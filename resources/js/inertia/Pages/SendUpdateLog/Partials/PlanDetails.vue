@@ -37,7 +37,8 @@ const state = reactive({
 
 const planDetailsForm = useForm({
   price_vat_applicable: props.sendUpdateLog?.price_vat_applicable || null,
-  price_vat_not_applicable: props.sendUpdateLog?.price_vat_not_applicable || null,
+  price_vat_not_applicable:
+    props.sendUpdateLog?.price_vat_not_applicable || null,
   price_with_vat: props.sendUpdateLog?.price_with_vat || null,
   insurer_quote_number: props.sendUpdateLog?.insurer_quote_number || null,
   insurance_provider_id: props.sendUpdateLog?.insurance_provider_id || null,
@@ -62,10 +63,15 @@ const roundDecimal = value => {
 const updatePriceWithVat = () => {
   let priceWithVat = 0;
   const priceVatApplicable = parseFloat(planDetailsForm.price_vat_applicable);
-  const priceVatNotApplicable = parseFloat(planDetailsForm.price_vat_not_applicable);
+  const priceVatNotApplicable = parseFloat(
+    planDetailsForm.price_vat_not_applicable,
+  );
 
   if (priceVatApplicable && priceVatNotApplicable) {
-    priceWithVat = (priceVatApplicable / 100) * vat + priceVatApplicable + priceVatNotApplicable;
+    priceWithVat =
+      (priceVatApplicable / 100) * vat +
+      priceVatApplicable +
+      priceVatNotApplicable;
   } else if (priceVatApplicable) {
     priceWithVat = (priceVatApplicable / 100) * vat + priceVatApplicable;
   } else if (priceVatNotApplicable) {
@@ -74,11 +80,16 @@ const updatePriceWithVat = () => {
 
   planDetailsForm.price_with_vat = roundDecimal(priceWithVat);
   planDetailsForm.price_vat_applicable = roundDecimal(priceVatApplicable);
-  planDetailsForm.price_vat_not_applicable = roundDecimal(priceVatNotApplicable);
+  planDetailsForm.price_vat_not_applicable = roundDecimal(
+    priceVatNotApplicable,
+  );
 };
 
 const onUpdate = () => {
-  if (!planDetailsForm.price_vat_applicable && !planDetailsForm.price_vat_not_applicable) {
+  if (
+    !planDetailsForm.price_vat_applicable &&
+    !planDetailsForm.price_vat_not_applicable
+  ) {
     notification.error({
       title: 'Please enter price.',
       position: 'top',
@@ -114,7 +125,8 @@ const onKeyPress = event => {
 
 const onCancel = () => {
   state.isEdit = false;
-  planDetailsForm.price_vat_applicable = props.sendUpdateLog?.price_vat_applicable || null;
+  planDetailsForm.price_vat_applicable =
+    props.sendUpdateLog?.price_vat_applicable || null;
   planDetailsForm.price_vat_not_applicable =
     props.sendUpdateLog?.price_vat_not_applicable || null;
   planDetailsForm.price_with_vat = props.sendUpdateLog?.price_with_vat || null;
@@ -137,7 +149,7 @@ const onEdit = () => {
     <Collapsible expanded>
       <template #header>
         <div class="flex justify-between gap-4 items-center">
-          <x-tooltip v-if="!isPlanDetails" position="left">
+          <x-tooltip v-if="!isPlanDetails" placement="left">
             <label
               class="font-semibold text-primary-800 text-lg underline decoration-dotted decoration-primary-700"
             >
@@ -161,7 +173,7 @@ const onEdit = () => {
             <!-- price VAT not applicable -->
             <div class="grid sm:grid-cols-2 gap-2">
               <dt>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -195,11 +207,12 @@ const onEdit = () => {
             <div class="grid sm:grid-cols-2 gap-2">
               <template
                 v-if="
-                  isPlanDetails && props.sendUpdateLog.category.code !== sendUpdateEnums.CPD
+                  isPlanDetails &&
+                  props.sendUpdateLog.category.code !== sendUpdateEnums.CPD
                 "
               >
                 <dt>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -230,7 +243,7 @@ const onEdit = () => {
             <!-- price VAT applicable -->
             <div class="grid sm:grid-cols-2 gap-2">
               <dt>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -270,11 +283,12 @@ const onEdit = () => {
             <div class="grid sm:grid-cols-2 gap-2">
               <template
                 v-if="
-                  isPlanDetails && props.sendUpdateLog.category.code !== sendUpdateEnums.CPD
+                  isPlanDetails &&
+                  props.sendUpdateLog.category.code !== sendUpdateEnums.CPD
                 "
               >
                 <dt>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -305,7 +319,7 @@ const onEdit = () => {
             <!-- Total price -->
             <div class="grid sm:grid-cols-2 gap-2">
               <dt>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >

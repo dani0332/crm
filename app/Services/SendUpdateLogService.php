@@ -454,7 +454,11 @@ class SendUpdateLogService
 
         $sendUpdateLogCategory = LookupRepository::where('id', $sendUpdateLog->category_id)->value('code');
 
-        $invoiceDescription = $insuranceProviderCode.'-'.$quoteType.'-'.$quote->policy_number;
+        if ($quoteType == quoteTypeCode::Business && $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
+            $invoiceDescription = $insuranceProviderCode.'-'.quoteTypeCode::GroupMedical.'-'.$quote->policy_number;
+        } else {
+            $invoiceDescription = $insuranceProviderCode.'-'.$quoteType.'-'.$quote->policy_number;
+        }
 
         if ($sendUpdateLogCategory == SendUpdateLogStatusEnum::EF) {
             $invoiceDescription = 'E.'.$invoiceDescription;
@@ -465,9 +469,13 @@ class SendUpdateLogService
             $invoiceDescription = 'C.'.$invoiceDescription;
         }
 
-        $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
-        if (SendUpdateLog::where('broker_invoice_number', $brokerInvoiceNumber)->whereNot('uuid', $sendUpdateLog->uuid)->exists()) {
+        if (empty($sendUpdateLog->broker_invoice_number)) {
             $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
+            if (SendUpdateLog::where('broker_invoice_number', $brokerInvoiceNumber)->whereNot('uuid', $sendUpdateLog->uuid)->exists()) {
+                $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
+            }
+        } else {
+            $brokerInvoiceNumber = $sendUpdateLog->broker_invoice_number;
         }
 
         $response = [
@@ -683,6 +691,7 @@ class SendUpdateLogService
         $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->with(['payments' => function ($query) {
             $query->whereNull('send_update_log_id');
         }])->first();
+        $currentDate = now();
 
         try {
             DB::beginTransaction();
@@ -760,7 +769,7 @@ class SendUpdateLogService
                         'renewal_expiry_date' => $sendUpdateLog->expiry_date,
                         'insurer_quote_number' => $sendUpdateLog->insurer_quote_number,
                         'policy_issuance_status_id' => $sendUpdateLog->issuance_status_id,
-                        'policy_booking_date' => $sendUpdateLog->booking_date,
+                        'policy_booking_date' => $currentDate,
                         'price_vat_applicable' => $sendUpdateLog->price_vat_applicable,
                         'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
                         'price_with_vat' => $sendUpdateLog->price_with_vat,
@@ -780,7 +789,7 @@ class SendUpdateLogService
             }
 
             $sendUpdateLog->update([
-                'booking_date' => now(),
+                'booking_date' => $currentDate,
                 'transaction_payment_status' => $status ?? '',
                 'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
             ]);

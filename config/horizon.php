@@ -176,17 +176,17 @@ return [
                 'timeout' => 60,
             ],
         ],
-        // 'uat' => [
-        //     'supervisor-uat' => [
-        //         'connection' => 'redis',
-        //         'queue' => 'default,renewals',
-        //         'balance' => 'auto',
-        //         'maxProcesses' => 3,
-        //         'processes' => 1,
-        //         'tries' => 3,
-        //         'timeout' => 60,
-        //     ],
-        // ],
+        'uat' => [
+            'supervisor-uat' => [
+                'connection' => 'redis',
+                'queue' => 'default,renewals',
+                'balance' => 'auto',
+                'maxProcesses' => 3,
+                'processes' => 1,
+                'tries' => 3,
+                'timeout' => 60,
+            ],
+        ],
         // 'uat2' => [
         //     'supervisor-uat2' => [
         //         'connection' => 'redis',

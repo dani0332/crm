@@ -1,6 +1,4 @@
 <script setup>
-import { usePage } from '@inertiajs/vue3';
-
 const props = defineProps({
   quote: Object,
   documentTypes: Object,
@@ -71,8 +69,8 @@ watch(
   },
 );
 
-const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReusableTemplate();
-
+const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
+  createReusableTemplate();
 </script>
 
 <template>
@@ -84,7 +82,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
         </div>
       </template>
       <template #body>
-       <x-divider class="my-4" />
+        <x-divider class="my-4" />
         <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
           <div class="w-full md:w-1/2">
             <div class="flex flex-col gap-4">
@@ -93,7 +91,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                 label="Status"
                 :error="quoteStatusForm.errors.quote_status_id"
                 :options="quoteStatusOptions"
-                :disabled="allowStatusUpdate || page.props.lockLeadSectionsDetails.lead_status"
+                :disabled="
+                  allowStatusUpdate ||
+                  page.props.lockLeadSectionsDetails.lead_status
+                "
                 :rules="[rules.isRequired]"
                 placeholder="Lead Status"
                 class="w-full uppercase"
@@ -105,7 +106,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                 placeholder="Lead Notes"
                 class="w-full uppercase"
                 :error="quoteStatusForm.errors.notes"
-                :disabled="allowStatusUpdate || page.props.lockLeadSectionsDetails.lead_status"
+                :disabled="
+                  allowStatusUpdate ||
+                  page.props.lockLeadSectionsDetails.lead_status
+                "
               />
             </div>
           </div>
@@ -113,8 +117,12 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
             <div class="flex flex-col gap-4">
               <x-field
                 label="Lost Reason"
-               class="uppercase" required
-                v-if="quoteStatusForm.quote_status_id == page.props.quoteStatusEnum.Lost"
+                class="uppercase"
+                required
+                v-if="
+                  quoteStatusForm.quote_status_id ==
+                  page.props.quoteStatusEnum?.Lost
+                "
               >
                 <x-select
                   v-model="quoteStatusForm.lost_reason_id"
@@ -129,7 +137,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
                   :error="quoteStatusForm.errors.lost_reason_id"
                 />
               </x-field>
-              <x-field class="uppercase"label="Transaction Type">
+              <x-field class="uppercase" label="Transaction Type">
                 <x-input
                   type="text"
                   :value="quote.transaction_type_text"
@@ -153,13 +161,17 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReus
           </x-button>
         </StatusUpdateButtonTemplate>
         <div class="flex justify-end">
-          <x-tooltip v-if="page.props.lockLeadSectionsDetails.lead_status" position="bottom">
-              <StatusUpdateButtonReuseTemplate :isDisabled="true"/>
-              <template #tooltip>
-                The lead status cannot be manually updated once it has reached 'Transaction Approved'
-              </template>
-            </x-tooltip>
-            <StatusUpdateButtonReuseTemplate v-else />
+          <x-tooltip
+            v-if="page.props.lockLeadSectionsDetails.lead_status"
+            placement="bottom"
+          >
+            <StatusUpdateButtonReuseTemplate :isDisabled="true" />
+            <template #tooltip>
+              The lead status cannot be manually updated once it has reached
+              'Transaction Approved'
+            </template>
+          </x-tooltip>
+          <StatusUpdateButtonReuseTemplate v-else />
         </div>
       </template>
     </Collapsible>

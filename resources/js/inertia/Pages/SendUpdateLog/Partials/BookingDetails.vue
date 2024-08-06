@@ -77,7 +77,7 @@ const dateToYMD = date => {
   }
 
   return null;
-}
+};
 
 const isEF = computed(() => {
   return props.sendUpdateLog.category.code === sendUpdateStatusEnum.EF;
@@ -88,7 +88,10 @@ const isCPD = computed(() => {
 });
 
 const isCIOrCIR = computed(() => {
-  return props.sendUpdateLog.category.code === sendUpdateStatusEnum.CI || props.sendUpdateLog.category.code === sendUpdateStatusEnum.CIR;
+  return (
+    props.sendUpdateLog.category.code === sendUpdateStatusEnum.CI ||
+    props.sendUpdateLog.category.code === sendUpdateStatusEnum.CIR
+  );
 });
 
 const hasTaxDocuments = computed(() => {
@@ -131,7 +134,11 @@ const checkSectionTwoEdit = () => {
     return;
   }
 
-  if (checkTaxInvoiceDoc && !hasTaxDocuments.value && !additionalInvoiceTypes.includes(props.sendUpdateLog?.option?.code)) {
+  if (
+    checkTaxInvoiceDoc &&
+    !hasTaxDocuments.value &&
+    !additionalInvoiceTypes.includes(props.sendUpdateLog?.option?.code)
+  ) {
     notification.error({
       title: 'Please upload tax invoice and tax invoice raised by buyer. ',
       position: 'top',
@@ -139,8 +146,14 @@ const checkSectionTwoEdit = () => {
     return;
   }
 
-  if (checkTaxInvoiceDoc && additionalInvoiceTypes.includes(props.sendUpdateLog?.option?.code)) {
-    if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ACB && !props.uploadedDocuments.includes('SUTAXINVRB')) {
+  if (
+    checkTaxInvoiceDoc &&
+    additionalInvoiceTypes.includes(props.sendUpdateLog?.option?.code)
+  ) {
+    if (
+      props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ACB &&
+      !props.uploadedDocuments.includes('SUTAXINVRB')
+    ) {
       notification.error({
         title: 'Please upload tax invoice raised by buyer',
         position: 'top',
@@ -148,7 +161,10 @@ const checkSectionTwoEdit = () => {
       return;
     }
 
-    if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB && !props.uploadedDocuments.includes('SUTAXINV')) {
+    if (
+      props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB &&
+      !props.uploadedDocuments.includes('SUTAXINV')
+    ) {
       notification.error({
         title: 'Please upload tax invoice',
         position: 'top',
@@ -165,22 +181,37 @@ const transactionPaymentStatusTooltip = ref('');
 const transactionPaymentStatus = computed(() => {
   let payment = props.payments[0];
   if (Number(payment?.captured_amount) < 1) {
-    transactionPaymentStatusTooltip.value = 'This status indicates that no payments have been applied to the associated insurer tax invoice. Regular follow-ups are essential to ensure timely collections.';
+    transactionPaymentStatusTooltip.value =
+      'This status indicates that no payments have been applied to the associated insurer tax invoice. Regular follow-ups are essential to ensure timely collections.';
     return sendUpdateStatusEnum.UNPAID;
-  } else if (Number(payment?.captured_amount + payment?.discount_value) < Number(payment?.total_price)) {
-    transactionPaymentStatusTooltip.value = 'The invoice has received a portion of its total amount due. Please ensure that the remaining balance is collected promptly to prevent potential financial discrepancies.';
+  } else if (
+    Number(payment?.captured_amount + payment?.discount_value) <
+    Number(payment?.total_price)
+  ) {
+    transactionPaymentStatusTooltip.value =
+      'The invoice has received a portion of its total amount due. Please ensure that the remaining balance is collected promptly to prevent potential financial discrepancies.';
     return sendUpdateStatusEnum.PARTIALLY_PAID;
-  } else if (Number(payment?.captured_amount + payment?.discount_value) >= Number(payment?.total_price)) {
-    transactionPaymentStatusTooltip.value = 'This insurer tax invoice has been settled in its entirety, with no outstanding amounts. Always review payments to guarantee the accuracy of this status.';
+  } else if (
+    Number(payment?.captured_amount + payment?.discount_value) >=
+    Number(payment?.total_price)
+  ) {
+    transactionPaymentStatusTooltip.value =
+      'This insurer tax invoice has been settled in its entirety, with no outstanding amounts. Always review payments to guarantee the accuracy of this status.';
     return sendUpdateStatusEnum.FULL_PAID;
   }
 
-  transactionPaymentStatusTooltip.value = 'This status indicates that no payments have been applied to the associated insurer tax invoice. Regular follow-ups are essential to ensure timely collections.';
+  transactionPaymentStatusTooltip.value =
+    'This status indicates that no payments have been applied to the associated insurer tax invoice. Regular follow-ups are essential to ensure timely collections.';
   return 'N/A';
 });
 
 function isNotZero(value) {
-  if (value === 0 || value === '0.00' || value === null || value === undefined) {
+  if (
+    value === 0 ||
+    value === '0.00' ||
+    value === null ||
+    value === undefined
+  ) {
     return false;
   }
 
@@ -195,18 +226,47 @@ const bookingDetailsForm = useForm({
   invoice_description: props.bookingDetails?.invoice_description || '',
   broker_invoice_number: props.bookingDetails?.broker_invoice_number || '',
   transaction_payment_status: 'N/A',
-  invoice_date: dateToYMD(props.sendUpdateLog?.invoice_date) || dateToYMD(props?.payments[0]?.insurer_invoice_date) || '',
-  insurer_tax_invoice_number: props.sendUpdateLog?.insurer_tax_invoice_number || props?.payments[0]?.insurer_tax_number || null,
-  discount: props?.payments[0]?.discount_value || props.sendUpdateLog?.discount || '0.00',
-  insurer_commission_invoice_number: props.sendUpdateLog?.insurer_commission_invoice_number || props?.payments[0]?.insurer_commmission_invoice_number || '',
-  commission_percentage: props.sendUpdateLog?.commission_percentage || props?.payments[0]?.commmission_percentage || '',
-  commission_vat_not_applicable: props.sendUpdateLog?.commission_vat_not_applicable || props?.payments[0]?.commission_vat_not_applicable || '0.00',
-  vat_on_commission: props.sendUpdateLog?.vat_on_commission || props?.payments[0]?.commission_vat || '',
-  commission_vat_applicable: Math.abs(props.sendUpdateLog.commission_vat_applicable) || props?.payments[0]?.commission_vat_applicable || '',
-  total_commission: props.sendUpdateLog?.total_commission || props?.payments[0]?.commission || '',
+  invoice_date:
+    dateToYMD(props.sendUpdateLog?.invoice_date) ||
+    dateToYMD(props?.payments[0]?.insurer_invoice_date) ||
+    '',
+  insurer_tax_invoice_number:
+    props.sendUpdateLog?.insurer_tax_invoice_number ||
+    props?.payments[0]?.insurer_tax_number ||
+    null,
+  discount:
+    props?.payments[0]?.discount_value ||
+    props.sendUpdateLog?.discount ||
+    '0.00',
+  insurer_commission_invoice_number:
+    props.sendUpdateLog?.insurer_commission_invoice_number ||
+    props?.payments[0]?.insurer_commmission_invoice_number ||
+    '',
+  commission_percentage:
+    props.sendUpdateLog?.commission_percentage ||
+    props?.payments[0]?.commmission_percentage ||
+    '',
+  commission_vat_not_applicable:
+    props.sendUpdateLog?.commission_vat_not_applicable ||
+    props?.payments[0]?.commission_vat_not_applicable ||
+    '0.00',
+  vat_on_commission:
+    props.sendUpdateLog?.vat_on_commission ||
+    props?.payments[0]?.commission_vat ||
+    '',
+  commission_vat_applicable:
+    Math.abs(props.sendUpdateLog.commission_vat_applicable) ||
+    props?.payments[0]?.commission_vat_applicable ||
+    '',
+  total_commission:
+    props.sendUpdateLog?.total_commission ||
+    props?.payments[0]?.commission ||
+    '',
   total_vat_amount: props.sendUpdateLog?.total_vat_amount || '0.00',
-  price_vat_applicable: Math.abs(props.sendUpdateLog.price_vat_applicable) || '0.00',
-  price_vat_not_applicable: Math.abs(props.sendUpdateLog.price_vat_not_applicable) || '0.00',
+  price_vat_applicable:
+    Math.abs(props.sendUpdateLog.price_vat_applicable) || '0.00',
+  price_vat_not_applicable:
+    Math.abs(props.sendUpdateLog.price_vat_not_applicable) || '0.00',
   price_with_vat: props.sendUpdateLog?.price_with_vat || '0.00',
   // new entry section related.
   reversal_invoice: props.sendUpdateLog?.reversal_invoice || null,
@@ -214,7 +274,10 @@ const bookingDetailsForm = useForm({
 
 // convertToNegative function will replace all values in negative if the isNegativeValue is true.
 const calculateCommisionDetailsForACB = () => {
-  if (bookingDetailsForm.commission_vat_applicable == 0 && bookingDetailsForm.commission_vat_not_applicable == 0) {
+  if (
+    bookingDetailsForm.commission_vat_applicable == 0 &&
+    bookingDetailsForm.commission_vat_not_applicable == 0
+  ) {
     notification.error({
       title: 'Please add Commision VAT or VAT Not Applicable',
       position: 'top',
@@ -223,28 +286,32 @@ const calculateCommisionDetailsForACB = () => {
   }
 
   if (bookingDetailsForm.commission_vat_applicable > 0) {
-    let vat_on_commission = bookingDetailsForm.commission_vat_applicable * Number(vat / 100);
-      bookingDetailsForm.vat_on_commission = convertToNegative(vat_on_commission);
+    let vat_on_commission =
+      bookingDetailsForm.commission_vat_applicable * Number(vat / 100);
+    bookingDetailsForm.vat_on_commission = convertToNegative(vat_on_commission);
 
-      let total_commission =
-        Number(bookingDetailsForm.commission_vat_not_applicable) +
-        Number(bookingDetailsForm.commission_vat_applicable) +
-        vat_on_commission;
-      bookingDetailsForm.total_commission = convertToNegative(total_commission);
-  }
-  else if (bookingDetailsForm.commission_vat_not_applicable > 0) {
-    bookingDetailsForm.total_commission = bookingDetailsForm.commission_vat_not_applicable;
-  }
-  else {
+    let total_commission =
+      Number(bookingDetailsForm.commission_vat_not_applicable) +
+      Number(bookingDetailsForm.commission_vat_applicable) +
+      vat_on_commission;
+    bookingDetailsForm.total_commission = convertToNegative(total_commission);
+  } else if (bookingDetailsForm.commission_vat_not_applicable > 0) {
+    bookingDetailsForm.total_commission =
+      bookingDetailsForm.commission_vat_not_applicable;
+  } else {
     bookingDetailsForm.vat_on_commission = '';
     bookingDetailsForm.total_commission = '';
   }
-}
+};
 
 const calculatePriceDetailsForATIB = () => {
-  if (bookingDetailsForm.price_vat_applicable == 0 && bookingDetailsForm.price_vat_not_applicable == 0) {
+  if (
+    bookingDetailsForm.price_vat_applicable == 0 &&
+    bookingDetailsForm.price_vat_not_applicable == 0
+  ) {
     notification.error({
-      title: 'Please add Policy Detail Price (VAT APPLICABLE) or Price (VAT NOT APPLICABLE)',
+      title:
+        'Please add Policy Detail Price (VAT APPLICABLE) or Price (VAT NOT APPLICABLE)',
       position: 'top',
     });
     return false;
@@ -253,26 +320,33 @@ const calculatePriceDetailsForATIB = () => {
   if (bookingDetailsForm.price_vat_applicable > 0) {
     // in this calculation, number 5 is not VAT amount, we need to * the price_vat and price_not_vat with 5% to get the total VAT amount.
     let total_price_with_vat_and_not_vat_applicable =
-        Number(bookingDetailsForm.price_vat_applicable) +
-        Number(bookingDetailsForm.price_vat_not_applicable);
-      let total_vat_amount =
-        Number(bookingDetailsForm.price_vat_applicable) * Number(vat / 100);
-      bookingDetailsForm.total_vat_amount = convertToNegative(total_vat_amount);
+      Number(bookingDetailsForm.price_vat_applicable) +
+      Number(bookingDetailsForm.price_vat_not_applicable);
+    let total_vat_amount =
+      Number(bookingDetailsForm.price_vat_applicable) * Number(vat / 100);
+    bookingDetailsForm.total_vat_amount = convertToNegative(total_vat_amount);
 
-      let price_with_vat =
-        total_price_with_vat_and_not_vat_applicable + Number(total_vat_amount);
-      bookingDetailsForm.price_with_vat = convertToNegative(price_with_vat);
+    let price_with_vat =
+      total_price_with_vat_and_not_vat_applicable + Number(total_vat_amount);
+    bookingDetailsForm.price_with_vat = convertToNegative(price_with_vat);
   }
-}
+};
 
 const calculateCommission = () => {
-  if(props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ACB) {
+  if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ACB) {
     calculateCommisionDetailsForACB();
-  } else if(props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB) {
+  } else if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB) {
     calculatePriceDetailsForATIB();
   } else {
-    if (bookingDetailsForm.commission_vat_applicable > 0 || bookingDetailsForm.price_vat_applicable > 0 || bookingDetailsForm.price_vat_not_applicable > 0) {
-      if (Number(bookingDetailsForm.price_vat_applicable > 0) || Number(bookingDetailsForm.price_vat_not_applicable > 0)) {
+    if (
+      bookingDetailsForm.commission_vat_applicable > 0 ||
+      bookingDetailsForm.price_vat_applicable > 0 ||
+      bookingDetailsForm.price_vat_not_applicable > 0
+    ) {
+      if (
+        Number(bookingDetailsForm.price_vat_applicable > 0) ||
+        Number(bookingDetailsForm.price_vat_not_applicable > 0)
+      ) {
         let vat_on_commission =
           bookingDetailsForm.commission_vat_applicable * Number(vat / 100);
         bookingDetailsForm.vat_on_commission =
@@ -282,7 +356,8 @@ const calculateCommission = () => {
           Number(bookingDetailsForm.commission_vat_not_applicable) +
           Number(bookingDetailsForm.commission_vat_applicable) +
           vat_on_commission;
-        bookingDetailsForm.total_commission = convertToNegative(total_commission);
+        bookingDetailsForm.total_commission =
+          convertToNegative(total_commission);
 
         // in this calculation, number 5 is not VAT amount, we need to * the price_vat and price_not_vat with 5% to get the total VAT amount.
         let total_price_with_vat_and_not_vat_applicable =
@@ -290,10 +365,12 @@ const calculateCommission = () => {
           Number(bookingDetailsForm.price_vat_not_applicable);
         let total_vat_amount =
           Number(bookingDetailsForm.price_vat_applicable) * Number(vat / 100);
-        bookingDetailsForm.total_vat_amount = convertToNegative(total_vat_amount);
+        bookingDetailsForm.total_vat_amount =
+          convertToNegative(total_vat_amount);
 
         let price_with_vat =
-          total_price_with_vat_and_not_vat_applicable + Number(total_vat_amount);
+          total_price_with_vat_and_not_vat_applicable +
+          Number(total_vat_amount);
         bookingDetailsForm.price_with_vat = convertToNegative(price_with_vat);
 
         bookingDetailsForm.commission_percentage = convertToNegative(
@@ -364,10 +441,7 @@ const saveBookingDetail = isValid => {
     sendUpdateStatusEnum.ED,
     sendUpdateStatusEnum.DM,
   ];
-  if (
-    isEF.value &&
-    !childOptions.includes(props.sendUpdateLog.option.code)
-  ) {
+  if (isEF.value && !childOptions.includes(props.sendUpdateLog.option.code)) {
     /* alert('payment condition will goes here. ');
     return; */
   }
@@ -378,6 +452,14 @@ const saveBookingDetail = isValid => {
         title: 'The request has been updated.',
         position: 'top',
       });
+      if (props?.bookingDetails?.isLackingOfPayment) {
+        notification.error({
+          title:
+            'Action Needed: Please revise payment details to reflect plan changes.',
+          position: 'top',
+          timeout: 10000,
+        });
+      }
       state.isEdit = false;
       location.reload();
     },
@@ -418,9 +500,12 @@ const reversalEntry = reactive({
   total_price: null,
 });
 
-watch(() => reversalEntry.price_with_vat, (newValue, oldValue) => {
-  isReversalNegative.value = newValue < 0;
-});
+watch(
+  () => reversalEntry.price_with_vat,
+  (newValue, oldValue) => {
+    isReversalNegative.value = newValue < 0;
+  },
+);
 
 const loader = reactive({
   sendUpdateSectionBtn: false,
@@ -470,21 +555,54 @@ function reverseValue(value) {
 
 function updateReversalEntries(payment, sendUpdateLog) {
   reversalEntry.transaction_payment_status = 'N/A';
-  reversalEntry.booking_date = payment?.policy_booking_date || sendUpdateLog?.booking_date || '';
-  reversalEntry.invoice_date = payment.insurer_invoice_date || sendUpdateLog.invoice_date || '';
-  reversalEntry.insurer_tax_invoice_number = (payment?.insurer_tax_number) ? (payment.insurer_tax_number + '-REV') : (sendUpdateLog.insurer_tax_invoice_number + '-REV');
-  reversalEntry.broker_invoice_number = (payment?.broker_invoice_number) ? (payment.broker_invoice_number + '-REV') : (sendUpdateLog.broker_invoice_number + '-REV');
-  reversalEntry.insurer_commission_invoice_number = (payment?.insurer_commmission_invoice_number) ? (payment.insurer_commmission_invoice_number + '-REV') : (sendUpdateLog.insurer_commission_invoice_number + '-REV');
+  reversalEntry.booking_date =
+    sendUpdateLog?.booking_date ||
+    props.realQuote?.policy_booking_date ||
+    props.quote?.policy_booking_date ||
+    '';
+  reversalEntry.invoice_date =
+    payment.insurer_invoice_date || sendUpdateLog.invoice_date || '';
+  reversalEntry.insurer_tax_invoice_number = payment?.insurer_tax_number
+    ? payment.insurer_tax_number + '-REV'
+    : sendUpdateLog.insurer_tax_invoice_number + '-REV';
+  reversalEntry.broker_invoice_number = payment?.broker_invoice_number
+    ? payment.broker_invoice_number + '-REV'
+    : sendUpdateLog.broker_invoice_number + '-REV';
+  reversalEntry.insurer_commission_invoice_number =
+    payment?.insurer_commmission_invoice_number
+      ? payment.insurer_commmission_invoice_number + '-REV'
+      : sendUpdateLog.insurer_commission_invoice_number + '-REV';
   reversalEntry.discount = payment.discount_value || null;
-  reversalEntry.price_vat_applicable = sendUpdateLog?.price_vat_applicable || payment.paymentable?.price_vat_applicable;
-  reversalEntry.commission_percentage = sendUpdateLog?.commission_percentage || payment.commmission_percentage || null;
-  reversalEntry.price_vat_not_applicable = sendUpdateLog?.price_vat_not_applicable || payment.paymentable?.price_vat_not_applicable;
-  reversalEntry.vat_on_commission = ((payment.commission_vat !== null) ? payment.commission_vat : sendUpdateLog?.vat_on_commission) ?? null;
-  reversalEntry.commission_vat_applicable = sendUpdateLog?.commission_vat_applicable || payment.commission_vat_applicable || null;
-  reversalEntry.total_commission = sendUpdateLog?.total_commission || payment.commission || null;
-  reversalEntry.commission_vat_not_applicable = sendUpdateLog?.commission_vat_not_applicable || payment.commission_vat_not_applicable || null;
-  reversalEntry.total_vat_amount = sendUpdateLog?.total_vat_amount || props.realQuote?.vat;
-  reversalEntry.price_with_vat = ((payment.total_price !== null && payment.total_price > 0) ? payment.total_price : sendUpdateLog?.price_with_vat) ?? null;
+  reversalEntry.price_vat_applicable =
+    sendUpdateLog?.price_vat_applicable ||
+    payment.paymentable?.price_vat_applicable;
+  reversalEntry.commission_percentage =
+    sendUpdateLog?.commission_percentage ||
+    payment.commmission_percentage ||
+    null;
+  reversalEntry.price_vat_not_applicable =
+    sendUpdateLog?.price_vat_not_applicable ||
+    payment.paymentable?.price_vat_not_applicable;
+  reversalEntry.vat_on_commission =
+    (payment.commission_vat !== null
+      ? payment.commission_vat
+      : sendUpdateLog?.vat_on_commission) ?? null;
+  reversalEntry.commission_vat_applicable =
+    sendUpdateLog?.commission_vat_applicable ||
+    payment.commission_vat_applicable ||
+    null;
+  reversalEntry.total_commission =
+    sendUpdateLog?.total_commission || payment.commission || null;
+  reversalEntry.commission_vat_not_applicable =
+    sendUpdateLog?.commission_vat_not_applicable ||
+    payment.commission_vat_not_applicable ||
+    null;
+  reversalEntry.total_vat_amount =
+    sendUpdateLog?.total_vat_amount || props.realQuote?.vat;
+  reversalEntry.price_with_vat =
+    (payment.total_price !== null && payment.total_price > 0
+      ? payment.total_price
+      : sendUpdateLog?.price_with_vat) ?? null;
 }
 
 onMounted(() => {
@@ -500,18 +618,28 @@ const onUpdateReversal = () => {
   state.reversalSectionEdit = !state.reversalSectionEdit;
   bookingDetailsForm.transaction_payment_status = 'N/A';
   bookingDetailsForm.invoice_date = reversalEntry.invoice_date || '';
-  bookingDetailsForm.insurer_tax_invoice_number = (reversalEntry.insurer_tax_invoice_number).replace('REV', 'NEW');
-  bookingDetailsForm.broker_invoice_number = (reversalEntry.broker_invoice_number).replace('REV', 'NEW') || '';
-  bookingDetailsForm.insurer_commission_invoice_number = (reversalEntry.insurer_commission_invoice_number).replace('REV', 'NEW') || '';
+  bookingDetailsForm.insurer_tax_invoice_number =
+    reversalEntry.insurer_tax_invoice_number.replace('REV', 'NEW');
+  bookingDetailsForm.broker_invoice_number =
+    reversalEntry.broker_invoice_number.replace('REV', 'NEW') || '';
+  bookingDetailsForm.insurer_commission_invoice_number =
+    reversalEntry.insurer_commission_invoice_number.replace('REV', 'NEW') || '';
   bookingDetailsForm.discount = props?.payments[0]?.discount_value || null;
-  bookingDetailsForm.price_vat_applicable = Math.abs(reversalEntry.price_vat_applicable) || '0.00';
-  bookingDetailsForm.commission_percentage = reversalEntry.commission_percentage || null;
-  bookingDetailsForm.price_vat_not_applicable = Math.abs(reversalEntry.price_vat_not_applicable) || '0.00';
-  bookingDetailsForm.vat_on_commission = reversalEntry.vat_on_commission || null;
-  bookingDetailsForm.commission_vat_applicable = Math.abs(reversalEntry.commission_vat_applicable) || null;
+  bookingDetailsForm.price_vat_applicable =
+    Math.abs(reversalEntry.price_vat_applicable) || '0.00';
+  bookingDetailsForm.commission_percentage =
+    reversalEntry.commission_percentage || null;
+  bookingDetailsForm.price_vat_not_applicable =
+    Math.abs(reversalEntry.price_vat_not_applicable) || '0.00';
+  bookingDetailsForm.vat_on_commission =
+    reversalEntry.vat_on_commission || '0.00';
+  bookingDetailsForm.commission_vat_applicable =
+    Math.abs(reversalEntry.commission_vat_applicable) || null;
   bookingDetailsForm.total_commission = reversalEntry.total_commission || null;
-  bookingDetailsForm.commission_vat_not_applicable = reversalEntry.commission_vat_not_applicable || null;
-  bookingDetailsForm.total_vat_amount = reversalEntry.total_vat_amount || '0.00';
+  bookingDetailsForm.commission_vat_not_applicable =
+    reversalEntry.commission_vat_not_applicable || null;
+  bookingDetailsForm.total_vat_amount =
+    reversalEntry.total_vat_amount || '0.00';
   bookingDetailsForm.price_with_vat = reversalEntry.price_with_vat;
 };
 
@@ -535,11 +663,11 @@ const isStating = ref(false);
 
 const sendUpdatePermissionCheck = computed(() => {
   if (props.updateBtn === sendUpdateStatusEnum.SU) {
-    return ! can(page.props.permissionsEnum.BOOK_UPDATE_BUTTON);
+    return !can(page.props.permissionsEnum.BOOK_UPDATE_BUTTON);
   } else if (props.updateBtn === sendUpdateStatusEnum.SUC) {
-    return ! can(page.props.permissionsEnum.SEND_UPDATE_TO_CUSTOMER_BUTTON);
+    return !can(page.props.permissionsEnum.SEND_UPDATE_TO_CUSTOMER_BUTTON);
   } else if (props.updateBtn === sendUpdateStatusEnum.SNBU) {
-    return ! can(page.props.permissionsEnum.SEND_AND_BOOK_UPDATE_BUTTON);
+    return !can(page.props.permissionsEnum.SEND_AND_BOOK_UPDATE_BUTTON);
   }
 
   return true;
@@ -550,7 +678,8 @@ const isLackingPayment = computed(() => {
 });
 
 const sendUpdateValidationURL = computed(() => {
-  return (props.updateBtn === sendUpdateStatusEnum.SU || props.sendUpdateLog.status === sendUpdateStatusEnum.UPDATE_SENT_TO_CUSTOMER)
+  return props.updateBtn === sendUpdateStatusEnum.SU ||
+    props.sendUpdateLog.status === sendUpdateStatusEnum.UPDATE_SENT_TO_CUSTOMER
     ? 'book-update'
     : 'send-update-customer-validation';
 });
@@ -774,22 +903,31 @@ const onCancel = () => {
     props.bookingDetails?.commission_vat_applicable || '';
 };
 
-const [sendUpdateConfirmBtnTemp, SendUpdateReuseBtnTemp] = createReusableTemplate();
-const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusableTemplate();
+const [sendUpdateConfirmBtnTemp, SendUpdateReuseBtnTemp] =
+  createReusableTemplate();
+const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] =
+  createReusableTemplate();
 
-watch(() => props?.payments[0]?.discount_value,
-    (newValue, oldValue) => {
-      bookingDetailsForm.discount = newValue;
-    },
+watch(
+  () => props?.payments[0]?.discount_value,
+  (newValue, oldValue) => {
+    bookingDetailsForm.discount = newValue;
+  },
 );
 
 const isPriceVatNotApplicableEditable = computed(() => {
-  return props.quoteType === quoteTypeCodeEnum.Business || props.quoteType === quoteTypeCodeEnum.Health || props.quoteType === quoteTypeCodeEnum.Life;
+  return (
+    props.quoteType === quoteTypeCodeEnum.Business ||
+    props.quoteType === quoteTypeCodeEnum.Health ||
+    props.quoteType === quoteTypeCodeEnum.Life
+  );
 });
 
 const isPriceVatApplicableEditable = computed(() => {
-  return (isCIOrCIR.value || isEF.value || isCPD.value) &&
-      props.quoteType !== quoteTypeCodeEnum.Life;
+  return (
+    (isCIOrCIR.value || isEF.value || isCPD.value) &&
+    props.quoteType !== quoteTypeCodeEnum.Life
+  );
 });
 
 const emit = defineEmits(['update-error-status']);
@@ -814,27 +952,31 @@ const isCI = computed(() => {
   return props.sendUpdateLog.category.code === sendUpdateStatusEnum.CI;
 });
 
-const checkDiscount = (newPrice) => {
+const checkDiscount = newPrice => {
   let total_price = Number(props.sendUpdateLog?.price_with_vat);
-  let difference =  Number(Number(newPrice) - Number(total_price)).toFixed(2);
-  let previousDiscount = props?.payments[0]?.discount_value || 0.00;
-  let paymentDiscount = props?.payments[0]?.discount_value || 0.00;
+  let difference = Number(Number(newPrice) - Number(total_price)).toFixed(2);
+  let previousDiscount = props?.payments[0]?.discount_value || 0.0;
+  let paymentDiscount = props?.payments[0]?.discount_value || 0.0;
   let newDiscount = Number(bookingDetailsForm.discount).toFixed(2);
   if (newPrice > total_price && (isEF || isCI || isCPD)) {
     if (previousDiscount > 0) {
-      bookingDetailsForm.discount = Number(parseFloat(newDiscount) + parseFloat(difference));
+      bookingDetailsForm.discount = Number(
+        parseFloat(newDiscount) + parseFloat(difference),
+      );
     } else {
       bookingDetailsForm.discount = Number(difference).toFixed(2);
     }
   } else {
     let lessDifference = Number(total_price - newPrice).toFixed(2);
     if (paymentDiscount > 0 && lessDifference <= 0.99) {
-      bookingDetailsForm.discount = Number(paymentDiscount - lessDifference).toFixed(2);
+      bookingDetailsForm.discount = Number(
+        paymentDiscount - lessDifference,
+      ).toFixed(2);
     } else {
       bookingDetailsForm.discount = previousDiscount;
     }
   }
-}
+};
 
 const dateToDMY = date => {
   if (date) {
@@ -851,7 +993,7 @@ const dateToDMY = date => {
   }
 
   return null;
-}
+};
 </script>
 
 <template>
@@ -872,7 +1014,7 @@ const dateToDMY = date => {
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div class="text-right"></div>
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="text-[#308BCA] text-sm font-bold underline decoration-dotted decoration-primary-700"
                   >
@@ -901,7 +1043,7 @@ const dateToDMY = date => {
 
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -914,12 +1056,16 @@ const dateToDMY = date => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.invoice_description !== '' ? reversalEntry.invoice_description : 'N/A' }}</span>
+                <span>{{
+                  reversalEntry.invoice_description !== ''
+                    ? reversalEntry.invoice_description
+                    : 'N/A'
+                }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -932,12 +1078,14 @@ const dateToDMY = date => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ dateToDMY(reversalEntry.booking_date) ?? 'N/A' }}</span>
+                <span>{{
+                  dateToDMY(reversalEntry.booking_date) ?? 'N/A'
+                }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -951,19 +1099,25 @@ const dateToDMY = date => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.transaction_payment_status ?? 'N/A' }}</span>
+                <span>{{
+                  reversalEntry.transaction_payment_status ?? 'N/A'
+                }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
                     LINE OF BUSINESS
                   </label>
                   <template #tooltip>
-                    Signifies the specific category or type of insurance coverage associated with this booking. It helps categorize the booking by its primary insurance focus, allowing for better organization and classification of insurance transactions.
+                    Signifies the specific category or type of insurance
+                    coverage associated with this booking. It helps categorize
+                    the booking by its primary insurance focus, allowing for
+                    better organization and classification of insurance
+                    transactions.
                   </template>
                 </x-tooltip>
               </div>
@@ -973,7 +1127,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -986,12 +1140,14 @@ const dateToDMY = date => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ dateToDMY(reversalEntry.invoice_date) ?? 'N/A' }}</span>
+                <span>{{
+                  dateToDMY(reversalEntry.invoice_date) ?? 'N/A'
+                }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1007,7 +1163,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1021,12 +1177,14 @@ const dateToDMY = date => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ reversalEntry.insurer_tax_invoice_number ?? 'N/A'}}</span>
+                <span>{{
+                  reversalEntry.insurer_tax_invoice_number ?? 'N/A'
+                }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1043,7 +1201,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1063,7 +1221,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1076,12 +1234,16 @@ const dateToDMY = date => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.discount !== null) ? reverseValue(reversalEntry.discount) : 'N/A' }}</span>
+                <span>{{
+                  reversalEntry.discount !== null
+                    ? reverseValue(reversalEntry.discount)
+                    : 'N/A'
+                }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1095,12 +1257,16 @@ const dateToDMY = date => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.price_vat_applicable !== null) ? reverseValue(reversalEntry.price_vat_applicable) : 'N/A' }}</span>
+                <span>{{
+                  reversalEntry.price_vat_applicable !== null
+                    ? reverseValue(reversalEntry.price_vat_applicable)
+                    : 'N/A'
+                }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1112,12 +1278,16 @@ const dateToDMY = date => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.commission_percentage !== null) ? reverseValue(reversalEntry.commission_percentage) + '%' : 'N/A' }}</span>
+                <span>{{
+                  reversalEntry.commission_percentage !== null
+                    ? reverseValue(reversalEntry.commission_percentage) + '%'
+                    : 'N/A'
+                }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1130,12 +1300,16 @@ const dateToDMY = date => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.price_vat_not_applicable !== null) ? reverseValue(reversalEntry.price_vat_not_applicable) : 'N/A' }}</span>
+                <span>{{
+                  reversalEntry.price_vat_not_applicable !== null
+                    ? reverseValue(reversalEntry.price_vat_not_applicable)
+                    : 'N/A'
+                }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1147,12 +1321,16 @@ const dateToDMY = date => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.vat_on_commission !== null) ? reverseValue(reversalEntry.vat_on_commission) : 'N/A' }}</span>
+                <span>{{
+                  reversalEntry.vat_on_commission !== null
+                    ? reverseValue(reversalEntry.vat_on_commission)
+                    : 'N/A'
+                }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1167,12 +1345,16 @@ const dateToDMY = date => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.commission_vat_applicable !== null) ? reverseValue(reversalEntry.commission_vat_applicable) : 'N/A' }}</span>
+                <span>{{
+                  reversalEntry.commission_vat_applicable !== null
+                    ? reverseValue(reversalEntry.commission_vat_applicable)
+                    : 'N/A'
+                }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1185,13 +1367,17 @@ const dateToDMY = date => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.total_commission !== null) ? reverseValue(reversalEntry.total_commission) : 'N/A' }}</span>
+                <span>{{
+                  reversalEntry.total_commission !== null
+                    ? reverseValue(reversalEntry.total_commission)
+                    : 'N/A'
+                }}</span>
               </div>
             </div>
 
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1204,12 +1390,16 @@ const dateToDMY = date => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.commission_vat_not_applicable !== null) ? reverseValue(reversalEntry.commission_vat_not_applicable) : 'N/A' }}</span>
+                <span>{{
+                  reversalEntry.commission_vat_not_applicable !== null
+                    ? reverseValue(reversalEntry.commission_vat_not_applicable)
+                    : 'N/A'
+                }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1222,7 +1412,11 @@ const dateToDMY = date => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.total_vat_amount !== null) ? reverseValue(reversalEntry.total_vat_amount) : 'N/A' }}</span>
+                <span>{{
+                  reversalEntry.total_vat_amount !== null
+                    ? reverseValue(reversalEntry.total_vat_amount)
+                    : 'N/A'
+                }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2">
@@ -1231,7 +1425,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1245,7 +1439,11 @@ const dateToDMY = date => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ (reversalEntry.price_with_vat !== null) ? reverseValue(reversalEntry.price_with_vat) : 'N/A' }}</span>
+                <span>{{
+                  reversalEntry.price_with_vat !== null
+                    ? reverseValue(reversalEntry.price_with_vat)
+                    : 'N/A'
+                }}</span>
               </div>
             </div>
           </div>
@@ -1301,8 +1499,8 @@ const dateToDMY = date => {
             <div class="grid md:grid-cols-2 gap-x-4 gap-y-2 py-4 items-center">
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
-                  <x-tooltip position="left">
-                    <label 
+                  <x-tooltip placement="left">
+                    <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       INVOICE DESCRIPTION
@@ -1315,16 +1513,24 @@ const dateToDMY = date => {
                 </div>
                 <div>
                   <span>
-                    {{ bookingDetailsForm.invoice_description !== '' ? bookingDetailsForm.invoice_description : 'N/A' }}
+                    {{
+                      bookingDetailsForm.invoice_description !== ''
+                        ? bookingDetailsForm.invoice_description
+                        : 'N/A'
+                    }}
                   </span>
                 </div>
               </div>
-              <div v-if="
-                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB && 
-                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" 
-                class="grid sm:grid-cols-2 pb-1.5">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !==
+                    sendUpdateStatusEnum.ACB &&
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                "
+                class="grid sm:grid-cols-2 pb-1.5"
+              >
                 <div class="font-bold">
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1340,12 +1546,16 @@ const dateToDMY = date => {
                   <span>{{ bookingDetailsForm.booking_date ?? 'N/A' }}</span>
                 </div>
               </div>
-              <div v-if="
-                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB && 
-                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" 
-                class="grid sm:grid-cols-2 pb-1.5">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !==
+                    sendUpdateStatusEnum.ACB &&
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                "
+                class="grid sm:grid-cols-2 pb-1.5"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1364,14 +1574,18 @@ const dateToDMY = date => {
               </div>
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
                       LINE OF BUSINESS
                     </label>
                     <template #tooltip>
-                      Signifies the specific category or type of insurance coverage associated with this booking. It helps categorize the booking by its primary insurance focus, allowing for better organization and classification of insurance transactions.
+                      Signifies the specific category or type of insurance
+                      coverage associated with this booking. It helps categorize
+                      the booking by its primary insurance focus, allowing for
+                      better organization and classification of insurance
+                      transactions.
                     </template>
                   </x-tooltip>
                 </div>
@@ -1381,7 +1595,7 @@ const dateToDMY = date => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1408,7 +1622,7 @@ const dateToDMY = date => {
               </div>
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1422,9 +1636,14 @@ const dateToDMY = date => {
                 </div>
                 <div>N/A</div>
               </div>
-              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                "
+                class="grid sm:grid-cols-2"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1451,7 +1670,7 @@ const dateToDMY = date => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1464,13 +1683,20 @@ const dateToDMY = date => {
                 </div>
                 <div>
                   <span>{{
-                    bookingDetailsForm.broker_invoice_number !== '' ? bookingDetailsForm.broker_invoice_number : 'N/A'
+                    bookingDetailsForm.broker_invoice_number !== ''
+                      ? bookingDetailsForm.broker_invoice_number
+                      : 'N/A'
                   }}</span>
                 </div>
               </div>
-              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                "
+                class="grid sm:grid-cols-2"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1496,12 +1722,16 @@ const dateToDMY = date => {
                   />
                 </div>
               </div>
-              <div v-if="
-                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB && 
-                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" 
-                class="grid sm:grid-cols-2">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !==
+                    sendUpdateStatusEnum.ACB &&
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                "
+                class="grid sm:grid-cols-2"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1514,12 +1744,21 @@ const dateToDMY = date => {
                   </x-tooltip>
                 </div>
                 <div>
-                  <span>{{ bookingDetailsForm.discount !== null ? bookingDetailsForm.discount : 'N/A' }}</span>
+                  <span>{{
+                    bookingDetailsForm.discount !== null
+                      ? bookingDetailsForm.discount
+                      : 'N/A'
+                  }}</span>
                 </div>
               </div>
-              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                "
+                class="grid sm:grid-cols-2"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1536,7 +1775,8 @@ const dateToDMY = date => {
                   <x-input
                     type="number"
                     min="0"
-                    add step="any"
+                    add
+                    step="any"
                     v-model="bookingDetailsForm.price_vat_applicable"
                     @change="calculateCommission"
                     class="!mb-0 w-full"
@@ -1552,12 +1792,16 @@ const dateToDMY = date => {
                   <span>N/A</span>
                 </div>
               </div>
-              <div v-if="
-                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB && 
-                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB"  
-                class="grid sm:grid-cols-2">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !==
+                    sendUpdateStatusEnum.ACB &&
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                "
+                class="grid sm:grid-cols-2"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1569,15 +1813,21 @@ const dateToDMY = date => {
                   </x-tooltip>
                 </div>
                 <div>
-                  <span>{{ (bookingDetailsForm.commission_percentage !== '') ? 
-                    bookingDetailsForm.commission_percentage + '%' :
-                    'N/A'
+                  <span>{{
+                    bookingDetailsForm.commission_percentage !== ''
+                      ? bookingDetailsForm.commission_percentage + '%'
+                      : 'N/A'
                   }}</span>
                 </div>
               </div>
-              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                "
+                class="grid sm:grid-cols-2"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1592,29 +1842,37 @@ const dateToDMY = date => {
 
                 <div v-if="isPriceVatNotApplicableEditable">
                   <x-input
-                      type="number"
-                      min="0"
-                      add step="any"
-                      v-model="bookingDetailsForm.price_vat_not_applicable"
-                      @change="calculateCommission"
-                      class="!mb-0 w-full"
-                      :class="isNegativeValue ? ' icon-padding' : ''"
-                      :disabled="!state.isEdit"
-                      placeholder="Enter Price"
-                      :rules="[isRequired]"
-                      size="xs"
-                      :icon-left="isNegativeValue ? 'minus' : ''"
+                    type="number"
+                    min="0"
+                    add
+                    step="any"
+                    v-model="bookingDetailsForm.price_vat_not_applicable"
+                    @change="calculateCommission"
+                    class="!mb-0 w-full"
+                    :class="isNegativeValue ? ' icon-padding' : ''"
+                    :disabled="!state.isEdit"
+                    placeholder="Enter Price"
+                    :rules="[isRequired]"
+                    size="xs"
+                    :icon-left="isNegativeValue ? 'minus' : ''"
                   />
                 </div>
                 <div v-else>
                   <span>{{
-                      bookingDetailsForm.price_vat_not_applicable !== '0.00' ? bookingDetailsForm.price_vat_not_applicable : 'N/A'
-                    }}</span>
+                    bookingDetailsForm.price_vat_not_applicable !== '0.00'
+                      ? bookingDetailsForm.price_vat_not_applicable
+                      : 'N/A'
+                  }}</span>
                 </div>
               </div>
-              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                "
+                class="grid sm:grid-cols-2"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1627,13 +1885,20 @@ const dateToDMY = date => {
                 </div>
                 <div>
                   <span>{{
-                    bookingDetailsForm.vat_on_commission !== '' ? thousandSeparator(bookingDetailsForm.vat_on_commission) : 'N/A'
+                    bookingDetailsForm.vat_on_commission !== ''
+                      ? thousandSeparator(bookingDetailsForm.vat_on_commission)
+                      : 'N/A'
                   }}</span>
                 </div>
               </div>
-              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                "
+                class="grid sm:grid-cols-2"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="pt-1 font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1651,7 +1916,8 @@ const dateToDMY = date => {
                   <x-input
                     type="number"
                     min="0"
-                    add step="any"
+                    add
+                    step="any"
                     v-model="bookingDetailsForm.commission_vat_applicable"
                     @change="calculateCommission"
                     class="!mb-0 w-full"
@@ -1664,9 +1930,14 @@ const dateToDMY = date => {
                   />
                 </div>
               </div>
-              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                "
+                class="grid sm:grid-cols-2"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1680,13 +1951,20 @@ const dateToDMY = date => {
                 </div>
                 <div>
                   <span>{{
-                    bookingDetailsForm.total_commission !== '' ? thousandSeparator(bookingDetailsForm.total_commission) : 'N/A'
+                    bookingDetailsForm.total_commission !== ''
+                      ? thousandSeparator(bookingDetailsForm.total_commission)
+                      : 'N/A'
                   }}</span>
                 </div>
               </div>
-              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                "
+                class="grid sm:grid-cols-2"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1700,13 +1978,20 @@ const dateToDMY = date => {
                 </div>
                 <div>
                   <span>{{
-                    bookingDetailsForm.commission_vat_not_applicable !== null ? bookingDetailsForm.commission_vat_not_applicable : 'N/A'
+                    bookingDetailsForm.commission_vat_not_applicable !== null
+                      ? bookingDetailsForm.commission_vat_not_applicable
+                      : 'N/A'
                   }}</span>
                 </div>
               </div>
-              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                "
+                class="grid sm:grid-cols-2"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1720,7 +2005,9 @@ const dateToDMY = date => {
                 </div>
                 <div>
                   <span>{{
-                    bookingDetailsForm.total_vat_amount !== '0.00' ? thousandSeparator(bookingDetailsForm.total_vat_amount) : 'N/A'
+                    bookingDetailsForm.total_vat_amount !== '0.00'
+                      ? thousandSeparator(bookingDetailsForm.total_vat_amount)
+                      : 'N/A'
                   }}</span>
                 </div>
               </div>
@@ -1728,9 +2015,14 @@ const dateToDMY = date => {
                 <div class="font-bold text-right"></div>
                 <div></div>
               </div>
-              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                "
+                class="grid sm:grid-cols-2"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1746,7 +2038,9 @@ const dateToDMY = date => {
                 <div>
                   <span>
                     {{
-                      bookingDetailsForm.price_with_vat!== '0.00' ? thousandSeparator(bookingDetailsForm.price_with_vat) : 'N/A'
+                      bookingDetailsForm.price_with_vat !== '0.00'
+                        ? thousandSeparator(bookingDetailsForm.price_with_vat)
+                        : 'N/A'
                     }}
                   </span>
                 </div>
@@ -1760,31 +2054,31 @@ const dateToDMY = date => {
               <template v-if="isLackingPayment">
                 <x-tooltip>
                   <x-button
-                      size="sm"
-                      color="orange"
-                      v-if="props.updateBtn"
-                      :loading="loader.sendUpdateSectionBtn"
-                      @click="sendUpdateValidation"
-                      :disabled="sendUpdatePermissionCheck || isLackingPayment"
-                  >
-                    {{ props.updateBtn }}
-                  </x-button>
-                  <template #tooltip>
-                      <span class="custom-tooltip-content">
-                        Action Needed: Please revise payment details to reflect
-                        plan changes.
-                      </span>
-                  </template>
-                </x-tooltip>
-              </template>
-              <template v-else>
-                <x-button
                     size="sm"
                     color="orange"
                     v-if="props.updateBtn"
                     :loading="loader.sendUpdateSectionBtn"
                     @click="sendUpdateValidation"
-                    :disabled="sendUpdatePermissionCheck"
+                    :disabled="sendUpdatePermissionCheck || isLackingPayment"
+                  >
+                    {{ props.updateBtn }}
+                  </x-button>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">
+                      Action Needed: Please revise payment details to reflect
+                      plan changes.
+                    </span>
+                  </template>
+                </x-tooltip>
+              </template>
+              <template v-else>
+                <x-button
+                  size="sm"
+                  color="orange"
+                  v-if="props.updateBtn"
+                  :loading="loader.sendUpdateSectionBtn"
+                  @click="sendUpdateValidation"
+                  :disabled="sendUpdatePermissionCheck"
                 >
                   {{ props.updateBtn }}
                 </x-button>
@@ -1827,8 +2121,12 @@ const dateToDMY = date => {
       </x-button>
     </sendUpdateCustConfirmBtnTemp>
 
-    <x-modal v-model="modals.sendConfirm" show-close backdrop>
-      <template #header> Send Update </template>
+    <x-modal
+      v-model="modals.sendConfirm"
+      title="Send Update"
+      show-close
+      backdrop
+    >
       <x-alert
         color="orange"
         light
@@ -1853,7 +2151,7 @@ const dateToDMY = date => {
             Cancel
           </x-button>
           <template v-if="!modals.isConfirmed">
-            <x-tooltip position="left">
+            <x-tooltip placement="left">
               <SendUpdateCustReuseBtnTemp />
               <template #tooltip>
                 Please select the checkbox to proceed
@@ -1865,19 +2163,18 @@ const dateToDMY = date => {
       </template>
     </x-modal>
 
-    <x-modal v-model="modals.paymentConfirmation" backdrop>
-      <template #header> Are you sure you want to continue? </template>
+    <x-modal
+      v-model="modals.paymentConfirmation"
+      title="Are you sure you want to continue?"
+      backdrop
+    >
       <div class="text-center">
         <p class="font-semibold">{{ paymentConfirmationMessage.status }}</p>
         <p>{{ paymentConfirmationMessage.message }}</p>
       </div>
       <template #actions>
         <div class="text-center space-x-4">
-          <x-button
-            size="sm"
-            ghost
-            @click.prevent="confirmationModalClose()"
-          >
+          <x-button size="sm" ghost @click.prevent="confirmationModalClose()">
             Go Back
           </x-button>
           <x-button
@@ -1904,8 +2201,13 @@ const dateToDMY = date => {
       </x-button>
     </sendUpdateConfirmBtnTemp>
 
-    <x-modal v-model="modals.attestRecord" size="md" show-close backdrop>
-      <template #header> Send Update </template>
+    <x-modal
+      v-model="modals.attestRecord"
+      size="md"
+      title="Send Update"
+      show-close
+      backdrop
+    >
       <x-checkbox
         v-model="confirmationCheck"
         label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
@@ -1921,7 +2223,7 @@ const dateToDMY = date => {
             Cancel
           </x-button>
           <template v-if="!confirmationCheck">
-            <x-tooltip position="left">
+            <x-tooltip placement="left">
               <SendUpdateReuseBtnTemp />
               <template #tooltip>
                 Please select the checkbox to proceed
@@ -1936,7 +2238,7 @@ const dateToDMY = date => {
 </template>
 
 <style>
-  .icon-padding input {
-    padding-left: 4vh !important;
-  }
+.icon-padding input {
+  padding-left: 4vh !important;
+}
 </style>

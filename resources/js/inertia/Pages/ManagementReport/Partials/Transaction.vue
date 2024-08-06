@@ -175,8 +175,8 @@ const isIntegerColumn = key => {
     <template #item-policy_start_date="{ policy_start_date }">
       {{ policy_start_date ?? 'N/A' }}
     </template>
-    <template #item-payment_due_date="{payment_due_date, due_date}">
-      {{ (payment_due_date ? payment_due_date : (due_date ? due_date : 'N/A')) }}
+    <template #item-payment_due_date="{ payment_due_date, due_date }">
+      {{ payment_due_date ? payment_due_date : due_date ? due_date : 'N/A' }}
     </template>
     <template #item-price_vat_applicable="{ price_vat_applicable }">
       {{ price_vat_applicable ? priceFormat(price_vat_applicable) : 0.0 }}

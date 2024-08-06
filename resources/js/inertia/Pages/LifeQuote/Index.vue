@@ -51,8 +51,8 @@ const filters = reactive({
   payment_status_id: '',
   previous_quote_policy_number_text: '',
   page: 1,
-  payment_due_date:"",
-  booking_date: ""
+  payment_due_date: '',
+  booking_date: '',
 });
 
 const loader = reactive({
@@ -81,6 +81,11 @@ const tableHeader = reactive([
   {
     text: 'Previous Policy Number',
     value: 'previous_quote_policy_number',
+    is_active: true,
+  },
+  {
+    text: 'Renewal Batch',
+    value: 'renewal_batch',
     is_active: true,
   },
 ]);
@@ -195,7 +200,10 @@ watch(
   () => filters,
   () => {
     if (
-      can(permissionsEnum.DATA_EXTRACTION) && ((filters.created_at_start && filters.created_at_end) || (filters.payment_due_date) || (filters.booking_date))
+      can(permissionsEnum.DATA_EXTRACTION) &&
+      ((filters.created_at_start && filters.created_at_end) ||
+        filters.payment_due_date ||
+        filters.booking_date)
     ) {
       canExport.value = true;
     } else {
@@ -260,7 +268,7 @@ const resetDateFilters = filterName => {
     <x-form @submit="filterQuotes" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -390,11 +398,12 @@ const resetDateFilters = filterName => {
           >
             Export
           </x-button>
-          <x-tooltip v-else position="right">
+          <x-tooltip v-else placement="right">
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date are required to export data.
+                Created dates or payment due date or booking date are required
+                to export data.
               </span>
             </template>
           </x-tooltip>

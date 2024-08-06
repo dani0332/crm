@@ -1,11 +1,6 @@
 <script setup>
 import LegacyCard from '../LegacyPolicy/Partials/LegacyCard';
 import DocumentListing from './Partials/DocumentListing.vue';
-import {
-  formatDate,
-  maskEmail,
-  maskPhone,
-} from '../../Composables/utilities.js';
 
 const props = defineProps({
   policy: Object,
@@ -329,7 +324,7 @@ const dateFormat = date => {
       <h2 class="text-xl font-semibold">Legacy Policy Detail</h2>
 
       <div class="flex gap-2">
-        <x-tooltip position="bottom" v-if="policy?.moved_to_imcrm">
+        <x-tooltip placement="bottom" v-if="policy?.moved_to_imcrm">
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
           >
@@ -656,18 +651,20 @@ const dateFormat = date => {
       </template>
     </div>
 
-    <x-modal v-model="moveToImcrmModal" size="lg" show-close backdrop>
+    <x-modal
+      v-model="moveToImcrmModal"
+      size="lg"
+      :title="`${!single ? 'Lead Detail' : ''}`"
+      show-close
+      backdrop
+    >
       <div v-if="single">
         This policy already exists in IMCRM as REF:ID
         <Link :href="`${lobLink}`" class="text-primary-500 hover:underline">
           {{ lobCode }}
         </Link>
       </div>
-
-      <template #header v-if="!single"> Lead Detail </template>
       <p v-if="!single">Do you want to use existing details?</p>
-      <template #actions> </template>
-
       <DataTable
         v-model:items-selected="quotesSelected"
         table-class-name="tablefixed"
@@ -710,7 +707,7 @@ const dateFormat = date => {
         >
       </div>
 
-      <div class="flex justify-end my-4 gap-3 mb-4">
+      <template #actions>
         <x-button
           size="sm"
           color="#ff5e00"
@@ -722,7 +719,7 @@ const dateFormat = date => {
         <x-button size="sm" color="primary" @click="moveToImcrmModal = false">
           Cancel
         </x-button>
-      </div>
+      </template>
     </x-modal>
   </div>
 </template>
