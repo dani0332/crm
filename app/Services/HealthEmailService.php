@@ -29,6 +29,8 @@ class HealthEmailService extends BaseService
     {
 
         $advisor = User::where('id', $lead->advisor_id)->first();
+        info('sic health plans count: '.count($plans));
+        info('sic health plans'.json_encode($plans));
 
         $emailData = $this->mappingEmailDataForOCBEmail($lead,$advisor,$plans);
         if ($triggerSICWorkFlow) {
