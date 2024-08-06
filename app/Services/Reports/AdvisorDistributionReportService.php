@@ -120,7 +120,6 @@ class AdvisorDistributionReportService extends BaseService
         $selectColumns = [
             DB::raw('count(DISTINCT personal_quotes.id) as total_leads'),
             'users.name as advisor_name',
-            'source',
         ];
         $query = PersonalQuote::query()
             ->select($selectColumns)
@@ -553,11 +552,10 @@ class AdvisorDistributionReportService extends BaseService
 
         if ($lob === quoteTypeCode::Travel) {
             $isTravelQuote = false;
-
             if ((! empty($filters->insurance_type) && $filters->insurance_type != '') ||
                 (! empty($filters->travel_coverage) && $filters->travel_coverage != '')) {
-                $query->join('travel_quote_request', 'travel_quote_request.uuid', 'personal_quotes.uuid');
                 $isTravelQuote = true;
+                $query->join('travel_quote_request', 'travel_quote_request.uuid', 'personal_quotes.uuid');
             }
             if (! empty($filters->insurance_type) && $filters->insurance_type != '') {
                 $query->where('travel_quote_request.direction_code', $filters->insurance_type);
