@@ -65,11 +65,11 @@ const onLogout = () => {
         <div
           class="sticky top-0 z-10 flex h-[63.5px] items-center justify-center border-b border-r bg-white"
         >
-          <Link :href="route('home')">
+          <Link :href="route('dashboard.home')">
             <x-image
               :src="page.props.im_logo"
               alt="IMCRM"
-              class="w-full px-1"
+              class="w-full px-2"
               width="439"
               height="66"
             />
