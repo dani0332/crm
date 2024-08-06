@@ -100,7 +100,7 @@ const setBatchMonth = () => {
 };
 
 const setBatchYear = () => {
-    return batchForm.batchMonth.year;
+  return batchForm.batchMonth.year;
 };
 
 function onSubmit(isValid) {
