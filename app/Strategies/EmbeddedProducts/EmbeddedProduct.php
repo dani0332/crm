@@ -70,7 +70,6 @@ class EmbeddedProduct
             $carModel = $quoteObject->carModel->text ?? '';
             $advisorName = $quoteObject->advisor->name ?? '';
             $nationality = $quoteObject->customer->nationality->text ?? '';
-            
 
             $age = isset($quoteObject->dob) ?
                 Carbon::parse($quoteObject->dob)->diffInYears(Carbon::now()).' Years'

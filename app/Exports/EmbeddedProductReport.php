@@ -21,7 +21,7 @@ class EmbeddedProductReport
     {
         $this->embeddedProduct = $embeddedProduct;
         $this->filters = $filters;
-        $isTravel = EmbeddedProductEnum::TRAVEL === $embeddedProduct->short_code;
+        $isTravel = $embeddedProduct->short_code === EmbeddedProductEnum::TRAVEL;
         if ($isTravel) {
             $this->epStrategy = new TravelAnnual();
         } else {
@@ -46,7 +46,6 @@ class EmbeddedProductReport
 
     public function map($certificate): array
     {
-        
 
         return $this->epStrategy->getExcelData($certificate);
     }

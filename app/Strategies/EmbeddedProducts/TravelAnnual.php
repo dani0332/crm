@@ -4,7 +4,6 @@ namespace App\Strategies\EmbeddedProducts;
 
 class TravelAnnual extends EmbeddedProduct
 {
-    
     public function getExcelColumns()
     {
         return [

@@ -519,7 +519,7 @@ class EmbeddedProductRepository extends BaseRepository
 
         $strategy = $this->createStrategy($ep->short_code);
         $dataset = $strategy->getTransactionData($dataset);
-        
+
         return $dataset;
     }
 
@@ -529,10 +529,9 @@ class EmbeddedProductRepository extends BaseRepository
         $shortCode = strtoupper($shortCode);
         if ($shortCode == 'MDX') {
             $strategy = new MDX();
-        } else if ($shortCode == EmbeddedProductEnum::TRAVEL) {
+        } elseif ($shortCode == EmbeddedProductEnum::TRAVEL) {
             $strategy = new TravelAnnual();
-        } 
-        else {
+        } else {
             $strategy = new EmbeddedProductStrategy();
         }
 

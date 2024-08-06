@@ -609,8 +609,6 @@ class AdvisorConversionReportService extends BaseService
             }
         }
 
-        
-
         if ($lob === quoteTypeCode::Health) {
             if (! empty($filters->insurance_for) && $filters->insurance_for != '') {
                 $query->join('health_quote_request', function ($join) use ($filters) {
@@ -644,7 +642,7 @@ class AdvisorConversionReportService extends BaseService
                 $query->where('travel_quote_request.coverage_code', $filters->travel_coverage);
             }
 
-            if (isset($filters->isEmbeddedProducts) && $filters->isEmbeddedProducts == 'true' ) {
+            if (isset($filters->isEmbeddedProducts) && $filters->isEmbeddedProducts == 'true') {
                 $table = $isTravelQuote ? 'travel_quote_request.source' : 'source';
                 $query->where($table, '=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
             }
