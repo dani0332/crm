@@ -421,7 +421,6 @@ class SagePayloadFactory
         if (in_array($type, [SageEnum::SCT_REVERSAL, SageEnum::SCT_CORRECTION]) && ! empty($reversalDetails)) {
             $entryType = $type;
             $reversePayLoad = json_decode($reversalDetails);
-            dd($reversePayLoad);
 
             unset($reversePayLoad->BatchStatus);
             unset($reversePayLoad->BatchNumber);
