@@ -32,7 +32,7 @@ const props = defineProps({
 });
 
 const isLoading = ref(false);
-const isExpandedSplitPayments = ref([]);
+const isExpandedCommissionSchedule = ref([]);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
@@ -816,11 +816,11 @@ const isShowingTransactionPaymentStatus = computed(() => {
                                 <span
                                   class="expand-pointer"
                                   @click="
-                                    isExpandedSplitPayments[index] =
-                                      !isExpandedSplitPayments[index]
+                                    isExpandedCommissionSchedule[index] =
+                                      !isExpandedCommissionSchedule[index]
                                   "
                                   >{{
-                                    isExpandedSplitPayments[index]
+                                    isExpandedCommissionSchedule[index]
                                       ? '&and;'
                                       : '&or;'
                                   }}
@@ -835,7 +835,9 @@ const isShowingTransactionPaymentStatus = computed(() => {
                               <td>{{ formatAmount(item.commission_vat) }}</td>
                               <td>{{ formatAmount(item.commission) }}</td>
                             </tr>
-                            <template v-if="isExpandedSplitPayments[index]">
+                            <template
+                              v-if="isExpandedCommissionSchedule[index]"
+                            >
                               <tr
                                 v-for="splitPayment in item.payment_splits"
                                 :key="splitPayment.id"
