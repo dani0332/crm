@@ -94,7 +94,7 @@ class BikeQuoteController extends Controller
     }
 
     /**
-     * @param    $quoteTypeCode
+     * @param  $quoteTypeCode
      * @return \Illuminate\Http\RedirectResponse
      */
     public function store(BikeQuoteRequest $request)
@@ -251,8 +251,8 @@ class BikeQuoteController extends Controller
     }
 
     /**
-     * @param    $quoteTypeCode
-     * @param    $quoteId
+     * @param  $quoteTypeCode
+     * @param  $quoteId
      * @return void
      */
     public function update($uuid, BikeQuoteRequest $request)

@@ -198,8 +198,8 @@ trait PersonalQuoteSyncTrait
     /**
      * Create a new personal quote from source quote
      *
-     * @param    $sourceQuote  - Existing object of car/heath/travel/... quote
-     * @param    $entry  - Entry from quote_sync table
+     * @param  $sourceQuote  - Existing object of car/heath/travel/... quote
+     * @param  $entry  - Entry from quote_sync table
      */
     private function createPersonalQuoteFromSource($sourceQuote, $newValues, $quoteUuid, $quoteTypeId)
     {
@@ -332,8 +332,8 @@ trait PersonalQuoteSyncTrait
     /**
      * Retrieve required columns for a table without defaults and excluding foreign keys
      *
-     * @param    $columns  - Column list
-     * @param    $foreignKeys  - Foriegn keys
+     * @param  $columns  - Column list
+     * @param  $foreignKeys  - Foriegn keys
      */
     private function getRequiredColumns($columns, $foreignKeys)
     {
