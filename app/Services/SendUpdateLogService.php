@@ -754,34 +754,17 @@ class SendUpdateLogService
             $prepareDataForERP['sendUpdateType'] = SageEnum::SUT_NORMAL;
             $sageResponse = app(SageApiService::class)->documentsPushedToERP($sendUpdateRequest, $prepareDataForERP);
             
-        //     $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
-        //         $sendUpdateRequest, $quote, [
-        //             'type' => SageEnum::PT_SEND_UPDATE,
-        //             'send_update_type' => SageEnum::SUT_NORMAL,
-        //             'category' => $categoryCode,
-        //             'option' => $sendUpdateLog->option->code,
-        //             'send_update_log' => $sendUpdateLog,
-        //         ]
-        //     );
-
             return $sageResponse;
         }
 
-        // if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
-        //     info('Book Update - Sending Update to Sage300 - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.'- Reverse Insurer Tax Invoice Number: '.$sendUpdateRequest->reversalInvoice);
-        //     $sageResponse = app(SageApiService::class)->handleDocumentsToSage(
-        //         $sendUpdateRequest, $quote, [
-        //             'type' => SageEnum::PT_SEND_UPDATE,
-        //             'send_update_type' => SageEnum::SUT_REVE_CORR,
-        //             'category' => $categoryCode,
-        //             'send_update_log' => $sendUpdateLog,
-        //             'reverse_invoice' => $sendUpdateRequest->reversalInvoice,
-        //         ]
-        //     );
+        if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
+            info('Book Update - Sending Update to Sage300 - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.'- Reverse Insurer Tax Invoice Number: '.$sendUpdateRequest->reversalInvoice);
+            $prepareDataForERP['sendUpdateType'] = SageEnum::SUT_REVE_CORR;
+            $prepareDataForERP['reverseInvoice'] = $sendUpdateRequest->reversalInvoice;
+            $sageResponse = app(SageApiService::class)->documentsPushedToERP($sendUpdateRequest, $prepareDataForERP);
 
-        //     return $sageResponse;
-        // }
-
+            return $sageResponse;
+        }
     }
 
     public function updatesMoveToLead($sendUpdateRequest, $sendUpdateLog)

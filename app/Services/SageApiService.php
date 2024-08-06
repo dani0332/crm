@@ -494,51 +494,27 @@ class SageApiService
                 'entryType' => SageEnum::SCT_STRAIGHT,
                 'requestType' => SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
                 'sendUpdateLog' => $preparedDataForERP['sendUpdateLogs'] ?? [],
-                'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
+                'mainLeadDetails' => $preparedDataForERP['mainLeadDetails'] ?? [],
                 'extras' => [
-                    'option_id' => $extras['option'] ?? null,
-                    'authDetails' => $extras['authDetails'] ?? [],
-                ],
-            ]);
-        }
-    }
-
-    public function handleSendUpdateNormalCalls($quote, $payment, $splitPayments, $sageRequestPayload, $sageLogArray, $extras)
-    {
-        $startingStep = 2;
-        $totalSteps = 13;
-
-        if ($payment->frequency == PaymentFrequency::UPFRONT) {
-            info('Book Update - Creating AR Invoice and mark as posted');
-            $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-                'iterator' => 0,
-                'lastIteration' => 2,
-                'startingStep' => $startingStep,
-                'totalSteps' => $totalSteps,
-                'entryType' => SageEnum::SCT_STRAIGHT,
-                'requestType' => SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
-                'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
-                'extras' => [
-                    'option_id' => $extras['option'] ?? null,
-                    'authDetails' => $extras['authDetails'] ?? [],
+                    'option_id' => $preparedDataForERP['sendUpdateLogs']?->option?->code ?? null,
+                    'authDetails' => $preparedDataForERP['authDetails'] ?? [],
                 ],
             ]);
 
-            if ($extras['option'] !== SendUpdateLogStatusEnum::ACB) {
+            if ($preparedDataForERP['sendUpdateLogs']?->option?->code !== SendUpdateLogStatusEnum::ACB) {
                 info('Book Update - Creating AP Invoice and mark as posted');
-                $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
+                $this->sageRecursiveCalls($preparedDataForERP['quoteDetails'], $sageRequestPayload, $sageLogArray, [
                     'iterator' => 0,
                     'lastIteration' => 2,
                     'startingStep' => ($startingStep + 3),
                     'totalSteps' => $totalSteps,
                     'entryType' => SageEnum::SCT_STRAIGHT,
                     'requestType' => SageEnum::SRT_CREATE_AP_PREM_INV,
-                    'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                    'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
+                    'sendUpdateLog' => $preparedDataForERP['sendUpdateLogs'] ?? [],
+                    'mainLeadDetails' => $preparedDataForERP['mainLeadDetails'] ?? [],
                     'extras' => [
-                        'option_id' => $extras['option'] ?? null,
-                        'authDetails' => $extras['authDetails'] ?? [],
+                        'option_id' => $preparedDataForERP['sendUpdateLogs']?->option?->code ?? null,
+                        'authDetails' => $preparedDataForERP['authDetails'] ?? [],
                     ],
                 ]);
             }
@@ -548,38 +524,38 @@ class SageApiService
 
         } else {
             info('Book Update - Creating AR Split Payment Invoice and mark as posted');
-            $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
+            $this->sageRecursiveCalls($preparedDataForERP['quoteDetails'], $sageRequestPayload, $sageLogArray, [
                 'iterator' => 0,
                 'lastIteration' => 2,
                 'startingStep' => $startingStep,
                 'totalSteps' => $totalSteps,
                 'entryType' => SageEnum::SCT_STRAIGHT,
                 'requestType' => SageEnum::SRT_CREATE_AR_SPPAY_INV,
-                'payment' => $payment,
-                'splitPayments' => $splitPayments,
-                'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
+                'payment' => $preparedDataForERP['payment'],
+                'splitPayments' => $preparedDataForERP['splitPayments'],
+                'sendUpdateLog' => $preparedDataForERP['sendUpdateLogs'] ?? [],
+                'mainLeadDetails' => $preparedDataForERP['mainLeadDetails'] ?? [],
                 'extras' => [
-                    'option_id' => $extras['option'] ?? null,
-                    'authDetails' => $extras['authDetails'] ?? [],
+                    'option_id' => $preparedDataForERP['sendUpdateLogs']?->option?->code ?? null,
+                    'authDetails' => $preparedDataForERP['authDetails'] ?? [],
                 ],
             ]);
 
             info('Book Update - Creating AP Split Payment Invoice and mark as posted');
-            $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
+            $this->sageRecursiveCalls($preparedDataForERP['quoteDetails'], $sageRequestPayload, $sageLogArray, [
                 'iterator' => 0,
                 'lastIteration' => 2,
                 'startingStep' => ($startingStep + 4),
                 'totalSteps' => $totalSteps,
                 'entryType' => SageEnum::SCT_STRAIGHT,
                 'requestType' => SageEnum::SRT_CREATE_AP_SPPAY_INV,
-                'payment' => $payment,
-                'splitPayments' => $splitPayments,
-                'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
+                'payment' => $preparedDataForERP['payment'],
+                'splitPayments' => $preparedDataForERP['splitPayments'],
+                'sendUpdateLog' => $preparedDataForERP['sendUpdateLogs'] ?? [],
+                'mainLeadDetails' => $preparedDataForERP['mainLeadDetails'] ?? [],
                 'extras' => [
-                    'option_id' => $extras['option'] ?? null,
-                    'authDetails' => $extras['authDetails'] ?? [],
+                    'option_id' => $preparedDataForERP['sendUpdateLogs']?->option?->code ?? null,
+                    'authDetails' => $preparedDataForERP['authDetails'] ?? [],
                 ],
             ]);
 
@@ -588,17 +564,17 @@ class SageApiService
 
         if ($sageRequestPayload->discount > 0) {
             info('Book Update - Creating AR Discount Invoice and mark as posted');
-            $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
+            $this->sageRecursiveCalls($preparedDataForERP['quoteDetails'], $sageRequestPayload, $sageLogArray, [
                 'iterator' => 0,
                 'lastIteration' => 2,
                 'startingStep' => $startingStep,
                 'totalSteps' => $totalSteps,
                 'entryType' => SageEnum::SCT_STRAIGHT,
                 'requestType' => SageEnum::SRT_CREATE_AR_DISC_INV,
-                'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
+                'sendUpdateLog' => $preparedDataForERP['sendUpdateLogs'] ?? [],
+                'mainLeadDetails' => $preparedDataForERP['mainLeadDetails'] ?? [],
                 'extras' => [
-                    'authDetails' => $extras['authDetails'] ?? [],
+                    'authDetails' => $preparedDataForERP['authDetails'] ?? [],
                 ],
             ]);
 
@@ -611,19 +587,19 @@ class SageApiService
         return ['status' => $response['status'], 'message' => $response['message']];
     }
 
-    public function handleSendUpdateRevCorrCalls($quote, $payment, $splitPayments, $sageRequestPayload, $sageLogArray, $extras, $invoicesForReverse)
+    public function handleReveralDocumentsERP($preparedDataForERP, $sageRequestPayload, $sageLogArray)
     {
         $sendUpdateLog = $extras['send_update_log'];
-        $reverseSendUpdateTypes = collect($invoicesForReverse)->pluck('sage_request_type')->toArray();
+        $reverseSendUpdateTypes = collect($preparedDataForERP['reverseInvoice'])->pluck('sage_request_type')->toArray();
         $checkARInvoices = [SageEnum::SRT_CREATE_AR_PREM_COMM_INV, SageEnum::SRT_CREATE_AR_SPPAY_INV];
         $checkAPInvoices = [SageEnum::SRT_CREATE_AP_PREM_INV, SageEnum::SRT_CREATE_AP_SPPAY_INV];
         foreach ($reverseSendUpdateTypes as $reverseSendUpdateTypeKey => $reverseSendUpdateType) {
-            $invoiceResponse = json_decode($invoicesForReverse[$reverseSendUpdateTypeKey]['response']);
+            $invoiceResponse = json_decode($preparedDataForERP['reverseInvoice'][$reverseSendUpdateTypeKey]['response']);
 
-            if ($payment->frequency == SageEnum::SF_UPFRONT) {
+            if ($preparedDataForERP['payment']->frequency == SageEnum::SF_UPFRONT) {
                 if (in_array($reverseSendUpdateType, $checkARInvoices)) {
                     info('Book Update - Creating AR Reverse and Correction Invoices and mark as posted');
-                    $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
+                    $this->sageRecursiveCalls($preparedDataForERP['quoteDetails'], $sageRequestPayload, $sageLogArray, [
                         'iterator' => 0,
                         'lastIteration' => 6,
                         'startingStep' => 1,
@@ -632,11 +608,11 @@ class SageApiService
                         'entryType' => SageEnum::SCT_STRAIGHT,
                         'invoiceType' => SageEnum::SRT_GET_AR_INVOICE,
                         'requestType' => SageEnum::SRT_REV_CORR_AR_PREM_COMM_INV,
-                        'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                        'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkARInvoices)->first() ?? [],
+                        'sendUpdateLog' => $preparedDataForERP['sendUpdateLogs'] ?? [],
+                        'reversalInvoice' => collect($preparedDataForERP['reverseInvoice'])->whereIn('sage_request_type', $checkARInvoices)->first() ?? [],
                         'extras' => [
-                            'option_id' => $extras['option'] ?? null,
-                            'authDetails' => $extras['authDetails'] ?? [],
+                            'option_id' => $preparedDataForERP['sendUpdateLogs']?->option?->code ?? null,
+                            'authDetails' => $preparedDataForERP['authDetails'] ?? [],
 
                         ],
                     ]);
@@ -644,7 +620,7 @@ class SageApiService
 
                 if (in_array($reverseSendUpdateType, $checkAPInvoices)) {
                     info('Book Update - Creating AP Reverse and Correction Invoices and mark as posted');
-                    $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
+                    $this->sageRecursiveCalls($preparedDataForERP['quoteDetails'], $sageRequestPayload, $sageLogArray, [
                         'iterator' => 0,
                         'lastIteration' => 6,
                         'startingStep' => 8,
@@ -653,11 +629,11 @@ class SageApiService
                         'entryType' => SageEnum::SCT_STRAIGHT,
                         'invoiceType' => SageEnum::SRT_GET_AP_INVOICE,
                         'requestType' => SageEnum::SRT_REV_CORR_AP_PREM_INV,
-                        'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                        'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkAPInvoices)->first() ?? [],
+                        'sendUpdateLog' => $preparedDataForERP['sendUpdateLogs'] ?? [],
+                        'reversalInvoice' => collect($preparedDataForERP['reverseInvoice'])->whereIn('sage_request_type', $checkAPInvoices)->first() ?? [],
                         'extras' => [
-                            'option_id' => $extras['option'] ?? null,
-                            'authDetails' => $extras['authDetails'] ?? [],
+                            'option_id' => $preparedDataForERP['sendUpdateLogs']?->option?->code ?? null,
+                            'authDetails' => $preparedDataForERP['authDetails'] ?? [],
                         ],
                     ]);
                 }
@@ -667,7 +643,7 @@ class SageApiService
             } else {
                 if (in_array($reverseSendUpdateType, $checkARInvoices)) {
                     info('Book Update - Creating AR Reverse and Correction Split Payment Invoices and mark as posted');
-                    $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
+                    $this->sageRecursiveCalls($preparedDataForERP['quoteDetails'], $sageRequestPayload, $sageLogArray, [
                         'iterator' => 0,
                         'lastIteration' => 7,
                         'startingStep' => 1,
@@ -676,13 +652,13 @@ class SageApiService
                         'entryType' => SageEnum::SCT_STRAIGHT,
                         'invoiceType' => SageEnum::SRT_GET_AR_INVOICE,
                         'requestType' => SageEnum::SRT_REV_CORR_AR_SPPAY_INV,
-                        'payment' => $payment,
-                        'splitPayments' => $splitPayments,
-                        'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                        'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkARInvoices)->first() ?? [],
+                        'payment' => $preparedDataForERP['payment'],
+                        'splitPayments' => $preparedDataForERP['splitPayments'],
+                        'sendUpdateLog' => $preparedDataForERP['sendUpdateLogs'] ?? [],
+                        'reversalInvoice' => collect($preparedDataForERP['reverseInvoice'])->whereIn('sage_request_type', $checkARInvoices)->first() ?? [],
                         'extras' => [
-                            'option_id' => $extras['option'] ?? null,
-                            'authDetails' => $extras['authDetails'] ?? [],
+                            'option_id' => $preparedDataForERP['sendUpdateLogs']?->option?->code ?? null,
+                            'authDetails' => $preparedDataForERP['authDetails'] ?? [],
                         ],
                     ]);
                 }
@@ -690,7 +666,7 @@ class SageApiService
                 if (in_array($reverseSendUpdateType, $checkAPInvoices)) {
                     info('Book Update - Creating AP Reverse and Correction Split Payment Invoices and mark as posted');
                     // This Split Invoice for Reverse and Correction need to be tested
-                    $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
+                    $this->sageRecursiveCalls($preparedDataForERP['quoteDetails'], $sageRequestPayload, $sageLogArray, [
                         'iterator' => 0,
                         'lastIteration' => 7,
                         'startingStep' => 9,
@@ -699,13 +675,13 @@ class SageApiService
                         'entryType' => SageEnum::SCT_STRAIGHT,
                         'invoiceType' => SageEnum::SRT_GET_AP_INVOICE,
                         'requestType' => SageEnum::SRT_REV_CORR_AP_SPPAY_INV,
-                        'payment' => $payment,
-                        'splitPayments' => $splitPayments,
-                        'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                        'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkAPInvoices)->first() ?? [],
+                        'payment' => $preparedDataForERP['payment'],
+                        'splitPayments' => $preparedDataForERP['splitPayments'],
+                        'sendUpdateLog' => $preparedDataForERP['sendUpdateLogs'] ?? [],
+                        'reversalInvoice' => collect($preparedDataForERP['reverseInvoice'])->whereIn('sage_request_type', $checkAPInvoices)->first() ?? [],
                         'extras' => [
-                            'option_id' => $extras['option'] ?? null,
-                            'authDetails' => $extras['authDetails'] ?? [],
+                            'option_id' => $preparedDataForERP['sendUpdateLogs']?->option?->code ?? null,
+                            'authDetails' => $preparedDataForERP['authDetails'] ?? [],
                         ],
                     ]);
                 }
@@ -716,7 +692,7 @@ class SageApiService
 
             if ($reverseSendUpdateType == SageEnum::SRT_CREATE_AR_DISC_INV && $sendUpdateLog && $sendUpdateLog->discount > 0) {
                 info('Book Update - Creating AR Reverse and Correction Invoices for Discount and mark as posted');
-                $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
+                $this->sageRecursiveCalls($preparedDataForERP['quoteDetails'], $sageRequestPayload, $sageLogArray, [
                     'iterator' => 0,
                     'lastIteration' => 6,
                     'startingStep' => $startingStep,
@@ -725,10 +701,10 @@ class SageApiService
                     'entryType' => SageEnum::SCT_STRAIGHT,
                     'invoiceType' => SageEnum::SRT_GET_AR_INVOICE,
                     'requestType' => SageEnum::SRT_REV_CORR_AR_DIS_INV,
-                    'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                    'reversalInvoice' => collect($invoicesForReverse)->where('sage_request_type', SageEnum::SRT_CREATE_AR_DISC_INV)->first() ?? [],
+                    'sendUpdateLog' => $preparedDataForERP['sendUpdateLogs'] ?? [],
+                    'reversalInvoice' => collect($preparedDataForERP['reverseInvoice'])->where('sage_request_type', SageEnum::SRT_CREATE_AR_DISC_INV)->first() ?? [],
                     'extras' => [
-                        'authDetails' => $extras['authDetails'] ?? [],
+                        'authDetails' => $preparedDataForERP['authDetails'] ?? [],
                     ],
                 ]);
             }

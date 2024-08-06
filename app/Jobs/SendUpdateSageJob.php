@@ -49,13 +49,15 @@ class SendUpdateSageJob implements ShouldQueue, StackableJob
 
         switch ($this->preparedData['sendUpdateType']) {
             case SageEnum::SUT_NORMAL:
-                $sageResponse = $sageApiService->handleSendUpdateNormalCalls($this->preparedData, $this->sagePayload, $this->sageAPIsLogs);
+                $sageResponse = $sageApiService->handleStraightDocumentsERP($this->preparedData, $this->sagePayload, $this->sageAPIsLogs);
                 break;
 
             case SageEnum::SUT_REVE_CORR:
-                $sageResponse = $sageApiService->handleSendUpdateRevCorrCalls($this->preparedData, $this->sagePayload, $this->sageAPIsLogs);
+                $sageResponse = $sageApiService->handleReveralDocumentsERP($this->preparedData, $this->sagePayload, $this->sageAPIsLogs);
                 break;
         }
+
+        
     }
 
     public function middleware()
