@@ -54,7 +54,7 @@ class SaleDetailReportService extends ManagementReport
                 'p.commission_vat_applicable',
                 'p.commission_vat',
                 'p.commission_vat_not_applicable',
-                DB::raw('(IFNULL( commission_vat_applicable , 0 ) + IFNULL( commission_vat , 0 )) as total_commission'),
+                DB::raw('(IFNULL( p.commission_vat_applicable , 0 ) + IFNULL( p.commission_vat , 0 )) as total_commission'),
                 'p.collection_type as collects',
                 'p.insurer_tax_number as insurer_tax_invoice_number',
                 'insurer_invoice_date as insurer_tax_invoice_date',
