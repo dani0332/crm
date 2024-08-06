@@ -552,9 +552,12 @@ class AdvisorDistributionReportService extends BaseService
         }
 
         if ($lob === quoteTypeCode::Travel) {
+            $isTravelQuote = false;
+
             if ((! empty($filters->insurance_type) && $filters->insurance_type != '') ||
                 (! empty($filters->travel_coverage) && $filters->travel_coverage != '')) {
                 $query->join('travel_quote_request', 'travel_quote_request.uuid', 'personal_quotes.uuid');
+                $isTravelQuote = true;
             }
             if (! empty($filters->insurance_type) && $filters->insurance_type != '') {
                 $query->where('travel_quote_request.direction_code', $filters->insurance_type);
@@ -565,7 +568,8 @@ class AdvisorDistributionReportService extends BaseService
             }
 
             if (isset($filters->isEmbeddedProducts) && $filters->isEmbeddedProducts == 'true') {
-                $query->where('personal_quotes.source', '=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
+                $table = $isTravelQuote ? 'travel_quote_request.source' : 'source';
+                $query->where($table, '=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
             }
         }
 
