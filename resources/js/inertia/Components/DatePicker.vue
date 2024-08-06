@@ -40,7 +40,7 @@ const props = defineProps({
   },
   placeholder: {
     type: String,
-    default: '',
+    default: 'Select date',
   },
   hideFooter: {
     type: Boolean,
