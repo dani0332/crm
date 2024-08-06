@@ -45,7 +45,7 @@ class HealthRevivalQuotesSeeder extends Seeder
 
                 $healthManager = Role::where('name', RolesEnum::HealthManager)->first();
 
-                if (! empty($healthManager)) {
+                if (!empty($healthManager)) {
                     $record = DB::table('role_has_permissions')->where('role_id', $healthManager->id)->where('permission_id', $permissionId)->first();
                     if (empty($record)) {
                         DB::table('role_has_permissions')->insert(
@@ -58,7 +58,7 @@ class HealthRevivalQuotesSeeder extends Seeder
                 }
 
                 $adminRole = Role::where('name', RolesEnum::Admin)->first();
-                if (! empty($adminRole)) {
+                if (!empty($adminRole)) {
                     $record = DB::table('role_has_permissions')->where('role_id', $adminRole->id)->where('permission_id', $permissionId)->first();
                     if (empty($record)) {
                         DB::table('role_has_permissions')->insert(
@@ -71,7 +71,7 @@ class HealthRevivalQuotesSeeder extends Seeder
                 }
 
                 $betaUserRole = Role::where('name', RolesEnum::BetaUser)->first();
-                if (! empty($betaUserRole)) {
+                if (!empty($betaUserRole)) {
                     $record = DB::table('role_has_permissions')->where('role_id', $betaUserRole->id)->where('permission_id', $permissionId)->first();
                     if (empty($record)) {
                         DB::table('role_has_permissions')->insert(
@@ -87,10 +87,20 @@ class HealthRevivalQuotesSeeder extends Seeder
 
         // dtt health initial and followup template
         $dttHealthInitialAndFollowupTemplate = ApplicationStorage::where('key_name', ApplicationStorageEnums::DTT_HEALTH_INITIAL_AND_FOLLOWUP_TEMPLATE)->first();
-        if (! $dttHealthInitialAndFollowupTemplate) {
+        if (!$dttHealthInitialAndFollowupTemplate) {
             DB::table('application_storage')->insert([
                 'key_name' => ApplicationStorageEnums::DTT_HEALTH_INITIAL_AND_FOLLOWUP_TEMPLATE,
                 'value' => '691',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }  // dtt health initial without health team type
+        $dttHealthInitialWithOutHealthTeamTemplate = ApplicationStorage::where('key_name', ApplicationStorageEnums::DTT_HEALTH_INITIAL_WITHOUT_HEALTH_TEAM)->first();
+        if (!$dttHealthInitialWithOutHealthTeamTemplate) {
+            DB::table('application_storage')->insert([
+                'key_name' => ApplicationStorageEnums::DTT_HEALTH_INITIAL_WITHOUT_HEALTH_TEAM,
+                'value' => '692',
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),

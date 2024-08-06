@@ -69,6 +69,7 @@ class DttHealth extends Command
             'salary_band_id',
             'member_category_id',
             'customer_id',
+            'health_team_type',
         )
             ->where('created_at', '>=', $dateOne)
             ->where('created_at', '<', $dateTwo)

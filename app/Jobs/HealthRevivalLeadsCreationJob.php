@@ -7,7 +7,9 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Models\ApplicationStorage;
+use App\Models\DttRevival;
 use App\Models\HealthQuote;
+use App\Models\QuoteBatches;
 use App\Services\CapiRequestService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\AddPremiumAllLobs;
@@ -90,59 +92,88 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             if (!isset($capiResponse->errors) && !empty($capiResponse->quoteUID)) {
                 info($logPrefix . 'healthRevivalParentLead -' . $this->lead->uuid . '- childLeadCreated - ' . $capiResponse->quoteUID . ' - CAPI Response-' . json_encode($capiResponse));
 
-                $healthQuote = $this->getQuoteObject(QuoteTypes::HEALTH->value, $capiResponse->quoteUID);
-
-                $response = Ken::request('/get-health-quote-plans-order-priority', 'post', [
-                    // 'quoteUID' => $healthQuote->uuid,
-                    'quoteUID' => 'R6GP2BZ8',
-                ]);
-                $plansArray = [];
-                foreach ($response['plans'] as  $item) {
-                    $planObj = new \stdClass();
-                    $planObj->id = $item['id'];
-                    $planObj->name = $item['name'];
-                    $planObj->providerName = $item['providerName'];
-                    $planObj->eligibilityName = $item['eligibilityName'];
-                    $planObj->planCode = $item['planCode'];
-                    $planObj->providerCode = $item['providerCode'];
-                    $planObj->total = $item['premium'];
-                    $planObj->buynowURL = $item['planLink'];
-
-                    $lowestRate = collect($item['ratesPerCopay'])->sortBy('discountPremium')->first();
+                if (empty($this->lead->health_team_type)) {
 
 
-                    $coPaymentsCollection = collect($item['coPayments']);
-                    $filteredSelectedCopay = $coPaymentsCollection->where('id', $lowestRate['healthPlanCoPaymentId'])->first();
-                    $planObj->planBenefit = $this->getBenefitsDetails($item['benefits'], $filteredSelectedCopay);
-                    $plansArray[] = $planObj;
+                    $key = ApplicationStorageEnums::DTT_HEALTH_INITIAL_WITHOUT_HEALTH_TEAM;
+
+                    $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
+                } else {
+                    $healthQuote = $this->getQuoteObject(QuoteTypes::HEALTH->value, $capiResponse->quoteUID);
+
+                    $response = Ken::request('/get-health-quote-plans-order-priority', 'post', [
+                        // 'quoteUID' => $healthQuote->uuid,
+                        'quoteUID' => 'R6GP2BZ8',
+                    ]);
+                    $plansArray = [];
+                    foreach ($response['plans'] as  $item) {
+                        $planObj = new \stdClass();
+                        $planObj->id = $item['id'];
+                        $planObj->name = $item['name'];
+                        $planObj->providerName = $item['providerName'];
+                        $planObj->eligibilityName = $item['eligibilityName'];
+                        $planObj->planCode = $item['planCode'];
+                        $planObj->providerCode = $item['providerCode'];
+                        $planObj->total = $item['premium'];
+                        $planObj->buynowURL = $item['planLink'];
+
+                        $lowestRate = collect($item['ratesPerCopay'])->sortBy('discountPremium')->first();
+
+
+                        $coPaymentsCollection = collect($item['coPayments']);
+                        $filteredSelectedCopay = $coPaymentsCollection->where('id', $lowestRate['healthPlanCoPaymentId'])->first();
+                        $planObj->planBenefit = $this->getBenefitsDetails($item['benefits'], $filteredSelectedCopay);
+                        $plansArray[] = $planObj;
+                    }
+
+
+                    info($logPrefix . 'plans' . json_encode($plansArray));
+
+                    $emailData = new \stdClass();
+                    $customerName = $healthQuote->first_name . ' ' . $healthQuote->last_name;
+
+                    $key = ApplicationStorageEnums::DTT_HEALTH_INITIAL_AND_FOLLOWUP_TEMPLATE;
+
+                    $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
+
+                    $emailData->subject = $customerName . "'s" . ' Health Insurance with Alfred ' . $healthQuote->code;
+
+                    $emailData->customerName = $customerName;
+                    $emailData->customerEmail = 'nouman.hussain@myalfred.com';
+                    // $emailData->customerEmail =  $healthQuote->email;
+                    $emailData->templateId = (int) $emailTemplateId;
+                    $emailData->quotePlanLink = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL') . $healthQuote->uuid;
+                    $emailData->tag = 'health-revival-initial-email';
+                    $emailData->plans = $plansArray;
+                    $emailData->templateType = 'revivalHealthInitial';
+
+                    info($logPrefix . 'emailData -' . json_encode($emailData));
                 }
 
 
-                info($logPrefix . 'plans' . json_encode($plansArray));
-
-                $emailData = new \stdClass();
-                $customerName = $healthQuote->first_name . ' ' . $healthQuote->last_name;
-
-                $key = ApplicationStorageEnums::DTT_HEALTH_INITIAL_AND_FOLLOWUP_TEMPLATE;
-
-                $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
-
-                $emailData->subject = $customerName . "'s" . ' Health Insurance with Alfred ' . $healthQuote->code;
-
-                $emailData->customerName = $customerName;
-                $emailData->customerEmail = 'nouman.hussain@myalfred.com';
-                // $emailData->customerEmail =  $healthQuote->email;
-                $emailData->templateId = (int) $emailTemplateId;
-                $emailData->quotePlanLink = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL') . $healthQuote->uuid;
-                $emailData->tag = 'health-revival-initial-email';
-                $emailData->plans = $plansArray;
-                $emailData->templateType = 'revivalHealthInitial';
-
-                info($logPrefix . 'emailData -' . json_encode($emailData));
 
                 $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
                 if ($response == 201) {
-                    info('HealthRevivalLeadsCreationJob - healthRevivalParentLead -' . $this->lead->uuid . '-childLead - ' . $capiResponse->quoteUID . '- emailSent -- ' . $emailData->customerEmail);
+                    info($logPrefix . 'healthRevivalParentLead -' . $this->lead->uuid . '-childLead - ' . $capiResponse->quoteUID . '- emailSent -- ' . $emailData->customerEmail);
+
+
+                    // Get the latest quote batch and assign it to the lead.
+                    $quoteBatch = QuoteBatches::latest()->first();
+
+                    DttRevival::create([
+                        'quote_type_id' => QuoteTypes::HEALTH->id(),
+                        'quote_id' =>  $healthQuote->id,
+                        'uuid' => $capiResponse->quoteUID,
+                        'revival_quote_batch_id' => $quoteBatch->id,
+                        'email_sent' => true,
+                        'previous_health_plan_type' => empty($this->lead->health_team_type) ? false : true,
+                    ]);
+
+                    info($logPrefix . 'healthRevivalParentLead -' . $this->lead->uuid . '- childLead - ' . $capiResponse->quoteUID . '-dttRevivalsInsertedUUID - ' . $capiResponse->quoteUID);
+
+                    // HealthQuote::find($this->lead->id)->update(['is_revived' => true]);
+
+                    info($logPrefix . 'healthRevivalParentLead -' . $this->lead->uuid . '- childLead - ' . $capiResponse->quoteUID . '- parentLeadIsRevived - ' . $this->lead->id);
                 } else {
                     info('HealthRevivalLeadsCreationJob - healthRevivalParentLead -' . $this->lead->uuid . '- childLead - ' . $capiResponse->quoteUID . 'emailIsNotSent - ' . $emailData->customerEmail);
                 }
