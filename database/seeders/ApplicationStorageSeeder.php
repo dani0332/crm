@@ -195,27 +195,27 @@ class ApplicationStorageSeeder extends Seeder
             ],
             [
                 'key_name' => ApplicationStorageEnums::SUKOON_TEMPLATE_POLICY_CERTIFICATE,
-                'value' => (config('constants.APP_ENV') != EnvEnum::PRODUCTION) ? '9024065094027325487': '9139600398162627641',
+                'value' => (config('constants.APP_ENV') != EnvEnum::PRODUCTION) ? '9024065094027325487' : '9139600398162627641',
                 'is_active' => 1,
             ],
             [
                 'key_name' => ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_CREDIT,
-                'value' => (config('constants.APP_ENV') != EnvEnum::PRODUCTION) ? '9099784511062815329': '9139600409696963644',
+                'value' => (config('constants.APP_ENV') != EnvEnum::PRODUCTION) ? '9099784511062815329' : '9139600409696963644',
                 'is_active' => 1,
             ],
             [
                 'key_name' => ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_CREDIT_BUYER,
-                'value' => (config('constants.APP_ENV') != EnvEnum::PRODUCTION) ? '9099784511515800162': '9139600411592789053',
+                'value' => (config('constants.APP_ENV') != EnvEnum::PRODUCTION) ? '9099784511515800162' : '9139600411592789053',
                 'is_active' => 1,
             ],
             [
                 'key_name' => ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_INVOICE,
-                'value' => (config('constants.APP_ENV') != EnvEnum::PRODUCTION) ? '9068692883229388975': '9139600402977688634',
+                'value' => (config('constants.APP_ENV') != EnvEnum::PRODUCTION) ? '9068692883229388975' : '9139600402977688634',
                 'is_active' => 1,
             ],
             [
                 'key_name' => ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_INVOICE_BUYER,
-                'value' => (config('constants.APP_ENV') != EnvEnum::PRODUCTION) ? '9083336468679635183': '9139600407281044539',
+                'value' => (config('constants.APP_ENV') != EnvEnum::PRODUCTION) ? '9083336468679635183' : '9139600407281044539',
                 'is_active' => 1,
             ],
         ];
