@@ -469,9 +469,9 @@ function handleErrorStatusUpdate(newStatus) {
     </div>
 
     <LazyProviderDetails
-        v-if="props.quote?.insly_migrated || props.realQuote?.insly_migrated"
-        :sendUpdateLog="sendUpdateLog"
-        :insuranceProviders="props.insuranceProviders"
+      v-if="props.quote?.insly_migrated || props.realQuote?.insly_migrated"
+      :sendUpdateLog="sendUpdateLog"
+      :insuranceProviders="props.insuranceProviders"
     />
 
     <!-- Indicative additional price & Plan details comp -->
