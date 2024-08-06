@@ -3112,7 +3112,6 @@ const lookupsEnum = page.props.lookupsEnum;
                 </x-tooltip>
               </th>
 
-
               <th class="inner-th-class">
                 <x-tooltip>
                   <span class="border-b border-dotted">Total Price</span>
@@ -3207,7 +3206,7 @@ const lookupsEnum = page.props.lookupsEnum;
                   <td>{{ formatDate(item.payment_splits[0].due_date) }}</td>
                   <td>{{ item.payment_method.name }}</td>
                   <td>{{ formatAmount(item.price_vat_applicable) }}</td>
-                  <td>{{ formatAmount(item.price_vat) }}</td>                  
+                  <td>{{ formatAmount(item.price_vat) }}</td>
                   <td>{{ formatAmount(item.total_price) }}</td>
                   <td>{{ formatAmount(item.discount_value) }}</td>
                   <td>{{ formatAmount(item.total_amount) }}</td>
@@ -3319,7 +3318,9 @@ const lookupsEnum = page.props.lookupsEnum;
                     <td>{{ formatDate(splitPayment.due_date) }}</td>
                     <td>{{ formatDate(splitPayment.due_date) }}</td>
                     <td>{{ splitPayment.payment_method.name }}</td>
-                    <td>{{ formatAmount(splitPayment.price_vat_applicable) }}</td>
+                    <td>
+                      {{ formatAmount(splitPayment.price_vat_applicable) }}
+                    </td>
                     <td>{{ formatAmount(splitPayment.price_vat) }}</td>
                     <td>{{ formatAmount(splitPayment.payment_amount) }}</td>
                     <td></td>
