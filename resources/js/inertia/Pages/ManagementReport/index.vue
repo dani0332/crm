@@ -120,7 +120,6 @@ const departments = computed(() => {
     return {value: item.id, label: item.name}
   });
 });
-console.log("props.filterOptions?.departments",props.filterOptions?.departments)
 
 const teams = computed(() => {
   return Object.keys(props.filterOptions?.teams).map(key => ({
