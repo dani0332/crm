@@ -468,10 +468,7 @@ class EmbeddedProductRepository extends BaseRepository
             'quoteRequest.quoteStatus',
             'quoteRequest.advisor',
             'quoteRequest.quoteRequestEntityMapping',
-        )->whereHas('product.embeddedProduct', function ($query) use ($ep) {
-            $query->where('id', $ep->id);
-        })
-            ->where('embedded_transactions.is_selected', true)
+        )->where('embedded_transactions.is_selected', true)
             ->when(isset($filters['ref_id']), function ($query) use ($filters) {
                 $query->where('embedded_transactions.code', 'like', "%{$filters['ref_id']}%");
             })
