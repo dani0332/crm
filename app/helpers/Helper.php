@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -230,7 +229,6 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
             $result['total_opportunity'] = $modelQuery->sum('price_starting_from');
         }
     } else {
-
         $result['total_leads'] = $modelQueryWithOutAdvisor->count();
         if ($modelType == HealthQuote::class || $modelType == TravelQuote::class) {
             $result['total_premium'] = $modelQueryWithOutAdvisor->sum('premium');
