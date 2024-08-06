@@ -1823,7 +1823,7 @@ const editPaymentModal = (
   ) {
     planDetail.value = payment.travel_plan;
 
-    if (! (props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
+    if (!(props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
       planDetail.value['insurance_provider'] =
         payment.travel_plan.insurance_provider;
     }
@@ -1835,7 +1835,7 @@ const editPaymentModal = (
     (paymentMethodsForm.status == 'edit' || paymentMethodsForm.status == 'view')
   ) {
     planDetail.value = payment.travel_plan;
-    if (! (props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
+    if (!(props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
       planDetail.value['insurance_provider'] =
         payment.travel_plan.insurance_provider;
     }
