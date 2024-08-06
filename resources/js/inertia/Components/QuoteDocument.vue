@@ -1,5 +1,5 @@
 <script setup>
-import DownloadDocuments from "./DownloadDocuments.vue";
+import DownloadDocuments from './DownloadDocuments.vue';
 
 defineProps({
   quote: Object,
@@ -52,7 +52,7 @@ const quoteDocumentsTable = reactive({
     {
       text: 'Action',
       value: 'action',
-    }
+    },
   ],
 });
 
@@ -73,7 +73,7 @@ const docForm = reactive({
 
 const uploadFile = (doc, filesWithInfo) => {
   successStatus.value[doc.id] = false;
-  errorMsg.value[doc.id] ='';
+  errorMsg.value[doc.id] = '';
   const { files, rejectReason } = filesWithInfo;
   if (files.length == 0) {
     notification.error({
@@ -163,7 +163,7 @@ const uploadDocumentModal = () => {
   modals.doc = true;
   successStatus.value = {};
   errorMsg.value = {};
-}
+};
 </script>
 
 <template>
@@ -181,11 +181,13 @@ const uploadDocumentModal = () => {
         <x-divider class="my-4" />
 
         <div class="flex gap-2 mb-4 justify-end">
-            <DownloadDocuments
-                v-if="can(permissionEnum.DOWNLOAD_ALL_DOCUMENTS)"
-                :quote="page.props.quote"
-                :quoteDocuments="page.props.quote.documents ?? page.props.quoteDocuments"
-            />
+          <DownloadDocuments
+            v-if="can(permissionEnum.DOWNLOAD_ALL_DOCUMENTS)"
+            :quote="page.props.quote"
+            :quoteDocuments="
+              page.props.quote.documents ?? page.props.quoteDocuments
+            "
+          />
           <Link
             v-if="inslyId && can(permissionEnum.VIEW_LEGACY_DETAILS)"
             :href="`/legacy-policy/${inslyId}`"
@@ -207,7 +209,11 @@ const uploadDocumentModal = () => {
           >
             Copy upload Link
           </x-button>
-          <x-button @click.prevent="uploadDocumentModal" size="sm" color="orange">
+          <x-button
+            @click.prevent="uploadDocumentModal"
+            size="sm"
+            color="orange"
+          >
             Upload Documents
           </x-button>
           <x-button
@@ -237,7 +243,10 @@ const uploadDocumentModal = () => {
               {{ item.original_name }}
             </a>
           </template>
-          <template v-if="can(permissionEnum.DOCUMENT_DELETE)" #item-action="{ doc_name }">
+          <template
+            v-if="can(permissionEnum.DOCUMENT_DELETE)"
+            #item-action="{ doc_name }"
+          >
             <div>
               <x-button
                 size="xs"
@@ -253,10 +262,14 @@ const uploadDocumentModal = () => {
       </template>
     </Collapsible>
 
-    <x-modal v-model="modals.doc" size="xl" show-close backdrop>
-      <template #header> Upload Documents </template>
-
-      <x-tab-group v-model="selectedTab" class="pb-10" variant="block">
+    <x-modal
+      v-model="modals.doc"
+      size="xl"
+      title="Upload Documents"
+      show-close
+      backdrop
+    >
+      <x-tab-group v-model="selectedTab" variant="block">
         <x-tab
           :value="index"
           :label="key.replace(/_/g, ' ')"
@@ -308,7 +321,10 @@ const uploadDocumentModal = () => {
                 :max-size="documentType.max_size"
                 :loading="uploadingStatus[documentType.id]"
                 :document-type-code="documentType.code"
-                :isDisabled="documentType.code == documentTypeCodeEnum.AUDIT && !can(permissionEnum.AUDITDOCUMENT_UPLOAD)"
+                :isDisabled="
+                  documentType.code == documentTypeCodeEnum.AUDIT &&
+                  !can(permissionEnum.AUDITDOCUMENT_UPLOAD)
+                "
                 @change="uploadFile(documentType, $event)"
               />
 
@@ -331,8 +347,12 @@ const uploadDocumentModal = () => {
         </x-tab>
       </x-tab-group>
     </x-modal>
-    <x-modal v-model="modals.docConfirm" show-close backdrop>
-      <template #header> Delete Document </template>
+    <x-modal
+      v-model="modals.docConfirm"
+      title="Delete Document"
+      show-close
+      backdrop
+    >
       <p>Are you sure you want to delete this document?</p>
       <template #actions>
         <div class="text-right space-x-4">
