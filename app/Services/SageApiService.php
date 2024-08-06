@@ -1911,7 +1911,7 @@ class SageApiService
     public function applyPaymentInvoices($sageRequestDataArray)
     {
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
-
+        $isTotalPriceZero = $payment->total_price == 0;
         /* applyPaymentInvoices */
         $isTransactionPaidAndFrequencyUpfront = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::UPFRONT;
 
