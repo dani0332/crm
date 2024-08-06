@@ -7,7 +7,7 @@ use App\Models\HealthQuote;
 use App\Services\CRUDService;
 use App\Services\UserService;
 use Illuminate\Bus\Queueable;
-use App\Enums\HospitalPlanType;
+use App\Enums\HealthFacilityType;
 use App\Enums\HealthPlanTypeEnum;
 use Illuminate\Support\Facades\Log;
 use App\Services\HealthEmailService;
@@ -46,7 +46,7 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
      public function getHospitals($featuredFacilities){
         if(empty($featuredFacilities)) return null;
         $hospitals = collect($featuredFacilities)
-            ->where('type',HospitalPlanType::HOSPITAL)
+            ->where('type',HealthFacilityType::HOSPITAL)
             ->filter(function ($item) {
                 return !empty($item->text);
             })
@@ -59,7 +59,7 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
     public function getClinics($featuredFacilities){
         if(empty($featuredFacilities)) return null;
         $hospitals = collect($featuredFacilities)
-            ->where('type',HospitalPlanType::CLINIC)
+            ->where('type',HealthFacilityType::CLINIC)
             ->filter(function ($item) {
                 return !empty($item->text);
             })

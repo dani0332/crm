@@ -9,7 +9,7 @@ use BenSampo\Enum\Enum;
  * @method static static OptionTwo()
  * @method static static OptionThree()
  */
-final class HospitalPlanType extends Enum
+final class HealthFacilityType extends Enum
 {
     const HOSPITAL = 'HOSPITAL';
     const CLINIC = 'CLINIC';
