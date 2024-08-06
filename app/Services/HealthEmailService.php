@@ -27,7 +27,7 @@ class HealthEmailService extends BaseService
 
     public function sendHealthOCBIntroEmail($plans, $lead, $previousAdvisorId, $healthQuoteService, $triggerSICWorkFlow = false)
     {
-        $plans = $this->executePlansSelectionLogic((array)$plans);
+
         $advisor = User::where('id', $lead->advisor_id)->first();
 
         $emailData = $this->mappingEmailDataForOCBEmail($lead,$advisor,$plans);
@@ -49,13 +49,9 @@ class HealthEmailService extends BaseService
                 info('SIC Health workflow already enabled for lead: '.$lead->uuid);
             }
         }
-        if ($lead->advisor_id) {
-            $responseCode = $this->birdService->sendHealthOCBEmail($emailData);
-            info('sendHealthOCBEmail - Ref ID:'.$lead->uuid.' Time: '.now());
-        } else {
-            info('sendHealthNonAdvisorIntroEmail - Ref ID:'.$lead->uuid.' Time: '.now());
-            $responseCode = $this->birdService->sendHealthNonAdvisorIntroEmail($emailData);
-        }
+
+        $responseCode = $this->birdService->sendHealthOCBEmail($emailData);
+        info('sic sendHealthOCBEmail - Ref ID:'.$lead->uuid.' Time: '.now());
         return $responseCode;
     }
 
@@ -71,45 +67,9 @@ class HealthEmailService extends BaseService
             'advisorDetails' => $advisor ?? null,
             'quotePlanLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid,
             'requestAdvisorLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
-            'plans' => [],
+            'plans' => $plans ?? [],
         ];
     }
 
-    private function executePlansSelectionLogic(array $plans): array
-    {
-        $top6Plans = array_slice($plans, 0, 6);
-        // return $top6Plans if $top6Plans is not empty otherwise return $plans
-        return ! empty($top6Plans) ? $top6Plans : [];
-    }
-
-    public function buildEmailData($lead, $plans, $previousAdvisor)
-    {
-        return (object)[
-            'healthQuoteId' => $lead->uuid,
-            'customerEmail' => $lead->email,
-            'customerFullName' => $lead->first_name.' '.$lead->last_name,
-            'advisorId' => $lead->advisor_id,
-            'advisorName' => $lead->advisor_name,
-            'advisorEmail' => $lead->advisor_email,
-            'advisorDetails' => $lead->advisor,
-            'plans' => $plans,
-            'previousAdvisor' => $previousAdvisor,
-        ];
-    }
-
-    private function getEmailTemplateId($lead, $plans, $triggerSICWorkFlow = false)
-    {
-        if ($triggerSICWorkFlow) {
-            info('Inside sic flow enabled: '.$lead->uuid);
-            $noAdvisorTemplateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::SIC_HEALTH_NO_ADVISOR_TEMPLATE)->first();
-            if ($noAdvisorTemplateId) {
-                return (int) $noAdvisorTemplateId->value;
-            } else {
-                info('SIC Health email template');
-                $TemplateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::SIC_HEALTH_FOLLOWUP_TEMPLATE)->first();
-                return (int) $TemplateId->value; // keeping it as a fallback
-            }
-        }
-    }
 
 }
