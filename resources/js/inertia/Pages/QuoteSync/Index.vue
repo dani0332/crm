@@ -46,21 +46,18 @@ function resetFilters() {
   for (const key in filters) {
     filters[key] = '';
   }
-  router.visit(
-    route('admin.quotesync'),
-    {
-      method: 'get',
-      data: { page: 1 },
-      preserveState: true,
-      preserveScroll: true,
-      onFinish: () => {
-        loader.table = false;
-      },
-      onBefore: () => {
-        loader.table = true;
-      },
+  router.visit(route('admin.quotesync'), {
+    method: 'get',
+    data: { page: 1 },
+    preserveState: true,
+    preserveScroll: true,
+    onFinish: () => {
+      loader.table = false;
     },
-  );
+    onBefore: () => {
+      loader.table = true;
+    },
+  });
 }
 
 function filterLogs(isValid) {
@@ -76,70 +73,57 @@ function filterLogs(isValid) {
     }
   }
 
-  router.visit(
-    route('admin.quotesync'),
-    {
-      method: 'get',
-      data: {
-        ...filters,
-        ...serverOptions.value,
-      },
-      preserveState: true,
-      preserveScroll: true,
-      onFinish: () => {
-        loader.table = false;
-      },
-      onBefore: () => {
-        loader.table = true;
-      },
+  router.visit(route('admin.quotesync'), {
+    method: 'get',
+    data: {
+      ...filters,
+      ...serverOptions.value,
     },
-  );
+    preserveState: true,
+    preserveScroll: true,
+    onFinish: () => {
+      loader.table = false;
+    },
+    onBefore: () => {
+      loader.table = true;
+    },
+  });
 }
 
 function syncStuckEntries() {
-
-  if (!confirm("Are you sure you want to sync stuck entries?")) {
+  if (!confirm('Are you sure you want to sync stuck entries?')) {
     return;
   }
-  
-  router.visit(
-    route('admin.quotesync.sync-stuck-entries'),
-    {
-      method: 'post',
-      preserveState: true,
-      preserveScroll: true,
-      onFinish: () => {
-        filterLogs(true);
-      },
-      onBefore: () => {
-        loader.table = true;
-      },
-    },
-  );
 
+  router.visit(route('admin.quotesync.sync-stuck-entries'), {
+    method: 'post',
+    preserveState: true,
+    preserveScroll: true,
+    onFinish: () => {
+      filterLogs(true);
+    },
+    onBefore: () => {
+      loader.table = true;
+    },
+  });
 }
 
 function syncFailedEntries() {
-
-  if (!confirm("Are you sure you want to sync failed entries?")) {
+  if (!confirm('Are you sure you want to sync failed entries?')) {
     return;
   }
 
-  router.visit(
-    route('admin.quotesync.sync-failed-entries'),
-    {
-      method: 'post',
-      preserveState: true,
-      preserveScroll: true,
-      onFinish: () => {
-        filterLogs(true);
-      },
-      onBefore: () => {
-        loader.table = true;
-      },
+  router.visit(route('admin.quotesync.sync-failed-entries'), {
+    method: 'post',
+    preserveState: true,
+    preserveScroll: true,
+    onFinish: () => {
+      filterLogs(true);
     },
-  );
-
+    onBefore: () => {
+      loader.table = true;
+    },
+  });
 }
 
 function setQueryFilters() {
@@ -156,7 +140,13 @@ onMounted(() => {
   setQueryFilters();
 });
 
-watch(serverOptions, (value) => { filterLogs(true); }, { deep: true });
+watch(
+  serverOptions,
+  value => {
+    filterLogs(true);
+  },
+  { deep: true },
+);
 
 const quoteTypesOptions = computed(() => {
   return [
@@ -193,71 +183,123 @@ const distinctOptions = computed(() => {
     { value: '0', label: 'No' },
   ];
 });
-
 </script>
 
 <template>
   <div>
-
     <Head title="Quote Sync" />
 
     <x-divider class="my-4" />
     <x-form @submit="filterLogs" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <x-field label="Quote type">
-          <x-select v-model="filters.quote_type" placeholder="Select Quote Type" :options="quoteTypesOptions"
-            class="w-full" />
+          <x-select
+            v-model="filters.quote_type"
+            placeholder="Select Quote Type"
+            :options="quoteTypesOptions"
+            class="w-full"
+          />
         </x-field>
         <x-field label="UUID">
-          <x-input v-model="filters.uuid" type="search" name="first_name" class="w-full" placeholder="Type here" />
+          <x-input
+            v-model="filters.uuid"
+            type="search"
+            name="first_name"
+            class="w-full"
+            placeholder="Type here"
+          />
         </x-field>
         <x-field label="Is Synced?">
-          <x-select v-model="filters.is_synced" placeholder="Select Is Synced?" :options="isSyncedOptions"
-            class="w-full" />
+          <x-select
+            v-model="filters.is_synced"
+            placeholder="Select Is Synced?"
+            :options="isSyncedOptions"
+            class="w-full"
+          />
         </x-field>
         <x-field label="Status">
-          <x-select v-model="filters.status" placeholder="Select Status" :options="quoteSyncStatusOptions"
-            class="w-full" />
+          <x-select
+            v-model="filters.status"
+            placeholder="Select Status"
+            :options="quoteSyncStatusOptions"
+            class="w-full"
+          />
         </x-field>
         <x-field label="Synced At">
-          <DatePicker v-model="filters.synced_at" name="date_of_purchase" class="w-full" model-type="yyyy-MM-dd" range
-            max-range="7" />
+          <DatePicker
+            v-model="filters.synced_at"
+            name="date_of_purchase"
+            class="w-full"
+            model-type="yyyy-MM-dd"
+            range
+            max-range="7"
+          />
         </x-field>
         <x-field label="Created At">
-          <DatePicker v-model="filters.created_at" name="date_of_purchase" class="w-full" model-type="yyyy-MM-dd" range
-            max-range="7" />
+          <DatePicker
+            v-model="filters.created_at"
+            name="date_of_purchase"
+            class="w-full"
+            model-type="yyyy-MM-dd"
+            range
+            max-range="7"
+          />
         </x-field>
         <x-field label="Distinct">
-          <x-select v-model="filters.distinct" placeholder="Select Distinct" :options="distinctOptions"
-            class="w-full" />
+          <x-select
+            v-model="filters.distinct"
+            placeholder="Select Distinct"
+            :options="distinctOptions"
+            class="w-full"
+          />
         </x-field>
       </div>
       <div class="flex justify-between">
-        <div class="font-bold pt-4">
-          Total: {{ count }}
-        </div>
+        <div class="font-bold pt-4">Total: {{ count }}</div>
         <div class="flex justify-self-end gap-3">
           <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-          <x-button size="sm" color="primary" @click.prevent="resetFilters">Reset</x-button>
-          <x-button size="sm" color="error" @click.prevent="syncStuckEntries">Sync Stuck Entries</x-button>
-          <x-button size="sm" color="error" @click.prevent="syncFailedEntries">Sync Failed Entries</x-button>
+          <x-button size="sm" color="primary" @click.prevent="resetFilters"
+            >Reset</x-button
+          >
+          <x-button size="sm" color="error" @click.prevent="syncStuckEntries"
+            >Sync Stuck Entries</x-button
+          >
+          <x-button size="sm" color="error" @click.prevent="syncFailedEntries"
+            >Sync Failed Entries</x-button
+          >
         </div>
       </div>
     </x-form>
 
     <x-divider class="my-4" />
 
-    <DataTable v-model:server-options="serverOptions" table-class-name="compact text-wrap" :headers="tableHeader"
-      :loading="loader.table" :items="logs.data || []" border-cell hide-rows-per-page hide-footer fixed-checkbox>
+    <DataTable
+      v-model:server-options="serverOptions"
+      table-class-name="compact text-wrap"
+      :headers="tableHeader"
+      :loading="loader.table"
+      :items="logs.data || []"
+      border-cell
+      hide-rows-per-page
+      hide-footer
+      fixed-checkbox
+    >
       <template #item-id="{ id }">
-        <Link :href="route('admin.quotesync.show', id)" class="text-primary-500 hover:underline">
-        {{ id }}
+        <Link
+          :href="route('admin.quotesync.show', id)"
+          class="text-primary-500 hover:underline"
+        >
+          {{ id }}
         </Link>
       </template>
 
       <template #item-is_synced="{ is_synced }">
         <div class="text-center">
-          <x-icon :icon="is_synced ? 'roundchecked' : 'roundcross'" :color="is_synced ? 'green' : 'red'" size="lg" />
+          <x-icon
+            :icon="is_synced ? 'roundchecked' : 'roundcross'"
+            :color="is_synced ? 'green' : 'red'"
+            size="lg"
+          />
         </div>
       </template>
 
@@ -280,13 +322,14 @@ const distinctOptions = computed(() => {
       </template> -->
     </DataTable>
 
-    <Pagination :links="{
+    <Pagination
+      :links="{
         next: logs.next_page_url,
         prev: logs.prev_page_url,
         current: logs.current_page,
         from: logs.from,
         to: logs.to,
-      }" />
-
+      }"
+    />
   </div>
 </template>

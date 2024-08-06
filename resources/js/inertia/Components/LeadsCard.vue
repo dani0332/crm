@@ -197,7 +197,7 @@ watch(
         <span>{{ quote.data.total_leads }} </span>
       </div>
       <div class="flex justify-between gap-1" v-show="quoteType == 'Health'">
-        <x-tooltip align="left">
+        <x-tooltip placement="left">
           <span>Total Opportunity</span>
           <template #tooltip>
             <div class="max-w-[194px] text-xs">
