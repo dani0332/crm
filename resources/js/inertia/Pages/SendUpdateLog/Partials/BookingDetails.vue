@@ -998,6 +998,14 @@ const dateToDMY = date => {
 
   return null;
 };
+
+watch(
+  () => props.sendUpdateLog.insurance_provider_id,
+  (newValue, oldValue) => {
+    bookingDetailsForm.broker_invoice_number =
+      props.bookingDetails.broker_invoice_number;
+  },
+);
 </script>
 
 <template>
