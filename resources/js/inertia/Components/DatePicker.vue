@@ -1,25 +1,14 @@
 <script setup>
-import VueDatePicker from '@vuepic/vue-datepicker';
-import '@vuepic/vue-datepicker/dist/main.css';
-
 const emit = defineEmits(['update:modelValue']);
 
 const props = defineProps({
+  modelValue: {
+    type: [String, Array, Date, Object, Number],
+    default: '',
+  },
   label: {
     type: String,
     default: '',
-  },
-  modelValue: {
-    type: [String, Date, Array, Object],
-    default: '',
-  },
-  placeholder: {
-    type: String,
-    default: 'Select Date',
-  },
-  single: {
-    type: Boolean,
-    default: true,
   },
   withTime: {
     type: Boolean,
@@ -29,31 +18,31 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  size: {
+    type: String,
+    default: 'md',
+  },
+  helper: {
+    type: String,
+    default: '',
+  },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
   rules: {
     type: Array,
     default: () => [],
   },
-  customError: {
+  tooltip: {
     type: String,
     default: '',
   },
-  minDate: {
-    type: Date,
-    default: null,
+  placeholder: {
+    type: String,
+    default: 'Select date',
   },
-  onlySelect: {
-    type: Boolean,
-    default: false,
-  },
-  maxDate: {
-    type: Date,
-    default: null,
-  },
-  monthPicker: {
-    type: Boolean,
-    default: false,
-  },
-  disableYear: {
+  hideFooter: {
     type: Boolean,
     default: false,
   },
@@ -69,96 +58,59 @@ const selectedData = computed({
   },
 });
 
-const monthPicker = computed(() => {
-  return props.monthPicker;
+const iconPosition = computed(() => {
+  return props.label ? '2.75rem' : '54%';
 });
-const onlyCurentYear = () => {
-  if (props.disableYear && props.monthPicker)
-    return [new Date().getFullYear(), new Date().getFullYear()];
-  else return [1900, 2100];
-};
 </script>
 <template>
-  <VueDatePicker
+  <x-datepicker
     v-model="selectedData"
-    auto-apply
-    :format="
-      props.withTime
-        ? 'dd-MM-yyyy HH:mm'
-          ? props.monthPicker
-          : 'MM/yyyy'
-        : 'dd-MM-yyyy'
-    "
-    :teleport="true"
+    :format="props.withTime ? `dd/MM/yyyy HH:mm` : `dd/MM/yyyy`"
+    :teleport="!props.disabled"
     :enable-time-picker="props.withTime"
     :month-change-on-scroll="false"
-    :clearable="false"
-    :disabled="props.disabled"
-    :min-date="props.minDate"
-    :max-date="props.maxDate"
-    utc="preserve"
     :is-24="false"
+    utc="preserve"
+    :disabled="props.disabled"
+    position="left"
+    class="w-full"
+    auto-apply
+    :clearable="!props.disabled"
     text-input
-    :month-picker="monthPicker"
   >
-    <template #dp-input="{ value, onClear, onInput, onBlur }">
+    <template #dp-input="{ value, onEnter, onTab, onBlur, onInput }">
       <x-input
-        type="text"
-        :value="value"
+        :model-value="value"
         :label="props.label"
-        :placeholder="placeholder"
+        :size="props.size"
         :disabled="props.disabled"
-        class="w-full"
-        :rules="value ? [] : props.rules"
-        :error="props.customError ? props.customError : ''"
+        :helper="props.helper"
+        :icon-right="props.disabled ? null : value ? 'clear' : 'calendar'"
+        :loading="props.loading"
+        :rules="props.rules"
+        :tooltip="props.tooltip"
+        :placeholder="props.placeholder"
+        :hide-footer="props.hideFooter"
+        @keydown.tab="onTab"
         @update:modelValue="onInput"
         @blur="onBlur"
-        :readonly="props.onlySelect"
+        @keydown.enter.prevent="onEnter"
       />
-      <div
-        v-if="!props.disabled"
-        :class="props.label == '' ? 'top-3' : 'top-[34px]'"
-        class="absolute right-2.5 hover:text-secondary-500"
-      >
-        <svg
-          v-if="!value"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke-width="1.5"
-          stroke="currentColor"
-          class="w-4 h-4"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
-          />
-        </svg>
-
-        <svg
-          v-else
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke-width="1.5"
-          stroke="currentColor"
-          class="w-4 h-4"
-          @click="onClear"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M6 18L18 6M6 6l12 12"
-          />
-        </svg>
-      </div>
     </template>
-  </VueDatePicker>
+  </x-datepicker>
 </template>
 
 <style>
-.dp__clear_icon {
-  top: 40%;
+:root {
+  --dp-font-family: 'Inter', sans-serif;
+}
+
+.dp__icon.dp__clear_icon {
+  @apply !text-orange-500;
+  top: v-bind(iconPosition) !important;
+}
+
+.dp__cell_disabled {
+  @apply opacity-20;
 }
 </style>

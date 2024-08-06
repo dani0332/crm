@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -88,6 +89,7 @@ class BikeQuote extends Model implements AuditableContract
     {
         return $this->morphMany(SageApiLog::class, 'section');
     }
+
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
@@ -95,6 +97,7 @@ class BikeQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(UAELicenseHeldFor::class, 'back_home_license_held_for_id');
     }
+
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
@@ -110,6 +113,7 @@ class BikeQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(CarModel::class, 'model_id');
     }
+
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
@@ -117,10 +121,12 @@ class BikeQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(CarTypeInsurance::class, 'insurance_type_id');
     }
+
     public function batch()
     {
         return $this->hasOne(QuoteBatches::class, 'id', 'quote_batch_id')->select(['id', 'name', 'start_date', 'end_date']);
     }
+
     public function emirates()
     {
         return $this->belongsTo(Emirate::class, 'emirate_of_registration_id');
@@ -129,5 +135,10 @@ class BikeQuote extends Model implements AuditableContract
     public function claimHistory()
     {
         return $this->belongsTo(ClaimHistory::class, 'claim_history_id');
+    }
+
+    public function advisor(): HasOne
+    {
+        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no', 'profile_photo_path', 'calendar_link']);
     }
 }

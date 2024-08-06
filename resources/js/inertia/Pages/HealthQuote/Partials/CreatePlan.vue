@@ -3,6 +3,12 @@ const props = defineProps({
   uuid: String,
   members: Array,
   genders: Object,
+  modelValue: Boolean,
+});
+
+const shown = computed({
+  get: () => props.modelValue,
+  set: value => emit('update:modelValue', value),
 });
 
 const page = usePage();
@@ -32,10 +38,10 @@ const totalLoadingPrice = computed(() => {
 });
 
 const options = reactive({
-    networks: [],
-    insurancePlans: [],
-    coPayments: [],
-    loading: false,
+  networks: [],
+  insurancePlans: [],
+  coPayments: [],
+  loading: false,
 });
 
 const genderText = v => {
@@ -67,7 +73,6 @@ const numFixed = num => {
 const isEmptyField = ref(false);
 
 const onSubmit = isValid => {
-
   if (createForm.provider_id == null) {
     isEmptyField.value = true;
   } else {
@@ -81,11 +86,11 @@ const onSubmit = isValid => {
   axios
     .post('/health-plan-manual-create', {
       quoteUID: props.uuid,
-    //   planId: createForm.plan_id,
-    //   actualPremium: createForm.premium,
-    formData: createForm,
-    // members: props.members,
-    membersPrice: membersPrice,
+      //   planId: createForm.plan_id,
+      //   actualPremium: createForm.premium,
+      formData: createForm,
+      // members: props.members,
+      membersPrice: membersPrice,
     })
     .then(res => {
       if (res.data == 200) {
@@ -122,23 +127,23 @@ watch(
           }
         })
         .catch(err => {
-            emit('error');
+          emit('error');
         })
         .finally(() => {
           options.loading = false;
-        //   createForm.plan_id = null;
+          //   createForm.plan_id = null;
         });
     }
   },
 );
 
 watch(
-    () => createForm?.plan_id,
-    value => {
-        if (value) {
-            planId.value = value;
-        }
-    },
+  () => createForm?.plan_id,
+  value => {
+    if (value) {
+      planId.value = value;
+    }
+  },
 );
 
 watch(
@@ -155,12 +160,12 @@ watch(
         .then(res => {
           if (res.data.healthPlans?.length > 0) {
             options.insurancePlans = res.data.healthPlans;
-          }else{
+          } else {
             options.insurancePlans = [];
-        }
+          }
         })
         .catch(err => {
-            emit('error');
+          emit('error');
         })
         .finally(() => {
           options.loading = false;
@@ -177,18 +182,16 @@ watch(
       options.loading = true;
       options.coPayments = [];
       axios
-        .get(
-          `/health-plan-copays?planId=${value}`,
-        )
+        .get(`/health-plan-copays?planId=${value}`)
         .then(res => {
           if (res.data.copays) {
             options.coPayments = res.data.copays;
-          }else{
+          } else {
             options.coPayments = [];
-        }
+          }
         })
         .catch(err => {
-            emit('error');
+          emit('error');
         })
         .finally(() => {
           options.loading = false;
@@ -196,12 +199,18 @@ watch(
     }
   },
 );
-
-
 </script>
 
 <template>
-  <x-form @submit="onSubmit" :auto-focus="false">
+  <x-modal
+    v-model="shown"
+    size="xl"
+    title="Add Plan"
+    show-close
+    backdrop
+    is-form
+    @submit="onSubmit"
+  >
     <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-x-4">
       <ComboBox
         v-model="createForm.provider_id"
@@ -305,7 +314,7 @@ watch(
                 Gender
               </th>
               <th class="py-2 px-3 sticky top-0 text-left w-40 z-10">
-                <x-tooltip position="bottom" class="arrow-t">
+                <x-tooltip placement="bottom">
                   <span
                     class="font-semibold tracking-widest uppercase text-xs underline decoration-dotted decoration-primary-600 cursor-help"
                   >
@@ -313,37 +322,44 @@ watch(
                   </span>
                   <template #tooltip>
                     <div class="whitespace-normal normal-case text-[10px]">
-                                Base Price (exclusive of  VAT, Basmah & Policy Fee)
-                            </div>
+                      Base Price (exclusive of VAT, Basmah & Policy Fee)
+                    </div>
                   </template>
                 </x-tooltip>
               </th>
               <th class="py-2 px-3 sticky top-0 text-left w-40 z-10">
-                <x-tooltip position="bottom" class="arrow-t">
+                <x-tooltip placement="bottom">
                   <span
                     class="font-semibold tracking-widest uppercase text-xs underline decoration-dotted decoration-primary-600 cursor-help"
                   >
                     Loading Price
                   </span>
                   <template #tooltip>
-                    <div class="whitespace-normal text-wrap normal-case text-[10px]">
-                                <p>Additional cost or fee that is added to the base price. This extra charge is
-                                applied to cover specific risks or factors associated with the policyholder,
-                                such as pre-existing medical conditions or other higher-risk situations
-                                (exclusive of VAT)</p>
-                            </div>
+                    <div
+                      class="whitespace-normal text-wrap normal-case text-[10px]"
+                    >
+                      <p>
+                        Additional cost or fee that is added to the base price.
+                        This extra charge is applied to cover specific risks or
+                        factors associated with the policyholder, such as
+                        pre-existing medical conditions or other higher-risk
+                        situations (exclusive of VAT)
+                      </p>
+                    </div>
                   </template>
                 </x-tooltip>
               </th>
               <th class="py-2 px-3 sticky top-0 text-left w-40 z-10">
-                <x-tooltip position="bottom" class="arrow-t">
+                <x-tooltip placement="bottom">
                   <span
                     class="font-semibold tracking-widest uppercase text-xs underline decoration-dotted decoration-primary-600 cursor-help"
                   >
                     Final Price
                   </span>
                   <template #tooltip>
-                    <div class="whitespace-normal normal-case text-[10px]">Total Price (exclusive of  VAT)</div>
+                    <div class="whitespace-normal normal-case text-[10px]">
+                      Total Price (exclusive of VAT)
+                    </div>
                   </template>
                 </x-tooltip>
               </th>
@@ -440,10 +456,12 @@ watch(
       </div>
     </div>
 
-    <div class="flex justify-end">
-      <x-button type="submit" color="emerald" :loading="createForm.loading">
-        Add Plan
-      </x-button>
-    </div>
-  </x-form>
+    <template #actions>
+      <div class="flex justify-end">
+        <x-button type="submit" color="emerald" :loading="createForm.loading">
+          Add Plan
+        </x-button>
+      </div>
+    </template>
+  </x-modal>
 </template>

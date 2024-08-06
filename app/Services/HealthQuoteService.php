@@ -138,6 +138,7 @@ class HealthQuoteService extends BaseService
             'hqr.kyc_decision',
             'hqr.risk_score',
             'hqr.enquiry_count',
+            'hqr.policy_booking_date',
             DB::raw('IF(EXISTS (
                 SELECT *
                 FROM quote_request_entity_mapping
@@ -166,8 +167,15 @@ class HealthQuoteService extends BaseService
             'hqr.health_plan_co_payment_id',
             'hp.text as health_plan_name_text',
             'ihp.text as plan_provider_name_text',
-            'hqr.stale_at',
-            'hqr.health_plan_type_id'
+            'hqr.health_plan_type_id',
+            'hqr.price_vat_not_applicable',
+            'hqr.price_vat_applicable',
+            'hqr.price_with_vat',
+            'hqr.vat',
+            'hqr.insurer_quote_number',
+            'hqr.policy_issuance_status_id',
+            'hqr.policy_issuance_status_other',
+            'hqr.stale_at'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -202,9 +210,22 @@ class HealthQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return HealthQuote::where('id', $id)->with(['payments.paymentSplits' => function ($query) {
-            $query->orderBy('sr_no', 'asc');
-        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents'])->first();
+        return HealthQuote::where('id', $id)->with([
+            'payments' => function ($payment) {
+                $payment->with([
+                    'paymentSplits' => function ($paymentSplit) {
+                        $paymentSplit->with([
+                            'paymentStatus',
+                            'paymentMethod',
+                            'documents',
+                            'verifiedByUser',
+                        ]);
+                        $paymentSplit->orderBy('sr_no');
+                    },
+                ]);
+                $payment->orderBy('created_at');
+            },
+        ])->first();
     }
 
     public function getSelectedLostReason($id)
@@ -323,7 +344,7 @@ class HealthQuoteService extends BaseService
             $dateTo = $this->parseDate($request['created_at_end'], true);
             $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
         }
-        if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
+        if (! empty($request->created_at_start) && ! empty($request->created_at_end) && empty($request->payment_due_date) && empty($request->booking_date)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
 
@@ -469,6 +490,8 @@ class HealthQuoteService extends BaseService
             $isEcommerce = $request->is_ecommerce == 'Yes' ? 1 : 0;
             $this->query->where('hqr.is_ecommerce', $isEcommerce);
         }
+
+        $this->adjustQueryByDateFilters($this->query, 'hqr');
 
         foreach ($searchProperties as $item) {
             if (! empty($request[$item]) && $item != 'created_at') {

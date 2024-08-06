@@ -81,6 +81,7 @@ const batchForm = useForm({
   quote_status_id: [props.quoteStatus.CarSold],
   deadline_date: [],
   month: '',
+  year: '',
 });
 
 const generateDeadlineDate = () => {
@@ -96,6 +97,10 @@ const setBatchMonth = () => {
   return batchForm.batchMonth.month.toString()
     ? batchForm.batchMonth.month + 1
     : batchForm.batchMonth;
+};
+
+const setBatchYear = () => {
+  return batchForm.batchMonth.year;
 };
 
 function onSubmit(isValid) {
@@ -117,6 +122,7 @@ function onSubmit(isValid) {
 
   batchForm.clearErrors();
   batchForm.month = setBatchMonth();
+  batchForm.year = setBatchYear();
   batchForm.transform(data => ({
     ...data,
     [dynamicKey]: data.dead_date,
@@ -226,10 +232,8 @@ onMounted(() => {
             class="w-full"
             :monthPicker="true"
             placeholder="Batch Month"
-            format="MMM"
+            format="MMM-yyyy"
             :disableYear="true"
-            :minDate="new Date(new Date().getFullYear(), 0)"
-            :maxDate="new Date(new Date().getFullYear(), 11)"
           />
         </x-field>
         <x-field label="Start Date" required>

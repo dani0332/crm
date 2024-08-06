@@ -9,6 +9,7 @@ use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\YachtQuote;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,8 @@ use Illuminate\Support\Facades\URL;
 
 class YachtQuoteRepository extends BaseRepository
 {
+    use GenericQueriesAllLobs;
+
     public function model()
     {
         return PersonalQuote::class;
@@ -92,9 +95,10 @@ class YachtQuoteRepository extends BaseRepository
                 'quoteDetail.previousAdvisor',
                 'insuranceProvider',
                 'payments' => function ($q) {
-                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod',
+                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentable',
                         'paymentSplits.paymentStatus',
                         'paymentSplits.paymentMethod',
+                        'paymentSplits.verifiedByUser',
                         'paymentSplits.documents',
                     ]);
                 },
@@ -110,6 +114,9 @@ class YachtQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
+                'renewal_expiry_date',
+                'policy_start_date',
+                'policy_issuance_date',
                 \DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
@@ -146,8 +153,9 @@ class YachtQuoteRepository extends BaseRepository
                 $query->where('advisor_id', \auth()->user()->id);
             })
             ->filter(! $forExport, $forTotalLeadsCount)
-            ->withFakeLeadCriteria($forTotalLeadsCount)
-            ->orderBy($sort_by, $sort_type);
+            ->withFakeLeadCriteria($forTotalLeadsCount);
+        $this->adjustQueryByDateFilters($query, 'personal_quotes');
+        $this->orderBy($sort_by, $sort_type);
 
         if ($forTotalLeadsCount) {
             //PD Revert
