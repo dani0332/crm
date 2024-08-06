@@ -2,16 +2,22 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\GenericRequestEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RetentionReportEnum;
+use App\Enums\RolesEnum;
+use App\Enums\TravelQuoteEnum;
 use App\Models\QuoteType;
 use App\Models\UserManager;
+use App\Repositories\QuoteTypeRepository;
+use App\Services\ApplicationStorageService;
 use Carbon\Carbon;
 use App\Services\BaseService;
+use App\Services\DropdownSourceService;
 use App\Traits\TeamHierarchyTrait;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
@@ -306,25 +312,6 @@ class RetentionReportService extends BaseService
                 $query->where('business_type_of_insurance_id', '!=', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
             }
         }
-    
-        if ($lob === quoteTypeCode::GroupMedical) {
-            // Filter for group medical line of business
-            $query->where('business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
-        }
-    
-        if ($lob === quoteTypeCode::Travel) {
-            // Filter for travel line of business
-            if (!empty($request['insurance_type']) && $request['insurance_type'] != '') {
-                $query->where('direction_code', $request['insurance_type']);
-            }
-        }
-    
-        if ($lob === quoteTypeCode::Life) {
-            // Filter for life insurance line of business
-            if (!empty($request['insurance_type']) && $request['insurance_type'] != '') {
-                $query->where('tenure_of_insurance_id', $request['insurance_type']);
-            }
-        }
     }
 
     /**
@@ -450,9 +437,12 @@ class RetentionReportService extends BaseService
         $productName = '';
         // Get the products associated with the authenticated user
         $products = $this->getUserProducts(auth()->user()->id);
-        // Check if the user has any products and set the product name
-        if (count($products) != 0) {
-            $productName = $products[0]->name;
+        // Check if the user has any products and set the product name excluding "Car"
+        foreach ($products as $product) {
+            if ($product->name !== quoteTypeCode::Car) {
+                $productName = $product->name;
+                break;
+            }
         }
         return $productName;
     }
@@ -517,13 +507,12 @@ class RetentionReportService extends BaseService
         );
 
         return [
-           'total' => $aggregatedData['total'],
+            'total' => $aggregatedData['total'],
             'sales' => $aggregatedData['sales'],
             'lost' => $aggregatedData['lost'],
             'invalid' => $aggregatedData['invalid'],
             'volume_net_retention' => $volumeNetRetention,
             'volume_gross_retention' => $volumeGrossRetention,
-            
         ];
     }
 
@@ -534,11 +523,12 @@ class RetentionReportService extends BaseService
      */
     private function aggregateReportData($reportData)
     {
+        $isReportDataExist = count($reportData) !== 0;
         return [
-            'total' => $reportData->sum('total'),
-            'sales' => $reportData->sum('sales'),
-            'invalid' => $reportData->sum('invalid'),
-            'lost' => $reportData->sum('lost')
+            'total' => $isReportDataExist ? $reportData->sum('total'): 0,
+            'sales' => $isReportDataExist ? $reportData->sum('sales'): 0,
+            'invalid' => $isReportDataExist ? $reportData->sum('invalid'): 0,
+            'lost' => $isReportDataExist ? $reportData->sum('lost'): 0
         ];
     }
 
@@ -555,15 +545,174 @@ class RetentionReportService extends BaseService
         return ($total != 0) ? number_format(($sales / $total) * 100, 2) . '%' : '0.00%';
     }
 
-    public function isShowBatchColumn($retentionReportData){
+    /**
+     * Determines whether the batch column should be shown in the report.
+     * This method checks the first item in the provided retention report data to see if it has a 'batch' attribute.
+     * If the 'batch' attribute is present and not null, the method returns true, indicating that the batch column should be shown.
+     *
+     * @return bool 
+     */
+    public function isShowBatchColumn($retentionReportData)
+    {
         $isShowBatchColumn = false;
-        if (count($retentionReportData) != 0){
-           $firstRetentionReporData = $retentionReportData->first();
-        }
-        if ($firstRetentionReporData && $firstRetentionReporData->getAttribute('batch') !== null) {
-            $isShowBatchColumn = true;
+        if (count($retentionReportData) != 0) {
+            $firstRetentionReporData = $retentionReportData->first();
+            if ($firstRetentionReporData && $firstRetentionReporData->getAttribute('batch') !== null) {
+                $isShowBatchColumn = true;
+            }
         }
         return $isShowBatchColumn;
     }
 
+   /**
+     * Retrieves the filter options for the retention report.
+     *
+     * @return array
+     */
+    public function getFilterOptions()
+    {
+        $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+        
+        $advisors = [];
+        $teams = [];
+
+        // Get lines of business (LOB) based on user permissions
+        $lobs = $this->getLobByPermissions();
+        
+        // Create an instance of DropdownSourceService to fetch dropdown data
+        $dropdownSourceService = new DropdownSourceService();
+
+        // Retrieve and filter business insurance types, excluding 'groupMedical'
+        $businessInsuranceType = $dropdownSourceService->getDropdownSource('business_type_of_insurance_id')
+            ->filter(function ($type) {
+                return $type['text'] != quoteBusinessTypeCode::groupMedical;
+            })
+            ->map(function ($type) {
+                return ['value' => $type['id'], 'label' => $type['text']];
+            })
+            ->toArray();
+        
+        // Re-index the array to ensure it starts from 0
+        $businessInsuranceType = array_values($businessInsuranceType);
+        
+        // Define the insurance types with the filtered business insurance types
+        $insuranceType = [
+            quoteTypeCode::CORPLINE => $businessInsuranceType,
+        ];
+
+        // Return the filter options as an associative array
+        return [
+            'lob' => $lobs,
+            'maxDays' => $maxDays,
+            'advisors' => $advisors,
+            'teams' => $teams,
+            'insurance_type' => $insuranceType,
+        ];
+    }
+
+    /**
+     * Retrieves the lines of business (LOB) based on the user's permissions.
+     *
+     * @return array 
+     */
+    public function getLobByPermissions()
+    {
+        // Define the initial lines of business (LOB) with their corresponding permission constants
+        $lobs = [
+            quoteTypeCode::Bike => PermissionsEnum::BIKE_CONVERSION_REPORT,
+            quoteTypeCode::Health => PermissionsEnum::HEALTH_CONVERSION_REPORT,
+            quoteTypeCode::Travel => PermissionsEnum::TRAVEL_CONVERSION_REPORT,
+            quoteTypeCode::Pet => PermissionsEnum::PET_CONVERSION_REPORT,
+            quoteTypeCode::Cycle => PermissionsEnum::CYCLE_CONVERSION_REPORT,
+            quoteTypeCode::Yacht => PermissionsEnum::YACHT_CONVERSION_REPORT,
+            quoteTypeCode::Life => PermissionsEnum::LIFE_CONVERSION_REPORT,
+            quoteTypeCode::Home => PermissionsEnum::HOME_CONVERSION_REPORT,
+        ];
+
+        // Filter the LOBs based on the user's permissions
+        $lobs = array_filter($lobs, function ($permission) {
+            return Auth::user()->can($permission);
+        });
+
+        // Retrieve the list of LOBs from the repository and filter them based on the user's permissions
+        $lobs = QuoteTypeRepository::GetList()
+            ->filter(function ($lob) use ($lobs) {
+                return array_key_exists($lob->code, $lobs);
+            })
+            ->pluck('code', 'text')
+            ->toArray();
+
+        // Add corporate line insurance to the LOBs if the user has the necessary permission
+        if (Auth::user()->can(PermissionsEnum::CORPLINE_CONVERSION_REPORT)) {
+            $lobs = array_merge(['CorpLine Insurance' => quoteTypeCode::CORPLINE], $lobs);
+        }
+
+        // Add group medical insurance to the LOBs if the user has the necessary permission
+        if (Auth::user()->can(PermissionsEnum::GROUPMEDICAL_CONVERSION_REPORT)) {
+            $lobs = array_merge(['Group Medical Insurance' => quoteTypeCode::GroupMedical], $lobs);
+        }
+
+        // Return the filtered and augmented LOBs
+        return $lobs;
+    }
+
+    /**
+     * Retrieves the filter options based on the lines of business (LOB) and user roles.
+     *
+     * @return array 
+     */
+    public function getFiltersByLob()
+    {
+        // Determine the visibility of each LOB based on the user's roles
+        $canView = [
+            quoteTypeCode::Bike => ! Auth::user()->hasRole(RolesEnum::BikeAdvisor),
+            quoteTypeCode::Health => ! Auth::user()->hasRole(RolesEnum::RMAdvisor),
+            quoteTypeCode::Travel => ! Auth::user()->hasRole(RolesEnum::TravelAdvisor),
+            quoteTypeCode::Pet => ! Auth::user()->hasRole(RolesEnum::PetAdvisor),
+            quoteTypeCode::Cycle => ! Auth::user()->hasRole(RolesEnum::CycleAdvisor),
+            quoteTypeCode::Yacht => ! Auth::user()->hasRole(RolesEnum::YachtAdvisor),
+            quoteTypeCode::Life => ! Auth::user()->hasRole(RolesEnum::LifeAdvisor),
+            quoteTypeCode::Home => ! Auth::user()->hasRole(RolesEnum::HomeAdvisor),
+            quoteTypeCode::CORPLINE => ! Auth::user()->hasRole(RolesEnum::CorpLineAdvisor),
+            quoteTypeCode::GroupMedical => ! Auth::user()->hasRole(RolesEnum::GMAdvisor),
+        ];
+
+        // Return the filter options with their visibility settings
+        return [
+            'advisors' => [
+                'can_view' => $canView,
+            ],
+            'teams' => [
+                'can_view' => $canView,
+                'lobs' => [
+                    quoteTypeCode::Health,
+                ],
+            ],
+            'insurance_type' => [
+                'lobs' => [
+                    quoteTypeCode::CORPLINE,
+                ],
+            ],
+            'view_by' => [
+                'can_view' => $canView,
+            ],
+            'select_month' => [
+                'can_view' => $canView,
+                'lobs' => [
+                    quoteTypeCode::Home,
+                    quoteTypeCode::Pet,
+                    quoteTypeCode::Cycle,
+                    quoteTypeCode::Yacht,
+                    quoteTypeCode::CORPLINE,
+                    quoteTypeCode::GroupMedical,
+                ],
+            ],
+            'select_batch' => [
+                'can_view' => $canView,
+            ],
+            'policy_expiry_date' => [
+                'can_view' => $canView,
+            ],
+        ];
+    }
 }

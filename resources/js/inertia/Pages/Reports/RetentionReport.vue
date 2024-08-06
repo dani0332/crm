@@ -1,4 +1,6 @@
 <script setup>
+import { filter } from 'lodash';
+
 
 const props = defineProps({
   filterOptions: Object,
@@ -17,7 +19,6 @@ const isMounted = ref(false);
 const advisorOptions = ref([]);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const notification = useToast();
-const subteamOptions = ref([]);
 const RetentionReportEnum = props.RetentionReportEnum 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
@@ -37,7 +38,6 @@ const objToUrl = obj => {
     .join('&');
 };
 
-
 const getFiltersObject = () => {
   return {
     lob: props.productName,
@@ -47,21 +47,31 @@ const getFiltersObject = () => {
     advisors: [],
     month: '',
     page: 1,
-    sub_teams: [],
     insurance_type: "",
     type: '',
     advisor_id: ''
   }
 };
 
-const displayBy = ref([
-  { label: 'Month', value: RetentionReportEnum.MONTHLY},
-  { label: 'Batch', value: RetentionReportEnum.BATCH },
-]);
+let filters = reactive(getFiltersObject());
+
+const canShow = (element) => {
+  if(page.props.filtersByLob &&
+  page.props.filtersByLob[element]) {
+      const lobs = page.props.filtersByLob[element]['lobs'] ?? [];
+      if((lobs.length == 0 ||
+      (lobs.length != 0 && Object.values(lobs).includes(filters.lob)))) {
+          return true;
+      }
+      return false;
+  }
+
+  return true;
+}
+
+const displayBy = ref([]);
 
 const teamOptions = ref([]);
-
-let filters = reactive(getFiltersObject());
 
 const quoteTypesOptions = computed(() => {
   const quoteTypesOptions = [...Object.keys(page.props.filterOptions.lob).map(text => ({
@@ -89,25 +99,10 @@ function onReset() {
   onSubmit(false)
 }
 
-const canShow = (element) => {
-  if(page.props.filtersByLob &&
-  page.props.filtersByLob[element]) {
-      const lobs = page.props.filtersByLob[element]['lobs'] ?? [];
-      if((lobs.length == 0 ||
-      (lobs.length != 0 && Object.values(lobs).includes(filters.lob)))) {
-          return true;
-      }
-      return false;
-  }
-
-  return true;
-}
-
 const loaders = reactive({
   table: false,
   advisorLeadTable: false,
   teamsOptions: false,
-  subteamOptions: false,
   advisorOptions: false,
 });
 
@@ -178,7 +173,6 @@ const onTeamChange = (e, isOnMounted = false) => {
       filters.advisors = [];
       advisorOptions.value = [];
   }
-  loadSubTeams(e);
   loadAdvisors(e);
 };
 
@@ -194,14 +188,21 @@ const onLobChange = (e, isOnMounted = false) => {
       filters.advisors= [];
       filters.month='';
       filters.page=1;
-      filters.sub_teams=[];
       filters.insurance_type="";
     }
 
-  if([quoteTypeCodeEnum.Car,
-      quoteTypeCodeEnum.Health,
-      quoteTypeCodeEnum.CORPLINE,
-      quoteTypeCodeEnum.GroupMedical
+  displayBy.value = [];
+
+  if (canShow('select_month')) {
+    displayBy.value.push({ label: 'Month', value: RetentionReportEnum.MONTHLY });
+  }
+
+  if (canShow('select_batch')) {
+    displayBy.value.push({ label: 'Batch', value: RetentionReportEnum.BATCH });
+  }
+
+  if([quoteTypeCodeEnum.Health,
+      quoteTypeCodeEnum.CORPLINE
   ].includes(filters.lob)) {
       loadTeams(e);
   } else {
@@ -227,45 +228,14 @@ const isDisabled = (element) => {
 
 const getAdvisorLabel = () => {
     let label = 'Advisors'
-    if ([quoteTypeCodeEnum.Car,
-        quoteTypeCodeEnum.Health,
-        quoteTypeCodeEnum.CORPLINE,
-        quoteTypeCodeEnum.GroupMedical].includes(filters.lob) &&
+    if ([quoteTypeCodeEnum.Health,
+        quoteTypeCodeEnum.CORPLINE].includes(filters.lob) &&
     (!filters.teams || filters.teams.length == 0)) {
         label = 'Advisors (select teams first)';
     }
 
     return label;
 }
-
-const loadSubTeams = e => {
-  if (e.length == 0) {
-    return;
-  }
-
-  if (isMounted.value) {
-    isDirty.value = true;
-  }
-
-  loaders.subteamOptions = true;
-
-  axios
-    .post(`/reports/fetch-subteams-by-team`, {
-      teamIds: Array.isArray(e) ? e : [e],
-      lob: filters.lob,
-    })
-    .then(res => {
-      if (res.data.length > 0) {
-        subteamOptions.value = Object.keys(res.data).map(key => ({
-          value: res.data[key].id.toString(),
-          label: res.data[key].name,
-        }));
-      }
-    })
-    .finally(() => {
-      loaders.subteamOptions = false;
-    });
-};
 
 const loadAdvisors = e => {
   if (e.length == 0) {
@@ -329,13 +299,13 @@ const cleanFilters = filters => {
 };
 
 const removeUnusedFilters = filters => {
-    const filtersByLob = page.props.filtersByLob;
-    Object.keys(filtersByLob).forEach(key => {
-        if(filtersByLob[key]['lobs'] && !filtersByLob[key]['lobs'].includes(filters.lob)) {
-            delete filters[key];
-        }
-    });
-    return filters;
+  const filtersByLob = page.props.filtersByLob;
+  Object.keys(filtersByLob).forEach(key => {
+      if(filtersByLob[key]['lobs'] && !filtersByLob[key]['lobs'].includes(filters.lob)) {
+          delete filters[key];
+      }
+  });
+  return filters;
 };
 
 function setQueryStringFilters() {
@@ -364,9 +334,16 @@ function onSubmit(isValid=true) {
       });
       return
     }
-    if (filters.policyExpiryDate && filters.policyExpiryDate.length === 0 && filters.month === ''){
+    if (filters.displayBy == RetentionReportEnum.BATCH && !filters.policyExpiryDate){
       notification.error({
-        title: 'Enter values in any one filter [ View by Month or Policy expiry date ]',
+        title: 'Please select Policy Expiry Date',
+        position: 'top',
+      });
+      return
+    }
+    if (filters.displayBy == RetentionReportEnum.MONTHLY && !filters.month){
+      notification.error({
+        title: 'Please select Month',
         position: 'top',
       });
       return
@@ -376,65 +353,19 @@ function onSubmit(isValid=true) {
   const payLoad = cleanFilters(filters);
   loaders.table = true
   router.visit('/reports/retention-report', {
-      method: 'get',
-      data: {
-        ...payLoad,
-      },
-      preserveState: true,
-      preserveScroll: true,
-      onBefore: () => (loaders.table = true),
-      onFinish: () => {
-        loaders.table = false;
-      },
-    });
-  }
-
-const onSubTeamChange = (e, isOnMounted = false) => {
-
-if(!isOnMounted) {
-    filters.advisors = [];
+    method: 'get',
+    data: {
+      ...payLoad,
+    },
+    preserveState: true,
+    preserveScroll: true,
+    onBefore: () => (loaders.table = true),
+    onFinish: () => {
+      loaders.table = false;
+    },
+  });
 }
 
-advisorOptions.value = [];
-
-if (e.length == 0 &&
-    [quoteTypeCodeEnum.Car, quoteTypeCodeEnum.GroupMedical].includes(filters.lob) &&
-    filters.teams.length > 0) {
-
-    loadAdvisors(filters.teams);
-} else {
-    loadAdvisorsBySubteams(e);
-}
-};
-
-const loadAdvisorsBySubteams = e => {
-  if (e.length == 0) {
-    return;
-  }
-
-  if (isMounted.value) {
-    isDirty.value = true;
-  }
-
-  loaders.advisorOptions = true;
-
-  axios
-    .post(`/reports/fetch-advisor-by-sub-team`, {
-      teamIds: Array.isArray(e) ? e : [e],
-      lob: filters.lob,
-    })
-    .then(res => {
-      if (res.data.length > 0) {
-        advisorOptions.value = Object.keys(res.data).map(key => ({
-          value: res.data[key].id.toString(),
-          label: res.data[key].name,
-        }));
-      }
-    })
-    .finally(() => {
-      loaders.advisorOptions = false;
-    });
-};
 const insuranceTypeOptions = computed(() => {
     const types = page.props.filterOptions.insurance_type;
     if(types[filters.lob]) {
@@ -446,7 +377,6 @@ const insuranceTypeOptions = computed(() => {
 
   return [];
 });
-
 
 const totalLeads = reactive({
   modal: false,
@@ -577,7 +507,7 @@ watch(
         />
 
         <DatePicker
-          v-if="filters.displayBy === RetentionReportEnum.BATCH"
+          v-if="canShow('policy_expiry_date') && filters.displayBy === RetentionReportEnum.BATCH"
           v-model="filters.policyExpiryDate"
           label="Policy Expiry Date"
           placeholder="Select Start & End Date"
@@ -585,8 +515,9 @@ watch(
           size="sm"
           model-type="yyyy-MM-dd"
         />
+        
         <ComboBox
-          v-if="filters.displayBy === RetentionReportEnum.MONTHLY"
+          v-if="canShow('select_month') && filters.displayBy === RetentionReportEnum.MONTHLY"
           v-model="filters.month"
           label="Select month"
           placeholder="Select month"
@@ -607,20 +538,6 @@ watch(
           :options="teamOptions"
           @update:model-value="onTeamChange"
           :loading="loaders.teamsOptions"
-        />
-
-        <ComboBox
-          v-if="canShow('sub_teams')"
-          :disabled="!isDisabled('sub_teams')"
-          :class="{
-              'opacity-50': !isDisabled('sub_teams'),
-          }"
-          v-model="filters.sub_teams"
-          label="SubTeams"
-          placeholder="Search by SubTeams"
-          :options="subteamOptions"
-          @update:model-value="onSubTeamChange"
-          :loading="loaders.subteamOptions"
         />
 
         <ComboBox
@@ -649,11 +566,11 @@ watch(
           </p>
         </div>
         <div class="flex gap-3">
-          <x-button v-if="can(canExport && permissionsEnum.DATA_EXTRACTION)" size="sm" color="emerald" :href="`/${RetentionReportEnum.RETENTION}/report-export?${objToUrl(filters)}`" class="justify-self-start">
+          <x-button :loading="loaders.table" v-if="can(canExport && permissionsEnum.DATA_EXTRACTION)" size="sm" color="emerald" :href="`/${RetentionReportEnum.RETENTION}/report-export?${objToUrl(filters)}`" class="justify-self-start">
             Export
           </x-button>
           <x-tooltip v-if="!canExport && can(permissionsEnum.DATA_EXTRACTION)" position="right">
-            <x-button tag="div" size="sm" color="emerald">
+            <x-button :loading="loaders.table" tag="div" size="sm" color="emerald">
               Export
             </x-button>
             <template #tooltip>
@@ -670,33 +587,9 @@ watch(
       </div>
     </x-form>
 
-    <DataTable
-      table-class-name="tablefixed"
-      :loading="loaders.table"
-      :headers="getRetentionReportHeaders()"
-      :items="reportData.data || []"
-      border-cell
-      hide-rows-per-page
-      hide-footer
-    >
+    <DataTable table-class-name="tablefixed" :loading="loaders.table" :headers="getRetentionReportHeaders()" :items="reportData.data || []" border-cell hide-rows-per-page hide-footer>
       <template #header="header">
         <HeaderCell :header="header" />
-      </template>
-      
-      <template #item-month="item">
-        {{ item.month }}
-      </template>
-      <template #item-batch="item">
-        {{ item.batch }}
-      </template>
-      <template #item-start-date="item">
-        {{ item.start_date }}
-      </template>
-      <template #item-end-date="item">
-        {{ item.end_date }}
-      </template>
-      <template #item-advisor-name="item">
-        {{ item.advisor_name }}
       </template>
       <template #item-total="item">
         <x-tooltip position="right bootom">
@@ -766,7 +659,7 @@ watch(
           </template>
         </x-tooltip>
       </template>
-      <template #item-volume-gross-retention="item">
+      <template #item-volume_gross_retention="item">
         <x-tooltip position="right bootom">
           {{ item.volume_gross_retention }}
           <template #tooltip>
@@ -776,7 +669,7 @@ watch(
           </template>
         </x-tooltip>
       </template>
-      <template #item-volume-net-retention="item">
+      <template #item-volume_net_retention="item">
         <x-tooltip position="right bootom">
           {{ item.volume_net_retention }}
           <template #tooltip>
@@ -786,7 +679,7 @@ watch(
           </template>
         </x-tooltip>
       </template>
-      <template #item-relative-retention="item">
+      <template #item-relative_retention="item">
         <x-tooltip position="left bootom">
           {{item.relative_retention}}
           <template #tooltip>
@@ -796,7 +689,6 @@ watch(
           </template>
         </x-tooltip>
       </template>
-
       <template #body-append>
         <tr v-if="reportData.length > 0 || reportData.data && reportData.data.length > 0" class="total-row">
           <td class="direction-left">Total</td>

@@ -493,11 +493,11 @@ class ReportsController extends Controller
         ]);
     }
 
-    public function renderRetentionReport(Request $request,  AdvisorConversionReportService $advisorConversionReportService, RetentionReportService $retentionReportService){
+    public function renderRetentionReport(Request $request, RetentionReportService $retentionReportService){
         $retentionReportData =  $retentionReportService->getReportData($request);
         return inertia('Reports/RetentionReport', [
-            'filterOptions' => $advisorConversionReportService->getFilterOptions(),
-            'filtersByLob' => $advisorConversionReportService->getFiltersByLob(),
+            'filterOptions' => $retentionReportService->getFilterOptions(),
+            'filtersByLob' => $retentionReportService->getFiltersByLob(),
             'reportData' => $retentionReportData,
             'productName' => $retentionReportService->getUserPorductName(),
             'monthNames' => MonthNameEnum::all(),

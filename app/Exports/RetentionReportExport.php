@@ -10,13 +10,11 @@ use Illuminate\Http\Request;
 class RetentionReportExport
 {
     use ExcelExportable;
-    private $request;
     private $data;
     private $isShowBatchColumn;
 
-    public function __construct(Request $request,) {
-        $this->request = $request;
-        $this->data = app(RetentionReportService::class)->getReportData($this->request, true);
+    public function __construct(Request $request) {
+        $this->data = app(RetentionReportService::class)->getReportData($request, true);
         $this->isShowBatchColumn = app(RetentionReportService::class)->isShowBatchColumn($this->data);
     }
 
