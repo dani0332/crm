@@ -1,5 +1,6 @@
 <script setup>
 import moment from 'moment';
+const { isRequired } = useRules();
 
 const page = usePage();
 
@@ -181,7 +182,6 @@ const isCarOrBikeQuote = [
 ].includes(quoteType);
 
 const rules = {
-  isRequired: v => !!v || 'This field is required',
   quote_policy_number: v => {
     return !!v || 'This field is required';
   },
@@ -233,14 +233,16 @@ const rules = {
   quote_policy_issuance_date: v => {
     if (v) {
       const date = new Date(v);
-      return isNaN(date.getTime());
+      let isDate = date instanceof Date;
+      return isDate || 'Date format is incorrect';
     }
     return !!v || 'This field is required';
   },
   start_date: v => {
     if (v) {
       const date = new Date(v);
-      return isNaN(date.getTime());
+      let isDate = date instanceof Date;
+      return isDate || 'Date format is incorrect';
     }
     return !!v || 'This field is required';
   },
@@ -251,7 +253,8 @@ const rules = {
       if (startDate >= date) {
         return 'Expiry date should be greater than Start Date';
       }
-      return isNaN(date.getTime());
+      let isDate = date instanceof Date;
+      return isDate || 'Date format is incorrect';
     }
     return !!v || 'This field is required';
   },
@@ -394,13 +397,7 @@ watch(
                 <DatePicker
                   v-model="policyDetailsForm.quote_policy_issuance_date"
                   :disabled="!policyDetailsState.isEditing"
-                  :custom-error="
-                    rules.quote_policy_issuance_date(
-                      policyDetailsForm.quote_policy_issuance_date,
-                    )
-                  "
-                  :rules="[rules.quote_policy_issuance_date]"
-                  type="date"
+                  :rules="[isRequired]"
                   class="w-full"
                 />
               </div>
@@ -428,11 +425,6 @@ watch(
                 <x-input
                   v-model="policyDetailsForm.price_vat_notapplicable"
                   @change="calculateVatAmount"
-                  :custom-error="
-                    rules.price_vat_not_applicable(
-                      policyDetailsForm.price_vat_notapplicable,
-                    )
-                  "
                   :rules="[rules.price_vat_not_applicable]"
                   type="number"
                   placeholder="Price (VAT NOT APPLICABLE)"
@@ -457,8 +449,7 @@ watch(
                 </x-tooltip>
                 <DatePicker
                   v-model="policyDetailsForm.quote_policy_start_date"
-                  :rules="[rules.start_date]"
-                  type="date"
+                  :rules="[isRequired]"
                   placeholder="Start Date"
                   class="w-full"
                   :disabled="!policyDetailsState.isEditing"
@@ -485,11 +476,6 @@ watch(
                 <x-input
                   v-model="policyDetailsForm.price_vat_applicable"
                   @change="calculateVatAmount"
-                  :custom-error="
-                    rules.price_vat_applicable(
-                      policyDetailsForm.price_vat_applicable,
-                    )
-                  "
                   :rules="[rules.price_vat_applicable]"
                   type="number"
                   placeholder="Price (VAT APPLICABLE)"
@@ -514,8 +500,7 @@ watch(
                 </x-tooltip>
                 <DatePicker
                   v-model="policyDetailsForm.quote_policy_expiry_date"
-                  :rules="[rules.expiry_date]"
-                  type="date"
+                  :rules="[isRequired, rules.expiry_date]"
                   placeholder="Expiry Date"
                   class="w-full"
                   :disabled="!policyDetailsState.isEditing"
