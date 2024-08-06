@@ -143,16 +143,11 @@ class RenewalBatch extends Model implements AuditableContract
     public function scopeDateFilter($q, $reportDateEnd = null, $includePreviousMonth = true)
     {
         $baseDate = $reportDateEnd ? Carbon::parse($reportDateEnd) : now();
+        $startMonth = $includePreviousMonth ? $baseDate->copy()->subMonth()->startOfMonth() : $baseDate->copy()->startOfMonth();
+        $endMonth = $baseDate->copy()->addMonth()->endOfMonth();
 
-        $startMonth = $includePreviousMonth ? $baseDate->copy()->subMonth(1)->startOfMonth() : $baseDate->copy()->startOfMonth();
-        $endMonth = $baseDate->copy()->addMonth(1)->endOfMonth();
-
-        $startMonthFormatted = $startMonth->format('n');
-        $endMonthFormatted = $endMonth->format('n');
-        $startYearFormatted = $startMonth->format('Y');
-        $endYearFormatted = $endMonth->format('Y');
-
-        $q->whereBetween('month', [$startMonthFormatted, $endMonthFormatted])
-            ->whereBetween('year', [$startYearFormatted, $endYearFormatted]);
+        $q->whereBetween('month', [$startMonth->format('n'), $endMonth->format('n')])
+          ->whereBetween('year', [$startMonth->format('Y'), $endMonth->format('Y')]);
     }
+
 }
