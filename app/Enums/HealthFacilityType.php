@@ -2,15 +2,8 @@
 
 namespace App\Enums;
 
-use BenSampo\Enum\Enum;
-
-/**
- * @method static static OptionOne()
- * @method static static OptionTwo()
- * @method static static OptionThree()
- */
-final class HealthFacilityType extends Enum
+enum HealthFacilityType: string
 {
-    const HOSPITAL = 'HOSPITAL';
-    const CLINIC = 'CLINIC';
+    case HOSPITAL = 'HOSPITAL';
+    case CLINIC = 'CLINIC';
 }

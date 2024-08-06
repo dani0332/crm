@@ -46,7 +46,7 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
      public function getHospitals($featuredFacilities){
         if(empty($featuredFacilities)) return null;
         $hospitals = collect($featuredFacilities)
-            ->where('type',HealthFacilityType::HOSPITAL)
+            ->where('type',HealthFacilityType::HOSPITAL->value)
             ->filter(function ($item) {
                 return !empty($item->text);
             })
@@ -59,7 +59,7 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
     public function getClinics($featuredFacilities){
         if(empty($featuredFacilities)) return null;
         $hospitals = collect($featuredFacilities)
-            ->where('type',HealthFacilityType::CLINIC)
+            ->where('type',HealthFacilityType::CLINIC->value)
             ->filter(function ($item) {
                 return !empty($item->text);
             })
