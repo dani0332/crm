@@ -1019,7 +1019,7 @@ const onAddUpdate = () => {
       modelType="Cycle"
     />
 
-    <QuoteDocuments
+    <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"

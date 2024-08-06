@@ -14,6 +14,38 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
+  size: {
+    type: String,
+    default: 'md',
+  },
+  helper: {
+    type: String,
+    default: '',
+  },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
+  rules: {
+    type: Array,
+    default: () => [],
+  },
+  tooltip: {
+    type: String,
+    default: '',
+  },
+  placeholder: {
+    type: String,
+    default: 'Select date',
+  },
+  hideFooter: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const selectedData = computed({
@@ -29,28 +61,40 @@ const selectedData = computed({
 const iconPosition = computed(() => {
   return props.label ? '2.75rem' : '54%';
 });
-
-const currentTz = computed(() => {
-  return Intl.DateTimeFormat().resolvedOptions().timeZone;
-});
 </script>
 <template>
   <x-datepicker
     v-model="selectedData"
-    :label="props.label"
     :format="props.withTime ? `dd/MM/yyyy HH:mm` : `dd/MM/yyyy`"
-    :teleport="true"
+    :teleport="!props.disabled"
     :enable-time-picker="props.withTime"
     :month-change-on-scroll="false"
     :is-24="false"
+    :disabled="props.disabled"
     position="left"
     class="w-full"
     auto-apply
-    clearable
+    :clearable="!props.disabled"
     text-input
   >
-    <template v-if="props.withTime" #action-extra>
-      <span class="pb-1 text-xs">Timezone: {{ currentTz }}</span>
+    <template #dp-input="{ value, onEnter, onTab, onBlur, onInput }">
+      <x-input
+        :model-value="value"
+        :label="props.label"
+        :size="props.size"
+        :disabled="props.disabled"
+        :helper="props.helper"
+        :icon-right="props.disabled ? null : value ? 'clear' : 'calendar'"
+        :loading="props.loading"
+        :rules="props.rules"
+        :tooltip="props.tooltip"
+        :placeholder="props.placeholder"
+        :hide-footer="props.hideFooter"
+        @keydown.tab="onTab"
+        @update:modelValue="onInput"
+        @blur="onBlur"
+        @keydown.enter.prevent="onEnter"
+      />
     </template>
   </x-datepicker>
 </template>
@@ -61,8 +105,8 @@ const currentTz = computed(() => {
 }
 
 .dp__icon.dp__clear_icon {
-  top: v-bind(iconPosition) !important;
   @apply !text-orange-500;
+  top: v-bind(iconPosition) !important;
 }
 
 .dp__cell_disabled {
