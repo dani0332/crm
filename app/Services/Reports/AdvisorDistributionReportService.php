@@ -565,9 +565,9 @@ class AdvisorDistributionReportService extends BaseService
                 $query->where('travel_quote_request.coverage_code', $filters->travel_coverage);
             }
 
-            if (isset($filters->isEmbeddedProducts) && $filters->isEmbeddedProducts == 'true') {
+            if (isset($filters->isEmbeddedProducts) && $filters->isEmbeddedProducts == 'false') {
                 $table = $isTravelQuote ? 'travel_quote_request.source' : 'source';
-                $query->where($table, '=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
+                $query->where($table, '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
             }
         }
 

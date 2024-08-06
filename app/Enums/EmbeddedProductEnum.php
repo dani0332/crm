@@ -14,5 +14,5 @@ final class EmbeddedProductEnum extends Enum
     const TRAVEL = 'TRA';
 
     // used in report for source
-    const SRC_CAR_EMBEDDED_PRODUCT = 'CAR_EMBEDDED_PRODUCT';
+    const SRC_CAR_EMBEDDED_PRODUCT = 'CAR EMBEDDED PRODUCT';
 }
