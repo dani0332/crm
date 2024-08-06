@@ -61,6 +61,7 @@ class ExportValidationRequest extends FormRequest
                 $diffInDays = 31;
             }
 
+    
             if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {
                 if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
                     $start = Carbon::parse($this->input('paid_at_start'));
@@ -79,14 +80,18 @@ class ExportValidationRequest extends FormRequest
                     $end = Carbon::parse($this->input('created_at_end'));
                     $error_fields = 'created date';
                 } elseif ($quoteType == RetentionReportEnum::RETENTION){
-                    $start = Carbon::parse($this->input('start_date'));
-                    $end = Carbon::parse($this->input('end_date'));
-                    $error_fields = 'start date and end date';
+                    if ($this->input('policyExpiryDate')){
+                        $start = Carbon::parse($this->input('policyExpiryDate')[0])->startOfDay();
+                        $end = Carbon::parse($this->input('policyExpiryDate')[1])->endOfDay();
+                        $error_fields = 'expiry date';
+                    }
                 }
-
-                $diff = $start->diffInDays($end);
-                if ($diff > $diffInDays) {
-                    $validator->errors()->add('flash', 'Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.');
+                
+                if (empty($this->input('month'))){
+                    $diff = $start->diffInDays($end);
+                    if ($diff > $diffInDays) {
+                        $validator->errors()->add('flash', 'Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.');
+                    }
                 }
             }
         });

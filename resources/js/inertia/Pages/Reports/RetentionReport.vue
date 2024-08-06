@@ -788,7 +788,7 @@ watch(
       </template>
       <template #item-relative-retention="item">
         <x-tooltip position="left bootom">
-          -------
+          {{item.relative_retention}}
           <template #tooltip>
             <span class="custom-tooltip-content">
               {{ RetentionReportEnum.RELATIVE_RETENTION_COLUMN }}
