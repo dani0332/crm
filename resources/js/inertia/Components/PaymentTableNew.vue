@@ -1823,8 +1823,10 @@ const editPaymentModal = (
   ) {
     planDetail.value = payment.travel_plan;
 
-    planDetail.value['insurance_provider'] =
-      payment.travel_plan.insurance_provider;
+    if (! (props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
+      planDetail.value['insurance_provider'] =
+        payment.travel_plan.insurance_provider;
+    }
   }
 
   //Assign plan for Travel
@@ -1833,8 +1835,10 @@ const editPaymentModal = (
     (paymentMethodsForm.status == 'edit' || paymentMethodsForm.status == 'view')
   ) {
     planDetail.value = payment.travel_plan;
-    planDetail.value['insurance_provider'] =
-      payment.travel_plan.insurance_provider;
+    if (! (props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
+      planDetail.value['insurance_provider'] =
+        payment.travel_plan.insurance_provider;
+    }
   }
 
   if (capture_approval > 0) {
