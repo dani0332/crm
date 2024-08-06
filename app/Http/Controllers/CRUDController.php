@@ -2034,7 +2034,9 @@ class CRUDController extends Controller
      * @param  \App\Models\ClaimsStatus  $claimsStatus
      * @return \Illuminate\Http\Response
      */
-    public function destroy() {}
+    public function destroy()
+    {
+    }
 
     private function getCarMakeDropdown()
     {

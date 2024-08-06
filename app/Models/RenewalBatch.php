@@ -147,7 +147,7 @@ class RenewalBatch extends Model implements AuditableContract
         $endMonth = $baseDate->copy()->addMonth()->endOfMonth();
 
         $q->whereBetween('month', [$startMonth->format('n'), $endMonth->format('n')])
-          ->whereBetween('year', [$startMonth->format('Y'), $endMonth->format('Y')]);
+            ->whereBetween('year', [$startMonth->format('Y'), $endMonth->format('Y')]);
     }
 
 }
