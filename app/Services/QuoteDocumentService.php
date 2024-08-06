@@ -270,14 +270,22 @@ class QuoteDocumentService extends BaseService
         $pageCount = $pdf->setSourceFile(storage_path('app/' . $filePath));
 
         $watermarkImagePath = public_path('images/watermark1.png');
+        $watermarkImageAA4Path = public_path('images/watermarkAA4.png');
 
         for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
             $templateId = $pdf->importPage($pageNo);
             $size = $pdf->getTemplateSize($templateId);
 
+            Log::info('Page size: ' . json_encode($size));
+
             $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
             // Add watermark
-            $pdf->Image($watermarkImagePath, 0, 0, $size['width'], $size['height'], '', '', '', false, 300, '', false, false, 0);
+            if ($size['orientation'] === "P")
+            {
+                $pdf->Image($watermarkImagePath, 0, 0, $size['width'], $size['height'], '', '', '', false, 300, '', false, false, 0);
+            } else {
+                $pdf->Image($watermarkImageAA4Path, 0, 0, $size['width'], $size['height'], '', '', '', false, 300, '', false, false, 0);
+            }
 
             $pdf->useTemplate($templateId);
         }
