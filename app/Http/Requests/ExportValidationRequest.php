@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\RetentionReportEnum;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -18,7 +19,8 @@ class ExportValidationRequest extends FormRequest
     {
         $rules = [];
 
-        $exportType = $this->route('exportType');
+        $exportType = $this->route('quoteType');
+        $quoteType = $this->route('quoteType');
 
         if ($exportType != GenericRequestEnum::EXPORT_MAKES_MODELS) {
             if ($exportType == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
@@ -30,6 +32,13 @@ class ExportValidationRequest extends FormRequest
                 $rules['payment_due_date.*'] = 'required|date';
             } elseif ($this->has('booking_date')) {
                 $rules['booking_date.*'] = 'required|date';
+            } elseif ($quoteType == RetentionReportEnum::RETENTION){
+                $rules = [
+                    'lob' => 'required',
+                    'displayBy' => 'required',
+                    'month' => ['required_if:displayBy,'.RetentionReportEnum::MONTHLY],
+                    'policyExpiryDate.*' => ['required_if:displayBy,'.RetentionReportEnum::BATCH.'|date'],
+                ];
             } else {
                 $rules = [
                     'created_at_start' => 'required|date',
@@ -69,6 +78,10 @@ class ExportValidationRequest extends FormRequest
                     $start = Carbon::parse($this->input('created_at_start'));
                     $end = Carbon::parse($this->input('created_at_end'));
                     $error_fields = 'created date';
+                } elseif ($quoteType == RetentionReportEnum::RETENTION){
+                    $start = Carbon::parse($this->input('start_date'));
+                    $end = Carbon::parse($this->input('end_date'));
+                    $error_fields = 'start date and end date';
                 }
 
                 $diff = $start->diffInDays($end);

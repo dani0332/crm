@@ -7,6 +7,7 @@ use BenSampo\Enum\Enum;
 final class RetentionReportEnum extends Enum
 {
 
+    const RETENTION = 'RETENTION';
     const MONTHLY = 'MONTHLY';
     const BATCH = 'BATCH';
     const LOST =  'LOST';

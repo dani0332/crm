@@ -19,6 +19,24 @@ const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const notification = useToast();
 const subteamOptions = ref([]);
 const RetentionReportEnum = props.RetentionReportEnum 
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+const canExport = ref(false);
+
+const objToUrl = obj => {
+  Object.keys(obj).forEach(
+    key => (obj[key] === '' || obj[key]?.length === 0) && delete obj[key],
+  );
+  return Object.keys(obj)
+    .map(key => {
+      if (Array.isArray(obj[key])) {
+        return obj[key].map(value => `${key}[]=${value}`).join('&');
+      }
+      return `${key}=${obj[key]}`;
+    })
+    .join('&');
+};
+
 
 const getFiltersObject = () => {
   return {
@@ -514,6 +532,18 @@ if (props.isShowBatchColumn) {
 return headers;
 
 };
+
+watch(
+  () => filters,
+  () => {
+    if ((filters.lob && filters.displayBy) && (filters.policyExpiryDate || filters.month)) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
+  },
+  { deep: true, immediate: true },
+);
 </script>
 
 <template>
@@ -619,6 +649,19 @@ return headers;
           </p>
         </div>
         <div class="flex gap-3">
+          <x-button v-if="can(canExport && permissionsEnum.DATA_EXTRACTION)" size="sm" color="emerald" :href="`/${RetentionReportEnum.RETENTION}/report-export?${objToUrl(filters)}`" class="justify-self-start">
+            Export
+          </x-button>
+          <x-tooltip v-if="!canExport && can(permissionsEnum.DATA_EXTRACTION)" position="right">
+            <x-button tag="div" size="sm" color="emerald">
+              Export
+            </x-button>
+            <template #tooltip>
+              <span class="font-medium">
+                Select LOB and select display by and select month or select expiry date   
+              </span>
+            </template>
+          </x-tooltip>
           <x-button :loading="loaders.table" size="sm" color="#ff5e00" type="submit">Search</x-button>
           <x-button :loading="loaders.table" size="sm" color="primary" @click.prevent="onReset">
             Reset

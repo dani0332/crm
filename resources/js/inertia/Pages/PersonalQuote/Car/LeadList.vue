@@ -37,6 +37,7 @@ const tableHeader = [
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'DATE OF BIRTH', value: 'dob' },
   { text: 'LEAD SOURCE', value: 'source' },
+  { text: 'ADVISOR REQUESTED', value: 'sic_advisor_requested' },
   { text: 'NATIONALITY', value: 'nationality_id_text' },
   { text: 'UAE LICENCE HELD FOR', value: 'uae_license_held_for_id_text' },
   { text: 'CAR MAKE', value: 'car_make_id_text' },
@@ -64,7 +65,7 @@ const tableHeader = [
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
-  { text: 'RENEWAL EXPIRY DATE', value: 'renewal_expiry_date' },
+  { text: 'POLICY EXPIRY DATE', value: 'policy_expiry_date' },
   { text: 'IS GCC STANDARD', value: 'is_gcc_standard' },
   { text: 'IS VEHICLE MODIFIED', value: 'is_modified' },
   { text: 'PRICE', value: 'premium' },
@@ -208,7 +209,7 @@ const filters = reactive({
   quote_status_id: [],
   created_at_start: page.props.createdAtStart || '',
   currently_insured_with: '',
-  renewal_expiry_date: '',
+  policy_expiry_date: '',
   is_ecommerce: '',
   payment_status_id: '',
   renewal_batch: '',
@@ -220,16 +221,17 @@ const filters = reactive({
   quote_batch_id: [],
   advisor_id: [],
   advisor_assigned_date_end: '',
-  renewal_expiry_date_end: '',
+  policy_expiry_date_end: '',
   created_at_end: page.props.createdAtEnd || '',
   page: 1,
   paid_at_start: '',
   paid_at_end: '',
+  sic_advisor_requested: 'All',
   segment_filter: 'all',
   teams: [],
   transaction_approved_dates: page.props.transaction_approved_dates || '',
-  payment_due_date:"",
-  booking_date: ""
+  payment_due_date: '',
+  booking_date: '',
 });
 
 const teamUsers =
@@ -255,7 +257,11 @@ const canExportLeadsAndPlan = ref(false);
 watch(
   () => filters,
   () => {
-    if ((filters.created_at_start && filters.created_at_end) || (filters.payment_due_date) || (filters.booking_date)) {
+    if (
+      (filters.created_at_start && filters.created_at_end) ||
+      filters.payment_due_date ||
+      filters.booking_date
+    ) {
       canExport.value = true;
     } else {
       canExport.value = false;
@@ -379,7 +385,6 @@ onMounted(() => {
   setQueryStringFilters();
 });
 
-
 const resetDateFilters = filterName => {
   const filterMappings = {
     payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
@@ -411,7 +416,6 @@ const resetDateFilters = filterName => {
     },
   );
 });
-
 </script>
 
 <template>
@@ -585,14 +589,14 @@ const resetDateFilters = filterName => {
           placeholder="Search by Renewal Batch"
         />
         <DatePicker
-          v-model="filters.renewal_expiry_date"
-          name="renewal_expiry_date"
-          label="Renewal Expiry Date Start"
+          v-model="filters.policy_expiry_date"
+          name="policy_expiry_date"
+          label="Policy Expiry Date Start"
         />
         <DatePicker
-          v-model="filters.renewal_expiry_date_end"
-          name="renewal_expiry_date_end"
-          label="Renewal Expiry Date End"
+          v-model="filters.policy_expiry_date_end"
+          name="policy_expiry_date_end"
+          label="Policy Expiry Date End"
         />
         <ComboBox
           :single="true"
@@ -673,6 +677,17 @@ const resetDateFilters = filterName => {
           :options="quoteSegments"
           :single="true"
         />
+        <x-select
+          v-model="filters.sic_advisor_requested"
+          label="Advisor Requested"
+          placeholder="Select any option"
+          :options="[
+            { value: 'All', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+          class="w-full"
+        />
         <DatePicker
           v-model="filters.payment_due_date"
           label="Payment Due Date"
@@ -710,7 +725,8 @@ const resetDateFilters = filterName => {
             </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date are required to export data.
+                Created dates or payment due date or booking date are required
+                to export data.
               </span>
             </template>
           </x-tooltip>
@@ -829,6 +845,13 @@ const resetDateFilters = filterName => {
         <div class="text-center">
           <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
             {{ is_ecommerce ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
+      </template>
+      <template #item-sic_advisor_requested="{ sic_advisor_requested }">
+        <div class="text-center">
+          <x-tag size="sm" :color="sic_advisor_requested ? 'success' : 'error'">
+            {{ sic_advisor_requested ? 'Yes' : 'No' }}
           </x-tag>
         </div>
       </template>

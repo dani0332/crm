@@ -495,14 +495,6 @@ class ReportsController extends Controller
 
     public function renderRetentionReport(Request $request,  AdvisorConversionReportService $advisorConversionReportService, RetentionReportService $retentionReportService){
         $retentionReportData =  $retentionReportService->getReportData($request);
-        $isShowBatchColumn = false;
-        $firstRetentionReporData = false;
-        if (count($retentionReportData) != 0){
-           $firstRetentionReporData = $retentionReportData->first();
-        }
-        if ($firstRetentionReporData && $firstRetentionReporData->getAttribute('batch') !== null) {
-            $isShowBatchColumn = true;
-        }
         return inertia('Reports/RetentionReport', [
             'filterOptions' => $advisorConversionReportService->getFilterOptions(),
             'filtersByLob' => $advisorConversionReportService->getFiltersByLob(),
@@ -510,7 +502,7 @@ class ReportsController extends Controller
             'productName' => $retentionReportService->getUserPorductName(),
             'monthNames' => MonthNameEnum::all(),
             'RetentionReportEnum' => RetentionReportEnum::asArray(),
-            'isShowBatchColumn' => $isShowBatchColumn,
+            'isShowBatchColumn' => $retentionReportService->isShowBatchColumn($retentionReportData),
             'footerData' => $retentionReportService->getFooterData($retentionReportData)
         ]);
     }

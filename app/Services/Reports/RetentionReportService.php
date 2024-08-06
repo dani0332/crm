@@ -413,6 +413,8 @@ class RetentionReportService extends BaseService
      */
     private function formatReportData($reportData)
     {
+        $aggregatedData= $this->getFooterData($reportData);
+        $avgVolumeNetRetention = $aggregatedData['volume_net_retention']; 
         // Iterate through each report in the report data
         foreach ($reportData as $report) {
             $totalInvalid = $report->total - $report->invalid;
@@ -425,6 +427,11 @@ class RetentionReportService extends BaseService
             $report->volume_gross_retention = $this->calculateRetentionPercentage(
                 $report->sales, 
                 $report->total
+            );
+            
+            $report->relative_retention = $this->calculateAdvisorRetentionPercentage(
+                $avgVolumeNetRetention,
+                $report->volume_net_retention
             );
         }
 
@@ -490,7 +497,6 @@ class RetentionReportService extends BaseService
      * Calculates and returns the footer data for the report.
      * This method aggregates the report data, calculates the total valid entries,
      * and computes the volume net retention and volume gross retention percentages.
-     * 
      * @return array 
      */
     public function getFooterData($reportData){
@@ -516,7 +522,8 @@ class RetentionReportService extends BaseService
             'lost' => $aggregatedData['lost'],
             'invalid' => $aggregatedData['invalid'],
             'volume_net_retention' => $volumeNetRetention,
-            'volume_gross_retention' => $volumeGrossRetention
+            'volume_gross_retention' => $volumeGrossRetention,
+            
         ];
     }
 
@@ -535,6 +542,9 @@ class RetentionReportService extends BaseService
         ];
     }
 
+    private function calculateAdvisorRetentionPercentage($avgVolumeNetRetention, $volumeNetRetention){
+        return number_format((((double)$volumeNetRetention) - ((double)$avgVolumeNetRetention)) , 2) . '%' ;
+    }
     /**
      * Calculates the retention percentage based on sales and total values.
      *
@@ -544,4 +554,16 @@ class RetentionReportService extends BaseService
     {
         return ($total != 0) ? number_format(($sales / $total) * 100, 2) . '%' : '0.00%';
     }
+
+    public function isShowBatchColumn($retentionReportData){
+        $isShowBatchColumn = false;
+        if (count($retentionReportData) != 0){
+           $firstRetentionReporData = $retentionReportData->first();
+        }
+        if ($firstRetentionReporData && $firstRetentionReporData->getAttribute('batch') !== null) {
+            $isShowBatchColumn = true;
+        }
+        return $isShowBatchColumn;
+    }
+
 }

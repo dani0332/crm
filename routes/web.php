@@ -131,6 +131,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('/reports/advisor-distribution', [ReportsController::class, 'renderAdvisorDistributionReport'])->name('advisor-distribution-report-view');
 
+    Route::get('{quoteType}/report-export', [CentralController::class, 'exportLeads'])->name('retention-export');
     Route::get('/reports/retention-report', [ReportsController::class, 'renderRetentionReport'])->name('retentionn-report');
     Route::get('/reports/fetch-retention-leads-data', [ReportsController::class, 'fetchRetentionLeadsData'])->name('fetch-retention-leads-data');
    
