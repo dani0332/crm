@@ -47,8 +47,10 @@ const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteIssuanceStatusEnum = page.props.quoteIssuanceStatusEnum;
 const quoteStatusEnum = page.props.quoteStatusEnum;
-const isPolicyCancelledOrPending = page.props?.bookPolicyDetails?.isPolicyCancelledOrPending;
-const isPolicyCancelledOrPendingToolTtip = page.props?.bookPolicyDetails?.isPolicyCancelledOrPendingToolTtip;
+const isPolicyCancelledOrPending =
+  page.props?.bookPolicyDetails?.isPolicyCancelledOrPending;
+const isPolicyCancelledOrPendingToolTtip =
+  page.props?.bookPolicyDetails?.isPolicyCancelledOrPendingToolTtip;
 
 const policyIssuanceStatusOptions = computed(() => {
   let policyIssuanceStatus = page.props.policyIssuanceStatus;
@@ -319,7 +321,8 @@ watch(
   },
 );
 
-const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] = createReusableTemplate();
+const [EditPolicyButtonTemplate, EditPolicyButtonReuseTemplate] =
+  createReusableTemplate();
 
 const setQuotePlanInsurerNumber = () => {
   policyDetailsForm.quote_plan_insurer_quote_number =
@@ -336,7 +339,6 @@ watch(
     setQuotePlanInsurerNumber();
   },
 );
-
 </script>
 
 <template>
@@ -409,7 +411,8 @@ watch(
                 <x-tooltip>
                   <label
                     class="font-medium text-gray-800 dark:text-gray-200 mb-1 uppercase border-b-2 border-dotted border-black"
-                    >Price (VAT NOT APPLICABLE)
+                  >
+                    Price (VAT NOT APPLICABLE)
                     <span
                       v-if="isPriceVatApplicableRequired"
                       class="text-red-500"
@@ -422,7 +425,7 @@ watch(
                     }}</span>
                   </template>
                 </x-tooltip>
-                <x-textarea
+                <x-input
                   v-model="policyDetailsForm.price_vat_notapplicable"
                   @change="calculateVatAmount"
                   :custom-error="
@@ -479,7 +482,7 @@ watch(
                     }}</span>
                   </template>
                 </x-tooltip>
-                <x-textarea
+                <x-input
                   v-model="policyDetailsForm.price_vat_applicable"
                   @change="calculateVatAmount"
                   :custom-error="
@@ -634,7 +637,7 @@ watch(
               <div class="w-full md:w-1/2" />
             </div>
 
-            <EditPolicyButtonTemplate v-slot="{ isDisabled }" >
+            <EditPolicyButtonTemplate v-slot="{ isDisabled }">
               <x-button
                 class="mt-4"
                 color="emerald"
@@ -642,17 +645,19 @@ watch(
                 @click.prevent="policyDetailsState.isEditing = true"
                 :disabled="isDisabled"
               >
-              Edit
+                Edit
               </x-button>
             </EditPolicyButtonTemplate>
 
-            <div v-if="isPolicyCancelledOrPending" class="flex justify-end"> 
+            <div v-if="isPolicyCancelledOrPending" class="flex justify-end">
               <x-tooltip>
                 <x-button class="mt-4 mr-2" color="emerald" size="sm" disabled>
                   Edit
                 </x-button>
                 <template #tooltip>
-                  <span class="custom-tooltip-content"> {{ isPolicyCancelledOrPendingToolTtip }} </span>
+                  <span class="custom-tooltip-content">
+                    {{ isPolicyCancelledOrPendingToolTtip }}
+                  </span>
                 </template>
               </x-tooltip>
             </div>
@@ -695,17 +700,38 @@ watch(
                   Update
                 </x-button>
 
-                <x-tooltip v-if="page.props.lockLeadSectionsDetails.lead_details" position="bottom">
-                  <template v-if="props.modelType === quoteTypeCodeEnum.Car.toLowerCase()">
-                    <EditPolicyButtonReuseTemplate v-if="!policyDetailsState.isEditing && can(permissionsEnum.POLICY_DETAILS_ADD)" :isDisabled="true"/>
+                <x-tooltip
+                  v-if="page.props.lockLeadSectionsDetails.lead_details"
+                  placement="bottom"
+                >
+                  <template
+                    v-if="
+                      props.modelType === quoteTypeCodeEnum.Car.toLowerCase()
+                    "
+                  >
+                    <EditPolicyButtonReuseTemplate
+                      v-if="
+                        !policyDetailsState.isEditing &&
+                        can(permissionsEnum.POLICY_DETAILS_ADD)
+                      "
+                      :isDisabled="true"
+                    />
                   </template>
-                  <template #tooltip>TThis lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+                  <template #tooltip
+                    >TThis lead is now locked as the policy has been booked. If
+                    changes are needed, go to 'Send Update', select 'Add
+                    Update', and choose 'Correction of Policy'</template
+                  >
                 </x-tooltip>
 
                 <template v-else>
-                  <EditPolicyButtonReuseTemplate v-if="!policyDetailsState.isEditing && can(permissionsEnum.POLICY_DETAILS_ADD)"/>
+                  <EditPolicyButtonReuseTemplate
+                    v-if="
+                      !policyDetailsState.isEditing &&
+                      can(permissionsEnum.POLICY_DETAILS_ADD)
+                    "
+                  />
                 </template>
-
               </template>
               <template v-else>
                 <x-tooltip>

@@ -44,8 +44,8 @@ const filters = reactive({
   coverage_code: '',
   previous_quote_policy_number: '',
   renewal_batch: '',
-  payment_due_date:"",
-  booking_date: ""
+  payment_due_date: '',
+  booking_date: '',
 });
 
 const loader = reactive({
@@ -226,7 +226,11 @@ const onDataExport = () => {
 watch(
   () => filters,
   () => {
-    if ((filters.created_at_start && filters.created_at_end) || (filters.payment_due_date) || (filters.booking_date)) {
+    if (
+      (filters.created_at_start && filters.created_at_end) ||
+      filters.payment_due_date ||
+      filters.booking_date
+    ) {
       canExport.value = true;
     } else {
       canExport.value = false;
@@ -294,7 +298,7 @@ const resetDateFilters = filterName => {
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -462,11 +466,12 @@ const resetDateFilters = filterName => {
           >
             Export
           </x-button>
-          <x-tooltip v-else position="right">
+          <x-tooltip v-else placement="right">
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date are required to export data.
+                Created dates or payment due date or booking date are required
+                to export data.
               </span>
             </template>
           </x-tooltip>
@@ -552,10 +557,10 @@ const resetDateFilters = filterName => {
             coverage_code != null
               ? coverage_code
               : days_cover_for <= 92
-              ? travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
-              : travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
-                '/' +
-                travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
+                ? travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
+                : travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
+                  '/' +
+                  travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
           }}
         </div>
       </template>
@@ -574,16 +579,16 @@ const resetDateFilters = filterName => {
             direction_code == travelQuoteEnum.TRAVEL_UAE_OUTBOUND
               ? 'Outbound'
               : direction_code == travelQuoteEnum.TRAVEL_UAE_INBOUND
-              ? 'Inbound'
-              : currently_located_in_id_text ==
-                  travelQuoteEnum.LOCATION_UAE_TEXT &&
-                region_cover_for_id != travelQuoteEnum.REGION_COVER_ID_UAE
-              ? 'Outbound'
-              : destination_id_text ==
-                  travelQuoteEnum.LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
-                region_cover_for_id == travelQuoteEnum.REGION_COVER_ID_UAE
-              ? 'Inbound'
-              : ''
+                ? 'Inbound'
+                : currently_located_in_id_text ==
+                      travelQuoteEnum.LOCATION_UAE_TEXT &&
+                    region_cover_for_id != travelQuoteEnum.REGION_COVER_ID_UAE
+                  ? 'Outbound'
+                  : destination_id_text ==
+                        travelQuoteEnum.LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
+                      region_cover_for_id == travelQuoteEnum.REGION_COVER_ID_UAE
+                    ? 'Inbound'
+                    : ''
           }}
         </div>
       </template>

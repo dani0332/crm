@@ -407,70 +407,12 @@ border-primary animate-spin;
   min-height: 38px;
 }
 
-.arrow-t .x-popover-container::after {
-  content: '';
-  position: absolute;
-  top: -9px;
-  left: 50%;
-  margin-left: -5px;
-  border-width: 5px;
-  border-style: solid;
-  border-color: rgb(55, 65, 81) transparent transparent transparent;
-  transform: rotate(180deg);
-}
-
-.arrow-l .x-popover-container::after {
-  content: '';
-  position: absolute;
-  left: -5px;
-  top: 10px;
-  margin-left: -5px;
-  border-width: 5px;
-  border-style: solid;
-  border-color: rgb(28, 124, 178) transparent transparent transparent;
-  transform: rotate(90deg);
-}
-
 .x-popover-container.max-h-72 {
   @apply !max-h-48;
 }
 
-.arrow-l-dark .x-popover-container::after {
-  content: '';
-  position: absolute;
-  top: 100%; /* Change 'top' to move the arrow to the top position */
-  left: 50%; /* Center the arrow horizontally */
-  margin-left: -5px;
-  border-width: 5px;
-  border-style: solid;
-  border-color: rgb(55 65 81) transparent transparent transparent;
-  transform: rotate(360deg);
-}
 .x-notification {
   @apply z-50;
-}
-
-.arrow-r .x-popover-container::after {
-  content: '';
-  position: absolute;
-  top: 14%; /* Change 'top' to move the arrow to the top position */
-  right: -4.2%; /* Center the arrow horizontally */
-  /* margin-right: -5px; */
-  border-width: 5px;
-  border-style: solid;
-  border-color: rgb(55 65 81) transparent transparent transparent;
-  transform: rotate(270deg);
-}
-
-.arrow-b .x-popover-container::after {
-  content: '';
-  position: absolute;
-  bottom: -9px;
-  left: 50%;
-  margin-left: -5px;
-  border-width: 5px;
-  border-style: solid;
-  border-color: rgb(55 65 81) transparent transparent transparent;
 }
 
 .vue3-easy-data-table.plain {
