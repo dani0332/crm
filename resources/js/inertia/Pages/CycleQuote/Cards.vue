@@ -10,6 +10,9 @@ const props = defineProps({
   },
   leadStatuses: Array,
   advisors: Array,
+  teams: Object,
+  areBothTeamsPresent: Boolean,
+  is_renewal: String,
 });
 
 const page = usePage();
@@ -71,6 +74,7 @@ const params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(false);
 const filtersCount = ref(0);
+
 const filters = reactive({
   date: null,
   status_filters: null,
@@ -82,7 +86,7 @@ const filters = reactive({
   created_at_start: '',
   created_at_end: '',
   renewal_batch: '',
-  previous_quote_policy_number: '',
+  is_renewal: props.is_renewal,
   is_ecommerce: '',
   quote_status_id: '',
   page: 1,
@@ -92,6 +96,8 @@ const filters = reactive({
   stale_at: '',
   advisors: [],
 });
+
+provide('filters', filters);
 
 const serverOptions = ref({
   page: 1,
@@ -233,7 +239,7 @@ function onReset() {
     <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -340,14 +346,15 @@ function onReset() {
             class="w-full"
           />
         </x-field>
-        <x-field label="Is Renewal">
+        <x-field label="Renewal">
           <x-select
-            v-model="filters.previous_quote_policy_number"
+            :disabled="!props.areBothTeamsPresent"
+            v-model="filters.is_renewal"
             placeholder="Search by Renewal"
             :options="[
-              { value: '', label: 'All' },
-              { value: 0, label: 'Yes' },
-              { value: 1, label: 'No' },
+              { value: null, label: 'All' },
+              { value: 'Yes', label: 'Yes' },
+              { value: 'No', label: 'No' },
             ]"
             class="w-full"
           />

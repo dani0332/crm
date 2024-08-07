@@ -75,10 +75,10 @@ class QuoteSyncService extends BaseService
             ]);
     }
 
-    public function addStuckEntriesForSyncing()
+    public function addEntriesForReSyncing($status)
     {
         $entries = QuoteSync::where('is_synced', false)
-            ->where('status', QuoteSyncStatus::INPROGRESS)
+            ->where('status', $status)
             ->groupBy('quote_uuid')
             ->get()
             ->pluck('quote_uuid')->toArray();

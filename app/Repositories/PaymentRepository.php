@@ -7,6 +7,7 @@ use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\PaymentAllocationStatus;
+use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
@@ -35,6 +36,7 @@ use App\Traits\HandlesDeadlockRetries;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PaymentRepository extends BaseRepository implements PaymentRepositoryInterface
 {
@@ -164,37 +166,56 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         return $this->handleWithDeadlockRetries(function () use ($request) {
             $masterPayment = (object) $request->payment;
-            $paymentInformation = [
-                'total_price' => $masterPayment->total_price,
-                'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
-                'custom_reason' => ! empty($masterPayment->custom_reason) ? $masterPayment->custom_reason : null,
-                'discount_reason' => $masterPayment->discount_reason,
-                'discount_custom_reason' => $masterPayment->discount_custom_reason,
-                'discount_type' => $masterPayment->discount,
-                'frequency' => $masterPayment->frequency,
-                'credit_approval' => $masterPayment->credit_approval,
-                'total_payments' => $masterPayment->payment_no,
-                'collection_type' => $masterPayment->collection_type,
-                'total_amount' => $masterPayment->total_amount, //amount after discount
-                'collection_date' => $masterPayment->collection_date,
-                'discount_value' => $masterPayment->discount_value,
-                'payment_methods_code' => $masterPayment->payment_methods,
-                'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
-                'updated_by' => $request->user()->id,
-            ];
 
-            if ($masterPayment->reference) {
-                $paymentInformation['reference'] = $masterPayment->reference;
-            }
             $payment = Payment::where('code', $request->paymentCode)->first();
             if (! $payment) {
                 return ['status' => 'error', 'message' => 'Payment record not found'];
             }
 
-            if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
-                $paymentInformation['payment_status_id'] = PaymentStatusEnum::CREDIT_APPROVED;
-            } elseif ($payment->payment_status_id == PaymentStatusEnum::CREDIT_APPROVED) {
-                $paymentInformation['payment_status_id'] = PaymentStatusEnum::NEW;
+            if ($request->isPaymentLocked) { // Check if payment is locked to update specific fields
+                $paymentInformation = [
+                    'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
+                    'custom_reason' => ! empty($masterPayment->custom_reason) ? $masterPayment->custom_reason : null,
+                    'credit_approval' => $masterPayment->credit_approval,
+                    'updated_by' => $request->user()->id,
+                ];
+
+                // Check if payment frequency is upfron and Old or new Payment method is Proforma Payment Request, only than update parent payment method
+                $isProformaPaymentNewParentPaymentMethod = $masterPayment->payment_methods == PaymentMethodsEnum::ProformaPaymentRequest;
+                $isProformaPaymentOldParentPaymentMethod = $payment->payment_methods_code == PaymentMethodsEnum::ProformaPaymentRequest;
+                $isParentPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
+                if ($isParentPaymentFrequencyUpfront && ($isProformaPaymentNewParentPaymentMethod || $isProformaPaymentOldParentPaymentMethod)) {
+                    $paymentInformation['payment_methods_code'] = $masterPayment->payment_methods;
+                }
+
+            } else {
+                $paymentInformation = [
+                    'total_price' => $masterPayment->total_price,
+                    'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
+                    'custom_reason' => ! empty($masterPayment->custom_reason) ? $masterPayment->custom_reason : null,
+                    'discount_reason' => $masterPayment->discount_reason,
+                    'discount_custom_reason' => $masterPayment->discount_custom_reason,
+                    'discount_type' => $masterPayment->discount,
+                    'frequency' => $masterPayment->frequency,
+                    'credit_approval' => $masterPayment->credit_approval,
+                    'total_payments' => $masterPayment->payment_no,
+                    'collection_type' => $masterPayment->collection_type,
+                    'total_amount' => $masterPayment->total_amount, //amount after discount
+                    'collection_date' => $masterPayment->collection_date,
+                    'discount_value' => $masterPayment->discount_value,
+                    'payment_methods_code' => $masterPayment->payment_methods,
+                    'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
+                    'updated_by' => $request->user()->id,
+                ];
+
+                if ($masterPayment->reference) {
+                    $paymentInformation['reference'] = $masterPayment->reference;
+                }
+                if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
+                    $paymentInformation['payment_status_id'] = PaymentStatusEnum::CREDIT_APPROVED;
+                } elseif ($payment->payment_status_id == PaymentStatusEnum::CREDIT_APPROVED) {
+                    $paymentInformation['payment_status_id'] = PaymentStatusEnum::NEW;
+                }
             }
             $payment->update($paymentInformation);
 
@@ -303,16 +324,23 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
 
             if (isset($splitPayment['payment_method']) && $splitPayment['payment_method'] != null) {
-                $splitPaymentInformation = [
-                    'code' => $request->paymentCode,
-                    'sr_no' => $serialNo,
-                    'payment_method' => $splitPayment['payment_method'],
-                    'check_detail' => isset($splitPayment['check_detail']) ? $splitPayment['check_detail'] : null,
-                    'payment_amount' => $splitPayment['payment_amount'],
-                    'payment_status_id' => PaymentStatusEnum::NEW, //reset status to 'NEW
-                    'due_date' => $splitPayment['due_date'],
-                    'discount_value' => $discount,
-                ];
+
+                if ($request->isPaymentLocked) { // Check if payment is locked to update specific fields
+                    $splitPaymentInformation = [
+                        'payment_method' => $splitPayment['payment_method'],
+                    ];
+                } else {
+                    $splitPaymentInformation = [
+                        'code' => $request->paymentCode,
+                        'sr_no' => $serialNo,
+                        'payment_method' => $splitPayment['payment_method'],
+                        'check_detail' => isset($splitPayment['check_detail']) ? $splitPayment['check_detail'] : null,
+                        'payment_amount' => $splitPayment['payment_amount'],
+                        'payment_status_id' => PaymentStatusEnum::NEW, //reset status to 'NEW
+                        'due_date' => $splitPayment['due_date'],
+                        'discount_value' => $discount,
+                    ];
+                }
 
                 $paymentSplitRecord = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $serialNo])->first();
                 if (! $paymentSplitRecord) {
@@ -484,7 +512,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 DB::commit();
             } catch (Exception $exception) {
                 $canCaptureEp = false;
+                Log::error('Error in processMasterPaymentApprove: '.$exception->getMessage());
                 DB::rollBack();
+                $successMessage = false;
             }
 
             if ($canCaptureEp) {

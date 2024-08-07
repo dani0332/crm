@@ -41,7 +41,7 @@ class AlfredChatController extends Controller
                             ],
                         ],
                         'role' => ['$first' => '$role'], //$first is used to add role field of the first occurrence of the group
-                        'msg' => ['$first' => '$msg'],   //$first is used to add msg field  of the first occurrence of the group
+                        'msg' => ['$first' => '$msg'], //$first is used to add msg field  of the first occurrence of the group
                         'count' => ['$sum' => 1], // $sum is used to count the number of records in the group
                     ],
                 ],
@@ -66,7 +66,7 @@ class AlfredChatController extends Controller
         $chat = AlfredChat::where('quote_id', $request->quoteId)
             ->where('quote_type', $request->quoteType)
             ->whereBetween('created_at', [$dateFrom, $dateTo])
-            ->select('role', 'msg', 'created_at')
+        // ->select('role', 'msg', 'created_at')
             ->get();
 
         if ($chat->isEmpty()) {
@@ -202,11 +202,11 @@ class AlfredChatController extends Controller
             : null,
 
             'next_page_url' => $nextPage ? $request->url().'?page='.$nextPage.
-                ($request->start_date ? '&start_date='.$request->start_date : '').
-                ($request->end_date ? '&end_date='.$request->end_date : '').
-                ($request->quoteType ? '&quoteType='.$request->quoteType : '').
-                ($request->quoteId ? '&quoteId='.$request->quoteId : '')
-                : null,
+            ($request->start_date ? '&start_date='.$request->start_date : '').
+            ($request->end_date ? '&end_date='.$request->end_date : '').
+            ($request->quoteType ? '&quoteType='.$request->quoteType : '').
+            ($request->quoteId ? '&quoteId='.$request->quoteId : '')
+            : null,
 
             'from' => $startIndex + 1,
             'to' => $endIndex,

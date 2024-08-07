@@ -11,6 +11,9 @@ const props = defineProps({
   leadStatuses: Array,
   advisors: Array,
   insuranceTypeOptions: Array,
+  teams: Object,
+  areBothTeamsPresent: Boolean,
+  is_renewal: String,
 });
 
 const page = usePage();
@@ -70,6 +73,18 @@ const params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(false);
 const filtersCount = ref(0);
+const renewalInitialState = () => {
+  if (hasTeams([teamsEnum.CORPLINE_TEAM, teamsEnum.CORPLINE_RENEWALS])) {
+    return 'Yes';
+  } else if (hasTeams([teamsEnum.CORPLINE_RENEWALS])) {
+    return 'Yes';
+  } else if (hasTeams([teamsEnum.CORPLINE_TEAM])) {
+    return 'No';
+  } else {
+    return null;
+  }
+};
+
 const filters = reactive({
   date: null,
   status_filters: null,
@@ -87,11 +102,13 @@ const filters = reactive({
   page: 1,
   previous_quote_policy_number: '',
   renewal_batch: '',
-  is_renewal: '',
+  is_renewal: props.is_renewal,
   payment_status: [],
   is_cold: false,
   is_stale: false,
 });
+
+provide('filters', filters);
 
 const serverOptions = ref({
   page: 1,
@@ -180,7 +197,7 @@ const setIntialState = () => {
     page: 1,
     previous_quote_policy_number: '',
     renewal_batch: '',
-    is_renewal: '',
+    is_renewal: props.is_renewal,
     payment_status: [],
     is_cold: false,
     is_stale: false,
@@ -275,7 +292,7 @@ watch(
     <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -373,9 +390,9 @@ watch(
           v-model="filters.previous_quote_policy_number"
           type="text"
           name="previous_quote_policy_number"
-          label="Previous Policy Number"
+          label="Policy Number"
           class="w-full"
-          placeholder="Search by Previous Policy Number"
+          placeholder="Policy Number"
         />
         <x-input
           v-model="filters.renewal_batch"
@@ -386,8 +403,9 @@ watch(
           placeholder="Search by Renewal Batch"
         />
         <x-select
+          :disabled="!props.areBothTeamsPresent"
           v-model="filters.is_renewal"
-          label="Is Renewal"
+          label="Renewal"
           placeholder="Search by Renewal"
           :options="[
             { value: '', label: 'All' },

@@ -153,21 +153,7 @@ class PetQuoteService extends BaseService
 
     public function getDetailEntity($id)
     {
-        $entity = PetQuoteRequestDetail::where('pet_quote_request_id', $id)->firstOrFail();
-        if (! $entity) {
-            $entity = $this->createDetailEntity($id);
-        }
-
-        return $entity;
-    }
-
-    public function createDetailEntity($id)
-    {
-        return PetQuoteRequestDetail::create([
-            'pet_quote_request_id' => $id,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
+        return PetQuoteRequestDetail::firstOrCreate(['pet_quote_request_id' => $id]);
     }
 
     public function getLeadsForAssignment()
@@ -192,7 +178,7 @@ class PetQuoteService extends BaseService
         }
         if ($request->ajax()) {
             if (empty($request->email) && empty($request->code) && empty($request->first_name) &&
-                    empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
+                empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
                 $this->query->where('pqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
@@ -208,7 +194,7 @@ class PetQuoteService extends BaseService
 
             if (Auth::user()->isSpecificTeamAdvisor('Pet')) {
                 // if user has advisor Role then fetch leads assigned to the user only
-                $this->query->where('pqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
+                $this->query->where('pqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
             }
             if (isset($request->code) && $request->code != '') {
                 $this->query->where('pqr.code', $request->code);
@@ -226,7 +212,10 @@ class PetQuoteService extends BaseService
                 $this->query->where('pqr.mobile_no', $request->mobile_no);
             }
             if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-                $this->query->where('pqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+                $this->query->where(function ($query) use ($request) {
+                    $query->where('pqr.policy_number', $request->previous_quote_policy_number)
+                        ->orWhere('pqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+                });
             }
             if (isset($request->renewal_batch) && $request->renewal_batch != '') {
                 $this->query->where('pqr.renewal_batch', $request->renewal_batch);
@@ -389,15 +378,13 @@ class PetQuoteService extends BaseService
 
     public function updateChildRecord($id)
     {
-        $childRecord = PetQuoteRequestDetail::where('pet_quote_request_id', $id)->first();
-
-        if (empty($childRecord)) {
-            $childRecord = $this->createDetailEntity($id);
-        }
-
-        $childRecord->advisor_assigned_by_id = Auth::user()->id;
-        $childRecord->advisor_assigned_date = Carbon::now();
-        $childRecord->save();
+        PetQuoteRequestDetail::updateOrCreate(
+            ['pet_quote_request_id' => $id],
+            [
+                'advisor_assigned_date' => Carbon::now(),
+                'advisor_assigned_by_id' => Auth::user()->id,
+            ]
+        );
     }
 
     public function fillModelProperties()

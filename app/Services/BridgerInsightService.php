@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\AMLDecisionStatusEnum;
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Models\KycLog;
 use App\Models\QuoteType;
@@ -25,7 +26,7 @@ class BridgerInsightService
         $this->bridgerEndPoint = config('constants.BRIDGER_ENDPOINT'); //'https://staging.bridger.lexisnexis.eu/LN.WebServices';
         $this->bridgerClientID = config('constants.BRIDGER_CLIENTID'); //'AFIALLCAETEST';
         $this->bridgerUserName = config('constants.BRIDGER_USERNAME'); //'DaniyalS01';
-        $this->bridgerPassword = config('constants.BRIDGER_PASSWORD'); //'user@1234@';
+        $this->bridgerPassword = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::BRIDGER_PASSWORD); //'user@1234@';
         $this->bridgerAPIKey = config('constants.BRIDGER_APIKEY'); //'043b2bb1-2af9-46fe-add5-e6cee1e39259';
     }
 
