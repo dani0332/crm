@@ -182,4 +182,32 @@ class ActivitiesService extends BaseService
 
         return $activities;
     }
+
+    public function createApiActivity(Request $request, $record , $modelType)
+    {
+        $activity = new Activities();
+        $activity->uuid = $this->helperService->generateUUID();
+        if (isset($record) && $record != '') {
+            $activity->client_name = $record->first_name.' '.$record->last_name;
+            $activity->quote_request_id = isset($record->id) ? $record->id : $request->leadId;
+            $activity->quote_type_id = $this->getQuoteTypeId(strtolower($modelType));
+            $activity->quote_uuid = isset($request->entityUId) ? $request->entityUId : $request->quote_uuid;
+        }
+        if (isset($request->leadStatus)) {
+            $quoteStatus = QuoteStatus::select('text')->where('id', $request->leadStatus)->first();
+            $request->title = $quoteStatus->text;
+        }
+        $nextFollowupDate = isset($request->next_followup_date) ? Carbon::parse($request->next_followup_date)->format('Y-m-d H:i:s') : null;
+        $dueDate = isset($request->due_date) ? Carbon::parse($request->due_date)->format('Y-m-d H:i:s') : null;
+        $activity->due_date = isset($request->due_date) ? $dueDate : $nextFollowupDate;
+        $activity->assignee_id = isset($record->advisor_id) ? $record->advisor_id : auth()->user()->id;
+        $activity->description = isset($request->description) ? $request->description : $request->notes;
+        $activity->title = $request->title;
+        $activity->created_at = Carbon::now();
+        $activity->updated_at = Carbon::now();
+        $activity->quote_status_id = $record?->quote_status_id ?? null;
+        $activity->save();
+
+        return $activity;
+    }
 }

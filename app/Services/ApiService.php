@@ -12,6 +12,7 @@ use App\Jobs\SendOCBIntroEmailJob;
 use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
+use App\Models\QuoteType;
 use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -172,11 +173,15 @@ class ApiService
         if ($validator->fails()) {
             return response()->json(['message' => $validator->errors()->first()], 422);
         }
-        $record = '';
-        if (isset($request->entityId)) {
-            $record = app(CRUDService::class)->getEntity($request->modelType, $request->entityUId);
+        $modelType = '';
+        if (isset($request->quoteTypeId)) {
+            $modelType = QuoteType::select('code')->find($request->quoteTypeId);
         }
-        app(ActivitiesService::class)->createActivity($request, $record);
+        $record = '';
+        if (isset($request->entityUId)) {
+            $record = app(CRUDService::class)->getEntity($modelType->code, $request->entityUId);
+        }
+        app(ActivitiesService::class)->createApiActivity($request, $record,$modelType);
 
         return response()->json(['message' => 'Activity has been Created'], 200);
 

@@ -27,10 +27,8 @@ class ActivityApiRequest
             'title' => 'required|string',
             'description' => 'required|string',
             'due_date' => 'required|date',
-            'assignee_id' => 'required|integer',
             'entityUId' => 'required|string',
-            'entityId' => 'required|integer',
-            'modelType' => 'required|string',
+            'quoteTypeId' => 'required|int',
         ];
     }
 
@@ -41,12 +39,9 @@ class ActivityApiRequest
             'description.required' => 'Activity Description Required',
             'due_date.required' => 'Activity Due Date Required',
             'due_date.date' => 'Activity Due Date must be a valid date',
-            'assignee_id.required' => 'Activity Assignee ID Required',
-            'assignee_id.integer' => 'Activity Assignee ID must be an integer',
             'entityUId.required' => 'Entity UUID Required',
-            'entityId.required' => 'Entity ID Required',
-            'entityId.integer' => 'Entity ID must be an integer',
-            'modelType.required' => 'Model Type Required',
+            'quoteTypeId.integer' => 'Quote Type ID  must be an integer',
+            'quoteTypeId.required' => 'Quote Type ID Required',
         ];
     }
 }
