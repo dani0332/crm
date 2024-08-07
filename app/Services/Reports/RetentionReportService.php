@@ -3,6 +3,7 @@
 namespace App\Services\Reports;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\MonthNameEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteStatusCode;
@@ -36,6 +37,7 @@ class RetentionReportService extends BaseService
         $this->dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         // Test DB
         $this->policyExpiryColumnName = 'policy_expiry_date';
+        // $this->policyExpiryColumnName = 'created_at';
         // Stage DB
         // $this->policyExpiryColumnName = 'renewal_expiry_date';
         $this->paginateData = 12;
@@ -127,6 +129,10 @@ class RetentionReportService extends BaseService
         $this->applyFilters($query, $request);
         // Group the query results by advisor name
         $query->groupBy('users.name');
+
+        // Sort the results in chronological order by month
+        $months = implode("', '", MonthNameEnum::all());
+        $query->orderByRaw("FIELD(MONTHNAME({$this->policyExpiryColumnName}), '{$months}')");
         return $query;
     }
 
