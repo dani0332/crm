@@ -81,7 +81,7 @@ const ageRangeValid = computed(() => {
     });
 </script>
 <template>
-    <Head :title="'SIC Health Configuration'" />
+    <Head title="SIC Health Configuration" />
     <div class="card p-4 shadow-md rounded-lg mb-4">
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">
