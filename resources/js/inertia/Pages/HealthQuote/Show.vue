@@ -1540,6 +1540,7 @@ const selectedProviderPlan = ref({
   planName: page.props.quote.health_plan_name_text,
   providerName: page.props.quote.plan_provider_name_text,
   premium: page.props.ecomDetails.priceWithVAT,
+  planType: checkPlanType(page.props.quote.plan_type_id),
 });
 
 const handlePlanSelected = plan => {
@@ -1548,6 +1549,7 @@ const handlePlanSelected = plan => {
   selectedProviderPlan.value.planName = plan.planName;
   selectedProviderPlan.value.providerName = plan.providerName;
   selectedProviderPlan.value.premium = plan.premium;
+  selectedProviderPlan.value.planType =checkPlanType(plan.planTypeId);
   router.reload({
     preserveState: true,
     preserveScroll: true,
@@ -2789,6 +2791,10 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
             <dd>{{ coPayment ? coPayment.text : 'N/A' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PLAN TYPE</dt>
+            <dd>{{ selectedProviderPlan.planType ?? 'N/A' }}</dd>
           </div>
         </dl>
       </div>
