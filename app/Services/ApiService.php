@@ -181,7 +181,7 @@ class ApiService
         if (isset($request->entityUId)) {
             $record = app(CRUDService::class)->getEntity($modelType->code, $request->entityUId);
         }
-        app(ActivitiesService::class)->createApiActivity($request, $record,$modelType);
+        app(ActivitiesService::class)->createApiActivity($request, $record, $modelType);
 
         return response()->json(['message' => 'Activity has been Created'], 200);
 

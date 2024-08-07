@@ -183,14 +183,14 @@ class ActivitiesService extends BaseService
         return $activities;
     }
 
-    public function createApiActivity(Request $request, $record , $modelType)
+    public function createApiActivity(Request $request, $record, $modelType)
     {
         $activity = new Activities();
         $activity->uuid = $this->helperService->generateUUID();
         if (isset($record) && $record != '') {
             $activity->client_name = $record->first_name.' '.$record->last_name;
             $activity->quote_request_id = isset($record->id) ? $record->id : $request->leadId;
-            $activity->quote_type_id = $this->getQuoteTypeId(strtolower($modelType));
+            $activity->quote_type_id = $this->getQuoteTypeId(strtolower($modelType->code));
             $activity->quote_uuid = isset($request->entityUId) ? $request->entityUId : $request->quote_uuid;
         }
         if (isset($request->leadStatus)) {
