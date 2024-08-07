@@ -760,7 +760,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     {
         $insurance_provider_id = $payment->insurance_provider_id;
         $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
-        $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
+        //$insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
+        $latestBINByInsurer = Payment::whereNotNull('broker_invoice_number')->where('insurance_provider_id', $insurance_provider_id)->orderBy('updated_at', 'desc')->first()?->broker_invoice_number;
+        $insuranceProviderLeadCount = (int) str_replace($insuranceProviderCode, '', $latestBINByInsurer) + 1;
 
         return $insuranceProviderCode.$insuranceProviderLeadCount;
     }
