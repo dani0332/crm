@@ -34,10 +34,10 @@ use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
 use Exception;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Http\Request;
 
 class PaymentRepository extends BaseRepository implements PaymentRepositoryInterface
 {
@@ -767,7 +767,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $payment = $quoteModel->payments()->where('code', $request->payment_code)->first();
 
         if ($payment) {
-           
+
             $payment->paymentSplits()
                 ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
                 ->whereNot('payment_method', PaymentMethodsEnum::CreditApproval)
@@ -795,8 +795,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         vAbort($failMessage);
                     }
                 });
+
             return response()->json(['message' => 'Payment updated successfully']);
         }
+
         return response()->json(['error' => 'Receipts Creation Failed']);
     }
 }

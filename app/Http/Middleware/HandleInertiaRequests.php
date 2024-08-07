@@ -8,6 +8,7 @@ use App\Enums\DocumentTypeEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
+use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
@@ -108,6 +109,7 @@ class HandleInertiaRequests extends Middleware
             'paymentAllocationStatus' => PaymentAllocationStatus::asArray(),
             'lookupsEnum' => getLookupsEnum(),
             'documentTypeCodeEnum' => DocumentTypeCode::asArray(),
+            'paymentFrequencyEnum' => PaymentFrequency::asArray(),
         ];
     }
 
