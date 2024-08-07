@@ -397,10 +397,17 @@ const disableBookPolicyButton = computed(() => {
 });
 
 const isTravelQuoteAndAMLNotCleared = () => {
+  const sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
+  const isPolicySendTypeSage = sendPolicyType === sendPolicyTypeEnum.SAGE;
   const isQuoteTypeTravel = page.props.quoteType == quoteTypeCodeEnum.Travel;
   const isPolicyAMLScreeningCleared =
     props.quote.kyc_decision == kycEnums.COMPLETE;
-  if (isQuoteTypeTravel && !isPolicyAMLScreeningCleared) {
+
+  if (
+    isQuoteTypeTravel &&
+    !isPolicyAMLScreeningCleared &&
+    isPolicySendTypeSage
+  ) {
     let allowedQuoteStatuesForAMLAlert = [
       page.props.quoteStatusEnum.TransactionApproved,
       page.props.quoteStatusEnum.PolicyIssued,
