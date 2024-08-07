@@ -1573,6 +1573,9 @@ class HealthQuoteService extends BaseService
         $providers = InsuranceProvider::whereIn('id', $providerIds)->get()->keyBy('id')->toArray();
 
         $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
+        if (! $quote) {
+            return ['error' => 'Quote Detail not available'];
+        }
         $quote->load(['advisor' => function ($q) {
             $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
         }, 'customer']);
