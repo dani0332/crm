@@ -1934,6 +1934,7 @@ class SageApiService
 
         $returnMessage['status'] = true;
         $returnMessage['message'] = 'Apply Prepayment completed';
+
         return $returnMessage;
 
     }
