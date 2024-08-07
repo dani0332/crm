@@ -175,8 +175,8 @@ const isIntegerColumn = key => {
     <template #item-policy_start_date="{ policy_start_date }">
       {{ policy_start_date ?? 'N/A' }}
     </template>
-    <template #item-payment_due_date="{payment_due_date, due_date}">
-      {{ (payment_due_date ? payment_due_date : (due_date ? due_date : 'N/A')) }}
+    <template #item-payment_due_date="{ payment_due_date, due_date }">
+      {{ payment_due_date ? payment_due_date : due_date ? due_date : 'N/A' }}
     </template>
     <template #item-source="{ source }">
       {{ source }}
@@ -185,39 +185,33 @@ const isIntegerColumn = key => {
       {{ team }}
     </template>
     <template #item-price_vat_applicable="{ price_vat_applicable }">
-      {{ price_vat_applicable ? (price_vat_applicable) : 0.00 }}
+      {{ price_vat_applicable ? price_vat_applicable : 0.0 }}
     </template>
     <template #item-vat="{ vat }">
       {{ vat ?? 0 }}
     </template>
     <template #item-price_vat_not_applicable="{ price_vat_not_applicable }">
-      {{ price_vat_not_applicable ? (price_vat_not_applicable) : 0.00 }}
+      {{ price_vat_not_applicable ? price_vat_not_applicable : 0.0 }}
     </template>
     <template #item-discount="{ discount }">
-      {{ discount ? (discount) : 0.00 }}
+      {{ discount ? discount : 0.0 }}
     </template>
     <template #item-total_price="{ total_price }">
-      {{ total_price ? (total_price) : 0.00 }}
+      {{ total_price ? total_price : 0.0 }}
     </template>
     <template #item-commission_vat_applicable="{ commission_vat_applicable }">
-      {{
-        commission_vat_applicable ? (commission_vat_applicable) : 0.00
-      }}
+      {{ commission_vat_applicable ? commission_vat_applicable : 0.0 }}
     </template>
     <template #item-commission_vat="{ commission_vat }">
-      {{ commission_vat ? (commission_vat) : 0.00 }}
+      {{ commission_vat ? commission_vat : 0.0 }}
     </template>
     <template
       #item-commission_vat_not_applicable="{ commission_vat_not_applicable }"
     >
-      {{
-        commission_vat_not_applicable
-          ? (commission_vat_not_applicable)
-          : 0.00
-      }}
+      {{ commission_vat_not_applicable ? commission_vat_not_applicable : 0.0 }}
     </template>
     <template #item-total_commission="{ total_commission }">
-      {{ total_commission ? (total_commission) : 0.00 }}
+      {{ total_commission ? total_commission : 0.0 }}
     </template>
     <template #item-collects="{ collects }">
       {{ collects }}
@@ -241,7 +235,7 @@ const isIntegerColumn = key => {
       {{ customer_name }}
     </template>
     <template #item-customer_type="{ customer_type }">
-      {{ (customer_type && customer_type.includes('IND')) ? 'Individual' : '--' }}
+      {{ customer_type && customer_type.includes('IND') ? 'Individual' : '--' }}
     </template>
     <template #item-insurer="{ insurer }">
       {{ insurer }}
@@ -268,7 +262,10 @@ const isIntegerColumn = key => {
         >
           {{
             isIntegerColumn(header.value)
-              ? priceFormat(calculateTotalSum(reportData.data, header.value), true)
+              ? priceFormat(
+                  calculateTotalSum(reportData.data, header.value),
+                  true,
+                )
               : 'N/A'
           }}
         </td>

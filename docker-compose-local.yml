@@ -30,8 +30,8 @@ services:
     restart: unless-stopped
     tty: true
     ports:
-      - "$WEB_PORT:80"
-      - "$SSL_PORT:443"
+      - '$WEB_PORT:80'
+      - '$SSL_PORT:443'
     volumes:
       - ./:/var/www
       - ./docker-local/nginx/conf.d/:/etc/nginx/conf.d/
@@ -45,7 +45,7 @@ services:
     restart: unless-stopped
     tty: false
     ports:
-      - "$DB_MIRROR_PORT:3306"
+      - '$DB_MIRROR_PORT:3306'
     environment:
       MYSQL_DATABASE: blanka_db
       MYSQL_ROOT_PASSWORD: root
@@ -71,13 +71,13 @@ services:
       PMA_PORT: 3306
       PMA_ARBITRARY: 1
     ports:
-      - "$PHPMYADMIN_PORT:80"
+      - '$PHPMYADMIN_PORT:80'
   meilisearch:
-    image: "getmeili/meilisearch:latest"
+    image: 'getmeili/meilisearch:latest'
     ports:
-      - "7700:7700"
+      - '7700:7700'
     volumes:
-      - "sailmeilisearch:/data.ms"
+      - 'sailmeilisearch:/data.ms'
     networks:
       - blanka-app-network
   mailhogblanka:
