@@ -42,7 +42,6 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
             $lead = HealthQuote::where('uuid', $this->quoteUuid)->first();
             if (! $lead) {
                 info('SendHealthOCBIntroEmailJob - Lead not found for uuid: '.$this->quoteUuid);
-
                 return;
             }
             if ($lead->sic_flow_enabled) {
@@ -51,7 +50,7 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
                 return;
             } else {
                 info('SendHealthOCBIntroEmailJob - SIC work flow is not enabled on this lead : '.$this->quoteUuid);
-                $responseCode = $healthEmailService->sendHealthOCBIntroEmail($lead, $this->previousAdvisor, $healthQuoteService, $this->triggerSICWorkflow);
+                $responseCode = $healthEmailService->sendHealthOCBIntroEmail($lead,$healthQuoteService, $this->triggerSICWorkflow);
                 if (in_array($responseCode, [200, 201])) {
                     info('SendHealthOCBIntroEmailJob - OCB INTRO Email Sent: '.$responseCode.' Customer Email Address: '.$lead->email.' Quote UuId: '.$this->quoteUuid);
                 } else {

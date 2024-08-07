@@ -2,31 +2,28 @@
 
 namespace App\Services;
 
-use App\Enums\ApplicationStorageEnums;
+use App\Models\User;
+use App\Services\BirdService;
 use App\Enums\HealthFacilityType;
 use App\Enums\HealthPlanTypeEnum;
 use App\Models\ApplicationStorage;
-use App\Models\User;
+use App\Enums\ApplicationStorageEnums;
 
 class HealthEmailService extends BaseService
 {
-    protected $sendEmailCustomerService;
     protected $birdService;
 
-    public function __construct(SendEmailCustomerService $sendEmailCustomerService, BirdService $birdService)
+    public function __construct(BirdService $birdService)
     {
-        $this->sendEmailCustomerService = $sendEmailCustomerService;
         $this->birdService = $birdService;
     }
-
-    public function sendHealthOCBIntroEmail($lead, $previousAdvisorId, $healthQuoteService, $triggerSICWorkFlow = false)
+    public function sendHealthOCBIntroEmail($lead,$healthQuoteService, $triggerSICWorkFlow = false)
     {
         // Retrieve plans with available ratings for the given lead
         $quote = $healthQuoteService->getQuotePlans($lead->uuid);
         if (! $quote->quote->plans) {
             info('No plans found for lead: '.$lead->uuid.' | time: '.now());
         }
-
         $advisor = User::where('id', $lead->advisor_id)->first();
         $plans = $this->getQuotePlansByCriteria($quote->quote->healthPlanTypeId, $quote->quote->plans ?? []);
         $emailData = $this->mappingEmailDataForOCBEmail($lead, $advisor, $plans);
@@ -49,7 +46,6 @@ class HealthEmailService extends BaseService
                 info('SIC Health workflow already enabled for lead: '.$lead->uuid);
             }
         }
-
         return $responseCode;
     }
 
@@ -90,7 +86,6 @@ class HealthEmailService extends BaseService
                 ? collect($plan->coPayments)->firstWhere('id', $lowestRate->healthPlanCoPaymentId)
                 : '';
             $totalValue = ($plan->policyFee ?? 0) + ($plan->basmah ?? 0) + ($lowestRate->discountPremium ?? 0);
-
             return (object) [
                 'name' => $plan->name ?? null,
                 'planCode' => $plan->planCode,
@@ -122,7 +117,6 @@ class HealthEmailService extends BaseService
             ->map(function ($item) {
                 return str_replace('Hospital', '', $item->text);
             })->implode(', ');
-
         return $hospitals ?? '';
     }
 
