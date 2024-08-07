@@ -837,34 +837,39 @@ class CRUDService extends BaseService
                     // Product type
                     $customerScore += 1; // For products all product have 1
                     $scoreList[] = ['score' => 1, 'text' => 'Types of Products', 'value' => $type];
-
-                    $transactionVolumesScore = in_array(strtolower($customerDetail->premium_tenure), Kyc::PREMIUM_TENURE_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->premium_tenure), Kyc::PREMIUM_TENURE_TWO_RATING) ? 2 : 1);
-                    $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Premium Tenure', 'value' => Kyc::PREMIUM_TENURE[$customerDetail->premium_tenure]];
-                    $customerScore += $transactionVolumesScore;
-
+                    if (isset($customerDetail->premium_tenure)) {
+                        $transactionVolumesScore = in_array(strtolower($customerDetail->premium_tenure), Kyc::PREMIUM_TENURE_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->premium_tenure), Kyc::PREMIUM_TENURE_TWO_RATING) ? 2 : 1);
+                        $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Premium Tenure', 'value' => Kyc::PREMIUM_TENURE[$customerDetail->premium_tenure]];
+                        $customerScore += $transactionVolumesScore;
+                    }
                     // Payment amount Transaction value / Premium (AED)
                     $paymentScore = ($paymentAuthorized >= 1000000) ? 3 : (($paymentAuthorized >= 250001 && $paymentAuthorized <= 1000000) ? 2 : 1);
                     $paymentAuthorizedValue = $paymentScore == 3 ? 'Above AED 1,000,000' : ($paymentScore == 2 ? 'AED 250,001 to AED 1,000,000' : 'Upto AED 250,000');
                     $scoreList[] = ['score' => $paymentScore, 'text' => 'Transaction Value', 'value' => $paymentAuthorizedValue];
                     $customerScore += $paymentScore;
-
-                    $transactionVolumesScore = in_array(strtolower($customerDetail->transaction_pattern), Kyc::TRANSACTION_PATTERN_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->transaction_pattern), Kyc::TRANSACTION_PATTERN_ZERO_RATING) ? 0 : 1);
-                    $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Transaction Pattern changes', 'value' => Kyc::TRANSACTION_PATTERN[$customerDetail->transaction_pattern]];
-                    $customerScore += $transactionVolumesScore;
-
+                    if (isset($customerDetail->transaction_pattern)) {
+                        $transactionVolumesScore = in_array(strtolower($customerDetail->transaction_pattern), Kyc::TRANSACTION_PATTERN_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->transaction_pattern), Kyc::TRANSACTION_PATTERN_ZERO_RATING) ? 0 : 1);
+                        $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Transaction Pattern changes', 'value' => Kyc::TRANSACTION_PATTERN[$customerDetail->transaction_pattern]];
+                        $customerScore += $transactionVolumesScore;
+                    }
                     // payment mode
                     $customerScore += $paymentTopScore;
                     $scoreList[] = ['score' => $paymentTopScore, 'text' => 'Payment Mode', 'value' => $paymentMethod];
+                    if (isset($customerDetail->mode_of_delivery)) {
+                        $deliveryModeScore = in_array(strtolower($customerDetail->mode_of_delivery), Kyc::MODE_OF_DELIVERY_THREE_RATING) ? 3 : 1;
+                        $scoreList[] = ['score' => $deliveryModeScore, 'text' => 'Delivery Channel', 'value' => Kyc::MODE_OF_DELIVERY[$customerDetail->mode_of_delivery]];
+                        $customerScore += $deliveryModeScore;
+                    }
 
-                    $deliveryModeScore = in_array(strtolower($customerDetail->mode_of_delivery), Kyc::MODE_OF_DELIVERY_THREE_RATING) ? 3 : 1;
-                    $scoreList[] = ['score' => $deliveryModeScore, 'text' => 'Delivery Channel', 'value' => Kyc::MODE_OF_DELIVERY[$customerDetail->mode_of_delivery]];
-                    $customerScore += $deliveryModeScore;
-
-                    $contactScore = in_array(strtolower($customerDetail->mode_of_contact), Kyc::MODE_OF_CONTACT_THREE_RATING) ? 3 : 1;
-                    $modType = Lookup::where(['key' => LookupsEnum::MODE_OF_CONTACT, 'code' => $customerDetail->mode_of_contact])->first();
-                    $modTypeValue = $customerDetail->mode_of_contact;
-                    if (isset($modType->text)) {
-                        $modTypeValue = $modType->text;
+                    $contactScore = '';
+                    $modTypeValue = '';
+                    if (isset($customerDetail->mode_of_contact)) {
+                        $contactScore = in_array(strtolower($customerDetail->mode_of_contact), Kyc::MODE_OF_CONTACT_THREE_RATING) ? 3 : 1;
+                        $modType = Lookup::where(['key' => LookupsEnum::MODE_OF_CONTACT, 'code' => $customerDetail->mode_of_contact])->first();
+                        $modTypeValue = $customerDetail->mode_of_contact;
+                        if (isset($modType->text)) {
+                            $modTypeValue = $modType->text;
+                        }
                     }
                     $scoreList[] = ['score' => $contactScore, 'text' => 'Mode Of Contact', 'value' => $modTypeValue];
                     $customerScore += $contactScore;
@@ -1063,25 +1068,29 @@ class CRUDService extends BaseService
         $paymentAuthorizedValue = $transactionValueScore == 3 ? 'Above AED 1,000,000' : ($transactionValueScore == 2 ? 'AED 250,001 to AED 1,000,000' : 'Upto AED 250,000');
         $scoreList[] = ['score' => $transactionValueScore, 'text' => 'Transaction Value', 'value' => $paymentAuthorizedValue];
         $entityScore += $transactionValueScore;
+        if (isset($entity->transaction_activities)) {
+            $transactionVolumesScore = in_array(strtolower($entity->transaction_activities), Kyc::TRANSACTION_ACTIVITIES_THREE_RATING) ? 3 : (in_array(strtolower($entity->transaction_activities), Kyc::TRANSACTION_ACTIVITIES_TWO_RATING) ? 2 : 1);
+            $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Transaction Activities', 'value' => Kyc::TRANSACTION_ACTIVITIES[$entity->transaction_activities]];
+            $entityScore += $transactionVolumesScore;
+        }
 
-        $transactionVolumesScore = in_array(strtolower($entity->transaction_activities), Kyc::TRANSACTION_ACTIVITIES_THREE_RATING) ? 3 : (in_array(strtolower($entity->transaction_activities), Kyc::TRANSACTION_ACTIVITIES_TWO_RATING) ? 2 : 1);
-        $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Transaction Activities', 'value' => Kyc::TRANSACTION_ACTIVITIES[$entity->transaction_activities]];
-        $entityScore += $transactionVolumesScore;
-
-        $transactionVolumesScore = in_array(strtolower($entity->transaction_pattern), Kyc::TRANSACTION_PATTERN_THREE_RATING) ? 3 : (in_array(strtolower($entity->transaction_pattern), Kyc::TRANSACTION_PATTERN_ZERO_RATING) ? 0 : 1);
-        $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Transaction Pattern changes', 'value' => Kyc::TRANSACTION_PATTERN[$entity->transaction_pattern]];
-        $entityScore += $transactionVolumesScore;
-
+        if (isset($entity->transaction_pattern)) {
+            $transactionVolumesScore = in_array(strtolower($entity->transaction_pattern), Kyc::TRANSACTION_PATTERN_THREE_RATING) ? 3 : (in_array(strtolower($entity->transaction_pattern), Kyc::TRANSACTION_PATTERN_ZERO_RATING) ? 0 : 1);
+            $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Transaction Pattern changes', 'value' => Kyc::TRANSACTION_PATTERN[$entity->transaction_pattern]];
+            $entityScore += $transactionVolumesScore;
+        }
         $scoreList[] = ['score' => $paymentTopScore, 'text' => 'Payment Mode', 'value' => $paymentMethod];
         $entityScore += $paymentTopScore;
-
-        $transactionVolumesScore = in_array(strtolower($entity->mode_of_contact), Kyc::ENTITY_MODE_OF_CONTACT_THREE_RATING) ? 3 : 1;
-        $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Mode of Contact', 'value' => $entity->mode_of_contact];
-        $entityScore += $transactionVolumesScore;
-
-        $transactionVolumesScore = in_array(strtolower($entity->mode_of_delivery), Kyc::ENTITY_MODE_OF_DELIVERY_THREE_RATING) ? 3 : 1;
-        $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Delivery Channel', 'value' => Kyc::MODE_OF_DELIVERY[$entity->mode_of_delivery]];
-        $entityScore += $transactionVolumesScore;
+        if (isset($entity->mode_of_contact)) {
+            $transactionVolumesScore = in_array(strtolower($entity->mode_of_contact), Kyc::ENTITY_MODE_OF_CONTACT_THREE_RATING) ? 3 : 1;
+            $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Mode of Contact', 'value' => $entity->mode_of_contact];
+            $entityScore += $transactionVolumesScore;
+        }
+        if (isset($entity->mode_of_delivery)) {
+            $transactionVolumesScore = in_array(strtolower($entity->mode_of_delivery), Kyc::ENTITY_MODE_OF_DELIVERY_THREE_RATING) ? 3 : 1;
+            $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Delivery Channel', 'value' => Kyc::MODE_OF_DELIVERY[$entity->mode_of_delivery]];
+            $entityScore += $transactionVolumesScore;
+        }
 
         return ['total' => $entityScore, 'score_list' => $scoreList];
 
