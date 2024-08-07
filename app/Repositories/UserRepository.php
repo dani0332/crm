@@ -84,7 +84,7 @@ class UserRepository extends BaseRepository
     }
 
     /**
-     * @param    $teamName  this could be a string - single team or array of team names
+     * @param  $teamName  this could be a string - single team or array of team names
      * @return mixed
      */
     public function fetchIsUserMemberofTeam($userId, $teamName)
