@@ -28,6 +28,10 @@ const tableHeader = reactive([
     value: 'code',
   },
   {
+    text: 'Department',
+    value: 'department',
+  },
+  {
     text: 'Policy Number',
     value: 'policy_number',
   },

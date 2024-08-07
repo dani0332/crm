@@ -69,12 +69,18 @@ class ManagementReport
             ->map(fn ($users) => $users->name)
             ->toArray();
 
+        $departments = DB::table('departments')
+                           ->where('is_active', 1)
+                           ->orderBy('name')
+                           ->get();
+
         return [
             'maxDays' => $maxDays,
             'leadSources' => $leadSources,
             'teams' => $teams,
             'reportCategories' => $reportCategories,
             'transactionTypes' => $transactionTypes,
+            'departments' => $departments,
         ];
     }
     public function applyFilters($query, $request, $endorsementsQuery = false)
@@ -190,6 +196,9 @@ class ManagementReport
 
         if (isset($request['leadSources']) && ! empty($request['leadSources'])) {
             $query->whereIn('personal_quotes.source', $request['leadSources']);
+        }
+        if (isset($request['department_id']) && ! empty($request['department_id'])){
+            $query->whereIn('u.department_id', $request['department_id'] ?? []);
         }
 
         if (isset($request['includeCancelledPolicies']) && ! empty($request['includeCancelledPolicies'])) {

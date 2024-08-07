@@ -57,6 +57,7 @@ class InstallmentReportService extends ManagementReport
                 'personal_quotes.first_name',
                 'personal_quotes.last_name',
                 'u.name as advisor',
+                'dp.name as department',
                 'pi.name as policy_issuer',
                 'p.invoice_description as invoice_description',
                 'pm.name as payment_method',
@@ -76,6 +77,7 @@ class InstallmentReportService extends ManagementReport
             ->leftJoin('quote_status as q', 'q.id', '=', 'personal_quotes.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
+            ->leftJoin('departments as dp', 'u.department_id', '=', 'dp.id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
             ->leftJoin('payment_methods as pm', 'pm.code', '=', 'ps.payment_method')

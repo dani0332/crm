@@ -38,12 +38,14 @@ class SaleSummaryReportService extends ManagementReport
             Carbon::parse($request['paymentDueDate'][1])->toDateString();
         }
 
+       
         // Subquery to get distinct payment splits with minimum due_date
         $distinctPaymentSplits = DB::table('payment_splits as dps')
             ->selectRaw('DISTINCT(code), due_date');
 
         $query = PersonalQuote::query()
             ->leftJoin('users as u', 'personal_quotes.advisor_id', '=', 'u.id')
+            ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
             ->leftJoin('user_team', 'u.id', '=', 'user_team.user_id')
             ->leftJoin('teams as t', 'user_team.team_id', '=', 't.id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
@@ -70,13 +72,17 @@ class SaleSummaryReportService extends ManagementReport
                 if ($utmGroupBy) {
                     array_push($groupByArray, $utmGroupBy);
                 }
-
                 return $query->groupBy($groupByArray);
             });
 
         if ($request->groupBy == 'advisor') {
-            $query->addSelect('u.name as advisor');
+            $query->addSelect('u.name as advisor','dp.name as department');
             $query->whereNotNull('advisor_id');
+        }
+
+        if ($request->groupBy == 'department') {
+            $query->addSelect('dp.name as department');
+            $query->whereNotNull('u.department_id');
         }
 
         if ($request->groupBy == 'customer_group') {
@@ -107,7 +113,6 @@ class SaleSummaryReportService extends ManagementReport
                 $join->on('p.code', '=', 'ps.code');
             });
         }
-
         $this->applyFilters($query, $request);
         $data = $query->get();
         $this->formatData($data);
@@ -258,7 +263,9 @@ class SaleSummaryReportService extends ManagementReport
             'insurer' => 'p.insurance_provider_id',
             'advisor' => 'u.name',
             'line_of_business' => 'quote_type.code',
+            'department' => 'u.department_id',
         ];
+
 
         return $mapping[$groupBy] ?? $groupBy;
     }
