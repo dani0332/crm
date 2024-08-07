@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\HealthPlanType;
+use App\Repositories\NationalityRepository;
 use App\Services\LookupService;
 use App\Services\SICHealthConfigService;
-use App\Repositories\NationalityRepository;
+use Illuminate\Http\Request;
 
 class SICHealthController extends Controller
 {
@@ -21,7 +21,6 @@ class SICHealthController extends Controller
     {
         $sicHealthConfig = $this->sicHealthConfigService->getEntity();
         $healthTypes = HealthPlanType::all();
-
 
         return inertia('Admin/SICHealth/SicHealthConfigForm', [
             'nationalities' => NationalityRepository::withActive()->get(),

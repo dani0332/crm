@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\ApplicationStorage;
 use App\Enums\ApplicationStorageEnums;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\ApplicationStorage;
+use Illuminate\Database\Seeder;
 
 class AddSICHealthWorkFlowSeeder extends Seeder
 {
@@ -56,7 +55,6 @@ class AddSICHealthWorkFlowSeeder extends Seeder
                 'is_active' => 1,
             ]);
         }
-
 
     }
 }

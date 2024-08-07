@@ -707,7 +707,7 @@ class SendEmailCustomerService extends BaseService
 
             ['code' => $responseCode, 'response' => $response, 'sent' => $isEmailSent] = $this->sendMail($body);
         } catch (Exception $ex) {
-        $responseCode = $ex->getCode();
+            $responseCode = $ex->getCode();
             $responseDetail = 'SIB Send sendNonAdvisorIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage().' '.$emailData->carQuoteId;
             Log::error($responseDetail);
         }

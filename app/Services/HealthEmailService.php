@@ -2,24 +2,16 @@
 
 namespace App\Services;
 
-use Carbon\Carbon;
-use App\Models\User;
-use App\Enums\quoteTypeCode;
-use App\Enums\LeadSourceEnum;
-use App\Services\BirdService;
+use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
-use App\Enums\ApplicationStorageEnums;;
-use App\Services\SendEmailCustomerService;
-
-
+use App\Models\User;
 
 class HealthEmailService extends BaseService
 {
     protected $sendEmailCustomerService;
     protected $birdService;
 
-
-    public function __construct(SendEmailCustomerService $sendEmailCustomerService,BirdService $birdService)
+    public function __construct(SendEmailCustomerService $sendEmailCustomerService, BirdService $birdService)
     {
         $this->sendEmailCustomerService = $sendEmailCustomerService;
         $this->birdService = $birdService;
@@ -32,7 +24,7 @@ class HealthEmailService extends BaseService
         info('sic health plans count: '.count($plans));
         info('sic health plans'.json_encode($plans));
 
-        $emailData = $this->mappingEmailDataForOCBEmail($lead,$advisor,$plans);
+        $emailData = $this->mappingEmailDataForOCBEmail($lead, $advisor, $plans);
         if ($triggerSICWorkFlow) {
             if (! $lead->sic_flow_enabled) {
                 $sicEventName = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
@@ -54,17 +46,19 @@ class HealthEmailService extends BaseService
 
         $responseCode = $this->birdService->sendHealthOCBEmail($emailData);
         info('sic sendHealthOCBEmail - Ref ID:'.$lead->uuid.' Time: '.now());
+
         return $responseCode;
     }
 
-    public function mappingEmailDataForOCBEmail($lead,$advisor,$plans){
+    public function mappingEmailDataForOCBEmail($lead, $advisor, $plans)
+    {
         return (object) [
             'healthQuoteId' => $lead->code,
             'customerEmail' => $lead->email,
-            'uuid'=> $lead->uuid,
-            'customerFullName' =>  $lead->first_name.' '.$lead->last_name,
+            'uuid' => $lead->uuid,
+            'customerFullName' => $lead->first_name.' '.$lead->last_name,
             'advisorId' => $advisor->id ?? null,
-            'advisorName' =>(! empty($advisor->name) ? $advisor->name : ''),
+            'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
             'advisorDetails' => $advisor ?? null,
             'quotePlanLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid,
@@ -72,6 +66,5 @@ class HealthEmailService extends BaseService
             'plans' => $plans,
         ];
     }
-
 
 }
