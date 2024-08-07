@@ -91,8 +91,11 @@ class RetentionReportService extends BaseService
      */
     private function isAdvisorManager()
     {
-        // Check if the user is a manager or deputy and lacks the permission to view the manager retention report
-        if (
+        if (auth()->user()->isAdmin()){
+            return true;
+        }
+         // Check if the user is a manager or deputy and lacks the permission to view the manager retention report
+         if (
             (auth()->user()->isManagerOrDeputy() && !Auth::user()->can(PermissionsEnum::MANAGER_RETENTION_REPORT_VIEW)) ||
             // Check if the user is an advisor and lacks the permission to view the advisor retention report
             (auth()->user()->isAdvisor() && !Auth::user()->can(PermissionsEnum::ADVISOR_RETENTION_REPORT_VIEW))
@@ -100,6 +103,7 @@ class RetentionReportService extends BaseService
             return false;
         }
         return true;
+       
     }
     
     /**
@@ -322,6 +326,9 @@ class RetentionReportService extends BaseService
      */
     private function applyPermissionFilters($query, $request)
     {
+        if (auth()->user()->isAdmin()){
+            return true;
+        }
         // Check if the user is a manager or deputy and has the permission to view the manager retention report
         if (auth()->user()->isManagerOrDeputy() && Auth::user()->can(PermissionsEnum::MANAGER_RETENTION_REPORT_VIEW)) {
             $assigneeIds = UserManager::where('manager_id', Auth::user()->id)->get()->pluck('user_id')->toArray();
@@ -698,14 +705,6 @@ class RetentionReportService extends BaseService
             ],
             'select_month' => [
                 'can_view' => $canView,
-                'lobs' => [
-                    quoteTypeCode::Home,
-                    quoteTypeCode::Pet,
-                    quoteTypeCode::Cycle,
-                    quoteTypeCode::Yacht,
-                    quoteTypeCode::CORPLINE,
-                    quoteTypeCode::GroupMedical,
-                ],
             ],
             'select_batch' => [
                 'can_view' => $canView,
