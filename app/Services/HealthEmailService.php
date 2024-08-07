@@ -2,12 +2,11 @@
 
 namespace App\Services;
 
-use App\Models\User;
-use App\Services\BirdService;
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\HealthFacilityType;
 use App\Enums\HealthPlanTypeEnum;
 use App\Models\ApplicationStorage;
-use App\Enums\ApplicationStorageEnums;
+use App\Models\User;
 
 class HealthEmailService extends BaseService
 {
@@ -17,7 +16,7 @@ class HealthEmailService extends BaseService
     {
         $this->birdService = $birdService;
     }
-    public function sendHealthOCBIntroEmail($lead,$healthQuoteService, $triggerSICWorkFlow = false)
+    public function sendHealthOCBIntroEmail($lead, $healthQuoteService, $triggerSICWorkFlow = false)
     {
         // Retrieve plans with available ratings for the given lead
         $quote = $healthQuoteService->getQuotePlans($lead->uuid);
@@ -46,6 +45,7 @@ class HealthEmailService extends BaseService
                 info('SIC Health workflow already enabled for lead: '.$lead->uuid);
             }
         }
+
         return $responseCode;
     }
 
@@ -86,6 +86,7 @@ class HealthEmailService extends BaseService
                 ? collect($plan->coPayments)->firstWhere('id', $lowestRate->healthPlanCoPaymentId)
                 : '';
             $totalValue = ($plan->policyFee ?? 0) + ($plan->basmah ?? 0) + ($lowestRate->discountPremium ?? 0);
+
             return (object) [
                 'name' => $plan->name ?? null,
                 'planCode' => $plan->planCode,
@@ -117,6 +118,7 @@ class HealthEmailService extends BaseService
             ->map(function ($item) {
                 return str_replace('Hospital', '', $item->text);
             })->implode(', ');
+
         return $hospitals ?? '';
     }
 
