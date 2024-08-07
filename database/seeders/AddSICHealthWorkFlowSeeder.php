@@ -13,16 +13,6 @@ class AddSICHealthWorkFlowSeeder extends Seeder
      */
     public function run(): void
     {
-        $sicHealthWorkFlow = ApplicationStorage::where('key_name', ApplicationStorageEnums::SIC_HEALTH_WORKFLOW_NAME)->first();
-        if (empty($sicHealthWorkFlow)) {
-            ApplicationStorage::insert([
-                'key_name' => ApplicationStorageEnums::SIC_HEALTH_WORKFLOW_NAME,
-                'value' => '0',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ]);
-        }
 
         $birdOCBEmail = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_OCB_FOLLOWUP_TEMPLATE)->first();
         if (empty($birdOCBEmail)) {
