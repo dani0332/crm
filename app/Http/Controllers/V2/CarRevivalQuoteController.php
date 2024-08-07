@@ -167,8 +167,8 @@ class CarRevivalQuoteController extends Controller
     }
 
     /**
-     * @param  $quoteTypeCode
-     * @param  $quoteId
+     * @param    $quoteTypeCode
+     * @param    $quoteId
      * @return void
      */
     public function update($uuid, CarRevivalQuoteRequest $carRevivalQuoteRequest)
