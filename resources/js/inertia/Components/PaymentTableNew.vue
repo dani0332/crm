@@ -2925,6 +2925,18 @@ watch(
 );
 
 const lookupsEnum = page.props.lookupsEnum;
+
+const masterPaymentStatusFormat = computed(() => {
+  return formatString(masterPaymentStatus.value);
+});
+
+const totalPriceFormat = computed(() => {
+  return formatAmount(totalPrice.value);
+});
+
+const totalAmountFormat = computed(() => {
+  return formatAmount(totalAmount.value);
+});
 </script>
 
 <template>
@@ -3438,7 +3450,7 @@ const lookupsEnum = page.props.lookupsEnum;
               <x-input
                 v-if="!isFieldReadonly"
                 class="w-full"
-                :value="formatAmount(totalPrice)"
+                v-model="totalPriceFormat"
                 :disabled="true"
               />
             </x-field>
@@ -3492,7 +3504,7 @@ const lookupsEnum = page.props.lookupsEnum;
               <x-input
                 v-if="!isFieldReadonly"
                 class="w-full"
-                :value="providerName"
+                v-model="providerName"
                 :disabled="true"
               />
             </x-field>
@@ -3556,7 +3568,7 @@ const lookupsEnum = page.props.lookupsEnum;
               <x-input
                 v-if="!isFieldReadonly"
                 class="w-full"
-                :value="getPlanName"
+                v-model="getPlanName"
                 :disabled="true"
               />
             </x-field>
@@ -3604,7 +3616,7 @@ const lookupsEnum = page.props.lookupsEnum;
               <x-input
                 v-if="!isFieldReadonly"
                 class="w-full"
-                :value="formatString(masterPaymentStatus)"
+                v-model="masterPaymentStatusFormat"
                 :disabled="true"
               />
             </x-field>
@@ -4019,7 +4031,7 @@ const lookupsEnum = page.props.lookupsEnum;
               <x-input
                 v-if="!isFieldReadonly"
                 class="w-full"
-                :value="formatAmount(totalAmount)"
+                v-model="totalAmountFormat"
                 :disabled="true"
               />
             </x-field>
@@ -5442,8 +5454,11 @@ const lookupsEnum = page.props.lookupsEnum;
   height: 38px;
 }
 .custom-select-error {
-  border: 2px solid red; /* Add a red border for the error state */
-  outline: none; /* Remove the default blue outline */
+  border: 1px solid red;
+  padding: 1px;
+  outline: none;
+  box-sizing: border-box;
+  height: 45px;
 }
 .custom-dropdown {
   position: relative;
@@ -5455,13 +5470,14 @@ const lookupsEnum = page.props.lookupsEnum;
   margin-left: calc(100% - 39px);
   cursor: pointer;
   color: #333; /* Customize the close icon color */
-  font-size: 1rem;
+  font-size: 0.7rem;
   font-weight: normal;
 }
 .delete-pointer {
   cursor: pointer;
   padding-left: 5px;
   font-weight: bold;
+  font-size: 12px;
 }
 .expand-pointer {
   cursor: pointer;
