@@ -64,6 +64,15 @@ class RenewalBatchReportService extends BaseService
             ->withQueryString();
     }
 
+    private function getApprovedStatues()
+    {
+        return implode(',', [
+            QuoteStatusEnum::PolicyDocumentsPending,
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicyBooked,
+        ]);
+    }
+
     /**
      * get super retention data function
      *
@@ -682,8 +691,7 @@ class RenewalBatchReportService extends BaseService
     {
         return $query->addSelect(
             DB::raw('count(DISTINCT car_quote_request.id) as total_allocated_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyDocumentsPending.'
-                , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.')
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.$this->getApprovedStatues().')
                 and car_quote_request.quote_status_date <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as renewed'),
 
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::CarSold.'
@@ -716,12 +724,10 @@ class RenewalBatchReportService extends BaseService
 
             DB::raw('SUM(IF(car_quote_request.advisor_id in ('.$userIdsString.'), 1, 0)) as total_allocated_leads_by_all_advisors'),
 
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyDocumentsPending.'
-            , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.')
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.$this->getApprovedStatues().')
                     and car_quote_request.quote_status_date <= "'.$reportDateEnd.'" and car_quote_request.advisor_id in ('.$advisors.') THEN 1 ELSE 0 END) as renewed'),
 
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyDocumentsPending.'
-            , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.')
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.$this->getApprovedStatues().')
                     and car_quote_request.quote_status_date <= "'.$reportDateEnd.'" and car_quote_request.advisor_id in ('.$userIdsString.') THEN 1 ELSE 0 END) as renewed_by_all_advisors'),
 
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::CarSold.'
@@ -770,12 +776,10 @@ class RenewalBatchReportService extends BaseService
 
             DB::raw('SUM(IF(car_quote_request.advisor_id in ('.$teamUsersIdsString.'), 1, 0)) as total_allocated_leads_by_all_advisors'),
 
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyDocumentsPending.'
-            , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.')
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.$this->getApprovedStatues().')
                 and car_quote_request.quote_status_date <= "'.$reportDateEnd.'" and car_quote_request.advisor_id = "'.$authUserId.'" THEN 1 ELSE 0 END) as renewed'),
 
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyDocumentsPending.'
-            , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.')
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.$this->getApprovedStatues().')
                 and car_quote_request.quote_status_date <= "'.$reportDateEnd.'" and car_quote_request.advisor_id in ('.$teamUsersIdsString.') THEN 1 ELSE 0 END) as renewed_by_all_advisors'),
 
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::CarSold.'
@@ -825,8 +829,7 @@ class RenewalBatchReportService extends BaseService
             $segmentAdvisorsIdString = implode(',', $advisors);
 
             return $query->addSelect(
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyDocumentsPending.'
-                    , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.')
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.$this->getApprovedStatues().')
                     and car_quote_request.advisor_id in ('.$segmentAdvisorsIdString.')
                     and car_quote_request.quote_status_date <= "'.$reportDateEnd.'"  THEN 1 ELSE 0 END) as "'.$renewedAsColumn.'_for_'.$batchName.'"'),
 
