@@ -755,4 +755,20 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     {
         return $quote->payments()->where('insurer_tax_number', $invoiceNumber)->first();
     }
+
+    public function generateBrokerInvoiceNumber($payment): string
+    {
+        $insurance_provider_id = $payment->insurance_provider_id;
+        $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
+        $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
+
+        return $insuranceProviderCode.$insuranceProviderLeadCount;
+    }
+    public function generateInvoiceDescription($payment, $quoteType, $record): string
+    {
+        $insurance_provider_id = $payment->insurance_provider_id;
+        $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
+
+        return substr($insuranceProviderCode.'-'.ucfirst($quoteType).'-'.$record->policy_number, 0, 60);
+    }
 }

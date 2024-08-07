@@ -18,6 +18,7 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\SendUpdateLog;
 use App\Repositories\DocumentTypeRepository;
+use App\Repositories\PaymentRepository;
 use App\Services\CapiRequestService;
 use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
@@ -229,8 +230,8 @@ trait GenericQueriesAllLobs
         // Retrieve the first payment belongs to lead not to send update
         $payment = $payments->whereNull('send_update_log_id')->first();
         if ($payment) {
-            $invoiceDescription = generateInvoiceDescription($payment, $quoteType, $record);
-            $brokerInvoiceNo = generateBrokerInvoiceNumber($payment);
+            $invoiceDescription = (new PaymentRepository())->generateInvoiceDescription($payment, $quoteType, $record);
+            $brokerInvoiceNo = (new PaymentRepository())->generateBrokerInvoiceNumber($payment);
         }
 
         if ($record->quote_status_id == QuoteStatusEnum::PolicyBooked) {
