@@ -1,6 +1,4 @@
 <script setup>
-
-
 const page = usePage();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
@@ -38,8 +36,6 @@ const rules = {
     'Phone must be valid',
 };
 
-
-
 const kycForm = reactive({
   quote_uuid: props.quote.uuid,
   customer_id: props.quote.customer_id,
@@ -48,11 +44,13 @@ const kycForm = reactive({
   company_name: props.entityDetails?.entity?.company_name ?? null, // props.quote.company_name
   legal_structure: props.entityDetails?.entity?.legal_structure ?? null,
   industry_type: props.entityDetails?.entity?.industry_type_code ?? null,
-  country_of_corporation: props.entityDetails?.entity?.country_of_corporation ?? 56, //Default UAE
+  country_of_corporation:
+    props.entityDetails?.entity?.country_of_corporation ?? 56, //Default UAE
   registered_address: props.entityDetails?.entity?.registered_address ?? null,
-  communication_address: props.entityDetails?.entity?.communication_address ?? null,
-  mobile_number: props.entityDetails?.entity?.mobile_no ?? props.quote.mobile_no,
-  email: props.entityDetails?.entity?.email ?? props.quote.email,
+  communication_address:
+    props.entityDetails?.entity?.communication_address ?? null,
+  mobile_number: props.quote.mobile_no,
+  email: props.quote.email,
   website: props.entityDetails?.entity?.website ?? null,
   id_document_type: props.entityDetails?.entity?.id_type ?? null,
   id_number: props.entityDetails?.entity?.id_number ?? null,
@@ -61,18 +59,17 @@ const kycForm = reactive({
   place_of_issue: props.entityDetails?.entity?.issuance_place ?? null,
   issuing_authority: props.entityDetails?.entity?.id_issuance_authority ?? null,
   manager_name: props.entityDetails?.entity?.quote_member?.first_name ?? null,
-  manager_nationality: props.entityDetails?.entity?.quote_member?.nationality_id ?? null,
+  manager_nationality:
+    props.entityDetails?.entity?.quote_member?.nationality_id ?? null,
   manager_dob: props.entityDetails?.entity?.quote_member?.dob ?? null,
-  manager_position: props.entityDetails?.entity?.quote_member?.relation_code ?? null,
+  manager_position:
+    props.entityDetails?.entity?.quote_member?.relation_code ?? null,
   pep: props.entityDetails?.entity?.pep ?? props.amlQuoteStatus,
-  financial_sanctions: props.entityDetails?.entity?.financial_sanctions ?? props.amlQuoteStatus,
-  dual_nationality: props.entityDetails?.entity?.dual_nationality ?? props.amlQuoteStatus,
+  financial_sanctions:
+    props.entityDetails?.entity?.financial_sanctions ?? props.amlQuoteStatus,
+  dual_nationality:
+    props.entityDetails?.entity?.dual_nationality ?? props.amlQuoteStatus,
 });
-
-
-
-
-
 
 const isNationalityEmpty = ref(false);
 const isPositionEmpty = ref(false);
@@ -88,7 +85,7 @@ const onKycSubmit = isValid => {
   if (!kycForm.issuing_authority) isIssuingAuthorityEmpty.value = true;
   else isIssuingAuthorityEmpty.value = false;
 
-  if(!isValid) return;
+  if (!isValid) return;
 
   if (confirm('Are you sure you want to create and save the document?')) {
     isLoading.value = true;
@@ -100,11 +97,11 @@ const onKycSubmit = isValid => {
             title: 'KYC Document uploaded.',
             position: 'top',
           });
-            router.reload({
-                replace: true,
-                preserveScroll: true,
-                preserveState: true,
-            });
+          router.reload({
+            replace: true,
+            preserveScroll: true,
+            preserveState: true,
+          });
         } else {
           notification.error({
             title: response.data.message,
@@ -186,9 +183,6 @@ const complianceRules = computed(() => {
     : [];
 });
 
-
-
-
 onMounted(() => {
   complianceDisable.isDisable = !(
     can(permissionsEnum.AMLDecisionUpdate) ||
@@ -198,7 +192,6 @@ onMounted(() => {
 </script>
 
 <template>
-
   <x-form @submit="onKycSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
       <x-input
@@ -235,7 +228,7 @@ onMounted(() => {
       />
 
       <div>
-        <x-tooltip position="right">
+        <x-tooltip placement="right">
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
           >
@@ -298,6 +291,7 @@ onMounted(() => {
         placeholder="Mobile number"
         type="number"
         :rules="[isRequired]"
+        :disabled="true"
       />
 
       <x-input
@@ -306,10 +300,11 @@ onMounted(() => {
         placeholder="Email"
         type="email"
         :rules="[isRequired]"
+        :disabled="true"
       />
 
       <div>
-        <x-tooltip position="bottom">
+        <x-tooltip placement="bottom">
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
           >
@@ -328,7 +323,7 @@ onMounted(() => {
       </div>
 
       <div>
-        <x-tooltip position="bottom">
+        <x-tooltip placement="bottom">
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
           >
@@ -356,7 +351,7 @@ onMounted(() => {
       />
 
       <div>
-        <x-tooltip position="bottom">
+        <x-tooltip placement="bottom">
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
           >
@@ -374,7 +369,7 @@ onMounted(() => {
       </div>
 
       <div>
-        <x-tooltip position="bottom">
+        <x-tooltip placement="bottom">
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
           >
@@ -392,7 +387,7 @@ onMounted(() => {
       </div>
 
       <div>
-        <x-tooltip position="bottom">
+        <x-tooltip placement="bottom">
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
           >
@@ -415,7 +410,7 @@ onMounted(() => {
 
     <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
       <div>
-        <x-tooltip position="bottom">
+        <x-tooltip placement="bottom">
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
           >
@@ -480,66 +475,67 @@ onMounted(() => {
       </h3>
     </div>
 
-    <div class="grid md:grid-cols-2 gap-4 mb-1">
-      <x-label> Is the customer a PEP? </x-label>
+    <div class="flex justify-between gap-4 mb-1">
       <div class="grid md:grid-cols-2">
-        <x-radio
-          v-model="kycForm.pep"
-          :value="1"
-          label="Yes"
-          :rules="complianceRules"
-          :disabled="complianceDisable.isDisable"
-        />
-        <x-radio
-          v-model="kycForm.pep"
-          :value="2"
-          label="No"
-          :rules="complianceRules"
-          :disabled="complianceDisable.isDisable"
-        />
+        <x-label> Is the customer a PEP? </x-label>
+        <x-form-group v-model="kycForm.pep" :rules="complianceRules">
+          <x-radio
+            :value="1"
+            label="Yes"
+            :disabled="complianceDisable.isDisable"
+          />
+          <x-radio
+            :value="2"
+            label="No"
+            :disabled="complianceDisable.isDisable"
+          />
+        </x-form-group>
       </div>
     </div>
 
-    <div class="grid md:grid-cols-2 gap-4 mb-1">
-      <x-label>
-        Is the customer or business subjected to financial sanctions / or
-        connected with prescribed terrorist organizations?
-      </x-label>
+    <div class="flex justify-between gap-4 mb-1">
       <div class="grid md:grid-cols-2 mt-3">
-        <x-radio
+        <x-label>
+          Is the customer or business subjected to financial sanctions / or
+          connected with prescribed terrorist organizations?
+        </x-label>
+        <x-form-group
           v-model="kycForm.financial_sanctions"
-          :value="1"
-          label="Yes"
           :rules="complianceRules"
-          :disabled="complianceDisable.isDisable"
-        />
-        <x-radio
-          v-model="kycForm.financial_sanctions"
-          :value="2"
-          label="No"
-          :rules="complianceRules"
-          :disabled="complianceDisable.isDisable"
-        />
+        >
+          <x-radio
+            :value="1"
+            label="Yes"
+            :disabled="complianceDisable.isDisable"
+          />
+          <x-radio
+            :value="2"
+            label="No"
+            :disabled="complianceDisable.isDisable"
+          />
+        </x-form-group>
       </div>
     </div>
 
-    <div class="grid md:grid-cols-2 gap-4">
+    <div class="flex justify-between gap-4 mb-1">
       <x-label> Does the customer have dual nationality </x-label>
       <div class="grid md:grid-cols-2">
-        <x-radio
+        <x-form-group
           v-model="kycForm.dual_nationality"
-          :value="1"
-          label="Yes"
           :rules="complianceRules"
-          :disabled="complianceDisable.isDisable"
-        />
-        <x-radio
-          v-model="kycForm.dual_nationality"
-          :value="2"
-          label="No"
-          :rules="complianceRules"
-          :disabled="complianceDisable.isDisable"
-        />
+        >
+          <x-radio
+            :value="1"
+            label="Yes"
+            :disabled="complianceDisable.isDisable"
+          />
+          <x-radio
+            v-model="kycForm.dual_nationality"
+            :value="2"
+            label="No"
+            :disabled="complianceDisable.isDisable"
+          />
+        </x-form-group>
       </div>
     </div>
 

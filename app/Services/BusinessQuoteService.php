@@ -12,6 +12,7 @@ use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Models\QuoteBatches;
 use App\Traits\AddPremiumAllLobs;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\RolePermissionConditions;
 use Auth;
@@ -24,8 +25,7 @@ use Illuminate\Support\Facades\Log;
 class BusinessQuoteService extends BaseService
 {
     protected $query;
-
-    use AddPremiumAllLobs, GetUserTreeTrait, RolePermissionConditions;
+    use AddPremiumAllLobs, GenericQueriesAllLobs, GetUserTreeTrait, RolePermissionConditions;
 
     protected $leadAllocationService;
 
@@ -158,40 +158,38 @@ class BusinessQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return BusinessQuote::where('id', $id)->with(['insuranceProviderDetails', 'payments.paymentSplits' => function ($query) {
-            $query->orderBy('sr_no', 'asc');
-        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents', 'payments.paymentSplits.verifiedByUser'])->first();
+        return BusinessQuote::where('id', $id)->with([
+            'payments' => function ($payment) {
+                $payment->with([
+                    'paymentSplits' => function ($paymentSplit) {
+                        $paymentSplit->with([
+                            'paymentStatus',
+                            'paymentMethod',
+                            'documents',
+                            'verifiedByUser',
+                        ]);
+                        $paymentSplit->orderBy('sr_no');
+                    },
+                ]);
+                $payment->orderBy('created_at');
+            },
+        ])->first();
     }
 
     public function updateChildRecord($id)
     {
-        $childRecord = BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
-
-        if (empty($childRecord)) {
-            $childRecord = $this->createDetailEntity($id);
-        }
-        $childRecord->advisor_assigned_by_id = Auth::user()->id;
-        $childRecord->advisor_assigned_date = Carbon::now();
-        $childRecord->save();
+        BusinessQuoteRequestDetail::updateOrCreate(
+            ['business_quote_request_id' => $id],
+            [
+                'advisor_assigned_date' => Carbon::now(),
+                'advisor_assigned_by_id' => Auth::user()->id,
+            ]
+        );
     }
 
     public function getDetailEntity($id)
     {
-        $entity = BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
-        if (! $entity) {
-            $entity = $this->createDetailEntity($id);
-        }
-
-        return $entity;
-    }
-
-    public function createDetailEntity($id)
-    {
-        return BusinessQuoteRequestDetail::create([
-            'business_quote_request_id' => $id,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
+        return BusinessQuoteRequestDetail::firstOrCreate(['business_quote_request_id' => $id]);
     }
 
     public function getSelectedLostReason($id)
@@ -288,7 +286,7 @@ class BusinessQuoteService extends BaseService
 
         if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::CORPLINE) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
-            $this->query->where('bqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
+            $this->query->where('bqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
         if (isset($request->code) && $request->code != '') {
             $this->query->where('bqr.code', $request->code);
@@ -306,7 +304,10 @@ class BusinessQuoteService extends BaseService
             $this->query->where('bqr.policy_number', $request->policy_number);
         }
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-            $this->query->where('bqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            $this->query->where(function ($query) use ($request) {
+                $query->where('bqr.policy_number', $request->previous_quote_policy_number)
+                    ->orWhere('bqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            });
         }
         if (isset($request->renewal_batch) && $request->renewal_batch != '') {
             $this->query->where('bqr.renewal_batch', $request->renewal_batch);
@@ -368,6 +369,9 @@ class BusinessQuoteService extends BaseService
                 }
             }
         }
+
+        $this->adjustQueryByDateFilters($this->query, 'bqr');
+
         // sortBy filter
         if (isset($request->sortBy) && $request->sortBy != '') {
             return $this->query->where('bti.text', '!=', 'Group Medical')->orderBy($request->sortBy, $request->sortType);

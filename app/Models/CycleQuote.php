@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class CycleQuote extends Model
 {
@@ -50,5 +51,10 @@ class CycleQuote extends Model
     public function sageApiLogs()
     {
         return $this->morphMany(SageApiLog::class, 'section');
+    }
+
+    public function advisor(): HasOne
+    {
+        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no', 'profile_photo_path', 'calendar_link']);
     }
 }

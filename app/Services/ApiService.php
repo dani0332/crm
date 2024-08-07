@@ -16,6 +16,7 @@ use App\Models\MyAlFredUser;
 use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 
 class ApiService
 {
@@ -118,7 +119,6 @@ class ApiService
         info('------ Lead allocation request completed to assign advisor only for '.$allocationId.' ------');
 
         return apiResponse($responseData, Response::HTTP_OK, 'Advisor assigned successfully!');
-
     }
 
     private function triggerOCBOnly($allocationId)
@@ -134,6 +134,10 @@ class ApiService
     {
         info('------ Lead allocation started for lead : '.$allocationId.' ------');
         $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId, $teamId);
+        if (is_null($allocationStrategy)) {
+            info('-- Exception against - allocationType: '.$allocationId.' and allocationId: '.$allocationId.' --');
+            throw new InvalidArgumentException("Allocation strategy for type '$allocationType -- $allocationId' not found.");
+        }
         $assignedAdvisorId = $allocationStrategy->executeSteps();
         info('------ Lead allocation ended for lead : '.$allocationId.' ------');
         $responseData = ['assignedAdvisorId' => $assignedAdvisorId];
@@ -144,13 +148,12 @@ class ApiService
     public function triggerSICWorkflow(SICWorkflowRequest $request)
     {
 
-        if ( isset($request->quoteTypeId)  && $request->quoteTypeId == QuoteTypes::HEALTH->id()) {
+        if (isset($request->quoteTypeId) && $request->quoteTypeId == QuoteTypes::HEALTH->id()) {
 
-            info('------ Health SIC workflow trigger request received for  lead : ' . ($request->quoteUuid ?? '') . ' ------');
+            info('------ Health SIC workflow trigger request received for  lead : '.($request->quoteUuid ?? '').' ------');
             SendHealthOCBIntroEmailJob::dispatch($request->quoteUuid, null, true);
             info('------ Health SIC workflow trigger request completed for lead : '.$request->quoteUuid.' ------');
-        }
-        else {
+        } else {
             info('------ Motor SIC workflow trigger request received for lead : '.$request->quoteUuid.' ------');
             SendOCBIntroEmailJob::dispatch($request->quoteUuid, null, true);
             info('------ Motor SIC workflow trigger request completed for lead : '.$request->quoteUuid.' ------');

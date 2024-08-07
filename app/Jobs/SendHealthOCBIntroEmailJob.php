@@ -57,7 +57,6 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
                          Log::error('SendHealthOCBIntroEmailJob - OCB INTRO Email Not Sent: '.$responseCode.' Customer EmailAddress:'.$lead->email);
                      }
                 }
-
          }catch (Exception $e) {
              info('SendHealthOCBIntroEmailJob - Error: '.$e->getMessage().' with stack trace: '.$e->getTraceAsString());
          }

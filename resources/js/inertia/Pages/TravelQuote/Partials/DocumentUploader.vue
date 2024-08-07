@@ -1,5 +1,5 @@
 <script setup>
-const emit = defineEmits(["updateQuoteStatus"]);
+const emit = defineEmits(['updateQuoteStatus']);
 
 defineProps({
   members: Array,
@@ -21,17 +21,16 @@ const docForm = useForm({
   file: null,
 });
 
-
 const uploadFile = (doc, memberId, filesWithInfo) => {
-  const { files, rejectReason} = filesWithInfo;
-    if (files.length == 0) {
-        notification.error({
-            title: 'File upload failed',
-            position: 'top',
-        });
-        docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
-        return false
-    };
+  const { files, rejectReason } = filesWithInfo;
+  if (files.length == 0) {
+    notification.error({
+      title: 'File upload failed',
+      position: 'top',
+    });
+    docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
+    return false;
+  }
   isUploading.value = true;
   docForm
     .transform(data => ({
@@ -63,50 +62,54 @@ const uploadFile = (doc, memberId, filesWithInfo) => {
 <template>
   <div>
     <div>
-      <x-alert color="error" class="mb-5" v-if="Object.keys(docForm.errors).length">
+      <x-alert
+        color="error"
+        class="mb-5"
+        v-if="Object.keys(docForm.errors).length"
+      >
         <ul>
           <li v-for="error in docForm?.errors">{{ error }}</li>
         </ul>
       </x-alert>
       <x-tab-group v-model="memberTabs" class="pb-10" variant="block">
         <x-tab value="quote-documents" label="Documents">
-            <template v-for="docuType in docTypes">
-                <div
-                    v-for="docType in docuType"
-                    :key="docType.id"
-                    class="grid md:grid-cols-2 gap-2 my-4 border-b"
+          <template v-for="docuType in docTypes">
+            <div
+              v-for="docType in docuType"
+              :key="docType.id"
+              class="grid md:grid-cols-2 gap-2 my-4 border-b"
+            >
+              <div class="flex flex-col gap-1">
+                <h5 class="text-sm font-semibold">
+                  {{ docType.text }} {{ docType.is_required ? '*' : '' }}
+                </h5>
+                <p class="text-xs">Max files: {{ docType.max_files }}</p>
+                <p class="text-xs">Supported: {{ docType.accepted_files }}</p>
+                <p class="text-xs">Max file size: {{ docType.max_size }} MB</p>
+              </div>
+              <div class="pb-4">
+                <Dropzone
+                  :id="docType.id"
+                  :accept="docType.accepted_files"
+                  :max-files="docType.max_files"
+                  :max-size="docType.max_size"
+                  :loading="docForm.processing"
+                  @change="uploadFile(docType, null, $event)"
+                />
+                <a
+                  v-for="doc in docs.filter(
+                    d => d.document_type_code == docType.code,
+                  )"
+                  :key="doc.id"
+                  :href="cdn + doc.doc_url"
+                  target="_blank"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
                 >
-                    <div class="flex flex-col gap-1">
-                        <h5 class="text-sm font-semibold">
-                            {{ docType.text }} {{ docType.is_required ? '*' : ''}}
-                        </h5>
-                        <p class="text-xs">Max files: {{ docType.max_files }}</p>
-                        <p class="text-xs">Supported: {{ docType.accepted_files }}</p>
-                        <p class="text-xs">Max file size: {{ docType.max_size }} MB</p>
-                    </div>
-                    <div class="pb-4">
-                        <Dropzone
-                            :id="docType.id"
-                            :accept="docType.accepted_files"
-                            :max-files="docType.max_files"
-                            :max-size="docType.max_size"
-                            :loading="docForm.processing"
-                            @change="uploadFile(docType, null, $event)"
-                        />
-                        <a
-                            v-for="doc in docs.filter(
-                  d => d.document_type_code == docType.code,
-                )"
-                            :key="doc.id"
-                            :href="cdn + doc.doc_url"
-                            target="_blank"
-                            class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-                        >
-                            {{ doc.original_name || doc.doc_name }}
-                        </a>
-                    </div>
-                </div>
-            </template>
+                  {{ doc.original_name || doc.doc_name }}
+                </a>
+              </div>
+            </div>
+          </template>
         </x-tab>
         <x-tab
           v-for="member in members"
@@ -121,7 +124,7 @@ const uploadFile = (doc, memberId, filesWithInfo) => {
           >
             <div class="flex flex-col gap-1">
               <h5 class="text-sm font-semibold">
-                {{ docType.text }} {{ docType.is_required ? '*' : ''}}
+                {{ docType.text }} {{ docType.is_required ? '*' : '' }}
               </h5>
               <p class="text-xs">Max files: {{ docType.max_files }}</p>
               <p class="text-xs">Supported: {{ docType.accepted_files }}</p>

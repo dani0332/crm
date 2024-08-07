@@ -1,6 +1,4 @@
 <script setup>
-import { computed } from 'vue';
-
 const props = defineProps({
   reportable: {
     type: Object,
@@ -40,13 +38,13 @@ const sendUpdatesTable = reactive({
     },
     {
       text: 'Type',
-      value: 'type',
+      value: 'category.text',
       tooltip:
         'The type of "Send Update" request, categorizing the nature of the action being taken.',
     },
     {
       text: 'Sub Type',
-      value: 'sub_type',
+      value: 'option.text',
       tooltip:
         'A further classification of the "Send Update" request, providing additional context or details.',
     },
@@ -109,79 +107,6 @@ onMounted(() => {
   // fetchLogs();
 });
 
-const authenticatedSendUpdateOptions = computed(() => {
-  let filteredOptions = props.options;
-
-  if (
-    !(
-      can(permissionsEnum.SEND_UPDATE_ENDO_FIN_ADD) ||
-      can(permissionsEnum.SEND_UPDATE_ENDO_NON_FIN_ADD)
-    )
-  ) {
-    // it will remove the main Button.
-    filteredOptions = filteredOptions.filter((option, index) => index !== 0);
-  } else {
-    if (!can(permissionsEnum.SEND_UPDATE_ENDO_FIN_ADD)) {
-      // it will remove only sub button.
-      filteredOptions[0].childs = filteredOptions[0]?.childs.filter(
-        (option, index) => index !== 0,
-      );
-    }
-    if (!can(permissionsEnum.SEND_UPDATE_ENDO_NON_FIN_ADD)) {
-      // it will remove only sub button.
-      filteredOptions[0].childs = filteredOptions[0]?.childs.filter(
-        (option, index) => index !== 1,
-      );
-    }
-  }
-
-  if (
-    !(
-      can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD) ||
-      can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD)
-    )
-  ) {
-    filteredOptions = filteredOptions.filter((option, index) => index !== 1);
-  } else {
-    if (!can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD)) {
-      filteredOptions[1].childs = filteredOptions[1]?.childs.filter(
-        (option, index) => index !== 0,
-      );
-    }
-    if (
-      !can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD)
-    ) {
-      filteredOptions[1].childs = filteredOptions[1]?.childs.filter(
-        (option, index) => index !== 1,
-      );
-    }
-  }
-
-  if (
-    !(
-      can(permissionsEnum.SEND_UPDATE_CORRECT_POLICY_UPLOAD_ADD) ||
-      can(permissionsEnum.SEND_UPDATE_CORRECT_POLICY_DETAILS_ADD)
-    )
-  ) {
-    filteredOptions = filteredOptions.filter((option, index) => index !== 2);
-  } else {
-    if (!can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD)) {
-      filteredOptions[2].childs = filteredOptions[2]?.childs.filter(
-        (option, index) => index !== 0,
-      );
-    }
-    if (
-      !can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD)
-    ) {
-      filteredOptions[2].childs = filteredOptions[2]?.childs.filter(
-        (option, index) => index !== 1,
-      );
-    }
-  }
-
-  return filteredOptions;
-});
-
 // const fetchLogs = () => {
 //   axios.get(route('send-update.get-by-id', { id: props.reportableId }))
 //     .then(res => sendUpdatesTable.data = res.data.logs)
@@ -200,7 +125,8 @@ const getSendUpdateOptions = () => {
     .post(route('send-update.get-options'), {
       quoteTypeId: props.quote_type_id,
       parentId: parentId.value,
-      businessInsuranceTypeId: props.reportable?.business_type_of_insurance_id || null,
+      businessInsuranceTypeId:
+        props.reportable?.business_type_of_insurance_id || null,
       status: form.childCategory?.slug || null,
     })
     .then(response => {
@@ -288,6 +214,7 @@ const confirmOrAddUpdate = autoSubmit => {
   }
 };
 
+const emit = defineEmits(['onAddUpdate']);
 const onAddUpdate = autoSubmit => {
   if (!autoSubmit) {
     if (form.option === null) {
@@ -296,13 +223,14 @@ const onAddUpdate = autoSubmit => {
     }
   }
   addButtonLoader.value = true;
-
   optionError.value = false;
-
+  emit('onAddUpdate');
   form
     .transform(data => {
       let childCatgeory = { ...data.childCategory };
-      let option = sendUpdateOptions.value.find(item => item.id === data.option);
+      let option = sendUpdateOptions.value.find(
+        item => item.id === data.option,
+      );
       childCatgeory.option = option || null;
       delete sendUpdateOptions.value;
 
@@ -394,7 +322,7 @@ const findOption = (item, key) => {
           :hide-footer="sendUpdatesTable.data.length <= 10"
         >
           <template #header-code="{ text, tooltip }">
-            <x-tooltip align="left" position="right">
+            <x-tooltip placement="left">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
                 <span
@@ -407,7 +335,7 @@ const findOption = (item, key) => {
             </x-tooltip>
           </template>
           <template #header-type="{ text, tooltip }">
-            <x-tooltip align="left" position="right">
+            <x-tooltip placement="left">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
                 <span class="whitespace-break-spaces !normal-case">
@@ -417,7 +345,7 @@ const findOption = (item, key) => {
             </x-tooltip>
           </template>
           <template #header-sub_type="{ text, tooltip }">
-            <x-tooltip align="left" position="right">
+            <x-tooltip placement="left">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
                 <span class="whitespace-break-spaces !normal-case">
@@ -427,7 +355,7 @@ const findOption = (item, key) => {
             </x-tooltip>
           </template>
           <template #header-status="{ text, tooltip }">
-            <x-tooltip align="left" position="right">
+            <x-tooltip placement="left">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
                 <span class="whitespace-break-spaces !normal-case">
@@ -437,7 +365,7 @@ const findOption = (item, key) => {
             </x-tooltip>
           </template>
           <template #header-created_at="{ text, tooltip }">
-            <x-tooltip align="left" position="bottom">
+            <x-tooltip placement="left">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
                 <span class="whitespace-break-spaces !normal-case">
@@ -499,11 +427,8 @@ const findOption = (item, key) => {
         class="w-full flex flex-wrap gap-5 justify-center text-center my-10 mb-20 items-stretch !h-100"
         v-if="modals.step === 'step1'"
       >
-        <template
-          v-for="option in authenticatedSendUpdateOptions"
-          :key="option.title"
-        >
-          <x-tooltip align="left" position="bottom" class="arrow-t">
+        <template v-for="option in props.options" :key="option.title">
+          <x-tooltip placement="left">
             <x-button
               color="primary"
               class="py-8 px-6 rounded-xl min-h-[150px] w-[200px] whitespace-break-spaces underline decoration-dotted !h-100"
@@ -529,7 +454,7 @@ const findOption = (item, key) => {
           v-for="category in form.parentCategory?.childs"
           :key="category.title"
         >
-          <x-tooltip position="bottom" class="arrow-t">
+          <x-tooltip placement="bottom">
             <x-button
               color="primary"
               class="py-8 px-6 rounded-xl w-[200px] min-h-[150px] whitespace-break-spaces underline decoration-dotted"
@@ -548,9 +473,7 @@ const findOption = (item, key) => {
       <!-- modal 3 -->
       <div
         class="w-full flex gap-5 mb-10"
-        v-else-if="
-          modals.step === 'step3' && sendUpdateOptions
-        "
+        v-else-if="modals.step === 'step3' && sendUpdateOptions"
       >
         <div class="flex flex-col gap-2 flex-grow w-75">
           <x-field :label="form.childCategory.title" required>

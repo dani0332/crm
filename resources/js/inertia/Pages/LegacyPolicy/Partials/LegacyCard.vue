@@ -1,5 +1,4 @@
 <script setup>
-import { formatDate } from '../../../Composables/utilities.js';
 const props = defineProps({
   legacy: Object,
   type: String,

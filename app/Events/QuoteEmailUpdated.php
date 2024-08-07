@@ -2,9 +2,10 @@
 
 namespace App\Events;
 
+use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Queue\SerializesModels;
 
-class QuoteEmailUpdated
+class QuoteEmailUpdated implements ShouldDispatchAfterCommit
 {
     use SerializesModels;
 

@@ -34,6 +34,7 @@ class BusinessQuoteExport
             'NUMBER OF EMPLOYEES',
             'BUSINESS INSURANCE TYPE',
             'GENDER',
+            'RENEWAL BATCH',
         ];
     }
 
@@ -56,6 +57,7 @@ class BusinessQuoteExport
             $quote->number_of_employees,
             optional($quote->businessTypeOfInsurance)->text,
             $quote->gender,
+            $quote->renewal_batch,
         ];
     }
 }

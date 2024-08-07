@@ -1,5 +1,4 @@
 <script setup>
-
 const props = defineProps({
   aml: Object,
   amlResults: Array,
@@ -52,53 +51,52 @@ function submitDecision(decision) {
   if (complianceRules()) {
     submitDecisionLoading.value = true;
     let quoteStatusCode = passingDecisions.includes(decision)
-        ? props.quoteStatusCode.AMLScreeningCleared
-        : props.quoteStatusCode.AMLScreeningFailed;
+      ? props.quoteStatusCode.AMLScreeningCleared
+      : props.quoteStatusCode.AMLScreeningFailed;
     let url = `${props.aml.quote_type_id}/details/${props.aml.quote_request_id}
     /quoteStatusUpdate/${quoteStatusCode}?notes=${decisionNotes.value}&aml_id=${props.aml.id}&aml_decision=${decision}
     &decisonsForUpdatePortal=[${JSON.stringify(decisionSelected.value)}]&result_id=${JSON.parse(props.aml.results)[0].ResultID}`;
 
     axios
-        .get(url)
-        .then(response => {
-          submitDecisionLoading.value = false;
-          decisionNotesModal.value = false;
-          if (response.data.status === 'success') {
-            notification.success({
-              title: response.data.message,
-              position: 'top',
-            });
-            window.location = `/kyc/aml/${props.aml.quote_type_id}/details/${props.aml.quote_request_id}`;
-          } else {
-            notification.error({
-              title: response.data.message,
-              position: 'top',
-            });
-          }
-        })
-        .catch(err => {
-          console.log(err);
-        });
+      .get(url)
+      .then(response => {
+        submitDecisionLoading.value = false;
+        decisionNotesModal.value = false;
+        if (response.data.status === 'success') {
+          notification.success({
+            title: response.data.message,
+            position: 'top',
+          });
+          window.location = `/kyc/aml/${props.aml.quote_type_id}/details/${props.aml.quote_request_id}`;
+        } else {
+          notification.error({
+            title: response.data.message,
+            position: 'top',
+          });
+        }
+      })
+      .catch(err => {
+        console.log(err);
+      });
   }
 }
 
 const submitAMLDecision = decision => {
-    setAllDecisionSelected();
+  setAllDecisionSelected();
   decisionNotes.value = '';
   decisionNotesModal.value = true;
   decisionModalHeading.value = decisionTitles[decision];
   amlDecision.value = decision;
 };
 
-const setAllDecisionSelected = ()=>{
-    amlResults.value.filter((x) => {
-        if(x.decision == 'FalsePositive' || x.decision == 'TrueMatch'){
-            decisionSelected.value[x.ID] = x.decision;
-        }
-    });
-}
+const setAllDecisionSelected = () => {
+  amlResults.value.filter(x => {
+    if (x.decision == 'FalsePositive' || x.decision == 'TrueMatch') {
+      decisionSelected.value[x.ID] = x.decision;
+    }
+  });
+};
 const setSelectedOption = (e, item) => {
-
   decisionSelected.value[item.ID] = e;
   let index = amlResults.value.findIndex(
     x => x.EntityUniqueID == item.EntityUniqueID,
@@ -107,40 +105,45 @@ const setSelectedOption = (e, item) => {
   if (index != -1) amlResults.value[index].decision = e;
 
   let data = {
-      aml_id : props.aml.id,
-      aml_quote_url : `/kyc/aml/${props.aml.quote_type_id}/details/${props.aml.quote_request_id}`,
-      quote_id : props.aml.quote_request_id,
-      quote_ref_id : props.quoteObject.code,
-      customer_entity_name : props.aml.input,
-      quote_type_text : props.aml.quote_type_text,
-      bridger_response: props.aml.results_found,
-      last_updated_at : props.aml.updated_at,
-      bridger_match_id : item.ID,
-      bridger_decision_type: e
-
+    aml_id: props.aml.id,
+    aml_quote_url: `/kyc/aml/${props.aml.quote_type_id}/details/${props.aml.quote_request_id}`,
+    quote_id: props.aml.quote_request_id,
+    quote_ref_id: props.quoteObject.code,
+    customer_entity_name: props.aml.input,
+    quote_type_text: props.aml.quote_type_text,
+    bridger_response: props.aml.results_found,
+    last_updated_at: props.aml.updated_at,
+    bridger_match_id: item.ID,
+    bridger_decision_type: e,
   };
 
-  axios.post(`/kyc/send-bridger-response`, data)
-      .then(res => {
-          if (res.data.status === 'success') {
-              checkDecisionLockStatus.value = res.data.result_state === props.amlDecisionStatusCode.SENT_FOR_REVIEW;
-              notification.success({
-                  title: res.data.message,
-                  position: 'top',
-              });
-          } else if(res.data.status === 'error') {
-              notification.error({
-                  title: res.data.message,
-                  position: 'top',
-              });
-          }
-      })
-      .catch(err => {
-          console.log(err);
-      })
+  axios
+    .post(`/kyc/send-bridger-response`, data)
+    .then(res => {
+      if (res.data.status === 'success') {
+        checkDecisionLockStatus.value =
+          res.data.result_state === props.amlDecisionStatusCode.SENT_FOR_REVIEW;
+        notification.success({
+          title: res.data.message,
+          position: 'top',
+        });
+      } else if (res.data.status === 'error') {
+        notification.error({
+          title: res.data.message,
+          position: 'top',
+        });
+      }
+    })
+    .catch(err => {
+      console.log(err);
+    });
 };
 
-const checkDecisionLockStatus = ref((props.aml.decision === props.amlDecisionStatusCode.TRUE_MATCH_REJECT_RISK || props.aml.decision === props.amlDecisionStatusCode.SENT_FOR_REVIEW ) && hasRole(rolesEnum.COMPLIANCE));
+const checkDecisionLockStatus = ref(
+  (props.aml.decision === props.amlDecisionStatusCode.TRUE_MATCH_REJECT_RISK ||
+    props.aml.decision === props.amlDecisionStatusCode.SENT_FOR_REVIEW) &&
+    hasRole(rolesEnum.COMPLIANCE),
+);
 
 const isTrue = computed(() => {
   return amlResults.value.some(x => x.decision == 'TrueMatch');
@@ -152,8 +155,11 @@ const falsePositive = computed(() => {
 
 const notesRequired = ref(false);
 
-function complianceRules () {
-  if((hasRole(rolesEnum.COMPLIANCE) || hasRole(rolesEnum.ComplianceSuperUser)) && decisionNotes.value == '') {
+function complianceRules() {
+  if (
+    (hasRole(rolesEnum.COMPLIANCE) || hasRole(rolesEnum.ComplianceSuperUser)) &&
+    decisionNotes.value == ''
+  ) {
     notesRequired.value = 'This field is required';
     return false;
   }
@@ -161,7 +167,6 @@ function complianceRules () {
   notesRequired.value = false;
   return true;
 }
-
 </script>
 
 <template>
@@ -266,7 +271,11 @@ function complianceRules () {
         </template>
 
         <template #item-date_of_birth="{ EntityDetails }">
-          {{ EntityDetails.AdditionalInfo.filter(x => x.Type === "DOB").map( dob => dob.Value).toString() ?? "" }}
+          {{
+            EntityDetails.AdditionalInfo.filter(x => x.Type === 'DOB')
+              .map(dob => dob.Value)
+              .toString() ?? ''
+          }}
         </template>
 
         <template #item-gender="{ EntityDetails }">
@@ -274,22 +283,35 @@ function complianceRules () {
         </template>
 
         <template #item-customer_id="{ EntityDetails }">
-          {{ EntityDetails.IDs.filter(x => x.Type === "ProprietaryUID").map( ProprietaryUID => ProprietaryUID.Number).toString() ?? "" }}
+          {{
+            EntityDetails.IDs.filter(x => x.Type === 'ProprietaryUID')
+              .map(ProprietaryUID => ProprietaryUID.Number)
+              .toString() ?? ''
+          }}
         </template>
 
         <template #item-address="{ EntityDetails }">
           {{
-              EntityDetails.Addresses ? EntityDetails.Addresses.map(
-                  address => (address.City ?? '') +' '+ (address.StateProvinceDistrict ?? '') +' '+ (address.Country ?? ''),
-              ).toString() : ''
+            EntityDetails.Addresses
+              ? EntityDetails.Addresses.map(
+                  address =>
+                    (address.City ?? '') +
+                    ' ' +
+                    (address.StateProvinceDistrict ?? '') +
+                    ' ' +
+                    (address.Country ?? ''),
+                ).toString()
+              : ''
           }}
         </template>
 
         <template #item-country="{ EntityDetails }">
           {{
-            EntityDetails.Addresses ? EntityDetails.Addresses.map(
-              nationality => nationality.Country,
-            ).toString() : ''
+            EntityDetails.Addresses
+              ? EntityDetails.Addresses.map(
+                  nationality => nationality.Country,
+                ).toString()
+              : ''
           }}
         </template>
 
@@ -332,7 +354,11 @@ function complianceRules () {
           True Match - Accept Risk
         </x-button>
       </div>
-      <x-modal v-model="decisionNotesModal" backdrop>
+      <x-modal
+        v-model="decisionNotesModal"
+        :title="`${decisionModalHeading}`"
+        backdrop
+      >
         <template #header>
           {{ decisionModalHeading }}
         </template>

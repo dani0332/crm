@@ -174,17 +174,13 @@ function onSubmit(isValid) {
               required
             >
               <div class="flex gap-12 mt-2">
-                <x-radio
+                <x-form-group
                   v-model="quoteForm.has_accident"
-                  value="1"
-                  label="Yes"
                   :rules="[isRequired]"
-                />
-                <x-radio
-                  v-model="quoteForm.has_accident"
-                  value="0"
-                  label="No"
-                />
+                >
+                  <x-radio value="1" label="Yes" />
+                  <x-radio value="0" label="No" />
+                </x-form-group>
               </div>
             </x-field>
           </div>
@@ -198,17 +194,13 @@ function onSubmit(isValid) {
               required
             >
               <div class="flex gap-12 mt-2">
-                <x-radio
+                <x-form-group
                   v-model="quoteForm.has_good_condition"
-                  value="1"
-                  label="Yes"
                   :rules="[isRequired]"
-                />
-                <x-radio
-                  v-model="quoteForm.has_good_condition"
-                  value="0"
-                  label="No"
-                />
+                >
+                  <x-radio value="1" label="Yes" />
+                  <x-radio value="0" label="No" />
+                </x-form-group>
               </div>
             </x-field>
           </div>
