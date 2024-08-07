@@ -2,41 +2,34 @@
 
 namespace App\Services;
 
-use Carbon\Carbon;
-use App\Models\User;
-use App\Enums\quoteTypeCode;
-use App\Enums\LeadSourceEnum;
-use App\Services\BirdService;
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\HealthFacilityType;
 use App\Enums\HealthPlanTypeEnum;
 use App\Models\ApplicationStorage;
-use App\Enums\ApplicationStorageEnums;;
-use App\Services\SendEmailCustomerService;
-
-
+use App\Models\User;
 
 class HealthEmailService extends BaseService
 {
     protected $sendEmailCustomerService;
     protected $birdService;
 
-
-    public function __construct(SendEmailCustomerService $sendEmailCustomerService,BirdService $birdService)
+    public function __construct(SendEmailCustomerService $sendEmailCustomerService, BirdService $birdService)
     {
         $this->sendEmailCustomerService = $sendEmailCustomerService;
         $this->birdService = $birdService;
     }
 
-    public function sendHealthOCBIntroEmail( $lead, $previousAdvisorId, $healthQuoteService, $triggerSICWorkFlow = false)
+    public function sendHealthOCBIntroEmail($lead, $previousAdvisorId, $healthQuoteService, $triggerSICWorkFlow = false)
     {
-          // Retrieve plans with available ratings for the given lead
+        // Retrieve plans with available ratings for the given lead
         $quote = $healthQuoteService->getQuotePlans($lead->uuid);
-        if(!$quote->quote->plans)
-           info('No plans found for lead: '.$lead->uuid. ' | time: '.now());
+        if (! $quote->quote->plans) {
+            info('No plans found for lead: '.$lead->uuid.' | time: '.now());
+        }
 
         $advisor = User::where('id', $lead->advisor_id)->first();
-        $plans = $this->getQuotePlansByCriteria($quote->quote->healthPlanTypeId,$quote->quote->plans ?? []);
-        $emailData = $this->mappingEmailDataForOCBEmail($lead,$advisor,$plans);
+        $plans = $this->getQuotePlansByCriteria($quote->quote->healthPlanTypeId, $quote->quote->plans ?? []);
+        $emailData = $this->mappingEmailDataForOCBEmail($lead, $advisor, $plans);
         $responseCode = $this->birdService->sendHealthOCBEmail($emailData);
         info('sic sendHealthOCBEmail - Ref ID:'.$lead->uuid.' Time: '.now());
         if ($triggerSICWorkFlow) {
@@ -60,14 +53,15 @@ class HealthEmailService extends BaseService
         return $responseCode;
     }
 
-    public function mappingEmailDataForOCBEmail($lead,$advisor,$plans){
+    public function mappingEmailDataForOCBEmail($lead, $advisor, $plans)
+    {
         return (object) [
             'healthQuoteId' => $lead->code,
             'customerEmail' => $lead->email,
-            'uuid'=> $lead->uuid,
-            'customerFullName' =>  $lead->first_name.' '.$lead->last_name,
+            'uuid' => $lead->uuid,
+            'customerFullName' => $lead->first_name.' '.$lead->last_name,
             'advisorId' => $advisor->id ?? null,
-            'advisorName' =>(! empty($advisor->name) ? $advisor->name : ''),
+            'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
             'advisorDetails' => $advisor ?? null,
             'quotePlanLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid,
@@ -89,23 +83,25 @@ class HealthEmailService extends BaseService
         $selectedPlans = collect($plans)->filter(function ($plan) use ($healthPlanTypeId, $plansByLevel) {
             return in_array($plan->planCode, $plansByLevel[$healthPlanTypeId] ?? []);
         });
+
         return $selectedPlans->map(function ($plan) {
             $lowestRate = collect($plan->ratesPerCopay)->sortBy('discountPremium')->first();
-            $filteredSelectedCopay = $lowestRate && !empty($lowestRate->healthPlanCoPaymentId)
+            $filteredSelectedCopay = $lowestRate && ! empty($lowestRate->healthPlanCoPaymentId)
                 ? collect($plan->coPayments)->firstWhere('id', $lowestRate->healthPlanCoPaymentId)
-                : "";
+                : '';
             $totalValue = ($plan->policyFee ?? 0) + ($plan->basmah ?? 0) + ($lowestRate->discountPremium ?? 0);
-            return (object)[
+
+            return (object) [
                 'name' => $plan->name ?? null,
                 'planCode' => $plan->planCode,
                 'eligibilityName' => $plan->eligibilityName ?? null,
                 'planBenefit' => $this->getBenefitsDetails($plan->benefits, $filteredSelectedCopay) ?? null,
                 'total' => $this->formatNumberWithCommas($totalValue),
-                'hospital' => (object)[
+                'hospital' => (object) [
                     'count' => $plan->healthNetwork->noOfHospitals ?? 0,
-                    'text' => $this->getHospitals($plan->healthNetwork->featuredFacilities ?? null) ?? null
+                    'text' => $this->getHospitals($plan->healthNetwork->featuredFacilities ?? null) ?? null,
                 ],
-                'clinic' => (object)[
+                'clinic' => (object) [
                     'count' => $plan->healthNetwork->noOfClinics ?? 0,
                     'text' => $this->getClinics($plan->healthNetwork->featuredFacilities ?? null) ?? null,
                 ],
@@ -113,30 +109,38 @@ class HealthEmailService extends BaseService
         })->take(6)->toArray();
     }
 
-    public function getHospitals($featuredFacilities){
-        if(empty($featuredFacilities)) return null;
+    public function getHospitals($featuredFacilities)
+    {
+        if (empty($featuredFacilities)) {
+            return null;
+        }
         $hospitals = collect($featuredFacilities)
-            ->where('type',HealthFacilityType::HOSPITAL->value)
+            ->where('type', HealthFacilityType::HOSPITAL->value)
             ->filter(function ($item) {
-                return !empty($item->text);
+                return ! empty($item->text);
             })
             ->map(function ($item) {
                 return str_replace('Hospital', '', $item->text);
             })->implode(', ');
-        return $hospitals ?? "";
+
+        return $hospitals ?? '';
     }
 
-    public function getClinics($featuredFacilities){
-        if(empty($featuredFacilities)) return null;
+    public function getClinics($featuredFacilities)
+    {
+        if (empty($featuredFacilities)) {
+            return null;
+        }
         $hospitals = collect($featuredFacilities)
-            ->where('type',HealthFacilityType::CLINIC->value)
+            ->where('type', HealthFacilityType::CLINIC->value)
             ->filter(function ($item) {
-                return !empty($item->text);
+                return ! empty($item->text);
             })
             ->map(function ($item) {
                 return $item->text;
             })->implode(', ');
-        return $hospitals ?? "";
+
+        return $hospitals ?? '';
     }
 
     public function formatNumberWithCommas($number)
@@ -159,6 +163,7 @@ class HealthEmailService extends BaseService
                 }
             }
         }
+
         return $benefitsTypes;
     }
 
