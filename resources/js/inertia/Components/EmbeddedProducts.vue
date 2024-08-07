@@ -77,8 +77,8 @@ const syncDocument = id => {
     }))
     .post('/embedded-products/sync-document', {
       preserveScroll: true,
-      responseType: 'blob',  // Ensure this is correctly set
-      onSuccess: (response) => {
+      responseType: 'blob', // Ensure this is correctly set
+      onSuccess: response => {
         syncDocumentLoader.value = false;
       },
       onError: () => {
@@ -139,12 +139,10 @@ const sendDcoument = id => {
     });
 };
 
-
-
 /**
  * this function use download embedded transaction documents issue from insurance provider
  */
-const downloadDocument = async (id) => {
+const downloadDocument = async id => {
   downloadDocumentLoader.value = true;
   const formData = {
     quoteId: props.quote.id,
@@ -153,37 +151,44 @@ const downloadDocument = async (id) => {
   };
 
   axios
-  .post('/embedded-products/download-document', formData)
-  .then(response => {
-    if(response.data.attachments.length > 0) {
-      response.data.attachments.forEach(attachment => {
-        downloadFile(attachment);
-      });
-    }
+    .post('/embedded-products/download-document', formData)
+    .then(response => {
+      if (response.data.attachments.length > 0) {
+        response.data.attachments.forEach(attachment => {
+          downloadFile(attachment);
+        });
+      }
 
-    downloadDocumentLoader.value = false;
-
-  })
-  .catch(error => {
-    downloadDocumentLoader.value = false;
-
-  });
+      downloadDocumentLoader.value = false;
+    })
+    .catch(error => {
+      downloadDocumentLoader.value = false;
+    });
 };
 
-const downloadFile = (download) => {
-    const save = document.createElement('a');
-    if (typeof save.download !== 'undefined') {
-        // if the download attribute is supported, save.download will return empty string, if not supported, it will return undefined
-        // if you are using helper method, such as isNone in ember, you can also do isNone(save.download)
-        save.href = window.location.protocol+'//'+window.location.host+'/embedded-products/download/force?path='+download.path;
-        save.target = '_blank';
-        save.download = download.name;
-        save.dispatchEvent(new MouseEvent('click'));
-    } else {
-        window.location.href = window.location.protocol+'//'+window.location.host+'/embedded-products/download/force?path='+download.path; // so that it opens new tab for IE11
-    }
-}
-
+const downloadFile = download => {
+  const save = document.createElement('a');
+  if (typeof save.download !== 'undefined') {
+    // if the download attribute is supported, save.download will return empty string, if not supported, it will return undefined
+    // if you are using helper method, such as isNone in ember, you can also do isNone(save.download)
+    save.href =
+      window.location.protocol +
+      '//' +
+      window.location.host +
+      '/embedded-products/download/force?path=' +
+      download.path;
+    save.target = '_blank';
+    save.download = download.name;
+    save.dispatchEvent(new MouseEvent('click'));
+  } else {
+    window.location.href =
+      window.location.protocol +
+      '//' +
+      window.location.host +
+      '/embedded-products/download/force?path=' +
+      download.path; // so that it opens new tab for IE11
+  }
+};
 
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
@@ -425,21 +430,42 @@ const can = permission => useCan(permission);
 
           <template #item-actions="item">
             <div class="flex flex-col gap-1">
-              <x-button size="xs" color="emerald" v-if="item.sync_document_button" :disabled="!item.sync_document_button" :loading="syncDocumentLoader"
-                @click.prevent="syncDocument(item.id)">
+              <x-button
+                size="xs"
+                color="emerald"
+                v-if="item.sync_document_button"
+                :disabled="!item.sync_document_button"
+                :loading="syncDocumentLoader"
+                @click.prevent="syncDocument(item.id)"
+              >
                 Sync Documents from Provider
               </x-button>
-              <x-button size="xs" color="emerald" :disabled="!item.send_document_button" :loading="sendDocumentLoader"
-                @click.prevent="sendDcoument(item.id)">
+              <x-button
+                size="xs"
+                color="emerald"
+                :disabled="!item.send_document_button"
+                :loading="sendDocumentLoader"
+                @click.prevent="sendDcoument(item.id)"
+              >
                 Send Documents
               </x-button>
-              <x-button size="xs" color="emerald" :disabled="!item.download_document_button" :loading="downloadDocumentLoader"
-                @click.prevent="downloadDocument(item.id)">
+              <x-button
+                size="xs"
+                color="emerald"
+                :disabled="!item.download_document_button"
+                :loading="downloadDocumentLoader"
+                @click.prevent="downloadDocument(item.id)"
+              >
                 Download Documents
               </x-button>
-              <x-button v-if="item.canGenerateCerticate" size="xs" color="#ff5e00"
-                :disabled="!item.send_document_button" :loading="downloadLoader"
-                @click.prevent="downloadDcoument(item.id)">
+              <x-button
+                v-if="item.canGenerateCerticate"
+                size="xs"
+                color="#ff5e00"
+                :disabled="!item.send_document_button"
+                :loading="downloadLoader"
+                @click.prevent="downloadDcoument(item.id)"
+              >
                 Download Certificate
               </x-button>
               <x-button
