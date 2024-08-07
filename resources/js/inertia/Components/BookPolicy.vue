@@ -468,8 +468,9 @@ const isShowingTransactionPaymentStatus = computed(() => {
                   <x-tooltip>
                     <label
                       class="border-b-2 border-dotted border-black uppercase"
-                      >Invoice Description</label
                     >
+                      Invoice Description
+                    </label>
                     <template #tooltip>
                       <span class="custom-tooltip-content">{{
                         productionProcessTooltipEnum.INVOICE_DESCRIPTION
@@ -502,19 +503,21 @@ const isShowingTransactionPaymentStatus = computed(() => {
                     >Transaction Payment Status</label
                   >
                   <template #tooltip>
-                    <span class="custom-tooltip-content">{{
-                      productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS
-                    }}</span>
+                    <span class="custom-tooltip-content">
+                      {{
+                        productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS
+                      }}
+                    </span>
                   </template>
                 </x-tooltip>
                 <template v-if="isShowingTransactionPaymentStatus">
-                  <x-tooltip placement="center">
-                    <dd class="border-b border-dotted border-black">
+                  <x-tooltip placement="left">
+                    <dd class="border-b border-dotted border-black inline">
                       {{ bpForm.transaction_payment_status }}
                     </dd>
                     <template #tooltip>
-                      {{ bpForm.transaction_payment_status_tool_tip }}</template
-                    >
+                      {{ bpForm.transaction_payment_status_tool_tip }}
+                    </template>
                   </x-tooltip>
                 </template>
                 <template v-else>
