@@ -7,6 +7,7 @@ const props = defineProps({
   travelers: Array,
   quotePlans: Array,
   errors: Array,
+  travelDestinations: Object,
 });
 const page = usePage();
 const travelQuoteEnum = page.props.travelQuoteEnum;
@@ -145,6 +146,10 @@ function removeMember(index) {
 function onSubmit(isValid) {
   if (!isValid) return;
 
+  if( (( quoteForm.direction_code != travelQuoteEnum.TRAVEL_UAE_INBOUND ) && isArrivedUAE()) && quoteForm?.destination_ids?.length < 1){
+    quoteForm.errors.destination_ids = 'Please select at least one destination.';
+    return
+  }
   quoteForm.clearErrors();
 
   const method = 'post';
@@ -179,6 +184,7 @@ function addUpdatedTraveller() {
 onMounted(() => {
   addUpdatedTraveller();
   updateRegionCover();
+  quoteForm.destination_ids = mappedDestinationIds.value;
 });
 
 watch(
@@ -287,6 +293,21 @@ const checkUAEResident = computed(() => {
     hasZeroValueForUAEResident.value = false;
     return false;
 });
+
+
+
+
+    const mappedDestinationIds = computed(() => {
+      return props.travelDestinations?.map(destination => destination.destination_id);
+    });
+
+    watch(mappedDestinationIds, (newVal) => {
+      if (newVal.length < 1) return;
+      quoteForm.destination_ids = newVal;
+    });
+
+
+
 </script>
 
 <template>
@@ -370,7 +391,7 @@ const checkUAEResident = computed(() => {
               :single="false"
               class="w-full"
               :rules="[rules.isRequired]"
-              :hasError="quoteForm.errors[index]"
+              :hasError="quoteForm.errors.destination_ids"
             />
           </x-field>
         <x-field

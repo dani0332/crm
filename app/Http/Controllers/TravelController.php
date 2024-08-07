@@ -373,6 +373,7 @@ class TravelController extends Controller
         $fields['email']['disabled'] = true;
         $fields['mobile_no']['disabled'] = true;
         $quotePlans = $this->travelQuoteService->listTravelQuotePlans($record->id);
+        $travelDestinations = $this->travelQuoteService->getTravelDestinations($record->id);
 
         return inertia('TravelQuote/Form', [
             'quote' => $record,
@@ -381,6 +382,7 @@ class TravelController extends Controller
             'modelType' => $this->genericModel->modelType,
             'genderOptions' => $this->crudService->getGenderOptions(),
             'dropdownSource' => $dropdownSource,
+            'travelDestinations' => $travelDestinations,
             'model' => json_encode($this->genericModel->properties),
             'fields' => $fields,
         ]);

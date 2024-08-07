@@ -4,6 +4,7 @@ import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue'
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
+import DownloadDocuments from "../../Components/DownloadDocuments.vue";
 
 const props = defineProps({
   quote: Object,
@@ -1539,6 +1540,7 @@ const selectedProviderPlan = ref({
   planName: page.props.quote.health_plan_name_text,
   providerName: page.props.quote.plan_provider_name_text,
   premium: page.props.ecomDetails.priceWithVAT,
+  planType: checkPlanType(page.props.quote.plan_type_id),
 });
 
 const handlePlanSelected = plan => {
@@ -1547,6 +1549,7 @@ const handlePlanSelected = plan => {
   selectedProviderPlan.value.planName = plan.planName;
   selectedProviderPlan.value.providerName = plan.providerName;
   selectedProviderPlan.value.premium = plan.premium;
+  selectedProviderPlan.value.planType =checkPlanType(plan.planTypeId);
   router.reload({
     preserveState: true,
     preserveScroll: true,
@@ -1706,7 +1709,6 @@ watch(
 
 
 const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
-
 </script>
 
 <template>
@@ -2790,6 +2792,10 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
             <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
             <dd>{{ coPayment ? coPayment.text : 'N/A' }}</dd>
           </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PLAN TYPE</dt>
+            <dd>{{ selectedProviderPlan.planType ?? 'N/A' }}</dd>
+          </div>
         </dl>
       </div>
     </div>
@@ -3335,6 +3341,11 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
           <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
         </h3>
         <div class="flex gap-2">
+            <DownloadDocuments
+            v-if="can(permissionsEnum.DOWNLOAD_ALL_DOCUMENTS)"
+            :quote="props.quote"
+            :quoteDocuments="props.quoteDocuments"
+            />
           <Link
             v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
             :href="`/legacy-policy/${quote.insly_id}`"

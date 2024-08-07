@@ -108,6 +108,8 @@ const initialAmount = ref(0);
 // Check quoteType and set initialAmount.value accordingly
 if (props.quoteType === 'Health') {
   initialAmount.value = props.eCommercePrice;
+} else if (props.quoteType === 'Bike') {
+  initialAmount.value = props.quoteRequest.premium;
 } else {
   initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
     ? props.quoteRequest.premium
@@ -130,9 +132,11 @@ let initalPlanDetails = [];
 if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
 } else if (props.quoteType == 'Business' || props.quoteType == 'Home') {
-  initalPlanDetails = props.quoteRequest.insurance_provider_details;
+    initalPlanDetails = props.quoteRequest?.insurance_provider_details ?? props.quoteRequest?.insurance_provider;
+} else if ( props.quoteType=='Bike' ) {
+    initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
 } else {
-  initalPlanDetails = props.quoteRequest.insurance_provider;
+    initalPlanDetails = props.quoteRequest?.insurance_provider;
 }
 let planDetail = ref(initalPlanDetails);
 const paidAmountSum = ref(0);
@@ -165,9 +169,9 @@ const isInsureNowPayLaterAllowed = computed(() => {
         }
     }
   }
-  if ( paymentMethodsForm.collection_type === 'broker' && 
-       can(permissionEnum.INPL_USER) 
-  ) { 
+  if ( paymentMethodsForm.collection_type === 'broker' &&
+       can(permissionEnum.INPL_USER)
+  ) {
     return true;
   }
   return false;
@@ -249,7 +253,7 @@ const currentFile = computed(() => {
 const initialTotalPriceWithoutVat = computed(() => {
   if ( props.quoteType === 'Health' ) {
     return props.eCommercePriceWithLP; // premium with loading price,excluding vat
-  }  
+  }
   const vatRate = vatValue ? vatValue / 100 : 0;
   return (totalPrice.value / (1 + vatRate));
 });
@@ -974,10 +978,10 @@ const handleFrequencyChange = (noPaymentUpdate = true) => {
 const isCCDisabled = computed(() => {
   return;
   /*return (
-    paymentMethodsForm.frequency === 'monthly' || 
-    paymentMethodsForm.frequency === 'quarterly' || 
+    paymentMethodsForm.frequency === 'monthly' ||
+    paymentMethodsForm.frequency === 'quarterly' ||
     paymentMethodsForm.frequency === 'semi_annual'
-  
+
     );*/
 });
 
@@ -1185,7 +1189,7 @@ const editPaymentModal = (
   if (payment.discount_type=='' || payment.discount_type==null) {
     paymentMethodsForm.discount= payment.discount_type;
   } else {
-    paymentMethodsForm.discount= payment.discount_type;    
+    paymentMethodsForm.discount= payment.discount_type;
   }*/
 
   paymentMethodsForm.custom_reason = payment.custom_reason;
@@ -1323,9 +1327,9 @@ const editPaymentModal = (
    //Assign plan for Travel
    if (props.quoteType === 'Travel' && (paymentMethodsForm.status == 'edit' || paymentMethodsForm.status == 'view')) {
       planDetail.value =  payment.travel_plan;
-      planDetail.value['insurance_provider'] =  payment.travel_plan.insurance_provider;   
+      planDetail.value['insurance_provider'] =  payment.travel_plan.insurance_provider;
     }
-  
+
   if(capture_approval>0) {
     isApproveClicked.value = true;
     if (capture_approval == 1) {
@@ -1938,7 +1942,7 @@ const getCaptureValidation = computed(() => {
         } else if (
             paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PAID ||
             paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.AUTHORISED ||
-            paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PARTIALLY_PAID      
+            paymentRecord.payment_splits[0].payment_status_id===props.paymentStatusEnum.PARTIALLY_PAID
           ){
           return true;
         }
@@ -1993,6 +1997,9 @@ const getCaptureOption = computed(() => {
 
 const getPlanName = computed(() => {
   const plan = planDetail.value;
+  if(props.quoteType === 'Bike' ) {
+    return plan ? props.quoteRequest.car_plan.text : 'Not Available';
+  }
   return quoteTypesToCheck.includes(props.quoteType) && plan
     ? plan.text
     : 'Not Available';
@@ -2047,6 +2054,8 @@ watch(
     ) {
       if (props.quoteType === 'Health') {
         initialAmount.value = props.eCommercePrice;
+      } else if (props.quoteType === 'Bike') {
+        initialAmount.value = props.quoteRequest.premium;
       } else {
         initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
           ? props.quoteRequest.premium
@@ -2059,6 +2068,8 @@ watch(
       initalPlanDetails = props.quoteRequest.plan;
     } else if (props.quoteType == 'Business' || props.quoteType == 'Home') {
       initalPlanDetails = props.quoteRequest.insurance_provider_details;
+    } else if ( props.quoteType=='Bike' ) {
+      initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
     } else {
       initalPlanDetails = props.quoteRequest.insurance_provider;
     }
@@ -3867,10 +3878,10 @@ const isMasterPaymentPaid = computed(() => {
                   v-if="
                     isCreditApprovalView ||
                     (splitPaymentRecord.payment_status_id !=
-                      paymentStatusEnum.PAID &&                      
+                      paymentStatusEnum.PAID &&
                       (
                         can(permissionEnum.ApprovePayments)
-                        ||                    
+                        ||
                         (can(permissionEnum.INPL_APPROVER) && splitPaymentRecord.payment_methods_code == 'IN_PL')
                       )
                     )

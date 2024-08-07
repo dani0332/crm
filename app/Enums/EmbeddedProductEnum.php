@@ -15,4 +15,13 @@ final class EmbeddedProductEnum extends Enum
 
     // used in report for source
     const SRC_CAR_EMBEDDED_PRODUCT = 'CAR EMBEDDED PRODUCT';
+
+    public static function getAlfredProtectCodes(): array
+    {
+        return [
+            'AP1',
+            'AP2',
+            'AP3',
+        ];
+    }
 }

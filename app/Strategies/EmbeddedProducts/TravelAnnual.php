@@ -51,7 +51,7 @@ class TravelAnnual extends EmbeddedProduct
      *
      * @return Collection
      */
-    public function getTransactionData($dataset)
+    public function getTransactionData($dataset, $isAlfredProtect = false)
     {
         $dataset->each(function ($item) {
             $dateFormat = config('constants.DATE_DISPLAY_FORMAT');

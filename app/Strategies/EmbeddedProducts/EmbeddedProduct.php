@@ -2,6 +2,8 @@
 
 namespace App\Strategies\EmbeddedProducts;
 
+use App\Enums\EmbeddedProductEnum;
+use App\Enums\quoteTypeCode;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
@@ -59,9 +61,9 @@ class EmbeddedProduct
      *
      * @return Collection
      */
-    public function getTransactionData($dataset)
+    public function getTransactionData($dataset, $isAlfredProtect = false)
     {
-        $dataset->each(function ($item) {
+        $dataset->each(function ($item) use ($isAlfredProtect) {
             $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
             $quoteObject = $item->quoteRequest;
             $status = $quoteObject->quoteStatus->text ?? '';
@@ -106,10 +108,28 @@ class EmbeddedProduct
             $item->status = $status;
             $item->policy_issuance_date = $quoteObject->policy_issuance_date ?? '';
             $item->emirates_id_number = $customer->emirates_id_number ?? '';
+            $item->lob = quoteTypeCode::getName($quoteObject::class) ?? '';
+
+            if ($isAlfredProtect) {
+                $item->plan_type = EmbeddedProductEnum::{$item->product->embeddedProduct->short_code}()->value;
+                $item->tax_invoice_no = $item->tax_invoice_no ?? '';
+                $item->tax_invoice_buyer_no = $item->tax_invoice_buyer_no ?? '';
+                $item->credit_note_no = $item->credit_note_no ?? '';
+                $item->credit_note_buyer_no = $item->credit_note_buyer_no ?? '';
+                $item->commission_with_vat = $item->commission_with_vat ?? '';
+                $item->premium_with_vat = $item->contribution_amount;
+            }
 
             return $item;
         });
 
         return $dataset;
+    }
+
+    public static function checkAlfredProtect($product)
+    {
+        $product = strtoupper(trim($product));
+
+        return in_array($product, EmbeddedProductEnum::getAlfredProtectCodes());
     }
 }

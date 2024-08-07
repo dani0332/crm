@@ -30,6 +30,11 @@ class EmbeddedProductRequest extends FormRequest
             $minAgeRule = 'nullable|int|lte:max_age';
         }
 
+        $minValueRule = 'nullable|int';
+        if ($this->input('min_value') && $this->input('max_value')) {
+            $minValueRule = 'nullable|int|lte:max_value';
+        }
+
         return [
             'insurance_provider_id' => 'nullable|int|exists:insurance_provider,id',
             'product_name' => 'required',
@@ -51,6 +56,8 @@ class EmbeddedProductRequest extends FormRequest
             'is_active' => 'nullable',
             'min_age' => $minAgeRule,
             'max_age' => 'nullable|int',
+            'min_value' => $minValueRule,
+            'max_value' => 'nullable|int',
         ];
     }
 }
