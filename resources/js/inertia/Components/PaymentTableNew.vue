@@ -2927,17 +2927,16 @@ watch(
 const lookupsEnum = page.props.lookupsEnum;
 
 const masterPaymentStatusFormat = computed(() => {
-    return formatString(masterPaymentStatus.value);
+  return formatString(masterPaymentStatus.value);
 });
 
 const totalPriceFormat = computed(() => {
-    return formatAmount(totalPrice.value);
+  return formatAmount(totalPrice.value);
 });
 
 const totalAmountFormat = computed(() => {
-    return formatAmount(totalAmount.value);
+  return formatAmount(totalAmount.value);
 });
-
 </script>
 
 <template>
@@ -5455,11 +5454,11 @@ const totalAmountFormat = computed(() => {
   height: 38px;
 }
 .custom-select-error {
-  border: 1px solid red; 
-  padding: 1px; 
+  border: 1px solid red;
+  padding: 1px;
   outline: none;
   box-sizing: border-box;
-  height: 45px; 
+  height: 45px;
 }
 .custom-dropdown {
   position: relative;
