@@ -1,5 +1,4 @@
 <script setup>
-
 const props = defineProps({
     sicHealthConfig: Object,
     nationalities: Object,
@@ -47,8 +46,6 @@ function onSubmit(isValid) {
 
 }
 
-
-
 const nationalitiesOptions = computed(() => {
   return page.props.nationalities.map(nat => ({
     value: nat.id,
@@ -62,6 +59,7 @@ const memberCategoriesOptions = computed(() => {
     label: cat.text,
   }));
 });
+
 const healthTypesOptions = computed(() => {
   return page.props.healthTypes.map(type => ({
     value: type.id,
@@ -187,5 +185,4 @@ const ageRangeValid = computed(() => {
 :id="$page.props.sicHealthConfig?.id"
 :expanded="sectionExpanded"
 />
-
 </template>
