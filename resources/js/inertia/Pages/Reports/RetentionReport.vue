@@ -10,7 +10,8 @@ const props = defineProps({
   monthNames: Array,
   RetentionReportEnum: Array,
   isShowBatchColumn: Boolean,
-  footerData: Array
+  footerData: Array,
+  baseURL: String
 });
 
 const page = usePage();
@@ -747,7 +748,21 @@ watch(
             border-cell
             hide-rows-per-page
             hide-footer
-          ></DataTable>
+          >
+          <template #item-code="{ code, uuid }">
+            <a :href="route(baseURL, uuid)" target="_blank" class="text-primary-500 hover:underline">
+              {{ code }}
+            </a>
+              |            
+            <Link
+              :href="route(baseURL, uuid)"
+              class="text-primary-500 hover:underline"
+              target="_blank"
+            >
+              {{ code }}
+            </Link>
+          </template>
+        </DataTable>
         </div>
         <div v-else class="p-4 flex flex-col justify-center items-center gap-4">
           <x-spinner size="lg" color="#1d83bc" />

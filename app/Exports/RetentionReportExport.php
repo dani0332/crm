@@ -14,7 +14,7 @@ class RetentionReportExport
     private $isShowBatchColumn;
 
     public function __construct(Request $request) {
-        $this->data = app(RetentionReportService::class)->getReportData($request, true);
+        @[$this->data] = app(RetentionReportService::class)->getReportData($request, true);
         $this->isShowBatchColumn = app(RetentionReportService::class)->isShowBatchColumn($this->data);
     }
 

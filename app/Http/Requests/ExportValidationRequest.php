@@ -86,7 +86,6 @@ class ExportValidationRequest extends FormRequest
                         $error_fields = 'expiry date';
                     }
                 }
-                
                 if (empty($this->input('month'))){
                     $diff = $start->diffInDays($end);
                     if ($diff > $diffInDays) {

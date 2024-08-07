@@ -37,7 +37,8 @@ class RetentionReportService extends BaseService
         $this->dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         // Test DB
         $this->policyExpiryColumnName = 'policy_expiry_date';
-        // $this->policyExpiryColumnName = 'created_at';
+        // Development 
+        // $this->policyExpiryColumnName = 'health_quote_request.created_at';
         // Stage DB
         // $this->policyExpiryColumnName = 'renewal_expiry_date';
         $this->paginateData = 12;
@@ -63,16 +64,23 @@ class RetentionReportService extends BaseService
 
         // Build the query based on the model object and request parameters
         $query = $this->buildQuery($quoteModel, $request);
+        
+        $allData = $query->get();
+
+        $aggregatedData= $this->getFooterData($allData);
 
         if (!$isExport){
             // Paginate the query results and retain the query string
             $reportData = $query->paginate($this->paginateData)->withQueryString();
         } else {
-            $reportData = $query->get();
+            $reportData = $allData;
         }
 
         // Add some new column into report date and return the result
-        return $this->formatReportData($reportData);
+        return [
+            $this->formatReportData($reportData, $aggregatedData),
+            $aggregatedData
+        ];
     }
 
     /**
@@ -411,9 +419,8 @@ class RetentionReportService extends BaseService
      *
      * @return array .
      */
-    private function formatReportData($reportData)
+    private function formatReportData($reportData, $aggregatedData)
     {
-        $aggregatedData= $this->getFooterData($reportData);
         $avgVolumeNetRetention = $aggregatedData['volume_net_retention']; 
         // Iterate through each report in the report data
         foreach ($reportData as $report) {
@@ -470,6 +477,7 @@ class RetentionReportService extends BaseService
     {
         // Determine the quote type based on the request or user's product name
         $quoteType = $this->getQuoteType($request);
+                
         // Get the model class for the quote type
         $quoteModelClass = $this->getModelObject($quoteType);
 
@@ -484,7 +492,7 @@ class RetentionReportService extends BaseService
 
         // Construct the query to retrieve retention leads data
         $query = $quoteModel::query()
-            ->selectRaw("{$tableName}.code, CONCAT({$tableName}.first_name, ' ', {$tableName}.last_name) as fullName, quote_status.text as quoteStatusName, price_with_vat as price, policy_expiry_date")
+            ->selectRaw("{$tableName}.uuid, {$tableName}.code, CONCAT({$tableName}.first_name, ' ', {$tableName}.last_name) as fullName, quote_status.text as quoteStatusName, price_with_vat as price, {$this->policyExpiryColumnName} as  policy_expiry_date ")
             ->join('users', 'advisor_id', '=', 'users.id')
             ->join('quote_status', 'quote_status.id', "{$tableName}.quote_status_id");
 
@@ -719,5 +727,36 @@ class RetentionReportService extends BaseService
                 'can_view' => $canView,
             ],
         ];
+    }
+
+   /**
+     * Generates a URL based on the quote type.
+     *
+     * This method constructs a URL based on the provided quote type. It handles different cases for personal quotes,
+     * group medical quotes, corporate line quotes, and other types of quotes.
+     *
+     * @return string 
+     */
+    public function buildQuoteURL($request)
+    {
+        // Get the quote type and capitalize the first letter
+        $quoteType = ucfirst($this->getQuoteType($request));
+    
+        // Define the mapping of quote types to their corresponding paths
+        $quoteTypePaths = [
+            quoteTypeCode::Car => 'car.show',
+            quoteTypeCode::Health => 'health.show',
+            quoteTypeCode::Travel => 'travel.show',
+            quoteTypeCode::Bike => 'bike-quotes-show',
+            quoteTypeCode::Pet => 'pet-quotes-show',
+            quoteTypeCode::Cycle => 'cycle-quotes-show',
+            quoteTypeCode::Yacht => 'yacht-quotes-show',
+            quoteTypeCode::Life => 'life-quotes-show',
+            quoteTypeCode::Home => 'home.show',
+            quoteTypeCode::GroupMedical => 'amt.show',
+            quoteTypeCode::CORPLINE => 'business.show',
+        ];
+    
+        return $quoteTypePaths[$quoteType] ?? null;
     }
 }

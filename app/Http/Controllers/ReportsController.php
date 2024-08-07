@@ -46,7 +46,7 @@ class ReportsController extends Controller
         $advisorDistributionReportPermissions = implode('|', PermissionsEnum::getAdvisorDistributionReportPermissions());
         $this->middleware(['permission:'.$advisorDistributionReportPermissions], ['only' => ['renderAdvisorDistributionReport']]);
 
-        $this->middleware('readonly_db');
+        // $this->middleware('readonly_db');
     }
 
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
@@ -494,7 +494,7 @@ class ReportsController extends Controller
     }
 
     public function renderRetentionReport(Request $request, RetentionReportService $retentionReportService){
-        $retentionReportData =  $retentionReportService->getReportData($request);
+        @[$retentionReportData, $footerData] =  $retentionReportService->getReportData($request);
         return inertia('Reports/RetentionReport', [
             'filterOptions' => $retentionReportService->getFilterOptions(),
             'filtersByLob' => $retentionReportService->getFiltersByLob(),
@@ -503,7 +503,8 @@ class ReportsController extends Controller
             'monthNames' => MonthNameEnum::all(),
             'RetentionReportEnum' => RetentionReportEnum::asArray(),
             'isShowBatchColumn' => $retentionReportService->isShowBatchColumn($retentionReportData),
-            'footerData' => $retentionReportService->getFooterData($retentionReportData)
+            'footerData' => $footerData,
+            'baseURL' => $retentionReportService->buildQuoteURL($request)
         ]);
     }
 
