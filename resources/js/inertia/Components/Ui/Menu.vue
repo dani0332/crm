@@ -1,21 +1,21 @@
 <script setup>
-import UiMenu from "./Menu.vue";
+import UiMenu from './Menu.vue';
 
 const props = defineProps({
   items: {
     type: Array,
-    default: () => []
+    default: () => [],
   },
   collapsible: {
     type: Boolean,
-    default: true
+    default: true,
   },
   collapseIcon: String,
-  disabled: Boolean
+  disabled: Boolean,
 });
 
-const expanded = (items) => {
-  return items.some((item) => item.active);
+const expanded = items => {
+  return items.some(item => item.active);
 };
 </script>
 
