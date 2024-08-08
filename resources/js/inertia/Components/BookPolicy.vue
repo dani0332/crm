@@ -1082,7 +1082,16 @@ const isShowingTransactionPaymentStatus = computed(() => {
                       "
                       @click.prevent="confirmSendPolicy"
                     >
-                      {{ props.bookPolicyDetails?.text }}
+                      <x-tooltip>
+                        <span>{{ props.bookPolicyDetails?.text }}</span>
+                        <template #tooltip>
+                          <span>{{
+                            isPaymentPaidWithoutSageReceiptID
+                              ? 'Action needed: Please update payment to generate Sage Receipt ID.'
+                              : 'Please update the booking details.'
+                          }}</span>
+                        </template>
+                      </x-tooltip>
                     </x-button>
                   </template>
                   <template v-else>
