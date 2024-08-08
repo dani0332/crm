@@ -28,8 +28,8 @@ class DepartmentService extends BaseService
             'name' => $data->name,
             'is_active' => $data->is_active,
         ]);
-        foreach ($data->teams as $key => $team_id) {
-            $teams = DepartmentTeams::create([
+        foreach ($data->teams as $team_id) {
+            DepartmentTeams::create([
                 'department_id' => $new_department->id,
                 'team_id' => $team_id,
             ]);
@@ -48,8 +48,8 @@ class DepartmentService extends BaseService
         $department->is_active = $data->is_active;
         $department->save();
         $department->teams()->delete();
-        foreach ($data->teams as $key => $team_id) {
-            $teams = DepartmentTeams::create([
+        foreach ($data->teams as $team_id) {
+            DepartmentTeams::create([
                 'department_id' => $department->id,
                 'team_id' => $team_id,
             ]);
@@ -72,9 +72,7 @@ class DepartmentService extends BaseService
 
     public function getTeamList()
     {
-        $teams = Team::all();
-
-        return $teams;
+        return Team::all();
     }
 
 }

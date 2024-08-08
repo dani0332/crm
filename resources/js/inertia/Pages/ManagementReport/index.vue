@@ -128,27 +128,27 @@ const teams = computed(() => {
 });
 
 const disabledGroupBy = computed(() => {
-  return filters.reportCategory == 'Sales Summary' ?? false;
+  return filters.reportCategory == 'Sales Summary' ? true : false;
 });
 
 const hideUmtGroup = computed(() => {
-  return filters.reportCategory == 'Active Policies' ?? false;
+  return filters.reportCategory == 'Active Policies' ? true : false;
 });
 
 const showPaymentDueDate = computed(() => {
-  return filters.reportType == 'Transaction Payments' ?? false;
+  return filters.reportType == 'Transaction Payments' ? true : false;
 });
 
 const showBookingDate = computed(() => {
-  return filters.reportType  == 'Booked Policies' ?? false;
+  return filters.reportType  == 'Booked Policies' ? true : false;
 });
 
 const showExpiryDate = computed(() => {
-  return filters.reportType == 'Expiring Policies' ?? false;
+  return filters.reportType == 'Expiring Policies' ? true : false;
 });
 
 const showDateTo = computed(() => {
-  return filters.reportType == 'Active Policies' ?? false;
+  return filters.reportType == 'Active Policies' ? true : false;
 });
 
 const reportCategories = ref(props.filterOptions?.reportCategories);

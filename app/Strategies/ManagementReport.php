@@ -33,8 +33,6 @@ class ManagementReport
 
         $loginUserId = auth()->user()->id;
 
-        $advisors = [];
-
         $teamIds = $this->getUserTeams($loginUserId);
 
         $teams = Team::whereIn('id', $teamIds->pluck('id'))
@@ -85,95 +83,7 @@ class ManagementReport
     }
     public function applyFilters($query, $request, $endorsementsQuery = false)
     {
-        //secondOptionalFieldName to be used in case of transaction due date, coming from a different table 'payment_splits'
-        $dateFilter = function ($fieldName, $filterKey, $secondOptionalFieldName = null) use ($query, $request) {
-
-            if ($request[$filterKey] != null) {
-                if (is_array($request[$filterKey])) {
-                    $dates = [];
-                    foreach ($request[$filterKey] as $key => $dateString) {
-                        $carbonDate = Carbon::parse($dateString);
-                        if ($key == 0) {
-                            $dates[$key] = $carbonDate->startOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
-                        } else {
-                            $dates[$key] = $carbonDate->endOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
-                        }
-                    }
-                    $request[$filterKey] = $dates;
-                } else {
-                    $carbonDate = Carbon::parse($request[$filterKey]);
-                    $dates = $carbonDate->startOfDay();
-                    $request[$filterKey] = $dates;
-                }
-            }
-            $dateRange = $request[$filterKey] ?? [
-                Carbon::today()->startOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH')),
-                Carbon::today()->endOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH')),
-            ];
-
-            if ($secondOptionalFieldName) {
-                $query->where(function ($query) use ($fieldName, $dateRange, $secondOptionalFieldName) {
-                    $query->whereBetween($fieldName, $dateRange)
-                        ->orWhereBetween($secondOptionalFieldName, $dateRange);
-                });
-            } else {
-                $query->whereBetween($fieldName, $dateRange);
-            }
-
-        };
-
-        switch ($request['reportCategory']) {
-            case ManagementReportCategoriesEnum::SALE_SUMMARY:
-            case ManagementReportCategoriesEnum::SALE_DETAIL:
-                if ($request['reportType'] == ManagementReportTypeEnum::BOOKED_POLICIES) {
-                    if ($endorsementsQuery) {
-                        $dateFilter('send_update_logs.booking_date', 'policyBookDate');
-                    } else {
-                        $dateFilter('personal_quotes.policy_booking_date', 'policyBookDate');
-                    }
-                } elseif ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
-                    $dateFilter('p.payment_due_date', 'paymentDueDate', 'ps.due_date');
-                }
-                break;
-
-            case ManagementReportCategoriesEnum::ENDING_POLICIES:
-                if ($request['reportType'] == ManagementReportTypeEnum::EXPIRING_POLICIES) {
-                    $dateFilter('p.policy_expiry_date', 'policyExpiredDate');
-                }
-                break;
-
-            case ManagementReportCategoriesEnum::TRANSACTION:
-                if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
-                    $dateFilter('p.payment_due_date', 'paymentDueDate', 'ps.due_date');
-                } elseif ($request['reportType'] == ManagementReportTypeEnum::BOOKED_POLICIES) {
-                    $dateFilter('personal_quotes.policy_booking_date', 'policyBookDate');
-                }
-                break;
-
-            case ManagementReportCategoriesEnum::ENDORSEMENT:
-                if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
-                    $dateFilter('send_update_logs.invoice_date', 'paymentDueDate', 'ps.due_date');
-                } elseif ($request['reportType'] == ManagementReportTypeEnum::BOOKED_POLICIES) {
-                    $dateFilter('send_update_logs.booking_date', 'policyBookDate');
-                }
-                break;
-
-            case ManagementReportCategoriesEnum::ACTIVE_POLICIES:
-                if ($request['reportType'] == ManagementReportTypeEnum::ACTIVE_POLICIES) {
-                    $dateFilter = $request['createdAt'] ?? now()->startOfDay()->format(config('constants.DATE_FORMAT_ONLY'));
-                    $query->where(function ($query) use ($dateFilter) {
-                        $query->where('policy_start_date', '>=', $dateFilter)
-                            ->orWhere('p.policy_expiry_date', '<=', $dateFilter);
-                    });
-                }
-                break;
-
-            case ManagementReportCategoriesEnum::INSTALLMENT:
-                if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
-                    $dateFilter('ps.due_date', 'paymentDueDate');
-                }
-                break;
-        }
+        $this->applyDateFilters($query, $request, $endorsementsQuery);
 
         if (isset($request['transactionType'])) {
             $transactionTypes = Lookup::where('key', LookupsEnum::TRANSACTION_TYPES);
@@ -194,20 +104,125 @@ class ManagementReport
             $query->whereIn('u.sub_team_id', $request['subTeams']);
         }
 
-        if (isset($request['leadSources']) && ! empty($request['leadSources'])) {
-            $query->whereIn('personal_quotes.source', $request['leadSources']);
-        }
-        if (isset($request['department_id']) && ! empty($request['department_id'])) {
-            $query->whereIn('u.department_id', $request['department_id'] ?? []);
-        }
-
-        if (isset($request['includeCancelledPolicies']) && ! empty($request['includeCancelledPolicies'])) {
-            if ($request['includeCancelledPolicies'] == 'No') {
-                $query->where('personal_quotes.quote_status_id', '!=', QuoteStatusEnum::PolicyCancelled);
-            }
-        }
+        $this->applyAdditionalFilters($query, $request);
 
         return $query;
+    }
+
+    private function applyAdditionalFilters($query, $request)
+    {
+        if (! empty($request['leadSources'])) {
+            $query->whereIn('personal_quotes.source', $request['leadSources']);
+        }
+
+        if (! empty($request['department_id'])) {
+            $query->whereIn('u.department_id', $request['department_id']);
+        }
+
+        if (isset($request['includeCancelledPolicies']) && ! empty($request['includeCancelledPolicies']) && $request['includeCancelledPolicies'] == 'No') {
+            $query->where('personal_quotes.quote_status_id', '!=', QuoteStatusEnum::PolicyCancelled);
+        }
+    }
+
+    private function getDateFilter($query, $request, $fieldName, $filterKey, $secondOptionalFieldName = null)
+    {
+        if ($request[$filterKey] != null) {
+            if (is_array($request[$filterKey])) {
+                $dates = [];
+                foreach ($request[$filterKey] as $key => $dateString) {
+                    $carbonDate = Carbon::parse($dateString);
+                    if ($key == 0) {
+                        $dates[$key] = $carbonDate->startOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+                    } else {
+                        $dates[$key] = $carbonDate->endOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH'));
+                    }
+                }
+                $request[$filterKey] = $dates;
+            } else {
+                $carbonDate = Carbon::parse($request[$filterKey]);
+                $dates = $carbonDate->startOfDay();
+                $request[$filterKey] = $dates;
+            }
+        }
+        $dateRange = $request[$filterKey] ?? [
+            today()->startOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH')),
+            today()->endOfDay()->format(config('constants.DB_DATE_FORMAT_MATCH')),
+        ];
+
+        if ($secondOptionalFieldName) {
+            $query->where(function ($query) use ($fieldName, $dateRange, $secondOptionalFieldName) {
+                $query->whereBetween($fieldName, $dateRange)
+                    ->orWhereBetween($secondOptionalFieldName, $dateRange);
+            });
+        } else {
+            $query->whereBetween($fieldName, $dateRange);
+        }
+    }
+
+    private function isReportType($request, $type)
+    {
+        return $request['reportType'] == $type;
+    }
+
+    private function applySaleFilters($query, $request, $endorsementsQuery)
+    {
+        if ($this->isReportType($request, ManagementReportTypeEnum::BOOKED_POLICIES)) {
+            $field = $endorsementsQuery ? 'send_update_logs.booking_date' : 'personal_quotes.policy_booking_date';
+            $this->getDateFilter($query, $request, $field, 'policyBookDate');
+        } elseif ($this->isReportType($request, ManagementReportTypeEnum::TRANSACTION_PAYMENTS)) {
+            $this->getDateFilter($query, $request, 'p.payment_due_date', 'paymentDueDate', 'ps.due_date');
+        }
+    }
+
+    private function applyDateFilters($query, $request, $endorsementsQuery)
+    {
+        switch ($request['reportCategory']) {
+            case ManagementReportCategoriesEnum::SALE_SUMMARY:
+            case ManagementReportCategoriesEnum::SALE_DETAIL:
+                $this->applySaleFilters($query, $request, $endorsementsQuery);
+                break;
+
+            case ManagementReportCategoriesEnum::ENDING_POLICIES:
+                if ($this->isReportType($request, ManagementReportTypeEnum::EXPIRING_POLICIES)) {
+                    $this->getDateFilter($query, $request, 'p.policy_expiry_date', 'policyExpiredDate');
+                }
+                break;
+
+            case ManagementReportCategoriesEnum::TRANSACTION:
+                if ($this->isReportType($request, ManagementReportTypeEnum::TRANSACTION_PAYMENTS)) {
+                    $this->getDateFilter($query, $request, 'p.payment_due_date', 'paymentDueDate', 'ps.due_date');
+                } elseif ($this->isReportType($request, ManagementReportTypeEnum::BOOKED_POLICIES)) {
+                    $this->getDateFilter($query, $request, 'personal_quotes.policy_booking_date', 'policyBookDate');
+                }
+                break;
+
+            case ManagementReportCategoriesEnum::ENDORSEMENT:
+                if ($this->isReportType($request, ManagementReportTypeEnum::TRANSACTION_PAYMENTS)) {
+                    $this->getDateFilter($query, $request, 'send_update_logs.invoice_date', 'paymentDueDate', 'ps.due_date');
+                } elseif ($this->isReportType($request, ManagementReportTypeEnum::BOOKED_POLICIES)) {
+                    $this->getDateFilter($query, $request, 'send_update_logs.booking_date', 'policyBookDate');
+                }
+                break;
+
+            case ManagementReportCategoriesEnum::ACTIVE_POLICIES:
+                if ($this->isReportType($request, ManagementReportTypeEnum::ACTIVE_POLICIES)) {
+                    $dateFilter = $request['createdAt'] ?? now()->startOfDay()->format(config('constants.DATE_FORMAT_ONLY'));
+                    $query->where(function ($query) use ($dateFilter) {
+                        $query->where('policy_start_date', '>=', $dateFilter)
+                            ->orWhere('p.policy_expiry_date', '<=', $dateFilter);
+                    });
+                }
+                break;
+
+            case ManagementReportCategoriesEnum::INSTALLMENT:
+                if ($this->isReportType($request, ManagementReportTypeEnum::TRANSACTION_PAYMENTS)) {
+                    $this->getDateFilter($query, $request, 'ps.due_date', 'paymentDueDate');
+                }
+                break;
+
+            default:
+                break;
+        }
     }
 
     protected function filterTeams($query, $teams)
@@ -225,28 +240,62 @@ class ManagementReport
 
     public function getUtmGroup($request, $query)
     {
+        $utmGroup = null;
+
         if (isset($request['utmGroupBy']) && ! empty($request['utmGroupBy'])) {
             switch ($request['utmGroupBy']) {
                 case 'UTM Campaign':
                     $query->addSelect('pqd.utm_campaign');
                     $query->whereNotNull('pqd.utm_campaign');
 
-                    return 'pqd.utm_campaign';
+                    $utmGroup = 'pqd.utm_campaign';
                     break;
                 case 'UTM Source':
                     $query->addSelect('pqd.utm_source');
                     $query->whereNotNull('pqd.utm_source');
 
-                    return 'pqd.utm_source';
+                    $utmGroup = 'pqd.utm_source';
                     break;
                 case 'UTM Medium':
                     $query->addSelect('pqd.utm_medium');
                     $query->whereNotNull('pqd.utm_medium');
 
-                    return 'pqd.utm_medium';
+                    $utmGroup = 'pqd.utm_medium';
+                    break;
+
+                default:
+                    $utmGroup = null;
                     break;
             }
         }
+
+        return $utmGroup;
+    }
+
+    private function initializeSums($handle, $nonIntegarIndexes, $headers, $data)
+    {
+        $sums = array_fill(0, count($headers), 0.00);
+
+        $data = collect($data);
+        foreach ($data as $index => $quote) {
+
+            fputcsv($handle, $this->map($quote));
+
+            // Update sums
+            foreach ($this->map($quote) as $index => $value) {
+                if (! in_array($index, $nonIntegarIndexes)) {
+                    $floatValue = (float) str_replace(',', '', $value);
+                    $sums[$index] += $floatValue;
+                } elseif ($index == 0) {
+                    $sums[$index] = 'TOTAL';
+                } else {
+                    $sums[$index] = 'N/A';
+                }
+            }
+
+        }
+
+        return $sums;
     }
 
     /**
@@ -265,26 +314,7 @@ class ManagementReport
             fputcsv($handle, $headers);
 
             // Prepare an array to hold the sums
-            $sums = array_fill(0, count($headers), 0.00);
-
-            $data = collect($data);
-            foreach ($data as $index => $quote) {
-
-                fputcsv($handle, $this->map($quote));
-
-                // Update sums
-                foreach ($this->map($quote) as $index => $value) {
-                    if (! in_array($index, $nonIntegarIndexes)) {
-                        $floatValue = (float) str_replace(',', '', $value);
-                        $sums[$index] += $floatValue;
-                    } elseif ($index == 0) {
-                        $sums[$index] = 'TOTAL';
-                    } else {
-                        $sums[$index] = 'N/A';
-                    }
-                }
-
-            }
+            $sums = $this->initializeSums($handle, $nonIntegarIndexes, $headers, $data);
 
             $formattedSums = [];
 
@@ -324,6 +354,22 @@ class ManagementReport
         return $item;
     }
 
+    private static function mapEndorsementsToReport($item, $endorsementData, $request)
+    {
+        foreach ($endorsementData as $endorsement) {
+            if ($item[$request->groupBy] === $endorsement[$request->groupBy]) {
+                $item->total_endorsements = $endorsement->total_endorsements ?? 0;
+                $item->total_transaction = $item->total_policies + $item->total_endorsements;
+                $item->endorsements_amount = (float) $endorsement->total_endorsement_amount;
+                $item->total_price =
+                    ($item->total_price ? (float) $item->total_price : 0) +
+                    ($endorsement->total_endorsement_amount ? (float) $endorsement->total_endorsement_amount : 0);
+            }
+        }
+
+        return $item;
+    }
+
     /**
      * process endorsements data function
      *
@@ -338,18 +384,7 @@ class ManagementReport
          * map the endorsement data to the report data
          */
         $reportData = $reportData->map(function ($item) use ($request, $endorsementData) {
-            foreach ($endorsementData as $endorsement) {
-                if ($item[$request->groupBy] === $endorsement[$request->groupBy]) {
-                    $item->total_endorsements = $endorsement->total_endorsements ?? 0;
-                    $item->total_transaction = $item->total_policies + $item->total_endorsements;
-                    $item->endorsements_amount = (float) $endorsement->total_endorsement_amount;
-                    $item->total_price =
-                        ($item->total_price ? (float) $item->total_price : 0) +
-                        ($endorsement->total_endorsement_amount ? (float) $endorsement->total_endorsement_amount : 0);
-                }
-            }
-
-            return $item;
+            return self::mapEndorsementsToReport($item, $endorsementData, $request);
         });
 
         /**
