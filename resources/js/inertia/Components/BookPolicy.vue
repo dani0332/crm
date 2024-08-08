@@ -385,19 +385,7 @@ const isPaymentPaidWithoutSageReceiptID = computed(() => {
     }
   }
   return false;
-  console.clear();
-  console.log(
-    'isPaymentPaidWithoutSageReceiptID',
-    payment,
-    paymentStatusEnum,
-    paymentMethodsEnum,
-  );
 });
-console.log(
-  'isPaymentPaidWithoutSageReceiptID',
-  props.payments[0],
-  paymentStatusEnum,
-);
 const disableSendAndBookPolicyButton = computed(() => {
   let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
   let permission = permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON;
