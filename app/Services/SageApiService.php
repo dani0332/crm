@@ -1274,7 +1274,6 @@ class SageApiService
 
         $data = ['id' => $quote->id, 'quoteTypeId' => $quoteTypeId];
 
-
         //Booking of Policies with zero price is only allowed for the policies having Credit Approval as Payment Method.
         $isPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
         $isPaymentMethodCreditApproved = $payment->payment_methods_code == PaymentMethodsEnum::CreditApproval;
@@ -1330,7 +1329,7 @@ class SageApiService
 
     public function bookPolicyOnSage($sageRequestDataArray)
     {
-        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
+        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $request] = $sageRequestDataArray;
         info('################################## Sage Book Policy started for : '.$quote->code.'##################################');
         info('Sage API - Payment frequency : '.$payment->frequency.' for '.$quote->uuid);
 
@@ -1395,7 +1394,7 @@ class SageApiService
         info('########## End of Policy Booked for : '.$quote->code.' ##########');
 
         return ['status' => true, 'message' => 'Policy is Booked'];
-     }
+    }
 
     private function createARInvoicePremAndComm($sageRequestDataArray)
     {
