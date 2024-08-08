@@ -2134,31 +2134,30 @@ onMounted(() => {
                   payments[0].total_amount + payments[0].discount_value
                 "
               />
-                <div v-if="readOnlyMode.isDisable === true">
-              <x-button
-                v-if="can(permissionEnum.PaymentsCreate)"
-                size="sm"
-                color="emerald"
-                @click="addPaymentModal"
-              >
-                Add Manual Payment
-              </x-button>
-                    </div>
+              <div v-if="readOnlyMode.isDisable === true">
+                <x-button
+                  v-if="can(permissionEnum.PaymentsCreate)"
+                  size="sm"
+                  color="emerald"
+                  @click="addPaymentModal"
+                >
+                  Add Manual Payment
+                </x-button>
+              </div>
             </div>
           </template>
           <template v-else>
             <x-tooltip>
-                <div v-if="readOnlyMode.isDisable === true">
-
-              <x-button
-                v-if="can(permissionEnum.PaymentsCreate)"
-                size="sm"
-                color="emerald"
-                @click="addPaymentModal"
-              >
-                <span class="border-b border-dotted">Add Manual Payment</span>
-              </x-button>
-                </div>
+              <div v-if="readOnlyMode.isDisable === true">
+                <x-button
+                  v-if="can(permissionEnum.PaymentsCreate)"
+                  size="sm"
+                  color="emerald"
+                  @click="addPaymentModal"
+                >
+                  <span class="border-b border-dotted">Add Manual Payment</span>
+                </x-button>
+              </div>
               <template #tooltip>
                 <span>{{
                   paymentTooltipEnum.PAYMENT_MANAGEMENT_ADD_PAYMENT
