@@ -38,12 +38,12 @@ const htmlTag = computed(() => {
     </span>
 
     <span class="ml-1 shrink-0">
-      <x-spinner v-if="props.loading" />
+      <x-spinner v-if="item.loading" />
       <template v-else>
         <span v-if="$slots.suffix">
           <slot name="suffix"></slot>
         </span>
-        <x-icon v-else-if="props.iconRight" :icon="props.iconRight" />
+        <x-icon v-else-if="item.iconRight" :icon="item.iconRight" />
       </template>
     </span>
   </component>

@@ -15,11 +15,7 @@ const createLink = link => {
       value: link.url,
       href: link.url,
       active: page.url.startsWith(menuUrl),
-      ...(link.attributes.external
-        ? { target: '_blank', href: link.url }
-        : {
-            onClick: () => router.visit(link.url),
-          }),
+      ...(link.attributes.external ? { target: '_blank' } : null),
     };
   }
 };
