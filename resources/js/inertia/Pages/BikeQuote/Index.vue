@@ -87,12 +87,16 @@ function setQueryStringFilters() {
     }
   }
 }
-
+const readOnlyMode = reactive({
+    isDisable: true,
+});
 onMounted(() => {
   setQueryStringFilters();
   if (hasRole(rolesEnum.BikeManager) || hasRole(rolesEnum.Admin)) {
     permissionAssignLeads.value = true;
   }
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+
 });
 
 const tableHeader = [
@@ -197,6 +201,7 @@ watch(
 
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Bike Quotes List</h2>
+        <div v-if="readOnlyMode.isDisable === true">
       <x-button
         v-if="can(permissionsEnum.BikeQuotesCreate)"
         size="sm"
@@ -206,6 +211,7 @@ watch(
         <!-- href="/personal-quotes/bike/create" -->
         Create Lead
       </x-button>
+        </div>
     </div>
     <x-divider class="my-4" />
 

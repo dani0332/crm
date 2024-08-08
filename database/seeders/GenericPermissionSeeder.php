@@ -18,8 +18,14 @@ class GenericPermissionSeeder extends Seeder
      */
     public function run()
     {
+        // ADD Permission to Read only Access LOBS
+        $readOnlyAccessPermission = Permission::where('name', PermissionsEnum::All_QUOTES_VIEWONLY_ACCESS)->first();
+        if (! $readOnlyAccessPermission) {
+            Permission::create([
+                'name' => PermissionsEnum::All_QUOTES_VIEWONLY_ACCESS,
+            ]);
+        }
         //CUSTOMER RISK SCORE PERMISSION
-
         $riskScorePermission = Permission::where('name', PermissionsEnum::CUSTOMER_RISKRRATING_OVERRIDE)->first();
         if (! $riskScorePermission) {
             Permission::create([

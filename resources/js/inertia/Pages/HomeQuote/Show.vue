@@ -51,6 +51,8 @@ const notification = useNotifications('toast');
 const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 const hasRole = role => useHasRole(role);
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 
 const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at),
@@ -470,6 +472,12 @@ const linkEntity = () => {
       console.log(err);
     });
 };
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -485,7 +493,7 @@ const linkEntity = () => {
           Stale for {{ countDays }}
         </p>
       </template>
-      <template #default>
+      <template #default v-if="readOnlyMode.isDisable === true">
         <LeadNotes
           :documentType="noteDocumentType"
           :notes="quoteNotes"
@@ -862,6 +870,7 @@ const linkEntity = () => {
                   @click.prevent="searchByTradeLicense"
                   size="xs"
                   color="primary"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Search
                 </x-button>
@@ -958,6 +967,7 @@ const linkEntity = () => {
           size="sm"
           :loading="customerProfileForm.processing"
           @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
         >
           Search
         </x-button>
@@ -1005,7 +1015,7 @@ const linkEntity = () => {
           </dd>
         </div>
         <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity">
+          <x-button size="sm" color="orange" @click.prevent="linkEntity" v-if="readOnlyMode.isDisable === true">
             Link
           </x-button>
         </div>
@@ -1124,6 +1134,7 @@ const linkEntity = () => {
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
               :disabled="allowStatusUpdate"
+              v-if="readOnlyMode.isDisable === true"
             >
               Change Status
             </x-button>
@@ -1269,7 +1280,7 @@ const linkEntity = () => {
       <template #content>
         <x-divider class="mb-4 mt-1" />
         <div class="flex justify-end gap-4 items-center mb-4">
-          <x-button size="sm" color="orange" @click.prevent="addActivity">
+          <x-button size="sm" color="orange" @click.prevent="addActivity" v-if="readOnlyMode.isDisable === true">
             Add Activity
           </x-button>
         </div>
@@ -1318,6 +1329,7 @@ const linkEntity = () => {
                 outlined
                 :disabled="item.status === 1"
                 @click.prevent="activityEdit(item)"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Edit
               </x-button>
@@ -1327,6 +1339,7 @@ const linkEntity = () => {
                 :disabled="item.status === 1"
                 outlined
                 @click.prevent="activityDelete(item.id)"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Delete
               </x-button>

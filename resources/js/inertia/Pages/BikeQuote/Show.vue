@@ -293,6 +293,14 @@ const linkEntity = () => {
     });
 };
 const paymentStatusEnum = page.props.paymentStatusEnum;
+
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+
+});
 </script>
 
 <template>
@@ -368,15 +376,15 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
           :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
           preserve-scroll
         >
-          <x-button size="sm" color="#ff5e00" tag="div">
+          <x-button size="sm" color="#ff5e00" tag="div" v-if="readOnlyMode.isDisable === true">
             View Legacy policy
           </x-button>
         </Link>
         <Link v-if="can(permissionsEnum.BikeQuotesEdit)" :href="route('bike-quotes-edit', quote.uuid)">
-                <x-button size="sm" tag="div">Edit</x-button>
+                <x-button size="sm" tag="div" v-if="readOnlyMode.isDisable === true">Edit</x-button>
             </Link>
             <Link :href="route('bike-quotes-list')" preserve-scroll v-if="can(permissionsEnum.BikeQuotesList)">
-                <x-button size="sm" tag="div">Bike Quotes</x-button>
+                <x-button size="sm" tag="div" v-if="readOnlyMode.isDisable === true">Bike Quotes</x-button>
             </Link>
         </div>
     </div>
@@ -720,6 +728,7 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
                   @click.prevent="searchByTradeLicense"
                   size="xs"
                   color="primary"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Search
                 </x-button>
@@ -816,6 +825,7 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
           size="sm"
           :loading="customerProfileForm.processing"
           @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
         >
           Search
         </x-button>
@@ -1052,7 +1062,7 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
                 </div>
             </div>
         </div>
-        <div class="flex justify-end">
+        <div class="flex justify-end" v-if="readOnlyMode.isDisable === true">
             <x-button
                 v-if="assumptionState.isEditing"
                 class="mt-4 mr-2"

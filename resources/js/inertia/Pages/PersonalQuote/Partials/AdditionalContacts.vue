@@ -6,7 +6,8 @@ defineProps({
   quote: Object,
   quoteType: String,
 });
-
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 const modals = reactive({
   addContact: false,
   contactDeleteConfirm: false,
@@ -199,6 +200,13 @@ const additionalContact = computed(() => {
   }
   return [];
 });
+
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 <template>
   <x-collapse show-icon class="p-4 rounded shadow mb-6 bg-white">
@@ -211,7 +219,7 @@ const additionalContact = computed(() => {
     <template #content>
       <x-divider class="mb-4 mt-1" />
       <div class="flex flex-wrap gap-3 justify-end items-center mb-4">
-        <x-button size="sm" color="orange" @click="addContactModal">
+        <x-button size="sm" color="orange" @click="addContactModal" v-if="readOnlyMode.isDisable === true">
           Add Additional Contacts
         </x-button>
       </div>
@@ -234,6 +242,7 @@ const additionalContact = computed(() => {
               color="emerald"
               outlined
               @click.prevent="additionalContactPrimary(item)"
+              v-if="readOnlyMode.isDisable === true"
             >
               Make Primary
             </x-button>

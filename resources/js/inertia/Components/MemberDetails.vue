@@ -21,6 +21,8 @@ const props = defineProps({
 const page = usePage();
 const notification = useToast();
 const { isRequired } = useRules();
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 
 const modals = reactive({
   member: false,
@@ -161,6 +163,13 @@ const memberDeleteConfirmed = () => {
     },
   );
 };
+
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -172,7 +181,7 @@ const memberDeleteConfirmed = () => {
     <template #content>
       <x-divider class="mb-4 mt-1" />
       <div class="flex justify-end gap-4 items-center mb-4">
-        <x-button @click.prevent="addMemberModal" size="sm" color="orange">
+        <x-button @click.prevent="addMemberModal" size="sm" color="orange" v-if="readOnlyMode.isDisable === true">
           Add Member
         </x-button>
       </div>
@@ -204,6 +213,7 @@ const memberDeleteConfirmed = () => {
               color="primary"
               outlined
               @click.prevent="onEditMember(item)"
+              v-if="readOnlyMode.isDisable === true"
             >
               Edit
             </x-button>
@@ -212,6 +222,7 @@ const memberDeleteConfirmed = () => {
               color="error"
               outlined
               @click.prevent="memberDelete(item.id)"
+              v-if="readOnlyMode.isDisable === true"
             >
               Delete
             </x-button>

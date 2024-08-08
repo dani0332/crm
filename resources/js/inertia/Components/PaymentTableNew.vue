@@ -1,6 +1,7 @@
 <script setup>
 import ToolTip from './../Components/ToolTip.vue';
 import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
+import {onMounted, reactive} from "vue";
 const notification = useNotifications('toast');
 const page = usePage();
 
@@ -2093,6 +2094,14 @@ const isMasterPaymentPaid = computed(() => {
   }
   return false;
 });
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+
+    // setLeadStatuses();
+});
 </script>
 
 <template>
@@ -2125,6 +2134,7 @@ const isMasterPaymentPaid = computed(() => {
                   payments[0].total_amount + payments[0].discount_value
                 "
               />
+                <div v-if="readOnlyMode.isDisable === true">
               <x-button
                 v-if="can(permissionEnum.PaymentsCreate)"
                 size="sm"
@@ -2133,10 +2143,13 @@ const isMasterPaymentPaid = computed(() => {
               >
                 Add Manual Payment
               </x-button>
+                    </div>
             </div>
           </template>
           <template v-else>
             <x-tooltip>
+                <div v-if="readOnlyMode.isDisable === true">
+
               <x-button
                 v-if="can(permissionEnum.PaymentsCreate)"
                 size="sm"
@@ -2145,6 +2158,7 @@ const isMasterPaymentPaid = computed(() => {
               >
                 <span class="border-b border-dotted">Add Manual Payment</span>
               </x-button>
+                </div>
               <template #tooltip>
                 <span>{{
                   paymentTooltipEnum.PAYMENT_MANAGEMENT_ADD_PAYMENT
@@ -2334,7 +2348,7 @@ const isMasterPaymentPaid = computed(() => {
                         }}
                       </td>
                       <td>
-                        <div class="flex gap-2">
+                        <div class="flex gap-2" v-if="readOnlyMode.isDisable === true">
                           <x-button
                             v-if="can(permissionEnum.PaymentsEdit)"
                             size="xs"
@@ -2426,6 +2440,7 @@ const isMasterPaymentPaid = computed(() => {
                               )
                             "
                             outlined
+                            v-if="readOnlyMode.isDisable === true"
                             >View</x-button
                           >
                           <x-button

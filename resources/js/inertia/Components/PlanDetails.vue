@@ -68,7 +68,7 @@ const rules = {
 const submitPlanDetailsForm = isValid => {
 
   if (!planDetailsForm.insurance_provider_id) {
-    isProviderEmpty.value = true; 
+    isProviderEmpty.value = true;
     return;
   }
   else isProviderEmpty.value = false;
@@ -147,6 +147,12 @@ const can = permission => useCan(permission);
 const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -231,7 +237,7 @@ const permissionEnum = page.props.permissionsEnum;
       </div>
 
       <div class="text-right space-x-4 mt-12">
-        <x-button color="#26B99A" type="submit" size="sm" :loading="formProcessing">Save</x-button>
+        <x-button color="#26B99A" type="submit" size="sm" :loading="formProcessing" v-if="readOnlyMode.isDisable === true">Save</x-button>
       </div>
     </x-form>
   </div>
