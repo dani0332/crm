@@ -85,6 +85,8 @@ class ExportValidationRequest extends FormRequest
                         $end = Carbon::parse($this->input('policyExpiryDate')[1])->endOfDay();
                         $error_fields = 'expiry date';
                     }
+                    // Will change once deploy on stage
+                    $diffInDays = 1000000;
                 }
                 if (empty($this->input('month'))){
                     $diff = $start->diffInDays($end);

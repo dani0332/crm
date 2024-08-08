@@ -299,6 +299,29 @@ const cleanFilters = filters => {
   return filters;
 };
 
+const addMissingFilters = payLoad => {
+  try{
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.forEach((value, key) => {
+      if (key.includes('[') && key.includes(']')) {
+        const baseKey = key.substring(0, key.indexOf('['));
+        const index = key.substring(key.indexOf('[') + 1, key.indexOf(']'));
+        if (!payLoad[baseKey]) {
+          payLoad[baseKey] = [];
+        }
+        payLoad[baseKey][index] = value;
+      } else {
+        if (!(key in payLoad)) {
+          payLoad[key] = value;
+        }
+      }
+    });
+  } catch(ex){
+    console.log(ex);
+  }
+  return payLoad
+}
+
 const removeUnusedFilters = filters => {
   const filtersByLob = page.props.filtersByLob;
   Object.keys(filtersByLob).forEach(key => {
@@ -420,7 +443,8 @@ function onFetchLeadsInfo(advisor_id, type, page=1){
   filters.type = type;
   filters.page = page
   filters.advisor_id = advisor_id;
-  const payLoad = cleanFilters(filters);
+  let payLoad = cleanFilters(filters);
+  payLoad = addMissingFilters(payLoad)
   axios
     .get(`/reports/fetch-retention-leads-data`, {
       params: {

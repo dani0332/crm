@@ -6,12 +6,11 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\MonthNameEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
-use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RetentionReportEnum;
 use App\Enums\RolesEnum;
-use App\Enums\TravelQuoteEnum;
+use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Models\UserManager;
 use App\Repositories\QuoteTypeRepository;
@@ -36,9 +35,9 @@ class RetentionReportService extends BaseService
     public function __construct() {
         $this->dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         // Test DB
-        $this->policyExpiryColumnName = 'policy_expiry_date';
+        // $this->policyExpiryColumnName = 'policy_expiry_date';
         // Development 
-        // $this->policyExpiryColumnName = 'health_quote_request.created_at';
+        $this->policyExpiryColumnName = 'personal_quotes.created_at';
         // Stage DB
         // $this->policyExpiryColumnName = 'renewal_expiry_date';
         $this->paginateData = 12;
@@ -51,27 +50,21 @@ class RetentionReportService extends BaseService
      */
     public function getReportData($request, $isExport=false)
     {
-        // Get the quote type or LOB
-        $quoteType = $this->getQuoteType($request);
-
-        // Get the relevant LOB model
-        $quoteModel = $this->getModelObject($quoteType);
-
         // If the model object is not found or the user is not an advisor or manager and no permission, return an empty array
-        if (!$quoteModel || !$this->isAdvisorManager()) {
+        if (!$this->isAdvisorManager()) {
             return [];
         }
 
         // Build the query based on the model object and request parameters
-        $query = $this->buildQuery($quoteModel, $request);
-        
+        $query = $this->buildQuery($request);
         $allData = $query->get();
 
-        $aggregatedData= $this->getFooterData($allData);
+        $aggregatedData= $this->getSummarizedData($allData);
 
         if (!$isExport){
             // Paginate the query results and retain the query string
             $reportData = $query->paginate($this->paginateData)->withQueryString();
+            $summarizedData= $this->getSummarizedData($reportData);
         } else {
             $reportData = $allData;
         }
@@ -79,7 +72,7 @@ class RetentionReportService extends BaseService
         // Add some new column into report date and return the result
         return [
             $this->formatReportData($reportData, $aggregatedData),
-            $aggregatedData
+            $isExport ? $aggregatedData : $summarizedData
         ];
     }
 
@@ -121,10 +114,10 @@ class RetentionReportService extends BaseService
      *
      * @return \Illuminate\Database\Eloquent\Builder 
      */
-    private function buildQuery($quoteModel, $request)
+    private function buildQuery($request)
     {
         // Initialize the query with the necessary select statements and joins
-        $query = $quoteModel::query()
+        $query = PersonalQuote::query()
             ->selectRaw("MONTHNAME({$this->policyExpiryColumnName}) as `month`,
                 users.name as `advisor_name`,
                 count(*) as total,
@@ -151,6 +144,9 @@ class RetentionReportService extends BaseService
      */
     private function applyFilters($query, $request)
     {
+        // Apply line of business filters
+        $this->applyLineOfBusinessFilters($query, $request);
+
         // Apply date range filters to the query
         $this->applyDateFilters($query, $request);
     
@@ -165,15 +161,19 @@ class RetentionReportService extends BaseService
     
         // Apply permission-based filters to the query
         $this->applyPermissionFilters($query, $request);
-    
-        // Apply personal quote filter
-        $this->applyPersonalQuoteFilter($query, $request);
-
-        // Apply Business quote filter
-        $this->applyBusinessQuoteFilter($query, $request);
 
         // Apply additional filters based on the 'displayBy' parameter in the request
-        if (isset($request['displayBy'])){
+        $this->applyDisplayByFilters($query, $request);
+    }
+
+    /**
+     * Applies filters based on the 'displayBy' parameter in the request.
+     *
+     * @return void
+     */
+    private function applyDisplayByFilters($query, $request)
+    {
+        if (isset($request['displayBy'])) {
             if ($request['displayBy'] === RetentionReportEnum::BATCH) {
                 $this->applyFilterForBatch($query, $request);
             } elseif ($request['displayBy'] === RetentionReportEnum::MONTHLY) {
@@ -183,31 +183,22 @@ class RetentionReportService extends BaseService
     }
 
     /**
-    * Applies a filter to the query to include only personal quotes.
-    * @return void
-    */
-    private function applyPersonalQuoteFilter($query, $filters){
-        $quoteType = $this->getQuoteType($filters);
-        $isPersonalQuote = checkPersonalQuotes($quoteType);
-        if ( $isPersonalQuote){
-            $quoteTypeData = QuoteType::where('code', $quoteType)->first();
-            $query->where('quote_type_id', $quoteTypeData->id);
-        }
-    }
-
-    /**
-    * Applies a filter to the query to include only business quotes.
-    *
-    * @return void
-    */
-    private function applyBusinessQuoteFilter($query, $filters){
-        $quoteType = $this->getQuoteType($filters);
-        if ($quoteType === quoteTypeCode::GroupMedical){
-            $query->leftJoin('business_type_of_insurance as bit', 'business_type_of_insurance_id', '=', 'bit.id')
-		        ->where('bit.text', '=', quoteTypeCode::GroupMedical);
-        } elseif  ( $quoteType === quoteTypeCode::CORPLINE){
-            $query->leftJoin('business_type_of_insurance as bit', 'business_type_of_insurance_id', '=', 'bit.id')
-                ->where('bit.text', '!=', quoteTypeCode::GroupMedical);
+     * Applies line of business filters to the query.
+     *
+     * @return void
+     */
+    private function applyLineOfBusinessFilters($query, $request)
+    {
+        $lob = $quoteType = $this->getQuoteType($request);
+        $lob = in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE]) ? quoteTypeCode::Business : $lob;
+        $lobId = QuoteTypeRepository::where('code', $lob)->first();
+        $query->where('quote_type_id', $lobId->id);
+        if (in_array($quoteType, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE])){
+            if ($quoteType == quoteTypeCode::GroupMedical){
+                $query->where('business_type_of_insurance_id', '=', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
+            } else if($quoteType == quoteTypeCode::CORPLINE) {
+                $query->where('business_type_of_insurance_id', '!=', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
+            }
         }
     }
 
@@ -401,16 +392,15 @@ class RetentionReportService extends BaseService
      */
     private function getMonthDatesByNumber($year, $monthNumber)
     {
-        // Create DateTime objects for the start and end dates of the month
-        $startDate = new DateTime("$year-$monthNumber-01");
-        $endDate = clone $startDate;
-        $endDate->modify('last day of this month');
-
-        // Return the formatted start and end dates
-        return [
-            'start_date' => $startDate->format($this->dateFormat),
-            'end_date' => $endDate->format($this->dateFormat)
-        ];
+       // Create Carbon instances for the start and end dates of the month
+       $startDate = Carbon::create($year, $monthNumber, 1);
+       $endDate = $startDate->copy()->endOfMonth();
+   
+       // Return the formatted start and end dates
+       return [
+           'start_date' => $startDate->format($this->dateFormat),
+           'end_date' => $endDate->format($this->dateFormat)
+       ];
     }
 
     /**
@@ -475,23 +465,11 @@ class RetentionReportService extends BaseService
      */
     public function getRetentionLeadsData($request)
     {
-        // Determine the quote type based on the request or user's product name
-        $quoteType = $this->getQuoteType($request);
-                
-        // Get the model class for the quote type
-        $quoteModelClass = $this->getModelObject($quoteType);
-
-        // Return an empty array if the model class is not found
-        if (!$quoteModelClass) {
-            return [];
-        }
-
-        // Instantiate the quote model and get the table name
-        $quoteModel = new $quoteModelClass();
-        $tableName = $quoteModel->getTable();
+        // Instantiate the table name
+        $tableName = 'personal_quotes';
 
         // Construct the query to retrieve retention leads data
-        $query = $quoteModel::query()
+        $query = PersonalQuote::query()
             ->selectRaw("{$tableName}.uuid, {$tableName}.code, CONCAT({$tableName}.first_name, ' ', {$tableName}.last_name) as fullName, quote_status.text as quoteStatusName, price_with_vat as price, {$this->policyExpiryColumnName} as  policy_expiry_date ")
             ->join('users', 'advisor_id', '=', 'users.id')
             ->join('quote_status', 'quote_status.id', "{$tableName}.quote_status_id");
@@ -510,7 +488,7 @@ class RetentionReportService extends BaseService
      * and computes the volume net retention and volume gross retention percentages.
      * @return array 
      */
-    public function getFooterData($reportData){
+    public function getSummarizedData($reportData){
         $aggregatedData = $this->aggregateReportData($reportData);
 
         // Calculate the total valid entries
@@ -640,38 +618,18 @@ class RetentionReportService extends BaseService
     {
         // Define the initial lines of business (LOB) with their corresponding permission constants
         $lobs = [
-            quoteTypeCode::Bike => PermissionsEnum::BIKE_CONVERSION_REPORT,
-            quoteTypeCode::Health => PermissionsEnum::HEALTH_CONVERSION_REPORT,
-            quoteTypeCode::Travel => PermissionsEnum::TRAVEL_CONVERSION_REPORT,
-            quoteTypeCode::Pet => PermissionsEnum::PET_CONVERSION_REPORT,
-            quoteTypeCode::Cycle => PermissionsEnum::CYCLE_CONVERSION_REPORT,
-            quoteTypeCode::Yacht => PermissionsEnum::YACHT_CONVERSION_REPORT,
-            quoteTypeCode::Life => PermissionsEnum::LIFE_CONVERSION_REPORT,
-            quoteTypeCode::Home => PermissionsEnum::HOME_CONVERSION_REPORT,
+            quoteTypeCode::Bike => quoteTypeCode::Bike,
+            quoteTypeCode::Health => quoteTypeCode::Health,
+            quoteTypeCode::Travel => quoteTypeCode::Travel,
+            quoteTypeCode::Pet => quoteTypeCode::Pet,
+            quoteTypeCode::Cycle => quoteTypeCode::Cycle,
+            quoteTypeCode::Yacht => quoteTypeCode::Yacht,
+            quoteTypeCode::Life => quoteTypeCode::Life,
+            quoteTypeCode::Home => quoteTypeCode::Home,
+            quoteTypeCode::CORPLINE =>  quoteTypeCode::CORPLINE,
+            quoteTypeCode::GroupMedical => quoteTypeCode::GroupMedical
+
         ];
-
-        // Filter the LOBs based on the user's permissions
-        $lobs = array_filter($lobs, function ($permission) {
-            return Auth::user()->can($permission);
-        });
-
-        // Retrieve the list of LOBs from the repository and filter them based on the user's permissions
-        $lobs = QuoteTypeRepository::GetList()
-            ->filter(function ($lob) use ($lobs) {
-                return array_key_exists($lob->code, $lobs);
-            })
-            ->pluck('code', 'text')
-            ->toArray();
-
-        // Add corporate line insurance to the LOBs if the user has the necessary permission
-        if (Auth::user()->can(PermissionsEnum::CORPLINE_CONVERSION_REPORT)) {
-            $lobs = array_merge(['CorpLine Insurance' => quoteTypeCode::CORPLINE], $lobs);
-        }
-
-        // Add group medical insurance to the LOBs if the user has the necessary permission
-        if (Auth::user()->can(PermissionsEnum::GROUPMEDICAL_CONVERSION_REPORT)) {
-            $lobs = array_merge(['Group Medical Insurance' => quoteTypeCode::GroupMedical], $lobs);
-        }
 
         // Return the filtered and augmented LOBs
         return $lobs;
