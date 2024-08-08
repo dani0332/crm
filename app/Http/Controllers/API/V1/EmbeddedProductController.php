@@ -11,8 +11,12 @@ class EmbeddedProductController extends Controller
 {
     public function sendDocument(EmbeddedProducDocumentRequest $request)
     {
-        $message = EmbeddedProductRepository::sendDocument($request->validated());
+        $data = $request->validated();
+        $quoteId = $data['quoteId'];
+        $modelType = $data['modelType'];
+        $epId = $data['epId'];
+        $message = EmbeddedProductRepository::SendDocumentsByLead($quoteId, $modelType, $epId);
 
-        return apiResponse(null, Response::HTTP_OK, $message);
+        return apiResponse(null, Response::HTTP_OK, '');
     }
 }
