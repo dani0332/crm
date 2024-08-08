@@ -82,7 +82,7 @@ const dateToYMD = date => {
   }
 
   return null;
-}
+};
 
 const isEF = computed(() => {
   return props.sendUpdateLog.category.code === sendUpdateStatusEnum.EF;
@@ -139,7 +139,11 @@ const checkSectionTwoEdit = () => {
     return;
   }
 
-  if (checkTaxInvoiceDoc && !hasTaxDocuments.value && !additionalInvoiceTypes.includes(props.sendUpdateLog?.option?.code)) {
+  if (
+    checkTaxInvoiceDoc &&
+    !hasTaxDocuments.value &&
+    !additionalInvoiceTypes.includes(props.sendUpdateLog?.option?.code)
+  ) {
     notification.error({
       title: 'Please upload tax invoice and tax invoice raised by buyer. ',
       position: 'top',
@@ -147,8 +151,14 @@ const checkSectionTwoEdit = () => {
     return;
   }
 
-  if (checkTaxInvoiceDoc && additionalInvoiceTypes.includes(props.sendUpdateLog?.option?.code)) {
-    if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ACB && !props.uploadedDocuments.includes('SUTAXINVRB')) {
+  if (
+    checkTaxInvoiceDoc &&
+    additionalInvoiceTypes.includes(props.sendUpdateLog?.option?.code)
+  ) {
+    if (
+      props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ACB &&
+      !props.uploadedDocuments.includes('SUTAXINVRB')
+    ) {
       notification.error({
         title: 'Please upload tax invoice raised by buyer',
         position: 'top',
@@ -156,7 +166,10 @@ const checkSectionTwoEdit = () => {
       return;
     }
 
-    if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB && !props.uploadedDocuments.includes('SUTAXINV')) {
+    if (
+      props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB &&
+      !props.uploadedDocuments.includes('SUTAXINV')
+    ) {
       notification.error({
         title: 'Please upload tax invoice',
         position: 'top',
@@ -218,15 +231,42 @@ const bookingDetailsForm = useForm({
   invoice_description: props.bookingDetails?.invoice_description || '',
   broker_invoice_number: props.bookingDetails?.broker_invoice_number || '',
   transaction_payment_status: 'N/A',
-  invoice_date: dateToYMD(props.sendUpdateLog?.invoice_date) || dateToYMD(props?.payments[0]?.insurer_invoice_date) || '',
-  insurer_tax_invoice_number: props.sendUpdateLog?.insurer_tax_invoice_number || props?.payments[0]?.insurer_tax_number || null,
-  discount: props?.payments[0]?.discount_value || props.sendUpdateLog?.discount || '0.00',
-  insurer_commission_invoice_number: props.sendUpdateLog?.insurer_commission_invoice_number || props?.payments[0]?.insurer_commmission_invoice_number || '',
-  commission_percentage: props.sendUpdateLog?.commission_percentage || props?.payments[0]?.commmission_percentage || '',
-  commission_vat_not_applicable: props.sendUpdateLog?.commission_vat_not_applicable || props?.payments[0]?.commission_vat_not_applicable || '0.00',
-  vat_on_commission: props.sendUpdateLog?.vat_on_commission || props?.payments[0]?.commission_vat || '',
-  commission_vat_applicable: Math.abs(props.sendUpdateLog.commission_vat_applicable) || props?.payments[0]?.commission_vat_applicable || '',
-  total_commission: props.sendUpdateLog?.total_commission || props?.payments[0]?.commission || '',
+  invoice_date:
+    dateToYMD(props.sendUpdateLog?.invoice_date) ||
+    dateToYMD(props?.payments[0]?.insurer_invoice_date) ||
+    '',
+  insurer_tax_invoice_number:
+    props.sendUpdateLog?.insurer_tax_invoice_number ||
+    props?.payments[0]?.insurer_tax_number ||
+    null,
+  discount:
+    props?.payments[0]?.discount_value ||
+    props.sendUpdateLog?.discount ||
+    '0.00',
+  insurer_commission_invoice_number:
+    props.sendUpdateLog?.insurer_commission_invoice_number ||
+    props?.payments[0]?.insurer_commmission_invoice_number ||
+    '',
+  commission_percentage:
+    props.sendUpdateLog?.commission_percentage ||
+    props?.payments[0]?.commmission_percentage ||
+    '',
+  commission_vat_not_applicable:
+    props.sendUpdateLog?.commission_vat_not_applicable ||
+    props?.payments[0]?.commission_vat_not_applicable ||
+    '0.00',
+  vat_on_commission:
+    props.sendUpdateLog?.vat_on_commission ||
+    props?.payments[0]?.commission_vat ||
+    '',
+  commission_vat_applicable:
+    Math.abs(props.sendUpdateLog.commission_vat_applicable) ||
+    props?.payments[0]?.commission_vat_applicable ||
+    '',
+  total_commission:
+    props.sendUpdateLog?.total_commission ||
+    props?.payments[0]?.commission ||
+    '',
   total_vat_amount: props.sendUpdateLog?.total_vat_amount || '0.00',
   price_vat_applicable:
     Math.abs(
@@ -243,7 +283,10 @@ const bookingDetailsForm = useForm({
 
 // convertToNegative function will replace all values in negative if the isNegativeValue is true.
 const calculateCommisionDetailsForACB = () => {
-  if (bookingDetailsForm.commission_vat_applicable == 0 && bookingDetailsForm.commission_vat_not_applicable == 0) {
+  if (
+    bookingDetailsForm.commission_vat_applicable == 0 &&
+    bookingDetailsForm.commission_vat_not_applicable == 0
+  ) {
     notification.error({
       title: 'Please add Commision VAT or VAT Not Applicable',
       position: 'top',
@@ -252,28 +295,32 @@ const calculateCommisionDetailsForACB = () => {
   }
 
   if (bookingDetailsForm.commission_vat_applicable > 0) {
-    let vat_on_commission = bookingDetailsForm.commission_vat_applicable * Number(vat / 100);
-      bookingDetailsForm.vat_on_commission = convertToNegative(vat_on_commission);
+    let vat_on_commission =
+      bookingDetailsForm.commission_vat_applicable * Number(vat / 100);
+    bookingDetailsForm.vat_on_commission = convertToNegative(vat_on_commission);
 
-      let total_commission =
-        Number(bookingDetailsForm.commission_vat_not_applicable) +
-        Number(bookingDetailsForm.commission_vat_applicable) +
-        vat_on_commission;
-      bookingDetailsForm.total_commission = convertToNegative(total_commission);
-  }
-  else if (bookingDetailsForm.commission_vat_not_applicable > 0) {
-    bookingDetailsForm.total_commission = bookingDetailsForm.commission_vat_not_applicable;
-  }
-  else {
+    let total_commission =
+      Number(bookingDetailsForm.commission_vat_not_applicable) +
+      Number(bookingDetailsForm.commission_vat_applicable) +
+      vat_on_commission;
+    bookingDetailsForm.total_commission = convertToNegative(total_commission);
+  } else if (bookingDetailsForm.commission_vat_not_applicable > 0) {
+    bookingDetailsForm.total_commission =
+      bookingDetailsForm.commission_vat_not_applicable;
+  } else {
     bookingDetailsForm.vat_on_commission = '';
     bookingDetailsForm.total_commission = '';
   }
-}
+};
 
 const calculatePriceDetailsForATIB = () => {
-  if (bookingDetailsForm.price_vat_applicable == 0 && bookingDetailsForm.price_vat_not_applicable == 0) {
+  if (
+    bookingDetailsForm.price_vat_applicable == 0 &&
+    bookingDetailsForm.price_vat_not_applicable == 0
+  ) {
     notification.error({
-      title: 'Please add Policy Detail Price (VAT APPLICABLE) or Price (VAT NOT APPLICABLE)',
+      title:
+        'Please add Policy Detail Price (VAT APPLICABLE) or Price (VAT NOT APPLICABLE)',
       position: 'top',
     });
     return false;
@@ -282,29 +329,29 @@ const calculatePriceDetailsForATIB = () => {
   if (bookingDetailsForm.price_vat_applicable > 0) {
     // in this calculation, number 5 is not VAT amount, we need to * the price_vat and price_not_vat with 5% to get the total VAT amount.
     let total_price_with_vat_and_not_vat_applicable =
-        Number(bookingDetailsForm.price_vat_applicable) +
-        Number(bookingDetailsForm.price_vat_not_applicable);
-      let total_vat_amount =
-        Number(bookingDetailsForm.price_vat_applicable) * Number(vat / 100);
-      bookingDetailsForm.total_vat_amount = convertToNegative(total_vat_amount);
+      Number(bookingDetailsForm.price_vat_applicable) +
+      Number(bookingDetailsForm.price_vat_not_applicable);
+    let total_vat_amount =
+      Number(bookingDetailsForm.price_vat_applicable) * Number(vat / 100);
+    bookingDetailsForm.total_vat_amount = convertToNegative(total_vat_amount);
 
-      let price_with_vat =
-        total_price_with_vat_and_not_vat_applicable + Number(total_vat_amount);
-      bookingDetailsForm.price_with_vat = convertToNegative(price_with_vat);
+    let price_with_vat =
+      total_price_with_vat_and_not_vat_applicable + Number(total_vat_amount);
+    bookingDetailsForm.price_with_vat = convertToNegative(price_with_vat);
   }
-}
+};
 
 const calculateCommission = () => {
-  if(props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ACB) {
+  if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ACB) {
     calculateCommisionDetailsForACB();
-  } else if(props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB) {
+  } else if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB) {
     calculatePriceDetailsForATIB();
   } else {if (
     bookingDetailsForm.commission_vat_applicable > 0 ||
     bookingDetailsForm.price_vat_applicable > 0 ||
     bookingDetailsForm.price_vat_not_applicable > 0
-    ) {
-    if (
+
+    ) {if (
       Number(bookingDetailsForm.price_vat_applicable > 0) ||
       Number(bookingDetailsForm.price_vat_not_applicable > 0)
     ) {
@@ -317,7 +364,8 @@ const calculateCommission = () => {
           Number(bookingDetailsForm.commission_vat_not_applicable) +
           Number(bookingDetailsForm.commission_vat_applicable) +
           vat_on_commission;
-        bookingDetailsForm.total_commission = convertToNegative(total_commission);
+        bookingDetailsForm.total_commission =
+          convertToNegative(total_commission);
 
         // in this calculation, number 5 is not VAT amount, we need to * the price_vat and price_not_vat with 5% to get the total VAT amount.
         let total_price_with_vat_and_not_vat_applicable =
@@ -325,10 +373,12 @@ const calculateCommission = () => {
           Number(bookingDetailsForm.price_vat_not_applicable);
         let total_vat_amount =
           Number(bookingDetailsForm.price_vat_applicable) * Number(vat / 100);
-        bookingDetailsForm.total_vat_amount = convertToNegative(total_vat_amount);
+        bookingDetailsForm.total_vat_amount =
+          convertToNegative(total_vat_amount);
 
         let price_with_vat =
-          total_price_with_vat_and_not_vat_applicable + Number(total_vat_amount);
+          total_price_with_vat_and_not_vat_applicable +
+          Number(total_vat_amount);
         bookingDetailsForm.price_with_vat = convertToNegative(price_with_vat);
 
         bookingDetailsForm.commission_percentage = convertToNegative(
@@ -410,6 +460,14 @@ const saveBookingDetail = isValid => {
         title: 'The request has been updated.',
         position: 'top',
       });
+      if (props?.bookingDetails?.isLackingOfPayment) {
+        notification.error({
+          title:
+            'Action Needed: Please revise payment details to reflect plan changes.',
+          position: 'top',
+          timeout: 10000,
+        });
+      }
       state.isEdit = false;
       location.reload();
     },
@@ -505,8 +563,13 @@ function reverseValue(value) {
 
 function updateReversalEntries(payment, sendUpdateLog) {
   reversalEntry.transaction_payment_status = 'N/A';
-  reversalEntry.booking_date = sendUpdateLog?.booking_date || props.realQuote?.policy_booking_date || props.quote?.policy_booking_date || '';
-  reversalEntry.invoice_date = payment.insurer_invoice_date || sendUpdateLog.invoice_date || '';
+  reversalEntry.booking_date =
+    sendUpdateLog?.booking_date ||
+    props.realQuote?.policy_booking_date ||
+    props.quote?.policy_booking_date ||
+    '';
+  reversalEntry.invoice_date =
+    payment.insurer_invoice_date || sendUpdateLog.invoice_date || '';
   reversalEntry.insurer_tax_invoice_number = payment?.insurer_tax_number
     ? payment.insurer_tax_number + '-REV'
     : sendUpdateLog.insurer_tax_invoice_number + '-REV';
@@ -577,13 +640,14 @@ const onUpdateReversal = () => {
   bookingDetailsForm.price_vat_not_applicable =
     Math.abs(reversalEntry.price_vat_not_applicable) || '0.00';
   bookingDetailsForm.vat_on_commission =
-    reversalEntry.vat_on_commission || null;
+    reversalEntry.vat_on_commission || '0.00';
   bookingDetailsForm.commission_vat_applicable =
     Math.abs(reversalEntry.commission_vat_applicable) || null;
   bookingDetailsForm.total_commission = reversalEntry.total_commission || null;
   bookingDetailsForm.commission_vat_not_applicable =
     reversalEntry.commission_vat_not_applicable || null;
-  bookingDetailsForm.total_vat_amount = reversalEntry.total_vat_amount || '0.00';
+  bookingDetailsForm.total_vat_amount =
+    reversalEntry.total_vat_amount || '0.00';
   bookingDetailsForm.price_with_vat = reversalEntry.price_with_vat;
 };
 
@@ -903,27 +967,31 @@ const isCI = computed(() => {
   return props.sendUpdateLog.category.code === sendUpdateStatusEnum.CI;
 });
 
-const checkDiscount = (newPrice) => {
+const checkDiscount = newPrice => {
   let total_price = Number(props.sendUpdateLog?.price_with_vat);
-  let difference =  Number(Number(newPrice) - Number(total_price)).toFixed(2);
-  let previousDiscount = props?.payments[0]?.discount_value || 0.00;
-  let paymentDiscount = props?.payments[0]?.discount_value || 0.00;
+  let difference = Number(Number(newPrice) - Number(total_price)).toFixed(2);
+  let previousDiscount = props?.payments[0]?.discount_value || 0.0;
+  let paymentDiscount = props?.payments[0]?.discount_value || 0.0;
   let newDiscount = Number(bookingDetailsForm.discount).toFixed(2);
   if (newPrice > total_price && (isEF || isCI || isCPD)) {
     if (previousDiscount > 0) {
-      bookingDetailsForm.discount = Number(parseFloat(newDiscount) + parseFloat(difference));
+      bookingDetailsForm.discount = Number(
+        parseFloat(newDiscount) + parseFloat(difference),
+      );
     } else {
       bookingDetailsForm.discount = Number(difference).toFixed(2);
     }
   } else {
     let lessDifference = Number(total_price - newPrice).toFixed(2);
     if (paymentDiscount > 0 && lessDifference <= 0.99) {
-      bookingDetailsForm.discount = Number(paymentDiscount - lessDifference).toFixed(2);
+      bookingDetailsForm.discount = Number(
+        paymentDiscount - lessDifference,
+      ).toFixed(2);
     } else {
       bookingDetailsForm.discount = previousDiscount;
     }
   }
-}
+};
 
 const dateToDMY = date => {
   if (date) {
@@ -940,7 +1008,15 @@ const dateToDMY = date => {
   }
 
   return null;
-}
+};
+
+watch(
+  () => props.sendUpdateLog.insurance_provider_id,
+  (newValue, oldValue) => {
+    bookingDetailsForm.broker_invoice_number =
+      props.bookingDetails.broker_invoice_number;
+  },
+);
 </script>
 
 <template>
@@ -961,7 +1037,7 @@ const dateToDMY = date => {
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div class="text-right"></div>
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="text-[#308BCA] text-sm font-bold underline decoration-dotted decoration-primary-700"
                   >
@@ -990,7 +1066,7 @@ const dateToDMY = date => {
 
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1012,7 +1088,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1025,12 +1101,14 @@ const dateToDMY = date => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ dateToDMY(reversalEntry.booking_date) ?? 'N/A' }}</span>
+                <span>{{
+                  dateToDMY(reversalEntry.booking_date) ?? 'N/A'
+                }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1051,7 +1129,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1072,7 +1150,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1085,12 +1163,14 @@ const dateToDMY = date => {
                 </x-tooltip>
               </div>
               <div>
-                <span>{{ dateToDMY(reversalEntry.invoice_date) ?? 'N/A' }}</span>
+                <span>{{
+                  dateToDMY(reversalEntry.invoice_date) ?? 'N/A'
+                }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1106,7 +1186,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1127,7 +1207,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1144,7 +1224,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1164,7 +1244,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1186,7 +1266,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1209,7 +1289,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1230,7 +1310,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1252,7 +1332,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1273,7 +1353,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1297,7 +1377,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1320,7 +1400,7 @@ const dateToDMY = date => {
 
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1342,7 +1422,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1368,7 +1448,7 @@ const dateToDMY = date => {
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
               <div>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -1442,7 +1522,7 @@ const dateToDMY = date => {
             <div class="grid md:grid-cols-2 gap-x-4 gap-y-2 py-4 items-center">
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1464,12 +1544,16 @@ const dateToDMY = date => {
                   </span>
                 </div>
               </div>
-              <div v-if="
-                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB &&
-                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB"
-                class="grid sm:grid-cols-2 pb-1.5">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !==
+                    sendUpdateStatusEnum.ACB &&
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                "
+                class="grid sm:grid-cols-2 pb-1.5"
+              >
                 <div class="font-bold">
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1485,12 +1569,16 @@ const dateToDMY = date => {
                   <span>{{ bookingDetailsForm.booking_date ?? 'N/A' }}</span>
                 </div>
               </div>
-              <div v-if="
-                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB &&
-                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB"
-                class="grid sm:grid-cols-2 pb-1.5">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !==
+                    sendUpdateStatusEnum.ACB &&
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                "
+                class="grid sm:grid-cols-2 pb-1.5"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1509,7 +1597,7 @@ const dateToDMY = date => {
               </div>
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1530,7 +1618,7 @@ const dateToDMY = date => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1557,7 +1645,7 @@ const dateToDMY = date => {
               </div>
               <div class="grid sm:grid-cols-2 pb-1.5">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1571,9 +1659,14 @@ const dateToDMY = date => {
                 </div>
                 <div>N/A</div>
               </div>
-              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                "
+                class="grid sm:grid-cols-2"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1600,7 +1693,7 @@ const dateToDMY = date => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1619,9 +1712,14 @@ const dateToDMY = date => {
                   }}</span>
                 </div>
               </div>
-              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                "
+                class="grid sm:grid-cols-2"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1647,12 +1745,16 @@ const dateToDMY = date => {
                   />
                 </div>
               </div>
-              <div v-if="
-                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB &&
-                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB"
-                class="grid sm:grid-cols-2">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !==
+                    sendUpdateStatusEnum.ACB &&
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                "
+                class="grid sm:grid-cols-2"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1672,9 +1774,14 @@ const dateToDMY = date => {
                   }}</span>
                 </div>
               </div>
-              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                "
+                class="grid sm:grid-cols-2"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1708,12 +1815,16 @@ const dateToDMY = date => {
                   <span>N/A</span>
                 </div>
               </div>
-              <div v-if="
-                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB &&
-                props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB"
-                class="grid sm:grid-cols-2">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !==
+                    sendUpdateStatusEnum.ACB &&
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                "
+                class="grid sm:grid-cols-2"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1732,9 +1843,14 @@ const dateToDMY = date => {
                   }}</span>
                 </div>
               </div>
-              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                "
+                class="grid sm:grid-cols-2"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1757,11 +1873,11 @@ const dateToDMY = date => {
                     @change="calculateCommission"
                     class="!mb-0 w-full"
                     :class="isNegativeValue ? ' icon-padding' : ''"
-                      :disabled="!state.isEdit"
+                    :disabled="!state.isEdit"
                     placeholder="Enter Price"
                     :rules="[isRequired]"
                     size="xs"
-                      :icon-left="isNegativeValue ? 'minus' : ''"
+                    :icon-left="isNegativeValue ? 'minus' : ''"
                   />
                 </div>
                 <div v-else>
@@ -1772,9 +1888,14 @@ const dateToDMY = date => {
                   }}</span>
                 </div>
               </div>
-              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                "
+                class="grid sm:grid-cols-2"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1793,9 +1914,14 @@ const dateToDMY = date => {
                   }}</span>
                 </div>
               </div>
-              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                "
+                class="grid sm:grid-cols-2"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="pt-1 font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1827,9 +1953,14 @@ const dateToDMY = date => {
                   />
                 </div>
               </div>
-              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                "
+                class="grid sm:grid-cols-2"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1849,9 +1980,14 @@ const dateToDMY = date => {
                   }}</span>
                 </div>
               </div>
-              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB" class="grid sm:grid-cols-2">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
+                "
+                class="grid sm:grid-cols-2"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1871,9 +2007,14 @@ const dateToDMY = date => {
                   }}</span>
                 </div>
               </div>
-              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                "
+                class="grid sm:grid-cols-2"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1897,9 +2038,14 @@ const dateToDMY = date => {
                 <div class="font-bold text-right"></div>
                 <div></div>
               </div>
-              <div v-if="props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB" class="grid sm:grid-cols-2">
+              <div
+                v-if="
+                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ACB
+                "
+                class="grid sm:grid-cols-2"
+              >
                 <div>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -1937,31 +2083,31 @@ const dateToDMY = date => {
               <template v-if="isLackingPayment">
                 <x-tooltip>
                   <x-button
-                      size="sm"
-                      color="orange"
-                      v-if="props.updateBtn"
-                      :loading="loader.sendUpdateSectionBtn"
-                      @click="sendUpdateValidation"
-                      :disabled="sendUpdatePermissionCheck || isLackingPayment"
-                  >
-                    {{ props.updateBtn }}
-                  </x-button>
-                  <template #tooltip>
-                      <span class="custom-tooltip-content">
-                        Action Needed: Please revise payment details to reflect
-                        plan changes.
-                      </span>
-                  </template>
-                </x-tooltip>
-              </template>
-              <template v-else>
-                <x-button
                     size="sm"
                     color="orange"
                     v-if="props.updateBtn"
                     :loading="loader.sendUpdateSectionBtn"
                     @click="sendUpdateValidation"
-                    :disabled="sendUpdatePermissionCheck"
+                    :disabled="sendUpdatePermissionCheck || isLackingPayment"
+                  >
+                    {{ props.updateBtn }}
+                  </x-button>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">
+                      Action Needed: Please revise payment details to reflect
+                      plan changes.
+                    </span>
+                  </template>
+                </x-tooltip>
+              </template>
+              <template v-else>
+                <x-button
+                  size="sm"
+                  color="orange"
+                  v-if="props.updateBtn"
+                  :loading="loader.sendUpdateSectionBtn"
+                  @click="sendUpdateValidation"
+                  :disabled="sendUpdatePermissionCheck"
                 >
                   {{ props.updateBtn }}
                 </x-button>
@@ -2004,8 +2150,12 @@ const dateToDMY = date => {
       </x-button>
     </sendUpdateCustConfirmBtnTemp>
 
-    <x-modal v-model="modals.sendConfirm" show-close backdrop>
-      <template #header> Send Update </template>
+    <x-modal
+      v-model="modals.sendConfirm"
+      title="Send Update"
+      show-close
+      backdrop
+    >
       <x-alert
         color="orange"
         light
@@ -2030,7 +2180,7 @@ const dateToDMY = date => {
             Cancel
           </x-button>
           <template v-if="!modals.isConfirmed">
-            <x-tooltip position="left">
+            <x-tooltip placement="left">
               <SendUpdateCustReuseBtnTemp />
               <template #tooltip>
                 Please select the checkbox to proceed
@@ -2042,8 +2192,11 @@ const dateToDMY = date => {
       </template>
     </x-modal>
 
-    <x-modal v-model="modals.paymentConfirmation" backdrop>
-      <template #header> Are you sure you want to continue? </template>
+    <x-modal
+      v-model="modals.paymentConfirmation"
+      title="Are you sure you want to continue?"
+      backdrop
+    >
       <div class="text-center">
         <p class="font-semibold">{{ paymentConfirmationMessage.status }}</p>
         <p>{{ paymentConfirmationMessage.message }}</p>
@@ -2077,8 +2230,13 @@ const dateToDMY = date => {
       </x-button>
     </sendUpdateConfirmBtnTemp>
 
-    <x-modal v-model="modals.attestRecord" size="md" show-close backdrop>
-      <template #header> Send Update </template>
+    <x-modal
+      v-model="modals.attestRecord"
+      size="md"
+      title="Send Update"
+      show-close
+      backdrop
+    >
       <x-checkbox
         v-model="confirmationCheck"
         label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
@@ -2094,7 +2252,7 @@ const dateToDMY = date => {
             Cancel
           </x-button>
           <template v-if="!confirmationCheck">
-            <x-tooltip position="left">
+            <x-tooltip placement="left">
               <SendUpdateReuseBtnTemp />
               <template #tooltip>
                 Please select the checkbox to proceed
@@ -2109,7 +2267,7 @@ const dateToDMY = date => {
 </template>
 
 <style>
-  .icon-padding input {
-    padding-left: 4vh !important;
-  }
+.icon-padding input {
+  padding-left: 4vh !important;
+}
 </style>

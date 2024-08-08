@@ -16,6 +16,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  toolBarProp: {
+    type: Array,
+    default: ['bold', 'italic', 'link', 'preview'],
+  },
   required: {
     type: Boolean,
     default: false,
@@ -54,7 +58,7 @@ const onBlur = () => {
       v-model="currentValue"
       :editor-id="props.id"
       language="en-US"
-      :toolbars="['bold', 'italic', 'link', 'preview']"
+      :toolbars="props.toolBarProp"
       no-upload-img
       no-highlight
       no-mermaid

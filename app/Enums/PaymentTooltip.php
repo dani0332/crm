@@ -62,7 +62,7 @@ final class PaymentTooltip extends Enum
     const CHECK_DETAILS = 'Enter the unique number found on the cheque. This is essential for tracking and verification purposes. Only fill this out if the payment method is \'cheque\'.';
     const DOCUMENTS_UPLOAD = 'Either click to browse your computer or simply drag and drop the necessary files here. It\'s a quick way to attach your documents.';
     const DOCUMENT_DELETE_ICON = 'Remove';
-    const CAPTURE_AMOUNT = 'This is the specific amount you\'re confirming or \'capturing\' from the total amount that\'s authorized. Make sure it doesn\'t exceed the total mount due.';
+    const CAPTURE_AMOUNT = 'This is the specific amount you\'re confirming or \'capturing\' from the total amount that\'s authorized. Make sure it doesn\'t exceed the total amount due.';
 
     // Collector dropdown list
     const COLLECTOR_LIST_BROKER = 'Payment made directly to Insurancemarket.ae by the customer.';

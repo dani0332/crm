@@ -43,7 +43,8 @@ class RenewalBatchReportService extends BaseService
                 'renewal_batches.end_date',
                 'renewal_batches.id',
                 'renewal_batches.name',
-                'renewal_batches.month'
+                'renewal_batches.month',
+                'renewal_batches.year'
             )
             ->join('users', 'users.id', '=', 'car_quote_request.advisor_id')
             ->leftJoin('car_lost_quote_logs', function ($qry) {
@@ -61,6 +62,15 @@ class RenewalBatchReportService extends BaseService
 
         return $query->paginate(15)
             ->withQueryString();
+    }
+
+    private function getApprovedStatues()
+    {
+        return implode(',', [
+            QuoteStatusEnum::PolicyDocumentsPending,
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicyBooked,
+        ]);
     }
 
     /**
@@ -81,7 +91,8 @@ class RenewalBatchReportService extends BaseService
                 'renewal_batches.end_date',
                 'renewal_batches.id',
                 'renewal_batches.name',
-                'renewal_batches.month'
+                'renewal_batches.month',
+                'renewal_batches.year'
             )
             ->join('users', 'users.id', '=', 'health_quote_request.advisor_id')
             ->join('renewal_batches', 'renewal_batches.name', '=', 'health_quote_request.renewal_batch')
@@ -248,21 +259,12 @@ class RenewalBatchReportService extends BaseService
 
         // date filter
         if (isset($filters->reportDate)) {
-            $reportDateEnd = Carbon::parse($filters->reportDate)
-                ->endOfDay()->format($dateFormat);
-            // set previous and next month as per report date
-            $previousMonth = Carbon::parse($reportDateEnd)->subMonth(1)->startOfMonth()->format($dateFormat);
-            $nextMonth = Carbon::parse($reportDateEnd)->addMonth(1)->endOfMonth()->format($dateFormat);
-
-            $monthDigitFormat = config('constants.MONTH_DIGIT_FORMAT');
-            $CurrentMonthDigitWise = ltrim(Carbon::parse($reportDateEnd)->startOfMonth()->format($monthDigitFormat), '0');
-            $nextMonthDigitWise = ltrim(Carbon::parse($reportDateEnd)->addMonth(1)->endOfMonth()->format($monthDigitFormat), '0');
+            $reportDateEnd = Carbon::parse($filters->reportDate)->endOfDay()->format($dateFormat);
 
             $dataBatches = RenewalBatch::query()
                 ->select('name', 'start_date', 'end_date', 'id')
-                ->whereBetween('month', [$CurrentMonthDigitWise, $nextMonthDigitWise])
+                ->dateFilter($reportDateEnd, false)
                 ->orderByDesc('end_date')
-                ->get()
                 ->pluck('name', 'id')
                 ->toArray();
 
@@ -464,21 +466,12 @@ class RenewalBatchReportService extends BaseService
 
         // date filter
         if (isset($filters->reportDate)) {
-            $reportDateEnd = Carbon::parse($filters->reportDate)
-                ->endOfDay()->format($dateFormat);
-            // set previous and next month as per report date
-            $previousMonth = Carbon::parse($reportDateEnd)->subMonth()->startOfMonth()->format($dateFormat);
-            $nextMonth = Carbon::parse($reportDateEnd)->addMonth()->endOfMonth()->format($dateFormat);
-
-            $monthDigitFormat = config('constants.MONTH_DIGIT_FORMAT');
-            $currentMonthDigitWise = ltrim(Carbon::parse($reportDateEnd)->startOfMonth()->format($monthDigitFormat), '0');
-            $nextMonthDigitWise = ltrim(Carbon::parse($reportDateEnd)->addMonth(1)->endOfMonth()->format($monthDigitFormat), '0');
+            $reportDateEnd = Carbon::parse($filters->reportDate)->endOfDay()->format($dateFormat);
 
             $dataBatches = RenewalBatch::query()
                 ->select('name', 'start_date', 'end_date', 'id')
-                ->whereBetween('month', [$currentMonthDigitWise, $nextMonthDigitWise])
+                ->dateFilter($reportDateEnd, false)
                 ->orderByDesc('end_date')
-                ->get()
                 ->pluck('name', 'id')
                 ->toArray();
         } else {
@@ -617,31 +610,24 @@ class RenewalBatchReportService extends BaseService
     public function getBatchRangeForDefaultView()
     {
         $startDate = $endDate = null;
-        $dateFormat = config('constants.DATE_FORMAT_ONLY');
-        $dateTimeFormat = config('constants.DB_DATE_FORMAT_MATCH');
-        $monthDigitFormat = config('constants.MONTH_DIGIT_FORMAT');
-        $reportDate = Carbon::today()->format($dateFormat);
-        $previousMonth = ltrim(Carbon::parse($reportDate)->subMonth(1)->startOfMonth()->format($monthDigitFormat), '0');
-        $nextMonth = ltrim(Carbon::parse($reportDate)->addMonth(1)->endOfMonth()->format($monthDigitFormat), '0');
 
         $defaultBatchRange = RenewalBatch::query()
             ->select('name', 'start_date', 'end_date', 'id')
-            ->whereBetween('month', [$previousMonth, $nextMonth])
+            ->dateFilter()
             ->orderByDesc('end_date')
             ->get();
 
         if (empty($defaultBatchRange)) {
-            $lastBatch = RenewalBatch::select('end_date')->orderByDesc('end_date')->fisrt();
-            $previousMonth = ltrim(Carbon::parse($lastBatch->end_date)->subMonth(1)->startOfMonth()->format($monthDigitFormat), '0');
-            $nextMonth = ltrim(Carbon::parse($lastBatch->end_date)->addMonth(1)->endOfMonth()->format($monthDigitFormat), '0');
+            $lastBatch = RenewalBatch::select('end_date')->orderByDesc('end_date')->first();
             $defaultBatchRange = RenewalBatch::query()
                 ->select('name', 'start_date', 'end_date', 'id')
-                ->whereBetween('month', [$previousMonth, $nextMonth])
+                ->dateFilter($lastBatch->end_date)
                 ->orderByDesc('end_date')
                 ->get();
         }
 
         if ($defaultBatchRange) {
+            $dateTimeFormat = config('constants.DB_DATE_FORMAT_MATCH');
             $startDate = Carbon::parse($defaultBatchRange->last()->start_date)->startOfDay()->format($dateTimeFormat);
             $endDate = Carbon::parse($defaultBatchRange->first()->end_date)->endOfDay()->format($dateTimeFormat);
         }
@@ -671,6 +657,7 @@ class RenewalBatchReportService extends BaseService
 
     public function batchwiseSegmentedAdvisors($batches)
     {
+        $data = [];
         foreach ($batches as $id => $batch) {
             $batchUsers = DB::table('renewal_batch_segment_user')
                 ->select('id', 'advisor_id', 'renewal_batch_id', 'segment_type')
@@ -704,8 +691,7 @@ class RenewalBatchReportService extends BaseService
     {
         return $query->addSelect(
             DB::raw('count(DISTINCT car_quote_request.id) as total_allocated_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyDocumentsPending.'
-                , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.')
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.$this->getApprovedStatues().')
                 and car_quote_request.quote_status_date <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as renewed'),
 
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::CarSold.'
@@ -738,12 +724,10 @@ class RenewalBatchReportService extends BaseService
 
             DB::raw('SUM(IF(car_quote_request.advisor_id in ('.$userIdsString.'), 1, 0)) as total_allocated_leads_by_all_advisors'),
 
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyDocumentsPending.'
-            , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.')
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.$this->getApprovedStatues().')
                     and car_quote_request.quote_status_date <= "'.$reportDateEnd.'" and car_quote_request.advisor_id in ('.$advisors.') THEN 1 ELSE 0 END) as renewed'),
 
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyDocumentsPending.'
-            , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.')
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.$this->getApprovedStatues().')
                     and car_quote_request.quote_status_date <= "'.$reportDateEnd.'" and car_quote_request.advisor_id in ('.$userIdsString.') THEN 1 ELSE 0 END) as renewed_by_all_advisors'),
 
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::CarSold.'
@@ -792,12 +776,10 @@ class RenewalBatchReportService extends BaseService
 
             DB::raw('SUM(IF(car_quote_request.advisor_id in ('.$teamUsersIdsString.'), 1, 0)) as total_allocated_leads_by_all_advisors'),
 
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyDocumentsPending.'
-            , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.')
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.$this->getApprovedStatues().')
                 and car_quote_request.quote_status_date <= "'.$reportDateEnd.'" and car_quote_request.advisor_id = "'.$authUserId.'" THEN 1 ELSE 0 END) as renewed'),
 
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyDocumentsPending.'
-            , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.')
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.$this->getApprovedStatues().')
                 and car_quote_request.quote_status_date <= "'.$reportDateEnd.'" and car_quote_request.advisor_id in ('.$teamUsersIdsString.') THEN 1 ELSE 0 END) as renewed_by_all_advisors'),
 
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::CarSold.'
@@ -847,8 +829,7 @@ class RenewalBatchReportService extends BaseService
             $segmentAdvisorsIdString = implode(',', $advisors);
 
             return $query->addSelect(
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyDocumentsPending.'
-                    , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.')
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.$this->getApprovedStatues().')
                     and car_quote_request.advisor_id in ('.$segmentAdvisorsIdString.')
                     and car_quote_request.quote_status_date <= "'.$reportDateEnd.'"  THEN 1 ELSE 0 END) as "'.$renewedAsColumn.'_for_'.$batchName.'"'),
 

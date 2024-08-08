@@ -22,19 +22,17 @@ class BookPolicyOnSageJob implements ShouldQueue
     private $payment;
     private $sageLogArray;
     private $request;
-    private $paymentSplits;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $request)
+    public function __construct($sageRequest, $quote, $payment, $sageLogArray, $request)
     {
         $this->sageRequest = $sageRequest;
         $this->quote = $quote;
         $this->payment = $payment;
         $this->sageLogArray = $sageLogArray;
         $this->request = $request;
-        $this->paymentSplits = $paymentSplits;
     }
 
     /**
@@ -43,7 +41,7 @@ class BookPolicyOnSageJob implements ShouldQueue
     public function handle()
     {
         info('BookPolicyOnSageJob - '.$this->quote->code.' - Started');
-        $response = (new SageApiService())->bookPolicyOnSage($this->sageRequest, $this->quote, $this->payment, $this->paymentSplits, $this->sageLogArray, $this->request);
+        $response = (new SageApiService())->bookPolicyOnSage([$this->sageRequest, $this->quote, $this->payment, $this->paymentSplits, $this->sageLogArray, $this->request]);
         info('BookPolicyOnSageJob - '.$this->quote->code.' - Response: '.json_encode($response));
     }
 

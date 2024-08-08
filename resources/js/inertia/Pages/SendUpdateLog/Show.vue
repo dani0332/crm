@@ -228,7 +228,7 @@ function handleErrorStatusUpdate(newStatus) {
           <dl class="grid md:grid-cols-2 gap-y-4">
             <div class="grid sm:grid-cols-2">
               <dt>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -262,7 +262,7 @@ function handleErrorStatusUpdate(newStatus) {
                 "
               >
                 <dt>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >
@@ -280,7 +280,7 @@ function handleErrorStatusUpdate(newStatus) {
             </div>
             <div class="grid md:grid-cols-2 gap-y-4">
               <dt>
-                <x-tooltip position="left">
+                <x-tooltip placement="left">
                   <label
                     class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                   >
@@ -308,7 +308,7 @@ function handleErrorStatusUpdate(newStatus) {
                 "
               >
                 <dt>
-                  <x-tooltip position="left">
+                  <x-tooltip placement="left">
                     <label
                       class="font-bold text-gray-800 underline decoration-dotted decoration-primary-700"
                     >

@@ -37,8 +37,8 @@ const computedMessages = computed(() => {
 });
 
 const renderMarkdown = markdownString => {
-  if(!markdownString){
-    return 'no content available.'
+  if (!markdownString) {
+    return 'no content available.';
   }
   // Parse the markdown string
   const initialHtml = md.render(markdownString);
@@ -126,7 +126,10 @@ const renderMarkdown = markdownString => {
               <div v-html="renderMarkdown(message.msg)"></div>
               <div
                 class="absolute right-[-30px] text-red-600"
-                v-if="message?.whatsapp_request?.type == 'audio'||  message?.whatsapp_request?.type == 'voice'"
+                v-if="
+                  message?.whatsapp_request?.type == 'audio' ||
+                  message?.whatsapp_request?.type == 'voice'
+                "
               >
                 <x-icon icon="audio" />
               </div>

@@ -7,8 +7,6 @@ import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
-import PlanDetails from '../../Components/PlanDetails.vue';
-import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 
 defineProps({
   quote: Object,
@@ -41,13 +39,13 @@ const permissionsEnum = page.props.permissionsEnum;
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const modelClass = 'App\\Models\\PersonalQuote';
 
-const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
+  createReusableTemplate();
 
 const isAddUpdate = ref(false);
 const onAddUpdate = () => {
   isAddUpdate.value = true;
 };
-
 </script>
 
 <template>
@@ -72,19 +70,36 @@ const onAddUpdate = () => {
             </Link>
 
             <LeadEditBtnTemplate v-slot="{ isDisabled }">
-              <Link v-if="!isDisabled" :href="route('jetski-quotes-edit', quote.uuid)">
+              <Link
+                v-if="!isDisabled"
+                :href="route('jetski-quotes-edit', quote.uuid)"
+              >
                 <x-button size="sm" tag="div">Edit</x-button>
               </Link>
-              <x-button v-else:disabled="isDisabled"size="sm" tag="div">Edit</x-button>
+              <x-button v-else:disabled="isDisabled"size="sm" tag="div"
+                >Edit</x-button
+              >
 
 </LeadEditBtnTemplate>
 
-            <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
-              <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.JetskiQuotesEdit)" :isDisabled="true"/>
-              <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+            <x-tooltip
+              v-if="lockLeadSectionsDetails.lead_details"
+              placement="bottom"
+            >
+              <LeadEditBtnReuseTemplate
+                v-if="can(permissionsEnum.JetskiQuotesEdit)"
+                :isDisabled="true"
+              />
+              <template #tooltip
+                >This lead is now locked as the policy has been booked. If
+                changes are needed, go to 'Send Update', select 'Add Update',
+                and choose 'Correction of Policy'</template
+              >
             </x-tooltip>
             <template v-else>
-              <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.JetskiQuotesEdit)"/>
+              <LeadEditBtnReuseTemplate
+                v-if="can(permissionsEnum.JetskiQuotesEdit)"
+              />
             </template>
             <Link
               v-if="can(permissionsEnum.JetskiQuotesList)"
@@ -101,7 +116,7 @@ const onAddUpdate = () => {
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -303,7 +318,7 @@ const onAddUpdate = () => {
       :expanded="sectionExpanded"
     />
 
-    <QuoteDocuments
+    <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
@@ -334,7 +349,7 @@ const onAddUpdate = () => {
       :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
     :isAddUpdate="isAddUpdate"
-     />
+    />
 
     <EmbeddedProducts
       :data="embeddedProducts"
