@@ -370,7 +370,7 @@ const isPaymentPaidWithoutSageReceiptID = computed(() => {
   if (payment.payment_methods_code != paymentMethodsEnum.CreditApproval) {
     //For split payments frequency, all split should have sage receipt id, for others only first child payment should have sage receipt id
     if (payment.frequency == paymentFrequencyEnum.SPLIT_PAYMENTS) {
-      let paymentSplitsWithSageReceiptID = splitPayments.filter(
+      let paymentSplitsWithSageReceiptID = paymentSplits.filter(
         splitPayment => splitPayment.sage_reciept_id,
       );
       if (paymentSplitsWithSageReceiptID.length == payment.total_payments) {
@@ -379,7 +379,7 @@ const isPaymentPaidWithoutSageReceiptID = computed(() => {
         return true;
       }
     } else {
-      let firstSplitPayment = splitPayments[0];
+      let firstSplitPayment = paymentSplits[0];
       if (!firstSplitPayment.sage_reciept_id) return true;
       else return false;
     }
