@@ -25,6 +25,8 @@ const props = defineProps({
   uboRelation: Array,
   entityDetails: Object,
   industryType: Array,
+  kycLogs:Array,
+  uboDetails:Array
 });
 
 const rules = {
@@ -37,6 +39,36 @@ const rules = {
     /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,10}$/im.test(v) ||
     'Phone must be valid',
 };
+
+const uboNationality = computed(() => {
+    if (props.uboDetails.length > 0) {
+        const uboDetail = props.uboDetails.filter((val) => {
+            return val.nationality.code === 'North Korean' || val.nationality.code === 'Iranian';
+        });
+        if(uboDetail.length > 0 )
+        {
+            return 1
+        }else{
+            return 2;
+        }
+    }
+    return null;
+});
+
+const kycLogsValue = computed(() => {
+    if (props.kycLogs) {
+        const logsStatus = props.kycLogs.filter((val) => {
+            return val.decision === 'rejected' || val.decision === 'Escalated';
+        });
+        if(logsStatus.length > 0 )
+        {
+            return 1
+        }else{
+            return 2;
+        }
+    }
+    return 2;
+});
 
 
 
@@ -67,6 +99,21 @@ const kycForm = reactive({
   pep: props.entityDetails?.entity?.pep ?? props.amlQuoteStatus,
   financial_sanctions: props.entityDetails?.entity?.financial_sanctions ?? props.amlQuoteStatus,
   dual_nationality: props.entityDetails?.entity?.dual_nationality ?? props.amlQuoteStatus,
+  in_sanction_list: props.entityDetails?.entity?.in_sanction_list ?? props.amlQuoteStatus, // kycLogsValue.value
+    in_adverse_media: props.entityDetails?.entity?.in_adverse_media ?? null,
+    is_owner_pep: props.entityDetails?.entity?.is_owner_pep ?? null,
+    is_controlling_pep: props.entityDetails?.entity?.is_controlling_pep ?? null,
+    is_sanction_match: props.entityDetails?.entity?.is_sanction_match ?? props.amlQuoteStatus, // kycLogsValue.value
+    in_fatf: props.entityDetails?.entity?.in_fatf ?? props.amlQuoteStatus, // kycLogsValue.value
+    is_owner_high_risk:props.entityDetails?.entity?.is_owner_high_risk ?? uboNationality.value,
+    deal_sanction_list: props.entityDetails?.entity?.deal_sanction_list ?? props.amlQuoteStatus, // kycLogsValue.value
+    is_operation_high_risk: props.entityDetails?.entity?.is_operation_high_risk ?? props.amlQuoteStatus, //kycLogsValue.value
+    customer_tenure: props.entityDetails?.entity?.customer_tenure ?? null,
+    transaction_pattern:props.entityDetails?.entity?.transaction_pattern ?? 'no_changes',
+    transaction_activities:props.entityDetails?.entity?.transaction_activities ?? 'less_expected_annual_activity',
+    transaction_volume:props.entityDetails?.entity?.transaction_volume ?? 'less-than-3-in-month',
+    mode_of_delivery:props.entityDetails?.entity?.mode_of_delivery ?? null,
+    mode_of_contact:props.entityDetails?.entity?.mode_of_contact ?? null,
 });
 
 
@@ -118,6 +165,101 @@ const onKycSubmit = isValid => {
       .finally(() => (isLoading.value = false));
   }
 };
+
+const transactionPatternOptions = [
+    {
+        value: 'count_pattern_changes',
+        label: 'Yes - Count Pattern Changes',
+    },
+    {
+        value: 'behaviour_changes',
+        label: 'Yes - Behaviour Changes',
+    },
+    {
+        value: 'business_model_changes',
+        label: 'Yes - Business Model Changes',
+    },
+    {
+        value: 'no_changes',
+        label: 'No Changes',
+    },
+    {
+        value: 'not_applicable',
+        label: 'Not Applicable',
+    },
+];
+const transactionActivitiesOptions = [
+    {
+        value: 'less_expected_annual_activity',
+        label: 'Less than expected Annual Activity',
+    },
+    {
+        value: 'near_expected_annual_activity',
+        label: 'Near to expected Annual Activity',
+    },
+    {
+        value: 'more_expected_annual_activity',
+        label: 'More than expected Annual Activity',
+    },
+];
+const transactionVolumeOptions = [
+    {
+        value: 'less-than-3-in-month',
+        label: 'Less than 3 transactions in a month',
+    },
+    {
+        value: '4-7-in-month',
+        label: '4 to 7 transactions in a month',
+    },
+    {
+        value: 'more-than-8-in-month',
+        label: 'More than 8 transactions in a month',
+    }
+];
+const deliveryModOptions = [
+    {
+        value: 'mod-delivery-car',
+        label: 'Company Authorised Representative',
+    },
+    {
+        value: 'mod-delivery-atp',
+        label: 'Authorised Third party',
+    },
+    {
+        value: 'mod-delivery-unkown',
+        label: 'Unknown',
+    },
+    {
+        value: 'mod-delivery-pse',
+        label: 'Policy sent via email',
+    },
+    {
+        value: 'mod-delivery-psc',
+        label: 'Policy sent via courier',
+    },
+    {
+        value: 'mod-delivery-cco',
+        label: 'Collected by customer from office',
+    }
+];
+const contactModOptions = [
+    {
+        value: 'email',
+        label: 'Email',
+    },
+    {
+        value: 'phone',
+        label: 'Phone',
+    },
+    {
+        value: 'phoneandemail',
+        label: 'Phone and Email',
+    },
+    {
+        value: 'walkin',
+        label: 'Walk-in',
+    }
+];
 
 const countryList = computed(() => {
   return props.countryList.map(nat => ({
@@ -434,7 +576,63 @@ onMounted(() => {
           :hasError="isIssuingAuthorityEmpty"
         />
       </div>
+        <div>
+            <x-tooltip position="bottom">
+                <label
+                    class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+                >
+                    Customer Tenure
+                </label>
+                <template #tooltip>
+                    Customer Tenure
+                </template>
+            </x-tooltip>
+            <x-input
+                v-model="kycForm.customer_tenure"
+                placeholder="Customer Tenure"
+                class="w-full"
+                type="number"
+                :rules="[isRequired]"
+            />
+        </div>
     </div>
+      <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
+          <div>
+              <x-tooltip position="bottom">
+                  <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+                  >
+                      Mode of contact
+                  </label>
+                  <template #tooltip>
+                      Please select the Emirates of Registration as per Trade License
+                  </template>
+              </x-tooltip>
+              <x-select
+                  v-model="kycForm.mode_of_contact"
+                  :options="contactModOptions"
+                  placeholder="Mode of contact"
+                  class="w-full"
+                  :single="true"
+                  :rules="[isRequired]"
+              />
+          </div>
+          <div>
+              <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+              >
+                  Mode of Delivery
+              </label>
+              <x-select
+                  v-model="kycForm.mode_of_delivery"
+                  :options="deliveryModOptions"
+                  placeholder="Mode of Delivery"
+                  class="w-full"
+                  :single="true"
+              />
+          </div>
+          <div></div>
+      </div>
 
     <div class="grid md:grid-cols-1 gap-4 mb-5">
       <h3 class="font-bold text-black-800 text-center">
@@ -543,8 +741,173 @@ onMounted(() => {
         />
       </div>
     </div>
+      <div class="grid md:grid-cols-2 gap-4">
+          <x-label> Does the Company name or Subsidiary/Affiliate entities feature in any sanction list?</x-label>
+          <div class="grid md:grid-cols-2">
+              <x-radio
+                  v-model="kycForm.in_sanction_list"
+                  :value="1"
+                  label="Yes"
+                  :rules="complianceRules"
+                  :disabled="complianceDisable.isDisable"
+              />
+              <x-radio
+                  v-model="kycForm.in_sanction_list"
+                  :value="2"
+                  label="No"
+                  :rules="complianceRules"
+                  :disabled="complianceDisable.isDisable"
+              />
+          </div>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4">
+          <x-label>Is There A Sanction Match On The Owner/Partners/Bod, Senior Management, Group Company, Holding Company Or Related Company Names?</x-label>
+          <div class="grid md:grid-cols-2">
+              <x-radio
+                  v-model="kycForm.is_sanction_match"
+                  :value="1"
+                  label="Yes"
+                  :rules="complianceRules"
+                  :disabled="complianceDisable.isDisable"
+              />
+              <x-radio
+                  v-model="kycForm.is_sanction_match"
+                  :value="2"
+                  label="No"
+                  :rules="complianceRules"
+                  :disabled="complianceDisable.isDisable"
+              />
+          </div>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4">
+          <x-label>Does the company have any subsidiary, affiliate, branch, or group/holding company in FATF-listed high-risk monitored jurisdiction?</x-label>
+          <div class="grid md:grid-cols-2">
+              <x-radio
+                  v-model="kycForm.in_fatf"
+                  :value="1"
+                  label="Yes"
+                  :rules="complianceRules"
+                  :disabled="complianceDisable.isDisable"
+              />
+              <x-radio
+                  v-model="kycForm.in_fatf"
+                  :value="2"
+                  label="No"
+                  :rules="complianceRules"
+                  :disabled="complianceDisable.isDisable"
+              />
+          </div>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4">
+          <x-label>Does the customer intend to deal with any country listed in the Sanctions List?</x-label>
+          <div class="grid md:grid-cols-2">
+              <x-radio
+                  v-model="kycForm.deal_sanction_list"
+                  :value="1"
+                  label="Yes"
+                  :rules="complianceRules"
+                  :disabled="complianceDisable.isDisable"
+              />
+              <x-radio
+                  v-model="kycForm.deal_sanction_list"
+                  :value="2"
+                  label="No"
+                  :rules="complianceRules"
+                  :disabled="complianceDisable.isDisable"
+              />
+          </div>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4">
+          <x-label>Do the customer or subsidiary/ affiliate entities have operations in any High-Risk Countries?</x-label>
+          <div class="grid md:grid-cols-2">
+              <x-radio
+                  v-model="kycForm.is_operation_high_risk"
+                  :value="1"
+                  label="Yes"
+                  :rules="complianceRules"
+                  :disabled="complianceDisable.isDisable"
+              />
+              <x-radio
+                  v-model="kycForm.is_operation_high_risk"
+                  :value="2"
+                  label="No"
+                  :rules="complianceRules"
+                  :disabled="complianceDisable.isDisable"
+              />
+          </div>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4">
+          <x-label>Is the owner/ Shareholder/ Partner/Director of the company from High-Risk countries?</x-label>
+          <div class="grid md:grid-cols-2">
+              <x-radio
+                  v-model="kycForm.is_owner_high_risk"
+                  :value="1"
+                  label="Yes"
+                  :rules="complianceRules"
+                  :disabled="complianceDisable.isDisable"
+              />
+              <x-radio
+                  v-model="kycForm.is_owner_high_risk"
+                  :value="2"
+                  label="No"
+                  :rules="complianceRules"
+                  :disabled="complianceDisable.isDisable"
+              />
+          </div>
+      </div>
+      <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4 mt-4">
+          <div>
+              <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+              >
+                  Transaction Volume
+              </label>
+              <x-select
+                  v-model="kycForm.transaction_volume"
+                  :options="transactionVolumeOptions"
+                  placeholder="Transaction Volume"
+                  class="w-full"
+                  :single="true"
+                  :rules="complianceRules"
+                  :disabled="complianceDisable.isDisable"
+              />
+          </div>
+          <div>
+              <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+              >
+                  Transaction Activities
+              </label>
+              <x-select
+                  v-model="kycForm.transaction_activities"
+                  :options="transactionActivitiesOptions"
+                  placeholder="Transaction Activities"
+                  class="w-full"
+                  :single="true"
+                  :rules="complianceRules"
+                  :disabled="complianceDisable.isDisable"
+              />
+          </div>
+          <div>
+              <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+              >
+                  Transaction Pattern changes
+              </label>
+              <x-select
+                  v-model="kycForm.transaction_pattern"
+                  :options="transactionPatternOptions"
+                  placeholder="Transaction Pattern"
+                  class="w-full"
+                  :single="true"
+                  :rules="complianceRules"
+                  :disabled="complianceDisable.isDisable"
+              />
+          </div>
+      </div>
 
-    <div class="flex justify-center gap-3 mt-7">
+
+      <div class="flex justify-center gap-3 mt-7">
       <x-button
         :loading="isLoading"
         size="sm"

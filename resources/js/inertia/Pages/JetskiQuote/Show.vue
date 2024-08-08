@@ -231,7 +231,7 @@ onMounted(() => {
 
 
           <RiskRatingScoreDetails
-              :quote="quote.jetski_quote"
+              :quote="quote"
               :modelType="quoteType"
             />
 

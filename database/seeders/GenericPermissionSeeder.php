@@ -23,6 +23,13 @@ class GenericPermissionSeeder extends Seeder
         if (! $readOnlyAccessPermission) {
             Permission::create([
                 'name' => PermissionsEnum::All_QUOTES_VIEWONLY_ACCESS,
+            ]);
+        }
+        //CUSTOMER RISK SCORE PERMISSION
+        $riskScorePermission = Permission::where('name', PermissionsEnum::CUSTOMER_RISKRRATING_OVERRIDE)->first();
+        if (! $riskScorePermission) {
+            Permission::create([
+                'name' => PermissionsEnum::CUSTOMER_RISKRRATING_OVERRIDE,
                 'guard_name' => 'web',
             ]);
         }

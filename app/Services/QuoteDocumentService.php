@@ -114,7 +114,11 @@ class QuoteDocumentService extends BaseService
                     return false;
                 }
             } elseif ($isKyc) {
-                $originalName = 'SystemGeneratedKycDocument.pdf';
+                if (isset($data['pdf_name'])) {
+                    $originalName = $data['pdf_name'];
+                } else {
+                    $originalName = 'SystemGeneratedKycDocument.pdf';
+                }
 
                 // Generate a unique filename
                 $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);

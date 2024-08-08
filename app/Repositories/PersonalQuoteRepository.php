@@ -11,6 +11,7 @@ use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
 use App\Services\CentralService;
+use App\Services\CRUDService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
@@ -31,7 +32,7 @@ class PersonalQuoteRepository extends BaseRepository
      */
     public function fetchUpdateStatus($quoteType, $quoteId, $data)
     {
-        return DB::transaction(function () use ($quoteId, $data) {
+        return DB::transaction(function () use ($quoteId, $data, $quoteType) {
             $quote = $this->where('id', $quoteId)->firstOrFail();
 
             $previousStatusId = $quote->quote_status_id;
@@ -42,6 +43,9 @@ class PersonalQuoteRepository extends BaseRepository
 
             if (! empty($data['notes'])) {
                 $quoteData['notes'] = $data['notes'];
+            }
+            if ($data['quote_status_id'] == QuoteStatusEnum::TransactionApproved) {
+                app(CRUDService::class)->calculateScore($quote, $quoteType);
             }
 
             $quote->update($quoteData);

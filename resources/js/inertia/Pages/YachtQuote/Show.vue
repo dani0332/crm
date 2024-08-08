@@ -540,7 +540,7 @@ onMounted(() => {
             </div>
 
             <RiskRatingScoreDetails
-              :quote="quote.yacht_quote"
+              :quote="quote"
               :modelType="quoteType"
             />
           </dl>

@@ -2,6 +2,8 @@
 import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import EntityRiskRatingScoreDetails from '../../Components/EntityRiskRatingScoreDetails.vue';
+import RiskRatingScoreDetails from "../../Components/RiskRatingScoreDetails.vue";
 
 const props = defineProps({
   quote: Object,
@@ -960,6 +962,20 @@ onMounted(() => {
             </x-button>
           </div>
         </div>
+          <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">ENTITY TYPE</dt>
+              <dd>
+                  <ComboBox
+                      @update:modelValue="entityTypeChange($event)"
+                      :single="true"
+                      v-model:modelValue="customerProfileForm.entity_type_code"
+                      :options="companyConcernOptions"
+                      placeholder="SELECT COMPANY CONCERN"
+                      class="w-full"
+                  />
+              </dd>
+          </div>
+          <EntityRiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
       </x-form>
     </div>
     <x-modal v-model="getParentEntityModel" size="lg" show-close backdrop>

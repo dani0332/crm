@@ -677,6 +677,7 @@ onMounted(() => {
                 />
               </dd>
             </div>
+
             <div class="grid sm:grid-cols-2">
                 <dt class="font-medium uppercase">UAE licence held for</dt>
                 <dd>{{ quote?.bike_quote?.uae_license_held_for?.text }}</dd>
@@ -685,8 +686,8 @@ onMounted(() => {
                 <dt class="font-medium uppercase">Home Country Driving License Held For</dt>
                 <dd>{{ quote?.bike_quote?.back_home_license_held_for?.text }}</dd>
             </div>
-            <RiskRatingScoreDetails v-if="quote?.bike_quote"
-              :quote="quote.bike_quote"
+            <RiskRatingScoreDetails
+              :quote="quote"
               :modelType="'Bike'"
             />
           </dl>
@@ -1100,7 +1101,6 @@ onMounted(() => {
     :carPlanAddonsCodeEnum="carPlanAddonsCodeEnum" :carPlanTypeEnum="carPlanTypeEnum" :carPlanExclusionsCodeEnum="carPlanExclusionsCodeEnum" :quote="quote" :carPlanFeaturesCodeEnum="carPlanFeaturesCodeEnum"
     :websiteURL="websiteURL"
     :linkedQuoteDetails="linkedQuoteDetails"/>
-
 
     <PaymentTableNew
 			v-if="isNewPaymentStructure"
