@@ -39,7 +39,7 @@ class PaymentOverdueStatus extends Command
             ->where('total_payments', '>', 0)
             ->count();
 
-        if($newMasterPayments > 0) {
+        if ($newMasterPayments > 0) {
             try {
                 Payment::where('payment_status_id', PaymentStatusEnum::NEW)
                     ->where('collection_date', '<', $currentTime)
@@ -56,7 +56,7 @@ class PaymentOverdueStatus extends Command
         $newChildPayments = PaymentSplits::where('payment_status_id', PaymentStatusEnum::NEW)
             ->where('due_date', '<', $currentTime)
             ->count();
-        if($newChildPayments > 0) {
+        if ($newChildPayments > 0) {
             try {
                 PaymentSplits::where('payment_status_id', PaymentStatusEnum::NEW)
                     ->where('due_date', '<', $currentTime)
