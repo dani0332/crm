@@ -2,6 +2,8 @@
 import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
+import EntityRiskRatingScoreDetails from '../../Components/EntityRiskRatingScoreDetails.vue';
+
 
 defineProps({
   quote: Object,
@@ -666,6 +668,7 @@ onMounted(() => {
                 />
               </dd>
             </div>
+              <EntityRiskRatingScoreDetails :quote="quote" :modelType="'business'" />
           </dl>
           <div class="flex justify-end">
             <x-button
