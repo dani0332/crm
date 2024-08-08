@@ -374,7 +374,7 @@ const calculateCommission = () => {
         bookingDetailsForm.price_with_vat = convertToNegative(price_with_vat);
 
         bookingDetailsForm.commission_percentage = convertToNegative(
-          (total_commission / price_with_vat) * 100,
+          (Number(bookingDetailsForm.commission_vat_applicable) / total_price_with_vat_and_not_vat_applicable) * 100,
         );
 
         checkDiscount(price_with_vat);
