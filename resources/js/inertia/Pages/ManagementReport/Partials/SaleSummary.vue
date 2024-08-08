@@ -11,7 +11,7 @@ const props = defineProps({
 });
 
 const formattedReportData = computed(() => {
-  return props.reportData?.filter(item => {
+  return props?.reportData?.filter(item => {
     return (item.total_policies > 0 || item.total_endorsements > 0);
   });
 });
