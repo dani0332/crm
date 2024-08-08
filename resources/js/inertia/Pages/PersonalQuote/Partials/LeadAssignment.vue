@@ -12,7 +12,7 @@ const props = defineProps({
     type: String,
   },
 });
-
+const page = usePage();
 const emit = defineEmits(['success', 'error']);
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
