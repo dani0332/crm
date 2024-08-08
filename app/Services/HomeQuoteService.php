@@ -284,7 +284,7 @@ class HomeQuoteService extends BaseService
             $this->query->whereIn('quote_status_id', $request->quote_status);
         }
         // advisors filter
-        if (isset($request->advisors) && $request->advisors != '') {
+        if (isset($request->advisors) && is_array($request->advisors) && count($request->advisors) > 0) {
             $this->query->whereIn('advisor_id', $request->advisors);
         }
 

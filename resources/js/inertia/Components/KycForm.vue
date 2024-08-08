@@ -1,8 +1,4 @@
 <script setup>
-
-import KycIndividualModal from "@/inertia/Components/KycIndividualModal.vue";
-import KycEntityModal from "@/inertia/Components/KycEntityModal.vue";
-
 const props = defineProps({
   kycType: String,
   roles: Array,
@@ -35,65 +31,75 @@ const kycDocModal = val => {
 
 const changeButtonType = val => {
   modals.buttonType = val;
-}
+};
 
 onMounted(() => {
   if (props.quote.kyc_decision === 'Complete') {
-    modals.buttonType = true
+    modals.buttonType = true;
   } else {
-    modals.buttonType = false
+    modals.buttonType = false;
   }
 });
-
 </script>
 
 <template>
-  <x-button @click.prevent="kycDocModal(true)" size="sm" color="primary" v-if="!modals.buttonType">
+  <x-button
+    @click.prevent="kycDocModal(true)"
+    size="sm"
+    color="primary"
+    v-if="!modals.buttonType"
+  >
     KYC - Pending
   </x-button>
-  <x-button size="sm" color="orange" v-else>
-    KYC - Complete
-  </x-button>
+  <x-button size="sm" color="orange" v-else> KYC - Complete </x-button>
 
-  <x-modal size="xl" v-model="modals.kycDocModal" show-close backdrop v-if="props.quote.customer_type == 'Individual'">
-    <template #header>
-      KYC Individual Form
-    </template>
+  <x-modal
+    size="xl"
+    v-model="modals.kycDocModal"
+    title="KYC Individual Form"
+    show-close
+    backdrop
+    v-if="props.quote.customer_type == 'Individual'"
+  >
     <KycIndividualModal
-        :roles="props.roles"
-        :quote="props.quote"
-        :status="kycDocModal"
-        :buttonStatus="changeButtonType"
-        :country-list="props.countryList"
-        :aml-quote-status="props.amlQuoteStatus"
-        :nationalities="props.nationalities"
-        :modelType="props.modelType"
-        :id-document-type="props.idDocumentType"
-        :mode-of-contact="props.modeOfContact"
-        :employment-sectors="props.employmentSectors"
-        :residential-status="props.residentialStatus"
-        :company-position="props.companyPosition"
+      :roles="props.roles"
+      :quote="props.quote"
+      :status="kycDocModal"
+      :buttonStatus="changeButtonType"
+      :country-list="props.countryList"
+      :aml-quote-status="props.amlQuoteStatus"
+      :nationalities="props.nationalities"
+      :modelType="props.modelType"
+      :id-document-type="props.idDocumentType"
+      :mode-of-contact="props.modeOfContact"
+      :employment-sectors="props.employmentSectors"
+      :residential-status="props.residentialStatus"
+      :company-position="props.companyPosition"
     />
   </x-modal>
 
-  <x-modal size="xl" v-model="modals.kycDocModal" show-close backdrop v-else>
-    <template #header>
-      KYC Entity Form
-    </template>
+  <x-modal
+    size="xl"
+    v-model="modals.kycDocModal"
+    title="KYC Entity Form"
+    show-close
+    backdrop
+    v-else
+  >
     <KycEntityModal
-        :roles="props.roles"
-        :quote="props.quote"
-        :status="kycDocModal"
-        :buttonStatus="changeButtonType"
-        :country-list="props.countryList"
-        :aml-quote-status="props.amlQuoteStatus"
-        :nationalities="props.nationalities"
-        :modelType="props.modelType"
-        :entities="props.entities"
-        :id-document-type="props.idDocumentType"
-        :legal-structure="props.legalStructure"
-        :issuance-place="props.issuancePlace"
-        :issuing-authority="props.issuingAuthority"
+      :roles="props.roles"
+      :quote="props.quote"
+      :status="kycDocModal"
+      :buttonStatus="changeButtonType"
+      :country-list="props.countryList"
+      :aml-quote-status="props.amlQuoteStatus"
+      :nationalities="props.nationalities"
+      :modelType="props.modelType"
+      :entities="props.entities"
+      :id-document-type="props.idDocumentType"
+      :legal-structure="props.legalStructure"
+      :issuance-place="props.issuancePlace"
+      :issuing-authority="props.issuingAuthority"
     />
   </x-modal>
 </template>

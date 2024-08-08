@@ -40,6 +40,7 @@ use App\Http\Requests\UpdateLastYearPolicyRequest;
 use App\Http\Requests\UpdatePaymentRequest;
 use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Http\Requests\UpdateTotalPriceRequest;
+use App\Http\Requests\SageReceiptRequest;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\Customer;
@@ -529,7 +530,7 @@ class CentralController extends Controller
     }
 
     // create sage receipts for payment
-    public function createSageReceiptsTemp(Request $request)
+    public function createSageReceiptsTemp(SageReceiptRequest $request)
     {         
         $successMessage = PaymentRepository::createSageReceiptsTemp($request);
         

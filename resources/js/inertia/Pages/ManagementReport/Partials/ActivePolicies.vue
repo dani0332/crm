@@ -75,10 +75,10 @@ const isIntegerColumn = key => {
       {{ active_policy_count ?? 0 }}
     </template>
     <template #item-price_with_vat="{ price_with_vat }">
-      {{ price_with_vat ? (price_with_vat) : 0 }}
+      {{ price_with_vat ? price_with_vat : 0 }}
     </template>
     <template #item-price_without_vat="{ price_without_vat }">
-      {{ price_without_vat ? (price_without_vat) : 0 }}
+      {{ price_without_vat ? price_without_vat : 0 }}
     </template>
     <template #body-append>
       <tr v-if="reportData.data.length > 0" class="total-row">
@@ -90,7 +90,10 @@ const isIntegerColumn = key => {
         >
           {{
             isIntegerColumn(header.value)
-              ? priceFormat(calculateTotalSum(reportData.data, header.value), true)
+              ? priceFormat(
+                  calculateTotalSum(reportData.data, header.value),
+                  true,
+                )
               : 'N/A'
           }}
         </td>

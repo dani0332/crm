@@ -14,19 +14,12 @@ const updateModal = ref(false);
 const notification = useNotifications('toast');
 const isLoading = ref(false);
 
-
 const validateSageButton = () => {
     const { permissionsEnum, quoteStatusEnum, paymentStatusEnum, paymentMethodsEnum } = page.props;
     const { payments, quoteStatusId } = props;
-
-    console.log(can(permissionsEnum.TEMP_UPDATE_PAYMENT), quoteStatusId, payments.length, payments[0].payment_splits.length);
-    console.log('Payment Create date:', payments[0].created_at);
-
     let [datePart, timePart] = payments[0].created_at.split(' ');
     let [month, day, year] = datePart.split('-');
     let createdAt = new Date(`${year}-${day}-${month}T${timePart}`);
-
-    console.log('Payment Create dateVV:', createdAt);
     let startDate = new Date('2024-04-23T00:00:00');
     let endDate = new Date('2024-08-15T23:59:59');
 
@@ -36,16 +29,11 @@ const validateSageButton = () => {
 
     if (can(permissionsEnum.TEMP_UPDATE_PAYMENT) && isQuoteStatusValid && payments.length && isWithinDateRange && isPaymentStatusValid) {
         const paymentSplits = payments[0].payment_splits;
-
         const totalUnpaidReceipts = paymentSplits.filter(item => 
             (item.sage_reciept_id === '' || item.sage_reciept_id === null) &&
             item.payment_method.code !== paymentMethodsEnum.CreditApproval &&
             (item.payment_status_id === paymentStatusEnum.PAID || item.payment_status_id === paymentStatusEnum.PARTIALLY_PAID)
         );
-
-        console.log('Total Unpaid Receipts:', totalUnpaidReceipts);
-        console.log('Number of Total Unpaid Receipts:', totalUnpaidReceipts.length);
-
         return totalUnpaidReceipts.length > 0;
     }
     return false;
@@ -76,11 +64,11 @@ const submitForm = isValid => {
                     position: 'top',
                 });
             }           
-            updateModal.value = false;    
-            
-            /*setTimeout(() => {
+            updateModal.value = false;  
+
+            setTimeout(() => {
                 location.reload();
-            }, 500); */
+            }, 200); 
         })
         .catch(err => {           
             console.log(err)
@@ -108,14 +96,7 @@ const showModel = () => {
         >
         <span>Create Sage Receipts</span>
         </x-button>
-        <x-modal v-model="updateModal" size="xl" show-close backdrop>
-            
-            <template #header>
-                <span class=" ">
-                 Create Sage Receipts
-                </span>
-            </template> 
-            
+        <x-modal v-model="updateModal" size="xl" title="Create Sage Receipts" show-close backdrop>
             <x-form @submit="submitForm" :auto-focus="false">
                 <div class="w-full grid md:grid-cols-1 gap-3">          
                     <div>
