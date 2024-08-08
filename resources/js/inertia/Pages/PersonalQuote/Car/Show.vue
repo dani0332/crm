@@ -1,9 +1,9 @@
 <script setup>
-import PaymentTable from './Partials/PaymentTable.vue';
+import AssignTier from './Partials/AssignTier.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
+import PaymentTable from './Partials/PaymentTable.vue';
 
 defineProps({
   quote: Object,
@@ -2431,6 +2431,7 @@ const onAddUpdate = () => {
                     leadStatusDisabled || lockLeadSectionsDetails.lead_status
                   "
                   :options="leadStatusOptions"
+                  filterable
                 />
                 <x-field
                   label="Lost Reason"

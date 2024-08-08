@@ -98,6 +98,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 :rules="[rules.isRequired]"
                 placeholder="Lead Status"
                 class="w-full uppercase"
+                filterable
               />
               <x-textarea
                 v-model="quoteStatusForm.notes"

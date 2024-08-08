@@ -1161,6 +1161,7 @@ const onAddUpdate = () => {
                   placeholder="Lead Status"
                   class="w-full"
                   label="Status"
+                  filterable
                 />
 
                 <x-select

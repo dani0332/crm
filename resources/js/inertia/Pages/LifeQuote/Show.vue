@@ -1170,6 +1170,7 @@ const onAddUpdate = () => {
                     "
                     placeholder="Lead Status"
                     class="w-full"
+                    filterable
                   />
                 </x-field>
                 <x-field label="Notes">

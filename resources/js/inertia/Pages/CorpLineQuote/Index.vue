@@ -636,6 +636,7 @@ const resetDateFilters = filterName => {
                 placeholder="Select Advisor"
                 class="flex-1 w-auto"
                 :rules="[isRequired]"
+                filterable
               />
               <div class="mb-3 md:pt-6">
                 <x-button

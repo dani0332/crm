@@ -525,6 +525,7 @@ const resetDateFilters = filterName => {
               class="flex-1 w-full"
               :rules="[isRequired]"
               label="Assign Advisor"
+              filterable
             />
             <div class="mb-3 md:pt-6">
               <x-button

@@ -1905,6 +1905,7 @@ const onAddUpdate = () => {
                 placeholder="Select Subteam"
                 class="w-auto flex-1"
                 hide-footer
+                filterable
               />
               <div>
                 <x-button
@@ -2946,6 +2947,7 @@ const onAddUpdate = () => {
                   "
                   placeholder="Lead Status"
                   class="w-full"
+                  filterable
                 />
                 <x-textarea
                   v-model="leadStatusForm.notes"

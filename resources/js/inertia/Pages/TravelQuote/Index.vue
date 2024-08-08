@@ -494,13 +494,14 @@ const resetDateFilters = filterName => {
         >
           <x-form @submit="onAssignLead" :auto-focus="false">
             <div class="w-full flex flex-col md:flex-row gap-4">
-              <x-field label="Assign Advisor">
+              <x-field label="Assign Advisor" class="w-full">
                 <x-select
                   v-model="assignForm.assigned_to_id_new"
                   :options="advisorOptions"
                   placeholder="Select Advisor"
-                  class="flex-1 w-auto"
+                  class="flex-1 w-full"
                   :rules="[rules.isRequired]"
+                  filterable
                 />
               </x-field>
 
