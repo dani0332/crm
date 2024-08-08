@@ -6,6 +6,9 @@ use App\Enums\PaymentStatusEnum;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
+use Exception;
 
 class PaymentOverdueStatus extends Command
 {
@@ -28,20 +31,42 @@ class PaymentOverdueStatus extends Command
      */
     public function handle()
     {
-        info('PaymentOverdueStatus Command Started');
-        // update payment where payment status is NEW and due date is less than current date
-        $currentTime = now()->format('Y-m-d').' 00:00:00';
-
-        Payment::where('payment_status_id', PaymentStatusEnum::NEW)
+         // update payment where payment status is NEW and due date is less than current date
+        $currentTime = Carbon::now()->startOfDay()->format('Y-m-d H:i:s');
+        
+        $newMasterPayments = Payment::where('payment_status_id', PaymentStatusEnum::NEW)
             ->where('collection_date', '<', $currentTime)
             ->where('total_payments', '>', 0)
-            ->update(['payment_status_id' => PaymentStatusEnum::OVERDUE]);
+            ->get();
+
+        if($newMasterPayments->count() > 0) {
+            try {
+                Payment::where('payment_status_id', PaymentStatusEnum::NEW)
+                ->where('collection_date', '<', $currentTime)
+                ->where('total_payments', '>', 0)
+                ->update(['payment_status_id' => PaymentStatusEnum::OVERDUE]);
+                info('Payments successfully updated to overdue status.');
+            } catch (Exception $e) {
+                // Log the error
+                Log::error('Error updating payments to overdue status: ' . $e->getMessage());              
+            }
+        }
+        
 
         // update payment splits where payment status is NEW and due date is less than current date
-        PaymentSplits::where('payment_status_id', PaymentStatusEnum::NEW)
+        $newChildPayments = PaymentSplits::where('payment_status_id', PaymentStatusEnum::NEW)
             ->where('due_date', '<', $currentTime)
-            ->update(['payment_status_id' => PaymentStatusEnum::OVERDUE]);
-
-        info('PaymentOverdueStatus Command Ends');
+            ->get();
+        if($newChildPayments->count() > 0) {
+            try {
+                PaymentSplits::where('payment_status_id', PaymentStatusEnum::NEW)
+                ->where('due_date', '<', $currentTime)
+                ->update(['payment_status_id' => PaymentStatusEnum::OVERDUE]);
+                info('Split payments successfully updated to overdue status.');
+            } catch (Exception $e) {
+                // Log the error
+                Log::error('Error updating split payments to overdue status: ' . $e->getMessage());              
+            }        
+        }
     }
 }
