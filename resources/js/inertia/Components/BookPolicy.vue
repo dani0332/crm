@@ -32,9 +32,11 @@ const props = defineProps({
 });
 
 const isLoading = ref(false);
+const isAMLNotClearedForTravelQuote = ref(false);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const kycEnums = page.props.kycEnums;
 const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
 const sendPolicyTypeEnum = page.props.sendPolicyTypeEnum;
 const canAny = permissions => useCanAny(permissions);
@@ -224,6 +226,13 @@ const confirmSendPolicy = () => {
 };
 
 const submitPolicy = () => {
+  if (isAMLNotClearedForTravelQuote.value) {
+    notification.error({
+      title: 'Kindly clear the AML.',
+      position: 'top',
+    });
+    return;
+  }
   isLoading.value = true;
   let url = '/quotes/send-booking-policy';
   let data = {
@@ -352,6 +361,7 @@ const showSendAndBookPolicyButtonBlock = computed(() => {
 
   return [TransactionApproved, PolicyIssued].includes(quote_status_id);
 });
+
 const showSendAndBookPolicyButton = computed(() => {
   let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
   let permission = permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON;
@@ -360,6 +370,7 @@ const showSendAndBookPolicyButton = computed(() => {
   }
   return props.bookPolicyDetails?.sendButton && can(permission);
 });
+
 const disableSendAndBookPolicyButton = computed(() => {
   let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
   let permission = permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON;
@@ -376,6 +387,45 @@ const disableSendAndBookPolicyButton = computed(() => {
     !can(permission)
   );
 });
+
+const disableBookPolicyButton = computed(() => {
+  return (
+    !props.bookPolicyDetails?.bookButton ||
+    bp.isEditing ||
+    !can(permissionsEnum.BOOK_POLICY_BUTTON)
+  );
+});
+
+const isTravelQuoteAndAMLNotCleared = () => {
+  const bookPolicyButtonLabel = props.bookPolicyDetails?.text;
+  const isSendPolicyToCustomerButton =
+    bookPolicyButtonLabel === sendPolicyTypeEnum.CUSTOMER_BUTTON_TEXT;
+  const isQuoteTypeTravel = page.props.quoteType == quoteTypeCodeEnum.Travel;
+  const isPolicyAMLScreeningCleared =
+    props.quote.kyc_decision == kycEnums.COMPLETE;
+
+  if (
+    isQuoteTypeTravel &&
+    !isPolicyAMLScreeningCleared &&
+    !isSendPolicyToCustomerButton
+  ) {
+    let allowedQuoteStatuesForAMLAlert = [
+      page.props.quoteStatusEnum.TransactionApproved,
+      page.props.quoteStatusEnum.PolicyIssued,
+      page.props.quoteStatusEnum.PolicySentToCustomer,
+    ];
+    if (allowedQuoteStatuesForAMLAlert.includes(props.quote.quote_status_id)) {
+      notification.error({
+        title: 'Kindly clear the AML.',
+        position: 'top',
+        timeout: 30000,
+      });
+    }
+
+    isAMLNotClearedForTravelQuote.value = true;
+  }
+};
+
 const showActionButtons = computed(() => {
   // Hide buttons only when policy is cancelled and have a chilrd lead
   return (
@@ -429,6 +479,9 @@ const isShowingTransactionPaymentStatus = computed(() => {
     page.props.quoteStatusEnum.PolicyCancelledReissued,
   ];
   return policyStatuses.includes(props.quote.quote_status_id);
+});
+onBeforeMount(() => {
+  isTravelQuoteAndAMLNotCleared();
 });
 </script>
 
@@ -884,7 +937,11 @@ const isShowingTransactionPaymentStatus = computed(() => {
                     color="orange"
                     class="mt-4"
                     @click.prevent="confirmSendPolicy"
-                    :disabled="bp.isEditing || is_lacking_payment"
+                    :disabled="
+                      bp.isEditing ||
+                      is_lacking_payment ||
+                      isAMLNotClearedForTravelQuote
+                    "
                     v-if="showSendAndBookPolicyButton"
                   >
                     {{ props.bookPolicyDetails?.text }}
@@ -1000,9 +1057,8 @@ const isShowingTransactionPaymentStatus = computed(() => {
                         class="mt-4 mr-2"
                         color="orange"
                         :disabled="
-                          !props.bookPolicyDetails?.bookButton ||
-                          bp.isEditing ||
-                          !can(permissionsEnum.BOOK_POLICY_BUTTON)
+                          disableBookPolicyButton ||
+                          isAMLNotClearedForTravelQuote
                         "
                         @click.prevent="confirmSendPolicy"
                       >
@@ -1021,9 +1077,7 @@ const isShowingTransactionPaymentStatus = computed(() => {
                       class="mt-4 mr-2"
                       color="orange"
                       :disabled="
-                        !props.bookPolicyDetails?.bookButton ||
-                        bp.isEditing ||
-                        !can(permissionsEnum.BOOK_POLICY_BUTTON)
+                        disableBookPolicyButton || isAMLNotClearedForTravelQuote
                       "
                       @click.prevent="confirmSendPolicy"
                     >
