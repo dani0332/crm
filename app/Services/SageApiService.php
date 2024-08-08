@@ -501,6 +501,7 @@ class SageApiService
                         break;
                 }
 
+                // TODO: Need to convert this to normal job
                 Haystack::build()
                     ->addJob(new SendUpdateSageJob(
                         $quote,
@@ -965,6 +966,7 @@ class SageApiService
             $resp = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload'] ?? [], $sageAPIsParams['extraDetails'][$methodName]['verb'] ?? 'POST');
             $sageResponse = json_decode($resp, true);
             info('Book Update - Sage API Call - Method Name ('.$methodName.') - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$extraParams['sendUpdateLog']->uuid);
+
         }
 
         if (in_array($methodName, ['createARInvoicePremAndComm', 'createAPInvoicePrem', 'createARInvoiceDis', 'createPaymentReceiptOneInvoice', 'arSplitPrepaymentPayload']) && isset($sageResponse['BatchNumber'])) {
@@ -1002,7 +1004,11 @@ class SageApiService
         $arrayKey = $arrayKey + 1;
 
         if ($methodName == 'getInvoiceDetails') {
-            $isFollowUpCondition = $sageResponse['BatchNumber'] == $extraParams['batchNumber'];
+            if (isset($sageResponse['BatchNumber'])) {
+                $isFollowUpCondition = $sageResponse['BatchNumber'] == $extraParams['batchNumber'];
+            } else {
+                logger()->error('Book Update - Sage API Failed - Batch Number not found in response'.json_encode($sageResponse));
+            }
         } else {
             $isFollowUpCondition = isset($sageAPIsParams['extraDetails'][$methodName]['nextCondition']) ?
                 ! empty($sageResponse[$sageAPIsParams['extraDetails'][$methodName]['nextCondition']]) : true;
@@ -1150,8 +1156,8 @@ class SageApiService
                     }
 
                     if ($isARInvoicesCalls) {
-                        $invoicePaymentSchedule['AmountDue'] = $amountDue;
-                        $invoicePaymentSchedule['DueDate'] = $dueDate;
+                        $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = $amountDue;
+                        $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
                     } else {
                         $invoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
                         $invoicePaymentSchedule->amtdue = $amountDue;

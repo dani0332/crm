@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CarQuote;
 use App\Models\InsurerRequestResponse;
+use App\Models\PersonalQuote;
 use App\Models\SageApiLog;
 use App\Repositories\AuditRepository;
 use App\Services\BaseService;
@@ -41,6 +42,7 @@ class AuditableController extends Controller
     {
         $code = isset($request->code) ? $request->code : '';
 
+        $documentIds = [];
         if ($request->auditableType === 'App\Models\SendUpdateLog') {
             $code = $this->getSendUpdatePaymentCode($request->auditableId);
             $documentIds = $this->getSendUpdateDocumentIds($request->auditableId);
@@ -60,7 +62,7 @@ class AuditableController extends Controller
             });
         }
 
-        if ($documentIds) {
+        if (! empty($documentIds)) {
             $query->orWhere(function ($query) use ($documentIds) {
                 $query->where('auditable_type', 'App\Models\QuoteDocument')
                     ->whereIn('auditable_id', $documentIds);
@@ -68,23 +70,26 @@ class AuditableController extends Controller
         }
 
         return $query->orderBy('created_at', 'desc')->get();
-
     }
 
     public function loadApiLogs(Request $request)
     {
-        if ($request->auditableType == CarQuote::class) {
-            $query = InsurerRequestResponse::with('insuranceProvider')
-                ->select('*')
-                ->where('insurer_request_response.quote_uuid', CarQuote::where('id', $request->auditableId)->value('uuid'))
-                ->orderByDesc('insurer_request_response.created_at');
+        $auditableType = $request->get('auditableType');
 
-            if ($request->insurance_provider) {
-                $query->where('insurer_request_response.provider_id', $request->insurance_provider);
-            }
+        $uuid = $request->auditableType::where('id', $request->auditableId)->value('uuid');
 
-            return $query->get();
+        $quoteUuid = (strpos($auditableType, 'PersonalQuote') !== false) ? PersonalQuote::where('uuid', $uuid)->value('uuid') : CarQuote::where('id', $request->auditableId)->value('uuid');
+
+        $query = InsurerRequestResponse::with('insuranceProvider')
+            ->select('*')
+            ->where('insurer_request_response.quote_uuid', $quoteUuid)
+            ->orderByDesc('insurer_request_response.created_at');
+
+        if ($request->insurance_provider) {
+            $query->where('insurer_request_response.provider_id', $request->insurance_provider);
         }
+
+        return $query->get();
     }
 
     /**

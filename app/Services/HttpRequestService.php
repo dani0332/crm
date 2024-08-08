@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\CarQuote;
-
 class HttpRequestService extends BaseService
 {
     public function processRequest($data, $creds)
@@ -41,13 +39,24 @@ class HttpRequestService extends BaseService
         }
     }
 
-    public function executeGetPlansApi($id, mixed $getLatestRating, mixed $isRenewalSort, mixed $isDisabledEnabled): mixed
+    public function executeGetPlansApi($id, mixed $getLatestRating, mixed $isRenewalSort, mixed $isDisabledEnabled, $quoteType = ''): mixed
     {
+        // Set model name
+        $modelName = 'CarQuote';
+        $type = 'Car';
+
+        if (! empty($quoteType) && $quoteType != '') {
+            // check in checkPersonalQuotes to access PersonalQuote Model
+            $modelName = checkPersonalQuotes(ucfirst($quoteType)) ? 'PersonalQuote' : 'CarQuote';
+            $type = $quoteType;
+        }
+
+        $model = '\\App\\Models\\'.$modelName;
         // Get the Quote UUID
-        $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
+        $quoteUuId = $model::where('uuid', '=', $id)->value('uuid');
 
         // Configuration values
-        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-car-quote-plans';
+        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-'.lcfirst($type).'-quote-plans';
         $plansApiToken = config('constants.KEN_API_TOKEN');
         $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
         $plansApiUserName = config('constants.KEN_API_USER');
@@ -125,9 +134,9 @@ class HttpRequestService extends BaseService
         }
     }
 
-    public function getPlans($id, $getLatestRating, $isRenewalSort = false, $isDisabledEnabled = false)
+    public function getPlans($id, $getLatestRating, $isRenewalSort = false, $isDisabledEnabled = false, $quoteType = '')
     {
-        $quotePlans = $this->executeGetPlansApi($id, $getLatestRating, $isRenewalSort, $isDisabledEnabled);
+        $quotePlans = $this->executeGetPlansApi($id, $getLatestRating, $isRenewalSort, $isDisabledEnabled, $quoteType);
 
         // Check if the $quotePlans object has a message property
         if (isset($quotePlans->message) && $quotePlans->message != '') {
