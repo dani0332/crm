@@ -142,6 +142,13 @@ const onEdit = () => {
     state.isEdit = true;
   }
 };
+
+watch(
+  () => props.sendUpdateLog.insurance_provider_id,
+  (newValue, oldValue) => {
+    planDetailsForm.insurance_provider_id = newValue;
+  },
+);
 </script>
 
 <template>
