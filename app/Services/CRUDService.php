@@ -900,23 +900,28 @@ class CRUDService extends BaseService
         $entity = Entity::where('id', $quote->quoteRequestEntityMapping->entity->id)->first();
 
         $paymentTopScore = 0;
-        $legalStructureScore = in_array(strtolower($entity->legal_structure), Kyc::ENTITY_LEGAL_STRUCTURE_THREE_RATING) ? 3 : (in_array(strtolower($entity->legal_structure), Kyc::ENTITY_LEGAL_STRUCTURE_TWO_RATING) ? 2 : 1);
-        $legalType = Lookup::where(['key' => LookupsEnum::LEGAL_STRUCTURE, 'code' => $entity->legal_structure])->first();
-        $legalStatusValue = $entity->legal_structure;
-        if (isset($legalType->text)) {
-            $legalStatusValue = $legalType->text;
+        if (isset($entity->legal_structure)) {
+            $legalStructureScore = in_array(strtolower($entity->legal_structure), Kyc::ENTITY_LEGAL_STRUCTURE_THREE_RATING) ? 3 : (in_array(strtolower($entity->legal_structure), Kyc::ENTITY_LEGAL_STRUCTURE_TWO_RATING) ? 2 : 1);
+            $legalType = Lookup::where(['key' => LookupsEnum::LEGAL_STRUCTURE, 'code' => $entity->legal_structure])->first();
+            $legalStatusValue = $entity->legal_structure;
+            if (isset($legalType->text)) {
+                $legalStatusValue = $legalType->text;
+            }
+            $scoreList[] = ['score' => $legalStructureScore, 'text' => 'Legal Status Of The Entity', 'value' => $legalStatusValue];
+            $entityScore += $legalStructureScore;
         }
-        $scoreList[] = ['score' => $legalStructureScore, 'text' => 'Legal Status Of The Entity', 'value' => $legalStatusValue];
-        $entityScore += $legalStructureScore;
+
         // s
-        $industryTypeCode = in_array(strtolower($entity->industry_type_code), Kyc::ENTITY_INDUSTRY_TYPE_ONE_RATING) ? 1 : (in_array(strtolower($entity->industry_type_code), Kyc::ENTITY_INDUSTRY_TYPE_TWO_RATING) ? 2 : 3);
-        $industryType = Lookup::where(['key' => LookupsEnum::COMPANY_TYPE, 'code' => $entity->industry_type_code])->first();
-        $industryTypeValue = $entity->industry_type_code;
-        if (isset($industryType->text)) {
-            $industryTypeValue = $industryType->text;
+        if (isset($entity->industry_type_code)) {
+            $industryTypeCode = in_array(strtolower($entity->industry_type_code), Kyc::ENTITY_INDUSTRY_TYPE_ONE_RATING) ? 1 : (in_array(strtolower($entity->industry_type_code), Kyc::ENTITY_INDUSTRY_TYPE_TWO_RATING) ? 2 : 3);
+            $industryType = Lookup::where(['key' => LookupsEnum::COMPANY_TYPE, 'code' => $entity->industry_type_code])->first();
+            $industryTypeValue = $entity->industry_type_code;
+            if (isset($industryType->text)) {
+                $industryTypeValue = $industryType->text;
+            }
+            $scoreList[] = ['score' => $industryTypeCode, 'text' => 'Nature Of Business', 'value' => $industryTypeValue];
+            $entityScore += $industryTypeCode;
         }
-        $scoreList[] = ['score' => $industryTypeCode, 'text' => 'Nature Of Business', 'value' => $industryTypeValue];
-        $entityScore += $industryTypeCode;
 
         // sanctions
         if ($entity->in_sanction_list == 1) {
@@ -1023,9 +1028,11 @@ class CRUDService extends BaseService
         $scoreList[] = ['score' => 1, 'text' => 'Types of Products', 'value' => 'Business'];
         $entityScore += 1;
 
-        $transactionVolumesScore = in_array(strtolower($entity->transaction_volume), Kyc::ENTITY_TRANSACTION_VOLUME_THREE_RATING) ? 3 : (in_array(strtolower($entity->transaction_volume), Kyc::ENTITY_TRANSACTION_VOLUME_TWO_RATING) ? 2 : 1);
-        $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Transaction Volume', 'value' => Kyc::TRANSACTION_VOLUME[$entity->transaction_volume]];
-        $entityScore += $transactionVolumesScore;
+        if (isset($entity->transaction_volume)) {
+            $transactionVolumesScore = in_array(strtolower($entity->transaction_volume), Kyc::ENTITY_TRANSACTION_VOLUME_THREE_RATING) ? 3 : (in_array(strtolower($entity->transaction_volume), Kyc::ENTITY_TRANSACTION_VOLUME_TWO_RATING) ? 2 : 1);
+            $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Transaction Volume', 'value' => Kyc::TRANSACTION_VOLUME[$entity->transaction_volume]];
+            $entityScore += $transactionVolumesScore;
+        }
 
         $paymentAuthorized = 0;
         $paymentMethod = '';
