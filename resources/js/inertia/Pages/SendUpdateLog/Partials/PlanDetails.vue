@@ -144,10 +144,10 @@ const onEdit = () => {
 };
 
 watch(
-    () => props.sendUpdateLog.insurance_provider_id,
-    (newValue, oldValue) => {
-      planDetailsForm.insurance_provider_id = newValue;
-    },
+  () => props.sendUpdateLog.insurance_provider_id,
+  (newValue, oldValue) => {
+    planDetailsForm.insurance_provider_id = newValue;
+  },
 );
 </script>
 
