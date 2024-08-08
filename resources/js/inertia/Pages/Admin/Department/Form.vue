@@ -29,10 +29,9 @@ watch(
   () => props.department?.teams,
   () => {
     if (props.department?.teams) {
-        props.department?.teams.forEach(element => {
-            departmentForm.teams.push(+element.team_id);
-        });
-
+      props.department?.teams.forEach(element => {
+        departmentForm.teams.push(+element.team_id);
+      });
     }
   },
   { immediate: true },
@@ -67,10 +66,14 @@ function onSubmit(isValid) {
 <template>
   <Head :title="isEdit ? 'Edit Department' : 'Create Department'" />
   <div class="flex justify-between items-center">
-    <h2 class="text-xl font-semibold">{{ isEdit ? 'Edit' : 'Create' }} Department</h2>
+    <h2 class="text-xl font-semibold">
+      {{ isEdit ? 'Edit' : 'Create' }} Department
+    </h2>
     <div>
       <Link :href="route('departments.index')">
-        <x-button size="sm" color="#1d83bc" tag="div"> Departments List </x-button>
+        <x-button size="sm" color="#1d83bc" tag="div">
+          Departments List
+        </x-button>
       </Link>
     </div>
   </div>
@@ -99,17 +102,13 @@ function onSubmit(isValid) {
           autocomplete
         />
       </x-field>
-      <x-field
-      :label="'Active'"
-      required
-    >
-      <x-select
-        v-model="departmentForm.is_active"
-        :options="departmentStatus"
-        class="w-full"
-
-      />
-    </x-field>
+      <x-field :label="'Active'" required>
+        <x-select
+          v-model="departmentForm.is_active"
+          :options="departmentStatus"
+          class="w-full"
+        />
+      </x-field>
     </div>
     <x-divider class="my-4" />
     <div class="flex justify-end gap-3 mb-4">

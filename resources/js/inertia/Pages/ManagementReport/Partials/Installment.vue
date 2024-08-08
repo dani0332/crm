@@ -165,12 +165,26 @@ const isIntegerColumn = key => {
 };
 </script>
 <template>
-  <DataTable class="mt-4" table-class-name="" :loading="loader" :headers="tableHeader"
-    :items="props.reportData.data || []" border-cell :empty-message="'No Records Available'" :sort-by="'net_conversion'"
-    :sort-type="'desc'" hide-footer :rows-per-page="100">
+  <DataTable
+    class="mt-4"
+    table-class-name=""
+    :loading="loader"
+    :headers="tableHeader"
+    :items="props.reportData.data || []"
+    border-cell
+    :empty-message="'No Records Available'"
+    :sort-by="'net_conversion'"
+    :sort-type="'desc'"
+    hide-footer
+    :rows-per-page="100"
+  >
     <template #item-uuid="{ uuid, routeName, code }">
-      <a :href="route(routeName, uuid)" class="text-primary-500 hover:underline" target="_blank">
-          {{ code }}
+      <a
+        :href="route(routeName, uuid)"
+        class="text-primary-500 hover:underline"
+        target="_blank"
+      >
+        {{ code }}
       </a>
     </template>
     <template #item-policy_number="{ policy_number }">
@@ -182,7 +196,7 @@ const isIntegerColumn = key => {
     <template #item-policy_start_date="{ policy_start_date }">
       {{ policy_start_date ?? 'N/A' }}
     </template>
-    <template #item-due_date="{due_date}">
+    <template #item-due_date="{ due_date }">
       {{ due_date ? due_date : 'N/A' }}
     </template>
     <template #item-price_vat_applicable="{ price_vat_applicable }">
@@ -193,7 +207,7 @@ const isIntegerColumn = key => {
     </template>
     <template #item-price_vat_not_applicable="{ price_vat_not_applicable }">
       {{
-      price_vat_not_applicable ? priceFormat(price_vat_not_applicable) : 0.0
+        price_vat_not_applicable ? priceFormat(price_vat_not_applicable) : 0.0
       }}
     </template>
     <template #item-discount="{ discount }">
@@ -209,7 +223,9 @@ const isIntegerColumn = key => {
       {{ commission_vat ? commission_vat : 0.0 }}
     </template>
 
-    <template #item-commission_vat_not_applicable="{ commission_vat_not_applicable }">
+    <template
+      #item-commission_vat_not_applicable="{ commission_vat_not_applicable }"
+    >
       {{ commission_vat_not_applicable ? commission_vat_not_applicable : 0.0 }}
     </template>
     <template #item-collected_amount="{ collected_amount }">
@@ -263,24 +279,30 @@ const isIntegerColumn = key => {
     <template #body-append>
       <tr v-if="reportData.data.length > 0" class="total-row">
         <td class="direction-left">Total</td>
-        <td v-for="header in tableHeader.slice(1, tableHeader.length)" :key="header.value" class="direction-center">
+        <td
+          v-for="header in tableHeader.slice(1, tableHeader.length)"
+          :key="header.value"
+          class="direction-center"
+        >
           {{
-          isIntegerColumn(header.value)
-          ? priceFormat(
-          calculateTotalSum(reportData.data, header.value),
-          true,
-          )
-          : 'N/A'
+            isIntegerColumn(header.value)
+              ? priceFormat(
+                  calculateTotalSum(reportData.data, header.value),
+                  true,
+                )
+              : 'N/A'
           }}
         </td>
       </tr>
     </template>
   </DataTable>
-  <Pagination :links="{
+  <Pagination
+    :links="{
       next: props.reportData.next_page_url,
       prev: props.reportData.prev_page_url,
       current: props.reportData.current_page,
       from: props.reportData.from,
       to: props.reportData.to,
-    }" />
+    }"
+  />
 </template>

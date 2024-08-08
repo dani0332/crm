@@ -152,7 +152,7 @@ const tableHeader = reactive([
   {
     text: 'Endorsement Sub-type',
     value: 'endorsement_sub_type',
-  }
+  },
 ]);
 const isIntegerColumn = key => {
   // Add logic to determine if the column contains an integer
@@ -187,24 +187,42 @@ const isIntegerColumn = key => {
     :rows-per-page="100"
   >
     <template #item-quote_uuid="{ quote_uuid, routeName, main_lead_code }">
-      <a :href="route(routeName, quote_uuid)" class="text-primary-500 hover:underline" target="_blank">
-          {{ main_lead_code }}
+      <a
+        :href="route(routeName, quote_uuid)"
+        class="text-primary-500 hover:underline"
+        target="_blank"
+      >
+        {{ main_lead_code }}
       </a>
     </template>
     <template #item-code="{ uuid, code }">
-      <a :href="route('send-update.show', { uuid: uuid, refURL: $page.url })" class="text-primary-800 underline" target="_blank">{{ code }}</a>
+      <a
+        :href="route('send-update.show', { uuid: uuid, refURL: $page.url })"
+        class="text-primary-800 underline"
+        target="_blank"
+        >{{ code }}</a
+      >
     </template>
     <template #item-policy_number="{ policy_number, main_lead_policy_number }">
-      {{ policy_number ? policy_number : (main_lead_policy_number ?? 'N/A') }}
+      {{ policy_number ? policy_number : main_lead_policy_number ?? 'N/A' }}
     </template>
     <template #item-transactions="{ transactions }">
       {{ transactions ? transactions : 'N/A' }}
     </template>
-    <template #item-policy_start_date="{ policy_start_date, main_lead_policy_start_date }">
-      {{ policy_start_date ? policy_start_date : (main_lead_policy_start_date ?? 'N/A') }}
+    <template
+      #item-policy_start_date="{
+        policy_start_date,
+        main_lead_policy_start_date,
+      }"
+    >
+      {{
+        policy_start_date
+          ? policy_start_date
+          : main_lead_policy_start_date ?? 'N/A'
+      }}
     </template>
-    <template #item-payment_due_date="{payment_due_date, due_date}">
-      {{ (payment_due_date ? payment_due_date : (due_date ? due_date : 'N/A')) }}
+    <template #item-payment_due_date="{ payment_due_date, due_date }">
+      {{ payment_due_date ? payment_due_date : due_date ? due_date : 'N/A' }}
     </template>
     <template #item-price_vat_applicable="{ price_vat_applicable }">
       {{ price_vat_applicable ? priceFormat(price_vat_applicable) : 0.0 }}

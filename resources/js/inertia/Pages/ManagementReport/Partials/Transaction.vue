@@ -175,8 +175,12 @@ const isIntegerColumn = key => {
     :rows-per-page="100"
   >
     <template #item-uuid="{ uuid, routeName, code }">
-      <a :href="route(routeName, uuid)" class="text-primary-500 hover:underline" target="_blank">
-          {{ code }}
+      <a
+        :href="route(routeName, uuid)"
+        class="text-primary-500 hover:underline"
+        target="_blank"
+      >
+        {{ code }}
       </a>
     </template>
     <template #item-policy_number="{ policy_number }">

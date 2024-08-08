@@ -94,10 +94,12 @@ const computedSubTeams = computed(() => {
 
 const computedDepartments = computed(() => {
   if (page.props.departments?.length > 0)
-    return page.props.departments?.map(item => ({ value: item.id, label: item.name }));
+    return page.props.departments?.map(item => ({
+      value: item.id,
+      label: item.name,
+    }));
   else return [];
 });
-
 
 const validRole = computed(() => {
   return (userForm.roles.length == 0 && isError.value) ?? false;
@@ -331,10 +333,10 @@ watch(
       </x-field>
       <x-field label="Department">
         <ComboBox
-            v-model="userForm.department_id"
-            placeholder="Select Department"
-            :options="computedDepartments"
-            :single="true"
+          v-model="userForm.department_id"
+          placeholder="Select Department"
+          :options="computedDepartments"
+          :single="true"
         />
       </x-field>
 

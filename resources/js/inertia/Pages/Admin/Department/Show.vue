@@ -8,14 +8,14 @@ const props = defineProps({
 const page = usePage();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
-let teams  = ref([]);
+let teams = ref([]);
 const departmentTeams = computed(() => {
   if (props.department && props.department?.teams) {
     return props.department?.teams.map(x => x.team.name).toString();
   } else return null;
 });
 
-console.log("teams",teams.value)
+console.log('teams', teams.value);
 </script>
 <template>
   <Head title="departments Detail" />
@@ -23,13 +23,17 @@ console.log("teams",teams.value)
     <h2 class="text-xl font-semibold">Departments Detail</h2>
     <div class="space-x-3">
       <Link :href="route('departments.index')">
-        <x-button size="sm" color="#ff5e00" tag="div"> Department List </x-button>
+        <x-button size="sm" color="#ff5e00" tag="div">
+          Department List
+        </x-button>
       </Link>
       <Link
         v-if="can(permissionsEnum.DEPARTMENT_UPDATE)"
         :href="route('departments.edit', props.department.id)"
       >
-        <x-button size="sm" color="primary" tag="div"> Edit Department </x-button>
+        <x-button size="sm" color="primary" tag="div">
+          Edit Department
+        </x-button>
       </Link>
     </div>
   </div>
@@ -61,12 +65,24 @@ console.log("teams",teams.value)
 
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">CREATED AT</dt>
-          <dd>{{ department.created_at ? department.created_at.split('T')[0] : 'N/A' }}</dd>
+          <dd>
+            {{
+              department.created_at
+                ? department.created_at.split('T')[0]
+                : 'N/A'
+            }}
+          </dd>
         </div>
 
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">UPDATED AT</dt>
-          <dd>{{ department.updated_at ? department.updated_at.split('T')[0] : 'N/A' }}</dd>
+          <dd>
+            {{
+              department.updated_at
+                ? department.updated_at.split('T')[0]
+                : 'N/A'
+            }}
+          </dd>
         </div>
       </dl>
     </div>

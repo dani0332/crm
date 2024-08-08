@@ -12,7 +12,7 @@ const props = defineProps({
 
 const formattedReportData = computed(() => {
   return props?.reportData?.filter(item => {
-    return (item.total_policies > 0 || item.total_endorsements > 0);
+    return item.total_policies > 0 || item.total_endorsements > 0;
   });
 });
 
@@ -66,7 +66,6 @@ const tableHeader = reactive([
     text: 'T. Price',
     value: 'total_price',
   },
-
 ]);
 // v-if="props.groupBy == 'advisor'"
 
@@ -78,23 +77,33 @@ watchEffect(() => {
     insurer: 'Insurer',
     line_of_business: 'Line of Business',
     department: 'Department',
-
   };
 
-  const headerText = props.groupBy != null ? headerMap[props.groupBy] : headerMap['advisor'];
+  const headerText =
+    props.groupBy != null ? headerMap[props.groupBy] : headerMap['advisor'];
 
   const newItem = { text: headerText, value: props.groupBy };
-   headerText && tableHeader[0].text === 'T. Policies' ? tableHeader.unshift(newItem) : tableHeader.splice(0, 1, newItem);
-   console.log(';props.groupBy',props.groupBy,'| headerMap[props.groupBy]',headerMap[props.groupBy],'| headerMap',  headerMap['advisor'])
-    if (props.groupBy === 'advisor') {
-        tableHeader.push({text: 'Department', value: 'department'});
-    } else {
-        const index = tableHeader.findIndex(item => item.text === 'Department' && item.value === 'department');
-        if (index !== -1) {
-            tableHeader.splice(index, 1);
-        }
+  headerText && tableHeader[0].text === 'T. Policies'
+    ? tableHeader.unshift(newItem)
+    : tableHeader.splice(0, 1, newItem);
+  console.log(
+    ';props.groupBy',
+    props.groupBy,
+    '| headerMap[props.groupBy]',
+    headerMap[props.groupBy],
+    '| headerMap',
+    headerMap['advisor'],
+  );
+  if (props.groupBy === 'advisor') {
+    tableHeader.push({ text: 'Department', value: 'department' });
+  } else {
+    const index = tableHeader.findIndex(
+      item => item.text === 'Department' && item.value === 'department',
+    );
+    if (index !== -1) {
+      tableHeader.splice(index, 1);
     }
-
+  }
 });
 
 const calculateTotalSum = useCalculateTotalSum;
@@ -112,7 +121,7 @@ const isIntegerColumn = key => {
     'discount',
     'commission_vat_applicable',
     'total_price',
-    'endorsements_amount'
+    'endorsements_amount',
   ].includes(key);
 };
 </script>
@@ -155,12 +164,13 @@ const isIntegerColumn = key => {
       {{ commission_vat_applicable ? commission_vat_applicable : 0.0 }}
     </template>
     <template #item-endorsements_amount="{ endorsements_amount }">
-      {{ endorsements_amount ? priceFormat(endorsements_amount, true) : '0.00'}}
+      {{
+        endorsements_amount ? priceFormat(endorsements_amount, true) : '0.00'
+      }}
     </template>
-    <template #item-total_price="{ total_price}">
-      {{ total_price ? priceFormat(total_price, true) :  '0.00'}}
+    <template #item-total_price="{ total_price }">
+      {{ total_price ? priceFormat(total_price, true) : '0.00' }}
     </template>
-
 
     <template #body-append>
       <tr v-if="reportData?.length > 0" class="total-row">
