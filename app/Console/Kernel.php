@@ -42,7 +42,7 @@ class Kernel extends ConsoleKernel
         $schedule
             ->command('UpdateUserStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
-        $schedule->command('PaymentOverdueStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(5);
+        //$schedule->command('PaymentOverdueStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(5);
 
         /*$schedule->job(new UnconSubmissionReminder)
         ->tuesdays()
@@ -103,7 +103,6 @@ class Kernel extends ConsoleKernel
         //     ->onFailure(function (Stringable $output) {
         //         info('----------- Business Data Migrations Failed -----------'.$output);
         //     });
-
     }
 
     /**

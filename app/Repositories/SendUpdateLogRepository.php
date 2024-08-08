@@ -158,7 +158,9 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchFindByQuoteUuid($uuid)
     {
-        return $this->where(['quote_uuid' => $uuid])->get();
+        return $this->with(['category', 'option'])
+            ->where('quote_uuid', $uuid)
+            ->get();
     }
 
     public function fetchUpdateLogPriceDetails($data)

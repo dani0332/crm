@@ -1,5 +1,4 @@
 <script setup>
-
 defineProps({
   embeddedProducts: Object,
 });
@@ -32,11 +31,17 @@ const tableHeader = [
   <div>
     <Head title="Reports" />
     <nav class="mb-4">
-        <ol class="flex gap-1">
-            <li> <Link :href="route('embedded-products.index')" class="text-sm border-b text-gray-500"><span> Embedded Products </span></Link> </li>
-            <li> <span class="text-gray-400">/</span> </li>
-            <li> <span class="text-sm font-semibold"> Reports </span> </li>
-        </ol>
+      <ol class="flex gap-1">
+        <li>
+          <Link
+            :href="route('embedded-products.index')"
+            class="text-sm border-b text-gray-500"
+            ><span> Embedded Products </span></Link
+          >
+        </li>
+        <li><span class="text-gray-400">/</span></li>
+        <li><span class="text-sm font-semibold"> Reports </span></li>
+      </ol>
     </nav>
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Reports</h2>
@@ -60,11 +65,11 @@ const tableHeader = [
 
       <template #item-is_active="{ is_active }">
         <div class="text-center">
-            <x-icon
+          <x-icon
             :icon="is_active ? 'roundchecked' : 'roundcross'"
             :color="is_active ? 'green' : 'red'"
             size="lg"
-            />
+          />
         </div>
       </template>
 

@@ -4,6 +4,8 @@ namespace App\Exports;
 
 use App\Models\EmbeddedProduct;
 use App\Repositories\EmbeddedProductRepository;
+use App\Strategies\EmbeddedProducts\AlfredProtect;
+use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
 use App\Traits\ExcelExportable;
 
 class EmbeddedProductReport
@@ -31,39 +33,27 @@ class EmbeddedProductReport
 
     public function headings(): array
     {
-        return [
-            'EP REF-ID',
-            'ADVISOR NAME',
-            'PAYMENT DATE',
-            'PLAN COMMENCEMENT DATE',
-            'PLAN END DATE',
-            'CERTIFICATE NUMBER',
-            'FULL NAME',
-            'EMIRATES ID NUMBER',
-            'DOB',
-            'AGE',
-            'VEHICLE',
-            'CONTRIBUTION AMOUNT',
-            'POLICY ISSUE STATUS',
-        ];
+        $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($this->embeddedProduct->short_code);
+        $epStrategy = null;
+        if ($isAlfredProtect) {
+            $epStrategy = new AlfredProtect();
+        } else {
+            $epStrategy = new EmbeddedProductStrategy();
+        }
+
+        return $epStrategy->getExcelColumns();
     }
 
     public function map($certificate): array
     {
-        return [
-            $certificate->ref_id,
-            $certificate->advisor_name,
-            $certificate->payment_date,
-            $certificate->plan_start_date,
-            $certificate->plan_end_date,
-            $certificate->certificate_number,
-            $certificate->name,
-            $certificate->emirates_id_number,
-            $certificate->dob,
-            $certificate->age,
-            $certificate->vehicle,
-            $certificate->contribution_amount,
-            $certificate->status,
-        ];
+        $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($this->embeddedProduct->short_code);
+        $epStrategy = null;
+        if ($isAlfredProtect) {
+            $epStrategy = new AlfredProtect();
+        } else {
+            $epStrategy = new EmbeddedProductStrategy();
+        }
+
+        return $epStrategy->getExcelData($certificate);
     }
 }

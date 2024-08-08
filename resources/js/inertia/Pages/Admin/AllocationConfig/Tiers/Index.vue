@@ -208,8 +208,13 @@ onMounted(() => {
     }"
   />
 
-  <x-modal v-model="showDeleteModal" size="md" show-close backdrop>
-    <template #header> Delete Resource </template>
+  <x-modal
+    v-model="showDeleteModal"
+    size="md"
+    title="Delete Resource"
+    show-close
+    backdrop
+  >
     <p>Are you sure you want to delete selected resource?</p>
     <template #actions>
       <div class="text-right space-x-4">
