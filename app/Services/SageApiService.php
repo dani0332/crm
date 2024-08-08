@@ -380,15 +380,15 @@ class SageApiService
         ];
 
         $customerTotalSteps = in_array($preparedData['sendUpdateType'], array_keys($stepsAsPerType)) ? $stepsAsPerType[$preparedData['sendUpdateType']] : $customerTotalSteps;
-        $sageCustomerNumber = $this->sageCustomer($sendUpdateRequest->quoteType, $preparedData['quoteDetails'], $customerTotalSteps);
+        $sageCustomerNumber = $this->sageCustomer($preparedData['quoteType'], $preparedData['quoteDetails'], $customerTotalSteps);
     
         if(! $sageCustomerNumber) {
-            logger()->error('Book Update - Customer not found in Sage300. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$preparedData['quoteDetails']['uuid'].' - SendUpdateUUID: '.$preparedData['sendUpdateLog']['uuid']);
+            logger()->error('Book Update - Customer not found in ERP. QuoteType: '.$preparedData['quoteType'].' - QuoteUUID: '.$preparedData['quoteDetails']['uuid'].' - SendUpdateUUID: '.$preparedData['sendUpdateLog']['uuid']);
             
-            return ['status' => false, 'message' => 'Customer not found in Sage300'];
+            return ['status' => false, 'message' => 'Customer not found in ERP'];
         }
 
-        $sageRequestPayload = SagePayloadFactory::sagePayLoad($sendUpdateRequest->quoteType, $preparedData['quoteDetails'], $preparedData['payment'], $preparedData['splitPayments']);
+        $sageRequestPayload = SagePayloadFactory::sagePayLoad($preparedData['quoteType'], $preparedData['quoteDetails'], $preparedData['payment'], $preparedData['splitPayments']);
         $sageRequestPayload->customerId = $sageCustomerNumber;
 
         if (! $sageRequestPayload->insurerGlLiaiblityAccount || ! $sageRequestPayload->sageVenderId || ! $sageRequestPayload->sageInsurerCustomerId) {
@@ -468,7 +468,7 @@ class SageApiService
                 break;
         }
 
-        // Need to update with default Queue
+        // TODO: Need to update with default Queue
         dispatch(new SendUpdateSageJob(
             $preparedData,
             $sageRequestPayload,
@@ -476,6 +476,8 @@ class SageApiService
             auth()->user(),
         ))->onQueue('sageQueue');
 
+        info('Book Update - Sage Job Dispatched. QuoteType: '.$preparedData['quoteType'].' - QuoteUUID: '.$preparedData['quoteDetails']['uuid'].' - SendUpdateUUID: '.$preparedData['sendUpdateLog']['uuid']);
+        
         return ['status' => true, 'message' => SageEnum::SAGE_REQUEST_BEING_PROCESS];
     }
 
@@ -493,15 +495,15 @@ class SageApiService
                 'totalSteps' => $totalSteps,
                 'entryType' => SageEnum::SCT_STRAIGHT,
                 'requestType' => SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
-                'sendUpdateLog' => $preparedDataForERP['sendUpdateLogs'] ?? [],
+                'sendUpdateLog' => $preparedDataForERP['sendUpdateLog'] ?? [],
                 'mainLeadDetails' => $preparedDataForERP['mainLeadDetails'] ?? [],
                 'extras' => [
-                    'option_id' => $preparedDataForERP['sendUpdateLogs']?->option?->code ?? null,
+                    'option_id' => $preparedDataForERP['sendUpdateLog']?->option?->code ?? null,
                     'authDetails' => $preparedDataForERP['authDetails'] ?? [],
                 ],
             ]);
 
-            if ($preparedDataForERP['sendUpdateLogs']?->option?->code !== SendUpdateLogStatusEnum::ACB) {
+            if ($preparedDataForERP['sendUpdateLog']?->option?->code !== SendUpdateLogStatusEnum::ACB) {
                 info('Book Update - Creating AP Invoice and mark as posted');
                 $this->sageRecursiveCalls($preparedDataForERP['quoteDetails'], $sageRequestPayload, $sageLogArray, [
                     'iterator' => 0,
@@ -510,10 +512,10 @@ class SageApiService
                     'totalSteps' => $totalSteps,
                     'entryType' => SageEnum::SCT_STRAIGHT,
                     'requestType' => SageEnum::SRT_CREATE_AP_PREM_INV,
-                    'sendUpdateLog' => $preparedDataForERP['sendUpdateLogs'] ?? [],
+                    'sendUpdateLog' => $preparedDataForERP['sendUpdateLog'] ?? [],
                     'mainLeadDetails' => $preparedDataForERP['mainLeadDetails'] ?? [],
                     'extras' => [
-                        'option_id' => $preparedDataForERP['sendUpdateLogs']?->option?->code ?? null,
+                        'option_id' => $preparedDataForERP['sendUpdateLog']?->option?->code ?? null,
                         'authDetails' => $preparedDataForERP['authDetails'] ?? [],
                     ],
                 ]);
@@ -533,10 +535,10 @@ class SageApiService
                 'requestType' => SageEnum::SRT_CREATE_AR_SPPAY_INV,
                 'payment' => $preparedDataForERP['payment'],
                 'splitPayments' => $preparedDataForERP['splitPayments'],
-                'sendUpdateLog' => $preparedDataForERP['sendUpdateLogs'] ?? [],
+                'sendUpdateLog' => $preparedDataForERP['sendUpdateLog'] ?? [],
                 'mainLeadDetails' => $preparedDataForERP['mainLeadDetails'] ?? [],
                 'extras' => [
-                    'option_id' => $preparedDataForERP['sendUpdateLogs']?->option?->code ?? null,
+                    'option_id' => $preparedDataForERP['sendUpdateLog']?->option?->code ?? null,
                     'authDetails' => $preparedDataForERP['authDetails'] ?? [],
                 ],
             ]);
@@ -551,10 +553,10 @@ class SageApiService
                 'requestType' => SageEnum::SRT_CREATE_AP_SPPAY_INV,
                 'payment' => $preparedDataForERP['payment'],
                 'splitPayments' => $preparedDataForERP['splitPayments'],
-                'sendUpdateLog' => $preparedDataForERP['sendUpdateLogs'] ?? [],
+                'sendUpdateLog' => $preparedDataForERP['sendUpdateLog'] ?? [],
                 'mainLeadDetails' => $preparedDataForERP['mainLeadDetails'] ?? [],
                 'extras' => [
-                    'option_id' => $preparedDataForERP['sendUpdateLogs']?->option?->code ?? null,
+                    'option_id' => $preparedDataForERP['sendUpdateLog']?->option?->code ?? null,
                     'authDetails' => $preparedDataForERP['authDetails'] ?? [],
                 ],
             ]);
@@ -571,7 +573,7 @@ class SageApiService
                 'totalSteps' => $totalSteps,
                 'entryType' => SageEnum::SCT_STRAIGHT,
                 'requestType' => SageEnum::SRT_CREATE_AR_DISC_INV,
-                'sendUpdateLog' => $preparedDataForERP['sendUpdateLogs'] ?? [],
+                'sendUpdateLog' => $preparedDataForERP['sendUpdateLog'] ?? [],
                 'mainLeadDetails' => $preparedDataForERP['mainLeadDetails'] ?? [],
                 'extras' => [
                     'authDetails' => $preparedDataForERP['authDetails'] ?? [],

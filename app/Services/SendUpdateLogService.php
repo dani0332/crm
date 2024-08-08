@@ -737,7 +737,7 @@ class SendUpdateLogService
         ];
 
         if (! in_array($categoryCode, $allowedCategoriesForSage)) {
-            info('Book Update - Skipping Sage APIs for Send Update - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            info('Book Update - Skipping Sage APIs for Book Update - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
             
             return ['status' => true];
         }
@@ -748,9 +748,9 @@ class SendUpdateLogService
         $quoteDetails = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
         $prepareDataForERP = $this->getPreparedDataForERP($sendUpdateRequest, $quoteDetails, $sendUpdateLog);
         $prepareDataForERP['quoteDetails'] = $quoteDetails;
-        
+
         if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
-            info('Book Update - Sending Update to ERP - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            info('Book Update - Book Update to ERP - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
             $prepareDataForERP['sendUpdateType'] = SageEnum::SUT_NORMAL;
             $sageResponse = app(SageApiService::class)->documentsPushedToERP($sendUpdateRequest, $prepareDataForERP);
             
@@ -758,7 +758,7 @@ class SendUpdateLogService
         }
 
         if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
-            info('Book Update - Sending Update to Sage300 - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.'- Reverse Insurer Tax Invoice Number: '.$sendUpdateRequest->reversalInvoice);
+            info('Book Update - Book Update to ERP - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.'- Reverse Insurer Tax Invoice Number: '.$sendUpdateRequest->reversalInvoice);
             $prepareDataForERP['sendUpdateType'] = SageEnum::SUT_REVE_CORR;
             $prepareDataForERP['reverseInvoice'] = $sendUpdateRequest->reversalInvoice;
             $sageResponse = app(SageApiService::class)->documentsPushedToERP($sendUpdateRequest, $prepareDataForERP);

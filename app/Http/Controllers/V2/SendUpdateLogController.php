@@ -24,7 +24,6 @@ use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
-use App\Models\SendUpdateLog;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\PersonalQuoteRepository;

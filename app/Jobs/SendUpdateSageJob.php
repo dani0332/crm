@@ -8,18 +8,15 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Sammyjo20\LaravelHaystack\Concerns\Stackable;
-use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
-use Throwable;
 
-class SendUpdateSageJob implements ShouldQueue, StackableJob
+class SendUpdateSageJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, Stackable;
+    use Dispatchable, InteractsWithQueue, Queueable;
 
     public $tries = 3; // TODO: Disccuss later
     public $timeout = 40;
     public $backoff = 360;
+    // public $releaseLockAfter = 600; // 10 minutes
 
     private $preparedData;
     private $sagePayload;
@@ -44,7 +41,7 @@ class SendUpdateSageJob implements ShouldQueue, StackableJob
 
     public function handle(SageApiService $sageApiService): void
     {
-        info('------------------ Book Update - Sage Job Started - SendUpdateUUID: '.$this->preparedData['quoteDetails']['uuid'].'------------------');
+        info('------------------ Book Update - Sage Job Execution Started - QuoteUUID: '.$this->preparedData['quoteDetails']['uuid'].'------------------');
         $this->preparedData['authDetails'] = $this->loginUserDetails;
 
         switch ($this->preparedData['sendUpdateType']) {
@@ -53,26 +50,12 @@ class SendUpdateSageJob implements ShouldQueue, StackableJob
                 break;
 
             case SageEnum::SUT_REVE_CORR:
-                $sageResponse = $sageApiService->handleReveralDocumentsERP($this->preparedData, $this->sagePayload, $this->sageAPIsLogs);
+                // $sageResponse = $sageApiService->handleReveralDocumentsERP($this->preparedData, $this->sagePayload, $this->sageAPIsLogs);
+                info('SUT REVE_CORR');
                 break;
         }
 
-        
-    }
-
-    public function middleware()
-    {
-        // return [(new WithoutOverlapping($this->newCustomerId))->dontRelease()];
-    }
-
-    /**
-     * Handle a job failure.
-     *
-     * @param  \App\Events\OrderShipped  $event
-     * @return void
-     */
-    public function failed(Throwable $exception)
-    {
+        // info('Book Update - Sage Response: '.json_encode($sageResponse));
         
     }
 
