@@ -223,12 +223,12 @@ const permissionsEnum = page.props.permissionsEnum;
             <dd>{{ quote.dob }}</dd>
           </div>
 
-          
+
           <RiskRatingScoreDetails
-              :quote="quote.jetski_quote"
+              :quote="quote"
               :modelType="quoteType"
             />
-         
+
         </dl>
       </div>
     </div>

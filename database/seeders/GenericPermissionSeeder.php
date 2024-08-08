@@ -18,6 +18,15 @@ class GenericPermissionSeeder extends Seeder
      */
     public function run()
     {
+        //CUSTOMER RISK SCORE PERMISSION
+
+        $riskScorePermission = Permission::where('name', PermissionsEnum::CUSTOMER_RISKRRATING_OVERRIDE)->first();
+        if (! $riskScorePermission) {
+            Permission::create([
+                'name' => PermissionsEnum::CUSTOMER_RISKRRATING_OVERRIDE,
+                'guard_name' => 'web',
+            ]);
+        }
         // Conversion as at report Permissions
         $conversionReportPermissions = [
             PermissionsEnum::CONVERSION_AS_AT_REPORT,
