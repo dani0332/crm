@@ -97,7 +97,7 @@ class RetentionReportService extends BaseService
             return true;
         }
          // Check if the user is a manager or deputy and lacks the permission to view the manager retention report
-         if (
+        if (
             (auth()->user()->isManagerOrDeputy() && !Auth::user()->can(PermissionsEnum::MANAGER_RETENTION_REPORT_VIEW)) ||
             // Check if the user is an advisor and lacks the permission to view the advisor retention report
             (auth()->user()->isAdvisor() && !Auth::user()->can(PermissionsEnum::ADVISOR_RETENTION_REPORT_VIEW))
@@ -667,6 +667,7 @@ class RetentionReportService extends BaseService
                 'can_view' => $canView,
                 'lobs' => [
                     quoteTypeCode::Health,
+                    quoteTypeCode::CORPLINE
                 ],
             ],
             'insurance_type' => [
