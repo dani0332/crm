@@ -1170,7 +1170,7 @@ class SageApiService
 
         BookPolicyOnSageJob::dispatch($sageRequest, $quote, $payment, $sageLogArray, $request)->onQueue('sage-book-policy');
 
-        return ['status' => true, 'message' => 'Booking process in started! It will take some time to Complete. Come Back in a whilet to check the status!'];
+        return ['status' => true, 'message' => 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!'];
     }
 
     private function checkRequiredSageIds($sageRequest): array
