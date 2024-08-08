@@ -74,8 +74,9 @@ function onAssignLead(isValid) {
 const readOnlyMode = reactive({
     isDisable: true,
 });
+
+
 onMounted(() => {
-    setQueryStringFilters();
     readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 </script>
