@@ -303,8 +303,6 @@ class CarAllocationService extends AllocationService
             $query->where('user_id', '!=', $advisorId);
         }
 
-        info('getAdvisorsByStatus fetch query is : '.$query->toSql().' with params : '.json_encode($query->getBindings()));
-
         // Return the resulting collection of advisors.
         return $query->get();
     }

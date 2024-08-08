@@ -13,6 +13,8 @@ const props = defineProps({
   leadStatuses: Array,
   advisors: Array,
   teams: Object,
+  areBothTeamsPresent: Boolean,
+  is_renewal: String,
 });
 
 const page = usePage();
@@ -61,7 +63,6 @@ const channel = pusher.subscribe(
 const listen = () => {
   channel.bind('leads.count', function (e) {
     leadsCount.value = e.totalLeadsCount;
-    console.log('leads.count', e.totalLeadsCount);
   });
 };
 
@@ -72,6 +73,7 @@ const params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(false);
 const filtersCount = ref(0);
+
 const filters = reactive({
   date: null,
   status_filters: null,
@@ -85,7 +87,7 @@ const filters = reactive({
   quote_status: [],
   advisors: [],
   is_ecommerce: '',
-  is_renewal: '',
+  is_renewal: props.is_renewal,
   page: 1,
   previous_quote_policy_number_text: '',
   renewal_batch: '',
@@ -235,7 +237,7 @@ onUnmounted(() => {
     <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -316,8 +318,9 @@ onUnmounted(() => {
             :options="advisorOptions"
           />
         </x-field>
-        <x-field label="Is Renewal">
+        <x-field label="Renewal">
           <x-select
+            :disabled="!props.areBothTeamsPresent"
             v-model="filters.is_renewal"
             placeholder="Search by Renewal"
             :options="[

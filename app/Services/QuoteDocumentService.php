@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\ApplicationStorage;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
@@ -259,7 +261,8 @@ class QuoteDocumentService extends BaseService
                 $businessInsurerName = DocumentTypeRepository::businessInsurerName($businessTypeOfInsurance);
 
                 return $query->byBusinessTypeOfCustomer($businessTypeOfCustomer, $businessInsurerName);
-            })->sortDocumentType()->get();
+            })
+            ->sortDocumentType()->get();
 
         // Handle documents for quote types like CORPLINE and GroupMedical.
         if ($quoteTypeId == QuoteTypeId::Business) {
@@ -272,8 +275,9 @@ class QuoteDocumentService extends BaseService
             } elseif ($quoteType == quoteTypeCode::CORPLINE) {
                 $businessDocumetTypes = [DocumentTypeCode::CLPD, DocumentTypeCode::CLPDR, DocumentTypeCode::CLDPDR, DocumentTypeCode::PPR];
             }
+            $businessDocumetTypes[] = DocumentTypeCode::AUDIT;
             // Fetch additional business document types based on the specific quote type.
-            $businessDocumetTypes = DocumentType::active()->where('quote_type_id', QuoteTypeId::Business)->whereIn('code', $businessDocumetTypes)->get();
+            $businessDocumetTypes = DocumentType::active()->where('quote_type_id', QuoteTypeId::Business)->whereIn('code', $businessDocumetTypes)->sortDocumentType()->get();
             $documentTypes = $documentTypes->merge($businessDocumetTypes);
         }
 
@@ -337,7 +341,7 @@ class QuoteDocumentService extends BaseService
     public function getHandBookDocuments($quote)
     {
         if ($quote->policyWording) {
-            $policyWording = $quote->policyWording->map(function ($policyWording) {
+            $policyWording = $quote->policyWording->map(function ($policyWording) use ($quote) {
                 $baseUrl = config('constants.AZURE_IM_STORAGE_URL');
                 if (strpos($policyWording->link, $baseUrl) !== 0) {
                     $policyWording->link = rtrim($baseUrl, '/').'/'.ltrim($policyWording->link, '/');
@@ -345,7 +349,7 @@ class QuoteDocumentService extends BaseService
 
                 return [
                     'url' => $policyWording->link,
-                    'name' => basename($policyWording->link),
+                    'name' => 'InsuranceMarket.ae™ Policy Handbook for Policy Number '.$quote->policy_number.'.'.pathinfo($policyWording->link, PATHINFO_EXTENSION),
                 ];
             });
 
@@ -353,5 +357,34 @@ class QuoteDocumentService extends BaseService
         }
 
         return [];
+    }
+    /**
+     * Get app download linked for Health LOB
+     *
+     * @return array
+     */
+    public function getAppDownloadLink($modelType, $quote)
+    {
+        $appDownloadLink = '';
+        if (ucfirst($modelType) == quoteTypeCode::Health) {
+            $plan = $quote->plan;
+            $code = $plan->insuranceProvider->code.'_HEALTH_DOC';
+            $providerHealthDoc = ApplicationStorage::where('key_name', $code)->first()->value ?? null;
+            // If no document found against provider  will check health network document
+            if ($providerHealthDoc == null) {
+                $healthNetwork = $plan->healthNetwork;
+                $code = str_replace(' ', '_', $healthNetwork->text).'_HEALTH_DOC';
+                $providerHealthDoc = ApplicationStorage::where('key_name', $code)->first()->value ?? null;
+            }
+            // If these two documents then we send complete url
+            if (in_array($code, [ApplicationStorageEnums::BUP_HEALTH_DOC, ApplicationStorageEnums::CIG_HEALTH_DOC])) {
+                $appDownloadLink = $providerHealthDoc;
+            } else {
+                $baseUrl = config('constants.AZURE_IM_STORAGE_URL');
+                $appDownloadLink = $baseUrl.$providerHealthDoc;
+            }
+        }
+
+        return $appDownloadLink;
     }
 }

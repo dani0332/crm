@@ -7,6 +7,7 @@ use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\PaymentAllocationStatus;
+use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
@@ -35,6 +36,7 @@ use App\Traits\HandlesDeadlockRetries;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PaymentRepository extends BaseRepository implements PaymentRepositoryInterface
 {
@@ -177,6 +179,15 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     'credit_approval' => $masterPayment->credit_approval,
                     'updated_by' => $request->user()->id,
                 ];
+
+                // Check if payment frequency is upfron and Old or new Payment method is Proforma Payment Request, only than update parent payment method
+                $isProformaPaymentNewParentPaymentMethod = $masterPayment->payment_methods == PaymentMethodsEnum::ProformaPaymentRequest;
+                $isProformaPaymentOldParentPaymentMethod = $payment->payment_methods_code == PaymentMethodsEnum::ProformaPaymentRequest;
+                $isParentPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
+                if ($isParentPaymentFrequencyUpfront && ($isProformaPaymentNewParentPaymentMethod || $isProformaPaymentOldParentPaymentMethod)) {
+                    $paymentInformation['payment_methods_code'] = $masterPayment->payment_methods;
+                }
+
             } else {
                 $paymentInformation = [
                     'total_price' => $masterPayment->total_price,
@@ -501,11 +512,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 DB::commit();
             } catch (Exception $exception) {
                 $canCaptureEp = false;
+                Log::error('Error in processMasterPaymentApprove: '.$exception->getMessage());
                 DB::rollBack();
+                $successMessage = false;
             }
 
             if ($canCaptureEp) {
-                // capture EP and send documents
                 EmbeddedProductRepository::capturePayment($request->quote_id, $request->modelType);
             }
         }

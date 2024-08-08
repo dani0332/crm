@@ -22,8 +22,8 @@ const props = defineProps({
   expanded: {
     required: false,
     type: Boolean,
-    default: true
-  }
+    default: true,
+  },
 });
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss a');

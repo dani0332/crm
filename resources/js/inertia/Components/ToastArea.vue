@@ -3,6 +3,7 @@ const toast = useToast();
 const page = usePage();
 
 const flash = computed(() => page.props.flash || '');
+const errors = computed(() => page.props.errors || '');
 
 watch(
   flash,
@@ -31,6 +32,19 @@ watch(
     } else if (flash.value.info) {
       toast.info({
         title: flash.value.info,
+        position: 'top',
+      });
+    }
+  },
+  { immediate: true },
+);
+watch(
+  errors,
+  async () => {
+    if (!errors.value) return;
+    if (errors.value.flash) {
+      toast.error({
+        title: errors.value.flash,
         position: 'top',
       });
     }

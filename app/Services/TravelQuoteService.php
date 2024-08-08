@@ -538,8 +538,7 @@ class TravelQuoteService extends BaseService
                         $paymentSplit->orderBy('sr_no');
                     },
                 ]);
-                // This condition added to get the latest payment first for fetching Booking Details accordingly
-                $payment->orderBy('created_at', 'desc');
+                $payment->orderBy('created_at');
             },
         ])->first();
     }
@@ -958,7 +957,7 @@ class TravelQuoteService extends BaseService
             return ['error' => 'Quote plans not available'];
         }
 
-        $providerIds = collect($quotePlans->quotes->plans)->pluck('providerId')->toArray();
+        $providerIds = collect($quotePlans->quotes->plans)->pluck('insuranceProviderId')->toArray();
         $providers = InsuranceProvider::whereIn('id', $providerIds)->get()->keyBy('id')->toArray();
 
         $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);

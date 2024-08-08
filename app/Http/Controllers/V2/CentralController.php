@@ -26,6 +26,7 @@ use App\Http\Requests\BookPolicyRequest;
 use App\Http\Requests\CustomerProfileRequest;
 use App\Http\Requests\DragAndDropUpdateLeadStatusRequest;
 use App\Http\Requests\DuplicateLobRequest;
+use App\Http\Requests\ExportValidationRequest;
 use App\Http\Requests\GeneratePaymentLinkRequest;
 use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\MigratePaymentsRequest;
@@ -77,71 +78,8 @@ class CentralController extends Controller
         return back()->with('message', 'Quote is created successfully.');
     }
 
-    public function exportLeads(Request $request, $quoteType, $exportTye = null)
+    public function exportLeads(ExportValidationRequest $request, $quoteType, $exportTye = null)
     {
-        $diffInDays = 120;
-
-        if (! $quoteType) {
-            return abort(404);
-        }
-        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
-        if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {
-            if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
-                $error_fields = 'paid at';
-
-                $request->validate([
-                    'paid_at_start' => 'required',
-                    'paid_at_end' => 'required',
-                ]);
-                $created_at_start = Carbon::parse($request->paid_at_start)->format($dateFormat);
-                $created_at_end = Carbon::parse($request->paid_at_end)->format($dateFormat);
-            } else {
-                $error_fields = 'created date';
-
-                if (request()->has('created_at')) {
-                    request()->merge(['created_at_start' => request()->get('created_at')]);
-                    request()->query->remove('created_at');
-                }
-
-                if (request()->has('payment_due_date')) {
-                    $request->validate([
-                        'payment_due_date' => 'required',
-                    ]);
-
-                    $defaultDate = now()->endOfDay();
-
-                    $created_at_start = isset($request['booking_date']) ? Carbon::parse($request['booking_date'][0])->startOfDay() : $defaultDate;
-                    $created_at_end = isset($request['booking_date']) ? Carbon::parse($request['booking_date'][1])->endOfDay() : $defaultDate;
-                } elseif (request()->has('booking_date')) {
-                    $request->validate([
-                        'booking_date' => 'required',
-                    ]);
-                    $defaultDate = now()->endOfDay();
-
-                    $created_at_start = isset($request['booking_date']) ? Carbon::parse($request['booking_date'][0])->startOfDay() : $defaultDate;
-                    $created_at_end = isset($request['booking_date']) ? Carbon::parse($request['booking_date'][1])->endOfDay() : $defaultDate;
-                } else {
-                    $request->validate([
-                        'created_at_start' => 'required',
-                        'created_at_end' => 'required',
-                    ]);
-
-                    $created_at_start = Carbon::parse($request->created_at_start)->format($dateFormat);
-                    $created_at_end = Carbon::parse($request->created_at_end)->format($dateFormat);
-                }
-            }
-
-            if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
-                $diffInDays = 31;
-            }
-
-            $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
-
-            if ($diff > $diffInDays) {
-                return back()->with('error', 'Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.');
-            }
-        }
-
         // For Personal Quotes
         if (in_array(ucfirst($quoteType), [
             QuoteTypes::BIKE->value,
@@ -370,6 +308,9 @@ class CentralController extends Controller
     public function splitPaymentsApprove(SplitPaymentApproveRequest $request)
     {
         $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
+        if (! $successMessage) {
+            return back()->with('error', 'Error in approving payment');
+        }
 
         return back()->with('success', $successMessage);
     }

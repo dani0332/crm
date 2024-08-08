@@ -134,6 +134,7 @@ const tableHeader = [
     text: 'Previous Policy Number',
     value: 'previous_quote_policy_number',
   },
+  { text: 'Renewal Batch', value: 'renewal_batch' },
 ];
 
 const onDataExport = () => {
@@ -175,7 +176,7 @@ watch(
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -316,7 +317,7 @@ watch(
           >
             Export
           </x-button>
-          <x-tooltip v-else position="right">
+          <x-tooltip v-else placement="right">
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">

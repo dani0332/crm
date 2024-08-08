@@ -322,11 +322,11 @@ watch(
       </x-field>
       <x-field label="SUB TEAM">
         <ComboBox
-            v-model="userForm.sub_team_id"
-            placeholder="Select sub team"
-            :options="computedSubTeams"
-            :single="true"
-            :loading="loader.subTeamLoader"
+          v-model="userForm.sub_team_id"
+          placeholder="Select sub team"
+          :options="computedSubTeams"
+          :single="true"
+          :loading="loader.subTeamLoader"
         />
       </x-field>
       <x-field label="Department">

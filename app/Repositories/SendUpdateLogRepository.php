@@ -158,7 +158,9 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchFindByQuoteUuid($uuid)
     {
-        return $this->where(['quote_uuid' => $uuid])->get();
+        return $this->with(['category', 'option'])
+            ->where('quote_uuid', $uuid)
+            ->get();
     }
 
     public function fetchUpdateLogPriceDetails($data)
@@ -315,16 +317,19 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function checkPolicyDetailsFilled($sendUpdate, $quoteTypeId, $quote)
     {
+        $insuranceProviderId = ($sendUpdate->insurance_provider_id ?? $quote->insurance_provider_id) ?? null;
+        if ($quoteTypeId == QuoteTypeId::Car && is_null($insuranceProviderId)) {
+            $insuranceProviderId = $quote->car_plan_provider_id ?? null;
+        }
+
         $sendUpdatePolicyDetails = [
             'first_name' => ($sendUpdate->first_name ?? $quote->first_name) ?? null,
             'last_name' => ($sendUpdate->last_name ?? $quote->last_name) ?? null,
-            'insurance_provider_id' => ($sendUpdate->insurance_provider_id ?? ($quote->insurance_provider_id ?? $quote->car_plan_provider_id)) ?? null,
+            'insurance_provider_id' => $insuranceProviderId,
             'policy_number' => ($sendUpdate->policy_number ?? $quote->policy_number) ?? null,
             'issuance_date' => ($sendUpdate->issuance_date ?? $quote->policy_issuance_date) ?? null,
             'start_date' => ($sendUpdate->start_date ?? $quote->policy_start_date) ?? null,
             'expiry_date' => ($sendUpdate->expiry_date ?? $quote->renewal_expiry_date) ?? null,
-            'insurer_quote_number' => ($sendUpdate->insurer_quote_number ?? $quote->insurer_quote_number) ?? null,
-            'issuance_status_id' => ($sendUpdate->issuance_status_id ?? $quote->policy_issuance_status_id) ?? null,
         ];
 
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
@@ -396,6 +401,7 @@ class SendUpdateLogRepository extends BaseRepository
             ->where('quote_uuid', $quoteUuid)
             ->where('quote_type_id', $quoteTypeId)
             ->where('status', SendUpdateLogStatusEnum::UPDATE_BOOKED)
+            ->whereNotNull('insurer_tax_invoice_number')
             ->get()
             ->pluck('insurer_tax_invoice_number');
     }

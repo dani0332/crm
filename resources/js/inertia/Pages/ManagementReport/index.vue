@@ -1,5 +1,4 @@
 <script setup>
-import { useObjToUrl } from '../../Composables/utilities';
 import ActivePolicies from './Partials/ActivePolicies.vue';
 import EndingPolicies from './Partials/EndingPolicies.vue';
 import SalesDetail from './Partials/SalesDetail.vue';

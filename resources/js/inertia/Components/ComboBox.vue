@@ -44,6 +44,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  hideFooter: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -123,7 +127,7 @@ const removeSelected = item => {
     >
       <div>
         <div
-          class="select-none outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-gray-300 shadow-sm rounded-md hover:border-gray-400 px-3 py-2 bg-white text-gray-700 active:outline-sky-500 w-full flex flex-wrap gap-1 border pr-5 pl-2"
+          class="select-none outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-gray-300 shadow-sm rounded-md hover:border-gray-400 px-3 py-2 bg-white text-gray-700 active:outline-primary-500 w-full flex flex-wrap gap-1 border pr-5 pl-2"
           v-if="selectedValue.length > 0 && autocomplete"
         >
           <x-tag
@@ -131,7 +135,7 @@ const removeSelected = item => {
             :key="item.label"
             removable
             size="xs"
-            color="sky"
+            color="primary"
             @remove="removeSelected(item)"
           >
             {{ item.label }}
@@ -145,16 +149,14 @@ const removeSelected = item => {
             'border-red-500': props.hasError,
             '!bg-gray-100': props.disabled,
           }"
-          class="appearance-none block placeholder-gray-400 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-gray-300 border shadow-sm rounded-md hover:border-gray-400 px-3 py-2 bg-white text-gray-700 focus:outline-sky-500 w-full"
+          class="appearance-none block placeholder-gray-400 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-gray-300 border shadow-sm rounded-md hover:border-gray-400 px-3 py-2 bg-white text-gray-700 focus:outline-primary-500 w-full"
           :placeholder="props.placeholder"
           :value="
             props.single
               ? props.options.find(option => option.value === props.modelValue)
                   ?.label
               : `${selectedValue.length} Selected ${
-                  props.maxLimit
-                    ? '| max: ' + props.maxLimit
-                    : ''
+                  props.maxLimit ? '| max: ' + props.maxLimit : ''
                 }`
           "
           readonly
@@ -275,8 +277,10 @@ const removeSelected = item => {
         </svg>
       </div>
     </Combobox>
-    <p v-if="props.hasError" class="text-sm text-red-500 mt-1">
-      This field is required
-    </p>
+    <div v-if="!props.hideFooter" class="x-input-footer text-xs mt-1">
+      <p v-if="props.hasError" class="text-error-500 dark:text-error-400">
+        This field is required
+      </p>
+    </div>
   </label>
 </template>

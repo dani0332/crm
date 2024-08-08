@@ -55,13 +55,17 @@ class SendUpdateCustomerValidationRequest extends FormRequest
             }
 
             if ($this->sendUpdate->quote_type_id == QuoteTypeId::Car) {
-                if ($option == SendUpdateLogStatusEnum::AOCOV && empty($sendUpdateLog->car_addons)) {
+                if ($option == SendUpdateLogStatusEnum::AOCOV && empty($this->sendUpdate->car_addons)) {
                     return $validator->errors()->add('error', 'Please select Addons');
                 } elseif (in_array($option, [SendUpdateLogStatusEnum::COE_NFI, SendUpdateLogStatusEnum::COE]) && empty($this->sendUpdate->emirates_id)) {
                     return $validator->errors()->add('error', 'Please select Emirate');
                 } elseif (in_array($option, [SendUpdateLogStatusEnum::CISC_NFI, SendUpdateLogStatusEnum::CISC]) && empty($this->sendUpdate->seating_capacity)) {
                     return $validator->errors()->add('error', 'Please select Seating capacity');
                 }
+            }
+
+            if ($category == SendUpdateLogStatusEnum::EF && $option == SendUpdateLogStatusEnum::PPE && is_null($this->sendUpdate->expiry_date)) {
+                return $validator->errors()->add('error', 'The expiry date field is required.');
             }
 
             switch ($category) {

@@ -360,3 +360,7 @@ export function buildCdbidLink(quote_uuid, quote_type_id) {
     return '';
   }
 }
+
+export const userHasRequiredTeams = (givenTeams, userTeams) => {
+  return givenTeams.every(team => userTeams.includes(team));
+};
