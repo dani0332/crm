@@ -277,6 +277,12 @@ const linkEntity = () => {
       console.log(err);
     });
 };
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -300,7 +306,7 @@ const linkEntity = () => {
           :quote="quote"
           :cdn="cdnPath"
         />
-        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
+        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate" v-if="readOnlyMode.isDisable === true">
           Duplicate Lead
         </x-button>
         <Link
@@ -308,7 +314,7 @@ const linkEntity = () => {
           :href="route('cycle-quotes-list')"
           preserve-scroll
         >
-          <x-button size="sm" color="primary" tag="div">
+          <x-button size="sm" color="primary" tag="div" v-if="readOnlyMode.isDisable === true">
             Cycle Quotes
           </x-button>
         </Link>
@@ -316,7 +322,7 @@ const linkEntity = () => {
           v-if="can(permissionsEnum.CycleQuotesEdit)"
           :href="route('cycle-quotes-edit', quote.uuid)"
         >
-          <x-button size="sm" tag="div">Edit</x-button>
+          <x-button size="sm" tag="div" v-if="readOnlyMode.isDisable === true">Edit</x-button>
         </Link>
       </template>
     </StickyHeader>
@@ -672,6 +678,7 @@ const linkEntity = () => {
                   @click.prevent="searchByTradeLicense"
                   size="xs"
                   color="primary"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Search
                 </x-button>
@@ -768,6 +775,7 @@ const linkEntity = () => {
           size="sm"
           :loading="customerProfileForm.processing"
           @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
         >
           Search
         </x-button>

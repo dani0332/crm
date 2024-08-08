@@ -1,5 +1,6 @@
 <script setup>
 import { fileUploadErrorMessage } from '@/inertia/Composables/utilities.js';
+import DownloadDocuments from "../../../Components/DownloadDocuments.vue";
 
 defineProps({
   quote: Object,
@@ -127,6 +128,12 @@ const uploadFile = (doc, filesWithInfo) => {
       },
     });
 };
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -137,7 +144,12 @@ const uploadFile = (doc, filesWithInfo) => {
     </h3>
     <template #content>
       <x-divider class="mb-4 mt-1" />
-      <div class="flex justify-end gap-4 items-center mb-4">
+      <div class="flex justify-end gap-4 items-center mb-4" v-if="readOnlyMode.isDisable === true">
+          <DownloadDocuments
+              v-if="can(permissionsEnum.DOWNLOAD_ALL_DOCUMENTS)"
+              :quote="page.props.quote"
+              :quoteDocuments="page.props.quote.documents ?? page.props.quoteDocuments"
+          />
         <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
           Upload Documents
         </x-button>
@@ -176,6 +188,7 @@ const uploadFile = (doc, filesWithInfo) => {
               color="error"
               outlined
               @click.prevent="onDocDelete(doc_name)"
+              v-if="readOnlyMode.isDisable === true"
             >
               Delete
             </x-button>

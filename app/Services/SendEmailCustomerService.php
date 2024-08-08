@@ -75,7 +75,7 @@ class SendEmailCustomerService extends BaseService
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->customerName,
                 ]],
-                'templateId' => $emailTemplateId,
+                'templateId' => (int) $emailTemplateId,
                 'params' => [
                     'customerName' => $emailData->customerName,
                     'customerEmail' => $emailData->customerEmail,
@@ -83,6 +83,7 @@ class SendEmailCustomerService extends BaseService
                     'inviteCode' => isset($emailData->inviteCode) ? $emailData->inviteCode : null,
                     'buttonUrl' => isset($emailData->buttonUrl) ? $emailData->buttonUrl : null,
                     'cdbId' => isset($emailData->quoteCdbId) ? $emailData->quoteCdbId : null,
+                    'productName' => isset($emailData->productName) ? $emailData->productName : null,
                     'advisorName' => isset($emailData->advisorName) ? $emailData->advisorName : null,
                     'advisorLandlineNo' => isset($emailData->advisorLandlineNo) ? $emailData->advisorLandlineNo : null,
                     'advisorMobileNo' => isset($emailData->advisorMobileNo) ? $emailData->advisorMobileNo : null,
@@ -609,9 +610,6 @@ class SendEmailCustomerService extends BaseService
         ];
         try {
             $response = Http::withHeaders($headers)
-                ->beforeSending(function () {
-                    info('sendDttEmail ---- Request is Sending ');
-                })
                 ->timeout(20)
                 ->retry(3, 90000)
                 ->post($this->url, $body);
@@ -979,6 +977,7 @@ class SendEmailCustomerService extends BaseService
 
         return $responseCode;
     }
+
     private function buildPlansEmailData($healthQuote, $plans, $previousAdvisor, $request, $emailTemplateId)
     {
         $advisor = User::find($healthQuote->advisor_id);
@@ -1054,6 +1053,7 @@ class SendEmailCustomerService extends BaseService
 
         return $emailData;
     }
+
     private function buildCommonEmailData($healthQuote, $advisor, $previousAdvisor, $request, $emailTemplateId)
     {
         $whatsAppNumber = ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';

@@ -30,6 +30,7 @@ class LifeQuotesExport
             'SOURCE',
             'LOST REASON',
             'IS ECOMMERCE',
+            'RENEWAL BATCH',
         ];
     }
 
@@ -49,6 +50,7 @@ class LifeQuotesExport
             $quote->source,
             optional($quote->lifeQuoteRequestDetail)?->lostReason->text ?? '',
             $quote->is_ecommerce ? 'Yes' : 'No',
+            $quote->renewal_batch,
         ];
     }
 }

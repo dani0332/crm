@@ -14,6 +14,7 @@ use App\Models\MyAlFredUser;
 use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 
 class ApiService
 {
@@ -116,7 +117,6 @@ class ApiService
         info('------ Lead allocation request completed to assign advisor only for '.$allocationId.' ------');
 
         return apiResponse($responseData, Response::HTTP_OK, 'Advisor assigned successfully!');
-
     }
 
     private function triggerOCBOnly($allocationId)
@@ -132,6 +132,10 @@ class ApiService
     {
         info('------ Lead allocation started for lead : '.$allocationId.' ------');
         $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId, $teamId);
+        if (is_null($allocationStrategy)) {
+            info('-- Exception against - allocationType: '.$allocationId.' and allocationId: '.$allocationId.' --');
+            throw new InvalidArgumentException("Allocation strategy for type '$allocationType -- $allocationId' not found.");
+        }
         $assignedAdvisorId = $allocationStrategy->executeSteps();
         info('------ Lead allocation ended for lead : '.$allocationId.' ------');
         $responseData = ['assignedAdvisorId' => $assignedAdvisorId];

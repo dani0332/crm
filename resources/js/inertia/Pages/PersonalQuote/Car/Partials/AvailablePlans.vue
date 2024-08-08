@@ -10,8 +10,11 @@ const props = defineProps({
   genericRequestEnum: Object,
 });
 const { isRequired } = useRules();
+const page = usePage();
 
 const emit = defineEmits(['onLoadAvailablePlansData']);
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum
 
 const notification = useToast();
 const coreInsurer = ['AXA', 'OIC', 'TM', 'QIC', 'RSA'];
@@ -189,6 +192,13 @@ const onToggleManual = () => {
     toggleManualLoader.value = false;
   }, 300);
 };
+
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -353,7 +363,7 @@ const onToggleManual = () => {
             </div>
           </dl>
           <br />
-          <div class="flex justify-end">
+          <div class="flex justify-end" v-if="readOnlyMode.isDisable === true">
             <x-button
               v-if="
                 access.carManagerCanEdit ||
@@ -400,7 +410,7 @@ const onToggleManual = () => {
               <dt class="font-bold">Total Price with VAT:</dt>
               <dd>AED: {{ totalPremiumWithVat.toFixed(2) }}</dd>
             </div>
-            <div class="flex justify-end">
+            <div class="flex justify-end" v-if="readOnlyMode.isDisable === true">
               <x-button
                 v-if="
                   access.carManagerCanEdit ||

@@ -100,6 +100,8 @@ const tableHeader = ref([
     value: 'previous_quote_policy_number',
     is_active: true,
   },
+    { text: 'Renewal Batch', value: 'renewal_batch' , is_active: true },
+
 ]);
 
 const quotesSelected = ref([]);
@@ -198,7 +200,9 @@ function setQueryStringFilters() {
     }
   }
 }
-
+const readOnlyMode = reactive({
+    isDisable: true,
+});
 onMounted(() => {
   params = getSavedQueryParams() || params;
   setQueryStringFilters();
@@ -225,6 +229,7 @@ onMounted(() => {
   }
 
   filtersCount.value = Object.keys(filtersCleaned).length;
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 watch(
@@ -263,8 +268,9 @@ watch(
         />
 
         <Link :href="route('yacht-quotes-card')">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
+          <x-button size="sm" color="#1d83bc" tag="div" v-if="readOnlyMode.isDisable === true"> Cards View </x-button>
         </Link>
+          <div v-if="readOnlyMode.isDisable === true">
         <x-button
           v-if="can(permissionsEnum.YachtQuotesCreate)"
           size="sm"
@@ -273,6 +279,7 @@ watch(
         >
           Create Lead
         </x-button>
+          </div>
       </template>
     </StickyHeader>
     <!-- <div class="flex justify-between items-center">
@@ -432,7 +439,7 @@ watch(
             placeholder="Search by Renewal Batch"
           />
         </x-field>
-        <x-field label="Is Renewal">
+        <x-field label="Renewal">
           <x-select
             v-model="filters.previous_quote_policy_number"
             placeholder="Search by Renewal"

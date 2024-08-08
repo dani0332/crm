@@ -18,6 +18,21 @@ class GenericPermissionSeeder extends Seeder
      */
     public function run()
     {
+        // ADD Permission to Read only Access LOBS
+        $readOnlyAccessPermission = Permission::where('name', PermissionsEnum::All_QUOTES_VIEWONLY_ACCESS)->first();
+        if (! $readOnlyAccessPermission) {
+            Permission::create([
+                'name' => PermissionsEnum::All_QUOTES_VIEWONLY_ACCESS,
+            ]);
+        }
+        //CUSTOMER RISK SCORE PERMISSION
+        $riskScorePermission = Permission::where('name', PermissionsEnum::CUSTOMER_RISKRRATING_OVERRIDE)->first();
+        if (! $riskScorePermission) {
+            Permission::create([
+                'name' => PermissionsEnum::CUSTOMER_RISKRRATING_OVERRIDE,
+                'guard_name' => 'web',
+            ]);
+        }
         // Conversion as at report Permissions
         $conversionReportPermissions = [
             PermissionsEnum::CONVERSION_AS_AT_REPORT,
@@ -127,6 +142,7 @@ class GenericPermissionSeeder extends Seeder
             PermissionsEnum::SAVE_QUOTE_NOTES,
             PermissionsEnum::UPDATE_QUOTE_NOTES,
             PermissionsEnum::DELETE_QUOTE_NOTES,
+            PermissionsEnum::TRAVEL_HAPEX,
         ];
 
         foreach ($permissions as $permissionName) {
@@ -137,7 +153,24 @@ class GenericPermissionSeeder extends Seeder
                     'name' => $permissionName,
                     'guard_name' => 'web',
                 ]);
+                $role = Role::where('name', RolesEnum::Admin)->first();
+
+                if (! $role->hasPermissionTo($permissionName)) {
+                    $role->givePermissionTo($permissionName);
+                }
             }
+        }
+
+        $role = Role::firstOrCreate([
+            'name' => RolesEnum::TravelHapex,
+        ], [
+            'guard_name' => 'web',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        if ($role && ! $role->hasPermissionTo(PermissionsEnum::TRAVEL_HAPEX)) {
+            $role->givePermissionTo(PermissionsEnum::TRAVEL_HAPEX);
         }
 
         $rolesForManageQuote = [
@@ -172,17 +205,17 @@ class GenericPermissionSeeder extends Seeder
             ]);
         }
 
-        $this->generateSegmentFilterPermission();
-        $this->embeddedProductSeeds();
-        $this->advisorConversionReportSeeds();
-        $this->quoteSyncSeeds();
-        $this->advisorDistributionReportSeeds();
-        $this->addMotorHeadNewRole();
-        $this->createAndAssignManulHealthPlanPermission();
+        // $this->generateSegmentFilterPermission();
+        // $this->embeddedProductSeeds();
+        // $this->advisorConversionReportSeeds();
+        // $this->quoteSyncSeeds();
+        // $this->advisorDistributionReportSeeds();
+        // $this->addMotorHeadNewRole();
+        // $this->createAndAssignManulHealthPlanPermission();
     }
 
     /**
-     * add manual health plan permission function
+     * add manual health plan permission function.
      *
      * @return void
      */

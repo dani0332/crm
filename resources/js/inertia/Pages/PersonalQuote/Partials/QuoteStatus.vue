@@ -17,6 +17,8 @@ const props = defineProps({
 
 const page = usePage();
 const notification = useNotifications('toast');
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 const quoteStatusOptions = computed(() => {
   return props.quoteStatuses.map(status => ({
     value: status.id,
@@ -58,8 +60,8 @@ const rules = {
 const allowStatusUpdate = computed(() => {
   return (
     (props.quote.quote_status_id ==
-    page.props.quoteStatusEnum.TransactionApproved ||
-      props.quote.quote_status_id == page.props.quoteStatusEnum.Lost) ??
+    page.props.quoteStatusEnum?.TransactionApproved ||
+      props.quote.quote_status_id == page.props.quoteStatusEnum?.Lost) ??
     false
   );
 });
@@ -72,6 +74,12 @@ watch(
     }
   },
 );
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -111,7 +119,7 @@ watch(
               <x-field
                 label="Lost Reason"
                class="uppercase" required
-                v-if="quoteStatusForm.quote_status_id == page.props.quoteStatusEnum.Lost"
+                v-if="quoteStatusForm.quote_status_id == page.props.quoteStatusEnum?.Lost"
               >
                 <x-select
                   v-model="quoteStatusForm.lost_reason_id"
@@ -145,6 +153,7 @@ watch(
             :loading="quoteStatusForm.processing"
             @click.prevent="onLeadStatus"
             :disabled="allowStatusUpdate"
+            v-if="readOnlyMode.isDisable === true"
           >
             Change Status
           </x-button>

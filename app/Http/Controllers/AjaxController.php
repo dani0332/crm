@@ -122,7 +122,7 @@ class AjaxController extends Controller
         $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
         $quoteModel->save();
 
-        app(CRUDService::class)->calculateScore($quoteModel);
+        app(CRUDService::class)->calculateScore($quoteModel, $request->modelType);
 
         return response()->json(['success' => true]);
     }
@@ -249,8 +249,14 @@ class AjaxController extends Controller
                         'pep' => $data['pep'] ?? null,
                         'financial_sanctions' => $data['financial_sanctions'] ?? null,
                         'dual_nationality' => $data['dual_nationality'] ?? null,
-                    ]
-                );
+                        'transaction_pattern' => $data['transaction_pattern'] ?? null,
+                        'premium_tenure' => $data['premium_tenure'] ?? null,
+                        'in_sanction_list' => $data['in_sanction_list'] ?? null,
+                        'deal_sanction_list' => $data['deal_sanction_list'] ?? null,
+                        'is_operation_high_risk' => $data['is_operation_high_risk'] ?? null,
+                        'is_partner' => $data['is_partner'] ?? null,
+
+                    ]);
 
                 $quote->first_name = $data['first_name'];
                 $quote->last_name = $data['last_name'];
@@ -278,6 +284,34 @@ class AjaxController extends Controller
         }
 
         return response()->json(['error' => false]);
+    }
+    public function updateRisk($quoteType, Request $request)
+    {
+        $request->validate([
+            'quote_uuid' => 'required',
+        ]);
+        $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
+        $detail = $this->getQuoteDetailObject($quoteType, $quote->id);
+        $detail->risk_score_override = $request->risk_override;
+        $detail->risk_score_override_date = Carbon::now();
+        $detail->risk_score_override_by = auth()->user()->id;
+        $detail->save();
+
+        app(CRUDService::class)->calculateScore($quote, $quoteType);
+    }
+
+    public function quoteDetail($quoteType, $id)
+    {
+        if ($quoteType && $id) {
+
+            $quote = $this->getQuoteObject($quoteType, $id);
+
+            $detail = $this->getQuoteDetailObject($quoteType, $quote->id);
+
+            return $detail;
+        } else {
+            return response()->json(['success' => false]);
+        }
     }
 
     public function uploadKycEntityDocument($quoteType, KycEntityDocRequest $request)
@@ -322,6 +356,18 @@ class AjaxController extends Controller
                     'pep' => $data['pep'] ?? null,
                     'financial_sanctions' => $data['financial_sanctions'] ?? null,
                     'dual_nationality' => $data['dual_nationality'] ?? null,
+                    'in_sanction_list' => $data['in_sanction_list'] ?? null,
+                    'is_sanction_match' => $data['is_sanction_match'] ?? null,
+                    'in_fatf' => $data['in_fatf'] ?? null,
+                    'deal_sanction_list' => $data['deal_sanction_list'] ?? null,
+                    'is_operation_high_risk' => $data['is_operation_high_risk'] ?? null,
+                    'customer_tenure' => $data['customer_tenure'] ?? null,
+                    'transaction_pattern' => $data['transaction_pattern'] ?? null,
+                    'transaction_activities' => $data['transaction_activities'] ?? null,
+                    'mode_of_contact' => $data['mode_of_contact'] ?? null,
+                    'mode_of_delivery' => $data['mode_of_delivery'] ?? null,
+                    'transaction_volume' => $data['transaction_volume'] ?? null,
+                    'is_owner_high_risk' => $data['is_owner_high_risk'] ?? null,
                 ]);
 
                 QuoteMemberDetail::updateOrCreate([
@@ -351,5 +397,29 @@ class AjaxController extends Controller
         }
 
         return response()->json(['message' => 'Something went wrong, contact to administrator.']);
+    }
+
+    public function bikeModelBasedOnCarMakeId(Request $request)
+    {
+        $carMakeCode = CarMake::activeWithId($request->id)->value('code');
+        if (! $carMakeCode) {
+            $carMakeCode = $request->id;
+        }
+        $carmodel = CarModel::activeWithCode($carMakeCode)
+            ->select('id', 'text', 'code', 'car_make_code')
+            ->where('quote_type_id', QuoteTypeId::Bike)
+            ->orderBy('text')
+            ->get();
+
+        return response()->json($carmodel);
+    }
+    public function getBikeModelDetails(Request $request)
+    {
+        $bikeModelDetail = CarModelDetail::active()
+            ->select('cubic_capacity', 'seating_capacity as seat_capacity')
+            ->where('car_model_id', $request->bike_model_id)
+            ->get();
+
+        return response()->json($bikeModelDetail);
     }
 }

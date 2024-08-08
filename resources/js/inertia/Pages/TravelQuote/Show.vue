@@ -5,6 +5,7 @@ import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import { computed } from 'vue';
+import DownloadDocuments from "../../Components/DownloadDocuments.vue";
 
 const page = usePage();
 defineProps({
@@ -1199,6 +1200,9 @@ const linkEntity = () => {
       console.log(err);
     });
 };
+const readOnlyMode = reactive({
+    isDisable: true,
+});
 
 onMounted(() => {
   onLoadAvailablePlansData();
@@ -1208,6 +1212,8 @@ onMounted(() => {
       position: 'top',
     });
   }
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+
 });
 
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);
@@ -1318,7 +1324,7 @@ const getGenderDisplay = (val) => {
     <Head title="Travel Detail" />
     <div class="flex justify-between items-center flex-wrap gap-2">
       <h2 class="text-xl font-semibold">Travel Detail</h2>
-      <div class="flex gap-2">
+      <div class="flex gap-2" v-if="readOnlyMode.isDisable === true">
         <Link
           v-if="quote?.insly_id"
           :href="`/legacy-policy/${quote.insly_id}`"
@@ -1793,6 +1799,7 @@ const getGenderDisplay = (val) => {
                   @click.prevent="searchByTradeLicense"
                   size="xs"
                   color="primary"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Search
                 </x-button>
@@ -1889,6 +1896,7 @@ const getGenderDisplay = (val) => {
           size="sm"
           :loading="customerProfileForm.processing"
           @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
         >
           Search
         </x-button>
@@ -1936,7 +1944,7 @@ const getGenderDisplay = (val) => {
           </dd>
         </div>
         <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity">
+          <x-button size="sm" color="orange" @click.prevent="linkEntity" v-if="readOnlyMode.isDisable === true">
             Link
           </x-button>
         </div>
@@ -1953,7 +1961,7 @@ const getGenderDisplay = (val) => {
           <x-tag size="sm">{{ travelers.length || 0 }}</x-tag>
         </h3>
         <div class="flex flex-wrap gap-3">
-          <x-button size="sm" color="orange" @click.prevent="onAddTraveler">
+          <x-button size="sm" color="orange" @click.prevent="onAddTraveler" v-if="readOnlyMode.isDisable === true">
             Add Member
           </x-button>
         </div>
@@ -1993,6 +2001,7 @@ const getGenderDisplay = (val) => {
               color="primary"
               @click.prevent="onEditTraveler(item)"
               outlined
+              v-if="readOnlyMode.isDisable === true"
             >
               Edit
             </x-button>
@@ -2004,6 +2013,7 @@ const getGenderDisplay = (val) => {
                 confirmModal.show = true;
               "
               outlined
+              v-if="readOnlyMode.isDisable === true"
             >
               Delete
             </x-button>
@@ -2115,7 +2125,7 @@ const getGenderDisplay = (val) => {
       </template>
     </x-modal>
 
-    <customerAdditionalContacts
+    <CustomerAdditionalContacts
       quoteType="Travel"
       :customerId="quote.customer_id"
       :quoteId="quote.id"
@@ -2201,6 +2211,7 @@ const getGenderDisplay = (val) => {
           :disabled="
             quote.quote_status_id == enums.quoteStatusEnum.TransactionApproved
           "
+          v-if="readOnlyMode.isDisable === true"
         >
           Change Status
         </x-button>
@@ -2317,6 +2328,7 @@ const getGenderDisplay = (val) => {
             type="submit"
             size="sm"
             v-show="policyDetails.editMode"
+            v-if="readOnlyMode.isDisable === true"
             >Update</x-button
           >
           <x-button
@@ -2325,6 +2337,7 @@ const getGenderDisplay = (val) => {
             type="submit"
             v-show="!policyDetails.editMode"
             @click.prevent="policyDetails.editMode = true"
+            v-if="readOnlyMode.isDisable === true"
             >Edit</x-button
           >
         </div>
@@ -2361,7 +2374,11 @@ const getGenderDisplay = (val) => {
           Documents
           <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
         </h3>
-        <div class="flex gap-2">
+        <div class="flex gap-2" v-if="readOnlyMode.isDisable === true">
+            <DownloadDocuments
+                :quote="page.props.quote"
+                :quoteDocuments="page.props.quoteDocuments"
+            />
           <Link
             v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
             :href="`/legacy-policy/${quote.insly_id}`"
@@ -2440,6 +2457,7 @@ const getGenderDisplay = (val) => {
               color="error"
               outlined
               @click.prevent="onDocDelete(doc_name)"
+              v-if="readOnlyMode.isDisable === true"
             >
               Delete
             </x-button>
@@ -2514,12 +2532,14 @@ const getGenderDisplay = (val) => {
                 <x-button
                   @click.prevent="onTogglePlans(false)"
                   :loading="toggleLoader"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Show
                 </x-button>
                 <x-button
                   @click.prevent="onTogglePlans(true)"
                   :loading="toggleLoader"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Hide
                 </x-button>
@@ -2786,7 +2806,7 @@ const getGenderDisplay = (val) => {
           Lead Activities
           <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
         </h3>
-        <x-button size="sm" color="orange" @click.prevent="addActivity">
+        <x-button size="sm" color="orange" @click.prevent="addActivity" v-if="readOnlyMode.isDisable === true">
           Add Activity
         </x-button>
       </div>
@@ -2807,6 +2827,7 @@ const getGenderDisplay = (val) => {
             :modelValue="status === 1"
             :disabled="status === 1"
             @change="onActivityStatusUpdate(id)"
+            v-if="readOnlyMode.isDisable === true"
           />
         </template>
         <template #item-action="item">
@@ -2817,6 +2838,7 @@ const getGenderDisplay = (val) => {
               outlined
               :disabled="item.status === 1"
               @click.prevent="activityEdit(item)"
+              v-if="readOnlyMode.isDisable === true"
             >
               Edit
             </x-button>
@@ -2826,6 +2848,7 @@ const getGenderDisplay = (val) => {
               :disabled="item.status === 1"
               outlined
               @click.prevent="activityDelete(item.id)"
+              v-if="readOnlyMode.isDisable === true"
             >
               Delete
             </x-button>
@@ -2982,6 +3005,7 @@ const getGenderDisplay = (val) => {
             size="sm"
             color="emerald"
             @click.prevent="modals.mixInquiryConfirm = false"
+            v-if="readOnlyMode.isDisable === true"
           >
             Okay, got it!
           </x-button>

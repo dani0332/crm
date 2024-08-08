@@ -2,6 +2,8 @@
 import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import EntityRiskRatingScoreDetails from '../../Components/EntityRiskRatingScoreDetails.vue';
+import RiskRatingScoreDetails from "../../Components/RiskRatingScoreDetails.vue";
 
 const props = defineProps({
   quote: Object,
@@ -46,7 +48,8 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 const notification = useNotifications('toast');
 const hasRole = role => useHasRole(role);
-
+const can = permission => useCan(permission);
+const permissionEnum = page.props.permissionsEnum;
 const countDays = useDaysSinceStale(props.quoteRequest?.stale_at);
 const compareDueDate = useCompareDueDate;
 
@@ -577,6 +580,12 @@ const linkEntity = () => {
       console.log(err);
     });
 };
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -592,7 +601,7 @@ const linkEntity = () => {
           Stale for {{ countDays }}
         </p>
       </template>
-      <template #default>
+      <template #default v-if="readOnlyMode.isDisable === true">
         <LeadNotes
           :documentType="noteDocumentType"
           :notes="quoteNotes"
@@ -885,6 +894,7 @@ const linkEntity = () => {
                   size="xs"
                   color="primary"
                   class="mt-1"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Search
                 </x-button>
@@ -952,6 +962,20 @@ const linkEntity = () => {
             </x-button>
           </div>
         </div>
+          <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">ENTITY TYPE</dt>
+              <dd>
+                  <ComboBox
+                      @update:modelValue="entityTypeChange($event)"
+                      :single="true"
+                      v-model:modelValue="customerProfileForm.entity_type_code"
+                      :options="companyConcernOptions"
+                      placeholder="SELECT COMPANY CONCERN"
+                      class="w-full"
+                  />
+              </dd>
+          </div>
+          <EntityRiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
       </x-form>
     </div>
     <x-modal v-model="getParentEntityModel" size="lg" show-close backdrop>
@@ -1134,6 +1158,7 @@ const linkEntity = () => {
             :loading="loaders.leadStatus"
             @click.prevent="onLeadStatus"
             :disabled="disableStatusSection"
+            v-if="readOnlyMode.isDisable === true"
           >
             Change Status
           </x-button>
@@ -1287,7 +1312,7 @@ const linkEntity = () => {
       <template #content>
         <x-divider class="my-4" />
         <div class="flex justify-end items-center mb-4">
-          <x-button size="sm" color="orange" @click.prevent="addActivity">
+          <x-button size="sm" color="orange" @click.prevent="addActivity" v-if="readOnlyMode.isDisable === true">
             Add Activity
           </x-button>
         </div>
@@ -1333,6 +1358,7 @@ const linkEntity = () => {
                 outlined
                 :disabled="item.status === 1"
                 @click.prevent="activityEdit(item)"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Edit
               </x-button>
@@ -1342,6 +1368,7 @@ const linkEntity = () => {
                 :disabled="item.status === 1"
                 outlined
                 @click.prevent="activityDelete(item.id)"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Delete
               </x-button>

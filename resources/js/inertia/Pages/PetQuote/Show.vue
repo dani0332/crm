@@ -11,6 +11,7 @@ import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+import {reactive} from 'vue';
 
 const props = defineProps({
   quote: Object,
@@ -258,6 +259,12 @@ const linkEntity = () => {
       console.log(err);
     });
 };
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -273,7 +280,7 @@ const linkEntity = () => {
           Stale for {{ countDays }}
         </p>
       </template>
-      <template #default>
+      <template #default v-if="readOnlyMode.isDisable === true">
         <LeadNotes
           :documentType="noteDocumentType"
           :notes="quoteDocuments"
@@ -346,7 +353,7 @@ const linkEntity = () => {
         </Link>
       </div>
 
-    
+
     </div> -->
 
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
@@ -627,7 +634,7 @@ const linkEntity = () => {
               </dd>
             </div>
             <RiskRatingScoreDetails
-              :quote="quote.pet_quote"
+              :quote="quote"
               :modelType="'Pet'"
             />
           </dl>
@@ -670,6 +677,7 @@ const linkEntity = () => {
                   @click.prevent="searchByTradeLicense"
                   size="xs"
                   color="primary"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Search
                 </x-button>
@@ -766,6 +774,7 @@ const linkEntity = () => {
           size="sm"
           :loading="customerProfileForm.processing"
           @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
         >
           Search
         </x-button>

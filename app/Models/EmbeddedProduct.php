@@ -23,6 +23,8 @@ class EmbeddedProduct extends Model
         'logic_description',
         'company_documents',
         'is_active',
+        'min_value',
+        'max_value',
         'min_age',
         'max_age',
     ];
@@ -65,5 +67,10 @@ class EmbeddedProduct extends Model
         }
 
         return false;
+    }
+
+    public function documents()
+    {
+        return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
 }

@@ -207,6 +207,10 @@ function onAssignLead(isValid) {
   }
 }
 
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+
 onMounted(() => {
   params = getSavedQueryParams() || params;
 
@@ -230,6 +234,7 @@ onMounted(() => {
   }
 
   filtersCount.value = Object.keys(filtersCleaned).length;
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 watch(
@@ -267,11 +272,11 @@ watch(
         />
 
         <Link :href="route('home-cardView')">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
+          <x-button size="sm" color="#1d83bc" tag="div" v-if="readOnlyMode.isDisable === true"> Cards View </x-button>
         </Link>
 
         <Link :href="route('home.create')">
-          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
+          <x-button size="sm" color="#ff5e00" tag="div" v-if="readOnlyMode.isDisable === true"> Create Lead </x-button>
         </Link>
       </template>
     </StickyHeader>
@@ -388,7 +393,7 @@ watch(
             :options="advisorOptions"
           />
         </x-field>
-        <x-field label="Is Renewal">
+        <x-field label="Renewal">
           <x-select
             v-model="filters.is_renewal"
             placeholder="Search by Renewal"
@@ -470,6 +475,7 @@ watch(
               class="flex-1 w-full"
               :rules="[isRequired]"
               label="Assign Advisor"
+              v-if="readOnlyMode.isDisable === true"
             />
             <div class="mb-3 md:pt-6">
               <x-button
@@ -477,6 +483,7 @@ watch(
                 size="sm"
                 type="submit"
                 :loading="assignForm.processing"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Assign
               </x-button>
