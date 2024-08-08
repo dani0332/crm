@@ -13,6 +13,7 @@ const createLink = link => {
       label: link.title,
       icon: link.attributes.icon,
       value: link.url,
+      href: link.url,
       active: page.url.startsWith(menuUrl),
       ...(link.attributes.external
         ? { target: '_blank', href: link.url }
@@ -75,11 +76,10 @@ const onLogout = () => {
             />
           </Link>
         </div>
-        <nav class="menu-wrapper dark p-1.5">
-          <x-menu
+        <nav class="p-1.5">
+          <ui-menu
             :items="$page.props.sidebar.map(createLink)"
             :collapseIcon="`chevronDown`"
-            color="zinc"
           />
         </nav>
       </aside>
@@ -214,14 +214,3 @@ const onLogout = () => {
     </XNotifications>
   </main>
 </template>
-
-<style>
-.menu-wrapper {
-  .x-menu-inner {
-    @apply text-white;
-  }
-  .x-menu-item {
-    @apply !text-white;
-  }
-}
-</style>
