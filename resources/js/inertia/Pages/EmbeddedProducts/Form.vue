@@ -511,7 +511,7 @@ function onSubmit(isValid) {
             <div class="flex gap-3 items-center">
               <x-field label="Price with 5% VAT" class="flex-1">
                 <x-input
-                  :value="(form.pricings[index].price * 1.05).toFixed(2)"
+                  :modelValue="(form.pricings[index].price * 1.05).toFixed(2)"
                   class="w-full"
                   readonly
                 />
