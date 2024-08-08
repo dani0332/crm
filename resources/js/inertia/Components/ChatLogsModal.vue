@@ -37,8 +37,8 @@ const computedMessages = computed(() => {
 });
 
 const renderMarkdown = markdownString => {
-  if(!markdownString){
-    return 'no content available.'
+  if (!markdownString) {
+    return 'no content available.';
   }
   // Parse the markdown string
   const initialHtml = md.render(markdownString);
@@ -49,37 +49,41 @@ const renderMarkdown = markdownString => {
   return adjustedHtml;
 };
 
-const checkCaption = (whatsapp_request) => {
-  const data = whatsapp_request?.document 
-           ?? whatsapp_request?.location 
-           ?? whatsapp_request?.contacts 
-           ?? whatsapp_request?.video 
-           ?? whatsapp_request?.sticker;
+const checkCaption = (whatsapp_request, UserAudio) => {
+  const data =
+    whatsapp_request?.document ??
+    whatsapp_request?.location ??
+    whatsapp_request?.contacts ??
+    whatsapp_request?.video ??
+    whatsapp_request?.sticker;
 
-    if (data) {
-        const { caption, mime_type } = JSON.parse(data);
+  if (data) {
+    const { caption, mime_type } = JSON.parse(data);
 
-        return caption 
-            ? `User has shared a ${mime_type} with a message: ${caption}` 
-            : `User has shared a ${whatsapp_request.type}`;
-    } 
+    return caption
+      ? `User has shared a ${mime_type} with a message: ${caption}`
+      : `User has shared a ${whatsapp_request.type}`;
+  }
 
-    const { blob_payload_type } = whatsapp_request;
-    const message = whatsapp_request?.payload.body?.image?.text 
-                ?? whatsapp_request?.payload.body?.document?.text 
-                ?? whatsapp_request?.payload.body?.file?.text 
-                ?? whatsapp_request?.payload.body?.location?.text 
-                ?? whatsapp_request?.payload.body?.contacts?.text 
-                ?? whatsapp_request?.payload.body?.video?.text 
-                ?? whatsapp_request?.payload.body?.sticker?.text;
+  const { blob_payload_type } = whatsapp_request;
+  const message =
+    whatsapp_request?.payload.body?.image?.text ??
+    whatsapp_request?.payload.body?.document?.text ??
+    whatsapp_request?.payload.body?.file?.text ??
+    whatsapp_request?.payload.body?.location?.text ??
+    whatsapp_request?.payload.body?.contacts?.text ??
+    whatsapp_request?.payload.body?.video?.text ??
+    whatsapp_request?.payload.body?.sticker?.text;
 
-    return message 
-        ? `User has shared a ${blob_payload_type} with a message: ${message}` 
-        : blob_payload_type 
-        ? `User has shared a ${blob_payload_type}` 
-        : false;
- 
-}
+  if (blob_payload_type === 'audio' && UserAudio != null && UserAudio != '') {
+    return `${UserAudio}`;
+  }
+  return message
+    ? `User has shared a ${blob_payload_type} with a message: ${message}`
+    : blob_payload_type
+      ? `User has shared a ${blob_payload_type}`
+      : false;
+};
 </script>
 <template>
   <AppModal
@@ -155,19 +159,30 @@ const checkCaption = (whatsapp_request) => {
               >
             </div>
             <div class="chat-bubble text-sm relative flex items-center">
-              <div v-if="message.whatsapp_request ? checkCaption(message.whatsapp_request) : false">
-                <span> {{ checkCaption(message.whatsapp_request) }}</span>
+              <div
+                v-if="
+                  message.whatsapp_request
+                    ? checkCaption(message.whatsapp_request, message.msg)
+                    : false
+                "
+              >
+                <span>
+                  {{
+                    checkCaption(message.whatsapp_request, message.msg)
+                  }}</span
+                >
               </div>
-              <!-- <div v-if="message.whatsapp_request?.type &&  message.whatsapp_request?.type.toLowerCase() === 'image'">
-                <span> {{ checkCaption(message.whatsapp_request) ?? 'User has shared a Image' }}</span>
-              </div>
-               <div v-else-if="message.whatsapp_request?.type && ['document', 'location', 'contacts', 'video', 'sticker'].includes(message.whatsapp_request?.type.toLowerCase())">
-                <span> {{ checkCaption(message.whatsapp_request) }}</span>
-              </div> -->
-              <div v-else="message.msg" v-html="renderMarkdown(message.msg)"></div>
+
+              <div
+                v-else="message.msg"
+                v-html="renderMarkdown(message.msg)"
+              ></div>
               <div
                 class="absolute right-[-30px] text-red-600"
-                v-if="message?.whatsapp_request?.type == 'audio'||  message?.whatsapp_request?.type == 'voice'"
+                v-if="
+                  message?.whatsapp_request?.type == 'audio' ||
+                  message?.whatsapp_request?.type == 'voice'
+                "
               >
                 <x-icon icon="audio" />
               </div>
