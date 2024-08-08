@@ -10,6 +10,7 @@ const props = defineProps({
   genericRequestEnum: Object,
 });
 const { isRequired } = useRules();
+const page = usePage();
 
 const emit = defineEmits(['onLoadAvailablePlansData']);
 const can = permission => useCan(permission);
