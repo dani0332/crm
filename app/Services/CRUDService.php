@@ -731,7 +731,6 @@ class CRUDService extends BaseService
                 $amlStatus = (AMLService::checkAMLStatusFailed($quoteType->id, $quote->id));
                 $amlLogsValue = ['score' => 1, 'value' => 'No'];
                 if ($amlStatus == true) {
-
                     $amlLogsValue = ['score' => 3, 'value' => 'Yes'];
                 }
                 if (isset($quote->customer->customerDetail)) {
@@ -873,14 +872,13 @@ class CRUDService extends BaseService
                     }
                     $scoreList[] = ['score' => $contactScore, 'text' => 'Mode Of Contact', 'value' => $modTypeValue];
                     $customerScore += $contactScore;
-
                 }
 
                 return ['total' => $customerScore, 'score_list' => $scoreList];
-
             }
         }
     }
+
     public function scoreEntityBreakdown($quote)
     {
         $scoreList = [];
@@ -893,14 +891,13 @@ class CRUDService extends BaseService
         $amlStatus = (AMLService::checkAMLStatusFailed(5, $quote->id));
         $amlLogsValue = ['score' => 1, 'value' => 'No'];
         if ($amlStatus == true) {
-
             $amlLogsValue = ['score' => 3, 'value' => 'Yes'];
         }
 
         $entity = Entity::where('id', $quote->quoteRequestEntityMapping->entity->id)->first();
 
         $paymentTopScore = 0;
-        if (isset($entity->legal_structure)) {
+        if (isset($entity->legal_structure) && $entity->legal_structure != '') {
             $legalStructureScore = in_array(strtolower($entity->legal_structure), Kyc::ENTITY_LEGAL_STRUCTURE_THREE_RATING) ? 3 : (in_array(strtolower($entity->legal_structure), Kyc::ENTITY_LEGAL_STRUCTURE_TWO_RATING) ? 2 : 1);
             $legalType = Lookup::where(['key' => LookupsEnum::LEGAL_STRUCTURE, 'code' => $entity->legal_structure])->first();
             $legalStatusValue = $entity->legal_structure;
@@ -912,7 +909,7 @@ class CRUDService extends BaseService
         }
 
         // s
-        if (isset($entity->industry_type_code)) {
+        if (isset($entity->industry_type_code) && $entity->industry_type_code != '') {
             $industryTypeCode = in_array(strtolower($entity->industry_type_code), Kyc::ENTITY_INDUSTRY_TYPE_ONE_RATING) ? 1 : (in_array(strtolower($entity->industry_type_code), Kyc::ENTITY_INDUSTRY_TYPE_TWO_RATING) ? 2 : 3);
             $industryType = Lookup::where(['key' => LookupsEnum::COMPANY_TYPE, 'code' => $entity->industry_type_code])->first();
             $industryTypeValue = $entity->industry_type_code;
@@ -1028,7 +1025,7 @@ class CRUDService extends BaseService
         $scoreList[] = ['score' => 1, 'text' => 'Types of Products', 'value' => 'Business'];
         $entityScore += 1;
 
-        if (isset($entity->transaction_volume)) {
+        if (isset($entity->transaction_volume) && $entity->transaction_volume != '') {
             $transactionVolumesScore = in_array(strtolower($entity->transaction_volume), Kyc::ENTITY_TRANSACTION_VOLUME_THREE_RATING) ? 3 : (in_array(strtolower($entity->transaction_volume), Kyc::ENTITY_TRANSACTION_VOLUME_TWO_RATING) ? 2 : 1);
             $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Transaction Volume', 'value' => Kyc::TRANSACTION_VOLUME[$entity->transaction_volume]];
             $entityScore += $transactionVolumesScore;
@@ -1100,8 +1097,8 @@ class CRUDService extends BaseService
         }
 
         return ['total' => $entityScore, 'score_list' => $scoreList];
-
     }
+
     public function getAMLCompliance($quoteId, $column, $amlLogsValue)
     {
         $amlProperty = AML::where('quote_request_id', $quoteId)->where($column, 1)->first();
@@ -1144,7 +1141,6 @@ class CRUDService extends BaseService
 
             app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quoteModel, true);
         }
-
     }
 
     public function getInquiryLogs($modelType, $uuid)
