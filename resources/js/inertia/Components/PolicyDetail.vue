@@ -44,7 +44,7 @@ const dateToYMD = date => {
   }
   return '';
 };
-console.log(props.payments);
+
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteIssuanceStatusEnum = page.props.quoteIssuanceStatusEnum;
