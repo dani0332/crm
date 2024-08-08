@@ -952,17 +952,26 @@ const checkDiscount = (newPrice, oldPrice) => {
   let paymentTotalPrice = Number(props?.payments[0]?.total_price);
   let paymentTotalAmount = Number(props?.payments[0]?.total_amount);
   let savedPriceWithVat = Number(props.sendUpdateLog?.price_with_vat);
-  let savedDiscount = Number(props?.payments[0]?.discount_value) || Number(props.sendUpdateLog.discount) || 0;
+  let savedDiscount =
+    Number(props?.payments[0]?.discount_value) ||
+    Number(props.sendUpdateLog.discount) ||
+    0;
 
   if (newPrice > savedPriceWithVat) {
-    bookingDetailsForm.discount = Number(savedDiscount + (newPrice - savedPriceWithVat)).toFixed(2);
+    bookingDetailsForm.discount = Number(
+      savedDiscount + (newPrice - savedPriceWithVat),
+    ).toFixed(2);
   } else {
     if (newPrice < savedPriceWithVat) {
-      let paymentDifference = (paymentTotalPrice - paymentTotalAmount) - savedDiscount;
-      if ((paymentTotalPrice - paymentDifference) == newPrice) { // don't use ===
+      let paymentDifference =
+        paymentTotalPrice - paymentTotalAmount - savedDiscount;
+      if (paymentTotalPrice - paymentDifference == newPrice) {
+        // don't use ===
         bookingDetailsForm.discount = savedDiscount;
       } else {
-        bookingDetailsForm.discount = Number(savedDiscount - (savedPriceWithVat - newPrice)).toFixed(2);
+        bookingDetailsForm.discount = Number(
+          savedDiscount - (savedPriceWithVat - newPrice),
+        ).toFixed(2);
       }
     } else {
       bookingDetailsForm.discount = savedDiscount;
@@ -995,9 +1004,12 @@ watch(
   },
 );
 
-watch(() => bookingDetailsForm.price_with_vat, (newValue, oldValue) => {
-  checkDiscount(newValue, oldValue)
-});
+watch(
+  () => bookingDetailsForm.price_with_vat,
+  (newValue, oldValue) => {
+    checkDiscount(newValue, oldValue);
+  },
+);
 </script>
 
 <template>
