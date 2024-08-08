@@ -3,6 +3,7 @@
 namespace App\Services\Reports;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\MonthNameEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
@@ -11,7 +12,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\RetentionReportEnum;
 use App\Enums\RolesEnum;
 use App\Models\PersonalQuote;
-use App\Models\QuoteType;
 use App\Models\UserManager;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
@@ -21,7 +21,6 @@ use App\Services\DropdownSourceService;
 use App\Traits\TeamHierarchyTrait;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
-use DateTime;
 use Illuminate\Support\Facades\Auth;
 
 class RetentionReportService extends BaseService
@@ -193,6 +192,9 @@ class RetentionReportService extends BaseService
         $lob = in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE]) ? quoteTypeCode::Business : $lob;
         $lobId = QuoteTypeRepository::where('code', $lob)->first();
         $query->where('quote_type_id', $lobId->id);
+
+        // Uncomment when move to stage or when we have renewel_upload data 
+        // $query->where('source', LeadSourceEnum::RENEWAL_UPLOAD);
         if (in_array($quoteType, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE])){
             if ($quoteType == quoteTypeCode::GroupMedical){
                 $query->where('business_type_of_insurance_id', '=', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
@@ -243,7 +245,7 @@ class RetentionReportService extends BaseService
     private function applyDateFilters($query, $request)
     {
         // Check if 'policyExpiryDate' or 'month' is not set in the request
-        if (!isset($request['policyExpiryDate']) && !isset($request['month'])) {
+        if (!isset($request['displayBy']) && !isset($request['policyExpiryDate']) && !isset($request['month'])) {
             $currentDate = Carbon::now();
     
             // Calculate the start date of the previous month
@@ -671,15 +673,6 @@ class RetentionReportService extends BaseService
                 'lobs' => [
                     quoteTypeCode::CORPLINE,
                 ],
-            ],
-            'view_by' => [
-                'can_view' => $canView,
-            ],
-            'select_month' => [
-                'can_view' => $canView,
-            ],
-            'select_batch' => [
-                'can_view' => $canView,
             ],
             'policy_expiry_date' => [
                 'can_view' => $canView,

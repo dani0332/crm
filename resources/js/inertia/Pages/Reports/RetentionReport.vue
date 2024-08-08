@@ -70,7 +70,10 @@ const canShow = (element) => {
   return true;
 }
 
-const displayBy = ref([]);
+const displayBy = ref([
+  { label: 'Month', value: RetentionReportEnum.MONTHLY },
+  { label: 'Batch', value: RetentionReportEnum.BATCH }
+]);
 
 const teamOptions = ref([]);
 
@@ -191,16 +194,6 @@ const onLobChange = (e, isOnMounted = false) => {
       filters.page=1;
       filters.insurance_type="";
     }
-
-  displayBy.value = [];
-
-  if (canShow('select_month')) {
-    displayBy.value.push({ label: 'Month', value: RetentionReportEnum.MONTHLY });
-  }
-
-  if (canShow('select_batch')) {
-    displayBy.value.push({ label: 'Batch', value: RetentionReportEnum.BATCH });
-  }
 
   if([quoteTypeCodeEnum.Health,
       quoteTypeCodeEnum.CORPLINE
@@ -542,7 +535,7 @@ watch(
         />
         
         <ComboBox
-          v-if="canShow('select_month') && filters.displayBy === RetentionReportEnum.MONTHLY"
+          v-if="filters.displayBy === RetentionReportEnum.MONTHLY"
           v-model="filters.month"
           label="Select month"
           placeholder="Select month"
