@@ -1563,7 +1563,7 @@ class CRUDController extends Controller
         $entity = $result['entity'];
         if ($request->leadStatus == QuoteStatusEnum::TransactionApproved) {
             $plainEntity = $this->getQuoteObject($request->modelType, $request->leadId);
-                $this->crudService->calculateScore($plainEntity, $request->modelType);
+            $this->crudService->calculateScore($plainEntity, $request->modelType);
         }
 
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
