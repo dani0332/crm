@@ -70,6 +70,7 @@ const iconPosition = computed(() => {
     :enable-time-picker="props.withTime"
     :month-change-on-scroll="false"
     :is-24="false"
+    utc="preserve"
     :disabled="props.disabled"
     position="left"
     class="w-full"

@@ -1244,7 +1244,7 @@ class SageApiService
         $isPaymentMethodCreditApproved = $payment->payment_methods_code == PaymentMethodsEnum::CreditApproval;
         $isTotalPriceZero = $payment->total_price == 0;
         if (! $isPaymentMethodCreditApproved && $isTotalPriceZero && $isPaymentFrequencyUpfront) {
-            return ['status' => false, 'message' => 'Please check the payment as total price is set to zero while Payment Method is '.PaymentMethodsEnum::CreditApproval.' and Frequency is '.$payment->frequency.'. Please Select Credit Approval as your payment method and Upfront as Payment Frequecy to Proceed!'];
+            return ['status' => false, 'message' => 'Please check the payment as total price is set to zero while Payment Method is '.PaymentMethodsEnum::CreditApproval.' and Frequency is '.$payment->frequency.'. Please Select Credit Approval as your payment method and Upfront as Payment Frequency to Proceed!'];
         }
 
         // payload
@@ -1909,6 +1909,7 @@ class SageApiService
     }
     public function applyPaymentInvoices($sageRequestDataArray)
     {
+        $returnMessage = ['status' => false, 'message' => null, 'error' => null];
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
         $isTotalPriceZero = $payment->total_price == 0;
         /* applyPaymentInvoices */
@@ -1929,6 +1930,11 @@ class SageApiService
         if (! $isFrequencyUpfrontOrSplit && $isFirstPaymentPaidOrCaptured) {
             return $this->applyNonSplitNonUpfrontPaymentInvoices($sageRequestDataArray);
         }
+
+        $returnMessage['status'] = true;
+        $returnMessage['message'] = 'Apply Prepayment completed';
+
+        return $returnMessage;
 
     }
 

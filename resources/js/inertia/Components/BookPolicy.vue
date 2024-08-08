@@ -32,10 +32,12 @@ const props = defineProps({
 });
 
 const isLoading = ref(false);
+const isAMLNotClearedForTravelQuote = ref(false);
 const isExpandedCommissionSchedule = ref([]);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const kycEnums = page.props.kycEnums;
 const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
 const sendPolicyTypeEnum = page.props.sendPolicyTypeEnum;
 const canAny = permissions => useCanAny(permissions);
@@ -237,6 +239,13 @@ const confirmSendPolicy = () => {
 };
 
 const submitPolicy = () => {
+  if (isAMLNotClearedForTravelQuote.value) {
+    notification.error({
+      title: 'Kindly clear the AML.',
+      position: 'top',
+    });
+    return;
+  }
   isLoading.value = true;
   let url = '/quotes/send-booking-policy';
   let data = {
@@ -365,6 +374,7 @@ const showSendAndBookPolicyButtonBlock = computed(() => {
 
   return [TransactionApproved, PolicyIssued].includes(quote_status_id);
 });
+
 const showSendAndBookPolicyButton = computed(() => {
   let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
   let permission = permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON;
@@ -373,6 +383,7 @@ const showSendAndBookPolicyButton = computed(() => {
   }
   return props.bookPolicyDetails?.sendButton && can(permission);
 });
+
 const disableSendAndBookPolicyButton = computed(() => {
   let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
   let permission = permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON;
@@ -389,6 +400,45 @@ const disableSendAndBookPolicyButton = computed(() => {
     !can(permission)
   );
 });
+
+const disableBookPolicyButton = computed(() => {
+  return (
+    !props.bookPolicyDetails?.bookButton ||
+    bp.isEditing ||
+    !can(permissionsEnum.BOOK_POLICY_BUTTON)
+  );
+});
+
+const isTravelQuoteAndAMLNotCleared = () => {
+  const bookPolicyButtonLabel = props.bookPolicyDetails?.text;
+  const isSendPolicyToCustomerButton =
+    bookPolicyButtonLabel === sendPolicyTypeEnum.CUSTOMER_BUTTON_TEXT;
+  const isQuoteTypeTravel = page.props.quoteType == quoteTypeCodeEnum.Travel;
+  const isPolicyAMLScreeningCleared =
+    props.quote.kyc_decision == kycEnums.COMPLETE;
+
+  if (
+    isQuoteTypeTravel &&
+    !isPolicyAMLScreeningCleared &&
+    !isSendPolicyToCustomerButton
+  ) {
+    let allowedQuoteStatuesForAMLAlert = [
+      page.props.quoteStatusEnum.TransactionApproved,
+      page.props.quoteStatusEnum.PolicyIssued,
+      page.props.quoteStatusEnum.PolicySentToCustomer,
+    ];
+    if (allowedQuoteStatuesForAMLAlert.includes(props.quote.quote_status_id)) {
+      notification.error({
+        title: 'Kindly clear the AML.',
+        position: 'top',
+        timeout: 30000,
+      });
+    }
+
+    isAMLNotClearedForTravelQuote.value = true;
+  }
+};
+
 const showActionButtons = computed(() => {
   // Hide buttons only when policy is cancelled and have a chilrd lead
   return (
@@ -443,6 +493,9 @@ const isShowingTransactionPaymentStatus = computed(() => {
   ];
   return policyStatuses.includes(props.quote.quote_status_id);
 });
+onBeforeMount(() => {
+  isTravelQuoteAndAMLNotCleared();
+});
 </script>
 
 <template>
@@ -481,8 +534,9 @@ const isShowingTransactionPaymentStatus = computed(() => {
                   <x-tooltip>
                     <label
                       class="border-b-2 border-dotted border-black uppercase"
-                      >Invoice Description</label
                     >
+                      Invoice Description
+                    </label>
                     <template #tooltip>
                       <span class="custom-tooltip-content">{{
                         productionProcessTooltipEnum.INVOICE_DESCRIPTION
@@ -515,19 +569,21 @@ const isShowingTransactionPaymentStatus = computed(() => {
                     >Transaction Payment Status</label
                   >
                   <template #tooltip>
-                    <span class="custom-tooltip-content">{{
-                      productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS
-                    }}</span>
+                    <span class="custom-tooltip-content">
+                      {{
+                        productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS
+                      }}
+                    </span>
                   </template>
                 </x-tooltip>
                 <template v-if="isShowingTransactionPaymentStatus">
-                  <x-tooltip placement="center">
-                    <dd class="border-b border-dotted border-black">
+                  <x-tooltip placement="left">
+                    <dd class="border-b border-dotted border-black inline">
                       {{ bpForm.transaction_payment_status }}
                     </dd>
                     <template #tooltip>
-                      {{ bpForm.transaction_payment_status_tool_tip }}</template
-                    >
+                      {{ bpForm.transaction_payment_status_tool_tip }}
+                    </template>
                   </x-tooltip>
                 </template>
                 <template v-else>
@@ -1004,7 +1060,11 @@ const isShowingTransactionPaymentStatus = computed(() => {
                     color="orange"
                     class="mt-4"
                     @click.prevent="confirmSendPolicy"
-                    :disabled="bp.isEditing || is_lacking_payment"
+                    :disabled="
+                      bp.isEditing ||
+                      is_lacking_payment ||
+                      isAMLNotClearedForTravelQuote
+                    "
                     v-if="showSendAndBookPolicyButton"
                   >
                     {{ props.bookPolicyDetails?.text }}
@@ -1120,9 +1180,8 @@ const isShowingTransactionPaymentStatus = computed(() => {
                         class="mt-4 mr-2"
                         color="orange"
                         :disabled="
-                          !props.bookPolicyDetails?.bookButton ||
-                          bp.isEditing ||
-                          !can(permissionsEnum.BOOK_POLICY_BUTTON)
+                          disableBookPolicyButton ||
+                          isAMLNotClearedForTravelQuote
                         "
                         @click.prevent="confirmSendPolicy"
                       >
@@ -1141,9 +1200,7 @@ const isShowingTransactionPaymentStatus = computed(() => {
                       class="mt-4 mr-2"
                       color="orange"
                       :disabled="
-                        !props.bookPolicyDetails?.bookButton ||
-                        bp.isEditing ||
-                        !can(permissionsEnum.BOOK_POLICY_BUTTON)
+                        disableBookPolicyButton || isAMLNotClearedForTravelQuote
                       "
                       @click.prevent="confirmSendPolicy"
                     >
