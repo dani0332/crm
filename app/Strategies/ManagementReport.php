@@ -70,9 +70,9 @@ class ManagementReport
             ->toArray();
 
         $departments = DB::table('departments')
-                           ->where('is_active', 1)
-                           ->orderBy('name')
-                           ->get();
+            ->where('is_active', 1)
+            ->orderBy('name')
+            ->get();
 
         return [
             'maxDays' => $maxDays,
@@ -197,7 +197,7 @@ class ManagementReport
         if (isset($request['leadSources']) && ! empty($request['leadSources'])) {
             $query->whereIn('personal_quotes.source', $request['leadSources']);
         }
-        if (isset($request['department_id']) && ! empty($request['department_id'])){
+        if (isset($request['department_id']) && ! empty($request['department_id'])) {
             $query->whereIn('u.department_id', $request['department_id'] ?? []);
         }
 
@@ -400,7 +400,7 @@ class ManagementReport
         ];
 
         $routeName = $types[$quoteTypeID];
-        if($quoteTypeID == 5 && $btoi == 5) {
+        if ($quoteTypeID == 5 && $btoi == 5) {
             $routeName = 'amt.show';
         }
 

@@ -38,7 +38,6 @@ class SaleSummaryReportService extends ManagementReport
             Carbon::parse($request['paymentDueDate'][1])->toDateString();
         }
 
-       
         // Subquery to get distinct payment splits with minimum due_date
         $distinctPaymentSplits = DB::table('payment_splits as dps')
             ->selectRaw('DISTINCT(code), due_date');
@@ -72,11 +71,12 @@ class SaleSummaryReportService extends ManagementReport
                 if ($utmGroupBy) {
                     array_push($groupByArray, $utmGroupBy);
                 }
+
                 return $query->groupBy($groupByArray);
             });
 
         if ($request->groupBy == 'advisor') {
-            $query->addSelect('u.name as advisor','dp.name as department');
+            $query->addSelect('u.name as advisor', 'dp.name as department');
             $query->whereNotNull('advisor_id');
         }
 
@@ -265,7 +265,6 @@ class SaleSummaryReportService extends ManagementReport
             'line_of_business' => 'quote_type.code',
             'department' => 'u.department_id',
         ];
-
 
         return $mapping[$groupBy] ?? $groupBy;
     }
