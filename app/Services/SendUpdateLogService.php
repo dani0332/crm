@@ -742,7 +742,7 @@ class SendUpdateLogService
             return ['status' => true];
         }
 
-        info('Book Update Process Start - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+        info('Book Update - Process Start - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
 
         $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
         $quoteDetails = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
@@ -750,144 +750,151 @@ class SendUpdateLogService
         $prepareDataForERP['quoteDetails'] = $quoteDetails;
 
         if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
-            info('Book Update - Book Update to ERP - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            info('Book Update - Documents Pushed to ERP - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
             $prepareDataForERP['sendUpdateType'] = SageEnum::SUT_NORMAL;
             $sageResponse = app(SageApiService::class)->documentsPushedToERP($sendUpdateRequest, $prepareDataForERP);
-            
-            return $sageResponse;
         }
 
         if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
-            info('Book Update - Book Update to ERP - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.'- Reverse Insurer Tax Invoice Number: '.$sendUpdateRequest->reversalInvoice);
+            info('Book Update - Documents Pushed to ERP - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.'- Reverse Insurer Tax Invoice Number: '.$sendUpdateRequest->reversalInvoice);
             $prepareDataForERP['sendUpdateType'] = SageEnum::SUT_REVE_CORR;
             $prepareDataForERP['reverseInvoice'] = $sendUpdateRequest->reversalInvoice;
             $sageResponse = app(SageApiService::class)->documentsPushedToERP($sendUpdateRequest, $prepareDataForERP);
-
-            return $sageResponse;
         }
+
+        if (!$sageResponse['status']) {
+            logger()->error('Book Update - Something went wrong - Response: '.$sageResponse['message'].' - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            
+            return $sageResponse;
+        } 
+
+        info('Book Update - Process Completed Successfully. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+
+        return $sageResponse;
     }
 
     public function updatesMoveToLead($sendUpdateRequest, $sendUpdateLog)
     {
-        $categoryCode = $sendUpdateLog->category?->code;
-        $optionCode = $sendUpdateLog->option?->code;
-        $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
-        $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->with(['payments' => function ($query) {
-            $query->whereNull('send_update_log_id');
-        }])->first();
-        $currentDate = now();
+        // $categoryCode = $sendUpdateLog->category?->code;
+        // $optionCode = $sendUpdateLog->option?->code;
+        // $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
+        // $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->with(['payments' => function ($query) {
+        //     $query->whereNull('send_update_log_id');
+        // }])->first();
+        // $currentDate = now();
 
-        try {
-            DB::beginTransaction();
+        // try {
+        //     DB::beginTransaction();
+        //     info('Book Update - Moving Send Update impact to Main Lead. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
 
-            $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
-            if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPD])) {
-                if ($payment) {
-                    info('Book Update - Updating Payment Details for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-                    $payment->update([
-                        'paymentable_id' => $quote->id,
-                        'paymentable_type' => ltrim($quoteModel, '\\'),
-                    ]);
-                }
+        //     $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
+        //     if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPD])) {
+        //         if ($payment) {
+        //             info('Book Update - Updating Payment Details for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+        //             $payment->update([
+        //                 'paymentable_id' => $quote->id,
+        //                 'paymentable_type' => ltrim($quoteModel, '\\'),
+        //             ]);
+        //         }
 
-                // Cases for Endorsment Financial Start
-                if ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE) {
-                    info('Book Update - Updating Renewal Expiry Date for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-                    $quote->update(['renewal_expiry_date' => $sendUpdateLog->expiry_date]);
-                }
+        //         // Cases for Endorsment Financial Start
+        //         if ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE) {
+        //             info('Book Update - Updating Renewal Expiry Date for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+        //             $quote->update(['renewal_expiry_date' => $sendUpdateLog->expiry_date]);
+        //         }
 
-                if ($sendUpdateRequest->quoteType == quoteTypeCode::Car && $categoryCode == SendUpdateLogStatusEnum::EF) {
-                    // Addons for Car move to main lead
-                    if (! empty($sendUpdateLog->car_addons) && $optionCode == SendUpdateLogStatusEnum::AOCOV) {
-                        foreach ($sendUpdateLog->car_addons as $addonId) {
-                            $plansAddons = CarAddOnOption::where('addon_id', $addonId)->get();
-                            foreach ($plansAddons as $planAddon) {
-                                CarQuoteRequestAddOn::updateOrCreate([
-                                    'quote_request_id' => $quote->id,
-                                    'addon_option_id' => $planAddon->id,
-                                ], [
-                                    'quote_request_id' => $quote->id,
-                                    'addon_option_id' => $planAddon->id,
-                                    'price' => 0,
-                                ]);
-                            }
-                        }
-                    }
-                    // Emirate of Registration for Car move to main lead
-                    elseif (! empty($sendUpdateLog->emirates_id) && $optionCode == SendUpdateLogStatusEnum::COE) {
-                        $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_id]);
-                        info('emirate id : '.$sendUpdateLog->emirates_id);
-                    }
-                    // Seat Capacity for Car move to main lead
-                    elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0 && $optionCode == SendUpdateLogStatusEnum::CISC) {
-                        $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
-                    }
-                }
-                // Cases for Endorsment Financial End
+        //         if ($sendUpdateRequest->quoteType == quoteTypeCode::Car && $categoryCode == SendUpdateLogStatusEnum::EF) {
+        //             // Addons for Car move to main lead
+        //             if (! empty($sendUpdateLog->car_addons) && $optionCode == SendUpdateLogStatusEnum::AOCOV) {
+        //                 foreach ($sendUpdateLog->car_addons as $addonId) {
+        //                     $plansAddons = CarAddOnOption::where('addon_id', $addonId)->get();
+        //                     foreach ($plansAddons as $planAddon) {
+        //                         CarQuoteRequestAddOn::updateOrCreate([
+        //                             'quote_request_id' => $quote->id,
+        //                             'addon_option_id' => $planAddon->id,
+        //                         ], [
+        //                             'quote_request_id' => $quote->id,
+        //                             'addon_option_id' => $planAddon->id,
+        //                             'price' => 0,
+        //                         ]);
+        //                     }
+        //                 }
+        //             }
+        //             // Emirate of Registration for Car move to main lead
+        //             elseif (! empty($sendUpdateLog->emirates_id) && $optionCode == SendUpdateLogStatusEnum::COE) {
+        //                 $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_id]);
+        //                 info('emirate id : '.$sendUpdateLog->emirates_id);
+        //             }
+        //             // Seat Capacity for Car move to main lead
+        //             elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0 && $optionCode == SendUpdateLogStatusEnum::CISC) {
+        //                 $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
+        //             }
+        //         }
+        //         // Cases for Endorsment Financial End
 
-                // Cases for Cancel Inception and Cancel Inception Reissue Start
-                if ($categoryCode === SendUpdateLogStatusEnum::CIR) {
-                    $quote->update([
-                        'quote_status_id' => QuoteStatusEnum::PolicyCancelledReissued,
-                        // 'quote_status_id' => QuoteStatusEnum::PolicyCancelled, // Below code overrides status, it should be PolicyCancelledReissued not PolicyCancelled
-                        'quote_batch_id' => null,
-                    ]);
-                    (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
-                } elseif ($categoryCode == SendUpdateLogStatusEnum::CI || ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::MPC)) {
-                    $quote->update([
-                        'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
-                    ]);
-                }
-                // Cases for Cancel Inception and Cancel Inception Reissue End
+        //         // Cases for Cancel Inception and Cancel Inception Reissue Start
+        //         if ($categoryCode === SendUpdateLogStatusEnum::CIR) {
+        //             $quote->update([
+        //                 'quote_status_id' => QuoteStatusEnum::PolicyCancelledReissued,
+        //                 // 'quote_status_id' => QuoteStatusEnum::PolicyCancelled, // Below code overrides status, it should be PolicyCancelledReissued not PolicyCancelled
+        //                 'quote_batch_id' => null,
+        //             ]);
+        //             (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
+        //         } elseif ($categoryCode == SendUpdateLogStatusEnum::CI || ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::MPC)) {
+        //             $quote->update([
+        //                 'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
+        //             ]);
+        //         }
+        //         // Cases for Cancel Inception and Cancel Inception Reissue End
 
-                // Cases for Correct Policy Details Start
-                if ($categoryCode == SendUpdateLogStatusEnum::CPD && (
-                    $sendUpdateRequest->reversalInvoice == $quote->payments->value('insurer_tax_number')
-                )) {
-                    info('Book Update - Updating Policy and Booking Details for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-                    $this->updatePaymentDetails($quote->payments->first(), $sendUpdateLog);
-                    $quote->update([
-                        'policy_number' => $sendUpdateLog->policy_number,
-                        'policy_start_date' => $sendUpdateLog->start_date,
-                        'policy_issuance_date' => $sendUpdateLog->issuance_date,
-                        'renewal_expiry_date' => $sendUpdateLog->expiry_date,
-                        'insurer_quote_number' => $sendUpdateLog->insurer_quote_number,
-                        'policy_issuance_status_id' => $sendUpdateLog->issuance_status_id,
-                        'policy_booking_date' => $currentDate,
-                        'price_vat_applicable' => $sendUpdateLog->price_vat_applicable,
-                        'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
-                        'price_with_vat' => $sendUpdateLog->price_with_vat,
-                    ]);
-                }
-                // Cases for Correct Policy Details End
-            }
+        //         // Cases for Correct Policy Details Start
+        //         if ($categoryCode == SendUpdateLogStatusEnum::CPD && (
+        //             $sendUpdateRequest->reversalInvoice == $quote->payments->value('insurer_tax_number')
+        //         )) {
+        //             info('Book Update - Updating Policy and Booking Details for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+        //             $this->updatePaymentDetails($quote->payments->first(), $sendUpdateLog);
+        //             $quote->update([
+        //                 'policy_number' => $sendUpdateLog->policy_number,
+        //                 'policy_start_date' => $sendUpdateLog->start_date,
+        //                 'policy_issuance_date' => $sendUpdateLog->issuance_date,
+        //                 'renewal_expiry_date' => $sendUpdateLog->expiry_date,
+        //                 'insurer_quote_number' => $sendUpdateLog->insurer_quote_number,
+        //                 'policy_issuance_status_id' => $sendUpdateLog->issuance_status_id,
+        //                 'policy_booking_date' => $currentDate,
+        //                 'price_vat_applicable' => $sendUpdateLog->price_vat_applicable,
+        //                 'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
+        //                 'price_with_vat' => $sendUpdateLog->price_with_vat,
+        //             ]);
+        //         }
+        //         // Cases for Correct Policy Details End
+        //     }
 
-            if ($payment) {
-                if ($payment->captured_amount < 1) {
-                    $status = SendUpdateLogStatusEnum::UNPAID;
-                } elseif (($payment->captured_amount + $payment->discount_value) < $payment->total_price) {
-                    $status = SendUpdateLogStatusEnum::PARTIALLY_PAID;
-                } elseif (($payment->captured_amount + $payment->discount_value) >= $payment->total_price) {
-                    $status = SendUpdateLogStatusEnum::FULL_PAID;
-                }
-            }
+        //     if ($payment) {
+        //         if ($payment->captured_amount < 1) {
+        //             $status = SendUpdateLogStatusEnum::UNPAID;
+        //         } elseif (($payment->captured_amount + $payment->discount_value) < $payment->total_price) {
+        //             $status = SendUpdateLogStatusEnum::PARTIALLY_PAID;
+        //         } elseif (($payment->captured_amount + $payment->discount_value) >= $payment->total_price) {
+        //             $status = SendUpdateLogStatusEnum::FULL_PAID;
+        //         }
+        //     }
 
-            $sendUpdateLog->update([
-                'booking_date' => $currentDate,
-                'transaction_payment_status' => $status ?? '',
-                'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
-            ]);
+        //     $sendUpdateLog->update([
+        //         'booking_date' => $currentDate,
+        //         'transaction_payment_status' => $status ?? '',
+        //         'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
+        //     ]);
 
-            DB::commit();
+        //     DB::commit();
 
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            logger()->error('Book Update - Error while moving updates to main lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.' - Exception: '.$exception->getMessage());
+        // } catch (\Exception $exception) {
+        //     DB::rollBack();
+        //     logger()->error('Book Update - Error while moving updates to main lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.' - Exception: '.$exception->getMessage());
 
-            return ['status' => false, 'message' => 'Update not booked'];
-        }
+        //     return ['status' => false, 'message' => 'Update not booked'];
+        // }
 
-        info('Book Update - Update booked successfully - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+        info('Book Update - Send Update impact successfully moved - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
 
         return ['status' => true, 'message' => SendUpdateLogStatusEnum::UPDATE_BOOKED];
     }

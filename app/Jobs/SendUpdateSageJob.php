@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\SageEnum;
 use App\Services\SageApiService;
+use App\Services\SendUpdateLogService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -39,9 +40,9 @@ class SendUpdateSageJob implements ShouldQueue
      * Execute the job.
      */
 
-    public function handle(SageApiService $sageApiService): void
+    public function handle(SageApiService $sageApiService, SendUpdateLogService $sendUpdateLogService): void
     {
-        info('------------------ Book Update - Sage Job Execution Started - QuoteUUID: '.$this->preparedData['quoteDetails']['uuid'].'------------------');
+        info('------------------ Book Update - Sage Job Execution Start - QuoteType: '.$this->preparedData['quoteType'].' - QuoteUUID: '.$this->preparedData['quoteDetails']['uuid'].' - SendUpdateUUID: '.$this->preparedData['sendUpdateLog']['uuid'].' ------------------');
         $this->preparedData['authDetails'] = $this->loginUserDetails;
 
         switch ($this->preparedData['sendUpdateType']) {
@@ -55,8 +56,13 @@ class SendUpdateSageJob implements ShouldQueue
                 break;
         }
 
-        // info('Book Update - Sage Response: '.json_encode($sageResponse));
-        
+        // if ($sageResponse['status']) {
+        //     // Send Update Data move to main lead
+        //     info('Update Move to Lead');
+        //     // $sendUpdateLogService->updatesMoveToLead($this->sendUpdateRequest, $this->preparedData['sendUpdateLog']);
+        // }
+
+        info('------------------ Book Update - Sage Job Execution Completed - QuoteType: '.$this->preparedData['quoteType'].' - QuoteUUID: '.$this->preparedData['quoteDetails']['uuid'].' - SendUpdateUUID: '.$this->preparedData['sendUpdateLog']['uuid'].' ------------------');
     }
 
 }

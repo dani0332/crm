@@ -392,7 +392,7 @@ class SageApiService
         $sageRequestPayload->customerId = $sageCustomerNumber;
 
         if (! $sageRequestPayload->insurerGlLiaiblityAccount || ! $sageRequestPayload->sageVenderId || ! $sageRequestPayload->sageInsurerCustomerId) {
-            info('Book Update - Sage Vendor ID or GL Account for Insurance Provider or Sage Insurer Customer ID not found. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$preparedData['sendUpdateLog']['uuid']);
+            logger()->error('Book Update - Sage Vendor ID or GL Account for Insurance Provider or Sage Insurer Customer ID not found. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$preparedData['sendUpdateLog']['uuid']);
 
             if (! $sageRequestPayload->insurerGlLiaiblityAccount && ! $sageRequestPayload->sageVenderId && ! $sageRequestPayload->sageInsurerCustomerId) {
                 return ['status' => false, 'message' => 'Sage Vendor ID, Sage Insurer Customer ID and GL Account for Insurance Provider not found.'];
@@ -460,7 +460,7 @@ class SageApiService
                 })->values()->toArray();
 
                 if (empty($preparedData['invoicesForReverse'])) {
-                    info('Book Update - No Invoices found for Reverse and Correction');
+                    logger()->error('Book Update - No Invoices found for Reverse and Correction');
 
                     return ['status' => false, 'message' => 'No Invoices found for Reverse and Correction'];
                 }

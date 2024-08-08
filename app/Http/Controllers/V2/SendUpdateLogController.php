@@ -369,7 +369,7 @@ class SendUpdateLogController extends Controller
             // TODO: Thiss need to be updated, it should be move in Service.
             $isSendUpdateSuccess = $this->sendUpdate($sendUpdateRequest->merge($data));
             if ($isSendUpdateSuccess->status() == 200) {
-                $_response[] = ['message' => isset($isSendUpdateSuccess->original['impactUpdated']) ? SendUpdateLogStatusEnum::UPDATE_BOOKED : SageEnum::SAGE_REQUEST_BEING_PROCESS, 'status' => 200];
+                $_response[] = ['message' => SageEnum::SAGE_REQUEST_BEING_PROCESS, 'status' => 200];
             } else {
                 $_response[] = ['message' => $isSendUpdateSuccess->original['message'], 'status' => 500];
             }
@@ -423,15 +423,7 @@ class SendUpdateLogController extends Controller
         
         $response = app(SendUpdateLogService::class)->sendUpdateProcess($sendUpdateRequest);
 
-        if (!$response['status']) {
-            // logger()->error('Book Update - Something went wrong - Response: '.$response['message'].' - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
-            
-            return response()->json(['message' => $response['message']], 500);
-        } 
-
-        // info('Book Update - Process Completed Successfully. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
-
-        return response()->json(['message' => $response['message'], 'impactUpdated' => true]);
+        return response()->json(['message' => $response['message']], $response['status'] ? 200 : 500);
 
     }
 
