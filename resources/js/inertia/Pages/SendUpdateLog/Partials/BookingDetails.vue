@@ -378,8 +378,6 @@ const calculateCommission = () => {
             total_price_with_vat_and_not_vat_applicable) *
             100,
         );
-
-        checkDiscount(price_with_vat);
       } else {
         notification.error({
           title: 'Please add Policy Detail Price (VAT APPLICABLE)',
@@ -950,32 +948,24 @@ const onReversalEdit = () => {
   }
 };
 
-const isCI = computed(() => {
-  return props.sendUpdateLog.category.code === sendUpdateStatusEnum.CI;
-});
+const checkDiscount = (newPrice, oldPrice) => {
+  let paymentTotalPrice = Number(props?.payments[0]?.total_price);
+  let paymentTotalAmount = Number(props?.payments[0]?.total_amount);
+  let savedPriceWithVat = Number(props.sendUpdateLog?.price_with_vat);
+  let savedDiscount = Number(props?.payments[0]?.discount_value) || Number(props.sendUpdateLog.discount) || 0;
 
-const checkDiscount = newPrice => {
-  let total_price = Number(props.sendUpdateLog?.price_with_vat);
-  let difference = Number(Number(newPrice) - Number(total_price)).toFixed(2);
-  let previousDiscount = props?.payments[0]?.discount_value || 0.0;
-  let paymentDiscount = props?.payments[0]?.discount_value || 0.0;
-  let newDiscount = Number(bookingDetailsForm.discount).toFixed(2);
-  if (newPrice > total_price && (isEF || isCI || isCPD)) {
-    if (previousDiscount > 0) {
-      bookingDetailsForm.discount = Number(
-        parseFloat(newDiscount) + parseFloat(difference),
-      );
-    } else {
-      bookingDetailsForm.discount = Number(difference).toFixed(2);
-    }
+  if (newPrice > savedPriceWithVat) {
+    bookingDetailsForm.discount = Number(savedDiscount + (newPrice - savedPriceWithVat)).toFixed(2);
   } else {
-    let lessDifference = Number(total_price - newPrice).toFixed(2);
-    if (paymentDiscount > 0 && lessDifference <= 0.99) {
-      bookingDetailsForm.discount = Number(
-        paymentDiscount - lessDifference,
-      ).toFixed(2);
+    if (newPrice < savedPriceWithVat) {
+      let paymentDifference = (paymentTotalPrice - paymentTotalAmount) - savedDiscount;
+      if ((paymentTotalPrice - paymentDifference) == newPrice) { // don't use ===
+        bookingDetailsForm.discount = savedDiscount;
+      } else {
+        bookingDetailsForm.discount = Number(savedDiscount - (savedPriceWithVat - newPrice)).toFixed(2);
+      }
     } else {
-      bookingDetailsForm.discount = previousDiscount;
+      bookingDetailsForm.discount = savedDiscount;
     }
   }
 };
@@ -1004,6 +994,10 @@ watch(
       props.bookingDetails.broker_invoice_number;
   },
 );
+
+watch(() => bookingDetailsForm.price_with_vat, (newValue, oldValue) => {
+  checkDiscount(newValue, oldValue)
+});
 </script>
 
 <template>
