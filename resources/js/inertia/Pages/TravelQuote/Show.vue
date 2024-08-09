@@ -1,10 +1,5 @@
 <script setup>
-import PaymentTableNew from './../../Components/PaymentTableNew.vue';
-import MigratePayment from './../../Components/MigratePayment.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
-import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
-import QuoteDocument from '@/inertia/Components/QuoteDocument.vue';
-import { computed } from 'vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 
 const page = usePage();
@@ -1278,26 +1273,25 @@ const documentValidate = async val => {
       updateDocumentValidate.show = false;
     });
 };
-const getGenderDisplay = (val) => {
-      switch (val) {
-        case 'M':
-        case 'male':
-          return 'Male';
-        case 'F':
-        case 'female':
-          return 'Female';
-        default:
-          return '';
-      }
-    }
+const getGenderDisplay = val => {
+  switch (val) {
+    case 'M':
+    case 'male':
+      return 'Male';
+    case 'F':
+    case 'female':
+      return 'Female';
+    default:
+      return '';
+  }
+};
 
 const onAddUpdate = () => {
   selectedProviderPlan.value.id = null;
   selectedProviderPlan.value.planName = '';
   selectedProviderPlan.value.providerName = '';
   selectedProviderPlan.value.premium = '';
-}
-
+};
 </script>
 
 <template>
@@ -1348,7 +1342,9 @@ const onAddUpdate = () => {
           <Link v-if="!isDisabled" :href="route('travel.edit', quote.uuid)">
             <x-button size="sm" tag="div">Edit</x-button>
           </Link>
-          <x-button v-else :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+          <x-button v-else :disabled="isDisabled" size="sm" tag="div"
+            >Edit</x-button
+          >
         </LeadEditBtnTemplate>
 
         <x-tooltip
@@ -1371,46 +1367,57 @@ const onAddUpdate = () => {
       </div>
     </div>
 
-    <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
-      <template #header> Duplicate Lead </template>
-      <x-form @submit="onCreateDuplicate" :auto-focus="false">
-        <div class="grid gap-4">
-          <x-field label="LOBs" required>
-            <x-select
-              v-model="leadDuplicateForm.lob_team"
-              :options="
-                allowedDuplicateLOB.map(lob => ({
-                  value: lob,
-                  label: lob,
-                }))
-              "
-              :rules="[isRequired]"
-              placeholder="Select LOB For Duplication"
-              class="w-full"
-              multiple
-            />
-          </x-field>
-          <x-field label="Reason" required>
-            <x-select
-              v-model="leadDuplicateForm.lob_team_sub_selection"
-              :rules="[isRequired]"
-              class="w-full"
-              :options="[
-                { value: 'new_enquiry', label: 'New enquiry' },
-                { value: 'record_only', label: 'Record purposes only' },
-              ]"
-            />
-          </x-field>
-
-          <x-button
-            color="orange"
-            type="submit"
-            :loading="leadDuplicateForm.processing"
-          >
-            Create Duplicate
-          </x-button>
-        </div>
-      </x-form>
+    <x-modal
+      v-model="modals.duplicate"
+      size="md"
+      title="Duplicate Lead"
+      show-close
+      backdrop
+      is-form
+      @submit="onCreateDuplicate"
+    >
+      <div class="grid gap-4">
+        <x-field label="LOBs" required>
+          <x-select
+            v-model="leadDuplicateForm.lob_team"
+            :options="
+              allowedDuplicateLOB.map(lob => ({
+                value: lob,
+                label: lob,
+              }))
+            "
+            :rules="[isRequired]"
+            placeholder="Select LOB For Duplication"
+            class="w-full"
+            multiple
+          />
+        </x-field>
+        <x-field label="Reason" required>
+          <x-select
+            v-model="leadDuplicateForm.lob_team_sub_selection"
+            :rules="[isRequired]"
+            class="w-full"
+            :options="[
+              { value: 'new_enquiry', label: 'New enquiry' },
+              { value: 'record_only', label: 'Record purposes only' },
+            ]"
+          />
+        </x-field>
+      </div>
+      <template #secondary-action>
+        <x-button ghost tabindex="-1" @click="modals.duplicate = false">
+          Cancel
+        </x-button>
+      </template>
+      <template #primary-action>
+        <x-button
+          color="orange"
+          type="submit"
+          :loading="leadDuplicateForm.processing"
+        >
+          Create Duplicate
+        </x-button>
+      </template>
     </x-modal>
 
     <div class="p-4 rounded shadow mt-6 mb-6 bg-white">
@@ -1427,7 +1434,7 @@ const onAddUpdate = () => {
                 :key="field"
               >
                 <dt v-if="field.title == 'Ref-ID'">
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -1437,7 +1444,7 @@ const onAddUpdate = () => {
                   </x-tooltip>
                 </dt>
                 <dt v-else-if="field.title == 'Ref-ID'">
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -1462,7 +1469,7 @@ const onAddUpdate = () => {
 
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -1486,43 +1493,43 @@ const onAddUpdate = () => {
                   </Link>
                 </dt>
               </div>
-          <div class="grid sm:grid-cols-2">
-            <dt>
-              <x-tooltip position="bottom">
-                <label
-                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                >
-                  TRAVELING WHERE
-                </label>
-                <template #tooltip> Traveling Where</template>
-              </x-tooltip>
-            </dt>
-            <dt class="font-medium uppercase">
-              {{
-                quote.direction_code != null
-                  ? quote.direction_code
-                  : quote?.currently_located_in_id_text ==
-                      enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
-                    quote?.region_cover_for_id !=
-                      enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                  ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
-                  : quote?.destination_id_text ==
-                      enums.travelQuoteEnum
-                        .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
-                    quote?.region_cover_for_id ==
-                      enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                  ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
-                  : ''
-              }}
-            </dt>
-          </div>
+              <div class="grid sm:grid-cols-2">
+                <dt>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      TRAVELING WHERE
+                    </label>
+                    <template #tooltip> Traveling Where</template>
+                  </x-tooltip>
+                </dt>
+                <dt class="font-medium uppercase">
+                  {{
+                    quote.direction_code != null
+                      ? quote.direction_code
+                      : quote?.currently_located_in_id_text ==
+                            enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
+                          quote?.region_cover_for_id !=
+                            enums.travelQuoteEnum.REGION_COVER_ID_UAE
+                        ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
+                        : quote?.destination_id_text ==
+                              enums.travelQuoteEnum
+                                .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
+                            quote?.region_cover_for_id ==
+                              enums.travelQuoteEnum.REGION_COVER_ID_UAE
+                          ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
+                          : ''
+                  }}
+                </dt>
+              </div>
 
               <div
                 class="grid sm:grid-cols-2"
                 v-if="linkedQuoteDetails.childLeadsCount == 1"
               >
                 <dt>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -1553,7 +1560,7 @@ const onAddUpdate = () => {
 
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -1626,7 +1633,7 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
                     >
@@ -1639,7 +1646,7 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
                     >
@@ -1658,7 +1665,7 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
                     >
@@ -1671,7 +1678,7 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
                     >
@@ -1694,7 +1701,7 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
                     >
@@ -1710,15 +1717,19 @@ const onAddUpdate = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TRAVEL DESTINATION(S)</dt>
                 <dt class="font-medium">
-                  <span v-for="(item, index) in travelDestinations" :key="item.id">
+                  <span
+                    v-for="(item, index) in travelDestinations"
+                    :key="item.id"
+                  >
                     {{ item?.destination?.country_name
-                    }}<span v-if="index < travelDestinations?.length - 1">, </span>
+                    }}<span v-if="index < travelDestinations?.length - 1"
+                      >,
+                    </span>
                   </span>
                 </dt>
               </div>
             </dl>
           </div>
-
         </template>
       </Collapsible>
     </div>
@@ -1746,14 +1757,13 @@ const onAddUpdate = () => {
             <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
 
-
           <div
             class="grid sm:grid-cols-2"
             v-if="quoteRequest.child || quoteRequest.parent"
           >
             <template v-if="quoteRequest.child">
               <dt>
-                <x-tooltip position="bottom">
+                <x-tooltip placement="bottom">
                   <label
                     class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
                   >
@@ -1777,7 +1787,7 @@ const onAddUpdate = () => {
             </template>
             <template v-if="quoteRequest.parent">
               <dt>
-                <x-tooltip position="bottom">
+                <x-tooltip placement="bottom">
                   <label
                     class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
                   >
@@ -2011,9 +2021,8 @@ const onAddUpdate = () => {
           </dd>
         </div>
       </dl>
-      <div class="flex justify-end">
+      <template #actions>
         <x-button
-          class="mt-4"
           color="primary"
           size="sm"
           :loading="customerProfileForm.processing"
@@ -2021,7 +2030,7 @@ const onAddUpdate = () => {
         >
           Search
         </x-button>
-      </div>
+      </template>
     </x-modal>
     <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
@@ -2064,12 +2073,12 @@ const onAddUpdate = () => {
             />
           </dd>
         </div>
-        <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity">
-            Link
-          </x-button>
-        </div>
       </dl>
+      <template #actions>
+        <x-button size="sm" color="orange" @click.prevent="linkEntity">
+          Link
+        </x-button>
+      </template>
     </x-modal>
 
     <div
@@ -2209,76 +2218,80 @@ const onAddUpdate = () => {
       <x-modal
         v-model="travelerTable.addTraveler"
         size="lg"
+        :title="`${travelerForm.id ? 'Edit' : 'Add'} Member`"
         show-close
         backdrop
+        is-form
+        @submit="submitTraveler"
       >
-        <template #header>
-          {{ travelerForm.id ? 'Edit' : 'Add' }} Member
-        </template>
-        <x-form @submit="submitTraveler" :auto-focus="false">
-          <div class="grid md:grid-cols-2 gap-4">
-            <x-input
-              v-model="travelerForm.first_name"
-              label="Member Name*"
-              placeholder="Member Name"
-              :rules="[isRequired]"
-            />
-            <ComboBox
-              v-model="travelerForm.nationality_id"
-              label="Nationality"
-              :options="nationalityOptions"
-              placeholder="Select Nationality"
-              :single="true"
-              :hasError="travelerFieldReq.nationality"
-            />
-            <DatePicker
-              v-model="travelerForm.dob"
-              label="Date of Birth*"
-              :hasError="travelerFieldReq.dob"
-              :rules="[isRequired]"
-            />
+        <div class="grid md:grid-cols-2 gap-4">
+          <x-input
+            v-model="travelerForm.first_name"
+            label="Member Name*"
+            placeholder="Member Name"
+            :rules="[isRequired]"
+          />
+          <ComboBox
+            v-model="travelerForm.nationality_id"
+            label="Nationality"
+            :options="nationalityOptions"
+            placeholder="Select Nationality"
+            :single="true"
+            :hasError="travelerFieldReq.nationality"
+          />
+          <DatePicker
+            v-model="travelerForm.dob"
+            label="Date of Birth*"
+            :hasError="travelerFieldReq.dob"
+            :rules="[isRequired]"
+          />
+          <x-select
+            v-model="travelerForm.relation_code"
+            label="Relation"
+            :options="memberRelationOptions"
+            placeholder="Select Relation"
+            class="w-full"
+          />
+          <x-input
+            v-model="travelerForm.emirates_id_number"
+            label="Emirates ID Number"
+            placeholder="Emirates ID Number"
+          />
+          <x-input
+            v-model="travelerForm.passport"
+            label="Passport Number"
+            placeholder="Passport Number"
+          />
+          <x-field label="Gender*">
             <x-select
-              v-model="travelerForm.relation_code"
-              label="Relation"
-              :options="memberRelationOptions"
-              placeholder="Select Relation"
+              v-model="travelerForm.gender"
+              placeholder="Gender"
+              :options="genderList"
+              :rules="[isRequired]"
               class="w-full"
             />
-            <x-input
-              v-model="travelerForm.emirates_id_number"
-              label="Emirates ID Number"
-              placeholder="Emirates ID Number"
-            />
-            <x-input
-              v-model="travelerForm.passport"
-              label="Passport Number"
-              placeholder="Passport Number"
-            />
-            <x-field label="Gender*">
-              <x-select
-                v-model="travelerForm.gender"
-                placeholder="Gender"
-                :options="genderList"
-                :rules="[isRequired]"
-                class="w-full"
-              />
-            </x-field>
-          </div>
-          <div class="text-right space-x-4 mt-8">
-            <x-button size="sm" @click.prevent="modals.addTraveler = false">
-              Cancel
-            </x-button>
-
-            <x-button
-              size="sm"
-              color="emerald"
-              :loading="travelerForm.processing"
-              type="submit"
-            >
-              {{ travelerForm.id ? 'Update' : 'Save' }}
-            </x-button>
-          </div>
-        </x-form>
+          </x-field>
+        </div>
+        <template #secondary-action>
+          <x-button
+            ghost
+            tabindex="-1"
+            size="sm"
+            @click.prevent="travelerTable.addTraveler = false"
+          >
+            Cancel
+          </x-button>
+        </template>
+        <template #primary-action>
+          <x-button
+            size="sm"
+            color="emerald"
+            :loading="travelerForm.processing"
+            type="submit"
+          >
+            {{ travelerForm.id ? 'Update' : 'Save' }}
+          </x-button>
+        </template>
       </x-modal>
     </div>
 
@@ -2292,8 +2305,12 @@ const onAddUpdate = () => {
       :expanded="sectionExpanded"
     />
 
-    <x-modal v-model="confirmModal.show" show-close backdrop>
-      <template #header> {{ confirmModal.title }} </template>
+    <x-modal
+      v-model="confirmModal.show"
+      :title="`${confirmModal.title}`"
+      show-close
+      backdrop
+    >
       <p>{{ confirmModal.message }}</p>
       <template #actions>
         <div class="text-right space-x-4">
@@ -2496,121 +2513,129 @@ const onAddUpdate = () => {
               <span class="text-primary-600 uppercase">{{ item.reason }}</span>
             </template>
           </DataTable>
-          </template>
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Documents
-          <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
-        </h3>
-        <div class="flex gap-2">
-          <Link
-            v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
-            :href="`/legacy-policy/${quote.insly_id}`"
-            preserve-scroll
-          >
-            <x-button size="sm" color="#ff5e00" tag="div">
-              View Legacy policy
-            </x-button>
-          </Link>
-          <x-tooltip position="top">
+        </template>
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Documents
+            <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
+          </h3>
+          <div class="flex gap-2">
+            <Link
+              v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
+              :href="`/legacy-policy/${quote.insly_id}`"
+              preserve-scroll
+            >
+              <x-button size="sm" color="#ff5e00" tag="div">
+                View Legacy policy
+              </x-button>
+            </Link>
+            <x-tooltip placement="top">
+              <x-button
+                @click.prevent="getupdateDocumentValidate(true)"
+                v-if="can(permissionsEnum.DOCUMENT_VERIFY)"
+                size="sm"
+                color="green"
+              >
+                Verify Documents
+              </x-button>
+              <template #tooltip>
+                Verify Documents: Clicking this button confirms that all
+                submitted documents are accurate and valid.</template
+              >
+            </x-tooltip>
             <x-button
-              @click.prevent="getupdateDocumentValidate(true)"
-              v-if="can(permissionsEnum.DOCUMENT_VERIFY)"
+              @click.prevent="modals.doc = true"
               size="sm"
-              color="green"
+              color="primary"
             >
-              Verify Documents
+              Upload Documents
             </x-button>
-            <template #tooltip>
-              Verify Documents: Clicking this button confirms that all submitted
-              documents are accurate and valid.</template
+            <x-button
+              size="sm"
+              color="red"
+              v-if="
+                displaySendPolicyButton &&
+                permissions.notProductionApproval &&
+                permissions.isQuoteDocumentEnabled
+              "
+              @click="sendPolicyToClient"
             >
-          </x-tooltip>
-          <x-button
-            @click.prevent="modals.doc = true"
-            size="sm"
-            color="primary"
-          >
-            Upload Documents
-          </x-button>
-          <x-button
-            size="sm"
-            color="red"
-            v-if="
-              displaySendPolicyButton &&
-              permissions.notProductionApproval &&
-              permissions.isQuoteDocumentEnabled
-            "
-            @click="sendPolicyToClient"
-          >
-            Send Policy
-          </x-button>
+              Send Policy
+            </x-button>
+          </div>
         </div>
-      </div>
-      <DataTable
-        table-class-name="compact"
-        :headers="quoteDocumentsTable.columns"
-        :items="quoteDocuments || []"
-        border-cell
-        hide-rows-per-page
-        :rows-per-page="15"
-        :hide-footer="quoteDocuments.length < 15"
-      >
-        <template #item-original_name="item">
-          <a
-            :href="cdnPath + item.doc_url"
-            target="_blank"
-            class="text-primary-600"
-          >
-            {{ item.original_name }}
-          </a>
-        </template>
-        <template #item-action="{ doc_name }">
-          <div>
-            <x-button
-              size="xs"
-              color="error"
-              outlined
-              @click.prevent="onDocDelete(doc_name)"
+        <DataTable
+          table-class-name="compact"
+          :headers="quoteDocumentsTable.columns"
+          :items="quoteDocuments || []"
+          border-cell
+          hide-rows-per-page
+          :rows-per-page="15"
+          :hide-footer="quoteDocuments.length < 15"
+        >
+          <template #item-original_name="item">
+            <a
+              :href="cdnPath + item.doc_url"
+              target="_blank"
+              class="text-primary-600"
             >
-              Delete
-            </x-button>
-          </div>
-        </template>
-      </DataTable>
+              {{ item.original_name }}
+            </a>
+          </template>
+          <template #item-action="{ doc_name }">
+            <div>
+              <x-button
+                size="xs"
+                color="error"
+                outlined
+                @click.prevent="onDocDelete(doc_name)"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
+        </DataTable>
 
-      <x-modal v-model="modals.doc" size="xl" show-close backdrop>
-        <template #header> Upload Documents </template>
-
-        <LazyDocumentUploader
-          :members="memberDataDocs(travelers)"
-          :doc-types="documentTypes"
-          :docs="quoteDocuments || []"
-          :cdn="cdnPath"
-        />
-      </x-modal>
-      <x-modal v-model="modals.docConfirm" show-close backdrop>
-        <template #header> Delete Document </template>
-        <p>Are you sure you want to delete this document?</p>
-        <template #actions>
-          <div class="text-right space-x-4">
-            <x-button
-              size="sm"
-              ghost
-              @click.prevent="modals.docConfirm = false"
-            >
-              Cancel
-            </x-button>
-            <x-button
-              size="sm"
-              color="error"
-              @click.prevent="confirmDeleteDoc"
-              :loading="quoteDocumentsTable.isLoading"
-            >
-              Delete
-            </x-button>
-          </div>
-        </template>
+        <x-modal
+          v-model="modals.doc"
+          size="xl"
+          title="Upload Documents"
+          show-close
+          backdrop
+        >
+          <LazyDocumentUploader
+            :members="memberDataDocs(travelers)"
+            :doc-types="documentTypes"
+            :docs="quoteDocuments || []"
+            :cdn="cdnPath"
+          />
+        </x-modal>
+        <x-modal
+          v-model="modals.docConfirm"
+          title="Delete Document"
+          show-close
+          backdrop
+        >
+          <p>Are you sure you want to delete this document?</p>
+          <template #actions>
+            <div class="text-right space-x-4">
+              <x-button
+                size="sm"
+                ghost
+                @click.prevent="modals.docConfirm = false"
+              >
+                Cancel
+              </x-button>
+              <x-button
+                size="sm"
+                color="error"
+                @click.prevent="confirmDeleteDoc"
+                :loading="quoteDocumentsTable.isLoading"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
         </x-modal>
       </Collapsible>
     </div>
@@ -2852,8 +2877,13 @@ const onAddUpdate = () => {
             </div>
           </div>
 
-          <x-modal v-model="modals.planDetails" size="xl" show-close backdrop>
-            <template #header> {{ planDetails.providerName }} </template>
+          <x-modal
+            v-model="modals.planDetails"
+            size="xl"
+            :title="`${planDetails?.providerName}`"
+            show-close
+            backdrop
+          >
             <LazyAvailablePlan :plan="planDetails" />
           </x-modal>
         </template>
@@ -2868,9 +2898,9 @@ const onAddUpdate = () => {
       :payments="payments"
     />
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			quoteType="Travel"
-			:payments="payments"
+      v-if="isNewPaymentStructure"
+      quoteType="Travel"
+      :payments="payments"
       :paymentDocument="paymentDocument"
       :proformaPayment="
         payments.find(
@@ -2968,7 +2998,7 @@ const onAddUpdate = () => {
               Add Activity
             </x-button>
           </div>
-          <x-divider class="my-4" />
+          <!-- <x-divider class="my-4" /> -->
           <DataTable
             table-class-name="compact"
             :headers="activityTable"
@@ -3013,8 +3043,12 @@ const onAddUpdate = () => {
         </template>
       </Collapsible>
 
-      <x-modal v-model="updateDocumentValidate.show" show-close backdrop>
-        <template #header> Are all documents correct? </template>
+      <x-modal
+        v-model="updateDocumentValidate.show"
+        title="Are all documents correct?"
+        show-close
+        backdrop
+      >
         <p>
           Note: By clicking 'Yes,' you confirm that all submitted documents are
           accurate and valid. Failure to verify will be considered a breach of
@@ -3040,65 +3074,77 @@ const onAddUpdate = () => {
           </div>
         </template>
       </x-modal>
-      <x-modal v-model="modals.activity" size="lg" show-close backdrop>
-        <template #header>
-          {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
-        </template>
-
-        <x-form @submit="onActivitySubmit" :auto-focus="false">
-          <div class="grid gap-4">
-            <x-field label="Title" required>
-              <x-input
-                v-model="activityForm.title"
-                :rules="[isRequired]"
-                class="w-full"
-              />
-            </x-field>
-            <x-field label="Description">
-              <x-textarea
-                v-model="activityForm.description"
-                :adjust-to-text="false"
-                class="w-full"
-              />
-            </x-field>
-            <x-field label="Assignee" required>
-              <x-select
-                v-model="activityForm.assignee_id"
-                :options="advisorOptions"
-                :rules="[isRequired]"
-                placeholder="Select Assignee"
-                class="w-full"
-              />
-            </x-field>
-
-            <DatePicker
-              :format="format"
-              v-model="activityForm.due_date"
-              label="Due Date"
+      <x-modal
+        v-model="modals.activity"
+        size="lg"
+        :title="`${activityActionEdit ? 'Edit' : 'Add'} Lead Activity`"
+        show-close
+        backdrop
+        is-form
+        @submit="onActivitySubmit"
+      >
+        <div class="grid gap-4">
+          <x-field label="Title" required>
+            <x-input
+              v-model="activityForm.title"
               :rules="[isRequired]"
               class="w-full"
-              withTime
             />
-          </div>
+          </x-field>
+          <x-field label="Description">
+            <x-textarea
+              v-model="activityForm.description"
+              :adjust-to-text="false"
+              class="w-full"
+            />
+          </x-field>
+          <x-field label="Assignee" required>
+            <x-select
+              v-model="activityForm.assignee_id"
+              :options="advisorOptions"
+              :rules="[isRequired]"
+              placeholder="Select Assignee"
+              class="w-full"
+            />
+          </x-field>
 
-          <div class="text-right space-x-4 mt-12">
-            <x-button size="sm" @click.prevent="modals.activity = false">
-              Cancel
-            </x-button>
+          <DatePicker
+            :format="format"
+            v-model="activityForm.due_date"
+            label="Due Date"
+            :rules="[isRequired]"
+            class="w-full"
+            withTime
+          />
+        </div>
 
-            <x-button
-              size="sm"
-              color="emerald"
-              :loading="activityForm.processing"
-              type="submit"
-            >
-              {{ activityActionEdit ? 'Update' : 'Save' }}
-            </x-button>
-          </div>
-        </x-form>
+        <template #secondary-action>
+          <x-button
+            ghost
+            tabindex="-1"
+            size="sm"
+            @click.prevent="modals.activity = false"
+          >
+            Cancel
+          </x-button>
+        </template>
+        <template #primary-action>
+          <x-button
+            size="sm"
+            color="emerald"
+            :loading="activityForm.processing"
+            type="submit"
+          >
+            {{ activityActionEdit ? 'Update' : 'Save' }}
+          </x-button>
+        </template>
       </x-modal>
-      <x-modal v-model="modals.activityConfirm" show-close backdrop>
-        <template #header> Delete Activity </template>
+      <x-modal
+        v-model="modals.activityConfirm"
+        title="Delete Activity"
+        show-close
+        backdrop
+      >
         <p>Are you sure you want to delete this activity?</p>
         <template #actions>
           <div class="text-right space-x-4">
@@ -3172,10 +3218,12 @@ const onAddUpdate = () => {
       :expanded="sectionExpanded"
     />
 
-    <x-modal v-model="modals.mixInquiryConfirm" show-close backdrop>
-      <template #header>
-        <div class="text-center">SORRY!</div>
-      </template>
+    <x-modal
+      v-model="modals.mixInquiryConfirm"
+      title="SORRY!"
+      show-close
+      backdrop
+    >
       <p>
         Please choose quotes from the same age group for a correct comparison.
       </p>
@@ -3196,7 +3244,6 @@ const onAddUpdate = () => {
       :quoteId="quote.uuid"
       :quoteType="'TRAVEL'"
     />
-
   </div>
 </template>
 <style>

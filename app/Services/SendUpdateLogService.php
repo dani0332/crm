@@ -447,27 +447,44 @@ class SendUpdateLogService
         return false;
     }
 
-    public function getInvoiceDescription($sendUpdateLog, $quote, $quoteType, $insurance_provider_id)
+    public function getInvoiceDescription($sendUpdateLog, $quote, $quoteType, $payments): array
     {
-        $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
-        $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
-
+        if ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::CPD || $payments->isEmpty()) {
+            $insuranceProviderId = $sendUpdateLog->insurance_provider_id;
+        } else {
+            $insuranceProviderId = $payments->first()->insurance_provider_id;
+        }
         $sendUpdateLogCategory = LookupRepository::where('id', $sendUpdateLog->category_id)->value('code');
 
-        $invoiceDescription = $insuranceProviderCode.'-'.$quoteType.'-'.$quote->policy_number;
+        $insuranceProviderCode = InsuranceProviderRepository::where('id', $insuranceProviderId)->value('code');
+        if (empty($sendUpdateLog->broker_invoice_number)) {
+            $insuranceProviderLeadCount = Payment::where('insurance_provider_id', $insuranceProviderId)->count();
 
-        if ($sendUpdateLogCategory == SendUpdateLogStatusEnum::EF) {
-            $invoiceDescription = 'E.'.$invoiceDescription;
-        } elseif (in_array($sendUpdateLogCategory, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
-            $invoiceDescription = 'CI.'.$invoiceDescription;
-        } elseif ($sendUpdateLogCategory == SendUpdateLogStatusEnum::CPD) {
-            $reversalInvoiceDescription = 'R.'.$invoiceDescription;
-            $invoiceDescription = 'C.'.$invoiceDescription;
+            $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
+            if (SendUpdateLog::where('broker_invoice_number', $brokerInvoiceNumber)->whereNot('uuid', $sendUpdateLog->uuid)->exists()) {
+                $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
+            }
+        } else {
+            $brokerInvoiceNumber = $sendUpdateLog->broker_invoice_number;
         }
 
-        $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
-        if (SendUpdateLog::where('broker_invoice_number', $brokerInvoiceNumber)->whereNot('uuid', $sendUpdateLog->uuid)->exists()) {
-            $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
+        if (empty($sendUpdateLog->invoice_description)) {
+            if ($quoteType == quoteTypeCode::Business && $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
+                $invoiceDescription = $insuranceProviderCode.'-'.quoteTypeCode::GroupMedical.'-'.$quote->policy_number;
+            } else {
+                $invoiceDescription = $insuranceProviderCode.'-'.$quoteType.'-'.$quote->policy_number;
+            }
+
+            if ($sendUpdateLogCategory == SendUpdateLogStatusEnum::EF) {
+                $invoiceDescription = 'E.'.$invoiceDescription;
+            } elseif (in_array($sendUpdateLogCategory, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
+                $invoiceDescription = 'CI.'.$invoiceDescription;
+            } elseif ($sendUpdateLogCategory == SendUpdateLogStatusEnum::CPD) {
+                $reversalInvoiceDescription = 'R.'.$invoiceDescription;
+                $invoiceDescription = 'C.'.$invoiceDescription;
+            }
+        } else {
+            $invoiceDescription = $sendUpdateLog->invoice_description;
         }
 
         $response = [
@@ -683,6 +700,7 @@ class SendUpdateLogService
         $quote = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->with(['payments' => function ($query) {
             $query->whereNull('send_update_log_id');
         }])->first();
+        $currentDate = now();
 
         try {
             DB::beginTransaction();
@@ -760,7 +778,7 @@ class SendUpdateLogService
                         'renewal_expiry_date' => $sendUpdateLog->expiry_date,
                         'insurer_quote_number' => $sendUpdateLog->insurer_quote_number,
                         'policy_issuance_status_id' => $sendUpdateLog->issuance_status_id,
-                        'policy_booking_date' => $sendUpdateLog->booking_date,
+                        'policy_booking_date' => $currentDate,
                         'price_vat_applicable' => $sendUpdateLog->price_vat_applicable,
                         'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
                         'price_with_vat' => $sendUpdateLog->price_with_vat,
@@ -780,7 +798,7 @@ class SendUpdateLogService
             }
 
             $sendUpdateLog->update([
-                'booking_date' => now(),
+                'booking_date' => $currentDate,
                 'transaction_payment_status' => $status ?? '',
                 'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
             ]);

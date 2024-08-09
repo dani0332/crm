@@ -37,7 +37,8 @@ class RenewalBatchReportService extends BaseService
                 'renewal_batches.end_date',
                 'renewal_batches.id',
                 'renewal_batches.name',
-                'renewal_batches.month'
+                'renewal_batches.month',
+                'renewal_batches.year'
             )
             ->join('users', 'users.id', '=', 'car_quote_request.advisor_id')
             ->leftJoin('car_lost_quote_logs', function ($qry) {
@@ -74,7 +75,8 @@ class RenewalBatchReportService extends BaseService
                 'renewal_batches.end_date',
                 'renewal_batches.id',
                 'renewal_batches.name',
-                'renewal_batches.month'
+                'renewal_batches.month',
+                'renewal_batches.year'
             )
             ->join('users', 'users.id', '=', 'health_quote_request.advisor_id')
             ->join('renewal_batches', 'renewal_batches.name', '=', 'health_quote_request.renewal_batch')
@@ -238,19 +240,11 @@ class RenewalBatchReportService extends BaseService
 
         // date filter
         if (isset($filters->reportDate)) {
-            $reportDateEnd = Carbon::parse($filters->reportDate)
-                ->endOfDay()->format($dateFormat);
-            // set previous and next month as per report date
-            $previousMonth = Carbon::parse($reportDateEnd)->subMonth(1)->startOfMonth()->format($dateFormat);
-            $nextMonth = Carbon::parse($reportDateEnd)->addMonth(1)->endOfMonth()->format($dateFormat);
-
-            $monthDigitFormat = config('constants.MONTH_DIGIT_FORMAT');
-            $previousMonthDigitWise = ltrim(Carbon::parse($reportDateEnd)->subMonth(1)->startOfMonth()->format($monthDigitFormat), '0');
-            $nextMonthDigitWise = ltrim(Carbon::parse($reportDateEnd)->addMonth(1)->endOfMonth()->format($monthDigitFormat), '0');
+            $reportDateEnd = Carbon::parse($filters->reportDate)->endOfDay()->format($dateFormat);
 
             $dataBatches = RenewalBatch::query()
                 ->select('name', 'start_date', 'end_date', 'id')
-                ->whereBetween('month', [$previousMonthDigitWise, $nextMonthDigitWise])
+                ->dateFilter($reportDateEnd)
                 ->orderByDesc('end_date')
                 ->get()
                 ->pluck('name', 'id')
@@ -454,19 +448,11 @@ class RenewalBatchReportService extends BaseService
 
         // date filter
         if (isset($filters->reportDate)) {
-            $reportDateEnd = Carbon::parse($filters->reportDate)
-                ->endOfDay()->format($dateFormat);
-            // set previous and next month as per report date
-            $previousMonth = Carbon::parse($reportDateEnd)->subMonth()->startOfMonth()->format($dateFormat);
-            $nextMonth = Carbon::parse($reportDateEnd)->addMonth()->endOfMonth()->format($dateFormat);
-
-            $monthDigitFormat = config('constants.MONTH_DIGIT_FORMAT');
-            $previousMonthDigitWise = ltrim(Carbon::parse($reportDateEnd)->subMonth(1)->startOfMonth()->format($monthDigitFormat), '0');
-            $nextMonthDigitWise = ltrim(Carbon::parse($reportDateEnd)->addMonth(1)->endOfMonth()->format($monthDigitFormat), '0');
+            $reportDateEnd = Carbon::parse($filters->reportDate)->endOfDay()->format($dateFormat);
 
             $dataBatches = RenewalBatch::query()
                 ->select('name', 'start_date', 'end_date', 'id')
-                ->whereBetween('month', [$previousMonthDigitWise, $nextMonthDigitWise])
+                ->dateFilter($reportDateEnd)
                 ->orderByDesc('end_date')
                 ->get()
                 ->pluck('name', 'id')
@@ -605,20 +591,15 @@ class RenewalBatchReportService extends BaseService
     public function getBatchRangeForDefaultView()
     {
         $startDate = $endDate = null;
-        $dateFormat = config('constants.DATE_FORMAT_ONLY');
-        $dateTimeFormat = config('constants.DB_DATE_FORMAT_MATCH');
-        $monthDigitFormat = config('constants.MONTH_DIGIT_FORMAT');
-        $reportDate = Carbon::today()->format($dateFormat);
-        $previousMonth = ltrim(Carbon::parse($reportDate)->subMonth(1)->startOfMonth()->format($monthDigitFormat), '0');
-        $nextMonth = ltrim(Carbon::parse($reportDate)->addMonth(1)->endOfMonth()->format($monthDigitFormat), '0');
 
         $defaultBatchRange = RenewalBatch::query()
             ->select('name', 'start_date', 'end_date', 'id')
-            ->whereBetween('month', [$previousMonth, $nextMonth])
+            ->dateFilter()
             ->orderByDesc('end_date')
             ->get();
 
         if ($defaultBatchRange) {
+            $dateTimeFormat = config('constants.DB_DATE_FORMAT_MATCH');
             $startDate = Carbon::parse($defaultBatchRange->last()->start_date)->startOfDay()->format($dateTimeFormat);
             $endDate = Carbon::parse($defaultBatchRange->first()->end_date)->endOfDay()->format($dateTimeFormat);
         }

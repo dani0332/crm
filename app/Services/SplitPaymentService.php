@@ -662,7 +662,7 @@ class SplitPaymentService
                 if ($isFromJob) {
                     CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $exception->getMessage()]);
                 } else {
-                    Log::error('Error in processSplitPaymentApprove: '.$exception->getMessage());
+                    Log::error('Error in processSplitPaymentApprove '.$quoteModel->code.': '.$exception->getMessage());
                 }
                 DB::rollBack();
             }
@@ -745,7 +745,7 @@ class SplitPaymentService
             if ($isFromJob && $splitPaymentId > 0) {
                 CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $exception->getMessage()]);
             }
-            Log::error('Error in processMasterPaymentApprove: '.$exception->getMessage());
+            Log::error('Error in processMasterPaymentApprove for '.$quoteModel->code.': '.$exception->getMessage());
             DB::rollBack();
         }
 

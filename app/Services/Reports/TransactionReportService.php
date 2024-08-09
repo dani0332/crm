@@ -22,7 +22,11 @@ class TransactionReportService extends ManagementReport
         $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::TRANSACTION;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::TRANSACTION_PAYMENTS;
 
-        if ($request['paymentDueDate'] && ! empty($request['paymentDueDate']) && is_array($request['paymentDueDate'])) {
+        if ($request['policyBookDate'] && ! empty($request['policyBookDate']) && is_array($request['policyBookDate'])) {
+            $this->reportDateRange = Carbon::parse($request['policyBookDate'][0])->toDateString()
+                .' - '.
+                Carbon::parse($request['policyBookDate'][1])->toDateString();
+        } elseif ($request['paymentDueDate'] && ! empty($request['paymentDueDate']) && is_array($request['paymentDueDate'])) {
             $this->reportDateRange = Carbon::parse($request['paymentDueDate'][0])->toDateString()
                 .' - '.
                 Carbon::parse($request['paymentDueDate'][1])->toDateString();
@@ -30,39 +34,45 @@ class TransactionReportService extends ManagementReport
 
         $query = PersonalQuote::query()
             ->select(
+                'personal_quotes.quote_type_id',
+                'personal_quotes.business_type_of_insurance_id',
+                'personal_quotes.uuid',
                 'personal_quotes.policy_number',
                 'personal_quotes.code',
-                DB::raw('CONCAT(p.reference, " ", p.tax_invoice_number) as transactions'),
-                DB::raw("DATE_FORMAT(personal_quotes.policy_start_date, '%Y-%m-%d') as policy_start_date"),
-                DB::raw("DATE_FORMAT(p.payment_due_date, '%Y-%m-%d') as payment_due_date"),
-                DB::raw("DATE_FORMAT(ps.due_date, '%Y-%m-%d') as due_date"),
+                'p.notes',
+                'p.reference',
+                'personal_quotes.policy_start_date',
+                'p.payment_due_date as payment_due_date',
+                'ps.due_date',
                 'personal_quotes.price_vat_applicable',
                 'personal_quotes.vat',
                 'personal_quotes.price_vat_not_applicable',
                 'p.discount_value as discount',
-                DB::raw('FORMAT(((
+                DB::raw('((
                     IFNULL( personal_quotes.price_vat_applicable , 0 ) +
                     IFNULL( personal_quotes.price_vat_not_applicable , 0 )  +
-                    IFNULL( personal_quotes.vat , 0 )) - IFNULL( p.discount_value , 0 )),2) as total_price'),
-                DB::raw('FORMAT(p.commission_vat_applicable,2) as commission_vat_applicable'),
-                DB::raw('FORMAT(p.commission_vat,2) as commission_vat'),
-                DB::raw('FORMAT(p.commission_vat_not_applicable,2) as commission_vat_not_applicable'),
-                DB::raw('p.captured_amount as collected_amount'),
-                DB::raw('(SELECT pss.verified_at 
-                          FROM payment_splits pss 
-                          WHERE pss.code = p.code 
-                          and pss.sr_no = 1
-                          LIMIT 1) as payment_date'),
-                DB::raw('FORMAT(((
+                    IFNULL( personal_quotes.vat , 0 )) - IFNULL( p.discount_value , 0 )) as total_price'),
+                'p.commission_vat_applicable',
+                'p.commission_vat',
+                'p.commission_vat_not_applicable',
+                'p.captured_amount as collected_amount',
+                DB::raw('(SELECT pss.verified_at
+                FROM payment_splits pss
+                WHERE pss.code = p.code
+                and pss.sr_no = 1
+                LIMIT 1) as payment_date'),
+                DB::raw('((
                     IFNULL( personal_quotes.price_vat_applicable , 0 ) +
                     IFNULL( personal_quotes.price_vat_not_applicable , 0 ) +
                     IFNULL( personal_quotes.vat , 0 )) - IFNULL( p.discount_value , 0 )) -
-                    SUM(p.captured_amount),2) as pending_balance'),
-                DB::raw('UPPER(p.collection_type) as collects'),
+                    IFNULL( p.captured_amount, 0) as pending_balance'),
+                'p.collection_type as collects',
                 'ip.text as insurer',
                 'quote_type.text as line_of_business',
-                DB::raw("CONCAT(personal_quotes.first_name, ' ', personal_quotes.last_name) as customer_name"),
+                'personal_quotes.first_name',
+                'personal_quotes.last_name',
                 'u.name as advisor',
+                'dp.name as department',
                 'pi.name as policy_issuer',
                 'p.invoice_description as invoice_description',
                 'pm.name as payment_method',
@@ -77,6 +87,7 @@ class TransactionReportService extends ManagementReport
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
             ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
+            ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
             ->leftJoin('user_team as ut', 'ut.user_id', '=', 'u.id')
             ->leftJoin('teams as t', 't.id', '=', 'ut.team_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
@@ -97,6 +108,7 @@ class TransactionReportService extends ManagementReport
 
         if ($request->export == 1) {
             $data = $query->get();
+            $this->formatData($data);
 
             // Columns that are not integar and should not be summed
             $nonIntegarIndexes = [0, 1, 2, 3, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27];
@@ -108,8 +120,28 @@ class TransactionReportService extends ManagementReport
                 $nonIntegarIndexes
             );
         } else {
-            return $query->simplePaginate(100)->withQueryString();
+            $data = $query->simplePaginate(100)->withQueryString();
+            $data->map(function ($item) {
+                $item->routeName = $this->getQuoteRouteName($item->quote_type_id, $item->business_type_of_insurance_id);
+            });
+            $this->formatData($data);
+
+            return $data;
         }
+    }
+
+    private function formatData(&$data)
+    {
+        $data->map(function ($item) {
+            $item->transactions = $this->concatValues([$item->insurer_invoice_number, $item->notes, $item->reference], '-');
+            $item->policy_start_date = ! empty($item->policy_start_date) ? Carbon::parse($item->policy_start_date)->format('Y-m-d') : null;
+            $item->payment_due_date = ! empty($item->payment_due_date) ? Carbon::parse($item->payment_due_date)->format('Y-m-d') : null;
+            $item->due_date = ! empty($item->due_date) ? Carbon::parse($item->due_date)->format('Y-m-d') : null;
+            $item->total_price = number_format($item->total_price, 2);
+            $item->collects = strtoupper($item->collects);
+            $item->pending_balance = number_format($item->pending_balance, 2);
+            $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
+        });
     }
 
     public function getDefaultFilters()
@@ -130,6 +162,7 @@ class TransactionReportService extends ManagementReport
     public function headings(): array
     {
         return [
+            'Ref-ID',
             'Policy Number',
             'Transactions',
             'Policy Start Date',
@@ -164,10 +197,11 @@ class TransactionReportService extends ManagementReport
     public function map($quote): array
     {
         return [
-            $quote->policy_number ?? 'N/A',
-            $quote->transactions ?? 0,
+            $quote->code ?? 'N/A',
+            $quote->policy_number ? '="'.$quote->policy_number.'"' : 'N/A',
+            $quote->transactions ? $quote->transactions : 'N/A',
             $quote->policy_start_date ?? 'N/A',
-            $quote->payment_due_date ?? 'N/A',
+            $quote->payment_due_date ? $quote->payment_due_date : ($quote->due_date ?? 'N/A'),
             $quote->price_vat_applicable ?? '0.00',
             $quote->vat ?? '0.00',
             $quote->price_vat_not_applicable ?? '0.00',

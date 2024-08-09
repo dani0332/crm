@@ -9,6 +9,8 @@ class EmbeddedTransaction extends Model
 {
     use HasFactory;
 
+    protected $guarded = [];
+
     public function quoteType()
     {
         return $this->belongsTo(QuoteType::class, 'quote_type_id', 'id');
@@ -31,5 +33,10 @@ class EmbeddedTransaction extends Model
     public function quoteRequest()
     {
         return $this->morphTo();
+    }
+
+    public function documents()
+    {
+        return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
 }
