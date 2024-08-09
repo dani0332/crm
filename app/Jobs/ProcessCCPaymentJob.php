@@ -17,7 +17,7 @@ class ProcessCCPaymentJob implements ShouldQueue
 
     protected $paymentRecord;
     public $tries = 1;
-    public $timeout = 1800; // 30 minutes
+    public $timeout = 120; // 2 minutes
 
     /**
      * Create a new job instance.
