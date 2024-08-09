@@ -63,7 +63,6 @@ class RetentionReportService extends BaseService
         if (!$isExport){
             // Paginate the query results and retain the query string
             $reportData = $query->paginate($this->paginateData)->withQueryString();
-            $summarizedData= $this->getSummarizedData($reportData);
         } else {
             $reportData = $allData;
         }
@@ -71,7 +70,7 @@ class RetentionReportService extends BaseService
         // Add some new column into report date and return the result
         return [
             $this->formatReportData($reportData, $aggregatedData),
-            $isExport ? $aggregatedData : $summarizedData
+            $aggregatedData
         ];
     }
 
