@@ -1003,10 +1003,28 @@ watch(
   },
 );
 
+const noDiscountType = computed(() => {
+  const noDiscountTypeOptions = [
+    sendUpdateStatusEnum.MPC,
+    sendUpdateStatusEnum.MDOM,
+    sendUpdateStatusEnum.DM,
+    sendUpdateStatusEnum.DTSI,
+    sendUpdateStatusEnum.DOV,
+    sendUpdateStatusEnum.ED,
+  ];
+
+  return ! (noDiscountTypeOptions.includes(props.sendUpdateLog?.option?.code) || props.sendUpdateLog?.category?.code === isCIOrCIR.value);
+});
+
 watch(
   () => bookingDetailsForm.price_with_vat,
   (newValue, oldValue) => {
-    checkDiscount(newValue, oldValue);
+
+    console.log(noDiscountType.value);
+
+    if (noDiscountType.value) {
+      checkDiscount(newValue, oldValue);
+    }
   },
 );
 </script>
