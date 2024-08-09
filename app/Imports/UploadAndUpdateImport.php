@@ -109,30 +109,8 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
     {
         $columns = [
             'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => 'required|max:100'],
-            'email' => [
-                'index' => 1,
-                'title' => 'Customer Email',
-                'rules' => [
-                    'max:255',
-                    function ($attribute, $value, $onFailure) {
-                        if ($value == 0 || $value == '0') {
-                            $onFailure('The '.$attribute.' cannot be 0.');
-                        }
-                    },
-                ],
-            ],
-            'mobile_no' => [
-                'index' => 2,
-                'title' => 'Customer Mobile',
-                'rules' => [
-                    'max:100',
-                    function ($attribute, $value, $onFailure) {
-                        if ($value == 0 || $value == '0') {
-                            $onFailure('The '.$attribute.' cannot be 0.');
-                        }
-                    },
-                ],
-            ],
+            'email' => ['index' => 1, 'title' => 'Customer Email', 'rules' => 'max:255'],
+            'mobile_no' => ['index' => 2, 'title' => 'Customer Mobile', 'rules' => 'max:100'],
             'quote_type' => ['index' => 3, 'title' => 'Insurance Type', 'rules' => 'required|required|max:4'],
             'insurer' => ['index' => 4, 'title' => 'Insurance Provider', 'rules' => 'required|max:100'],
             'product_type' => ['index' => 5, 'title' => 'Product Type', 'rules' => 'required|max:100'],
