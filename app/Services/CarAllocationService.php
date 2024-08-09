@@ -393,6 +393,7 @@ class CarAllocationService extends AllocationService
             $isSAPLead = str_contains($lead->source, 'sap-') || str_contains($lead->source, 'partner.alfred.ae');
             if ($isSAPLead) {
                 // If the lead source is SAP, get eligible users for SAP leads.
+                info('SAP lead found, so filtering eligible users for SAP lead');
                 $finalEligibleUserIds = $this->getEligibleUserForSAPLead($ruleUserIds);
             }
 
