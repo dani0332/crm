@@ -861,31 +861,6 @@ class SendUpdateLogService
         return $carQuote->plan->carAddons->toArray();
     }
 
-    private function getDocuments($sendUpdateLog, $quoteTypeId, $action)
-    {
-        if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
-            return $sendUpdateLog->documents->whereIn('document_type_code', [
-                DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
-                DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE,
-            ])->with('createdBy:id,name,email')->latest()->get();
-        }
-
-        if (in_array($quoteTypeId, [QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
-            $documentTypes = [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE];
-
-            if ($action == SendUpdateLogStatusEnum::ACTION_SNBU) {
-                $documentTypes[] = DocumentTypeCode::SEND_UPDATE_TAX_INVOICE;
-            } elseif ($action == SendUpdateLogStatusEnum::ACTION_SU) {
-                $documentTypes = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE];
-            }
-
-            return $sendUpdateLog->documents->whereIn('document_type_code', $documentTypes)
-                ->with('createdBy:id,name,email')->latest()->get();
-        }
-
-        return collect();
-    }
-
     public function sendUpdateToCustomerEmail($sendUpdateLog, $action): array
     {
         $quoteTypeId = $sendUpdateLog->quote_type_id;
@@ -902,7 +877,7 @@ class SendUpdateLogService
             $update = quoteStatusCode::POLICY_CANCELLED;
         }
 
-        /*if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
             $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
                 DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE])->with('createdBy:id,name,email')->latest()->get();
         } elseif (in_array($quoteTypeId, [QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
@@ -916,8 +891,8 @@ class SendUpdateLogService
                 $documents = $sendUpdateLog->documents->where('document_type_code', DocumentTypeCode::SEND_UPDATE_TAX_INVOICE)->with('createdBy:id,name,email')
                     ->latest()->get();
             }
-        }*/
-        $documents = $this->getDocuments($sendUpdateLog, $quoteTypeId, $action);
+        }
+        // $documents = $this->getDocuments($sendUpdateLog, $quoteTypeId, $action);
 
         // need to add "Car Fleet" for PPE details.
         // need to add "Car Fleet" for CISC_NFI details.
