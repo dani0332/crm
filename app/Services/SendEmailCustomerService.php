@@ -770,7 +770,7 @@ class SendEmailCustomerService extends BaseService
                     'googleMeet' => $emailData->googleMeet,
                     'appDownloadLink' => $emailData->appDownloadLink,
                     'insuranceType' => $emailData->insuranceType,
-                    'healthPlanName' => $emailData->healthPlanName,
+                    'planName' => $emailData->planName,
                     'advisor' => (object) [
                         'name' => $emailData->advisorName,
                         'email' => $emailData->advisorEmail,

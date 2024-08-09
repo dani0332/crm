@@ -40,13 +40,13 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
     public function handle(SendEmailCustomerService $sendEmailCustomerService, QuoteDocumentService $quoteDocumentService)
     {
         $insuranceType = '';
-        $healthPlanName = '';
+        $planName = '';
 
         info('job: SendBookPolicyDocumentsJob started');
 
         // In case of Group Medical & Corpline, modelType is used & for rest of the LOBs model_type is used
         // Basically we are different to identify the template which will send to customer after policy booking
-        $modelType = ! empty($this->data->modelType) ? $this->data->modelType : $this->data->model_type;
+        $modelType = ucfirst(! empty($this->data->modelType) ? $this->data->modelType : $this->data->model_type);
 
         $quote = $this->getQuoteObject($this->data->model_type, $this->data->quote_id);
         $handBookDocuments = [];
@@ -66,12 +66,12 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $docs = [];
         }
 
-        if ($modelType == quoteTypeCode::Business){
+        if ($modelType == quoteTypeCode::CORPLINE){
             $quote->load('businessTypeOfInsurance');
             $insuranceType = $quote->businessTypeOfInsurance->text;
         }
         if($modelType == quoteTypeCode::Health){
-            $healthPlanName = $quote->plan->text;
+            $planName = $quote->plan->text;
         }
 
         $quote->load('advisor');
@@ -95,7 +95,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->advisorLandlineNo = '';
             $emailData->googleMeet = '';
             $emailData->insuranceType = $insuranceType;
-            $emailData->healthPlanName = $healthPlanName;  
+            $emailData->planName = $planName;  
             if (! empty($quote->advisor)) {
                 $emailData->advisorName = $quote->advisor->name;
                 $emailData->advisorEmail = $quote->advisor->email;
