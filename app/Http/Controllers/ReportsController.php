@@ -384,6 +384,7 @@ class ReportsController extends Controller
         $displayBy = $request->displayBy ?? null;
         $quoteTypes = QuoteTypeId::getOptions();
         $quoteTypeCodes = quoteTypeCode::asArray();
+
         return inertia('Reports/ConversionAsAt', [
             'reportData' => $conversionAsAtReportService->getReportData($request),
             'filterOptions' => $conversionAsAtReportService->getFilterOptions(),
