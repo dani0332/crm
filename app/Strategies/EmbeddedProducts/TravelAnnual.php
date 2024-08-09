@@ -72,23 +72,11 @@ class TravelAnnual extends EmbeddedProduct
                 $query->whereBetween('embedded_transactions.paid_at', [$startDate, $endDate]);
             })
             ->when(isset($filters['name']), function ($query) use ($filters) {
-                $query->whereHas('travelQuote', function ($query) use ($filters) {
-                    $name = $filters['name'];
+                $name = $filters['name'];
 
-                    // Check if `quoteRequestEntityMapping` exists
-                    $hasMapping = $query->quoteRequestEntityMapping()->exists();
-
-                    // Apply the filter on `first_name` and `last_name` if mapping exists
-                    $query->where(function ($query) use ($name, $hasMapping) {
-                        if ($hasMapping) {
-                            $query->where('first_name', 'like', "%{$name}%")
-                                ->orWhere('last_name', 'like', "%{$name}%");
-                        } else {
-                            // Apply the default search even if mapping doesn't exist
-                            $query->where('customer.insured_first_name', 'like', "%{$name}%")
-                                ->orWhere('customer.insured_last_name', 'like', "%{$name}%");
-                        }
-                    });
+                $query->whereHas('travelQuote', function ($query) use ($name) {
+                    $query->where('first_name', 'like', "%{$name}%")
+                    ->orWhere('last_name', 'like', "%{$name}%");
                 });
             })
             ->when(isset($filters['email']), function ($query) use ($filters) {
