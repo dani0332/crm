@@ -178,4 +178,9 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->hasMany(TravelDestination::class, 'quote_id', 'id');
     }
+
+    public function embeddedTransaction() 
+    {
+        return $this->hasOne(EmbeddedTransaction::class, 'code', 'code');
+    }
 }

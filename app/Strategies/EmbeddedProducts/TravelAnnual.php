@@ -2,6 +2,8 @@
 
 namespace App\Strategies\EmbeddedProducts;
 
+use App\Enums\PaymentStatusEnum;
+use App\Models\EmbeddedTransaction;
 use App\Models\TravelQuote;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -46,6 +48,87 @@ class TravelAnnual extends EmbeddedProduct
         ];
     }
 
+    public function filterReport($ep, $filters) 
+    {
+        $productTransaction = EmbeddedTransaction::whereHas('product.embeddedProduct', function ($query) use ($ep) {
+            $query->where('id', $ep->id);
+        });
+        $dataset = $productTransaction->with(
+            'product.embeddedProduct',
+            'travelQuote',
+            'travelQuote.customer',
+            'travelQuote.customer.nationality',
+            'travelQuote.quoteStatus',
+            'travelQuote.advisor',
+            'travelQuote.quoteRequestEntityMapping',
+        )->where('embedded_transactions.is_selected', true)
+        ->where('embedded_transactions.payment_status_id', PaymentStatusEnum::CAPTURED)
+            ->when(isset($filters['ref_id']), function ($query) use ($filters) {
+                $query->where('embedded_transactions.code', 'like', "%{$filters['ref_id']}%");
+            })
+            ->when(isset($filters['months']), function ($query) use ($filters) {
+                $startDate = Carbon::parse($filters['months'])->startOfMonth()->format('Y-m-d');
+                $endDate = Carbon::parse($filters['months'])->endOfMonth()->format('Y-m-d');
+                $query->whereBetween('embedded_transactions.paid_at', [$startDate, $endDate]);
+            })
+            ->when(isset($filters['name']), function ($query) use ($filters) {
+                $query->whereHas('travelQuote', function ($query) use ($filters) {
+                    $name = $filters['name'];
+
+                    // Check if `quoteRequestEntityMapping` exists
+                    $hasMapping = $query->quoteRequestEntityMapping()->exists();
+
+                    // Apply the filter on `first_name` and `last_name` if mapping exists
+                    $query->where(function ($query) use ($name, $hasMapping) {
+                        if ($hasMapping) {
+                            $query->where('first_name', 'like', "%{$name}%")
+                                ->orWhere('last_name', 'like', "%{$name}%");
+                        } else {
+                            // Apply the default search even if mapping doesn't exist
+                            $query->where('customer.insured_first_name', 'like', "%{$name}%")
+                                ->orWhere('customer.insured_last_name', 'like', "%{$name}%");
+                        }
+                    });
+                });
+            })
+            ->when(isset($filters['email']), function ($query) use ($filters) {
+                $query->whereHas('travelQuote', function ($query) use ($filters) {
+                    $email = $filters['email'];
+                    $query->where('email', 'like', "%{$email}%");
+                });
+            })
+            ->when(isset($filters['date_of_purchase']), function ($query) use ($filters) {
+                $query->whereHas('travelQuote', function ($query) use ($filters) {
+                    $startDate = Carbon::parse($filters['date_of_purchase'][0])->startOfDay();
+                    $endDate = Carbon::parse($filters['date_of_purchase'][1])->endOfDay();
+                    $query->whereBetween('policy_issuance_date', [$startDate, $endDate]);
+                });
+            });
+
+        $sortBy = 'embedded_transactions.id';
+        $sortOrder = 'desc';
+        if (! empty($filters['sortBy']) && ! empty($filters['sortType'])) {
+            $sortableColumns = [
+                'payment_date' => 'embedded_transactions.paid_at',
+                'contribution_amount' => 'embedded_transactions.price_with_vat',
+            ];
+            $sortBy = $sortableColumns[$filters['sortBy']] ?? 'embedded_transactions.id';
+            $sortOrder = $filters['sortType'] ?? 'desc';
+        }
+
+        $dataset = $dataset->orderBy($sortBy, $sortOrder);
+
+        if (isset($filters['excel_export']) && $filters['excel_export'] == true) {
+            $dataset = $dataset->get();
+        } else {
+            $dataset = $dataset->simplePaginate()->withQueryString();
+        }
+
+
+
+        return $dataset;
+    }
+
     /**
      * Retrieves sold transaction data from a dataset.
      *
@@ -55,8 +138,7 @@ class TravelAnnual extends EmbeddedProduct
     {
         $dataset->each(function ($item) {
             $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
-            $quoteObject = $item->quoteRequest;
-            $quoteObject = TravelQuote::where('uuid', $quoteObject->code)->with('customer')->first();
+            $quoteObject = $quoteObject->travelQuote ?? $item->quoteRequest;
             $status = $quoteObject->quoteStatus->text ?? '';
             $customer = $quoteObject->customer ?? null;
             $advisorName = $quoteObject->advisor->name ?? '';
