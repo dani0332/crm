@@ -363,29 +363,7 @@ const showSendAndBookPolicyButton = computed(() => {
   }
   return props.bookPolicyDetails?.sendButton && can(permission);
 });
-const isPaymentPaidWithoutSageReceiptID = computed(() => {
-  let payment = props.payments[0];
-  let paymentSplits = payment?.payment_splits;
-  //Skip the check for Credit Approval Payment Method
-  if (payment.payment_methods_code != paymentMethodsEnum.CreditApproval) {
-    //For split payments frequency, all split should have sage receipt id, for others only first child payment should have sage receipt id
-    if (payment.frequency == paymentFrequencyEnum.SPLIT_PAYMENTS) {
-      let paymentSplitsWithSageReceiptID = paymentSplits.filter(
-        splitPayment => splitPayment.sage_reciept_id,
-      );
-      if (paymentSplitsWithSageReceiptID.length == payment.total_payments) {
-        return false;
-      } else {
-        return true;
-      }
-    } else {
-      let firstSplitPayment = paymentSplits[0];
-      if (!firstSplitPayment.sage_reciept_id) return true;
-      else return false;
-    }
-  }
-  return false;
-});
+
 const disableSendAndBookPolicyButton = computed(() => {
   let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
   let permission = permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON;
@@ -891,22 +869,15 @@ const isShowingTransactionPaymentStatus = computed(() => {
                       color="orange"
                       class="mt-4"
                       @click.prevent="confirmSendPolicy"
-                      :disabled="
-                        bp.isEditing ||
-                        is_lacking_payment ||
-                        isPaymentPaidWithoutSageReceiptID
-                      "
+                      :disabled="bp.isEditing || is_lacking_payment"
                       v-if="showSendAndBookPolicyButton"
                     >
                       {{ props.bookPolicyDetails?.text }}
                     </x-button>
                     <template #tooltip>
                       <span class="custom-tooltip-content">
-                        {{
-                          isPaymentPaidWithoutSageReceiptID
-                            ? 'Action needed: Please update payment to generate Sage Receipt ID.'
-                            : 'Action Needed: Please revise payment details to reflect plan changes.'
-                        }}
+                        Action Needed: Please revise payment details to reflect
+                        plan changes.
                       </span>
                     </template>
                   </x-tooltip>
@@ -917,11 +888,7 @@ const isShowingTransactionPaymentStatus = computed(() => {
                     color="orange"
                     class="mt-4"
                     @click.prevent="confirmSendPolicy"
-                    :disabled="
-                      bp.isEditing ||
-                      is_lacking_payment ||
-                      isPaymentPaidWithoutSageReceiptID
-                    "
+                    :disabled="bp.isEditing || is_lacking_payment"
                     v-if="showSendAndBookPolicyButton"
                   >
                     {{ props.bookPolicyDetails?.text }}
@@ -1039,8 +1006,7 @@ const isShowingTransactionPaymentStatus = computed(() => {
                         :disabled="
                           !props.bookPolicyDetails?.bookButton ||
                           bp.isEditing ||
-                          !can(permissionsEnum.BOOK_POLICY_BUTTON) ||
-                          isPaymentPaidWithoutSageReceiptID
+                          !can(permissionsEnum.BOOK_POLICY_BUTTON)
                         "
                         @click.prevent="confirmSendPolicy"
                       >
@@ -1049,11 +1015,9 @@ const isShowingTransactionPaymentStatus = computed(() => {
                       <template #tooltip>
                         <span>
                           {{
-                            isPaymentPaidWithoutSageReceiptID
-                              ? 'Action needed: Please update payment to generate Sage Receipt ID.'
-                              : `Cancellation for the ${bpForm.parent_duplicate_quote_id} is still pending`
-                          }}</span
-                        >
+                            `Cancellation for the ${bpForm.parent_duplicate_quote_id} is still pending`
+                          }}
+                        </span>
                       </template>
                     </x-tooltip>
 
@@ -1065,19 +1029,14 @@ const isShowingTransactionPaymentStatus = computed(() => {
                       :disabled="
                         !props.bookPolicyDetails?.bookButton ||
                         bp.isEditing ||
-                        !can(permissionsEnum.BOOK_POLICY_BUTTON) ||
-                        isPaymentPaidWithoutSageReceiptID
+                        !can(permissionsEnum.BOOK_POLICY_BUTTON)
                       "
                       @click.prevent="confirmSendPolicy"
                     >
                       <x-tooltip>
                         <span>{{ props.bookPolicyDetails?.text }}</span>
                         <template #tooltip>
-                          <span>{{
-                            isPaymentPaidWithoutSageReceiptID
-                              ? 'Action needed: Please update payment to generate Sage Receipt ID.'
-                              : 'Please update the booking details.'
-                          }}</span>
+                          <span>Please update the booking details.</span>
                         </template>
                       </x-tooltip>
                     </x-button>
@@ -1094,11 +1053,7 @@ const isShowingTransactionPaymentStatus = computed(() => {
                         Book Policy
                       </x-button>
                       <template #tooltip>
-                        <span>{{
-                          isPaymentPaidWithoutSageReceiptID
-                            ? 'Action needed: Please update payment to generate Sage Receipt ID.'
-                            : 'Please update the booking details.'
-                        }}</span>
+                        <span>Please update the booking details.</span>
                       </template>
                     </x-tooltip>
                   </template>
