@@ -895,14 +895,17 @@ class SendEmailCustomerService extends BaseService
                 'Content-Type' => 'application/json',
             ];
 
-            $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
+            $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
-            if ($emailAttachments) {
-                $attachments = [];
-                foreach ($emailAttachments as $emailAttachment) {
+            $documents = $emailData->documents;
+            $attachments = [];
+            if (! empty($documents)) {
+                foreach ($documents as $document) {
+                    $path = $document->doc_url;
+                    $documentURL = $path !== '' ? $websiteURL.$path : '';
                     $attachments[] = [
-                        'url' => storageUrl().$emailAttachment,
-                        'name' => basename($emailAttachment),
+                        'url' => $documentURL,
+                        'name' => 'InsuranceMarket.ae™ '.$document->document_type_text.' for Policy Number '.$emailData->policyNumber.'-'.$emailData->carQuoteId.'.'.pathinfo($documentURL, PATHINFO_EXTENSION),
                     ];
                 }
             }
@@ -925,7 +928,7 @@ class SendEmailCustomerService extends BaseService
                 'tags' => [
                     $tag,
                 ],
-                'attachment' => isset($attachments) ? $attachments : null,
+                'attachment' => $attachments ?? null,
             ];
 
             $checkIsHealthOrGroupMedical = $quoteTypeId == QuoteTypeId::Health || $emailData->isGroupMedical;
