@@ -7,6 +7,7 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\CarPlanType;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RuleTypeEnum;
@@ -33,7 +34,6 @@ use App\Models\User;
 use App\Models\UserTeams;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use App\Enums\PaymentStatusEnum;
 
 class CarAllocationService extends AllocationService
 {
