@@ -740,7 +740,6 @@ class SendEmailCustomerService extends BaseService
                     ];
                 }
             }
-
             if (is_array($emailData->handBookDocuments) && ! empty($emailData->handBookDocuments)) {
                 $attachments = array_merge($attachments, $emailData->handBookDocuments);
             }
@@ -781,7 +780,7 @@ class SendEmailCustomerService extends BaseService
                 'tags' => [
                     $tag,
                 ],
-                'attachment' => isset($attachments) ? $attachments : null,
+                'attachment' => isset($attachments) &&  count($attachments) > 0 ? $attachments : null,
                 'bcc' => [],
             ];
 
