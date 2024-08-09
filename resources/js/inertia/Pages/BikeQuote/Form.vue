@@ -74,7 +74,8 @@ const quoteForm = useForm({
   has_ncd_supporting_documents_dropdown: null,
   claim_history_id: props.bikeQuoteDetail?.claim_history_id || null,
   insurance_type_id: props.bikeQuoteDetail?.insurance_type_id || null,
-  emirate_of_registration_id: props.bikeQuoteDetail?.emirate_of_registration_id || null,
+  emirate_of_registration_id:
+    props.bikeQuoteDetail?.emirate_of_registration_id || null,
   seat_capacity: props.bikeQuoteDetail?.seat_capacity || '',
   make_id: props.bikeQuoteDetail?.make_id || null,
   model_id: props.bikeQuoteDetail?.model_id || null,

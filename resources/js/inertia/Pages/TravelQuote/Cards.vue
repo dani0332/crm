@@ -1,6 +1,4 @@
 <script setup>
-import { onMounted } from 'vue';
-
 const props = defineProps({
   quoteStatusEnum: Object,
   quoteTypeId: String,

@@ -193,7 +193,7 @@ const emailConversionReportTableHeader = [
           :key="index"
           v-slot="{ selected }"
         >
-          <x-tooltip position="top">
+          <x-tooltip placement="top">
             <button
               :class="[
                 'underline decoration-dotted rounded-lg px-3 py-2 md:min-w-[15%] text-sm font-medium text-gray-800 transition duration-200 ease-in-out uppercase',
@@ -223,7 +223,7 @@ const emailConversionReportTableHeader = [
             hide-rows-per-page
           >
             <template #header-quote_batch_id="header">
-              <x-tooltip align="left" position="top">
+              <x-tooltip placement="top">
                 <span class="underline decoration-dotted">{{
                   header.text
                 }}</span>
@@ -240,7 +240,7 @@ const emailConversionReportTableHeader = [
 
             <template #header-conversion_captured="header">
               <div class="customize-header underline">
-                <x-tooltip position="bottom" class="arrow-t underline">
+                <x-tooltip placement="bottom" class="underline">
                   <span
                     class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600"
                   >
@@ -257,7 +257,7 @@ const emailConversionReportTableHeader = [
 
             <template #header-total_revived="header">
               <div class="customize-header underline">
-                <x-tooltip position="bottom" class="arrow-t underline">
+                <x-tooltip placement="bottom" class="underline">
                   <span
                     class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600"
                   >
@@ -274,7 +274,7 @@ const emailConversionReportTableHeader = [
 
             <template #header-ratio="header">
               <div class="customize-header underline">
-                <x-tooltip position="bottom" class="arrow-t underline">
+                <x-tooltip placement="bottom" class="underline">
                   <span
                     class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600"
                   >
@@ -300,7 +300,7 @@ const emailConversionReportTableHeader = [
             hide-rows-per-page
           >
             <template #header-quote_batch_id="header">
-              <x-tooltip align="left" position="top">
+              <x-tooltip placement="top">
                 <span class="underline decoration-dotted">{{
                   header.text
                 }}</span>
@@ -317,7 +317,7 @@ const emailConversionReportTableHeader = [
 
             <template #header-captured="header">
               <div class="customize-header underline">
-                <x-tooltip position="bottom" class="arrow-t underline">
+                <x-tooltip placement="bottom" class="underline">
                   <span
                     class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600"
                   >
@@ -334,7 +334,7 @@ const emailConversionReportTableHeader = [
 
             <template #header-authorized="header">
               <div class="customize-header underline">
-                <x-tooltip position="bottom" class="arrow-t underline">
+                <x-tooltip placement="bottom" class="underline">
                   <span
                     class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600"
                   >
@@ -351,7 +351,7 @@ const emailConversionReportTableHeader = [
 
             <template #header-ratio="header">
               <div class="customize-header underline">
-                <x-tooltip position="bottom" class="arrow-t underline">
+                <x-tooltip placement="bottom" class="underline">
                   <span
                     class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600"
                   >
@@ -377,7 +377,7 @@ const emailConversionReportTableHeader = [
             hide-rows-per-page
           >
             <template #header-quote_batch_id="header">
-              <x-tooltip align="left" position="top">
+              <x-tooltip placement="top">
                 <span class="underline decoration-dotted">{{
                   header.text
                 }}</span>
@@ -394,7 +394,7 @@ const emailConversionReportTableHeader = [
 
             <template #header-reply_received_count="header">
               <div class="customize-header underline">
-                <x-tooltip position="bottom" class="arrow-t underline">
+                <x-tooltip placement="bottom" class="underline">
                   <span
                     class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600"
                   >
@@ -411,7 +411,7 @@ const emailConversionReportTableHeader = [
 
             <template #header-email_sent_count="header">
               <div class="customize-header underline">
-                <x-tooltip position="bottom" class="arrow-t underline">
+                <x-tooltip placement="bottom" class="underline">
                   <span
                     class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600"
                   >
@@ -427,7 +427,7 @@ const emailConversionReportTableHeader = [
             </template>
             <template #header-ratio="header">
               <div class="customize-header underline">
-                <x-tooltip position="bottom" class="arrow-t underline">
+                <x-tooltip placement="bottom" class="underline">
                   <span
                     class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600"
                   >

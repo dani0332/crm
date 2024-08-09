@@ -142,7 +142,7 @@ const totalLeads = reactive({
 
 function calculateGrossConversion(item) {
   if (item) {
-    const totalLeadsCount = item.total_leads;
+    const totalLeadsCount = item.total_leads - item.cancelled_leads;
     const manualCreated = item.manual_created;
     const saleLeads = item.sale_leads;
     const createdSaleLeads = item.created_sale_leads;
@@ -166,7 +166,7 @@ function calculateTotalNetConversion(data) {
   let saleLeads = 0;
   let createdSaleLeads = 0;
   data.forEach(row => {
-    totalLeads += Number(row.total_leads);
+    totalLeads += Number(row.total_leads) - Number(row.cancelled_leads);
     manualCreated += Number(row.manual_created);
     saleLeads += Number(row.sale_leads);
     createdSaleLeads += Number(row.created_sale_leads);
@@ -186,7 +186,7 @@ function calculateTotalGrossConversion(data) {
   let saleLeads = 0;
   let createdSaleLeads = 0;
   data.forEach(row => {
-    totalLeads += Number(row.total_leads);
+    totalLeads += Number(row.total_leads) - Number(row.cancelled_leads);
     manualCreated += Number(row.manual_created);
     saleLeads += Number(row.sale_leads);
     createdSaleLeads += Number(row.created_sale_leads);
@@ -199,7 +199,7 @@ function calculateTotalGrossConversion(data) {
 }
 
 function calculateNetConversion(row) {
-  const totalLeads = row.total_leads;
+  const totalLeads = row.total_leads - row.cancelled_leads;
   const manualCreated = row.manual_created;
   const badLeads = row.bad_leads;
   const manualCreatedBadLeads = row.manual_created_bad_leads;
@@ -232,13 +232,12 @@ const getFiltersObject = () => {
     insurance_for: '',
     travel_coverage: '',
     segment_filter: 'all',
-  }
+  };
 };
 
 let filters = reactive(getFiltersObject());
 
 function onSubmit(isValid, isMounted = false) {
-
   if (!filters.lob && isMounted === false) {
     toast.error({
       title: 'Please select LOB',
@@ -277,7 +276,9 @@ function onSubmit(isValid, isMounted = false) {
           teams: Array.isArray(payLoad.teams) ? payLoad.teams : [payLoad.teams],
         }),
         ...(payLoad.sub_teams && {
-          sub_teams: Array.isArray(payLoad.sub_teams) ? payLoad.sub_teams : [payLoad.sub_teams],
+          sub_teams: Array.isArray(payLoad.sub_teams)
+            ? payLoad.sub_teams
+            : [payLoad.sub_teams],
         }),
       },
       preserveState: true,
@@ -327,62 +328,62 @@ const currentTypeTitle = computed(() => {
 });
 
 const quoteTypesOptions = computed(() => {
-    return Object.keys(page.props.filterOptions.lob).map(text => ({
-        label: text,
-        value: page.props.filterOptions.lob[text],
-    }));
+  return Object.keys(page.props.filterOptions.lob).map(text => ({
+    label: text,
+    value: page.props.filterOptions.lob[text],
+  }));
 });
 
 const vehicleTypeOptions = computed(() => {
-    const types = page.props.filterOptions.vehicle_type;
-    if(types[filters.lob]) {
-        return [
-            {
-                value: "All",
-                label: "All",
-            },
-            ...types[filters.lob].map(option => ({
-                value: option.value,
-                label: option.label,
-            }))
-        ];
-    }
+  const types = page.props.filterOptions.vehicle_type;
+  if (types[filters.lob]) {
+    return [
+      {
+        value: 'All',
+        label: 'All',
+      },
+      ...types[filters.lob].map(option => ({
+        value: option.value,
+        label: option.label,
+      })),
+    ];
+  }
 
   return [];
 });
 
 const insuranceTypeOptions = computed(() => {
-    const types = page.props.filterOptions.insurance_type;
-    if(types[filters.lob]) {
-        return types[filters.lob].map(option => ({
-            value: option.value.toString(),
-            label: option.label,
-        }));
-    }
+  const types = page.props.filterOptions.insurance_type;
+  if (types[filters.lob]) {
+    return types[filters.lob].map(option => ({
+      value: option.value.toString(),
+      label: option.label,
+    }));
+  }
 
   return [];
 });
 
 const insuranceForOptions = computed(() => {
-    const types = page.props.filterOptions.insurance_for;
-    if(types[filters.lob]) {
-        return types[filters.lob].map(option => ({
-            value: option.id.toString(),
-            label: option.text,
-        }));
-    }
+  const types = page.props.filterOptions.insurance_for;
+  if (types[filters.lob]) {
+    return types[filters.lob].map(option => ({
+      value: option.id.toString(),
+      label: option.text,
+    }));
+  }
 
   return [];
 });
 
 const travelCoverageOptions = computed(() => {
-    const types = page.props.filterOptions.travel_coverage;
-    if (types[filters.lob] && types[filters.lob][filters.insurance_type]) {
-        return types[filters.lob][filters.insurance_type].map(option => ({
-            value: option.value,
-            label: option.label,
-        }));
-    }
+  const types = page.props.filterOptions.travel_coverage;
+  if (types[filters.lob] && types[filters.lob][filters.insurance_type]) {
+    return types[filters.lob][filters.insurance_type].map(option => ({
+      value: option.value,
+      label: option.label,
+    }));
+  }
 
   return [];
 });
@@ -461,13 +462,16 @@ const cleanFilters = filters => {
 };
 
 const removeUnusedFilters = filters => {
-    const filtersByLob = page.props.filtersByLob;
-    Object.keys(filtersByLob).forEach(key => {
-        if(filtersByLob[key]['lobs'] && !filtersByLob[key]['lobs'].includes(filters.lob)) {
-            delete filters[key];
-        }
-    });
-    return filters;
+  const filtersByLob = page.props.filtersByLob;
+  Object.keys(filtersByLob).forEach(key => {
+    if (
+      filtersByLob[key]['lobs'] &&
+      !filtersByLob[key]['lobs'].includes(filters.lob)
+    ) {
+      delete filters[key];
+    }
+  });
+  return filters;
 };
 
 function setQueryStringFilters() {
@@ -489,72 +493,77 @@ const calculateTotalSum = (data, key) => {
 };
 
 const onLobChange = (e, isOnMounted = false) => {
+  if (!isOnMounted) {
+    filters.teams = [];
+    filters.sub_teams = [];
+    filters.advisors = [];
+    teamOptions.value = [];
+    subteamOptions.value = [];
+    advisorOptions.value = [];
+    filters.insurance_type = '';
+    filters.insurance_for = '';
+    filters.travel_coverage = '';
+    filters.isCommercial = '';
+    filters.vehicle_type = 'All';
+    filters.is_ecommerce = '';
+    filters.tiers = [];
+  }
 
-    if(!isOnMounted) {
-        filters.teams = [];
-        filters.sub_teams = [];
-        filters.advisors = [];
-        teamOptions.value = [];
-        subteamOptions.value = [];
-        advisorOptions.value = [];
-        filters.insurance_type = '';
-        filters.insurance_for = '';
-        filters.travel_coverage = '';
-        filters.isCommercial = '';
-        filters.vehicle_type = 'All';
-        filters.is_ecommerce = '';
-        filters.tiers = [];
-    }
-
-    if([quoteTypeCodeEnum.Car,
-        quoteTypeCodeEnum.Health,
-        quoteTypeCodeEnum.CORPLINE,
-        quoteTypeCodeEnum.GroupMedical
-    ].includes(filters.lob)) {
-        loadTeams(e);
-    } else {
-        loadAdvisorsByLob(e);
-    }
+  if (
+    [
+      quoteTypeCodeEnum.Car,
+      quoteTypeCodeEnum.Health,
+      quoteTypeCodeEnum.CORPLINE,
+      quoteTypeCodeEnum.GroupMedical,
+    ].includes(filters.lob)
+  ) {
+    loadTeams(e);
+  } else {
+    loadAdvisorsByLob(e);
+  }
 };
 
 const onTeamChange = (e, isOnMounted = false) => {
+  if (!isOnMounted) {
+    filters.sub_teams = [];
+    subteamOptions.value = [];
+    filters.advisors = [];
+    advisorOptions.value = [];
+  }
 
-    if(!isOnMounted) {
-        filters.sub_teams = [];
-        subteamOptions.value = [];
-        filters.advisors = [];
-        advisorOptions.value = [];
+  if (
+    [quoteTypeCodeEnum.Car, quoteTypeCodeEnum.GroupMedical].includes(
+      filters.lob,
+    )
+  ) {
+    loadSubTeams(e);
+
+    if (!(isOnMounted && filters.sub_teams.length > 0)) {
+      loadAdvisors(e);
     }
-
-    if([quoteTypeCodeEnum.Car,
-        quoteTypeCodeEnum.GroupMedical
-    ].includes(filters.lob)) {
-        loadSubTeams(e);
-
-        if(!(isOnMounted && filters.sub_teams.length > 0)) {
-            loadAdvisors(e);
-        }
-    } else {
-        loadAdvisors(e);
-    }
+  } else {
+    loadAdvisors(e);
+  }
 };
 
 const onSubTeamChange = (e, isOnMounted = false) => {
+  if (!isOnMounted) {
+    filters.advisors = [];
+  }
 
-    if(!isOnMounted) {
-        filters.advisors = [];
-    }
+  advisorOptions.value = [];
 
-    advisorOptions.value = [];
-
-    if (e.length == 0 &&
-        [quoteTypeCodeEnum.Car, quoteTypeCodeEnum.GroupMedical].includes(filters.lob) &&
-        filters.teams.length > 0) {
-
-        loadAdvisors(filters.teams);
-    } else {
-        loadAdvisorsBySubteams(e);
-    }
+  if (
+    e.length == 0 &&
+    [quoteTypeCodeEnum.Car, quoteTypeCodeEnum.GroupMedical].includes(
+      filters.lob,
+    ) &&
+    filters.teams.length > 0
+  ) {
+    loadAdvisors(filters.teams);
+  } else {
+    loadAdvisorsBySubteams(e);
+  }
 };
 
 const loadTeams = e => {
@@ -701,21 +710,21 @@ const loadAdvisorsByLob = e => {
 };
 
 const onInsuranceTypeChange = e => {
-    filters.travel_coverage = '';
-}
+  filters.travel_coverage = '';
+};
 
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 
 const setDefaultValues = () => {
-    if (page.props.defaultFilters && !params['page']) {
-        Object.keys(page.props.defaultFilters).forEach(key => {
-            if (filters.hasOwnProperty(key)) {
-                filters[key] = page.props.defaultFilters[key];
-            }
-        });
-    }
-}
+  if (page.props.defaultFilters && !params['page']) {
+    Object.keys(page.props.defaultFilters).forEach(key => {
+      if (filters.hasOwnProperty(key)) {
+        filters[key] = page.props.defaultFilters[key];
+      }
+    });
+  }
+};
 
 onMounted(() => {
   setDefaultValues();
@@ -744,51 +753,58 @@ watch(
   },
 );
 
-const canShow = (element) => {
-    if(page.props.filtersByLob &&
-    page.props.filtersByLob[element]) {
-        const lobs = page.props.filtersByLob[element]['lobs'] ?? [];
+const canShow = element => {
+  if (page.props.filtersByLob && page.props.filtersByLob[element]) {
+    const lobs = page.props.filtersByLob[element]['lobs'] ?? [];
 
-        if((lobs.length == 0 ||
-        (lobs.length != 0 && Object.values(lobs).includes(filters.lob)))) {
-            return true;
-        }
-
-        return false;
+    if (
+      lobs.length == 0 ||
+      (lobs.length != 0 && Object.values(lobs).includes(filters.lob))
+    ) {
+      return true;
     }
 
-    return true;
-}
+    return false;
+  }
 
-const isDisabled = (element) => {
-    if(page.props.filtersByLob &&
-      page.props.filtersByLob[element] &&
-      filters.lob) {
-        const canView = page.props.filtersByLob[element]['can_view'][filters.lob] ?? true;
+  return true;
+};
 
-        if(canView) {
-            return true;
-        }
+const isDisabled = element => {
+  if (
+    page.props.filtersByLob &&
+    page.props.filtersByLob[element] &&
+    filters.lob
+  ) {
+    const canView =
+      page.props.filtersByLob[element]['can_view'][filters.lob] ?? true;
 
-        return false;
+    if (canView) {
+      return true;
     }
 
-    return true;
-}
+    return false;
+  }
+
+  return true;
+};
 
 const getAdvisorLabel = () => {
-    let label = 'Advisors'
-    if ([quoteTypeCodeEnum.Car,
-        quoteTypeCodeEnum.Health,
-        quoteTypeCodeEnum.CORPLINE,
-        quoteTypeCodeEnum.GroupMedical].includes(filters.lob) &&
-    (!filters.teams || filters.teams.length == 0)) {
-        label = 'Advisors (select teams first)';
-    }
+  let label = 'Advisors';
+  if (
+    [
+      quoteTypeCodeEnum.Car,
+      quoteTypeCodeEnum.Health,
+      quoteTypeCodeEnum.CORPLINE,
+      quoteTypeCodeEnum.GroupMedical,
+    ].includes(filters.lob) &&
+    (!filters.teams || filters.teams.length == 0)
+  ) {
+    label = 'Advisors (select teams first)';
+  }
 
-    return label;
-}
-
+  return label;
+};
 </script>
 
 <template>
@@ -801,7 +817,6 @@ const getAdvisorLabel = () => {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-
         <ComboBox
           v-model="filters.lob"
           label="LOB"
@@ -857,13 +872,15 @@ const getAdvisorLabel = () => {
           :max-limit="8"
         />
 
-        <x-tooltip position="top" v-if="canShow('tiers')">
-          <template #tooltip v-if="filters.lob === quoteTypeCodeEnum.Bike"> Development for Bike Tiers still in progress </template>
+        <x-tooltip placement="top" v-if="canShow('tiers')">
+          <template #tooltip v-if="filters.lob === quoteTypeCodeEnum.Bike">
+            Development for Bike Tiers still in progress
+          </template>
           <template #tooltip v-else> Select Tiers </template>
           <ComboBox
             :disabled="filters.lob === quoteTypeCodeEnum.Bike"
             :class="{
-                'opacity-50': filters.lob === quoteTypeCodeEnum.Bike,
+              'opacity-50': filters.lob === quoteTypeCodeEnum.Bike,
             }"
             v-model="filters.tiers"
             label="Tiers"
@@ -878,56 +895,56 @@ const getAdvisorLabel = () => {
         </x-tooltip>
 
         <ComboBox
-        v-model="filters.leadSources"
-        label="Lead Source"
-        placeholder="Search by Lead Source"
-        :options="
+          v-model="filters.leadSources"
+          label="Lead Source"
+          placeholder="Search by Lead Source"
+          :options="
             Object.keys(filterOptions.leadSources).map(key => ({
-            value: key,
-            label: filterOptions.leadSources[key],
+              value: key,
+              label: filterOptions.leadSources[key],
             }))
-        "
-        :max-limit="3"
+          "
+          :max-limit="3"
         />
 
         <ComboBox
-        v-if="canShow('teams')"
-        :disabled="!isDisabled('teams')"
-        :class="{
+          v-if="canShow('teams')"
+          :disabled="!isDisabled('teams')"
+          :class="{
             'opacity-50': !isDisabled('teams'),
-        }"
-        v-model="filters.teams"
-        label="Teams"
-        placeholder="Search by Teams"
-        :options="teamOptions"
-        @update:model-value="onTeamChange"
-        :loading="loaders.teamsOptions"
+          }"
+          v-model="filters.teams"
+          label="Teams"
+          placeholder="Search by Teams"
+          :options="teamOptions"
+          @update:model-value="onTeamChange"
+          :loading="loaders.teamsOptions"
         />
 
         <ComboBox
-        v-if="canShow('sub_teams')"
-        :disabled="!isDisabled('sub_teams')"
-        :class="{
+          v-if="canShow('sub_teams')"
+          :disabled="!isDisabled('sub_teams')"
+          :class="{
             'opacity-50': !isDisabled('sub_teams'),
-        }"
-        v-model="filters.sub_teams"
-        label="SubTeams"
-        placeholder="Search by SubTeams"
-        :options="subteamOptions"
-        @update:model-value="onSubTeamChange"
-        :loading="loaders.subteamOptions"
+          }"
+          v-model="filters.sub_teams"
+          label="SubTeams"
+          placeholder="Search by SubTeams"
+          :options="subteamOptions"
+          @update:model-value="onSubTeamChange"
+          :loading="loaders.subteamOptions"
         />
 
         <ComboBox
-        v-if="canShow('advisors')"
-        :disabled="!isDisabled('advisors')"
-        :class="{
+          v-if="canShow('advisors')"
+          :disabled="!isDisabled('advisors')"
+          :class="{
             'opacity-50': !isDisabled('advisors'),
-        }"
-        v-model="filters.advisors"
-        :label="getAdvisorLabel()"
-        :options="advisorOptions"
-        :loading="loaders.advisorOptions"
+          }"
+          v-model="filters.advisors"
+          :label="getAdvisorLabel()"
+          :options="advisorOptions"
+          :loading="loaders.advisorOptions"
         />
         <x-select
           v-if="canShow('isCommercial')"
@@ -945,7 +962,10 @@ const getAdvisorLabel = () => {
           v-model="filters.insurance_type"
           label="Insurance Type"
           placeholder="Select insurance type"
-          :options="[ { value: '', label: 'Select insurance type' }, ...insuranceTypeOptions ]"
+          :options="[
+            { value: '', label: 'Select insurance type' },
+            ...insuranceTypeOptions,
+          ]"
           class="w-full"
           @update:model-value="onInsuranceTypeChange"
         />
@@ -954,22 +974,31 @@ const getAdvisorLabel = () => {
           v-model="filters.insurance_for"
           label="Insurance For"
           placeholder="Select insurance for"
-          :options="[ { value: '', label: 'Select insurance for' }, ...insuranceForOptions ]"
+          :options="[
+            { value: '', label: 'Select insurance for' },
+            ...insuranceForOptions,
+          ]"
           class="w-full"
         />
         <x-select
           v-if="canShow('travel_coverage')"
           v-model="filters.travel_coverage"
-          :label=" !filters.insurance_type
-                ? `Travel Coverage (Select Insurance Type first)`
-                : `Travel Coverage`"
-            :options="[ { value: '', label: 'Select travel coverage' }, ...travelCoverageOptions ]"
+          :label="
+            !filters.insurance_type
+              ? `Travel Coverage (Select Insurance Type first)`
+              : `Travel Coverage`
+          "
+          :options="[
+            { value: '', label: 'Select travel coverage' },
+            ...travelCoverageOptions,
+          ]"
           placeholder="Select travel coverage"
-
           class="w-full"
         />
         <ComboBox
-          v-if="can(permissionsEnum.SEGMENT_FILTER) && canShow('segment_filter')"
+          v-if="
+            can(permissionsEnum.SEGMENT_FILTER) && canShow('segment_filter')
+          "
           v-model="filters.segment_filter"
           label="Segment"
           placeholder="Select Segment"
@@ -1202,10 +1231,13 @@ const getAdvisorLabel = () => {
       </div>
     </div>
 
-    <x-modal v-model="totalLeads.modal" size="xl" show-close backdrop>
-      <template #header>
-        <div class="text-center">{{ currentTypeTitle }}</div>
-      </template>
+    <x-modal
+      v-model="totalLeads.modal"
+      size="xl"
+      :title="`${currentTypeTitle}`"
+      show-close
+      backdrop
+    >
       <section class="min-h-[70vh]">
         <div v-if="!loaders.advisorLeadTable">
           <PaginateClient

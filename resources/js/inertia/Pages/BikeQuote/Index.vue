@@ -32,6 +32,8 @@ let availableFilters = {
   advisor_id: [],
   page: 1,
   previous_quote_policy_number_text: '',
+  payment_due_date: '',
+  booking_date: '',
 };
 const canExport = ref(false);
 const permissionAssignLeads = ref(false);
@@ -103,8 +105,8 @@ const tableHeader = [
   { text: 'Ref-ID', value: 'uuid' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
-    { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
-    { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
+  { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
+  { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
   { text: 'DOB', value: 'dob' },
   { text: 'LEAD STATUS', value: 'quote_status' },
   { text: 'ADVISOR', value: 'advisor' },
@@ -117,7 +119,6 @@ const tableHeader = [
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
   { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
   { text: 'Renewal Batch', value: 'renewal_batch' },
-
 ];
 
 const can = permission => useCan(permission);
@@ -148,44 +149,48 @@ const onDataExport = () => {
   window.open(url + '?' + new URLSearchParams(data).toString());
 };
 function daysAgoFromAuthorizedDate(authorizedDate) {
-    // Check if authorizedDate is null or undefined
-    if (!authorizedDate) {
-        return
-    }
-    const [datePart] = authorizedDate.split(' ');
+  // Check if authorizedDate is null or undefined
+  if (!authorizedDate) {
+    return;
+  }
+  const [datePart] = authorizedDate.split(' ');
 
-    const [day, month, year] = datePart.split('-').map(Number);
+  const [day, month, year] = datePart.split('-').map(Number);
 
-    const parsedDate = new Date(year, month - 1, day);
+  const parsedDate = new Date(year, month - 1, day);
 
-    // Check if the parsed date is valid
-    if (isNaN(parsedDate.getTime())) {
-        return "Invalid date";
-    }
+  // Check if the parsed date is valid
+  if (isNaN(parsedDate.getTime())) {
+    return 'Invalid date';
+  }
 
-    // Calculate the new date by adding 8 days to the authorized date
-    const newDate = new Date(parsedDate);
-    newDate.setDate(parsedDate.getDate() + 8);
+  // Calculate the new date by adding 8 days to the authorized date
+  const newDate = new Date(parsedDate);
+  newDate.setDate(parsedDate.getDate() + 8);
 
-    // Get the current date
-    const currentDate = new Date();
+  // Get the current date
+  const currentDate = new Date();
 
-    // Calculate the difference in time
-    const differenceInTime = newDate.getTime() - currentDate.getTime();
-    const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+  // Calculate the difference in time
+  const differenceInTime = newDate.getTime() - currentDate.getTime();
+  const differenceInDays = differenceInTime / (1000 * 3600 * 24);
 
-    // Check if the date has expired
-    if (Math.floor(differenceInDays) <= 0) {
-        return "Expired";
-    }
+  // Check if the date has expired
+  if (Math.floor(differenceInDays) <= 0) {
+    return 'Expired';
+  }
 
-    // Return the difference in days
-    return Math.floor(differenceInDays) + " days";
+  // Return the difference in days
+  return Math.floor(differenceInDays) + ' days';
 }
 watch(
   () => filters,
   () => {
-    if (filters.created_at_start && filters.created_at_end) {
+    if (
+      (filters.created_at_start && filters.created_at_end) ||
+      filters.payment_due_date ||
+      filters.booking_date
+    ) {
       canExport.value = true;
     } else {
       canExport.value = false;
@@ -193,6 +198,37 @@ watch(
   },
   { deep: true, immediate: true },
 );
+
+const resetDateFilters = filterName => {
+  const filterMappings = {
+    payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
+    booking_date: ['payment_due_date', 'created_at_start', 'created_at_end'],
+    created_at_start: ['booking_date', 'payment_due_date', 'created_at_end'],
+    created_at_end: ['booking_date', 'payment_due_date', 'created_at_start'],
+  };
+
+  const filtersToReset = filterMappings[filterName] || [];
+
+  filtersToReset.forEach(filter => {
+    filters[filter] = '';
+  });
+};
+
+[
+  'payment_due_date',
+  'booking_date',
+  'created_at_start',
+  'created_at_end',
+].forEach(filterName => {
+  watch(
+    () => filters[filterName],
+    newValue => {
+      if (newValue) {
+        resetDateFilters(filterName);
+      }
+    },
+  );
+});
 </script>
 
 <template>
@@ -219,7 +255,7 @@ watch(
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -346,6 +382,22 @@ watch(
           class="w-full"
           placeholder="Policy Number"
         />
+        <DatePicker
+          v-model="filters.payment_due_date"
+          label="Payment Due Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.booking_date"
+          label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -358,11 +410,12 @@ watch(
           >
             Export
           </x-button>
-          <x-tooltip v-else position="right">
+          <x-tooltip v-else placement="right">
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates are required to export data.
+                Created dates or payment due date or booking date are required
+                to export data.
               </span>
             </template>
           </x-tooltip>
@@ -412,12 +465,16 @@ watch(
         </Link>
         <span v-else>{{ code }}</span>
       </template>
-        <template #item-authorized_at="item">
-            <p v-if="item?.payments[0]?.payment_status_id === 4">{{ item?.payments[0]?.authorized_at }}</p>
-        </template>
-        <template #item-expiry_date="item">
-            <p v-if="item?.payments[0]?.payment_status_id === 4">{{daysAgoFromAuthorizedDate(item.payments[0].authorized_at)}}</p>
-        </template>
+      <template #item-authorized_at="item">
+        <p v-if="item?.payments[0]?.payment_status_id === 4">
+          {{ item?.payments[0]?.authorized_at }}
+        </p>
+      </template>
+      <template #item-expiry_date="item">
+        <p v-if="item?.payments[0]?.payment_status_id === 4">
+          {{ daysAgoFromAuthorizedDate(item.payments[0].authorized_at) }}
+        </p>
+      </template>
 
       <template #item-advisor="{ advisor }">
         {{ advisor?.name }}

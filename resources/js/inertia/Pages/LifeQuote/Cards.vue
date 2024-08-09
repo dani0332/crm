@@ -3,7 +3,7 @@ const props = defineProps({
   quoteStatusEnum: Object,
   quoteTypeId: String,
   lostReasons: Object,
-    quoteType: String,
+  quoteType: String,
 });
 const page = usePage();
 const dateFormat = date => {

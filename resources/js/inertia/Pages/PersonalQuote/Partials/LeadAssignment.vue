@@ -47,8 +47,8 @@ function onAssignLead(isValid) {
     props.quoteType.toLowerCase() === 'car'
       ? '/quotes/car/manualLeadAssign'
       : props.quoteType === 'tmlead'
-      ? '/telemarketing/tmLeadsAssign'
-      : `/quotes/${props.quoteType}/leadAssign`;
+        ? '/telemarketing/tmLeadsAssign'
+        : `/quotes/${props.quoteType}/leadAssign`;
 
   if (isValid) {
     assignForm

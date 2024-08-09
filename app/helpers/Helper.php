@@ -1,7 +1,9 @@
 <?php
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\IMCRMSearchTypesEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -10,6 +12,7 @@ use App\Enums\QuoteTypes;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessQuote;
 use App\Models\CustomerAdditionalInfo;
+use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
@@ -620,6 +623,19 @@ if (! function_exists('getRepositoryObject')) {
     }
 }
 
+if (! function_exists('getServiceObject')) {
+    function getServiceObject($quoteType)
+    {
+        if (checkPersonalQuotes($quoteType)) {
+            $quoteType = QuoteTypes::PERSONAL->value;
+        }
+
+        $quoteType = ucfirst($quoteType);
+
+        return 'App\\Services\\'.$quoteType.'QuoteService';
+    }
+}
+
 if (! function_exists('checkModifiedRecord')) {
     function checkModifiedRecord($firstDate, $secondDate): bool
     {
@@ -666,6 +682,38 @@ if (! function_exists('getIMLogo')) {
         return $isPDF ? public_path($imLogo) : asset($imLogo);
     }
 }
+if (! function_exists('mimeContentType')) {
+    function mimeContentType($ext = null, $mimeType = null)
+    {
+        $mime_types = [ // images
+            'png' => 'image/png',
+            'jpeg' => 'image/jpeg',
+            'jpg' => 'image/jpeg',
+            'gif' => 'image/gif',
+            'bmp' => 'image/bmp',
+            'ico' => 'image/vnd.microsoft.icon',
+            'tiff' => 'image/tiff',
+            'tif' => 'image/tiff',
+            'svg' => 'image/svg+xml',
+            'svgz' => 'image/svg+xml',
+
+            'pdf' => 'application/pdf',
+            'psd' => 'image/vnd.adobe.photoshop',
+            'ai' => 'application/postscript',
+            'eps' => 'application/postscript',
+            'ps' => 'application/postscript',
+        ];
+
+        if (! empty($ext)) {
+            array_key_exists($ext, $mime_types);
+
+            return $mime_types[$ext];
+        }
+        if (! empty($mimeType)) {
+            return array_search($mimeType, $mime_types);
+        }
+    }
+}
 
 if (! function_exists('apiResponse')) {
     function apiResponse($data, $statusCode = 200, $message = null)
@@ -693,6 +741,31 @@ if (! function_exists('apiResponse')) {
             'message' => $message,
             'status' => $statusCode,
         ], $statusCode);
+    }
+
+    if (! function_exists('generateQuoteMemberCode')) {
+        function generateQuoteMemberCode($customerType, $customerEntityID)
+        {
+            $quoteMemberCount = CustomerMembers::where([
+                'customer_type' => $customerType,
+                'customer_entity_id' => $customerEntityID,
+            ])->count();
+
+            return ($customerType == CustomerTypeEnum::Individual) ?
+                CustomerTypeEnum::IndividualShort.'-'.$customerEntityID.'-'.(++$quoteMemberCount) :
+                CustomerTypeEnum::EntityShort.'-'.$customerEntityID.'-'.(++$quoteMemberCount);
+        }
+    }
+}
+
+if (! function_exists('strToFloat')) {
+    function strToFloat($value, $isNegative = false): float
+    {
+        if ($isNegative) {
+            $value = $value > 0 ? -$value : $value;
+        }
+
+        return floatval(str_replace(',', '', $value));
     }
 }
 if (! function_exists('getCardViewRequestFilters')) {
@@ -847,22 +920,6 @@ if (! function_exists('isMyAlfredCampaignEnabled')) {
     }
 }
 
-if (! function_exists('isMyAlfredCampaignEnabled')) {
-    function isMyAlfredCampaignEnabled($campaignId): bool
-    {
-        $campaign = getMyAlfredCampaign($campaignId);
-        if (! $campaign) {
-            return false;
-        }
-
-        if (property_exists($campaign->data, 'startDate') && property_exists($campaign->data, 'endDate')) {
-            return today()->between($campaign->data->startDate, $campaign->data->endDate);
-        }
-
-        return false;
-    }
-}
-
 if (! function_exists('getAppStorageValueByKey')) {
     function getAppStorageValueByKey($keyName)
     {
@@ -936,7 +993,7 @@ if (! function_exists('isValidTeamForLOBAdvisor')) {
 if (! function_exists('isAllowedInDuplicateLOBList')) {
     function isAllowedInDuplicateLOBList($quoteType, $code)
     {
-        return (new CentralService())->duplicateAllowedLobsList($quoteType, $code);
+        return app(CentralService::class)->duplicateAllowedLobsList($quoteType, $code);
     }
 }
 
@@ -1054,5 +1111,48 @@ if (! function_exists('isValidDate')) {
         return ! empty($date)
             && $date != '0000-00-00 00:00:00'
             && $date != '0000-00-00';
+    }
+}
+if (! function_exists('getManagersByUser')) {
+    function getManagersByUser($userId)
+    {
+        $managerIds = DB::table('user_manager')->where('user_id', $userId)->get()->pluck('manager_id');
+
+        return User::whereIn('id', $managerIds)->where('is_active', 1)->get();
+    }
+}
+
+if (! function_exists('roundNumber')) {
+    function roundNumber($number)
+    {
+        return round($number, 2);
+    }
+}
+
+if (! function_exists('getLookupsEnum')) {
+    function getLookupsEnum(): array
+    {
+        return array_combine(
+            array_map(fn ($case) => $case->name, LookupsEnum::cases()),
+            array_map(fn ($case) => $case->value, LookupsEnum::cases())
+        );
+    }
+}
+
+if (! function_exists('isVatApplied')) {
+    function isVatApplied($modelType): bool
+    {
+        $vatEnabledQuotes = [
+            quoteTypeCode::Health,
+            quoteTypeCode::Business,
+            quoteTypeCode::Pet,
+            quoteTypeCode::Cycle,
+            quoteTypeCode::Bike,
+        ];
+        if (in_array($modelType, $vatEnabledQuotes)) {
+            return true;
+        }
+
+        return false;
     }
 }

@@ -44,6 +44,8 @@ const filters = reactive({
   coverage_code: '',
   previous_quote_policy_number: '',
   renewal_batch: '',
+  payment_due_date: '',
+  booking_date: '',
 });
 
 const loader = reactive({
@@ -224,7 +226,11 @@ const onDataExport = () => {
 watch(
   () => filters,
   () => {
-    if (filters.created_at_start && filters.created_at_end) {
+    if (
+      (filters.created_at_start && filters.created_at_end) ||
+      filters.payment_due_date ||
+      filters.booking_date
+    ) {
       canExport.value = true;
     } else {
       canExport.value = false;
@@ -239,6 +245,37 @@ const readOnlyMode = reactive({
 onMounted(() => {
     setQueryFilters();
     readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
+const resetDateFilters = filterName => {
+  const filterMappings = {
+    payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
+    booking_date: ['payment_due_date', 'created_at_start', 'created_at_end'],
+    created_at: ['booking_date', 'payment_due_date'],
+  };
+
+  const filtersToReset =
+    filterMappings[filterName] ||
+    (filterName.startsWith('created_at') ? filterMappings.created_at : []);
+
+  filtersToReset.forEach(filter => {
+    filters[filter] = '';
+  });
+};
+
+[
+  'payment_due_date',
+  'booking_date',
+  'created_at_start',
+  'created_at_end',
+].forEach(filterName => {
+  watch(
+    () => filters[filterName],
+    newValue => {
+      if (newValue) {
+        resetDateFilters(filterName);
+      }
+    },
+  );
 });
 </script>
 
@@ -265,7 +302,7 @@ onMounted(() => {
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -405,6 +442,22 @@ onMounted(() => {
           class="w-full"
           placeholder="Search by Renewal Batch"
         />
+        <DatePicker
+          v-model="filters.payment_due_date"
+          label="Payment Due Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.booking_date"
+          label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -417,11 +470,12 @@ onMounted(() => {
           >
             Export
           </x-button>
-          <x-tooltip v-else position="right">
+          <x-tooltip v-else placement="right">
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates are required to export data.
+                Created dates or payment due date or booking date are required
+                to export data.
               </span>
             </template>
           </x-tooltip>
@@ -509,10 +563,10 @@ onMounted(() => {
             coverage_code != null
               ? coverage_code
               : days_cover_for <= 92
-              ? travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
-              : travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
-                '/' +
-                travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
+                ? travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
+                : travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
+                  '/' +
+                  travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
           }}
         </div>
       </template>
@@ -531,16 +585,16 @@ onMounted(() => {
             direction_code == travelQuoteEnum.TRAVEL_UAE_OUTBOUND
               ? 'Outbound'
               : direction_code == travelQuoteEnum.TRAVEL_UAE_INBOUND
-              ? 'Inbound'
-              : currently_located_in_id_text ==
-                  travelQuoteEnum.LOCATION_UAE_TEXT &&
-                region_cover_for_id != travelQuoteEnum.REGION_COVER_ID_UAE
-              ? 'Outbound'
-              : destination_id_text ==
-                  travelQuoteEnum.LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
-                region_cover_for_id == travelQuoteEnum.REGION_COVER_ID_UAE
-              ? 'Inbound'
-              : ''
+                ? 'Inbound'
+                : currently_located_in_id_text ==
+                      travelQuoteEnum.LOCATION_UAE_TEXT &&
+                    region_cover_for_id != travelQuoteEnum.REGION_COVER_ID_UAE
+                  ? 'Outbound'
+                  : destination_id_text ==
+                        travelQuoteEnum.LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
+                      region_cover_for_id == travelQuoteEnum.REGION_COVER_ID_UAE
+                    ? 'Inbound'
+                    : ''
           }}
         </div>
       </template>

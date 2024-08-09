@@ -137,4 +137,5 @@ return [
     'SUKOON_API_VERSION' => env('SUKOON_API_VERSION', ''),
     'SUKOON_USERNAME' => env('SUKOON_USERNAME', ''),
     'SUKOON_PASSWORD' => env('SUKOON_PASSWORD', ''),
+    'RECEIPT_ORDER_DATE' => env('RECEIPT_ORDER_DATE', 'd-m-Y \a\t H:i'),
 ];

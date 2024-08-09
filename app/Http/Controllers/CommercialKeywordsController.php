@@ -7,7 +7,6 @@ use App\Http\Requests\CommercialKeywordRequest;
 use App\Models\CommercialKeyword;
 use App\Services\CommercialKeywordsService;
 use Illuminate\Http\Request;
-use Yajra\DataTables\DataTables;
 
 class CommercialKeywordsController extends Controller
 {
@@ -36,20 +35,18 @@ class CommercialKeywordsController extends Controller
     {
         $gridData = CommercialKeyword::query();
 
-        if ($request->ajax()) {
-            if (isset($request->name) && ! empty($request->name)) {
-                $name = $request->name;
-                $gridData = $gridData->where(function ($query) use ($name) {
-                    $query->whereRaw('LOWER(name) LIKE ?', [strtolower("%{$name}%")]);
-                });
-            }
-
-            return DataTables::of($gridData->orderByDesc('id')->get())
-                ->addIndexColumn()
-                ->make(true);
+        if (isset($request->name) && ! empty($request->name)) {
+            $name = $request->name;
+            $gridData = $gridData->where(function ($query) use ($name) {
+                $query->whereRaw('LOWER(name) LIKE ?', [strtolower("%{$name}%")]);
+            });
         }
 
-        return view('commercialkeywords.index');
+        $gridData = $gridData->orderByDesc('id')->paginate();
+
+        return inertia('Admin/AllocationConfig/CommercialKeywords/Index', [
+            'data' => $gridData,
+        ]);
     }
 
     /**
@@ -59,7 +56,7 @@ class CommercialKeywordsController extends Controller
      */
     public function create()
     {
-        return view('commercialkeywords.add');
+        return inertia('Admin/AllocationConfig/CommercialKeywords/Form');
     }
 
     /**
@@ -72,6 +69,7 @@ class CommercialKeywordsController extends Controller
         $attributes = $request->validated();
 
         return $this->commercialKeywordsService->store($attributes);
+
     }
 
     /**
@@ -82,7 +80,7 @@ class CommercialKeywordsController extends Controller
      */
     public function show(CommercialKeyword $commercialKeyword)
     {
-        return view('commercialkeywords.show', compact('commercialKeyword'));
+        return inertia('Admin/AllocationConfig/CommercialKeywords/Show', ['keyword' => $commercialKeyword]);
     }
 
     /**
@@ -93,7 +91,8 @@ class CommercialKeywordsController extends Controller
      */
     public function edit(CommercialKeyword $commercialKeyword)
     {
-        return view('commercialkeywords.edit', compact('commercialKeyword'));
+
+        return inertia('Admin/AllocationConfig/CommercialKeywords/Form', ['keyword' => $commercialKeyword]);
     }
 
     /**
