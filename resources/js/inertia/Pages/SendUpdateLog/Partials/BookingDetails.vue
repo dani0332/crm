@@ -1020,8 +1020,6 @@ watch(
   () => bookingDetailsForm.price_with_vat,
   (newValue, oldValue) => {
 
-    console.log(noDiscountType.value);
-
     if (noDiscountType.value) {
       checkDiscount(newValue, oldValue);
     }
