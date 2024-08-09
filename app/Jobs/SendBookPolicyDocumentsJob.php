@@ -66,11 +66,11 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $docs = [];
         }
 
-        if (strcasecmp($modelType, quoteTypeCode::CORPLINE) == 0){
+        if (strcasecmp($modelType, quoteTypeCode::CORPLINE) == 0) {
             $quote->load('businessTypeOfInsurance');
             $insuranceType = $quote->businessTypeOfInsurance->text;
         }
-        if($modelType == quoteTypeCode::Health){
+        if ($modelType == quoteTypeCode::Health) {
             $planName = $quote->plan->text;
         }
 
@@ -95,7 +95,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->advisorLandlineNo = '';
             $emailData->googleMeet = '';
             $emailData->insuranceType = $insuranceType;
-            $emailData->planName = $planName;  
+            $emailData->planName = $planName;
             if (! empty($quote->advisor)) {
                 $emailData->advisorName = $quote->advisor->name;
                 $emailData->advisorEmail = $quote->advisor->email;

@@ -780,7 +780,7 @@ class SendEmailCustomerService extends BaseService
                 'tags' => [
                     $tag,
                 ],
-                'attachment' => isset($attachments) &&  count($attachments) > 0 ? $attachments : null,
+                'attachment' => isset($attachments) && count($attachments) > 0 ? $attachments : null,
                 'bcc' => [],
             ];
 
