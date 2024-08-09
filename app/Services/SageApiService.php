@@ -392,18 +392,11 @@ class SageApiService
         $sageRequestPayload = SagePayloadFactory::sagePayLoad($preparedData['quoteType'], $preparedData['quoteDetails'], $preparedData['payment'], $preparedData['splitPayments']);
         $sageRequestPayload->customerId = $sageCustomerNumber;
 
-        if (! $sageRequestPayload->insurerGlLiaiblityAccount || ! $sageRequestPayload->sageVenderId || ! $sageRequestPayload->sageInsurerCustomerId) {
-            logger()->error('Book Update - Sage Vendor ID or GL Account for Insurance Provider or Sage Insurer Customer ID not found. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$preparedData['sendUpdateLog']['uuid']);
+        $checkERPPayloadValidations = $this->checkRequiredSageIds($sageRequestPayload);
+        if (! $checkERPPayloadValidations['status']) {
+            logger()->error('Book Update - '.$checkERPPayloadValidations['message'].'. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$preparedData['sendUpdateLog']['uuid']);
 
-            if (! $sageRequestPayload->insurerGlLiaiblityAccount && ! $sageRequestPayload->sageVenderId && ! $sageRequestPayload->sageInsurerCustomerId) {
-                return ['status' => false, 'message' => 'Sage Vendor ID, Sage Insurer Customer ID and GL Account for Insurance Provider not found.'];
-            } elseif (! $sageRequestPayload->insurerGlLiaiblityAccount) {
-                return ['status' => false, 'message' => 'GL Account for Insurance Provider not found.'];
-            } elseif (! $sageRequestPayload->sageVenderId) {
-                return ['status' => false, 'message' => 'Sage Vendor ID for Insurance Provider not found.'];
-            } elseif (! $sageRequestPayload->sageInsurerCustomerId) {
-                return ['status' => false, 'message' => 'Sage Insurer Customer ID for Insurance Provider not found.'];
-            }
+            return $checkERPPayloadValidations;
         }
 
         $quoteModelObject = ! empty($preparedData['sendUpdateLog']) ? $preparedData['sendUpdateLog'] : $preparedData['quoteDetails'];
@@ -586,6 +579,11 @@ class SageApiService
         }
 
         $response = ['status' => $_REQUEST['status'] ?? true, 'message' => $_REQUEST['message'] ?? 'Invoices created successfully'];
+
+        if($response['status']){
+            // Send Update Data move to main lead
+            app(SendUpdateLogService::class)->updatesMoveToLead($preparedDataForERP);
+        }
 
         return ['status' => $response['status'], 'message' => $response['message']];
     }
@@ -1356,6 +1354,7 @@ class SageApiService
 
         return $returnMessage;
     }
+
     private function createNonUpfrontARInvoicePremAndComm($sageRequestDataArray)
     {
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];

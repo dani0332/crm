@@ -47,20 +47,13 @@ class SendUpdateSageJob implements ShouldQueue
 
         switch ($this->preparedData['sendUpdateType']) {
             case SageEnum::SUT_NORMAL:
-                $sageResponse = $sageApiService->handleStraightDocumentsERP($this->preparedData, $this->sagePayload, $this->sageAPIsLogs);
+                $sageApiService->handleStraightDocumentsERP($this->preparedData, $this->sagePayload, $this->sageAPIsLogs);
                 break;
 
             case SageEnum::SUT_REVE_CORR:
-                // $sageResponse = $sageApiService->handleReveralDocumentsERP($this->preparedData, $this->sagePayload, $this->sageAPIsLogs);
-                info('SUT REVE_CORR');
+                // $sageApiService->handleReveralDocumentsERP($this->preparedData, $this->sagePayload, $this->sageAPIsLogs);
                 break;
         }
-
-        // if ($sageResponse['status']) {
-        //     // Send Update Data move to main lead
-        //     info('Update Move to Lead');
-        //     // $sendUpdateLogService->updatesMoveToLead($this->sendUpdateRequest, $this->preparedData['sendUpdateLog']);
-        // }
 
         info('------------------ Book Update - Sage Job Execution Completed - QuoteType: '.$this->preparedData['quoteType'].' - QuoteUUID: '.$this->preparedData['quoteDetails']['uuid'].' - SendUpdateUUID: '.$this->preparedData['sendUpdateLog']['uuid'].' ------------------');
     }
