@@ -12,6 +12,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -1138,7 +1139,7 @@ class CRUDService extends BaseService
             $quoteModel = $this->getQuoteObject($quoteType, $quote->uuid);
             $data = $results;
             $detail = $this->getQuoteDetailObject($quoteType, $quoteModel->id);
-            $data['document_type_code'] = 'SCRDOC';
+            $data['document_type_code'] = QuoteDocumentsEnum::SCRDOC;
             $data['pdf_name'] = 'Riskscore_'.$pdfName.'.pdf';
             $data['quote_uuid'] = $quote->uuid;
             $kycLogs = AML::where([
