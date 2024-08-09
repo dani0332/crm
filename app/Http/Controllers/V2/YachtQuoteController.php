@@ -118,12 +118,13 @@ class YachtQuoteController extends Controller
      */
     public function show($uuid)
     {
-        $quote = YachtQuoteRepository::getBy('uuid', $uuid);
 
         /* Start - Temporarily adding for correcting historic data  */
-        (new PaymentRepository())->updatePriceVatApplicableAndVat($quote, QuoteTypes::YACHT);
+        $quote = YachtQuoteRepository::where('uuid', $uuid)->first();
+        (new PaymentRepository())->updatePriceVatApplicableAndVat($quote, QuoteTypes::YACHT->value);
         /* End - Temporarily adding for correcting historic data  */
 
+        $quote = YachtQuoteRepository::getBy('uuid', $uuid);
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::YACHT->value, $quote);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::YACHT->name);

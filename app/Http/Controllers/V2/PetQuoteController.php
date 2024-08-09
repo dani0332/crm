@@ -115,12 +115,12 @@ class PetQuoteController extends Controller
      */
     public function show($uuid)
     {
-        $quote = PetQuoteRepository::getBy('uuid', $uuid);
-
         /* Start - Temporarily adding for correcting historic data  */
-        (new PaymentRepository())->updatePriceVatApplicableAndVat($quote, QuoteTypes::PET);
+        $quote = PetQuoteRepository::where('uuid', $uuid)->first();
+        (new PaymentRepository())->updatePriceVatApplicableAndVat($quote, QuoteTypes::PET->value);
         /* End - Temporarily adding for correcting historic data  */
 
+        $quote = PetQuoteRepository::getBy('uuid', $uuid);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
 
         @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Pet);

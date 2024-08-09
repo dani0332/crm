@@ -132,12 +132,12 @@ class BikeQuoteController extends Controller
      */
     public function show($uuid)
     {
-        $quote = BikeQuoteRepository::getBy('uuid', $uuid);
-
         /* Start - Temporarily adding for correcting historic data  */
-        (new PaymentRepository())->updatePriceVatApplicableAndVat($quote, QuoteTypes::BIKE);
+        $quote = BikeQuoteRepository::where('uuid', $uuid)->first();
+        (new PaymentRepository())->updatePriceVatApplicableAndVat($quote, QuoteTypes::BIKE->value);
         /* End - Temporarily adding for correcting historic data  */
 
+        $quote = BikeQuoteRepository::getBy('uuid', $uuid);
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::BIKE->value, $quote);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::BIKE->name);

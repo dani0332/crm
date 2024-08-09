@@ -136,11 +136,13 @@ class CycleQuoteController extends Controller
      */
     public function show($uuid)
     {
-        $quote = CycleQuoteRepository::getBy('uuid', $uuid);
+
         /* Start - Temporarily adding for correcting historic data  */
-        (new PaymentRepository())->updatePriceVatApplicableAndVat($quote, QuoteTypes::CYCLE);
+        $quote = CycleQuoteRepository::where('uuid', $uuid)->first();
+        (new PaymentRepository())->updatePriceVatApplicableAndVat($quote, QuoteTypes::CYCLE->value);
         /* End - Temporarily adding for correcting historic data  */
 
+        $quote = CycleQuoteRepository::getBy('uuid', $uuid);
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::CYCLE->value, $quote);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->get();
 

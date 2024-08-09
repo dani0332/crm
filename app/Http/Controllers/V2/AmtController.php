@@ -245,7 +245,7 @@ class AmtController extends Controller
         ]);
 
         /* Start - Temporarily adding for correcting historic data  */
-        (new PaymentRepository())->updatePriceVatApplicableAndVat($record, QuoteTypes::BUSINESS);
+        (new PaymentRepository())->updatePriceVatApplicableAndVat($record, QuoteTypes::BUSINESS->value);
         /* End - Temporarily adding for correcting historic data  */
 
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::BUSINESS->value, $record);

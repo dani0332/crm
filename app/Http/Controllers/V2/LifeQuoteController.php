@@ -17,6 +17,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\LifeQuoteRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
+use App\Models\LifeQuote;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
@@ -99,12 +100,12 @@ class LifeQuoteController extends Controller
      */
     public function show($uuid)
     {
-        $quote = LifeQuoteRepository::getBy('uuid', $uuid);
-
         /* Start - Temporarily adding for correcting historic data  */
-        (new PaymentRepository())->updatePriceVatApplicableAndVat($quote, QuoteTypes::LIFE);
+        $quote = LifeQuoteRepository::where('uuid', $uuid)->first();
+        (new PaymentRepository())->updatePriceVatApplicableAndVat($quote, QuoteTypes::LIFE->value);
         /* End - Temporarily adding for correcting historic data  */
 
+        $quote = LifeQuoteRepository::getBy('uuid', $uuid);
         $payments = $quote?->payments;
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Life);
         $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::LIFE->value, $quote->code);

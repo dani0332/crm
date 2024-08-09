@@ -774,7 +774,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         info('Start - Temporarily adding for correcting historic data'.$quote->uuid);
         /* calculate price and vat for payments for old payment data  where price_vat_applicable is not available */
         $quotePayment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
-        if($quotePayment){
+        if ($quotePayment) {
             if (! $quotePayment->price_vat_applicable) {
                 [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculateMasterPriceAndVat($quotePayment->frequency, $quotePayment->total_price, $modelType, $quote->id);
                 $quotePayment->update([
