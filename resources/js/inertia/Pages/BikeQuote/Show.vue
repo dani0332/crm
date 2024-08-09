@@ -5,6 +5,7 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+import LazyBookingDetails from '../SendUpdateLog/Partials/BookingDetails.vue';
 
 defineProps({
   quote: Object,
@@ -1232,6 +1233,15 @@ const onAddUpdate = () => {
     />
 
     <EmailStatus :emailStatuses="emailStatuses" />
+
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="quote"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
+      @onAddUpdate="onAddUpdate"
+    />
 
     <AuditLogs
       :id="$page.props.quote.id"
