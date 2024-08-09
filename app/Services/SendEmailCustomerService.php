@@ -769,6 +769,8 @@ class SendEmailCustomerService extends BaseService
                     'roadsideAssistance' => $emailData->roadsideAssistance,
                     'googleMeet' => $emailData->googleMeet,
                     'appDownloadLink' => $emailData->appDownloadLink,
+                    'insuranceType' => $emailData->insuranceType,
+                    'healthPlanName' => $emailData->healthPlanName,
                     'advisor' => (object) [
                         'name' => $emailData->advisorName,
                         'email' => $emailData->advisorEmail,

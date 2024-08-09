@@ -39,6 +39,9 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
      */
     public function handle(SendEmailCustomerService $sendEmailCustomerService, QuoteDocumentService $quoteDocumentService)
     {
+        $insuranceType = '';
+        $healthPlanName = '';
+
         info('job: SendBookPolicyDocumentsJob started');
 
         // In case of Group Medical & Corpline, modelType is used & for rest of the LOBs model_type is used
@@ -63,6 +66,14 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $docs = [];
         }
 
+        if ($modelType == quoteTypeCode::Business){
+            $quote->load('businessTypeOfInsurance');
+            $insuranceType = $quote->businessTypeOfInsurance->text;
+        }
+        if($modelType == quoteTypeCode::Health){
+            $healthPlanName = $quote->plan->text;
+        }
+
         $quote->load('advisor');
 
         $templateId = ApplicationStorage::where('key_name', strtoupper(str_replace(' ', '_', $modelType)).'_BOOK_POLICY_TEMPLATE')->first()->value ?? null;
@@ -83,6 +94,8 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->advisorMobileNo = '';
             $emailData->advisorLandlineNo = '';
             $emailData->googleMeet = '';
+            $emailData->insuranceType = $insuranceType;
+            $emailData->healthPlanName = $healthPlanName;  
             if (! empty($quote->advisor)) {
                 $emailData->advisorName = $quote->advisor->name;
                 $emailData->advisorEmail = $quote->advisor->email;
