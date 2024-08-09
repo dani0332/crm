@@ -644,6 +644,7 @@ class SplitPaymentService
             if (in_array($modelType, $ecommLobs)) {
                 $priceWithoutVat = $computedPrice - $vat;
             }
+
             return [$priceWithoutVat, $vat];
         }
 
