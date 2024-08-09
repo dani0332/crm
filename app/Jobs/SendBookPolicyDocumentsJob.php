@@ -66,7 +66,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $docs = [];
         }
 
-        if (strcasecmp($modelType, quoteTypeCode::CORPLINE) == 0) {
+        if (strtolower($modelType) == strtolower(quoteTypeCode::CORPLINE) ){
             $quote->load('businessTypeOfInsurance');
             $insuranceType = $quote->businessTypeOfInsurance->text;
         }
