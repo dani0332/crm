@@ -183,7 +183,7 @@ const isIntegerColumn = key => {
           {{
             isIntegerColumn(header.value)
               ? priceFormat(
-                  calculateTotalSum(reportData.data, header.value),
+                  calculateTotalSum(reportData, header.value),
                   true,
                 )
               : 'N/A'
