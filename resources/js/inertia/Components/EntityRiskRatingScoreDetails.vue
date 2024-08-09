@@ -112,9 +112,8 @@ quoteDetail();
       show-close
       backdrop
       size="lg"
+      title="Risk Rating - Score"
     >
-      <template #header> Risk Rating - Score </template>
-      <template #actions>
         <div class="space-x-2">
           <table class="x-table w-full relative table-bordered">
             <tbody class="vue3-easy-data-table__body border-inner">
@@ -237,7 +236,6 @@ quoteDetail();
             </tbody>
           </table>
         </div>
-      </template>
     </x-modal>
   </div>
 </template>
