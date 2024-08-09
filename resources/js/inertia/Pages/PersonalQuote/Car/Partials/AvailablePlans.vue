@@ -11,8 +11,6 @@ const props = defineProps({
 });
 const { isRequired } = useRules();
 const page = usePage();
-
-const page = usePage();
 const emit = defineEmits(['onLoadAvailablePlansData']);
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum

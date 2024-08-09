@@ -269,7 +269,7 @@ const onAddUpdate = () => {
                 <dd>{{ quote.dob }}</dd>
               </div>
               <RiskRatingScoreDetails
-                :quote="quote.jetski_quote"
+                :quote="quote"
                 :modelType="quoteType"
               />
             </dl>

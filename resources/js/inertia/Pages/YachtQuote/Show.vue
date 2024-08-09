@@ -634,6 +634,8 @@ const onAddUpdate = () => {
                   type="text"
                   class="w-full"
                 />
+              </dd>
+            </div>
               </dl>
               <dl
                 v-if="

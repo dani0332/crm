@@ -57,6 +57,7 @@ const quoteStatusEnum = page.props.quoteStatusEnum;
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+const can = permission => useCan(permission);
 
 const countDays = useDaysSinceStale(props.quoteRequest?.stale_at);
 const compareDueDate = useCompareDueDate;
@@ -1003,54 +1004,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 </x-button>
               </div>
             </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
-              <dd>
-                <ComboBox
-                  v-model="customerProfileForm.emirate_of_registration_id"
-                  :single="true"
-                  placeholder="SELECT EMIRATES OF REGISTRATION"
-                  :options="emiratesOptions"
-                  class="w-full"
-                />
-              </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">COMPANY ADDRESS</dt>
-              <dd>
-                <x-input
-                  v-model="customerProfileForm.company_address"
-                  placeholder="COMPANY ADDRESS"
-                  type="text"
-                  class="w-full"
-                />
-              </dd>
-            </div>
-
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">INDUSTRY TYPE</dt>
-              <dd>
-                <x-select
-                  v-model="customerProfileForm.industry_type_code"
-                  :options="companyTypeOptions"
-                  placeholder="SELECT COMPANY TYPE"
-                  class="w-full"
-                />
-              </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">ENTITY TYPE</dt>
-              <dd>
-                <ComboBox
-                  @update:modelValue="entityTypeChange($event)"
-                  :single="true"
-                  v-model:modelValue="customerProfileForm.entity_type_code"
-                  :options="companyConcernOptions"
-                  placeholder="SELECT COMPANY CONCERN"
-                  class="w-full"
-                />
-              </dd>
-            </div>
+              <dl>
           </dl>
           <div class="flex justify-end">
             <x-button
@@ -1063,20 +1017,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
             >
               Update Profile
             </x-button>
-          </div>
-        </div>
-          <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">ENTITY TYPE</dt>
-              <dd>
-                  <ComboBox
-                      @update:modelValue="entityTypeChange($event)"
-                      :single="true"
-                      v-model:modelValue="customerProfileForm.entity_type_code"
-                      :options="companyConcernOptions"
-                      placeholder="SELECT COMPANY CONCERN"
-                      class="w-full"
-                  />
-              </dd>
           </div>
           <EntityRiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
         </x-form>

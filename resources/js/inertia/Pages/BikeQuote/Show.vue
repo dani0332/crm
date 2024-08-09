@@ -743,8 +743,8 @@ const onAddUpdate = () => {
               <dd>{{ quote?.bike_quote?.back_home_license_held_for?.text }}</dd>
             </div>
             <RiskRatingScoreDetails
-              v-if="quote?.bike_quote"
-              :quote="quote.bike_quote"
+              v-if="quote"
+              :quote="quote"
               :modelType="'Bike'"
             />
           </dl>
