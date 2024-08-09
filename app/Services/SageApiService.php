@@ -714,9 +714,21 @@ class SageApiService
 
             return ['status' => false, 'message' => 'No Invoices found for Reverse and Correction'];
         }
+
         $reverseSendUpdateTypes = collect($invoicesForReverse)->pluck('sage_request_type')->toArray();
         $checkARInvoices = [SageEnum::SRT_CREATE_AR_PREM_COMM_INV, SageEnum::SRT_CREATE_AR_SPPAY_INV];
         $checkAPInvoices = [SageEnum::SRT_CREATE_AP_PREM_INV, SageEnum::SRT_CREATE_AP_SPPAY_INV];
+
+        $isOnlyDiscountReversal = false;
+        $upFrontTotalSteps = 21;
+        $nonUpFrontTotalSteps = 23;
+        if (in_array(SageEnum::SRT_CREATE_AR_DISC_INV, $reverseSendUpdateTypes)) {
+            $isOnlyDiscountReversal = $sendUpdateLog && (int) $sendUpdateLog->discount == 0;
+            $upFrontTotalSteps = ($isOnlyDiscountReversal) ? 18 : 21;
+            $nonUpFrontTotalSteps = ($isOnlyDiscountReversal) ? 20 : 23;
+        }
+
+
         foreach ($reverseSendUpdateTypes as $reverseSendUpdateTypeKey => $reverseSendUpdateType) {
             $invoiceResponse = json_decode($invoicesForReverse[$reverseSendUpdateTypeKey]['response']);
 
@@ -727,7 +739,7 @@ class SageApiService
                         'iterator' => 0,
                         'lastIteration' => 6,
                         'startingStep' => 1,
-                        'totalSteps' => 21,
+                        'totalSteps' => $upFrontTotalSteps,
                         'batchNumber' => $invoiceResponse->BatchNumber,
                         'entryType' => SageEnum::SCT_STRAIGHT,
                         'invoiceType' => SageEnum::SRT_GET_AR_INVOICE,
@@ -746,7 +758,7 @@ class SageApiService
                         'iterator' => 0,
                         'lastIteration' => 6,
                         'startingStep' => 8,
-                        'totalSteps' => 21,
+                        'totalSteps' => $upFrontTotalSteps,
                         'batchNumber' => $invoiceResponse->BatchNumber,
                         'entryType' => SageEnum::SCT_STRAIGHT,
                         'invoiceType' => SageEnum::SRT_GET_AP_INVOICE,
@@ -760,7 +772,7 @@ class SageApiService
                 }
 
                 $startingStep = 15;
-                $totalSteps = 23;
+                $totalSteps = $upFrontTotalSteps;
             } else {
                 if (in_array($reverseSendUpdateType, $checkARInvoices)) {
                     info('Book Update - Creating AR Reverse and Correction Split Payment Invoices and mark as posted');
@@ -768,7 +780,7 @@ class SageApiService
                         'iterator' => 0,
                         'lastIteration' => 7,
                         'startingStep' => 1,
-                        'totalSteps' => 21,
+                        'totalSteps' => $nonUpFrontTotalSteps,
                         'batchNumber' => $invoiceResponse->BatchNumber,
                         'entryType' => SageEnum::SCT_STRAIGHT,
                         'invoiceType' => SageEnum::SRT_GET_AR_INVOICE,
@@ -790,7 +802,7 @@ class SageApiService
                         'iterator' => 0,
                         'lastIteration' => 7,
                         'startingStep' => 9,
-                        'totalSteps' => 21,
+                        'totalSteps' => $nonUpFrontTotalSteps,
                         'batchNumber' => $invoiceResponse->BatchNumber,
                         'entryType' => SageEnum::SCT_STRAIGHT,
                         'invoiceType' => SageEnum::SRT_GET_AP_INVOICE,
@@ -806,14 +818,15 @@ class SageApiService
                 }
 
                 $startingStep = 17;
-                $totalSteps = 23;
+                $totalSteps = $nonUpFrontTotalSteps;
             }
 
-            if ($reverseSendUpdateType == SageEnum::SRT_CREATE_AR_DISC_INV && $sendUpdateLog && $sendUpdateLog->discount > 0) {
-                info('Book Update - Creating AR Reverse and Correction Invoices for Discount and mark as posted');
+            if ($reverseSendUpdateType == SageEnum::SRT_CREATE_AR_DISC_INV) {
+                $lastIteration = $isOnlyDiscountReversal ? 3 : 6;
+                info('Book Update - Creating AR '.($isOnlyDiscountReversal ? 'Reversal Invoice' : 'Reversal and Correction Invoices').' for Discount and mark as posted');
                 $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                     'iterator' => 0,
-                    'lastIteration' => 6,
+                    'lastIteration' => $lastIteration,
                     'startingStep' => $startingStep,
                     'totalSteps' => $totalSteps,
                     'batchNumber' => $invoiceResponse->BatchNumber,
