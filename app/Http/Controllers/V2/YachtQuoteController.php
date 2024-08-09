@@ -30,6 +30,7 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
+use App\Repositories\PaymentRepository;
 use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteNoteRepository;
 use App\Repositories\QuoteStatusRepository;
@@ -118,6 +119,11 @@ class YachtQuoteController extends Controller
     public function show($uuid)
     {
         $quote = YachtQuoteRepository::getBy('uuid', $uuid);
+
+        /* Start - Temporarily adding for correcting historic data  */
+        (new PaymentRepository())->updatePriceVatApplicableAndVat($quote, QuoteTypes::YACHT);
+        /* End - Temporarily adding for correcting historic data  */
+
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::YACHT->value, $quote);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::YACHT->name);
