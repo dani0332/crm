@@ -47,7 +47,7 @@ class DatabaseSeeder extends Seeder
             // addDubaiNowEmailGroup::class,
             // DubaiLeadSource::class,
             // ActivitySchedulesSeeder::class,
-            // DocumentTypeSeeder::class,
+            DocumentTypeSeeder::class,
             //            AddNewDocumentTypesSeeder::class,
             // UpdateCustomerToHealthAndTravelMemberDetails::class,
             GenericPermissionSeeder::class,
