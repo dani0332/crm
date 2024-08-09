@@ -203,6 +203,9 @@ class CentralController extends Controller
         $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
         info('Book policy details update successfully for : '.$quote->uuid);
 
+        (new SplitPaymentService())->updateCommissionSchedule($payment);
+        info('Commission Schedule updated successfully for : '.$quote->uuid);
+
         return redirect()->back()->with('success', 'Booking details has been updated.');
     }
 
