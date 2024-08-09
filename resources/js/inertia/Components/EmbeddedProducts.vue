@@ -398,7 +398,9 @@ const can = permission => useCan(permission);
                 :key="index"
               >
                 <x-checkbox
-                  v-if="priceItem.transactions && priceItem.transactions.length > 0"
+                  v-if="
+                    priceItem.transactions && priceItem.transactions.length > 0
+                  "
                   v-model="priceItem.transactions[0].is_selected"
                   @change="toggleProduct(priceItem, $event)"
                   color="primary"

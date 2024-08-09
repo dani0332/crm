@@ -1542,7 +1542,7 @@ const linkEntity = () => {
     });
 };
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
   onLoadAvailablePlansData();
@@ -1553,7 +1553,6 @@ onMounted(() => {
   isMounted.value = true;
 
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
-
 });
 
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);
@@ -1580,7 +1579,7 @@ const handlePlanSelected = plan => {
   selectedProviderPlan.value.planName = plan.planName;
   selectedProviderPlan.value.providerName = plan.providerName;
   selectedProviderPlan.value.premium = plan.premium;
-  selectedProviderPlan.value.planType =checkPlanType(plan.planTypeId);
+  selectedProviderPlan.value.planType = checkPlanType(plan.planTypeId);
   router.reload({
     preserveState: true,
     preserveScroll: true,
@@ -2439,7 +2438,12 @@ const onAddUpdate = () => {
       </dl>
       <template #actions>
         <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity" v-if="readOnlyMode.isDisable === true">
+          <x-button
+            size="sm"
+            color="orange"
+            @click.prevent="linkEntity"
+            v-if="readOnlyMode.isDisable === true"
+          >
             Link
           </x-button>
         </div>

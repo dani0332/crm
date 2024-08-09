@@ -205,58 +205,58 @@ const additionalContactDeleteConfirmed = () => {
 };
 
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 </script>
 
 <template>
-      <x-accordion show-icon class="p-4 rounded shadow mb-6 bg-white">
-      <x-accordion-item>
-    <h3 class="font-semibold text-primary-800 text-lg">
-      Customer Additional Contacts
-      <x-tag size="sm">{{ contacts.length || 0 }}</x-tag>
-    </h3>
-    <template #content>
-      <x-divider class="mb-4 mt-1" />
-      <div class="flex justify-end gap-4 items-center mb-4">
-        <x-button
-          size="sm"
-          color="orange"
-          @click.prevent="addAdditionalContact"
-          v-if="readOnlyMode.isDisable === true"
+  <x-accordion show-icon class="p-4 rounded shadow mb-6 bg-white">
+    <x-accordion-item>
+      <h3 class="font-semibold text-primary-800 text-lg">
+        Customer Additional Contacts
+        <x-tag size="sm">{{ contacts.length || 0 }}</x-tag>
+      </h3>
+      <template #content>
+        <x-divider class="mb-4 mt-1" />
+        <div class="flex justify-end gap-4 items-center mb-4">
+          <x-button
+            size="sm"
+            color="orange"
+            @click.prevent="addAdditionalContact"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Add Additional Contacts
+          </x-button>
+        </div>
+        <DataTable
+          table-class-name="compact"
+          :headers="additionalContactTable"
+          :items="contacts || []"
+          border-cell
+          hide-rows-per-page
+          hide-footer
         >
-          Add Additional Contacts
-        </x-button>
-      </div>
-      <DataTable
-        table-class-name="compact"
-        :headers="additionalContactTable"
-        :items="contacts || []"
-        border-cell
-        hide-rows-per-page
-        hide-footer
-      >
-        <template #item-key="{ key }">
-          <span v-if="key === 'email'"> Email Address </span>
-          <span v-else> Mobile Number </span>
-        </template>
-        <template #item-action="item">
-          <div class="space-x-4">
-            <x-button
-              size="xs"
-              color="emerald"
-              outlined
-              @click.prevent="additionalContactPrimary(item)"
-              v-if="readOnlyMode.isDisable === true"
-            >
-              Make Primary
-            </x-button>
-          </div>
-        </template>
-      </DataTable>
+          <template #item-key="{ key }">
+            <span v-if="key === 'email'"> Email Address </span>
+            <span v-else> Mobile Number </span>
+          </template>
+          <template #item-action="item">
+            <div class="space-x-4">
+              <x-button
+                size="xs"
+                color="emerald"
+                outlined
+                @click.prevent="additionalContactPrimary(item)"
+                v-if="readOnlyMode.isDisable === true"
+              >
+                Make Primary
+              </x-button>
+            </div>
+          </template>
+        </DataTable>
 
         <x-modal
           v-model="modals.addContact"

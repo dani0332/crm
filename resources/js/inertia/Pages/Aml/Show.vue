@@ -51,10 +51,18 @@ const decisionTitles = {
 };
 
 function submitDecision(decision) {
-    if ((props.aml.quote_type_id == 5 && fieldValidationscompany() && fieldValidationspartner()  && fieldValidationsperson() && complianceRules() )
-        || ( props.aml.quote_type_id != 5 &&  fieldValidationscompany() && fieldValidationsowner()  && complianceRules()) ) {
-
-        submitDecisionLoading.value = true;
+  if (
+    (props.aml.quote_type_id == 5 &&
+      fieldValidationscompany() &&
+      fieldValidationspartner() &&
+      fieldValidationsperson() &&
+      complianceRules()) ||
+    (props.aml.quote_type_id != 5 &&
+      fieldValidationscompany() &&
+      fieldValidationsowner() &&
+      complianceRules())
+  ) {
+    submitDecisionLoading.value = true;
     let quoteStatusCode = passingDecisions.includes(decision)
       ? props.quoteStatusCode.AMLScreeningCleared
       : props.quoteStatusCode.AMLScreeningFailed;
@@ -160,8 +168,11 @@ const falsePositive = computed(() => {
 
 const notesRequired = ref(false);
 
-function complianceRules () {
-  if((hasRole(rolesEnum.COMPLIANCE) || hasRole(rolesEnum.ComplianceSuperUser)) && (decisionNotes.value == '' || decisionNotes.value == null )) {
+function complianceRules() {
+  if (
+    (hasRole(rolesEnum.COMPLIANCE) || hasRole(rolesEnum.ComplianceSuperUser)) &&
+    (decisionNotes.value == '' || decisionNotes.value == null)
+  ) {
     notesRequired.value = 'This field is required';
     return false;
   }
@@ -171,40 +182,40 @@ function complianceRules () {
 }
 const fieldRequired = ref(false);
 const fieldRequiredowner = ref(false);
-function fieldValidationsowner(){
-    if(is_owner_pep.value === '' || is_owner_pep.value === null ){
-        fieldRequiredowner.value = 'This field is required';
-        return false;
-    }
-    fieldRequiredowner.value = false;
-    return true
+function fieldValidationsowner() {
+  if (is_owner_pep.value === '' || is_owner_pep.value === null) {
+    fieldRequiredowner.value = 'This field is required';
+    return false;
+  }
+  fieldRequiredowner.value = false;
+  return true;
 }
 const fieldRequiredcompany = ref(false);
-function fieldValidationscompany(){
-    if(in_adverse_media.value === '' || in_adverse_media.value == null ){
-        fieldRequiredcompany.value = 'This field is required';
-        return false;
-    }
-    fieldRequiredcompany.value = false;
-    return true
+function fieldValidationscompany() {
+  if (in_adverse_media.value === '' || in_adverse_media.value == null) {
+    fieldRequiredcompany.value = 'This field is required';
+    return false;
+  }
+  fieldRequiredcompany.value = false;
+  return true;
 }
 const fieldRequiredpartner = ref(false);
-function fieldValidationspartner(){
-    if(is_owner_pep.value === '' || is_owner_pep.value === null ){
-        fieldRequiredpartner.value = 'This field is required';
-        return false;
-    }
-    fieldRequiredpartner.value = false;
-    return true
+function fieldValidationspartner() {
+  if (is_owner_pep.value === '' || is_owner_pep.value === null) {
+    fieldRequiredpartner.value = 'This field is required';
+    return false;
+  }
+  fieldRequiredpartner.value = false;
+  return true;
 }
 const fieldRequiredperson = ref(false);
-function fieldValidationsperson(){
-    if(is_controlling_pep.value === '' || is_controlling_pep.value === null){
-        fieldRequiredperson.value = 'This field is required';
-        return false;
-    }
-    fieldRequiredperson.value = false;
-    return true
+function fieldValidationsperson() {
+  if (is_controlling_pep.value === '' || is_controlling_pep.value === null) {
+    fieldRequiredperson.value = 'This field is required';
+    return false;
+  }
+  fieldRequiredperson.value = false;
+  return true;
 }
 </script>
 
@@ -401,92 +412,92 @@ function fieldValidationsperson(){
         <template #header>
           {{ decisionModalHeading }}
         </template>
-          <div v-if="aml.quote_type_id === 5">
-              <x-label>Does the Company name or subsidiary / Affiliate entities feature in any adverse media?</x-label>
-              <div class="grid md:grid-cols-2 mb-4 mt-2">
-                  <x-select
-                      v-model="in_adverse_media"
-                      :options="[
+        <div v-if="aml.quote_type_id === 5">
+          <x-label
+            >Does the Company name or subsidiary / Affiliate entities feature in
+            any adverse media?</x-label
+          >
+          <div class="grid md:grid-cols-2 mb-4 mt-2">
+            <x-select
+              v-model="in_adverse_media"
+              :options="[
                 { value: 1, label: 'Yes' },
                 { value: 0, label: 'No' },
               ]"
-                      placeholder="Select Result"
-                      class="w-full"
-                      :error="fieldRequiredcompany"
-
-                      size="xs"
-                  />
-              </div>
-
-              <x-label>Does the owner/ Shareholder/Partner of the company feature in any PEP List/ Adverse Media?</x-label>
-              <div class="grid md:grid-cols-2 mb-4 mt-2">
-                  <x-select
-                      v-model="is_owner_pep"
-                      :options="[
-                { value: 1, label: 'Yes' },
-                { value: 0, label: 'No' },
-              ]"
-                      placeholder="Select Result"
-                      class="w-full"
-                      :error="fieldRequiredpartner"
-
-                      size="xs"
-                  />
-
-              </div>
-              <x-label>Is the controlling person a PEP/HIO/FPEP/Government Organization?</x-label>
-              <div class="grid md:grid-cols-2 mb-4 mt-2">
-                  <x-select
-                      v-model="is_controlling_pep"
-                      :options="[
-                { value: 1, label: 'Yes' },
-                { value: 0, label: 'No' },
-              ]"
-                      placeholder="Select Result"
-                      class="w-full"
-
-                      :error="fieldRequiredperson"
-                      size="xs"
-                  />
-              </div>
+              placeholder="Select Result"
+              class="w-full"
+              :error="fieldRequiredcompany"
+              size="xs"
+            />
           </div>
 
-          <div v-else>
-              <x-label>Is the Natural Person listed in any adverse media?</x-label>
-              <div class="grid md:grid-cols-2 mb-4 mt-2">
-
-                  <x-select
-                      v-model="in_adverse_media"
-                      :options="[
+          <x-label
+            >Does the owner/ Shareholder/Partner of the company feature in any
+            PEP List/ Adverse Media?</x-label
+          >
+          <div class="grid md:grid-cols-2 mb-4 mt-2">
+            <x-select
+              v-model="is_owner_pep"
+              :options="[
                 { value: 1, label: 'Yes' },
                 { value: 0, label: 'No' },
               ]"
-                      placeholder="Select Result"
-                      class="w-full"
-                      size="xs"
-
-                      :error="fieldRequiredcompany"
-                  />
-
-
-              </div>
-
-              <x-label>Is the Natural Person listed in PEP/FPEP/HIO?</x-label>
-              <div class="grid md:grid-cols-2 mb-4 mt-2">
-                  <x-select
-                      v-model="is_owner_pep"
-                      :options="[
-                { value: 1, label: 'Yes' },
-                { value: 0, label: 'No' },
-              ]"
-                      placeholder="Select Result"
-                      class="w-full"
-                      size="xs"
-                      :error="fieldRequiredowner"
-                  />
-
-              </div>
+              placeholder="Select Result"
+              class="w-full"
+              :error="fieldRequiredpartner"
+              size="xs"
+            />
           </div>
+          <x-label
+            >Is the controlling person a PEP/HIO/FPEP/Government
+            Organization?</x-label
+          >
+          <div class="grid md:grid-cols-2 mb-4 mt-2">
+            <x-select
+              v-model="is_controlling_pep"
+              :options="[
+                { value: 1, label: 'Yes' },
+                { value: 0, label: 'No' },
+              ]"
+              placeholder="Select Result"
+              class="w-full"
+              :error="fieldRequiredperson"
+              size="xs"
+            />
+          </div>
+        </div>
+
+        <div v-else>
+          <x-label>Is the Natural Person listed in any adverse media?</x-label>
+          <div class="grid md:grid-cols-2 mb-4 mt-2">
+            <x-select
+              v-model="in_adverse_media"
+              :options="[
+                { value: 1, label: 'Yes' },
+                { value: 0, label: 'No' },
+              ]"
+              placeholder="Select Result"
+              class="w-full"
+              size="xs"
+              :error="fieldRequiredcompany"
+            />
+          </div>
+
+          <x-label>Is the Natural Person listed in PEP/FPEP/HIO?</x-label>
+          <div class="grid md:grid-cols-2 mb-4 mt-2">
+            <x-select
+              v-model="is_owner_pep"
+              :options="[
+                { value: 1, label: 'Yes' },
+                { value: 0, label: 'No' },
+              ]"
+              placeholder="Select Result"
+              class="w-full"
+              size="xs"
+              :error="fieldRequiredowner"
+            />
+          </div>
+        </div>
         <x-textarea
           v-model="decisionNotes"
           placeholder="Notes"

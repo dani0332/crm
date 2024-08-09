@@ -362,10 +362,10 @@ watch(
 );
 
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 const resetDateFilters = filterName => {
   const filterMappings = {
@@ -426,11 +426,25 @@ const resetDateFilters = filterName => {
           @toggleFilters="showFilters = !showFilters"
         />
         <Link :href="route('health.cards')">
-          <x-button size="sm" color="#1d83bc" tag="div" v-if="readOnlyMode.isDisable === true"> Cards View </x-button>
+          <x-button
+            size="sm"
+            color="#1d83bc"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Cards View
+          </x-button>
         </Link>
 
         <Link :href="route('health.create')">
-          <x-button size="sm" color="#ff5e00" tag="div" v-if="readOnlyMode.isDisable === true"> Create Lead </x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Create Lead
+          </x-button>
         </Link>
       </template>
     </StickyHeader>

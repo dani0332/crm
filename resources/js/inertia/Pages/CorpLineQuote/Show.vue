@@ -3,7 +3,7 @@ import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocument
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import EntityRiskRatingScoreDetails from '../../Components/EntityRiskRatingScoreDetails.vue';
-import RiskRatingScoreDetails from "../../Components/RiskRatingScoreDetails.vue";
+import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 
 const props = defineProps({
   quote: Object,
@@ -553,10 +553,10 @@ const linkEntity = () => {
     });
 };
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
@@ -1004,22 +1004,24 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 </x-button>
               </div>
             </div>
-              <dl>
-          </dl>
-          <div class="flex justify-end">
-            <x-button
-              v-if="isProfileUpdateAllow"
-              class="mt-4"
-              color="emerald"
-              size="sm"
-              :loading="customerProfileForm.processing"
-              type="submit"
-            >
-              Update Profile
-            </x-button>
-          </div>
-          <EntityRiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
-        </x-form>
+            <dl></dl>
+            <div class="flex justify-end">
+              <x-button
+                v-if="isProfileUpdateAllow"
+                class="mt-4"
+                color="emerald"
+                size="sm"
+                :loading="customerProfileForm.processing"
+                type="submit"
+              >
+                Update Profile
+              </x-button>
+            </div>
+            <EntityRiskRatingScoreDetails
+              :quote="quote"
+              :modelType="quoteType"
+            />
+          </x-form>
         </template>
       </Collapsible>
     </div>

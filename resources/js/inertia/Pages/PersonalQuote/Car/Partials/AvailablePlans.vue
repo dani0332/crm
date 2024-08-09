@@ -13,7 +13,7 @@ const { isRequired } = useRules();
 const page = usePage();
 const emit = defineEmits(['onLoadAvailablePlansData']);
 const can = permission => useCan(permission);
-const permissionsEnum = page.props.permissionsEnum
+const permissionsEnum = page.props.permissionsEnum;
 
 const notification = useToast();
 const coreInsurer = ['AXA', 'OIC', 'TM', 'QIC', 'RSA'];
@@ -196,10 +196,10 @@ const onToggleManual = () => {
 };
 
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
   createReusableTemplate();
@@ -446,7 +446,10 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
               <dt class="font-bold">Total Price with VAT:</dt>
               <dd>AED: {{ totalPremiumWithVat.toFixed(2) }}</dd>
             </div>
-            <div class="flex justify-end" v-if="readOnlyMode.isDisable === true">
+            <div
+              class="flex justify-end"
+              v-if="readOnlyMode.isDisable === true"
+            >
               <x-button
                 v-if="
                   (access.carManagerCanEdit ||

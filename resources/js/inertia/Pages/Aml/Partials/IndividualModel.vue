@@ -17,8 +17,8 @@ const props = defineProps({
   lookups: Object,
   quoteAmlStatus: Number,
   customerDetails: Object,
-  cardHolderName:Object,
-  kycLogs:Array,
+  cardHolderName: Object,
+  kycLogs: Array,
 });
 
 const loader = ref({

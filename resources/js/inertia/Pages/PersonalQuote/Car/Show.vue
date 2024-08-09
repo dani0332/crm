@@ -1296,10 +1296,10 @@ const closeModal = v => {
   showfollowup.value = false;
 };
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
 
   onLoadAvailablePlansData();
   if (can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)) {

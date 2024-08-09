@@ -16,7 +16,7 @@ const props = defineProps({
   legalStructure: Object,
   quoteAmlStatus: Number,
   customerDetails: Object,
-  kycLogs:Array,
+  kycLogs: Array,
 });
 
 if (props.entityDetails.entity === undefined) {
@@ -216,18 +216,17 @@ const linkEntity = () => {
 
 const show = ref(true);
 const uboNationality = computed(() => {
-    if (props.uboDetails) {
-        const uboDetail = props.uboDetails.filter((val) => {
-            return val.nationality.code === 'Afghan'
-        });
-        if(uboDetail.length > 0 )
-        {
-            return 1
-        }else{
-            return 2;
-        }
+  if (props.uboDetails) {
+    const uboDetail = props.uboDetails.filter(val => {
+      return val.nationality.code === 'Afghan';
+    });
+    if (uboDetail.length > 0) {
+      return 1;
+    } else {
+      return 2;
     }
-    return 1;
+  }
+  return 1;
 });
 </script>
 

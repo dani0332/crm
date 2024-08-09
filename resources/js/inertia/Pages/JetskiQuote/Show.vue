@@ -35,10 +35,10 @@ const page = usePage();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
@@ -268,10 +268,7 @@ const onAddUpdate = () => {
                 <dt class="font-medium">DATE OF BIRTH</dt>
                 <dd>{{ quote.dob }}</dd>
               </div>
-              <RiskRatingScoreDetails
-                :quote="quote"
-                :modelType="quoteType"
-              />
+              <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
             </dl>
           </div>
         </template>

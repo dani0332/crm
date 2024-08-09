@@ -1,7 +1,7 @@
 <script setup>
 import ToolTip from './../Components/ToolTip.vue';
 import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
-import {onMounted, reactive} from "vue";
+import { onMounted, reactive } from 'vue';
 import moment from 'moment';
 import NProgress from 'nprogress';
 const notification = useNotifications('toast');
@@ -2851,12 +2851,12 @@ const isMasterPaymentPaid = computed(() => {
   return false;
 });
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
 
-    // setLeadStatuses();
+  // setLeadStatuses();
 });
 
 let is_lacking_payment = ref(

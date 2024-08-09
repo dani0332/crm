@@ -5,7 +5,7 @@ import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
-import {reactive} from 'vue';
+import { reactive } from 'vue';
 
 const props = defineProps({
   quote: Object,
@@ -263,10 +263,10 @@ const linkEntity = () => {
     });
 };
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
@@ -705,10 +705,7 @@ const onAddUpdate = () => {
                     />
                   </dd>
                 </div>
-                <RiskRatingScoreDetails
-                  :quote="quote"
-                  :modelType="'Pet'"
-                />
+                <RiskRatingScoreDetails :quote="quote" :modelType="'Pet'" />
               </dl>
               <dl
                 v-if="

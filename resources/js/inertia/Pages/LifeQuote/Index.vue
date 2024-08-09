@@ -213,11 +213,11 @@ watch(
   { deep: true, immediate: true },
 );
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
   setQueryFilters();
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 const resetDateFilters = filterName => {
@@ -260,10 +260,24 @@ const resetDateFilters = filterName => {
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3 flex">
         <Link href="/quotes/life/cards">
-          <x-button size="sm" color="#1d83bc" tag="div" v-if="readOnlyMode.isDisable === true"> Cards View </x-button>
+          <x-button
+            size="sm"
+            color="#1d83bc"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Cards View
+          </x-button>
         </Link>
         <Link :href="route('life-quotes-create')">
-          <x-button size="sm" color="#ff5e00" tag="div" v-if="readOnlyMode.isDisable === true"> Create Lead </x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Create Lead
+          </x-button>
         </Link>
       </div>
     </div>

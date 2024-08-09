@@ -15,7 +15,6 @@ const page = usePage();
 const permissionsEnum = page.props.permissionsEnum;
 const can = permission => useCan(permission);
 
-
 const dateToYMD = date => {
   if (date) {
     const d = new Date(date);
@@ -115,10 +114,10 @@ const submitpolicyForm = isValid => {
 };
 
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 </script>
 

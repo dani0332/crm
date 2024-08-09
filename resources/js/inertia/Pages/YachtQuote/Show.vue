@@ -222,10 +222,10 @@ const linkEntity = () => {
     });
 };
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
@@ -596,46 +596,45 @@ const onAddUpdate = () => {
                   </dd>
                 </div>
 
-            <RiskRatingScoreDetails
-              :quote="quote"
-              :modelType="quoteType"
-            />
-          </dl>
-          <dl
-            v-if="quote.customer_type === page.props.customerTypeEnum.Entity"
-            class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
-          >
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">FIRST NAME</dt>
-              <dd>{{ quote.first_name }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">LAST NAME</dt>
-              <dd>{{ quote.last_name }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">MOBILE NUMBER</dt>
-              <dd>{{ quote.mobile_no }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">EMAIL</dt>
-              <dd>{{ quote.email }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">COMPANY NAME</dt>
-              <dd>{{ customerProfileForm.company_name }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">TRADE LICENSE NO</dt>
-              <dd>
-                <x-input
-                  v-model="customerProfileForm.trade_license_no"
-                  placeholder="TRADE LICENSE NO"
-                  type="text"
-                  class="w-full"
-                />
-              </dd>
-            </div>
+                <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
+              </dl>
+              <dl
+                v-if="
+                  quote.customer_type === page.props.customerTypeEnum.Entity
+                "
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+              >
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">FIRST NAME</dt>
+                  <dd>{{ quote.first_name }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">LAST NAME</dt>
+                  <dd>{{ quote.last_name }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">MOBILE NUMBER</dt>
+                  <dd>{{ quote.mobile_no }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMAIL</dt>
+                  <dd>{{ quote.email }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">COMPANY NAME</dt>
+                  <dd>{{ customerProfileForm.company_name }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">TRADE LICENSE NO</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.trade_license_no"
+                      placeholder="TRADE LICENSE NO"
+                      type="text"
+                      class="w-full"
+                    />
+                  </dd>
+                </div>
               </dl>
               <dl
                 v-if="

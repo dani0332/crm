@@ -1136,7 +1136,7 @@ const linkEntity = () => {
     });
 };
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 
 onMounted(() => {
@@ -1147,8 +1147,7 @@ onMounted(() => {
       position: 'top',
     });
   }
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
-
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);
@@ -2080,7 +2079,12 @@ const onAddUpdate = () => {
           </dd>
         </div>
         <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity" v-if="readOnlyMode.isDisable === true">
+          <x-button
+            size="sm"
+            color="orange"
+            @click.prevent="linkEntity"
+            v-if="readOnlyMode.isDisable === true"
+          >
             Link
           </x-button>
         </div>

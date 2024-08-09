@@ -158,10 +158,10 @@ const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 const [SavePlanDetailsButtonTemplate, SavePlanDetailsButtonReuseTemplate] =
   createReusableTemplate();

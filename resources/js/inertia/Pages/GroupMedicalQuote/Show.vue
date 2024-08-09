@@ -3,7 +3,6 @@ import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 import EntityRiskRatingScoreDetails from '../../Components/EntityRiskRatingScoreDetails.vue';
 
-
 defineProps({
   quote: Object,
   quoteDetails: Object,
@@ -349,10 +348,10 @@ const linkEntity = () => {
     .finally(() => (loader.tradeDetail = false));
 };
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
@@ -811,7 +810,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                     />
                   </dd>
                 </div>
-                <EntityRiskRatingScoreDetails :quote="quote" :modelType="'business'" />
+                <EntityRiskRatingScoreDetails
+                  :quote="quote"
+                  :modelType="'business'"
+                />
               </dl>
               <div class="flex justify-end">
                 <x-button

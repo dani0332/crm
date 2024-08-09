@@ -25,7 +25,7 @@ const props = defineProps({
   residentialStatus: Array,
   companyPosition: Array,
   customerDetails: Object,
-  kycLogs:Array,
+  kycLogs: Array,
 });
 
 const rules = {
@@ -44,29 +44,26 @@ const rules = {
   },
 };
 const kycLogsValue = computed(() => {
-    if (props.kycLogs) {
-        const logsStatus = props.kycLogs.filter((val) => {
-            return val.decision === 'rejected' || val.decision === 'Escalated';
-        });
-        if(logsStatus.length > 0 )
-        {
-            return 1
-        }else{
-            return 2;
-        }
+  if (props.kycLogs) {
+    const logsStatus = props.kycLogs.filter(val => {
+      return val.decision === 'rejected' || val.decision === 'Escalated';
+    });
+    if (logsStatus.length > 0) {
+      return 1;
+    } else {
+      return 2;
     }
-    return 2;
+  }
+  return 2;
 });
-const incomeSource = computed(()=>{
-    if(props.customerDetails?.detail?.source_of_income === "employed")
-    {
-        return 2;
-    }
-    else if(props.customerDetails?.detail?.source_of_income === "business"){
-        return 1;
-    }
-    return null;
-})
+const incomeSource = computed(() => {
+  if (props.customerDetails?.detail?.source_of_income === 'employed') {
+    return 2;
+  } else if (props.customerDetails?.detail?.source_of_income === 'business') {
+    return 1;
+  }
+  return null;
+});
 
 const kycForm = reactive({
   quote_uuid: props.quote.uuid,
@@ -107,14 +104,22 @@ const kycForm = reactive({
   trade_license: props.customerDetails?.detail?.trade_license_no ?? null,
   company_position: props.customerDetails?.detail?.position_in_company ?? null,
   pep: props.customerDetails?.detail?.pep ?? props.amlQuoteStatus,
-  financial_sanctions: props.customerDetails?.detail?.financial_sanctions ?? props.amlQuoteStatus,
-  dual_nationality: props.customerDetails?.detail?.dual_nationality ?? props.amlQuoteStatus,
-    transaction_pattern:props.customerDetails?.detail?.transaction_pattern ?? 'no_changes',
-    premium_tenure:props.customerDetails?.detail?.premium_tenure ?? 'single_premium',
-    in_sanction_list:props.customerDetails?.detail?.in_sanction_list ?? props.amlQuoteStatus,  // kycLogsValue.value
-    deal_sanction_list:props.customerDetails?.detail?.deal_sanction_list ?? props.amlQuoteStatus, // kycLogsValue.value
-    is_operation_high_risk:props.customerDetails?.detail?.is_operation_high_risk ?? props.amlQuoteStatus, // kycLogsValue.value
-    is_partner:props.customerDetails?.detail?.is_partner ?? incomeSource.value,
+  financial_sanctions:
+    props.customerDetails?.detail?.financial_sanctions ?? props.amlQuoteStatus,
+  dual_nationality:
+    props.customerDetails?.detail?.dual_nationality ?? props.amlQuoteStatus,
+  transaction_pattern:
+    props.customerDetails?.detail?.transaction_pattern ?? 'no_changes',
+  premium_tenure:
+    props.customerDetails?.detail?.premium_tenure ?? 'single_premium',
+  in_sanction_list:
+    props.customerDetails?.detail?.in_sanction_list ?? props.amlQuoteStatus, // kycLogsValue.value
+  deal_sanction_list:
+    props.customerDetails?.detail?.deal_sanction_list ?? props.amlQuoteStatus, // kycLogsValue.value
+  is_operation_high_risk:
+    props.customerDetails?.detail?.is_operation_high_risk ??
+    props.amlQuoteStatus, // kycLogsValue.value
+  is_partner: props.customerDetails?.detail?.is_partner ?? incomeSource.value,
 });
 
 const incomeSourceFields = reactive({
@@ -126,11 +131,11 @@ function changeIncomeSource(val) {
   if (val === 'employed') {
     incomeSourceFields.employed = true;
     incomeSourceFields.business = false;
-      kycForm.is_partner = 2;
+    kycForm.is_partner = 2;
   } else if (val === 'business') {
     incomeSourceFields.employed = false;
     incomeSourceFields.business = true;
-      kycForm.is_partner = 1;
+    kycForm.is_partner = 1;
   }
 }
 
@@ -251,55 +256,54 @@ const complianceRules = computed(() => {
     : [];
 });
 const transactionPatternOptions = [
-    {
-        value: 'count_pattern_changes',
-        label: 'Yes - Count Pattern Changes',
-    },
-    {
-        value: 'behaviour_changes',
-        label: 'Yes - Behaviour Changes',
-    },
-    {
-        value: 'business_model_changes',
-        label: 'Yes - Business Model Changes',
-    },
-    {
-        value: 'no_changes',
-        label: 'No Changes',
-    },
-    {
-        value: 'not_applicable',
-        label: 'Not Applicable',
-    },
+  {
+    value: 'count_pattern_changes',
+    label: 'Yes - Count Pattern Changes',
+  },
+  {
+    value: 'behaviour_changes',
+    label: 'Yes - Behaviour Changes',
+  },
+  {
+    value: 'business_model_changes',
+    label: 'Yes - Business Model Changes',
+  },
+  {
+    value: 'no_changes',
+    label: 'No Changes',
+  },
+  {
+    value: 'not_applicable',
+    label: 'Not Applicable',
+  },
 ];
 const premiumTenureOptions = [
-    {
-        value: 'single_premium',
-        label: 'Single Premium',
-    },
-    {
-        value: 'quarter_premium',
-        label: 'Quarterly/Semi-Annual',
-    },
-    {
-        value: 'monthly',
-        label: 'Monthly',
-    },
+  {
+    value: 'single_premium',
+    label: 'Single Premium',
+  },
+  {
+    value: 'quarter_premium',
+    label: 'Quarterly/Semi-Annual',
+  },
+  {
+    value: 'monthly',
+    label: 'Monthly',
+  },
 ];
-const activeField = ref(true)
-function activePatternField (){
-    if(hasRole(rolesEnum.COMPLIANCE) || hasRole(rolesEnum.ComplianceSuperUser)){
-        activeField.value = false
-    }
+const activeField = ref(true);
+function activePatternField() {
+  if (hasRole(rolesEnum.COMPLIANCE) || hasRole(rolesEnum.ComplianceSuperUser)) {
+    activeField.value = false;
+  }
 }
-
 
 onMounted(() => {
   complianceDisable.isDisable = !(
     can(permissionsEnum.AMLDecisionUpdate) ||
     can(permissionsEnum.AMLDecisionUpdateTrueMatch)
   );
-    activePatternField();
+  activePatternField();
   changeIncomeSource(props.customerDetails?.detail?.source_of_income ?? null);
 });
 </script>
@@ -453,21 +457,21 @@ onMounted(() => {
         placeholder="Mode of delivery"
         :rules="[isRequired]"
       />
-        <div>
-            <label
-                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
-            >
-                Premium Tenure
-            </label>
-            <x-select
-                v-model="kycForm.premium_tenure"
-                :options="premiumTenureOptions"
-                placeholder="Premium Tenure"
-                class="w-full"
-                :single="true"
-                :rules="[isRequired]"
-            />
-        </div>
+      <div>
+        <label
+          class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+        >
+          Premium Tenure
+        </label>
+        <x-select
+          v-model="kycForm.premium_tenure"
+          :options="premiumTenureOptions"
+          placeholder="Premium Tenure"
+          class="w-full"
+          :single="true"
+          :rules="[isRequired]"
+        />
+      </div>
     </div>
 
     <div class="grid md:grid-cols-1 gap-4">
@@ -616,100 +620,111 @@ onMounted(() => {
         </x-form-group>
       </div>
     </div>
-      <div class="grid md:grid-cols-2 gap-4">
-          <x-label>Is the Natural Person listed in any Sanction/OOL/SIP list?</x-label>
-          <div class="grid md:grid-cols-2">
-              <x-radio
-                  v-model="kycForm.in_sanction_list"
-                  :value="1"
-                  label="Yes"
-                  :rules="complianceRules"
-                  :disabled="complianceDisable.isDisable"
-              />
-              <x-radio
-                  v-model="kycForm.in_sanction_list"
-                  :value="2"
-                  label="No"
-                  :rules="complianceRules"
-                  :disabled="complianceDisable.isDisable"
-              />
-          </div>
+    <div class="grid md:grid-cols-2 gap-4">
+      <x-label
+        >Is the Natural Person listed in any Sanction/OOL/SIP list?</x-label
+      >
+      <div class="grid md:grid-cols-2">
+        <x-radio
+          v-model="kycForm.in_sanction_list"
+          :value="1"
+          label="Yes"
+          :rules="complianceRules"
+          :disabled="complianceDisable.isDisable"
+        />
+        <x-radio
+          v-model="kycForm.in_sanction_list"
+          :value="2"
+          label="No"
+          :rules="complianceRules"
+          :disabled="complianceDisable.isDisable"
+        />
       </div>
-      <div class="grid md:grid-cols-2 gap-4">
-          <x-label>Is the Natural Person an Owner/Shareholder/Partner in any Organization?</x-label>
-          <div class="grid md:grid-cols-2">
-              <x-radio
-                  v-model="kycForm.is_partner"
-                  :value="1"
-                  label="Yes"
-                  :rules="complianceRules"
-                  :disabled="complianceDisable.isDisable"
-              />
-              <x-radio
-                  v-model="kycForm.is_partner"
-                  :value="2"
-                  label="No"
-                  :rules="complianceRules"
-                  :disabled="complianceDisable.isDisable"
-              />
-          </div>
+    </div>
+    <div class="grid md:grid-cols-2 gap-4">
+      <x-label
+        >Is the Natural Person an Owner/Shareholder/Partner in any
+        Organization?</x-label
+      >
+      <div class="grid md:grid-cols-2">
+        <x-radio
+          v-model="kycForm.is_partner"
+          :value="1"
+          label="Yes"
+          :rules="complianceRules"
+          :disabled="complianceDisable.isDisable"
+        />
+        <x-radio
+          v-model="kycForm.is_partner"
+          :value="2"
+          label="No"
+          :rules="complianceRules"
+          :disabled="complianceDisable.isDisable"
+        />
       </div>
-      <div class="grid md:grid-cols-2 gap-4">
-          <x-label>Does the Natural Person intend to provide professional services in any sanctions-listed country/ies?</x-label>
-          <div class="grid md:grid-cols-2">
-              <x-radio
-                  v-model="kycForm.deal_sanction_list"
-                  :value="1"
-                  label="Yes"
-                  :rules="complianceRules"
-                  :disabled="complianceDisable.isDisable"
-              />
-              <x-radio
-                  v-model="kycForm.deal_sanction_list"
-                  :value="2"
-                  label="No"
-                  :rules="complianceRules"
-                  :disabled="complianceDisable.isDisable"
-              />
-          </div>
+    </div>
+    <div class="grid md:grid-cols-2 gap-4">
+      <x-label
+        >Does the Natural Person intend to provide professional services in any
+        sanctions-listed country/ies?</x-label
+      >
+      <div class="grid md:grid-cols-2">
+        <x-radio
+          v-model="kycForm.deal_sanction_list"
+          :value="1"
+          label="Yes"
+          :rules="complianceRules"
+          :disabled="complianceDisable.isDisable"
+        />
+        <x-radio
+          v-model="kycForm.deal_sanction_list"
+          :value="2"
+          label="No"
+          :rules="complianceRules"
+          :disabled="complianceDisable.isDisable"
+        />
       </div>
-      <div class="grid md:grid-cols-2 gap-4">
-          <x-label>Is the Natural Person controlling/involved in any business listed in High-Risk Countries?</x-label>
-          <div class="grid md:grid-cols-2">
-              <x-radio
-                  v-model="kycForm.is_operation_high_risk"
-                  :value="1"
-                  label="Yes"
-                  :rules="complianceRules"
-                  :disabled="complianceDisable.isDisable"
-              />
-              <x-radio
-                  v-model="kycForm.is_operation_high_risk"
-                  :value="2"
-                  label="No"
-                  :rules="complianceRules"
-                  :disabled="complianceDisable.isDisable"
-              />
-          </div>
+    </div>
+    <div class="grid md:grid-cols-2 gap-4">
+      <x-label
+        >Is the Natural Person controlling/involved in any business listed in
+        High-Risk Countries?</x-label
+      >
+      <div class="grid md:grid-cols-2">
+        <x-radio
+          v-model="kycForm.is_operation_high_risk"
+          :value="1"
+          label="Yes"
+          :rules="complianceRules"
+          :disabled="complianceDisable.isDisable"
+        />
+        <x-radio
+          v-model="kycForm.is_operation_high_risk"
+          :value="2"
+          label="No"
+          :rules="complianceRules"
+          :disabled="complianceDisable.isDisable"
+        />
       </div>
-      <div class="grid md:grid-cols-2 gap-4 mt-4">
-          <div>
-              <label
-                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
-              >
-                  Transaction Pattern changes
-              </label>
-              <x-select
-                  v-model="kycForm.transaction_pattern"
-                  :options="transactionPatternOptions"
-                  placeholder="Transaction Pattern"
-                  class="w-full"
-                  :single="true"
-                  :disabled="activeField"
-                  :rules="[isRequired]"
-              />
-          </div>
+    </div>
+    <div class="grid md:grid-cols-2 gap-4 mt-4">
+      <div>
+        <label
+          class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+        >
+          Transaction Pattern changes
+        </label>
+        <x-select
+          v-model="kycForm.transaction_pattern"
+          :options="transactionPatternOptions"
+          placeholder="Transaction Pattern"
+          class="w-full"
+          :single="true"
+          :disabled="activeField"
+          :rules="[isRequired]"
+        />
       </div>
+    </div>
 
     <template #secondary-action>
       <x-button

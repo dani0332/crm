@@ -301,10 +301,10 @@ const linkEntity = () => {
 const paymentStatusEnum = page.props.paymentStatusEnum;
 
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
@@ -331,7 +331,12 @@ const onAddUpdate = () => {
           :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
           preserve-scroll
         >
-          <x-button size="sm" color="#ff5e00" tag="div" v-if="readOnlyMode.isDisable === true">
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
             View Legacy policy
           </x-button>
         </Link>

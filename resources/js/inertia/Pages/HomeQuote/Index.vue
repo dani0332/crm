@@ -214,7 +214,7 @@ function onAssignLead(isValid) {
 }
 
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 
 onMounted(() => {
@@ -240,7 +240,7 @@ onMounted(() => {
   }
 
   filtersCount.value = Object.keys(filtersCleaned).length;
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 watch(
@@ -310,11 +310,25 @@ const resetDateFilters = filterName => {
         />
 
         <Link :href="route('home-cardView')">
-          <x-button size="sm" color="#1d83bc" tag="div" v-if="readOnlyMode.isDisable === true"> Cards View </x-button>
+          <x-button
+            size="sm"
+            color="#1d83bc"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Cards View
+          </x-button>
         </Link>
 
         <Link :href="route('home.create')">
-          <x-button size="sm" color="#ff5e00" tag="div" v-if="readOnlyMode.isDisable === true"> Create Lead </x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Create Lead
+          </x-button>
         </Link>
       </template>
     </StickyHeader>
