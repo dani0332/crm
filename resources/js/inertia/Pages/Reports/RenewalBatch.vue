@@ -619,7 +619,8 @@ watch(
                 }))
                     " :max-limit="15" />
 
-                <ComboBox v-if="hasAnyRole([rolesEnum.SeniorManagement, rolesEnum.Accounts])" v-model="filters.teams"
+                <ComboBox v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.SeniorManagement, rolesEnum.Accounts])"
+                    v-model="filters.teams"
                     label="Teams" placeholder="Search by Teams" :options="Object.keys(filterOptions.teams).map(key => ({
                         value: key,
                         label: filterOptions.teams[key],
@@ -717,13 +718,13 @@ watch(
                                     {{ useDateFormat(item.end_date, 'MMM DD').value }}
                                 </td>
                                 <td class="x-table-cell px-3 py-4 align-middle">
-                                    {{ item.renewed.toLocaleString() }}
+                                    {{ item.renewed?.toLocaleString() || 0 }}
                                 </td>
                                 <td class="x-table-cell px-3 py-4 align-middle">
-                                    {{ item.total_allocated_leads.toLocaleString() }}
+                                    {{ item.total_allocated_leads?.toLocaleString() || 0 }}
                                 </td>
                                 <td class="x-table-cell px-3 py-4 align-middle">
-                                    {{ item.car_sold.toLocaleString() }}
+                                    {{ item.car_sold?.toLocaleString() || 0 }}
                                 </td>
                                 <!-- // tempory hidden don't remove -->
 

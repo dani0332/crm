@@ -71,7 +71,7 @@ class QuoteAllocation extends Command
     {
         $processedRecords = 0;
         $shouldIncludeDubaiNow = $applicationStorageService->getValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
-        $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY, LeadSourceEnum::REVIVAL];
+        $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::INSLY, LeadSourceEnum::REVIVAL];
 
         if ($shouldIncludeDubaiNow) {
             $exemptedLeadSources[] = LeadSourceEnum::DUBAI_NOW;
@@ -84,7 +84,12 @@ class QuoteAllocation extends Command
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', $exemptedLeadSources)
             ->where('is_renewal_tier_email_sent', 0)
-            ->where('sic_flow_enabled', 0)
+            ->where(function ($query) {
+                $query->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)->where('sic_flow_enabled', 0)
+                    ->orWhere(function ($query) {
+                        $query->where('source', LeadSourceEnum::RENEWAL_UPLOAD)->where('sic_advisor_requested', 1)->where('sic_flow_enabled', 1);
+                    });
+            })
             ->take($chunkSize);
 
         info('leads fetch query is : '.$leads->toSql().' with params : '.json_encode($leads->getBindings()));

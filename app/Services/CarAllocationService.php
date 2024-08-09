@@ -26,7 +26,6 @@ use App\Models\LeadAllocation;
 use App\Models\LeadSource;
 use App\Models\QuoteBatches;
 use App\Models\Rule;
-use App\Models\RuleLeadSource;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Models\TierUser;
@@ -34,7 +33,7 @@ use App\Models\User;
 use App\Models\UserTeams;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use App\Enums\PaymentStatusEnum;
 
 class CarAllocationService extends AllocationService
 {
@@ -44,7 +43,7 @@ class CarAllocationService extends AllocationService
         $shouldIncludeDubaiNow = $this->getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
 
         // List of exempted lead sources
-        $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY, LeadSourceEnum::REVIVAL];
+        $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::INSLY, LeadSourceEnum::REVIVAL];
 
         // Add Dubai Now to exempted lead sources if $shouldIncludeDubaiNow is true
         if ($shouldIncludeDubaiNow) {
@@ -272,6 +271,23 @@ class CarAllocationService extends AllocationService
 
         // If no eligible users are found, return an empty array.
         return [];
+    }
+
+    public function updateTierBeforeEligibleUserIdentification($lead)
+    {
+        info('lead payment status is : '.$lead->payment_status_id.' and tier id is : '.$lead->tier_id.' and sic advisor requested is : '.$lead->sic_advisor_requested.' with UUID : '.$lead->uuid);
+        if (($lead->payment_status_id == PaymentStatusEnum::AUTHORISED || $lead->sic_advisor_requested == 1) && $lead->tier_id == TiersIdEnum::TIER_R) {
+            info('SIC lead payment is made and tier is Tier R lead with UUID: '.$lead->uuid);
+            $tier = $this->findTier($lead);
+            if (! empty($tier) && $tier->id != $lead->tier_id) {
+                info('Tier is found for the lead with UUID: '.$lead->uuid.' and tier name is: '.$tier->name);
+                $this->updateLeadTier($lead, $tier);
+
+                return $tier->id;
+            } else {
+                return $lead->tier_id;
+            }
+        }
     }
 
     public function getAdvisorsByStatus($status, $tierUserIds, $advisorId = null, $teamId = null)

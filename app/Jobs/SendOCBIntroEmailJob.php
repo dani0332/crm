@@ -33,15 +33,17 @@ class SendOCBIntroEmailJob implements ShouldQueue
     private $quoteUuid;
     private $previousAdvisor;
     private $triggerSICWorkflow;
+    private $triggerOnlyWorkflow;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($quoteUuid, $previousAdvisor, $triggerSICWorkflow = false)
+    public function __construct($quoteUuid, $previousAdvisor, $triggerSICWorkflow = false, $triggerOnlyWorkflow = false)
     {
         $this->quoteUuid = $quoteUuid;
         $this->previousAdvisor = $previousAdvisor;
         $this->triggerSICWorkflow = $triggerSICWorkflow;
+        $this->triggerOnlyWorkflow = $triggerOnlyWorkflow;
     }
 
     /**
@@ -71,7 +73,7 @@ class SendOCBIntroEmailJob implements ShouldQueue
                     // Retrieve plans with available ratings for the given lead
                     $plans = $httpService->getPlans($lead->uuid, false, false, false, 'Car');
 
-                    $responseCode = $carEmailService->sendCarOCBIntroEmail($plans, $lead, $tierR, $this->previousAdvisor, $carQuoteService, $this->triggerSICWorkflow);
+                    $responseCode = $carEmailService->sendCarOCBIntroEmail($plans, $lead, $tierR, $this->previousAdvisor, $carQuoteService, $this->triggerSICWorkflow, $triggerOnlyWorkflow);
                     if (in_array($responseCode, [200, 201])) {
                         info('SendOCBIntroEmailJob - OCB INTRO Email Sent: '.$responseCode.' Customer Email Address: '.$lead->email.' Quote UuId: '.$this->quoteUuid);
                     } else {

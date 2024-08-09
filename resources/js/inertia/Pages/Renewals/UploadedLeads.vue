@@ -30,6 +30,7 @@ const tableHeader = [
     { text: 'Good', value: 'good' },
     { text: 'Bad', value: 'cannot_upload' },
     { text: 'Status', value: 'status' },
+    { text: 'SIC', value: 'is_sic' },
     { text: 'Skip Plans', value: 'skip_plans' },
     { text: 'Submitted By', value: 'uploaded_by' },
     { text: 'Submitted At', value: 'created_at' },
@@ -80,6 +81,9 @@ const permissionsEnum = page.props.permissionsEnum;
                 >
                     {{ cannot_upload }}
                 </x-button>
+            </template>
+            <template #item-is_sic="{ is_sic }">
+                {{ is_sic == 1 ? 'Yes': 'No' }}
             </template>
             <template #item-skip_plans="{ skip_plans }">
                 {{ (! skip_plans) ? EnumGenericNo: ((skip_plans == EnumSkipPlansNonGCC) ? 'YES - NON GCC' : EnumGenericYes) }}
