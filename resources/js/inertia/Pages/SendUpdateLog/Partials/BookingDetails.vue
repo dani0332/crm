@@ -1013,13 +1013,15 @@ const noDiscountType = computed(() => {
     sendUpdateStatusEnum.ED,
   ];
 
-  return ! (noDiscountTypeOptions.includes(props.sendUpdateLog?.option?.code) || props.sendUpdateLog?.category?.code === isCIOrCIR.value);
+  return !(
+    noDiscountTypeOptions.includes(props.sendUpdateLog?.option?.code) ||
+    props.sendUpdateLog?.category?.code === isCIOrCIR.value
+  );
 });
 
 watch(
   () => bookingDetailsForm.price_with_vat,
   (newValue, oldValue) => {
-
     if (noDiscountType.value) {
       checkDiscount(newValue, oldValue);
     }
