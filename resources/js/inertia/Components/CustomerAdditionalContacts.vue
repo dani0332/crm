@@ -213,7 +213,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <x-collapse show-icon class="p-4 rounded shadow mb-6 bg-white">
+      <x-accordion show-icon class="p-4 rounded shadow mb-6 bg-white">
+      <x-accordion-item>
     <h3 class="font-semibold text-primary-800 text-lg">
       Customer Additional Contacts
       <x-tag size="sm">{{ contacts.length || 0 }}</x-tag>

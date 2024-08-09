@@ -706,7 +706,7 @@ const onAddUpdate = () => {
                   </dd>
                 </div>
                 <RiskRatingScoreDetails
-                  :quote="quote.pet_quote"
+                  :quote="quote"
                   :modelType="'Pet'"
                 />
               </dl>
