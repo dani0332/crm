@@ -30,6 +30,7 @@ const sortBy = ref('net_conversion');
 const sortType = ref('desc');
 const showTable = ref(true);
 
+const quoteTypeIdEnum = page.props.quoteTypeIdEnum;
 const {
   currentPageFirstIndex,
   currentPageLastIndex,
@@ -136,6 +137,7 @@ const filters = reactive({
   startEndDate: [],
   lob: '',
   asAtDate: '',
+  tag: '',
   displayBy: props.displayByColumn || '',
   page: 1,
 });
@@ -354,6 +356,19 @@ const minDate = computed(() => {
           placeholder="Search by Group"
           label="Display by"
           :options="displayBy"
+          class="w-full"
+          :single="true"
+        />
+        <ComboBox
+          v-if="filters.lob == quoteTypeIdEnum.Car"
+          v-model="filters.tag"
+          placeholder="SIC/PUA Filter"
+          label="SIC/PUA Filter"
+          :options="[
+            { value: '', label: 'Select' },
+            { value: 'sic', label: 'Filter by SIC Leads' },
+            { value: 'non-sic', label: 'Filter by PUA Leads' },
+          ]"
           class="w-full"
           :single="true"
         />

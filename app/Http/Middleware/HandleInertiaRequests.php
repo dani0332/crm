@@ -18,6 +18,7 @@ use App\Enums\QuoteIssuanceStatusEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\SendUpdateLogStatusEnum;
@@ -109,6 +110,7 @@ class HandleInertiaRequests extends Middleware
             'paymentAllocationStatus' => PaymentAllocationStatus::asArray(),
             'lookupsEnum' => getLookupsEnum(),
             'documentTypeCodeEnum' => DocumentTypeCode::asArray(),
+            'quoteTypeIdEnum' => QuoteTypeId::asArray(),
         ];
     }
 

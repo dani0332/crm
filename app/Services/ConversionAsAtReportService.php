@@ -6,6 +6,7 @@ use App\Enums\DisplayByEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteBusinessTypeCode;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
@@ -32,24 +33,24 @@ class ConversionAsAtReportService extends BaseService
         if ($request->lob && $request->startEndDate && $request->asAtDate) {
             $query = PersonalQuote::query()
                 ->select(
-                    DB::raw('SUM(CASE WHEN personal_quotes.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as total_leads'),
+                    DB::raw('SUM(CASE WHEN personal_quotes.source != "' . LeadSourceEnum::IMCRM . '" THEN 1 ELSE 0 END) as total_leads'),
                     DB::raw('SUM(CASE WHEN
-                        personal_quotes.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.')
-                        and personal_quotes.source != "'.LeadSourceEnum::IMCRM.'"
-                        and personal_quotes.transaction_approved_at <= "'.Carbon::parse($request->asAtDate)->endOfDay()->format($dateFormat).'"
+                        personal_quotes.quote_status_id in (' . QuoteStatusEnum::Duplicate . ',' . QuoteStatusEnum::Fake . ')
+                        and personal_quotes.source != "' . LeadSourceEnum::IMCRM . '"
+                        and personal_quotes.transaction_approved_at <= "' . Carbon::parse($request->asAtDate)->endOfDay()->format($dateFormat) . '"
                         THEN 1 ELSE 0 END) as bad_leads'),
                     DB::raw(
                         'SUM(
                             CASE WHEN (
-                                ( personal_quotes.payment_status_id = "'.PaymentStatusEnum::CAPTURED.'"
-                                and personal_quotes.payment_status_date <= "'.Carbon::parse($request->asAtDate)->endOfDay()->format($dateFormat).'"
+                                ( personal_quotes.payment_status_id = "' . PaymentStatusEnum::CAPTURED . '"
+                                and personal_quotes.payment_status_date <= "' . Carbon::parse($request->asAtDate)->endOfDay()->format($dateFormat) . '"
                                 )
                                 OR
-                                ( personal_quotes.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.')
-                                and personal_quotes.transaction_approved_at <= "'.Carbon::parse($request->asAtDate)->endOfDay()->format($dateFormat).'"
+                                ( personal_quotes.quote_status_id in (' . QuoteStatusEnum::TransactionApproved . ',' . QuoteStatusEnum::PolicyIssued . ')
+                                and personal_quotes.transaction_approved_at <= "' . Carbon::parse($request->asAtDate)->endOfDay()->format($dateFormat) . '"
                                 )
                             )
-                          and personal_quotes.source != "'.LeadSourceEnum::IMCRM.'"
+                          and personal_quotes.source != "' . LeadSourceEnum::IMCRM . '"
                           THEN 1 ELSE 0 END) as sale_leads'
                     ),
                 )
@@ -60,6 +61,7 @@ class ConversionAsAtReportService extends BaseService
                 'startEndDate' => $request->startEndDate,
                 'lob' => $request->lob,
                 'displayBy' => $request->displayBy,
+                'tag' => $request->tag,
                 'page' => $request->page,
             ];
 
@@ -87,7 +89,7 @@ class ConversionAsAtReportService extends BaseService
             ->whereNotIn('code', [QuoteTypes::BUSINESS, QuoteTypes::CAR_BIKE])
             ->where('is_active', 1);
 
-        if (! in_array(RolesEnum::SeniorManagement, $userRoles)) {
+        if (!in_array(RolesEnum::SeniorManagement, $userRoles)) {
             $lobs->whereIn('code', $userProducts);
         }
 
@@ -98,11 +100,11 @@ class ConversionAsAtReportService extends BaseService
             ->toArray();
 
         if ($authUser->hasAnyRole([RolesEnum::SeniorManagement, RolesEnum::CorplineManager])) {
-            $lobs[QuoteTypes::getIdFromValue(quoteTypeCode::CORPLINE)] = quoteTypeCode::CORPLINE.' Insurance';
+            $lobs[QuoteTypes::getIdFromValue(quoteTypeCode::CORPLINE)] = quoteTypeCode::CORPLINE . ' Insurance';
         }
 
         if ($authUser->hasAnyRole([RolesEnum::SeniorManagement, RolesEnum::GMManager])) {
-            $lobs[QuoteTypes::getIdFromValue(quoteTypeCode::GroupMedical)] = quoteTypeCode::GroupMedical.' Insurance';
+            $lobs[QuoteTypes::getIdFromValue(quoteTypeCode::GroupMedical)] = quoteTypeCode::GroupMedical . ' Insurance';
         }
 
         return [
@@ -128,6 +130,7 @@ class ConversionAsAtReportService extends BaseService
             $query->whereBetween('pqd.advisor_assigned_date', [$startDate, $endDate]);
         }
 
+
         if (isset($filters->lob)) {
             if ($filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::CORPLINE)) {
                 $query->join('business_quote_request', 'business_quote_request.uuid', 'personal_quotes.uuid');
@@ -139,7 +142,16 @@ class ConversionAsAtReportService extends BaseService
                 $query->where('personal_quotes.quote_type_id', $filters->lob);
             }
         }
+        if (isset($filters->tag)) {
 
+            $query->join('quote_tags', 'quote_tags.quote_uuid', 'personal_quotes.uuid');
+            if ($filters->tag == QuoteSegmentEnum::SIC->value) {
+                $query->where('quote_tags.name', ucwords(QuoteSegmentEnum::SIC->value));
+            } else {
+
+                $query->whereIn('quote_tags.name', ['APUA', 'SPUA']);
+            }
+        }
         if (isset($filters->displayBy)) {
             switch ($filters->displayBy) {
                 case DisplayByEnum::ADVISOR_NAME:
@@ -373,5 +385,4 @@ class ConversionAsAtReportService extends BaseService
             ? round(($numerator / $denominator) * 100, 2)
             : 'NaN';
     }
-
 }
