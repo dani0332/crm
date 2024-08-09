@@ -4,6 +4,7 @@ namespace App\Services\Reports;
 
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
+use App\Enums\PaymentFrequency;
 use App\Models\PersonalQuote;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
@@ -11,7 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class TransactionReportService extends ManagementReport
+class InstallmentReportService extends ManagementReport
 {
     use TeamHierarchyTrait;
 
@@ -19,14 +20,10 @@ class TransactionReportService extends ManagementReport
 
     public function getReportData(Request $request)
     {
-        $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::TRANSACTION;
+        $request['reportCategory'] = $request->reportCategory ?? ManagementReportCategoriesEnum::INSTALLMENT;
         $request['reportType'] = $request->reportType ?? ManagementReportTypeEnum::TRANSACTION_PAYMENTS;
 
-        if ($request['policyBookDate'] && ! empty($request['policyBookDate']) && is_array($request['policyBookDate'])) {
-            $this->reportDateRange = Carbon::parse($request['policyBookDate'][0])->toDateString()
-                .' - '.
-                Carbon::parse($request['policyBookDate'][1])->toDateString();
-        } elseif ($request['paymentDueDate'] && ! empty($request['paymentDueDate']) && is_array($request['paymentDueDate'])) {
+        if ($request['paymentDueDate'] && ! empty($request['paymentDueDate']) && is_array($request['paymentDueDate'])) {
             $this->reportDateRange = Carbon::parse($request['paymentDueDate'][0])->toDateString()
                 .' - '.
                 Carbon::parse($request['paymentDueDate'][1])->toDateString();
@@ -39,33 +36,21 @@ class TransactionReportService extends ManagementReport
                 'personal_quotes.uuid',
                 'personal_quotes.policy_number',
                 'personal_quotes.code',
+                'ps.reference',
                 'p.notes',
-                'p.reference',
                 'personal_quotes.policy_start_date',
-                'p.payment_due_date as payment_due_date',
                 'ps.due_date',
-                'personal_quotes.price_vat_applicable',
-                'personal_quotes.vat',
-                'personal_quotes.price_vat_not_applicable',
-                'p.discount_value as discount',
-                DB::raw('((
-                    IFNULL( personal_quotes.price_vat_applicable , 0 ) +
-                    IFNULL( personal_quotes.price_vat_not_applicable , 0 )  +
-                    IFNULL( personal_quotes.vat , 0 )) - IFNULL( p.discount_value , 0 )) as total_price'),
-                'p.commission_vat_applicable',
-                'p.commission_vat',
-                'p.commission_vat_not_applicable',
-                'p.captured_amount as collected_amount',
-                DB::raw('(SELECT pss.verified_at
-                FROM payment_splits pss
-                WHERE pss.code = p.code
-                and pss.sr_no = 1
-                LIMIT 1) as payment_date'),
-                DB::raw('((
-                    IFNULL( personal_quotes.price_vat_applicable , 0 ) +
-                    IFNULL( personal_quotes.price_vat_not_applicable , 0 ) +
-                    IFNULL( personal_quotes.vat , 0 )) - IFNULL( p.discount_value , 0 )) -
-                    IFNULL( p.captured_amount, 0) as pending_balance'),
+                DB::raw('IFNULL(personal_quotes.price_vat_applicable, 0) / IFNULL(p.total_payments, 1) as price_vat_applicable'),
+                DB::raw('IFNULL(personal_quotes.vat, 0) / IFNULL(p.total_payments, 1) as vat'),
+                DB::raw('IFNULL(personal_quotes.price_vat_not_applicable, 0) / IFNULL(p.total_payments, 1) as price_vat_not_applicable'),
+                'ps.discount_value as discount',
+                'ps.payment_amount as total_price',
+                DB::raw('IFNULL(p.commission_vat_applicable, 0) / IFNULL(p.total_payments, 1) as commission_vat_applicable'),
+                DB::raw('CASE WHEN ps.sr_no=1 THEN IFNULL(p.commission_vat, 0) ELSE 0 END as commission_vat'),
+                DB::raw('IFNULL(p.commission_vat_not_applicable, 0) / IFNULL(p.total_payments, 1) as commission_vat_not_applicable'),
+                DB::raw('IFNULL(ps.collection_amount, 0) as collected_amount'),
+                'ps.verified_at as payment_date',
+                DB::raw('IFNULL(ps.payment_amount, 0) - IFNULL(ps.collection_amount, 0) as pending_balance'),
                 'p.collection_type as collects',
                 'ip.text as insurer',
                 'quote_type.text as line_of_business',
@@ -81,30 +66,28 @@ class TransactionReportService extends ManagementReport
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'p.broker_invoice_number',
                 'btoi.text as sub_type_line_of_business',
+                'q.text as lead_status',
             )
-            ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
+            ->join('payments as p', function ($join) {
+                $join->on('personal_quotes.code', '=', 'p.code')
+                    ->where('p.frequency', '<>', PaymentFrequency::UPFRONT);
+            })
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
+            ->leftJoin('quote_status as q', 'q.id', '=', 'personal_quotes.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
-            ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
-            ->leftJoin('user_team as ut', 'ut.user_id', '=', 'u.id')
-            ->leftJoin('teams as t', 't.id', '=', 'ut.team_id')
+            ->leftJoin('departments as dp', 'u.department_id', '=', 'dp.id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
-            ->leftJoin('payment_methods as pm', 'pm.code', '=', 'p.payment_methods_code')
-            ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'p.payment_gateway_id')
-            ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id');
+            ->leftJoin('payment_methods as pm', 'pm.code', '=', 'ps.payment_method')
+            ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'ps.payment_gateway_id')
+            ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
+            ->orderBy('personal_quotes.id', 'desc')
+            ->orderBy('ps.due_date', 'asc');
 
         $this->applyFilters($query, $request);
-
-        $utmGroupBy = $this->getUtmGroup($request, $query);
-
-        if ($utmGroupBy) {
-            $query->groupBy(['personal_quotes.code', $utmGroupBy]);
-        } else {
-            $query->groupBy('personal_quotes.code');
-        }
+        $this->getUtmGroup($request, $query);
 
         if ($request->export == 1) {
             $data = $query->get();
@@ -114,7 +97,7 @@ class TransactionReportService extends ManagementReport
             $nonIntegarIndexes = [0, 1, 2, 3, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27];
 
             return $this->download(
-                'Transaction Report '.$this->reportDateRange,
+                'Installment Report '.$this->reportDateRange,
                 $data,
                 $this->headings(),
                 $nonIntegarIndexes
@@ -133,15 +116,29 @@ class TransactionReportService extends ManagementReport
     private function formatData(&$data)
     {
         $data->map(function ($item) {
-            $item->transactions = $this->concatValues([$item->insurer_invoice_number, $item->notes, $item->reference], '-');
             $item->policy_start_date = ! empty($item->policy_start_date) ? Carbon::parse($item->policy_start_date)->format('Y-m-d') : null;
-            $item->payment_due_date = ! empty($item->payment_due_date) ? Carbon::parse($item->payment_due_date)->format('Y-m-d') : null;
             $item->due_date = ! empty($item->due_date) ? Carbon::parse($item->due_date)->format('Y-m-d') : null;
             $item->total_price = number_format($item->total_price, 2);
-            $item->collects = strtoupper($item->collects);
+            $item->commission_vat_applicable = number_format($item->commission_vat_applicable, 2);
+            $item->commission_vat = number_format($item->commission_vat, 2);
+            $item->commission_vat_not_applicable = number_format($item->commission_vat_not_applicable, 2);
             $item->pending_balance = number_format($item->pending_balance, 2);
+            $item->collects = strtoupper($item->collects);
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
+            $item->transactions = $this->concatValues([$item->insurer_invoice_number, $item->notes, $item->reference], '-');
         });
+    }
+
+    protected function filterTeams($query, $teamIds)
+    {
+        if (empty($teamIds)) {
+            $teamIds = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();
+        }
+
+        $userIds = $this->getUsersByTeamIds($teamIds)->pluck('id')->toArray();
+        $query->whereIn('personal_quotes.advisor_id', $userIds);
+
+        return $query;
     }
 
     public function getDefaultFilters()
@@ -154,7 +151,7 @@ class TransactionReportService extends ManagementReport
 
         return [
             'paymentDueDate' => $defaultDate,
-            'reportCategory' => ManagementReportCategoriesEnum::TRANSACTION,
+            'reportCategory' => ManagementReportCategoriesEnum::INSTALLMENT,
             'reportType' => ManagementReportTypeEnum::TRANSACTION_PAYMENTS,
         ];
     }
@@ -191,6 +188,7 @@ class TransactionReportService extends ManagementReport
             'Insurer Invoice No.',
             'Insurer Invoice Date',
             'Broker Invoice No',
+            'Lead Status',
         ];
     }
 
@@ -198,10 +196,10 @@ class TransactionReportService extends ManagementReport
     {
         return [
             $quote->code ?? 'N/A',
-            $quote->policy_number ? '="'.$quote->policy_number.'"' : 'N/A',
-            $quote->transactions ? $quote->transactions : 'N/A',
+            $quote->policy_number ?? 'N/A',
+            $quote->transactions ?? 'N/A',
             $quote->policy_start_date ?? 'N/A',
-            $quote->payment_due_date ? $quote->payment_due_date : ($quote->due_date ?? 'N/A'),
+            $quote->due_date ?? 'N/A',
             $quote->price_vat_applicable ?? '0.00',
             $quote->vat ?? '0.00',
             $quote->price_vat_not_applicable ?? '0.00',
@@ -226,6 +224,7 @@ class TransactionReportService extends ManagementReport
             $quote->insurer_invoice_number ?? 'N/A',
             $quote->insurer_tax_invoice_date ?? 'N/A',
             $quote->broker_invoice_number ?? 'N/A',
+            $quote->lead_status ?? 'N/A',
         ];
     }
 }
