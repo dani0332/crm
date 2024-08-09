@@ -18,8 +18,16 @@ const priceFormat = (price, thousandSeparator = false) => {
 
 const tableHeader = reactive([
   {
+    text: 'Ref-ID',
+    value: 'uuid',
+  },
+  {
     text: 'Policy No.',
     value: 'policy_number',
+  },
+  {
+    text: 'Department',
+    value: 'department',
   },
   {
     text: 'Transactions',
@@ -138,7 +146,7 @@ const isIntegerColumn = key => {
   // Add logic to determine if the column contains an integer
   // For example, check if the key corresponds to an integer column
   return [
-    'transactions',
+    // 'transactions',
     'price_vat_applicable',
     'vat',
     'price_vat_not_applicable',
@@ -166,11 +174,20 @@ const isIntegerColumn = key => {
     hide-footer
     :rows-per-page="100"
   >
+    <template #item-uuid="{ uuid, routeName, code }">
+      <a
+        :href="route(routeName, uuid)"
+        class="text-primary-500 hover:underline"
+        target="_blank"
+      >
+        {{ code }}
+      </a>
+    </template>
     <template #item-policy_number="{ policy_number }">
       {{ policy_number }}
     </template>
     <template #item-transactions="{ transactions }">
-      {{ transactions ?? 0 }}
+      {{ transactions ? transactions : 'N/A' }}
     </template>
     <template #item-policy_start_date="{ policy_start_date }">
       {{ policy_start_date ?? 'N/A' }}

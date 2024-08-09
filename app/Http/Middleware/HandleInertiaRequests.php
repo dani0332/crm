@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\Kyc;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentMethodsEnum;
@@ -109,6 +110,7 @@ class HandleInertiaRequests extends Middleware
             'policyIssuanceStatusEnum' => PolicyIssuanceStatusEnum::asArray(),
             'paymentAllocationStatus' => PaymentAllocationStatus::asArray(),
             'lookupsEnum' => getLookupsEnum(),
+            'kycEnums' => Kyc::asArray(),
             'documentTypeCodeEnum' => DocumentTypeCode::asArray(),
             'quoteTypeIdEnum' => QuoteTypeId::asArray(),
         ];
@@ -473,6 +475,12 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->can(PermissionsEnum::RoleList),
                         'Roles',
                         route('roles.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::DEPARTMENT_LIST),
+                        'Departments',
+                        url('admin/departments'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(

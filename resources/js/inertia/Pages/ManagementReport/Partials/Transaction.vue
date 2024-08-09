@@ -20,8 +20,16 @@ const priceFormat = (price, thousandSeparator = false) => {
 
 const tableHeader = reactive([
   {
+    text: 'Ref-ID',
+    value: 'uuid',
+  },
+  {
     text: 'Policy Number',
     value: 'policy_number',
+  },
+  {
+    text: 'Department',
+    value: 'department',
   },
   {
     text: 'Transactions',
@@ -155,7 +163,7 @@ const isIntegerColumn = key => {
 <template>
   <DataTable
     class="mt-4"
-    table-class-name=""
+    table-class-name="compact"
     :loading="loader"
     :headers="tableHeader"
     :items="props.reportData.data || []"
@@ -166,11 +174,20 @@ const isIntegerColumn = key => {
     hide-footer
     :rows-per-page="100"
   >
+    <template #item-uuid="{ uuid, routeName, code }">
+      <a
+        :href="route(routeName, uuid)"
+        class="text-primary-500 hover:underline"
+        target="_blank"
+      >
+        {{ code }}
+      </a>
+    </template>
     <template #item-policy_number="{ policy_number }">
       {{ policy_number ?? 'N/A' }}
     </template>
     <template #item-transactions="{ transactions }">
-      {{ transactions ?? 0 }}
+      {{ transactions ? transactions : 'N/A' }}
     </template>
     <template #item-policy_start_date="{ policy_start_date }">
       {{ policy_start_date ?? 'N/A' }}
@@ -214,7 +231,7 @@ const isIntegerColumn = key => {
       {{ payment_date ?? 'N/A' }}
     </template>
     <template #item-pending_balance="{ pending_balance }">
-      {{ pending_balance ?? 'N/A' }}
+      {{ pending_balance ?? 0 }}
     </template>
     <template #item-collects="{ collects }">
       {{ collects ?? 'N/A' }}

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentStatusTextEnum;
@@ -556,6 +557,95 @@ class SplitPaymentService
         }
 
         return $paymentStatusText;
+    }
+
+    public function updateCommissionSchedule($payment)
+    {
+        $paymentSplits = $payment->paymentSplits;
+        $commissionSplitSumWithoutLastSplit = 0;
+        $commissionVatApplicable = $payment->commission_vat_applicable;
+        foreach ($paymentSplits as $paymentSplit) {
+            $commissionSplitAmount = $this->calculateCommissionSplit($payment, $paymentSplit);
+            /*
+             to prevent difference in amount due to rounding number, sum all the Commission Split Amount except the last one,
+             and then subtract that amount from the total commission without vat and use the result as commission for last commission split
+            */
+            if ($paymentSplit->sr_no == count($paymentSplits)) {
+                $commissionSplitAmount = floatval(sprintf('%.2f', $commissionVatApplicable - $commissionSplitSumWithoutLastSplit));
+            } else {
+                $commissionSplitSumWithoutLastSplit += $commissionSplitAmount;
+            }
+            $paymentSplit->commission_vat_applicable = $commissionSplitAmount;
+            /* Add Vat on commission to the first Installment of commission */
+            $paymentSplit->commission_vat = $paymentSplit->sr_no == 1 ? $payment->commission_vat : 0;
+            $paymentSplit->save();
+        }
+    }
+
+    private function calculateCommissionSplit($payment, $paymentSplit)
+    {
+        $commissionVatApplicable = $payment->commission_vat_applicable;
+        $totalPriceVatApplicable = $payment->paymentSplits()->sum('price_vat_applicable');
+
+        return roundNumber(($paymentSplit->price_vat_applicable / $totalPriceVatApplicable) * $commissionVatApplicable);
+    }
+
+    // function to calculate the price vat
+    public function calculatePriceAndVat($frequency, $masterTotalPrice, $splitPaymentNumber, $splitPaymentAmount, $modelType, $quoteId, $totalSplitPayments)
+    {
+        $priceWithoutVat = $splitPaymentAmount;
+        $vat = 0;
+        $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
+        if (! $vatValue) {
+            return [$priceWithoutVat, $vat];
+        }
+        [$priceWithoutVat, $vat] = $this->calculateMasterPriceAndVat($frequency, $masterTotalPrice, $modelType, $quoteId);
+        if ($vat > 0) {
+            if ($frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+                $vat = $vat / $totalSplitPayments;
+                $priceWithoutVat = $splitPaymentAmount - $vat;
+            } elseif ($splitPaymentNumber === 1) {
+                if ($frequency != PaymentFrequency::UPFRONT) {
+                    $priceWithoutVat = $splitPaymentAmount - $vat;
+                }
+            } else {
+                $priceWithoutVat = $splitPaymentAmount;
+                $vat = 0;
+            }
+        } else {
+            $priceWithoutVat = $splitPaymentAmount;
+        }
+
+        return [$priceWithoutVat, $vat];
+    }
+
+    // function to calculate the price vat for master payment
+    public function calculateMasterPriceAndVat($frequency, $masterTotalPrice, $modelType, $quoteId)
+    {
+        $vat = 0;
+        $priceWithoutVat = $masterTotalPrice;
+        $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
+        if (! $vatValue) {
+            return [$priceWithoutVat, $vat];
+        }
+        $computedPrice = 0;
+        $ecommLobs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Bike];
+        if (in_array($modelType, $ecommLobs)) {
+            $computedPrice = $masterTotalPrice;
+        } else {
+            $quoteModel = $this->getQuoteObject($modelType, $quoteId);
+            if ($quoteModel && isset($quoteModel->price_vat_applicable) && $quoteModel->price_vat_applicable > 0) {
+                $computedPrice = $quoteModel->price_vat_applicable;
+            }
+        }
+        if ($computedPrice > 0) {
+            $priceWithoutVat = $computedPrice;
+            $vat = ($priceWithoutVat * $vatValue) / 100;
+
+            return [$priceWithoutVat, $vat];
+        }
+
+        return [$priceWithoutVat, $vat];
     }
 
 }

@@ -482,7 +482,7 @@ class SageApiService
                 $payment = $getQuoteDetails->payments->first();
                 $splitPayments = $payment->paymentSplits;
 
-                // Most CPD cases have no vaalue then should it set as Credit Note
+                // Most CPD cases have no value then should it set as Credit Note
                 $mainLeadDetails = [
                     'payment' => [
                         'insurer_tax_number' => $payment->insurer_tax_number,
@@ -494,8 +494,8 @@ class SageApiService
                     'discount_value' => $extras['send_update_log']->discount,
                     'invoice_description' => $extras['send_update_log']->invoice_description,
                     'insurer_invoice_date' => $extras['send_update_log']->invoice_date,
-                    'commission_vat' => '', // Need to verify this field
-                    'total_price' => abs($extras['send_update_log']->price_without_vat), // Need to verify this field
+                    'commission_vat' => abs($extras['send_update_log']->vat_on_commission),
+                    'total_price' => abs($extras['send_update_log']->price_without_vat),
                     'total_amount' => abs($extras['send_update_log']->price_vat_applicable),
                     'commission' => abs($extras['send_update_log']->total_commission),
                     'commission_vat_applicable' => abs($extras['send_update_log']->commission_vat_applicable),
@@ -512,6 +512,8 @@ class SageApiService
                     'due_date' => $extras['send_update_log']->invoice_date,
                     'payment_amount' => abs($extras['send_update_log']->price_vat_applicable),
                     'collection_amount' => abs($extras['send_update_log']->price_vat_applicable),
+                    'commission_vat_applicable' => ($payment->commission - $payment->commission_vat),
+                    'commission_vat' => $payment->commission_vat,
                 ]);
 
                 return ['payment' => $payment, 'splitPayments' => $splitPayments, 'mainLeadDetails' => $mainLeadDetails];
@@ -1151,26 +1153,13 @@ class SageApiService
 
                 if (in_array($extras['requestType'], [SageEnum::SRT_CREATE_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AR_SPPAY_INV])) {
                     info('Book Update - Prepare Patch payload for Commission Split Payments');
-                    $vatOnCommission = floatval($extras['payment']->commission_vat);
-                    $commission = floatval($extras['payment']->commission);
-                    $commissionWithoutVat = ($commission - $vatOnCommission);
-                    $commissionSplit = $commissionWithoutVat > 0 ? $commissionWithoutVat / count($extras['splitPayments']) : 0;
 
-                    $commissionSplitSumWithoutLastSplit = 0;
                     foreach ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'] as $key => $value) {
                         // Add vat on commission split payments to the first installment of commission in sage for balancing the amount
-                        $dueCommissionSplitAmount = roundNumber($commissionSplit);
-                        if ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['PaymentNumber'] == 1) {
-                            $dueCommissionSplitAmount = roundNumber($commissionSplit) + roundNumber($vatOnCommission);
-                        }
+                        $commissionSplit = floatval($extras['splitPayments'][$key]['commission_vat_applicable']);
+                        $vatOnCommission = floatval($extras['splitPayments'][$key]['commission_vat']);
 
-                        // To prevent difference in amount due to rounding number, sum all the dueCommissionSplitAmount except the last one,
-                        // and then subtract that amount from the total commission with vat and use the result as dueAmount for last installment
-                        if ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['PaymentNumber'] == count($extras['splitPayments'])) {
-                            $dueCommissionSplitAmount = floatval(sprintf('%.2f', $commission - $commissionSplitSumWithoutLastSplit));
-                        } else {
-                            $commissionSplitSumWithoutLastSplit += $dueCommissionSplitAmount;
-                        }
+                        $dueCommissionSplitAmount = roundNumber(roundNumber($commissionSplit) + roundNumber($vatOnCommission));
 
                         $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($extras['splitPayments'][$key]['due_date'])), $sageRequestPayload->insurerInvoiceDate);
                         if ($extras['payment']->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
@@ -1255,7 +1244,7 @@ class SageApiService
         $isPaymentMethodCreditApproved = $payment->payment_methods_code == PaymentMethodsEnum::CreditApproval;
         $isTotalPriceZero = $payment->total_price == 0;
         if (! $isPaymentMethodCreditApproved && $isTotalPriceZero && $isPaymentFrequencyUpfront) {
-            return ['status' => false, 'message' => 'Please check the payment as total price is set to zero while Payment Method is '.PaymentMethodsEnum::CreditApproval.' and Frequency is '.$payment->frequency.'. Please Select Credit Approval as your payment method and Upfront as Payment Frequecy to Proceed!'];
+            return ['status' => false, 'message' => 'Please check the payment as total price is set to zero while Payment Method is '.PaymentMethodsEnum::CreditApproval.' and Frequency is '.$payment->frequency.'. Please Select Credit Approval as your payment method and Upfront as Payment Frequency to Proceed!'];
         }
 
         // payload
@@ -1466,14 +1455,15 @@ class SageApiService
         }
         info('SAGE API:  Prepare Patch payload for SpitPayments  for '.$quote->uuid);
         foreach ($postedResponse['Invoices'][0]['InvoicePaymentSchedules'] as $key => $value) {
+            $paymentSplit = $paymentSplits[$key];
             // add discount amount to amount due for the first child payment in sage for balancing the amount
-            $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplits[$key]['due_date'])), $sageRequest->insurerInvoiceDate);
-            $dueAmount = roundNumber($paymentSplits[$key]['payment_amount'] + ($paymentSplits[$key]['sr_no'] == 1 ? $payment->discount_value : 0));
+            $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplit['due_date'])), $sageRequest->insurerInvoiceDate);
+            $dueAmount = roundNumber($paymentSplit['payment_amount'] + ($paymentSplit['sr_no'] == 1 ? $payment->discount_value : 0));
 
             if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                 $dueDate = $invoicePaymentSchedulesDueDate;
             } else {
-                $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
+                $dueDate = $paymentSplit['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($paymentSplit['due_date']));
             }
 
             $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueAmount;
@@ -1481,34 +1471,43 @@ class SageApiService
         }
 
         info('SAGE API:  Prepare Patch payload for Commission Spits  for '.$quote->uuid);
+
         /* Add Vat on commission to the first Installment of commission */
+        /*
         $vatOnCommission = floatval($payment->commission_vat);
         $commission = floatval($payment->commission);
         $commissionWithoutVat = ($commission - $vatOnCommission);
         $commissionSplit = $commissionWithoutVat > 0 ? $commissionWithoutVat / count($paymentSplits) : 0;
-
         $commissionSplitSumWithoutLastSplit = 0;
+        */
+
         foreach ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'] as $key => $value) {
-            // Add Vat on commission to the first installment of commission in sage for balancing the amount
-            $dueCommissionSplitAmount = roundNumber($commissionSplit);
-            if ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['PaymentNumber'] == 1) {
-                $dueCommissionSplitAmount = roundNumber(roundNumber($commissionSplit) + roundNumber($vatOnCommission));
-            }
+            $paymentSplit = $paymentSplits[$key];
+            $commissionSplit = $paymentSplit['commission_vat_applicable'];
+            $vatOnCommission = $paymentSplit['commission_vat'];
+
+            $dueCommissionSplitAmount = roundNumber(roundNumber($commissionSplit) + roundNumber($vatOnCommission));
+
+            /*if ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['PaymentNumber'] == 1) {
+            $dueCommissionSplitAmount = roundNumber(roundNumber($commissionSplit) + roundNumber($vatOnCommission));
+            }*/
             /*
              to prevent difference in amount due to rounding number, sum all the dueCommissionSplitAmount except the last one,
              and then subtract that amount from the total commission with vat and use the result as dueAmount for last installment
             */
-            if ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['PaymentNumber'] == count($paymentSplits)) {
+
+            /*if ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['PaymentNumber'] == count($paymentSplits)) {
                 $dueCommissionSplitAmount = floatval(sprintf('%.2f', $commission - $commissionSplitSumWithoutLastSplit));
             } else {
                 $commissionSplitSumWithoutLastSplit += $dueCommissionSplitAmount;
-            }
+            }*/
 
-            $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplits[$key]['due_date'])), $sageRequest->insurerInvoiceDate);
+            $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplit['due_date'])), $sageRequest->insurerInvoiceDate);
+            // for upfront and split, due date should always be insurer invoice date for all child payment, for other frequencies, it should be the due date of the first child payment
             if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                 $dueDate = $invoicePaymentSchedulesDueDate;
             } else {
-                $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
+                $dueDate = $paymentSplit['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($paymentSplit['due_date']));
             }
             $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueCommissionSplitAmount;
             $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
@@ -1910,6 +1909,7 @@ class SageApiService
     }
     public function applyPaymentInvoices($sageRequestDataArray)
     {
+        $returnMessage = ['status' => false, 'message' => null, 'error' => null];
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
         $isTotalPriceZero = $payment->total_price == 0;
         /* applyPaymentInvoices */
@@ -1930,6 +1930,11 @@ class SageApiService
         if (! $isFrequencyUpfrontOrSplit && $isFirstPaymentPaidOrCaptured) {
             return $this->applyNonSplitNonUpfrontPaymentInvoices($sageRequestDataArray);
         }
+
+        $returnMessage['status'] = true;
+        $returnMessage['message'] = 'Apply Prepayment completed';
+
+        return $returnMessage;
 
     }
 
