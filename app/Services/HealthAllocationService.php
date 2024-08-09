@@ -66,9 +66,17 @@ class HealthAllocationService extends AllocationService
     public function assignTeamBasedOnPrice($lead)
     {
         info('Inside assignHealthTeamBasedOnStartingPrice for quote : '.$lead->uuid);
-
-        $priceStartingFrom = $lead->price_starting_from;
-
+        if ($lead->sic_flow_enabled ?? false) {
+            if (!empty($lead->plan_id) && !empty($lead->premium)) {
+                $priceStartingFrom = $lead->premium;
+                 info("plan found against Ref-ID: {$lead->uuid} with plan id: {$lead->plan_id} | with premium: {$lead->premium} | Time: " . now());
+            } else {
+                info("plan not found against Ref-ID: {$lead->uuid} with plan id: {$lead->plan_id} | with premium: {$lead->premium} | Time: " . now());
+            }
+        } else {
+            $priceStartingFrom = $lead->price_starting_from;
+             info("no sic lead against Ref-ID: {$lead->uuid} with plan id: {$lead->plan_id} | with premium: {$lead->premium} | Time: " . now());
+        }
         $healthTeam = Team::where('allocation_threshold_enabled', true)
             ->where('min_price', '<=', $priceStartingFrom)
             ->where('max_price', '>=', $priceStartingFrom)
