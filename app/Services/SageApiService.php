@@ -728,7 +728,6 @@ class SageApiService
             $nonUpFrontTotalSteps = ($isOnlyDiscountReversal) ? 20 : 23;
         }
 
-
         foreach ($reverseSendUpdateTypes as $reverseSendUpdateTypeKey => $reverseSendUpdateType) {
             $invoiceResponse = json_decode($invoicesForReverse[$reverseSendUpdateTypeKey]['response']);
 
