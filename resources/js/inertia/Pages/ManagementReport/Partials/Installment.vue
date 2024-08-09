@@ -7,6 +7,8 @@ const props = defineProps({
   },
 });
 
+const calculateTotalSum = useCalculateTotalSum;
+
 const priceFormat = (price, thousandSeparator = false) => {
   return thousandSeparator
     ? parseFloat(price).toLocaleString('en-US', {
@@ -22,12 +24,12 @@ const tableHeader = reactive([
     value: 'uuid',
   },
   {
-    text: 'Policy No.',
-    value: 'policy_number',
-  },
-  {
     text: 'Department',
     value: 'department',
+  },
+  {
+    text: 'Policy Number',
+    value: 'policy_number',
   },
   {
     text: 'Transactions',
@@ -37,24 +39,17 @@ const tableHeader = reactive([
     text: 'Policy Start Date',
     value: 'policy_start_date',
   },
+
   {
     text: 'Payment Due Date',
-    value: 'payment_due_date',
-  },
-  {
-    text: 'Source',
-    value: 'source',
-  },
-  {
-    text: 'Team',
-    value: 'team',
+    value: 'due_date',
   },
   {
     text: 'Price (VAT applicable)',
     value: 'price_vat_applicable',
   },
   {
-    text: 'T. VAT',
+    text: 'Total VAT',
     value: 'vat',
   },
   {
@@ -66,7 +61,7 @@ const tableHeader = reactive([
     value: 'discount',
   },
   {
-    text: 'T. Price',
+    text: 'Total Price',
     value: 'total_price',
   },
   {
@@ -82,41 +77,20 @@ const tableHeader = reactive([
     value: 'commission_vat_not_applicable',
   },
   {
-    text: 'T. Commission',
-    value: 'total_commission',
-  },
-  {
-    text: 'Collects',
-    value: 'collects',
-  },
-  {
-    text: 'Insurer Tax Inv No.',
-    value: 'insurer_tax_invoice_number',
-  },
-  {
-    text: 'Tax Invoice Date',
-    value: 'insurer_tax_invoice_date',
-  },
-  {
-    text: 'Payment Status',
-    value: 'transaction_payment_status',
-  },
-  {
-    text: 'Date Paid',
-    value: 'date_paid',
-  },
-  {
     text: 'Collected Amount',
     value: 'collected_amount',
   },
   {
-    text: 'Customer Name',
-    value: 'customer_name',
+    text: 'Payment Date',
+    value: 'payment_date',
   },
-
   {
-    text: 'Customer Type',
-    value: 'customer_type',
+    text: 'Unpaid',
+    value: 'pending_balance',
+  },
+  {
+    text: 'Collects',
+    value: 'collects',
   },
   {
     text: 'Insurer',
@@ -131,22 +105,51 @@ const tableHeader = reactive([
     value: 'sub_type_line_of_business',
   },
   {
+    text: 'Customer Name',
+    value: 'customer_name',
+  },
+  {
     text: 'Advisor',
     value: 'advisor',
   },
   {
-    text: 'Policy Issuer ',
+    text: 'Policy Issuer',
     value: 'policy_issuer',
   },
+  {
+    text: 'Invoice Description',
+    value: 'invoice_description',
+  },
+  {
+    text: 'Payment Method',
+    value: 'payment_method',
+  },
+  {
+    text: 'Payment Gateway',
+    value: 'payment_gateway',
+  },
+
+  {
+    text: 'Insurer Invoice No.',
+    value: 'insurer_invoice_number',
+  },
+  {
+    text: 'Insurer Invoice Date',
+    value: 'insurer_tax_invoice_date',
+  },
+  {
+    text: 'Broker Invoice No',
+    value: 'broker_invoice_number',
+  },
+  {
+    text: 'Lead Status',
+    value: 'lead_status',
+  },
 ]);
-
-const calculateTotalSum = useCalculateTotalSum;
-
 const isIntegerColumn = key => {
   // Add logic to determine if the column contains an integer
   // For example, check if the key corresponds to an integer column
   return [
-    // 'transactions',
     'price_vat_applicable',
     'vat',
     'price_vat_not_applicable',
@@ -155,8 +158,9 @@ const isIntegerColumn = key => {
     'commission_vat_applicable',
     'commission_vat',
     'commission_vat_not_applicable',
-    'total_commission',
     'collected_amount',
+    'pending_balance',
+    'collects',
   ].includes(key);
 };
 </script>
@@ -184,34 +188,30 @@ const isIntegerColumn = key => {
       </a>
     </template>
     <template #item-policy_number="{ policy_number }">
-      {{ policy_number }}
+      {{ policy_number ?? 'N/A' }}
     </template>
     <template #item-transactions="{ transactions }">
-      {{ transactions ? transactions : 'N/A' }}
+      {{ transactions ?? 'N/A' }}
     </template>
     <template #item-policy_start_date="{ policy_start_date }">
       {{ policy_start_date ?? 'N/A' }}
     </template>
-    <template #item-payment_due_date="{ payment_due_date, due_date }">
-      {{ payment_due_date ? payment_due_date : due_date ? due_date : 'N/A' }}
-    </template>
-    <template #item-source="{ source }">
-      {{ source }}
-    </template>
-    <template #item-team="{ team }">
-      {{ team }}
+    <template #item-due_date="{ due_date }">
+      {{ due_date ? due_date : 'N/A' }}
     </template>
     <template #item-price_vat_applicable="{ price_vat_applicable }">
-      {{ price_vat_applicable ? price_vat_applicable : 0.0 }}
+      {{ price_vat_applicable ? priceFormat(price_vat_applicable) : 0.0 }}
     </template>
     <template #item-vat="{ vat }">
-      {{ vat ?? 0 }}
+      {{ vat ? priceFormat(vat) : 0.0 }}
     </template>
     <template #item-price_vat_not_applicable="{ price_vat_not_applicable }">
-      {{ price_vat_not_applicable ? price_vat_not_applicable : 0.0 }}
+      {{
+        price_vat_not_applicable ? priceFormat(price_vat_not_applicable) : 0.0
+      }}
     </template>
     <template #item-discount="{ discount }">
-      {{ discount ? discount : 0.0 }}
+      {{ discount ? priceFormat(discount) : 0.0 }}
     </template>
     <template #item-total_price="{ total_price }">
       {{ total_price ? total_price : 0.0 }}
@@ -222,40 +222,26 @@ const isIntegerColumn = key => {
     <template #item-commission_vat="{ commission_vat }">
       {{ commission_vat ? commission_vat : 0.0 }}
     </template>
+
     <template
       #item-commission_vat_not_applicable="{ commission_vat_not_applicable }"
     >
       {{ commission_vat_not_applicable ? commission_vat_not_applicable : 0.0 }}
     </template>
-    <template #item-total_commission="{ total_commission }">
-      {{ total_commission ? total_commission : 0.0 }}
+    <template #item-collected_amount="{ collected_amount }">
+      {{ collected_amount ? priceFormat(collected_amount) : 0 }}
+    </template>
+    <template #item-payment_date="{ payment_date }">
+      {{ payment_date ?? 'N/A' }}
+    </template>
+    <template #item-pending_balance="{ pending_balance }">
+      {{ pending_balance ?? 'N/A' }}
     </template>
     <template #item-collects="{ collects }">
-      {{ collects }}
-    </template>
-    <template #item-insurer_tax_invoice_number="{ insurer_tax_invoice_number }">
-      {{ insurer_tax_invoice_number ?? 'N/A' }}
-    </template>
-    <template #item-insurer_tax_invoice_date="{ insurer_tax_invoice_date }">
-      {{ insurer_tax_invoice_date ?? 'N/A' }}
-    </template>
-    <template #item-transaction_payment_status="{ transaction_payment_status }">
-      {{ transaction_payment_status }}
-    </template>
-    <template #item-date_paid="{ date_paid }">
-      {{ date_paid ?? 'N/A' }}
-    </template>
-    <template #item-collected_amount="{ collected_amount }">
-      {{ collected_amount ?? 0 }}
-    </template>
-    <template #item-customer_name="{ customer_name }">
-      {{ customer_name }}
-    </template>
-    <template #item-customer_type="{ customer_type }">
-      {{ customer_type && customer_type.includes('IND') ? 'Individual' : '--' }}
+      {{ collects ?? 'N/A' }}
     </template>
     <template #item-insurer="{ insurer }">
-      {{ insurer }}
+      {{ insurer ?? 'N/A' }}
     </template>
     <template #item-line_of_business="{ line_of_business }">
       {{ line_of_business ?? 'N/A' }}
@@ -263,11 +249,32 @@ const isIntegerColumn = key => {
     <template #item-sub_type_line_of_business="{ sub_type_line_of_business }">
       {{ sub_type_line_of_business ?? 'N/A' }}
     </template>
+    <template #item-customer_name="{ customer_name }">
+      {{ customer_name ?? 'N/A' }}
+    </template>
     <template #item-advisor="{ advisor }">
-      {{ advisor }}
+      {{ advisor ?? 'N/A' }}
     </template>
     <template #item-policy_issuer="{ policy_issuer }">
       {{ policy_issuer ?? 'N/A' }}
+    </template>
+    <template #item-invoice_description="{ invoice_description }">
+      {{ invoice_description ?? 'N/A' }}
+    </template>
+    <template #item-payment_method="{ payment_method }">
+      {{ payment_method ?? 'N/A' }}
+    </template>
+    <template #item-payment_gateway="{ payment_gateway }">
+      {{ payment_gateway ?? 'N/A' }}
+    </template>
+    <template #item-insurer_invoice_number="{ insurer_invoice_number }">
+      {{ insurer_invoice_number ?? 'N/A' }}
+    </template>
+    <template #item-insurer_tax_invoice_date="{ insurer_tax_invoice_date }">
+      {{ insurer_tax_invoice_date ?? 'N/A' }}
+    </template>
+    <template #item-broker_invoice_number="{ broker_invoice_number }">
+      {{ broker_invoice_number ?? 'N/A' }}
     </template>
     <template #body-append>
       <tr v-if="reportData.data.length > 0" class="total-row">
