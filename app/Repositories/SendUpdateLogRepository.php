@@ -234,8 +234,8 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchSendUpdateToCustomer($data)
     {
+        $sendUpdateLog = $this->find($data['sendUpdateId']);
         try {
-            $sendUpdateLog = $this->find($data['sendUpdateId']);
             if ($data['quoteType'] == quoteTypeCode::Car && $sendUpdateLog->category->code == SendUpdateLogStatusEnum::EN) {
                 $quote = CarQuote::where('uuid', $sendUpdateLog->quote_uuid)->first();
                 if (! empty($sendUpdateLog->emirates_id)) { // will work on Change of Emirates (with no financial impact).
