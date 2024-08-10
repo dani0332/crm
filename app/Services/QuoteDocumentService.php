@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\DocumentTypeCategory;
 use App\Enums\DocumentTypeCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -56,10 +57,20 @@ class QuoteDocumentService extends BaseService
 
     public function getSendUpdateDocumentTypes(): array
     {
-        return DocumentType::where(['category' => SendUpdateLogStatusEnum::SEND_UPDATE, 'is_active' => true])
+        $sendUpdateDocumentTypes = DocumentType::active()
+            ->whereIn('category', [SendUpdateLogStatusEnum::SEND_UPDATE, DocumentTypeCategory::QUOTE_AND_ENDORSEMENT])
             ->orderBy('sort_order')
-            ->get()
-            ->toArray();
+            ->get();
+
+        // Document types for send updates are grouped by category.
+        $documentTypesByCategory = $sendUpdateDocumentTypes->groupBy('category');
+        $groupedDocumentTypesByCategory = collect();
+
+        foreach ($documentTypesByCategory as $key => $documentType) {
+            $groupedDocumentTypesByCategory->put($key, $documentTypesByCategory->get($key)->toArray());
+        }
+
+        return $groupedDocumentTypesByCategory->toArray();
     }
 
     /**
