@@ -65,7 +65,6 @@ class InslyDataService extends BaseService
         $dataMapping->save();
     }
 
-
     public function inslyInsurances()
     {
         return [

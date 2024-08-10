@@ -373,7 +373,7 @@ class InslyDetailRepository extends BaseRepository
     public function getCoverageList($user)
     {
         $coverage = [];
-        $inslyCoverageArray =  (new InslyDataService())->inslyInsurances();
+        $inslyCoverageArray = (new InslyDataService())->inslyInsurances();
         if ($user->hasRole(RolesEnum::BikeAdvisor)) {
             $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::BIKE->value]);
         }
