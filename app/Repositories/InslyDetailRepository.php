@@ -363,7 +363,7 @@ class InslyDetailRepository extends BaseRepository
             $dataArr['is_ecommerce'] = false;
         }
         if (ucfirst($quoteType) == QuoteTypes::BUSINESS->value) {
-            $dataArr['business_type_of_insurance_id'] = $this->getBusinessTypeOfInsuranceIDFromCoverage(strtolower($coverage));
+            $dataArr['business_type_of_insurance_id'] = $coverage ? $this->getBusinessTypeOfInsuranceIDFromCoverage(strtolower($coverage)) : null;
         }
 
         return $dataArr;
