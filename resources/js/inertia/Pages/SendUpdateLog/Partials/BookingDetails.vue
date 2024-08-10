@@ -1017,10 +1017,6 @@ const noDiscountType = computed(() => {
 
   return !(noDiscountTypeOptions.includes(props.sendUpdateLog?.option?.code) || isCIOrCIR.value);
 
-  return !(
-    noDiscountTypeOptions.includes(props.sendUpdateLog?.option?.code) ||
-    props.sendUpdateLog?.category?.code === isCIOrCIR.value
-  );
 });
 
 watch(
