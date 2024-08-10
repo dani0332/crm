@@ -30,6 +30,7 @@ const props = defineProps({
 });
 
 const page = usePage();
+const selectedTab = ref(0);
 const notification = useNotifications('toast');
 const sendUpdateStatusEnum = page.props.sendUpdateStatusEnum;
 
@@ -42,6 +43,7 @@ const memberTabs = ref('quote-documents');
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const leadSource = page.props.leadSource;
+const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
 
 const quoteDocumentsTable = reactive({
   isLoading: false,
@@ -405,59 +407,76 @@ const sendUpdatePermissionCheck = computed(() => {
         </ul>
       </x-alert>
 
-      <div
-        v-for="documentType in documentTypes"
-        :key="documentType.id"
-        class="grid md:grid-cols-2 gap-2 my-4 border-b"
-      >
-        <div class="flex flex-col gap-1">
-          <h5 class="text-sm font-semibold">
-            {{ documentType.text }}
-            <span class="text-red-500">{{
-              documentType.is_required ? '*' : ''
-            }}</span>
-          </h5>
-          <p class="text-xs">Max files: {{ documentType.max_files }}</p>
-          <p class="text-xs">Supported: {{ documentType.accepted_files }}</p>
-          <p class="text-xs">Max file size: {{ documentType.max_size }} MB</p>
-        </div>
-        <div class="pb-4">
-          <Dropzone
-            :id="documentType.id"
-            :accept="documentType.accepted_files"
-            :max-files="documentType.max_files"
-            :max-size="documentType.max_size"
-            :loading="docForm.processing"
-            @change="uploadFile(documentType, $event)"
-          />
-          <div v-if="isSendUpdatePage">
-            <a
-              v-for="quoteDocument in quoteDocuments.filter(
-                d => d.document_type_text == documentType.text,
-              )"
-              :key="quoteDocument.id"
-              :href="storageUrl + quoteDocument.doc_url"
-              target="_blank"
-              class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-            >
-              {{ quoteDocument.original_name || quoteDocument.doc_name }}
-            </a>
+      <x-tab-group v-model="selectedTab" variant="block">
+        <x-tab
+          :value="index"
+          :label="key.replace(/_/g, ' ')"
+          v-for="(docType, key, index) in documentTypes"
+        >
+          <div
+            v-for="documentType in docType"
+            :key="documentType.id"
+            class="grid md:grid-cols-2 gap-2 my-4 border-b"
+          >
+            <div class="flex flex-col gap-1">
+              <h5 class="text-sm font-semibold">
+                {{ documentType.text }}
+                <span class="text-red-500">{{
+                  documentType.is_required ? '*' : ''
+                }}</span>
+              </h5>
+              <p class="text-xs">Max files: {{ documentType.max_files }}</p>
+              <p class="text-xs">
+                Supported: {{ documentType.accepted_files }}
+              </p>
+              <p class="text-xs">
+                Max file size: {{ documentType.max_size }} MB
+              </p>
+            </div>
+            <div class="pb-4">
+              <Dropzone
+                :id="documentType.id"
+                :accept="documentType.accepted_files"
+                :max-files="documentType.max_files"
+                :max-size="documentType.max_size"
+                :loading="docForm.processing"
+                @change="uploadFile(documentType, $event)"
+                :isDisabled="
+                  documentType.code ==
+                    documentTypeCodeEnum.SEND_UPDATE_AUDIT_RECORD &&
+                  !can(permissionEnum.AUDITDOCUMENT_UPLOAD)
+                "
+              />
+              <div v-if="isSendUpdatePage">
+                <a
+                  v-for="quoteDocument in quoteDocuments.filter(
+                    d => d.document_type_text == documentType.text,
+                  )"
+                  :key="quoteDocument.id"
+                  :href="storageUrl + quoteDocument.doc_url"
+                  target="_blank"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                >
+                  {{ quoteDocument.original_name || quoteDocument.doc_name }}
+                </a>
+              </div>
+              <div v-else>
+                <a
+                  v-for="quoteDocument in quoteDocuments.filter(
+                    d => d.document_type_code == documentType.code,
+                  )"
+                  :key="quoteDocument.id"
+                  :href="storageUrl + quoteDocument.doc_url"
+                  target="_blank"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                >
+                  {{ quoteDocument.original_name || quoteDocument.doc_name }}
+                </a>
+              </div>
+            </div>
           </div>
-          <div v-else>
-            <a
-              v-for="quoteDocument in quoteDocuments.filter(
-                d => d.document_type_code == documentType.code,
-              )"
-              :key="quoteDocument.id"
-              :href="storageUrl + quoteDocument.doc_url"
-              target="_blank"
-              class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-            >
-              {{ quoteDocument.original_name || quoteDocument.doc_name }}
-            </a>
-          </div>
-        </div>
-      </div>
+        </x-tab>
+      </x-tab-group>
     </x-modal>
 
     <x-modal

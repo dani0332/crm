@@ -72,6 +72,7 @@ class DatabaseSeeder extends Seeder
             AddeTicketDocumentTypeSeeder::class,
             DocumentVerifyPermissionSeeder::class,
             DepartmentPermissionSeeder::class,
+            DocumentTypeAuditRecordSU::class, // Add new Document type for send update - Audit Records
         ]);
     }
 }
