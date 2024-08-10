@@ -63,6 +63,7 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\NationalityRepository;
+use App\Repositories\PaymentRepository;
 use App\Repositories\QuoteNoteRepository;
 use App\Repositories\RenewalBatchRepository;
 use App\Repositories\SendUpdateLogRepository;
@@ -537,6 +538,10 @@ class CRUDController extends Controller
         $paymentTooltipEnum = PaymentTooltip::asArray();
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         abort_if(! $record, 404);
+
+        /* Start - Temporarily adding for correcting historic data  */
+        (new PaymentRepository())->updatePriceVatApplicableAndVat($record, $this->genericModel->modelType);
+        /* End - Temporarily adding for correcting historic data  */
 
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($this->genericModel->modelType, $record);
         $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($record->id, $quoteType);
