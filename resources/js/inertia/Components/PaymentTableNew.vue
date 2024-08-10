@@ -2999,13 +2999,13 @@ const totalAmountFormat = computed(() => {
               class="flex justify-between items-center gap-2"
               style="margin-left: auto"
             >
-              <SageRecieptCreation                
+              <!--              <SageRecieptCreation
                 :quoteId="quoteRequest.id"
                 :paymentCode="payments[0].code"
-                :quoteType="quoteType" 
+                :quoteType="quoteType"
                 :quoteStatusId="quoteRequest.quote_status_id"
-                :payments = "payments"                        
-              />
+                :payments = "payments"
+              />-->
               <UpdateTotalPrice
                 v-if="
                   can(permissionEnum.TEMP_UPDATE_TOTALPRICE) &&
