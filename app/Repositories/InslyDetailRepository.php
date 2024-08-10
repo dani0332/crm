@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -29,7 +30,7 @@ class InslyDetailRepository extends BaseRepository
     }
     public function fetchGetData()
     {
-        $coverage = $this->getCoverageList(auth()->user());
+        $coverage = [];
 
         $query = InslyDetail::query();
 
@@ -310,6 +311,7 @@ class InslyDetailRepository extends BaseRepository
     {
 
         $dataArr = [];
+        $coverage = $policy['policy']['coverage'];
         $dataArr['previous_quote_policy_number'] = $policy['policy_no'] ?? null;
         $dataArr['email'] = $policy['customer']['email'] ?? null;
         if ($dataArr['email'] == null) {
@@ -359,6 +361,9 @@ class InslyDetailRepository extends BaseRepository
         if ($isPersonalQuote) {
             $dataArr['quote_type_id'] = $quoteTypeData->id;
             $dataArr['is_ecommerce'] = false;
+        }
+        if (ucfirst($quoteType) == QuoteTypes::BUSINESS->value) {
+            $dataArr['business_type_of_insurance_id'] = $this->getBusinessTypeOfInsuranceIDFromCoverage(strtolower($coverage));
         }
 
         return $dataArr;
@@ -442,5 +447,21 @@ class InslyDetailRepository extends BaseRepository
         $regexPattern = implode('.*', str_split($phoneNumber));
 
         return new Regex("$regexPattern", 'i');
+    }
+
+    private function getBusinessTypeOfInsuranceIDFromCoverage($coverage)
+    {
+        $coverage = $coverage ?? null;
+        $inslyBusinessTypeOfInsurances = $this->inslyBusinessTypeOfInsurance();
+        $businessTypeOfInsurance = null;
+        foreach ($inslyBusinessTypeOfInsurances as $key => $inslyBusinessTypeOfInsurance) {
+            $lowercaseBusinessTypeOfInsurance = array_map('strtolower', $inslyBusinessTypeOfInsurance);
+            $inslyBusinessTypeOfInsurance = array_merge($inslyBusinessTypeOfInsurance, $lowercaseBusinessTypeOfInsurance);
+            if (in_array($coverage, $inslyBusinessTypeOfInsurance)) {
+                $businessTypeOfInsurance = $key;
+            }
+        }
+
+        return $businessTypeOfInsurance ? quoteBusinessTypeCode::getId($businessTypeOfInsurance) : null;
     }
 }

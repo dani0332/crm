@@ -8,6 +8,7 @@ use App\Enums\PaymentFrequency;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\ProductionProcessTooltipEnum;
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
@@ -212,6 +213,35 @@ trait GenericQueriesAllLobs
             QuoteTypes::CYCLE->value => ['Pedal cycle insurance'],
             QuoteTypes::PET->value => ['Pet insurance'],
             QuoteTypes::YACHT->value => ['Yacht insurance'],
+        ];
+    }
+
+    public function inslyBusinessTypeOfInsurance()
+    {
+        return [
+            quoteBusinessTypeCode::property => ['property insurance'],
+            quoteBusinessTypeCode::publicLiability => ['public liability insurance'],
+            quoteBusinessTypeCode::groupMedical => ['group medical insurance'],
+            quoteBusinessTypeCode::groupLife => ['group life'],
+            quoteBusinessTypeCode::proIndemnity => ['professional indemnity insurance'],
+            quoteBusinessTypeCode::carFleet => ['motor fleet'],
+            quoteBusinessTypeCode::marineCargoIndividual => ['marine cargo (individual shipment) insurance'],
+            quoteBusinessTypeCode::marineHull => ['marine hull insurance', 'yacht insurance'],
+            quoteBusinessTypeCode::marineCargoOpenCover => ['open cover - marine cargo insurance'],
+            quoteBusinessTypeCode::businessInterruption => ['business interruption insurance'],
+            quoteBusinessTypeCode::machineryBreakdown => ['machinery breakdown insurance'],
+            quoteBusinessTypeCode::tradeCredit => ['trade credit insurance'],
+            quoteBusinessTypeCode::directorsOfficers => ['directors and officers liability insurance'],
+            quoteBusinessTypeCode::cyber => ['cyber liability'],
+            quoteBusinessTypeCode::workmens => ['workmens compensation insurance'],
+            quoteBusinessTypeCode::contractorsRisk => ['contractors all risks', 'engineering and plant insurance'],
+            quoteBusinessTypeCode::holidayHomes => ['holiday homes'],
+            quoteBusinessTypeCode::liveStock => ['livestock insurance'],
+            quoteBusinessTypeCode::moneyInsurance => ['money insurance'],
+            quoteBusinessTypeCode::smeInsurance => ['sme packaged insurance'],
+            quoteBusinessTypeCode::fidelityGuarantee => ['fidelity guarantee'],
+            quoteBusinessTypeCode::goodsInTransit => ['road transit (uae only)'],
+            quoteBusinessTypeCode::MedicalMalpracticeInsurance => ['medical malpractice insurance'],
         ];
     }
 
