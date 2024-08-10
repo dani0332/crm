@@ -246,6 +246,7 @@ class SendUpdateLogRepository extends BaseRepository
             }
 
             $result = SendUpdateToCustomerJob::dispatchSync($sendUpdateLog, $data);
+            info('Email dispatched result -> '.$result);
 
             if ($result) {
                 $sendUpdateLog->update([
