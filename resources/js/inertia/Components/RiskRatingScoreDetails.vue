@@ -48,11 +48,11 @@ const riskRatingScore = quote => {
     </dd>
     <x-modal
       v-model="modals.riskRatingScoreModal"
+      title="Risk Rating - Score"
       show-close
       backdrop
       size="md"
     >
-      <template #header> Risk Rating - Score </template>
       <template #actions>
         <div class="space-x-2">
           <table class="x-table w-full relative table-bordered">

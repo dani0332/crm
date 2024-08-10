@@ -272,6 +272,8 @@ class BikeAllocationService extends AllocationService
     {
         $excludedUserIds = $this->getExcludedUserIds();
 
+        $excludedUserIds = $excludedUserIds ? $excludedUserIds->pluck('user_id')->toArray() : [];
+
         // Create a query to fetch lead allocations with their associated users.
         $query = LeadAllocation::with('leadAllocationUser')
             ->whereHas('leadAllocationUser', function ($query) use ($status) {
@@ -293,8 +295,6 @@ class BikeAllocationService extends AllocationService
         if (! empty($advisorId)) {
             $query->where('user_id', '!=', $advisorId);
         }
-
-        info('getAdvisorsByStatus fetch query is : '.$query->toSql().' with params : '.json_encode($query->getBindings()));
 
         // Return the resulting collection of advisors.
         return $query->get();

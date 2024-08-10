@@ -56,7 +56,7 @@ const onAssignTier = () => {
         </div>
       </template>
       <template #body>
-				<x-divider class="my-4" />
+        <x-divider class="my-4" />
         <div class="flex flex-wrap md:flex-nowrap gap-6 w-full mt-4">
           <div class="w-full md:w-50">
             <x-field label="Select Tier" required>

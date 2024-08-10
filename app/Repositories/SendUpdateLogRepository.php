@@ -17,6 +17,7 @@ use App\Models\Payment;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\SendUpdateLogService;
+use App\Services\SplitPaymentService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Illuminate\Support\Str;
 
@@ -159,7 +160,9 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchFindByQuoteUuid($uuid)
     {
-        return $this->where(['quote_uuid' => $uuid])->get();
+        return $this->with(['category', 'option'])
+            ->where('quote_uuid', $uuid)
+            ->get();
     }
 
     public function fetchUpdateLogPriceDetails($data)
@@ -305,8 +308,13 @@ class SendUpdateLogRepository extends BaseRepository
 
             $payment = Payment::where('send_update_log_id', $data['id'])->firstOrFail();
             if ($payment) {
-                app(SendUpdateLogService::class)->sendUpdatePriceAndDiscount($sendUpdate, $payment);
+                $sendUpdateLogService = app(SendUpdateLogService::class);
+                info('Send update - Updating Booking details and Commission Schedule in Payments - SendUpdateUUID: '.$sendUpdate->uuid);
+                $sendUpdateLogService->sendUpdatePriceAndDiscount($sendUpdate, $payment);
+                $sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate);
+                app(SplitPaymentService::class)->updateCommissionSchedule($payment);
             }
+
         } catch (\Exception $ex) {
             $result = (object) [
                 'message' => $ex->getMessage(),

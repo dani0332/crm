@@ -1,9 +1,4 @@
 <script setup>
-import { useFileUploadErrorMessage } from '@/inertia/Composables/utilities.js';
-import DownloadDocuments from "../../../Components/DownloadDocuments.vue";
-
-import { computed } from 'vue';
-
 const props = defineProps({
   quote: Object,
   quoteDocuments: Object,
@@ -70,7 +65,7 @@ const quoteDocumentsTable = reactive({
     {
       text: 'Action',
       value: 'action',
-    }
+    },
   ],
 });
 
@@ -174,23 +169,23 @@ const uploadFile = (doc, filesWithInfo, memberId) => {
 
 const isEN = computed(() => {
   return (
-      isSendUpdatePage &&
-      props.sendUpdateLog.category.code === sendUpdateStatusEnum.EN
+    isSendUpdatePage &&
+    props.sendUpdateLog.category.code === sendUpdateStatusEnum.EN
   );
 });
 
 const isCPU = computed(() => {
   return (
-      isSendUpdatePage &&
-      props.sendUpdateLog.category.code === sendUpdateStatusEnum.CPU
+    isSendUpdatePage &&
+    props.sendUpdateLog.category.code === sendUpdateStatusEnum.CPU
   );
 });
 
 const sendUpdateButton = computed(() => {
   return (
-      (isEN.value || isCPU.value) &&
-      props.updateBtn &&
-      props.updateBtn !== sendUpdateStatusEnum.SU
+    (isEN.value || isCPU.value) &&
+    props.updateBtn &&
+    props.updateBtn !== sendUpdateStatusEnum.SU
   );
 });
 
@@ -223,7 +218,8 @@ const sendUpdateValidation = () => {
 
 const permissionEnum = page.props.permissionsEnum;
 
-const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] = createReusableTemplate();
+const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] =
+  createReusableTemplate();
 
 const submitToCustomer = () => {
   if (!modals.isConfirmed) {
@@ -239,51 +235,53 @@ const submitToCustomer = () => {
     isEmailSent: props.sendUpdateLog.is_email_sent,
   };
   axios
-      .post(url, data)
-      .then(response => {
-        if (response.status == 200) {
-          Object.keys(response.data).forEach(function (key) {
-            notification.success({
-              title: response.data[key],
-              position: 'top',
-            });
-          });
-          router.reload({ preserveState: true });
-          modals.sendConfirm = isLoading.value = false;
-        }
-      })
-      .catch(err => {
-        const flash_messages = err.response.data.errors;
-        Object.keys(flash_messages).forEach(function (key) {
-          notification.error({
-            title: flash_messages[key],
+    .post(url, data)
+    .then(response => {
+      if (response.status == 200) {
+        Object.keys(response.data).forEach(function (key) {
+          notification.success({
+            title: response.data[key],
             position: 'top',
           });
         });
-      })
-      .finally(() => {
-        modals.sendConfirm = false;
-        isLoading.value = false;
-        isNotConfirmed.value = false;
+        router.reload({ preserveState: true });
+        modals.sendConfirm = isLoading.value = false;
+      }
+    })
+    .catch(err => {
+      const flash_messages = err.response.data.errors;
+      Object.keys(flash_messages).forEach(function (key) {
+        notification.error({
+          title: flash_messages[key],
+          position: 'top',
+        });
       });
+    })
+    .finally(() => {
+      modals.sendConfirm = false;
+      isLoading.value = false;
+      isNotConfirmed.value = false;
+    });
 };
 
 const sendUpdatePermissionCheck = computed(() => {
-  if (props.updateBtn === sendUpdateStatusEnum.SUC && props.sendUpdateLog.status === sendUpdateStatusEnum.UPDATE_SENT_TO_CUSTOMER) {
+  if (
+    props.updateBtn === sendUpdateStatusEnum.SUC &&
+    props.sendUpdateLog.status === sendUpdateStatusEnum.UPDATE_SENT_TO_CUSTOMER
+  ) {
     return true;
   }
 
   if (props.updateBtn === sendUpdateStatusEnum.SU) {
-    return ! can(permissionEnum.BOOK_UPDATE_BUTTON);
+    return !can(permissionEnum.BOOK_UPDATE_BUTTON);
   } else if (props.updateBtn === sendUpdateStatusEnum.SUC) {
-    return ! can(permissionEnum.SEND_UPDATE_TO_CUSTOMER_BUTTON);
+    return !can(permissionEnum.SEND_UPDATE_TO_CUSTOMER_BUTTON);
   } else if (props.updateBtn === sendUpdateStatusEnum.SNBU) {
-    return ! can(permissionEnum.SEND_AND_BOOK_UPDATE_BUTTON);
+    return !can(permissionEnum.SEND_AND_BOOK_UPDATE_BUTTON);
   }
 
   return true;
 });
-
 </script>
 
 <template>
@@ -300,11 +298,13 @@ const sendUpdatePermissionCheck = computed(() => {
       <template #body>
         <x-divider class="my-4" />
         <div class="flex gap-2 mb-4 justify-end">
-            <DownloadDocuments
-                v-if="can(permissionsEnum.DOWNLOAD_ALL_DOCUMENTS)"
-                :quote="page.props.quote"
-                :quoteDocuments="page.props.quote.documents ?? page.props.quoteDocuments"
-            />
+          <DownloadDocuments
+            v-if="can(permissionsEnum.DOWNLOAD_ALL_DOCUMENTS)"
+            :quote="page.props.quote"
+            :quoteDocuments="
+              page.props.quote.documents ?? page.props.quoteDocuments
+            "
+          />
           <Link
             v-if="inslyId && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
             :href="`/legacy-policy/${inslyId}`"
@@ -352,7 +352,10 @@ const sendUpdatePermissionCheck = computed(() => {
               {{ item.original_name }}
             </a>
           </template>
-          <template #item-action="{ doc_name }" v-if="can(permissionEnum.DOCUMENT_DELETE)">
+          <template
+            #item-action="{ doc_name }"
+            v-if="can(permissionEnum.DOCUMENT_DELETE)"
+          >
             <div>
               <x-button
                 size="xs"
@@ -381,9 +384,13 @@ const sendUpdatePermissionCheck = computed(() => {
       </template>
     </Collapsible>
 
-    <x-modal v-model="modals.doc" size="xl" show-close backdrop>
-      <template #header> Upload Documents </template>
-
+    <x-modal
+      v-model="modals.doc"
+      size="xl"
+      title="Upload Documents"
+      show-close
+      backdrop
+    >
       <x-alert
         color="error"
         class="mb-5"
@@ -401,7 +408,10 @@ const sendUpdatePermissionCheck = computed(() => {
       >
         <div class="flex flex-col gap-1">
           <h5 class="text-sm font-semibold">
-            {{ documentType.text }} <span class="text-red-500">{{ documentType.is_required ? '*' : '' }}</span>
+            {{ documentType.text }}
+            <span class="text-red-500">{{
+              documentType.is_required ? '*' : ''
+            }}</span>
           </h5>
           <p class="text-xs">Max files: {{ documentType.max_files }}</p>
           <p class="text-xs">Supported: {{ documentType.accepted_files }}</p>
@@ -446,8 +456,12 @@ const sendUpdatePermissionCheck = computed(() => {
       </div>
     </x-modal>
 
-    <x-modal v-model="modals.docConfirm" show-close backdrop>
-      <template #header> Delete Document </template>
+    <x-modal
+      v-model="modals.docConfirm"
+      title="Delete Document"
+      show-close
+      backdrop
+    >
       <p>Are you sure you want to delete this document?</p>
       <template #actions>
         <div class="text-right space-x-4">
@@ -468,43 +482,47 @@ const sendUpdatePermissionCheck = computed(() => {
 
     <sendUpdateCustConfirmBtnTemp>
       <x-button
-          size="sm"
-          color="error"
-          @click.prevent="submitToCustomer"
-          :disabled="!modals.isConfirmed"
-          :loading="isLoading"
+        size="sm"
+        color="error"
+        @click.prevent="submitToCustomer"
+        :disabled="!modals.isConfirmed"
+        :loading="isLoading"
       >
         Confirm
       </x-button>
     </sendUpdateCustConfirmBtnTemp>
 
-    <x-modal v-model="modals.sendConfirm" show-close backdrop>
-      <template #header> Send Update </template>
+    <x-modal
+      v-model="modals.sendConfirm"
+      title="Send Update"
+      show-close
+      backdrop
+    >
       <x-alert
-          color="orange"
-          light
-          type="error"
-          class="text-sm mb-4"
-          v-if="isStating"
+        color="orange"
+        light
+        type="error"
+        class="text-sm mb-4"
+        v-if="isStating"
       >
         {{ isStating }}
       </x-alert>
       <x-checkbox
-          v-model="modals.isConfirmed"
-          label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
+        v-model="modals.isConfirmed"
+        label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
       />
       <template #actions>
         <div class="text-right space-x-4">
           <x-button
-              size="sm"
-              ghost
-              :disabled="isLoading"
-              @click.prevent="modals.sendConfirm = false"
+            size="sm"
+            ghost
+            :disabled="isLoading"
+            @click.prevent="modals.sendConfirm = false"
           >
             Cancel
           </x-button>
           <template v-if="!modals.isConfirmed">
-            <x-tooltip position="left">
+            <x-tooltip placement="left">
               <SendUpdateCustReuseBtnTemp />
               <template #tooltip>
                 Please select the checkbox to proceed

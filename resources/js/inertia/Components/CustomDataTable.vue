@@ -14,9 +14,9 @@
             </th>
             <th class="">
               <span class="header direction-left">
-								<span class="header-text">Title</span>
-								<!----><!---->
-							</span>
+                <span class="header-text">Title</span>
+                <!----><!---->
+              </span>
             </th>
             <th class="">
               <span class="header direction-left"
@@ -45,8 +45,8 @@
           </tr>
         </thead>
         <tbody class="vue3-easy-data-table__body">
-					<slot name="body" />
-				</tbody>
+          <slot name="body" />
+        </tbody>
       </table>
       <!---->
       <div class="vue3-easy-data-table__message">No Available Data</div>
