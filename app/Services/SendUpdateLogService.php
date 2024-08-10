@@ -989,9 +989,9 @@ class SendUpdateLogService
 
         foreach ($documentTypesByCategory as $documentCategory => $documentTypes) {
             foreach ($documentTypes as $key => $documentType) {
-                if (!in_array($category, [SendUpdateLogStatusEnum::EN, SendUpdateLogStatusEnum::CPD]) && 
+                if (! in_array($category, [SendUpdateLogStatusEnum::EN, SendUpdateLogStatusEnum::CPD]) &&
                     in_array($documentType['code'], [
-                        DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, 
+                        DocumentTypeCode::SEND_UPDATE_TAX_INVOICE,
                         DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER,
                     ])
                 ) {
