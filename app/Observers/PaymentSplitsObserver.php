@@ -2,9 +2,9 @@
 
 namespace App\Observers;
 
+use App\Enums\QuoteTypes;
 use App\Models\PaymentSplits;
 use App\Services\SplitPaymentService;
-use App\Enums\QuoteTypes;
 
 class PaymentSplitsObserver
 {
@@ -32,7 +32,7 @@ class PaymentSplitsObserver
         $masterPayment = $paymentSplits->payment;
         $totalSplitPayments = $masterPayment->paymentSplits->count();
         $quote = $masterPayment->paymentable;
-        $modelType = QuoteTypes::getName($quote->quote_type_id)->value;        
+        $modelType = QuoteTypes::getName($quote->quote_type_id)->value;
 
         [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat(
             $masterPayment->frequency,

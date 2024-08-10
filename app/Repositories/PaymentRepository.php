@@ -93,7 +93,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
                 $masterPaymentStatus = PaymentStatusEnum::CREDIT_APPROVED;
             }
-            
+
             $paymentInformation = [
                 'total_price' => $masterPayment->total_price,
                 'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
@@ -114,7 +114,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
                 'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
                 'created_by' => $request->user()->id,
-                'updated_by' => $request->user()->id,               
+                'updated_by' => $request->user()->id,
             ];
 
             // Payment follow up count is now iterative (- nth+1) and not dependent on the count of payments in the quote
@@ -190,7 +190,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 }
 
             } else {
-                
+
                 $paymentInformation = [
                     'total_price' => $masterPayment->total_price,
                     'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
@@ -207,7 +207,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     'discount_value' => $masterPayment->discount_value,
                     'payment_methods_code' => $masterPayment->payment_methods,
                     'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
-                    'updated_by' => $request->user()->id,                    
+                    'updated_by' => $request->user()->id,
                 ];
 
                 if ($masterPayment->reference) {
@@ -252,7 +252,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     'payment_amount' => $splitPayment['payment_amount'],
                     'due_date' => $splitPayment['due_date'],
                     'payment_status_id' => PaymentStatusEnum::NEW,
-                    'discount_value' => $discount,                    
+                    'discount_value' => $discount,
                 ];
                 $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
                 if ($paymentSplitRecord) {
@@ -341,7 +341,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         'payment_amount' => $splitPayment['payment_amount'],
                         'payment_status_id' => PaymentStatusEnum::NEW, //reset status to 'NEW
                         'due_date' => $splitPayment['due_date'],
-                        'discount_value' => $discount,                                            
+                        'discount_value' => $discount,
                     ];
                 }
 
