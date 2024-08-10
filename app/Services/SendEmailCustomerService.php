@@ -901,11 +901,11 @@ class SendEmailCustomerService extends BaseService
             $attachments = [];
             if (! empty($documents)) {
                 foreach ($documents as $document) {
-                    $path = $document->doc_url;
+                    $path = $document['doc_url'];
                     $documentURL = $path !== '' ? $websiteURL.$path : '';
                     $attachments[] = [
                         'url' => $documentURL,
-                        'name' => 'InsuranceMarket.ae™ '.$document->document_type_text.' for Policy Number '.$emailData->policyNumber.'-'.$emailData->carQuoteId.'.'.pathinfo($documentURL, PATHINFO_EXTENSION),
+                        'name' => 'InsuranceMarket.ae™ '.$document['document_type_text'].' for Policy Number '.$emailData->policyNumber.'-'.$emailData->carQuoteId.'.'.pathinfo($documentURL, PATHINFO_EXTENSION),
                     ];
                 }
             }

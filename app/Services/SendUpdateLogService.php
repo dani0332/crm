@@ -879,20 +879,18 @@ class SendUpdateLogService
 
         if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
             $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
-                DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE])->with('createdBy:id,name,email')->latest()->get();
+                DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE])->toArray();
         } elseif (in_array($quoteTypeId, [QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
             if ($action == SendUpdateLogStatusEnum::ACTION_SNBU) {
                 $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
-                    DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE])->with('createdBy:id,name,email')->latest()->get();
+                    DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE])->toArray();
             } elseif ($action == SendUpdateLogStatusEnum::ACTION_SUC) {
                 $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
-                    DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE])->with('createdBy:id,name,email')->latest()->get();
+                    DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE])->toArray();
             } elseif ($action == SendUpdateLogStatusEnum::ACTION_SU) {
-                $documents = $sendUpdateLog->documents->where('document_type_code', DocumentTypeCode::SEND_UPDATE_TAX_INVOICE)->with('createdBy:id,name,email')
-                    ->latest()->get();
+                $documents = $sendUpdateLog->documents->where('document_type_code', DocumentTypeCode::SEND_UPDATE_TAX_INVOICE)->toArray();
             }
         }
-        // $documents = $this->getDocuments($sendUpdateLog, $quoteTypeId, $action);
 
         // need to add "Car Fleet" for PPE details.
         // need to add "Car Fleet" for CISC_NFI details.
