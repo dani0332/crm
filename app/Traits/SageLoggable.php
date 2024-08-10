@@ -9,12 +9,12 @@ use Illuminate\Support\Facades\Log;
 
 trait SageLoggable
 {
-    protected function logSageApiCall($payload, $response = [], $section = null, $step = null, $totalSteps = null, $status = 'success')
+    protected function logSageApiCall($payload, $response = [], $section = null, $step = null, $totalSteps = null, $status = 'success', $advisorId = null)
     {
         try {
             $userId = Auth::id();
-            if (! $userId) {
-                $userId = optional(ModelHasRole::where('role_id', 1)->first())->model_id; // Admin for backend jobs
+            if (! $userId && $advisorId) {
+                $userId = $advisorId;                
             }
             // Ensure mandatory fields are populated
             SageApiLog::updateOrCreate(

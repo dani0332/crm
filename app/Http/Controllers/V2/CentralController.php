@@ -50,6 +50,7 @@ use App\Models\HealthQuoteRequestDetail;
 use App\Models\Payment;
 use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
+use App\Models\CcPaymentProcess;
 use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
 use App\Services\CentralService;
@@ -358,8 +359,11 @@ class CentralController extends Controller
 
     // Retry CC split payment
     public function retrySplitPayment(RetrySplitPaymentRequest $request)
-    {
-        $successMessage = PaymentRepository::retrySplitPayment($request->payment_process_job_id);
+    {        
+        $paymentProcessJob = CcPaymentProcess::find($request->payment_process_job_id);
+        info('Manual CC Payments Job Started For Payment Split ID: '.$paymentProcessJob->payment_splits_id);
+
+        $successMessage =  app(SplitPaymentService::class)->processSplitPaymentApprove($paymentProcessJob->quote_type, $paymentProcessJob->quoteable_id, $paymentProcessJob->payment_splits_id, $paymentProcessJob->amount_captured, true);
 
         return $successMessage;
     }

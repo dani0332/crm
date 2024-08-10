@@ -17,6 +17,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\SageEnum;
 use App\Factories\SagePayloadFactory;
 use App\Models\CarQuote;
 use App\Models\CcPaymentProcess;
@@ -101,7 +102,7 @@ class SplitPaymentService
         $sageLogArray = $splitPayment->sageApiLogs->keyBy('step')->toArray();
 
         $sageApiService = new SageApiService();
-        $sageCustomerNumber = $sageApiService->verifySageCustomer($request->customer_id, $customerData, $splitPayment, $sageLogArray);
+        $sageCustomerNumber = $sageApiService->verifySageCustomer($request->customer_id, $customerData, $splitPayment, $sageLogArray, 4, $request->advisor_id);
         if ($sageCustomerNumber == '') {
             $returnMessage['response'] = 'Customer not found in sage';
 
@@ -127,7 +128,7 @@ class SplitPaymentService
 
         if (isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])) {
             if ($isLiveApiCallStep2) {
-                $this->logSageApiCall($payLoadOptions, $sageResponse, $splitPayment, 2, 4);
+                $this->logSageApiCall($payLoadOptions, $sageResponse, $splitPayment, 2, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
             }
             $isLiveApiCallStep3 = true;
             // make ready to post to sage,cannot use log data as it changes on each call
@@ -137,16 +138,16 @@ class SplitPaymentService
             if ($readyToPostResponse !== '') {
                 $readyToPostArray = json_decode($readyToPostResponse, true);
                 if (isset($readyToPostArray['error']['message']['value']) && ! strpos($readyToPostArray['error']['message']['value'], 'status from POSTED')) {
-                    $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, 'fail');
+                    $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, SageEnum::STATUS_FAIL, $request->advisor_id);
                     $returnMessage['response'] = 'Error while making ready to post to sage';
 
                     return $returnMessage;
                 } else {
-                    $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4);
+                    $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
                 }
             } else {
                 if ($isLiveApiCallStep3) {
-                    $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4);
+                    $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
                 }
             }
 
@@ -162,18 +163,18 @@ class SplitPaymentService
 
             if (isset($postedResponse['error'])) {
                 $returnMessage['response'] = 'Error while posting to sage';
-                $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4, 'fail');
+                $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4, SageEnum::STATUS_FAIL, $request->advisor_id);
 
                 return $returnMessage;
             } else {
                 if ($isLiveApiCallStep4) {
-                    $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4);
+                    $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
                 }
             }
             $documentNumberForReciept = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
             $returnMessage = ['status' => 'success', 'response' => $documentNumberForReciept];
         } else {
-            $this->logSageApiCall($payLoadOptions, $sageResponse, $splitPayment, 2, 4, 'fail');
+            $this->logSageApiCall($payLoadOptions, $sageResponse, $splitPayment, 2, 4, SageEnum::STATUS_FAIL, $request->advisor_id);
             $returnMessage['response'] = 'Document number not generated from sage';
         }
 
@@ -584,7 +585,7 @@ class SplitPaymentService
         }
 
         if ($isFromJob && ! $quoteModel) {
-            CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::INPROCESS, 'message' => PaymentProcessJobEnum::QUOTE_NOTFOUND_MESSAGE]);
+            CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => PaymentProcessJobEnum::QUOTE_NOTFOUND_MESSAGE]);
 
             return;
         }
@@ -599,6 +600,7 @@ class SplitPaymentService
                     'modelType' => $modelType,
                     'quote_id' => $quoteId,
                     'customer_id' => $quoteModel->customer_id,
+                    'advisor_id' => $quoteModel->advisor_id,
                 ]);
 
                 $sageResponse = $this->createSageRecipt($request, $paymentSplit, $amountCollected);
@@ -624,8 +626,8 @@ class SplitPaymentService
                 //$paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED; //Temporarily commented on API request
             }
 
-            $imcrmReceiptCreated = QuoteDocument::where(['payment_split_id' => $splitPaymentId, 'document_type_text' => DocumentTypeEnum::RECEIPT])->get();
-            if ($imcrmReceiptCreated->count() === 0 && $isFromJob) {
+            $existingReceipts = QuoteDocument::where(['payment_split_id' => $splitPaymentId, 'document_type_text' => DocumentTypeEnum::RECEIPT])->get();
+            if ($existingReceipts->count() === 0 && $isFromJob) {
                 $this->createReceipt($modelType, $quoteId, $paymentSplit);
             }
         }

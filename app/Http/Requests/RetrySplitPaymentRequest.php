@@ -27,7 +27,7 @@ class RetrySplitPaymentRequest extends FormRequest
         return [
             'model_type' => 'required|string',
             'quote_id' => 'required|integer',
-            'payment_process_job_id' => 'required|integer',
+            'payment_process_job_id' => 'required|integer|exists:cc_payment_processes,id',
         ];
     }
 
@@ -42,12 +42,6 @@ class RetrySplitPaymentRequest extends FormRequest
                 $validator->errors()->add('value', 'Quote Not Exists');
             }
         });
-
-        $validator->after(function ($validator) {
-            $paymentProcessJob = CcPaymentProcess::find(request()->payment_process_job_id);
-            if (! $paymentProcessJob) {
-                $validator->errors()->add('value', 'Payment Process Job Not Exists');
-            }
-        });
+       
     }
 }

@@ -15,7 +15,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Models\CarQuote;
-use App\Models\CcPaymentProcess;
 use App\Models\HealthQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
@@ -646,13 +645,5 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     public function fetchGetPaymentByInsurerInvoiceNumber($quote, $invoiceNumber)
     {
         return $quote->payments()->where('insurer_tax_number', $invoiceNumber)->first();
-    }
-
-    public function fetchRetrySplitPayment($paymentProcessJobId)
-    {
-        $paymentProcessJob = CcPaymentProcess::find($paymentProcessJobId);
-        info('Manual CC Payments Job Started For Payment Split ID: '.$paymentProcessJob->payment_splits_id);
-
-        return app(SplitPaymentService::class)->processSplitPaymentApprove($paymentProcessJob->quote_type, $paymentProcessJob->quoteable_id, $paymentProcessJob->payment_splits_id, $paymentProcessJob->amount_captured, true);
-    }
+    }    
 }
