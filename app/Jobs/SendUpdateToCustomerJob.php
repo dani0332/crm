@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\SendUpdateLog;
 use App\Services\SendEmailCustomerService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
@@ -47,10 +49,12 @@ class SendUpdateToCustomerJob implements ShouldQueue
             info('Send Update to Customer Job Response '.json_encode($response));
 
             if ($response == 201) {
-                /*SendUpdateLog::find($this->sendUpdate->id)->update([
+                SendUpdateLog::find($this->sendUpdate->id)->update([
                     'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
-                    'is_email_sent' => true,
-                ]);*/
+                    // 'is_email_sent' => true,
+                ]);
+
+                return true;
 
                 /*if ($this->payload['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
                     $sendUpdateRequest = new SendUpdateRequest();
@@ -60,6 +64,8 @@ class SendUpdateToCustomerJob implements ShouldQueue
             } else {
                 info('Send Update to Customer Job failed, send update id -> '.$this->sendUpdate->id);
             }
+
+            return false;
         }
     }
 
