@@ -1,4 +1,5 @@
 <script setup>
+import NProgress from 'nprogress';
 import LegacyCard from '../LegacyPolicy/Partials/LegacyCard';
 import DocumentListing from './Partials/DocumentListing.vue';
 
@@ -265,11 +266,13 @@ const installmentsTableHeader = [
 /* payments ends */
 const moveToImcrm = async (policyNumber, validateAll = true) => {
   try {
+    NProgress.start();
     const response = await axios.post('/legacy-policy/move-to-imcrm', {
       policyNumber: policyNumber,
       validateAll: validateAll,
       isInertia: true,
     });
+    NProgress.done();
     if (response?.data.status == 201) {
       notification.success({
         title: response.data.message,
