@@ -61,7 +61,7 @@ class QuotesDocumentRequest extends FormRequest
                     $uploadedDocuments = $quoteDocuments?->documents()->where($whereFilter)->count();
 
                     if (request()->document_type_code == DocumentTypeCode::SEND_UPDATE_AUDIT_RECORD) {
-                        if (!auth()->user()->can(PermissionsEnum::AUDITDOCUMENT_UPLOAD)) {
+                        if (! auth()->user()->can(PermissionsEnum::AUDITDOCUMENT_UPLOAD)) {
                             $validator->errors()->add('error', 'This section is for audit purposes only. Only authorised users can upload files here');
                         }
                     }
