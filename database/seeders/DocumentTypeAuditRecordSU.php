@@ -15,10 +15,10 @@ class DocumentTypeAuditRecordSU extends Seeder
      */
     public function run(): void
     {
-        DocumentType::firstOrCreate(([
+        DocumentType::firstOrCreate([
             'code' => DocumentTypeCode::SEND_UPDATE_AUDIT_RECORD,
             'category' => DocumentTypeCategory::QUOTE_AND_ENDORSEMENT,
-        ]), [
+        ], [
             'text' => DocumentTypeEnum::AUDIT_RECORD,
             'is_active' => 1,
             'folder_path' => 'send-update',
@@ -26,7 +26,6 @@ class DocumentTypeAuditRecordSU extends Seeder
             'max_files' => 25,
             'max_size' => 25,
             'is_required' => 0,
-            'category' => DocumentTypeCategory::QUOTE_AND_ENDORSEMENT,
             'sort_order' => 14,
         ]);
     }

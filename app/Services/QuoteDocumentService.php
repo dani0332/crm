@@ -64,10 +64,12 @@ class QuoteDocumentService extends BaseService
 
         // Document types for send updates are grouped by category.
         $documentTypesByCategory = $sendUpdateDocumentTypes->groupBy('category');
-        $groupedDocumentTypesByCategory = collect();
+        $groupedDocumentTypesByCategory = $documentTypesByCategory->map(function ($documentType) {
+            return $documentType->toArray();
+        });
 
-        foreach ($documentTypesByCategory as $key => $documentType) {
-            $groupedDocumentTypesByCategory->put($key, $documentTypesByCategory->get($key)->toArray());
+        foreach ($documentTypesByCategory as $category => $documentTypeByCategory) {
+            $groupedDocumentTypesByCategory->put($category, $documentTypesByCategory->get($category)->toArray());
         }
 
         return $groupedDocumentTypesByCategory->toArray();
