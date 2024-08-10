@@ -2,10 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Enums\SendUpdateLogStatusEnum;
-use App\Http\Controllers\V2\SendUpdateLogController;
-use App\Http\Requests\SendUpdateRequest;
-use App\Models\SendUpdateLog;
 use App\Services\SendEmailCustomerService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
