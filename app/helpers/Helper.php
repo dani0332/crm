@@ -1138,3 +1138,21 @@ if (! function_exists('getLookupsEnum')) {
         );
     }
 }
+
+if (! function_exists('isVatApplied')) {
+    function isVatApplied($modelType): bool
+    {
+        $vatEnabledQuotes = [
+            quoteTypeCode::Health,
+            quoteTypeCode::Business,
+            quoteTypeCode::Pet,
+            quoteTypeCode::Cycle,
+            quoteTypeCode::Bike,
+        ];
+        if (in_array($modelType, $vatEnabledQuotes)) {
+            return true;
+        }
+
+        return false;
+    }
+}
