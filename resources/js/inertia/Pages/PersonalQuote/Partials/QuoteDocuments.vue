@@ -408,7 +408,6 @@ const sendUpdatePermissionCheck = computed(() => {
           :label="key.replace(/_/g, ' ')"
           v-for="(docType, key, index) in documentTypes"
         >
-
           <div
             v-for="documentType in docType"
             :key="documentType.id"
@@ -422,8 +421,12 @@ const sendUpdatePermissionCheck = computed(() => {
                 }}</span>
               </h5>
               <p class="text-xs">Max files: {{ documentType.max_files }}</p>
-              <p class="text-xs">Supported: {{ documentType.accepted_files }}</p>
-              <p class="text-xs">Max file size: {{ documentType.max_size }} MB</p>
+              <p class="text-xs">
+                Supported: {{ documentType.accepted_files }}
+              </p>
+              <p class="text-xs">
+                Max file size: {{ documentType.max_size }} MB
+              </p>
             </div>
             <div class="pb-4">
               <Dropzone
@@ -434,7 +437,8 @@ const sendUpdatePermissionCheck = computed(() => {
                 :loading="docForm.processing"
                 @change="uploadFile(documentType, $event)"
                 :isDisabled="
-                  documentType.code == documentTypeCodeEnum.SEND_UPDATE_AUDIT_RECORD &&
+                  documentType.code ==
+                    documentTypeCodeEnum.SEND_UPDATE_AUDIT_RECORD &&
                   !can(permissionEnum.AUDITDOCUMENT_UPLOAD)
                 "
               />
