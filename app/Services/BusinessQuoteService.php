@@ -64,7 +64,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.source',
                 'bqr.policy_number',
                 'bqr.previous_quote_id',
-                'bqr.renewal_expiry_date',
+                // 'bqr.renewal_expiry_date',
                 'bqr.renewal_batch',
                 'bqr.previous_quote_policy_number',
                 'bqr.previous_policy_expiry_date',
