@@ -892,25 +892,6 @@ class SendUpdateLogService
             }
         }
 
-        // need to add "Car Fleet" for PPE details.
-        // need to add "Car Fleet" for CISC_NFI details.
-        // need to add "Car Fleet" for COE_NFI details.
-
-        if ($quoteTypeId == QuoteTypeId::Business) {
-            if ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
-                $isGroupMedical = true;
-                $templateId = getAppStorageValueByKey(ApplicationStorageEnums::GROUP_MEDICAL_SEND_POLICY_TEMPLATE);
-            } elseif ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::tradeCredit)) {
-                $templateId = getAppStorageValueByKey(ApplicationStorageEnums::CORPLINE_TRADE_SEND_POLICY_TEMPLATE);
-            } else {
-                $templateId = getAppStorageValueByKey(ApplicationStorageEnums::CORPLINE_CAR_SEND_POLICY_TEMPLATE);
-            }
-        } else {
-            $templateCode = strtoupper(QuoteTypeId::getOptions()[$quoteTypeId]).'_SEND_POLICY_TEMPLATE';
-            $constantName = 'App\Enums\ApplicationStorageEnums::'.$templateCode;
-            $templateId = getAppStorageValueByKey(constant($constantName));
-        }
-
         $emailData = (object) [
             'clientFullName' => $quote->first_name.' '.$quote->last_name,
             'policyNumber' => $quote->policy_number,
@@ -926,8 +907,23 @@ class SendUpdateLogService
             ],
             'googleMeet' => $quote->advisor->calendar_link ?? '',
             'documents' => $documents,
-            'isGroupMedical' => $isGroupMedical ?? null,
         ];
+
+        if ($quoteTypeId == QuoteTypeId::Business) {
+            $emailData->lobType = quoteBusinessTypeCode::getValueById($quote->business_type_of_insurance_id);
+            if ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
+                $emailData->isGroupMedical = true;
+                $templateId = getAppStorageValueByKey(ApplicationStorageEnums::GROUP_MEDICAL_SEND_POLICY_TEMPLATE);
+            } elseif ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::tradeCredit)) {
+                $templateId = getAppStorageValueByKey(ApplicationStorageEnums::CORPLINE_TRADE_SEND_POLICY_TEMPLATE);
+            } else {
+                $templateId = getAppStorageValueByKey(ApplicationStorageEnums::CORPLINE_CAR_SEND_POLICY_TEMPLATE);
+            }
+        } else {
+            $templateCode = strtoupper(QuoteTypeId::getOptions()[$quoteTypeId]).'_SEND_POLICY_TEMPLATE';
+            $constantName = 'App\Enums\ApplicationStorageEnums::'.$templateCode;
+            $templateId = getAppStorageValueByKey(constant($constantName));
+        }
 
         if ($quoteTypeId == QuoteTypeId::Car) {
             if ($optionCode == SendUpdateLogStatusEnum::AOCOV) {
