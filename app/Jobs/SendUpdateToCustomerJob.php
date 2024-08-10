@@ -54,8 +54,6 @@ class SendUpdateToCustomerJob implements ShouldQueue
                     // 'is_email_sent' => true,
                 ]);
 
-                return true;
-
                 /*if ($this->payload['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
                     $sendUpdateRequest = new SendUpdateRequest();
                     app(SendUpdateLogController::class)->sendUpdate($sendUpdateRequest->merge($this->payload));
@@ -64,8 +62,6 @@ class SendUpdateToCustomerJob implements ShouldQueue
             } else {
                 info('Send Update to Customer Job failed, send update id -> '.$this->sendUpdate->id);
             }
-
-            return false;
         }
     }
 

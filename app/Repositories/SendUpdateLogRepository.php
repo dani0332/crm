@@ -245,7 +245,7 @@ class SendUpdateLogRepository extends BaseRepository
                 }
             }
 
-            $result = SendUpdateToCustomerJob::dispatchSync($sendUpdateLog, $data);
+            SendUpdateToCustomerJob::dispatchSync($sendUpdateLog, $data);
 
             /*$sendUpdateLog->update([
                 'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
@@ -260,6 +260,7 @@ class SendUpdateLogRepository extends BaseRepository
                 ]);
             }*/
             info('Send update to Customer - Send Update Code: '.$sendUpdateLog->code.' - Status update to: '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
+            $result = true;
         } catch (\Exception $ex) {
             logger()->error('Send Update to Customer - Failed - Send Update Code: '.$sendUpdateLog->code.' - Error : '.$ex->getMessage());
 
