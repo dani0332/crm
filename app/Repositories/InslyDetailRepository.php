@@ -30,7 +30,7 @@ class InslyDetailRepository extends BaseRepository
     }
     public function fetchGetData()
     {
-        $coverage = [];
+        $coverage = $this->getCoverageList(auth()->user());;
 
         $query = InslyDetail::query();
 
