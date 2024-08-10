@@ -14,6 +14,7 @@ use App\Models\PetQuote;
 use App\Models\QuoteType;
 use App\Models\YachtQuote;
 use App\Services\CapiRequestService;
+use App\Services\InslyDataService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Carbon\Carbon;
@@ -77,7 +78,7 @@ class InslyDetailRepository extends BaseRepository
     private function getQuoteTypeFromCoverage($coverage)
     {
         $coverage = $coverage ?? null;
-        $inslyCoverageArray = $this->inslyInsurances();
+        $inslyCoverageArray = (new InslyDataService())->inslyInsurances();
         $quoteType = null;
         foreach ($inslyCoverageArray as $key => $item) {
             $lowerCaseCoverageValues = array_map('strtolower', $item);
@@ -372,7 +373,7 @@ class InslyDetailRepository extends BaseRepository
     public function getCoverageList($user)
     {
         $coverage = [];
-        $inslyCoverageArray = $this->inslyInsurances();
+        $inslyCoverageArray =  (new InslyDataService())->inslyInsurances();
         if ($user->hasRole(RolesEnum::BikeAdvisor)) {
             $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::BIKE->value]);
         }
@@ -452,7 +453,7 @@ class InslyDetailRepository extends BaseRepository
     private function getBusinessTypeOfInsuranceIDFromCoverage($coverage)
     {
         $coverage = $coverage ?? null;
-        $inslyBusinessTypeOfInsurances = $this->inslyBusinessTypeOfInsurance();
+        $inslyBusinessTypeOfInsurances = (new InslyDataService())->inslyBusinessTypeOfInsurance();
         $businessTypeOfInsurance = null;
         foreach ($inslyBusinessTypeOfInsurances as $key => $inslyBusinessTypeOfInsurance) {
             $lowercaseBusinessTypeOfInsurance = array_map('strtolower', $inslyBusinessTypeOfInsurance);
