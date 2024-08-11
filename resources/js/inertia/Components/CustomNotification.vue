@@ -5,7 +5,7 @@
             <img :src="imageUrl" alt="Notification Image" class="notification-image" />
             <div>
             <h2 class="notification-title">{{ title }}</h2>
-            <p class="notification-message">{{ message }} <a class="notification-button" @click="openUrl">REF ID</a> </p>
+            <p class="notification-message">{{ message }} <a class="notification-button" @click="openUrl">{{quoteType}}-{{uuid}}</a> </p>
             </div>
             </div>
     </div>
@@ -21,7 +21,9 @@ const props = defineProps({
     message: String,
     url: String,
     timeout: Number,
-    callHideFunction:Function
+    callHideFunction:Function,
+    uuid: String,
+    quoteType: String,
 });
 
 const visible = ref(false);
@@ -102,5 +104,6 @@ onMounted(() => {
 .notification-button {
     color: #007bff;
     cursor: pointer;
+    text-decoration: underline;
 }
 </style>

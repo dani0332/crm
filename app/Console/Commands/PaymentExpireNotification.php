@@ -72,7 +72,8 @@ class PaymentExpireNotification extends Command
                 $model = $this->getModelObject(strtolower('car'));
                 $model = $model::find($car->id);
                 $url .= '/quotes/'.strtolower('car').'/'.$model->uuid;
-                event(new PaymentExpireNotifications($model, $url));
+                $quoteUuid = $car->uuid;
+                event(new PaymentExpireNotifications($model, $url, $quoteUuid));
             }
         }
         // HEALTH PAYMENT EXPIRE NOTIFICATION
@@ -98,7 +99,8 @@ class PaymentExpireNotification extends Command
                 $model = $this->getModelObject(strtolower('health'));
                 $model = $model::find($health->id);
                 $url .= '/quotes/'.strtolower('health').'/'.$model->uuid;
-                event(new PaymentExpireNotifications($model, $url));
+                $quoteUuid = $health->uuid;
+                event(new PaymentExpireNotifications($model, $url, $quoteUuid));
             }
         }
 
@@ -125,7 +127,8 @@ class PaymentExpireNotification extends Command
                 $model = $this->getModelObject(strtolower('business'));
                 $model = $model::find($business->id);
                 $url .= "/quotes/business/$model->uuid";
-                event(new PaymentExpireNotifications($model, $url));
+                $quoteUuid = $business->uuid;
+                event(new PaymentExpireNotifications($model, $url, $quoteUuid));
             }
         }
 
@@ -153,7 +156,8 @@ class PaymentExpireNotification extends Command
                 $model = $this->getModelObject(strtolower('business'));
                 $model = $model::find($business->id);
                 $url .= "/medical/amt/$model->uuid";
-                event(new PaymentExpireNotifications($model, $url));
+                $quoteUuid = $business->uuid;
+                event(new PaymentExpireNotifications($model, $url, $quoteUuid));
             }
         }
 
@@ -183,7 +187,8 @@ class PaymentExpireNotification extends Command
                 $model = $this->getModelObject(strtolower('bike'));
                 $model = $model::find($bike->id);
                 $url .= "/personal-quotes/bike/$model->uuid";
-                event(new PaymentExpireNotifications($model, $url));
+                $quoteUuid = $bike->uuid;
+                event(new PaymentExpireNotifications($model, $url, $quoteUuid));
             }
         }
 
@@ -211,7 +216,8 @@ class PaymentExpireNotification extends Command
                 $model = $this->getModelObject(strtolower('cycle'));
                 $model = $model::find($cycle->id);
                 $url .= "/personal-quotes/cycle/$model->uuid";
-                event(new PaymentExpireNotifications($model, $url));
+                $quoteUuid = $cycle->uuid;
+                event(new PaymentExpireNotifications($model, $url, $quoteUuid));
             }
         }
 
@@ -239,7 +245,8 @@ class PaymentExpireNotification extends Command
                 $model = $this->getModelObject(strtolower('yacht'));
                 $model = $model::find($yacht->id);
                 $url .= "/personal-quotes/yacht/$model->uuid";
-                event(new PaymentExpireNotifications($model, $url));
+                $quoteUuid = $yacht->uuid;
+                event(new PaymentExpireNotifications($model, $url, $quoteUuid));
             }
         }
 
@@ -267,7 +274,8 @@ class PaymentExpireNotification extends Command
                 $model = $this->getModelObject(strtolower('pet'));
                 $model = $model::find($pet->id);
                 $url .= "/personal-quotes/pet/$model->uuid";
-                event(new PaymentExpireNotifications($model, $url));
+                $quoteUuid = $pet->uuid;
+                event(new PaymentExpireNotifications($model, $url, $quoteUuid));
             }
         }
 
@@ -295,7 +303,8 @@ class PaymentExpireNotification extends Command
                 $model = $this->getModelObject(strtolower('jetski'));
                 $model = $model::find($jetski->id);
                 $url .= "/personal-quotes/jetski/$model->uuid";
-                event(new PaymentExpireNotifications($model, $url));
+                $quoteUuid = $jetski->uuid;
+                event(new PaymentExpireNotifications($model, $url, $quoteUuid));
             }
         }
 
@@ -323,7 +332,8 @@ class PaymentExpireNotification extends Command
                 $model = $this->getModelObject(strtolower('home'));
                 $model = $model::find($home->id);
                 $url .= "/quotes/home/$model->uuid";
-                event(new PaymentExpireNotifications($model, $url));
+                $quoteUuid = $home->uuid;
+                event(new PaymentExpireNotifications($model, $url, $quoteUuid));
             }
         }
 
@@ -351,7 +361,8 @@ class PaymentExpireNotification extends Command
                 $model = $this->getModelObject(strtolower('life'));
                 $model = $model::find($life->id);
                 $url .= "/quotes/life/$model->uuid";
-                event(new PaymentExpireNotifications($model, $url));
+                $quoteUuid = $life->uuid;
+                event(new PaymentExpireNotifications($model, $url, $quoteUuid));
             }
         }
 
@@ -379,7 +390,8 @@ class PaymentExpireNotification extends Command
                 $model = $model::find($travel->id);
                 if (isset($model->uuid)) {
                     $travelUrl = $url.'/quotes/travel/'.$model->uuid;
-                    event(new PaymentExpireNotifications($model, $travelUrl));
+                    $quoteUuid = $travel->uuid;
+                    event(new PaymentExpireNotifications($model, $url, $quoteUuid));
                 }
             }
         }

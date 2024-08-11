@@ -24,6 +24,7 @@ const listen = () => {
                 title: 'Payment',
                 message: e.message,
                 url: e.url,
+                quoteUuid: e.quoteUuid,
                 timeout: 30000
             };
             showNotification.value = true;
@@ -54,6 +55,7 @@ onUnmounted(() => {
             :title="notificationData.title"
             :message="notificationData.message"
             :url="notificationData.url"
+            :quoteUuid="notificationData.quoteUuid"
             :timeout="notificationData.timeout"
             :callHideFunction="hideNotification"
             @close="showNotification = false"

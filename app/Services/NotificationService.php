@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeShortCode;
 use App\Events\PaymentNotifications;
 use App\Traits\GenericQueriesAllLobs;
 
@@ -46,7 +47,7 @@ class NotificationService extends BaseService
         }
 
         info('Payment Notification Event Trigger');
-
-        event(new PaymentNotifications($model, $url));
+        $quoteType = strtoupper(substr(trim($request->quoteType), 0, 3));
+        event(new PaymentNotifications($model, $url, $quoteType));
     }
 }

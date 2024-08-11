@@ -16,14 +16,16 @@ class PaymentNotifications implements ShouldBroadcastNow
     private int $advisorId;
     private string $message;
     private string $url;
+    private string $quoteType;
 
-    public function __construct($model, $url)
+    public function __construct($model, $url, $quoteType)
     {
         $this->uuid = $model->uuid;
         $this->clientName = "$model->first_name $model->last_name";
         $this->advisorId = $model->advisor_id;
         $this->message = "$this->clientName has authorized the payment for ";
         $this->url = $url;
+        $this->quoteType = $quoteType;
     }
 
     public function broadcastOn()
@@ -38,12 +40,13 @@ class PaymentNotifications implements ShouldBroadcastNow
 
     public function broadcastWith()
     {
-        info("Notification Send",[$this->uuid]);
+        info('Notification Send', [$this->uuid]);
         return [
             'uuid' => $this->uuid,
             'advisorId' => $this->advisorId,
             'message' => $this->message,
             'url' => $this->url,
+            'quoteType' => $this->quoteType,
         ];
     }
 }

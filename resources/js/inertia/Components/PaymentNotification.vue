@@ -23,6 +23,8 @@ const listen = () => {
                 title: 'Payment',
                 message: e.message,
                 url: e.url,
+                uuid : e.uuid,
+                quoteType : e.quoteType,
                 timeout: 30000
             };
             showNotification.value = true;
@@ -53,6 +55,8 @@ onUnmounted(() => {
             :imageUrl="notificationData.imageUrl"
             :title="notificationData.title"
             :message="notificationData.message"
+            :uuid="notificationData.uuid"
+            :quoteType="notificationData.quoteType"
             :url="notificationData.url"
             :timeout="notificationData.timeout"
             :callHideFunction="hideNotification"

@@ -728,8 +728,8 @@ if (! function_exists('getAuthorisePaymentCount')) {
         /*  CarQuote::where('payment_status_id', PaymentStatusEnum::AUTHORISED)
           ->where('advisor_id', Auth::user()->id)
           ->count() */
+        $userId = Auth::user()->id;
         $userTeams = Auth::user()->getUserTeams(Auth::user()->id);
-
         if (empty($userTeams)) {
             return 0;
         }
@@ -740,7 +740,9 @@ if (! function_exists('getAuthorisePaymentCount')) {
             ->join('user_team', 'user_team.user_id', 'users.id')
             ->join('teams', 'teams.id', '=', 'user_team.team_id')
             ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('personal_quotes.advisor_id', $userId)
             ->whereIn('teams.name', $userTeams)
+            ->distinct('personal_quotes.id')
             ->count();
 
         $travelCount = DB::table('travel_quote_request')
@@ -749,7 +751,9 @@ if (! function_exists('getAuthorisePaymentCount')) {
             ->join('user_team', 'user_team.user_id', 'users.id')
             ->join('teams', 'teams.id', '=', 'user_team.team_id')
             ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('travel_quote_request.advisor_id', $userId)
             ->whereIn('teams.name', $userTeams)
+            ->distinct('travel_quote_request.id')
             ->count();
 
         $lifeCount = DB::table('life_quote_request')
@@ -758,7 +762,9 @@ if (! function_exists('getAuthorisePaymentCount')) {
             ->join('user_team', 'user_team.user_id', 'users.id')
             ->join('teams', 'teams.id', '=', 'user_team.team_id')
             ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('life_quote_request.advisor_id', $userId)
             ->whereIn('teams.name', $userTeams)
+            ->distinct('life_quote_request.id')
             ->count();
 
         $totalCount = $personalCount + $travelCount + $lifeCount;

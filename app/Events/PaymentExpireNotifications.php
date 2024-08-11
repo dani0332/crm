@@ -15,13 +15,15 @@ class PaymentExpireNotifications implements ShouldBroadcastNow
     private int $advisorId;
     private string $message;
     private string $url;
+    private string $quoteUuid;
 
-    public function __construct($model, $url)
+    public function __construct($model, $url, $quoteUuid)
     {
         $this->uuid = $model->uuid;
         $this->advisorId = $model->advisor_id;
         $this->message = "The payment for $this->uuid will expire in 2 days";
         $this->url = $url;
+        $this->quoteUuid = $quoteUuid;
     }
 
     public function broadcastOn()
@@ -37,11 +39,13 @@ class PaymentExpireNotifications implements ShouldBroadcastNow
     public function broadcastWith()
     {
         info('Payment Expire Notification sent to Advisor: '.$this->advisorId.' and Quote ID: '.$this->uuid);
+
         return [
             'uuid' => $this->uuid,
             'advisorId' => $this->advisorId,
             'message' => $this->message,
             'url' => $this->url,
+            'quoteUuid' => $this->quoteUuid,
         ];
     }
 }
