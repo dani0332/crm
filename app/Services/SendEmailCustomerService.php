@@ -987,8 +987,12 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    public function sendSICFollowupEmail($lead, QuoteTypes $quoteType, array $extraParams = [])
+    public function sendSICFollowupEmail($lead, QuoteTypes $quoteType = null, array $extraParams = [])
     {
+        if($quoteType === null) {
+            $quoteType = QuoteTypes::CAR;
+        }
+
         if ($quoteType === QuoteTypes::CAR) {
             $emailTemplateId = getAppStorageValueByKey(ApplicationStorageEnums::SIC_FOLLOWUP_TEMPLATE_ID);
         }
