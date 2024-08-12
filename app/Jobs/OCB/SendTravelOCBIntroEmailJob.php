@@ -19,12 +19,20 @@ class SendTravelOCBIntroEmailJob implements ShouldQueue
     public $tries = 3;
     public $timeout = 60;
     public $backoff = 300;
+    public $quoteUuid;
+    public $previousAdvisor;
+    public $triggerSICWorkflow;
+    public $handleZeroPlans;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(public $quoteUuid, public $previousAdvisor = null, public bool $triggerSICWorkflow = false, public bool $handleZeroPlans = false)
+    public function __construct($quoteUuid, $previousAdvisor = null, bool $triggerSICWorkflow = false, bool $handleZeroPlans = false)
     {
+        $this->quoteUuid = $quoteUuid;
+        $this->previousAdvisor = $previousAdvisor;
+        $this->triggerSICWorkflow = $triggerSICWorkflow;
+        $this->handleZeroPlans = $handleZeroPlans;
     }
 
     /**

@@ -16,8 +16,13 @@ use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
 {
-    public function __construct(public ApiService $apiService, public InboundEmailsHookService $inboundEmailsHookService)
+    public $apiService;
+    public $inboundEmailsHookService;
+
+    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService)
     {
+        $this->apiService = $apiService;
+        $this->inboundEmailsHookService = $inboundEmailsHookService;
     }
 
     public function fetchSignupUrl(APiFetchUrl $request)

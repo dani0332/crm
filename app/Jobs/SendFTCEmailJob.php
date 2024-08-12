@@ -16,12 +16,19 @@ class SendFTCEmailJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public $tries = 3;
+    public $timeout = 60;
+    public $backoff = 300;
+    public $quoteUUID;
+    public $quoteType;
+
     /**
      * Create a new job instance.
      */
-    public function __construct(public string $quoteUUID, public QuoteTypes $quoteType)
+    public function __construct(string $quoteUUID, QuoteTypes $quoteType)
     {
-        //
+        $this->quoteUUID = $quoteUUID;
+        $this->quoteType = $quoteType;
     }
 
     /**

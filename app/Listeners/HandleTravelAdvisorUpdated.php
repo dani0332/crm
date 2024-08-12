@@ -20,11 +20,20 @@ use Illuminate\Support\Facades\Log;
 
 class HandleTravelAdvisorUpdated
 {
+    public $travelAllocationService;
+    public $smsService;
+    public $travelEmailService;
+    public $httpService;
+
     /**
      * Create the event listener.
      */
-    public function __construct(public TravelAllocationService $travelAllocationService, public SendSmsCustomerService $smsService, public TravelEmailService $travelEmailService, public HttpRequestService $httpService)
+    public function __construct(TravelAllocationService $travelAllocationService, SendSmsCustomerService $smsService, TravelEmailService $travelEmailService, HttpRequestService $httpService)
     {
+        $this->travelAllocationService = $travelAllocationService;
+        $this->smsService = $smsService;
+        $this->travelEmailService = $travelEmailService;
+        $this->httpService = $httpService;
     }
 
     /**

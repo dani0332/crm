@@ -584,7 +584,7 @@ class SendEmailCustomerService extends BaseService
 
             if ($quoteType === QuoteTypes::TRAVEL) {
                 $body['cc'] = $this->getAdditionalEmails(getAppStorageValueByKey(ApplicationStorageEnums::SIC_TRAVEL_EMAIL_CC));
-                $body['replyTo'] = ['email' => getAppStorageValueByKey(ApplicationStorageEnums::DTT_REPLY_TO), 'name' => 'InsuranceMarket.ae'];
+                $body['replyTo'] = ['email' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_EMAIL_REPLY_TO), 'name' => 'InsuranceMarket.ae'];
             }
 
             // Conditionally add 'sender' key if advisorName and $advisorCustomEmail are not null
@@ -761,7 +761,7 @@ class SendEmailCustomerService extends BaseService
 
             if ($quoteType === QuoteTypes::TRAVEL) {
                 $body['cc'] = $this->getAdditionalEmails(getAppStorageValueByKey(ApplicationStorageEnums::SIC_TRAVEL_EMAIL_CC));
-                $body['replyTo'] = ['email' => getAppStorageValueByKey(ApplicationStorageEnums::DTT_REPLY_TO), 'name' => 'InsuranceMarket.ae'];
+                $body['replyTo'] = ['email' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_EMAIL_REPLY_TO), 'name' => 'InsuranceMarket.ae'];
             }
 
             $response = Http::withHeaders($headers)
@@ -1024,7 +1024,7 @@ class SendEmailCustomerService extends BaseService
 
             if ($quoteType === QuoteTypes::TRAVEL) {
                 $body['cc'] = $this->getAdditionalEmails(getAppStorageValueByKey(ApplicationStorageEnums::SIC_TRAVEL_EMAIL_CC));
-                $body['replyTo'] = ['email' => getAppStorageValueByKey(ApplicationStorageEnums::DTT_REPLY_TO), 'name' => 'InsuranceMarket.ae'];
+                $body['replyTo'] = ['email' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_EMAIL_REPLY_TO), 'name' => 'InsuranceMarket.ae'];
             }
 
             $response = Http::withHeaders($headers)

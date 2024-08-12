@@ -23,9 +23,13 @@ class SICFollowupEmailJob implements ShouldQueue
 
     public $timeout = 15;
     public $backoff = 60;
+    public $uuid;
+    public $quoteType;
 
-    public function __construct(public $uuid, public QuoteTypes $quoteType)
+    public function __construct($uuid, QuoteTypes $quoteType)
     {
+        $this->uuid = $uuid;
+        $this->quoteType = $quoteType;
     }
 
     /**
