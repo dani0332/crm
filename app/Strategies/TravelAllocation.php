@@ -11,8 +11,15 @@ use Illuminate\Support\Facades\Log;
 
 class TravelAllocation implements Allocation
 {
-    public function __construct(public TravelAllocationService $travelAllocationService, public $allocationId, public $teamId = false)
+    public $travelAllocationService;
+    public $allocationId;
+    public $teamId;
+
+    public function __construct(TravelAllocationService $travelAllocationService, $allocationId, $teamId = false)
     {
+        $this->travelAllocationService = $travelAllocationService;
+        $this->allocationId = $allocationId;
+        $this->teamId = $teamId;
     }
 
     public function executeSteps($overrideAdvisorId = false)

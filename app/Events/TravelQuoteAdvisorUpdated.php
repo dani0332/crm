@@ -11,10 +11,15 @@ class TravelQuoteAdvisorUpdated
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
+    public $lead;
+    public $oldAdvisorId;
+
     /**
      * Create a new event instance.
      */
-    public function __construct(public TravelQuote $lead, public $oldAdvisorId)
+    public function __construct(TravelQuote $lead, $oldAdvisorId)
     {
+        $this->lead = $lead;
+        $this->oldAdvisorId = $oldAdvisorId;
     }
 }

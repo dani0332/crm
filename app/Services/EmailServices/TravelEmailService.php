@@ -20,8 +20,13 @@ use Illuminate\Support\Str;
 
 class TravelEmailService extends BaseService
 {
-    public function __construct(public TravelQuoteService $travelQuoteService, public SendEmailCustomerService $sendEmailCustomerService)
+    public $travelQuoteService;
+    public $sendEmailCustomerService;
+
+    public function __construct(TravelQuoteService $travelQuoteService, SendEmailCustomerService $sendEmailCustomerService)
     {
+        $this->travelQuoteService = $travelQuoteService;
+        $this->sendEmailCustomerService = $sendEmailCustomerService;
     }
 
     private function getPlans(TravelQuote $lead, bool $handleZeroPlans = false): object
