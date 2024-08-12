@@ -980,6 +980,7 @@ class RenewalsUploadService
                 'emirate_of_registration_id' => $emirate->id ?? null,
                 'uae_license_held_for_id' => $uaeLicenseHeldFor->id ?? null,
                 'car_value' => $data['car_value'],
+                'car_value_tier' => $data['car_value'],
                 'previous_policy_expiry_date' => (! empty($data['end_date'])) ? $this->formatDate($data['end_date']) : null,
                 'advisor_id' => $advisorId,
                 'renewal_batch' => $data['batch'],
