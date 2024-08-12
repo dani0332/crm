@@ -632,7 +632,7 @@ class SendUpdateLogService
         return $payments;
     }
 
-    public function updatePaymentDetails($payment, $sendUpdateLog)
+    public function updatePaymentDetails($payment, $sendUpdateLog, $ignoreDiscount = false)
     {
         $sendUpdatePaymentDetails = [
             'policy_expiry_date' => $sendUpdateLog->expiry_date,
@@ -645,9 +645,12 @@ class SendUpdateLogService
             'commission_vat_applicable' => $sendUpdateLog->commission_vat_applicable,
             'commission' => $sendUpdateLog->total_commission,
             'insurer_invoice_date' => $sendUpdateLog->invoice_date,
-            'discount_value' => $sendUpdateLog->discount,
             'commission_vat' => $sendUpdateLog->vat_on_commission,
         ];
+
+        if (! $ignoreDiscount) {
+            $sendUpdatePaymentDetails['discount_value'] = $sendUpdateLog->discount;
+        }
 
         return $payment->update($sendUpdatePaymentDetails);
     }

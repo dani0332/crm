@@ -32,10 +32,21 @@ class SendUpdateLogRepository extends BaseRepository
     public function fetchCreate($data)
     {
         try {
-            $code = $data['childCategory']['slug'];
-            $count = $this->fetchGetCount($code);
+            $category = $data['childCategory']['slug']; // EF, EN, CI, CIR, CPU, CPD.
+            $count = $this->fetchGetCount($category); // get count of send update log by category.
+            $baseCode = $category.'-'.date('m').date('y').'-'; // CPD-0824- or EF-0824- etc.
+            $code = $baseCode.($count + 1); // CPD-0824-48 or EF-0824-48 etc.
 
-            $code = $code.'-'.date('m').date('y').'-'.($count + 1);
+            $attempts = 0;
+            while (SendUpdateLog::where('code', $code)->exists() && $attempts < 10) {
+                $count++;
+                $code = $baseCode.$count;
+                $attempts++;
+            }
+
+            if ($attempts >= 10) {
+                vAbort('Send Update Log Code generation failed.');
+            }
 
             $uuid = strtoupper(Str::random(6));
 
@@ -310,7 +321,7 @@ class SendUpdateLogRepository extends BaseRepository
                 $sendUpdateLogService = app(SendUpdateLogService::class);
                 info('Send update - Updating Booking details and Commission Schedule in Payments - SendUpdateUUID: '.$sendUpdate->uuid);
                 $sendUpdateLogService->sendUpdatePriceAndDiscount($sendUpdate, $payment);
-                $sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate);
+                $sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate, true);
                 app(SplitPaymentService::class)->updateCommissionSchedule($payment);
             }
 
