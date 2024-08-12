@@ -151,7 +151,7 @@ class AlfredChatController extends Controller
 
         $fileName = 'alfred_chat_logs_'.Carbon::now()->format('Y-m-d_H-i-s');
 
-        
+
         if($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
             return Excel::download(new InstantChatConsolidatedExport($chat), $fileName.'.xlsx');
         }
@@ -341,10 +341,28 @@ class AlfredChatController extends Controller
                             ]
                         ]
                     ],
+                    'customer_interactions' => [
+                        '$sum' => [
+                            '$cond' => [
+                                ['$eq' => ['$role', 'USER']],
+                                1,
+                                0
+                            ]
+                        ]
+                    ],
                     'ai_interactions' => [
                         '$sum' => [
                             '$cond' => [
                                 ['$eq' => ['$role', 'AI']],
+                                1,
+                                0
+                            ]
+                        ]
+                    ],
+                    'total_ai_interactions' => [
+                        '$sum' => [
+                            '$cond' => [
+                                ['$in' => ['$role', ['AI', 'USER']]],
                                 1,
                                 0
                             ]
