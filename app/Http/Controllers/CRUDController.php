@@ -1583,15 +1583,12 @@ class CRUDController extends Controller
         $result = $this->crudService->updateQuoteStatus($request);
         $entity = $result['entity'];
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
-
             // Check if the lead status is "Quoted"
-            if ($request->leadStatus == QuoteStatusEnum::Quoted) {
-
+            if ((isset($request->leadStatus) && $request->leadStatus == QuoteStatusEnum::Quoted)) {
                 // Create a new instance of HealthEmailService
                 $healthEmailService  = new HealthEmailService();
-
                 // Send the Health OCA email using the HealthEmailService
-                $healthEmailService->sendHealthOCAEmail($entity);
+                $healthEmailService->sendOCAHealthFollowupsEmail($entity);
             }
         }
         $plainEntity = $this->crudService->getLeadPlainEntityByUUID($request->modelType, $request->quote_uuid);

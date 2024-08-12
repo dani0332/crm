@@ -4,152 +4,164 @@ namespace App\Services;
 
 use Carbon\Carbon;
 use App\Models\User;
-use App\Enums\quoteTypeCode;
-use App\Enums\LeadSourceEnum;
-use App\Enums\UserStatusEnum;
 use App\Services\BirdService;
+use App\Enums\HealthFacilityType;
+use App\Enums\HealthPlanTypeEnum;
+use App\Models\ApplicationStorage;
+use App\Services\HealthQuoteService;
 use App\Enums\ApplicationStorageEnums;
-use App\Services\SendEmailCustomerService;
 
 
 class HealthEmailService extends BaseService
 {
-    protected $sendEmailCustomerService;
-    protected $healthQuoteService;
 
-    public function __construct(SendEmailCustomerService $sendEmailCustomerService = null, HealthQuoteService $healthQuoteService = null)
+    protected $birdService;
+
+    public function __construct(BirdService $birdService=null)
     {
-        $this->sendEmailCustomerService = $sendEmailCustomerService;
-        $this->healthQuoteService = $healthQuoteService;
+        $this->birdService = $birdService;
+    }
+    public function sendOCAHealthFollowupsEmail($lead, HealthQuoteService $healthQuoteService=null)
+    {
+        // Retrieve plans with available ratings for the given lead
+        $quote = $healthQuoteService->getQuotePlans($lead->uuid);
+        if (! $quote->quote->plans) {
+            info('No plans found for lead: '.$lead->uuid.' | time: '.now());
+        }
+
+           $lead->oca_flow_enabled  = false;
+            if (! $lead->oca_flow_enabled) {
+                $advisor = User::where('id', $lead->advisor_id)->first();
+                $plans = $this->getQuotePlansByCriteria($quote->quote->healthPlanTypeId, $quote->quote->plans ?? []);
+                $emailData = $this->mappingEmailDataForOCAEmail($lead, $advisor, $plans);
+                $eventName = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_OCA_HEALTH_WORKFLOW)->first();
+                info('OCA Health workflow key: '.$eventName->value);
+                if ($eventName) {
+                    $responseCode = $this->birdService->sendOCAHealthWorkFlow($emailData);
+                    $lead->oca_flow_enabled = true;
+                    $lead->save();
+                    info('OCA Health workflow event triggered for lead: '.$lead->uuid.' and oca_flow_enabled: '.$lead->oca_flow_enabled);
+                    info('OCA Health workflow response: '.$responseCode);
+                } else {
+                    info('OCA Health workflow key not found');
+                }
+            } else {
+                info('OCA Health workflow already enabled for lead: '.$lead->uuid);
+            }
+        return $responseCode ?? null;
     }
 
-    public function sendHealthOCAEmail($lead)
+    public function mappingEmailDataForOCAEmail($lead, $advisor, $plans)
     {
-        $plans = $lead->plans;
+        return (object) [
+            'healthQuoteId' => $lead->code,
+            'customerEmail' => $lead->email,
+            'uuid' => $lead->uuid,
+            'customerFullName' => $lead->first_name.' '.$lead->last_name,
+            'advisorId' => $advisor->id ?? null,
+            'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
+            'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
+            'advisorDetails' => $advisor ?? null,
+            'quotePlanLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid,
+            'requestAdvisorLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
+            'plans' => $plans,
+        ];
+    }
 
+    public function getQuotePlansByCriteria($healthPlanTypeId, $plans)
+    {
+        $entryLevelPlans = ['TE_ECARE_1', 'SROADB_DIC', 'SUKOON_SAFE', 'DIC_N4_NIL', 'NLGIC_PLAN5', 'OI2_RN3_NIL'];
+        $goodLevelPlans = ['TE_MN_SILPLUS', 'N2A_DIC', 'SUKOON_HOME', 'NLGIC_PLAN4', 'NT_MN_PEARL', 'VIV_MN_1000SCLASOCA'];
+        $bestLevelPlans = ['CIGNA_REGIONAL_COMEXAH_NIL', 'BUPA_PREMIER', 'ALLIANZ_SELECT_PEARL_EXCL', 'APR_ESES_WW', 'ORIENT_NC_HP2', 'TE_MN_PLATINUM'];
+        $plansByLevel = [
+            HealthPlanTypeEnum::ENTRY_LEVEL->value => $entryLevelPlans,
+            HealthPlanTypeEnum::GOOD->value => $goodLevelPlans,
+            HealthPlanTypeEnum::BEST->value => $bestLevelPlans,
+        ];
+        $selectedPlans = collect($plans)->filter(function ($plan) use ($healthPlanTypeId, $plansByLevel) {
+            return in_array($plan->planCode, $plansByLevel[$healthPlanTypeId] ?? []);
+        });
 
-        // Determine the email template ID
-        $emailTemplateId = 0;
+        return $selectedPlans->map(function ($plan) {
+            $lowestRate = collect($plan->ratesPerCopay)->sortBy('discountPremium')->first();
+            $filteredSelectedCopay = $lowestRate && ! empty($lowestRate->healthPlanCoPaymentId)
+                ? collect($plan->coPayments)->firstWhere('id', $lowestRate->healthPlanCoPaymentId)
+                : '';
+            $totalValue = ($plan->policyFee ?? 0) + ($plan->basmah ?? 0) + ($lowestRate->discountPremium ?? 0);
 
-        // Build email data
-        $emailData = $this->buildEmailData($lead, $plans);
-        $quotePlansCount = is_countable($plans) ? count($plans) : 0;
-        if ($quotePlansCount > 0) {
-            info('Inside plans of count: '.$lead->uuid.'    ');
-            $pdfData = [
-                'plan_ids' => collect($plans)->take(5)->pluck('id')->toArray(),
-                'quote_uuid' => $lead->uuid,
+            return (object) [
+                'name' => $plan->name ?? null,
+                'planCode' => $plan->planCode,
+                'eligibilityName' => $plan->eligibilityName ?? null,
+                'planBenefit' => $this->getBenefitsDetails($plan->benefits, $filteredSelectedCopay) ?? null,
+                'total' => $this->formatNumberWithCommas($totalValue),
+                'hospital' => (object) [
+                    'count' => $plan->healthNetwork->noOfHospitals ?? 0,
+                    'text' => $this->getHospitals($plan->healthNetwork->featuredFacilities ?? null) ?? null,
+                ],
+                'clinic' => (object) [
+                    'count' => $plan->healthNetwork->noOfClinics ?? 0,
+                    'text' => $this->getClinics($plan->healthNetwork->featuredFacilities ?? null) ?? null,
+                ],
             ];
-            $pdf = $this->healthQuoteService->exportPlansPdf(quoteTypeCode::Health, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $plans], 'isDataSorted' => true])));
-            if (isset($pdf['error'])) {
-                info('Failed to generate PDF for UUID in health OCA email service: '.$lead->uuid.' Error: '.$pdf['error']);
-            } else {
-                $emailData->pdfAttachment = (object) $pdf;
-                info('attaching pdf: '.$lead->uuid.'    ');
+        })->take(6)->toArray();
+    }
+
+    public function getHospitals($featuredFacilities)
+    {
+        if (empty($featuredFacilities)) {
+            return null;
+        }
+        $hospitals = collect($featuredFacilities)
+            ->where('type', HealthFacilityType::HOSPITAL->value)
+            ->filter(function ($item) {
+                return ! empty($item->text);
+            })
+            ->map(function ($item) {
+                return str_replace('Hospital', '', $item->text);
+            })->implode(', ');
+
+        return $hospitals ?? '';
+    }
+
+    public function getClinics($featuredFacilities)
+    {
+        if (empty($featuredFacilities)) {
+            return null;
+        }
+        $hospitals = collect($featuredFacilities)
+            ->where('type', HealthFacilityType::CLINIC->value)
+            ->filter(function ($item) {
+                return ! empty($item->text);
+            })
+            ->map(function ($item) {
+                return $item->text;
+            })->implode(', ');
+
+        return $hospitals ?? '';
+    }
+
+    public function formatNumberWithCommas($number)
+    {
+        return number_format($number, 2, '.', ',');
+    }
+
+    public function getBenefitsDetails($benefitList, $filteredSelectedCopay = null)
+    {
+        $benefitsTypes = [];
+        $getBenefitCode = ['annualLimit', 'regionsCovered'];
+        foreach ($benefitList as $key => $covers) {
+            foreach ($covers as $cover) {
+                if ($key === 'outpatient' && $cover->code === 'medicine') {
+                    $benefitsTypes[$cover->code] = ['text' => $cover->value ?? ''];
+                } elseif (in_array($cover->code, $getBenefitCode)) {
+                    $benefitsTypes[$cover->code] = ['text' => $cover->value ?? ''];
+                } elseif ($cover->code === 'outpatient_copay') {
+                    $benefitsTypes[$cover->code] = ['text' => $filteredSelectedCopay->text ?? ''];
+                }
             }
         }
 
-         $responseCode = $this->sendEmailCustomerService->sendHealthOCAEmail($emailTemplateId, $emailData, 'health-oca-email');
-         if ( in_array([200,201],$responseCode)) {
-            $birdService =new  BirdService();
-            // Sending bird workflow email
-            $bird = $birdService->sendAutomationWorkflow('/health-oca',$emailData);
-
-         }
-
-        return $responseCode;
-    }
-
-
-    public function buildEmailData($lead, $plans)
-    {
-        if (count($plans) == 0) {
-            // No plans with available ratings, build email data for the specific case
-            return $this->buildNoPlansEmailData($lead);
-        } else {
-            // Plans with available ratings exist, build email data for the different case
-            return $this->buildPlansEmailData($lead, $plans);
-        }
-    }
-
-    private function buildNoPlansEmailData($healthQuote)
-    {
-        $advisor = User::where('id', $healthQuote->advisor_id)->first();
-        $previousAdvisor = User::where('id', $healthQuote->previous_advisor_id)->first();
-        $emailData = $this->buildCommonEmailData($healthQuote, $advisor, $previousAdvisor);
-        $emailData->isReAssignment = ! empty($previousAdvisor);
-        return $emailData;
-    }
-
-    private function buildPlansEmailData($healthQuote, $plans)
-    {
-        $advisor = User::where('id', $healthQuote->advisor_id)->first();
-        return (object) [
-            'clientFullName' => $healthQuote->first_name.' '.$healthQuote->last_name,
-            'customerName' => $healthQuote->first_name.' '.$healthQuote->last_name,
-            'customerEmail' => $healthQuote->email,
-            'mobilePhone' => (! empty($advisor->mobile_no) ? formatMobileNoDisplay($advisor->mobile_no) : ''),
-            'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
-            'landLine' => (! empty($advisor->landline_no) ? formatLandlineDisplay($advisor->landline_no) : ''),
-            'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
-            'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
-            'documentUrl' => '',
-            'healthQuoteId' => $healthQuote->code,
-            'currentInsurer' => $healthQuote->currently_insured_with,
-            'quoteLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid, // DLA = Disable Lead Assignment
-            'requestAdvisorLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid.'/?assignAdvisor=true',
-            'assignmentType' => $this->getAssignmentTypeText($healthQuote->assignment_type),
-            'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
-            'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
-            'isReAssignment' => ! empty($previousAdvisor),
-        ];
-    }
-
-    private function getAssignmentTypeText($assignmentType)
-    {
-        $assignmentText = '';
-        switch ($assignmentType) {
-            case 1:
-                $assignmentText = 'System Assigned';
-                break;
-            case 2:
-                $assignmentText = 'System ReAssigned';
-                break;
-            case 3:
-                $assignmentText = 'Manual Assigned';
-                break;
-            case 4:
-                $assignmentText = 'Manual ReAssigned';
-                break;
-            default:
-                break;
-        }
-
-        return $assignmentText;
-    }
-
-    private function buildCommonEmailData($healthQuote, $advisor, $previousAdvisor)
-    {
-        $documentUrl = getAppStorageValueByKey(ApplicationStorageEnums::HEALTH_OCA_EMAIL_ATTACHMENT_URL);
-        $whatsAppNumber = ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
-        return (object) [
-            'clientFullName' => $healthQuote->first_name.' '.$healthQuote->last_name,
-            'customerName' => $healthQuote->first_name.' '.$healthQuote->last_name,
-            'customerEmail' => $healthQuote->email,
-            'mobilePhone' => (! empty($advisor->mobile_no) ? formatMobileNoDisplay($advisor->mobile_no) : ''),
-            'whatsAppNumber' => $whatsAppNumber,
-            'landLine' => (! empty($advisor->landline_no) ? formatLandlineDisplay($advisor->landline_no) : ''),
-            'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
-            'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
-            'documentUrl' => '',
-            'healthQuoteId' => $healthQuote->code,
-            'currentInsurer' => $healthQuote->currently_insured_with,
-            'quoteLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid,
-            'requestAdvisorLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid,
-            'assignmentType' => $this->getAssignmentTypeText($healthQuote->assignment_type),
-            'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
-            'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
-            'isReAssignment' => ! empty($previousAdvisor),
-        ];
+        return $benefitsTypes;
     }
 }

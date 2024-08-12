@@ -2,43 +2,40 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
 use App\Enums\ApplicationStorageEnums;
+use App\Models\ApplicationStorage;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class BirdService extends BaseService
 {
-    protected $birdEndpoint = 'https://api.bird.com';
-    protected $birdUserName;
-    protected $birdPassword;
+    protected $birdEndpoint;
+    protected $birdaccessKey;
     public function __construct()
     {
-        $this->birdEndpoint = config('constants.BIRD_API_ENDPOINT') ?? 'https://api.bird.com';
-        $this->birdUserName = config('constants.BIRD_BASIC_AUTH_USER_NAME');
-        $this->birdPassword = config('constants.BIRD_BASIC_AUTH_PASSWORD');
+        $this->birdEndpoint = config('constants.BIRD_API_ENDPOINT');
+        $this->birdaccessKey = config('constants.BIRD_BASIC_AUTH_USER_NAME');
     }
 
+    public function birdRequest($method, $url, $data)
+    {
 
-    public function birdRequest($method ='get',$url, $data){
+        try { // Configure the HTTP request with headers
+            $request = Http::withHeaders([
+                'Authorization' => 'AccessKey '.$this->birdaccessKey ?? null,
+                'Content-Type' => 'application/json',
+            ]);
+            // Dynamically call the HTTP method with the appropriate data
+            if (in_array(strtolower($method), ['post', 'put', 'patch'])) {
+                $response = $request->$method($this->birdEndpoint.$url, $data);
+            } else {
+                $response = $request->$method($this->birdEndpoint.$url, ['query' => $data]);
+            }
 
-        $authBasic = base64_encode($this->birdUserName.':'.$this->birdPassword);
-        try {
-                  // Configure the HTTP request with headers
-                $request = Http::withHeaders([
-                    'Authorization' => 'Basic ' . $authBasic,
-                    'Content-Type' => 'application/json', // Adjust if needed
-                ]);
-
-                // Dynamically call the HTTP method with the appropriate data
-                if (in_array(strtolower($method), ['post', 'put', 'patch'])) {
-                    $response = $request->$method($url, $data);
-                } else {
-                    $response = $request->$method($this->birdEndpoint.$url, ['query' => $data]);
-                }
-              // Return status code and response body
+            // Return status code and response body
             return [
                 'status_code' => $response->status(),
-                'body' => $response->body() // or $response->body() for raw response
+                'body' => $response->body(), // or $response->body() for raw response
             ];
         } catch (\Exception $e) {
             // Log the error with details
@@ -48,39 +45,70 @@ class BirdService extends BaseService
                 'data' => $data,
                 'error' => $e->getMessage(),
             ]);
+            throw $e;
+        }
+    }
+    public function birdWebHookRequest($method, $url, $data)
+    {
 
-            // return response()->json(['error' => 'API request failed'], 500);
+        try {
+            // Configure the HTTP request with headers
+            $request = Http::withHeaders([
+                'Authorization' => 'AccessKey '.$this->birdaccessKey ?? null,
+                'Content-Type' => 'application/json',
+            ]);
+            // Dynamically call the HTTP method with the appropriate data
+            if (in_array(strtolower($method), ['post', 'put', 'patch'])) {
+                $response = $request->$method($url, $data);
+            } else {
+                $response = $request->$method($url, ['query' => $data]);
+            }
+            // Return status code and response body
+            info('response code : '.$response->status());
+            info('response body : '.$response->body().'\n Ref-ID: '.$data->uuid ?? ''.'\n');
+
+            return $response->status();
+        } catch (\Exception $e) {
+            // Log the error with details
+            Log::error('Bird API request failed', [
+                'method' => $method,
+                'url' => $url,
+                'data' => $data,
+                'error' => $e->getMessage(),
+            ]);
             throw $e;
         }
     }
 
-
-    public function createContactIdentifier($data){
-     return   $this->birdRequest('post', "/workspaces/{$data['workspaceId']}/contacts/{$data['uuid']}/identifiers", $data);
+    public function createContactIdentifier($data)
+    {
+        return $this->birdRequest('post', "/workspaces/{$data['workspaceId']}/contacts/{$data['uuid']}/identifiers", $data);
     }
 
-    public function updateContactIdentifier($data){
-        return   $this->birdRequest('put', "/workspaces/{$data['workspaceId']}/contacts/{$data['uuid']}/identifiers/{$data['identifierId']}", $data);
+    public function updateContactIdentifier($data)
+    {
+        return $this->birdRequest('put', "/workspaces/{$data['workspaceId']}/contacts/{$data['uuid']}/identifiers/{$data['identifierId']}", $data);
     }
 
+    public function triggerWorkflow($webhook, $data)
+    {
 
-    public function triggerWorkflow($webhook,$data){
-
-        return  $this->birdRequest('post', $webhook, $data);
+        return $this->birdWebHookRequest('post', $webhook, $data);
     }
 
-    public function sendAutomationWorkflow($data){
-        $payload = [
-            'customerEmail' => $data['customerEmail'],
-            'customerName' => $data['customerName'],
-            'advisorEmail' => $data['advisorEmail'],
-            'advisorName' => $data['advisorName'],
-            'plans' => [],
-        ];
-        $webhook = ApplicationStorageEnums::HEALTH_OCA_WORKFLOW_ID;
-        return  $this->triggerWorkflow($webhook, $payload);
-    }
+    public function sendOCAHealthWorkFlow($data)
+    {
+        $webhook = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_OCA_HEALTH_WORKFLOW)->first();
+        if (! empty($webhook)) {
+            info('SIC Health OCB email template found REF:ID | '.$data->healthQuoteId.' Time: '.now());
 
+            return $this->triggerWorkflow($webhook->value, $data);
+        } else {
+            info('SIC Health OCB email template not found REF:ID | '.$data->healthQuoteId.' Time: '.now());
+
+            return false;
+        }
+    }
 
 
 }
