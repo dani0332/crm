@@ -14,6 +14,7 @@ use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
+use App\Models\BusinessQuoteType;
 use App\Models\CarAddOn;
 use App\Models\CarAddOnOption;
 use App\Models\CarQuote;
@@ -923,7 +924,7 @@ class SendUpdateLogService
         ];
 
         if ($quoteTypeId == QuoteTypeId::Business) {
-            $emailData->lobType = quoteBusinessTypeCode::getValueById($quote->business_type_of_insurance_id);
+            $emailData->lobType = BusinessQuoteType::where('id', $quote->business_type_of_insurance_id)->where('is_active', true)->first()->text;
             if ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
                 $emailData->isGroupMedical = true;
                 $templateId = getAppStorageValueByKey(ApplicationStorageEnums::GROUP_MEDICAL_SEND_POLICY_TEMPLATE);
