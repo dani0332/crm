@@ -1134,11 +1134,11 @@ if (! function_exists('getQuoteUsingSubject')) {
     }
 }
 
-if (! function_exists('sendTravelFTCEmail')) {
-    function sendTravelFTCEmail(string $quoteUUID, QuoteTypes $quoteType)
+if (! function_exists('sendFTCEmail')) {
+    function sendFTCEmail(string $quoteUUID, QuoteTypes $quoteType)
     {
         try {
-            info("sendTravelFTCEmail: Trying to send Payment Auth Email if lead is SIC and Payment is Authorized and Advisor is Assigned for uuid {$quoteUUID}");
+            info("sendFTCEmail: Trying to Send FTC Email if lead is SIC and Payment is Authorized and Advisor is Assigned for uuid {$quoteUUID}");
             $lead = $quoteType->model()::with('payments')
                 ->whereNotNull('advisor_id')
                 ->where('uuid', $quoteUUID)
@@ -1156,19 +1156,19 @@ if (! function_exists('sendTravelFTCEmail')) {
                     ];
 
                     $response = Marshall::request('/payment/send-payment-auth-email', 'post', $data);
-                    info("sendTravelFTCEmail: Email Sent Sucessfully for uuid: {$quoteUUID}");
+                    info("sendFTCEmail: Email Sent Sucessfully for uuid: {$quoteUUID}");
 
                     return $response;
                 } else {
-                    info("sendTravelFTCEmail: Payment not authorized for uuid {$quoteUUID}");
+                    info("sendFTCEmail: Payment not authorized for uuid {$quoteUUID}");
                 }
             } else {
-                info("sendTravelFTCEmail: Quote not found for uuid {$quoteUUID}");
+                info("sendFTCEmail: Quote not found for uuid {$quoteUUID}");
 
                 return null;
             }
         } catch (Exception $e) {
-            Log::error('sendTravelFTCEmail Error: '.$e->getMessage().$e->getTraceAsString());
+            Log::error('sendFTCEmail Error: '.$e->getMessage().$e->getTraceAsString());
         }
     }
 }

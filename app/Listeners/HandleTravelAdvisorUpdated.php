@@ -36,7 +36,7 @@ class HandleTravelAdvisorUpdated
         $lead = $event->lead;
 
         if ($lead) {
-            sendTravelFTCEmail($lead->uuid, QuoteTypes::TRAVEL);
+            sendFTCEmail($lead->uuid, QuoteTypes::TRAVEL);
         }
 
         if ($lead->source == LeadSourceEnum::RENEWAL_UPLOAD) {
