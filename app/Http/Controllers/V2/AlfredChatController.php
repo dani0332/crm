@@ -140,7 +140,6 @@ class AlfredChatController extends Controller
         $chatPipeline[] = ['$skip' => $skip];
         $chatPipeline[] = ['$limit' => $perPage];
 
-
         $chat = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline))->toArray();
 
         $startIndex = ($page - 1) * $perPage + 1;
