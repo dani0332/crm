@@ -17,7 +17,7 @@ class SendTravelOCBIntroEmailJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
-    public $timeout = 60;
+    public $timeout = 100;
     public $backoff = 300;
     public $quoteUuid;
     public $previousAdvisor;

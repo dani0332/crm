@@ -37,7 +37,18 @@ class SICFollowupEmailJob implements ShouldQueue
      */
     public function handle(SendEmailCustomerService $sendEmailCustomerService)
     {
+        info(self::class . ' - Inside handle', [
+            'uuid' => $this->uuid,
+            'quoteType' => $this->quoteType,
+        ]);
+
         $lead = $this->quoteType?->model()::where('uuid', $this->uuid)->first();
+        if($lead) {
+            info(self::class . ' - Lead found for uuid : ' . $lead->uuid);
+        } else {
+            info(self::class . ' - Lead not found for uuid : ' . $this->uuid);
+            return;
+        }
 
         if (empty($lead->advisor_id)) {
             $sendEmailCustomerService->sendSICFollowupEmail($lead, $this->quoteType);
