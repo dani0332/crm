@@ -236,6 +236,7 @@ class CarAllocationService extends AllocationService
         if ($tier) {
             return $tier;
         }
+
         // Return null if no matching tier is found.
         return null;
     }
