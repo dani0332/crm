@@ -195,30 +195,6 @@ trait GenericQueriesAllLobs
         return $customer;
     }
 
-    public function inslyInsurances()
-    {
-        return [
-            QuoteTypes::BIKE->value => ['Bike insurance'],
-            QuoteTypes::BUSINESS->value => [
-                'business interruption insurance', 'contractors all risks', 'Cyber liability', 'directors and officers liability insurance',
-                'Engineering and plant insurance', 'fidelity guarantee', 'group life', 'group medical insurance', 'holiday homes',
-                'livestock insurance', 'machinery breakdown insurance', 'marine cargo (individual shipment) insurance',
-                'marine hull insurance', 'medical malpractice insurance', 'money insurance', 'motor fleet',
-                'open cover - marine cargo insurance', 'professional indemnity insurance,property insurance',
-                'public liability insurance', 'road transit (international)', 'road transit (UAE only)',
-                'sme packaged insurance', 'trade credit insurance', 'workmens compensation insurance',
-            ],
-            QuoteTypes::CAR->value => ['casco', 'motor insurance - Comprehensive', 'motor insurance - TPL'],
-            QuoteTypes::LIFE->value => ['Critical illness', 'Individual life insurance'],
-            QuoteTypes::HOME->value => ['Home insurance', 'personal accident', 'home insurance'],
-            QuoteTypes::TRAVEL->value => ['Inbound travel insurance', 'Outbound travel insurance'],
-            QuoteTypes::HEALTH->value => ['Individual or family medical'],
-            QuoteTypes::CYCLE->value => ['Pedal cycle insurance'],
-            QuoteTypes::PET->value => ['Pet insurance'],
-            QuoteTypes::YACHT->value => ['Yacht insurance'],
-        ];
-    }
-
     /**
      * add comments & improvements needed
      * This method called when we visit all LOB's details page
@@ -230,7 +206,7 @@ trait GenericQueriesAllLobs
     {
         info('fn: bookPolicyPayload called for '.$record->uuid);
         $infoMessage = 'QC '.$record->code.' ';
-        $insuranceProviderLeadCount = $insuranceProviderCode = $sendUpdateInvoiceDescription = $sendUpdateBrokerInvoice = '';
+        $insuranceProviderLeadCount = $insuranceProviderCode = '';
         // Retrieve the first payment belongs to lead not to send update
         $payment = $payments->whereNull('send_update_log_id')->first();
         if ($payment) {
@@ -238,16 +214,11 @@ trait GenericQueriesAllLobs
             $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
             $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
         }
-        if ($payments->first()?->send_update_log_id) {
-            $sendUpdateInvoiceDescription = $payments->first()->invoice_description;
-            $sendUpdateBrokerInvoice = $payments->first()->broker_invoice_number;
-        }
 
-        $invoiceDescription = empty($sendUpdateInvoiceDescription) ? $insuranceProviderCode.'-'.ucfirst($quoteType).'-'.$record->policy_number : $sendUpdateInvoiceDescription;
         $bookPolicyDetails = [];
         $bookPolicyDetails['lineOfBusiness'] = ucfirst($quoteType);
-        $bookPolicyDetails['brokerInvoiceNo'] = empty($sendUpdateBrokerInvoice) ? $insuranceProviderCode.$insuranceProviderLeadCount : $sendUpdateBrokerInvoice;
-        $bookPolicyDetails['invoiceDescription'] = substr($invoiceDescription, 0, 60);
+        $bookPolicyDetails['brokerInvoiceNo'] = $insuranceProviderCode.$insuranceProviderLeadCount;
+        $bookPolicyDetails['invoiceDescription'] = substr($insuranceProviderCode.'-'.ucfirst($quoteType).'-'.$record->policy_number, 0, 60);
         $bookPolicyDetails['bookButton'] = false;
         $bookPolicyDetails['sendButton'] = false;
         $bookPolicyDetails['editButton'] = false;
@@ -499,7 +470,7 @@ trait GenericQueriesAllLobs
                                 ! empty($quote->policy_issuance_date) &&
                                 ! empty($quote->policy_start_date) &&
                                 ! empty($quote->renewal_expiry_date) &&
-                                $quote->price_with_vat > 0;
+                                $quote->price_with_vat >= 0;
 
         if (! $hasBasicPolicyDetails) {
             return false;
@@ -573,7 +544,7 @@ trait GenericQueriesAllLobs
                 PaymentStatusEnum::PENDING,
                 PaymentStatusEnum::NEW,
                 PaymentStatusEnum::OVERDUE,
-                PaymentStatusEnum::CREDIT_APPROVED,
+                PaymentStatusEnum::CREDIT_APPROVED, // TODO: Check with Faisal and Ahsan about this to be included or not for booking of policy with zero price.
             ];
 
             $insufficientPaymentStatusesHeading = [

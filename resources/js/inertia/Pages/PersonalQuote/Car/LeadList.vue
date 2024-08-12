@@ -718,7 +718,7 @@ const resetDateFilters = filterName => {
           </x-button>
           <x-tooltip
             v-if="!canExport && can(permissionsEnum.DATA_EXTRACTION)"
-            position="right"
+            placement="right"
           >
             <x-button tag="div" size="sm" color="emerald" class="mr-3">
               Export
@@ -747,7 +747,7 @@ const resetDateFilters = filterName => {
             v-if="
               !canExportLeadsAndPlan && can(permissionsEnum.EXPORT_PLAN_DETAIL)
             "
-            position="right"
+            placement="right"
           >
             <x-button class="mr-3" tag="div" size="sm" color="emerald">
               Extract leads and plan detail</x-button
@@ -778,7 +778,7 @@ const resetDateFilters = filterName => {
               !canExport &&
               can(permissionsEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE)
             "
-            position="right"
+            placement="right"
           >
             <x-button class="mr-3" tag="div" size="sm" color="emerald"
               >Extract leads detail with email/mobile_no</x-button
@@ -890,45 +890,44 @@ const resetDateFilters = filterName => {
       }"
     />
 
-    <x-modal v-model="createLead.modal" size="lg" show-close backdrop>
-      <template #header>
-        <span class="text-primary-800 font-semibold"> Create Lead </span>
+    <x-modal
+      v-model="createLead.modal"
+      size="md"
+      title="Create Lead"
+      show-close
+      backdrop
+    >
+      <div class="w-full grid md:grid-cols-2 gap-5">
+        <p class="text-md font-bold text-gray-500">
+          Select reason to create manual lead <span class="error">*</span>
+        </p>
+      </div>
+      <div class="flex w-full flex-col gap-5 mt-4 mb-4">
+        <x-form-group v-model="createLead.type">
+          <x-radio value="referral" label="Referral" />
+          <x-radio value="early_renewal" label="Early Renewal" />
+          <x-radio value="payment_status" label="Payment Status" />
+        </x-form-group>
+      </div>
+      <template #actions>
+        <x-button
+          ghost
+          tabindex="-1"
+          size="md"
+          type="button"
+          @click.prevent="createLead.modal = false"
+        >
+          Cancel
+        </x-button>
+        <x-button
+          size="md"
+          color="emerald"
+          type="button"
+          @click.prevent="onConfirmCreateLead"
+        >
+          Confirm
+        </x-button>
       </template>
-      <x-form :auto-focus="false">
-        <div class="w-full grid md:grid-cols-2 gap-5">
-          <p class="text-md font-bold text-gray-500">
-            Select reason to create manual lead <span class="error">*</span>
-          </p>
-        </div>
-        <div class="flex w-full flex-col gap-5 mt-4 mb-4">
-          <x-radio
-            v-model="createLead.type"
-            value="referral"
-            label="Referral"
-          />
-          <x-radio
-            v-model="createLead.type"
-            value="early_renewal"
-            label="Early Renewal"
-          />
-          <x-radio
-            v-model="createLead.type"
-            value="payment_status"
-            label="Payment Status"
-          />
-        </div>
-        <x-divider class="my-4" />
-        <div class="flex justify-end gap-3 mb-4">
-          <x-button
-            size="md"
-            color="emerald"
-            type="button"
-            @click.prevent="onConfirmCreateLead"
-          >
-            Confirm
-          </x-button>
-        </div>
-      </x-form>
     </x-modal>
   </div>
 </template>

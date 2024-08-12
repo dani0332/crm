@@ -129,7 +129,7 @@ class SendEmailCustomerService extends BaseService
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->customerName,
                 ]],
-                'templateId' => $emailTemplateId,
+                'templateId' => (int) $emailTemplateId,
                 'params' => [
                     'customerName' => $emailData->customerName,
                     'customerEmail' => $emailData->customerEmail,
@@ -137,6 +137,7 @@ class SendEmailCustomerService extends BaseService
                     'inviteCode' => isset($emailData->inviteCode) ? $emailData->inviteCode : null,
                     'buttonUrl' => isset($emailData->buttonUrl) ? $emailData->buttonUrl : null,
                     'cdbId' => isset($emailData->quoteCdbId) ? $emailData->quoteCdbId : null,
+                    'productName' => isset($emailData->productName) ? $emailData->productName : null,
                     'advisorName' => isset($emailData->advisorName) ? $emailData->advisorName : null,
                     'advisorLandlineNo' => isset($emailData->advisorLandlineNo) ? $emailData->advisorLandlineNo : null,
                     'advisorMobileNo' => isset($emailData->advisorMobileNo) ? $emailData->advisorMobileNo : null,
@@ -739,7 +740,6 @@ class SendEmailCustomerService extends BaseService
                     ];
                 }
             }
-
             if (is_array($emailData->handBookDocuments) && ! empty($emailData->handBookDocuments)) {
                 $attachments = array_merge($attachments, $emailData->handBookDocuments);
             }
@@ -766,6 +766,10 @@ class SendEmailCustomerService extends BaseService
                     'policyStartDate' => $emailData->policyStartDate,
                     'policyNumber' => $emailData->policy_number,
                     'roadsideAssistance' => $emailData->roadsideAssistance,
+                    'googleMeet' => $emailData->googleMeet,
+                    'appDownloadLink' => $emailData->appDownloadLink,
+                    'insuranceType' => $emailData->insuranceType,
+                    'planName' => $emailData->planName,
                     'advisor' => (object) [
                         'name' => $emailData->advisorName,
                         'email' => $emailData->advisorEmail,
@@ -776,7 +780,7 @@ class SendEmailCustomerService extends BaseService
                 'tags' => [
                     $tag,
                 ],
-                'attachment' => isset($attachments) ? $attachments : null,
+                'attachment' => isset($attachments) && count($attachments) > 0 ? $attachments : null,
                 'bcc' => [],
             ];
 
