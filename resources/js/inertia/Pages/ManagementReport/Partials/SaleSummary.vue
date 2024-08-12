@@ -95,7 +95,7 @@ watchEffect(() => {
     headerMap['advisor'],
   );
   if (props.groupBy === 'advisor') {
-    tableHeader.push({ text: 'Department', value: 'department' });
+    tableHeader.unshift({ text: 'Department', value: 'department' });
   } else {
     const index = tableHeader.findIndex(
       item => item.text === 'Department' && item.value === 'department',

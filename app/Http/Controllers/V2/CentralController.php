@@ -241,30 +241,6 @@ class CentralController extends Controller
             $data['quoteTypeId'] = $quoteTypeId;
             $data['id'] = $quote->id;
 
-            /* Start - Temporarily adding for correcting historic data  */
-            /* calculate price and vat for payments for old payment data  where price_vat_applicable is not available */
-            if (! $payment->price_vat_applicable) {
-                [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculateMasterPriceAndVat($payment->frequency, $payment->total_price, $request->model_type, $quote->id);
-                $payment->update([
-                    'price_vat_applicable' => $priceWithoutVat,
-                    'price_vat' => $vat,
-                ]);
-            }
-
-            /* calculate price and vat for split payments for old split payment data where price_vat_applicable is not available */
-            if ($paymentSplits->whereNull('price_vat_applicable')->count()) {
-                foreach ($payment->paymentSplits as $splitPayment) {
-                    if (isset($splitPayment->payment_method) && $splitPayment->payment_method != null) {
-                        [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat($payment->frequency, $payment->total_price, $splitPayment->sr_no, $splitPayment->payment_amount, $request->model_type, $quote->id, count($paymentSplits));
-                        $splitPayment->update([
-                            'price_vat_applicable' => $priceWithoutVat,
-                            'price_vat' => $vat,
-                        ]);
-                    }
-                }
-            }
-            /* End - Temporarily adding for correcting historic data  */
-
             $sageService = new SageApiService();
             $response = $sageService->postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data);
 
