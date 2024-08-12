@@ -126,7 +126,7 @@ class TravelAnnual extends EmbeddedProduct
     {
         $dataset->each(function ($item) {
             $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
-            $quoteObject = $quoteObject->travelQuote ?? $item->quoteRequest;
+            $quoteObject = $item->travelQuote ?? $item->quoteRequest;
             $status = $quoteObject->quoteStatus->text ?? '';
             $customer = $quoteObject->customer ?? null;
             $advisorName = $quoteObject->advisor->name ?? '';
