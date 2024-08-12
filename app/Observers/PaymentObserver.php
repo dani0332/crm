@@ -2,11 +2,11 @@
 
 namespace App\Observers;
 
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\Payment;
-use App\Services\SplitPaymentService;
 use App\Models\PersonalQuote;
-use App\Enums\quoteTypeCode;
+use App\Services\SplitPaymentService;
 
 class PaymentObserver
 {
