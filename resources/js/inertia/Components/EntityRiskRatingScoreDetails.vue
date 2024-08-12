@@ -33,7 +33,7 @@ const riskRatingOptions = [
 const riskRatingScore = quote => {
   if (quote.risk_score != null) {
     modals.riskRatingScoreModal = true;
-    let url = `/quotes/${props.modelType.toLowerCase()}/risk-rating-details/${quote.uuid}`;
+    let url = `/quotes/business/risk-rating-details/${quote.uuid}`;
     axios
       .get(url)
       .then(res => {
@@ -45,7 +45,7 @@ const riskRatingScore = quote => {
   }
 };
 const quoteDetail = () => {
-  let url = `/${props.modelType}/quote-detail/${props.quote.uuid}`;
+  let url = `/business/quote-detail/${props.quote.uuid}`;
   axios
     .get(url)
     .then(res => {
@@ -56,24 +56,19 @@ const quoteDetail = () => {
       console.log(err);
     });
 };
-
 let formValues = {
   risk_override: '',
   quote_uuid: props.quote.uuid,
 };
-
 const formModal = reactive(formValues);
 const can = permission => useCan(permission);
-
 function toggleEdit() {
   modals.editOpen = !modals.editOpen;
 }
-
 const contentLoader = ref(false);
-
 function saveRisk() {
   contentLoader.value = true;
-  let url = `/${props.modelType}/update-risk`;
+  let url = `/business/update-risk`;
   axios
     .post(url, formModal)
     .then(res => {
@@ -90,12 +85,12 @@ function saveRisk() {
       console.log(err);
     });
 }
-
 quoteDetail();
 </script>
 <template>
   <div class="grid sm:grid-cols-2">
     <dt class="font-medium">Risk Category</dt>
+
     <dd @click.prevent="riskRatingScore(quote)">
       {{
         quote.risk_score == null && modals.risk_score_override == null
@@ -132,16 +127,16 @@ quoteDetail();
               <th v-if="index == 0" class="w-50 z-10 text-left" rowspan="8">
                 Customer Risk
               </th>
-              <th v-if="index == 8" class="w-50 z-10 text-left" rowspan="4">
+              <th v-if="index == 8" class="w-50 z-10 text-left" rowspan="5">
                 Geographic Risk
               </th>
-              <th v-if="index == 12" class="w-50 z-10 text-left">
+              <th v-if="index == 13" class="w-50 z-10 text-left">
                 Product Risk
               </th>
-              <th v-if="index == 13" class="w-50 z-10 text-left" rowspan="3">
+              <th v-if="index == 14" class="w-50 z-10 text-left" rowspan="4">
                 Transaction Risk
               </th>
-              <th v-if="index == 16" class="w-50 z-10 text-left" rowspan="3">
+              <th v-if="index == 18" class="w-50 z-10 text-left" rowspan="3">
                 Delivery Channel & Payment Risk
               </th>
               <td class="w-50 z-10 text-left p-0">{{ scoreList.text }}</td>
@@ -160,7 +155,7 @@ quoteDetail();
               <td class="text-center" colspan="3">
                 <strong>Inherent Risk Level </strong>
               </td>
-              <td class="text-left w-20 p-0">
+              <td class="text-left w-20 p-0 capitalize">
                 {{
                   quote.risk_score <= 25
                     ? 'Low Risk'
@@ -213,8 +208,8 @@ quoteDetail();
                     class="mr-2"
                     @click="saveRisk()"
                     :loading="contentLoader"
-                    >Save
-                  </x-button>
+                    >Save</x-button
+                  >
                   <x-button size="xs" color="primary" @click="toggleEdit()">
                     Cancel
                   </x-button>
@@ -248,11 +243,9 @@ quoteDetail();
 .bg-slate-50.p-4 {
   overflow: auto !important;
 }
-
 .color-white {
   color: #fff;
 }
-
 th {
   font-size: 13px;
   border-width: 1px;

@@ -473,6 +473,12 @@ const linkEntity = () => {
       console.log(err);
     });
 };
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
@@ -504,7 +510,7 @@ const onAddUpdate = () => {
 
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Life Detail</h2>
-      <div class="flex gap-2">
+      <div class="flex gap-2" v-if="readOnlyMode.isDisable === true">
         <Link
           v-if="quote.life_quote_request_detail?.insly_id"
           :href="`/legacy-policy/${quote.life_quote_request_detail.insly_id}`"
@@ -1053,6 +1059,7 @@ const onAddUpdate = () => {
           size="sm"
           :loading="customerProfileForm.processing"
           @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
         >
           Search
         </x-button>
@@ -1098,6 +1105,16 @@ const onAddUpdate = () => {
               disabled
             />
           </dd>
+        </div>
+        <div class="text-left space-x-4">
+          <x-button
+            size="sm"
+            color="orange"
+            @click.prevent="linkEntity"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Link
+          </x-button>
         </div>
       </dl>
       <template #actions>
