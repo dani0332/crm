@@ -234,7 +234,9 @@ trait GenericQueriesAllLobs
             $brokerInvoiceNo = (new PaymentRepository())->generateBrokerInvoiceNumber($payment);
         }
 
-        if ($record->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+        $getBINFromDBForPolicyStatuses = [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued,  QuoteStatusEnum::CancellationPending];
+
+        if (in_array($record->quote_status_id, $getBINFromDBForPolicyStatuses)) {
             $brokerInvoiceNo = $payment->broker_invoice_number;
         }
 
