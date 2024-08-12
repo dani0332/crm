@@ -26,6 +26,8 @@ const props = defineProps({
 const page = usePage();
 const notification = useToast();
 const { isRequired } = useRules();
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 
 const modals = reactive({
   member: false,

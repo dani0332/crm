@@ -1541,7 +1541,9 @@ const linkEntity = () => {
       console.log(err);
     });
 };
-
+const readOnlyMode = reactive({
+  isDisable: true,
+});
 onMounted(() => {
   onLoadAvailablePlansData();
   const isHealthAdvisor = page.props.advisors.find(
@@ -1549,8 +1551,8 @@ onMounted(() => {
   ) || { id: null };
   if (isHealthAdvisor) assignLead.value = isHealthAdvisor.id;
   isMounted.value = true;
-  //   console.log("testing");
-  //   console.log(membersDetailsUpdated);
+
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);
@@ -1568,6 +1570,7 @@ const selectedProviderPlan = ref({
   planName: page.props.quote.health_plan_name_text,
   providerName: page.props.quote.plan_provider_name_text,
   premium: page.props.ecomDetails.priceWithVAT,
+  planType: checkPlanType(page.props.quote.plan_type_id),
 });
 
 const handlePlanSelected = plan => {
@@ -1576,6 +1579,7 @@ const handlePlanSelected = plan => {
   selectedProviderPlan.value.planName = plan.planName;
   selectedProviderPlan.value.providerName = plan.providerName;
   selectedProviderPlan.value.premium = plan.premium;
+  selectedProviderPlan.value.planType = checkPlanType(plan.planTypeId);
   router.reload({
     preserveState: true,
     preserveScroll: true,
@@ -1781,7 +1785,7 @@ const onAddUpdate = () => {
         </p>
       </template>
 
-      <template #default>
+      <template #default v-if="readOnlyMode.isDisable === true">
         <Link
           v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
           :href="`/legacy-policy/${quote.insly_id}`"
@@ -2377,18 +2381,18 @@ const onAddUpdate = () => {
           </dd>
         </div>
       </dl>
-      <template #actions>
-        <div class="flex justify-end">
-          <x-button
-            color="primary"
-            size="sm"
-            :loading="customerProfileForm.processing"
-            @click.prevent="searchByTradeLicense('SubEntity')"
-          >
-            Search
-          </x-button>
-        </div>
-      </template>
+      <div class="flex justify-end">
+        <x-button
+          class="mt-4"
+          color="primary"
+          size="sm"
+          :loading="customerProfileForm.processing"
+          @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
+        >
+          Search
+        </x-button>
+      </div>
     </x-modal>
     <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
@@ -2434,7 +2438,12 @@ const onAddUpdate = () => {
       </dl>
       <template #actions>
         <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity">
+          <x-button
+            size="sm"
+            color="orange"
+            @click.prevent="linkEntity"
+            v-if="readOnlyMode.isDisable === true"
+          >
             Link
           </x-button>
         </div>
@@ -3102,12 +3111,14 @@ const onAddUpdate = () => {
               <x-button
                 @click.prevent="onTogglePlans(false)"
                 :loading="toggleLoader"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Show
               </x-button>
               <x-button
                 @click.prevent="onTogglePlans(true)"
                 :loading="toggleLoader"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Hide
               </x-button>

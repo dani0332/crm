@@ -282,6 +282,12 @@ const linkEntity = () => {
       console.log(err);
     });
 };
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
@@ -849,6 +855,7 @@ const onAddUpdate = () => {
           size="sm"
           :loading="customerProfileForm.processing"
           @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
         >
           Search
         </x-button>

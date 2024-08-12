@@ -204,8 +204,12 @@ watch(
   { deep: true, immediate: true },
 );
 
+const readOnlyMode = reactive({
+  isDisable: true,
+});
 onMounted(() => {
   setQueryFilters();
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 const resetDateFilters = filterName => {
   const filterMappings = {
@@ -247,11 +251,25 @@ const resetDateFilters = filterName => {
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3">
         <Link :href="route('amt.cardsView')">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
+          <x-button
+            size="sm"
+            color="#1d83bc"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Cards View
+          </x-button>
         </Link>
 
         <Link :href="route('amt.create')">
-          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Create Lead
+          </x-button>
         </Link>
       </div>
     </div>
@@ -422,6 +440,7 @@ const resetDateFilters = filterName => {
                 placeholder="Select Advisor"
                 class="flex-1 w-auto"
                 :error="assignForm.errors.assigned_to_id_new"
+                v-if="readOnlyMode.isDisable === true"
               />
               <div class="mb-3 md:pt-6">
                 <x-button
@@ -429,6 +448,7 @@ const resetDateFilters = filterName => {
                   size="sm"
                   type="submit"
                   :loading="assignForm.processing"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Assign
                 </x-button>

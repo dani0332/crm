@@ -12,6 +12,8 @@ defineProps({
 
 const notification = useNotifications('toast');
 const page = usePage();
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 
 const dateToYMD = date => {
   if (date) {
@@ -110,6 +112,13 @@ const submitpolicyForm = isValid => {
       },
     });
 };
+
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
