@@ -379,8 +379,12 @@ const onConfirmCreateLead = () => {
   createLead.modal = false;
 };
 
+const readOnlyMode = reactive({
+  isDisable: true,
+});
 onMounted(() => {
   setQueryStringFilters();
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 const resetDateFilters = filterName => {
@@ -435,6 +439,7 @@ const resetDateFilters = filterName => {
         color="#ff5e00"
         tag="div"
         @click="createLead.modal = true"
+        v-if="readOnlyMode.isDisable === true"
       >
         Create Lead
       </x-button>
