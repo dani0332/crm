@@ -16,6 +16,8 @@ const notification = useNotifications('toast');
 const compareDueDate = useCompareDueDate;
 
 const page = usePage();
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -147,6 +149,12 @@ const onDeleteConfirmation = () => {
     },
   });
 };
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>

@@ -740,7 +740,6 @@ class SendEmailCustomerService extends BaseService
                     ];
                 }
             }
-
             if (is_array($emailData->handBookDocuments) && ! empty($emailData->handBookDocuments)) {
                 $attachments = array_merge($attachments, $emailData->handBookDocuments);
             }
@@ -769,6 +768,8 @@ class SendEmailCustomerService extends BaseService
                     'roadsideAssistance' => $emailData->roadsideAssistance,
                     'googleMeet' => $emailData->googleMeet,
                     'appDownloadLink' => $emailData->appDownloadLink,
+                    'insuranceType' => $emailData->insuranceType,
+                    'planName' => $emailData->planName,
                     'advisor' => (object) [
                         'name' => $emailData->advisorName,
                         'email' => $emailData->advisorEmail,
@@ -779,7 +780,7 @@ class SendEmailCustomerService extends BaseService
                 'tags' => [
                     $tag,
                 ],
-                'attachment' => isset($attachments) ? $attachments : null,
+                'attachment' => isset($attachments) && count($attachments) > 0 ? $attachments : null,
                 'bcc' => [],
             ];
 

@@ -1,4 +1,8 @@
 <script setup>
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import MigratePayment from '../../Components/MigratePayment.vue';
+import EntityRiskRatingScoreDetails from '../../Components/EntityRiskRatingScoreDetails.vue';
+
 defineProps({
   quote: Object,
   quoteDetails: Object,
@@ -343,6 +347,12 @@ const linkEntity = () => {
     })
     .finally(() => (loader.tradeDetail = false));
 };
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
@@ -800,6 +810,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                     />
                   </dd>
                 </div>
+                <EntityRiskRatingScoreDetails
+                  :quote="quote"
+                  :modelType="'business'"
+                />
               </dl>
               <div class="flex justify-end">
                 <x-button
@@ -842,6 +856,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
           size="sm"
           :loading="customerProfileForm.processing"
           @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
         >
           Search
         </x-button>

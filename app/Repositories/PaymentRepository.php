@@ -93,7 +93,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
                 $masterPaymentStatus = PaymentStatusEnum::CREDIT_APPROVED;
             }
-            [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculateMasterPriceAndVat($masterPayment->frequency, $masterPayment->total_price, $request->modelType, $request->quote_id);
+
             $paymentInformation = [
                 'total_price' => $masterPayment->total_price,
                 'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
@@ -115,8 +115,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
                 'created_by' => $request->user()->id,
                 'updated_by' => $request->user()->id,
-                'price_vat_applicable' => $priceWithoutVat,
-                'price_vat' => $vat,
             ];
 
             // Payment follow up count is now iterative (- nth+1) and not dependent on the count of payments in the quote
@@ -192,7 +190,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 }
 
             } else {
-                [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculateMasterPriceAndVat($masterPayment->frequency, $masterPayment->total_price, $request->modelType, $request->quote_id);
+
                 $paymentInformation = [
                     'total_price' => $masterPayment->total_price,
                     'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
@@ -210,8 +208,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     'payment_methods_code' => $masterPayment->payment_methods,
                     'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
                     'updated_by' => $request->user()->id,
-                    'price_vat_applicable' => $priceWithoutVat,
-                    'price_vat' => $vat,
                 ];
 
                 if ($masterPayment->reference) {
@@ -247,7 +243,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         foreach ($masterPayment->payment_splits as $splitPayment) {
             if (isset($splitPayment['payment_method']) && $splitPayment['payment_method'] != null) {
-                [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat($masterPayment->frequency, $masterPayment->total_price, $splitPayment['sr_no'], $splitPayment['payment_amount'], $request->modelType, $request->quote_id, $totalSplitPayments);
+                //[$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat($masterPayment->frequency, $masterPayment->total_price, $splitPayment['sr_no'], $splitPayment['payment_amount'], $request->modelType, $request->quote_id, $totalSplitPayments);
                 $splitPaymentInformation = [
                     'code' => $quoteID,
                     'sr_no' => $splitPayment['sr_no'],
@@ -257,8 +253,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     'due_date' => $splitPayment['due_date'],
                     'payment_status_id' => PaymentStatusEnum::NEW,
                     'discount_value' => $discount,
-                    'price_vat_applicable' => $priceWithoutVat,
-                    'price_vat' => $vat,
                 ];
                 $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
                 if ($paymentSplitRecord) {
@@ -339,7 +333,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         'payment_method' => $splitPayment['payment_method'],
                     ];
                 } else {
-                    [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat($masterPayment->frequency, $masterPayment->total_price, $serialNo, $splitPayment['payment_amount'], $request->modelType, $request->quote_id, $totalSplitPayments);
                     $splitPaymentInformation = [
                         'code' => $request->paymentCode,
                         'sr_no' => $serialNo,
@@ -349,8 +342,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         'payment_status_id' => PaymentStatusEnum::NEW, //reset status to 'NEW
                         'due_date' => $splitPayment['due_date'],
                         'discount_value' => $discount,
-                        'price_vat_applicable' => $priceWithoutVat,
-                        'price_vat' => $vat,
                     ];
                 }
 
@@ -500,6 +491,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
                     }
                     $quoteModel->save();
+                    app(CRUDService::class)->calculateScore($quoteModel, $request->modelType);
                     $canCaptureEp = true;
                     // Berlin Service - Extend Customer Subscription on Shaji request
                     $customerData = app(CustomerService::class)->getCustomerById($quoteModel->customer_id);
@@ -766,5 +758,40 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     public function fetchGetPaymentByInsurerInvoiceNumber($quote, $invoiceNumber)
     {
         return $quote->payments()->where('insurer_tax_number', $invoiceNumber)->first();
+    }
+
+    public function updatePriceVatApplicableAndVat($quote, $modelType)
+    {
+        /* Start - Temporarily adding for correcting historic data  */
+        info('Start - Temporarily adding for correcting historic data'.$quote->uuid);
+        /* calculate price and vat for payments for old payment data  where price_vat_applicable is not available */
+        $quotePayment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
+        if ($quotePayment) {
+            if (! $quotePayment->price_vat_applicable) {
+                [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculateMasterPriceAndVat($quotePayment->frequency, $quotePayment->total_price, $modelType, $quote->id);
+                $quotePayment->update([
+                    'price_vat_applicable' => $priceWithoutVat,
+                    'price_vat' => $vat,
+                ]);
+            }
+
+            /* calculate price and vat for split payments for old split payment data where price_vat_applicable is not available */
+            $paymentSplits = $quotePayment->paymentSplits;
+            if ($paymentSplits->whereNull('price_vat_applicable')->count()) {
+                foreach ($quotePayment->paymentSplits as $splitPayment) {
+                    if (isset($splitPayment->payment_method) && $splitPayment->payment_method != null) {
+                        [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat($quotePayment->frequency, $quotePayment->total_price, $splitPayment->sr_no, $splitPayment->payment_amount, $modelType, $quote->id, count($paymentSplits));
+                        $splitPayment->update([
+                            'price_vat_applicable' => $priceWithoutVat,
+                            'price_vat' => $vat,
+                        ]);
+                    }
+                }
+            }
+        }
+
+        info('End - Temporarily adding for correcting historic data '.$quote->uuid);
+        /* End - Temporarily adding for correcting historic data  */
+
     }
 }

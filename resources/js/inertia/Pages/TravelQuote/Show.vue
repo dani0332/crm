@@ -1135,6 +1135,9 @@ const linkEntity = () => {
       console.log(err);
     });
 };
+const readOnlyMode = reactive({
+  isDisable: true,
+});
 
 onMounted(() => {
   onLoadAvailablePlansData();
@@ -1144,6 +1147,7 @@ onMounted(() => {
       position: 'top',
     });
   }
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);
@@ -1299,7 +1303,7 @@ const onAddUpdate = () => {
     <Head title="Travel Detail" />
     <div class="flex justify-between items-center flex-wrap gap-2">
       <h2 class="text-xl font-semibold">Travel Detail</h2>
-      <div class="flex gap-2">
+      <div class="flex gap-2" v-if="readOnlyMode.isDisable === true">
         <Link
           v-if="quote?.insly_id"
           :href="`/legacy-policy/${quote.insly_id}`"
@@ -2027,6 +2031,7 @@ const onAddUpdate = () => {
           size="sm"
           :loading="customerProfileForm.processing"
           @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
         >
           Search
         </x-button>
@@ -2072,6 +2077,16 @@ const onAddUpdate = () => {
               disabled
             />
           </dd>
+        </div>
+        <div class="text-left space-x-4">
+          <x-button
+            size="sm"
+            color="orange"
+            @click.prevent="linkEntity"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Link
+          </x-button>
         </div>
       </dl>
       <template #actions>
@@ -2672,12 +2687,14 @@ const onAddUpdate = () => {
                 <x-button
                   @click.prevent="onTogglePlans(false)"
                   :loading="toggleLoader"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Show
                 </x-button>
                 <x-button
                   @click.prevent="onTogglePlans(true)"
                   :loading="toggleLoader"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Hide
                 </x-button>
@@ -3233,6 +3250,7 @@ const onAddUpdate = () => {
             size="sm"
             color="emerald"
             @click.prevent="modals.mixInquiryConfirm = false"
+            v-if="readOnlyMode.isDisable === true"
           >
             Okay, got it!
           </x-button>

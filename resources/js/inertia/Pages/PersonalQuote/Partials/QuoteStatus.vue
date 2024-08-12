@@ -15,6 +15,8 @@ const props = defineProps({
 
 const page = usePage();
 const notification = useNotifications('toast');
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const quoteStatusOptions = computed(() => {
   return props.quoteStatuses.map(status => ({
@@ -68,6 +70,12 @@ watch(
     }
   },
 );
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 
 const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
   createReusableTemplate();
