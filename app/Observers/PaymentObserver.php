@@ -5,6 +5,8 @@ namespace App\Observers;
 use App\Enums\QuoteTypes;
 use App\Models\Payment;
 use App\Services\SplitPaymentService;
+use App\Models\PersonalQuote;
+use App\Enums\quoteTypeCode;
 
 class PaymentObserver
 {
@@ -33,7 +35,11 @@ class PaymentObserver
     private function updatePriceVat(Payment $payment): void
     {
         $quote = $payment->paymentable;
-        $modelType = QuoteTypes::getName($quote->quote_type_id)->value;
+        if ($payment->paymentable_type == PersonalQuote::class) {
+            $modelType = QuoteTypes::getName($quote->quote_type_id)->value;
+        } else {
+            $modelType = quoteTypeCode::getName($payment->paymentable_type);
+        }
 
         [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculateMasterPriceAndVat(
             $payment->frequency,
