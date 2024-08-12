@@ -11,6 +11,7 @@ use App\Factories\AllocationFactory;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
+use App\Models\TravelQuote;
 use App\Services\ApplicationStorageService;
 use Illuminate\Console\Command;
 
@@ -60,6 +61,7 @@ class QuoteAllocation extends Command
             $this->executeCarAllocation(QuoteTypeId::Car, $to, $chunkSize, $allocationStartDate, $applicationStorageService);
             $this->executeHealthAllocation(QuoteTypeId::Health, $to, $chunkSize, $allocationStartDate);
             $this->executeBikeAllocation(QuoteTypeId::Bike, $to, $chunkSize, $allocationStartDate, $applicationStorageService);
+            $this->executeTravelAllocation(QuoteTypeId::Travel, $to, $chunkSize, $allocationStartDate);
         } else {
             info('Quote Allocation Command is turned Off');
         }
@@ -99,9 +101,8 @@ class QuoteAllocation extends Command
             $processedRecords++;
             info('Processed record for Quote Allocation with uuid: '.$lead->uuid);
         }
-        if ($processedRecords === 0) {
-            info('No records found for '.QuoteTypeId::getDescription($quoteType));
-        }
+
+        $this->logProcessedRecords($processedRecords, $quoteType);
     }
 
     public function executeHealthAllocation($quoteType, $to, $chunkSize, $allocationStartDate)
@@ -122,6 +123,32 @@ class QuoteAllocation extends Command
             $allocationStrategy->executeSteps();
             $processedRecords++;
         }
+
+        $this->logProcessedRecords($processedRecords, $quoteType);
+    }
+
+    public function executeTravelAllocation($quoteType, $to, $chunkSize, $allocationStartDate)
+    {
+        $processedRecords = 0;
+        $leads = TravelQuote::whereNull('advisor_id')
+            ->select('uuid')
+            ->whereBetween('created_at', [$allocationStartDate, $to])
+            ->orderBy('created_at', 'desc')
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->where('sic_flow_enabled', false)
+            ->take($chunkSize);
+
+        foreach ($leads->get() as $lead) {
+            $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
+            $allocationStrategy->executeSteps();
+            $processedRecords++;
+        }
+
+        $this->logProcessedRecords($processedRecords, $quoteType);
+    }
+
+    private function logProcessedRecords($processedRecords, $quoteType)
+    {
         if ($processedRecords === 0) {
             info('No records found for '.QuoteTypeId::getDescription($quoteType));
         }
@@ -158,8 +185,6 @@ class QuoteAllocation extends Command
             $processedRecords++;
             info('Processed record for Bike Quote Allocation with uuid: '.$lead->uuid);
         }
-        if ($processedRecords === 0) {
-            info('No records found for '.QuoteTypeId::getDescription($quoteType));
-        }
+        $this->logProcessedRecords($processedRecords, $quoteType);
     }
 }
