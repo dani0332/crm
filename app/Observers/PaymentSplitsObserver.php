@@ -32,7 +32,7 @@ class PaymentSplitsObserver
     private function updateSplitPriceVat(PaymentSplits $paymentSplits): void
     {
         $masterPayment = $paymentSplits->payment;
-        $totalSplitPayments = $masterPayment->paymentSplits->count();
+        $totalSplitPayments = $masterPayment->total_payments;
         $quote = $masterPayment->paymentable;
         $modelType = QuoteTypes::getName($quote->quote_type_id)->value;
 
