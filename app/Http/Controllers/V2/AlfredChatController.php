@@ -151,7 +151,7 @@ class AlfredChatController extends Controller
 
         $fileName = 'alfred_chat_logs_'.Carbon::now()->format('Y-m-d_H-i-s');
 
-        dd($chat->toArray());
+        
         if($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
             return Excel::download(new InstantChatConsolidatedExport($chat), $fileName.'.xlsx');
         }
