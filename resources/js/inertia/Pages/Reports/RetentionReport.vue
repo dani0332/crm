@@ -666,36 +666,40 @@ watch(
           </template>
         </x-tooltip>
       </template>
+    
       <template #item-volume_gross_retention="item">
-        <x-tooltip position="right bootom">
-          {{ item.volume_gross_retention }}
+        <x-tooltip placement="left">
+          <span class="underline">{{ item.volume_gross_retention }}</span>
           <template #tooltip>
-            <span class="custom-tooltip-content">
+            <span class="whitespace-break-spaces !normal-case">
               {{ RetentionReportEnum.VOLUME_GROSS_RETENTION_COLUMN }}
             </span>
           </template>
         </x-tooltip>
       </template>
+
       <template #item-volume_net_retention="item">
-        <x-tooltip position="right bootom">
-          {{ item.volume_net_retention }}
+        <x-tooltip placement="left">
+          <span class="underline">{{ item.volume_net_retention }}</span>
           <template #tooltip>
-            <span class="custom-tooltip-content">
+            <span class="whitespace-break-spaces !normal-case">
               {{ RetentionReportEnum.VOLUME_NET_RETENTION_COLUMN }}
             </span>
           </template>
         </x-tooltip>
       </template>
+
       <template #item-relative_retention="item">
-        <x-tooltip position="left bootom">
-          {{item.relative_retention}}
+        <x-tooltip placement="left">
+          <span class="underline">{{ item.relative_retention }}</span>
           <template #tooltip>
-            <span class="custom-tooltip-content">
+            <span class="whitespace-break-spaces !normal-case">
               {{ RetentionReportEnum.RELATIVE_RETENTION_COLUMN }}
             </span>
           </template>
         </x-tooltip>
       </template>
+      
       <template #body-append>
         <tr v-if="reportData.length > 0 || reportData.data && reportData.data.length > 0" class="total-row">
           <td class="direction-left">Total</td>
