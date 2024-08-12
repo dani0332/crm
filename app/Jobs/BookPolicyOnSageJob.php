@@ -41,7 +41,7 @@ class BookPolicyOnSageJob implements ShouldQueue
     public function handle()
     {
         info('BookPolicyOnSageJob - '.$this->quote->code.' - Started');
-        $response = (new SageApiService())->bookPolicyOnSage([$this->sageRequest, $this->quote, $this->payment, $this->paymentSplits, $this->sageLogArray, $this->request]);
+        $response = (new SageApiService())->bookPolicyOnSage([$this->sageRequest, $this->quote, $this->payment, $this->sageLogArray, $this->request]);
         info('BookPolicyOnSageJob - '.$this->quote->code.' - Response: '.json_encode($response));
     }
 

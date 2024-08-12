@@ -49,6 +49,7 @@ use App\Models\HealthQuoteRequestDetail;
 use App\Models\Payment;
 use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
+use App\Models\QuoteStatusLog;
 use App\Repositories\PaymentRepository;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
