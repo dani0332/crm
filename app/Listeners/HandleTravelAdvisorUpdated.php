@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteTypes;
 use App\Events\TravelQuoteAdvisorUpdated;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Models\TravelQuote;
@@ -33,6 +34,10 @@ class HandleTravelAdvisorUpdated
         info(self::class.' - inside handle travel update advisor');
 
         $lead = $event->lead;
+
+        if ($lead) {
+            sendPaymentAuthEmail($lead->uuid, QuoteTypes::TRAVEL);
+        }
 
         if ($lead->source == LeadSourceEnum::RENEWAL_UPLOAD) {
             info(self::class.' - lead is source is renewal upload. Skipping intro email job');
