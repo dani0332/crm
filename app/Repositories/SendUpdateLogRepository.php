@@ -36,9 +36,15 @@ class SendUpdateLogRepository extends BaseRepository
             $baseCode = $category.'-'.date('m').date('y').'-'; // CPD-0824- or EF-0824- etc.
             $code = $baseCode.($count + 1); // CPD-0824-48 or EF-0824-48 etc.
 
-            while (SendUpdateLog::where('code', $code)->exists()) {
+            $attempts = 0;
+            while (SendUpdateLog::where('code', $code)->exists() && $attempts < 10) {
                 $count++;
                 $code = $baseCode.$count;
+                $attempts++;
+            }
+
+            if ($attempts >= 10) {
+                vAbort('Send Update Log Code generation failed.');
             }
 
             $uuid = strtoupper(Str::random(6));
