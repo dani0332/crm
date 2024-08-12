@@ -92,46 +92,6 @@ class AlfredChatController extends Controller
             $quoteType = strtoupper($request->quoteType);
         }
 
-        if (isset($quoteType)) {
-            $totalPipeline = [
-                ['$match' => ['quote_type' => $quoteType]],
-            ];
-        }
-
-        if (isset($quoteId)) {
-            $totalPipeline = [
-                ['$match' => ['quote_id' => $quoteId]],
-            ];
-        }
-
-        // Apply date range filter if provided
-        if ($request->has('start_date') && $request->has('end_date')) {
-            $start_date = Carbon::createFromFormat('Y-m-d', $request->start_date)->startOfDay()->toIso8601String();
-            $end_date = Carbon::createFromFormat('Y-m-d', $request->end_date)->endOfDay()->toIso8601String();
-
-            $totalPipeline[] = [
-                '$match' => [
-                    'created_at' => ['$gte' => $start_date, '$lte' => $end_date],
-                ],
-            ];
-        }
-
-        // Add a $group stage to count total documents
-        $totalPipeline[] = ['$group' => [
-            '_id' => ['quote_id' => '$quote_id',
-                ['$dateToString' => ['timezone' => '+04:00', 'format' => '%Y-%m-%d',
-                    'date' => ['$toDate' => '$created_at']]]],
-            'quote_type' => ['$first' => '$quote_type'],
-            'quote_id' => ['$first' => '$quote_id'],
-        ],
-        ];
-        $totalPipeline[] = ['$count' => 'total'];
-
-        // Execute the aggregation pipeline to get the total count
-        $totalDocuments = AlfredChat::raw(fn ($collection) => $collection->aggregate($totalPipeline))->toArray();
-
-        $totalDocumentsCount = empty($totalDocuments) ? 0 : $totalDocuments[0]['total'];
-
         // Define pagination parameters
         $perPage = 15; // Or any number of documents per page
         $page = $request->has('page') ? max(1, (int) $request->page) : 1;
@@ -180,15 +140,13 @@ class AlfredChatController extends Controller
         $chatPipeline[] = ['$skip' => $skip];
         $chatPipeline[] = ['$limit' => $perPage];
 
-        // Execute the aggregation pipeline to fetch paginated chat records
-        $chat = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline));
 
-        // Calculate pagination indices
-        $startIndex = ($page - 1) * $perPage;
-        $endIndex = max($startIndex + $perPage, $totalDocumentsCount);
+        $chat = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline))->toArray();
+
+        $startIndex = ($page - 1) * $perPage + 1;
+        $endIndex = $startIndex + count($chat) - 1;
         $prevPage = $page > 1 ? $page - 1 : null;
-        $nextPage = $endIndex <= $totalDocumentsCount ? $page + 1 : null;
-
+        $nextPage = count($chat) === $perPage ? $page + 1 : null;
         // Create pagination object
         $pagination = [
             'data' => $chat,
@@ -208,7 +166,7 @@ class AlfredChatController extends Controller
             ($request->quoteId ? '&quoteId='.$request->quoteId : '')
             : null,
 
-            'from' => $startIndex + 1,
+            'from' => $startIndex,
             'to' => $endIndex,
         ];
 
