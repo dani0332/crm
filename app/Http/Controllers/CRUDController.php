@@ -2052,7 +2052,7 @@ class CRUDController extends Controller
 
     public function riskRatingDetails($quoteType, $uuid)
     {
-        $quoteModel = $this->getQuoteObject($quoteType, $uuid);
+        $quoteModel = $this->getQuoteObjectBy($quoteType, $uuid, 'uuid');
         $response = $this->crudService->scoreBreakdown($quoteModel, $quoteType);
 
         return $response;
