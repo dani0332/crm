@@ -168,7 +168,12 @@ const uploadFile = (doc, filesWithInfo, memberId) => {
       },
     });
 };
-
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 const isEN = computed(() => {
   return (
     isSendUpdatePage &&

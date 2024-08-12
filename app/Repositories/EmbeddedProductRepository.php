@@ -256,7 +256,8 @@ class EmbeddedProductRepository extends BaseRepository
                 $item->download_document_button = $isDocPresent;
 
                 if (auth()->user()->hasRole(RolesEnum::Engineering)) {
-                    $item->sync_document_button = ! $isDocPresent;
+                    $documentCount = ($isDocPresent == true) ? $transaction[0]->documents()->count() : 0;
+                    $item->sync_document_button = $documentCount < 5;
                 }
 
             }

@@ -6,7 +6,8 @@ defineProps({
   quote: Object,
   quoteType: String,
 });
-
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 const modals = reactive({
   addContact: false,
   contactDeleteConfirm: false,
@@ -198,6 +199,13 @@ const additionalContact = computed(() => {
     return page.props.quote?.customer?.additional_contact_info;
   }
   return [];
+});
+
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 </script>
 <template>

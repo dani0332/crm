@@ -16,6 +16,7 @@ use App\Enums\TransactionPaymentStatusEnum;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Models\PersonalQuoteDetail;
 use App\Models\SendUpdateLog;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\InsuranceProviderRepository;
@@ -289,6 +290,29 @@ trait GenericQueriesAllLobs
         return $leadCodeArray[0];
     }
 
+    public function getQuoteDetailObject($quoteType, $id, $idType = 'quote')
+    {
+        $nameSpace = '\\App\\Models\\';
+
+        $model = $nameSpace.ucwords($quoteType).'QuoteRequestDetail';
+        if (! class_exists($model)) {
+            if (! (in_array(ucwords($quoteType), [quoteTypeCode::Cycle, quoteTypeCode::Jetski]))) {
+                return false;
+            }
+        }
+        if ($idType == 'quote') {
+            if (checkPersonalQuotes(ucwords($quoteType))) {
+                $quote = PersonalQuoteDetail::where('personal_quote_id', $id)->first();
+            } else {
+                $quote = $model::where($quoteType.'_quote_request_id', $id)->first();
+            }
+        } else {
+            $quote = $model::find($id);
+        }
+
+        return (isset($quote->id)) ? $quote : false;
+    }
+
     /**
      * Updates quote & policy issuance status, first will check if the quote's current status is not already set to 'Policy Sent to Customer'
      * We check policy issuance status is not 'Policy Issued' & if afilled policy details & required documents are uploaded
@@ -519,6 +543,7 @@ trait GenericQueriesAllLobs
 
         return true;
     }
+
     /**
      * Checks if the payment is insufficient based on its payment status.
      * This method sets appropriate headings and descriptions based on the specific payment status
