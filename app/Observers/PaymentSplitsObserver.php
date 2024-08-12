@@ -21,7 +21,9 @@ class PaymentSplitsObserver
      */
     public function updated(PaymentSplits $paymentSplits): void
     {
-        $this->updateSplitPriceVat($paymentSplits);
+        if ($paymentSplits->isDirty('payment_amount')) {
+            $this->updateSplitPriceVat($paymentSplits);
+        }
     }
 
     /**

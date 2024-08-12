@@ -21,7 +21,10 @@ class PaymentObserver
      */
     public function updated(Payment $payment): void
     {
-        $this->updatePriceVat($payment);
+        // Only update VAT if total_price or frequency has changed
+        if ($payment->isDirty('total_price') || $payment->isDirty('frequency')) {
+            $this->updatePriceVat($payment);
+        }
     }
 
     /**
