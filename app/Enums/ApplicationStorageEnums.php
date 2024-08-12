@@ -93,4 +93,5 @@ final class ApplicationStorageEnums extends Enum
     public const TRAVEL_EMAIL_TEMPLATE = 'TRAVEL_EMAIL_TEMPLATE';
     public const SIC_TRAVEL_FOLLOWUP_TEMPLATE_ID = 'SIC_TRAVEL_FOLLOWUP_TEMPLATE_ID';
     public const SIC_TRAVEL_EMAIL_CC = 'SIC_TRAVEL_EMAIL_CC';
+    public const TRAVEL_EMAIL_REPLY_TO = 'TRAVEL_EMAIL_REPLY_TO';
 }
