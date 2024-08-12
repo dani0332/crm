@@ -728,12 +728,20 @@ class SageApiService
         $checkAPInvoices = [SageEnum::SRT_CREATE_AP_PREM_INV, SageEnum::SRT_CREATE_AP_SPPAY_INV];
 
         $isOnlyDiscountReversal = false;
+        $isOnlyDiscount = false;
         $upFrontTotalSteps = 21;
         $nonUpFrontTotalSteps = 23;
+
         if (in_array(SageEnum::SRT_CREATE_AR_DISC_INV, $reverseSendUpdateTypes)) {
             $isOnlyDiscountReversal = $sendUpdateLog && (int) $sendUpdateLog->discount == 0;
             $upFrontTotalSteps = ($isOnlyDiscountReversal) ? 18 : 21;
             $nonUpFrontTotalSteps = ($isOnlyDiscountReversal) ? 20 : 23;
+        } else {
+            if ($sendUpdateLog->discount > 0) {
+                $isOnlyDiscount = true;
+                $upFrontTotalSteps = 17;
+                $nonUpFrontTotalSteps = 19;
+            }
         }
 
         foreach ($reverseSendUpdateTypes as $reverseSendUpdateTypeKey => $reverseSendUpdateType) {
@@ -853,6 +861,23 @@ class SageApiService
             }
         }
 
+        if ($isOnlyDiscount) {
+            info('Book Update - Creating AR Discount Invoice and mark as posted');
+            $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
+                'iterator' => 0,
+                'lastIteration' => 2,
+                'startingStep' => $startingStep,
+                'totalSteps' => $totalSteps,
+                'entryType' => SageEnum::SCT_STRAIGHT,
+                'requestType' => SageEnum::SRT_CREATE_AR_DISC_INV,
+                'sendUpdateLog' => $extras['send_update_log'] ?? [],
+                'reversalInvoice' => [],
+                'extras' => [
+                    'only_correction' => true,
+                ],
+            ]);
+        }
+
         $response = ['status' => $_REQUEST['status'] ?? true, 'message' => $_REQUEST['message'] ?? 'Invoices reversed and corrected successfully'];
         info('Book Update - Response: '.$response['message']);
 
@@ -874,6 +899,7 @@ class SageApiService
         $sageEntryType = $extraParams['entryType'];
         $arrayKey = isset($extraParams['arrayKey']) ? $extraParams['arrayKey'] : 0;
         $sageAPIsParams = SagePayloadFactory::handleSageAPIsParms($extraParams['requestType'], $sageEntryType);
+
         if (! isset($extraParams['recursiveCall']) && ($extraParams['startingStep'] < array_key_first($sageLogArray))) {
             $sageLogKey =
             $extraParams['startingStep'] = array_key_first($sageLogArray);
@@ -945,7 +971,10 @@ class SageApiService
 
                 default:
                     if (in_array($extraParams['requestType'], [SageEnum::SRT_CREATE_AR_DISC_INV, SageEnum::SRT_REV_CORR_AR_DIS_INV])) {
-                        $payLoadOptions = SagePayloadFactory::{$methodName}($requestParms, $sageEntryType, SageEnum::SCT_DISCOUNT, ['sage_request_type' => $extraParams['requestType']]);
+                        $payLoadOptions = SagePayloadFactory::{$methodName}($requestParms, $sageEntryType, SageEnum::SCT_DISCOUNT, [
+                            'sage_request_type' => $extraParams['requestType'],
+                            'extras' => $extraParams['extras'] ?? [],
+                        ]);
                     } else {
                         if ($methodName == 'createPaymontRecieptOneInvoice') {
                             $payLoadOptions = SagePayloadFactory::{$methodName}($quote, $sageRequestPayload->customerId, $extraParams['payment'], $extraParams['splitPayments'], true);
