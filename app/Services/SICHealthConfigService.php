@@ -16,21 +16,24 @@ class SICHealthConfigService extends BaseService
     public function saveEntity($id, $data)
     {
         try {
-            $sicHealthConfig = SICHealthConfig::where('id', $id)->first();
-            $sicHealthConfig = SICHealthConfig::updateOrCreate(
-                ['id' => $sicHealthConfig->id ?? null],
-                [
-                    'is_age' => $data['is_age'],
-                    'min_age' => $data['min_age'],
-                    'max_age' => $data['max_age'],
-                    'is_type' => $data['is_type'],
-                    'plan_types' => $data['plan_types'],
-                    'is_nationality' => $data['is_nationality'],
-                    'nationalities' => $data['nationalities'],
-                    'is_member_category' => $data['is_member_category'],
-                    'member_categories' => $data['member_categories'],
-                ]
-            );
+            $sicHealthConfig =  SICHealthConfig::first();
+            $data= [
+                'is_age' => $data['is_age'],
+                'min_age' => $data['min_age'],
+                'max_age' => $data['max_age'],
+                'is_type' => $data['is_type'],
+                'plan_types' => $data['plan_types'],
+                'is_nationality' => $data['is_nationality'],
+                'nationalities' => $data['nationalities'],
+                'is_member_category' => $data['is_member_category'],
+                'member_categories' => $data['member_categories'],
+            ];
+            if(empty($sicHealthConfig)){
+                $sicHealthConfig =   SICHealthConfig::create($data);
+            }
+            else {
+                $sicHealthConfig->update($data);
+            }
 
             return $sicHealthConfig;
         } catch (Exception $e) {

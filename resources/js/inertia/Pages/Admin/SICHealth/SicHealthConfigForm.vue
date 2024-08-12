@@ -101,7 +101,7 @@ const ageRangeValid = computed(() => {
                 v-model="SICHealthConfigForm.is_age"
                 label="Age"
               />
-              <div class="grid sm:grid-cols-2 gap-4">
+              <div class="grid sm:grid-cols-2 gap-4" v-if="SICHealthConfigForm.is_age">
                 <x-field label="Min Age" required>
                     <x-input
                       v-model="SICHealthConfigForm.min_age"
@@ -127,7 +127,7 @@ const ageRangeValid = computed(() => {
                 v-model="SICHealthConfigForm.is_type"
                 label="Plan Type"
               />
-              <div class="grid sm:grid-cols-1 gap-4">
+              <div class="grid sm:grid-cols-1 gap-4" v-if="SICHealthConfigForm.is_type">
                 <x-field label="Types">
                     <ComboBox
                         v-model="SICHealthConfigForm.plan_types"
@@ -148,7 +148,7 @@ const ageRangeValid = computed(() => {
                 v-model="SICHealthConfigForm.is_nationality"
                 label="Nationality"
               />
-              <div class="grid sm:grid-cols-1 gap-4">
+              <div class="grid sm:grid-cols-1 gap-4" v-if="SICHealthConfigForm.is_nationality">
                 <x-field label="Nationalities">
                 <ComboBox
                         v-model="SICHealthConfigForm.nationalities"
@@ -165,7 +165,7 @@ const ageRangeValid = computed(() => {
                 v-model="SICHealthConfigForm.is_member_category"
                 label="Member Category "
               />
-              <div class="grid sm:grid-cols-1 gap-4">
+              <div class="grid sm:grid-cols-1 gap-4" v-if="SICHealthConfigForm.is_member_category">
                 <x-field label="Member Categories">
                     <ComboBox
                         v-model="SICHealthConfigForm.member_categories"
