@@ -1,7 +1,6 @@
 <script setup>
 import { filter } from 'lodash';
 
-
 const props = defineProps({
   filterOptions: Object,
   filtersByLob: Object,
@@ -59,12 +58,12 @@ let filters = reactive(getFiltersObject());
 const canShow = (element) => {
   if(page.props.filtersByLob &&
   page.props.filtersByLob[element]) {
-      const lobs = page.props.filtersByLob[element]['lobs'] ?? [];
-      if((lobs.length == 0 ||
-      (lobs.length != 0 && Object.values(lobs).includes(filters.lob)))) {
-          return true;
-      }
-      return false;
+    const lobs = page.props.filtersByLob[element]['lobs'] ?? [];
+    if((lobs.length == 0 ||
+    (lobs.length != 0 && Object.values(lobs).includes(filters.lob)))) {
+      return true;
+    }
+    return false;
   }
 
   return true;
@@ -82,7 +81,6 @@ const quoteTypesOptions = computed(() => {
     label: text,
     value: page.props.filterOptions.lob[text],
   }))];
-
   return quoteTypesOptions
 });
 
@@ -91,7 +89,6 @@ const monthOptions = computed(() => {
     label: text,
     value: index+1,
   }))];
-
   return monthOptions
 });
 
@@ -117,16 +114,13 @@ const loadTeams = e => {
 
   if (isMounted.value) {
     isDirty.value = true;
-
   }
 
   if(!isMounted) {
-      filters.advisors = [];
-      advisorOptions.value = [];
+    filters.advisors = [];
+    advisorOptions.value = [];
   }
-
   loaders.teamsOptions = true;
-
   axios
     .post(`/reports/fetch-teams-by-lob`, {
       lob: e,
@@ -174,8 +168,8 @@ const loadAdvisorsByLob = e => {
 
 const onTeamChange = (e, isOnMounted = false) => {
   if(!isOnMounted) {
-      filters.advisors = [];
-      advisorOptions.value = [];
+    filters.advisors = [];
+    advisorOptions.value = [];
   }
   loadAdvisors(e);
 };
@@ -183,63 +177,58 @@ const onTeamChange = (e, isOnMounted = false) => {
 
 const onLobChange = (e, isOnMounted = false) => {
   if(!isOnMounted) {
-      filters.teams = [];
-      filters.advisors = [];
-      advisorOptions.value = [];
-      filters.displayBy= '';
-      filters.policyExpiryDate=[];
-      filters.teams=[];
-      filters.advisors= [];
-      filters.month='';
-      filters.page=1;
-      filters.insurance_type="";
-    }
+    filters.teams = [];
+    filters.advisors = [];
+    advisorOptions.value = [];
+    filters.displayBy= '';
+    filters.policyExpiryDate=[];
+    filters.teams=[];
+    filters.advisors= [];
+    filters.month='';
+    filters.page=1;
+    filters.insurance_type="";
+  }
 
   if([quoteTypeCodeEnum.Health,
       quoteTypeCodeEnum.CORPLINE
   ].includes(filters.lob)) {
-      loadTeams(e);
+    loadTeams(e);
   } else {
-      loadAdvisorsByLob(e);
+    loadAdvisorsByLob(e);
   }
 };
 
 const isDisabled = (element) => {
-    if(page.props.filtersByLob &&
-      page.props.filtersByLob[element] &&
-      filters.lob) {
-        const canView = page.props.filtersByLob[element]['can_view'][filters.lob] ?? true;
-
-        if(canView) {
-            return true;
-        }
-
-        return false;
-    }
-
-    return true;
+  if(page.props.filtersByLob &&
+    page.props.filtersByLob[element] &&
+    filters.lob) {
+      const canView = page.props.filtersByLob[element]['can_view'][filters.lob] ?? true;
+      if(canView) {
+        return true;
+      }
+      return false;
+  }
+  return true;
 }
 
 const getAdvisorLabel = () => {
-    let label = 'Advisors'
-    if ([quoteTypeCodeEnum.Health,
-        quoteTypeCodeEnum.CORPLINE].includes(filters.lob) &&
-    (!filters.teams || filters.teams.length == 0)) {
-        label = 'Advisors (select teams first)';
-    }
+  let label = 'Advisors'
+  if ([quoteTypeCodeEnum.Health,
+      quoteTypeCodeEnum.CORPLINE].includes(filters.lob) &&
+  (!filters.teams || filters.teams.length == 0)) {
+      label = 'Advisors (select teams first)';
+  }
 
-    return label;
+  return label;
 }
 
 const loadAdvisors = e => {
   if (e.length == 0) {
     return;
   }
-
   if (isMounted.value) {
     isDirty.value = true;
   }
-
   loaders.advisorOptions = true;
 
   axios
@@ -318,9 +307,9 @@ const addMissingFilters = payLoad => {
 const removeUnusedFilters = filters => {
   const filtersByLob = page.props.filtersByLob;
   Object.keys(filtersByLob).forEach(key => {
-      if(filtersByLob[key]['lobs'] && !filtersByLob[key]['lobs'].includes(filters.lob)) {
-          delete filters[key];
-      }
+    if(filtersByLob[key]['lobs'] && !filtersByLob[key]['lobs'].includes(filters.lob)) {
+      delete filters[key];
+    }
   });
   return filters;
 };
@@ -384,14 +373,13 @@ function onSubmit(isValid=true) {
 }
 
 const insuranceTypeOptions = computed(() => {
-    const types = page.props.filterOptions.insurance_type;
-    if(types[filters.lob]) {
-        return types[filters.lob].map(option => ({
-            value: option.value.toString(),
-            label: option.label,
-        }));
-    }
-
+  const types = page.props.filterOptions.insurance_type;
+  if(types[filters.lob]) {
+    return types[filters.lob].map(option => ({
+        value: option.value.toString(),
+        label: option.label,
+    }));
+  }
   return [];
 });
 
@@ -466,7 +454,7 @@ const headers = [
   { text: 'Total', value: 'total', tooltip: RetentionReportEnum.TOTAL_HEADING},
   { text: 'Lost', value: 'lost', tooltip: RetentionReportEnum.LOST_HEADING},
   { text: 'Invalid', value: 'invalid', tooltip: RetentionReportEnum.INVALID_HEADING},
-  { text: 'Sales', value: 'sales', tooltip: RetentionReportEnum.POLICIES_BOOKED_HEADING},
+  { text: 'Policy Booked', value: 'sales', tooltip: RetentionReportEnum.POLICIES_BOOKED_HEADING},
   { text: 'Volume Gross Retention', value: 'volume_gross_retention', tooltip: RetentionReportEnum.VOLUME_GROSS_RETENTION_HEADING},
   { text: 'Volume Net Retention', value: 'volume_net_retention', tooltip: RetentionReportEnum.VOLUME_NET_RETENTION_HEADING},
   { text: 'Relative Retention', value: 'relative_retention', tooltip: RetentionReportEnum.RELATIVE_RETENTION_HEADING},
@@ -770,14 +758,6 @@ watch(
             <a :href="route(baseURL, uuid)" target="_blank" class="text-primary-500 hover:underline">
               {{ code }}
             </a>
-              |            
-            <Link
-              :href="route(baseURL, uuid)"
-              class="text-primary-500 hover:underline"
-              target="_blank"
-            >
-              {{ code }}
-            </Link>
           </template>
         </DataTable>
         </div>
