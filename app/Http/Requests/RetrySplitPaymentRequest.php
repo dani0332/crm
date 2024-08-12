@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Models\CcPaymentProcess;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -42,6 +41,6 @@ class RetrySplitPaymentRequest extends FormRequest
                 $validator->errors()->add('value', 'Quote Not Exists');
             }
         });
-       
+
     }
 }

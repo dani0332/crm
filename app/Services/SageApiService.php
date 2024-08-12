@@ -234,7 +234,7 @@ class SageApiService
         if ($quoteEntity) {
             $data['entity'] = $quoteEntity;
             if ($quoteEntity->sage_customer_number) {
-                $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps,  SageEnum::STATUS_SUCCESS, $advisorId);
+                $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps, SageEnum::STATUS_SUCCESS, $advisorId);
 
                 return $quoteEntity->sage_customer_number;
             }
@@ -243,7 +243,7 @@ class SageApiService
         if ($customer) {
             $customer->data = ! empty($data) ? $data : [];
             if ($customer->sage_customer_number && ! $quoteEntity) {
-                $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps,  SageEnum::STATUS_SUCCESS, $advisorId);
+                $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps, SageEnum::STATUS_SUCCESS, $advisorId);
 
                 return $customer->sage_customer_number;
             } else {
@@ -271,10 +271,10 @@ class SageApiService
 
                 if ($sageCustomerNumber) {
                     if ($isLiveApiCallStep1) {
-                        $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps,  SageEnum::STATUS_SUCCESS, $advisorId);
+                        $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps, SageEnum::STATUS_SUCCESS, $advisorId);
                     }
                 } else {
-                    $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps,  SageEnum::STATUS_FAIL, $advisorId);
+                    $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps, SageEnum::STATUS_FAIL, $advisorId);
                 }
             }
         }

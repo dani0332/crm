@@ -2,7 +2,6 @@
 
 namespace App\Traits;
 
-use App\Models\ModelHasRole;
 use App\Models\SageApiLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -14,7 +13,7 @@ trait SageLoggable
         try {
             $userId = Auth::id();
             if (! $userId && $advisorId) {
-                $userId = $advisorId;                
+                $userId = $advisorId;
             }
             // Ensure mandatory fields are populated
             SageApiLog::updateOrCreate(

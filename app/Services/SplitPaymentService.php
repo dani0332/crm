@@ -16,8 +16,8 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\SageEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Factories\SagePayloadFactory;
 use App\Models\CarQuote;
 use App\Models\CcPaymentProcess;
@@ -783,7 +783,7 @@ class SplitPaymentService
             }
         }
     }
-    
+
     public function updateCommissionSchedule($payment)
     {
         $paymentSplits = $payment->paymentSplits;
