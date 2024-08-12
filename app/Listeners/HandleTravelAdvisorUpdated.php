@@ -7,6 +7,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Events\TravelQuoteAdvisorUpdated;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
+use App\Jobs\SendFTCEmailJob;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\EmailServices\TravelEmailService;
@@ -36,7 +37,7 @@ class HandleTravelAdvisorUpdated
         $lead = $event->lead;
 
         if ($lead) {
-            sendFTCEmail($lead->uuid, QuoteTypes::TRAVEL);
+            SendFTCEmailJob::dispatch($lead->uuid, QuoteTypes::TRAVEL)->delay(now()->addSeconds(5));
         }
 
         if ($lead->source == LeadSourceEnum::RENEWAL_UPLOAD) {

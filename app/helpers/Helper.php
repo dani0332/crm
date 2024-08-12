@@ -7,7 +7,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Facades\Marshall;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessQuote;
 use App\Models\CustomerAdditionalInfo;
@@ -1131,44 +1130,5 @@ if (! function_exists('getQuoteUsingSubject')) {
         }
 
         return null;
-    }
-}
-
-if (! function_exists('sendFTCEmail')) {
-    function sendFTCEmail(string $quoteUUID, QuoteTypes $quoteType)
-    {
-        try {
-            info("sendFTCEmail: Trying to Send FTC Email if lead is SIC and Payment is Authorized and Advisor is Assigned for uuid {$quoteUUID}");
-            $lead = $quoteType->model()::with('payments')
-                ->whereNotNull('advisor_id')
-                ->where('uuid', $quoteUUID)
-                ->isSICLead($quoteType)
-                ->first();
-
-            // Lead must be SIC LEAD and payment authorized
-            if ($lead) {
-                $isPaymentAuthorized = $lead->isPaymentAuthorized();
-                if ($isPaymentAuthorized) {
-                    $data = [
-                        'quoteUID' => $quoteUUID,
-                        'quoteTypeId' => (int) $quoteType->id(),
-                        'isSic' => true,
-                    ];
-
-                    $response = Marshall::request('/payment/send-payment-auth-email', 'post', $data);
-                    info("sendFTCEmail: Email Sent Sucessfully for uuid: {$quoteUUID}");
-
-                    return $response;
-                } else {
-                    info("sendFTCEmail: Payment not authorized for uuid {$quoteUUID}");
-                }
-            } else {
-                info("sendFTCEmail: Quote not found for uuid {$quoteUUID}");
-
-                return null;
-            }
-        } catch (Exception $e) {
-            Log::error('sendFTCEmail Error: '.$e->getMessage().$e->getTraceAsString());
-        }
     }
 }
