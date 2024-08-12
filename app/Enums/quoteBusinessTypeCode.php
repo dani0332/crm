@@ -92,47 +92,4 @@ final class quoteBusinessTypeCode extends Enum
             quoteBusinessTypeCode::tradeCredit => 16,
         };
     }
-
-    public static function getValueById(int $id): ?string
-    {
-        return match ($id) {
-            1 => quoteBusinessTypeCode::several,
-            2 => quoteBusinessTypeCode::office,
-            3 => quoteBusinessTypeCode::property,
-            4 => quoteBusinessTypeCode::publicLiability,
-            5 => quoteBusinessTypeCode::groupMedical,
-            6 => quoteBusinessTypeCode::groupLife,
-            7 => quoteBusinessTypeCode::groupTravel,
-            8 => quoteBusinessTypeCode::proIndemnity,
-            9 => quoteBusinessTypeCode::carFleet,
-            10 => quoteBusinessTypeCode::marineCargo,
-            11 => quoteBusinessTypeCode::marineHull,
-            12 => quoteBusinessTypeCode::businessInterruption,
-            13 => quoteBusinessTypeCode::machineryBreakdown,
-            14 => quoteBusinessTypeCode::contractorsRisk,
-            15 => quoteBusinessTypeCode::erection,
-            16 => quoteBusinessTypeCode::tradeCredit,
-            17 => quoteBusinessTypeCode::jewellersBlock,
-            18 => quoteBusinessTypeCode::medicalMalpractices,
-            19 => quoteBusinessTypeCode::kidnapRansom,
-            20 => quoteBusinessTypeCode::directorsOfficers,
-            21 => quoteBusinessTypeCode::defenceBased,
-            22 => quoteBusinessTypeCode::extendedWarranties,
-            23 => quoteBusinessTypeCode::drone,
-            24 => quoteBusinessTypeCode::bancassurance,
-            25 => quoteBusinessTypeCode::cyber,
-            26 => quoteBusinessTypeCode::workmens,
-            27 => quoteBusinessTypeCode::photographers,
-            28 => quoteBusinessTypeCode::event,
-            30 => quoteBusinessTypeCode::smeInsurance,
-            35 => quoteBusinessTypeCode::moneyInsurance,
-            36 => quoteBusinessTypeCode::liveStock,
-            37 => quoteBusinessTypeCode::holidayHomes,
-            39 => quoteBusinessTypeCode::fidelityGuarantee,
-            40 => quoteBusinessTypeCode::MedicalMalpracticeInsurance,
-            41 => quoteBusinessTypeCode::marineCargoOpenCover,
-            44 => quoteBusinessTypeCode::goodsInTransit,
-            default => null,
-        };
-    }
 }
