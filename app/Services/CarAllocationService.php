@@ -227,6 +227,19 @@ class CarAllocationService extends AllocationService
         return null;
     }
 
+    public function findRenewalLeadTier($carLead): ?Tier
+    {
+        $tiersQuery = Tier::where('is_active', 1)->where('min_price', '<=', $carValue)->where('max_price', '>=', $carValue);
+
+        $tier = $tiersQuery->first();
+
+        if ($tier) {
+            return $tier;
+        }
+        // Return null if no matching tier is found.
+        return null;
+    }
+
     public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource, $teamId)
     {
         $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
@@ -278,7 +291,7 @@ class CarAllocationService extends AllocationService
         info('lead payment status is : '.$lead->payment_status_id.' and tier id is : '.$lead->tier_id.' and sic advisor requested is : '.$lead->sic_advisor_requested.' with UUID : '.$lead->uuid);
         if (($lead->payment_status_id == PaymentStatusEnum::AUTHORISED || $lead->sic_advisor_requested == 1) && $lead->tier_id == TiersIdEnum::TIER_R) {
             info('SIC lead payment is made and tier is Tier R lead with UUID: '.$lead->uuid);
-            $tier = $this->findTier($lead);
+            $tier = $this->findRenewalLeadTier($lead);
             if (! empty($tier) && $tier->id != $lead->tier_id) {
                 info('Tier is found for the lead with UUID: '.$lead->uuid.' and tier name is: '.$tier->name);
                 $this->updateLeadTier($lead, $tier);
