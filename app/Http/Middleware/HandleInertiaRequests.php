@@ -415,7 +415,7 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        $nav = $nav->addIf(auth()->user()->hasRole(RolesEnum::BetaUser), 'Legacy Policies', route('legacy-policy.index'));
+        $nav = $nav->addIf(auth()->user()->can(PermissionsEnum::VIEW_LEGACY_DETAILS), 'Legacy Policies', route('legacy-policy.index'));
 
         if (auth()->user()->can(PermissionsEnum::TeleMarketingList)) {
             $nav = $nav->add('Telemarketing', '', function (Section $section) {
@@ -473,6 +473,12 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->can(PermissionsEnum::RoleList),
                         'Roles',
                         route('roles.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::DEPARTMENT_LIST),
+                        'Departments',
+                        url('admin/departments'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(

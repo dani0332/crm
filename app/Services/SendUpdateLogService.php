@@ -984,17 +984,22 @@ class SendUpdateLogService
 
     public function getSendUpdateDocuments($category): array
     {
-        $documentTypes = app(QuoteDocumentService::class)->getSendUpdateDocumentTypes();
+        $documentTypesByCategory = app(QuoteDocumentService::class)->getSendUpdateDocumentTypes();
 
-        return array_map(function ($documentType) use ($category) {
-            if (! in_array($category, [SendUpdateLogStatusEnum::EN, SendUpdateLogStatusEnum::CPD]) &&
-                in_array($documentType['code'], [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER])
-            ) {
-                $documentType['is_required'] = 1;
+        foreach ($documentTypesByCategory as $documentCategory => $documentTypes) {
+            foreach ($documentTypes as $key => $documentType) {
+                if (! in_array($category, [SendUpdateLogStatusEnum::EN, SendUpdateLogStatusEnum::CPD]) &&
+                    in_array($documentType['code'], [
+                        DocumentTypeCode::SEND_UPDATE_TAX_INVOICE,
+                        DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER,
+                    ])
+                ) {
+                    $documentTypesByCategory[$documentCategory][$key]['is_required'] = (int) true;
+                }
             }
+        }
 
-            return $documentType;
-        }, $documentTypes);
+        return $documentTypesByCategory;
     }
 
     public function sendUpdatePriceAndDiscount($sendUpdateLog, $payment): void

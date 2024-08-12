@@ -8,24 +8,16 @@ const createLink = link => {
       items: link.children.map(createLink),
     };
   } else {
-    const menuUrl = removeDomain(link.url);
     return {
       label: link.title,
       icon: link.attributes.icon,
       value: link.url,
-      active: page.url.startsWith(menuUrl),
-      ...(link.attributes.external
-        ? { target: '_blank', href: link.url }
-        : {
-            onClick: () => router.visit(link.url),
-          }),
+      href: link.url,
+      active: page.props.location.startsWith(link.url),
+      ...(link.attributes.external ? { target: '_blank' } : null),
     };
   }
 };
-
-function removeDomain(url) {
-  return '/' + url.replace(/^(?:\/\/|[^/]+)*\//, '');
-}
 
 const user = computed(() => page.props.auth.user);
 const navLinks = computed(() => page.props.sidebar);
@@ -75,11 +67,10 @@ const onLogout = () => {
             />
           </Link>
         </div>
-        <nav class="menu-wrapper dark p-1.5">
-          <x-menu
+        <nav class="p-1.5">
+          <ui-menu
             :items="$page.props.sidebar.map(createLink)"
             :collapseIcon="`chevronDown`"
-            color="zinc"
           />
         </nav>
       </aside>
@@ -214,14 +205,3 @@ const onLogout = () => {
     </XNotifications>
   </main>
 </template>
-
-<style>
-.menu-wrapper {
-  .x-menu-inner {
-    @apply text-white;
-  }
-  .x-menu-item {
-    @apply !text-white;
-  }
-}
-</style>

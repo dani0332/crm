@@ -28,7 +28,7 @@ class ActivePoliciesReportService extends ManagementReport
         $query = PersonalQuote::query()
             ->select(
                 DB::raw('COUNT(personal_quotes.id) as active_policy_count'),
-                DB::raw('FORMAT(SUM(price_vat_applicable), 2) as price_with_vat'),
+                DB::raw('FORMAT(SUM(personal_quotes.price_vat_applicable), 2) as price_with_vat'),
                 DB::raw('FORMAT(SUM(price_vat_not_applicable), 2) as price_without_vat'),
                 'ip.text as insurer',
                 'quote_type.code as line_of_business',
