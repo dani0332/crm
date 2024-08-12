@@ -2876,7 +2876,8 @@ const handlePlanSelected = plan => {
             isRenewal,
             isDisabled,
             puaPremium,
-            puaType
+            puaType,
+            isSystemDiscountPrice
           }"
         >
           <p>{{ providerName }}</p>
@@ -2905,6 +2906,14 @@ const handlePlanSelected = plan => {
             >
               Hidden
             </x-tag>
+              <x-tag
+                  v-if="isSystemDiscountPrice"
+                  size="xs"
+                  color="danger"
+                  class="mt-0.5 text-[10px]"
+              >
+                  SDP
+              </x-tag>
 
             <x-tag
               v-if="puaType"

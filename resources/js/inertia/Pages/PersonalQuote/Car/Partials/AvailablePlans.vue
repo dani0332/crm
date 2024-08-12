@@ -333,6 +333,12 @@ onMounted(() => {
                 class="w-full"
               />
             </div>
+              <div class="grid sm:grid-cols-2">
+                  <dt class="">System Discounted Price:</dt>
+                  <dd>
+                      {{ props.plan.isSystemDiscountPrice ? "YES" : "NO" }}
+                  </dd>
+              </div>
             <div class="grid sm:grid-cols-2"></div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-bold">Features:</dt>
