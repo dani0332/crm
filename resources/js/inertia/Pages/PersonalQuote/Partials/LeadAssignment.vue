@@ -47,8 +47,8 @@ function onAssignLead(isValid) {
     props.quoteType.toLowerCase() === 'car'
       ? '/quotes/car/manualLeadAssign'
       : props.quoteType === 'tmlead'
-      ? '/telemarketing/tmLeadsAssign'
-      : `/quotes/${props.quoteType}/leadAssign`;
+        ? '/telemarketing/tmLeadsAssign'
+        : `/quotes/${props.quoteType}/leadAssign`;
 
   if (isValid) {
     assignForm
@@ -72,12 +72,11 @@ function onAssignLead(isValid) {
   }
 }
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 
-
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 </script>
 

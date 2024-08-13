@@ -33,6 +33,7 @@ use App\Models\Lookup;
 use App\Models\PaymentAction;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
+use App\Models\SendUpdateLog;
 use App\Models\User;
 use App\Repositories\CustomerMembersRepository;
 use App\Traits\GenericQueriesAllLobs;
@@ -367,6 +368,7 @@ class CRUDService extends BaseService
                     CammyJob::dispatch($entity, 'unsub');
                 }
             }
+            $quoteTypeId = constant(QuoteTypeId::class.'::'.$request->modelType);
 
             $activityResponse = false;
             $previousStatusIdChanged = false;
@@ -635,11 +637,18 @@ class CRUDService extends BaseService
                         'is_manager_approved' => 1,
                     ]
                 );
+
                 $data = [
                     'uuid' => $quoteModel->uuid,
                     'type_id' => $quoteTypeId,
                     'code' => $paymentSplit->code.'-'.$paymentSplit->sr_no,
                 ];
+
+                // Payload update for Send Update to Payment Gateway
+                if (get_class($quoteModel) == SendUpdateLog::class) {
+                    $data['type_id'] = GenericRequestEnum::SEND_UPDATE_QUOTE_TYPE_MARSHAL;
+                }
+
                 $processResponse = $this->processCapturePayment($data);
 
                 return response($processResponse, 200);
@@ -1142,6 +1151,22 @@ class CRUDService extends BaseService
 
             app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quoteModel, true);
         }
+    }
+
+    public function hasAtleastOneStatusPolicyIssued($record): bool
+    {
+        if (isset($record->quote_status_id) && in_array($record->quote_status_id, [
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued,
+        ])) {
+            return true;
+        }
+
+        return false;
     }
 
     public function getInquiryLogs($modelType, $uuid)

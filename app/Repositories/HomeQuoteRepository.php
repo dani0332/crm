@@ -6,9 +6,12 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\HomeQuote;
+use App\Traits\GenericQueriesAllLobs;
 
 class HomeQuoteRepository extends BaseRepository
 {
+    use GenericQueriesAllLobs;
+
     public function model()
     {
         return HomeQuote::class;
@@ -36,7 +39,9 @@ class HomeQuoteRepository extends BaseRepository
                 $query->where('advisor_id', \auth()->user()->id);
             })
             ->filter(! $forExport, $forTotalLeadsCount)
-            ->withFakeLeadCriteria($forTotalLeadsCount)->orderBy('created_at', 'desc');
+            ->withFakeLeadCriteria($forTotalLeadsCount);
+        $this->adjustQueryByDateFilters($query, 'home_quote_request');
+        $query->orderBy('home_quote_request.created_at', 'desc');
 
         if ($forTotalLeadsCount) {
             //PD Revert

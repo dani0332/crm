@@ -1,8 +1,5 @@
 <script setup>
 const notification = useNotifications('toast');
-import { XButton } from '@indielayer/ui';
-import { useCan, useCanAny } from '../Composables/can';
-import { ref } from 'vue';
 
 const page = usePage();
 const props = defineProps({
@@ -80,8 +77,8 @@ const syncDocument = id => {
     }))
     .post('/embedded-products/sync-document', {
       preserveScroll: true,
-      responseType: 'blob',  // Ensure this is correctly set
-      onSuccess: (response) => {
+      responseType: 'blob', // Ensure this is correctly set
+      onSuccess: response => {
         syncDocumentLoader.value = false;
       },
       onError: () => {
@@ -142,12 +139,10 @@ const sendDcoument = id => {
     });
 };
 
-
-
 /**
  * this function use download embedded transaction documents issue from insurance provider
  */
-const downloadDocument = async (id) => {
+const downloadDocument = async id => {
   downloadDocumentLoader.value = true;
   const formData = {
     quoteId: props.quote.id,
@@ -156,37 +151,44 @@ const downloadDocument = async (id) => {
   };
 
   axios
-  .post('/embedded-products/download-document', formData)
-  .then(response => {
-    if(response.data.attachments.length > 0) {
-      response.data.attachments.forEach(attachment => {
-        downloadFile(attachment);
-      });
-    }
+    .post('/embedded-products/download-document', formData)
+    .then(response => {
+      if (response.data.attachments.length > 0) {
+        response.data.attachments.forEach(attachment => {
+          downloadFile(attachment);
+        });
+      }
 
-    downloadDocumentLoader.value = false;
-
-  })
-  .catch(error => {
-    downloadDocumentLoader.value = false;
-
-  });
+      downloadDocumentLoader.value = false;
+    })
+    .catch(error => {
+      downloadDocumentLoader.value = false;
+    });
 };
 
-const downloadFile = (download) => {
-    const save = document.createElement('a');
-    if (typeof save.download !== 'undefined') {
-        // if the download attribute is supported, save.download will return empty string, if not supported, it will return undefined
-        // if you are using helper method, such as isNone in ember, you can also do isNone(save.download)
-        save.href = window.location.protocol+'//'+window.location.host+'/embedded-products/download/force?path='+download.path;
-        save.target = '_blank';
-        save.download = download.name;
-        save.dispatchEvent(new MouseEvent('click'));
-    } else {
-        window.location.href = window.location.protocol+'//'+window.location.host+'/embedded-products/download/force?path='+download.path; // so that it opens new tab for IE11
-    }
-}
-
+const downloadFile = download => {
+  const save = document.createElement('a');
+  if (typeof save.download !== 'undefined') {
+    // if the download attribute is supported, save.download will return empty string, if not supported, it will return undefined
+    // if you are using helper method, such as isNone in ember, you can also do isNone(save.download)
+    save.href =
+      window.location.protocol +
+      '//' +
+      window.location.host +
+      '/embedded-products/download/force?path=' +
+      download.path;
+    save.target = '_blank';
+    save.download = download.name;
+    save.dispatchEvent(new MouseEvent('click'));
+  } else {
+    window.location.href =
+      window.location.protocol +
+      '//' +
+      window.location.host +
+      '/embedded-products/download/force?path=' +
+      download.path; // so that it opens new tab for IE11
+  }
+};
 
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
@@ -232,11 +234,16 @@ const checkTransactionExist = item => {
   for (let price of item.prices) {
     for (let transaction of price.transactions) {
       const paymentStatusDate = transaction.payment_status_date;
-      if(paymentStatusDate) {
+      if (paymentStatusDate) {
         var timeStart = new Date(paymentStatusDate);
         var timeEnd = new Date();
-        var timeDifferenceInMiliseconds = timeEnd.getTime() - timeStart.getTime();
-        if ((transaction.payment_status_id == 6 || transaction.payment_status_id == 4) && timeDifferenceInMiliseconds <= 259200000) {
+        var timeDifferenceInMiliseconds =
+          timeEnd.getTime() - timeStart.getTime();
+        if (
+          (transaction.payment_status_id == 6 ||
+            transaction.payment_status_id == 4) &&
+          timeDifferenceInMiliseconds <= 259200000
+        ) {
           return false;
         }
       }
@@ -248,8 +255,14 @@ const checkTransactionExist = item => {
 const { copy, copied } = useClipboard();
 
 const onCopyText = () => {
-
-let paymentLink = page.props.epLink + '/car-insurance/quote/'+props.quote.uuid+'/payment?planId='+props.quote.plan_id+'&providerCode='+props.quote.plan_provider_code;
+  let paymentLink =
+    page.props.epLink +
+    '/car-insurance/quote/' +
+    props.quote.uuid +
+    '/payment?planId=' +
+    props.quote.plan_id +
+    '&providerCode=' +
+    props.quote.plan_provider_code;
   copy(paymentLink);
   if (copied)
     notification.success({
@@ -259,7 +272,9 @@ let paymentLink = page.props.epLink + '/car-insurance/quote/'+props.quote.uuid+'
 };
 
 const getFirstPriceWithTransaction = prices => {
-  return prices.find(price => price.transactions && price.transactions.length > 0);
+  return prices.find(
+    price => price.transactions && price.transactions.length > 0,
+  );
 };
 
 const paymentStatus = id => {
@@ -269,7 +284,6 @@ const paymentStatus = id => {
 };
 
 const toggleProduct = (ep, event) => {
-
   let removeIdFromSelection = [];
   propsDataReactive.value?.forEach(item => {
     if (item.id === ep.embedded_product_id) {
@@ -289,7 +303,7 @@ const toggleProduct = (ep, event) => {
     removeIdFromSelection.push(id);
   }
 
-  if(removeIdFromSelection.length > 0) {
+  if (removeIdFromSelection.length > 0) {
     removeIdFromSelection.forEach(id => {
       const indexToRemove = selectedEp.value.indexOf(id);
       if (indexToRemove !== -1) {
@@ -300,7 +314,11 @@ const toggleProduct = (ep, event) => {
 
   console.log(selectedEp);
 
-  let data = { quote_uuid: props.quote.uuid, id: id,modelType:props.modelType };
+  let data = {
+    quote_uuid: props.quote.uuid,
+    id: id,
+    modelType: props.modelType,
+  };
   let requestUrl = '/quotes/' + props.modelType + '/toggle-product';
   axios
     .post(requestUrl, data)
@@ -319,7 +337,7 @@ const onActivitySubmit = isValid => {
   axios
     .post(url, paymentForm)
     .then(res => {
-        modals.cancelPayment = false;
+      modals.cancelPayment = false;
       notification.success('Processed');
     })
     .catch(err => {
@@ -334,48 +352,85 @@ const onActivitySubmit = isValid => {
     });
 };
 const hasAnyRole = roles => useHasAnyRole(roles);
+const canAny = permissions => useCanAny(permissions);
+const can = permission => useCan(permission);
 </script>
 
 <template>
-  <div v-if="useCanAny([permissionsEnum.EMBEDDED_PRODUCT_VIEW, permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL])">
-    <x-collapse class="p-4 rounded shadow mb-6 bg-white" show-icon>
-
+  <x-accordion
+    v-if="
+      canAny([
+        permissionsEnum.EMBEDDED_PRODUCT_VIEW,
+        permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL,
+      ])
+    "
+    show-icon
+  >
+    <x-accordion-item class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-4 justify-between items-center">
         <h3 class="font-semibold text-primary-800 text-lg">
-          Embedded Products <x-tag size="sm">{{ propsDataReactive.length || 0 }}</x-tag>
+          Embedded Products
+          <x-tag size="sm">{{ propsDataReactive.length || 0 }}</x-tag>
         </h3>
-        <div style="margin-right:50px;">
-          <x-button v-if="selectedEp.length > 0" size="sm" @click.stop="onCopyText()">
+        <div style="margin-right: 50px">
+          <x-button
+            v-if="selectedEp.length > 0"
+            size="sm"
+            @click.stop="onCopyText()"
+          >
             Copy Payment Link
           </x-button>
         </div>
       </div>
       <template #content>
         <x-divider class="mb-4 mt-2 mt-1" />
-        <DataTable table-class-name="tablefixed" :headers="epTable.columns" :items="propsDataReactive || []" border-cell
-          hide-rows-per-page hide-footer>
+        <DataTable
+          table-class-name="tablefixed"
+          :headers="epTable.columns"
+          :items="propsDataReactive || []"
+          border-cell
+          hide-rows-per-page
+          hide-footer
+        >
           <template #item-code="{ short_code }">
             {{ short_code + '-' + props.code }}
           </template>
 
           <template #item-prices="{ prices }">
-
             <div v-if="prices.length > 0" class="flex gap-3">
               <div v-for="(priceItem, index) in prices" :key="index">
                 <x-tag v-if="priceItem.transactions.length" color="primary">
-                  <x-checkbox v-model="priceItem.transactions[0].is_selected" @change="toggleProduct(priceItem, $event)"
-                    color="primary" :disabled="priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.AUTHORISED
-                      || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.CAPTURED
-                      || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.PARTIAL_CAPTURED" />
-                  {{ (parseFloat(priceItem.price) + (priceItem.price * 5) / 100).toFixed(2) }}
+                  <x-checkbox
+                    v-model="priceItem.transactions[0].is_selected"
+                    @change="toggleProduct(priceItem, $event)"
+                    color="primary"
+                    :disabled="
+                      priceItem.transactions[0]?.payment_status_id ==
+                        paymentStatusEnum.AUTHORISED ||
+                      priceItem.transactions[0]?.payment_status_id ==
+                        paymentStatusEnum.CAPTURED ||
+                      priceItem.transactions[0]?.payment_status_id ==
+                        paymentStatusEnum.PARTIAL_CAPTURED
+                    "
+                  />
+                  {{
+                    (
+                      parseFloat(priceItem.price) +
+                      (priceItem.price * 5) / 100
+                    ).toFixed(2)
+                  }}
                 </x-tag>
               </div>
             </div>
-
           </template>
 
           <template #item-payment_status="{ prices }">
-            {{ paymentStatus(getFirstPriceWithTransaction(prices)?.transactions[0]?.payment_status_id) }}
+            {{
+              paymentStatus(
+                getFirstPriceWithTransaction(prices)?.transactions[0]
+                  ?.payment_status_id,
+              )
+            }}
           </template>
 
           <template #item-updated_at="{ updated_at }">
@@ -384,58 +439,114 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 
           <template #item-actions="item">
             <div class="flex flex-col gap-1">
-              <x-button size="xs" color="emerald" v-if="item.sync_document_button" :disabled="!item.sync_document_button" :loading="syncDocumentLoader"
-                @click.prevent="syncDocument(item.id)">
+              <x-button
+                size="xs"
+                color="emerald"
+                v-if="item.sync_document_button"
+                :disabled="!item.sync_document_button"
+                :loading="syncDocumentLoader"
+                @click.prevent="syncDocument(item.id)"
+              >
                 Sync Documents from Provider
               </x-button>
-              <x-button size="xs" color="emerald" :disabled="!item.send_document_button" :loading="sendDocumentLoader"
-                @click.prevent="sendDcoument(item.id)">
+              <x-button
+                size="xs"
+                color="emerald"
+                :disabled="!item.send_document_button"
+                :loading="sendDocumentLoader"
+                @click.prevent="sendDcoument(item.id)"
+              >
                 Send Documents
               </x-button>
-              <x-button size="xs" color="emerald" :disabled="!item.download_document_button" :loading="downloadDocumentLoader"
-                @click.prevent="downloadDocument(item.id)">
+              <x-button
+                size="xs"
+                color="emerald"
+                :disabled="!item.download_document_button"
+                :loading="downloadDocumentLoader"
+                @click.prevent="downloadDocument(item.id)"
+              >
                 Download Documents
               </x-button>
-              <x-button v-if="item.canGenerateCerticate" size="xs" color="#ff5e00"
-                :disabled="!item.send_document_button" :loading="downloadLoader"
-                @click.prevent="downloadDcoument(item.id)">
+              <x-button
+                v-if="item.canGenerateCerticate"
+                size="xs"
+                color="#ff5e00"
+                :disabled="!item.send_document_button"
+                :loading="downloadLoader"
+                @click.prevent="downloadDcoument(item.id)"
+              >
                 Download Certificate
               </x-button>
-              <x-button size="xs" color="primary" :href="ppDoc(item.company_documents)" target="_blank"
-                :disabled="ppDoc(item.company_documents) === ''">
+              <x-button
+                size="xs"
+                color="primary"
+                :href="ppDoc(item.company_documents)"
+                target="_blank"
+                :disabled="ppDoc(item.company_documents) === ''"
+              >
                 Download Product Wordings
               </x-button>
-              <x-button v-if="useCan(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)" size="xs" color="#ff5e00"
-                :disabled="checkTransactionExist(item)" @click.prevent="cancelPaymentForm(item)">
+              <x-button
+                v-if="can(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)"
+                size="xs"
+                color="#ff5e00"
+                :disabled="checkTransactionExist(item)"
+                @click.prevent="cancelPaymentForm(item)"
+              >
                 Cancel Payments
               </x-button>
             </div>
           </template>
         </DataTable>
-        <x-modal v-if="useCan(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)" v-model="modals.cancelPayment" size="lg"
-          show-close backdrop>
-          <template #header> Cancel Payment </template>
+        <x-modal
+          v-if="can(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)"
+          title="Cancel Payment"
+          v-model="modals.cancelPayment"
+          size="md"
+          show-close
+          backdrop
+          is-form
+          @submit="onActivitySubmit"
+        >
+          <div class="grid gap-4">
+            <x-input
+              v-model="paymentForm.amount"
+              label="Amount"
+              :rules="[isRequired, isNumber]"
+              class="w-full"
+            />
 
-          <x-form @submit="onActivitySubmit" :auto-focus="false">
-            <div class="grid gap-4">
-              <x-input v-model="paymentForm.amount" label="Amount" :rules="[isRequired, isNumberOrDecimal]" class="w-full" />
+            <x-textarea
+              v-model="paymentForm.reason"
+              label="Reason"
+              maxlength="250"
+              :adjust-to-text="false"
+              class="w-full"
+            />
+          </div>
 
-              <x-textarea v-model="paymentForm.reason" label="Reason" maxlength="250" :adjust-to-text="false"
-                class="w-full" />
-            </div>
-
-            <div class="text-right space-x-4 mt-12">
-              <x-button size="sm" @click.prevent="modals.cancelPayment = false">
-                Cancel
-              </x-button>
-
-              <x-button size="sm" color="emerald" :loading="paymentForm.processing" type="submit">
-                Cancel Payment
-              </x-button>
-            </div>
-          </x-form>
+          <template #secondary-action>
+            <x-button
+              size="sm"
+              ghost
+              tabindex="-1"
+              @click.prevent="modals.cancelPayment = false"
+            >
+              Cancel
+            </x-button>
+          </template>
+          <template #primary-action>
+            <x-button
+              size="sm"
+              color="emerald"
+              :loading="paymentForm.processing"
+              type="submit"
+            >
+              Cancel Payment
+            </x-button>
+          </template>
         </x-modal>
       </template>
-    </x-collapse>
-  </div>
+    </x-accordion-item>
+  </x-accordion>
 </template>

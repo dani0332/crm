@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\FollowupStartedRequest;
 use App\Http\Requests\Api\UpdateLeadStatusRequest;
@@ -11,6 +12,7 @@ use App\Http\Resources\CarQuoteResource;
 use App\Models\CarQuote;
 use App\Repositories\CarQuoteRepository;
 use App\Services\CarQuoteService;
+use App\Services\QuoteStatusService;
 
 class CarQuoteController extends Controller
 {
@@ -70,7 +72,9 @@ class CarQuoteController extends Controller
      */
     public function updateQuoteStatus(UpdateLeadStatusRequest $request)
     {
-        CarQuoteRepository::updateQuoteStatus($request->validated());
+        $quoteStatus = QuoteStatusEnum::getKey($request->quote_status_id);
+        $quoteTypeId = QuoteTypes::getIdFromValue($request->quote_type);
+        app(QuoteStatusService::class)->updateQuoteStatus($quoteTypeId, $request->quote_uuid, $quoteStatus, [], $request->notes);
 
         return response()->json(['success' => true, 'message' => 'Lead status updated successfully']);
     }

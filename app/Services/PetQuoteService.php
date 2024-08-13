@@ -132,7 +132,7 @@ class PetQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return $this->query->where('pqr.uuid', $id)->firstOrFail();
+        return PetQuote::where('uuid', $id)->firstOrFail();
     }
 
     public function getEntityPlain($id)

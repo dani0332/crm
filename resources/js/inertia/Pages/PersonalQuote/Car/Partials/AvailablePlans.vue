@@ -11,10 +11,9 @@ const props = defineProps({
 });
 const { isRequired } = useRules();
 const page = usePage();
-
 const emit = defineEmits(['onLoadAvailablePlansData']);
 const can = permission => useCan(permission);
-const permissionsEnum = page.props.permissionsEnum
+const permissionsEnum = page.props.permissionsEnum;
 
 const notification = useToast();
 const coreInsurer = ['AXA', 'OIC', 'TM', 'QIC', 'RSA'];
@@ -73,7 +72,10 @@ const planForm = useForm({
   is_create: 0,
   addons: props.plan.addons,
   insurerTrim: props.plan.insurerTrimId || null,
-  insurer_quote_no: (props.plan.insurerQuoteNo != null && props.plan.insurerQuoteNo != '') ? props.plan.insurerQuoteNo : '',
+  insurer_quote_no:
+    props.plan.insurerQuoteNo != null && props.plan.insurerQuoteNo != ''
+      ? props.plan.insurerQuoteNo
+      : '',
   is_manual_update: props.plan.isManualUpdate,
   ancillary_excess: props.plan.ancillaryExcess,
   current_url: usePage().url,
@@ -112,7 +114,7 @@ const onTogglePlans = () => {
         title: 'Plan has been updated',
         position: 'top',
       });
-      emit("onLoadAvailablePlansData")
+      emit('onLoadAvailablePlansData');
     })
     .catch(error => {
       notification.error({
@@ -163,7 +165,7 @@ const onUpdatePlan = () => {
       preserveScroll: true,
       preserveState: true,
       onSuccess: () => {
-        emit("onLoadAvailablePlansData")
+        emit('onLoadAvailablePlansData');
       },
     });
 };
@@ -194,11 +196,13 @@ const onToggleManual = () => {
 };
 
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
+const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
+  createReusableTemplate();
 </script>
 
 <template>
@@ -229,6 +233,17 @@ onMounted(() => {
 
       <TabPanels class="mt-2 text-sm min-h-[70vh]">
         <TabPanel>
+          <ToggleManualButtonTemplate v-slot="{ isDisabled }">
+            <x-toggle
+              v-model="planForm.is_manual_update"
+              color="success"
+              label="Manual"
+              :disabled="isDisabled"
+              @change="onToggleManual"
+              :loading="toggleManualLoader"
+            />
+          </ToggleManualButtonTemplate>
+
           <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
             <div class="grid sm:grid-cols-2 mb-3">
               <x-toggle
@@ -240,14 +255,21 @@ onMounted(() => {
               />
             </div>
             <div class="grid sm:grid-cols-2 mb-3">
-              <x-toggle
-                v-model="planForm.is_manual_update"
-                color="success"
-                label="Manual"
-                @change="onToggleManual"
-                :loading="toggleManualLoader"
-              />
+              <x-tooltip
+                v-if="page.props.lockLeadSectionsDetails.plan_selection"
+                placement="bottom"
+              >
+                <ToggleManualButtonReuseTemplate :isDisabled="true" />
+                <template #tooltip>
+                  No further action allowed on issued policy, If changes are
+                  required, such as increase in price, please proceed through
+                  the 'Send Update' feature using the 'Correction of Policy'
+                  option.
+                </template>
+              </x-tooltip>
+              <ToggleManualButtonReuseTemplate v-else />
             </div>
+
             <div class="grid sm:grid-cols-2">
               <dt class="">Provider Name</dt>
               <dd>{{ props.plan.providerName }}</dd>
@@ -260,8 +282,8 @@ onMounted(() => {
                     ? coreInsurer.includes(props.plan.providerCode)
                       ? 'Premium workshop'
                       : halfLiveInsurer.includes(props.plan.providerCode)
-                      ? 'Non-Agency workshop'
-                      : 'NON-AGENCY'
+                        ? 'Non-Agency workshop'
+                        : 'NON-AGENCY'
                     : props.plan.repairType
                 }}
               </dd>
@@ -270,7 +292,10 @@ onMounted(() => {
               <dt class="mt-2">Insurer Quote No.:</dt>
               <x-input
                 v-model="planForm.insurer_quote_no"
-                :disabled="!planForm.is_manual_update"
+                :disabled="
+                  !planForm.is_manual_update ||
+                  page.props.lockLeadSectionsDetails.plan_selection
+                "
                 :error="showInsurerError ? 'This field is required' : ''"
                 maxlength="50"
                 size="sm"
@@ -280,7 +305,10 @@ onMounted(() => {
               <dt class="mt-2">Price:</dt>
               <x-input
                 v-model="planForm.actual_premium"
-                :disabled="!planForm.is_manual_update"
+                :disabled="
+                  !planForm.is_manual_update ||
+                  page.props.lockLeadSectionsDetails.plan_selection
+                "
                 size="sm"
                 type="number"
               />
@@ -291,6 +319,7 @@ onMounted(() => {
                 v-model="planForm.discounted_premium"
                 size="sm"
                 type="number"
+                :disabled="page.props.lockLeadSectionsDetails.plan_selection"
               />
             </div>
             <div class="grid sm:grid-cols-2">
@@ -304,13 +333,17 @@ onMounted(() => {
                 "
                 size="sm"
                 type="number"
+                :disabled="page.props.lockLeadSectionsDetails.plan_selection"
               />
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="mt-2">Excess:</dt>
               <x-input
                 v-model="planForm.excess"
-                :disabled="!planForm.is_manual_update"
+                :disabled="
+                  !planForm.is_manual_update ||
+                  page.props.lockLeadSectionsDetails.plan_selection
+                "
                 type="number"
                 size="sm"
               />
@@ -322,6 +355,7 @@ onMounted(() => {
                 placeholder="Select Option"
                 :options="ancillaryExcessOptions"
                 class="w-full"
+                :disabled="page.props.lockLeadSectionsDetails.plan_selection"
               />
             </div>
             <div class="grid sm:grid-cols-2">
@@ -331,6 +365,7 @@ onMounted(() => {
                 placeholder="Select Option"
                 :options="insurerAvailableTrimsOptions"
                 class="w-full"
+                :disabled="page.props.lockLeadSectionsDetails.plan_selection"
               />
             </div>
             <div class="grid sm:grid-cols-2"></div>
@@ -366,9 +401,10 @@ onMounted(() => {
           <div class="flex justify-end" v-if="readOnlyMode.isDisable === true">
             <x-button
               v-if="
-                access.carManagerCanEdit ||
-                access.carAdvisorCanEdit ||
-                notAdvisorAndManagerAndPA
+                (access.carManagerCanEdit ||
+                  access.carAdvisorCanEdit ||
+                  notAdvisorAndManagerAndPA) &&
+                !page.props.lockLeadSectionsDetails.plan_selection
               "
               color="primary"
               size="sm"
@@ -410,12 +446,16 @@ onMounted(() => {
               <dt class="font-bold">Total Price with VAT:</dt>
               <dd>AED: {{ totalPremiumWithVat.toFixed(2) }}</dd>
             </div>
-            <div class="flex justify-end" v-if="readOnlyMode.isDisable === true">
+            <div
+              class="flex justify-end"
+              v-if="readOnlyMode.isDisable === true"
+            >
               <x-button
                 v-if="
-                  access.carManagerCanEdit ||
-                  access.carAdvisorCanEdit ||
-                  notAdvisorAndManagerAndPA
+                  (access.carManagerCanEdit ||
+                    access.carAdvisorCanEdit ||
+                    notAdvisorAndManagerAndPA) &&
+                  !page.props.lockLeadSectionsDetails.plan_selection
                 "
                 color="primary"
                 class="mt-5"
