@@ -485,7 +485,7 @@ class EmbeddedProductRepository extends BaseRepository
             }
 
             $body = json_encode([
-                'From' => config('constants.MA_FROM_EMAIL'),
+                'From' => config('constants.IM_FROM_EMAIL'),
                 'ReplyTo' => isset($advisorData['email']) ? $advisorData['email'] : null,
                 'To' => $quoteObject->email,
                 'Cc' => isset($advisorData['email']) ? $advisorData['email'] : '',
