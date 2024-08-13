@@ -38,7 +38,7 @@ class PaymentSplitsObserver
         $quote = $masterPayment->paymentable;
         $modelType = null;
         $quoteId = null;
-        if (!$masterPayment->send_update_log_id){
+        if (! $masterPayment->send_update_log_id) {
             $quote = $masterPayment->paymentable;
             $quoteId = $quote->id;
             if ($masterPayment->paymentable_type == PersonalQuote::class) {
@@ -48,7 +48,7 @@ class PaymentSplitsObserver
             }
         }
 
-       [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat(
+        [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat(
             $masterPayment->frequency,
             $masterPayment->total_price,
             $paymentSplits->sr_no,

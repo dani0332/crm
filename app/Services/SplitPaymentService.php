@@ -634,22 +634,22 @@ class SplitPaymentService
         if ($send_update_id > 0) {
             $quoteModel = SendUpdateLogRepository::getLogById($send_update_id);
         } else {
-            
+
             if (in_array($modelType, $ecommLobs)) {
                 $computedPrice = $masterTotalPrice;
             } else {
                 $quoteModel = $this->getQuoteObject($modelType, $quoteId);
             }
         }
-        
+
         if (isset($quoteModel) && isset($quoteModel->price_vat_applicable) && $quoteModel->price_vat_applicable > 0) {
             $computedPrice = $quoteModel->price_vat_applicable;
         }
-        
+
         if ($computedPrice > 0) {
             $priceWithoutVat = $computedPrice;
             $vat = ($priceWithoutVat * $vatValue) / 100;
-            if (in_array($modelType, $ecommLobs) && !$send_update_id) {
+            if (in_array($modelType, $ecommLobs) && ! $send_update_id) {
                 $priceWithoutVat = $computedPrice - $vat;
             }
 
