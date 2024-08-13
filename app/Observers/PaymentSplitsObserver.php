@@ -36,21 +36,27 @@ class PaymentSplitsObserver
         $masterPayment = $paymentSplits->payment;
         $totalSplitPayments = $masterPayment->total_payments;
         $quote = $masterPayment->paymentable;
-
-        if ($masterPayment->paymentable_type == PersonalQuote::class) {
-            $modelType = QuoteTypes::getName($quote->quote_type_id)->value;
-        } else {
-            $modelType = quoteTypeCode::getName($masterPayment->paymentable_type);
+        $modelType = null;
+        $quoteId = null;
+        if (!$masterPayment->send_update_log_id){
+            $quote = $masterPayment->paymentable;
+            $quoteId = $quote->id;
+            if ($masterPayment->paymentable_type == PersonalQuote::class) {
+                $modelType = QuoteTypes::getName($quote->quote_type_id)->value;
+            } else {
+                $modelType = quoteTypeCode::getName($masterPayment->paymentable_type);
+            }
         }
 
-        [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat(
+       [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat(
             $masterPayment->frequency,
             $masterPayment->total_price,
             $paymentSplits->sr_no,
             $paymentSplits->payment_amount,
             $modelType,
-            $quote->id,
-            $totalSplitPayments
+            $quoteId,
+            $totalSplitPayments,
+            $masterPayment->send_update_log_id
         );
 
         PaymentSplits::withoutEvents(function () use ($paymentSplits, $priceWithoutVat, $vat) {

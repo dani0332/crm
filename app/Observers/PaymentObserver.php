@@ -34,18 +34,24 @@ class PaymentObserver
      */
     private function updatePriceVat(Payment $payment): void
     {
-        $quote = $payment->paymentable;
-        if ($payment->paymentable_type == PersonalQuote::class) {
-            $modelType = QuoteTypes::getName($quote->quote_type_id)->value;
-        } else {
-            $modelType = quoteTypeCode::getName($payment->paymentable_type);
-        }
-
+        $modelType = null;
+        $quoteId = null;
+        if (!$payment->send_update_log_id){
+            $quote = $payment->paymentable;
+            $quoteId = $quote->id;
+            if ($payment->paymentable_type == PersonalQuote::class) {
+                $modelType = QuoteTypes::getName($quote->quote_type_id)->value;
+            } else {
+                $modelType = quoteTypeCode::getName($payment->paymentable_type);
+            }
+    }
+        
         [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculateMasterPriceAndVat(
             $payment->frequency,
             $payment->total_price,
             $modelType,
-            $quote->id
+            $quoteId,
+            $payment->send_update_log_id
         );
 
         Payment::withoutEvents(function () use ($payment, $priceWithoutVat, $vat) {
