@@ -5,7 +5,7 @@ import moment from 'moment';
 import NProgress from 'nprogress';
 import { computed } from 'vue';
 import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
-import SageRecieptCreation from './../Components/SageRecieptCreation.vue';
+
 const notification = useNotifications('toast');
 const page = usePage();
 
@@ -3009,13 +3009,7 @@ const totalAmountFormat = computed(() => {
               class="flex justify-between items-center gap-2"
               style="margin-left: auto"
             >
-              <!--              <SageRecieptCreation
-                :quoteId="quoteRequest.id"
-                :paymentCode="payments[0].code"
-                :quoteType="quoteType"
-                :quoteStatusId="quoteRequest.quote_status_id"
-                :payments = "payments"
-              />-->
+              
               <UpdateTotalPrice
                 v-if="
                   can(permissionEnum.TEMP_UPDATE_TOTALPRICE) &&

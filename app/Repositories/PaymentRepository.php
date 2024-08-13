@@ -761,50 +761,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return $quote->payments()->where('insurer_tax_number', $invoiceNumber)->first();
     }
 
-    //update total price
-    public function fetchCreateSageReceiptsTemp($request)
-    {   //echo request()->model_type; exit; dd($request);
-        $modelType = $request->model_type;
-        $quoteId = $request->quote_id;
-        $quoteModel = $this->getQuoteObject($modelType, $quoteId);
-        $payment = $quoteModel->payments()->where('code', $request->payment_code)->first();
-
-        if ($payment) {
-
-            $payment->paymentSplits()
-                ->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])
-                ->whereNot('payment_method', PaymentMethodsEnum::CreditApproval)
-                ->where(function ($query) {
-                    $query->whereNull('sage_reciept_id')
-                        ->orWhere('sage_reciept_id', '');
-                })
-                ->each(function ($splitPayment) use ($modelType, $quoteId, $quoteModel) {
-
-                    // Create an empty Request object
-                    $amountCollected = $splitPayment->collection_amount;
-                    $sageRequest = Request::createFromGlobals();
-                    $sageRequest->merge([
-                        'modelType' => $modelType,
-                        'quote_id' => $quoteId,
-                        'customer_id' => $quoteModel->customer_id,
-                    ]);
-
-                    $sageResponse = app(SplitPaymentService::class)->createSageRecipt($sageRequest, $splitPayment, $amountCollected);
-                    if ($sageResponse['status'] == 'success') {
-                        $splitPayment->sage_reciept_id = $sageResponse['response'];
-                        $splitPayment->save();
-                    } else {
-                        $failMessage = $sageResponse['response'];
-                        vAbort($failMessage);
-                    }
-                });
-
-            return response()->json(['message' => 'Payment updated successfully']);
-        }
-
-        return response()->json(['error' => 'Receipts Creation Failed']);
-    }
-
     public function generateBrokerInvoiceNumber($payment): string
     {
         $insurance_provider_id = $payment->insurance_provider_id;

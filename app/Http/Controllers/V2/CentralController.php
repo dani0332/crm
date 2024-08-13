@@ -535,11 +535,4 @@ class CentralController extends Controller
         }
     }
 
-    // create sage receipts for payment
-    public function createSageReceiptsTemp(SageReceiptRequest $request)
-    {
-        $successMessage = PaymentRepository::createSageReceiptsTemp($request);
-
-        return $successMessage;
-    }
 }
