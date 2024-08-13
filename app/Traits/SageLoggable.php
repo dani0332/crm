@@ -8,10 +8,10 @@ use Illuminate\Support\Facades\Log;
 
 trait SageLoggable
 {
-    protected function logSageApiCall($payload, $response = [], $section = null, $step = null, $totalSteps = null, $status = 'success')
+    protected function logSageApiCall($payload, $response = [], $section = null, $step = null, $totalSteps = null, $status = 'success', $loggedInUserId = null)
     {
         try {
-            $userId = Auth::id();
+            $userId = $loggedInUserId ?? Auth::id();
             // Ensure mandatory fields are populated
             SageApiLog::updateOrCreate(
                 [

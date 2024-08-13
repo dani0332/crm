@@ -32,9 +32,12 @@ const props = defineProps({
 });
 
 const isLoading = ref(false);
+const isAMLNotClearedForTravelQuote = ref(false);
+const isExpandedCommissionSchedule = ref([]);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const kycEnums = page.props.kycEnums;
 const paymentMethodsEnum = page.props.paymentMethodsEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
@@ -119,6 +122,18 @@ const transactionPaymentStatus = computed(() => {
     return 'Paid';
   }
 });
+
+const formatAmount = amount => {
+  const parsedAmount = parseFloat(amount);
+  if (isNaN(parsedAmount)) {
+    return '0.00';
+  }
+  return parsedAmount.toLocaleString('en-US', {
+    style: 'decimal',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
 
 // use Broker Invoice Number as Insurer Commission Tax Invoice Number for specific insurance providers
 const binAsInsurerCommissionTaxInvoiceNumber = () => {
@@ -227,6 +242,13 @@ const confirmSendPolicy = () => {
 };
 
 const submitPolicy = () => {
+  if (isAMLNotClearedForTravelQuote.value) {
+    notification.error({
+      title: 'Kindly clear the AML.',
+      position: 'top',
+    });
+    return;
+  }
   isLoading.value = true;
   let url = '/quotes/send-booking-policy';
   let data = {
@@ -355,6 +377,7 @@ const showSendAndBookPolicyButtonBlock = computed(() => {
 
   return [TransactionApproved, PolicyIssued].includes(quote_status_id);
 });
+
 const showSendAndBookPolicyButton = computed(() => {
   let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
   let permission = permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON;
@@ -380,6 +403,45 @@ const disableSendAndBookPolicyButton = computed(() => {
     !can(permission)
   );
 });
+
+const disableBookPolicyButton = computed(() => {
+  return (
+    !props.bookPolicyDetails?.bookButton ||
+    bp.isEditing ||
+    !can(permissionsEnum.BOOK_POLICY_BUTTON)
+  );
+});
+
+const isTravelQuoteAndAMLNotCleared = () => {
+  const bookPolicyButtonLabel = props.bookPolicyDetails?.text;
+  const isSendPolicyToCustomerButton =
+    bookPolicyButtonLabel === sendPolicyTypeEnum.CUSTOMER_BUTTON_TEXT;
+  const isQuoteTypeTravel = page.props.quoteType == quoteTypeCodeEnum.Travel;
+  const isPolicyAMLScreeningCleared =
+    props.quote.kyc_decision == kycEnums.COMPLETE;
+
+  if (
+    isQuoteTypeTravel &&
+    !isPolicyAMLScreeningCleared &&
+    !isSendPolicyToCustomerButton
+  ) {
+    let allowedQuoteStatuesForAMLAlert = [
+      page.props.quoteStatusEnum.TransactionApproved,
+      page.props.quoteStatusEnum.PolicyIssued,
+      page.props.quoteStatusEnum.PolicySentToCustomer,
+    ];
+    if (allowedQuoteStatuesForAMLAlert.includes(props.quote.quote_status_id)) {
+      notification.error({
+        title: 'Kindly clear the AML.',
+        position: 'top',
+        timeout: 30000,
+      });
+    }
+
+    isAMLNotClearedForTravelQuote.value = true;
+  }
+};
+
 const showActionButtons = computed(() => {
   // Hide buttons only when policy is cancelled and have a chilrd lead
   return (
@@ -433,6 +495,9 @@ const isShowingTransactionPaymentStatus = computed(() => {
     page.props.quoteStatusEnum.PolicyCancelledReissued,
   ];
   return policyStatuses.includes(props.quote.quote_status_id);
+});
+onBeforeMount(() => {
+  isTravelQuoteAndAMLNotCleared();
 });
 </script>
 
@@ -761,6 +826,116 @@ const isShowingTransactionPaymentStatus = computed(() => {
               <div class="w-full md:w-1/2"></div>
               <div class="w-full md:w-1/2" />
             </div>
+            <div class="grid-cols-12 mt-5">
+              <div class="p-4 rounded shadow mb-6 bg-white">
+                <div class="flex justify-between gap-4 items-center mb-4">
+                  <h3 class="font-semibold text-primary-800 text-lg">
+                    Commission Schedule
+                  </h3>
+                </div>
+                <div class="vue3-easy-data-table tablefixed custom-height">
+                  <div
+                    class="vue3-easy-data-table__main fixed-header hoverable border-cell custom-height manage-payment-table-parent-div"
+                  >
+                    <table>
+                      <thead class="vue3-easy-data-table__header">
+                        <tr>
+                          <th class="relative group text-center">
+                            <span class="">Payment No</span>
+                          </th>
+                          <th class="inner-th-class">
+                            <span class="">Payment Ref ID</span>
+                          </th>
+
+                          <th class="inner-th-class">
+                            <span class="">Commission (without VAT)</span>
+                          </th>
+                          <th class="inner-th-class">
+                            <span class="">VAT</span>
+                          </th>
+
+                          <th class="inner-th-class">
+                            <span class="">Total Commission</span>
+                          </th>
+                        </tr>
+                      </thead>
+
+                      <tbody class="vue3-easy-data-table__body">
+                        <template
+                          v-for="(item, index) in payments"
+                          :key="item.code"
+                        >
+                          <template
+                            v-if="
+                              item.total_payments > 0 && item.commission > 0
+                            "
+                          >
+                            <tr>
+                              <td class="text-center">
+                                <span
+                                  class="expand-pointer"
+                                  @click="
+                                    isExpandedCommissionSchedule[index] =
+                                      !isExpandedCommissionSchedule[index]
+                                  "
+                                  >{{
+                                    isExpandedCommissionSchedule[index]
+                                      ? '&and;'
+                                      : '&or;'
+                                  }}
+                                </span>
+                              </td>
+                              <td>{{ item.code }}</td>
+                              <td>
+                                {{
+                                  formatAmount(item.commission_vat_applicable)
+                                }}
+                              </td>
+                              <td>{{ formatAmount(item.commission_vat) }}</td>
+                              <td>{{ formatAmount(item.commission) }}</td>
+                            </tr>
+                            <template
+                              v-if="isExpandedCommissionSchedule[index]"
+                            >
+                              <tr
+                                v-for="splitPayment in item.payment_splits"
+                                :key="splitPayment.id"
+                              >
+                                <td class="text-center">
+                                  {{ splitPayment.sr_no }}
+                                </td>
+                                <td></td>
+                                <td>
+                                  {{
+                                    formatAmount(
+                                      splitPayment.commission_vat_applicable,
+                                    )
+                                  }}
+                                </td>
+                                <td>
+                                  {{
+                                    formatAmount(splitPayment.commission_vat)
+                                  }}
+                                </td>
+                                <td>
+                                  {{
+                                    formatAmount(
+                                      Number(
+                                        splitPayment.commission_vat_applicable,
+                                      ) + Number(splitPayment.commission_vat),
+                                    )
+                                  }}
+                                </td>
+                              </tr>
+                            </template>
+                          </template>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             <EditBookPolicyBtnTemplate v-slot="{ isDisabled }">
               <x-button
@@ -888,7 +1063,11 @@ const isShowingTransactionPaymentStatus = computed(() => {
                     color="orange"
                     class="mt-4"
                     @click.prevent="confirmSendPolicy"
-                    :disabled="bp.isEditing || is_lacking_payment"
+                    :disabled="
+                      bp.isEditing ||
+                      is_lacking_payment ||
+                      isAMLNotClearedForTravelQuote
+                    "
                     v-if="showSendAndBookPolicyButton"
                   >
                     {{ props.bookPolicyDetails?.text }}
@@ -1004,9 +1183,8 @@ const isShowingTransactionPaymentStatus = computed(() => {
                         class="mt-4 mr-2"
                         color="orange"
                         :disabled="
-                          !props.bookPolicyDetails?.bookButton ||
-                          bp.isEditing ||
-                          !can(permissionsEnum.BOOK_POLICY_BUTTON)
+                          disableBookPolicyButton ||
+                          isAMLNotClearedForTravelQuote
                         "
                         @click.prevent="confirmSendPolicy"
                       >
@@ -1027,9 +1205,7 @@ const isShowingTransactionPaymentStatus = computed(() => {
                       class="mt-4 mr-2"
                       color="orange"
                       :disabled="
-                        !props.bookPolicyDetails?.bookButton ||
-                        bp.isEditing ||
-                        !can(permissionsEnum.BOOK_POLICY_BUTTON)
+                        disableBookPolicyButton || isAMLNotClearedForTravelQuote
                       "
                       @click.prevent="confirmSendPolicy"
                     >
@@ -1144,3 +1320,11 @@ const isShowingTransactionPaymentStatus = computed(() => {
     </x-modal>
   </div>
 </template>
+<style scoped>
+.expand-pointer {
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: bold;
+  color: #1d83bc;
+}
+</style>

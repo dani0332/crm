@@ -204,6 +204,9 @@ class CentralController extends Controller
         $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
         info('Book policy details update successfully for : '.$quote->uuid);
 
+        (new SplitPaymentService())->updateCommissionSchedule($payment);
+        info('Commission Schedule updated successfully for : '.$quote->uuid);
+
         return redirect()->back()->with('success', 'Booking details has been updated.');
     }
 
@@ -233,6 +236,9 @@ class CentralController extends Controller
             }
             $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
             $payment = Payment::where('code', $quote['code'])->mainLeadPayment()->with('paymentSplits')->first();
+            $payment->update([
+                'broker_invoice_number' => (new PaymentRepository())->generateBrokerInvoiceNumber($payment),
+            ]);
             $paymentSplits = $payment->paymentSplits;
             $data['quoteTypeId'] = $quoteTypeId;
             $data['id'] = $quote->id;
@@ -248,7 +254,7 @@ class CentralController extends Controller
             }
 
             if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
-                // dispath job to send email
+                // dispatch job to send email
                 dispatch(new SendBookPolicyDocumentsJob($request));
             }
 

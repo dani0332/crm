@@ -26,6 +26,7 @@ use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
+use App\Repositories\PaymentRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\AMLService;
 use App\Services\CentralService;
@@ -110,6 +111,11 @@ class TravelController extends Controller
         $quoteType = strtolower($this->genericModel->modelType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         abort_if(! $record, 404);
+
+        /* Start - Temporarily adding for correcting historic data  */
+        (new PaymentRepository())->updatePriceVatApplicableAndVat($record, $this->genericModel->modelType);
+        /* End - Temporarily adding for correcting historic data  */
+
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::TRAVEL->value, $record);
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($quoteType, $record->code);
         $dropdownSource = $this->travelQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);

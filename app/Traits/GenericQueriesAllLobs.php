@@ -16,9 +16,10 @@ use App\Enums\TransactionPaymentStatusEnum;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Models\PersonalQuoteDetail;
 use App\Models\SendUpdateLog;
 use App\Repositories\DocumentTypeRepository;
-use App\Repositories\InsuranceProviderRepository;
+use App\Repositories\PaymentRepository;
 use App\Services\CapiRequestService;
 use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
@@ -191,30 +192,6 @@ trait GenericQueriesAllLobs
         return $customer;
     }
 
-    public function inslyInsurances()
-    {
-        return [
-            QuoteTypes::BIKE->value => ['Bike insurance'],
-            QuoteTypes::BUSINESS->value => [
-                'business interruption insurance', 'contractors all risks', 'Cyber liability', 'directors and officers liability insurance',
-                'Engineering and plant insurance', 'fidelity guarantee', 'group life', 'group medical insurance', 'holiday homes',
-                'livestock insurance', 'machinery breakdown insurance', 'marine cargo (individual shipment) insurance',
-                'marine hull insurance', 'medical malpractice insurance', 'money insurance', 'motor fleet',
-                'open cover - marine cargo insurance', 'professional indemnity insurance,property insurance',
-                'public liability insurance', 'road transit (international)', 'road transit (UAE only)',
-                'sme packaged insurance', 'trade credit insurance', 'workmens compensation insurance',
-            ],
-            QuoteTypes::CAR->value => ['casco', 'motor insurance - Comprehensive', 'motor insurance - TPL'],
-            QuoteTypes::LIFE->value => ['Critical illness', 'Individual life insurance'],
-            QuoteTypes::HOME->value => ['Home insurance', 'personal accident', 'home insurance'],
-            QuoteTypes::TRAVEL->value => ['Inbound travel insurance', 'Outbound travel insurance'],
-            QuoteTypes::HEALTH->value => ['Individual or family medical'],
-            QuoteTypes::CYCLE->value => ['Pedal cycle insurance'],
-            QuoteTypes::PET->value => ['Pet insurance'],
-            QuoteTypes::YACHT->value => ['Yacht insurance'],
-        ];
-    }
-
     /**
      * add comments & improvements needed
      * This method called when we visit all LOB's details page
@@ -226,19 +203,24 @@ trait GenericQueriesAllLobs
     {
         info('fn: bookPolicyPayload called for '.$record->uuid);
         $infoMessage = 'QC '.$record->code.' ';
-        $insuranceProviderLeadCount = $insuranceProviderCode = '';
+        $brokerInvoiceNo = $invoiceDescription = '';
         // Retrieve the first payment belongs to lead not to send update
         $payment = $payments->whereNull('send_update_log_id')->first();
         if ($payment) {
-            $insurance_provider_id = $payment->insurance_provider_id;
-            $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
-            $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
+            $invoiceDescription = (new PaymentRepository())->generateInvoiceDescription($payment, $quoteType, $record);
+            $brokerInvoiceNo = (new PaymentRepository())->generateBrokerInvoiceNumber($payment);
+        }
+
+        $getBINFromDBForPolicyStatuses = [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued,  QuoteStatusEnum::CancellationPending];
+
+        if (in_array($record->quote_status_id, $getBINFromDBForPolicyStatuses)) {
+            $brokerInvoiceNo = $payment->broker_invoice_number;
         }
 
         $bookPolicyDetails = [];
         $bookPolicyDetails['lineOfBusiness'] = ucfirst($quoteType);
-        $bookPolicyDetails['brokerInvoiceNo'] = $insuranceProviderCode.$insuranceProviderLeadCount;
-        $bookPolicyDetails['invoiceDescription'] = substr($insuranceProviderCode.'-'.ucfirst($quoteType).'-'.$record->policy_number, 0, 60);
+        $bookPolicyDetails['brokerInvoiceNo'] = $brokerInvoiceNo;
+        $bookPolicyDetails['invoiceDescription'] = $invoiceDescription;
         $bookPolicyDetails['bookButton'] = false;
         $bookPolicyDetails['sendButton'] = false;
         $bookPolicyDetails['editButton'] = false;
@@ -311,6 +293,29 @@ trait GenericQueriesAllLobs
         }
 
         return $leadCodeArray[0];
+    }
+
+    public function getQuoteDetailObject($quoteType, $id, $idType = 'quote')
+    {
+        $nameSpace = '\\App\\Models\\';
+
+        $model = $nameSpace.ucwords($quoteType).'QuoteRequestDetail';
+        if (! class_exists($model)) {
+            if (! (in_array(ucwords($quoteType), [quoteTypeCode::Cycle, quoteTypeCode::Jetski]))) {
+                return false;
+            }
+        }
+        if ($idType == 'quote') {
+            if (checkPersonalQuotes(ucwords($quoteType))) {
+                $quote = PersonalQuoteDetail::where('personal_quote_id', $id)->first();
+            } else {
+                $quote = $model::where($quoteType.'_quote_request_id', $id)->first();
+            }
+        } else {
+            $quote = $model::find($id);
+        }
+
+        return (isset($quote->id)) ? $quote : false;
     }
 
     /**
@@ -543,6 +548,7 @@ trait GenericQueriesAllLobs
 
         return true;
     }
+
     /**
      * Checks if the payment is insufficient based on its payment status.
      * This method sets appropriate headings and descriptions based on the specific payment status

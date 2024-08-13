@@ -5,6 +5,7 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+import LazyBookingDetails from '../SendUpdateLog/Partials/BookingDetails.vue';
 
 defineProps({
   quote: Object,
@@ -299,6 +300,12 @@ const linkEntity = () => {
 };
 const paymentStatusEnum = page.props.paymentStatusEnum;
 
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
@@ -324,7 +331,12 @@ const onAddUpdate = () => {
           :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
           preserve-scroll
         >
-          <x-button size="sm" color="#ff5e00" tag="div">
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
             View Legacy policy
           </x-button>
         </Link>
@@ -725,6 +737,7 @@ const onAddUpdate = () => {
                 />
               </dd>
             </div>
+
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium uppercase">UAE licence held for</dt>
               <dd>{{ quote?.bike_quote?.uae_license_held_for?.text }}</dd>
@@ -736,8 +749,8 @@ const onAddUpdate = () => {
               <dd>{{ quote?.bike_quote?.back_home_license_held_for?.text }}</dd>
             </div>
             <RiskRatingScoreDetails
-              v-if="quote?.bike_quote"
-              :quote="quote.bike_quote"
+              v-if="quote"
+              :quote="quote"
               :modelType="'Bike'"
             />
           </dl>
@@ -778,6 +791,7 @@ const onAddUpdate = () => {
                   @click.prevent="searchByTradeLicense"
                   size="xs"
                   color="primary"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Search
                 </x-button>
@@ -1224,6 +1238,15 @@ const onAddUpdate = () => {
     />
 
     <EmailStatus :emailStatuses="emailStatuses" />
+
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="quote"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
+      @onAddUpdate="onAddUpdate"
+    />
 
     <AuditLogs
       :id="$page.props.quote.id"

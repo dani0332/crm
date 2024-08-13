@@ -22,6 +22,7 @@ use App\Services\Reports\AdvisorPerformanceReportService;
 use App\Services\Reports\LeadDistributionReportService;
 use App\Services\Reports\RenewalBatchReportService;
 use App\Services\Reports\ReportService;
+use App\Strategies\ManagementReport;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -73,6 +74,7 @@ class ReportsController extends Controller
             'quoteBatchId' => $request->quote_batch_id,
             'page' => $request->page,
             'isCommercial' => $request->isCommercial,
+            'isEmbeddedProducts' => $request->isEmbeddedProducts,
             'lob' => $request->lob,
             'subeams' => $request->sub_teams,
             'vehicle_type' => $request->vehicle_type,
@@ -458,9 +460,20 @@ class ReportsController extends Controller
     {
         $reportCategory = ! isset($request->reportCategory) ? ManagementReportCategoriesEnum::SALE_SUMMARY : $request->reportCategory;
         $reportInstance = ManagementReportServiceFactory::createStrategy($reportCategory);
+        $reportData = null;
+        $endorsementData = null;
+
+        if ($reportCategory == ManagementReportCategoriesEnum::SALE_SUMMARY) {
+            $rawReportData = $reportInstance->getReportData($request);
+            $endorsementData = $reportInstance->getEndorsementsData($request);
+            /**
+             * process the endorsements data
+             */
+            $reportData = ManagementReport::processEndorsementsData($rawReportData, $endorsementData, $request);
+        }
 
         return inertia('ManagementReport/index', [
-            'reportData' => $reportInstance->getReportData($request),
+            'reportData' => $reportData ?? $reportInstance->getReportData($request),
             'filterOptions' => $reportInstance->getFilterOptions(),
             'defaultFilters' => $reportInstance->getDefaultFilters(),
             'reportName' => $reportCategory,

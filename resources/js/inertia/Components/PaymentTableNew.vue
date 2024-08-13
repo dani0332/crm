@@ -1,4 +1,7 @@
 <script setup>
+import ToolTip from './../Components/ToolTip.vue';
+import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
+import { onMounted, reactive } from 'vue';
 import moment from 'moment';
 import NProgress from 'nprogress';
 import { computed } from 'vue';
@@ -2850,6 +2853,14 @@ const isMasterPaymentPaid = computed(() => {
   }
   return false;
 });
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+
+  // setLeadStatuses();
+});
 
 let is_lacking_payment = ref(
   page.props?.bookPolicyDetails?.isLackingOfPayment ||
@@ -3019,26 +3030,30 @@ const totalAmountFormat = computed(() => {
                   payments[0].total_amount + payments[0].discount_value
                 "
               />
-              <x-button
-                v-if="can(permissionEnum.PaymentsCreate)"
-                size="sm"
-                color="emerald"
-                @click="addPaymentModal"
-              >
-                Add Manual Payment
-              </x-button>
+              <div v-if="readOnlyMode.isDisable === true">
+                <x-button
+                  v-if="can(permissionEnum.PaymentsCreate)"
+                  size="sm"
+                  color="emerald"
+                  @click="addPaymentModal"
+                >
+                  Add Manual Payment
+                </x-button>
+              </div>
             </div>
           </template>
           <template v-else>
             <x-tooltip>
-              <x-button
-                v-if="can(permissionEnum.PaymentsCreate)"
-                size="sm"
-                color="emerald"
-                @click="addPaymentModal"
-              >
-                <span class="border-b border-dotted">Add Manual Payment</span>
-              </x-button>
+              <div v-if="readOnlyMode.isDisable === true">
+                <x-button
+                  v-if="can(permissionEnum.PaymentsCreate)"
+                  size="sm"
+                  color="emerald"
+                  @click="addPaymentModal"
+                >
+                  <span class="border-b border-dotted">Add Manual Payment</span>
+                </x-button>
+              </div>
               <template #tooltip>
                 <span>{{
                   paymentTooltipEnum.PAYMENT_MANAGEMENT_ADD_PAYMENT
@@ -3112,6 +3127,28 @@ const totalAmountFormat = computed(() => {
                   </template>
                 </x-tooltip>
               </th>
+
+              <th class="inner-th-class">
+                <x-tooltip>
+                  <span class="border-b border-dotted">Price(without VAT)</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_METHOD
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th class="inner-th-class">
+                <x-tooltip>
+                  <span class="border-b border-dotted">VAT</span>
+                  <template #tooltip>
+                    <span class="custom-tooltip-content">{{
+                      paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_METHOD
+                    }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+
               <th class="inner-th-class">
                 <x-tooltip>
                   <span class="border-b border-dotted">Total Price</span>
@@ -3205,6 +3242,8 @@ const totalAmountFormat = computed(() => {
                   <td>{{ formatDate(item.collection_date) }}</td>
                   <td>{{ formatDate(item.payment_splits[0].due_date) }}</td>
                   <td>{{ item.payment_method.name }}</td>
+                  <td>{{ formatAmount(item.price_vat_applicable) }}</td>
+                  <td>{{ formatAmount(item.price_vat) }}</td>
                   <td>{{ formatAmount(item.total_price) }}</td>
                   <td>{{ formatAmount(item.discount_value) }}</td>
                   <td>{{ formatAmount(item.total_amount) }}</td>
@@ -3316,7 +3355,11 @@ const totalAmountFormat = computed(() => {
                     <td>{{ formatDate(splitPayment.due_date) }}</td>
                     <td>{{ formatDate(splitPayment.due_date) }}</td>
                     <td>{{ splitPayment.payment_method.name }}</td>
-                    <td></td>
+                    <td>
+                      {{ formatAmount(splitPayment.price_vat_applicable) }}
+                    </td>
+                    <td>{{ formatAmount(splitPayment.price_vat) }}</td>
+                    <td>{{ formatAmount(splitPayment.payment_amount) }}</td>
                     <td></td>
                     <td>{{ formatAmount(splitPayment.payment_amount) }}</td>
                     <td>

@@ -66,7 +66,6 @@ const iconPosition = computed(() => {
   <x-datepicker
     v-model="selectedData"
     :format="props.withTime ? `dd/MM/yyyy HH:mm` : `dd/MM/yyyy`"
-    :teleport="!props.disabled"
     :enable-time-picker="props.withTime"
     :month-change-on-scroll="false"
     :is-24="false"

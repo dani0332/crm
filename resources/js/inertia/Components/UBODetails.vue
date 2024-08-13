@@ -25,6 +25,8 @@ const props = defineProps({
 
 const page = usePage();
 const notification = useToast();
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 const { isRequired } = useRules();
 const modals = reactive({
   ubo: false,
@@ -186,6 +188,12 @@ const UBODeleteConfirmed = () => {
     },
   );
 };
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 
 const [AddUBOButtonTemplate, AddUBOButtonReuseTemplate] =
   createReusableTemplate();

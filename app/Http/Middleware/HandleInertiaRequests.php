@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\Kyc;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
@@ -109,6 +110,7 @@ class HandleInertiaRequests extends Middleware
             'policyIssuanceStatusEnum' => PolicyIssuanceStatusEnum::asArray(),
             'paymentAllocationStatus' => PaymentAllocationStatus::asArray(),
             'lookupsEnum' => getLookupsEnum(),
+            'kycEnums' => Kyc::asArray(),
             'documentTypeCodeEnum' => DocumentTypeCode::asArray(),
             'paymentFrequencyEnum' => PaymentFrequency::asArray(),
         ];
@@ -415,7 +417,7 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        $nav = $nav->addIf(auth()->user()->hasRole(RolesEnum::BetaUser), 'Legacy Policies', route('legacy-policy.index'));
+        $nav = $nav->addIf(auth()->user()->can(PermissionsEnum::VIEW_LEGACY_DETAILS), 'Legacy Policies', route('legacy-policy.index'));
 
         if (auth()->user()->can(PermissionsEnum::TeleMarketingList)) {
             $nav = $nav->add('Telemarketing', '', function (Section $section) {
@@ -476,6 +478,12 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
+                        auth()->user()->can(PermissionsEnum::DEPARTMENT_LIST),
+                        'Departments',
+                        url('admin/departments'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
                         auth()->user()->can(PermissionsEnum::TeamsList),
                         'Teams',
                         route('team.index'),
@@ -526,7 +534,7 @@ class HandleInertiaRequests extends Middleware
                             )
                             ->addIf(
                                 auth()->user()->can(PermissionsEnum::COMMERCIAL_KEYWORDS),
-                                'Commerical Keywords',
+                                'Commercial Keywords',
                                 route('admin.commercial.keywords'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )

@@ -11,4 +11,6 @@ final class ManagementReportCategoriesEnum extends Enum
     const ENDING_POLICIES = 'Ending Policies';
     const TRANSACTION = 'Transaction';
     const ACTIVE_POLICIES = 'Active Policies';
+    const ENDORSEMENT = 'Endorsement';
+    const INSTALLMENT = 'Installment';
 }
