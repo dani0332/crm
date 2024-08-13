@@ -772,7 +772,7 @@ class SendUpdateLogService
                 if ($categoryCode == SendUpdateLogStatusEnum::CPD && (
                     $sendUpdateRequest->reversalInvoice == $quote->payments->value('insurer_tax_number')
                 )) {
-                    info('Book Update - Updating Policy and Booking Details for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+                    info('Book Update - Updating Policy Details for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
                     $quote->update([
                         'policy_number' => $sendUpdateLog->policy_number,
                         'policy_start_date' => $sendUpdateLog->start_date,
