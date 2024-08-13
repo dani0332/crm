@@ -16,19 +16,22 @@ class HealthEmailService extends BaseService
 {
 
     protected $birdService;
+    protected $healthQuoteService;
 
-    public function __construct(BirdService $birdService=null)
+    public function __construct(BirdService $birdService=null, HealthQuoteService $healthQuoteService=null)
     {
         $this->birdService = $birdService;
+        $this->healthQuoteService = $healthQuoteService;
     }
-    public function sendOCAHealthFollowupsEmail($lead, HealthQuoteService $healthQuoteService=null)
+    public function triggerOCAFollowups($lead)
     {
         // Retrieve plans with available ratings for the given lead
-        $quote = $healthQuoteService->getQuotePlans($lead->uuid);
+        $quote = $this->healthQuoteService->getQuotePlans($lead->uuid);
         if (! $quote->quote->plans) {
             info('No plans found for lead: '.$lead->uuid.' | time: '.now());
         }
 
+        info('Sending OCA Health followups email for lead: '.$lead->uuid.' | time: '.now());
            $lead->oca_flow_enabled  = false;
             if (! $lead->oca_flow_enabled) {
                 $advisor = User::where('id', $lead->advisor_id)->first();
@@ -47,6 +50,36 @@ class HealthEmailService extends BaseService
                 }
             } else {
                 info('OCA Health workflow already enabled for lead: '.$lead->uuid);
+            }
+        return $responseCode ?? null;
+    }
+    public function triggerPendingHealthFollowupEmails($lead)
+    {
+        // Retrieve plans with available ratings for the given lead
+        $quote = $this->healthQuoteService->getQuotePlans($lead->uuid);
+        if (! $quote->quote->plans) {
+            info('triggerPendingHealthFollowupEmails: No plans found for lead: '.$lead->uuid.' | time: '.now());
+        }
+
+        info('triggerPendingHealthFollowupEmails: Sending AppPending Health followups email for lead: '.$lead->uuid.' | time: '.now());
+           $lead->pending_flow_enabled  = false;
+            if (! $lead->pending_flow_enabled) {
+                $advisor = User::where('id', $lead->advisor_id)->first();
+                $plans = $this->getQuotePlansByCriteria($quote->quote->healthPlanTypeId, $quote->quote->plans ?? []);
+                $emailData = $this->mappingEmailDataForOCAEmail($lead, $advisor, $plans);
+                $eventName = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_APP_PENDING_HEALTH_WORKFLOW)->first();
+                info('triggerPendingHealthFollowupEmails Health workflow key: '.$eventName->value);
+                if ($eventName) {
+                    $responseCode = $this->birdService->sendAppPendingHealthWorkFlow($emailData);
+                    $lead->pending_flow_enabled = true;
+                    $lead->save();
+                    info('triggerPendingHealthFollowupEmails: Health workflow event triggered for lead: '.$lead->uuid.' and oca_flow_enabled: '.$lead->oca_flow_enabled);
+                    info('triggerPendingHealthFollowupEmails: Health workflow response: '.$responseCode);
+                } else {
+                    info('triggerPendingHealthFollowupEmails: Health workflow key not found');
+                }
+            } else {
+                info('triggerPendingHealthFollowupEmails: Health workflow already enabled for lead: '.$lead->uuid);
             }
         return $responseCode ?? null;
     }
