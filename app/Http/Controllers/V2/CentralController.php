@@ -32,7 +32,6 @@ use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\MigratePaymentsRequest;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\QuoteNotesRequest;
-use App\Http\Requests\SageReceiptRequest;
 use App\Http\Requests\SendBookPolicyRequest;
 use App\Http\Requests\SplitPaymentApproveRequest;
 use App\Http\Requests\SplitPaymentUpdateRequest;
