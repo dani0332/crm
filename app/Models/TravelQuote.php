@@ -69,12 +69,12 @@ class TravelQuote extends Model implements AuditableContract
 
     public function parent()
     {
-        return $this->belongsTo(TravelQuote::class, 'parent_id');
+        return $this->belongsTo(self::class, 'parent_id');
     }
 
     public function child()
     {
-        return $this->hasOne(TravelQuote::class, 'parent_id');
+        return $this->hasOne(self::class, 'parent_id');
     }
 
     public function quotePlan()
@@ -133,6 +133,7 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->hasOne(InsuranceProvider::class, 'text', 'currently_insured_with')->select(['id', 'text']);
     }
+
     /**
      * get data by personal quote type.
      *
@@ -163,7 +164,6 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->hasMany(Activities::class, 'quote_request_id')
             ->where('quote_type_id', QuoteTypeId::Travel);
-
     }
 
     public function transactionType()
@@ -179,6 +179,11 @@ class TravelQuote extends Model implements AuditableContract
     public function TravelDestinations()
     {
         return $this->hasMany(TravelDestination::class, 'quote_id', 'id');
+    }
+
+    public function embeddedTransaction()
+    {
+        return $this->hasOne(EmbeddedTransaction::class, 'code', 'code');
     }
 
     public function scopeIsSICLead($q, QuoteTypes $quoteType)

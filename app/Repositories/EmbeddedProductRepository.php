@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
@@ -23,6 +24,7 @@ use App\Services\SendEmailCustomerService;
 use App\Strategies\EmbeddedProducts\AlfredProtect;
 use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
 use App\Strategies\EmbeddedProducts\MDX;
+use App\Strategies\EmbeddedProducts\TravelAnnual;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
@@ -565,71 +567,12 @@ class EmbeddedProductRepository extends BaseRepository
      */
     public function fetchGetSoldTransactionList(EmbeddedProduct $ep, $filters = [])
     {
-        $dataset = EmbeddedTransaction::with(
-            'product.embeddedProduct',
-            'quoteRequest.customer',
-            'quoteRequest.carMake',
-            'quoteRequest.carModel',
-            'quoteRequest.quoteStatus',
-            'quoteRequest.advisor',
-            'quoteRequest.quoteRequestEntityMapping',
-        )
-            ->join('embedded_product_options', function ($join) use ($ep) {
-                $join->on('embedded_product_options.id', '=', 'embedded_transactions.product_id')
-                    ->where('embedded_product_options.embedded_product_id', $ep->id);
-            })
-            ->where('embedded_transactions.payment_status_id', PaymentStatusEnum::CAPTURED)
-            ->where('embedded_transactions.is_selected', true)
-            ->when(isset($filters['ref_id']), function ($query) use ($filters) {
-                $query->where('embedded_transactions.code', 'like', "%{$filters['ref_id']}%");
-            })
-            ->when(isset($filters['months']), function ($query) use ($filters) {
-                $startDate = Carbon::parse($filters['months'])->startOfMonth()->format('Y-m-d');
-                $endDate = Carbon::parse($filters['months'])->endOfMonth()->format('Y-m-d');
-                $query->whereBetween('embedded_transactions.paid_at', [$startDate, $endDate]);
-            })
-            ->when(isset($filters['name']), function ($query) use ($filters) {
-                $query->whereHas('quoteRequest', function ($query) use ($filters) {
-                    $name = $filters['name'];
-                    $query->where('first_name', 'like', "%{$name}%")
-                        ->orWhere('last_name', 'like', "%{$name}%");
-                });
-            })
-            ->when(isset($filters['email']), function ($query) use ($filters) {
-                $query->whereHas('quoteRequest', function ($query) use ($filters) {
-                    $email = $filters['email'];
-                    $query->where('email', 'like', "%{$email}%");
-                });
-            })
-            ->when(isset($filters['date_of_purchase']), function ($query) use ($filters) {
-                $query->whereHas('quoteRequest', function ($query) use ($filters) {
-                    $startDate = Carbon::parse($filters['date_of_purchase'][0])->startOfDay();
-                    $endDate = Carbon::parse($filters['date_of_purchase'][1])->endOfDay();
-                    $query->whereBetween('policy_issuance_date', [$startDate, $endDate]);
-                });
-            });
+        $strategy = $this->createStrategy($ep->short_code);
 
-        $sortBy = 'embedded_transactions.id';
-        $sortOrder = 'desc';
-        if (! empty($filters['sortBy']) && ! empty($filters['sortType'])) {
-            $sortableColumns = [
-                'payment_date' => 'embedded_transactions.paid_at',
-                'contribution_amount' => 'embedded_transactions.price_with_vat',
-            ];
-            $sortBy = $sortableColumns[$filters['sortBy']] ?? 'embedded_transactions.id';
-            $sortOrder = $filters['sortType'] ?? 'desc';
-        }
+        $dataset = $strategy->filterReport($ep, $filters);
 
-        $dataset = $dataset->orderBy($sortBy, $sortOrder);
-
-        if (isset($filters['excel_export']) && $filters['excel_export'] == true) {
-            $dataset = $dataset->get();
-        } else {
-            $dataset = $dataset->simplePaginate()->withQueryString();
-        }
         $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($ep->short_code);
 
-        $strategy = $this->createStrategy($ep->short_code);
         $dataset = $strategy->getTransactionData($dataset, $isAlfredProtect);
 
         return $dataset;
@@ -648,6 +591,8 @@ class EmbeddedProductRepository extends BaseRepository
         $shortCode = strtoupper($shortCode);
         if ($shortCode == 'MDX') {
             $strategy = new MDX();
+        } elseif ($shortCode == EmbeddedProductEnum::TRAVEL) {
+            $strategy = new TravelAnnual();
         } elseif ($isAlfredProtect) {
             $strategy = new AlfredProtect();
         } else {
