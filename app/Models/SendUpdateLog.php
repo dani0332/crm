@@ -23,7 +23,7 @@ class SendUpdateLog extends Model implements AuditableContract
      */
     public function getStatusAttribute($value): string
     {
-        return ucwords(str_replace('-', ' ', strtolower($value)));
+        return ucwords(str_replace('_', ' ', strtolower($value)));
     }
 
     public function quoteType(): BelongsTo
