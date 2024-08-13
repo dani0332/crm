@@ -562,19 +562,9 @@ class SendEmailCustomerService extends BaseService
                 $body['sender'] = ['name' => $emailData->advisorName, 'email' => $advisorCustomEmail];
             }
 
-            $response = Http::withHeaders($headers)
-                ->beforeSending(function () use ($quoteId) {
-                    info('sendLMSIntroEmail ---- Request is Sending '.$quoteId);
-                })
-                ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
-                ->retry(3, 90000)
-                ->post($this->url, $body);
-
-            info('sendLMSIntroEmail ---- Request Sent '.$quoteId);
-            $responseCode = $response->status();
-            info('sendLMSIntroEmail ---- Received Code : '.$responseCode.' '.$quoteId);
-            info('sendLMSIntroEmail ---- response object : '.json_encode($response->object()));
+            ['code' => $responseCode, 'response' => $response, 'sent' => $isEmailSent] = $this->sendMail($body);
         } catch (Exception $ex) {
+            $isEmailSent = false;
             $responseCode = $ex->getCode();
             $responseDetail = 'SIB Send sendLMSIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage().' '.$quoteId;
             Log::error($responseDetail);
