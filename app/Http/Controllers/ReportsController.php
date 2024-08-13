@@ -73,6 +73,7 @@ class ReportsController extends Controller
             'quoteBatchId' => $request->quote_batch_id,
             'page' => $request->page,
             'isCommercial' => $request->isCommercial,
+            'isEmbeddedProducts' => $request->isEmbeddedProducts,
             'lob' => $request->lob,
             'subeams' => $request->sub_teams,
             'vehicle_type' => $request->vehicle_type,

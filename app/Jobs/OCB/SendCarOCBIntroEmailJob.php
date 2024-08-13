@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\OCB;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\AssignmentTypeEnum;
@@ -13,8 +13,8 @@ use App\Models\InsuranceProvider;
 use App\Models\Payment;
 use App\Models\Tier;
 use App\Models\User;
-use App\Services\CarEmailService;
 use App\Services\CarQuoteService;
+use App\Services\EmailServices\CarEmailService;
 use App\Services\HttpRequestService;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -23,7 +23,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 
-class SendOCBIntroEmailJob implements ShouldQueue
+class SendCarOCBIntroEmailJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
 
@@ -33,15 +33,17 @@ class SendOCBIntroEmailJob implements ShouldQueue
     private $quoteUuid;
     private $previousAdvisor;
     private $triggerSICWorkflow;
+    private $handleZeroPlans;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($quoteUuid, $previousAdvisor, $triggerSICWorkflow = false)
+    public function __construct($quoteUuid, $previousAdvisor, $triggerSICWorkflow = false, $handleZeroPlans = false)
     {
         $this->quoteUuid = $quoteUuid;
         $this->previousAdvisor = $previousAdvisor;
         $this->triggerSICWorkflow = $triggerSICWorkflow;
+        $this->handleZeroPlans = $handleZeroPlans;
     }
 
     /**
@@ -53,16 +55,16 @@ class SendOCBIntroEmailJob implements ShouldQueue
             $lead = CarQuote::where('uuid', $this->quoteUuid)->first();
 
             if (! $lead) {
-                info('SendOCBIntroEmailJob - Lead not found for uuid: '.$this->quoteUuid);
+                info('SendCarOCBIntroEmailJob - Lead not found for uuid: '.$this->quoteUuid);
 
                 return;
             }
             if ($lead->sic_flow_enabled) {
-                info('SendOCBIntroEmailJob - SIC work flow is enabled on this lead already : '.$this->quoteUuid);
+                info('SendCarOCBIntroEmailJob - SIC work flow is enabled on this lead already : '.$this->quoteUuid);
 
                 return;
             } else {
-                info('SendOCBIntroEmailJob - Lead found for uuid: '.$this->quoteUuid);
+                info('SendCarOCBIntroEmailJob - Lead found for uuid: '.$this->quoteUuid);
 
                 if (($lead->assignment_type == AssignmentTypeEnum::MANUAL_ASSIGNED || $lead->assignment_type == AssignmentTypeEnum::MANUAL_REASSIGNED) && $lead->source == LeadSourceEnum::DUBAI_NOW) {
                     $this->sendDubaiNowEmail($lead);
@@ -73,14 +75,14 @@ class SendOCBIntroEmailJob implements ShouldQueue
 
                     $responseCode = $carEmailService->sendCarOCBIntroEmail($plans, $lead, $tierR, $this->previousAdvisor, $carQuoteService, $this->triggerSICWorkflow);
                     if (in_array($responseCode, [200, 201])) {
-                        info('SendOCBIntroEmailJob - OCB INTRO Email Sent: '.$responseCode.' Customer Email Address: '.$lead->email.' Quote UuId: '.$this->quoteUuid);
+                        info('SendCarOCBIntroEmailJob - OCB INTRO Email Sent: '.$responseCode.' Customer Email Address: '.$lead->email.' Quote UuId: '.$this->quoteUuid);
                     } else {
-                        Log::error('SendOCBIntroEmailJob - OCB INTRO Email Not Sent: '.$responseCode.' Customer EmailAddress:'.$lead->email);
+                        Log::error('SendCarOCBIntroEmailJob - OCB INTRO Email Not Sent: '.$responseCode.' Customer EmailAddress:'.$lead->email);
                     }
                 }
             }
         } catch (Exception $e) {
-            info('SendOCBIntroEmailJob - Error: '.$e->getMessage().' with stack trace: '.$e->getTraceAsString());
+            info('SendCarOCBIntroEmailJob - Error: '.$e->getMessage().' with stack trace: '.$e->getTraceAsString());
         }
     }
 
