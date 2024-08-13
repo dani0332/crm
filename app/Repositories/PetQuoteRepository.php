@@ -153,7 +153,9 @@ class PetQuoteRepository extends BaseRepository
                         'paymentSplits.paymentStatus',
                         'paymentSplits.paymentMethod',
                         'paymentSplits.documents',
-                        'paymentSplits.verifiedByUser']);
+                        'paymentSplits.verifiedByUser',
+                        'paymentSplits.processJob',
+                    ]);
                 },
                 'createdBy',
                 'updatedBy',
