@@ -39,4 +39,9 @@ class EmbeddedTransaction extends Model
     {
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
+
+    public function travelQuote()
+    {
+        return $this->belongsTo(TravelQuote::class, 'code', 'code');
+    }
 }
