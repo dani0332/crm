@@ -593,16 +593,16 @@ class SendEmailCustomerService extends BaseService
             }
 
             $response = Http::withHeaders($headers)
-                ->beforeSending(function ($request) use ($emailData) {
-                    info('sendLMSIntroEmail ---- Request is Sending '.$emailData->carQuoteId);
+                ->beforeSending(function ($request) use ($quoteId) {
+                    info('sendLMSIntroEmail ---- Request is Sending '.$quoteId);
                 })
                 ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
                 ->retry(3, 90000)
                 ->post($this->url, $body);
 
-            info('sendLMSIntroEmail ---- Request Sent '.$emailData->carQuoteId);
+            info('sendLMSIntroEmail ---- Request Sent '.$quoteId);
             $responseCode = $response->status();
-            info('sendLMSIntroEmail ---- Received Code : '.$responseCode.' '.$emailData->carQuoteId);
+            info('sendLMSIntroEmail ---- Received Code : '.$responseCode.' '.$quoteId);
             info('sendLMSIntroEmail ---- response object : '.json_encode($response->object()));
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
