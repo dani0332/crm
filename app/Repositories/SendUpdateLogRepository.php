@@ -10,6 +10,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Jobs\SendUpdateToCustomerJob;
 use App\Models\CarQuote;
 use App\Models\Lookup;
 use App\Models\Payment;
@@ -244,8 +245,8 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchSendUpdateToCustomer($data)
     {
+        $sendUpdateLog = $this->find($data['sendUpdateId']);
         try {
-            $sendUpdateLog = $this->find($data['sendUpdateId']);
             if ($data['quoteType'] == quoteTypeCode::Car && $sendUpdateLog->category->code == SendUpdateLogStatusEnum::EN) {
                 $quote = CarQuote::where('uuid', $sendUpdateLog->quote_uuid)->first();
                 if (! empty($sendUpdateLog->emirates_id)) { // will work on Change of Emirates (with no financial impact).
@@ -255,16 +256,25 @@ class SendUpdateLogRepository extends BaseRepository
                 }
             }
 
-            $result = $sendUpdateLog->update([
-                'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
-            ]);
+            SendUpdateToCustomerJob::dispatchSync($sendUpdateLog, $data);
 
-            if ($result) {
-                app(SendUpdateLogService::class)->sendUpdateToCustomerEmail($sendUpdateLog, $data['action']);
-            }
+            /*$sendUpdateLog->update([
+                'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
+            ]);*/
+
+            // temporary comments.
+            /*if (! $sendUpdateLog->is_email_sent) {
+                dispatch(new SendUpdateToCustomerJob($sendUpdateLog, $data));
+            } else {
+                $sendUpdateLog->update([
+                    'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
+                ]);
+            }*/
             info('Send update to Customer - Send Update Code: '.$sendUpdateLog->code.' - Status update to: '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
+            $result = true;
         } catch (\Exception $ex) {
             logger()->error('Send Update to Customer - Failed - Send Update Code: '.$sendUpdateLog->code.' - Error : '.$ex->getMessage());
+
             $result = (object) [
                 'message' => $ex->getMessage(),
             ];
