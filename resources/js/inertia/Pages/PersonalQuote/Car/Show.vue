@@ -2902,7 +2902,8 @@ if(isPlanDetailEnabled.value && page.props.record.insurer_name !== '' ) {
             isRenewal,
             isDisabled,
             puaPremium,
-            puaType
+            puaType,
+            isSystemDiscountPrice
           }"
         >
           <p>{{ providerName }}</p>
@@ -2931,6 +2932,14 @@ if(isPlanDetailEnabled.value && page.props.record.insurer_name !== '' ) {
             >
               Hidden
             </x-tag>
+              <x-tag
+                  v-if="isSystemDiscountPrice"
+                  size="xs"
+                  color="danger"
+                  class="mt-0.5 text-[10px]"
+              >
+                  SDP
+              </x-tag>
 
             <x-tag
               v-if="puaType"
