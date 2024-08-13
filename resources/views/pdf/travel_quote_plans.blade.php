@@ -420,7 +420,8 @@
             ["code" => "travelRepatriationOfMortalRemains", "title" => "Repatriation of mortal remains", "type" => 'inclusion'],
             ["code" => "travelRepatriationOtherInsuredPerson", "title" => "Repatriation of other insured Person", "type" => 'exclusion'],
 
-            ["code" => "heading", "title" => "EXCESS"],
+
+            ["code" => "excess", "title" => "Excess",  "type" => "excess","heading_class" => "text-heading"],
             ["code" => "heading", "title" => "COVID 19"],
 
             ["code" => "travelTestingCost", "title" => "Testing Cost", "type" => 'covid19'],
@@ -584,6 +585,9 @@
                         @if($feature['type'] == 'info')
 
                             @php $return_value =  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' @endphp
+                         @elseif($feature['type'] == 'excess')
+
+                            @php $return_value =   $plans[$planId]->excess->premium ?? "" @endphp
 
 
                         @elseif($feature['type'] == 'prop')
