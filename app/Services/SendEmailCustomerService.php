@@ -81,7 +81,7 @@ class SendEmailCustomerService extends BaseService
         return $attachments;
     }
 
-    public function sendEmail($emailTemplateId, $emailData, $tag)
+    public function sendEmail($emailTemplateId, $emailData, $tag, $cc = [])
     {
         try {
             $apiKey = config('constants.SENDINBLUE_KEY');
@@ -113,6 +113,7 @@ class SendEmailCustomerService extends BaseService
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->customerName,
                 ]],
+                'cc' => $cc,
                 'templateId' => (int) $emailTemplateId,
                 'params' => [
                     'customerName' => $emailData->customerName,

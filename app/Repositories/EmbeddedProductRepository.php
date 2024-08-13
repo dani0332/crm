@@ -456,7 +456,14 @@ class EmbeddedProductRepository extends BaseRepository
             ];
             info('Send Alfred Protect Email Data: '.json_encode($emailData));
 
-            $response = app(SendEmailCustomerService::class)->sendEmail($emailTemplateId, $emailData, 'policy-documents-alfred-protect');
+            $ccData = isset($advisor) ? [
+                [
+                    'email' => isset($advisor) ? $advisor->email : null,
+                    'name' => isset($advisor) ? $advisor->name : null,
+                ]
+            ]: [];
+
+            $response = app(SendEmailCustomerService::class)->sendEmail($emailTemplateId, $emailData, 'policy-documents-alfred-protect', $ccData);
             info('Send Alfred Protect Email Response: '.json_encode($response));
 
             if ($response == 201) {
