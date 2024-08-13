@@ -136,10 +136,10 @@ const approveProofDocument = props.paymentDocument.find(
 );
 
 let initalPlanDetails = [];
-if (quoteTypesToCheck.includes(props.quoteType)) {
-  initalPlanDetails = props.quoteRequest.plan;
-} else if (props.quoteType == 'Business' || props.quoteType == 'Home' || props.isPlanDetailEnabled) {
+if (props.quoteType == 'Business' || props.quoteType == 'Home' || props.isPlanDetailEnabled) {
     initalPlanDetails = props.quoteRequest?.insurance_provider_details ?? props.quoteRequest?.insurance_provider;
+} else if (quoteTypesToCheck.includes(props.quoteType)) {
+  initalPlanDetails = props.quoteRequest.plan;
 } else if ( props.quoteType=='Bike' ) {
     initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
 } else {
@@ -2074,10 +2074,10 @@ watch(
       totalPrice.value = initialAmount.value;
     }
     //refresh plan
-    if (quoteTypesToCheck.includes(props.quoteType)) {
-      initalPlanDetails = props.quoteRequest.plan;
-    } else if (props.quoteType == 'Business' || props.quoteType == 'Home' || props.isPlanDetailEnabled) {
+    if (props.quoteType == 'Business' || props.quoteType == 'Home' || props.isPlanDetailEnabled) {
       initalPlanDetails = props.quoteRequest.insurance_provider_details;
+    } else if (quoteTypesToCheck.includes(props.quoteType)) {
+      initalPlanDetails = props.quoteRequest.plan;
     } else if ( props.quoteType=='Bike' ) {
       initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
     } else {
