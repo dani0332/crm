@@ -161,27 +161,11 @@ class CarRevivalQuoteRepository extends BaseRepository
         return $result;
     }
 
-    public function fetchupdateQuote($data)
+    public function fetchupdateQuote(CarQuote $lead)
     {
-        $inbound = new \Postmark\Inbound(file_get_contents('php://input'));
-
-        $subject = $inbound->Subject();
-
-        preg_match('/(?<=CAR-)\w+/', $subject, $matches);
-        if (! empty($matches[0])) {
-            $uuid = $matches[0];
-            $lead = CarQuote::where('uuid', $uuid)->first();
-            if (! $lead) {
-                info('UpdateLeadSource - UUID - '.$uuid.' - not found');
-
-                return false;
-            }
-            $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
-            DttRevival::where('uuid', $uuid)->update(['reply_received' => 1]);
-            info('UpdateLeadSource  - UUID - '.$uuid.' - source updated to Revival');
-        } else {
-            info('UpdateLeadSource uuid not found in subject');
-        }
+        $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
+        DttRevival::where('uuid', $lead->uuid)->update(['reply_received' => 1]);
+        info('UpdateLeadSource  - UUID - '.$lead->uuid.' - source updated to Revival');
     }
 
     public function fetchGetReportsData($request)

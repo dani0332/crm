@@ -532,7 +532,7 @@ class HandleInertiaRequests extends Middleware
                             )
                             ->addIf(
                                 auth()->user()->can(PermissionsEnum::COMMERCIAL_KEYWORDS),
-                                'Commerical Keywords',
+                                'Commercial Keywords',
                                 route('admin.commercial.keywords'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
