@@ -1,4 +1,7 @@
 <script setup>
+import ToolTip from './../Components/ToolTip.vue';
+import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
+import { onMounted, reactive } from 'vue';
 import moment from 'moment';
 import NProgress from 'nprogress';
 const notification = useNotifications('toast');
@@ -2847,6 +2850,14 @@ const isMasterPaymentPaid = computed(() => {
   }
   return false;
 });
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+
+  // setLeadStatuses();
+});
 
 let is_lacking_payment = ref(
   page.props?.bookPolicyDetails?.isLackingOfPayment ||
@@ -3009,26 +3020,30 @@ const totalAmountFormat = computed(() => {
                   payments[0].total_amount + payments[0].discount_value
                 "
               />
-              <x-button
-                v-if="can(permissionEnum.PaymentsCreate)"
-                size="sm"
-                color="emerald"
-                @click="addPaymentModal"
-              >
-                Add Manual Payment
-              </x-button>
+              <div v-if="readOnlyMode.isDisable === true">
+                <x-button
+                  v-if="can(permissionEnum.PaymentsCreate)"
+                  size="sm"
+                  color="emerald"
+                  @click="addPaymentModal"
+                >
+                  Add Manual Payment
+                </x-button>
+              </div>
             </div>
           </template>
           <template v-else>
             <x-tooltip>
-              <x-button
-                v-if="can(permissionEnum.PaymentsCreate)"
-                size="sm"
-                color="emerald"
-                @click="addPaymentModal"
-              >
-                <span class="border-b border-dotted">Add Manual Payment</span>
-              </x-button>
+              <div v-if="readOnlyMode.isDisable === true">
+                <x-button
+                  v-if="can(permissionEnum.PaymentsCreate)"
+                  size="sm"
+                  color="emerald"
+                  @click="addPaymentModal"
+                >
+                  <span class="border-b border-dotted">Add Manual Payment</span>
+                </x-button>
+              </div>
               <template #tooltip>
                 <span>{{
                   paymentTooltipEnum.PAYMENT_MANAGEMENT_ADD_PAYMENT

@@ -19,6 +19,7 @@ use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
 use App\Repositories\LookupRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
 use Carbon\Carbon;
@@ -591,7 +592,7 @@ class SplitPaymentService
     }
 
     // function to calculate the price vat
-    public function calculatePriceAndVat($frequency, $masterTotalPrice, $splitPaymentNumber, $splitPaymentAmount, $modelType, $quoteId, $totalSplitPayments)
+    public function calculatePriceAndVat($frequency, $masterTotalPrice, $splitPaymentNumber, $splitPaymentAmount, $modelType, $quoteId, $totalSplitPayments, $send_update_id = null)
     {
         $priceWithoutVat = $splitPaymentAmount;
         $vat = 0;
@@ -599,7 +600,7 @@ class SplitPaymentService
         if (! $vatValue) {
             return [$priceWithoutVat, $vat];
         }
-        [$priceWithoutVat, $vat] = $this->calculateMasterPriceAndVat($frequency, $masterTotalPrice, $modelType, $quoteId);
+        [$priceWithoutVat, $vat] = $this->calculateMasterPriceAndVat($frequency, $masterTotalPrice, $modelType, $quoteId, $send_update_id);
         if ($vat > 0) {
             if ($frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                 $vat = $vat / $totalSplitPayments;
@@ -620,7 +621,7 @@ class SplitPaymentService
     }
 
     // function to calculate the price vat for master payment
-    public function calculateMasterPriceAndVat($frequency, $masterTotalPrice, $modelType, $quoteId)
+    public function calculateMasterPriceAndVat($frequency, $masterTotalPrice, $modelType, $quoteId, $send_update_id = null)
     {
         $vat = 0;
         $priceWithoutVat = $masterTotalPrice;
@@ -630,17 +631,27 @@ class SplitPaymentService
         }
         $computedPrice = 0;
         $ecommLobs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Bike];
-        if (in_array($modelType, $ecommLobs)) {
-            $computedPrice = $masterTotalPrice;
+        if ($send_update_id > 0) {
+            $quoteModel = SendUpdateLogRepository::getLogById($send_update_id);
         } else {
-            $quoteModel = $this->getQuoteObject($modelType, $quoteId);
-            if ($quoteModel && isset($quoteModel->price_vat_applicable) && $quoteModel->price_vat_applicable > 0) {
-                $computedPrice = $quoteModel->price_vat_applicable;
+
+            if (in_array($modelType, $ecommLobs)) {
+                $computedPrice = $masterTotalPrice;
+            } else {
+                $quoteModel = $this->getQuoteObject($modelType, $quoteId);
             }
         }
+
+        if (isset($quoteModel) && isset($quoteModel->price_vat_applicable) && $quoteModel->price_vat_applicable > 0) {
+            $computedPrice = $quoteModel->price_vat_applicable;
+        }
+
         if ($computedPrice > 0) {
             $priceWithoutVat = $computedPrice;
             $vat = ($priceWithoutVat * $vatValue) / 100;
+            if (in_array($modelType, $ecommLobs) && ! $send_update_id) {
+                $priceWithoutVat = $computedPrice - $vat;
+            }
 
             return [$priceWithoutVat, $vat];
         }

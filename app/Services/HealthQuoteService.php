@@ -166,6 +166,7 @@ class HealthQuoteService extends BaseService
             'ihp.code as plan_provider_code',
             'hqr.health_plan_co_payment_id',
             'hp.text as health_plan_name_text',
+            'hp.plan_type_id as plan_type_id',
             'ihp.text as plan_provider_name_text',
             'hqr.health_plan_type_id',
             'hqr.price_vat_not_applicable',
@@ -1595,6 +1596,9 @@ class HealthQuoteService extends BaseService
         $providers = InsuranceProvider::whereIn('id', $providerIds)->get()->keyBy('id')->toArray();
 
         $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
+        if (! $quote) {
+            return ['error' => 'Quote Detail not available'];
+        }
         $quote->load(['advisor' => function ($q) {
             $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
         }, 'customer']);

@@ -8,21 +8,16 @@ const createLink = link => {
       items: link.children.map(createLink),
     };
   } else {
-    const menuUrl = removeDomain(link.url);
     return {
       label: link.title,
       icon: link.attributes.icon,
       value: link.url,
       href: link.url,
-      active: page.url.startsWith(menuUrl),
+      active: page.props.location.startsWith(link.url),
       ...(link.attributes.external ? { target: '_blank' } : null),
     };
   }
 };
-
-function removeDomain(url) {
-  return '/' + url.replace(/^(?:\/\/|[^/]+)*\//, '');
-}
 
 const user = computed(() => page.props.auth.user);
 const navLinks = computed(() => page.props.sidebar);

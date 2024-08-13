@@ -80,7 +80,7 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD)
                             <li><a href="{{ url('car-lead-allocation') }}">Car</a></li>
                             @endcan
-                           
+
                         </ul>
                     </li>
                 </ul>
@@ -303,13 +303,13 @@ use App\Enums\PermissionsEnum;
                     <li><a href="{{ url('embedded-products') }}"><i></i> Embedded Products </a>
                 </ul>
                 @endcan
-                @if(auth()->user()->hasRole(RolesEnum::BetaUser))
+
                 <ul class="nav side-menu">
                     @can(PermissionsEnum::VIEW_LEGACY_DETAILS)
                     <li><a href="{{ url('legacy-policy') }}"><i></i>Legacy Policies</a>
                     @endcan
                 </ul>
-                @endif
+
 
                 {{-- @if (auth()->check() && auth()->user()->isAdmin())
                 <ul class="nav side-menu">
