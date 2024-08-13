@@ -568,7 +568,7 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchGetSoldTransactionList(EmbeddedProduct $ep, $filters = [])
     {
         $strategy = $this->createStrategy($ep->short_code);
-        
+
         $dataset = $strategy->filterReport($ep, $filters);
 
         $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($ep->short_code);

@@ -4,7 +4,6 @@ namespace App\Strategies\EmbeddedProducts;
 
 use App\Enums\PaymentStatusEnum;
 use App\Models\EmbeddedTransaction;
-use App\Models\TravelQuote;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -48,7 +47,7 @@ class TravelAnnual extends EmbeddedProduct
         ];
     }
 
-    public function filterReport($ep, $filters) 
+    public function filterReport($ep, $filters)
     {
         $productTransaction = EmbeddedTransaction::whereHas('product.embeddedProduct', function ($query) use ($ep) {
             $query->where('id', $ep->id);
@@ -62,7 +61,7 @@ class TravelAnnual extends EmbeddedProduct
             'travelQuote.advisor',
             'travelQuote.quoteRequestEntityMapping',
         )->where('embedded_transactions.is_selected', true)
-        ->where('embedded_transactions.payment_status_id', PaymentStatusEnum::CAPTURED)
+            ->where('embedded_transactions.payment_status_id', PaymentStatusEnum::CAPTURED)
             ->when(isset($filters['ref_id']), function ($query) use ($filters) {
                 $query->where('embedded_transactions.code', 'like', "%{$filters['ref_id']}%");
             })
@@ -76,7 +75,7 @@ class TravelAnnual extends EmbeddedProduct
 
                 $query->whereHas('travelQuote', function ($query) use ($name) {
                     $query->where('first_name', 'like', "%{$name}%")
-                    ->orWhere('last_name', 'like', "%{$name}%");
+                        ->orWhere('last_name', 'like', "%{$name}%");
                 });
             })
             ->when(isset($filters['email']), function ($query) use ($filters) {
@@ -111,8 +110,6 @@ class TravelAnnual extends EmbeddedProduct
         } else {
             $dataset = $dataset->simplePaginate()->withQueryString();
         }
-
-
 
         return $dataset;
     }

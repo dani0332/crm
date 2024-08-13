@@ -143,7 +143,7 @@ class EmbeddedProduct
             'quoteRequest.advisor',
             'quoteRequest.quoteRequestEntityMapping',
         )->where('embedded_transactions.is_selected', true)
-        ->where('embedded_transactions.payment_status_id', PaymentStatusEnum::CAPTURED)
+            ->where('embedded_transactions.payment_status_id', PaymentStatusEnum::CAPTURED)
             ->when(isset($filters['ref_id']), function ($query) use ($filters) {
                 $query->where('embedded_transactions.code', 'like', "%{$filters['ref_id']}%");
             })
@@ -156,7 +156,7 @@ class EmbeddedProduct
                 $query->whereHas('quoteRequest', function ($query) use ($filters) {
                     $name = $filters['name'];
                     $query->where('first_name', 'like', "%{$name}%")
-                    ->orWhere('last_name', 'like', "%{$name}%");
+                        ->orWhere('last_name', 'like', "%{$name}%");
                 });
             })
             ->when(isset($filters['email']), function ($query) use ($filters) {

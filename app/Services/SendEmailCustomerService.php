@@ -987,9 +987,9 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    public function sendSICFollowupEmail($lead, QuoteTypes $quoteType = null, array $extraParams = [])
+    public function sendSICFollowupEmail($lead, ?QuoteTypes $quoteType = null, array $extraParams = [])
     {
-        if($quoteType === null) {
+        if ($quoteType === null) {
             $quoteType = QuoteTypes::CAR;
         }
 

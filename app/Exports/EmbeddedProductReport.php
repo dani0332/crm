@@ -5,9 +5,9 @@ namespace App\Exports;
 use App\Enums\EmbeddedProductEnum;
 use App\Models\EmbeddedProduct;
 use App\Repositories\EmbeddedProductRepository;
-use App\Strategies\EmbeddedProducts\TravelAnnual;
 use App\Strategies\EmbeddedProducts\AlfredProtect;
 use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
+use App\Strategies\EmbeddedProducts\TravelAnnual;
 use App\Traits\ExcelExportable;
 
 class EmbeddedProductReport
@@ -26,15 +26,15 @@ class EmbeddedProductReport
         $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($this->embeddedProduct->short_code);
         if ($isTravel) {
             $this->epStrategy = new TravelAnnual();
-        } else if ($isAlfredProtect) {
+        } elseif ($isAlfredProtect) {
             $this->epStrategy = new AlfredProtect();
-        }  else {
+        } else {
             $this->epStrategy = new EmbeddedProductStrategy();
         }
     }
 
     /**
-     * @return \Illuminate\Support\Collection
+     * @return Illuminate\Support\Collection
      */
     public function collection()
     {
@@ -52,3 +52,4 @@ class EmbeddedProductReport
     {
         return $this->epStrategy->getExcelData($certificate);
     }
+}
