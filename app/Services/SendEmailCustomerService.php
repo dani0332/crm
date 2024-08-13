@@ -593,7 +593,7 @@ class SendEmailCustomerService extends BaseService
             }
 
             $response = Http::withHeaders($headers)
-                ->beforeSending(function ($request) use ($quoteId) {
+                ->beforeSending(function () use ($quoteId) {
                     info('sendLMSIntroEmail ---- Request is Sending '.$quoteId);
                 })
                 ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
