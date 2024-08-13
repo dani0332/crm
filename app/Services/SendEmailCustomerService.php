@@ -61,28 +61,28 @@ class SendEmailCustomerService extends BaseService
 
     private function getEmailAttachments(object $emailData)
     {
-    $attachments = [];
+        $attachments = [];
 
-    if (isset($emailData->documentUrl)) {
-        foreach ($emailData->documentUrl as $emailAttachment) {
+        if (isset($emailData->documentUrl)) {
+            foreach ($emailData->documentUrl as $emailAttachment) {
+                $attachments[] = [
+                    'url' => $emailAttachment,
+                    'name' => basename($emailAttachment),
+                ];
+            }
+        }
+
+        if (property_exists($emailData, 'pdfAttachment') && ! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
             $attachments[] = [
-                'url' => $emailAttachment,
-                'name' => basename($emailAttachment),
+                'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
+                'name' => $emailData->pdfAttachment->name,
             ];
         }
-    }
 
-    if (property_exists($emailData, 'pdfAttachment') && ! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
-        $attachments[] = [
-            'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
-            'name' => $emailData->pdfAttachment->name,
-        ];
-    }
-
-    return $attachments;
+        return $attachments;
 
     }
-    
+
     public function sendMail(
         array $body,
         ?array $headers = null,
