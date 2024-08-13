@@ -61,28 +61,28 @@ class SendEmailCustomerService extends BaseService
 
     private function getEmailAttachments(object $emailData)
     {
-    $attachments = [];
+        $attachments = [];
 
-    if (isset($emailData->documentUrl)) {
-        foreach ($emailData->documentUrl as $emailAttachment) {
+        if (isset($emailData->documentUrl)) {
+            foreach ($emailData->documentUrl as $emailAttachment) {
+                $attachments[] = [
+                    'url' => $emailAttachment,
+                    'name' => basename($emailAttachment),
+                ];
+            }
+        }
+
+        if (property_exists($emailData, 'pdfAttachment') && ! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
             $attachments[] = [
-                'url' => $emailAttachment,
-                'name' => basename($emailAttachment),
+                'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
+                'name' => $emailData->pdfAttachment->name,
             ];
         }
-    }
 
-    if (property_exists($emailData, 'pdfAttachment') && ! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
-        $attachments[] = [
-            'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
-            'name' => $emailData->pdfAttachment->name,
-        ];
-    }
-
-    return $attachments;
+        return $attachments;
 
     }
-    
+
     public function sendMail(
         array $body,
         ?array $headers = null,
@@ -562,7 +562,18 @@ class SendEmailCustomerService extends BaseService
                 $body['sender'] = ['name' => $emailData->advisorName, 'email' => $advisorCustomEmail];
             }
 
-            ['code' => $responseCode, 'response' => $response, 'sent' => $isEmailSent] = $this->sendMail($body);
+            $response = Http::withHeaders($headers)
+                ->beforeSending(function () use ($quoteId) {
+                    info('sendLMSIntroEmail ---- Request is Sending '.$quoteId);
+                })
+                ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
+                ->retry(3, 90000)
+                ->post($this->url, $body);
+
+            info('sendLMSIntroEmail ---- Request Sent '.$quoteId);
+            $responseCode = $response->status();
+            info('sendLMSIntroEmail ---- Received Code : '.$responseCode.' '.$quoteId);
+            info('sendLMSIntroEmail ---- response object : '.json_encode($response->object()));
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $responseDetail = 'SIB Send sendLMSIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage().' '.$quoteId;
