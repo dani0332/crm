@@ -18,7 +18,7 @@ URLs:
 
 Please make sure to go through the last two lines to familiarize yourself with the code quality guide before you start contributing.
 
-## Setting up Laravel
+## Setting up Laravel 
 
 - Clone the repo in a new folder and use the develop branch for initial setup.
 - Make sure you're using PHP 8.1 or above, Maria DB server 10.x or above on your local machine.
