@@ -32,6 +32,7 @@ use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\MigratePaymentsRequest;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\QuoteNotesRequest;
+use App\Http\Requests\SageReceiptRequest;
 use App\Http\Requests\SendBookPolicyRequest;
 use App\Http\Requests\SplitPaymentApproveRequest;
 use App\Http\Requests\SplitPaymentUpdateRequest;
@@ -40,7 +41,6 @@ use App\Http\Requests\UpdateLastYearPolicyRequest;
 use App\Http\Requests\UpdatePaymentRequest;
 use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Http\Requests\UpdateTotalPriceRequest;
-use App\Http\Requests\SageReceiptRequest;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\Customer;
@@ -537,9 +537,9 @@ class CentralController extends Controller
 
     // create sage receipts for payment
     public function createSageReceiptsTemp(SageReceiptRequest $request)
-    {         
+    {
         $successMessage = PaymentRepository::createSageReceiptsTemp($request);
-        
+
         return $successMessage;
     }
 }

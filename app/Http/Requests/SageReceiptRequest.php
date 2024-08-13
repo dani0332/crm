@@ -26,7 +26,7 @@ class SageReceiptRequest extends FormRequest
         return [
             'model_type' => 'required|string',
             'payment_code' => 'required|string',
-            'quote_id' => 'required|integer',            
+            'quote_id' => 'required|integer',
         ];
     }
 

@@ -2322,6 +2322,7 @@ class SageApiService
 
                     return $returnMessage;
                 }
+
                 return $returnMessage;
             } else {
                 $firstPaymentSplitWithNoSageReceipt = $paymentSplits->where('sr_no', 1)->whereNull('sage_receipt_id')->count();
@@ -2332,6 +2333,7 @@ class SageApiService
 
                     return $returnMessage;
                 }
+
                 return $returnMessage;
             }
         }
