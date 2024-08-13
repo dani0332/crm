@@ -324,6 +324,8 @@ final class PermissionsEnum extends Enum
     public const DOCUMENT_VERIFY = 'document-verify';
     public const DOWNLOAD_ALL_DOCUMENTS = 'download-all-documents';
     public const TRAVEL_HAPEX = 'travel-hapex';
+    public const All_QUOTES_VIEWONLY_ACCESS = 'all-quotes-view-only-access';
+    public const CUSTOMER_RISKRRATING_OVERRIDE = 'customer-riskrrating-override';
 
     public static function getAdvisorConverionReportPermissions()
     {

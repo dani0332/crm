@@ -352,6 +352,13 @@ watch(
     if (oldValue !== newValue) onSubmit(true);
   },
 );
+
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -380,11 +387,11 @@ watch(
           @toggleFilters="showFilters = !showFilters"
         />
         <Link :href="route('health.cards')">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
+          <x-button size="sm" color="#1d83bc" tag="div" v-if="readOnlyMode.isDisable === true"> Cards View </x-button>
         </Link>
 
         <Link :href="route('health.create')">
-          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
+          <x-button size="sm" color="#ff5e00" tag="div" v-if="readOnlyMode.isDisable === true"> Create Lead </x-button>
         </Link>
       </template>
     </StickyHeader>
@@ -605,6 +612,7 @@ watch(
                 placeholder="Select Subteam"
                 class="flex-1 w-auto"
                 :rules="[isRequired]"
+                v-if="readOnlyMode.isDisable === true"
               />
               <x-select
                 v-model="assignForm.assigned_to_id_new"
@@ -613,6 +621,7 @@ watch(
                 placeholder="Select Advisor"
                 class="flex-1 w-auto"
                 :rules="[isRequired]"
+                v-if="readOnlyMode.isDisable === true"
               />
 
               <div class="mb-3 md:pt-6">
@@ -621,6 +630,7 @@ watch(
                   size="sm"
                   type="submit"
                   :loading="assignForm.processing"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Assign
                 </x-button>

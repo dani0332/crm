@@ -64,6 +64,7 @@ use App\Models\User;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\LookupRepository;
+use App\Services\EmailServices\CarEmailService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Carbon\Carbon;

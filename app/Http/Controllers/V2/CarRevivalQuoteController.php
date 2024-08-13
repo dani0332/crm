@@ -177,10 +177,4 @@ class CarRevivalQuoteController extends Controller
 
         return back()->with('message', 'Quote updated successfully');
     }
-
-    public function updateQuote(Request $request)
-    {
-
-        CarRevivalQuoteRepository::updateQuote($request);
-    }
 }

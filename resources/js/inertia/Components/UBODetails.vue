@@ -20,6 +20,8 @@ const props = defineProps({
 
 const page = usePage();
 const notification = useToast();
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 const { isRequired } = useRules();
 const modals = reactive({
   ubo: false,
@@ -181,6 +183,12 @@ const UBODeleteConfirmed = () => {
     },
   );
 };
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -192,6 +200,7 @@ const UBODeleteConfirmed = () => {
           (computedUboMembers && computedUboMembers.length) || 0
         }}</x-tag>
       </h3>
+        <div v-if="readOnlyMode.isDisable === true">
       <x-button
         v-if="
           page.props.quote?.quote_request_entity_mapping?.entity_id ??
@@ -204,6 +213,7 @@ const UBODeleteConfirmed = () => {
       >
         Add UBO
       </x-button>
+        </div>
     </div>
 
     <DataTable
@@ -234,6 +244,7 @@ const UBODeleteConfirmed = () => {
             color="primary"
             outlined
             @click.prevent="onEditUBO(item)"
+            v-if="readOnlyMode.isDisable === true"
           >
             Edit
           </x-button>
@@ -242,6 +253,7 @@ const UBODeleteConfirmed = () => {
             color="error"
             outlined
             @click.prevent="UBODelete(item.id)"
+            v-if="readOnlyMode.isDisable === true"
           >
             Delete
           </x-button>

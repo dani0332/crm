@@ -43,7 +43,7 @@ const modals = reactive({
   cancelPayment: false,
 });
 
-const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
+const { isRequired, isEmail, isNumberOrDecimal, isMobileNo } = useRules();
 
 const cancelPaymentForm = item => {
   paymentForm.reset();
@@ -418,7 +418,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 
           <x-form @submit="onActivitySubmit" :auto-focus="false">
             <div class="grid gap-4">
-              <x-input v-model="paymentForm.amount" label="Amount" :rules="[isRequired, isNumber]" class="w-full" />
+              <x-input v-model="paymentForm.amount" label="Amount" :rules="[isRequired, isNumberOrDecimal]" class="w-full" />
 
               <x-textarea v-model="paymentForm.reason" label="Reason" maxlength="250" :adjust-to-text="false"
                 class="w-full" />

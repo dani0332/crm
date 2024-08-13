@@ -8,6 +8,9 @@ defineProps({
 
 const notification = useNotifications('toast');
 const page = usePage();
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
+
 
 const dateToYMD = date => {
   if (date) {
@@ -106,6 +109,13 @@ const submitpolicyForm = isValid => {
       },
     });
 };
+
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -179,6 +189,7 @@ const submitpolicyForm = isValid => {
             size="sm"
             v-show="policyForm.editMode"
             @click.prevent="cancelPolicyFrom"
+            v-if="readOnlyMode.isDisable === true"
             >Cancel</x-button
           >
 
@@ -187,6 +198,7 @@ const submitpolicyForm = isValid => {
             type="submit"
             size="sm"
             v-show="policyForm.editMode"
+            v-if="readOnlyMode.isDisable === true"
             >Update</x-button
           >
 
@@ -196,6 +208,7 @@ const submitpolicyForm = isValid => {
             type="submit"
             v-show="!policyForm.editMode"
             @click.prevent="policyForm.editMode = true"
+            v-if="readOnlyMode.isDisable === true"
             >Edit</x-button
           >
         </div>

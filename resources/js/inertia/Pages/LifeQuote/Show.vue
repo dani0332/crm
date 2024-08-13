@@ -473,6 +473,12 @@ const linkEntity = () => {
       console.log(err);
     });
 };
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -481,7 +487,7 @@ const linkEntity = () => {
 
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Life Detail</h2>
-      <div class="flex gap-2">
+      <div class="flex gap-2" v-if="readOnlyMode.isDisable === true">
         <Link
           v-if="quote.life_quote_request_detail?.insly_id"
           :href="`/legacy-policy/${quote.life_quote_request_detail.insly_id}`"
@@ -804,6 +810,7 @@ const linkEntity = () => {
                   @click.prevent="searchByTradeLicense"
                   size="xs"
                   color="primary"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Search
                 </x-button>
@@ -900,6 +907,7 @@ const linkEntity = () => {
           size="sm"
           :loading="customerProfileForm.processing"
           @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
         >
           Search
         </x-button>
@@ -947,7 +955,7 @@ const linkEntity = () => {
           </dd>
         </div>
         <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity">
+          <x-button size="sm" color="orange" @click.prevent="linkEntity" v-if="readOnlyMode.isDisable === true">
             Link
           </x-button>
         </div>
@@ -992,7 +1000,7 @@ const linkEntity = () => {
       :canAddBatchNumber="canAddBatchNumber"
     />
 
-   
+
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>
@@ -1063,6 +1071,7 @@ const linkEntity = () => {
           :loading="leadStatusForm.processing"
           @click.prevent="onLeadStatus"
           :disabled="allowStatusUpdate"
+          v-if="readOnlyMode.isDisable === true"
         >
           Change Status
         </x-button>
@@ -1074,7 +1083,7 @@ const linkEntity = () => {
       :quote="quote"
       :quoteType="quoteType"
       :vatPrice="vatPercentage"
-      
+
     />
 
 <MigratePayment
@@ -1082,10 +1091,10 @@ const linkEntity = () => {
       :quoteId="quote.id"
       :paymentCode = "quote.code"
       :quoteType="quoteType"
-      :payments="payments"    
-    />    
+      :payments="payments"
+    />
 
-    <PaymentTableNew 
+    <PaymentTableNew
 			v-if="isNewPaymentStructure"
 			:quoteType="quoteType"
 			:payments="payments"
@@ -1119,7 +1128,7 @@ const linkEntity = () => {
           Lead Activities
           <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
         </h3>
-        <x-button size="sm" color="orange" @click.prevent="addActivity">
+        <x-button size="sm" color="orange" @click.prevent="addActivity" v-if="readOnlyMode.isDisable === true">
           Add Activity
         </x-button>
       </div>
@@ -1154,6 +1163,7 @@ const linkEntity = () => {
               outlined
               :disabled="item.status === 1"
               @click.prevent="activityEdit(item)"
+              v-if="readOnlyMode.isDisable === true"
             >
               Edit
             </x-button>
@@ -1163,6 +1173,7 @@ const linkEntity = () => {
               :disabled="item.status === 1"
               outlined
               @click.prevent="activityDelete(item.id)"
+              v-if="readOnlyMode.isDisable === true"
             >
               Delete
             </x-button>
