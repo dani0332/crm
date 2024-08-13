@@ -52,13 +52,19 @@ class CarAllocationService extends AllocationService
 
         // Create a query to retrieve a car lead based on the provided quote ID and filters.
         $carQuoteQuery = CarQuote::where('uuid', $quoteId)
-            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->whereNotIn('source', $exemptedLeadSources)
-            ->where('is_renewal_tier_email_sent', 0)
-            ->where(function ($query) {
-                $query->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
-                      ->orWhere('sic_flow_enabled', 1);
-            });
+        ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+        ->whereNotIn('source', $exemptedLeadSources)
+        ->where('is_renewal_tier_email_sent', 0)
+        ->where(function ($query) {
+            $query->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+                ->orWhere(function ($query) {
+                    $query->where('sic_flow_enabled', 1)
+                            ->where(function ($query) {
+                                $query->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
+                                    ->orWhere('sic_advisor_requested', 1);
+                            });
+                });
+        });
 
         if (! $overrideAdvisorId) {
             $carQuoteQuery->whereNull('advisor_id');
@@ -168,10 +174,10 @@ class CarAllocationService extends AllocationService
     /**
      * @return array|mixed
      */
-    public function executeRevivalCheck($leadSource, $tierUserIds): mixed
+    public function executeRevivalAndRenewalCheck($leadSource, $tierUserIds, $teamId): mixed
     {
-        if ($leadSource == LeadSourceEnum::REVIVAL_REPLIED) {
-            // if lead source is revival replied then we should only assign to organic advisors
+        if ($leadSource == LeadSourceEnum::REVIVAL_REPLIED || ($leadSource == LeadSourceEnum::RENEWAL_UPLOAD && $teamId == 0)) {
+            // if lead source is revival replied or renewal upload then we should only assign to organic advisors
 
             // Retrieve the ID of Organic team.
             $organicId = Team::whereIn('name', [TeamNameEnum::ORGANIC])->pluck('id')->toArray();
@@ -259,7 +265,7 @@ class CarAllocationService extends AllocationService
         $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
         info('Users against tierID '.$tierId.' are: '.json_encode($tierUserIds->toArray()));
 
-        $tierUserIds = $this->executeRevivalCheck($leadSource, $tierUserIds);
+        $tierUserIds = $this->executeRevivalAndRenewalCheck($leadSource, $tierUserIds, $teamId);
 
         if ($teamId) {
             $teamUserIds = UserTeams::where('team_id', $teamId)->select('user_id')->get();
