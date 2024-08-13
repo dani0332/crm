@@ -193,6 +193,7 @@ class SendUpdateLogController extends Controller
 
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
+            'quoteLink' => QuoteTypes::getName($quoteTypeId)?->url($quote->uuid),
             'quoteType' => $quoteType,
             'sendUpdateLog' => $sendUpdateLog,
             'parentText' => $sendUpdateLog->category->parent->text,
