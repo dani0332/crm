@@ -356,6 +356,8 @@ final class PermissionsEnum extends Enum
     public const AUDITDOCUMENT_UPLOAD = 'auditdocument-upload';
     public const DOWNLOAD_ALL_DOCUMENTS = 'download-all-documents';
     public const TRAVEL_HAPEX = 'travel-hapex';
+    public const VIEW_BULK_POLICY_BOOKING_LIST = 'view-bulk-policy-booking-list';
+    public const BOOK_BULK_POLICY_ON_SAGE = 'book-bulk-policy-on-sage';
 
     public static function getAdvisorConversionReportPermissions()
     {
@@ -405,6 +407,15 @@ final class PermissionsEnum extends Enum
             self::YACHT_DISTRIBUTION_REPORT,
             self::CORPLINE_DISTRIBUTION_REPORT,
             self::GROUPMEDICAL_DISTRIBUTION_REPORT,
+        ];
+    }
+
+
+    public static function getBulkPolicyBookingOnSagePermissions()
+    {
+        return [
+            self::VIEW_BULK_POLICY_BOOKING_LIST,
+            self::BOOK_BULK_POLICY_ON_SAGE,
         ];
     }
 }

@@ -237,6 +237,9 @@ class GenericPermissionSeeder extends Seeder
             ]);
         }
 
+        $this->syncBulkPolicyBookingOnSagePermissionList();
+        $this->syncMasterPermissionList();
+
         // $this->generateSegmentFilterPermission();
         // $this->embeddedProductSeeds();
         // $this->advisorConversionReportSeeds();
@@ -267,7 +270,6 @@ class GenericPermissionSeeder extends Seeder
         if (! $role->hasPermissionTo(PermissionsEnum::ADD_MANUAL_HEALTH_PLAN)) {
             $role->givePermissionTo(PermissionsEnum::ADD_MANUAL_HEALTH_PLAN);
         }
-        $this->syncMasterPermissionList();
     }
 
     private function generateSegmentFilterPermission()
@@ -691,6 +693,18 @@ class GenericPermissionSeeder extends Seeder
         ];
 
         $this->syncPermissionsWithRole($permissionList);
+    }
+
+    private function syncBulkPolicyBookingOnSagePermissionList()
+    {
+        $permissionList = PermissionsEnum::getBulkPolicyBookingOnSagePermissions();
+
+        foreach ($permissionList as $permission) {
+            $dataset = Permission::findOrCreate($permission, 'web');
+            if (($role = Role::findOrCreate(RolesEnum::Engineering, 'web')) && ! $role->hasPermissionTo($dataset->id)) {
+                $role->givePermissionTo($dataset->id);
+            }
+        }
     }
 
     private function syncPermissionsWithRole($permissionList)

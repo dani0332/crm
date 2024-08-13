@@ -80,7 +80,7 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD)
                             <li><a href="{{ url('car-lead-allocation') }}">Car</a></li>
                             @endcan
-                           
+
                         </ul>
                     </li>
                 </ul>
@@ -310,6 +310,12 @@ use App\Enums\PermissionsEnum;
                     @endcan
                 </ul>
                 @endif
+
+                <ul class="nav side-menu">
+                    @can(PermissionsEnum::VIEW_LEGACY_DETAILS)
+                        <li><a href="{{ route('bulk-policy-booking.index') }}"><i></i>Bulk Policy Book</a>
+                    @endcan
+                </ul>
 
                 {{-- @if (auth()->check() && auth()->user()->isAdmin())
                 <ul class="nav side-menu">
