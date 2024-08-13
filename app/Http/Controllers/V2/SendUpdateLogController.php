@@ -360,7 +360,7 @@ class SendUpdateLogController extends Controller
         }
 
         if ($log) {
-            $message[] = SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER;
+            $message[] = 'Update Sent to Customer.';
         } else {
             $message[] = 'Email Not Sent.';
         }
