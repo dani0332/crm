@@ -1005,7 +1005,7 @@ class SendEmailCustomerService extends BaseService
                 'attachment' => $attachments ?? null,
             ];
 
-            $checkIsHealthOrGroupMedical = $quoteTypeId == QuoteTypeId::Health || $emailData->isGroupMedical;
+            $checkIsHealthOrGroupMedical = $quoteTypeId == QuoteTypeId::Health || isset($emailData->isGroupMedical);
 
             $ebServiceTeam = [];
             if ($checkIsHealthOrGroupMedical) {

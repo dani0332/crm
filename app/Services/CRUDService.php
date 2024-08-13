@@ -1162,7 +1162,7 @@ class CRUDService extends BaseService
             QuoteStatusEnum::CancellationPending,
             QuoteStatusEnum::PolicyCancelled,
             QuoteStatusEnum::PolicyCancelledReissued,
-        ])) {
+        ]) || $record?->insly_migrated || $record?->insly_id) {
             return true;
         }
 

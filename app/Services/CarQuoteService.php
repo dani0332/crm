@@ -283,6 +283,7 @@ class CarQuoteService extends BaseService
                 't.cost_per_lead as cost_per_lead',
                 'qb.name as quote_batch_id_text',
                 'cqr.car_value_tier',
+                'cqr.insly_migrated',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
