@@ -80,6 +80,7 @@ class PersonalQuotesExport
                     'SOURCE',
                     'CURRENTLY INSURED WITH',
                     'IS ECOMMERCE',
+                    'PREVIOUS POLICY EXPIRY DATE',
                 ];
             case QuoteTypes::YACHT->value:
             case QuoteTypes::JETSKI->value:
@@ -97,6 +98,7 @@ class PersonalQuotesExport
                     'CURRENTLY INSURED WITH',
                     'IS ECOMMERCE',
                     'RENEWAL BATCH',
+                    'PREVIOUS POLICY EXPIRY DATE',
                 ];
 
             case QuoteTypes::PET->value:
@@ -125,6 +127,7 @@ class PersonalQuotesExport
                     'POSSESION TYPE',
                     'IS ECOMMERCE',
                     'RENEWAL BATCH',
+                    'PREVIOUS POLICY EXPIRY DATE',
                 ];
 
             case QuoteTypes::CYCLE->value:
@@ -141,6 +144,7 @@ class PersonalQuotesExport
                     'SOURCE',
                     'IS ECOMMERCE',
                     'RENEWAL BATCH',
+                    'PREVIOUS POLICY EXPIRY DATE',
                 ];
         }
     }
@@ -172,6 +176,7 @@ class PersonalQuotesExport
                     $quote->source,
                     optional($quote->currentlyInsuredWith)->text,
                     $quote->is_ecommerce ? 'Yes' : 'No',
+                    $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
                 ];
             case QuoteTypes::YACHT->value:
             case QuoteTypes::JETSKI->value:
@@ -189,6 +194,7 @@ class PersonalQuotesExport
                     optional($quote->currentlyInsuredWith)->text,
                     $quote->is_ecommerce ? 'Yes' : 'No',
                     $quote->renewal_batch,
+                    $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
                 ];
 
             case QuoteTypes::PET->value:
@@ -217,6 +223,7 @@ class PersonalQuotesExport
                     optional($quote->petQuote)->possessionType?->text,
                     $quote->is_ecommerce ? 'Yes' : 'No',
                     $quote->renewal_batch,
+                    $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
                 ];
 
             case QuoteTypes::CYCLE->value:
@@ -233,6 +240,7 @@ class PersonalQuotesExport
                     $quote->source,
                     $quote->is_ecommerce ? 'Yes' : 'No',
                     $quote->renewal_batch,
+                    $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
                 ];
         }
     }

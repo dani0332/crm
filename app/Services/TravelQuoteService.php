@@ -91,7 +91,7 @@ class TravelQuoteService extends BaseService
             'tqr.destination_id',
             'nationality.country_name as destination_id_text',
             'tqr.is_ecommerce',
-            'tqr.renewal_expiry_date',
+//            'tqr.renewal_expiry_date',
             'tqr.renewal_batch',
             'tqr.renewal_import_code',
             'tqr.previous_quote_policy_number',
