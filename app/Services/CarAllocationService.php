@@ -54,7 +54,11 @@ class CarAllocationService extends AllocationService
         $carQuoteQuery = CarQuote::where('uuid', $quoteId)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', $exemptedLeadSources)
-            ->where('is_renewal_tier_email_sent', 0);
+            ->where('is_renewal_tier_email_sent', 0)
+            ->where(function ($query) {
+                $query->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+                      ->orWhere('sic_flow_enabled', 1);
+            });
 
         if (! $overrideAdvisorId) {
             $carQuoteQuery->whereNull('advisor_id');
@@ -229,7 +233,16 @@ class CarAllocationService extends AllocationService
 
     public function findRenewalLeadTier($carLead): ?Tier
     {
-        $tiersQuery = Tier::where('is_active', 1)->where('min_price', '<=', $carValue)->where('max_price', '>=', $carValue);
+        $isSICFlowEnabled = $carLead->sic_flow_enabled;
+        $tiersQuery = Tier::where('is_active', 1)
+                    ->where('min_price', '<=', $carLead->var_value)
+                    ->where('max_price', '>=', $carLead->var_value)
+                    ->where('can_handle_tpl', 0)
+                    ->where(function ($query) use ($isSICFlowEnabled) {
+                        if ($isSICFlowEnabled) {
+                            $query->where('name', '!=', TiersEnum::TIER_L);
+                        }
+                    });
 
         $tier = $tiersQuery->first();
 
