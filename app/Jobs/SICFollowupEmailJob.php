@@ -21,10 +21,10 @@ class SICFollowupEmailJob implements ShouldQueue
      */
     public $tries = 3;
 
-    public $timeout = 15;
+    public $timeout = 60;
     public $backoff = 60;
-    public $uuid;
-    public $quoteType;
+    private $uuid;
+    private $quoteType;
 
     public function __construct($uuid, QuoteTypes $quoteType)
     {
@@ -37,16 +37,19 @@ class SICFollowupEmailJob implements ShouldQueue
      */
     public function handle(SendEmailCustomerService $sendEmailCustomerService)
     {
-        info(self::class . ' - Inside handle', [
+        info(self::class.' - Inside handle', [
             'uuid' => $this->uuid,
             'quoteType' => $this->quoteType,
         ]);
 
+        $this->quoteType = $this->quoteType ?: QuoteTypes::CAR;
+
         $lead = $this->quoteType?->model()::where('uuid', $this->uuid)->first();
-        if($lead) {
-            info(self::class . ' - Lead found for uuid : ' . $lead->uuid);
+        if ($lead) {
+            info(self::class.' - Lead found for uuid : '.$lead->uuid);
         } else {
-            info(self::class . ' - Lead not found for uuid : ' . $this->uuid);
+            info(self::class.' - Lead not found for uuid : '.$this->uuid);
+
             return;
         }
 
