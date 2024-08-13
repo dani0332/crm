@@ -34,6 +34,12 @@ const page = usePage();
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -48,7 +54,7 @@ const permissionsEnum = page.props.permissionsEnum;
           :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
           preserve-scroll
         >
-          <x-button size="sm" color="#ff5e00" tag="div">
+          <x-button size="sm" color="#ff5e00" tag="div" v-if="readOnlyMode.isDisable === true">
             View Legacy policy
           </x-button>
         </Link>
@@ -56,7 +62,7 @@ const permissionsEnum = page.props.permissionsEnum;
           v-if="can(permissionsEnum.JetskiQuotesEdit)"
           :href="route('jetski-quotes-edit', quote.uuid)"
         >
-          <x-button size="sm" tag="div">Edit</x-button>
+          <x-button size="sm" tag="div" v-if="readOnlyMode.isDisable === true">Edit</x-button>
         </Link>
 
         <Link
@@ -223,12 +229,12 @@ const permissionsEnum = page.props.permissionsEnum;
             <dd>{{ quote.dob }}</dd>
           </div>
 
-          
+
           <RiskRatingScoreDetails
-              :quote="quote.jetski_quote"
+              :quote="quote"
               :modelType="quoteType"
             />
-         
+
         </dl>
       </div>
     </div>

@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
@@ -177,5 +179,21 @@ class TravelQuote extends Model implements AuditableContract
     public function TravelDestinations()
     {
         return $this->hasMany(TravelDestination::class, 'quote_id', 'id');
+    }
+
+    public function scopeIsSICLead($q, QuoteTypes $quoteType)
+    {
+        $q->whereIn('uuid', function ($query) use ($quoteType) {
+            $query->distinct()
+                ->select('quote_uuid')
+                ->from('quote_tags')
+                ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
+                ->where('quote_tags.quote_type_id', $quoteType->id());
+        });
+    }
+
+    public function isPaymentAuthorized()
+    {
+        return $this->payments->count() > 0 && $this->payments->every(fn (Payment $payment) => $payment->isPaymentAuthorized());
     }
 }

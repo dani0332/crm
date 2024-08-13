@@ -233,8 +233,12 @@ watch(
   { deep: true, immediate: true },
 );
 
+const readOnlyMode = reactive({
+    isDisable: true,
+});
 onMounted(() => {
-  setQueryFilters();
+    setQueryFilters();
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 </script>
 
@@ -243,17 +247,17 @@ onMounted(() => {
     <Head title="Travel List" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
-      <div class="flex space-x-2 items-center">
+      <div class="flex space-x-2 items-center" v-if="readOnlyMode.isDisable === true">
         <Link :href="route('travel.expired.upload')" v-if="permissions.admin">
           <x-button size="sm" color="#1d83bc" tag="div">
             Upload Expired Leads
           </x-button>
         </Link>
         <Link :href="route('travel.cards')">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
+          <x-button size="sm" color="#1d83bc" tag="div" v-if="readOnlyMode.isDisable === true"> Cards View </x-button>
         </Link>
         <Link :href="route('travel.create')">
-          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
+          <x-button size="sm" color="#ff5e00" tag="div" v-if="readOnlyMode.isDisable === true"> Create Lead </x-button>
         </Link>
       </div>
     </div>
@@ -447,6 +451,7 @@ onMounted(() => {
                   placeholder="Select Advisor"
                   class="flex-1 w-auto"
                   :rules="[rules.isRequired]"
+                  v-if="readOnlyMode.isDisable === true"
                 />
               </x-field>
 
@@ -456,6 +461,7 @@ onMounted(() => {
                   size="sm"
                   type="submit"
                   :loading="assignForm.processing"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Assign
                 </x-button>

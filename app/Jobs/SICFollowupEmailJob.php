@@ -2,8 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Enums\QuoteTypes;
 use App\Facades\Ken;
-use App\Models\CarQuote;
 use App\Services\SendEmailCustomerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -19,15 +19,17 @@ class SICFollowupEmailJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    private $uuid;
-
     public $tries = 3;
+
     public $timeout = 15;
     public $backoff = 60;
+    public $uuid;
+    public $quoteType;
 
-    public function __construct($uuid)
+    public function __construct($uuid, QuoteTypes $quoteType)
     {
         $this->uuid = $uuid;
+        $this->quoteType = $quoteType;
     }
 
     /**
@@ -35,13 +37,24 @@ class SICFollowupEmailJob implements ShouldQueue
      */
     public function handle(SendEmailCustomerService $sendEmailCustomerService)
     {
-        $carLead = CarQuote::where('uuid', $this->uuid)->first();
+        info(self::class . ' - Inside handle', [
+            'uuid' => $this->uuid,
+            'quoteType' => $this->quoteType,
+        ]);
 
-        if (empty($carLead->advisor_id)) {
-            $sendEmailCustomerService->sendSICFollowupEmail($carLead);
+        $lead = $this->quoteType?->model()::where('uuid', $this->uuid)->first();
+        if($lead) {
+            info(self::class . ' - Lead found for uuid : ' . $lead->uuid);
+        } else {
+            info(self::class . ' - Lead not found for uuid : ' . $this->uuid);
+            return;
+        }
+
+        if (empty($lead->advisor_id)) {
+            $sendEmailCustomerService->sendSICFollowupEmail($lead, $this->quoteType);
             $this->sendWhatsAppMessage();
         } else {
-            info('SICFollowupEmailJob - Car Lead Advisor Available - Ref ID: '.$carLead->uuid.'- Time: '.now());
+            info('SICFollowupEmailJob - Lead Advisor Available - Ref ID: '.$lead->uuid.'- Time: '.now());
         }
     }
 

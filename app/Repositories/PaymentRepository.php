@@ -428,6 +428,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 if ($totalApproved == $quoteModel->payments()->count()) {
                     $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
                     $quoteModel->save();
+                    app(CRUDService::class)->calculateScore($quoteModel, $request->modelType);
                     $canCaptureEp = true;
                     // Berlin Service - Extend Customer Subscription on Shaji request
                     $customerData = app(CustomerService::class)->getCustomerById($quoteModel->customer_id);
@@ -453,7 +454,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
 
             if ($canCaptureEp) {
-                // capture EP and send documents
                 EmbeddedProductRepository::capturePayment($request->quote_id, $request->modelType);
             }
         }

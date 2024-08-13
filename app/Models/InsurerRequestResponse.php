@@ -11,6 +11,7 @@ class InsurerRequestResponse extends Model
 
     protected $table = 'insurer_request_response';
     protected $primaryKey = 'id';
+    protected $guarded = [];
 
     public function carQuotePlanDetails()
     {

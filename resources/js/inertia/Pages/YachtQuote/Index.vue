@@ -200,7 +200,9 @@ function setQueryStringFilters() {
     }
   }
 }
-
+const readOnlyMode = reactive({
+    isDisable: true,
+});
 onMounted(() => {
   params = getSavedQueryParams() || params;
   setQueryStringFilters();
@@ -227,6 +229,7 @@ onMounted(() => {
   }
 
   filtersCount.value = Object.keys(filtersCleaned).length;
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 watch(
@@ -265,8 +268,9 @@ watch(
         />
 
         <Link :href="route('yacht-quotes-card')">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
+          <x-button size="sm" color="#1d83bc" tag="div" v-if="readOnlyMode.isDisable === true"> Cards View </x-button>
         </Link>
+          <div v-if="readOnlyMode.isDisable === true">
         <x-button
           v-if="can(permissionsEnum.YachtQuotesCreate)"
           size="sm"
@@ -275,6 +279,7 @@ watch(
         >
           Create Lead
         </x-button>
+          </div>
       </template>
     </StickyHeader>
     <!-- <div class="flex justify-between items-center">
