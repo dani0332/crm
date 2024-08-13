@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
@@ -67,12 +69,12 @@ class TravelQuote extends Model implements AuditableContract
 
     public function parent()
     {
-        return $this->belongsTo(TravelQuote::class, 'parent_id');
+        return $this->belongsTo(self::class, 'parent_id');
     }
 
     public function child()
     {
-        return $this->hasOne(TravelQuote::class, 'parent_id');
+        return $this->hasOne(self::class, 'parent_id');
     }
 
     public function quotePlan()
@@ -167,7 +169,6 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->hasMany(Activities::class, 'quote_request_id')
             ->where('quote_type_id', QuoteTypeId::Travel);
-
     }
 
     public function customerMembers()
@@ -188,5 +189,26 @@ class TravelQuote extends Model implements AuditableContract
     public function TravelDestinations()
     {
         return $this->hasMany(TravelDestination::class, 'quote_id', 'id');
+    }
+
+    public function embeddedTransaction()
+    {
+        return $this->hasOne(EmbeddedTransaction::class, 'code', 'code');
+    }
+
+    public function scopeIsSICLead($q, QuoteTypes $quoteType)
+    {
+        $q->whereIn('uuid', function ($query) use ($quoteType) {
+            $query->distinct()
+                ->select('quote_uuid')
+                ->from('quote_tags')
+                ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
+                ->where('quote_tags.quote_type_id', $quoteType->id());
+        });
+    }
+
+    public function isPaymentAuthorized()
+    {
+        return $this->payments->count() > 0 && $this->payments->every(fn (Payment $payment) => $payment->isPaymentAuthorized());
     }
 }

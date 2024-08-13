@@ -35,6 +35,7 @@ const filters = reactive({
   sub_teams: [],
   tiers: [],
   isCommercial: 'All',
+  isEmbeddedProducts: '',
   insurance_type: '',
   insurance_for: '',
   segment_filter: 'all',
@@ -170,7 +171,7 @@ const onLobChange = (e, isOnMounted = false) => {
     filters.insurance_type = '';
     filters.insurance_for = '';
     filters.isCommercial = '';
-
+    filters.isEmbeddedProducts = false;
     teamOptions.value = [];
     subteamOptions.value = [];
     advisorOptions.value = [];
@@ -480,6 +481,16 @@ const insuranceForOptions = computed(() => {
           />
         </x-field>
       </x-tooltip>
+      <x-select
+        v-if="canShow('isEmbeddedProducts')"
+        v-model="filters.isEmbeddedProducts"
+        label="Include Embedded Products"
+        placeholder="Select any option"
+        :options="[
+          { value: 'true', label: 'Yes' },
+          { value: 'false', label: 'No' },
+        ]"
+      />
       <x-field label="Commercial" v-if="canShow('isCommercial')">
         <x-select
           v-model="filters.isCommercial"

@@ -271,6 +271,12 @@ const onCopyText = () => {
     });
 };
 
+const getFirstPriceWithTransaction = prices => {
+  return prices.find(
+    price => price.transactions && price.transactions.length > 0,
+  );
+};
+
 const paymentStatus = id => {
   const enums = paymentStatusEnum || {};
   const item = Object.keys(enums).find(key => enums[key] === id);
@@ -392,39 +398,39 @@ const can = permission => useCan(permission);
 
           <template #item-prices="{ prices }">
             <div v-if="prices.length > 0" class="flex gap-3">
-              <x-tag
-                color="primary"
-                v-for="(priceItem, index) in prices"
-                :key="index"
-              >
-                <x-checkbox
-                  v-if="
-                    priceItem.transactions && priceItem.transactions.length > 0
-                  "
-                  v-model="priceItem.transactions[0].is_selected"
-                  @change="toggleProduct(priceItem, $event)"
-                  color="primary"
-                  :disabled="
-                    priceItem.transactions[0]?.payment_status_id ==
-                      paymentStatusEnum.AUTHORISED ||
-                    priceItem.transactions[0]?.payment_status_id ==
-                      paymentStatusEnum.CAPTURED ||
-                    priceItem.transactions[0]?.payment_status_id ==
-                      paymentStatusEnum.PARTIAL_CAPTURED
-                  "
-                />
-                {{
-                  (
-                    parseFloat(priceItem.price) +
-                    (priceItem.price * 5) / 100
-                  ).toFixed(2)
-                }}
-              </x-tag>
+              <div v-for="(priceItem, index) in prices" :key="index">
+                <x-tag v-if="priceItem.transactions.length" color="primary">
+                  <x-checkbox
+                    v-model="priceItem.transactions[0].is_selected"
+                    @change="toggleProduct(priceItem, $event)"
+                    color="primary"
+                    :disabled="
+                      priceItem.transactions[0]?.payment_status_id ==
+                        paymentStatusEnum.AUTHORISED ||
+                      priceItem.transactions[0]?.payment_status_id ==
+                        paymentStatusEnum.CAPTURED ||
+                      priceItem.transactions[0]?.payment_status_id ==
+                        paymentStatusEnum.PARTIAL_CAPTURED
+                    "
+                  />
+                  {{
+                    (
+                      parseFloat(priceItem.price) +
+                      (priceItem.price * 5) / 100
+                    ).toFixed(2)
+                  }}
+                </x-tag>
+              </div>
             </div>
           </template>
 
           <template #item-payment_status="{ prices }">
-            {{ paymentStatus(prices[0]?.transactions[0]?.payment_status_id) }}
+            {{
+              paymentStatus(
+                getFirstPriceWithTransaction(prices)?.transactions[0]
+                  ?.payment_status_id,
+              )
+            }}
           </template>
 
           <template #item-updated_at="{ updated_at }">
