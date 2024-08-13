@@ -244,9 +244,10 @@ class CarAllocationService extends AllocationService
                     ->where('min_price', '<=', $carLead->var_value)
                     ->where('max_price', '>=', $carLead->var_value)
                     ->where('can_handle_tpl', 0)
+                    ->where('name', '!=', TiersEnum::TIER_R)
                     ->where(function ($query) use ($isSICFlowEnabled) {
                         if ($isSICFlowEnabled) {
-                            $query->where('name', '!=', TiersEnum::TIER_L);
+                            $query->whereNotIn('name', '!=', TiersEnum::TIER_L);
                         }
                     });
 
