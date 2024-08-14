@@ -583,7 +583,7 @@ class SplitPaymentService
             $quoteModel = SendUpdateLogRepository::getLogById($sendUpdateId);
             $quoteModel->fill([
                 'customer_id' => $mainLeadObject->customer_id,
-                'advisor_id' => $mainLeadObject->advisor_id
+                'advisor_id' => $mainLeadObject->advisor_id,
             ]);
         } else {
             $quoteModel = $mainLeadObject;
