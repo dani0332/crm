@@ -38,7 +38,6 @@ use App\Jobs\Renewals\ProcessRenewalsUploadUpdate;
 use App\Jobs\Renewals\ProcessTravelRenewalsUploadCreate;
 use App\Jobs\Renewals\RenewalBatchEmailJob;
 use App\Jobs\Renewals\UpdateRenewalQuotesJob;
-use App\Jobs\SendOCBIntroEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarModel;
@@ -1055,7 +1054,7 @@ class RenewalsUploadService
                     ];
 
                     $checkExisted = QuoteTag::where('quote_uuid', $quote->uuid)->where('name', QuoteSegmentEnum::SIC->tag())->first();
-                    !$checkExisted && QuoteTag::create($quoteTagPayload);
+                    ! $checkExisted && QuoteTag::create($quoteTagPayload);
                     // processing the SIC workflow trigger only and don't send OCB email
                     SendCarOCBIntroEmailJob::dispatch($quote->uuid, $previousAdvisor, true);
                     info($logPrefix.' Quote Tag created. : '.QuoteSegmentEnum::SIC->tag().' for UUID: '.$quote->uuid);

@@ -16,7 +16,6 @@ use App\Models\CarModelDetail;
 use App\Models\User;
 use App\Services\BaseService;
 use App\Services\SendEmailCustomerService;
-use App\Services\SIBService;
 use Carbon\Carbon;
 
 class CarEmailService extends BaseService

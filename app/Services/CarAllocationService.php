@@ -52,19 +52,19 @@ class CarAllocationService extends AllocationService
 
         // Create a query to retrieve a car lead based on the provided quote ID and filters.
         $carQuoteQuery = CarQuote::where('uuid', $quoteId)
-        ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-        ->whereNotIn('source', $exemptedLeadSources)
-        ->where('is_renewal_tier_email_sent', 0)
-        ->where(function ($query) {
-            $query->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
-                ->orWhere(function ($query) {
-                    $query->where('sic_flow_enabled', 1)
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('source', $exemptedLeadSources)
+            ->where('is_renewal_tier_email_sent', 0)
+            ->where(function ($query) {
+                $query->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+                    ->orWhere(function ($query) {
+                        $query->where('sic_flow_enabled', 1)
                             ->where(function ($query) {
                                 $query->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
                                     ->orWhere('sic_advisor_requested', 1);
                             });
-                });
-        });
+                    });
+            });
 
         if (! $overrideAdvisorId) {
             $carQuoteQuery->whereNull('advisor_id');
@@ -241,15 +241,15 @@ class CarAllocationService extends AllocationService
     {
         $isSICFlowEnabled = $carLead->sic_flow_enabled;
         $tiersQuery = Tier::where('is_active', 1)
-                    ->where('min_price', '<=', $carLead->car_value)
-                    ->where('max_price', '>=', $carLead->car_value)
-                    ->where('can_handle_tpl', 0)
-                    ->where('name', '!=', TiersEnum::TIER_R)
-                    ->where(function ($query) use ($isSICFlowEnabled) {
-                        if ($isSICFlowEnabled) {
-                            $query->whereNotIn('name', '!=', TiersEnum::TIER_L);
-                        }
-                    });
+            ->where('min_price', '<=', $carLead->car_value)
+            ->where('max_price', '>=', $carLead->car_value)
+            ->where('can_handle_tpl', 0)
+            ->where('name', '!=', TiersEnum::TIER_R)
+            ->where(function ($query) use ($isSICFlowEnabled) {
+                if ($isSICFlowEnabled) {
+                    $query->whereNotIn('name', '!=', TiersEnum::TIER_L);
+                }
+            });
 
         $tier = $tiersQuery->first();
 
