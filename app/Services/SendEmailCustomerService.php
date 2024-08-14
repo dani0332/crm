@@ -504,11 +504,6 @@ class SendEmailCustomerService extends BaseService
         try {
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
             info("sendLMSIntroEmail ---- Tag : {$tag} for ID : {$quoteId}");
-            $headers = [
-                'Accept' => 'application/json',
-                'api-key' => $this->apiKey,
-                'Content-Type' => 'application/json',
-            ];
             $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.' - ';
             $attachments = $this->getEmailAttachments($emailData);
 
@@ -696,18 +691,7 @@ class SendEmailCustomerService extends BaseService
                 $body['replyTo'] = ['email' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_EMAIL_REPLY_TO), 'name' => 'InsuranceMarket.ae'];
             }
 
-            $response = Http::withHeaders($headers)
-                ->beforeSending(function ($request) use ($quoteId) {
-                    info('sendNonAdvisorIntroEmail ---- Request is Sending '.$quoteId);
-                })
-                ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
-                ->retry(3, 90000)
-                ->post($this->url, $body);
-
-            info('sendNonAdvisorIntroEmail ---- Request Sent '.$quoteId);
-            $responseCode = $response->status();
-            info('sendNonAdvisorIntroEmail ---- Received Code : '.$responseCode.' '.$quoteId);
-            info('sendNonAdvisorIntroEmail ---- response object : '.json_encode($response->object()));
+            ['code' => $responseCode, 'response' => $response, 'sent' => $isEmailSent] = $this->sendMail($body);
         } catch (Exception $ex) {
             $isEmailSent = 0;
             $responseCode = $ex->getCode();

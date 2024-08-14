@@ -197,6 +197,7 @@ onMounted(() => {
               size="sm"
               v-show="policyForm.editMode"
               @click.prevent="cancelPolicyFrom"
+              v-if="readOnlyMode.isDisable === true"
               >Cancel</x-button
             >
 
@@ -205,6 +206,7 @@ onMounted(() => {
               type="submit"
               size="sm"
               v-show="policyForm.editMode"
+              v-if="readOnlyMode.isDisable === true"
               >Update</x-button
             >
 
@@ -214,6 +216,7 @@ onMounted(() => {
               type="submit"
               v-show="!policyForm.editMode"
               @click.prevent="policyForm.editMode = true"
+              v-if="readOnlyMode.isDisable === true"
               >Edit</x-button
             >
           </div>
