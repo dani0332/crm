@@ -21,6 +21,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Log;
 
 class SendCarOCBIntroEmailJob implements ShouldQueue
@@ -129,5 +130,10 @@ class SendCarOCBIntroEmailJob implements ShouldQueue
         } catch (Exception $e) {
             Log::error('SendDubaiNowInternalEmail - ERROR:'.$e->getMessage());
         }
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping($this->quoteUuid))->dontRelease()];
     }
 }
