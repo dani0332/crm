@@ -56,6 +56,7 @@ const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const quoteStatusEnum = page.props.quoteStatusEnum;
+const can = permission => useCan(permission);
 
 const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at),
@@ -473,6 +474,12 @@ const linkEntity = () => {
       console.log(err);
     });
 };
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
@@ -511,7 +518,7 @@ const onAddUpdate = () => {
           Stale for {{ countDays }}
         </p>
       </template>
-      <template #default>
+      <template #default v-if="readOnlyMode.isDisable === true">
         <LeadNotes
           :documentType="noteDocumentType"
           :notes="quoteNotes"
@@ -1043,6 +1050,7 @@ const onAddUpdate = () => {
           size="sm"
           :loading="customerProfileForm.processing"
           @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
         >
           Search
         </x-button>
@@ -1089,6 +1097,16 @@ const onAddUpdate = () => {
               disabled
             />
           </dd>
+        </div>
+        <div class="text-left space-x-4">
+          <x-button
+            size="sm"
+            color="orange"
+            @click.prevent="linkEntity"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Link
+          </x-button>
         </div>
       </dl>
       <template #actions>
@@ -1202,6 +1220,7 @@ const onAddUpdate = () => {
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
               :disabled="allowStatusUpdate || isDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Change Status
             </x-button>
@@ -1336,7 +1355,12 @@ const onAddUpdate = () => {
         <template #body>
           <x-divider class="my-4" />
           <div class="flex justify-end mb-4">
-            <x-button size="sm" color="orange" @click.prevent="addActivity">
+            <x-button
+              size="sm"
+              color="orange"
+              @click.prevent="addActivity"
+              v-if="readOnlyMode.isDisable === true"
+            >
               Add Activity
             </x-button>
           </div>
@@ -1366,6 +1390,7 @@ const onAddUpdate = () => {
                   outlined
                   :disabled="item.status === 1"
                   @click.prevent="activityEdit(item)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Edit
                 </x-button>
@@ -1375,6 +1400,7 @@ const onAddUpdate = () => {
                   :disabled="item.status === 1"
                   outlined
                   @click.prevent="activityDelete(item.id)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Delete
                 </x-button>

@@ -6,21 +6,21 @@ use BenSampo\Enum\Enum;
 
 final class SendUpdateLogStatusEnum extends Enum
 {
-    const NEW_REQUEST = 'New Request';
-    const REQUEST_IN_PROGRESS = 'Request in progress';
+    const NEW_REQUEST = 'NEW_REQUEST';
+    const REQUEST_IN_PROGRESS = 'REQUEST_IN_PROGRESS';
 
     // const PAYMENT_PENDING = 'Payment Pending';
     // const PAYMENT_AUTHORIZED = 'Payment Authorized';
     // const SENT_FOR_TRANSACTION_APPROVAL = 'Sent for Transaction Approval';
-    const TRANSACTION_DECLINE = 'Transaction Declined';
-    const TRANSACTION_APPROVED = 'Transaction Approved';
+    const TRANSACTION_DECLINE = 'TRANSACTION_DECLINED';
+    const TRANSACTION_APPROVED = 'TRANSACTION_APPROVED';
     const UNPAID = 'Unpaid';
     const PARTIALLY_PAID = 'Partially paid';
     const FULL_PAID = 'Fully paid';
 
     // const STALE_REQUEST = 'Stale Request';
-    const UPDATE_SENT_TO_CUSTOMER = 'Update Sent to Customer';
-    const UPDATE_BOOKED = 'Update Booked';
+    const UPDATE_SENT_TO_CUSTOMER = 'UPDATE_SENT_TO_CUSTOMER';
+    const UPDATE_BOOKED = 'UPDATE_BOOKED';
     const SEND_UPDATE = 'SEND_UPDATE';
     const EF = 'EF';    // Endorsement Financial
     const EN = 'EN';    // Endorsement Non Financial

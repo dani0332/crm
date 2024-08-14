@@ -25,4 +25,8 @@ class Entity extends Model
             $query->where('customer_type', CustomerTypeEnum::Entity);
         });
     }
+    public function corporationCountry()
+    {
+        return $this->belongsTo(Nationality::class, 'country_of_corporation', 'id');
+    }
 }

@@ -38,7 +38,6 @@ use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Http\Requests\UpdatePolicyDetailRequest;
 use App\Jobs\CarRenewalEmailJob;
-use App\Jobs\SendOCBIntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
@@ -63,6 +62,7 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\NationalityRepository;
+use App\Repositories\PaymentRepository;
 use App\Repositories\QuoteNoteRepository;
 use App\Repositories\RenewalBatchRepository;
 use App\Repositories\SendUpdateLogRepository;
@@ -72,13 +72,13 @@ use App\Services\AllocationService;
 use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
 use App\Services\BusinessQuoteService;
-use App\Services\CarEmailService;
 use App\Services\CarQuoteService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\EmailDataService;
+use App\Services\EmailServices\CarEmailService;
 use App\Services\EmailStatusService;
 use App\Services\HealthQuoteService;
 use App\Services\HomeQuoteService;
@@ -537,6 +537,10 @@ class CRUDController extends Controller
         $paymentTooltipEnum = PaymentTooltip::asArray();
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         abort_if(! $record, 404);
+
+        /* Start - Temporarily adding for correcting historic data  */
+        (new PaymentRepository())->updatePriceVatApplicableAndVat($record, $this->genericModel->modelType);
+        /* End - Temporarily adding for correcting historic data  */
 
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($this->genericModel->modelType, $record);
         $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($record->id, $quoteType);
@@ -1577,9 +1581,9 @@ class CRUDController extends Controller
         $oldEntity = $this->crudService->getEntityByUUID($request->quote_uuid, $request->modelType);
         $result = $this->crudService->updateQuoteStatus($request);
         $entity = $result['entity'];
-        $plainEntity = $this->crudService->getLeadPlainEntityByUUID($request->modelType, $request->quote_uuid);
         if ($request->leadStatus == QuoteStatusEnum::TransactionApproved) {
-            $this->crudService->calculateScore($plainEntity);
+            $plainEntity = $this->getQuoteObject($request->modelType, $request->leadId);
+            $this->crudService->calculateScore($plainEntity, $request->modelType);
         }
 
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
@@ -1993,11 +1997,13 @@ class CRUDController extends Controller
     public function sendOCBEmailNB(Request $request, $quoteType, $quoteUuId)
     {
         if ($quoteUuId) {
-            Log::info('sendOCBEmailNB OCB email sending started for quote uuid: '.$quoteUuId);
 
-            SendOCBIntroEmailJob::dispatch($quoteUuId, null);
-
-            info('sendOCBEmailNB OCB email Job dispatched for quote uuid: '.$quoteUuId);
+            $ocbEmailJob = QuoteTypes::getName(QuoteTypes::getIdFromValue($quoteType))?->ocbEmailJob();
+            if ($ocbEmailJob) {
+                Log::info("sendOCBEmailNB OCB email sending started for quote uuid: {$quoteUuId}");
+                dispatch(new $ocbEmailJob($request->quoteUuid, null));
+                info("sendOCBEmailNB OCB email Job dispatched for quote uuid: {$quoteUuId}");
+            }
 
             return response()->json(['success' => 'OCB NB email sent to customer !']);
         } else {
@@ -2047,7 +2053,7 @@ class CRUDController extends Controller
 
     public function riskRatingDetails($quoteType, $uuid)
     {
-        $quoteModel = $this->getQuoteObject($quoteType, $uuid);
+        $quoteModel = $this->getQuoteObjectBy($quoteType, $uuid, 'uuid');
         $response = $this->crudService->scoreBreakdown($quoteModel, $quoteType);
 
         return $response;

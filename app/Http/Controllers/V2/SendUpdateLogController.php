@@ -193,6 +193,7 @@ class SendUpdateLogController extends Controller
 
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
+            'quoteLink' => QuoteTypes::getName($quoteTypeId)?->url($quote->uuid),
             'quoteType' => $quoteType,
             'sendUpdateLog' => $sendUpdateLog,
             'parentText' => $sendUpdateLog->category->parent->text,
@@ -349,16 +350,21 @@ class SendUpdateLogController extends Controller
         ]);
     }
 
-    public function sendUpdateToCustomer(UpdateToCustomerRequest $request)
+    public function sendUpdateToCustomer(UpdateToCustomerRequest $updateToCustomerRequest)
     {
-        $data = $request->validated();
+        $data = $updateToCustomerRequest->validated();
 
         $log = SendUpdateLogRepository::sendUpdateToCustomer($data);
 
-        if (! empty($log->message)) {
-            vAbort($log->message);
+        if (! empty($log?->message)) {
+            vAbort($log?->message);
         }
-        $message[] = SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER;
+
+        if ($log) {
+            $message[] = 'Update Sent to Customer.';
+        } else {
+            $message[] = 'Email Not Sent.';
+        }
 
         if ($log && isset($data['action']) && $data['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
             $sendUpdateRequest = new SendUpdateRequest();
@@ -368,6 +374,17 @@ class SendUpdateLogController extends Controller
                 $message[] = SendUpdateLogStatusEnum::UPDATE_BOOKED;
             }
         }
+
+        // temporary comments.
+        /*if ($data['isEmailSent']) {
+            $message[] = SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER;
+        } else {
+            $message[] = 'Send Update to customer email scheduled.';
+        }
+
+        if (isset($data['action']) && $data['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
+            $message[] = 'Book Update scheduled.';
+        }*/
 
         return response()->json($message);
     }
@@ -403,7 +420,7 @@ class SendUpdateLogController extends Controller
         $isPaymentFetchedFromMainLead = true;
 
         if (! isset($sendUpdateRequest->paymentValidated)) {
-            // Add insuficient Payment Validations here
+            // Add insufficient Payment Validations here
             $insufficientPaymentCheck = false;
             if ($payment && in_array($payment->payment_status_id, [PaymentStatusEnum::PARTIALLY_PAID, PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
                 $insufficientPaymentCheck = true;
@@ -420,8 +437,7 @@ class SendUpdateLogController extends Controller
 
         if ($payment) {
             $isPaymentFetchedFromMainLead = false;
-            $paymentDetailsUpdate = $this->sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate);
-            info('Book Update - Payment details updated. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
+            $paymentDetailsUpdate = true;
         }
 
         if ($paymentDetailsUpdate || $isPaymentFetchedFromMainLead) {

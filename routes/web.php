@@ -17,6 +17,7 @@ use App\Http\Controllers\CommercialVehicleConfigurationContoller;
 use App\Http\Controllers\CRUDController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\FailedJobsController;
 use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\HandlerController;
@@ -216,18 +217,18 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         });
     });
 
-    Route::group(['middleware' => ['permission:'.PermissionsEnum::DATA_EXTRACTION]], function () {
-        Route::get('/reports/management-report/export', [ReportsController::class, 'exportManagementReport'])->name('management-report-export');
-    });
-
     Route::group(['middleware' => ['permission:'.PermissionsEnum::EXTRACT_REPORT]], function () {
+        Route::get('/reports/management-report/export', [ReportsController::class, 'exportManagementReport'])->name('management-report-export');
         Route::post('/reports/conversion-as-at/pdf', [ReportsController::class, 'conversionAsAtReportPdf']);
     });
 
-    Route::get('embedded-products-reports', [EmbeddedProductController::class, 'reportsList'])->name('embedded-products.reports');
-    Route::get('embedded-products-reports/{ep}', [EmbeddedProductController::class, 'reportTransactions'])->name('embedded-products.reports.certificates');
-    Route::get('embedded-products-reports/{ep}/export', [EmbeddedProductController::class, 'reportExport'])->name('embedded-products.reports.certificates.export');
-    Route::resource('embedded-products', EmbeddedProductController::class);
+    Route::group(['prefix' => 'embedded/'], function () {
+        Route::get('reports', [EmbeddedProductController::class, 'reportsList'])->name('embedded-products.reports');
+        Route::get('reports/{ep}', [EmbeddedProductController::class, 'reportTransactions'])->name('embedded-products.reports.certificates');
+        Route::get('reports/{ep}/export', [EmbeddedProductController::class, 'reportExport'])->name('embedded-products.reports.certificates.export');
+        Route::resource('products', EmbeddedProductController::class, ['names' => 'embedded-products']);
+    });
+
     Route::resource('legacy-policy', LegacyPolicyController::class);
     Route::post('legacy-policy/move-to-imcrm', [LegacyPolicyController::class, 'moveToImcrm']);
     Route::get('legacy-policy/{policyNumber}/policy', [LegacyPolicyController::class, 'getPolicyByPolicyNumber'])->name('view-legacy-policy.renewal-uploads');
@@ -262,6 +263,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/payments/{quoteType}/update-total-price', [CentralController::class, 'updateTotalPrice'])->name('temp-update-totalprice')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/store-new', [CentralController::class, 'storeNewPayment'])->name('payment-create')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/update-new', [CentralController::class, 'updateNewPayment'])->name('payment-edit')->middleware('check_route_access');
+    Route::post('/payments/{quoteType}/retry-payment', [CentralController::class, 'retrySplitPayment'])->name('approve-payments')->middleware('check_route_access');
 
     Route::get('/quotes/car/post-sage-data', [SageApi::class, 'processSagePostTest'])->name('post-sage-data');
     // Route::post('/quotes/car/post-sage-data', [\App\Http\Controllers\V2\CarQuoteController::class, 'processSagePost'])->name('post-sage-data');
@@ -367,6 +369,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::group(['prefix' => 'admin'], function () {
         Route::resource('users', UserController::class);
         Route::resource('roles', RoleController::class);
+        Route::resource('departments', DepartmentController::class);
         Route::group(['prefix' => 'commerical-keywords'], function () {
             Route::get('/', [CommercialKeywordsController::class, 'index'])->name('admin.commercial.keywords');
             Route::get('/view/{commercialKeyword}', [CommercialKeywordsController::class, 'show'])->name('admin.commercial.keywords.show');
@@ -535,6 +538,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         //        Route::get('aml/upload/uae', [AMLController::class, 'uploadUaeSanctionList'])->name('uploadUaeSanctionList');
         //        Route::post('aml/upload/uae-list', [AMLController::class, 'uaeSanctionListUpload'])->name('uaeSanctionListUpload');
     });
+    Route::post('aml/update-quote-comment', [AMLController::class, 'updateQuoteComment'])->name('aml-update-quote-comment');
 
     Route::controller(SendUpdateLogController::class)->prefix('send-update')->name('send-update.')->group(function () {
         Route::post('get-options', 'getOptions')->name('get-options');
@@ -595,6 +599,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/update-payment-status', [AjaxController::class, 'updatePaymentStatus']);
     Route::post('/{quoteType}/upload-individual-kycdoc', [AjaxController::class, 'uploadKycIndividualDocument']);
     Route::post('/{quoteType}/upload-entity-kycdoc', [AjaxController::class, 'uploadKycEntityDocument']);
+    Route::post('/{quoteType}/update-risk', [AjaxController::class, 'updateRisk']);
+    Route::get('/{quoteType}/quote-detail/{quoteId}', [AjaxController::class, 'quoteDetail']);
+    // Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']); to be removed
     Route::post('/generate-payment-link', [AjaxController::class, 'generatePaymentLink']);
     Route::post('update-car-plan-details', [CarQuoteController::class, 'updateCarPlanDetails']);
     Route::post('/generate-payment-link-new', [CentralController::class, 'generatePaymentLink']);

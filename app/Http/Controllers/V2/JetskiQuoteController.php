@@ -16,6 +16,7 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\JetskiQuoteRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
+use App\Repositories\PaymentRepository;
 use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
@@ -91,6 +92,12 @@ class JetskiQuoteController extends Controller
      */
     public function show($uuid)
     {
+
+        /* Start - Temporarily adding for correcting historic data  */
+        $quote = JetskiQuoteRepository::where('uuid', $uuid)->first();
+        (new PaymentRepository())->updatePriceVatApplicableAndVat($quote, QuoteTypes::JETSKI->value);
+        /* End - Temporarily adding for correcting historic data  */
+
         $quote = JetskiQuoteRepository::getBy('uuid', $uuid);
 
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);

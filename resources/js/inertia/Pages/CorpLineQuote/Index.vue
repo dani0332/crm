@@ -332,6 +332,14 @@ watch(
     if (oldValue !== newValue) onSubmit(true);
   },
 );
+
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
+
 const resetDateFilters = filterName => {
   const filterMappings = {
     payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
@@ -391,10 +399,24 @@ const resetDateFilters = filterName => {
           @toggleFilters="showFilters = !showFilters"
         />
         <Link :href="route('business.cards')">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View</x-button>
+          <x-button
+            size="sm"
+            color="#1d83bc"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Cards View</x-button
+          >
         </Link>
         <Link :href="route('business.create')">
-          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead</x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Create Lead</x-button
+          >
         </Link>
       </template>
     </StickyHeader>
@@ -637,6 +659,7 @@ const resetDateFilters = filterName => {
                 class="flex-1 w-auto"
                 :rules="[isRequired]"
                 filterable
+                v-if="readOnlyMode.isDisable === true"
               />
               <div class="mb-3 md:pt-6">
                 <x-button
@@ -644,6 +667,7 @@ const resetDateFilters = filterName => {
                   size="sm"
                   type="submit"
                   :loading="assignForm.processing"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Assign
                 </x-button>

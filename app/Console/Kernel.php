@@ -30,6 +30,7 @@ class Kernel extends ConsoleKernel
         Commands\AutomateActivitiesCommand::class,
         Commands\PaymentOverdueStatus::class,
         Commands\AlfredFollowUpSchedulerCommand::class,
+        Commands\ProcessCCPaymentsCommand::class,
     ];
 
     /**
@@ -42,7 +43,8 @@ class Kernel extends ConsoleKernel
         $schedule
             ->command('UpdateUserStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
-        //$schedule->command('PaymentOverdueStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(5);
+        $schedule->command('PaymentOverdueStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(5);
+        $schedule->command('ProcessCCPaymentsCommand:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
         /*$schedule->job(new UnconSubmissionReminder)
         ->tuesdays()
