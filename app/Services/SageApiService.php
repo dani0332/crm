@@ -873,6 +873,7 @@ class SageApiService
                 'sendUpdateLog' => $extras['send_update_log'] ?? [],
                 'reversalInvoice' => [],
                 'extras' => [
+                    'authDetails' => $extras['authDetails'] ?? [],
                     'only_correction' => true,
                 ],
             ]);
