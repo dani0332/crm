@@ -190,7 +190,7 @@ class EndorsementReportService extends ManagementReport
     {
         return [
             'Ref-ID',
-            'SU Ref-ID',
+            'Department',
             'Policy Number',
             'Transactions',
             'Policy Start Date',
@@ -221,6 +221,7 @@ class EndorsementReportService extends ManagementReport
             'Broker Invoice No',
             'Booking Date',
             'Endorsement Sub-Type',
+            'SU Ref-ID',
         ];
     }
 
@@ -228,7 +229,7 @@ class EndorsementReportService extends ManagementReport
     {
         return [
             $quote->main_lead_code ?? 'N/A',
-            $quote->code ?? 'N/A',
+            $quote->department ?? 'N/A',
             $quote->policy_number ? '="'.$quote->policy_number.'"' : ('="'.$quote->main_lead_policy_number.'"' ?? 'N/A'),
             $quote->transactions ? $quote->transactions : 'N/A',
             $quote->policy_start_date ? $quote->policy_start_date : ($quote->main_lead_policy_start_date ?? 'N/A'),
@@ -259,6 +260,7 @@ class EndorsementReportService extends ManagementReport
             $quote->broker_invoice_number ?? 'N/A',
             $quote->booking_date ?? 'N/A',
             $quote->endorsement_sub_type ?? 'N/A',
+            $quote->code ?? 'N/A',
         ];
     }
 }
