@@ -2994,7 +2994,6 @@ const totalPriceFormat = computed(() => {
 const totalAmountFormat = computed(() => {
   return formatAmount(totalAmount.value);
 });
-
 </script>
 
 <template>

@@ -382,7 +382,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
     <Head title="Group Medical Lead Detail" />
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
-      <div class="flex gap-2 mb-3 justify-end" v-if="readOnlyMode.isDisable === true">
+      <div
+        class="flex gap-2 mb-3 justify-end"
+        v-if="readOnlyMode.isDisable === true"
+      >
         <Link
           v-if="
             quoteDetails?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)
@@ -816,7 +819,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   :modelType="'business'"
                 />
               </dl>
-              <div class="flex justify-end" v-if="readOnlyMode.isDisable === true">
+              <div
+                class="flex justify-end"
+                v-if="readOnlyMode.isDisable === true"
+              >
                 <x-button
                   v-if="isProfileUpdateAllow"
                   class="mt-4"

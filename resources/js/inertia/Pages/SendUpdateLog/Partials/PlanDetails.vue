@@ -151,10 +151,10 @@ watch(
   },
 );
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 </script>
 
@@ -348,7 +348,10 @@ onMounted(() => {
             </div>
           </dl>
         </div>
-        <div class="flex justify-end gap-2" v-if="readOnlyMode.isDisable === true">
+        <div
+          class="flex justify-end gap-2"
+          v-if="readOnlyMode.isDisable === true"
+        >
           <x-button size="sm" @click="onEdit" v-if="!state.isEdit">
             Edit
           </x-button>

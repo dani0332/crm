@@ -992,7 +992,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   </dd>
                 </div>
               </dl>
-              <div class="flex justify-end" v-if="readOnlyMode.isDisable === true">
+              <div
+                class="flex justify-end"
+                v-if="readOnlyMode.isDisable === true"
+              >
                 <x-button
                   v-if="isProfileUpdateAllow"
                   class="mt-4"
@@ -1345,7 +1348,12 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
         <template #body>
           <x-divider class="my-4" />
           <div class="mb-4 flex justify-end">
-            <x-button size="sm" color="orange" @click.prevent="addActivity" v-if="readOnlyMode.isDisable === true">
+            <x-button
+              size="sm"
+              color="orange"
+              @click.prevent="addActivity"
+              v-if="readOnlyMode.isDisable === true"
+            >
               Add Activity
             </x-button>
           </div>

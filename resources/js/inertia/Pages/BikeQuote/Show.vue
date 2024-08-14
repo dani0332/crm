@@ -362,7 +362,9 @@ const onAddUpdate = () => {
             v-if="!isDisabled"
             :href="route('bike-quotes-edit', quote.uuid)"
           >
-            <x-button size="sm" tag="div" v-if="readOnlyMode.isDisable === true">Edit</x-button>
+            <x-button size="sm" tag="div" v-if="readOnlyMode.isDisable === true"
+              >Edit</x-button
+            >
           </Link>
           <x-button v-else :disabled="isDisabled" size="sm" tag="div"
             >Edit</x-button
@@ -449,7 +451,7 @@ const onAddUpdate = () => {
         </dl>
 
         <AddOn
-              v-if="bikeQuotePlanAddons.length > 0"
+          v-if="bikeQuotePlanAddons.length > 0"
           :quotePlanAddons="bikeQuotePlanAddons"
         />
       </div>
@@ -939,7 +941,12 @@ const onAddUpdate = () => {
       </dl>
       <template #actions>
         <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity" v-if="readOnlyMode.isDisable === true">
+          <x-button
+            size="sm"
+            color="orange"
+            @click.prevent="linkEntity"
+            v-if="readOnlyMode.isDisable === true"
+          >
             Link
           </x-button>
         </div>

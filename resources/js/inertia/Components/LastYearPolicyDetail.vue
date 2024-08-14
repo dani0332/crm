@@ -76,10 +76,10 @@ function onSubmit(isValid) {
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 </script>
 
@@ -193,11 +193,11 @@ onMounted(() => {
                 :error="policyForm.errors.renewal_batch"
               />
             </x-field>
-              <div v-if="readOnlyMode.isDisable === true">
-            <x-button v-if="allowEdit" color="primary" type="submit">
-              Update
-            </x-button>
-              </div>
+            <div v-if="readOnlyMode.isDisable === true">
+              <x-button v-if="allowEdit" color="primary" type="submit">
+                Update
+              </x-button>
+            </div>
           </div>
         </x-form>
       </template>

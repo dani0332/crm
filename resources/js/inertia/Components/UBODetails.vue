@@ -216,25 +216,25 @@ const [DeleteUBOButtonTemplate, DeleteUBOButtonReuseTemplate] =
           </h3>
         </div>
       </template>
-      <template #body >
+      <template #body>
         <x-divider class="my-4" />
 
-        <AddUBOButtonTemplate v-slot="{ isDisabled }" >
-            <div v-if="readOnlyMode.isDisable === true">
-          <x-button
-            v-if="
-              page.props.quote?.quote_request_entity_mapping?.entity_id ??
-              page.props.quote.entity_id
-            "
-            @click.prevent="addUBOModal"
-            size="sm"
-            color="orange"
-            :loading="isLoading"
-            :disabled="isDisabled"
-          >
-            Add UBO
-          </x-button>
-            </div>
+        <AddUBOButtonTemplate v-slot="{ isDisabled }">
+          <div v-if="readOnlyMode.isDisable === true">
+            <x-button
+              v-if="
+                page.props.quote?.quote_request_entity_mapping?.entity_id ??
+                page.props.quote.entity_id
+              "
+              @click.prevent="addUBOModal"
+              size="sm"
+              color="orange"
+              :loading="isLoading"
+              :disabled="isDisabled"
+            >
+              Add UBO
+            </x-button>
+          </div>
         </AddUBOButtonTemplate>
 
         <div class="flex mb-3 justify-end">

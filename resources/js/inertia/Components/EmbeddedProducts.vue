@@ -355,10 +355,10 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const canAny = permissions => useCanAny(permissions);
 const can = permission => useCan(permission);
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 </script>
 
@@ -444,7 +444,10 @@ onMounted(() => {
           </template>
 
           <template #item-actions="item">
-            <div class="flex flex-col gap-1" v-if="readOnlyMode.isDisable === true">
+            <div
+              class="flex flex-col gap-1"
+              v-if="readOnlyMode.isDisable === true"
+            >
               <x-button
                 size="xs"
                 color="emerald"

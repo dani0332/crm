@@ -1966,7 +1966,13 @@ const onAddUpdate = () => {
 
           <LeadEditBtnTemplate v-slot="{ isDisabled }">
             <Link v-if="!isDisabled" :href="route('car.edit', record.uuid)">
-              <x-button size="sm" color="primary" tag="div" v-if="readOnlyMode.isDisable === true">Edit</x-button>
+              <x-button
+                size="sm"
+                color="primary"
+                tag="div"
+                v-if="readOnlyMode.isDisable === true"
+                >Edit</x-button
+              >
             </Link>
             <x-button
               v-else
@@ -3268,18 +3274,20 @@ const onAddUpdate = () => {
                 >
                   View
                 </x-button>
-                  <div v-if="readOnlyMode.isDisable === true">
-                <x-button
-                  size="xs"
-                  color="error"
-                  outlined
-                  @click.prevent="copyPlanURL(item)"
-                  v-if="item.discountPremium + item.vat + totalPriceVAT > 0"
-                  :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
-                >
-                  Copy
-                </x-button>
-                  </div>
+                <div v-if="readOnlyMode.isDisable === true">
+                  <x-button
+                    size="xs"
+                    color="error"
+                    outlined
+                    @click.prevent="copyPlanURL(item)"
+                    v-if="item.discountPremium + item.vat + totalPriceVAT > 0"
+                    :disabled="
+                      page.props.linkedQuoteDetails.childLeadsCount > 0
+                    "
+                  >
+                    Copy
+                  </x-button>
+                </div>
                 <!-- <template
                   v-if="item.actualPremium > 0 && item.id != record.plan_id"
                 >

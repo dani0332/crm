@@ -232,10 +232,10 @@ const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 </script>
 
@@ -250,7 +250,10 @@ onMounted(() => {
 
       <template #body>
         <x-divider class="my-4" />
-        <div class="mb-4 flex justify-end" v-if="readOnlyMode.isDisable === true">
+        <div
+          class="mb-4 flex justify-end"
+          v-if="readOnlyMode.isDisable === true"
+        >
           <x-button
             v-if="
               can(permissionsEnum.PaymentsCreate) &&
