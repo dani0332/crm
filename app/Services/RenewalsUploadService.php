@@ -999,8 +999,8 @@ class RenewalsUploadService
                 $quoteData['vehicle_type_id'] = $carModelDetail->vehicle_type_id;
             }
 
-            if ($renewalUploadLead->skip_plans == 2 && $data['make'] == 'MOTOR BIKE') {
-                $quoteData['vehicle_type_id'] = VehicleType::where('text', 'BIKE')->first()->id ?? null;
+            if ($renewalUploadLead->skip_plans == 2 && $data['make'] == GenericRequestEnum::MOTOR_BIKE) {
+                $quoteData['vehicle_type_id'] = VehicleType::where('text', GenericRequestEnum::BIKE)->first()->id ?? null;
             }
 
             $quoteData['vehicle_type_id'] = ! empty($data['vehicle_type_id'] ?? '') ? $data['vehicle_type_id'] : ($quoteData['vehicle_type_id'] ?? null);

@@ -164,6 +164,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
             :loading="quoteStatusForm.processing"
             @click.prevent="onLeadStatus"
             :disabled="allowStatusUpdate || isDisabled"
+            v-if="readOnlyMode.isDisable === true"
           >
             Change Status
           </x-button>
