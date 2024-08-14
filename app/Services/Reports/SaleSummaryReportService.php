@@ -291,13 +291,13 @@ class SaleSummaryReportService extends ManagementReport
     public function headings(): array
     {
         $headings = [
-            ucwords(str_replace('_', ' ', $this->groupByColumn))
+            ucwords(str_replace('_', ' ', $this->groupByColumn)),
         ];
 
-        if(in_array($this->groupByColumn, ['advisor', 'department'])) {
+        if (in_array($this->groupByColumn, ['advisor', 'department'])) {
             $headings[] = 'Department';
         }
-        
+
         return [
             ...$headings,
             'Total Policies',
@@ -317,7 +317,7 @@ class SaleSummaryReportService extends ManagementReport
     {
         $groupBy = $this->groupByColumn;
         $values = [
-            $quote->$groupBy ?? 'N/A'
+            $quote->$groupBy ?? 'N/A',
         ];
 
         if (in_array($this->groupByColumn, ['advisor', 'department'])) {
