@@ -1514,14 +1514,11 @@ const isPlanDetailEnabled = computed(() => {
     // Check rules for commercial
     return true;
   }
-
   if (page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD) {
     return page.props.record.vehicle_type_id_text == 'BIKE';
   }
-
   return false;
 });
-
 if (isPlanDetailEnabled.value && page.props.record.insurer_name !== '') {
   selectedProviderPlan.value.premium = page.props.record.price_with_vat;
   selectedProviderPlan.value.providerName = page.props.record.insurer_name;
