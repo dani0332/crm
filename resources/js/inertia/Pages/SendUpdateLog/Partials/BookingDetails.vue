@@ -555,7 +555,8 @@ function reverseValue(value) {
 
 function updateReversalEntries(payment, sendUpdate) {
   reversalEntry.transaction_payment_status = 'N/A';
-  reversalEntry.invoice_description = payment.invoice_description || sendUpdate.invoice_description || '';
+  reversalEntry.invoice_description =
+    payment.invoice_description || sendUpdate.invoice_description || '';
   reversalEntry.booking_date =
     props.sendUpdateLog.status !== sendUpdateStatusEnum.UPDATE_BOOKED
       ? 'N/A'
@@ -580,9 +581,7 @@ function updateReversalEntries(payment, sendUpdate) {
     sendUpdate?.price_vat_applicable ||
     payment.paymentable?.price_vat_applicable;
   reversalEntry.commission_percentage =
-    sendUpdate?.commission_percentage ||
-    payment.commmission_percentage ||
-    null;
+    sendUpdate?.commission_percentage || payment.commmission_percentage || null;
   reversalEntry.price_vat_not_applicable =
     sendUpdate?.price_vat_not_applicable ||
     payment.paymentable?.price_vat_not_applicable;
