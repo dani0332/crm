@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\EmailServices;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
 use App\Jobs\SICFollowupEmailJob;
 use App\Models\ApplicationStorage;
@@ -13,6 +14,9 @@ use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
 use App\Models\User;
+use App\Services\BaseService;
+use App\Services\SendEmailCustomerService;
+use App\Services\SIBService;
 use Carbon\Carbon;
 
 class CarEmailService extends BaseService
@@ -68,14 +72,14 @@ class CarEmailService extends BaseService
         }
 
         if ($lead->advisor_id) {
-            $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
+            $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email', QuoteTypes::CAR);
         } else {
             info('sendCarOCBIntroEmail - sendNonAdvisorIntroEmail - Ref ID:'.$lead->uuid.' Time: '.now());
-            $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId);
+            $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId, QuoteTypes::CAR);
             if ($responseCode) {
-                $this->sendEmailCustomerService->sendSICFollowupEmail($lead);
+                $this->sendEmailCustomerService->sendSICFollowupEmail($lead, QuoteTypes::CAR);
                 // Dispatch the job with a 24 hours delay
-                SICFollowupEmailJob::dispatch($lead->uuid)->delay(Carbon::now()->addHours(24));
+                SICFollowupEmailJob::dispatch($lead->uuid, QuoteTypes::CAR)->delay(Carbon::now()->addHours(24));
                 info('sendCarOCBIntroEmail - SICFollowupEmailJob Dispatched - Ref ID:'.$lead->uuid.' Time: '.now());
             }
         }
@@ -139,20 +143,7 @@ class CarEmailService extends BaseService
         $whatsAppNumber = ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
 
         $isRevivalLead = $carQuote->source == LeadSourceEnum::REVIVAL || $carQuote->source == LeadSourceEnum::REVIVAL_PAID || $carQuote->source == LeadSourceEnum::REVIVAL_REPLIED;
-        $wfsBanner = null;
-        $wfsBannerRedirectUrl = null;
-
-        $campaign = getMyAlfredCampaign(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN));
-        if ($campaign) {
-            if (property_exists($campaign, 'banners') && property_exists($campaign->banners, 'buyPolicy')) {
-                $wfsBanner = $campaign->banners->buyPolicy;
-            }
-            if (property_exists($campaign, 'landingPage')) {
-                $wfsBannerRedirectUrl = $campaign->landingPage;
-            }
-        }
-
-        // info('wfsBanner: '.$wfsBanner.' wfsBannerRedirectUrl: '.$wfsBannerRedirectUrl);
+        [$emailCampaignBanner, $emailCampaignBannerRedirectUrl] = getEmailCampaignBanner();
 
         return (object) [
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
@@ -163,43 +154,20 @@ class CarEmailService extends BaseService
             'landLine' => (! empty($advisor->landline_no) ? formatLandlineDisplay($advisor->landline_no) : ''),
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
             'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
-            'documentUrl' => ! $wfsBanner ? [$documentUrl] : [],
+            'documentUrl' => ! $emailCampaignBanner ? [$documentUrl] : [],
             'carQuoteId' => $carQuote->code,
             'yearOfManufacture' => $carQuote->year_of_manufacture,
             'vehicleName' => $this->getVehicleName($carQuote),
             'currentInsurer' => $carQuote->currently_insured_with,
             'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid.($isRevivalLead ? '?dla=true' : ''), // DLA = Disable Lead Assignment
             'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid.'/?assignAdvisor=true',
-            'assignmentType' => $this->getAssignmentTypeText($carQuote->assignment_type),
+            'assignmentType' => getAssignmentTypeText($carQuote->assignment_type),
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
             'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
             'isReAssignment' => ! empty($previousAdvisor),
-            'wfsBanner' => $wfsBanner,
-            'wfsBannerRedirectUrl' => $wfsBannerRedirectUrl,
+            'wfsBanner' => $emailCampaignBanner,
+            'wfsBannerRedirectUrl' => $emailCampaignBannerRedirectUrl,
         ];
-    }
-
-    private function getAssignmentTypeText($assignmentType)
-    {
-        $assignmentText = '';
-        switch ($assignmentType) {
-            case 1:
-                $assignmentText = 'System Assigned';
-                break;
-            case 2:
-                $assignmentText = 'System ReAssigned';
-                break;
-            case 3:
-                $assignmentText = 'Manual Assigned';
-                break;
-            case 4:
-                $assignmentText = 'Manual ReAssigned';
-                break;
-            default:
-                break;
-        }
-
-        return $assignmentText;
     }
 
     private function getPlanBenefits($plan)

@@ -1053,4 +1053,24 @@ class LeadAllocationService extends BaseService
         }
     }
 
+    public function isCommercialVehicles($lead)
+    {
+        $isCommercial = false;
+        $commercialCarModel = CarModel::where('id', $lead->car_model_id)
+            ->where('is_commercial', true)
+            ->count();
+
+        if ($commercialCarModel) {
+            $isCommercial = true;
+        }
+
+        $commercialKeywords = CommercialKeyword::select('id', 'name')->get();
+        $commercialKeywordsCheck = in_array(strtolower(trim($lead->full_name)), array_column($commercialKeywords->toArray(), strtolower(trim('name'))));
+        if ($commercialKeywordsCheck) {
+            $isCommercial = true;
+        }
+
+        return $isCommercial;
+    }
+
 }

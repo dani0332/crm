@@ -192,4 +192,9 @@ class Payment extends Model implements Auditable
             return $value;
         }
     }
+
+    public function isPaymentAuthorized()
+    {
+        return $this->payment_status_id == PaymentStatusEnum::AUTHORISED;
+    }
 }
