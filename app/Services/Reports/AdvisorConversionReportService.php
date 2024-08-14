@@ -516,7 +516,7 @@ class AdvisorConversionReportService extends BaseService
         if (isset($filters->leadSourceFilter) && count($filters->leadSourceFilter) > 0) {
             $query->whereIn('car_quote_request.source', $filters->leadSourceFilter);
         } else {
-            $query->whereNotIn('car_quote_request.source', [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO , LeadSourceEnum::SAPJO]);
+            $query->whereNotIn('car_quote_request.source', [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO]);
             if ($isPopup === true) {
                 $query->whereNull('car_quote_request.renewal_import_code');
             }
