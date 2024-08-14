@@ -79,6 +79,7 @@ class SendUpdateLogRepository extends BaseRepository
                 'code' => $code,
                 'provider_name' => isset($insuranceProvider) ? $insuranceProvider->text : '',
                 'insurance_provider_id' => $personalQuote->insurance_provider_id ?? null,
+                'created_by' => auth()->user()->id,
             ]);
             // it will check if send update type is Correction of Policy Details or Enorsement Financial with subtype Policy Period Extension, it will save
             // insurance_provider_id and plan_id.
@@ -233,6 +234,21 @@ class SendUpdateLogRepository extends BaseRepository
                 'insurer_quote_number' => $data['insurer_quote_number'] ?? null,
                 'issuance_status_id' => $data['issuance_status_id'] ?? null,
                 'is_policy_filled' => SendUpdateLogStatusEnum::POLICY_FILLED,
+            ]);
+        } catch (\Exception $ex) {
+            $result = (object) [
+                'message' => $ex->getMessage(),
+            ];
+        }
+
+        return $result;
+    }
+
+    public function fetchSaveProviderDetails($data)
+    {
+        try {
+            $result = $this->find($data['send_update_log_id'])->update([
+                'insurance_provider_id' => $data['insurance_provider_id'],
             ]);
         } catch (\Exception $ex) {
             $result = (object) [

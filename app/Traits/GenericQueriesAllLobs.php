@@ -192,6 +192,30 @@ trait GenericQueriesAllLobs
         return $customer;
     }
 
+    public function inslyInsurances()
+    {
+        return [
+            QuoteTypes::BIKE->value => ['Bike insurance'],
+            QuoteTypes::BUSINESS->value => [
+                'business interruption insurance', 'contractors all risks', 'Cyber liability', 'directors and officers liability insurance',
+                'Engineering and plant insurance', 'fidelity guarantee', 'group life', 'group medical insurance', 'holiday homes',
+                'livestock insurance', 'machinery breakdown insurance', 'marine cargo (individual shipment) insurance',
+                'marine hull insurance', 'medical malpractice insurance', 'money insurance', 'motor fleet',
+                'open cover - marine cargo insurance', 'professional indemnity insurance', 'property insurance',
+                'public liability insurance', 'road transit (international)', 'road transit (UAE only)',
+                'sme packaged insurance', 'trade credit insurance', 'workmens compensation insurance',
+            ],
+            QuoteTypes::CAR->value => ['casco', 'motor insurance - Comprehensive', 'motor insurance - TPL'],
+            QuoteTypes::LIFE->value => ['Critical illness', 'Individual life insurance'],
+            QuoteTypes::HOME->value => ['Home insurance', 'personal accident', 'home insurance'],
+            QuoteTypes::TRAVEL->value => ['Inbound travel insurance', 'Outbound travel insurance'],
+            QuoteTypes::HEALTH->value => ['Individual or family medical'],
+            QuoteTypes::CYCLE->value => ['Pedal cycle insurance'],
+            QuoteTypes::PET->value => ['Pet insurance'],
+            QuoteTypes::YACHT->value => ['Yacht insurance'],
+        ];
+    }
+
     /**
      * add comments & improvements needed
      * This method called when we visit all LOB's details page
