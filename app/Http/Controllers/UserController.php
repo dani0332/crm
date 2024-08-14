@@ -51,8 +51,8 @@ class UserController extends Controller
                 'u1.email',
                 DB::raw('(SELECT GROUP_CONCAT(roles.name) FROM users INNER JOIN model_has_roles ON model_has_roles.model_id = users.id INNER JOIN roles ON roles.id = model_has_roles.role_id WHERE users.id = u1.id GROUP BY users.name) as roles'),
                 'teams.name as teamName',
-                 DB::raw('DATE_FORMAT(u1.updated_at, "%Y-%m-%d %H:%i") as updated_at'),
-                 DB::raw('DATE_FORMAT(u1.created_at, "%Y-%m-%d %H:%i") as created_at'),
+                DB::raw('DATE_FORMAT(u1.updated_at, "%Y-%m-%d %H:%i") as updated_at'),
+                DB::raw('DATE_FORMAT(u1.created_at, "%Y-%m-%d %H:%i") as created_at'),
                 'u1.is_active',
             ])
             ->leftJoin('user_team', 'user_team.user_id', '=', 'u1.id')
