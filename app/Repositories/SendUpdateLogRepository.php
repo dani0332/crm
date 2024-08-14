@@ -272,7 +272,7 @@ class SendUpdateLogRepository extends BaseRepository
                 }
             }
 
-            SendUpdateToCustomerJob::dispatchSync($sendUpdateLog, $data);
+            dispatch(new SendUpdateToCustomerJob($sendUpdateLog, $data));
 
             /*$sendUpdateLog->update([
                 'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
