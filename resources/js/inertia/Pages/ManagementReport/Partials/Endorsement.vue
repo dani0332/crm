@@ -24,10 +24,6 @@ const tableHeader = reactive([
     value: 'quote_uuid',
   },
   {
-    text: 'SU Ref-ID',
-    value: 'code',
-  },
-  {
     text: 'Department',
     value: 'department',
   },
@@ -152,6 +148,10 @@ const tableHeader = reactive([
   {
     text: 'Endorsement Sub-type',
     value: 'endorsement_sub_type',
+  },
+  {
+    text: 'SU Ref-ID',
+    value: 'code',
   },
 ]);
 const isIntegerColumn = key => {

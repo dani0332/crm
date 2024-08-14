@@ -82,28 +82,27 @@ watchEffect(() => {
   const headerText =
     props.groupBy != null ? headerMap[props.groupBy] : headerMap['advisor'];
 
+  const index = tableHeader.findIndex(item => item.value === 'department');
+  if (index !== -1) {
+    tableHeader.splice(index, 1);
+  }
+
   const newItem = { text: headerText, value: props.groupBy };
   headerText && tableHeader[0].text === 'T. Policies'
     ? tableHeader.unshift(newItem)
     : tableHeader.splice(0, 1, newItem);
-  console.log(
-    ';props.groupBy',
-    props.groupBy,
-    '| headerMap[props.groupBy]',
-    headerMap[props.groupBy],
-    '| headerMap',
-    headerMap['advisor'],
-  );
+
   if (props.groupBy === 'advisor') {
-    tableHeader.unshift({ text: 'Department', value: 'department' });
-  } else {
-    const index = tableHeader.findIndex(
-      item => item.text === 'Department' && item.value === 'department',
-    );
-    if (index !== -1) {
-      tableHeader.splice(index, 1);
+    if (!tableHeader.some(item => item.value === 'department')) {
+      tableHeader.unshift({ text: 'Department', value: 'department' });
     }
   }
+
+  tableHeader.sort((a, b) => {
+    if (a.value === props.groupBy) return -1;
+    if (b.value === props.groupBy) return 1;
+    return 0;
+  });
 });
 
 const calculateTotalSum = useCalculateTotalSum;
