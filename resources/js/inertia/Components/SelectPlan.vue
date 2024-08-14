@@ -4,6 +4,10 @@ const props = defineProps({
     plan: Object,
     quoteType: String,
     uuid: String,
+    disabled: {
+        type: Boolean,
+        default: false
+    },
     extraDetails: {
         type: Object,
         default: {}
@@ -134,6 +138,7 @@ watch(() => {
         size="xs"
         color="success"
         outlined
+        :disabled="props.disabled"
         :loading="isLoading"
         v-if="isPlanSelectionEnable"
         @click.prevent="updateSelectedPlan()"

@@ -87,6 +87,7 @@ class DatabaseSeeder extends Seeder
             // DocumentVerifyPermissionSeeder::class,
             AddLOBsClaimHistoryOptionsSeeder::class,
             AddRenewalTemplateStorageSeeder::class,
+            CarMakeSeeder::class,
         ]);
     }
 }
