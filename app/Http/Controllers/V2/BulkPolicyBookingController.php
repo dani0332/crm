@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\PermissionsEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookBulkPoliciesRequest;
+use App\Jobs\BulkPolicyBookingOnSage;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
@@ -41,19 +42,11 @@ class BulkPolicyBookingController extends Controller
 
     public function sendPoliciesForSageBulkBooking(BookBulkPoliciesRequest $request)
     {
-        $quoteType = $request->model_type;
-        $quoteIDs = $request->selectedQuoteIds;
-        $quoteErrors = collect([]);
-        foreach ($quoteIDs as $quoteID) {
-            $quote = $this->getQuoteObject($quoteType, $quoteID);
-            if ($quote) {
-                $response = (new SageApiService())->postBookPolicyToSage($request, $quote);
-                if (! $response['status']) {
-                    /* Log error in globel table for this lead */;
-                }
 
-            }
-        }
+        BulkPolicyBookingOnSage::dispatch($request)->onQueue('sage-book-policy');
+
+        return ['status' => true, 'message' => 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!'];
+
     }
 
 }
