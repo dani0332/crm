@@ -461,7 +461,7 @@ class AdvisorConversionReportService extends BaseService
         ];
     }
 
-    public function applyFilters($query, $filters)
+    public function applyFilters($query, $filters, $isPopup)
     {
         $filters = (object) $filters;
         $lob = $filters->lob ?? '';
@@ -514,7 +514,12 @@ class AdvisorConversionReportService extends BaseService
         }
 
         if (isset($filters->leadSourceFilter) && count($filters->leadSourceFilter) > 0) {
-            $query->whereIn('personal_quotes.source', $filters->leadSourceFilter);
+            $query->whereIn('car_quote_request.source', $filters->leadSourceFilter);
+        } else {
+            $query->whereNotIn('car_quote_request.source', [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO]);
+            if ($isPopup === true) {
+                $query->whereNull('car_quote_request.renewal_import_code');
+            }
         }
 
         if (isset($filters->teamsFilter) && count($filters->teamsFilter) > 0) {
@@ -672,7 +677,7 @@ class AdvisorConversionReportService extends BaseService
         return $query;
     }
 
-    public function applyFiltersForCar($query, $filters)
+    public function applyFiltersForCar($query, $filters, $isPopup)
     {
         $filters = (object) $filters;
 
@@ -726,7 +731,12 @@ class AdvisorConversionReportService extends BaseService
             $query->whereIn('car_quote_request.tier_id', $filters->tiersFilter);
         }
         if (isset($filters->leadSourceFilter) && count($filters->leadSourceFilter) > 0) {
-            $query->whereIn('car_quote_request.source', $filters->leadSourceFilter);
+            $query->whereIn('personal_quotes.source', $filters->leadSourceFilter);
+        } else {
+            $query->whereNotIn('personal_quotes.source', [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO]);
+            if ($isPopup === true) {
+                $query->whereNull('personal_quotes.renewal_import_code');
+            }
         }
         if (isset($filters->teamsFilter) && count($filters->teamsFilter) > 0) {
             $value = $filters->teamsFilter;
@@ -813,10 +823,10 @@ class AdvisorConversionReportService extends BaseService
         $lob = $filters['lob'] ?? quoteTypeCode::Car;
         if ($lob === quoteTypeCode::Car) {
             $query = $this->getCarQuoteAssignedLeadsQuery();
-            $query = $this->applyFiltersForCar($query, $filters);
+            $query = $this->applyFiltersForCar($query, $filters, true);
         } else {
             $query = $this->getPersonalQuoteAssignedLeadsQuery($lob);
-            $query = $this->applyFilters($query, $filters);
+            $query = $this->applyFilters($query, $filters, true);
         }
 
         return $query->paginate(10);
