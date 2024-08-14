@@ -477,8 +477,9 @@ class SageApiService
                 return ['payment' => $payment, 'splitPayments' => $splitPayments];
             } else {
                 $getQuoteDetails = $this->getQuoteObjectBy($request->quoteType, $request->quoteUuid, 'uuid');
+                $checkInslyMigratedLead = $this->checkInslyMigratedLead($request);
 
-                if ($request->inslyMigrated) {
+                if ($checkInslyMigratedLead) {
                     info('Book Update - Creating payment details based on the send update - The lead originated from Insly. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
                     $payment = new Payment();
                     $splitPayments = collect([new PaymentSplits()]);
@@ -523,7 +524,7 @@ class SageApiService
 
                 $response = ['payment' => $payment, 'splitPayments' => $splitPayments];
 
-                if (! $request->inslyMigrated) {
+                if (! $checkInslyMigratedLead) {
                     // Most CPD cases have no value then should it set as Credit Note - Need to verify this with Denber
                     $mainLeadDetails = [
                         'payment' => [
@@ -538,6 +539,19 @@ class SageApiService
                 return $response;
             }
         }
+    }
+
+    public function checkInslyMigratedLead($request) 
+    {
+        $inslyMigrated = false;
+        if ($request->inslyMigrated) {
+            $inslyMigrated = true;
+        } else {
+            $getQuoteDetails = $this->getQuoteDetailObject($request->quoteType, $request->quoteRefId);
+            $inslyMigrated = !empty($getQuoteDetails->insly_id) && $getQuoteDetails->insly_id != null;
+        }
+
+        return $inslyMigrated;
     }
 
     private function handleSendUpdateCalls($quote, $sageRequestPayload, $payment, $splitPayments, $extras)
@@ -1178,7 +1192,7 @@ class SageApiService
             $this->sageBatchNumber = $postedResponse['BatchNumber'];
 
             if ($isLiveApiCall) {
-                $this->logSageApiCall(${$processDetails['methodName']}, $postedResponse, $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_SUCCESS, $extras['authDetails']->id); // 6
+                $this->logSageApiCall(${$processDetails['methodName']}, $postedResponse, $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_SUCCESS, $extras['extras']['authDetails']->id);
                 info('Book Update - Sage API Call - Method Name ('.$processDetails['methodName'].') - '.(! empty($extras['sendUpdateLog']) ? 'SendUpdateUUID' : 'QuoteUUID').': '.$quoteObject->uuid);
             }
 
@@ -1273,7 +1287,7 @@ class SageApiService
                 $postedResponse['entry_type'] = $processDetails['entryType'];
 
                 if (($isARInvoicesCalls && isset($postedResponse['error'])) || (! $isARInvoicesCalls && $resp['status'] == false)) {
-                    $this->logSageApiCall($postedResponse, (($isARInvoicesCalls) ? $resp : $postedResponse), $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_FAIL, $extras['authDetails']->id);
+                    $this->logSageApiCall($postedResponse, (($isARInvoicesCalls) ? $resp : $postedResponse), $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_FAIL, $extras['extras']['authDetails']->id);
                     $responseMessage = ($isARInvoicesCalls && isset(json_decode($resp, true)['error']['message']['value'])) ?
                         json_decode($resp, true)['error']['message']['value'] : 'Error while making '.$processDetails['invoiceType'].' Split payments patch to sage';
                     $returnMessage['status'] = false;
@@ -1287,12 +1301,12 @@ class SageApiService
                 }
 
                 if ($isLiveApiCall) {
-                    $this->logSageApiCall($postedResponse, (($isARInvoicesCalls) ? $resp : $postedResponse), $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_SUCCESS, $extras['authDetails']->id);
+                    $this->logSageApiCall($postedResponse, (($isARInvoicesCalls) ? $resp : $postedResponse), $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_SUCCESS, $extras['extras']['authDetails']->id);
                 }
             }
 
         } else {
-            $this->logSageApiCall(${$processDetails['methodName']}, $postedResponse, $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_FAIL, $extras['authDetails']->id);
+            $this->logSageApiCall(${$processDetails['methodName']}, $postedResponse, $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_FAIL, $extras['extras']['authDetails']->id);
 
             $responseMessage = isset($postedResponse['error']['message']['value']) ?
                     $postedResponse['error']['message']['value'] : $processDetails['invoiceType'].' Split payment failed from Sage';
