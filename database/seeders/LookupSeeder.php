@@ -328,5 +328,12 @@ class LookupSeeder extends Seeder
         Lookup::updateOrCreate(['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'mod-delivery-pse'], ['text' => 'Policy sent via email']);
         Lookup::updateOrCreate(['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'mod-delivery-psc'], ['text' => 'Policy sent via courier']);
         Lookup::updateOrCreate(['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'mod-delivery-cco'], ['text' => 'Collected by customer from office']);
+
+        /*
+        Business Type of customers
+        */
+        Lookup::updateOrCreate(['key' => LookupsEnum::BUSINESS_TYPE_OF_CUSTOMER, 'code' => 'CBTC'], ['text' => 'Company', 'description' => 'Company Business type of customer ']);
+        Lookup::updateOrCreate(['key' => LookupsEnum::BUSINESS_TYPE_OF_CUSTOMER, 'code' => 'IBTC'], ['text' => 'Individual', 'description' => 'Individual Business type of customer ']);
+
     }
 }

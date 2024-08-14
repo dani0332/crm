@@ -48,6 +48,7 @@ class PersonalQuote extends Model implements AuditableContract
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
     ];
+
     public function quoteStatus()
     {
         return $this->belongsTo(QuoteStatus::class);
@@ -74,7 +75,7 @@ class PersonalQuote extends Model implements AuditableContract
      */
     public function advisor()
     {
-        return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name']);
+        return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no', 'profile_photo_path', 'calendar_link']);
     }
 
     /**
@@ -247,6 +248,7 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->hasMany(QuoteStatusLog::class, 'quote_request_id');
     }
+
     public function transactionType()
     {
         return $this->belongsTo(Lookup::class, 'transaction_type_id', 'id');
@@ -272,6 +274,11 @@ class PersonalQuote extends Model implements AuditableContract
     public function insuranceProvider()
     {
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
+    }
+
+    public function sageApiLogs()
+    {
+        return $this->morphMany(SageApiLog::class, 'section');
     }
 
     public function scopeFilterBySegment($query, $segmentFilter, $quoteTypeCode)
@@ -318,5 +325,10 @@ class PersonalQuote extends Model implements AuditableContract
     public function claimHistory()
     {
         return $this->belongsTo(ClaimHistory::class, 'claim_history_id');
+    }
+
+    public function customerMembers()
+    {
+        return $this->morphMany(CustomerMembers::class, 'quote');
     }
 }

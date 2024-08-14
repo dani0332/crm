@@ -89,6 +89,7 @@ final class quoteBusinessTypeCode extends Enum
             quoteBusinessTypeCode::goodsInTransit => 44,
             quoteBusinessTypeCode::MedicalMalpracticeInsurance => 40,
             quoteBusinessTypeCode::carFleet => 9,
+            quoteBusinessTypeCode::tradeCredit => 16,
         };
     }
 }

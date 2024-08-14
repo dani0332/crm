@@ -146,10 +146,10 @@ class BerlinService extends BaseService
             $statusCode = $requestExtendSubscription->getStatusCode();
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $statusCode = $e->getResponse()->getStatusCode();
-
+            info('extendCustomerSubscription berlin error response: '.$e->getResponse()->getBody()->getContents());
             $errorData = json_decode($e->getResponse()->getBody()->getContents(), true);
 
-            if ($errorData['code'] == 'CUSTOMER_NOT_FOUND') {
+            if (is_array($errorData) && isset($errorData['code']) && $errorData['code'] == 'CUSTOMER_NOT_FOUND') {
                 $customer = $this->customerService->getCustomerByEmail($customerEmail);
                 Log::warning('extendCustomerSubscription Customer Id: '.$customerId.' Customer Email: '.$customerEmail.' Error Code: '.$errorData['code'].' Customer not exist so cannot proceed to extend subscription, sending signup email to customer. API Message: '.$errorData['message']);
                 MAWelcomeJob::dispatchIf(

@@ -1,6 +1,4 @@
 <script setup>
-import { computed } from 'vue';
-
 const props = defineProps({
   quoteStatusEnum: Object,
   quoteTypeId: String,
@@ -47,7 +45,6 @@ const filtersCount = ref(0);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 
-
 const isAllowed = computed(() => {
   return !hasAnyRole([
     rolesEnum.RMAdvisor,
@@ -56,7 +53,6 @@ const isAllowed = computed(() => {
     rolesEnum.HealthAdvisor,
   ]);
 });
-
 
 const filters = reactive({
   code: '',
@@ -185,7 +181,6 @@ function onSubmit(isValid) {
   }
 }
 
-
 onMounted(() => {
   setQueryStringFilters(params, filters);
 
@@ -262,7 +257,7 @@ function onReset() {
     <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
