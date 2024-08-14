@@ -41,12 +41,17 @@ class BulkPolicyBookingController extends Controller
 
     public function sendPoliciesForSageBulkBooking(BookBulkPoliciesRequest $request)
     {
-        $quoteType = $request->quoteType;
+        $quoteType = $request->model_type;
         $quoteIDs = $request->selectedQuoteIds;
+        $quoteErrors = collect([]);
         foreach ($quoteIDs as $quoteID) {
             $quote = $this->getQuoteObject($quoteType, $quoteID);
             if ($quote) {
-                (new SageApiService())->postBookPolicyToSage($request, $quote);
+                $response = (new SageApiService())->postBookPolicyToSage($request, $quote);
+                if (! $response['status']) {
+                    /* Log error in globel table for this lead */;
+                }
+
             }
         }
     }

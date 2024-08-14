@@ -24,7 +24,7 @@ class BookBulkPoliciesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'quoteType' => 'required|string',
+            'model_type' => 'required|string',
             'selectedQuoteIds' => 'required|array|min:1',
         ];
     }
@@ -42,7 +42,7 @@ class BookBulkPoliciesRequest extends FormRequest
     public function messages()
     {
         return [
-            'quoteType.required' => 'Quote Type is required.',
+            'model_type.required' => 'Quote Type is required.',
             'selectedQuoteIds.required' => 'Select at least one Quote',
             'selectedQuoteIds.min' => 'At least One Quote must be selected',
         ];

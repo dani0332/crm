@@ -3,6 +3,8 @@ import { useGetShowPageRoute } from '../../Composables/utilities';
 import dayjs from 'dayjs/esm/index.js';
 import NProgress from 'nprogress';
 
+const { isRequired } = useRules();
+
 const props = defineProps({
   quotes: Object,
   quoteTypes: Array,
@@ -12,7 +14,7 @@ const page = usePage();
 const notification = useToast();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
-const { isRequired } = useRules();
+
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss');
 
 const quotesSelected = ref([]);
@@ -50,9 +52,9 @@ const filtersForm = useForm({
   page: 1,
 });
 
-function fetchQuotes(isValid) {
+function fetchQuotes() {
   isQuoteTypeEmpty.value = !filtersForm.quoteType;
-  if (!isValid || !filtersForm.quoteType) return;
+  if (!filtersForm.quoteType) return;
 
   //remove empty fields
   Object.keys(filtersForm).forEach(
@@ -61,18 +63,6 @@ function fetchQuotes(isValid) {
   filtersForm.get(route('bulk-policy-booking.index'), {
     preserveScroll: true,
     onBefore: () => {
-      if (
-        dayjs(filtersForm.created_at_end).diff(
-          dayjs(filtersForm.created_at_start),
-          'day',
-        ) > 30
-      ) {
-        filtersForm.setError(
-          'created_at_start',
-          'Allowed no. of days between start & end dates are 30 days.',
-        );
-        return false;
-      }
       loader.table = true;
     },
     onSuccess: () => (loader.table = false),
@@ -105,16 +95,15 @@ const bookPoliciesOnSage = async () => {
     });
     return;
   }
-  const selected = quotesSelected.value.map(e => e.id);
-  console.log('bookPoliciesOnSage', selected);
+  const quoteIDs = quotesSelected.value.map(e => e.id);
 
   try {
     NProgress.start();
     const response = await axios.post(
       route('send-policies-for-bulk-sage-booking'),
       {
-        selectedQuoteIds: selected,
-        quoteType: filtersForm.quoteType,
+        selectedQuoteIds: quoteIDs,
+        model_type: filtersForm.quoteType,
       },
     );
 
@@ -188,6 +177,39 @@ const quoteTypeOptions = computed(() =>
   ),
 );
 
+const rules = {
+  created_at_start: v => {
+    if (v) {
+      const date = new Date(v);
+      let isDate = date instanceof Date;
+      return isDate || 'Date format is incorrect';
+    }
+    return !!v || 'This field is required';
+  },
+  created_at_end: v => {
+    if (v) {
+      const endDate = new Date(filtersForm.created_at_end);
+      const startDate = new Date(filtersForm.created_at_start);
+      if (startDate >= endDate) {
+        return 'End date should be greater than Start Date';
+      } else {
+        let startDateDay = dayjs(filtersForm.created_at_start);
+        let endDateDay = dayjs(filtersForm.created_at_end);
+        let isDiffMoreThan30Days = endDateDay.diff(startDateDay, 'day') > 31;
+        if (isDiffMoreThan30Days) {
+          return (
+            !isDiffMoreThan30Days ||
+            'Allowed no. of days between start & end dates are 31 days.'
+          );
+        }
+      }
+      let isDate = endDate instanceof Date;
+      return isDate || 'Date format is incorrect';
+    }
+    return !!v || 'This field is required';
+  },
+};
+
 watch(
   () => filtersForm,
   () => {
@@ -221,17 +243,17 @@ onMounted(() => {
         />
         <DatePicker
           v-model="filtersForm.created_at_start"
-          name="created_at_end"
+          name="created_at_start"
           label="Created Date Start"
           class="w-full"
-          :customError="filtersForm.errors.created_at_start"
+          :rules="[rules.created_at_start]"
         />
         <DatePicker
           v-model="filtersForm.created_at_end"
           name="created_at_end"
           label="Created Date End"
           class="w-full"
-          :customError="filtersForm.errors.created_at_end"
+          :rules="[rules.created_at_end]"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
