@@ -17,7 +17,6 @@ class SendUpdateLog extends Model implements AuditableContract
     protected $casts = [
         'car_addons' => 'json',
     ];
-
     protected $appends = ['display_status'];
     /*
      * it will convert BOOK-UPDATE to Book Update.
