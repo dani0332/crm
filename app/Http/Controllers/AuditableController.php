@@ -40,6 +40,13 @@ class AuditableController extends Controller
     public function loadAuditLogs(Request $request)
     {
         $code = isset($request->code) ? $request->code : '';
+
+        $documentIds = [];
+        if ($request->auditableType === 'App\Models\SendUpdateLog') {
+            $code = $this->getSendUpdatePaymentCode($request->auditableId);
+            $documentIds = $this->getSendUpdateDocumentIds($request->auditableId);
+        }
+
         $auditableTypes = ['App\Models\Payment', 'App\Models\PaymentSplits'];
         $query = DB::table('audits')
             ->select('audits.*', 'users.name')
@@ -51,6 +58,13 @@ class AuditableController extends Controller
             $query->orWhere(function ($query) use ($code, $auditableTypes) {
                 $query->where('old_values', 'like', '%"code":"'.$code.'"%')
                     ->whereIn('auditable_type', $auditableTypes);
+            });
+        }
+
+        if (! empty($documentIds)) {
+            $query->orWhere(function ($query) use ($documentIds) {
+                $query->where('auditable_type', 'App\Models\QuoteDocument')
+                    ->whereIn('auditable_id', $documentIds);
             });
         }
 

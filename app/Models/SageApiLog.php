@@ -20,10 +20,12 @@ class SageApiLog extends Model
         'section_type',
         'step',
         'total_steps',
+        'sage_request_type',
         'sage_end_point',
         'sage_payload',
         'response',
         'status',
+        'entry_type',
         'created_at',
         'updated_at',
     ];

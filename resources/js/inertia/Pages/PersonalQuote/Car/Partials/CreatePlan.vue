@@ -3,7 +3,7 @@ const notification = useNotifications('toast');
 const props = defineProps({
   record: Object,
   insuranceProviders: Array,
-  availablePlans: Array
+  availablePlans: Array,
 });
 
 const page = usePage();
@@ -55,7 +55,6 @@ const insuranceProviderOptions = computed(() => {
     value: provider.id,
     label: provider.text,
   }));
-
 });
 
 const insuranceProviderPlanOptions = ref([]);
@@ -97,7 +96,7 @@ const creatQuotePlan = isValid => {
         title: 'Car Quote Plan created successfully',
         position: 'top',
       });
-      emit("onLoadAvailablePlansData")
+      emit('onLoadAvailablePlansData');
     },
   });
 };
