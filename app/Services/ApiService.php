@@ -212,7 +212,7 @@ class ApiService
         }
 
         if ($lead instanceof TravelQuote && $lead->isMultiTrip()) {
-            info(self::class.' - handleZeroPlansEmail: First OCB Email Skipped because it is a Multi Trip Lead');
+            info(self::class." - handleZeroPlansEmail: First OCB Email Skipped because it is a Multi Trip Lead uuid: {$lead->uuid}");
 
             return apiResponse(null, Response::HTTP_OK, 'First OCB Email Skipped because it is a Multi Trip Lead!');
         }
