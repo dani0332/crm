@@ -795,6 +795,7 @@ function confirmationModalClose() {
   loader.sendUpdateSectionBtn = false;
 }
 
+// Need to update this code after Mirza's Implementation
 function sendUpdate(prePaymentCheck = true) {
   loader.sendUpdate = true;
   axios
@@ -805,6 +806,7 @@ function sendUpdate(prePaymentCheck = true) {
       quoteRefId: props.realQuote.id,
       paymentValidated: true,
       reversalInvoice: bookingDetailsForm.reversal_invoice ?? '',
+      inslyMigrated: props.realQuote.insly_migrated,
     })
     .then(response => {
       loader.sendUpdate = false;
@@ -845,6 +847,7 @@ function sendUpdate(prePaymentCheck = true) {
 const isLoading = ref(false);
 const isNotConfirmed = ref(false);
 
+// Need to update this code after Mirza's Implementation
 const submitToCustomer = () => {
   if (!modals.isConfirmed) {
     isNotConfirmed.value = true;
@@ -860,6 +863,7 @@ const submitToCustomer = () => {
     quoteRefId: props.realQuote.id,
     paymentValidated: true,
     reversalInvoice: bookingDetailsForm.reversal_invoice ?? '',
+    inslyMigrated: props.realQuote.insly_migrated,
     isEmailSent: props.sendUpdateLog.is_email_sent,
   };
   axios

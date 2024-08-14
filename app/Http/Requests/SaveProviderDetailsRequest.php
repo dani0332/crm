@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateToCustomerRequest extends FormRequest
+class SaveProviderDetailsRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -21,15 +21,10 @@ class UpdateToCustomerRequest extends FormRequest
      */
     public function rules(): array
     {
+
         return [
-            'sendUpdateId' => 'required|exists:send_update_logs,id',
-            'quoteType' => 'string',
-            'action' => 'string',
-            'quoteUuid' => 'string',
-            'quoteRefId' => 'integer',
-            'paymentValidated' => 'boolean',
-            'inslyMigrated' => 'boolean',
-            'isEmailSent' => 'boolean',
+            'insurance_provider_id' => 'required|integer',
+            'send_update_log_id' => 'required|integer',
         ];
     }
 }

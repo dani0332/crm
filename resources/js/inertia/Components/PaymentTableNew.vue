@@ -1,9 +1,11 @@
 <script setup>
 import ToolTip from './../Components/ToolTip.vue';
-import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
 import { onMounted, reactive } from 'vue';
 import moment from 'moment';
 import NProgress from 'nprogress';
+import { computed } from 'vue';
+import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
+
 const notification = useNotifications('toast');
 const page = usePage();
 
@@ -1862,8 +1864,10 @@ const editPaymentModal = (
   ) {
     planDetail.value = payment.travel_plan;
 
-    planDetail.value['insurance_provider'] =
-      payment.travel_plan.insurance_provider;
+    if (!(props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
+      planDetail.value['insurance_provider'] =
+        payment.travel_plan.insurance_provider;
+    }
   }
 
   //Assign plan for Travel
@@ -1872,8 +1876,10 @@ const editPaymentModal = (
     (paymentMethodsForm.status == 'edit' || paymentMethodsForm.status == 'view')
   ) {
     planDetail.value = payment.travel_plan;
-    planDetail.value['insurance_provider'] =
-      payment.travel_plan.insurance_provider;
+    if (!(props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
+      planDetail.value['insurance_provider'] =
+        payment.travel_plan.insurance_provider;
+    }
   }
 
   if (capture_approval > 0) {
