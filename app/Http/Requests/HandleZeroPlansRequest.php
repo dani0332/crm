@@ -4,11 +4,8 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class SICWorkflowRequest extends FormRequest
+class HandleZeroPlansRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
@@ -23,14 +20,7 @@ class SICWorkflowRequest extends FormRequest
     {
         return [
             'quoteUuid' => 'required',
-            'quoteTypeId' => 'sometimes|nullable',
-        ];
-    }
-
-    public function messages()
-    {
-        return [
-            'quoteUuid.required' => 'Quote UUID is required',
+            'quoteTypeId' => 'required',
         ];
     }
 }

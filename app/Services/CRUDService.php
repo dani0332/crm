@@ -1127,7 +1127,7 @@ class CRUDService extends BaseService
             $quote->risk_score = $results['total'];
             $quote->save();
             $quoteType = strtolower($type);
-            $quoteModel = $this->getQuoteObject($quoteType, $quote->uuid);
+            $quoteModel = $this->getQuoteObjectBy($quoteType, $quote->uuid, 'uuid');
             $data = $results;
             $detail = $this->getQuoteDetailObject($quoteType, $quoteModel->id);
             $data['document_type_code'] = QuoteDocumentsEnum::SCRDOC;
