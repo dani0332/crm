@@ -62,7 +62,7 @@ const onAddUpdate = () => {
           <h2 class="text-xl font-semibold">Jetski Detail</h2>
         </div>
         <template #body>
-          <div class="flex gap-2 mb-4 justify-end">
+          <div class="flex gap-2 mb-4 justify-end" v-if="readOnlyMode.isDisable === true">
             <Link
               v-if="quote.quote_detail?.insly_id"
               :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"

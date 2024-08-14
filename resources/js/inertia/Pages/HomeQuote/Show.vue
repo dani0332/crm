@@ -1219,6 +1219,7 @@ const onAddUpdate = () => {
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
               :disabled="allowStatusUpdate || isDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Change Status
             </x-button>
@@ -1353,7 +1354,7 @@ const onAddUpdate = () => {
         <template #body>
           <x-divider class="my-4" />
           <div class="flex justify-end mb-4">
-            <x-button size="sm" color="orange" @click.prevent="addActivity">
+            <x-button size="sm" color="orange" @click.prevent="addActivity" v-if="readOnlyMode.isDisable === true">
               Add Activity
             </x-button>
           </div>
@@ -1383,6 +1384,7 @@ const onAddUpdate = () => {
                   outlined
                   :disabled="item.status === 1"
                   @click.prevent="activityEdit(item)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Edit
                 </x-button>
@@ -1392,6 +1394,7 @@ const onAddUpdate = () => {
                   :disabled="item.status === 1"
                   outlined
                   @click.prevent="activityDelete(item.id)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Delete
                 </x-button>

@@ -175,6 +175,13 @@ const [EditMemberButtonTemplate, EditMemberButtonReuseTemplate] =
   createReusableTemplate();
 const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
   createReusableTemplate();
+
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -196,6 +203,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
             size="sm"
             color="orange"
             :disabled="isDisabled"
+            v-if="readOnlyMode.isDisable === true"
           >
             Add Member
           </x-button>
@@ -229,6 +237,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
             outlined
             @click.prevent="onEditMember(item)"
             :disabled="isDisabled"
+            v-if="readOnlyMode.isDisable === true"
           >
             Edit
           </x-button>
@@ -241,6 +250,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
             outlined
             @click.prevent="memberDelete(item.id)"
             :disabled="isDisabled"
+            v-if="readOnlyMode.isDisable === true"
           >
             Delete
           </x-button>

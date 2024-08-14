@@ -1966,7 +1966,7 @@ const onAddUpdate = () => {
 
           <LeadEditBtnTemplate v-slot="{ isDisabled }">
             <Link v-if="!isDisabled" :href="route('car.edit', record.uuid)">
-              <x-button size="sm" color="primary" tag="div">Edit</x-button>
+              <x-button size="sm" color="primary" tag="div" v-if="readOnlyMode.isDisable === true">Edit</x-button>
             </Link>
             <x-button
               v-else
@@ -2723,6 +2723,7 @@ const onAddUpdate = () => {
               "
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
+              v-if="readOnlyMode.isDisable === true"
             >
               Change Status
             </x-button>
@@ -2964,6 +2965,7 @@ const onAddUpdate = () => {
                 size="sm"
                 color="rose"
                 @click="showfollowup = !showfollowup"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Pause Follow-up to customer
               </x-button>
@@ -2979,12 +2981,14 @@ const onAddUpdate = () => {
                 @click.prevent="onTogglePlans(false)"
                 :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
                 :loading="toggleLoader"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Show
               </x-button>
               <x-button
                 @click.prevent="onTogglePlans(true)"
                 :loading="toggleLoader"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Hide
               </x-button>
@@ -3009,6 +3013,7 @@ const onAddUpdate = () => {
                 record.advisor_id != $page.props.auth.user.id ||
                 page.props.linkedQuoteDetails.childLeadsCount > 0
               "
+              v-if="readOnlyMode.isDisable === true"
             >
               Send OCB Email to Customer
             </x-button>
@@ -3263,6 +3268,7 @@ const onAddUpdate = () => {
                 >
                   View
                 </x-button>
+                  <div v-if="readOnlyMode.isDisable === true">
                 <x-button
                   size="xs"
                   color="error"
@@ -3273,6 +3279,7 @@ const onAddUpdate = () => {
                 >
                   Copy
                 </x-button>
+                  </div>
                 <!-- <template
                   v-if="item.actualPremium > 0 && item.id != record.plan_id"
                 >
@@ -3685,6 +3692,7 @@ const onAddUpdate = () => {
                   color="primary"
                   outlined
                   @click.prevent="onEditMember(item)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Edit
                 </x-button>
@@ -3693,6 +3701,7 @@ const onAddUpdate = () => {
                   color="error"
                   outlined
                   @click.prevent="memberDelete(item.id)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Delete
                 </x-button>
@@ -3791,6 +3800,7 @@ const onAddUpdate = () => {
                 size="sm"
                 color="orange"
                 class="mr-2"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Add Activity
               </x-button>
@@ -3823,6 +3833,7 @@ const onAddUpdate = () => {
                   outlined
                   :disabled="item.status === 1"
                   @click.prevent="activityEdit(item)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Edit
                 </x-button>
@@ -3832,6 +3843,7 @@ const onAddUpdate = () => {
                   outlined
                   :disabled="item.status === 1"
                   @click.prevent="activityDelete(item.id)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Delete
                 </x-button>

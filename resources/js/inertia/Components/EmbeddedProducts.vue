@@ -354,6 +354,12 @@ const onActivitySubmit = isValid => {
 const hasAnyRole = roles => useHasAnyRole(roles);
 const canAny = permissions => useCanAny(permissions);
 const can = permission => useCan(permission);
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -438,7 +444,7 @@ const can = permission => useCan(permission);
           </template>
 
           <template #item-actions="item">
-            <div class="flex flex-col gap-1">
+            <div class="flex flex-col gap-1" v-if="readOnlyMode.isDisable === true">
               <x-button
                 size="xs"
                 color="emerald"

@@ -496,6 +496,12 @@ const isShowingTransactionPaymentStatus = computed(() => {
 onBeforeMount(() => {
   isTravelQuoteAndAMLNotCleared();
 });
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -941,6 +947,7 @@ onBeforeMount(() => {
                 size="sm"
                 @click.prevent="bp.isEditing = true"
                 :disabled="isDisabled"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Edit
               </x-button>

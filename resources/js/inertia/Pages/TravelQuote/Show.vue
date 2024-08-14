@@ -1952,6 +1952,7 @@ const onAddUpdate = () => {
                       @click.prevent="searchByTradeLicense"
                       size="xs"
                       color="primary"
+                      v-if="readOnlyMode.isDisable === true"
                     >
                       Search
                     </x-button>
@@ -2136,6 +2137,7 @@ const onAddUpdate = () => {
               color="orange"
               @click.prevent="onAddTraveler"
               :disabled="isDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Add Member
             </x-button>
@@ -2162,6 +2164,7 @@ const onAddUpdate = () => {
               @click.prevent="onEditTraveler(item)"
               outlined
               :disabled="isDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Edit
             </x-button>
@@ -2177,6 +2180,7 @@ const onAddUpdate = () => {
               "
               outlined
               :disabled="isDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Delete
             </x-button>
@@ -2460,6 +2464,7 @@ const onAddUpdate = () => {
                 quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
                 isDisabled
               "
+              v-if="readOnlyMode.isDisable === true"
             >
               Change Status
             </x-button>
@@ -2581,6 +2586,7 @@ const onAddUpdate = () => {
               @click.prevent="modals.doc = true"
               size="sm"
               color="primary"
+              v-if="readOnlyMode.isDisable === true"
             >
               Upload Documents
             </x-button>
@@ -2623,6 +2629,7 @@ const onAddUpdate = () => {
                 color="error"
                 outlined
                 @click.prevent="onDocDelete(doc_name)"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Delete
               </x-button>
@@ -2697,7 +2704,7 @@ const onAddUpdate = () => {
                 age 0-64
               </h6>
             </div>
-            <div class="flex gap-2 mb-4">
+            <div class="flex gap-2 mb-4" v-if="readOnlyMode.isDisable === true">
               <x-button-group
                 v-if="selectedPlans.length > 0"
                 size="sm"
@@ -3032,7 +3039,7 @@ const onAddUpdate = () => {
         <template #body>
           <x-divider class="my-4" />
           <div class="my-4 flex justify-end">
-            <x-button size="sm" color="orange" @click.prevent="addActivity">
+            <x-button size="sm" color="orange" @click.prevent="addActivity" v-if="readOnlyMode.isDisable === true">
               Add Activity
             </x-button>
           </div>
@@ -3063,6 +3070,7 @@ const onAddUpdate = () => {
                   outlined
                   :disabled="item.status === 1"
                   @click.prevent="activityEdit(item)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Edit
                 </x-button>
@@ -3072,6 +3080,7 @@ const onAddUpdate = () => {
                   :disabled="item.status === 1"
                   outlined
                   @click.prevent="activityDelete(item.id)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Delete
                 </x-button>

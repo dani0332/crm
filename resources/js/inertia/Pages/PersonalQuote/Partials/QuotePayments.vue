@@ -230,6 +230,13 @@ const can = permission => useCan(permission);
 const hasRole = role => useHasRole(role);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
+
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -243,7 +250,7 @@ const rolesEnum = page.props.rolesEnum;
 
       <template #body>
         <x-divider class="my-4" />
-        <div class="mb-4 flex justify-end">
+        <div class="mb-4 flex justify-end" v-if="readOnlyMode.isDisable === true">
           <x-button
             v-if="
               can(permissionsEnum.PaymentsCreate) &&
@@ -280,7 +287,7 @@ const rolesEnum = page.props.rolesEnum;
             {{ payment_method?.name }}
           </template>
           <template #item-actions="item">
-            <div class="flex gap-2">
+            <div class="flex gap-2" v-if="readOnlyMode.isDisable === true">
               <template v-if="can(permissionsEnum.ApprovePayments)">
                 <x-button
                   size="xs"
