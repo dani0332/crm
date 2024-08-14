@@ -528,6 +528,7 @@ class CarAllocationService extends AllocationService
         $lead->advisor_id = $userId;
         $lead->cost_per_lead = $tier->cost_per_lead;
         $lead->auto_assigned = true;
+        $lead->sic_flow_enabled = 0;
         $lead->assignment_type = $assignmentType;
 
         // Get the latest quote batch and assign it to the lead.
