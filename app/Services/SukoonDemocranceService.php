@@ -98,8 +98,7 @@ class SukoonDemocranceService
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
             ])->json();
-
-            // TODO: has_error need to be checked for failure
+            
             if (isset($result['policy_number']) && $result['policy_number'] && ! $result['has_errors']) {
                 return $this->policyNumber = $result['policy_number'];
             }
@@ -250,8 +249,8 @@ class SukoonDemocranceService
         try {
             $this->currentQuote = $quote;
 
-            if (! $this->validateCustomerDetail($quote->customer->emirates_id_number, $quote->customer->emirates_id_expiry_date)) {
-                throw new Exception('Invalid Emirates ID or Expiry Date. Please check and try again.');
+            if (! $this->validateCustomerDetail($quote->customer->emirates_id_number, $quote->customer->emirates_id_expiry_date, $quote->customer->detail->residential_address)) {
+                throw new Exception('Address cannot be empty, Invalid Emirates ID or Expiry Date. Please check and try again.');
             }
 
             $shortCode = $transaction->product->embeddedProduct->short_code;
@@ -312,11 +311,11 @@ class SukoonDemocranceService
         }
     }
 
-    private function validateCustomerDetail($emiratesId, $emiratesIdExpiryDate)
+    private function validateCustomerDetail($emiratesId, $emiratesIdExpiryDate, $address)
     {
         $patternOfEID = '/^784-[0-9]{4}-[0-9]{7}-[0-9]{1}$/';
 
-        return preg_match($patternOfEID, $emiratesId) && $emiratesIdExpiryDate >= Carbon::now();
+        return preg_match($patternOfEID, $emiratesId) && $emiratesIdExpiryDate >= Carbon::now() && (!empty($address) || $address != '');
     }
 
     private function logFailure($operation, $message, $data = [])
