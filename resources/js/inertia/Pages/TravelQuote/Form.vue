@@ -190,7 +190,7 @@ function addUpdatedTraveller() {
 onMounted(() => {
   addUpdatedTraveller();
   updateRegionCover();
-  quoteForm.destination_ids = mappedDestinationIds.value;
+  quoteForm.destination_ids = mappedDestinationIds.value ?? [];
 });
 
 watch(
