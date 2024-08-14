@@ -30,6 +30,11 @@ class DocumentTypeCode extends Enum
     const ISSUING_DOCUMENTS = 'ISSUING_DOCUMENTS';
     const SEND_UPDATE_AUDIT_RECORD = 'SUAR'; // Send Update Audit Record
 
+    const QUOTE = 'QUOTE';
+    const MEMBER = 'MEMBER';
+    const ENDORSEMENT_DOCUMENTS = 'ENDORSEMENT_DOCUMENTS';
+    const SEND_UPDATE = 'SEND_UPDATE';
+    const QUOTE_AND_ENDORSEMENT = 'QUOTE_AND_ENDORSEMENT';
     // This is the same as the one in the database and we are using this as a text not it's code
     // The reason behind this code is different for all lob's but text is sames that's why we are using this as a text
     const NETWORK_LIST_BUSINESS = 'NL_GH';
