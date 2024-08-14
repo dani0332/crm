@@ -8,7 +8,7 @@ use BenSampo\Enum\Enum;
 
 final class EndorsementStatusEnum extends Enum
 {
-    public const UPDATE_BOOKED = 'Update Booked';
+    public const UPDATE_BOOKED = 'UPDATE_BOOKED';
 
     /**
      * ENDROSMENT CATEORGOIES
