@@ -156,7 +156,7 @@ if (props.sendUpdate) {
   initialAmount.value = props.eCommercePrice;
 } else if (props.quoteType === 'Bike') {
   initialAmount.value = props.quoteRequest.premium;
-} else if (props. isPlanDetailEnabled) {
+} else if (props.isPlanDetailEnabled) {
   initialAmount.value = props.quoteRequest.price_with_vat;
 } else {
   initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
@@ -178,12 +178,18 @@ const approveProofDocument = props.paymentDocument.find(
 );
 
 let initalPlanDetails = [];
-if (props.quoteType == 'Business' || props.quoteType == 'Home' || props.isPlanDetailEnabled) {
-    initalPlanDetails = props.quoteRequest?.insurance_provider_details ?? props.quoteRequest?.insurance_provider;
+if (
+  props.quoteType == 'Business' ||
+  props.quoteType == 'Home' ||
+  props.isPlanDetailEnabled
+) {
+  initalPlanDetails =
+    props.quoteRequest?.insurance_provider_details ??
+    props.quoteRequest?.insurance_provider;
 } else if (quoteTypesToCheck.includes(props.quoteType)) {
   initalPlanDetails = props.quoteRequest.plan;
-} else if ( props.quoteType=='Bike' ) {
-    initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
+} else if (props.quoteType == 'Bike') {
+  initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
 } else {
   initalPlanDetails = props.quoteRequest?.insurance_provider;
 }
@@ -2834,11 +2840,15 @@ watch(
       totalPrice.value = initialAmount.value;
     }
     //refresh plan
-    if (props.quoteType == 'Business' || props.quoteType == 'Home' || props.isPlanDetailEnabled) {
+    if (
+      props.quoteType == 'Business' ||
+      props.quoteType == 'Home' ||
+      props.isPlanDetailEnabled
+    ) {
       initalPlanDetails = props.quoteRequest.insurance_provider_details;
     } else if (quoteTypesToCheck.includes(props.quoteType)) {
       initalPlanDetails = props.quoteRequest.plan;
-    } else if ( props.quoteType=='Bike' ) {
+    } else if (props.quoteType == 'Bike') {
       initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
       if (props.sendUpdate) {
         initalPlanDetails =
