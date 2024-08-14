@@ -38171,10 +38171,10 @@ class DocumentTypeSeeder extends Seeder
                     'business_type_of_customer' => $document['business_type_of_customer'],
                 ];
 
-                if ($document['category'] == 'ISSUING_DOCUMENTS' && $document['send_to_customer'] == 1 && $document['max_size'] > 2) {
+                if ($document['category'] == DocumentTypeCode::ISSUING_DOCUMENTS && $document['send_to_customer'] == 1 && $document['max_size'] > 2) {
                     $document['max_size'] = 2;
                 }
-                
+
                 DocumentType::firstOrCreate($conditions, $document);
             }
         });
