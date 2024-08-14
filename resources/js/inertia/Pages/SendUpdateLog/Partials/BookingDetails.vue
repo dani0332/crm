@@ -525,9 +525,9 @@ const selectedInvoice = () => {
   axios
     .post(url, data)
     .then(response => {
-      let sendUpdateLog = response.data.send_update_log;
+      let sendUpdate = response.data.send_update_log;
       let payment = response.data.payment;
-      updateReversalEntries(payment, sendUpdateLog);
+      updateReversalEntries(payment, sendUpdate);
     })
     .catch(error => {
       const flash_messages = error.response.data.errors;
@@ -553,58 +553,59 @@ function reverseValue(value) {
   return reversedValue.toLocaleString('en-US', { minimumFractionDigits: 2 });
 }
 
-function updateReversalEntries(payment, sendUpdateLog) {
+function updateReversalEntries(payment, sendUpdate) {
   reversalEntry.transaction_payment_status = 'N/A';
+  reversalEntry.invoice_description = payment.invoice_description || sendUpdate.invoice_description || '';
   reversalEntry.booking_date =
-    sendUpdateLog?.status !== sendUpdateStatusEnum.UPDATE_BOOKED
+    props.sendUpdateLog.status !== sendUpdateStatusEnum.UPDATE_BOOKED
       ? 'N/A'
-      : sendUpdateLog?.booking_date ||
-        props.realQuote?.policy_booking_date ||
-        props.quote?.policy_booking_date ||
+      : dateToDMY(props.realQuote?.policy_booking_date) ||
+        dateToDMY(props.quote?.policy_booking_date) ||
+        dateToDMY(props.sendUpdateLog?.booking_date) ||
         '';
   reversalEntry.invoice_date =
-    payment.insurer_invoice_date || sendUpdateLog.invoice_date || '';
+    payment.insurer_invoice_date || sendUpdate.invoice_date || '';
   reversalEntry.insurer_tax_invoice_number = payment?.insurer_tax_number
     ? payment.insurer_tax_number + '-REV'
-    : sendUpdateLog.insurer_tax_invoice_number + '-REV';
+    : sendUpdate.insurer_tax_invoice_number + '-REV';
   reversalEntry.broker_invoice_number = payment?.broker_invoice_number
     ? payment.broker_invoice_number + '-REV'
-    : sendUpdateLog.broker_invoice_number + '-REV';
+    : sendUpdate.broker_invoice_number + '-REV';
   reversalEntry.insurer_commission_invoice_number =
     payment?.insurer_commmission_invoice_number
       ? payment.insurer_commmission_invoice_number + '-REV'
-      : sendUpdateLog.insurer_commission_invoice_number + '-REV';
+      : sendUpdate.insurer_commission_invoice_number + '-REV';
   reversalEntry.discount = payment.discount_value || null;
   reversalEntry.price_vat_applicable =
-    sendUpdateLog?.price_vat_applicable ||
+    sendUpdate?.price_vat_applicable ||
     payment.paymentable?.price_vat_applicable;
   reversalEntry.commission_percentage =
-    sendUpdateLog?.commission_percentage ||
+    sendUpdate?.commission_percentage ||
     payment.commmission_percentage ||
     null;
   reversalEntry.price_vat_not_applicable =
-    sendUpdateLog?.price_vat_not_applicable ||
+    sendUpdate?.price_vat_not_applicable ||
     payment.paymentable?.price_vat_not_applicable;
   reversalEntry.vat_on_commission =
     (payment.commission_vat !== null
       ? payment.commission_vat
-      : sendUpdateLog?.vat_on_commission) ?? null;
+      : sendUpdate?.vat_on_commission) ?? null;
   reversalEntry.commission_vat_applicable =
-    sendUpdateLog?.commission_vat_applicable ||
+    sendUpdate?.commission_vat_applicable ||
     payment.commission_vat_applicable ||
     null;
   reversalEntry.total_commission =
-    sendUpdateLog?.total_commission || payment.commission || null;
+    sendUpdate?.total_commission || payment.commission || null;
   reversalEntry.commission_vat_not_applicable =
-    sendUpdateLog?.commission_vat_not_applicable ||
+    sendUpdate?.commission_vat_not_applicable ||
     payment.commission_vat_not_applicable ||
     null;
   reversalEntry.total_vat_amount =
-    sendUpdateLog?.total_vat_amount || props.realQuote?.vat;
+    sendUpdate?.total_vat_amount || props.realQuote?.vat;
   reversalEntry.price_with_vat =
     (payment.total_price !== null && payment.total_price > 0
       ? payment.total_price
-      : sendUpdateLog?.price_with_vat) ?? null;
+      : sendUpdate?.price_with_vat) ?? null;
 }
 
 onMounted(() => {
@@ -1118,9 +1119,7 @@ watch(
                 </x-tooltip>
               </div>
               <div>
-                <span>{{
-                  dateToDMY(reversalEntry.booking_date) ?? 'N/A'
-                }}</span>
+                <span>{{ reversalEntry.booking_date }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">
