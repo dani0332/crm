@@ -577,10 +577,16 @@ class SplitPaymentService
     {
         $paymentSplit = PaymentSplits::find($splitPaymentId);
         $sendUpdateId = $paymentSplit->payment->send_update_log_id;
+        $mainLeadObject = $this->getQuoteObject($modelType, $quoteId);
+
         if (! empty($sendUpdateId) && $sendUpdateId > 0) {
             $quoteModel = SendUpdateLogRepository::getLogById($sendUpdateId);
+            $quoteModel->fill([
+                'customer_id' => $mainLeadObject->customer_id,
+                'advisor_id' => $mainLeadObject->advisor_id
+            ]);
         } else {
-            $quoteModel = $this->getQuoteObject($modelType, $quoteId);
+            $quoteModel = $mainLeadObject;
         }
 
         if ($isFromJob && ! $quoteModel) {
