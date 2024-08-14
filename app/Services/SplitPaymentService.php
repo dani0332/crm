@@ -871,10 +871,13 @@ class SplitPaymentService
         }
 
         if ($computedPrice > 0) {
-            $priceWithoutVat = $computedPrice;
-            $vat = ($priceWithoutVat * $vatValue) / 100;
+            
             if (in_array($modelType, $ecommLobs) && ! $send_update_id) {
-                $priceWithoutVat = $computedPrice - $vat;
+                $priceWithoutVat = $computedPrice / (1 + ($vatValue / 100));
+                $vat = $priceWithoutVat * $vatValue / 100;
+            } else {
+                $priceWithoutVat = $computedPrice;
+                $vat = ($priceWithoutVat * $vatValue) / 100;
             }
 
             return [$priceWithoutVat, $vat];
