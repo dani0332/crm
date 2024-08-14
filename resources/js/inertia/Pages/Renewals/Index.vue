@@ -67,7 +67,7 @@ function onSubmit(isValid) {
 const skipOptions = [
     { value: 0, text: 'No' },
     { value: 1, text: 'Yes' },
-    { value: 2, text: 'Skip Plans for Non GCC, Bike, Company Vehicles' },
+    { value: 2, text: 'Skip Plans for Non GCC, Bike, Company Vehicles' }, // Reminder:: This value:2 used in RenwalsUploadService => uploadedLeadsValidation()
 ];
 const can = permission => useCan(permission);
 

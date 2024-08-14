@@ -290,7 +290,7 @@ class AjaxController extends Controller
         $request->validate([
             'quote_uuid' => 'required',
         ]);
-        $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
+        $quote = $this->getQuoteObjectBy($quoteType, $request->quote_uuid, 'uuid');
         $detail = $this->getQuoteDetailObject($quoteType, $quote->id);
         $detail->risk_score_override = $request->risk_override;
         $detail->risk_score_override_date = Carbon::now();
@@ -303,8 +303,7 @@ class AjaxController extends Controller
     public function quoteDetail($quoteType, $id)
     {
         if ($quoteType && $id) {
-
-            $quote = $this->getQuoteObject($quoteType, $id);
+            $quote = $this->getQuoteObjectBy($quoteType, $id, 'uuid');
 
             $detail = $this->getQuoteDetailObject($quoteType, $quote->id);
 
