@@ -477,8 +477,9 @@ class SageApiService
                 return ['payment' => $payment, 'splitPayments' => $splitPayments];
             } else {
                 $getQuoteDetails = $this->getQuoteObjectBy($request->quoteType, $request->quoteUuid, 'uuid');
+                $checkInslyMigratedLead = $this->checkInslyMigratedLead($request);
 
-                if ($request->inslyMigrated) {
+                if ($checkInslyMigratedLead) {
                     info('Book Update - Creating payment details based on the send update - The lead originated from Insly. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
                     $payment = new Payment();
                     $splitPayments = collect([new PaymentSplits()]);
@@ -523,7 +524,7 @@ class SageApiService
 
                 $response = ['payment' => $payment, 'splitPayments' => $splitPayments];
 
-                if (! $request->inslyMigrated) {
+                if (! $checkInslyMigratedLead) {
                     // Most CPD cases have no value then should it set as Credit Note - Need to verify this with Denber
                     $mainLeadDetails = [
                         'payment' => [
@@ -538,6 +539,19 @@ class SageApiService
                 return $response;
             }
         }
+    }
+
+    public function checkInslyMigratedLead($request) 
+    {
+        $inslyMigrated = false;
+        if ($request->inslyMigrated) {
+            $inslyMigrated = true;
+        } else {
+            $getQuoteDetails = $this->getQuoteDetailObject($request->quoteType, $request->quoteRefId);
+            $inslyMigrated = !empty($getQuoteDetails->insly_id) && $getQuoteDetails->insly_id != null;
+        }
+
+        return $inslyMigrated;
     }
 
     private function handleSendUpdateCalls($quote, $sageRequestPayload, $payment, $splitPayments, $extras)
