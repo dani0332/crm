@@ -640,11 +640,6 @@ class SendEmailCustomerService extends BaseService
             info("sendNonAdvisorIntroEmail  , emailTemplateId: {$emailTemplateId} with QuoteId: {$quoteId}");
             $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
             $attachments = $this->getEmailAttachments($emailData);
-            $headers = [
-                'Accept' => 'application/json',
-                'api-key' => $this->apiKey,
-                'Content-Type' => 'application/json',
-            ];
 
             $bccAdditional = [];
             if ($quoteType === QuoteTypes::CAR) {
