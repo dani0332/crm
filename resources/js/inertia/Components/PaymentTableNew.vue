@@ -2993,8 +2993,11 @@ const totalAmountFormat = computed(() => {
   return formatAmount(totalAmount.value);
 });
 
-
-const splitPaymentTotalPrice = (splitPaymentNo, splitPaymentAmount, masterDiscountValue) => {
+const splitPaymentTotalPrice = (
+  splitPaymentNo,
+  splitPaymentAmount,
+  masterDiscountValue,
+) => {
   let total = 0;
   if (splitPaymentNo === 1 && masterDiscountValue > 0) {
     total = splitPaymentAmount + masterDiscountValue;
@@ -3405,13 +3408,21 @@ const splitPaymentTotalPrice = (splitPaymentNo, splitPaymentAmount, masterDiscou
                       {{ formatAmount(splitPayment.price_vat_applicable) }}
                     </td>
                     <td>{{ formatAmount(splitPayment.price_vat) }}</td>
-                    <td>{{ splitPaymentTotalPrice(splitPayment.sr_no, splitPayment.payment_amount, item.discount_value) }}</td>
+                    <td>
+                      {{
+                        splitPaymentTotalPrice(
+                          splitPayment.sr_no,
+                          splitPayment.payment_amount,
+                          item.discount_value,
+                        )
+                      }}
+                    </td>
                     <td>
                       {{
                         splitPayment.sr_no == 1
                           ? formatAmount(item.discount_value)
                           : ''
-                      }}  
+                      }}
                     </td>
                     <td>{{ formatAmount(splitPayment.payment_amount) }}</td>
                     <td>
