@@ -3,6 +3,7 @@ import LazyPlanDetails from './Partials/PlanDetails.vue';
 import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import LazyPolicyDetails from './Partials/PolicyDetails.vue';
 import LazyBookingDetails from './Partials/BookingDetails.vue';
+import LazyProviderDetails from './Partials/ProviderDetails.vue';
 
 const props = defineProps({
   quoteType: String,
@@ -202,6 +203,14 @@ const isAdditionalFieldError = ref(false);
 function handleErrorStatusUpdate(newStatus) {
   isAdditionalFieldError.value = newStatus;
 }
+
+const isLegacyPolicy = computed(() => {
+  return (
+    props.quote?.insly_migrated ||
+    props.realQuote?.insly_migrated ||
+    props.realQuote?.insly_id
+  );
+});
 </script>
 
 <template>
@@ -465,6 +474,12 @@ function handleErrorStatusUpdate(newStatus) {
         </div>
       </x-form>
     </div>
+
+    <LazyProviderDetails
+      v-if="isLegacyPolicy"
+      :sendUpdateLog="sendUpdateLog"
+      :insuranceProviders="props.insuranceProviders"
+    />
 
     <!-- Indicative additional price & Plan details comp -->
     <LazyPlanDetails

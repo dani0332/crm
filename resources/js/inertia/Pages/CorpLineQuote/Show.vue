@@ -1160,6 +1160,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 "
                 placeholder="Lead Status"
                 class="w-full"
+                filterable
               />
               <x-textarea
                 v-model="leadStatusForm.notes"

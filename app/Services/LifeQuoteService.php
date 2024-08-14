@@ -84,6 +84,7 @@ class LifeQuoteService extends BaseService
                 'lqr.kyc_decision',
                 'lqr.insurance_provider_id',
                 'ip.text AS insurance_provider_text',
+                'lqr.insly_migrated',
                 'lqr.policy_issuance_status_id',
                 'lqr.insurer_quote_number',
                 'lqr.policy_issuance_date',
