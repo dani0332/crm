@@ -193,6 +193,7 @@ class SendUpdateLogController extends Controller
 
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
+            'quoteLink' => QuoteTypes::getName($quoteTypeId)?->url($quote->uuid),
             'quoteType' => $quoteType,
             'sendUpdateLog' => $sendUpdateLog,
             'parentText' => $sendUpdateLog->category->parent->text,
@@ -360,7 +361,7 @@ class SendUpdateLogController extends Controller
         }
 
         if ($log) {
-            $message[] = SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER;
+            $message[] = 'Update Sent to Customer.';
         } else {
             $message[] = 'Email Not Sent.';
         }

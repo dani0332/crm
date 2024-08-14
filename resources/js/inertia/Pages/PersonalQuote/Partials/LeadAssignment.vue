@@ -87,12 +87,13 @@ onMounted(() => {
       <x-divider class="mb-4 mt-1" />
       <x-form @submit="onAssignLead" :auto-focus="false">
         <div class="w-full flex flex-col md:flex-row gap-4">
-          <ComboBox
+          <x-select
             v-model="assignForm.assigned_advisor_id"
             label="Assign Advisor"
             :options="props.advisors"
             placeholder="Select Advisor"
             class="flex-1 w-auto"
+            filterable
             single
             v-if="readOnlyMode.isDisable === true"
           />

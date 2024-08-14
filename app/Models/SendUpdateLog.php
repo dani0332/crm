@@ -18,6 +18,14 @@ class SendUpdateLog extends Model implements AuditableContract
         'car_addons' => 'json',
     ];
 
+    /*
+     * it will convert BOOK-UPDATE to Book Update.
+     */
+    public function getStatusAttribute($value): string
+    {
+        return ucwords(str_replace('_', ' ', strtolower($value)));
+    }
+
     public function quoteType(): BelongsTo
     {
         return $this->belongsTo(QuoteType::class, 'quote_type_id');

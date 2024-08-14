@@ -54,7 +54,7 @@ class RenewalBatchReportService extends BaseService
             })
             ->join('renewal_batches', 'renewal_batches.name', '=', 'car_quote_request.renewal_batch')
             ->where('car_quote_request.source', LeadSourceEnum::RENEWAL_UPLOAD)
-            ->whereNot('car_quote_request.quote_status_id', QuoteStatusEnum::Duplicate)
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Duplicate, QuoteStatusEnum::PolicyCancelledReissued])
             ->groupBy('car_quote_request.renewal_batch')
             ->orderBy('renewal_batches.end_date');
 
@@ -100,6 +100,7 @@ class RenewalBatchReportService extends BaseService
                 $query->where('health_quote_request.source', LeadSourceEnum::IMCRM)
                     ->orWhere('health_quote_request.source', 'like', '%'.$ecommerceSource.'%');
             })
+            ->whereNotIn('health_quote_request.quote_status_id', [QuoteStatusEnum::Duplicate, QuoteStatusEnum::PolicyCancelledReissued])
             ->groupBy('health_quote_request.renewal_batch')
             ->orderBy('renewal_batches.end_date');
 
@@ -504,14 +505,14 @@ class RenewalBatchReportService extends BaseService
             && (! isset($filters->segment) || $filters->segment === 'all');
         if ($nonAdvisorWithNoFilter) {
             $query->addSelect(
-                DB::raw('SUM(CASE WHEN health_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyCancelled.'
-                    , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.')
+                DB::raw('SUM(CASE WHEN health_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyDocumentsPending.'
+                    , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.', '.QuoteStatusEnum::PolicyCancelled.')
                     THEN 1 ELSE 0 END) as health_converted'),
             );
         } elseif ($authUserIsAdvisor) {
             $query->addSelect(
-                DB::raw('SUM(CASE WHEN health_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyCancelled.'
-                    , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.')
+                DB::raw('SUM(CASE WHEN health_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyDocumentsPending.'
+                    , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.', '.QuoteStatusEnum::PolicyCancelled.')
                     and health_quote_request.advisor_id = '.$authUserId.'
                     THEN 1 ELSE 0 END) as health_converted'),
             );

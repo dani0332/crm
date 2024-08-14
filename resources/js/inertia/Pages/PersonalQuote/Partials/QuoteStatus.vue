@@ -106,6 +106,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 :rules="[rules.isRequired]"
                 placeholder="Lead Status"
                 class="w-full uppercase"
+                filterable
               />
               <x-textarea
                 v-model="quoteStatusForm.notes"
@@ -164,6 +165,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
             :loading="quoteStatusForm.processing"
             @click.prevent="onLeadStatus"
             :disabled="allowStatusUpdate || isDisabled"
+            v-if="readOnlyMode.isDisable === true"
           >
             Change Status
           </x-button>

@@ -1909,12 +1909,14 @@ const onAddUpdate = () => {
                 placeholder="Select Subteam"
                 class="w-auto flex-1"
                 hide-footer
+                filterable
               />
               <div>
                 <x-button
                   color="orange"
                   @click.prevent="onTeamAssign"
                   :loading="isDisabled"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Assign Team
                 </x-button>
@@ -1935,6 +1937,7 @@ const onAddUpdate = () => {
                   color="orange"
                   :loading="isDisabled"
                   @click.prevent="onAssignLead"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Assign
                 </x-button>
@@ -2289,6 +2292,7 @@ const onAddUpdate = () => {
                       @click.prevent="searchByTradeLicense"
                       size="xs"
                       color="primary"
+                      v-if="readOnlyMode.isDisable === true"
                     >
                       Search
                     </x-button>
@@ -2467,6 +2471,7 @@ const onAddUpdate = () => {
               size="sm"
               color="orange"
               :disabled="isDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Add Member
             </x-button>
@@ -2492,6 +2497,7 @@ const onAddUpdate = () => {
               outlined
               @click.prevent="onEditMember(item)"
               :disabled="isDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Edit
             </x-button>
@@ -2503,6 +2509,7 @@ const onAddUpdate = () => {
               outlined
               @click.prevent="memberDelete(item.id)"
               :disabled="isDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Delete
             </x-button>
@@ -2809,6 +2816,7 @@ const onAddUpdate = () => {
                 additionalContact.reset();
                 modals.addContact = true;
               "
+              v-if="readOnlyMode.isDisable === true"
             >
               Add Additional Contacts
             </x-button>
@@ -2833,6 +2841,7 @@ const onAddUpdate = () => {
                 color="emerald"
                 outlined
                 @click.prevent="additionalContactPrimary(item)"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Make Primary
               </x-button>
@@ -2955,6 +2964,7 @@ const onAddUpdate = () => {
                   "
                   placeholder="Lead Status"
                   class="w-full"
+                  filterable
                 />
                 <x-textarea
                   v-model="leadStatusForm.notes"
@@ -3007,6 +3017,7 @@ const onAddUpdate = () => {
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
               :disabled="isDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Change Status
             </x-button>
@@ -3138,6 +3149,7 @@ const onAddUpdate = () => {
               size="sm"
               color="orange"
               :disabled="doesEmailStatusExist || isOcaButtonDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Send OCA Email to Customer
             </x-button>
@@ -3642,7 +3654,12 @@ const onAddUpdate = () => {
         <template #body>
           <x-divider class="my-4" />
           <div class="mb-3 flex justify-end">
-            <x-button size="sm" color="orange" @click.prevent="addActivity">
+            <x-button
+              size="sm"
+              color="orange"
+              @click.prevent="addActivity"
+              v-if="readOnlyMode.isDisable === true"
+            >
               Add Activity
             </x-button>
           </div>
@@ -3693,6 +3710,7 @@ const onAddUpdate = () => {
                   outlined
                   :disabled="item.status === 1"
                   @click.prevent="activityEdit(item)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Edit
                 </x-button>
@@ -3702,6 +3720,7 @@ const onAddUpdate = () => {
                   :disabled="item.status === 1"
                   outlined
                   @click.prevent="activityDelete(item.id)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Delete
                 </x-button>
