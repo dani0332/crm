@@ -330,6 +330,7 @@ class CentralService
                     'healthPlanCoPaymentId' => intval($data->copay_id),
                     'quoteUID' => $uuid,
                     'callSource' => strtolower(LeadSourceEnum::IMCRM),
+                    'url' => request()->url(),
                 ];
 
                 $response = Capi::request($endpoint, 'post', $data);

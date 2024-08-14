@@ -86,6 +86,7 @@ class BusinessQuoteService extends BaseService
                 'ent.trade_license_no',
                 'ent.company_name',
                 'ent.company_address',
+                'bqr.risk_score',
                 'qrem.entity_type_code',
                 'ent.industry_type_code',
                 'ent.emirate_of_registration_id',
@@ -168,6 +169,7 @@ class BusinessQuoteService extends BaseService
                             'paymentMethod',
                             'documents',
                             'verifiedByUser',
+                            'processJob',
                         ]);
                         $paymentSplit->orderBy('sr_no');
                     },

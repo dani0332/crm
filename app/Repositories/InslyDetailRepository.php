@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -13,6 +14,7 @@ use App\Models\PetQuote;
 use App\Models\QuoteType;
 use App\Models\YachtQuote;
 use App\Services\CapiRequestService;
+use App\Services\InslyDataService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 use Carbon\Carbon;
@@ -76,7 +78,7 @@ class InslyDetailRepository extends BaseRepository
     private function getQuoteTypeFromCoverage($coverage)
     {
         $coverage = $coverage ?? null;
-        $inslyCoverageArray = $this->inslyInsurances();
+        $inslyCoverageArray = (new InslyDataService())->inslyInsurances();
         $quoteType = null;
         foreach ($inslyCoverageArray as $key => $item) {
             $lowerCaseCoverageValues = array_map('strtolower', $item);
@@ -310,6 +312,7 @@ class InslyDetailRepository extends BaseRepository
     {
 
         $dataArr = [];
+        $coverage = $policy['policy']['coverage'];
         $dataArr['previous_quote_policy_number'] = $policy['policy_no'] ?? null;
         $dataArr['email'] = $policy['customer']['email'] ?? null;
         if ($dataArr['email'] == null) {
@@ -361,6 +364,9 @@ class InslyDetailRepository extends BaseRepository
             $dataArr['quote_type_id'] = $quoteTypeData->id;
             $dataArr['is_ecommerce'] = false;
         }
+        if (ucfirst($quoteType) == QuoteTypes::BUSINESS->value) {
+            $dataArr['business_type_of_insurance_id'] = $coverage ? $this->getBusinessTypeOfInsuranceIDFromCoverage(strtolower($coverage)) : null;
+        }
 
         return $dataArr;
     }
@@ -368,7 +374,7 @@ class InslyDetailRepository extends BaseRepository
     public function getCoverageList($user)
     {
         $coverage = [];
-        $inslyCoverageArray = $this->inslyInsurances();
+        $inslyCoverageArray = (new InslyDataService())->inslyInsurances();
         if ($user->hasRole(RolesEnum::BikeAdvisor)) {
             $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::BIKE->value]);
         }
@@ -443,5 +449,21 @@ class InslyDetailRepository extends BaseRepository
         $regexPattern = implode('.*', str_split($phoneNumber));
 
         return new Regex("$regexPattern", 'i');
+    }
+
+    private function getBusinessTypeOfInsuranceIDFromCoverage($coverage)
+    {
+        $coverage = $coverage ?? null;
+        $inslyBusinessTypeOfInsurances = (new InslyDataService())->inslyBusinessTypeOfInsurance();
+        $businessTypeOfInsurance = null;
+        foreach ($inslyBusinessTypeOfInsurances as $key => $inslyBusinessTypeOfInsurance) {
+            $lowercaseBusinessTypeOfInsurance = array_map('strtolower', $inslyBusinessTypeOfInsurance);
+            $inslyBusinessTypeOfInsurance = array_merge($inslyBusinessTypeOfInsurance, $lowercaseBusinessTypeOfInsurance);
+            if (in_array($coverage, $inslyBusinessTypeOfInsurance)) {
+                $businessTypeOfInsurance = $key;
+            }
+        }
+
+        return $businessTypeOfInsurance ? quoteBusinessTypeCode::getId($businessTypeOfInsurance) : null;
     }
 }

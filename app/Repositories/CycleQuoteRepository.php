@@ -172,6 +172,7 @@ class CycleQuoteRepository extends BaseRepository
                         'paymentSplits.paymentMethod',
                         'paymentSplits.verifiedByUser',
                         'paymentSplits.documents',
+                        'paymentSplits.processJob',
                     ]);
                 },
                 'customer',

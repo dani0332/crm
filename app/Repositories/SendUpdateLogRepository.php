@@ -10,12 +10,14 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Jobs\SendUpdateToCustomerJob;
 use App\Models\CarQuote;
 use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\SendUpdateLogService;
+use App\Services\SplitPaymentService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Illuminate\Support\Str;
 
@@ -30,10 +32,21 @@ class SendUpdateLogRepository extends BaseRepository
     public function fetchCreate($data)
     {
         try {
-            $code = $data['childCategory']['slug'];
-            $count = $this->fetchGetCount($code);
+            $category = $data['childCategory']['slug']; // EF, EN, CI, CIR, CPU, CPD.
+            $count = $this->fetchGetCount($category); // get count of send update log by category.
+            $baseCode = $category.'-'.date('m').date('y').'-'; // CPD-0824- or EF-0824- etc.
+            $code = $baseCode.($count + 1); // CPD-0824-48 or EF-0824-48 etc.
 
-            $code = $code.'-'.date('m').date('y').'-'.($count + 1);
+            $attempts = 0;
+            while (SendUpdateLog::where('code', $code)->exists() && $attempts < 10) {
+                $count++;
+                $code = $baseCode.$count;
+                $attempts++;
+            }
+
+            if ($attempts >= 10) {
+                vAbort('Send Update Log Code generation failed.');
+            }
 
             $uuid = strtoupper(Str::random(6));
 
@@ -248,8 +261,8 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchSendUpdateToCustomer($data)
     {
+        $sendUpdateLog = $this->find($data['sendUpdateId']);
         try {
-            $sendUpdateLog = $this->find($data['sendUpdateId']);
             if ($data['quoteType'] == quoteTypeCode::Car && $sendUpdateLog->category->code == SendUpdateLogStatusEnum::EN) {
                 $quote = CarQuote::where('uuid', $sendUpdateLog->quote_uuid)->first();
                 if (! empty($sendUpdateLog->emirates_id)) { // will work on Change of Emirates (with no financial impact).
@@ -259,16 +272,25 @@ class SendUpdateLogRepository extends BaseRepository
                 }
             }
 
-            $result = $sendUpdateLog->update([
-                'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
-            ]);
+            SendUpdateToCustomerJob::dispatchSync($sendUpdateLog, $data);
 
-            if ($result) {
-                app(SendUpdateLogService::class)->sendUpdateToCustomerEmail($sendUpdateLog, $data['action']);
-            }
+            /*$sendUpdateLog->update([
+                'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
+            ]);*/
+
+            // temporary comments.
+            /*if (! $sendUpdateLog->is_email_sent) {
+                dispatch(new SendUpdateToCustomerJob($sendUpdateLog, $data));
+            } else {
+                $sendUpdateLog->update([
+                    'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
+                ]);
+            }*/
             info('Send update to Customer - Send Update Code: '.$sendUpdateLog->code.' - Status update to: '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
+            $result = true;
         } catch (\Exception $ex) {
             logger()->error('Send Update to Customer - Failed - Send Update Code: '.$sendUpdateLog->code.' - Error : '.$ex->getMessage());
+
             $result = (object) [
                 'message' => $ex->getMessage(),
             ];
@@ -312,8 +334,13 @@ class SendUpdateLogRepository extends BaseRepository
 
             $payment = Payment::where('send_update_log_id', $data['id'])->firstOrFail();
             if ($payment) {
-                app(SendUpdateLogService::class)->sendUpdatePriceAndDiscount($sendUpdate, $payment);
+                $sendUpdateLogService = app(SendUpdateLogService::class);
+                info('Send update - Updating Booking details and Commission Schedule in Payments - SendUpdateUUID: '.$sendUpdate->uuid);
+                $sendUpdateLogService->sendUpdatePriceAndDiscount($sendUpdate, $payment);
+                $sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate, true);
+                app(SplitPaymentService::class)->updateCommissionSchedule($payment);
             }
+
         } catch (\Exception $ex) {
             $result = (object) [
                 'message' => $ex->getMessage(),

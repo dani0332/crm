@@ -239,8 +239,12 @@ watch(
   { deep: true, immediate: true },
 );
 
+const readOnlyMode = reactive({
+  isDisable: true,
+});
 onMounted(() => {
   setQueryFilters();
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 const resetDateFilters = filterName => {
   const filterMappings = {
@@ -280,17 +284,34 @@ const resetDateFilters = filterName => {
     <Head title="Travel List" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
-      <div class="flex space-x-2 items-center">
+      <div
+        class="flex space-x-2 items-center"
+        v-if="readOnlyMode.isDisable === true"
+      >
         <Link :href="route('travel.expired.upload')" v-if="permissions.admin">
           <x-button size="sm" color="#1d83bc" tag="div">
             Upload Expired Leads
           </x-button>
         </Link>
         <Link :href="route('travel.cards')">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
+          <x-button
+            size="sm"
+            color="#1d83bc"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Cards View
+          </x-button>
         </Link>
         <Link :href="route('travel.create')">
-          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Create Lead
+          </x-button>
         </Link>
       </div>
     </div>
@@ -494,13 +515,15 @@ const resetDateFilters = filterName => {
         >
           <x-form @submit="onAssignLead" :auto-focus="false">
             <div class="w-full flex flex-col md:flex-row gap-4">
-              <x-field label="Assign Advisor">
+              <x-field label="Assign Advisor" class="w-full">
                 <x-select
                   v-model="assignForm.assigned_to_id_new"
                   :options="advisorOptions"
                   placeholder="Select Advisor"
-                  class="flex-1 w-auto"
+                  class="flex-1 w-full"
                   :rules="[rules.isRequired]"
+                  filterable
+                  v-if="readOnlyMode.isDisable === true"
                 />
               </x-field>
 
@@ -510,6 +533,7 @@ const resetDateFilters = filterName => {
                   size="sm"
                   type="submit"
                   :loading="assignForm.processing"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Assign
                 </x-button>

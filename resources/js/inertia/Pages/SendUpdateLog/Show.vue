@@ -37,6 +37,7 @@ const props = defineProps({
     default: [],
   },
   isPlanDetailAvailable: Boolean,
+  quoteLink: String,
 });
 
 const page = usePage();
@@ -93,9 +94,7 @@ const sendUpdateForm = useForm({
   category_id: props.sendUpdateLog?.category_id || null,
   option_id: props.sendUpdateLog?.option_id || null,
   change_reason: props.sendUpdateLog?.change_reason || '',
-  reportable_id: props.sendUpdateLog?.reportable_id || null,
   quote_type_id: props.sendUpdateLog?.quote_type_id || null,
-  reportable_uuid: props.sendUpdateLog?.reportable_uuid || null,
   personal_quote_id: props.sendUpdateLog?.personal_quote_id || null,
   status: props.sendUpdateLog?.status || '',
   quote_uuid: props.realQuote.uuid,
@@ -221,7 +220,7 @@ const isLegacyPolicy = computed(() => {
           <h3 class="text-lg font-semibold text-primary-800 capitalize">
             {{ sendUpdateLog.category.text }}
           </h3>
-          <Link :href="state.redirectURL">
+          <Link :href="quoteLink">
             <x-button color="primary" size="sm" class="mr-5"
               >Go back to lead</x-button
             >

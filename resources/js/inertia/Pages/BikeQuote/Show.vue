@@ -5,6 +5,7 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+import LazyBookingDetails from '../SendUpdateLog/Partials/BookingDetails.vue';
 
 defineProps({
   quote: Object,
@@ -299,6 +300,12 @@ const linkEntity = () => {
 };
 const paymentStatusEnum = page.props.paymentStatusEnum;
 
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
@@ -324,7 +331,12 @@ const onAddUpdate = () => {
           :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
           preserve-scroll
         >
-          <x-button size="sm" color="#ff5e00" tag="div">
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
             View Legacy policy
           </x-button>
         </Link>
@@ -350,7 +362,9 @@ const onAddUpdate = () => {
             v-if="!isDisabled"
             :href="route('bike-quotes-edit', quote.uuid)"
           >
-            <x-button size="sm" tag="div">Edit</x-button>
+            <x-button size="sm" tag="div" v-if="readOnlyMode.isDisable === true"
+              >Edit</x-button
+            >
           </Link>
           <x-button v-else :disabled="isDisabled" size="sm" tag="div"
             >Edit</x-button
@@ -725,6 +739,7 @@ const onAddUpdate = () => {
                 />
               </dd>
             </div>
+
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium uppercase">UAE licence held for</dt>
               <dd>{{ quote?.bike_quote?.uae_license_held_for?.text }}</dd>
@@ -736,8 +751,8 @@ const onAddUpdate = () => {
               <dd>{{ quote?.bike_quote?.back_home_license_held_for?.text }}</dd>
             </div>
             <RiskRatingScoreDetails
-              v-if="quote?.bike_quote"
-              :quote="quote.bike_quote"
+              v-if="quote"
+              :quote="quote"
               :modelType="'Bike'"
             />
           </dl>
@@ -778,6 +793,7 @@ const onAddUpdate = () => {
                   @click.prevent="searchByTradeLicense"
                   size="xs"
                   color="primary"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Search
                 </x-button>
@@ -835,7 +851,7 @@ const onAddUpdate = () => {
               </dd>
             </div>
           </dl>
-          <div class="flex justify-end">
+          <div class="flex justify-end" v-if="readOnlyMode.isDisable === true">
             <x-button
               v-if="isProfileUpdateAllow"
               class="mt-4"
@@ -874,6 +890,7 @@ const onAddUpdate = () => {
             size="sm"
             :loading="customerProfileForm.processing"
             @click.prevent="searchByTradeLicense('SubEntity')"
+            v-if="readOnlyMode.isDisable === true"
           >
             Search
           </x-button>
@@ -924,7 +941,12 @@ const onAddUpdate = () => {
       </dl>
       <template #actions>
         <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity">
+          <x-button
+            size="sm"
+            color="orange"
+            @click.prevent="linkEntity"
+            v-if="readOnlyMode.isDisable === true"
+          >
             Link
           </x-button>
         </div>
@@ -1110,7 +1132,7 @@ const onAddUpdate = () => {
           </div>
         </div>
       </div>
-      <div class="flex justify-end">
+      <div class="flex justify-end" v-if="readOnlyMode.isDisable === true">
         <x-button
           v-if="assumptionState.isEditing"
           class="mt-4 mr-2"
@@ -1224,6 +1246,15 @@ const onAddUpdate = () => {
     />
 
     <EmailStatus :emailStatuses="emailStatuses" />
+
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="quote"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
+      @onAddUpdate="onAddUpdate"
+    />
 
     <AuditLogs
       :id="$page.props.quote.id"

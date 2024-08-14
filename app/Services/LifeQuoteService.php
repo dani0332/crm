@@ -88,6 +88,7 @@ class LifeQuoteService extends BaseService
                 'lqr.policy_issuance_status_id',
                 'lqr.insurer_quote_number',
                 'lqr.policy_issuance_date',
+                'lqr.insly_migrated',
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', 'lqr.id')
             ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')

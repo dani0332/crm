@@ -432,6 +432,50 @@ class ApplicationStorageSeeder extends Seeder
             ]);
         }
 
+        $sukoonConstants = [
+            [
+                'key_name' => ApplicationStorageEnums::SUKOON_PAYMENT_GATEWAY,
+                'value' => 'invoice',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::SUKOON_PRODUCT_SLUG,
+                'value' => 'accident_health_afia',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::SUKOON_TEMPLATE_POLICY_CERTIFICATE,
+                'value' => (config('constants.APP_ENV') != EnvEnum::PRODUCTION) ? '9024065094027325487' : '9139600398162627641',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_CREDIT,
+                'value' => (config('constants.APP_ENV') != EnvEnum::PRODUCTION) ? '9099784511062815329' : '9139600409696963644',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_CREDIT_BUYER,
+                'value' => (config('constants.APP_ENV') != EnvEnum::PRODUCTION) ? '9099784511515800162' : '9139600411592789053',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_INVOICE,
+                'value' => (config('constants.APP_ENV') != EnvEnum::PRODUCTION) ? '9068692883229388975' : '9139600402977688634',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_INVOICE_BUYER,
+                'value' => (config('constants.APP_ENV') != EnvEnum::PRODUCTION) ? '9083336468679635183' : '9139600407281044539',
+                'is_active' => 1,
+            ],
+        ];
+        foreach ($sukoonConstants as $sukoon) {
+            $conditions = [
+                'key_name' => $sukoon['key_name'],
+            ];
+            ApplicationStorage::firstOrCreate($conditions, $sukoon);
+        }
+
         $ecomSourceValue = 'insurancemarket.ae';
         if (config('constants.APP_ENV') == EnvEnum::STAGING) {
             $ecomSourceValue = 'staging.alfred.ae';
@@ -446,6 +490,71 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::LEAD_SOURCE_ECOMMERCE],
             [
                 'value' => $ecomSourceValue,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        $this->seedTravelSICStorage();
+    }
+
+    private function seedTravelSICStorage()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SIC_TRAVEL_WORKFLOW_ENABLE],
+            [
+                'value' => 'travel_sic_workflow_enable',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SIC_TRAVEL_WORKFLOW_DISABLE],
+            [
+                'value' => 'travel_sic_workflow_disable',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::TRAVEL_EMAIL_TEMPLATE],
+            [
+                'value' => 697,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SIC_TRAVEL_FOLLOWUP_TEMPLATE_ID],
+            [
+                'value' => 698,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SIC_TRAVEL_EMAIL_CC],
+            [
+                'value' => 'travel.enquiries@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::TRAVEL_EMAIL_REPLY_TO],
+            [
+                'value' => 'travel@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

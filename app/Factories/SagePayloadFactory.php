@@ -327,6 +327,14 @@ class SagePayloadFactory
             $payLoad = ($type == SageEnum::SCT_REVERSAL) ? $reversePayLoad : $payLoad;
         }
 
+        if (isset($extras['extras']['only_correction']) && $extras['extras']['only_correction']) {
+            $payLoad['Invoices'][0]['DocumentNumber'] = (string) substr($payLoad['Invoices'][0]['DocumentNumber'], -18);
+            $payLoad['Invoices'][0]['InvoiceDescription'] = $payLoad['Invoices'][0]['InvoiceDescription'].' - NEW';
+
+            $sageRequestType = SageEnum::SRT_CREATE_AR_DISC_CORR_INV;
+            $entryType = SageEnum::SCT_CORRECTION;
+        }
+
         return [
             'endPoint' => 'AR/ARInvoiceBatches',
             'payload' => $payLoad,
@@ -814,6 +822,11 @@ class SagePayloadFactory
             }
         }
 
+        if (isset($extras['extras']['only_correction']) && $extras['extras']['only_correction']) {
+            $sageRequestType = SageEnum::SRT_RTP_AR_DISC_CORR_INV;
+            $entryType = SageEnum::SCT_CORRECTION;
+        }
+
         // Additional commission and Tax invoice booking Case
         if (isset($extras['extras']['option_id']) && in_array($extras['extras']['option_id'], [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])) {
             $sageRequestType = ($extras['extras']['option_id'] == SendUpdateLogStatusEnum::ATIB) ? SageEnum::SRT_RTP_AR_PREM_INV : SageEnum::SRT_RTP_AR_COMM_INV;
@@ -911,6 +924,11 @@ class SagePayloadFactory
             if ($useFor == SageEnum::SCT_DISCOUNT) {
                 $sageRequestType = ($type == SageEnum::SCT_REVERSAL) ? SageEnum::SRT_POST_AR_DISC_REV_INV : SageEnum::SRT_POST_AR_DISC_CORR_INV;
             }
+        }
+
+        if (isset($extras['extras']['only_correction']) && $extras['extras']['only_correction']) {
+            $sageRequestType = SageEnum::SRT_POST_AR_DISC_CORR_INV;
+            $entryType = SageEnum::SCT_CORRECTION;
         }
 
         // Additional commission and Tax invoice booking Case
