@@ -2,7 +2,6 @@
 
 namespace App\Listeners;
 
-use App\Enums\LeadSourceEnum;
 use App\Events\CarQuoteAdvisorUpdated;
 use App\Jobs\OCB\SendCarOCBIntroEmailJob;
 use App\Models\ApplicationStorage;
