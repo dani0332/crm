@@ -1969,11 +1969,21 @@ class SageApiService
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
         $isTotalPriceZero = $payment->total_price == 0;
+
+        /* Start: Temporary code for historic data to allow book polciy after m2 launch */
+        $isQuoteFallUnderSkippableCriteria = $this->skipApplyPrepaymentsForSpecificLeads($quote, $payment, $paymentSplits);
+        if ($isQuoteFallUnderSkippableCriteria['status']) {
+            return $isQuoteFallUnderSkippableCriteria;
+        }
+        /* End: Temporary code for historic data to allow book polciy after m2 launch */
+
         /* applyPaymentInvoices */
         $isTransactionPaidAndFrequencyUpfront = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::UPFRONT;
 
         if ($isTransactionPaidAndFrequencyUpfront && ! $isTotalPriceZero) {
             return $this->applyUpfrontPaymentInvoices($sageRequestDataArray);
+        } elseif ($isTotalPriceZero) {
+            info('  ########## applyUpfrontPaymentInvoices skipped  for : '.$quote->code.' due to zero price ########## ');
         }
 
         $isFrequencySplitAndFirstChildPaymentPaid = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::SPLIT_PAYMENTS;
@@ -2290,5 +2300,45 @@ class SageApiService
         }
 
         return json_decode($response, true);
+    }
+
+    public function skipApplyPrepaymentsForSpecificLeads($quote, $payment, $paymentSplits)
+    {
+        $returnMessage = ['status' => false, 'message' => null, 'error' => null];
+        $startDate = Carbon::parse('2024-04-23')->startOfDay();
+        $endDate = Carbon::parse('2024-08-15')->endOfDay();
+        $quoteCreatedAt = Carbon::parse($quote->created_at);
+
+        $isQuoteCreatedWithInDateRange = $quoteCreatedAt->between($startDate, $endDate);
+        $isPaymentMethodCreditApproval = $payment->payment_methods_code == PaymentMethodsEnum::CreditApproval;
+        $isPaymentFrequencySplitPayment = $payment->frequency == PaymentFrequency::SPLIT_PAYMENTS;
+
+        if ($isQuoteCreatedWithInDateRange && ! $isPaymentMethodCreditApproval) {
+            if ($isPaymentFrequencySplitPayment) {
+                $paymentSplitsWithNoSageReceipt = $paymentSplits->whereNull('sage_receipt_id')->count();
+                if ($paymentSplitsWithNoSageReceipt) {
+                    info('  ########## applyUpfrontPaymentInvoices skipped  for : '.$quote->code.' due to sage receipt not generated on sage ########## ');
+                    $returnMessage['status'] = true;
+                    $returnMessage['message'] = 'Apply Prepayment skipped due to sage receipt not generated on sage';
+
+                    return $returnMessage;
+                }
+
+                return $returnMessage;
+            } else {
+                $firstPaymentSplitWithNoSageReceipt = $paymentSplits->where('sr_no', 1)->whereNull('sage_receipt_id')->count();
+                if ($firstPaymentSplitWithNoSageReceipt) {
+                    info('  ########## applyUpfrontPaymentInvoices skipped  for : '.$quote->code.' due to sage receipt not generated on sage ########## ');
+                    $returnMessage['status'] = true;
+                    $returnMessage['message'] = 'Apply Prepayment skipped due to sage receipt not generated on sage';
+
+                    return $returnMessage;
+                }
+            }
+
+            return $returnMessage;
+        }
+
+        return $returnMessage;
     }
 }

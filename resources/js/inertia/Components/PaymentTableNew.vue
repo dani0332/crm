@@ -1,9 +1,11 @@
 <script setup>
 import ToolTip from './../Components/ToolTip.vue';
-import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
 import { onMounted, reactive } from 'vue';
 import moment from 'moment';
 import NProgress from 'nprogress';
+import { computed } from 'vue';
+import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
+
 const notification = useNotifications('toast');
 const page = usePage();
 
