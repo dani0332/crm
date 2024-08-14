@@ -780,6 +780,7 @@ class SendUpdateLogService
                         'policy_number' => $sendUpdateLog->policy_number,
                         'policy_start_date' => $sendUpdateLog->start_date,
                         'renewal_expiry_date' => $sendUpdateLog->expiry_date,
+                        'policy_booking_date' => $currentDate,
                     ]);
                 }
                 // Cases for Correct Policy Details End
