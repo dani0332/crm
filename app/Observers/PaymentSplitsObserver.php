@@ -59,6 +59,7 @@ class PaymentSplitsObserver
             $masterPayment->send_update_log_id
         );
 
+        info('SplitPayment:Observer VAT updated for '.$masterPayment->code.' - Split No: '.$paymentSplits->sr_no);
         PaymentSplits::withoutEvents(function () use ($paymentSplits, $priceWithoutVat, $vat) {
             $paymentSplits->update([
                 'price_vat_applicable' => $priceWithoutVat,

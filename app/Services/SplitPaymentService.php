@@ -7,7 +7,6 @@ use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\LookupsEnum;
-use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PaymentStatusEnum;
@@ -826,17 +825,22 @@ class SplitPaymentService
         }
         [$priceWithoutVat, $vat] = $this->calculateMasterPriceAndVat($frequency, $masterTotalPrice, $modelType, $quoteId, $send_update_id);
         if ($vat > 0) {
-            if ($frequency == PaymentFrequency::SPLIT_PAYMENTS) {
-                $vat = $vat / $totalSplitPayments;
-                $priceWithoutVat = $splitPaymentAmount - $vat;
-            } elseif ($splitPaymentNumber === 1) {
-                if ($frequency != PaymentFrequency::UPFRONT) {
-                    $priceWithoutVat = $splitPaymentAmount - $vat;
-                }
+            $discount = 0;
+
+            if ($send_update_id > 0) {
+                $quoteModel = SendUpdateLogRepository::getLogById($send_update_id);
             } else {
-                $priceWithoutVat = $splitPaymentAmount;
-                $vat = 0;
+                $quoteModel = $this->getQuoteObject($modelType, $quoteId);
             }
+
+            $paymentDiscount = $quoteModel->payments()->where('code', $quoteModel->code)->value('discount_value');
+            if ($splitPaymentNumber === 1 && $paymentDiscount > 0) {
+                $splitPaymentAmount = $splitPaymentAmount + $paymentDiscount; //discount
+            }
+
+            $priceWithoutVat = $splitPaymentAmount / (1 + ($vatValue / 100));
+            $vat = $priceWithoutVat * $vatValue / 100;
+
         } else {
             $priceWithoutVat = $splitPaymentAmount;
         }
@@ -871,10 +875,13 @@ class SplitPaymentService
         }
 
         if ($computedPrice > 0) {
-            $priceWithoutVat = $computedPrice;
-            $vat = ($priceWithoutVat * $vatValue) / 100;
+
             if (in_array($modelType, $ecommLobs) && ! $send_update_id) {
-                $priceWithoutVat = $computedPrice - $vat;
+                $priceWithoutVat = $computedPrice / (1 + ($vatValue / 100));
+                $vat = $priceWithoutVat * $vatValue / 100;
+            } else {
+                $priceWithoutVat = $computedPrice;
+                $vat = ($priceWithoutVat * $vatValue) / 100;
             }
 
             return [$priceWithoutVat, $vat];
