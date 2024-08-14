@@ -870,13 +870,13 @@ class SendUpdateLogService
         return $carQuote->plan->carAddons->toArray();
     }
 
-    public function sendUpdateToCustomerEmail($sendUpdateLog, $action): array
+    public function sendUpdateToCustomerEmailData($sendUpdateLog, $action): array
     {
         $quoteTypeId = $sendUpdateLog->quote_type_id;
         $quoteType = QuoteTypeId::getOptions()[$quoteTypeId];
         $quoteModel = $this->getModelObject($quoteType);
         $quote = $quoteModel::where('uuid', $sendUpdateLog->quote_uuid)->first();
-        $insuranceProviderText = $quote?->insuranceProvider?->text ?? $quote?->plan?->insuranceProvider?->text ?? '';
+        $insuranceProviderText = $sendUpdateLog?->insuranceProvider?->text ?? $quote?->insuranceProvider?->text ?? $quote?->plan?->insuranceProvider?->text ?? '';
         $optionCode = $sendUpdateLog->option?->code;
         $categoryCode = $sendUpdateLog->category->code;
 
@@ -903,7 +903,7 @@ class SendUpdateLogService
 
         $emailData = (object) [
             'clientFullName' => $quote->first_name.' '.$quote->last_name,
-            'policyNumber' => $quote->policy_number,
+            'policyNumber' => $quote->policy_number ?? $quote?->previous_quote_policy_number ?? '',
             'carQuoteId' => $sendUpdateLog->code,
             'currentInsurer' => $insuranceProviderText,
             'policyUpdate' => $update ?? '',
