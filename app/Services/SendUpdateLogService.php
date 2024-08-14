@@ -775,19 +775,12 @@ class SendUpdateLogService
                 if ($categoryCode == SendUpdateLogStatusEnum::CPD && (
                     $sendUpdateRequest->reversalInvoice == $quote->payments->value('insurer_tax_number')
                 )) {
-                    info('Book Update - Updating Policy and Booking Details for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-                    $this->updatePaymentDetails($quote->payments->first(), $sendUpdateLog);
+                    info('Book Update - Updating Policy Details for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
                     $quote->update([
                         'policy_number' => $sendUpdateLog->policy_number,
                         'policy_start_date' => $sendUpdateLog->start_date,
-                        'policy_issuance_date' => $sendUpdateLog->issuance_date,
                         'renewal_expiry_date' => $sendUpdateLog->expiry_date,
-                        'insurer_quote_number' => $sendUpdateLog->insurer_quote_number,
-                        'policy_issuance_status_id' => $sendUpdateLog->issuance_status_id,
                         'policy_booking_date' => $currentDate,
-                        'price_vat_applicable' => $sendUpdateLog->price_vat_applicable,
-                        'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
-                        'price_with_vat' => $sendUpdateLog->price_with_vat,
                     ]);
                 }
                 // Cases for Correct Policy Details End
