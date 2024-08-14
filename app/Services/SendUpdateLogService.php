@@ -62,7 +62,6 @@ class SendUpdateLogService
             'payment_status_id',
             'payment_status_date',
             'payment_gateway',
-            'previous_quote_policy_number',
             'previous_policy_expiry_date',
             'previous_quote_policy_premium',
             'price_vat_applicable',
