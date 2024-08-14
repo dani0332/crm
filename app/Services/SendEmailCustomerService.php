@@ -504,11 +504,6 @@ class SendEmailCustomerService extends BaseService
         try {
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
             info("sendLMSIntroEmail ---- Tag : {$tag} for ID : {$quoteId}");
-            $headers = [
-                'Accept' => 'application/json',
-                'api-key' => $this->apiKey,
-                'Content-Type' => 'application/json',
-            ];
             $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.' - ';
             $attachments = $this->getEmailAttachments($emailData);
 
