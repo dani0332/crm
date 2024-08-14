@@ -461,7 +461,7 @@ class AdvisorConversionReportService extends BaseService
         ];
     }
 
-    public function applyFilters($query, $filters, $isPopup)
+    public function applyFilters($query, $filters, $isPopup = false)
     {
         $filters = (object) $filters;
         $lob = $filters->lob ?? '';
@@ -677,7 +677,7 @@ class AdvisorConversionReportService extends BaseService
         return $query;
     }
 
-    public function applyFiltersForCar($query, $filters, $isPopup)
+    public function applyFiltersForCar($query, $filters, $isPopup = false)
     {
         $filters = (object) $filters;
 
