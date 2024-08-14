@@ -541,14 +541,14 @@ class SageApiService
         }
     }
 
-    public function checkInslyMigratedLead($request) 
+    public function checkInslyMigratedLead($request)
     {
         $inslyMigrated = false;
         if ($request->inslyMigrated) {
             $inslyMigrated = true;
         } else {
             $getQuoteDetails = $this->getQuoteDetailObject($request->quoteType, $request->quoteRefId);
-            $inslyMigrated = !empty($getQuoteDetails->insly_id) && $getQuoteDetails->insly_id != null;
+            $inslyMigrated = ! empty($getQuoteDetails->insly_id) && $getQuoteDetails->insly_id != null;
         }
 
         return $inslyMigrated;
