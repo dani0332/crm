@@ -204,6 +204,10 @@ const isAdditionalFieldError = ref(false);
 function handleErrorStatusUpdate(newStatus) {
   isAdditionalFieldError.value = newStatus;
 }
+
+const isLegacyPolicy = computed(() => {
+  return props.quote?.insly_migrated || props.realQuote?.insly_migrated || props.realQuote?.insly_id;
+});
 </script>
 
 <template>
@@ -469,7 +473,7 @@ function handleErrorStatusUpdate(newStatus) {
     </div>
 
     <LazyProviderDetails
-      v-if="props.quote?.insly_migrated || props.realQuote?.insly_migrated"
+      v-if="isLegacyPolicy"
       :sendUpdateLog="sendUpdateLog"
       :insuranceProviders="props.insuranceProviders"
     />
