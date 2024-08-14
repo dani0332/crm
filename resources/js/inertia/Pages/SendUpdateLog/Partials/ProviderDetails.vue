@@ -58,7 +58,8 @@ const onUpdate = () => {
 
 const onCancel = () => {
   state.isEdit = false;
-  providerDetailsForm.insurance_provider_id = props.sendUpdateLog?.insurance_provider_id || null;
+  providerDetailsForm.insurance_provider_id =
+    props.sendUpdateLog?.insurance_provider_id || null;
 };
 </script>
 

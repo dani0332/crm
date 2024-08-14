@@ -205,7 +205,11 @@ function handleErrorStatusUpdate(newStatus) {
 }
 
 const isLegacyPolicy = computed(() => {
-  return props.quote?.insly_migrated || props.realQuote?.insly_migrated || props.realQuote?.insly_id;
+  return (
+    props.quote?.insly_migrated ||
+    props.realQuote?.insly_migrated ||
+    props.realQuote?.insly_id
+  );
 });
 </script>
 
