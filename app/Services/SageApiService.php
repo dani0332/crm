@@ -2333,9 +2333,9 @@ class SageApiService
 
                     return $returnMessage;
                 }
-
-                return $returnMessage;
             }
+            return $returnMessage;
         }
+        return $returnMessage;
     }
 }
