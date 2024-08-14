@@ -190,6 +190,7 @@ class EndorsementReportService extends ManagementReport
     {
         return [
             'Ref-ID',
+            'Department',
             'SU Ref-ID',
             'Policy Number',
             'Transactions',
@@ -228,6 +229,7 @@ class EndorsementReportService extends ManagementReport
     {
         return [
             $quote->main_lead_code ?? 'N/A',
+            $quote->department ?? 'N/A',
             $quote->code ?? 'N/A',
             $quote->policy_number ? '="'.$quote->policy_number.'"' : ('="'.$quote->main_lead_policy_number.'"' ?? 'N/A'),
             $quote->transactions ? $quote->transactions : 'N/A',
