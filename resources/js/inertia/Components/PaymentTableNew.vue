@@ -3068,7 +3068,6 @@ const splitPaymentTotalPrice = (
               class="flex justify-between items-center gap-2"
               style="margin-left: auto"
             >
-              
               <UpdateTotalPrice
                 v-if="
                   can(permissionEnum.TEMP_UPDATE_TOTALPRICE) &&
