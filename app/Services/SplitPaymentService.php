@@ -826,17 +826,22 @@ class SplitPaymentService
         }
         [$priceWithoutVat, $vat] = $this->calculateMasterPriceAndVat($frequency, $masterTotalPrice, $modelType, $quoteId, $send_update_id);
         if ($vat > 0) {
-            if ($frequency == PaymentFrequency::SPLIT_PAYMENTS) {
-                $vat = $vat / $totalSplitPayments;
-                $priceWithoutVat = $splitPaymentAmount - $vat;
-            } elseif ($splitPaymentNumber === 1) {
-                if ($frequency != PaymentFrequency::UPFRONT) {
-                    $priceWithoutVat = $splitPaymentAmount - $vat;
-                }
+            $discount = 0;
+            
+            if ($send_update_id > 0) {
+                $quoteModel = SendUpdateLogRepository::getLogById($send_update_id);
             } else {
-                $priceWithoutVat = $splitPaymentAmount;
-                $vat = 0;
+                $quoteModel = $this->getQuoteObject($modelType, $quoteId);
             }
+
+            $paymentDiscount = $quoteModel->payments()->where('code', $quoteModel->code)->value('discount_value');;
+            if ( $splitPaymentNumber === 1 && $paymentDiscount > 0) {
+                $splitPaymentAmount = $splitPaymentAmount + $paymentDiscount; //discount
+            }
+            
+            $priceWithoutVat = $splitPaymentAmount / (1 + ($vatValue / 100));
+            $vat = $priceWithoutVat * $vatValue / 100;
+
         } else {
             $priceWithoutVat = $splitPaymentAmount;
         }

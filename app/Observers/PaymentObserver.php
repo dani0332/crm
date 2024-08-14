@@ -21,12 +21,12 @@ class PaymentObserver
     /**
      * Handle the Payment "updated" event.
      */
-    public function saved(Payment $payment): void
+    public function updated(Payment $payment): void
     {
         // Only update VAT if total_price has changed
-        //if ($payment->isDirty('total_price')) {
+        if ($payment->isDirty('total_price')) {
             $this->updatePriceVat($payment);
-        //}
+        }
     }
 
     /**
@@ -53,7 +53,7 @@ class PaymentObserver
             $quoteId,
             $payment->send_update_log_id
         );
-        info('Payment:Observer Price without VAT: ' . $priceWithoutVat);
+        info('Payment:Observer VAT updated for '.$payment->code);
         
         Payment::withoutEvents(function () use ($payment, $priceWithoutVat, $vat) {
             $payment->update([

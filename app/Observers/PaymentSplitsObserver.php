@@ -23,9 +23,9 @@ class PaymentSplitsObserver
      */
     public function updated(PaymentSplits $paymentSplits): void
     {
-        //if ($paymentSplits->isDirty('payment_amount')) {
+        if ($paymentSplits->isDirty('payment_amount')) {
             $this->updateSplitPriceVat($paymentSplits);
-        //}
+        }
     }
 
     /**
@@ -58,7 +58,8 @@ class PaymentSplitsObserver
             $totalSplitPayments,
             $masterPayment->send_update_log_id
         );
-        info('Split Payment:Observer Price without VAT: ' . $priceWithoutVat);
+        
+        info('SplitPayment:Observer VAT updated for '.$masterPayment->code.' - Split No: '.$paymentSplits->sr_no);
         PaymentSplits::withoutEvents(function () use ($paymentSplits, $priceWithoutVat, $vat) {
             $paymentSplits->update([
                 'price_vat_applicable' => $priceWithoutVat,
