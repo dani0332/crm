@@ -2,6 +2,7 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
@@ -56,6 +57,7 @@ class AdvisorConversionReportService extends BaseService
             'advisorsFilter' => $request->advisors,
             'quoteBatchId' => $request->quote_batch_id,
             'isCommercial' => $request->isCommercial,
+            'isEmbeddedProducts' => $request->isEmbeddedProducts,
             'page' => $request->page,
             'lob' => $request->lob,
             'subeams' => $request->sub_teams,
@@ -270,6 +272,11 @@ class AdvisorConversionReportService extends BaseService
                     quoteTypeCode::Car,
                 ],
             ],
+            'isEmbeddedProducts' => [
+                'lobs' => [
+                    quoteTypeCode::Travel,
+                ],
+            ],
             'insurance_type' => [
                 'lobs' => [
                     quoteTypeCode::Travel,
@@ -445,10 +452,13 @@ class AdvisorConversionReportService extends BaseService
 
         $lobs = $this->getLobByPermissions();
 
+        $isEmbeddedProducts = false;
+
         return [
             'lob' => count($lobs) == 1 ? reset($lobs) : '',
             'advisorAssignedDates' => $advisorAssignedDates,
             'isCommercial' => 'All',
+            'isEmbeddedProducts' => $isEmbeddedProducts,
         ];
     }
 
@@ -619,9 +629,11 @@ class AdvisorConversionReportService extends BaseService
         }
 
         if ($lob === quoteTypeCode::Travel) {
+            $isTravelQuote = false;
             if ((! empty($filters->insurance_type) && $filters->insurance_type != '') ||
                 (! empty($filters->travel_coverage) && $filters->travel_coverage != '')) {
                 $query->join('travel_quote_request', 'travel_quote_request.uuid', 'personal_quotes.uuid');
+                $isTravelQuote = true;
             }
             if (! empty($filters->insurance_type) && $filters->insurance_type != '') {
                 $query->where('travel_quote_request.direction_code', $filters->insurance_type);
@@ -629,6 +641,11 @@ class AdvisorConversionReportService extends BaseService
 
             if (! empty($filters->travel_coverage) && $filters->travel_coverage != '') {
                 $query->where('travel_quote_request.coverage_code', $filters->travel_coverage);
+            }
+
+            if (isset($filters->isEmbeddedProducts) && $filters->isEmbeddedProducts == 'false') {
+                $table = $isTravelQuote ? 'travel_quote_request.source' : 'source';
+                $query->where($table, '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
             }
         }
 

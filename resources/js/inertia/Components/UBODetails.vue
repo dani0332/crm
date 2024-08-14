@@ -220,19 +220,21 @@ const [DeleteUBOButtonTemplate, DeleteUBOButtonReuseTemplate] =
         <x-divider class="my-4" />
 
         <AddUBOButtonTemplate v-slot="{ isDisabled }">
-          <x-button
-            v-if="
-              page.props.quote?.quote_request_entity_mapping?.entity_id ??
-              page.props.quote.entity_id
-            "
-            @click.prevent="addUBOModal"
-            size="sm"
-            color="orange"
-            :loading="isLoading"
-            :disabled="isDisabled"
-          >
-            Add UBO
-          </x-button>
+          <div v-if="readOnlyMode.isDisable === true">
+            <x-button
+              v-if="
+                page.props.quote?.quote_request_entity_mapping?.entity_id ??
+                page.props.quote.entity_id
+              "
+              @click.prevent="addUBOModal"
+              size="sm"
+              color="orange"
+              :loading="isLoading"
+              :disabled="isDisabled"
+            >
+              Add UBO
+            </x-button>
+          </div>
         </AddUBOButtonTemplate>
 
         <div class="flex mb-3 justify-end">
@@ -257,6 +259,7 @@ const [DeleteUBOButtonTemplate, DeleteUBOButtonReuseTemplate] =
             outlined
             @click.prevent="onEditUBO(item)"
             :disabled="isDisabled"
+            v-if="readOnlyMode.isDisable === true"
           >
             Edit
           </x-button>
@@ -269,6 +272,7 @@ const [DeleteUBOButtonTemplate, DeleteUBOButtonReuseTemplate] =
             outlined
             @click.prevent="UBODelete(item.id)"
             :disabled="isDisabled"
+            v-if="readOnlyMode.isDisable === true"
           >
             Delete
           </x-button>

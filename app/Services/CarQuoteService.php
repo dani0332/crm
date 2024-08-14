@@ -200,7 +200,8 @@ class CarQuoteService extends BaseService
                 'cpdip.text as insurer_name',
                 'cqr.policy_booking_date',
                 //'cqr.aml_status_id',
-                DB::raw('GROUP_CONCAT(team.name) as team_name')
+                DB::raw('GROUP_CONCAT(team.name) as team_name'),
+                'cqr.insly_migrated',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -283,6 +284,7 @@ class CarQuoteService extends BaseService
                 't.cost_per_lead as cost_per_lead',
                 'qb.name as quote_batch_id_text',
                 'cqr.car_value_tier',
+                'cqr.insly_migrated',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -593,6 +595,7 @@ class CarQuoteService extends BaseService
                             'paymentMethod',
                             'documents',
                             'verifiedByUser',
+                            'processJob',
                         ]);
                         $paymentSplit->orderBy('sr_no');
                     },

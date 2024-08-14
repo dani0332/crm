@@ -57,4 +57,11 @@ class CustomerMembers extends Model
 
         return $query->whereHasMorph('quote', $quoteModelObject);
     }
+
+    public function getAgeAttribute()
+    {
+        $dob = Carbon::parse($this->dob);
+
+        return $dob->age;
+    }
 }

@@ -51,7 +51,8 @@ class CarQuoteExport
             'cqr.premium',
             'ls.text as lost_reason',
             'cqr.quote_link',
-            'cqr.renewal_batch')->get();
+            'cqr.renewal_batch',
+            'cqr.previous_policy_expiry_date')->get();
     }
 
     public function headings(): array
@@ -96,6 +97,7 @@ class CarQuoteExport
             'LOST REASON',
             'QUOTE LINK',
             'RENEWAL BATCH',
+            'PREVIOUS POLICY EXPIRY DATE',
         ];
     }
 
@@ -141,6 +143,7 @@ class CarQuoteExport
             $quote->lost_reason,
             $quote->quote_link,
             $quote->renewal_batch,
+            $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
         ];
     }
 

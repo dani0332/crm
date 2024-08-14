@@ -362,7 +362,9 @@ const onAddUpdate = () => {
             v-if="!isDisabled"
             :href="route('bike-quotes-edit', quote.uuid)"
           >
-            <x-button size="sm" tag="div">Edit</x-button>
+            <x-button size="sm" tag="div" v-if="readOnlyMode.isDisable === true"
+              >Edit</x-button
+            >
           </Link>
           <x-button v-else :disabled="isDisabled" size="sm" tag="div"
             >Edit</x-button
@@ -849,7 +851,7 @@ const onAddUpdate = () => {
               </dd>
             </div>
           </dl>
-          <div class="flex justify-end">
+          <div class="flex justify-end" v-if="readOnlyMode.isDisable === true">
             <x-button
               v-if="isProfileUpdateAllow"
               class="mt-4"
@@ -888,6 +890,7 @@ const onAddUpdate = () => {
             size="sm"
             :loading="customerProfileForm.processing"
             @click.prevent="searchByTradeLicense('SubEntity')"
+            v-if="readOnlyMode.isDisable === true"
           >
             Search
           </x-button>
@@ -938,7 +941,12 @@ const onAddUpdate = () => {
       </dl>
       <template #actions>
         <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity">
+          <x-button
+            size="sm"
+            color="orange"
+            @click.prevent="linkEntity"
+            v-if="readOnlyMode.isDisable === true"
+          >
             Link
           </x-button>
         </div>
@@ -1124,7 +1132,7 @@ const onAddUpdate = () => {
           </div>
         </div>
       </div>
-      <div class="flex justify-end">
+      <div class="flex justify-end" v-if="readOnlyMode.isDisable === true">
         <x-button
           v-if="assumptionState.isEditing"
           class="mt-4 mr-2"

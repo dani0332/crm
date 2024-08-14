@@ -36,6 +36,7 @@ const props = defineProps({
     default: [],
   },
   isPlanDetailAvailable: Boolean,
+  quoteLink: String,
 });
 
 const page = usePage();
@@ -214,7 +215,7 @@ function handleErrorStatusUpdate(newStatus) {
           <h3 class="text-lg font-semibold text-primary-800 capitalize">
             {{ sendUpdateLog.category.text }}
           </h3>
-          <Link :href="state.redirectURL">
+          <Link :href="quoteLink">
             <x-button color="primary" size="sm" class="mr-5"
               >Go back to lead</x-button
             >
