@@ -163,8 +163,8 @@ class TransactionReportService extends ManagementReport
     {
         return [
             'Ref-ID',
-            'Policy Number',
             'Department',
+            'Policy Number',
             'Transactions',
             'Policy Start Date',
             'Payment Due Date',
@@ -199,8 +199,8 @@ class TransactionReportService extends ManagementReport
     {
         return [
             $quote->code ?? 'N/A',
-            $quote->policy_number ? '="'.$quote->policy_number.'"' : 'N/A',
             $quote->department ?? 'N/A',
+            $quote->policy_number ? '="'.$quote->policy_number.'"' : 'N/A',
             $quote->transactions ? $quote->transactions : 'N/A',
             $quote->policy_start_date ?? 'N/A',
             $quote->payment_due_date ? $quote->payment_due_date : ($quote->due_date ?? 'N/A'),
