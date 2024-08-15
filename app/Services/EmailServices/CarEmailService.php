@@ -39,17 +39,17 @@ class CarEmailService extends BaseService
         $emailData = $this->buildEmailData($lead, $plans, $previousAdvisorId, $tierR->id);
         $quotePlansCount = is_countable($plans) ? count($plans) : 0;
         if ($quotePlansCount > 0) {
-            info('Inside plans of count: ' . $lead->uuid . '    ');
+            info('Inside plans of count: '.$lead->uuid.'    ');
             $pdfData = [
                 'plan_ids' => collect($plans)->take(5)->pluck('id')->toArray(),
                 'quote_uuid' => $lead->uuid,
             ];
             $pdf = $carQuoteService->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $plans], 'isDataSorted' => true])));
             if (isset($pdf['error'])) {
-                info('Failed to generate PDF for UUID in car email service: ' . $lead->uuid . ' Error: ' . $pdf['error']);
+                info('Failed to generate PDF for UUID in car email service: '.$lead->uuid.' Error: '.$pdf['error']);
             } else {
                 $emailData->pdfAttachment = (object) $pdf;
-                info('attaching pdf: ' . $lead->uuid . '    ');
+                info('attaching pdf: '.$lead->uuid.'    ');
             }
         }
 
@@ -61,13 +61,13 @@ class CarEmailService extends BaseService
                     $apiResponse = SIBService::createWorkflowEvent($sicEventName->value, $lead, [], $emailData);
                     $lead->sic_flow_enabled = true;
                     $lead->save();
-                    info('SIC workflow event triggered for lead: ' . $lead->uuid . ' and sic_flow_enabled: ' . $lead->sic_flow_enabled);
-                    info('SIC workflow response: ' . $apiResponse);
+                    info('SIC workflow event triggered for lead: '.$lead->uuid.' and sic_flow_enabled: '.$lead->sic_flow_enabled);
+                    info('SIC workflow response: '.$apiResponse);
                 } else {
                     info('SIC workflow key not found');
                 }
             } else {
-                info('SIC workflow already enabled for lead: ' . $lead->uuid);
+                info('SIC workflow already enabled for lead: '.$lead->uuid);
             }
         }
 
@@ -77,13 +77,13 @@ class CarEmailService extends BaseService
             if ($lead->advisor_id) {
                 $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
             } else {
-                info('sendCarOCBIntroEmail - sendNonAdvisorIntroEmail - Ref ID:' . $lead->uuid . ' Time: ' . now());
+                info('sendCarOCBIntroEmail - sendNonAdvisorIntroEmail - Ref ID:'.$lead->uuid.' Time: '.now());
                 $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId);
                 if ($responseCode) {
                     $this->sendEmailCustomerService->sendSICFollowupEmail($lead, QuoteTypes::CAR);
                     // Dispatch the job with a 24 hours delay
                     SICFollowupEmailJob::dispatch($lead->uuid, QuoteTypes::CAR)->delay(Carbon::now()->addHours(24));
-                    info('sendCarOCBIntroEmail - SICFollowupEmailJob Dispatched - Ref ID:' . $lead->uuid . ' Time: ' . now());
+                    info('sendCarOCBIntroEmail - SICFollowupEmailJob Dispatched - Ref ID:'.$lead->uuid.' Time: '.now());
                 }
             }
         }
