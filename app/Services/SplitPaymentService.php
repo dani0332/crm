@@ -722,6 +722,7 @@ class SplitPaymentService
                     $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
                 } else {
                     $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
+                    app(CRUDService::class)->calculateScore($quoteModel, $modelType);
                 }
                 $quoteModel->save();
                 $canCaptureEp = true;
