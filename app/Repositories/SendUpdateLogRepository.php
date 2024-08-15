@@ -98,7 +98,6 @@ class SendUpdateLogRepository extends BaseRepository
                     $quoteModel = app($serviceFile)->getEntityPlain($realQuote->id)->load(['plan']);
                     $sendUpdate->insurance_provider_id = $quoteModel->plan->provider_id ?? null;
                     $sendUpdate->plan_id = $quoteModel->plan->id ?? null;
-                    $sendUpdate->plan_name = $quoteModel->plan->text ?? null;
                 } else {
                     $sendUpdate->insurance_provider_id = $realQuote->insuranceProvider->id ?? $realQuote->insurance_provider_id ?? null;
                     $sendUpdate->provider_name = $realQuote->insuranceProvider->text ?? $realQuote->insurance_provider_text ?? null;
