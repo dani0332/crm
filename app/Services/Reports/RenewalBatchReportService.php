@@ -144,6 +144,7 @@ class RenewalBatchReportService extends BaseService
         }
         // get all available segments list
         $segments = array_merge(['all'], RenewalBatch::SGEMENT_TYPES_LIST);
+        $car = $this->getProductByName(quoteTypeCode::Car);
         //teams listing as per auth roles
         if ($authUserIsCEO || $authUserIsAccounts) {
             $authUserSubTeams = Team::where('is_active', true)
@@ -151,13 +152,33 @@ class RenewalBatchReportService extends BaseService
                 ->pluck('name', 'id')
                 ->toArray();
 
-            $car = $this->getProductByName(quoteTypeCode::Car);
             $authUserTeams = Team::where('is_active', true)
                 ->where('parent_team_id', $car->id)
                 ->where('type', TeamTypeEnum::TEAM)
                 ->pluck('name', 'id')
                 ->toArray();
         } else {
+            if ($authUserIsManager || $authUserIsRenewalsManager) {
+
+                $allowedTeams = [
+                    TeamNameEnum::RENEWALS,
+                    TeamNameEnum::MOTOR_COOPERATE_RENEWALS,
+                    TeamNameEnum::BDM,
+                    TeamNameEnum::SBDM,
+                    TeamNameEnum::PCP,
+                    TeamNameEnum::ORGANIC,
+                    TeamNameEnum::SIC_UNASSISTED,
+                ];
+
+                $authUserTeams = Team::where('is_active', true)
+                    ->where('parent_team_id', $car->id)
+                    ->where('type', TeamTypeEnum::TEAM)
+                    ->whereIn('id', $authUserTeamsIds)
+                    ->whereIn('name', $allowedTeams)
+                    ->pluck('name', 'id')
+                    ->toArray();
+            }
+
             $authUserSubTeams = $this->getSubTeamsByTeamIds($authUserTeamsIds)->toArray();
 
             $authUserSubTeams = array_reduce($authUserSubTeams, function ($carry, $item) {
@@ -641,7 +662,7 @@ class RenewalBatchReportService extends BaseService
                 ->get();
         }
 
-        if ($defaultBatchRange) {
+        if (! empty($defaultBatchRange)) {
             $startDate = Carbon::parse($defaultBatchRange->last()->start_date)->startOfDay()->format($dateTimeFormat);
             $endDate = Carbon::parse($defaultBatchRange->first()->end_date)->endOfDay()->format($dateTimeFormat);
         }

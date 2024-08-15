@@ -1,9 +1,10 @@
 <script setup>
-
+import { ref } from 'vue';
 const notification = useToast();
 const uploadForm = useForm({
     csvFile:'',
-    skipPlans:''
+    skipPlans:'',
+    is_sic: false
 });
 let file = '';
 let files = [];
@@ -27,6 +28,7 @@ function onSubmit(isValid) {
         let formData = new FormData();
         formData.append('file_name',file);
         formData.append('skip_plans', uploadForm.skipPlans);
+        formData.append('is_sic', uploadForm.is_sic);
         formData.append('renewals_upload_type','update');
         axios.post('/renewals/upload-update',
             formData,
@@ -69,7 +71,8 @@ const skipOptions = [
 ];
 const can = permission => useCan(permission);
 
-
+const onToggle = (e) => {
+}
 
 </script>
 
@@ -88,6 +91,7 @@ const can = permission => useCan(permission);
                     v-model="uploadForm.skipPlans"
                     name="previous_quote_policy_number"
                     label="Skip Plans"
+                    :disabled="disabledPlan"
                     class="w-full"
                     :error="uploadForm.errors.skip_plans"
                     :options="
@@ -96,6 +100,12 @@ const can = permission => useCan(permission);
                           label: item.text,
                         }))"
                 />
+                <label
+                    class="group flex flex-col justify-around items-start relative x-select inline-block align-bottom text-left focus:outline-none mb-3 w-full"
+                >
+                    Is SIC
+                <ItemToggler :is-active="1" v-model="uploadForm.is_sic" :id="0" @toggle="(e)=>onToggle(e)" />
+                </label>
             </div>
             <Dropzone  v-model="uploadForm.csvFile"
                        @changeMethod="handleFileUpload( $event )"
