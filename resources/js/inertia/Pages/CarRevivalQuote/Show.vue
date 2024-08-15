@@ -854,7 +854,7 @@ const sendPolicyToClient = () => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Renewal Expiry Date</dt>
-            <dd>{{ quote.renewal_expiry_date }}</dd>
+            <dd>{{ quote.policy_expiry_date }}</dd>
           </div>
         </dl>
       </div>
