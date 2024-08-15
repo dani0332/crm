@@ -26,6 +26,7 @@ use App\Repositories\LifeQuoteRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\NationalityRepository;
+use App\Repositories\PaymentRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
@@ -98,6 +99,11 @@ class LifeQuoteController extends Controller
      */
     public function show($uuid)
     {
+        /* Start - Temporarily adding for correcting historic data  */
+        $quote = LifeQuoteRepository::where('uuid', $uuid)->first();
+        (new PaymentRepository())->updatePriceVatApplicableAndVat($quote, QuoteTypes::LIFE->value);
+        /* End - Temporarily adding for correcting historic data  */
+
         $quote = LifeQuoteRepository::getBy('uuid', $uuid);
         $payments = $quote?->payments;
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Life);

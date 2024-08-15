@@ -234,6 +234,7 @@ onMounted(() => {
             placeholder="Batch Month"
             format="MMM-yyyy"
             :disableYear="true"
+            teleport
           />
         </x-field>
         <x-field label="Start Date" required>
@@ -242,6 +243,7 @@ onMounted(() => {
             :rules="[isRequired]"
             class="w-full"
             placeholder="Start Date"
+            teleport
           />
         </x-field>
         <x-field label="End Date" required>
@@ -250,6 +252,7 @@ onMounted(() => {
             :rules="[isRequired]"
             class="w-full"
             placeholder="End Date"
+            teleport
           />
         </x-field>
       </div>
@@ -265,6 +268,7 @@ onMounted(() => {
             :rules="[isRequired]"
             class="w-full"
             placeholder="Car Sold Deadline"
+            teleport
           />
         </x-field>
       </div>

@@ -21,6 +21,9 @@ class DatabaseSeeder extends Seeder
             // addDubaiNowEmailGroup::class,
             // DubaiLeadSource::class,
             // ActivitySchedulesSeeder::class,
+            DocumentTypeSeeder::class,
+            //            AddNewDocumentTypesSeeder::class,
+            // UpdateCustomerToHealthAndTravelMemberDetails::class,
             GenericPermissionSeeder::class,
             /*addSICWorkflow::class,
             UpdateRenewalTemplateStorageSeeder::class,
@@ -68,6 +71,9 @@ class DatabaseSeeder extends Seeder
             addPermissionsForInsurerNowPayment::class,
             AddeTicketDocumentTypeSeeder::class,
             DocumentVerifyPermissionSeeder::class,
+            DepartmentPermissionSeeder::class,
+            DocumentTypeAuditRecordSU::class, // Add new Document type for send update - Audit Records
+
         ]);
     }
 }

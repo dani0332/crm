@@ -54,7 +54,7 @@ class RenewalBatchReportService extends BaseService
             })
             ->join('renewal_batches', 'renewal_batches.name', '=', 'car_quote_request.renewal_batch')
             ->where('car_quote_request.source', LeadSourceEnum::RENEWAL_UPLOAD)
-            ->whereNot('car_quote_request.quote_status_id', QuoteStatusEnum::Duplicate)
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Duplicate, QuoteStatusEnum::PolicyCancelledReissued])
             ->groupBy('car_quote_request.renewal_batch')
             ->orderBy('renewal_batches.end_date');
 
@@ -122,6 +122,7 @@ class RenewalBatchReportService extends BaseService
                 $query->where('health_quote_request.source', LeadSourceEnum::IMCRM)
                     ->orWhere('health_quote_request.source', 'like', '%'.$ecommerceSource.'%');
             })
+            ->whereNotIn('health_quote_request.quote_status_id', [QuoteStatusEnum::Duplicate, QuoteStatusEnum::PolicyCancelledReissued])
             ->groupBy('health_quote_request.renewal_batch')
             ->orderBy('renewal_batches.end_date');
 

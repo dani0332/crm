@@ -16,6 +16,7 @@ const props = defineProps({
   legalStructure: Object,
   quoteAmlStatus: Number,
   customerDetails: Object,
+  kycLogs: Array,
 });
 
 if (props.entityDetails.entity === undefined) {
@@ -214,6 +215,19 @@ const linkEntity = () => {
 };
 
 const show = ref(true);
+const uboNationality = computed(() => {
+  if (props.uboDetails) {
+    const uboDetail = props.uboDetails.filter(val => {
+      return val.nationality.code === 'Afghan';
+    });
+    if (uboDetail.length > 0) {
+      return 1;
+    } else {
+      return 2;
+    }
+  }
+  return 1;
+});
 </script>
 
 <template>
@@ -362,6 +376,8 @@ const show = ref(true);
           :ubo-relation="props.lookups.ubo_relation"
           :entity-details="props.entityDetails"
           :industry-type="props.lookups.company_type"
+          :kycLogs="kycLogs"
+          :uboDetails="uboDetails"
           :key="componentKey"
         />
       </x-form>

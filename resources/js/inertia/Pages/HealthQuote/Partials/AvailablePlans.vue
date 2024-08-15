@@ -989,10 +989,9 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                       :disabled="true"
                       size="sm"
                     /> -->
-
                     <x-input
                       v-if="data.healthPlanCoPaymentId == selectedCopay.id"
-                      :value="data.premium?.toLocaleString()"
+                      :modelValue="data.premium?.toLocaleString()"
                       :disabled="true"
                       size="sm"
                     />
@@ -1002,7 +1001,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                           selectedCopay.length == 0) &&
                         data.healthPlanCoPaymentId == defaultCopayId
                       "
-                      :value="data.premium?.toLocaleString()"
+                      :modelValue="data.premium?.toLocaleString()"
                       :disabled="true"
                       size="sm"
                     />
@@ -1112,7 +1111,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                       "
                       :disabled="true"
                       size="sm"
-                      :value="
+                      :modelValue="
                         (
                           Number(
                             loadingPrices[memberIndexPerId(item.memberId)]
@@ -1137,7 +1136,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                       "
                       :disabled="true"
                       size="sm"
-                      :value="
+                      :modelValue="
                         (
                           Number(
                             loadingPrices[memberIndexPerId(item.memberId)]
@@ -1161,7 +1160,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                       "
                       :disabled="true"
                       size="sm"
-                      :value="
+                      :modelValue="
                         (
                           Number(
                             loadingPrices[memberIndexPerId(item.memberId)]
@@ -1188,7 +1187,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                       "
                       :disabled="true"
                       size="sm"
-                      :value="
+                      :modelValue="
                         (
                           Number(
                             loadingPrices[memberIndexPerId(item.memberId)]
@@ -1211,7 +1210,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                       "
                       :disabled="true"
                       size="sm"
-                      :value="
+                      :modelValue="
                         (
                           Number(
                             loadingPrices[memberIndexPerId(item.memberId)]
@@ -1247,7 +1246,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                       "
                       :disabled="true"
                       size="sm"
-                      :value="
+                      :modelValue="
                         (
                           Number(
                             loadingPrices[memberIndexPerId(item.memberId)]
@@ -1266,7 +1265,7 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
                       "
                       :disabled="true"
                       size="sm"
-                      :value="
+                      :modelValue="
                         (
                           Number(
                             loadingPrices[memberIndexPerId(item.memberId)]

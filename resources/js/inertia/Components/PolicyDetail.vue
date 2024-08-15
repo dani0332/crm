@@ -44,6 +44,7 @@ const dateToYMD = date => {
   }
   return '';
 };
+
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteIssuanceStatusEnum = page.props.quoteIssuanceStatusEnum;
@@ -342,6 +343,12 @@ watch(
     setQuotePlanInsurerNumber();
   },
 );
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -646,7 +653,10 @@ watch(
                 </template>
               </x-tooltip>
             </div>
-            <div class="flex justify-end">
+            <div
+              class="flex justify-end"
+              v-if="readOnlyMode.isDisable === true"
+            >
               <template
                 v-if="
                   quote.quote_status_id ==

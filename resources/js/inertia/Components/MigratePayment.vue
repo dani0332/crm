@@ -9,7 +9,8 @@ const props = defineProps({
 
 const notification = useNotifications('toast');
 const isLoading = ref(false);
-
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 // Check if the component should be visible
 const isVisible = computed(() => {
   if (props.payments.length > 5 || props.payments.length === 0) {
@@ -100,6 +101,12 @@ const showConfirmation = () => {
     migratePayment();
   }
 };
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -116,6 +123,7 @@ const showConfirmation = () => {
         color="orange"
         :loading="isLoading"
         @click.prevent="showConfirmation()"
+        v-if="readOnlyMode.isDisable === true"
       >
         Migrate Payment
       </x-button>

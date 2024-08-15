@@ -164,6 +164,12 @@ const uploadDocumentModal = () => {
   successStatus.value = {};
   errorMsg.value = {};
 };
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -180,7 +186,10 @@ const uploadDocumentModal = () => {
       <template #body>
         <x-divider class="my-4" />
 
-        <div class="flex gap-2 mb-4 justify-end">
+        <div
+          class="flex gap-2 mb-4 justify-end"
+          v-if="readOnlyMode.isDisable === true"
+        >
           <DownloadDocuments
             v-if="can(permissionEnum.DOWNLOAD_ALL_DOCUMENTS)"
             :quote="page.props.quote"
@@ -253,6 +262,7 @@ const uploadDocumentModal = () => {
                 color="error"
                 outlined
                 @click.prevent="onDocDelete(doc_name)"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Delete
               </x-button>

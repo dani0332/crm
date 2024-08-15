@@ -86,6 +86,7 @@ class BusinessQuoteService extends BaseService
                 'ent.trade_license_no',
                 'ent.company_name',
                 'ent.company_address',
+                'bqr.risk_score',
                 'qrem.entity_type_code',
                 'ent.industry_type_code',
                 'ent.emirate_of_registration_id',
@@ -104,6 +105,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.policy_booking_date',
                 'policy_start_date',
                 'policy_issuance_date',
+                'bqr.insly_migrated',
             )
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
@@ -167,6 +169,7 @@ class BusinessQuoteService extends BaseService
                             'paymentMethod',
                             'documents',
                             'verifiedByUser',
+                            'processJob',
                         ]);
                         $paymentSplit->orderBy('sr_no');
                     },

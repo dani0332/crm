@@ -374,10 +374,10 @@ const calculateCommission = () => {
         bookingDetailsForm.price_with_vat = convertToNegative(price_with_vat);
 
         bookingDetailsForm.commission_percentage = convertToNegative(
-          (total_commission / price_with_vat) * 100,
+          (Number(bookingDetailsForm.commission_vat_applicable) /
+            total_price_with_vat_and_not_vat_applicable) *
+            100,
         );
-
-        checkDiscount(price_with_vat);
       } else {
         notification.error({
           title: 'Please add Policy Detail Price (VAT APPLICABLE)',
@@ -525,9 +525,9 @@ const selectedInvoice = () => {
   axios
     .post(url, data)
     .then(response => {
-      let sendUpdateLog = response.data.send_update_log;
+      let sendUpdate = response.data.send_update_log;
       let payment = response.data.payment;
-      updateReversalEntries(payment, sendUpdateLog);
+      updateReversalEntries(payment, sendUpdate);
     })
     .catch(error => {
       const flash_messages = error.response.data.errors;
@@ -553,56 +553,58 @@ function reverseValue(value) {
   return reversedValue.toLocaleString('en-US', { minimumFractionDigits: 2 });
 }
 
-function updateReversalEntries(payment, sendUpdateLog) {
+function updateReversalEntries(payment, sendUpdate) {
   reversalEntry.transaction_payment_status = 'N/A';
+  reversalEntry.invoice_description =
+    payment.invoice_description || sendUpdate.invoice_description || '';
   reversalEntry.booking_date =
-    sendUpdateLog?.booking_date ||
-    props.realQuote?.policy_booking_date ||
-    props.quote?.policy_booking_date ||
-    '';
+    props.sendUpdateLog.status !== sendUpdateStatusEnum.UPDATE_BOOKED
+      ? 'N/A'
+      : dateToDMY(props.realQuote?.policy_booking_date) ||
+        dateToDMY(props.quote?.policy_booking_date) ||
+        dateToDMY(props.sendUpdateLog?.booking_date) ||
+        '';
   reversalEntry.invoice_date =
-    payment.insurer_invoice_date || sendUpdateLog.invoice_date || '';
+    payment.insurer_invoice_date || sendUpdate.invoice_date || '';
   reversalEntry.insurer_tax_invoice_number = payment?.insurer_tax_number
     ? payment.insurer_tax_number + '-REV'
-    : sendUpdateLog.insurer_tax_invoice_number + '-REV';
+    : sendUpdate.insurer_tax_invoice_number + '-REV';
   reversalEntry.broker_invoice_number = payment?.broker_invoice_number
     ? payment.broker_invoice_number + '-REV'
-    : sendUpdateLog.broker_invoice_number + '-REV';
+    : sendUpdate.broker_invoice_number + '-REV';
   reversalEntry.insurer_commission_invoice_number =
     payment?.insurer_commmission_invoice_number
       ? payment.insurer_commmission_invoice_number + '-REV'
-      : sendUpdateLog.insurer_commission_invoice_number + '-REV';
+      : sendUpdate.insurer_commission_invoice_number + '-REV';
   reversalEntry.discount = payment.discount_value || null;
   reversalEntry.price_vat_applicable =
-    sendUpdateLog?.price_vat_applicable ||
+    sendUpdate?.price_vat_applicable ||
     payment.paymentable?.price_vat_applicable;
   reversalEntry.commission_percentage =
-    sendUpdateLog?.commission_percentage ||
-    payment.commmission_percentage ||
-    null;
+    sendUpdate?.commission_percentage || payment.commmission_percentage || null;
   reversalEntry.price_vat_not_applicable =
-    sendUpdateLog?.price_vat_not_applicable ||
+    sendUpdate?.price_vat_not_applicable ||
     payment.paymentable?.price_vat_not_applicable;
   reversalEntry.vat_on_commission =
     (payment.commission_vat !== null
       ? payment.commission_vat
-      : sendUpdateLog?.vat_on_commission) ?? null;
+      : sendUpdate?.vat_on_commission) ?? null;
   reversalEntry.commission_vat_applicable =
-    sendUpdateLog?.commission_vat_applicable ||
+    sendUpdate?.commission_vat_applicable ||
     payment.commission_vat_applicable ||
     null;
   reversalEntry.total_commission =
-    sendUpdateLog?.total_commission || payment.commission || null;
+    sendUpdate?.total_commission || payment.commission || null;
   reversalEntry.commission_vat_not_applicable =
-    sendUpdateLog?.commission_vat_not_applicable ||
+    sendUpdate?.commission_vat_not_applicable ||
     payment.commission_vat_not_applicable ||
     null;
   reversalEntry.total_vat_amount =
-    sendUpdateLog?.total_vat_amount || props.realQuote?.vat;
+    sendUpdate?.total_vat_amount || props.realQuote?.vat;
   reversalEntry.price_with_vat =
     (payment.total_price !== null && payment.total_price > 0
       ? payment.total_price
-      : sendUpdateLog?.price_with_vat) ?? null;
+      : sendUpdate?.price_with_vat) ?? null;
 }
 
 onMounted(() => {
@@ -624,7 +626,6 @@ const onUpdateReversal = () => {
     reversalEntry.broker_invoice_number.replace('REV', 'NEW') || '';
   bookingDetailsForm.insurer_commission_invoice_number =
     reversalEntry.insurer_commission_invoice_number.replace('REV', 'NEW') || '';
-  bookingDetailsForm.discount = props?.payments[0]?.discount_value || null;
   bookingDetailsForm.price_vat_applicable =
     Math.abs(reversalEntry.price_vat_applicable) || '0.00';
   bookingDetailsForm.commission_percentage =
@@ -794,6 +795,7 @@ function confirmationModalClose() {
   loader.sendUpdateSectionBtn = false;
 }
 
+// Need to update this code after Mirza's Implementation
 function sendUpdate(prePaymentCheck = true) {
   loader.sendUpdate = true;
   axios
@@ -804,6 +806,7 @@ function sendUpdate(prePaymentCheck = true) {
       quoteRefId: props.realQuote.id,
       paymentValidated: true,
       reversalInvoice: bookingDetailsForm.reversal_invoice ?? '',
+      inslyMigrated: props.realQuote.insly_migrated,
     })
     .then(response => {
       loader.sendUpdate = false;
@@ -844,6 +847,7 @@ function sendUpdate(prePaymentCheck = true) {
 const isLoading = ref(false);
 const isNotConfirmed = ref(false);
 
+// Need to update this code after Mirza's Implementation
 const submitToCustomer = () => {
   if (!modals.isConfirmed) {
     isNotConfirmed.value = true;
@@ -859,6 +863,8 @@ const submitToCustomer = () => {
     quoteRefId: props.realQuote.id,
     paymentValidated: true,
     reversalInvoice: bookingDetailsForm.reversal_invoice ?? '',
+    inslyMigrated: props.realQuote.insly_migrated,
+    isEmailSent: props.sendUpdateLog.is_email_sent,
   };
   axios
     .post(url, data)
@@ -948,32 +954,33 @@ const onReversalEdit = () => {
   }
 };
 
-const isCI = computed(() => {
-  return props.sendUpdateLog.category.code === sendUpdateStatusEnum.CI;
-});
+const checkDiscount = (newPrice, oldPrice) => {
+  let paymentTotalPrice = Number(props?.payments[0]?.total_price);
+  let paymentTotalAmount = Number(props?.payments[0]?.total_amount);
+  let savedPriceWithVat = Number(props.sendUpdateLog?.price_with_vat);
+  let savedDiscount =
+    Number(props?.payments[0]?.discount_value) ||
+    Number(props.sendUpdateLog.discount) ||
+    0;
 
-const checkDiscount = newPrice => {
-  let total_price = Number(props.sendUpdateLog?.price_with_vat);
-  let difference = Number(Number(newPrice) - Number(total_price)).toFixed(2);
-  let previousDiscount = props?.payments[0]?.discount_value || 0.0;
-  let paymentDiscount = props?.payments[0]?.discount_value || 0.0;
-  let newDiscount = Number(bookingDetailsForm.discount).toFixed(2);
-  if (newPrice > total_price && (isEF || isCI || isCPD)) {
-    if (previousDiscount > 0) {
-      bookingDetailsForm.discount = Number(
-        parseFloat(newDiscount) + parseFloat(difference),
-      );
-    } else {
-      bookingDetailsForm.discount = Number(difference).toFixed(2);
-    }
+  if (newPrice > savedPriceWithVat) {
+    bookingDetailsForm.discount = Number(
+      savedDiscount + (newPrice - savedPriceWithVat),
+    ).toFixed(2);
   } else {
-    let lessDifference = Number(total_price - newPrice).toFixed(2);
-    if (paymentDiscount > 0 && lessDifference <= 0.99) {
-      bookingDetailsForm.discount = Number(
-        paymentDiscount - lessDifference,
-      ).toFixed(2);
+    if (newPrice < savedPriceWithVat) {
+      let paymentDifference =
+        paymentTotalPrice - paymentTotalAmount - savedDiscount;
+      if (paymentTotalPrice - paymentDifference == newPrice) {
+        // don't use ===
+        bookingDetailsForm.discount = savedDiscount;
+      } else {
+        bookingDetailsForm.discount = Number(
+          savedDiscount - (savedPriceWithVat - newPrice),
+        ).toFixed(2);
+      }
     } else {
-      bookingDetailsForm.discount = previousDiscount;
+      bookingDetailsForm.discount = savedDiscount;
     }
   }
 };
@@ -1000,6 +1007,31 @@ watch(
   (newValue, oldValue) => {
     bookingDetailsForm.broker_invoice_number =
       props.bookingDetails.broker_invoice_number;
+  },
+);
+
+const noDiscountType = computed(() => {
+  const noDiscountTypeOptions = [
+    sendUpdateStatusEnum.MPC,
+    sendUpdateStatusEnum.MDOM,
+    sendUpdateStatusEnum.DM,
+    sendUpdateStatusEnum.DTSI,
+    sendUpdateStatusEnum.DOV,
+    sendUpdateStatusEnum.ED,
+  ];
+
+  return !(
+    noDiscountTypeOptions.includes(props.sendUpdateLog?.option?.code) ||
+    isCIOrCIR.value
+  );
+});
+
+watch(
+  () => bookingDetailsForm.price_with_vat,
+  (newValue, oldValue) => {
+    if (noDiscountType.value) {
+      checkDiscount(newValue, oldValue);
+    }
   },
 );
 </script>
@@ -1086,9 +1118,7 @@ watch(
                 </x-tooltip>
               </div>
               <div>
-                <span>{{
-                  dateToDMY(reversalEntry.booking_date) ?? 'N/A'
-                }}</span>
+                <span>{{ reversalEntry.booking_date }}</span>
               </div>
             </div>
             <div class="grid sm:grid-cols-2 pb-1.5">

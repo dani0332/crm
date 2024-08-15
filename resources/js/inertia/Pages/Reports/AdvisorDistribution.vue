@@ -33,6 +33,7 @@ const filters = reactive({
   teams: [],
   sub_teams: [],
   isCommercial: 'All',
+  isEmbeddedProducts: '',
   segment_filter: 'all',
   page: 1,
   insurance_type: '',
@@ -263,6 +264,23 @@ const onLobChange = (e, isOnMounted = false) => {
     filters.travel_coverage = '';
     filters.isCommercial = '';
     filters.is_ecommerce = '';
+    filters.tiers = [];
+  } else {
+    setTableHeader();
+  }
+
+  if (!isOnMounted) {
+    filters.teams = [];
+    filters.sub_teams = [];
+    filters.advisors = [];
+    teamOptions.value = [];
+    subteamOptions.value = [];
+    advisorOptions.value = [];
+    filters.insurance_type = '';
+    filters.insurance_for = '';
+    filters.travel_coverage = '';
+    filters.isCommercial = '';
+    (filters.isEmbeddedProducts = ''), (filters.is_ecommerce = '');
     filters.tiers = [];
   } else {
     setTableHeader();
@@ -626,7 +644,16 @@ const travelCoverageOptions = computed(() => {
           :options="advisorOptions"
           :loading="loaders.advisorOptions"
         />
-
+        <x-select
+          v-if="canShow('isEmbeddedProducts')"
+          v-model="filters.isEmbeddedProducts"
+          label="Include Embedded Products"
+          placeholder="Select any option"
+          :options="[
+            { value: 'true', label: 'Yes' },
+            { value: 'false', label: 'No' },
+          ]"
+        />
         <x-select
           v-if="canShow('isCommercial')"
           v-model="filters.isCommercial"
