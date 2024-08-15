@@ -64,10 +64,6 @@ class SendUpdateLogRepository extends BaseRepository
 
             $data['personal_quote_id'] = $personalQuote?->id ?? null;
 
-            if (! empty($personalQuote->insurance_provider_id)) {
-                $insuranceProvider = InsuranceProviderRepository::getById($personalQuote->insurance_provider_id);
-            }
-
             $sendUpdate = $this->create([
                 'personal_quote_id' => $data['personal_quote_id'],
                 'quote_uuid' => $data['quote_uuid'],
@@ -77,7 +73,6 @@ class SendUpdateLogRepository extends BaseRepository
                 'status' => $data['status'],
                 'uuid' => $uuid,
                 'code' => $code,
-                'provider_name' => isset($insuranceProvider) ? $insuranceProvider->text : '',
                 'insurance_provider_id' => $personalQuote->insurance_provider_id ?? null,
                 'created_by' => auth()->user()->id,
             ]);
