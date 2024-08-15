@@ -7,6 +7,7 @@ use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PaymentStatusEnum;
@@ -858,8 +859,15 @@ class SplitPaymentService
                 $splitPaymentAmount = $splitPaymentAmount + $paymentDiscount; //discount
             }
 
-            $priceWithoutVat = $splitPaymentAmount / (1 + ($vatValue / 100));
-            $vat = $priceWithoutVat * $vatValue / 100;
+            if ($frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+                $priceWithoutVat = $splitPaymentAmount / (1 + ($vatValue / 100));
+                $vat = $priceWithoutVat * $vatValue / 100;
+            } elseif ($splitPaymentNumber === 1) {
+                $priceWithoutVat = $splitPaymentAmount - $vat;
+            } else {
+                $priceWithoutVat = $splitPaymentAmount;
+                $vat = 0;
+            }
 
             $priceWithoutVat = $priceWithoutVat + $priceVatNotApplicable;
 

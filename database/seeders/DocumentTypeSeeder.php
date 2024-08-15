@@ -28,7 +28,6 @@ class DocumentTypeSeeder extends Seeder
             ->pluck('id')
             ->first();
 
-
         $goodInTransitIdInsuranceId = BusinessTypeOfInsurance::where('code', BusinessTypeOfInsuranceEnum::GOODS_IN_TRANSIT)
             ->pluck('id')
             ->first();
