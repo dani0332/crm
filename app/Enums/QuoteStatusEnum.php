@@ -55,8 +55,8 @@ final class QuoteStatusEnum extends Enum
     public const CarSold = 52;
     public const Uncontactable = 53;
     public const Stale = 54;
-    public const PolicySentToCustomer = 55;
-    public const PolicyBooked = 56;
+    public const PolicySentToCustomer = 70;
+    public const PolicyBooked = 71;
     public const CancellationPending = 57;
     public const PolicyCancelled = 58;
     public const Allocated = 59;
@@ -71,8 +71,8 @@ final class QuoteStatusEnum extends Enum
     public const SentForTransactionApproval = 68;
     public const RenewalTermsSent = 69;
     public const PolicyPending = 70;
-    public const EarlyRenewal = 71;
-    public const PolicyCancelledReissued = 72;
+    public const EarlyRenewal = 73;
+    public const PolicyCancelledReissued = 74;
 
     // This is use for lost reason id not for Quote status
     public const LOSTREASONID = 34;
