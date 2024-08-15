@@ -21,7 +21,7 @@ class SageCustomApiService
     private mixed $sageCustomApiUserName;
     private string $sageBaseUrl;
     private string $sageCustomApiVersion;
-    private string $sageCompany;
+    private string $sageDBName;
     private mixed $bearerToken = null;
     private mixed $maxAttempts = 10;
 
@@ -30,8 +30,8 @@ class SageCustomApiService
         $this->sageCustomApiUserName = env('SAGE_300_CUSTOM_API_USERNAME');
         $this->sageCustomApiPassword = env('SAGE_300_CUSTOM_API_USER_PASSWORD');
         $this->sageBaseUrl = env('SAGE_300_BASE_URL');
-        $this->sageDBName = env('SAGE_300_CUSTOM_API_DB_NAME');
         $this->sageCustomApiVersion = env('SAGE_300_CUSTOM_API_VERSION');
+        $this->sageDBName = env('SAGE_300_CUSTOM_API_DB_NAME');
         $this->bearerToken = Cache::store('redis')->get(SageEnum::SAGE_CUSTOM_API_AUTH_TOKEN_CACHE_KEY) ?? $this->getToken();
     }
 
