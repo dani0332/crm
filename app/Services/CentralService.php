@@ -497,7 +497,7 @@ class CentralService
         $collectionAmount = $paymentSplit ? $paymentSplit->collection_amount : $payment->captured_amount;
         $priceWithVat = $quote->price_with_vat;
         switch (true) {
-            case $payment->payment_status_id == PaymentStatusEnum::PAID && $paymentSplit && $paymentSplit->sage_reciept_id == null:
+            case $paymentSplit && $paymentSplit->sage_reciept_id == null:
                 return PaymentAllocationStatus::NOT_ALLOCATED;
             case in_array($payment->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::NEW]):
                 return null;
@@ -543,7 +543,7 @@ class CentralService
      */
     private function calculateSplitAllocationStatusWithCollectedAmount($paymentSplit, $quote, $collectedAmount)
     {
-        if ($paymentSplit->payment_status_id == PaymentStatusEnum::PAID && $paymentSplit && $paymentSplit->sage_reciept_id == null){
+        if ($paymentSplit && $paymentSplit->sage_reciept_id == null){
             return PaymentAllocationStatus::NOT_ALLOCATED;
         }
         

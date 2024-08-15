@@ -706,7 +706,7 @@ trait GenericQueriesAllLobs
 
             $paymentSplits = $payment->paymentSplits->first();
 
-            if ($payment->payment_status_id == PaymentStatusEnum::PAID  && $paymentSplits && $paymentSplits->sage_reciept_id == null) {
+            if ($paymentSplits && $paymentSplits->sage_reciept_id == null) {
                 $paymentStatus = TransactionPaymentStatusEnum::UNPAID_TEXT;
             }
             else {
