@@ -9,6 +9,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
@@ -19,10 +20,10 @@ class SendTravelOCBIntroEmailJob implements ShouldQueue
     public $tries = 3;
     public $timeout = 100;
     public $backoff = 300;
-    public $quoteUuid;
-    public $previousAdvisor;
-    public $triggerSICWorkflow;
-    public $handleZeroPlans;
+    private $quoteUuid;
+    private $previousAdvisor;
+    private $triggerSICWorkflow;
+    private $handleZeroPlans;
 
     /**
      * Create a new job instance.
@@ -72,5 +73,10 @@ class SendTravelOCBIntroEmailJob implements ShouldQueue
         } catch (Exception $e) {
             Log::error(self::class." - Error: {$e->getMessage()} with stack trace {$e->getTraceAsString()}");
         }
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping($this->quoteUuid))->dontRelease()];
     }
 }
