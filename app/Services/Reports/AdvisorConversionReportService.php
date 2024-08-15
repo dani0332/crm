@@ -89,7 +89,6 @@ class AdvisorConversionReportService extends BaseService
         });
 
         return $extendedQuery;
-
     }
 
     private function getCarQuoteQuery($lob)
@@ -514,7 +513,7 @@ class AdvisorConversionReportService extends BaseService
         if (isset($filters->leadSourceFilter) && count($filters->leadSourceFilter) > 0) {
             $query->whereIn('personal_quotes.source', $filters->leadSourceFilter);
         } else {
-            $query->where('personal_quotes.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD);
+            $query->whereNotIn('personal_quotes.source', [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO]);
             if ($isPopup === true) {
                 $query->whereNull('personal_quotes.renewal_import_code');
             }
@@ -534,7 +533,6 @@ class AdvisorConversionReportService extends BaseService
         if ((isset($filters->subeams) && count($filters->subeams) > 0)) {
             $value = $filters->subeams;
             $query->whereIn('users.id', function ($query) use ($value) {
-
                 $query->distinct()
                     ->select('users.id')
                     ->from('users')
@@ -581,7 +579,6 @@ class AdvisorConversionReportService extends BaseService
         }
 
         if ($lob === quoteTypeCode::Car) {
-
             if (isset($filters->tiersFilter) && count($filters->tiersFilter) > 0) {
                 $query->whereIn('personal_quotes.tier_id', $filters->tiersFilter);
             }
@@ -730,7 +727,7 @@ class AdvisorConversionReportService extends BaseService
         if (isset($filters->leadSourceFilter) && count($filters->leadSourceFilter) > 0) {
             $query->whereIn('car_quote_request.source', $filters->leadSourceFilter);
         } else {
-            $query->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD);
+            $query->whereNotIn('car_quote_request.source', [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO]);
             if ($isPopup === true) {
                 $query->whereNull('car_quote_request.renewal_import_code');
             }
@@ -750,7 +747,6 @@ class AdvisorConversionReportService extends BaseService
         if ((isset($filters->subeams) && count($filters->subeams) > 0)) {
             $value = $filters->subeams;
             $query->whereIn('users.id', function ($query) use ($value) {
-
                 $query->distinct()
                     ->select('users.id')
                     ->from('users')

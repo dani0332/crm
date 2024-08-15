@@ -12,6 +12,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class SendTravelOCBIntroEmailJob implements ShouldQueue
 {
@@ -36,6 +37,33 @@ class SendTravelOCBIntroEmailJob implements ShouldQueue
         $this->handleZeroPlans = $handleZeroPlans;
     }
 
+    private function verifyPreChecks($lead)
+    {
+        if (! $lead) {
+            info(self::class." - Lead not found for uuid: {$this->quoteUuid}");
+
+            return false;
+        }
+
+        info(self::class." - Lead found for uuid: {$this->quoteUuid}");
+
+        $shouldSkip = $lead->sic_flow_enabled || Str::startsWith($lead->code, 'TRA-CAR-') || (empty($lead->advisor_id) && $lead->isMultiTrip());
+
+        if ($shouldSkip) {
+            if ($lead->sic_flow_enabled) {
+                info(self::class." - SIC workflow is enabled on this lead already for uuid: {$lead->uuid}");
+            } elseif (Str::startsWith($lead->code, 'TRA-CAR-')) {
+                info(self::class." - Lead is a CAR lead having Travel as EP, no need to send OCB INTRO email for uuid: {$lead->uuid}");
+            } elseif (empty($lead->advisor_id) && $lead->isMultiTrip()) {
+                info(self::class." - The Lead is Multi Trip Lead so Skipping Initial OCB Email for uuid: {$lead->uuid}");
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+
     /**
      * Execute the job.
      */
@@ -44,31 +72,15 @@ class SendTravelOCBIntroEmailJob implements ShouldQueue
         try {
             $lead = TravelQuote::where('uuid', $this->quoteUuid)->first();
 
-            if (! $lead) {
-                info(self::class." - Lead not found for uuid: {$this->quoteUuid}");
-
+            if (! $this->verifyPreChecks($lead)) {
                 return;
             }
 
-            if (str_contains($lead->code, 'TRA-CAR-')) {
-                info(self::class." - Lead is a CAR lead having Travel as EP, no need to send OCB INTRO email for uuid: {$this->quoteUuid}");
-
-                return;
-            }
-
-            if ($lead->sic_flow_enabled) {
-                info(self::class." - SIC workflow is enabled on this lead already for uuid: {$this->quoteUuid}");
-
-                return;
+            $responseCode = $travelEmailService->sendTravelOCBIntroEmail($lead, $this->previousAdvisor, $this->triggerSICWorkflow, $this->handleZeroPlans);
+            if (in_array($responseCode, [200, 201])) {
+                info(self::class." - OCB INTRO Email Sent: {$responseCode} Customer Email Address: {$lead->email} Quote UuId: {$this->quoteUuid}");
             } else {
-                info(self::class." - Lead found for uuid: {$this->quoteUuid}");
-
-                $responseCode = $travelEmailService->sendTravelOCBIntroEmail($lead, $this->previousAdvisor, $this->triggerSICWorkflow, $this->handleZeroPlans);
-                if (in_array($responseCode, [200, 201])) {
-                    info(self::class." - OCB INTRO Email Sent: {$responseCode} Customer Email Address: {$lead->email} Quote UuId: {$this->quoteUuid}");
-                } else {
-                    Log::error(self::class." - OCB INTRO Email Not Sent: {$responseCode} Customer EmailAddress: {$lead->email}");
-                }
+                Log::error(self::class." - OCB INTRO Email Not Sent: {$responseCode} Customer EmailAddress: {$lead->email} Quote UuId: {$this->quoteUuid}");
             }
         } catch (Exception $e) {
             Log::error(self::class." - Error: {$e->getMessage()} with stack trace {$e->getTraceAsString()}");
