@@ -684,6 +684,7 @@ const resetDateFilters = filterName => {
                 placeholder="Select Subteam"
                 class="flex-1 w-auto"
                 :rules="[isRequired]"
+                filterable
                 v-if="readOnlyMode.isDisable === true"
               />
               <x-select
@@ -693,6 +694,7 @@ const resetDateFilters = filterName => {
                 placeholder="Select Advisor"
                 class="flex-1 w-auto"
                 :rules="[isRequired]"
+                filterable
                 v-if="readOnlyMode.isDisable === true"
               />
 

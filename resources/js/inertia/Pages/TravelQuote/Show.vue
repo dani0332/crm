@@ -116,7 +116,7 @@ const {
   isRequired,
   policy_number,
   premium,
-  renewal_expiry_date,
+  policy_expiry_date,
   policy_start_date,
   isEmail,
   isMobileNo,
@@ -490,7 +490,7 @@ const policyDetails = useForm({
   premium: page.props.quote.premium,
   policy_number: page.props.quote.policy_number || '',
   policy_start_date: dateToYMD(page.props.quote.policy_start_date),
-  renewal_expiry_date: dateToYMD(page.props.quote.renewal_expiry_date) || '',
+  policy_expiry_date: dateToYMD(page.props.quote.policy_expiry_date) || '',
   policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || '',
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
@@ -511,7 +511,7 @@ const submitPolicyDetails = isValid => {
     .transform(data => ({
       quote_policy_number: data.policy_number,
       quote_policy_start_date: data.policy_start_date,
-      quote_policy_expiry_date: data.renewal_expiry_date,
+      quote_policy_expiry_date: data.policy_expiry_date,
       quote_policy_issuance_date: data.policy_issuance_date,
       quote_premium: data.premium,
       modelType: data.modelType,
@@ -2412,6 +2412,7 @@ const onAddUpdate = () => {
                     "
                     placeholder="Lead Status"
                     class="w-full"
+                    filterable
                   />
                 </x-field>
                 <x-field label="NOTES">

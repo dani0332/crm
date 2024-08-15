@@ -41,7 +41,7 @@ class SendUpdateToCustomerJob implements ShouldQueue
     {
         info('job: SendUpdateToCustomerJob started');
 
-        @[$templateId, $emailData, $tag, $quoteTypeId] = $sendUpdateLogServices->sendUpdateToCustomerEmail($this->sendUpdate, $this->payload['action']);
+        @[$templateId, $emailData, $tag, $quoteTypeId] = $sendUpdateLogServices->sendUpdateToCustomerEmailData($this->sendUpdate, $this->payload['action']);
 
         if (! empty($templateId)) {
             info('Send Update to Customer Job Email Data '.json_encode($emailData));

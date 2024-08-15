@@ -611,8 +611,8 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">RENEWAL EXPIRY DATE</dt>
-                <dd>{{ quote.renewal_expiry_date }}</dd>
+                <dt class="font-medium">POLICY EXPIRY DATE</dt>
+                <dd>{{ quote.policy_expiry_date }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -981,6 +981,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   "
                   placeholder="Lead Status"
                   class="w-full"
+                  filterable
                 />
                 <x-textarea
                   v-model="leadStatusForm.notes"

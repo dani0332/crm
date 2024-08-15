@@ -77,7 +77,7 @@ class SageApiService
         $sageRequest->invoiceDescription = $payment->invoice_description;
         $sageRequest->bookingDate = $quote['policy_booking_date'] ? date(env('DATE_FORMAT_ONLY'), strtotime($quote['policy_booking_date'])) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
         $sageRequest->policyBookingDate = $quote['policy_booking_date'] ? date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote['policy_booking_date'])) : Carbon::now()->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
-        $sageRequest->policyExpiryDate = date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote['renewal_expiry_date']));
+        $sageRequest->policyExpiryDate = date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote['policy_expiry_date']));
         $sageRequest->insurerInvoiceDate = date(env('DATE_FORMAT_ONLY'), strtotime($payment->insurer_invoice_date));
 
         if (! empty($paymentSplits)) {
@@ -397,16 +397,20 @@ class SageApiService
             $response = '';
             $getingPaymentDetails = $this->getPaymentDetails($request, $extras);
 
+            // Need to update this code after Mirza's Implemenntation
             if ($extras['type'] == SageEnum::PT_SEND_UPDATE) {
                 $sendUpdateLog = SendUpdateLog::where('id', $request->sendUpdateId)->first();
                 $quoteDetails = [
                     'policy_booking_date' => $sendUpdateLog->booking_date,
-                    'renewal_expiry_date' => $sendUpdateLog->expiry_date,
+                    'policy_expiry_date' => $sendUpdateLog->expiry_date,
                     'policy_number' => $sendUpdateLog->policy_number,
                     'transaction_type_id' => $quote->transaction_type_id,
                     'advisor_id' => $sendUpdateLog->advisor_id,
                     'price_vat_applicable' => abs($getingPaymentDetails['payment']->total_price),
                     'price_with_vat' => abs($sendUpdateLog->price_with_vat),
+                    'insly_migrated' => $quote->insly_migrated,
+                    'insurance_provider_id' => $sendUpdateLog->insurance_provider_id,
+                    'booking_filled_by' => $sendUpdateLog->booking_filled_by,
                 ];
 
                 if (isset($getingPaymentDetails['mainLeadDetails'])) {
@@ -472,23 +476,25 @@ class SageApiService
 
                 return ['payment' => $payment, 'splitPayments' => $splitPayments];
             } else {
-                // If we don't have payment details then we fetched it from the Main Lead
-                info('Book Update - Fetching Payment details from Main Lead. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
                 $getQuoteDetails = $this->getQuoteObjectBy($request->quoteType, $request->quoteUuid, 'uuid');
-                $getQuoteDetails->load(['payments' => function ($query) {
-                    $query->whereNull('send_update_log_id');
-                }, 'payments.paymentSplits']);
+                $checkInslyMigratedLead = $this->checkInslyMigratedLead($request);
 
-                $payment = $getQuoteDetails->payments->first();
-                $splitPayments = $payment->paymentSplits;
+                if ($checkInslyMigratedLead) {
+                    info('Book Update - Creating payment details based on the send update - The lead originated from Insly. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
+                    $payment = new Payment();
+                    $splitPayments = collect([new PaymentSplits()]);
 
-                // Most CPD cases have no value then should it set as Credit Note
-                $mainLeadDetails = [
-                    'payment' => [
-                        'insurer_tax_number' => $payment->insurer_tax_number,
-                        'insurer_commmission_invoice_number' => $payment->insurer_commmission_invoice_number,
-                    ],
-                ];
+                } else {
+                    // If we don't have payment details then we fetched it from the Main Lead
+                    info('Book Update - Fetching Payment details from Main Lead. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
+
+                    $getQuoteDetails->load(['payments' => function ($query) {
+                        $query->whereNull('send_update_log_id');
+                    }, 'payments.paymentSplits']);
+
+                    $payment = $getQuoteDetails->payments->first();
+                    $splitPayments = $payment->paymentSplits;
+                }
 
                 $payment->fill([
                     'discount_value' => $extras['send_update_log']->discount,
@@ -516,9 +522,36 @@ class SageApiService
                     'commission_vat' => $payment->commission_vat,
                 ]);
 
-                return ['payment' => $payment, 'splitPayments' => $splitPayments, 'mainLeadDetails' => $mainLeadDetails];
+                $response = ['payment' => $payment, 'splitPayments' => $splitPayments];
+
+                if (! $checkInslyMigratedLead) {
+                    // Most CPD cases have no value then should it set as Credit Note - Need to verify this with Denber
+                    $mainLeadDetails = [
+                        'payment' => [
+                            'insurer_tax_number' => $payment->insurer_tax_number,
+                            'insurer_commmission_invoice_number' => $payment->insurer_commmission_invoice_number,
+                        ],
+                    ];
+
+                    $response['mainLeadDetails'] = $mainLeadDetails;
+                }
+
+                return $response;
             }
         }
+    }
+
+    public function checkInslyMigratedLead($request)
+    {
+        $inslyMigrated = false;
+        if ($request->inslyMigrated) {
+            $inslyMigrated = true;
+        } else {
+            $getQuoteDetails = $this->getQuoteDetailObject($request->quoteType, $request->quoteRefId);
+            $inslyMigrated = ! empty($getQuoteDetails->insly_id) && $getQuoteDetails->insly_id != null;
+        }
+
+        return $inslyMigrated;
     }
 
     private function handleSendUpdateCalls($quote, $sageRequestPayload, $payment, $splitPayments, $extras)
@@ -1159,7 +1192,7 @@ class SageApiService
             $this->sageBatchNumber = $postedResponse['BatchNumber'];
 
             if ($isLiveApiCall) {
-                $this->logSageApiCall(${$processDetails['methodName']}, $postedResponse, $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_SUCCESS, $extras['authDetails']->id); // 6
+                $this->logSageApiCall(${$processDetails['methodName']}, $postedResponse, $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_SUCCESS, $extras['extras']['authDetails']->id);
                 info('Book Update - Sage API Call - Method Name ('.$processDetails['methodName'].') - '.(! empty($extras['sendUpdateLog']) ? 'SendUpdateUUID' : 'QuoteUUID').': '.$quoteObject->uuid);
             }
 
@@ -1254,7 +1287,7 @@ class SageApiService
                 $postedResponse['entry_type'] = $processDetails['entryType'];
 
                 if (($isARInvoicesCalls && isset($postedResponse['error'])) || (! $isARInvoicesCalls && $resp['status'] == false)) {
-                    $this->logSageApiCall($postedResponse, (($isARInvoicesCalls) ? $resp : $postedResponse), $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_FAIL, $extras['authDetails']->id);
+                    $this->logSageApiCall($postedResponse, (($isARInvoicesCalls) ? $resp : $postedResponse), $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_FAIL, $extras['extras']['authDetails']->id);
                     $responseMessage = ($isARInvoicesCalls && isset(json_decode($resp, true)['error']['message']['value'])) ?
                         json_decode($resp, true)['error']['message']['value'] : 'Error while making '.$processDetails['invoiceType'].' Split payments patch to sage';
                     $returnMessage['status'] = false;
@@ -1268,12 +1301,12 @@ class SageApiService
                 }
 
                 if ($isLiveApiCall) {
-                    $this->logSageApiCall($postedResponse, (($isARInvoicesCalls) ? $resp : $postedResponse), $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_SUCCESS, $extras['authDetails']->id);
+                    $this->logSageApiCall($postedResponse, (($isARInvoicesCalls) ? $resp : $postedResponse), $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_SUCCESS, $extras['extras']['authDetails']->id);
                 }
             }
 
         } else {
-            $this->logSageApiCall(${$processDetails['methodName']}, $postedResponse, $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_FAIL, $extras['authDetails']->id);
+            $this->logSageApiCall(${$processDetails['methodName']}, $postedResponse, $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_FAIL, $extras['extras']['authDetails']->id);
 
             $responseMessage = isset($postedResponse['error']['message']['value']) ?
                     $postedResponse['error']['message']['value'] : $processDetails['invoiceType'].' Split payment failed from Sage';
@@ -1969,11 +2002,21 @@ class SageApiService
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
         $isTotalPriceZero = $payment->total_price == 0;
+
+        /* Start: Temporary code for historic data to allow book polciy after m2 launch */
+        $isQuoteFallUnderSkippableCriteria = $this->skipApplyPrepaymentsForSpecificLeads($quote, $payment, $paymentSplits);
+        if ($isQuoteFallUnderSkippableCriteria['status']) {
+            return $isQuoteFallUnderSkippableCriteria;
+        }
+        /* End: Temporary code for historic data to allow book polciy after m2 launch */
+
         /* applyPaymentInvoices */
         $isTransactionPaidAndFrequencyUpfront = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::UPFRONT;
 
         if ($isTransactionPaidAndFrequencyUpfront && ! $isTotalPriceZero) {
             return $this->applyUpfrontPaymentInvoices($sageRequestDataArray);
+        } elseif ($isTotalPriceZero) {
+            info('  ########## applyUpfrontPaymentInvoices skipped  for : '.$quote->code.' due to zero price ########## ');
         }
 
         $isFrequencySplitAndFirstChildPaymentPaid = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::SPLIT_PAYMENTS;
@@ -2290,5 +2333,45 @@ class SageApiService
         }
 
         return json_decode($response, true);
+    }
+
+    public function skipApplyPrepaymentsForSpecificLeads($quote, $payment, $paymentSplits)
+    {
+        $returnMessage = ['status' => false, 'message' => null, 'error' => null];
+        $startDate = Carbon::parse('2024-04-23')->startOfDay();
+        $endDate = Carbon::parse('2024-08-15')->endOfDay();
+        $quoteCreatedAt = Carbon::parse($quote->created_at);
+
+        $isQuoteCreatedWithInDateRange = $quoteCreatedAt->between($startDate, $endDate);
+        $isPaymentMethodCreditApproval = $payment->payment_methods_code == PaymentMethodsEnum::CreditApproval;
+        $isPaymentFrequencySplitPayment = $payment->frequency == PaymentFrequency::SPLIT_PAYMENTS;
+
+        if ($isQuoteCreatedWithInDateRange && ! $isPaymentMethodCreditApproval) {
+            if ($isPaymentFrequencySplitPayment) {
+                $paymentSplitsWithNoSageReceipt = $paymentSplits->whereNull('sage_reciept_id')->count();
+                if ($paymentSplitsWithNoSageReceipt) {
+                    info('  ########## applyUpfrontPaymentInvoices skipped  for : '.$quote->code.' due to sage receipt not generated on sage ########## ');
+                    $returnMessage['status'] = true;
+                    $returnMessage['message'] = 'Apply Prepayment skipped due to sage receipt not generated on sage';
+
+                    return $returnMessage;
+                }
+
+                return $returnMessage;
+            } else {
+                $firstPaymentSplitWithNoSageReceipt = $paymentSplits->where('sr_no', 1)->whereNull('sage_reciept_id')->count();
+                if ($firstPaymentSplitWithNoSageReceipt) {
+                    info('  ########## applyUpfrontPaymentInvoices skipped  for : '.$quote->code.' due to sage receipt not generated on sage ########## ');
+                    $returnMessage['status'] = true;
+                    $returnMessage['message'] = 'Apply Prepayment skipped due to sage receipt not generated on sage';
+
+                    return $returnMessage;
+                }
+            }
+
+            return $returnMessage;
+        }
+
+        return $returnMessage;
     }
 }

@@ -62,7 +62,6 @@ class SendUpdateLogService
             'payment_status_id',
             'payment_status_date',
             'payment_gateway',
-            'previous_quote_policy_number',
             'previous_policy_expiry_date',
             'previous_quote_policy_premium',
             'price_vat_applicable',
@@ -77,7 +76,7 @@ class SendUpdateLogService
             'plan_selected_at',
             'quote_batch_id',
             'renewal_batch',
-            'renewal_expiry_date',
+            'policy_expiry_date',
             'vat',
         ];
 
@@ -723,8 +722,8 @@ class SendUpdateLogService
 
                 // Cases for Endorsment Financial Start
                 if ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE) {
-                    info('Book Update - Updating Renewal Expiry Date for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-                    $quote->update(['renewal_expiry_date' => $sendUpdateLog->expiry_date]);
+                    info('Book Update - Updating Policy Expiry Date for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+                    $quote->update(['policy_expiry_date' => $sendUpdateLog->expiry_date]);
                 }
 
                 if ($sendUpdateRequest->quoteType == quoteTypeCode::Car && $categoryCode == SendUpdateLogStatusEnum::EF) {
@@ -775,19 +774,12 @@ class SendUpdateLogService
                 if ($categoryCode == SendUpdateLogStatusEnum::CPD && (
                     $sendUpdateRequest->reversalInvoice == $quote->payments->value('insurer_tax_number')
                 )) {
-                    info('Book Update - Updating Policy and Booking Details for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-                    $this->updatePaymentDetails($quote->payments->first(), $sendUpdateLog);
+                    info('Book Update - Updating Policy Details for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
                     $quote->update([
                         'policy_number' => $sendUpdateLog->policy_number,
                         'policy_start_date' => $sendUpdateLog->start_date,
-                        'policy_issuance_date' => $sendUpdateLog->issuance_date,
-                        'renewal_expiry_date' => $sendUpdateLog->expiry_date,
-                        'insurer_quote_number' => $sendUpdateLog->insurer_quote_number,
-                        'policy_issuance_status_id' => $sendUpdateLog->issuance_status_id,
+                        'policy_expiry_date' => $sendUpdateLog->expiry_date,
                         'policy_booking_date' => $currentDate,
-                        'price_vat_applicable' => $sendUpdateLog->price_vat_applicable,
-                        'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
-                        'price_with_vat' => $sendUpdateLog->price_with_vat,
                     ]);
                 }
                 // Cases for Correct Policy Details End
@@ -878,13 +870,13 @@ class SendUpdateLogService
         return $carQuote->plan->carAddons->toArray();
     }
 
-    public function sendUpdateToCustomerEmail($sendUpdateLog, $action): array
+    public function sendUpdateToCustomerEmailData($sendUpdateLog, $action): array
     {
         $quoteTypeId = $sendUpdateLog->quote_type_id;
         $quoteType = QuoteTypeId::getOptions()[$quoteTypeId];
         $quoteModel = $this->getModelObject($quoteType);
         $quote = $quoteModel::where('uuid', $sendUpdateLog->quote_uuid)->first();
-        $insuranceProviderText = $quote?->insuranceProvider?->text ?? $quote?->plan?->insuranceProvider?->text ?? '';
+        $insuranceProviderText = $sendUpdateLog?->insuranceProvider?->text ?? $quote?->insuranceProvider?->text ?? $quote?->plan?->insuranceProvider?->text ?? '';
         $optionCode = $sendUpdateLog->option?->code;
         $categoryCode = $sendUpdateLog->category->code;
 
@@ -911,7 +903,7 @@ class SendUpdateLogService
 
         $emailData = (object) [
             'clientFullName' => $quote->first_name.' '.$quote->last_name,
-            'policyNumber' => $quote->policy_number,
+            'policyNumber' => $quote->policy_number ?? $quote?->previous_quote_policy_number ?? '',
             'carQuoteId' => $sendUpdateLog->code,
             'currentInsurer' => $insuranceProviderText,
             'policyUpdate' => $update ?? '',

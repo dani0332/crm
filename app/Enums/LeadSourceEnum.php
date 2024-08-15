@@ -62,4 +62,6 @@ final class LeadSourceEnum extends Enum
     const TRAVEL_INSURANCEMARKET_AE = 'Travel - InsuranceMarket.ae';
     const WALK_IN_CLIENT = 'Walk In Client (not an existing client)';
     const WEB = 'web';
+    const SAPJO = 'https://sap-jo.insurancemarket.ae/';
+    const SAPGO = 'https://sap-go.insurancemarket.ae/';
 }

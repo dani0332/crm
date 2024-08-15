@@ -38,6 +38,9 @@ const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const kycEnums = page.props.kycEnums;
+const paymentMethodsEnum = page.props.paymentMethodsEnum;
+const paymentStatusEnum = page.props.paymentStatusEnum;
+const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
 const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
 const sendPolicyTypeEnum = page.props.sendPolicyTypeEnum;
 const canAny = permissions => useCanAny(permissions);
@@ -1195,9 +1198,11 @@ onMounted(() => {
                         {{ props.bookPolicyDetails?.text }}
                       </x-button>
                       <template #tooltip>
-                        <span>{{
-                          `Cancellation for the ${bpForm.parent_duplicate_quote_id} is still pending`
-                        }}</span>
+                        <span>
+                          {{
+                            `Cancellation for the ${bpForm.parent_duplicate_quote_id} is still pending`
+                          }}
+                        </span>
                       </template>
                     </x-tooltip>
 
@@ -1211,7 +1216,12 @@ onMounted(() => {
                       "
                       @click.prevent="confirmSendPolicy"
                     >
-                      {{ props.bookPolicyDetails?.text }}
+                      <x-tooltip>
+                        <span>{{ props.bookPolicyDetails?.text }}</span>
+                        <template #tooltip>
+                          <span>Please update the booking details.</span>
+                        </template>
+                      </x-tooltip>
                     </x-button>
                   </template>
                   <template v-else>
@@ -1226,7 +1236,7 @@ onMounted(() => {
                         Book Policy
                       </x-button>
                       <template #tooltip>
-                        <span>{{ 'Please update the booking details.' }}</span>
+                        <span>Please update the booking details.</span>
                       </template>
                     </x-tooltip>
                   </template>

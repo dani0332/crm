@@ -1,9 +1,9 @@
 <script setup>
-import PaymentTable from './Partials/PaymentTable.vue';
+import AssignTier from './Partials/AssignTier.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
+import PaymentTable from './Partials/PaymentTable.vue';
 
 defineProps({
   quote: Object,
@@ -626,7 +626,7 @@ const policyDetailsForm = useForm({
   quote_policy_vat_total_amount: vatAmount.value || null,
   quote_policy_start_date: dateToYMD(page.props.record.policy_start_date) || '',
   quote_policy_expiry_date:
-    dateToYMD(page.props.record.renewal_expiry_date) || '',
+    dateToYMD(page.props.record.policy_expiry_date) || '',
   quote_premium: page.props.record.premium || null,
   quote_plan_insurer_quote_number: planQuoteInsurerNumber.value || null,
   quote_policy_issuance_status: null,
@@ -2439,6 +2439,7 @@ const onAddUpdate = () => {
                     leadStatusDisabled || lockLeadSectionsDetails.lead_status
                   "
                   :options="leadStatusOptions"
+                  filterable
                 />
                 <x-field
                   label="Lost Reason"

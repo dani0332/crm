@@ -39,8 +39,8 @@ let availableFilters = {
   product: '',
   expiry_date: '',
   page: 1,
-  renewal_expiry_date_start: '',
-  renewal_expiry_date_end: '',
+  policy_expiry_date_start: '',
+  policy_expiry_date_end: '',
   mobile_no: '',
 };
 
@@ -126,7 +126,7 @@ const tableHeader = [
   { text: 'PRODUCT', value: 'advisor' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'POLICY START DATE', value: 'policy_start_date' },
-  { text: 'POLICY EXPIRY DATE', value: 'renewal_expiry_date' },
+  { text: 'POLICY EXPIRY DATE', value: 'policy_expiry_date' },
   { text: 'GROSS PREMIUM', value: 'premium' },
 ];
 const tableHeader2 = [
@@ -134,7 +134,7 @@ const tableHeader2 = [
   { text: 'PRODUCT', value: 'advisor' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'POLICY START DATE', value: 'policy_start_date' },
-  { text: 'POLICY EXPIRY DATE', value: 'renewal_expiry_date' },
+  { text: 'POLICY EXPIRY DATE', value: 'policy_expiry_date' },
   { text: 'GROSS PREMIUM', value: 'premium' },
 ];
 
@@ -144,7 +144,7 @@ const businessHeaders = [
   { text: 'SUB TYPE', value: 'subtype' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'POLICY START DATE', value: 'policy_start_date' },
-  { text: 'POLICY EXPIRY DATE', value: 'renewal_expiry_date' },
+  { text: 'POLICY EXPIRY DATE', value: 'policy_expiry_date' },
   { text: 'GROSS PREMIUM', value: 'premium' },
 ];
 
@@ -165,13 +165,13 @@ const permissionsEnum = page.props.permissionsEnum;
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <DatePicker
-          v-model="filters.renewal_expiry_date_start"
-          name="renewal_expiry_date_start"
-          label="Renewal Expiry Date Start"
+          v-model="filters.policy_expiry_date_start"
+          name="policy_expiry_date_start"
+          label="Policy Expiry Date Start"
         />
         <DatePicker
-          v-model="filters.renewal_expiry_date_end"
-          name="renewal_expiry_date_end"
+          v-model="filters.policy_expiry_date_end"
+          name="policy_expiry_date_end"
           label="Renewal Expiry End Date"
         />
 

@@ -93,7 +93,7 @@ const {
   isRequired,
   policy_number,
   premium,
-  renewal_expiry_date,
+  policy_expiry_date,
   policy_start_date,
   isEmail,
   isMobileNo,

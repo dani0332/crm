@@ -540,7 +540,7 @@ class SendEmailCustomerService extends BaseService
                 'tags' => [
                     $tag,
                 ],
-                'attachment' => isset($attachments) ? $attachments : null,
+                'attachment' => ! empty($attachments) ? $attachments : null,
             ];
 
             if (! empty($bcc)) {
@@ -639,18 +639,8 @@ class SendEmailCustomerService extends BaseService
 
             info("sendNonAdvisorIntroEmail  , emailTemplateId: {$emailTemplateId} with QuoteId: {$quoteId}");
             $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
+            $attachments = $this->getEmailAttachments($emailData);
 
-            $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
-
-            if ($emailAttachments) {
-                $attachments = [];
-                foreach ($emailAttachments as $emailAttachment) {
-                    $attachments[] = [
-                        'url' => $emailAttachment,
-                        'name' => basename($emailAttachment),
-                    ];
-                }
-            }
             $bccAdditional = [];
             if ($quoteType === QuoteTypes::CAR) {
                 $additionalBcc = ApplicationStorage::where('key_name', ApplicationStorageEnums::LMS_INTRO_EMAIL_BCC)->first()->value;
@@ -659,12 +649,6 @@ class SendEmailCustomerService extends BaseService
                         'email' => $additionalContact,
                     ];
                 }
-            }
-            if (property_exists($emailData, 'pdfAttachment') && ! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
-                $attachments[] = [
-                    'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
-                    'name' => $emailData->pdfAttachment->name,
-                ];
             }
             $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.' - ';
             $emailData->env = $subjectEnvTag;
@@ -679,7 +663,7 @@ class SendEmailCustomerService extends BaseService
                 'tags' => [
                     $tag,
                 ],
-                'attachment' => isset($attachments) ? $attachments : null,
+                'attachment' => ! empty($attachments) ? $attachments : null,
             ];
 
             if (! empty($bccAdditional)) {

@@ -79,6 +79,7 @@ class SendUpdateLogRepository extends BaseRepository
                 'code' => $code,
                 'provider_name' => isset($insuranceProvider) ? $insuranceProvider->text : '',
                 'insurance_provider_id' => $personalQuote->insurance_provider_id ?? null,
+                'created_by' => auth()->user()->id,
             ]);
             // it will check if send update type is Correction of Policy Details or Enorsement Financial with subtype Policy Period Extension, it will save
             // insurance_provider_id and plan_id.
@@ -243,6 +244,21 @@ class SendUpdateLogRepository extends BaseRepository
         return $result;
     }
 
+    public function fetchSaveProviderDetails($data)
+    {
+        try {
+            $result = $this->find($data['send_update_log_id'])->update([
+                'insurance_provider_id' => $data['insurance_provider_id'],
+            ]);
+        } catch (\Exception $ex) {
+            $result = (object) [
+                'message' => $ex->getMessage(),
+            ];
+        }
+
+        return $result;
+    }
+
     public function fetchSendUpdateToCustomer($data)
     {
         $sendUpdateLog = $this->find($data['sendUpdateId']);
@@ -256,7 +272,7 @@ class SendUpdateLogRepository extends BaseRepository
                 }
             }
 
-            SendUpdateToCustomerJob::dispatchSync($sendUpdateLog, $data);
+            dispatch(new SendUpdateToCustomerJob($sendUpdateLog, $data));
 
             /*$sendUpdateLog->update([
                 'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
@@ -356,7 +372,7 @@ class SendUpdateLogRepository extends BaseRepository
             'policy_number' => ($sendUpdate->policy_number ?? $quote->policy_number) ?? null,
             'issuance_date' => ($sendUpdate->issuance_date ?? $quote->policy_issuance_date) ?? null,
             'start_date' => ($sendUpdate->start_date ?? $quote->policy_start_date) ?? null,
-            'expiry_date' => ($sendUpdate->expiry_date ?? $quote->renewal_expiry_date) ?? null,
+            'expiry_date' => ($sendUpdate->expiry_date ?? $quote->policy_expiry_date) ?? null,
         ];
 
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
