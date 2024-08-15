@@ -80,9 +80,10 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
-const dateFormat = date => {
-  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
-};
+
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+  
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,

@@ -222,9 +222,10 @@ const tradeLicenseEntity = reactive({
   triggeredFrom: false,
 });
 
-const dateFormat = date => {
-  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
-};
+
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+
 const entityTypeChange = event => {
   if (event === 'SubEntity') {
     getParentEntityModel.value = true;

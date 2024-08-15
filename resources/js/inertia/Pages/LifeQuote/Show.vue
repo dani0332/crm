@@ -63,9 +63,9 @@ const advisorOptions = computed(() => {
   }));
 });
 
-const dateFormat = date => {
-  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
-};
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+  
 const emiratesOptions = computed(() => {
   return page.props.emirates.map(em => ({
     value: em.id,

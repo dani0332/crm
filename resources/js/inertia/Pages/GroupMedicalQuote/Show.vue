@@ -53,9 +53,10 @@ const genderText = gender =>
     return page.props.genderOptions[gender];
   });
 
-const dateFormat = date => {
-  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
-};
+
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+  
 const modals = reactive({
   duplicate: false,
   member: false,

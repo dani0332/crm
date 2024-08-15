@@ -85,9 +85,9 @@ const openDuplicate = () => {
   leadDuplicateForm.reset();
 };
 
-const dateFormat = date => {
-  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
-};
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+  
 const onCreateDuplicate = isValid => {
   if (!isValid) return;
   leadDuplicateForm.post(route('createDuplicate'), {

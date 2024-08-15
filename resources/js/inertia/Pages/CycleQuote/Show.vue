@@ -93,9 +93,9 @@ const onCreateDuplicate = isValid => {
   });
 };
 
-const dateFormat = date => {
-  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
-};
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+
 const historyLoading = ref(false);
 
 // history data
