@@ -128,8 +128,6 @@ const policyDetailsForm = useForm({
     props.quote?.car_plan_provider_id ||
     null,
   plan_id: props.sendUpdateLog?.plan_id || props.quote?.plan_id || null,
-  plan_name:
-    props.sendUpdateLog?.plan_name || props.quote?.plan_id_text || null,
   policy_number:
     props.sendUpdateLog?.policy_number || props.quote?.policy_number || null,
   issuance_date:
@@ -241,8 +239,6 @@ const onCancel = () => {
     null;
   policyDetailsForm.plan_id =
     props.sendUpdateLog?.plan_id || props.quote?.plan_id || null;
-  policyDetailsForm.plan_name =
-    props.sendUpdateLog?.plan_name || props.quote?.plan_id_text || null;
   policyDetailsForm.policy_number =
     props.sendUpdateLog?.policy_number || props.quote?.policy_number || null;
   policyDetailsForm.issuance_date =
@@ -381,7 +377,6 @@ const onCancel = () => {
                   :single="true"
                   :disabled="!state.isEdit"
                 />
-                <span v-else>{{ policyDetailsForm.plan_name ?? 'N/A' }}</span>
               </dd>
             </div>
 
