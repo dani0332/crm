@@ -626,7 +626,7 @@ const policyDetailsForm = useForm({
   quote_policy_vat_total_amount: vatAmount.value || null,
   quote_policy_start_date: dateToYMD(page.props.record.policy_start_date) || '',
   quote_policy_expiry_date:
-    dateToYMD(page.props.record.renewal_expiry_date) || '',
+    dateToYMD(page.props.record.policy_expiry_date) || '',
   quote_premium: page.props.record.premium || null,
   quote_plan_insurer_quote_number: planQuoteInsurerNumber.value || null,
   quote_policy_issuance_status: null,

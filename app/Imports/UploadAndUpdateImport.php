@@ -34,11 +34,13 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
     private $renewalImportCode;
     private $uploadType;
     private $renewalsUploadLead;
+    private $isSIC;
 
     public function __construct(RenewalsUploadService $renewalsUploadService, RenewalsUploadLeads $renewalsUploadLead)
     {
         $this->renewalsUploadService = $renewalsUploadService;
         $this->renewalsUploadLead = $renewalsUploadLead;
+        $this->isSIC = $renewalsUploadLead->is_sic == 1 ? 'true' : 'false';
     }
 
     /**
@@ -109,12 +111,12 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
     {
         $columns = [
             'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => 'required|max:100'],
-            'email' => ['index' => 1, 'title' => 'Customer Email', 'rules' => 'max:255'],
-            'mobile_no' => ['index' => 2, 'title' => 'Customer Mobile', 'rules' => 'max:100'],
+            'email' => ['index' => 1, 'title' => 'Customer Email', 'rules' => 'nullable|max:255'],
+            'mobile_no' => ['index' => 2, 'title' => 'Customer Mobile', 'rules' => 'nullable|max:100'],
             'quote_type' => ['index' => 3, 'title' => 'Insurance Type', 'rules' => 'required|required|max:4'],
             'insurer' => ['index' => 4, 'title' => 'Insurance Provider', 'rules' => 'required|max:100'],
             'product_type' => ['index' => 5, 'title' => 'Product Type', 'rules' => 'required|max:100'],
-            'advisor' => ['index' => 6, 'title' => 'Advisor Email', 'rules' => 'required|max:100'],
+            'advisor' => ['index' => 6, 'title' => 'Advisor Email', 'rules' => $this->isSIC == 'true' ? 'max:100' : 'required|max:100'],
             'policy_number' => ['index' => 7, 'title' => 'Policy Number', 'rules' => 'required|required|max:100'],
             'end_date' => ['index' => 8, 'title' => 'Policy End date', 'rules' => ['required', 'max:10', function ($attribute, $value, $onFailure) {
                 if (! $this->validateDate($value)) {
@@ -155,7 +157,7 @@ class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts
             'year_of_first_registration' => ['index' => 36, 'title' => 'First Year of Registration', 'rules' => 'max:4'],
             'trim' => ['index' => 37, 'title' => 'Trim', 'rules' => 'max:20'],
             'registration_location' => ['index' => 38, 'title' => 'Registration Location', 'rules' => ['max:100']],
-            'previous_advisor' => ['index' => 39, 'title' => 'Previous Advisor Email', 'rules' => 'max:100'],
+            'previous_advisor' => ['index' => 39, 'title' => 'Previous Advisor Email', 'rules' => 'nullable|max:100'],
             'notes' => ['index' => 40, 'title' => 'Notes', 'rules' => 'max:500'],
         ];
 

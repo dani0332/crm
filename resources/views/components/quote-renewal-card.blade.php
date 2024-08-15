@@ -30,8 +30,8 @@
                                 <p class="label-align-center">{{ isset($record->previous_quote_policy_number) ? $record->previous_quote_policy_number : '' }}</p>
                             </div>
                         </div>
-                    </div>    
-                    
+                    </div>
+
                     <div class="item form-group">
                         <div class="col">
                             <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Previous Policy Expiry Date</b></label>
@@ -52,7 +52,7 @@
                             <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Previous Policy Start Date</b></label>
                             <div class="col-md-6 col-sm-6">
                                 <p class="label-align-center">{{ isset($record->policy_start_date) ? $record->policy_start_date : '' }}</p>
-                    
+
                             </div>
                         </div>
                         <div class="col">
@@ -76,7 +76,7 @@
                         </div>
                     </div>
                     @endif
-                    
+
                 <div class="item form-group">
                     <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Policy Number</b></label>
@@ -85,9 +85,9 @@
                         </div>
                     </div>
                     <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Renewal Expiry Date</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Policy Expiry Date</b></label>
                         <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{ isset($record->renewal_expiry_date) ? $record->renewal_expiry_date : '' }}</p>
+                            <p class="label-align-center">{{ isset($record->policy_expiry_date) ? $record->policy_expiry_date : '' }}</p>
                         </div>
                     </div>
                 </div>

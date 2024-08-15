@@ -38,6 +38,18 @@ class CarAllocation implements Allocation
             // If a valid tier is found
             if ($tier) {
 
+                info('check the lead and identify if the tier update is required : '.$lead->uuid);
+                // check the lead and identify if the tier update is required
+                $updatedTierId = $this->carAllocationService->updateTierBeforeEligibleUserIdentification($lead);
+
+                if (! empty($updatedTierId) && $updatedTierId != $lead->tier_id) {
+                    $lead->tier_id = $updatedTierId;
+                    $lead->save();
+                    $tier = $this->getTier($updatedTierId);
+                }
+
+                info('Tier identified. Proceeding to finalize the tier for lead : '.$lead->uuid.' with UUID : '.$lead->uuid.' and tier name : '.$tier->name);
+
                 if ($evaluateTierOnly) {
                     info('Evaluate tier only. Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
                     $lead->tier_id = $tier->id;
@@ -47,7 +59,7 @@ class CarAllocation implements Allocation
                 }
                 info('Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
                 // Find available users for the tier
-                $availableUsers = $this->findAvailableUsers($tier->id, $lead->source);
+                $availableUsers = $this->findAvailableUsers($tier->id, $lead->source, $lead);
 
                 // Find custom rules for the lead
                 $rules = $this->findRules($lead);
@@ -103,7 +115,7 @@ class CarAllocation implements Allocation
         return $this->carAllocationService->getTierById($lead->tier_id);
     }
 
-    protected function findAvailableUsers($tierId, $leadSource): array|Collection
+    protected function findAvailableUsers($tierId, $leadSource, $lead): array|Collection
     {
         return $this->carAllocationService->getEligibleUserForAllocation($tierId, null, false, $leadSource, $this->teamId);
     }

@@ -33,7 +33,7 @@ const policyForm = useForm({
   premium: page.props.quote.premium,
   policy_number: page.props.quote.policy_number || '',
   policy_start_date: dateToYMD(page.props.quote.policy_start_date),
-  renewal_expiry_date: dateToYMD(page.props.quote.renewal_expiry_date) || '',
+  policy_expiry_date: dateToYMD(page.props.quote.policy_expiry_date) || '',
   policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || '',
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
@@ -61,7 +61,7 @@ const rules = {
     }
     return true;
   },
-  renewal_expiry_date: v => {
+  policy_expiry_date: v => {
     if (v) {
       const date = new Date(v);
       if (policyForm.policy_start_date) {
@@ -95,7 +95,7 @@ const submitpolicyForm = isValid => {
     .transform(data => ({
       policy_number: data.policy_number,
       policy_start_date: data.policy_start_date,
-      renewal_expiry_date: data.renewal_expiry_date,
+      policy_expiry_date: data.policy_expiry_date,
       policy_issuance_date: data.policy_issuance_date,
       premium: data.premium,
     }))
@@ -169,11 +169,11 @@ onMounted(() => {
             </div>
             <div class="w-full md:w-1/2">
               <x-input
-                v-model="policyForm.renewal_expiry_date"
+                v-model="policyForm.policy_expiry_date"
                 :disabled="!policyForm.editMode"
                 type="date"
                 label="Expiry Date"
-                :rules="[rules.isRequired, rules.renewal_expiry_date]"
+                :rules="[rules.isRequired, rules.policy_expiry_date]"
                 class="w-full"
               />
             </div>

@@ -38,7 +38,7 @@ export const useRules = () => {
     return true;
   };
 
-  const renewal_expiry_date = v => {
+  const policy_expiry_date = v => {
     if (v) {
       const date = new Date(v);
       if (policyDetails.policy_start_date) {
@@ -116,7 +116,7 @@ export const useRules = () => {
     isNumberOrDecimal,
     policy_number,
     policy_start_date,
-    renewal_expiry_date,
+    policy_expiry_date,
     premium,
     isDecimal,
     emptyOrDecimal,

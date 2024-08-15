@@ -219,7 +219,7 @@ class QuoteDocumentService extends BaseService
         }
 
         if (! isset($record->policy_number) || ! isset($record->policy_issuance_date) || ! isset($record->policy_start_date) ||
-            ! isset($record->premium) || ! isset($record->renewal_expiry_date) || ! isset($record->plan_id) ||
+            ! isset($record->premium) || ! isset($record->policy_expiry_date) || ! isset($record->plan_id) ||
             $record->advisor_id != auth()->user()->id) {
             return 0;
         }

@@ -108,7 +108,7 @@ const filledExpiryDate = computed(() => {
   if (isCPD.value) {
     return (
       props.sendUpdateLog?.expiry_date ||
-      props.quote?.renewal_expiry_date ||
+      props.quote?.policy_expiry_date ||
       null
     );
   }

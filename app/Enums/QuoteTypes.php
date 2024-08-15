@@ -4,6 +4,7 @@ namespace App\Enums;
 
 use App\Jobs\OCB\SendCarOCBIntroEmailJob;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
+use App\Jobs\SendHealthOCBIntroEmailJob;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
@@ -126,6 +127,7 @@ enum QuoteTypes: string
         return match ($this) {
             self::CAR => SendCarOCBIntroEmailJob::class,
             self::TRAVEL => SendTravelOCBIntroEmailJob::class,
+            self::HEALTH => SendHealthOCBIntroEmailJob::class,
             default => null,
         };
     }
