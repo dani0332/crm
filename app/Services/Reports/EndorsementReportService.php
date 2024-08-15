@@ -57,29 +57,27 @@ class EndorsementReportService extends ManagementReport
                 'send_update_logs.code',
                 'p.insurer_tax_number',
                 'p.notes',
-                'p.reference',
+                'ps.reference',
                 'send_update_logs.start_date as policy_start_date',
                 'personal_quotes.policy_start_date as main_lead_policy_start_date',
                 'send_update_logs.invoice_date as payment_due_date',
                 'ps.due_date as due_date',
-                'send_update_logs.price_vat_applicable',
-                'send_update_logs.total_vat_amount as vat',
-                'send_update_logs.price_vat_not_applicable',
-                'send_update_logs.discount as discount',
+                DB::raw('CASE WHEN send_update_logs.price_vat_applicable is not null THEN ps.price_vat_applicable ELSE 0 END as price_vat_applicable'),
+                'ps.price_vat as vat',
+                DB::raw('CASE WHEN send_update_logs.price_vat_applicable is null THEN ps.price_vat_applicable ELSE 0 END as price_vat_not_applicable'),
+                'ps.discount_value as discount',
                 DB::raw('((
-                    IFNULL( send_update_logs.price_vat_applicable , 0 ) +
-                    IFNULL( send_update_logs.price_vat_not_applicable , 0 )  +
-                    IFNULL( send_update_logs.total_vat_amount , 0 )) - IFNULL( send_update_logs.discount , 0 )) as total_price'),
-                'send_update_logs.commission_vat_applicable as commission_vat_applicable',
-                'send_update_logs.vat_on_commission as commission_vat',
-                'p.commission_vat_not_applicable as commission_vat_not_applicable',
-                'p.captured_amount as collected_amount',
+                    IFNULL( ps.price_vat_applicable , 0 ) +
+                    IFNULL( ps.price_vat , 0 )) - IFNULL( ps.discount_value , 0 )) as total_price'),
+                DB::raw('CASE WHEN ps.sr_no=1 THEN send_update_logs.commission_vat_applicable ELSE 0 END as commission_vat_applicable'),
+                DB::raw('CASE WHEN ps.sr_no=1 THEN send_update_logs.vat_on_commission ELSE 0 END as commission_vat'),
+                DB::raw('CASE WHEN ps.sr_no=1 THEN p.commission_vat_not_applicable ELSE 0 END as commission_vat_not_applicable'),
+                'ps.collection_amount as collected_amount',
                 'ps.verified_at as payment_date',
                 DB::raw('((
-                    IFNULL( send_update_logs.price_vat_applicable , 0 ) +
-                    IFNULL( send_update_logs.price_vat_not_applicable , 0 ) +
-                    IFNULL( send_update_logs.total_vat_amount , 0 )) - IFNULL( send_update_logs.discount , 0 )) -
-                    IFNULL( p.captured_amount, 0) as pending_balance'),
+                    IFNULL( ps.price_vat_applicable , 0 ) +
+                    IFNULL( ps.price_vat , 0 )) - IFNULL( ps.discount_value , 0 )) -
+                    IFNULL( ps.collection_amount, 0) as pending_balance'),
                 'pq.collection_type as collects',
                 'ip.text as insurer',
                 'quote_type.text as line_of_business',
@@ -108,8 +106,8 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
-            ->leftJoin('payment_methods as pm', 'pm.code', '=', 'p.payment_methods_code')
-            ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'p.payment_gateway_id')
+            ->leftJoin('payment_methods as pm', 'pm.code', '=', 'ps.payment_method')
+            ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'ps.payment_gateway_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
