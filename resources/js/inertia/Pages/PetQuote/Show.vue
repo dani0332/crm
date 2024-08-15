@@ -11,7 +11,7 @@ import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
-import {reactive} from 'vue';
+import { reactive } from 'vue';
 
 const props = defineProps({
   quote: Object,
@@ -85,6 +85,9 @@ const openDuplicate = () => {
   leadDuplicateForm.reset();
 };
 
+const dateFormat = date => {
+  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
+};
 const onCreateDuplicate = isValid => {
   if (!isValid) return;
   leadDuplicateForm.post(route('createDuplicate'), {
@@ -260,10 +263,10 @@ const linkEntity = () => {
     });
 };
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 </script>
 
@@ -533,10 +536,10 @@ onMounted(() => {
             </div>
             <div>{{ quote.parent_duplicate_quote_id }}</div>
           </div>
-            <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
-                <dd>{{ quote.transaction_approved_at }}</dd>
-              </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+            <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
+          </div>
         </dl>
       </div>
     </div>
@@ -637,10 +640,7 @@ onMounted(() => {
                 />
               </dd>
             </div>
-            <RiskRatingScoreDetails
-              :quote="quote"
-              :modelType="'Pet'"
-            />
+            <RiskRatingScoreDetails :quote="quote" :modelType="'Pet'" />
           </dl>
           <dl
             v-if="quote.customer_type === page.props.customerTypeEnum.Entity"

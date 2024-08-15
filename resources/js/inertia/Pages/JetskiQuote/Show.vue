@@ -35,11 +35,15 @@ const page = usePage();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
+
+const dateFormat = date => {
+  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
+};
 </script>
 
 <template>
@@ -54,7 +58,12 @@ onMounted(() => {
           :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
           preserve-scroll
         >
-          <x-button size="sm" color="#ff5e00" tag="div" v-if="readOnlyMode.isDisable === true">
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
             View Legacy policy
           </x-button>
         </Link>
@@ -62,7 +71,9 @@ onMounted(() => {
           v-if="can(permissionsEnum.JetskiQuotesEdit)"
           :href="route('jetski-quotes-edit', quote.uuid)"
         >
-          <x-button size="sm" tag="div" v-if="readOnlyMode.isDisable === true">Edit</x-button>
+          <x-button size="sm" tag="div" v-if="readOnlyMode.isDisable === true"
+            >Edit</x-button
+          >
         </Link>
 
         <Link
@@ -133,10 +144,10 @@ onMounted(() => {
             <dt class="font-medium">DEVICE</dt>
             <dd>{{ quote.device }}</dd>
           </div>
-           <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
-                <dd>{{ quote.transaction_approved_at }}</dd>
-              </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+            <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
+          </div>
         </dl>
       </div>
 
@@ -195,10 +206,10 @@ onMounted(() => {
       </div>
 
       <div class="flex justify-between items-center mt-6 mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-            Customer Profile
-        </h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <h3 class="font-semibold text-primary-800 text-lg">Customer Profile</h3>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+          KYC - Complete
+        </x-tag>
         <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
@@ -233,12 +244,7 @@ onMounted(() => {
             <dd>{{ quote.dob }}</dd>
           </div>
 
-
-          <RiskRatingScoreDetails
-              :quote="quote"
-              :modelType="quoteType"
-            />
-
+          <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
         </dl>
       </div>
     </div>
@@ -294,11 +300,11 @@ onMounted(() => {
     />
 
     <PlanDetails
-    :insuranceProviders="insuranceProviders"
-    :quote="quote"
-    :quoteType="quoteType"
-    :vatPrice="vatPercentage"
-     />
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+      :quoteType="quoteType"
+      :vatPrice="vatPercentage"
+    />
 
     <EmbeddedProducts
       :data="embeddedProducts"

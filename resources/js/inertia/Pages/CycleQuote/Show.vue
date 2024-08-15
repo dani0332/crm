@@ -93,6 +93,9 @@ const onCreateDuplicate = isValid => {
   });
 };
 
+const dateFormat = date => {
+  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
+};
 const historyLoading = ref(false);
 
 // history data
@@ -553,7 +556,7 @@ onMounted(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TRANSACTION APPROVED AT</dt>
-            <dd>{{ quote.transaction_approved_at }}</dd>
+            <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
           </div>
         </dl>
       </div>

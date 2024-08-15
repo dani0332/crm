@@ -53,6 +53,9 @@ const genderText = gender =>
     return page.props.genderOptions[gender];
   });
 
+const dateFormat = date => {
+  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
+};
 const modals = reactive({
   duplicate: false,
   member: false,
@@ -564,7 +567,7 @@ onMounted(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TRANSACTION APPROVED AT</dt>
-            <dd>{{ quote.transaction_approved_at }}</dd>
+           <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
           </div>
         </dl>
       </div>

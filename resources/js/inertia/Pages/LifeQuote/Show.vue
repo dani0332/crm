@@ -1,6 +1,6 @@
 <script setup>
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
-import MemberDetails from "../../Components/MemberDetails.vue";
+import MemberDetails from '../../Components/MemberDetails.vue';
 import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
@@ -63,6 +63,9 @@ const advisorOptions = computed(() => {
   }));
 });
 
+const dateFormat = date => {
+  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
+};
 const emiratesOptions = computed(() => {
   return page.props.emirates.map(em => ({
     value: em.id,
@@ -117,13 +120,13 @@ const leadDuplicateForm = useForm({
 //activities
 const activityActionEdit = ref(false);
 const activityTable = [
-    { text: 'Client Name', value: 'client_name' },
-    { text: 'Lead Status', value: 'quote_status.text' },
-    { text: 'Title', value: 'title' },
-    { text: 'Followup Date', value: 'due_date' },
-    { text: 'Assigned To', value: 'assignee' },
-    { text: 'Done', value: 'status', width: 60, align: 'center' },
-    { text: 'Action', value: 'action' },
+  { text: 'Client Name', value: 'client_name' },
+  { text: 'Lead Status', value: 'quote_status.text' },
+  { text: 'Title', value: 'title' },
+  { text: 'Followup Date', value: 'due_date' },
+  { text: 'Assigned To', value: 'assignee' },
+  { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Action', value: 'action' },
 ];
 
 const activityForm = useForm({
@@ -474,10 +477,10 @@ const linkEntity = () => {
     });
 };
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 </script>
 
@@ -653,10 +656,10 @@ onMounted(() => {
             </div>
             <div>{{ quote.parent_duplicate_quote_id }}</div>
           </div>
-            <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
-                <dd>{{ quote.transaction_approved_at }}</dd>
-              </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+            <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
+          </div>
         </dl>
       </div>
     </div>
@@ -959,7 +962,12 @@ onMounted(() => {
           </dd>
         </div>
         <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity" v-if="readOnlyMode.isDisable === true">
+          <x-button
+            size="sm"
+            color="orange"
+            @click.prevent="linkEntity"
+            v-if="readOnlyMode.isDisable === true"
+          >
             Link
           </x-button>
         </div>
@@ -1003,8 +1011,6 @@ onMounted(() => {
       :insly-id="quote?.life_quote_request_detail?.insly_id"
       :canAddBatchNumber="canAddBatchNumber"
     />
-
-
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>
@@ -1087,29 +1093,39 @@ onMounted(() => {
       :quote="quote"
       :quoteType="quoteType"
       :vatPrice="vatPercentage"
-
     />
 
-<MigratePayment
+    <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       :quoteType="quoteType"
       :payments="payments"
     />
 
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			:quoteType="quoteType"
-			:payments="payments"
-			:paymentDocument="page.props.documentTypes.filter(item => item.code === 'LPD' || item.code === 'LPDR' || item.code === 'LDPDR')"
-			:quoteRequest="quote"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="payments"
+      :paymentDocument="
+        page.props.documentTypes.filter(
+          item =>
+            item.code === 'LPD' ||
+            item.code === 'LPDR' ||
+            item.code === 'LDPDR',
+        )
+      "
+      :quoteRequest="quote"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-		/>
+    />
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
@@ -1132,7 +1148,12 @@ onMounted(() => {
           Lead Activities
           <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
         </h3>
-        <x-button size="sm" color="orange" @click.prevent="addActivity" v-if="readOnlyMode.isDisable === true">
+        <x-button
+          size="sm"
+          color="orange"
+          @click.prevent="addActivity"
+          v-if="readOnlyMode.isDisable === true"
+        >
           Add Activity
         </x-button>
       </div>
@@ -1293,6 +1314,10 @@ onMounted(() => {
         :hide-footer="historyData.length < 15"
       />
     </div>
-    <AuditLogs :type="'App\\Models\\LifeQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" />
+    <AuditLogs
+      :type="'App\\Models\\LifeQuote'"
+      :id="$page.props.quote.id"
+      :quoteCode="$page.props.quote.code"
+    />
   </div>
 </template>

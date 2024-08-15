@@ -80,6 +80,9 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
+const dateFormat = date => {
+  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
+};
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,
@@ -217,10 +220,10 @@ const linkEntity = () => {
     });
 };
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 </script>
 
@@ -438,10 +441,10 @@ onMounted(() => {
             <dt class="font-medium">OPERATOR EXPERIENCE</dt>
             <dd>{{ quote?.yacht_quote?.operator_experience }}</dd>
           </div>
-            <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
-                <dd>{{ quote.transaction_approved_at }}</dd>
-              </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+            <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
+          </div>
         </dl>
       </div>
     </div>
@@ -543,10 +546,7 @@ onMounted(() => {
               </dd>
             </div>
 
-            <RiskRatingScoreDetails
-              :quote="quote"
-              :modelType="quoteType"
-            />
+            <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
           </dl>
           <dl
             v-if="quote.customer_type === page.props.customerTypeEnum.Entity"
