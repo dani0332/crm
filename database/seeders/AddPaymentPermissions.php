@@ -15,7 +15,7 @@ class AddPaymentPermissions extends Seeder
      * Run the database seeds.
      */
     public function run(): void
-    { 
+    {
         $newRole = Role::findOrCreate(RolesEnum::NonCCPaymentVerifier, 'web');
         // Missing Role NON_CC_PAYMENT_VERIFIER
         $allRoles = [
