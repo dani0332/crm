@@ -826,6 +826,8 @@ class SplitPaymentService
     {
         $priceWithoutVat = $splitPaymentAmount;
         $vat = 0;
+        $priceVatNotApplicable = 0;
+
         $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
         if (! $vatValue) {
             return [$priceWithoutVat, $vat];
@@ -838,8 +840,12 @@ class SplitPaymentService
                 $quoteModel = SendUpdateLogRepository::getLogById($send_update_id);
             } else {
                 $quoteModel = $this->getQuoteObject($modelType, $quoteId);
+                if (isset($quoteModel->price_vat_not_applicable) && $quoteModel->price_vat_not_applicable > 0) {
+                    $priceVatNotApplicable = $quoteModel->price_vat_not_applicable;
+                    $priceVatNotApplicable = $priceVatNotApplicable / $totalSplitPayments;
+                }
             }
-
+            $splitPaymentAmount = $splitPaymentAmount - $priceVatNotApplicable;
             $paymentDiscount = $quoteModel->payments()->where('code', $quoteModel->code)->value('discount_value');
             if ($splitPaymentNumber === 1 && $paymentDiscount > 0) {
                 $splitPaymentAmount = $splitPaymentAmount + $paymentDiscount; //discount
@@ -847,6 +853,8 @@ class SplitPaymentService
 
             $priceWithoutVat = $splitPaymentAmount / (1 + ($vatValue / 100));
             $vat = $priceWithoutVat * $vatValue / 100;
+
+            $priceWithoutVat = $priceWithoutVat + $priceVatNotApplicable;
 
         } else {
             $priceWithoutVat = $splitPaymentAmount;
@@ -860,6 +868,7 @@ class SplitPaymentService
     {
         $vat = 0;
         $priceWithoutVat = $masterTotalPrice;
+        $priceVatNotApplicable = 0;
         $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
         if (! $vatValue) {
             return [$priceWithoutVat, $vat];
@@ -877,8 +886,14 @@ class SplitPaymentService
             }
         }
 
-        if (isset($quoteModel) && isset($quoteModel->price_vat_applicable) && $quoteModel->price_vat_applicable > 0) {
-            $computedPrice = $quoteModel->price_vat_applicable;
+        if (isset($quoteModel)) {
+            if (isset($quoteModel->price_vat_applicable) && $quoteModel->price_vat_applicable > 0) {
+                $computedPrice = $quoteModel->price_vat_applicable;
+            }
+            if (isset($quoteModel->price_vat_not_applicable) && $quoteModel->price_vat_not_applicable > 0) {
+                $priceVatNotApplicable = $quoteModel->price_vat_not_applicable;
+            }
+
         }
 
         if ($computedPrice > 0) {
@@ -890,6 +905,7 @@ class SplitPaymentService
                 $priceWithoutVat = $computedPrice;
                 $vat = ($priceWithoutVat * $vatValue) / 100;
             }
+            $priceWithoutVat = $priceWithoutVat + $priceVatNotApplicable;
 
             return [$priceWithoutVat, $vat];
         }
