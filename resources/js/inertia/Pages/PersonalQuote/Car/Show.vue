@@ -66,6 +66,7 @@ defineProps({
   planURL: String,
   storageUrl: String,
   insuranceProviders: Array,
+  insuranceProvidersByQuoteType: Object,
   advisor: Object,
   carMakeText: String,
   carModelText: String,
@@ -91,6 +92,8 @@ defineProps({
   carInsuranceProviders: Array,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
+  vatPercentage: Number,
+  commercialRules: Boolean,
   isAmlClearedForPayment: Boolean,
   clientInquiryLogs: Array,
   puaTypeEnum: Object,
@@ -1380,12 +1383,16 @@ const closeModal = v => {
   if (v) disableFollowUp.value = v;
   showfollowup.value = false;
 };
+const readOnlyMode = reactive({
+    isDisable: true,
+});
 onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+
   onLoadAvailablePlansData();
   if (can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)) {
     getFollowUpsByQuote();
   }
-
   // setLeadStatuses();
 });
 
@@ -1589,6 +1596,21 @@ const handlePlanSelected = plan => {
     only: ['payments','paymentEntityModel'],
   });
 };
+
+const isPlanDetailEnabled = computed(() => {  
+  if(page.props.commercialRules) { // Check rules for commercial
+    return true;
+  }
+  if(page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD) {
+      return (page.props.record.vehicle_type_id_text == 'BIKE');
+  }
+  return false;
+});
+if(isPlanDetailEnabled.value && page.props.record.insurer_name !== '' ) {
+  selectedProviderPlan.value.premium = page.props.record.price_with_vat;
+  selectedProviderPlan.value.providerName = page.props.record.insurer_name;
+}
+
 </script>
 
 <template>
@@ -1712,7 +1734,7 @@ const handlePlanSelected = plan => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Car Details</h3>
-        <div>
+        <div v-if="readOnlyMode.isDisable === true">
           <Link
             v-if="record?.insly_id"
             :href="`/legacy-policy/${record.insly_id}`"
@@ -1928,7 +1950,7 @@ const handlePlanSelected = plan => {
       <x-divider class="mb-4 mt-4" />
       <div class="flex justify-end mb-4">
         <Link :href="route('car.edit', record.uuid)">
-          <x-button size="sm" color="primary" tag="div">Edit</x-button>
+          <x-button size="sm" color="primary" tag="div" v-if="readOnlyMode.isDisable === true">Edit</x-button>
         </Link>
       </div>
     </div>
@@ -2116,6 +2138,7 @@ const handlePlanSelected = plan => {
                   @click.prevent="searchByTradeLicense"
                   size="xs"
                   color="primary"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Search
                 </x-button>
@@ -2213,6 +2236,7 @@ const handlePlanSelected = plan => {
           size="sm"
           :loading="customerProfileForm.processing"
           @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
         >
           Search
         </x-button>
@@ -2753,7 +2777,15 @@ const handlePlanSelected = plan => {
       </div>
     </div>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <PlanDetails
+      v-if="isPlanDetailEnabled"
+      :insuranceProviders="insuranceProvidersByQuoteType"
+      :quote="quote"
+      :quoteType="quoteType"
+      :vatPrice="vatPercentage"
+    />
+    
+    <div v-else class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Available Plans
@@ -2783,12 +2815,14 @@ const handlePlanSelected = plan => {
             <x-button
               @click.prevent="onTogglePlans(false)"
               :loading="toggleLoader"
+              v-if="readOnlyMode.isDisable === true"
             >
               Show
             </x-button>
             <x-button
               @click.prevent="onTogglePlans(true)"
               :loading="toggleLoader"
+              v-if="readOnlyMode.isDisable === true"
             >
               Hide
             </x-button>
@@ -2809,6 +2843,7 @@ const handlePlanSelected = plan => {
             color="orange"
             class="mr-2"
             :disabled="record.advisor_id != $page.props.auth.user.id"
+            v-if="readOnlyMode.isDisable === true"
           >
             Send OCB Email to Customer
           </x-button>
@@ -2867,7 +2902,8 @@ const handlePlanSelected = plan => {
             isRenewal,
             isDisabled,
             puaPremium,
-            puaType
+            puaType,
+            isSystemDiscountPrice
           }"
         >
           <p>{{ providerName }}</p>
@@ -2896,6 +2932,14 @@ const handlePlanSelected = plan => {
             >
               Hidden
             </x-tag>
+              <x-tag
+                  v-if="isSystemDiscountPrice"
+                  size="xs"
+                  color="danger"
+                  class="mt-0.5 text-[10px]"
+              >
+                  SDP
+              </x-tag>
 
             <x-tag
               v-if="puaType"
@@ -3235,7 +3279,9 @@ const handlePlanSelected = plan => {
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
+      :isPlanDetailEnabled="isPlanDetailEnabled"
 		/>
+    
     <PaymentTable
 		v-else
       :payments="payments"

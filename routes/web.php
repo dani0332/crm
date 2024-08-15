@@ -217,10 +217,13 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('/reports/conversion-as-at/pdf', [ReportsController::class, 'conversionAsAtReportPdf']);
     });
 
-    Route::get('embedded-products-reports', [EmbeddedProductController::class, 'reportsList'])->name('embedded-products.reports');
-    Route::get('embedded-products-reports/{ep}', [EmbeddedProductController::class, 'reportTransactions'])->name('embedded-products.reports.certificates');
-    Route::get('embedded-products-reports/{ep}/export', [EmbeddedProductController::class, 'reportExport'])->name('embedded-products.reports.certificates.export');
-    Route::resource('embedded-products', EmbeddedProductController::class);
+    Route::group(['prefix' => 'embedded/'], function () {
+        Route::get('reports', [EmbeddedProductController::class, 'reportsList'])->name('embedded-products.reports');
+        Route::get('reports/{ep}', [EmbeddedProductController::class, 'reportTransactions'])->name('embedded-products.reports.certificates');
+        Route::get('reports/{ep}/export', [EmbeddedProductController::class, 'reportExport'])->name('embedded-products.reports.certificates.export');
+        Route::resource('products', EmbeddedProductController::class, ['names' => 'embedded-products']);
+    });
+
     Route::resource('legacy-policy', LegacyPolicyController::class);
     Route::post('legacy-policy/move-to-imcrm', [LegacyPolicyController::class, 'moveToImcrm']);
     Route::post('legacy-policy/get-s3-temp-url', [LegacyPolicyController::class, 'getS3TempUrl']);
@@ -228,6 +231,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('embedded-products/upload-document', [EmbeddedProductController::class, 'uploadDocument'])->name('embedded-products.upload-document');
     Route::post('embedded-products/send-document', [EmbeddedProductController::class, 'sendDocument'])->name('embedded-products.send-document');
     Route::post('embedded-products/download-document', [EmbeddedProductController::class, 'downloadDocument'])->name('embedded-products.download-document');
+    Route::post('embedded-products/sync-document', [EmbeddedProductController::class, 'syncDocument'])->name('embedded-products.sync-document');
+    Route::get('embedded-products/download/force', [EmbeddedProductController::class, 'force'])->name('force-download');
+
     Route::post('embedded-products/{id}/toggle-status', [EmbeddedProductController::class, 'toggleStatus'])->name('embedded-products.toggle-status');
 
     Route::post('updateLeadStatusDragDrop', [CentralController::class, 'updateLeadStatusDragDrop'])->name('update-lead-status-drag-drop');
@@ -523,7 +529,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         //        Route::get('aml/upload/uae', [AMLController::class, 'uploadUaeSanctionList'])->name('uploadUaeSanctionList');
         //        Route::post('aml/upload/uae-list', [AMLController::class, 'uaeSanctionListUpload'])->name('uaeSanctionListUpload');
     });
-
+    Route::post('aml/update-quote-comment', [AMLController::class, 'updateQuoteComment'])->name('aml-update-quote-comment');
     Route::group(['prefix' => 'medical'], function () {
         if (in_array('Business', newUi())) {
             Route::get('amt/cards', [V2AmtController::class, 'cardsView'])->name('amt.cardsView');
@@ -567,6 +573,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/update-payment-status', [AjaxController::class, 'updatePaymentStatus']);
     Route::post('/{quoteType}/upload-individual-kycdoc', [AjaxController::class, 'uploadKycIndividualDocument']);
     Route::post('/{quoteType}/upload-entity-kycdoc', [AjaxController::class, 'uploadKycEntityDocument']);
+    Route::post('/{quoteType}/update-risk', [AjaxController::class, 'updateRisk']);
+    Route::get('/{quoteType}/quote-detail/{quoteId}', [AjaxController::class, 'quoteDetail']);
     // Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']); to be removed
     Route::post('/generate-payment-link', [AjaxController::class, 'generatePaymentLink']);
     Route::post('update-car-plan-details', [CarQuoteController::class, 'updateCarPlanDetails']);

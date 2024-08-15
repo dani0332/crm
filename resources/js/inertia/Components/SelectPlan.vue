@@ -4,6 +4,10 @@ const props = defineProps({
     plan: Object,
     quoteType: String,
     uuid: String,
+    disabled: {
+        type: Boolean,
+        default: false
+    },
     extraDetails: {
         type: Object,
         default: {}
@@ -89,7 +93,7 @@ const updateSelectedPlan = () => {
                     providerName: props.plan.providerName,
                     planName: props.plan.name,
                 }
-            
+
                 if(res.data.plan.planProcessValue[0]) {
                     selectedPlan.premium = premium.toFixed(2);
                 }
@@ -99,13 +103,14 @@ const updateSelectedPlan = () => {
                     id: props.plan.id,
                     providerName: props.plan.providerName,
                     planName: props.plan.name,
-                    premium: premium.toFixed(2)
+                    premium: premium.toFixed(2),
+                    planTypeId:props.plan.planTypeId,
                 });
             }
             notification.success({
                     title: "Selected plan updated",
                     position: 'top',
-            });            
+            });
         })
         .catch(err => {
             console.log(err)
@@ -133,8 +138,9 @@ watch(() => {
         size="xs"
         color="success"
         outlined
+        :disabled="props.disabled"
         :loading="isLoading"
-        v-if="isPlanSelectionEnable" 
+        v-if="isPlanSelectionEnable"
         @click.prevent="updateSelectedPlan()"
     >
         Select

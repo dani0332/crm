@@ -205,6 +205,11 @@ class CarQuote extends BaseModel
         return $this->morphMany(Payment::class, 'paymentable');
     }
 
+    public function embeddedTransactions()
+    {
+        return $this->morphMany(EmbeddedTransaction::class, 'quote_request');
+    }
+
     public function plan()
     {
         return $this->belongsTo(CarPlan::class, 'plan_id');
@@ -534,5 +539,11 @@ class CarQuote extends BaseModel
     public function duplicateInquiryLog(): MorphMany
     {
         return $this->morphMany(DuplicateInquiryLog::class, 'loggable');
+    }
+
+    // Get insurance provieder for plan details section
+    public function insuranceProviderDetails()
+    {
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
 }

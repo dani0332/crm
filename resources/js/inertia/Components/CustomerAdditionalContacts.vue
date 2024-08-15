@@ -30,6 +30,9 @@ const props = defineProps({
 const { isRequired, isEmail, isMobileNo } = useRules();
 
 const notification = useNotifications('toast');
+const page = usePage();
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 
 const contactLoader = ref(false);
 const EmailCheckLoader = ref(false);
@@ -200,6 +203,13 @@ const additionalContactDeleteConfirmed = () => {
     },
   );
 };
+
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -215,6 +225,7 @@ const additionalContactDeleteConfirmed = () => {
           size="sm"
           color="orange"
           @click.prevent="addAdditionalContact"
+          v-if="readOnlyMode.isDisable === true"
         >
           Add Additional Contacts
         </x-button>
@@ -238,6 +249,7 @@ const additionalContactDeleteConfirmed = () => {
               color="emerald"
               outlined
               @click.prevent="additionalContactPrimary(item)"
+              v-if="readOnlyMode.isDisable === true"
             >
               Make Primary
             </x-button>

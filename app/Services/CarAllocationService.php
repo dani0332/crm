@@ -14,7 +14,7 @@ use App\Enums\TeamNameEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TiersIdEnum;
 use App\Enums\UserStatusEnum;
-use App\Jobs\SendOCBIntroEmailJob;
+use App\Jobs\OCB\SendCarOCBIntroEmailJob;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarQuote;
@@ -158,7 +158,7 @@ class CarAllocationService extends AllocationService
         $lead->tier_id = $tier->id;
         $lead->save();
         info('SIC flow is enabled for lead : '.$lead->uuid.' , the updated field : '.$lead->sic_flow_enabled);
-        SendOCBIntroEmailJob::dispatch($lead->uuid, null, true);
+        SendCarOCBIntroEmailJob::dispatch($lead->uuid, null, true);
         info('SIC flow is email is dispatched for lead : '.$lead->uuid);
     }
 
@@ -303,8 +303,6 @@ class CarAllocationService extends AllocationService
             $query->where('user_id', '!=', $advisorId);
         }
 
-        info('getAdvisorsByStatus fetch query is : '.$query->toSql().' with params : '.json_encode($query->getBindings()));
-
         // Return the resulting collection of advisors.
         return $query->get();
     }
@@ -390,6 +388,14 @@ class CarAllocationService extends AllocationService
 
             // Find the intersection of available user IDs and rule user IDs.
             $finalEligibleUserIds = array_intersect($availableUserIds, $ruleUserIds);
+
+            // Check if the lead source indicates a SAP lead.
+            $isSAPLead = str_contains($lead->source, 'sap-') || str_contains($lead->source, 'partner.alfred.ae');
+            if ($isSAPLead) {
+                // If the lead source is SAP, get eligible users for SAP leads.
+                info('SAP lead found, so filtering eligible users for SAP lead');
+                $finalEligibleUserIds = $this->getEligibleUserForSAPLead($ruleUserIds);
+            }
 
             info('Rule found, and users against the rule are: '.json_encode($finalEligibleUserIds));
         } else {
@@ -583,5 +589,17 @@ class CarAllocationService extends AllocationService
         ]);
 
         info('Tier with name : '.$tier->name.' is assigned to car lead with uuid : '.$lead->uuid);
+    }
+
+    public function getEligibleUserForSAPLead($ruleUserIds): array
+    {
+        // Create a query to fetch lead allocations with their associated users.
+        $sapUserIds = LeadAllocation::with('leadAllocationUser')
+            ->whereIn('user_id', $ruleUserIds) // it will be the rule user ids for SAP rule only
+            ->where('quote_type_id', QuoteTypes::CAR->id())
+            ->orderBy('last_allocated')
+            ->pluck('user_id')->toArray();
+
+        return $sapUserIds;
     }
 }

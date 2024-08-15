@@ -35,7 +35,6 @@ use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Jobs\CarRenewalEmailJob;
-use App\Jobs\SendOCBIntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
@@ -68,13 +67,13 @@ use App\Services\AllocationService;
 use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
 use App\Services\BusinessQuoteService;
-use App\Services\CarEmailService;
 use App\Services\CarQuoteService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\EmailDataService;
+use App\Services\EmailServices\CarEmailService;
 use App\Services\EmailStatusService;
 use App\Services\HealthQuoteService;
 use App\Services\HomeQuoteService;
@@ -735,6 +734,8 @@ class CRUDController extends Controller
             $customerTypeEnum = CustomerTypeEnum::asArray();
             $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
             $nationalities = NationalityRepository::withActive()->get();
+            $insuranceProvidersByQuoteType = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::CAR->id());
+            $commercialRules = $this->leadAllocationService->isCommercialVehicles($record);
 
             return inertia('PersonalQuote/Car/Show', compact([
                 'record', 'quote', 'model', 'customTitles', 'customTableList', 'paymentStatusEnum', 'quoteStatusEnum', 'leadSourceEnum', 'isBetaUser',
@@ -746,6 +747,7 @@ class CRUDController extends Controller
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
                 'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'isAmlClearedForPayment', 'clientInquiryLogs', 'puaTypeEnum',
+                'insuranceProvidersByQuoteType', 'commercialRules', 'vatPercentage',
             ]));
         }
 
@@ -1541,9 +1543,6 @@ class CRUDController extends Controller
             if ($request->leadStatus == QuoteStatusEnum::TransactionApproved || $request->leadStatus == QuoteStatusEnum::PolicyIssued) {
                 // MS: dispatch sib work flow
                 SyncSIBContactJob::dispatch($lead);
-
-                // Ep send documents
-                EmbeddedProductRepository::sendDocumentsByLead($request->leadId, $request->modelType);
             }
 
             if (in_array($request->leadStatus, [QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer])) {
@@ -1564,10 +1563,17 @@ class CRUDController extends Controller
         $oldEntity = $this->crudService->getEntityByUUID($request->quote_uuid, $request->modelType);
         $result = $this->crudService->updateQuoteStatus($request);
         $entity = $result['entity'];
-        $plainEntity = $this->crudService->getLeadPlainEntityByUUID($request->modelType, $request->quote_uuid);
         if ($request->leadStatus == QuoteStatusEnum::TransactionApproved) {
-            $this->crudService->calculateScore($plainEntity);
+            $plainEntity = $this->getQuoteObject($request->modelType, $request->leadId);
+            $this->crudService->calculateScore($plainEntity, $request->modelType);
         }
+
+        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
+        && ($request->leadStatus == QuoteStatusEnum::TransactionApproved || $request->leadStatus == QuoteStatusEnum::PolicyIssued)) {
+            // Ep send documents
+            EmbeddedProductRepository::sendDocumentsByLead($request->leadId, $request->modelType);
+        }
+
         // courtesy email
         $lobs = [quoteTypeCode::Business];
         if ($oldEntity->quote_status_id != $entity->quote_status_id && $entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! in_array($request->modelType, $lobs)) {
@@ -1933,11 +1939,13 @@ class CRUDController extends Controller
     public function sendOCBEmailNB(Request $request, $quoteType, $quoteUuId)
     {
         if ($quoteUuId) {
-            Log::info('sendOCBEmailNB OCB email sending started for quote uuid: '.$quoteUuId);
 
-            SendOCBIntroEmailJob::dispatch($quoteUuId, null);
-
-            info('sendOCBEmailNB OCB email Job dispatched for quote uuid: '.$quoteUuId);
+            $ocbEmailJob = QuoteTypes::getName(QuoteTypes::getIdFromValue($quoteType))?->ocbEmailJob();
+            if ($ocbEmailJob) {
+                Log::info("sendOCBEmailNB OCB email sending started for quote uuid: {$quoteUuId}");
+                dispatch(new $ocbEmailJob($request->quoteUuid, null));
+                info("sendOCBEmailNB OCB email Job dispatched for quote uuid: {$quoteUuId}");
+            }
 
             return response()->json(['success' => 'OCB NB email sent to customer !']);
         } else {
@@ -1989,7 +1997,7 @@ class CRUDController extends Controller
 
     public function riskRatingDetails($quoteType, $uuid)
     {
-        $quoteModel = $this->getQuoteObject($quoteType, $uuid);
+        $quoteModel = $this->getQuoteObjectBy($quoteType, $uuid, 'uuid');
         $response = $this->crudService->scoreBreakdown($quoteModel, $quoteType);
 
         return $response;

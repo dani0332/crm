@@ -57,6 +57,7 @@ class CarQuoteService extends BaseService
                 'cqr.id',
                 'cqr.first_name',
                 'cqr.last_name',
+                DB::raw('CONCAT(cqr.first_name, " ", cqr.last_name) as full_name'),
                 'cqr.email',
                 'cqr.mobile_no',
                 DB::raw('DATE_FORMAT(cqr.dob, "%d-%m-%Y") as dob'),
@@ -184,6 +185,12 @@ class CarQuoteService extends BaseService
                 //'cqr.prefill_plan_selected_at',
                 //'cqr.plan_selected_at'
                 'cqr.enquiry_count',
+                'cqr.insurance_provider_id',
+                'cqr.insurer_quote_number',
+                'cqr.price_vat_applicable',
+                'cqr.price_vat_not_applicable',
+                'cqr.price_with_vat',
+                'cpdip.text as insurer_name',
                 //'cqr.aml_status_id',
                 DB::raw('GROUP_CONCAT(team.name) as team_name')
             )
@@ -202,8 +209,9 @@ class CarQuoteService extends BaseService
             ->leftJoin('users as pra', 'pra.id', '=', 'cqr.previous_advisor_id')
             ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
             ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
-        //->leftJoin('car_plan as prefill_plan', 'prefill_plan.id', '=', 'cqr.prefill_plan_id')
-        //->leftJoin('insurance_provider as ppip', 'ppip.id', '=', 'prefill_plan.provider_id')
+            ->leftJoin('insurance_provider as cpdip', 'cpdip.id', '=', 'cqr.insurance_provider_id')
+            //->leftJoin('car_plan as prefill_plan', 'prefill_plan.id', '=', 'cqr.prefill_plan_id')
+            //->leftJoin('insurance_provider as ppip', 'ppip.id', '=', 'prefill_plan.provider_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id')
@@ -567,7 +575,7 @@ class CarQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return CarQuote::where('id', $id)->with(['payments.paymentSplits' => function ($query) {
+        return CarQuote::where('id', $id)->with(['insuranceProviderDetails', 'payments.paymentSplits' => function ($query) {
             $query->orderBy('sr_no', 'asc');
         }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents'])->first();
     }

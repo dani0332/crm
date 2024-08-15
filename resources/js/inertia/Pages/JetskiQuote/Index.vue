@@ -108,12 +108,17 @@ const advisorOptions = computed(() => {
     label: advisor.name,
   }));
 });
-
+const readOnlyMode = reactive({
+    isDisable: true,
+});
 onMounted(() => {
   setQueryStringFilters();
   if (hasRole(rolesEnum.JetskiManager) || hasRole(rolesEnum.Admin)) {
     permissionAssignLeads.value = true;
   }
+
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+
 });
 
 const tableHeader = [
@@ -155,6 +160,7 @@ watch(
   },
   { deep: true, immediate: true },
 );
+
 </script>
 
 <template>
@@ -162,6 +168,7 @@ watch(
     <Head title="JetSki Quotes" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">JetSki Quotes List</h2>
+        <div v-if="readOnlyMode.isDisable === true">
       <x-button
         v-if="can(permissionsEnum.JetskiQuotesCreate)"
         size="sm"
@@ -170,6 +177,7 @@ watch(
       >
         Create Lead
       </x-button>
+        </div>
     </div>
     <x-divider class="my-4" />
 

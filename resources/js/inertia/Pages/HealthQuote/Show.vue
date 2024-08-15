@@ -1519,7 +1519,9 @@ const linkEntity = () => {
       console.log(err);
     });
 };
-
+const readOnlyMode = reactive({
+    isDisable: true,
+});
 onMounted(() => {
   onLoadAvailablePlansData();
   const isHealthAdvisor = page.props.advisors.find(
@@ -1527,6 +1529,9 @@ onMounted(() => {
   ) || { id: null };
   if (isHealthAdvisor) assignLead.value = isHealthAdvisor.id;
   isMounted.value = true;
+
+    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+
 });
 
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);
@@ -1540,6 +1545,7 @@ const selectedProviderPlan = ref({
   planName: page.props.quote.health_plan_name_text,
   providerName: page.props.quote.plan_provider_name_text,
   premium: page.props.ecomDetails.priceWithVAT,
+  planType: checkPlanType(page.props.quote.plan_type_id),
 });
 
 const handlePlanSelected = plan => {
@@ -1548,6 +1554,7 @@ const handlePlanSelected = plan => {
   selectedProviderPlan.value.planName = plan.planName;
   selectedProviderPlan.value.providerName = plan.providerName;
   selectedProviderPlan.value.premium = plan.premium;
+  selectedProviderPlan.value.planType =checkPlanType(plan.planTypeId);
   router.reload({
     preserveState: true,
     preserveScroll: true,
@@ -1722,7 +1729,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
           Stale for {{ countDays }}
         </p>
       </template>
-      <template #default>
+      <template #default  v-if="readOnlyMode.isDisable === true">
         <LeadNotes
           :documentType="noteDocumentType"
           :notes="quoteNotes"
@@ -1822,6 +1829,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
             :options="subTeamOptions"
             placeholder="Select Subteam"
             class="w-auto flex-1 !mb-2"
+            v-if="readOnlyMode.isDisable === true"
           />
           <div>
             <x-button
@@ -1830,6 +1838,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
               class="mb-2"
               @click.prevent="onTeamAssign"
               :loading="isDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Assign Team
             </x-button>
@@ -1845,6 +1854,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
             placeholder="Select Lead"
             class="w-auto flex-1 !mb-2"
             :single="true"
+            v-if="readOnlyMode.isDisable === true"
           />
           <div>
             <x-button
@@ -1853,6 +1863,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
               class="mb-2"
               @click.prevent="onAssignLead"
               :loading="isDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Assign
             </x-button>
@@ -2138,6 +2149,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
                   @click.prevent="searchByTradeLicense"
                   size="xs"
                   color="primary"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Search
                 </x-button>
@@ -2234,6 +2246,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
           size="sm"
           :loading="customerProfileForm.processing"
           @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
         >
           Search
         </x-button>
@@ -2281,7 +2294,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
           </dd>
         </div>
         <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity">
+          <x-button size="sm" color="orange" @click.prevent="linkEntity" v-if="readOnlyMode.isDisable === true">
             Link
           </x-button>
         </div>
@@ -2297,7 +2310,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
           Member Details
           <x-tag size="sm">{{ membersDetail.length || 0 }}</x-tag>
         </h3>
-        <x-button @click.prevent="onAddMemberModal" size="sm" color="orange">
+        <x-button @click.prevent="onAddMemberModal" size="sm" color="orange" v-if="readOnlyMode.isDisable === true">
           Add Member
         </x-button>
       </div>
@@ -2338,6 +2351,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
               color="primary"
               outlined
               @click.prevent="onEditMember(item)"
+              v-if="readOnlyMode.isDisable === true"
             >
               Edit
             </x-button>
@@ -2346,6 +2360,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
               color="error"
               outlined
               @click.prevent="memberDelete(item.id)"
+              v-if="readOnlyMode.isDisable === true"
             >
               Delete
             </x-button>
@@ -2557,6 +2572,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
             additionalContact.reset();
             modals.addContact = true;
           "
+          v-if="readOnlyMode.isDisable === true"
         >
           Add Additional Contacts
         </x-button>
@@ -2580,6 +2596,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
             color="emerald"
             outlined
             @click.prevent="additionalContactPrimary(item)"
+            v-if="readOnlyMode.isDisable === true"
           >
             Make Primary
           </x-button>
@@ -2734,6 +2751,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
               size="sm"
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
+              v-if="readOnlyMode.isDisable === true"
             >
               Change Status
             </x-button>
@@ -2789,6 +2807,10 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
             <dd>{{ coPayment ? coPayment.text : 'N/A' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PLAN TYPE</dt>
+            <dd>{{ selectedProviderPlan.planType ?? 'N/A' }}</dd>
           </div>
         </dl>
       </div>
@@ -2900,12 +2922,14 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
               <x-button
                 @click.prevent="onTogglePlans(false)"
                 :loading="toggleLoader"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Show
               </x-button>
               <x-button
                 @click.prevent="onTogglePlans(true)"
                 :loading="toggleLoader"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Hide
               </x-button>
@@ -2925,6 +2949,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
                   size="sm"
                   color="orange"
                   :disabled="doesEmailStatusExist || isOcaButtonDisabled"
+                  v-if="readOnlyMode.isDisable === true"
               >
                   Send OCA Email to Customer
               </x-button>
@@ -3109,6 +3134,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
                         `/payment/?providerCode=${item.providerCode}&planId=${item.id}&selectedCopayId=${item.selectedCopayId}`,
                     )
                   "
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Copy
                 </x-button>
@@ -3242,6 +3268,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
                 color="#ff5e00"
                 type="submit"
                 @click="onPlanFiltersSubmit"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Apply
               </x-button>
@@ -3353,6 +3380,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
             @click.prevent="modals.doc = true"
             size="sm"
             color="primary"
+            v-if="readOnlyMode.isDisable === true"
           >
             Upload Documents
           </x-button>
@@ -3391,6 +3419,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
               color="error"
               outlined
               @click.prevent="onDocDelete(doc_name)"
+              v-if="readOnlyMode.isDisable === true"
             >
               Delete
             </x-button>
@@ -3438,7 +3467,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
           Lead Activities
           <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
         </h3>
-        <x-button size="sm" color="orange" @click.prevent="addActivity">
+        <x-button size="sm" color="orange" @click.prevent="addActivity" v-if="readOnlyMode.isDisable === true">
           Add Activity
         </x-button>
       </div>
@@ -3460,6 +3489,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
             :modelValue="status === 1"
             :disabled="status === 1"
             @change="onActivityStatusUpdate(id)"
+            v-if="readOnlyMode.isDisable === true"
           />
         </template>
         <template #item-due_date="{ due_date, is_cold }">
@@ -3485,6 +3515,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
               outlined
               :disabled="item.status === 1"
               @click.prevent="activityEdit(item)"
+              v-if="readOnlyMode.isDisable === true"
             >
               Edit
             </x-button>
@@ -3494,6 +3525,7 @@ const doesEmailStatusExist = computed(() => props.emailStatuses.length > 0);
               :disabled="item.status === 1"
               outlined
               @click.prevent="activityDelete(item.id)"
+              v-if="readOnlyMode.isDisable === true"
             >
               Delete
             </x-button>

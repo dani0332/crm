@@ -19,6 +19,7 @@ const props = defineProps({
   quoteAmlStatus: Number,
   customerDetails: Object,
     cardHolderName:Object,
+    kycLogs:Array,
 });
 
 const loader = ref({
@@ -443,6 +444,7 @@ watch(
           :companyPosition="props.lookups.company_position"
           :entity-details="props.entityDetails"
           :customer-details="props.customerDetails"
+          :kycLogs="kycLogs"
         />
       </x-form>
     </x-modal>

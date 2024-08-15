@@ -1,6 +1,7 @@
 <script setup>
 import ToolTip from './../Components/ToolTip.vue';
 import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
+import {onMounted, reactive} from "vue";
 const notification = useNotifications('toast');
 const page = usePage();
 
@@ -33,6 +34,10 @@ const props = defineProps({
   eCommercePriceWithLP: {
     type: [String, Number],
     default: '0',
+  },
+  isPlanDetailEnabled: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -110,6 +115,8 @@ if (props.quoteType === 'Health') {
   initialAmount.value = props.eCommercePrice;
 } else if (props.quoteType === 'Bike') {
   initialAmount.value = props.quoteRequest.premium;
+} else if (props. isPlanDetailEnabled) {
+  initialAmount.value = props.quoteRequest.price_with_vat;
 } else {
   initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
     ? props.quoteRequest.premium
@@ -129,15 +136,16 @@ const approveProofDocument = props.paymentDocument.find(
 );
 
 let initalPlanDetails = [];
-if (quoteTypesToCheck.includes(props.quoteType)) {
-  initalPlanDetails = props.quoteRequest.plan;
-} else if (props.quoteType == 'Business' || props.quoteType == 'Home') {
+if (props.quoteType == 'Business' || props.quoteType == 'Home' || props.isPlanDetailEnabled) {
     initalPlanDetails = props.quoteRequest?.insurance_provider_details ?? props.quoteRequest?.insurance_provider;
+} else if (quoteTypesToCheck.includes(props.quoteType)) {
+  initalPlanDetails = props.quoteRequest.plan;
 } else if ( props.quoteType=='Bike' ) {
     initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
 } else {
     initalPlanDetails = props.quoteRequest?.insurance_provider;
 }
+
 let planDetail = ref(initalPlanDetails);
 const paidAmountSum = ref(0);
 const totalPaidAmount = ref(0);
@@ -2052,7 +2060,9 @@ watch(
         isTotalPriceUpdated.value === true
       )
     ) {
-      if (props.quoteType === 'Health') {
+      if (props.isPlanDetailEnabled) {
+        initialAmount.value = props.quoteRequest.price_with_vat;
+      } else if (props.quoteType === 'Health') {
         initialAmount.value = props.eCommercePrice;
       } else if (props.quoteType === 'Bike') {
         initialAmount.value = props.quoteRequest.premium;
@@ -2064,10 +2074,10 @@ watch(
       totalPrice.value = initialAmount.value;
     }
     //refresh plan
-    if (quoteTypesToCheck.includes(props.quoteType)) {
-      initalPlanDetails = props.quoteRequest.plan;
-    } else if (props.quoteType == 'Business' || props.quoteType == 'Home') {
+    if (props.quoteType == 'Business' || props.quoteType == 'Home' || props.isPlanDetailEnabled) {
       initalPlanDetails = props.quoteRequest.insurance_provider_details;
+    } else if (quoteTypesToCheck.includes(props.quoteType)) {
+      initalPlanDetails = props.quoteRequest.plan;
     } else if ( props.quoteType=='Bike' ) {
       initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
     } else {
@@ -2092,6 +2102,14 @@ const isMasterPaymentPaid = computed(() => {
     return true;
   }
   return false;
+});
+const readOnlyMode = reactive({
+    isDisable: true,
+});
+onMounted(() => {
+    readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+
+    // setLeadStatuses();
 });
 </script>
 
@@ -2125,26 +2143,30 @@ const isMasterPaymentPaid = computed(() => {
                   payments[0].total_amount + payments[0].discount_value
                 "
               />
-              <x-button
-                v-if="can(permissionEnum.PaymentsCreate)"
-                size="sm"
-                color="emerald"
-                @click="addPaymentModal"
-              >
-                Add Manual Payment
-              </x-button>
+              <div v-if="readOnlyMode.isDisable === true">
+                <x-button
+                  v-if="can(permissionEnum.PaymentsCreate)"
+                  size="sm"
+                  color="emerald"
+                  @click="addPaymentModal"
+                >
+                  Add Manual Payment
+                </x-button>
+              </div>
             </div>
           </template>
           <template v-else>
             <x-tooltip>
-              <x-button
-                v-if="can(permissionEnum.PaymentsCreate)"
-                size="sm"
-                color="emerald"
-                @click="addPaymentModal"
-              >
-                <span class="border-b border-dotted">Add Manual Payment</span>
-              </x-button>
+              <div v-if="readOnlyMode.isDisable === true">
+                <x-button
+                  v-if="can(permissionEnum.PaymentsCreate)"
+                  size="sm"
+                  color="emerald"
+                  @click="addPaymentModal"
+                >
+                  <span class="border-b border-dotted">Add Manual Payment</span>
+                </x-button>
+              </div>
               <template #tooltip>
                 <span>{{
                   paymentTooltipEnum.PAYMENT_MANAGEMENT_ADD_PAYMENT
@@ -2334,7 +2356,7 @@ const isMasterPaymentPaid = computed(() => {
                         }}
                       </td>
                       <td>
-                        <div class="flex gap-2">
+                        <div class="flex gap-2" v-if="readOnlyMode.isDisable === true">
                           <x-button
                             v-if="can(permissionEnum.PaymentsEdit)"
                             size="xs"
@@ -2426,6 +2448,7 @@ const isMasterPaymentPaid = computed(() => {
                               )
                             "
                             outlined
+                            v-if="readOnlyMode.isDisable === true"
                             >View</x-button
                           >
                           <x-button

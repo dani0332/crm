@@ -5,7 +5,7 @@ import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import { computed } from 'vue';
-import DownloadDocuments from "../../Components/DownloadDocuments.vue";
+import DownloadDocuments from '../../Components/DownloadDocuments.vue';
 
 const page = usePage();
 defineProps({
@@ -1074,6 +1074,7 @@ const customerProfileForm = useForm({
   company_address: page.props.quote.company_address ?? null,
   entity_type_code: page.props.quote.entity_type_code ?? 'Parent',
   industry_type_code: page.props.quote.industry_type_code ?? null,
+  passport_number: page.props.quote.passport_number ?? null,
   emirate_of_registration_id:
     page.props.quote.emirate_of_registration_id ?? null,
 });
@@ -1180,6 +1181,9 @@ const linkEntity = () => {
       console.log(err);
     });
 };
+const readOnlyMode = reactive({
+  isDisable: true,
+});
 
 onMounted(() => {
   onLoadAvailablePlansData();
@@ -1189,7 +1193,12 @@ onMounted(() => {
       position: 'top',
     });
   }
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
+
+const isEmbeddedProduct = code => {
+  return code.includes('TRA-CAR');
+};
 
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);
 const selectedPlanIds = computed(() => {
@@ -1280,25 +1289,36 @@ const documentValidate = async val => {
       updateDocumentValidate.show = false;
     });
 };
-const getGenderDisplay = (val) => {
-      switch (val) {
-        case 'M':
-        case 'male':
-          return 'Male';
-        case 'F':
-        case 'female':
-          return 'Female';
-        default:
-          return '';
-      }
-    }
+const getGenderDisplay = val => {
+  switch (val) {
+    case 'M':
+    case 'male':
+      return 'Male';
+    case 'F':
+    case 'female':
+      return 'Female';
+    default:
+      return '';
+  }
+};
 </script>
 
 <template>
   <div>
     <Head title="Travel Detail" />
-    <div class="flex justify-between items-center flex-wrap gap-2">
-      <h2 class="text-xl font-semibold">Travel Detail</h2>
+    <div
+      class="flex justify-between items-center flex-wrap gap-2"
+      v-if="readOnlyMode.isDisable === true"
+    >
+      <h2 class="text-xl font-semibold">
+        Travel Detail
+        <span
+          class="inline-flex items-center rounded-md bg-yellow-300 px-2 py-1 text-xs font-medium text-yellow-900 ring-1 ring-inset ring-yellow-300/10"
+          v-if="isEmbeddedProduct(quote.code)"
+        >
+          {{ 'Car Embedded Product' }}
+        </span>
+      </h2>
       <div class="flex gap-2">
         <Link
           v-if="quote?.insly_id"
@@ -1433,17 +1453,17 @@ const getGenderDisplay = (val) => {
                 quote.direction_code != null
                   ? quote.direction_code
                   : quote?.currently_located_in_id_text ==
-                      enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
-                    quote?.region_cover_for_id !=
-                      enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                  ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
-                  : quote?.destination_id_text ==
-                      enums.travelQuoteEnum
-                        .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
-                    quote?.region_cover_for_id ==
-                      enums.travelQuoteEnum.REGION_COVER_ID_UAE
-                  ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
-                  : ''
+                        enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
+                      quote?.region_cover_for_id !=
+                        enums.travelQuoteEnum.REGION_COVER_ID_UAE
+                    ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
+                    : quote?.destination_id_text ==
+                          enums.travelQuoteEnum
+                            .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
+                        quote?.region_cover_for_id ==
+                          enums.travelQuoteEnum.REGION_COVER_ID_UAE
+                      ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
+                      : ''
               }}
             </dt>
           </div>
@@ -1549,10 +1569,10 @@ const getGenderDisplay = (val) => {
                 quote.coverage_code != null
                   ? quote.coverage_code
                   : quote.days_cover_for <= 92
-                  ? enums.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
-                  : enums.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
-                    '/' +
-                    enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
+                    ? enums.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
+                    : enums.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
+                      '/' +
+                      enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
               }}
             </dt>
           </div>
@@ -1733,6 +1753,11 @@ const getGenderDisplay = (val) => {
             <RiskRatingScoreDetails :quote="quote" :modelType="'Travel'" />
 
             <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">PASSPORT NUMBER</dt>
+              <dd>{{ customerProfileForm.passport_number ?? 'N/A' }}</dd>
+            </div>
+
+            <div class="grid sm:grid-cols-2">
               <dt class="font-medium">UAE resident</dt>
               <dd>{{ customerProfileForm.uae_resident ?? 'N/A' }}</dd>
             </div>
@@ -1774,6 +1799,7 @@ const getGenderDisplay = (val) => {
                   @click.prevent="searchByTradeLicense"
                   size="xs"
                   color="primary"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Search
                 </x-button>
@@ -1870,6 +1896,7 @@ const getGenderDisplay = (val) => {
           size="sm"
           :loading="customerProfileForm.processing"
           @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
         >
           Search
         </x-button>
@@ -1917,7 +1944,12 @@ const getGenderDisplay = (val) => {
           </dd>
         </div>
         <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity">
+          <x-button
+            size="sm"
+            color="orange"
+            @click.prevent="linkEntity"
+            v-if="readOnlyMode.isDisable === true"
+          >
             Link
           </x-button>
         </div>
@@ -1934,7 +1966,12 @@ const getGenderDisplay = (val) => {
           <x-tag size="sm">{{ travelers.length || 0 }}</x-tag>
         </h3>
         <div class="flex flex-wrap gap-3">
-          <x-button size="sm" color="orange" @click.prevent="onAddTraveler">
+          <x-button
+            size="sm"
+            color="orange"
+            @click.prevent="onAddTraveler"
+            v-if="readOnlyMode.isDisable === true"
+          >
             Add Member
           </x-button>
         </div>
@@ -1974,6 +2011,7 @@ const getGenderDisplay = (val) => {
               color="primary"
               @click.prevent="onEditTraveler(item)"
               outlined
+              v-if="readOnlyMode.isDisable === true"
             >
               Edit
             </x-button>
@@ -1985,6 +2023,7 @@ const getGenderDisplay = (val) => {
                 confirmModal.show = true;
               "
               outlined
+              v-if="readOnlyMode.isDisable === true"
             >
               Delete
             </x-button>
@@ -2182,6 +2221,7 @@ const getGenderDisplay = (val) => {
           :disabled="
             quote.quote_status_id == enums.quoteStatusEnum.TransactionApproved
           "
+          v-if="readOnlyMode.isDisable === true"
         >
           Change Status
         </x-button>
@@ -2298,6 +2338,7 @@ const getGenderDisplay = (val) => {
             type="submit"
             size="sm"
             v-show="policyDetails.editMode"
+            v-if="readOnlyMode.isDisable === true"
             >Update</x-button
           >
           <x-button
@@ -2306,6 +2347,7 @@ const getGenderDisplay = (val) => {
             type="submit"
             v-show="!policyDetails.editMode"
             @click.prevent="policyDetails.editMode = true"
+            v-if="readOnlyMode.isDisable === true"
             >Edit</x-button
           >
         </div>
@@ -2342,11 +2384,11 @@ const getGenderDisplay = (val) => {
           Documents
           <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
         </h3>
-        <div class="flex gap-2">
-            <DownloadDocuments
-                :quote="page.props.quote"
-                :quoteDocuments="page.props.quoteDocuments"
-            />
+        <div class="flex gap-2" v-if="readOnlyMode.isDisable === true">
+          <DownloadDocuments
+            :quote="page.props.quote"
+            :quoteDocuments="page.props.quoteDocuments"
+          />
           <Link
             v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
             :href="`/legacy-policy/${quote.insly_id}`"
@@ -2416,6 +2458,7 @@ const getGenderDisplay = (val) => {
               color="error"
               outlined
               @click.prevent="onDocDelete(doc_name)"
+              v-if="readOnlyMode.isDisable === true"
             >
               Delete
             </x-button>
@@ -2490,12 +2533,14 @@ const getGenderDisplay = (val) => {
                 <x-button
                   @click.prevent="onTogglePlans(false)"
                   :loading="toggleLoader"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Show
                 </x-button>
                 <x-button
                   @click.prevent="onTogglePlans(true)"
                   :loading="toggleLoader"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Hide
                 </x-button>
@@ -2588,6 +2633,7 @@ const getGenderDisplay = (val) => {
                     <SelectPlan
                       class="ml-1"
                       v-if="!selectedPlanIds.includes(item.id)"
+                      :disabled="isEmbeddedProduct"
                       @update:selectedPlanChanged="handlePlanSelected"
                       :plan="item"
                       :quoteType="modelType"
@@ -2672,6 +2718,7 @@ const getGenderDisplay = (val) => {
                         class="ml-1"
                         v-if="!selectedPlanIds.includes(item.id)"
                         @update:selectedPlanChanged="handlePlanSelected"
+                        :disabled="isEmbeddedProduct"
                         :plan="item"
                         :quoteType="modelType"
                         :uuid="quote.uuid"
@@ -2762,7 +2809,12 @@ const getGenderDisplay = (val) => {
           Lead Activities
           <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
         </h3>
-        <x-button size="sm" color="orange" @click.prevent="addActivity">
+        <x-button
+          size="sm"
+          color="orange"
+          @click.prevent="addActivity"
+          v-if="readOnlyMode.isDisable === true"
+        >
           Add Activity
         </x-button>
       </div>
@@ -2783,6 +2835,7 @@ const getGenderDisplay = (val) => {
             :modelValue="status === 1"
             :disabled="status === 1"
             @change="onActivityStatusUpdate(id)"
+            v-if="readOnlyMode.isDisable === true"
           />
         </template>
         <template #item-action="item">
@@ -2793,6 +2846,7 @@ const getGenderDisplay = (val) => {
               outlined
               :disabled="item.status === 1"
               @click.prevent="activityEdit(item)"
+              v-if="readOnlyMode.isDisable === true"
             >
               Edit
             </x-button>
@@ -2802,6 +2856,7 @@ const getGenderDisplay = (val) => {
               :disabled="item.status === 1"
               outlined
               @click.prevent="activityDelete(item.id)"
+              v-if="readOnlyMode.isDisable === true"
             >
               Delete
             </x-button>
@@ -2958,6 +3013,7 @@ const getGenderDisplay = (val) => {
             size="sm"
             color="emerald"
             @click.prevent="modals.mixInquiryConfirm = false"
+            v-if="readOnlyMode.isDisable === true"
           >
             Okay, got it!
           </x-button>

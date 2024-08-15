@@ -6,6 +6,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\Customer;
+use App\Models\PersonalQuoteDetail;
 use App\Services\CapiRequestService;
 use App\Services\CustomerService;
 use Illuminate\Support\Arr;
@@ -208,5 +209,28 @@ trait GenericQueriesAllLobs
         }
 
         return $leadCodeArray[0];
+    }
+
+    public function getQuoteDetailObject($quoteType, $id, $idType = 'quote')
+    {
+        $nameSpace = '\\App\\Models\\';
+
+        $model = $nameSpace.ucwords($quoteType).'QuoteRequestDetail';
+        if (! class_exists($model)) {
+            if (! (in_array(ucwords($quoteType), [quoteTypeCode::Cycle, quoteTypeCode::Jetski]))) {
+                return false;
+            }
+        }
+        if ($idType == 'quote') {
+            if (checkPersonalQuotes(ucwords($quoteType))) {
+                $quote = PersonalQuoteDetail::where('personal_quote_id', $id)->first();
+            } else {
+                $quote = $model::where($quoteType.'_quote_request_id', $id)->first();
+            }
+        } else {
+            $quote = $model::find($id);
+        }
+
+        return (isset($quote->id)) ? $quote : false;
     }
 }

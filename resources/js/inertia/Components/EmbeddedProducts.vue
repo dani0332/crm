@@ -43,7 +43,7 @@ const modals = reactive({
   cancelPayment: false,
 });
 
-const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
+const { isRequired, isEmail, isNumberOrDecimal, isMobileNo } = useRules();
 
 const cancelPaymentForm = item => {
   paymentForm.reset();
@@ -61,13 +61,34 @@ const paymentForm = useForm({
   processing: false,
 });
 
+const syncDocumentLoader = ref(false);
 const downloadLoader = ref(false);
 const sendDocumentLoader = ref(false);
+const downloadDocumentLoader = ref(false);
 const sendDocumentForm = useForm({
   quoteId: props.quote.id,
   modelType: props.modelType,
   isInertia: true,
 });
+
+const syncDocument = id => {
+  syncDocumentLoader.value = true;
+  sendDocumentForm
+    .transform(data => ({
+      ...data,
+      epId: id,
+    }))
+    .post('/embedded-products/sync-document', {
+      preserveScroll: true,
+      responseType: 'blob',  // Ensure this is correctly set
+      onSuccess: (response) => {
+        syncDocumentLoader.value = false;
+      },
+      onError: () => {
+        syncDocumentLoader.value = false;
+      },
+    });
+};
 
 const downloadDcoument = id => {
   downloadLoader.value = true;
@@ -120,6 +141,53 @@ const sendDcoument = id => {
       },
     });
 };
+
+
+
+/**
+ * this function use download embedded transaction documents issue from insurance provider
+ */
+const downloadDocument = async (id) => {
+  downloadDocumentLoader.value = true;
+  const formData = {
+    quoteId: props.quote.id,
+    modelType: props.modelType,
+    epId: id,
+  };
+
+  axios
+  .post('/embedded-products/download-document', formData)
+  .then(response => {
+    if(response.data.attachments.length > 0) {
+      response.data.attachments.forEach(attachment => {
+        downloadFile(attachment);
+      });
+    }
+
+    downloadDocumentLoader.value = false;
+
+  })
+  .catch(error => {
+    downloadDocumentLoader.value = false;
+
+  });
+};
+
+const downloadFile = (download) => {
+    const save = document.createElement('a');
+    if (typeof save.download !== 'undefined') {
+        // if the download attribute is supported, save.download will return empty string, if not supported, it will return undefined
+        // if you are using helper method, such as isNone in ember, you can also do isNone(save.download)
+        save.href = window.location.protocol+'//'+window.location.host+'/embedded-products/download/force?path='+download.path;
+        save.target = '_blank';
+        save.download = download.name;
+        save.dispatchEvent(new MouseEvent('click'));
+    } else {
+        window.location.href = window.location.protocol+'//'+window.location.host+'/embedded-products/download/force?path='+download.path; // so that it opens new tab for IE11
+    }
+}
+
+
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
@@ -188,6 +256,10 @@ let paymentLink = page.props.epLink + '/car-insurance/quote/'+props.quote.uuid+'
       title: 'Link copied to clipboard',
       position: 'top',
     });
+};
+
+const getFirstPriceWithTransaction = prices => {
+  return prices.find(price => price.transactions && price.transactions.length > 0);
 };
 
 const paymentStatus = id => {
@@ -289,19 +361,21 @@ const hasAnyRole = roles => useHasAnyRole(roles);
           <template #item-prices="{ prices }">
 
             <div v-if="prices.length > 0" class="flex gap-3">
-              <x-tag color="primary" v-for="(priceItem, index) in prices" :key="index">
-                <x-checkbox v-model="priceItem.transactions[0].is_selected"
-                  @change="toggleProduct(priceItem, $event)" color="primary" :disabled="priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.AUTHORISED
-                    || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.CAPTURED
-                    || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.PARTIAL_CAPTURED" />
-                {{ (parseFloat(priceItem.price) + (priceItem.price * 5) / 100).toFixed(2) }}
-              </x-tag>
+              <div v-for="(priceItem, index) in prices" :key="index">
+                <x-tag v-if="priceItem.transactions.length" color="primary">
+                  <x-checkbox v-model="priceItem.transactions[0].is_selected" @change="toggleProduct(priceItem, $event)"
+                    color="primary" :disabled="priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.AUTHORISED
+                      || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.CAPTURED
+                      || priceItem.transactions[0]?.payment_status_id == paymentStatusEnum.PARTIAL_CAPTURED" />
+                  {{ (parseFloat(priceItem.price) + (priceItem.price * 5) / 100).toFixed(2) }}
+                </x-tag>
+              </div>
             </div>
 
           </template>
 
           <template #item-payment_status="{ prices }">
-            {{ paymentStatus(prices[0]?.transactions[0]?.payment_status_id) }}
+            {{ paymentStatus(getFirstPriceWithTransaction(prices)?.transactions[0]?.payment_status_id) }}
           </template>
 
           <template #item-updated_at="{ updated_at }">
@@ -310,9 +384,17 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 
           <template #item-actions="item">
             <div class="flex flex-col gap-1">
+              <x-button size="xs" color="emerald" v-if="item.sync_document_button" :disabled="!item.sync_document_button" :loading="syncDocumentLoader"
+                @click.prevent="syncDocument(item.id)">
+                Sync Documents from Provider
+              </x-button>
               <x-button size="xs" color="emerald" :disabled="!item.send_document_button" :loading="sendDocumentLoader"
                 @click.prevent="sendDcoument(item.id)">
                 Send Documents
+              </x-button>
+              <x-button size="xs" color="emerald" :disabled="!item.download_document_button" :loading="downloadDocumentLoader"
+                @click.prevent="downloadDocument(item.id)">
+                Download Documents
               </x-button>
               <x-button v-if="item.canGenerateCerticate" size="xs" color="#ff5e00"
                 :disabled="!item.send_document_button" :loading="downloadLoader"
@@ -336,7 +418,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 
           <x-form @submit="onActivitySubmit" :auto-focus="false">
             <div class="grid gap-4">
-              <x-input v-model="paymentForm.amount" label="Amount" :rules="[isRequired, isNumber]" class="w-full" />
+              <x-input v-model="paymentForm.amount" label="Amount" :rules="[isRequired, isNumberOrDecimal]" class="w-full" />
 
               <x-textarea v-model="paymentForm.reason" label="Reason" maxlength="250" :adjust-to-text="false"
                 class="w-full" />
