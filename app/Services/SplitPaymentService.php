@@ -858,9 +858,16 @@ class SplitPaymentService
                 $splitPaymentAmount = $splitPaymentAmount + $paymentDiscount; //discount
             }
 
-            $priceWithoutVat = $splitPaymentAmount / (1 + ($vatValue / 100));
-            $vat = $priceWithoutVat * $vatValue / 100;
-
+            if ( $frequency == 'split_payments') {
+                $priceWithoutVat = $splitPaymentAmount / (1 + ($vatValue / 100));
+                $vat = $priceWithoutVat * $vatValue / 100;
+            } else if ($splitPaymentNumber === 1) {
+                $priceWithoutVat = $splitPaymentAmount - $vat;
+            } else {
+                $priceWithoutVat = $splitPaymentAmount;
+                $vat = 0;
+            }
+            
             $priceWithoutVat = $priceWithoutVat + $priceVatNotApplicable;
 
         } else {
