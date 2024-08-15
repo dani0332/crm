@@ -136,4 +136,5 @@ final class ApplicationStorageEnums extends Enum
     public const NEXTCARE_HEALTH_DOC = 'NEXTCARE_HEALTH_DOC';
     public const NAS_HEALTH_DOC = 'NAS_HEALTH_DOC';
     public const E_CARE_HEALTH_DOC = 'E_CARE_HEALTH_DOC';
+    public const INSLY_M2_RELEASE_DATE = 'INSLY_M2_RELEASE_DATE';
 }
