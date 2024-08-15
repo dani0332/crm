@@ -2348,7 +2348,7 @@ class SageApiService
 
         if ($isQuoteCreatedWithInDateRange && ! $isPaymentMethodCreditApproval) {
             if ($isPaymentFrequencySplitPayment) {
-                $paymentSplitsWithNoSageReceipt = $paymentSplits->whereNull('sage_receipt_id')->count();
+                $paymentSplitsWithNoSageReceipt = $paymentSplits->whereNull('sage_reciept_id')->count();
                 if ($paymentSplitsWithNoSageReceipt) {
                     info('  ########## applyUpfrontPaymentInvoices skipped  for : '.$quote->code.' due to sage receipt not generated on sage ########## ');
                     $returnMessage['status'] = true;
@@ -2359,7 +2359,7 @@ class SageApiService
 
                 return $returnMessage;
             } else {
-                $firstPaymentSplitWithNoSageReceipt = $paymentSplits->where('sr_no', 1)->whereNull('sage_receipt_id')->count();
+                $firstPaymentSplitWithNoSageReceipt = $paymentSplits->where('sr_no', 1)->whereNull('sage_reciept_id')->count();
                 if ($firstPaymentSplitWithNoSageReceipt) {
                     info('  ########## applyUpfrontPaymentInvoices skipped  for : '.$quote->code.' due to sage receipt not generated on sage ########## ');
                     $returnMessage['status'] = true;
