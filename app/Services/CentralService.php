@@ -463,6 +463,8 @@ class CentralService
      */
     public function straightforwardPayments($payment, $paymentSplits, $quote)
     {
+        info('fn: straightforwardPayments for: ' . $payment->code, $payment, $paymentSplits);
+
         if ($payment) {
             $paymentSplit = $paymentSplits->first();
             $this->updatePaymentAllocationStatus($payment, $quote, $paymentSplit);
@@ -492,10 +494,11 @@ class CentralService
      *
      * @param string
      */
-    private function calculateAllocationStatus($payment, $quote, $paymentSplit = null)
+    private function    calculateAllocationStatus($payment, $quote, $paymentSplit = null)
     {
         $collectionAmount = $paymentSplit ? $paymentSplit->collection_amount : $payment->captured_amount;
         $priceWithVat = $quote->price_with_vat;
+        info('fn: calculateAllocationStatus code : ' . $payment->code .'  sage_reciept_id: '.$paymentSplit->sage_reciept_id.' payment status id: '.$paymentSplit->payment_status_id);
         switch (true) {
             case $paymentSplit && $paymentSplit->sage_reciept_id == null:
                 return PaymentAllocationStatus::NOT_ALLOCATED;
