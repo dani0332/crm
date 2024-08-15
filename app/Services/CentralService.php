@@ -543,10 +543,10 @@ class CentralService
      */
     private function calculateSplitAllocationStatusWithCollectedAmount($paymentSplit, $quote, $collectedAmount)
     {
-        if ($paymentSplit && $paymentSplit->sage_reciept_id == null){
+        if ($paymentSplit && $paymentSplit->sage_reciept_id == null) {
             return PaymentAllocationStatus::NOT_ALLOCATED;
         }
-        
+
         if (in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
             return PaymentAllocationStatus::NOT_ALLOCATED;
         }
