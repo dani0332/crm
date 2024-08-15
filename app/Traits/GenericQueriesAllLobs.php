@@ -718,7 +718,7 @@ trait GenericQueriesAllLobs
     private function updatePaymentAllocationStatus($quote)
     {
 
-        $payment = Payment::where('code', '=', $quote->code)->mainLeadPayment()->first();
+        $payment = Payment::where('code', '=', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
 
         if ($payment) {
             $capturedAmount = $payment->captured_amount;
@@ -728,12 +728,18 @@ trait GenericQueriesAllLobs
             $totalAmount = round($totalAmount, 2);
             $priceWithVat = round($priceWithVat, 2);
 
-            if ($capturedAmount == 0) {
+            $paymentSplits = $payment->paymentSplits->first();
+
+            if ($paymentSplits && $paymentSplits->sage_reciept_id == null) {
                 $paymentStatus = TransactionPaymentStatusEnum::UNPAID_TEXT;
-            } elseif ($totalAmount >= $priceWithVat) {
-                $paymentStatus = TransactionPaymentStatusEnum::FULLY_PAID_TEXT;
             } else {
-                $paymentStatus = TransactionPaymentStatusEnum::PARTIALLY_PAID_TEXT;
+                if ($capturedAmount == 0) {
+                    $paymentStatus = TransactionPaymentStatusEnum::UNPAID_TEXT;
+                } elseif ($totalAmount >= $priceWithVat) {
+                    $paymentStatus = TransactionPaymentStatusEnum::FULLY_PAID_TEXT;
+                } else {
+                    $paymentStatus = TransactionPaymentStatusEnum::PARTIALLY_PAID_TEXT;
+                }
             }
 
             $payment->transaction_payment_status = $paymentStatus;
