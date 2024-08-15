@@ -28,7 +28,7 @@ class CarEmailService extends BaseService
         $this->sendEmailCustomerService = $sendEmailCustomerService;
     }
 
-    public function sendCarOCBIntroEmail($plans, $lead, $tierR, $previousAdvisorId, $carQuoteService, $triggerSICWorkFlow = false)
+    public function sendCarOCBIntroEmail($plans, $lead, $tierR, $previousAdvisorId, $carQuoteService, $triggerSICWorkFlow = false, $triggerOnlyWorkflow = false)
     {
         $plans = $this->executePlansSelectionLogic($plans);
 
@@ -71,16 +71,20 @@ class CarEmailService extends BaseService
             }
         }
 
-        if ($lead->advisor_id) {
-            $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email', QuoteTypes::CAR);
-        } else {
-            info('sendCarOCBIntroEmail - sendNonAdvisorIntroEmail - Ref ID:'.$lead->uuid.' Time: '.now());
-            $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId, QuoteTypes::CAR);
-            if ($responseCode) {
-                $this->sendEmailCustomerService->sendSICFollowupEmail($lead, QuoteTypes::CAR);
-                // Dispatch the job with a 24 hours delay
-                SICFollowupEmailJob::dispatch($lead->uuid, QuoteTypes::CAR)->delay(Carbon::now()->addHours(24));
-                info('sendCarOCBIntroEmail - SICFollowupEmailJob Dispatched - Ref ID:'.$lead->uuid.' Time: '.now());
+        $responseCode = null;
+
+        if (! $triggerOnlyWorkflow) {
+            if ($lead->advisor_id) {
+                $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
+            } else {
+                info('sendCarOCBIntroEmail - sendNonAdvisorIntroEmail - Ref ID:'.$lead->uuid.' Time: '.now());
+                $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId);
+                if ($responseCode) {
+                    $this->sendEmailCustomerService->sendSICFollowupEmail($lead, QuoteTypes::CAR);
+                    // Dispatch the job with a 24 hours delay
+                    SICFollowupEmailJob::dispatch($lead->uuid, QuoteTypes::CAR)->delay(Carbon::now()->addHours(24));
+                    info('sendCarOCBIntroEmail - SICFollowupEmailJob Dispatched - Ref ID:'.$lead->uuid.' Time: '.now());
+                }
             }
         }
 
