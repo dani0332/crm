@@ -15,7 +15,6 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteStatusCode;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -66,7 +65,6 @@ use App\Models\UAELicenseHeldFor;
 use App\Models\User;
 use App\Models\VehicleType;
 use App\Repositories\BusinessQuoteRepository;
-use App\Repositories\CarQuoteRepository;
 use App\Repositories\LookupRepository;
 use App\Services\EmailServices\CarEmailService;
 use App\Traits\GenericQueriesAllLobs;
@@ -1310,11 +1308,8 @@ class RenewalsUploadService
 
                 if ($responseCode == 201) {
                     //update quote status to quoted
-                    CarQuoteRepository::updateQuoteStatus([
-                        'quote_uuid' => $carQuote->uuid,
-                        'quote_status_id' => QuoteStatusEnum::Quoted,
-                        'notes' => 'Change quote status to Quoted as OCB sent',
-                    ]);
+                    $notes = 'Change quote status to Quoted as OCB sent';
+                    app(QuoteStatusService::class)->updateQuoteStatus(QuoteTypes::CAR->id(), $carQuote->uuid, quoteStatusCode::QUOTED, [], $notes);
 
                     //record ocb sent datetime
                     $carQuote->carQuoteRequestDetail->updateOrCreate(
@@ -1325,35 +1320,17 @@ class RenewalsUploadService
                     Log::info('Renewals OCB Email sent to uuid: '.$carQuote->uuid.' ResponseCode: '.$responseCode);
                     RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
                     RenewalQuoteProcess::where('id', $renewalQuoteProcess->id)->update(['email_sent' => 1]);
-                    //$this->updateRenewalQuoteEmailSent($batch, $carQuote->id);
                 } else {
                     Log::error('Renewals OCB Email failed for uuid: '.$carQuote->uuid.' ResponseCode: '.$responseCode.' batchEmailId:'.$renewalsBatchEmail->id.' Customer EmailAddress:'.$carQuote->email);
                     RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);
                 }
             }
-
-            //$this->updateRenewalEmailBatchStatus($batchEmailId, $isCompleted);
             Log::info('Renewals OCB Email completed for uuid: '.$carQuote->uuid);
         } catch (\Exception $exception) {
             Log::info('Renewals OCB Email failed error: '.$exception->getMessage());
             RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);
         }
     }
-
-    //    public function updateRenewalEmailBatchStatus($batchEmailId, $isCompleted)
-    //    {
-    //        Log::info('updateRenewalEmailBatchStatus START');
-    //        $renewalsBatchStatus = RenewalsBatchEmails::find($batchEmailId);
-    //        if ($renewalsBatchStatus) { // if record exists, update the number of rows uploaded
-    //            $renewalsBatchStatus->total_sent = $renewalsBatchStatus->total_sent + 1;
-    //            $renewalsBatchStatus->save();
-    //        }
-    //        if (($renewalsBatchStatus->total_sent + $renewalsBatchStatus->total_bounced) == $renewalsBatchStatus->total_leads || $isCompleted == 1) { // if all records are uploaded, update the status to completed
-    //            $renewalsBatchStatus->status = ProcessStatusCode::COMPLETED;
-    //            $renewalsBatchStatus->save();
-    //        }
-    //        Log::info('updateRenewalEmailBatchStatus END');
-    //    }
 
     /**
      * //$modelName, $quoteRequestIdName.
@@ -1478,6 +1455,7 @@ class RenewalsUploadService
                             if ($leadData->make && ! CarMake::where('text', $leadData->make)->first()) {
                                 $leadValidationErrors->push('Invalid Car Make');
                             }
+
                             if ($leadData->model && ! CarModel::where('text', $leadData->model)->first()) {
                                 $leadValidationErrors->push('Invalid Car Model');
                             }
@@ -1934,7 +1912,7 @@ class RenewalsUploadService
                 'is_ecommerce' => trim($data['is_ecommerce']) == GenericRequestEnum::Yes ? 1 : 0,
                 'renewal_batch' => trim($data['renewal_batch']),
                 'currently_located_in_id' => $currently_located_in_id,
-                'renewal_expiry_date' => Carbon::parse(trim($data['renewal_expiry_date']))->format('Y-m-d'),
+                'policy_expiry_date' => Carbon::parse(trim($data['policy_expiry_date']))->format('Y-m-d'),
                 'email' => trim($data['customer_email']),
                 'mobile_no' => trim($data['customer_mobile']),
             ];

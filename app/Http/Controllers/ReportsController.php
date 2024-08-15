@@ -22,6 +22,7 @@ use App\Services\Reports\AdvisorPerformanceReportService;
 use App\Services\Reports\LeadDistributionReportService;
 use App\Services\Reports\RenewalBatchReportService;
 use App\Services\Reports\ReportService;
+use App\Strategies\ManagementReport;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -37,7 +38,7 @@ class ReportsController extends Controller
 
     public function __construct()
     {
-        $advisorConverionReportPermissions = implode('|', PermissionsEnum::getAdvisorConverionReportPermissions());
+        $advisorConverionReportPermissions = implode('|', PermissionsEnum::getAdvisorConversionReportPermissions());
         $this->middleware(['permission:'.$advisorConverionReportPermissions], ['only' => ['renderAdvisorConversionReport']]);
 
         $advisorDistributionReportPermissions = implode('|', PermissionsEnum::getAdvisorDistributionReportPermissions());
@@ -459,13 +460,37 @@ class ReportsController extends Controller
     {
         $reportCategory = ! isset($request->reportCategory) ? ManagementReportCategoriesEnum::SALE_SUMMARY : $request->reportCategory;
         $reportInstance = ManagementReportServiceFactory::createStrategy($reportCategory);
+        $reportData = null;
+        $endorsementData = null;
+
+        if ($reportCategory == ManagementReportCategoriesEnum::SALE_SUMMARY) {
+            $rawReportData = $reportInstance->getReportData($request);
+            $endorsementData = $reportInstance->getEndorsementsData($request);
+            /**
+             * process the endorsements data
+             */
+            $reportData = ManagementReport::processEndorsementsData($rawReportData, $endorsementData, $request);
+        }
 
         return inertia('ManagementReport/index', [
-            'reportData' => $reportInstance->getReportData($request),
+            'reportData' => $reportData ?? $reportInstance->getReportData($request),
             'filterOptions' => $reportInstance->getFilterOptions(),
             'defaultFilters' => $reportInstance->getDefaultFilters(),
             'reportName' => $reportCategory,
         ]);
+    }
+
+    /**
+     * export method for management reports.
+     *
+     * @return void
+     */
+    public function exportManagementReport(Request $request)
+    {
+        $reportCategory = ! isset($request->reportCategory) ? ManagementReportCategoriesEnum::SALE_SUMMARY : $request->reportCategory;
+        $reportInstance = ManagementReportServiceFactory::createStrategy($reportCategory);
+
+        return $reportInstance->getReportData($request);
     }
 
     public function totalPremiumLeadsSaleReport(Request $request, ReportService $reportService)

@@ -37,7 +37,7 @@ class TravelQuote extends Model implements AuditableContract
         'advisor_id' => FilterTypes::IN,
         'policy_number' => FilterTypes::EXACT,
         'source' => FilterTypes::EXACT,
-        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'policy_expiry_date' => FilterTypes::DATE_BETWEEN,
     ];
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
@@ -132,7 +132,7 @@ class TravelQuote extends Model implements AuditableContract
 
     public function insuranceProvider()
     {
-        return $this->hasOne(InsuranceProvider::class, 'text', 'currently_insured_with')->select(['id', 'text']);
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id')->select(['id', 'text']);
     }
 
     /**
@@ -161,10 +161,20 @@ class TravelQuote extends Model implements AuditableContract
             ->where('quote_type_id', QuoteTypeId::Travel);
     }
 
+    public function sageApiLogs()
+    {
+        return $this->morphMany(SageApiLog::class, 'section');
+    }
+
     public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Activities::class, 'quote_request_id')
             ->where('quote_type_id', QuoteTypeId::Travel);
+    }
+
+    public function customerMembers()
+    {
+        return $this->morphMany(CustomerMembers::class, 'quote');
     }
 
     public function transactionType()
@@ -172,9 +182,9 @@ class TravelQuote extends Model implements AuditableContract
         return $this->belongsTo(Lookup::class, 'transaction_type_id', 'id');
     }
 
-    public function customerMembers()
+    public function policyWording()
     {
-        return $this->morphMany(CustomerMembers::class, 'quote');
+        return $this->hasMany(TravelPlanPolicyWording::class, 'plan_id', 'plan_id');
     }
 
     public function TravelDestinations()

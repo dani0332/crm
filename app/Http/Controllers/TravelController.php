@@ -15,6 +15,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\TravelRenewalsUploadRequest;
@@ -25,14 +26,19 @@ use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
+use App\Repositories\PaymentRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Services\AMLService;
+use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\RenewalsUploadService;
+use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Services\TravelQuoteService;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Response;
@@ -41,6 +47,8 @@ use RuntimeException;
 
 class TravelController extends Controller
 {
+    use GenericQueriesAllLobs;
+
     protected $travelQuoteService;
     private $renewalQuoteService;
     protected $lookupService;
@@ -103,6 +111,12 @@ class TravelController extends Controller
         $quoteType = strtolower($this->genericModel->modelType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         abort_if(! $record, 404);
+
+        /* Start - Temporarily adding for correcting historic data  */
+        (new PaymentRepository())->updatePriceVatApplicableAndVat($record, $this->genericModel->modelType);
+        /* End - Temporarily adding for correcting historic data  */
+
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::TRAVEL->value, $record);
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($quoteType, $record->code);
         $dropdownSource = $this->travelQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
@@ -172,8 +186,11 @@ class TravelController extends Controller
         $isQuoteDocumentEnabled = $this->travelQuoteService->quoteDocumentEnabled($this->genericModel->modelType);
         $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments($this->genericModel->modelType, $record->id);
         $displaySendPolicyButton = $this->travelQuoteService->displaySendPolicyButton($record, $quoteDocuments, self::TYPE_ID);
-        $documentTypes = $this->travelQuoteService->getQuoteDocumentsForUpload(self::TYPE_ID);
+        $documentTypes = $documentType = $this->travelQuoteService->getQuoteDocumentsForUpload(self::TYPE_ID);
         $documentTypes = collect($documentTypes)->groupBy('category');
+
+        @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Travel);
+
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $activities = $this->travelQuoteService->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
         $customerAdditionalContacts = $this->travelQuoteService->getAdditionalContacts($record->customer_id, $record->mobile_no);
@@ -193,6 +210,19 @@ class TravelController extends Controller
         $uboDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::TRAVEL->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+        $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
+
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+        $sendUpdateEnum = (object) [];
+        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued($record);
+
+        if ($hasPolicyIssuedStatus) {
+            $sendUpdateOptions = $this->lookupService->getSendUpdateOptions(QuoteTypeId::Travel);
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
+        }
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
 
         return inertia('TravelQuote/Show', [
             'quote' => $record,
@@ -213,6 +243,7 @@ class TravelController extends Controller
             'ecomDetails' => $ecomDetails,
             'quoteDocuments' => $quoteDocuments->toArray(),
             'documentTypes' => $documentTypes,
+            'documentType' => $documentType,
             'cdnPath' => $cdnPath,
             'memberCategories' => $this->lookupService->getMemberCategories(),
             'emailStatuses' => $this->travelQuoteService->getEmailStatus(self::TYPE_ID, $record->id),
@@ -249,10 +280,9 @@ class TravelController extends Controller
 
             ],
             'enums' => [
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
-                'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                 'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             ],
+            'sendUpdateEnum' => $sendUpdateEnum,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'nationalities' => $nationalities,
             'memberRelations' => $memberRelations,
@@ -260,7 +290,14 @@ class TravelController extends Controller
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
             'emirates' => $emirates,
+            'bookPolicyDetails' => $bookPolicyDetails,
             'isNewPaymentStructure' => $isNewPaymentStructure,
+            'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'linkedQuoteDetails' => $linkedQuoteDetails,
+            'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
+            'paymentDocument' => $paymentDocument,
         ]);
     }
 

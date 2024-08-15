@@ -15,4 +15,10 @@ class HealthPlan extends Model
     {
         return $this->belongsTo(InsuranceProvider::class, 'provider_id');
     }
+
+    public function healthNetwork()
+    {
+        return $this->belongsTo(HealthNetwork::class, 'health_network_id');
+    }
+
 }
