@@ -15,16 +15,16 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            LookupSeeder::class,
+          //  LookupSeeder::class,
             // LostReasonsTableSeeder::class,
             // AddGenericRolePermissionSeeder::class,
             // addDubaiNowEmailGroup::class,
             // DubaiLeadSource::class,
             // ActivitySchedulesSeeder::class,
-            DocumentTypeSeeder::class,
+          //  DocumentTypeSeeder::class,
             //            AddNewDocumentTypesSeeder::class,
             // UpdateCustomerToHealthAndTravelMemberDetails::class,
-            GenericPermissionSeeder::class,
+           // GenericPermissionSeeder::class,
             /*addSICWorkflow::class,
             UpdateRenewalTemplateStorageSeeder::class,
             addDubaiNowEmailGroup::class,
@@ -40,7 +40,7 @@ class DatabaseSeeder extends Seeder
 
             PaymentLookupSeeder::class,
             InsuranceQuoteTypeSeeder::class,
-            AddPaymentPermissionsSeeder::class,
+            ,
             TotalPremiumReportPermissionSeeder::class,*/
 
             // dtt seeder
@@ -55,12 +55,14 @@ class DatabaseSeeder extends Seeder
             // ImcrmUsersRolesCleaner::class,
             // AddeTicketDocumentTypeSeeder::class,
             // DocumentVerifyPermissionSeeder::class,
-            AddLOBsClaimHistoryOptionsSeeder::class,
+
+
+           /* AddLOBsClaimHistoryOptionsSeeder::class,
             AddRenewalTemplateStorageSeeder::class,
             CarMakeSeeder::class,
             AddPaymentPermissions::class,
             AddCreateSendUpdatePermissionToAllRoles::class,
-            AddSendUpdatesCategoriesInLookups::class,
+
             InslyRoles::class,
             InslyPermissions::class,
             QuoteStatusMapSeeder::class,
@@ -72,7 +74,11 @@ class DatabaseSeeder extends Seeder
             AddeTicketDocumentTypeSeeder::class,
             DocumentVerifyPermissionSeeder::class,
             DepartmentPermissionSeeder::class,
-            DocumentTypeAuditRecordSU::class, // Add new Document type for send update - Audit Records
+            DocumentTypeAuditRecordSU::class, // Add new Document type for send update - Audit Records*/
+
+            AddPaymentPermissionsSeeder::class,
+            AddSendUpdatesCategoriesInLookups::class,
+
 
         ]);
     }
