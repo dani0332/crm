@@ -438,6 +438,10 @@ onMounted(() => {
             <dt class="font-medium">OPERATOR EXPERIENCE</dt>
             <dd>{{ quote?.yacht_quote?.operator_experience }}</dd>
           </div>
+            <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ quote.transaction_approved_at }}</dd>
+              </div>
         </dl>
       </div>
     </div>

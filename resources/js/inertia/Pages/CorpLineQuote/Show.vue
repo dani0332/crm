@@ -3,7 +3,7 @@ import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocument
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import EntityRiskRatingScoreDetails from '../../Components/EntityRiskRatingScoreDetails.vue';
-import RiskRatingScoreDetails from "../../Components/RiskRatingScoreDetails.vue";
+import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 
 const props = defineProps({
   quote: Object,
@@ -581,10 +581,10 @@ const linkEntity = () => {
     });
 };
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 </script>
 
@@ -842,6 +842,10 @@ onMounted(() => {
             <dt class="font-medium">DEVICE</dt>
             <dd>{{ quote.device }}</dd>
           </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+            <dd>{{ quote.transaction_approved_at }}</dd>
+          </div>
         </dl>
       </div>
     </div>
@@ -962,20 +966,20 @@ onMounted(() => {
             </x-button>
           </div>
         </div>
-          <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">ENTITY TYPE</dt>
-              <dd>
-                  <ComboBox
-                      @update:modelValue="entityTypeChange($event)"
-                      :single="true"
-                      v-model:modelValue="customerProfileForm.entity_type_code"
-                      :options="companyConcernOptions"
-                      placeholder="SELECT COMPANY CONCERN"
-                      class="w-full"
-                  />
-              </dd>
-          </div>
-          <EntityRiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">ENTITY TYPE</dt>
+          <dd>
+            <ComboBox
+              @update:modelValue="entityTypeChange($event)"
+              :single="true"
+              v-model:modelValue="customerProfileForm.entity_type_code"
+              :options="companyConcernOptions"
+              placeholder="SELECT COMPANY CONCERN"
+              class="w-full"
+            />
+          </dd>
+        </div>
+        <EntityRiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
       </x-form>
     </div>
     <x-modal v-model="getParentEntityModel" size="lg" show-close backdrop>
@@ -1312,7 +1316,12 @@ onMounted(() => {
       <template #content>
         <x-divider class="my-4" />
         <div class="flex justify-end items-center mb-4">
-          <x-button size="sm" color="orange" @click.prevent="addActivity" v-if="readOnlyMode.isDisable === true">
+          <x-button
+            size="sm"
+            color="orange"
+            @click.prevent="addActivity"
+            v-if="readOnlyMode.isDisable === true"
+          >
             Add Activity
           </x-button>
         </div>

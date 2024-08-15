@@ -192,7 +192,8 @@ class CarQuoteService extends BaseService
                 'cqr.price_with_vat',
                 'cpdip.text as insurer_name',
                 //'cqr.aml_status_id',
-                DB::raw('GROUP_CONCAT(team.name) as team_name')
+                DB::raw('GROUP_CONCAT(team.name) as team_name'),
+                DB::raw('DATE_FORMAT(cqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')

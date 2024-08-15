@@ -168,7 +168,8 @@ class HealthQuoteService extends BaseService
             'hp.plan_type_id as plan_type_id',
             'ihp.text as plan_provider_name_text',
             'hqr.stale_at',
-            'hqr.health_plan_type_id'
+            'hqr.health_plan_type_id',
+            DB::raw('DATE_FORMAT(hqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')

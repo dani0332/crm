@@ -278,10 +278,10 @@ const linkEntity = () => {
     });
 };
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 </script>
 
@@ -306,7 +306,12 @@ onMounted(() => {
           :quote="quote"
           :cdn="cdnPath"
         />
-        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate" v-if="readOnlyMode.isDisable === true">
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          @click.prevent="openDuplicate"
+          v-if="readOnlyMode.isDisable === true"
+        >
           Duplicate Lead
         </x-button>
         <Link
@@ -314,7 +319,12 @@ onMounted(() => {
           :href="route('cycle-quotes-list')"
           preserve-scroll
         >
-          <x-button size="sm" color="primary" tag="div" v-if="readOnlyMode.isDisable === true">
+          <x-button
+            size="sm"
+            color="primary"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
             Cycle Quotes
           </x-button>
         </Link>
@@ -322,7 +332,9 @@ onMounted(() => {
           v-if="can(permissionsEnum.CycleQuotesEdit)"
           :href="route('cycle-quotes-edit', quote.uuid)"
         >
-          <x-button size="sm" tag="div" v-if="readOnlyMode.isDisable === true">Edit</x-button>
+          <x-button size="sm" tag="div" v-if="readOnlyMode.isDisable === true"
+            >Edit</x-button
+          >
         </Link>
       </template>
     </StickyHeader>
@@ -538,6 +550,10 @@ onMounted(() => {
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">HAS GOOD CONDITION</dt>
             <dd>{{ quote?.cycle_quote?.has_good_condition ? 'YES' : 'NO' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+            <dd>{{ quote.transaction_approved_at }}</dd>
           </div>
         </dl>
       </div>

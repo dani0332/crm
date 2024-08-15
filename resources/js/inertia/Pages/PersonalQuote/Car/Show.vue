@@ -1597,7 +1597,7 @@ const handlePlanSelected = plan => {
   });
 };
 
-const isPlanDetailEnabled = computed(() => {  
+const isPlanDetailEnabled = computed(() => {
   if(page.props.commercialRules) { // Check rules for commercial
     return true;
   }
@@ -1945,6 +1945,10 @@ if(isPlanDetailEnabled.value && page.props.record.insurer_name !== '' ) {
             <dt class="font-medium">ENQUIRY COUNT</dt>
             <dd>{{ record.enquiry_count }}</dd>
           </div>
+             <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ record.transaction_approved_at }}</dd>
+              </div>
         </dl>
       </div>
       <x-divider class="mb-4 mt-4" />
@@ -2784,7 +2788,7 @@ if(isPlanDetailEnabled.value && page.props.record.insurer_name !== '' ) {
       :quoteType="quoteType"
       :vatPrice="vatPercentage"
     />
-    
+
     <div v-else class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
@@ -3281,7 +3285,7 @@ if(isPlanDetailEnabled.value && page.props.record.insurer_name !== '' ) {
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :isPlanDetailEnabled="isPlanDetailEnabled"
 		/>
-    
+
     <PaymentTable
 		v-else
       :payments="payments"

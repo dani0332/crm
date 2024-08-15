@@ -133,6 +133,7 @@ class TravelQuoteService extends BaseService
             'ent.industry_type_code',
             'ent.emirate_of_registration_id',
             'et.passport_number',
+            DB::raw('DATE_FORMAT(tqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')

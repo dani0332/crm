@@ -4,7 +4,6 @@ import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
 import EntityRiskRatingScoreDetails from '../../Components/EntityRiskRatingScoreDetails.vue';
 
-
 defineProps({
   quote: Object,
   quoteDetails: Object,
@@ -351,10 +350,10 @@ const linkEntity = () => {
     .finally(() => (loader.tradeDetail = false));
 };
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 </script>
 
@@ -563,6 +562,10 @@ onMounted(() => {
             <dt class="font-medium">PRICE</dt>
             <dd>{{ quote.premium }}</dd>
           </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+            <dd>{{ quote.transaction_approved_at }}</dd>
+          </div>
         </dl>
       </div>
     </div>
@@ -668,7 +671,10 @@ onMounted(() => {
                 />
               </dd>
             </div>
-              <EntityRiskRatingScoreDetails :quote="quote" :modelType="'business'" />
+            <EntityRiskRatingScoreDetails
+              :quote="quote"
+              :modelType="'business'"
+            />
           </dl>
           <div class="flex justify-end">
             <x-button
@@ -889,23 +895,34 @@ onMounted(() => {
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       :quoteType="page.props.quoteType"
       :payments="quote.payments"
     />
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			:quoteType="page.props.quoteType"
-			:payments="quote.payments"
-			:paymentDocument="documentTypes.filter(item => item.code === 'GMQPD' || item.code === 'GMQPDR' || item.code === 'GMQDPDR')"
-			:quoteRequest="quote"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      v-if="isNewPaymentStructure"
+      :quoteType="page.props.quoteType"
+      :payments="quote.payments"
+      :paymentDocument="
+        documentTypes.filter(
+          item =>
+            item.code === 'GMQPD' ||
+            item.code === 'GMQPDR' ||
+            item.code === 'GMQDPDR',
+        )
+      "
+      :quoteRequest="quote"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       quoteSubType="Group Medical"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-		/>
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>

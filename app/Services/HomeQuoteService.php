@@ -108,7 +108,8 @@ class HomeQuoteService extends BaseService
             'ent.company_address',
             'qrem.entity_type_code',
             'ent.industry_type_code',
-            'ent.emirate_of_registration_id'
+            'ent.emirate_of_registration_id',
+            DB::raw('DATE_FORMAT(hqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
         )
             ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')

@@ -550,6 +550,10 @@ onMounted(() => {
                     </div>
                     <div>{{ quote?.parent_duplicate_quote_id }}</div>
                 </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                  <dd>{{ quote.transaction_approved_at }}</dd>
+              </div>
             </dl>
         </div>
         </template>
