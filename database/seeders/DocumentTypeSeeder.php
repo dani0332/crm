@@ -37554,11 +37554,7 @@ class DocumentTypeSeeder extends Seeder
             foreach ($documents as $document) {
                 $conditions = [
                     'code' => $document['code'],
-                    'is_active' => $document['is_active'],
                     'quote_type_id' => $document['quote_type_id'],
-                    'folder_path' => $document['folder_path'],
-                    'is_required' => $document['is_required'],
-                    'send_to_customer' => $document['send_to_customer'],
                     'category' => $document['category'],
                     'business_type_of_insurance_id' => $document['business_type_of_insurance_id'],
                     'business_type_of_customer' => $document['business_type_of_customer'],
