@@ -732,8 +732,7 @@ trait GenericQueriesAllLobs
 
             if ($paymentSplits && $paymentSplits->sage_reciept_id == null) {
                 $paymentStatus = TransactionPaymentStatusEnum::UNPAID_TEXT;
-            }
-            else {
+            } else {
                 if ($capturedAmount == 0) {
                     $paymentStatus = TransactionPaymentStatusEnum::UNPAID_TEXT;
                 } elseif ($totalAmount >= $priceWithVat) {
