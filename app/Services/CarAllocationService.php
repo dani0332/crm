@@ -241,8 +241,8 @@ class CarAllocationService extends AllocationService
     {
         $isSICFlowEnabled = $carLead->sic_flow_enabled;
         $tiersQuery = Tier::where('is_active', 1)
-            ->where('min_price', '<=', $carLead->car_value)
-            ->where('max_price', '>=', $carLead->car_value)
+            ->where('min_price', '<=', $carLead->car_value_tier)
+            ->where('max_price', '>=', $carLead->car_value_tier)
             ->where('can_handle_tpl', 0)
             ->where('name', '!=', TiersEnum::TIER_R)
             ->where(function ($query) use ($isSICFlowEnabled) {
