@@ -722,6 +722,7 @@ class SplitPaymentService
                     $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
                 } else {
                     $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
+                    app(CRUDService::class)->calculateScore($quoteModel, $modelType);
                 }
                 $quoteModel->save();
                 $canCaptureEp = true;
@@ -729,8 +730,8 @@ class SplitPaymentService
                 $customerData = app(CustomerService::class)->getCustomerById($quoteModel->customer_id);
                 if ($customerData) {
                     $quoteOptions = QuoteTypeId::getOptions();
-                    $responseExtend = app(BerlinService::class)->extendCustomerSubscription($customerData->id, $customerData->email, strtoupper($quoteOptions[$quoteTypeId]).'-QUOTE', strtolower($quoteOptions[$quoteTypeId]).'-quote-myalfred-we');
-                    info('Transaction Approved responseExtend: '.$responseExtend);
+                  //  $responseExtend = app(BerlinService::class)->extendCustomerSubscription($customerData->id, $customerData->email, strtoupper($quoteOptions[$quoteTypeId]).'-QUOTE', strtolower($quoteOptions[$quoteTypeId]).'-quote-myalfred-we');
+                  //  info('Transaction Approved responseExtend: '.$responseExtend);
                 }
 
                 //Create duplicate lead for TRAVEL
