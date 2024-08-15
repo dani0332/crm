@@ -20,7 +20,9 @@ final class PaymentTooltip extends Enum
     const PAYMENT_MANAGEMENT_PAYMENT_ALLOCATION_STATUS = 'Indicates whether this payment is allocated to a specific invoice. This ensures that there\'s a clear record of invoicing for this payment.';
     const PAYMENT_MANAGEMENT_ACTION = 'Here, you can manage the payment details.Use \'Edit\' to modify payment information, \'View\' to see the entire payment setup, and \'Copy Link\' to share a direct payment link for clients preferring card payments.';
     const PAYMENT_MANAGEMENT_ADD_PAYMENT = 'Click this if you need to input a payment that was received outside our automated system. Ensure you have all necessary details and proofs when recording manually to maintain accuracy.';
+    const PAYMENT_MANAGEMENT_DOWNLOAD_PROFORMA_PAYMENT = 'Download the proforma payment request here. It\'s intended for initiating payment requisitions from customers and is an effective method for tracking the progress of those payments.';
     const PAYMENT_MANAGEMENT_ADD_PAYMENT_DIS = 'Payment already added; click \'Edit\' for changes.';
+    const PAYMENT_MANAGEMENT_NO_ACTION_ALLOWED_TO_PAID_PAYMENTS = 'No further actions allowed to paid payments.';
     const PAYMENT_ADD_DUPLICATE_FILES = 'You are uploading a file with the same name as another one. To avoid confusion, please rename the file or ensure it\'s the correct one. This way, we\'ll maintain a tidy and efficient document management process.';
     const PAYMENT_ADD_DELETE_DOCUMENT = 'Any uploaded documents cannot be deleted once the payment status marks as \'Paid\'.';
     const PAYMENT_DISCOUNT_PROOF_TITLE = 'Use this field to attach the approved discount proof. Ensure the proof includes approval from the Chief Marketing Officer, Chief Finance Officer, or General Manager. This document is crucial for verifying the discount and for record accuracy.';
@@ -60,7 +62,7 @@ final class PaymentTooltip extends Enum
     const CHECK_DETAILS = 'Enter the unique number found on the cheque. This is essential for tracking and verification purposes. Only fill this out if the payment method is \'cheque\'.';
     const DOCUMENTS_UPLOAD = 'Either click to browse your computer or simply drag and drop the necessary files here. It\'s a quick way to attach your documents.';
     const DOCUMENT_DELETE_ICON = 'Remove';
-    const CAPTURE_AMOUNT = 'This is the specific amount you\'re confirming or \'capturing\' from the total amount that\'s authorized. Make sure it doesn\'t exceed the total mount due.';
+    const CAPTURE_AMOUNT = 'This is the specific amount you\'re confirming or \'capturing\' from the total amount that\'s authorized. Make sure it doesn\'t exceed the total amount due.';
 
     // Collector dropdown list
     const COLLECTOR_LIST_BROKER = 'Payment made directly to Insurancemarket.ae by the customer.';
@@ -127,4 +129,6 @@ final class PaymentTooltip extends Enum
     const DECLINED_REASON_4 = 'No proof of discount approval';
     const DECLINED_REASON_5 = 'No proof of Credit approval';
     const DECLINED_REASON_6 = 'Other reasons';
+    const CONFIRM_APPROVE_UNSELECT = 'Select the checkbox to enable the \'Confirm\' button and proceed';
+    const PAYMENT_LOCKED = 'This lead is now locked as the policy has been booked. If changes are needed, please make them through the \'Send Update\' section via \'Correction of Policy\'';
 }

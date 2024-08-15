@@ -12,6 +12,11 @@ const props = defineProps({
     required: false,
     type: String,
   },
+  expanded: {
+    required: false,
+    type: Boolean,
+    default: true,
+  },
 });
 
 const insuranceProviderId = ref(null);
@@ -75,86 +80,94 @@ const onLoadAuditLogData = async () => {
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <div>
-      <h3 class="font-semibold text-primary-800 text-lg">API Logs</h3>
-      <x-divider class="mb-4 mt-1" />
-    </div>
-    <div class="text-center py-3" v-if="apiLogs.data === null">
-      <x-button
-        size="sm"
-        color="primary"
-        outlined
-        @click.prevent="onLoadAuditLogData"
-        :loading="apiLogs.loading"
-      >
-        Load API Logs
-      </x-button>
-    </div>
-    <div v-else>
-      <div class="flex items-center gap-4 my-3">
-        <x-field class="flex-1" label="Insurance Provider">
-          <ComboBox
-            :single="true"
-            class="w-full"
-            v-model="insuranceProviderId"
-            :options="
-              $page.props.insuranceProviders.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-          />
-        </x-field>
-        <x-button
-          size="sm"
-          color="primary"
-          @click="insuranceProviderId = null"
-          class="h-10 mt-3"
-        >
-          Reset
-        </x-button>
-      </div>
-      <DataTable
-        table-class-name="compact tablefixed"
-        :headers="apiLogs.table"
-        :items="filteredLogs || []"
-        border-cell
-        hide-rows-per-page
-        :rows-per-page="15"
-        :hide-footer="apiLogs.data?.length < 15"
-      >
-        <template #item-status="{ status }">
-          <x-tag
-            v-if="status"
-            size="xs"
-            :color="status === 'failed' ? 'red' : 'success'"
-            class="mt-0.5 text-[10px]"
-          >
-            <p>{{ status.toUpperCase() }}</p>
-          </x-tag>
-        </template>
-        <template #item-created_at="{ created_at }">
-          {{ dateFormat(created_at).value }}
-        </template>
-        <template #item-action="item">
+    <Collapsible :expanded="expanded">
+      <template #header>
+        <div>
+          <h3 class="font-semibold text-primary-800 text-lg">API Logs</h3>
+        </div>
+      </template>
+      <template #body>
+        <x-divider class="my-4" />
+        <div class="text-center py-3" v-if="apiLogs.data === null">
           <x-button
-            size="xs"
+            size="sm"
             color="primary"
             outlined
-            @click.prevent="selectLog(item)"
+            @click.prevent="onLoadAuditLogData"
+            :loading="apiLogs.loading"
           >
-            View
+            Load API Logs
           </x-button>
-        </template>
-      </DataTable>
-    </div>
+        </div>
+        <div v-else>
+          <div class="flex items-center gap-4 my-3">
+            <x-field class="flex-1" label="Insurance Provider">
+              <ComboBox
+                :single="true"
+                class="w-full"
+                v-model="insuranceProviderId"
+                :options="
+                  $page.props.insuranceProviders.map(item => ({
+                    value: item.id,
+                    label: item.text,
+                  }))
+                "
+              />
+            </x-field>
+            <x-button
+              size="sm"
+              color="primary"
+              @click="insuranceProviderId = null"
+              class="h-10 mt-3"
+            >
+              Reset
+            </x-button>
+          </div>
+          <DataTable
+            table-class-name="compact tablefixed"
+            :headers="apiLogs.table"
+            :items="filteredLogs || []"
+            border-cell
+            hide-rows-per-page
+            :rows-per-page="15"
+            :hide-footer="apiLogs.data?.length < 15"
+          >
+            <template #item-status="{ status }">
+              <x-tag
+                v-if="status"
+                size="xs"
+                :color="status === 'failed' ? 'red' : 'success'"
+                class="mt-0.5 text-[10px]"
+              >
+                <p>{{ status.toUpperCase() }}</p>
+              </x-tag>
+            </template>
+            <template #item-created_at="{ created_at }">
+              {{ dateFormat(created_at).value }}
+            </template>
+            <template #item-action="item">
+              <x-button
+                size="xs"
+                color="primary"
+                outlined
+                @click.prevent="selectLog(item)"
+              >
+                View
+              </x-button>
+            </template>
+          </DataTable>
+        </div>
+      </template>
+    </Collapsible>
   </div>
 
-  <x-modal v-model="modals.apiLog" size="lg" show-close backdrop>
-    <template #header>
-      Insurance Request Response Details: {{ selectedLog.id }}
-    </template>
-
+  <x-modal
+    v-model="modals.apiLog"
+    size="lg"
+    :title="`Insurance Request Response Details:  ${selectedLog?.id}`"
+    show-close
+    backdrop
+  >
     <div>
       <dl class="grid md:grid-cols-2 gap-x-1 gap-y-5">
         <div class="grid sm:grid-cols-2">
@@ -211,10 +224,17 @@ const onLoadAuditLogData = async () => {
         </div>
       </dl>
     </div>
-    <div class="text-right space-x-4 mt-12">
-      <x-button size="sm" @click.prevent="modals.apiLog = false">
-        Close
-      </x-button>
-    </div>
+    <template #actions>
+      <div class="text-right space-x-4">
+        <x-button
+          size="sm"
+          ghost
+          tabindex="-1"
+          @click.prevent="modals.apiLog = false"
+        >
+          Close
+        </x-button>
+      </div>
+    </template>
   </x-modal>
 </template>

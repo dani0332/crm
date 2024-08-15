@@ -79,6 +79,7 @@ class PetQuoteService extends BaseService
                 'pqr.parent_duplicate_quote_id',
                 'pqr.renewal_import_code',
                 'pqr.risk_score',
+                'pqr.insly_migrated',
             )
             ->leftJoin('pet_quote_request_detail as pqrd', 'pqrd.pet_quote_request_id', 'pqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'pqrd.lost_reason_id')
@@ -132,7 +133,7 @@ class PetQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return $this->query->where('pqr.uuid', $id)->firstOrFail();
+        return PetQuote::where('uuid', $id)->firstOrFail();
     }
 
     public function getEntityPlain($id)

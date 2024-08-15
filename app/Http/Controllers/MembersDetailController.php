@@ -48,14 +48,6 @@ class MembersDetailController extends Controller
             }
             unset($quoteMemberDetails['customer_id']);
             unset($quoteMemberDetails['quote_request_id']);
-            $quoteMemberCount = CustomerMembers::where([
-                'customer_type' => $request->customer_type,
-                'customer_entity_id' => $customerEntityId,
-            ])->count();
-
-            $quoteMemberCode = ($request->customer_type == CustomerTypeEnum::Individual) ?
-                CustomerTypeEnum::IndividualShort.'-'.$request->customer_id.'-'.(++$quoteMemberCount) :
-                CustomerTypeEnum::EntityShort.'-'.$request->entity_id.'-'.(++$quoteMemberCount);
 
             if ($quoteMemberDetails['first_name'] == null && $quoteMemberDetails['last_name'] == null) {
                 $quoteMemberCount = CustomerMembers::where([
@@ -70,7 +62,7 @@ class MembersDetailController extends Controller
 
             $quoteMemberDetails = CustomerMembers::updateOrCreate(array_merge($quoteMemberDetails), [
                 'quote_type' => ltrim($quoteModel, "'\'"),
-                'code' => $quoteMemberCode,
+                'code' => generateQuoteMemberCode($request->customer_type, $customerEntityId),
                 'is_payer' => isset($request->is_payer) && $request->is_payer == 1,
                 'is_third_party_payer' => $request->is_third_party_payer ?? false,
             ]);

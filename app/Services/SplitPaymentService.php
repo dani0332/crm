@@ -3,23 +3,38 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
+use App\Enums\DocumentTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
+use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentStatusTextEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\SageEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Factories\SagePayloadFactory;
+use App\Models\CarQuote;
+use App\Models\CcPaymentProcess;
+use App\Models\HealthQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
+use App\Models\SendUpdateLog;
+use App\Models\TravelQuote;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LookupRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PDF;
@@ -83,16 +98,21 @@ class SplitPaymentService
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
         $customerData = ['quoteTypeId' => $quoteTypeId, 'id' => $quote->id];
 
-        $sageLogArray = $splitPayment->sageLog->keyBy('step')->toArray();
+        $sageLogArray = $splitPayment->sageApiLogs->keyBy('step')->toArray();
 
         $sageApiService = new SageApiService();
-        $sageCustomerNumber = $sageApiService->verifySageCustomer($request->customer_id, $customerData, $splitPayment, $sageLogArray);
+        $sageCustomerNumber = $sageApiService->verifySageCustomer($request->customer_id, $customerData, $splitPayment, $sageLogArray, 4, $request->advisor_id);
         if ($sageCustomerNumber == '') {
             $returnMessage['response'] = 'Customer not found in sage';
 
             return $returnMessage;
         }
         $request->merge(['sage_customer_number' => $sageCustomerNumber]);
+
+        // check if the payment is the first child payment than add the discount to the sage request for prepayment of sage to balance the amounts
+        if ($splitPayment->sr_no == 1) {
+            $request->merge(['discount' => $splitPayment->payment->discount_value]);
+        }
         // create prepayment reciept
         $isLiveApiCallStep2 = true;
         if (isset($sageLogArray[2]) && $sageLogArray[2]['status'] == 'success') {
@@ -107,25 +127,26 @@ class SplitPaymentService
 
         if (isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])) {
             if ($isLiveApiCallStep2) {
-                $this->logSageApiCall($payLoadOptions, $sageResponse, $splitPayment, 2, 4);
+                $this->logSageApiCall($payLoadOptions, $sageResponse, $splitPayment, 2, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
             }
             $isLiveApiCallStep3 = true;
-            if (isset($sageLogArray[3]) && $sageLogArray[3]['status'] == 'success') {
-                $isLiveApiCallStep3 = false;
-                $readyToPostResponse = json_decode($sageLogArray[3]['response'], true);
-            } else {
-                $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptArPayment($sageResponse['BatchNumber']);
-                $readyToPostResponse = $sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
-            }
+            // make ready to post to sage,cannot use log data as it changes on each call
+            $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptArPayment($sageResponse['BatchNumber']);
+            $readyToPostResponse = $sageApiService->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
 
             if ($readyToPostResponse !== '') {
-                $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, 'fail');
-                $returnMessage['response'] = 'Error while making ready to post to sage';
+                $readyToPostArray = json_decode($readyToPostResponse, true);
+                if (isset($readyToPostArray['error']['message']['value']) && ! strpos($readyToPostArray['error']['message']['value'], 'status from POSTED')) {
+                    $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, SageEnum::STATUS_FAIL, $request->advisor_id);
+                    $returnMessage['response'] = 'Error while making ready to post to sage';
 
-                return $returnMessage;
+                    return $returnMessage;
+                } else {
+                    $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
+                }
             } else {
                 if ($isLiveApiCallStep3) {
-                    $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4);
+                    $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
                 }
             }
 
@@ -141,18 +162,18 @@ class SplitPaymentService
 
             if (isset($postedResponse['error'])) {
                 $returnMessage['response'] = 'Error while posting to sage';
-                $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4, 'fail');
+                $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4, SageEnum::STATUS_FAIL, $request->advisor_id);
 
                 return $returnMessage;
             } else {
                 if ($isLiveApiCallStep4) {
-                    $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4);
+                    $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
                 }
             }
             $documentNumberForReciept = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
             $returnMessage = ['status' => 'success', 'response' => $documentNumberForReciept];
         } else {
-            $this->logSageApiCall($payLoadOptions, $sageResponse, $splitPayment, 2, 4, 'fail');
+            $this->logSageApiCall($payLoadOptions, $sageResponse, $splitPayment, 2, 4, SageEnum::STATUS_FAIL, $request->advisor_id);
             $returnMessage['response'] = 'Document number not generated from sage';
         }
 
@@ -362,26 +383,41 @@ class SplitPaymentService
         }
     }
 
-    public function createReciept($modelType, $quoteId, $splitPayment)
+    public function createReceipt($modelType, $quoteId, $splitPayment, $send_update_id = null)
     {
         try {
             $quote = $this->getQuoteObject($modelType, $quoteId);
             $quote->load(['customer']);
+            $quote->load(['advisor']);
+
             $data = [];
             $data['order_amount'] = number_format($splitPayment->collection_amount, 2, '.', ',');
             $data['payment_split_id'] = $splitPayment->id;
 
-            $data['customer_name'] = $quote->customer->first_name.' '.$quote->customer->last_name;
+            if (! empty($quote->first_name)) {
+                $data['customer_name'] = $quote->first_name.' '.$quote->last_name;
+            } else {
+                $data['customer_name'] = $quote->customer->first_name.' '.$quote->customer->last_name;
+            }
+
+            // get the advisor details
+            $data['advisor_name'] = $quote->advisor->name ?? '';
+            $data['advisor_email'] = $quote->advisor->email ?? '';
+            $data['advisor_mobile_no'] = $quote->advisor->mobile_no ?? '';
+            $data['advisor_landline_no'] = $quote->advisor->landline_no ?? '';
+            $data['profile_photo_path'] = $quote->advisor->profile_photo_path ?? '';
+
             $data['receipt_number'] = $splitPayment->code;
             $data['order_number'] = $splitPayment->code.'-'.$splitPayment->sr_no;
             $data['pdf_filename'] = $splitPayment->code.'-'.$splitPayment->sr_no;
-            // get today date
-            $data['captured_at'] = date('Y-m-d', time());
-            if ($splitPayment->captured_at != null) {
-                $data['captured_at'] = date('Y-m-d', strtotime($splitPayment->captured_at));
-            }
+            // get verified at date
+            $data['order_at'] = date(config('constants.RECEIPT_ORDER_DATE'), strtotime($splitPayment->verified_at));
 
-            $data['order_at'] = $splitPayment->created_at;
+            $orderDateFormat = config('constants.DATE_DISPLAY_FORMAT');
+            $data['captured_at'] = date($orderDateFormat, strtotime($splitPayment->verified_at));
+            if ($splitPayment->captured_at != null) {
+                $data['captured_at'] = date($orderDateFormat, strtotime($splitPayment->captured_at));
+            }
 
             if ($modelType == QuoteTypes::BUSINESS->value || $modelType == QuoteTypes::GROUP_MEDICAL->value
             || $modelType == QuoteTypes::HOME->value) {
@@ -409,31 +445,34 @@ class SplitPaymentService
                 $data['type_of_insurance'] = $modelType.' Insurance';
             }
 
-            $documentType = DocumentTypeCode::CPD; // default car
+            $documentType = DocumentTypeCode::CPD_RECEIPT; // default car
             if ($modelType == QuoteTypes::HOME->value) {
-                $documentType = DocumentTypeCode::HOMPD;
+                $documentType = DocumentTypeCode::HOMPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::HEALTH->value) {
-                $documentType = DocumentTypeCode::HPD;
+                $documentType = DocumentTypeCode::HPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::LIFE->value) {
-                $documentType = DocumentTypeCode::LPD;
+                $documentType = DocumentTypeCode::LPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::BUSINESS->value) {
-                $documentType = DocumentTypeCode::CLPD;
+                $documentType = DocumentTypeCode::CLPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::BIKE->value) {
-                $documentType = DocumentTypeCode::BPD;
+                $documentType = DocumentTypeCode::BPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::YACHT->value) {
-                $documentType = DocumentTypeCode::YPD;
+                $documentType = DocumentTypeCode::YPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::TRAVEL->value) {
-                $documentType = DocumentTypeCode::TPD;
+                $documentType = DocumentTypeCode::TPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::PET->value) {
-                $documentType = DocumentTypeCode::PPD;
+                $documentType = DocumentTypeCode::PPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::CYCLE->value) {
-                $documentType = DocumentTypeCode::CYCPD;
+                $documentType = DocumentTypeCode::CYCPD_RECEIPT;
             } elseif ($modelType == QuoteTypes::GROUP_MEDICAL->value) {
-                $documentType = DocumentTypeCode::GMQPD;
+                $documentType = DocumentTypeCode::GMQPD_RECEIPT;
             }
 
             $data['document_type_code'] = $documentType;
             $data['quote_uuid'] = $quote->uuid;
+            if ($send_update_id) {
+                $quote = SendUpdateLog::find($send_update_id);
+            }
 
             $pdf = PDF::loadView('pdf.payment_receipt', compact('data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
             $pdf->setPaper('A4');
@@ -531,6 +570,331 @@ class SplitPaymentService
         }
 
         return $paymentStatusText;
+    }
+
+    // function to process the split payment approve
+    public function processSplitPaymentApprove($modelType, $quoteId, $splitPaymentId, $amountCollected, $isFromJob = false)
+    {
+        $paymentSplit = PaymentSplits::find($splitPaymentId);
+        $sendUpdateId = $paymentSplit->payment->send_update_log_id;
+        $mainLeadObject = $this->getQuoteObject($modelType, $quoteId);
+
+        if (! empty($sendUpdateId) && $sendUpdateId > 0) {
+            $quoteModel = SendUpdateLogRepository::getLogById($sendUpdateId);
+            $quoteModel->fill([
+                'customer_id' => $mainLeadObject->customer_id,
+                'advisor_id' => $mainLeadObject->advisor_id,
+            ]);
+        } else {
+            $quoteModel = $mainLeadObject;
+        }
+
+        if ($isFromJob && ! $quoteModel) {
+            CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => PaymentProcessJobEnum::QUOTE_NOTFOUND_MESSAGE]);
+
+            return;
+        }
+
+        if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
+            //create sage reciept
+            $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
+            if ($isSageEnabled && ($paymentSplit->sage_reciept_id == null || $paymentSplit->sage_reciept_id == '')) {
+                // Create an empty Request object
+                $request = Request::createFromGlobals();
+                $request->merge([
+                    'modelType' => $modelType,
+                    'quote_id' => $quoteId,
+                    'customer_id' => $quoteModel->customer_id,
+                    'advisor_id' => $quoteModel->advisor_id,
+                ]);
+
+                $sageResponse = $this->createSageRecipt($request, $paymentSplit, $amountCollected);
+                if ($sageResponse['status'] == 'success') {
+                    $paymentSplit->sage_reciept_id = $sageResponse['response'];
+                    $paymentSplit->save();
+                } else {
+                    $sageMessage = $sageResponse['response'];
+                    if ($isFromJob) {
+                        CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $sageMessage]);
+
+                        return;
+                    } else {
+                        vAbort($sageMessage);
+                    }
+                }
+            }
+            //Marshal Service to capture split payment
+
+            if (! in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID])) {
+                $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+                $response = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $amountCollected);
+                //$paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED; //Temporarily commented on API request
+            }
+
+            $existingReceipts = QuoteDocument::where(['payment_split_id' => $splitPaymentId, 'document_type_text' => DocumentTypeEnum::RECEIPT])->get();
+            if ($existingReceipts->count() === 0 && $isFromJob) {
+                $this->createReceipt($modelType, $quoteId, $paymentSplit);
+            }
+        }
+
+        if (! $paymentSplit->payment->is_approved && ! $isFromJob) {
+            DB::beginTransaction();
+            try {
+                if (empty($paymentSplit->verified_at)) {
+                    $paymentSplit->verified_at = now();
+                    $paymentSplit->verified_by = Auth::user()->id;
+                }
+                $paymentSplit->collection_amount = $amountCollected;
+                $paymentSplit->save();
+                $parentPayment = $paymentSplit->payment;
+                /* Create payment receipt for broker */
+                if ($parentPayment->collection_type == CollectionTypeEnum::BROKER &&
+                    ! in_array($paymentSplit->payment_method, [PaymentMethodsEnum::CreditCard, PaymentMethodsEnum::CreditApproval]) &&
+                    in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID])
+                ) {
+                    $this->createReceipt($modelType, $quoteId, $paymentSplit);
+                }
+                $parentPayment->captured_amount = ($parentPayment->captured_amount + $amountCollected);
+                $parentPayment->save();
+
+                if ($parentPayment->send_update_log_id) {
+                    SendUpdateLog::where('id', $parentPayment->send_update_log_id)->update([
+                        'status' => SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
+                    ]);
+                }
+                if ($isFromJob) {
+                    $this->processMasterPaymentApprove($modelType, $quoteId, $parentPayment->send_update_log_id, true);
+                }
+                DB::commit();
+            } catch (Exception $exception) {
+                if ($isFromJob) {
+                    CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $exception->getMessage()]);
+                } else {
+                    Log::error('Error in processSplitPaymentApprove '.$quoteModel->code.': '.$exception->getMessage());
+                }
+                DB::rollBack();
+            }
+        } elseif ($isFromJob) {
+            CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
+        }
+
+    }
+
+    // function to process the master payment approve
+    public function processMasterPaymentApprove($modelType, $quoteId, $sendUpdateId, $isFromJob = false, $splitPaymentId = 0)
+    {
+        $canCaptureEp = false;
+        // On failure, the capture button will render again and the user can try again
+        DB::beginTransaction();
+        try {
+            if ($sendUpdateId > 0) {
+                $quoteModel = SendUpdateLogRepository::getLogById($sendUpdateId);
+            } else {
+                $quoteModel = $this->getQuoteObject($modelType, $quoteId);
+            }
+            $masterPayment = ($sendUpdateId > 0) ? $quoteModel->payments()->where('send_update_log_id', $sendUpdateId)->first() : $quoteModel->payments()->where('code', $quoteModel->code)->first();
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+            $masterPaymentStatus = $masterPayment->payment_status_id;
+            $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
+                PaymentStatusEnum::PAID,
+                PaymentStatusEnum::CAPTURED,
+            ])->where('code', $masterPayment->code)->count();
+
+            $totalPartialPaidPayments = PaymentSplits::whereIn('payment_status_id', [
+                PaymentStatusEnum::PARTIAL_CAPTURED,
+                PaymentStatusEnum::PARTIALLY_PAID,
+            ])->where('code', $masterPayment->code)->count();
+
+            if ($totalPaidPayments == $masterPayment->total_payments) {
+                $masterPaymentStatus = PaymentStatusEnum::CAPTURED;
+            } elseif ($totalPartialPaidPayments > 0) {
+                $masterPaymentStatus = PaymentStatusEnum::PARTIAL_CAPTURED;
+            }
+            $masterPayment->update([
+                'is_approved' => 1,
+                'payment_status_id' => $masterPaymentStatus,
+                'updated_by' => Auth::user()->id,
+            ]);
+            $successMessage = 'Transaction approved';
+            $totalApproved = $quoteModel->payments()->where('is_approved', 1)->count();
+            if ($totalApproved == $quoteModel->payments()->count()) {
+                if ($sendUpdateId) {
+                    $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
+                } else {
+                    $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
+                    app(CRUDService::class)->calculateScore($quoteModel, $modelType);
+                }
+                $quoteModel->save();
+                $canCaptureEp = true;
+                // Berlin Service - Extend Customer Subscription on Shaji request
+                $customerData = app(CustomerService::class)->getCustomerById($quoteModel->customer_id);
+                if ($customerData) {
+                    $quoteOptions = QuoteTypeId::getOptions();
+                    $responseExtend = app(BerlinService::class)->extendCustomerSubscription($customerData->id, $customerData->email, strtoupper($quoteOptions[$quoteTypeId]).'-QUOTE', strtolower($quoteOptions[$quoteTypeId]).'-quote-myalfred-we');
+                    info('Transaction Approved responseExtend: '.$responseExtend);
+                }
+
+                //Create duplicate lead for TRAVEL
+                if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1 && ! $sendUpdateId) {
+                    if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel)) {
+                        $successMessage .= ', '.$quoteModel->code.'-1 Created For Booking The Additional Policy';
+                    }
+                }
+            }
+            if (! $sendUpdateId) {
+                $this->updateLeadStatus($masterPayment); //update lead status
+            }
+
+            if ($isFromJob && $splitPaymentId > 0) {
+                CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
+            }
+            DB::commit();
+        } catch (Exception $exception) {
+            $canCaptureEp = false;
+            if ($isFromJob && $splitPaymentId > 0) {
+                CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $exception->getMessage()]);
+            }
+            Log::error('Error in processMasterPaymentApprove for '.$quoteModel->code.': '.$exception->getMessage());
+            DB::rollBack();
+        }
+
+        if ($canCaptureEp) {
+            // capture EP and send documents
+            EmbeddedProductRepository::capturePayment($quoteId, $modelType);
+        }
+
+        return $successMessage;
+    }
+
+    // Update lead status for ecomm quotes
+    private function updateLeadStatus($payment)
+    {
+        $quoteType = '';
+        if ($payment->paymentable_type == CarQuote::class) {
+            $quoteType = quoteTypeCode::Car;
+        } elseif ($payment->paymentable_type == HealthQuote::class) {
+            $quoteType = quoteTypeCode::Health;
+        } elseif ($payment->paymentable_type == TravelQuote::class) {
+            $quoteType = quoteTypeCode::Travel;
+        }
+        // If a quote type is found, get the corresponding quote object
+        if ($quoteType !== '') {
+            $quoteModel = $this->getQuoteObject($quoteType, $payment->paymentable_id);
+            if ($quoteModel) {
+                $quoteModel->payment_status_id = $payment->payment_status_id;
+                if ($payment->payment_status_id == PaymentStatusEnum::PAID) {
+                    $quoteModel->payment_paid_at = now();
+                }
+                $quoteModel->save();
+            }
+        }
+    }
+
+    public function updateCommissionSchedule($payment)
+    {
+        $paymentSplits = $payment->paymentSplits;
+        $commissionSplitSumWithoutLastSplit = 0;
+        $commissionVatApplicable = $payment->commission_vat_applicable;
+        foreach ($paymentSplits as $paymentSplit) {
+            $commissionSplitAmount = $this->calculateCommissionSplit($payment, $paymentSplit);
+            /*
+             to prevent difference in amount due to rounding number, sum all the Commission Split Amount except the last one,
+             and then subtract that amount from the total commission without vat and use the result as commission for last commission split
+            */
+            if ($paymentSplit->sr_no == count($paymentSplits)) {
+                $commissionSplitAmount = floatval(sprintf('%.2f', $commissionVatApplicable - $commissionSplitSumWithoutLastSplit));
+            } else {
+                $commissionSplitSumWithoutLastSplit += $commissionSplitAmount;
+            }
+            $paymentSplit->commission_vat_applicable = $commissionSplitAmount;
+            /* Add Vat on commission to the first Installment of commission */
+            $paymentSplit->commission_vat = $paymentSplit->sr_no == 1 ? $payment->commission_vat : 0;
+            $paymentSplit->save();
+        }
+    }
+
+    private function calculateCommissionSplit($payment, $paymentSplit)
+    {
+        $commissionVatApplicable = $payment->commission_vat_applicable;
+        $totalPriceVatApplicable = $payment->paymentSplits()->sum('price_vat_applicable');
+
+        return roundNumber(($paymentSplit->price_vat_applicable / $totalPriceVatApplicable) * $commissionVatApplicable);
+    }
+
+    // function to calculate the price vat
+    public function calculatePriceAndVat($frequency, $masterTotalPrice, $splitPaymentNumber, $splitPaymentAmount, $modelType, $quoteId, $totalSplitPayments, $send_update_id = null)
+    {
+        $priceWithoutVat = $splitPaymentAmount;
+        $vat = 0;
+        $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
+        if (! $vatValue) {
+            return [$priceWithoutVat, $vat];
+        }
+        [$priceWithoutVat, $vat] = $this->calculateMasterPriceAndVat($frequency, $masterTotalPrice, $modelType, $quoteId, $send_update_id);
+        if ($vat > 0) {
+            $discount = 0;
+
+            if ($send_update_id > 0) {
+                $quoteModel = SendUpdateLogRepository::getLogById($send_update_id);
+            } else {
+                $quoteModel = $this->getQuoteObject($modelType, $quoteId);
+            }
+
+            $paymentDiscount = $quoteModel->payments()->where('code', $quoteModel->code)->value('discount_value');
+            if ($splitPaymentNumber === 1 && $paymentDiscount > 0) {
+                $splitPaymentAmount = $splitPaymentAmount + $paymentDiscount; //discount
+            }
+
+            $priceWithoutVat = $splitPaymentAmount / (1 + ($vatValue / 100));
+            $vat = $priceWithoutVat * $vatValue / 100;
+
+        } else {
+            $priceWithoutVat = $splitPaymentAmount;
+        }
+
+        return [$priceWithoutVat, $vat];
+    }
+
+    // function to calculate the price vat for master payment
+    public function calculateMasterPriceAndVat($frequency, $masterTotalPrice, $modelType, $quoteId, $send_update_id = null)
+    {
+        $vat = 0;
+        $priceWithoutVat = $masterTotalPrice;
+        $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
+        if (! $vatValue) {
+            return [$priceWithoutVat, $vat];
+        }
+        $computedPrice = 0;
+        $ecommLobs = [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Bike];
+        if ($send_update_id > 0) {
+            $quoteModel = SendUpdateLogRepository::getLogById($send_update_id);
+        } else {
+
+            if (in_array($modelType, $ecommLobs)) {
+                $computedPrice = $masterTotalPrice;
+            } else {
+                $quoteModel = $this->getQuoteObject($modelType, $quoteId);
+            }
+        }
+
+        if (isset($quoteModel) && isset($quoteModel->price_vat_applicable) && $quoteModel->price_vat_applicable > 0) {
+            $computedPrice = $quoteModel->price_vat_applicable;
+        }
+
+        if ($computedPrice > 0) {
+
+            if (in_array($modelType, $ecommLobs) && ! $send_update_id) {
+                $priceWithoutVat = $computedPrice / (1 + ($vatValue / 100));
+                $vat = $priceWithoutVat * $vatValue / 100;
+            } else {
+                $priceWithoutVat = $computedPrice;
+                $vat = ($priceWithoutVat * $vatValue) / 100;
+            }
+
+            return [$priceWithoutVat, $vat];
+        }
+
+        return [$priceWithoutVat, $vat];
     }
 
 }
