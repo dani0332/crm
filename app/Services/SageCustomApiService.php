@@ -27,11 +27,11 @@ class SageCustomApiService
 
     public function __construct()
     {
-        $this->sageCustomApiUserName = env('SAGE_300_CUSTOM_API_USERNAME');
-        $this->sageCustomApiPassword = env('SAGE_300_CUSTOM_API_USER_PASSWORD');
-        $this->sageBaseUrl = env('SAGE_300_BASE_URL');
-        $this->sageCustomApiVersion = env('SAGE_300_CUSTOM_API_VERSION');
-        $this->sageDBName = env('SAGE_300_CUSTOM_API_DB_NAME');
+        $this->sageCustomApiUserName = config('constants.SAGE_300_CUSTOM_API_USERNAME');
+        $this->sageCustomApiPassword = config('constants.SAGE_300_CUSTOM_API_USER_PASSWORD');
+        $this->sageBaseUrl = config('constants.SAGE_300_BASE_URL');
+        $this->sageCustomApiVersion = config('constants.SAGE_300_CUSTOM_API_VERSION');
+        $this->sageDBName = config('constants.SAGE_300_CUSTOM_API_DB_NAME');
         $this->bearerToken = Cache::store('redis')->get(SageEnum::SAGE_CUSTOM_API_AUTH_TOKEN_CACHE_KEY) ?? $this->getToken();
     }
 
