@@ -62,7 +62,7 @@ class CarEmailService extends BaseService
                 if ($responseCode) {
                     $this->sendEmailCustomerService->sendSICFollowupEmail($lead);
                     // Dispatch the job with a 24 hours delay
-                    SICFollowupEmailJob::dispatch($lead->uuid)->delay(Carbon::now()->addHours(24));
+                    SICFollowupEmailJob::dispatch($lead->uuid, QuoteTypes::CAR)->delay(Carbon::now()->addHours(24));
                     info('sendCarOCBIntroEmail - SICFollowupEmailJob Dispatched - Ref ID:'.$lead->uuid.' Time: '.now());
                 }
             }
