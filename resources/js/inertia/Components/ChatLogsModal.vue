@@ -55,12 +55,17 @@ const checkCaption = (whatsapp_request, UserAudio) => {
     whatsapp_request?.location ??
     whatsapp_request?.contacts ??
     whatsapp_request?.video ??
+    whatsapp_request?.image ??
     whatsapp_request?.sticker;
 
   if (data) {
     const { caption, mime_type } = JSON.parse(data);
 
-   
+    
+    if(whatsapp_request && whatsapp_request?.type === 'image'){
+      return caption ? `User has shared an image with a message: ${caption}`  : `User has shared an image`
+    }
+
     return caption
       ? `User has shared a ${mime_type} with a message: ${caption}`
       : `User has shared a ${whatsapp_request.type}`;
