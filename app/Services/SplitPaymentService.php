@@ -893,7 +893,7 @@ class SplitPaymentService
             if (isset($quoteModel->price_vat_not_applicable) && $quoteModel->price_vat_not_applicable > 0) {
                 $priceVatNotApplicable = $quoteModel->price_vat_not_applicable;
             }
-            
+
         }
 
         if ($computedPrice > 0) {
@@ -906,6 +906,7 @@ class SplitPaymentService
                 $vat = ($priceWithoutVat * $vatValue) / 100;
             }
             $priceWithoutVat = $priceWithoutVat + $priceVatNotApplicable;
+
             return [$priceWithoutVat, $vat];
         }
 
