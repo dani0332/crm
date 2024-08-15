@@ -61,12 +61,12 @@
                     $('#advisor_assigned_date').next().html('Please select assigned start date');
                     return false;
                 }
-                if ($('#renewal_expiry_date').val() == '' && $('#renewal_expiry_date_end').val() != '') {
-                    $('#renewal_expiry_date').next().html('Please select renewal start date');
+                if ($('#policy_expiry_date').val() == '' && $('#policy_expiry_date_end').val() != '') {
+                    $('#policy_expiry_date').next().html('Please select renewal start date');
                     return false;
                 }
-                if ($('#renewal_expiry_date').val() != '' && $('#renewal_expiry_date_end').val() == '') {
-                    $('#renewal_expiry_date_end').next().html('Please select renewal to end date');
+                if ($('#policy_expiry_date').val() != '' && $('#policy_expiry_date_end').val() == '') {
+                    $('#policy_expiry_date_end').next().html('Please select renewal to end date');
                     return false;
                 }
                 if ($('#previous_policy_expiry_date').val() != '' && $('#previous_policy_expiry_date_end')
@@ -222,8 +222,8 @@
                         }
                         d.advisor_assigned_date = $('#advisor_assigned_date').val();
                         d.advisor_assigned_date_end = $('#advisor_assigned_date_end').val();
-                        d.renewal_expiry_date = $('#renewal_expiry_date').val();
-                        d.renewal_expiry_date_end = $('#renewal_expiry_date_end').val();
+                        d.policy_expiry_date = $('#policy_expiry_date').val();
+                        d.policy_expiry_date_end = $('#policy_expiry_date_end').val();
                         d.policy_number = $('#policy_number').val();
                         if (isManagerOrDeputy == '1') d.show_renewal_upload_leads = $(
                             '#show_renewal_upload_leads').val();

@@ -752,7 +752,7 @@ class LeadAllocationService extends BaseService
         /**
          * Following are the criteria to match and find a renewal
          * Search for a lead where source is Renewal_upload
-         * Search for a lead where renewal expiry date should be in between last 30 days and future 90 days
+         * Search for a lead where policy expiry date should be in between last 30 days and future 90 days
          * Search for a lead where email OR phone number (last 7 digits) matches
          * Search for a lead where car make and model id is same as what we have from current request.
          *

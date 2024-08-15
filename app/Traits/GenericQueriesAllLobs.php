@@ -500,7 +500,7 @@ trait GenericQueriesAllLobs
 
     /**
      * Evaluates if all necessary policy details are filled for a given quote.
-     * such as policy number, policy issuance date, policy start date, renewal expiry date, and price with VAT are present.
+     * such as policy number, policy issuance date, policy start date, policy expiry date, and price with VAT are present.
      * Triggering from bookPolicyPayload
      *
      * @return bool
@@ -511,14 +511,14 @@ trait GenericQueriesAllLobs
             'policy_number' => $quote->policy_number,
             'policy_issuance_date' => $quote->policy_issuance_date,
             'policy_start_date' => $quote->policy_start_date,
-            'renewal_expiry_date' => $quote->renewal_expiry_date,
+            'policy_expiry_date' => $quote->policy_expiry_date,
             'insurer_quote_number' => $quote->insurer_quote_number,
         ]);
 
         $hasBasicPolicyDetails = ! empty($quote->policy_number) &&
                                 ! empty($quote->policy_issuance_date) &&
                                 ! empty($quote->policy_start_date) &&
-                                ! empty($quote->renewal_expiry_date) &&
+                                ! empty($quote->policy_expiry_date) &&
                                 $quote->price_with_vat >= 0;
 
         if (! $hasBasicPolicyDetails) {
