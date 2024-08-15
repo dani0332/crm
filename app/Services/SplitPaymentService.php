@@ -681,7 +681,7 @@ class SplitPaymentService
     }
 
     // function to process the master payment approve
-    public function processMasterPaymentApprove($modelType, $quoteId, $sendUpdateId, $isFromJob = false, $splitPaymentId = 0)
+    public function processMasterPaymentApprove($modelType, $quoteId, $sendUpdateId, $isFromJob = false, $splitPaymentId = 0, $paymentCode = '')
     {
         $canCaptureEp = false;
         // On failure, the capture button will render again and the user can try again
@@ -692,7 +692,13 @@ class SplitPaymentService
             } else {
                 $quoteModel = $this->getQuoteObject($modelType, $quoteId);
             }
-            $masterPayment = ($sendUpdateId > 0) ? $quoteModel->payments()->where('send_update_log_id', $sendUpdateId)->first() : $quoteModel->payments()->where('code', $quoteModel->code)->first();
+
+            if ($paymentCode != '') {
+                $masterPayment = $quoteModel->payments()->where('code', $paymentCode)->first();
+            } else {
+                $masterPayment = ($sendUpdateId > 0) ? $quoteModel->payments()->where('send_update_log_id', $sendUpdateId)->first() : $quoteModel->payments()->where('code', $quoteModel->code)->first();
+            }
+
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
             $masterPaymentStatus = $masterPayment->payment_status_id;
             $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
@@ -723,6 +729,7 @@ class SplitPaymentService
                 } else {
                     $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
                     app(CRUDService::class)->calculateScore($quoteModel, $modelType);
+                    info('Transaction Score Calculated: '.$quoteModel->code);
                 }
                 $quoteModel->save();
                 $canCaptureEp = true;
@@ -731,7 +738,7 @@ class SplitPaymentService
                 if ($customerData) {
                     $quoteOptions = QuoteTypeId::getOptions();
                     $responseExtend = app(BerlinService::class)->extendCustomerSubscription($customerData->id, $customerData->email, strtoupper($quoteOptions[$quoteTypeId]).'-QUOTE', strtolower($quoteOptions[$quoteTypeId]).'-quote-myalfred-we');
-                    info('Transaction Approved responseExtend: '.$responseExtend);
+                    info('Transaction Approved responseExtend for '.$quoteModel->code.': '.$responseExtend);
                 }
 
                 //Create duplicate lead for TRAVEL
