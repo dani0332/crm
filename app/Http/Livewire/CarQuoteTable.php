@@ -106,7 +106,7 @@ class CarQuoteTable extends DataTableComponent
                     $builder->where('car_quote_request.renewal_batch', $value);
                 }),
 
-            TextFilter::make('Renewal Expiry Date', 'renewal_expiry_date')
+            TextFilter::make('Policy Expiry Date', 'policy_expiry_date')
                 ->config([
                     'placeholder' => 'Select Start & End Date',
                     'range' => true,

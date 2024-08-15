@@ -90,7 +90,7 @@ class CarQuoteExport
             'ADDITIONAL NOTES',
             'ADVISOR',
             'POLICY NUMBER',
-            'RENEWAL EXPIRY DATE',
+            'POLICY EXPIRY DATE',
             'IS GCC STANDARD',
             'IS VEHICLE MODIFIED',
             'PREMIUM',

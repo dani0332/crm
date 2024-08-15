@@ -96,7 +96,7 @@ const policyDetailsForm = useForm({
   vat: page.props.quote.vat || 0,
   quote_policy_start_date: dateToYMD(page.props.quote.policy_start_date) || '',
   quote_policy_expiry_date:
-    dateToYMD(page.props.quote.renewal_expiry_date) || '',
+    dateToYMD(page.props.quote.policy_expiry_date) || '',
   amount_with_vat: 0,
   quote_plan_insurer_quote_number:
     planQuoteInsurerNumber.value || page.props.quote.insurer_quote_number,

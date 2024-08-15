@@ -64,7 +64,7 @@ const tableHeader = [
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
-  { text: 'RENEWAL EXPIRY DATE', value: 'renewal_expiry_date' },
+  { text: 'POLICY EXPIRY DATE', value: 'policy_expiry_date' },
   { text: 'IS GCC STANDARD', value: 'is_gcc_standard' },
   { text: 'IS VEHICLE MODIFIED', value: 'is_modified' },
   { text: 'PRICE', value: 'premium' },
@@ -208,7 +208,7 @@ const filters = reactive({
   quote_status_id: [],
   created_at_start: page.props.createdAtStart || '',
   currently_insured_with: '',
-  renewal_expiry_date: '',
+  policy_expiry_date: '',
   is_ecommerce: '',
   payment_status_id: '',
   renewal_batch: '',
@@ -220,7 +220,7 @@ const filters = reactive({
   quote_batch_id: [],
   advisor_id: [],
   advisor_assigned_date_end: '',
-  renewal_expiry_date_end: '',
+  policy_expiry_date_end: '',
   created_at_end: page.props.createdAtEnd || '',
   page: 1,
   paid_at_start: '',
@@ -592,14 +592,14 @@ const resetDateFilters = filterName => {
           placeholder="Search by Renewal Batch"
         />
         <DatePicker
-          v-model="filters.renewal_expiry_date"
-          name="renewal_expiry_date"
-          label="Renewal Expiry Date Start"
+          v-model="filters.policy_expiry_date"
+          name="policy_expiry_date"
+          label="Policy Expiry Date Start"
         />
         <DatePicker
-          v-model="filters.renewal_expiry_date_end"
-          name="renewal_expiry_date_end"
-          label="Renewal Expiry Date End"
+          v-model="filters.policy_expiry_date_end"
+          name="policy_expiry_date_end"
+          label="Policy Expiry Date End"
         />
         <ComboBox
           :single="true"

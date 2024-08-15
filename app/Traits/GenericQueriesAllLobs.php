@@ -500,7 +500,7 @@ trait GenericQueriesAllLobs
 
     /**
      * Evaluates if all necessary policy details are filled for a given quote.
-     * such as policy number, policy issuance date, policy start date, renewal expiry date, and price with VAT are present.
+     * such as policy number, policy issuance date, policy start date, policy expiry date, and price with VAT are present.
      * Triggering from bookPolicyPayload
      *
      * @return bool

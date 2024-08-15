@@ -611,7 +611,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">RENEWAL EXPIRY DATE</dt>
+                <dt class="font-medium">POLICY EXPIRY DATE</dt>
                 <dd>{{ quote.policy_expiry_date }}</dd>
               </div>
 
