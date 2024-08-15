@@ -56,7 +56,7 @@ class ResetLeadAllocationCounts extends Command
             'manual_assignment_count' => 0,
         ]);
 
-        DB::table('sessions')->truncate(); // truncate sessions table
+        DB::table('sessions')->delete(); // truncate sessions table
 
         User::query()->where('is_active', 1)
             ->whereNotIn('status', [UserStatusEnum::LEAVE, UserStatusEnum::SICK])
