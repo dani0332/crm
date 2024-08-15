@@ -60,7 +60,7 @@ class DatabaseSeeder extends Seeder
             CarMakeSeeder::class,
             AddPaymentPermissions::class,
             AddCreateSendUpdatePermissionToAllRoles::class,
-            // AddSendUpdatesCategoriesInLookups::class, Please don't run this seeder on test and stage env.
+            AddSendUpdatesCategoriesInLookups::class,
             InslyRoles::class,
             InslyPermissions::class,
             QuoteStatusMapSeeder::class,
