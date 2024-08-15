@@ -60,7 +60,6 @@ const checkCaption = (whatsapp_request, UserAudio) => {
   if (data) {
     const { caption, mime_type } = JSON.parse(data);
 
-   
     return caption
       ? `User has shared a ${mime_type} with a message: ${caption}`
       : `User has shared a ${whatsapp_request.type}`;
@@ -80,12 +79,12 @@ const checkCaption = (whatsapp_request, UserAudio) => {
     return `${UserAudio}`;
   }
 
-  if(blob_payload_type === 'image'){
+  if (blob_payload_type === 'image') {
     return message
-    ? `User has shared an ${blob_payload_type} with a message: ${message}`
-    : blob_payload_type
-      ? `User has shared an ${blob_payload_type}`
-      : false;
+      ? `User has shared an ${blob_payload_type} with a message: ${message}`
+      : blob_payload_type
+        ? `User has shared an ${blob_payload_type}`
+        : false;
   }
 
   return message
