@@ -95,7 +95,6 @@ class SendUpdateLogRepository extends BaseRepository
                     $sendUpdate->plan_id = $quoteModel->plan->id ?? null;
                 } else {
                     $sendUpdate->insurance_provider_id = $realQuote->insuranceProvider->id ?? $realQuote->insurance_provider_id ?? null;
-                    $sendUpdate->provider_name = $realQuote->insuranceProvider->text ?? $realQuote->insurance_provider_text ?? null;
                 }
 
                 $sendUpdate->save();
