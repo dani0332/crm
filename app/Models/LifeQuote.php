@@ -56,7 +56,7 @@ class LifeQuote extends Model implements AuditableContract
 
     public function advisor()
     {
-        return $this->belongsTo(User::class)->select(['id', 'email', 'name']);
+        return $this->belongsTo(User::class)->select(['id', 'email', 'name', 'mobile_no', 'landline_no', 'profile_photo_path', 'calendar_link']);
     }
     public function previousAdvisor()
     {
@@ -91,10 +91,12 @@ class LifeQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(LifeNumberOfYears::class, 'number_of_years_id');
     }
+
     public function maritalStatus()
     {
         return $this->belongsTo(MartialStatus::class, 'marital_status_id');
     }
+
     public function paymentStatus()
     {
         return $this->belongsTo(PaymentStatus::class, 'payment_status_id');
@@ -134,5 +136,15 @@ class LifeQuote extends Model implements AuditableContract
     public function insuranceProvider()
     {
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
+    }
+
+    public function sageApiLogs()
+    {
+        return $this->morphMany(SageApiLog::class, 'section');
+    }
+
+    public function customerMembers()
+    {
+        return $this->morphMany(CustomerMembers::class, 'quote');
     }
 }

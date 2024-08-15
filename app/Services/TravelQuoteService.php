@@ -92,15 +92,15 @@ class TravelQuoteService extends BaseService
             'tqr.destination_id',
             'nationality.country_name as destination_id_text',
             'tqr.is_ecommerce',
-            'tqr.renewal_expiry_date',
             'tqr.renewal_batch',
             'tqr.renewal_import_code',
             'tqr.previous_quote_policy_number',
             DB::raw('DATE_FORMAT(tqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
+            DB::raw('DATE_FORMAT(tqr.renewal_expiry_date, "%d-%m-%Y") as renewal_expiry_date'),
             'tqr.device',
             'tqr.previous_quote_policy_premium',
             'tqr.policy_issuance_date',
-            DB::raw('DATE_FORMAT(tqr.policy_start_date, "%d-%m-%Y") as policy_start_date'),
+            'tqr.policy_start_date',
             'tqr.customer_id',
             'tqr.parent_duplicate_quote_id',
             'tqr.has_arrived_destination',
@@ -133,6 +133,15 @@ class TravelQuoteService extends BaseService
             'ent.industry_type_code',
             'ent.emirate_of_registration_id',
             'et.passport_number',
+            'tqr.price_vat_not_applicable',
+            'tqr.price_vat_applicable',
+            'tqr.price_with_vat',
+            'tqr.vat',
+            'tqr.insurer_quote_number',
+            'tqr.policy_issuance_status_id',
+            'tqr.policy_issuance_status_other',
+            'tqr.policy_booking_date',
+            'tqr.insly_migrated',
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
@@ -169,7 +178,7 @@ class TravelQuoteService extends BaseService
             'mobileNo' => $request->mobile_no,
             'nationalityId' => $request->nationality_id,
             'destinationIds' => $request->destination_ids ?? [],
-            'tripStarted' => $request->has_arrived_uae == '1' ? 1 : 0,
+            'tripStarted' => ($request->has_arrived_uae == '1' || $request->has_arrived_destination == '1') ? 1 : 0,
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
         ];
@@ -341,7 +350,7 @@ class TravelQuoteService extends BaseService
             $this->query->whereBetween('tqr.created_at', [$dateFrom, $dateTo]);
         }
 
-        if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
+        if (! empty($request->created_at_start) && ! empty($request->created_at_end) && empty($request->payment_due_date) && empty($request->booking_date)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
             $this->query->whereBetween('tqr.created_at', [$dateFrom, $dateTo]);
@@ -436,6 +445,7 @@ class TravelQuoteService extends BaseService
                 }
             }
         }
+        $this->adjustQueryByDateFilters($this->query, 'tqr');
 
         $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
@@ -524,9 +534,25 @@ class TravelQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return TravelQuote::where('id', $id)->with(['payments.paymentSplits' => function ($query) {
-            $query->orderBy('sr_no', 'asc');
-        }, 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents', 'child', 'parent'])->first();
+        return TravelQuote::where('id', $id)->with([
+            'child',
+            'parent',
+            'payments' => function ($payment) {
+                $payment->with([
+                    'paymentSplits' => function ($paymentSplit) {
+                        $paymentSplit->with([
+                            'paymentStatus',
+                            'paymentMethod',
+                            'documents',
+                            'verifiedByUser',
+                            'processJob',
+                        ]);
+                        $paymentSplit->orderBy('sr_no');
+                    },
+                ]);
+                $payment->orderBy('created_at');
+            },
+        ])->first();
     }
 
     public function getSelectedLostReason($id)
@@ -687,7 +713,7 @@ class TravelQuoteService extends BaseService
                 $title = 'Price';
                 break;
             case 'parent_duplicate_quote_id':
-                $title = 'Parent Ref-ID';
+                $title = 'PARENT REF-ID';
                 break;
             case 'customer_type':
                 $title = 'Customer Type';
@@ -960,6 +986,7 @@ class TravelQuoteService extends BaseService
         return ['pdf' => $pdf, 'name' => $pdfName];
 
     }
+
     public function setQuoteUpdatedAt($id)
     {
         $travelQuote = TravelQuote::find($id);
@@ -1018,5 +1045,4 @@ class TravelQuoteService extends BaseService
 
         return $transactionApprovedAudit;
     }
-
 }

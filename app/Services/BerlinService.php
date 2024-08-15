@@ -146,7 +146,7 @@ class BerlinService extends BaseService
             $statusCode = $requestExtendSubscription->getStatusCode();
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $statusCode = $e->getResponse()->getStatusCode();
-
+            info('extendCustomerSubscription berlin error response: '.$e->getResponse()->getBody()->getContents());
             $errorData = json_decode($e->getResponse()->getBody()->getContents(), true);
 
             if (isset($errorData['code']) && $errorData['code'] == 'CUSTOMER_NOT_FOUND') {

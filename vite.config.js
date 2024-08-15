@@ -33,18 +33,15 @@ export default defineConfig({
       extensions: ['vue'],
       resolvers: [
         HeadlessUiResolver(),
-        name =>
-        {
-          if (name === 'Head')
-          {
+        name => {
+          if (name === 'Head') {
             return {
               importName: 'Head',
               path: '@inertiajs/vue3',
             };
           }
 
-          if (name === 'Link')
-          {
+          if (name === 'Link') {
             return {
               importName: 'Link',
               path: '@inertiajs/vue3',
@@ -65,11 +62,6 @@ export default defineConfig({
     chunkSizeWarningLimit: 4200,
   },
   optimizeDeps: {
-    include: [
-      '@vueuse/core',
-      '@vuepic/vue-datepicker',
-      'md-editor-v3',
-      '@headlessui/vue',
-    ],
+    include: ['@vueuse/core', 'md-editor-v3', '@headlessui/vue'],
   },
 });

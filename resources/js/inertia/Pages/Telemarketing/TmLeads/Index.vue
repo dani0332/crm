@@ -257,7 +257,7 @@ onMounted(() => {
             >
               Export
             </x-button>
-            <x-tooltip v-else position="right">
+            <x-tooltip v-else placement="right">
               <x-button tag="div" size="sm" color="emerald"> Export </x-button>
               <template #tooltip>
                 <span class="font-medium">

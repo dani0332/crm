@@ -17,7 +17,7 @@ const props = defineProps({
 </script>
 <template>
   <div v-if="daysSinceStale(date) !== false" class="relative self-end -mt-2">
-    <x-tooltip :align="align" :position="position">
+    <x-tooltip :placement="align">
       <p class="bg-red-600 px-1 rounded text-[10px] text-white">
         {{ daysSinceStale(date) }}
       </p>
