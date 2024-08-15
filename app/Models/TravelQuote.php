@@ -6,6 +6,7 @@ use App\Enums\FilterTypes;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\TravelQuoteEnum;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
@@ -210,5 +211,10 @@ class TravelQuote extends Model implements AuditableContract
     public function isPaymentAuthorized()
     {
         return $this->payments->count() > 0 && $this->payments->every(fn (Payment $payment) => $payment->isPaymentAuthorized());
+    }
+
+    public function isMultiTrip()
+    {
+        return $this->coverage_code === TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP;
     }
 }

@@ -13,6 +13,7 @@ use App\Http\Requests\SICWorkflowRequest;
 use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
+use App\Models\TravelQuote;
 use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -204,8 +205,16 @@ class ApiService
             return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
         }
 
-        if (! $quoteType?->model()->where('uuid', $request->quoteUuid)->exists()) {
+        $lead = $quoteType?->model()->where('uuid', $request->quoteUuid)->first();
+
+        if (! $lead) {
             return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found!');
+        }
+
+        if ($lead instanceof TravelQuote && $lead->isMultiTrip()) {
+            info(self::class." - handleZeroPlansEmail: First OCB Email Skipped because it is a Multi Trip Lead uuid: {$lead->uuid}");
+
+            return apiResponse(null, Response::HTTP_OK, 'First OCB Email Skipped because it is a Multi Trip Lead!');
         }
 
         $ocbEmailJob = $quoteType?->ocbEmailJob();
