@@ -3,7 +3,6 @@ import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocument
 import MigratePayment from '../../Components/MigratePayment.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import EntityRiskRatingScoreDetails from '../../Components/EntityRiskRatingScoreDetails.vue';
-import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 
 const props = defineProps({
   quote: Object,
