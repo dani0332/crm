@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\Activities;
@@ -127,6 +128,7 @@ class ActivitiesService extends BaseService
         $activity->created_at = Carbon::now();
         $activity->updated_at = Carbon::now();
         $activity->quote_status_id = $record?->quote_status_id ?? null;
+        $activity->source = LeadSourceEnum::IMCRM;
         $activity->save();
 
         return $activity;
@@ -200,12 +202,13 @@ class ActivitiesService extends BaseService
         $nextFollowupDate = isset($request->next_followup_date) ? Carbon::parse($request->next_followup_date)->format('Y-m-d H:i:s') : null;
         $dueDate = isset($request->due_date) ? Carbon::parse($request->due_date)->format('Y-m-d H:i:s') : null;
         $activity->due_date = isset($request->due_date) ? $dueDate : $nextFollowupDate;
-        $activity->assignee_id = isset($record->advisor_id) ? $record->advisor_id : auth()->user()->id;
+        $activity->assignee_id = isset($record->advisor_id) ? $record->advisor_id : null;
         $activity->description = isset($request->description) ? $request->description : $request->notes;
         $activity->title = $request->title;
         $activity->created_at = Carbon::now();
         $activity->updated_at = Carbon::now();
         $activity->quote_status_id = $record?->quote_status_id ?? null;
+        $activity->source = 'Instant Alfred';
         $activity->save();
 
         return $activity;

@@ -57,3 +57,4 @@ Route::prefix('v1')->group(function () {
 });
 
 Route::post('/imcrm/create-activity', [ApiController::class, 'createActivity'])->name('createActivity');
+Route::get('/imcrm/get-activity', [ApiController::class, 'getActivity'])->name('getActivity');

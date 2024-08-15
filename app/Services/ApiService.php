@@ -9,6 +9,7 @@ use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Jobs\SendOCBIntroEmailJob;
+use App\Models\Activities;
 use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
@@ -173,6 +174,13 @@ class ApiService
         if ($validator->fails()) {
             return response()->json(['message' => $validator->errors()->first()], 422);
         }
+        $existingActivity = Activities::where('quote_uuid', $request->entityUId)
+            ->Where('status', 0)
+            ->Where('source', 'Instant Alfred')
+            ->first();
+        if ($existingActivity) {
+            return response()->json(['message' => 'An existing activity was found. Please Mark Done the current activity before creating a new one.'], 409);
+        }
         $modelType = '';
         if (isset($request->quoteTypeId)) {
             $modelType = QuoteType::select('code')->find($request->quoteTypeId);
@@ -181,9 +189,36 @@ class ApiService
         if (isset($request->entityUId)) {
             $record = app(CRUDService::class)->getEntity($modelType->code, $request->entityUId);
         }
+        if (is_null($record->advisor_id)) {
+            return response()->json(['message' => 'No advisor has been assigned to this lead.'], 404);
+        }
         app(ActivitiesService::class)->createApiActivity($request, $record, $modelType);
 
         return response()->json(['message' => 'Activity has been Created'], 200);
 
     }
+
+    public function getActivity($request)
+    {
+        $uuid = $request->entityUId;
+
+        if (empty($uuid)) {
+            return response()->json(['message' => 'Entity UUID Not Found'], 404);
+        }
+
+        $activity = Activities::where('quote_uuid', $request->entityUId)
+            ->Where('status', 0)
+            ->Where('source', 'Instant Alfred')
+            ->first();
+
+        if (! $activity) {
+            return response()->json(['message' => 'Activity Not Found'], 404);
+        }
+
+        return response()->json([
+            'message' => 'Activity Found',
+            'activity' => $activity,
+        ], 200);
+    }
+
 }

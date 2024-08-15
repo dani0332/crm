@@ -72,4 +72,9 @@ class ApiController extends Controller
     {
         return $this->apiService->createActivity($request);
     }
+    public function getActivity(Request $request)
+    {
+        return $this->apiService->getActivity($request);
+
+    }
 }
