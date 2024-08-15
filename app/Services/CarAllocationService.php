@@ -389,6 +389,14 @@ class CarAllocationService extends AllocationService
             // Find the intersection of available user IDs and rule user IDs.
             $finalEligibleUserIds = array_intersect($availableUserIds, $ruleUserIds);
 
+            // Check if the lead source indicates a SAP lead.
+            $isSAPLead = str_contains($lead->source, 'sap-') || str_contains($lead->source, 'partner.alfred.ae');
+            if ($isSAPLead) {
+                // If the lead source is SAP, get eligible users for SAP leads.
+                info('SAP lead found, so filtering eligible users for SAP lead');
+                $finalEligibleUserIds = $this->getEligibleUserForSAPLead($ruleUserIds);
+            }
+
             info('Rule found, and users against the rule are: '.json_encode($finalEligibleUserIds));
         } else {
             // If no rules are found, get user IDs from rule lead sources.
@@ -581,5 +589,17 @@ class CarAllocationService extends AllocationService
         ]);
 
         info('Tier with name : '.$tier->name.' is assigned to car lead with uuid : '.$lead->uuid);
+    }
+
+    public function getEligibleUserForSAPLead($ruleUserIds): array
+    {
+        // Create a query to fetch lead allocations with their associated users.
+        $sapUserIds = LeadAllocation::with('leadAllocationUser')
+            ->whereIn('user_id', $ruleUserIds) // it will be the rule user ids for SAP rule only
+            ->where('quote_type_id', QuoteTypes::CAR->id())
+            ->orderBy('last_allocated')
+            ->pluck('user_id')->toArray();
+
+        return $sapUserIds;
     }
 }
