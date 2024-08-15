@@ -859,7 +859,7 @@ class SplitPaymentService
                 $splitPaymentAmount = $splitPaymentAmount + $paymentDiscount; //discount
             }
 
-            if ($frequency == PaymentFrequency::SPLIT_PAYMENTS  ) {
+            if ($frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                 $priceWithoutVat = $splitPaymentAmount / (1 + ($vatValue / 100));
                 $vat = $priceWithoutVat * $vatValue / 100;
             } elseif ($splitPaymentNumber === 1) {
