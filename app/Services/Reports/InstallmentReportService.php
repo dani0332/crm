@@ -160,6 +160,7 @@ class InstallmentReportService extends ManagementReport
     {
         return [
             'Ref-ID',
+            'Department',
             'Policy Number',
             'Transactions',
             'Policy Start Date',
@@ -196,6 +197,7 @@ class InstallmentReportService extends ManagementReport
     {
         return [
             $quote->code ?? 'N/A',
+            $quote->department ?? 'N/A',
             $quote->policy_number ?? 'N/A',
             $quote->transactions ?? 'N/A',
             $quote->policy_start_date ?? 'N/A',

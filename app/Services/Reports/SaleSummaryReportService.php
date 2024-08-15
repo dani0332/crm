@@ -131,6 +131,9 @@ class SaleSummaryReportService extends ManagementReport
 
             // Columns that are not integar and should not be summed
             $nonIntegarIndexes = [0];
+            if (in_array($this->groupByColumn, ['advisor', 'department'])) {
+                $nonIntegarIndexes[] = 1;
+            }
 
             return $this->download(
                 'Sale Summary Report '.$this->reportDateRange,
@@ -287,8 +290,16 @@ class SaleSummaryReportService extends ManagementReport
 
     public function headings(): array
     {
-        return [
+        $headings = [
             ucwords(str_replace('_', ' ', $this->groupByColumn)),
+        ];
+
+        if (in_array($this->groupByColumn, ['advisor', 'department'])) {
+            $headings[] = 'Department';
+        }
+
+        return [
+            ...$headings,
             'Total Policies',
             'Total Endorsements',
             'Total Transactions',
@@ -305,9 +316,16 @@ class SaleSummaryReportService extends ManagementReport
     public function map($quote): array
     {
         $groupBy = $this->groupByColumn;
+        $values = [
+            $quote->$groupBy ?? 'N/A',
+        ];
+
+        if (in_array($this->groupByColumn, ['advisor', 'department'])) {
+            $values[] = $quote->department ?? 'N/A';
+        }
 
         return [
-            $quote->$groupBy ?? 'N/A',
+            ...$values,
             $quote->total_policies ?? 0,
             $quote->total_endorsements ?? 0,
             $quote->total_transaction ?? 0,

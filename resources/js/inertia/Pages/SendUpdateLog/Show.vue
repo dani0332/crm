@@ -300,7 +300,7 @@ const isLegacyPolicy = computed(() => {
                   </template>
                 </x-tooltip>
               </dt>
-              <dd>{{ sendUpdateLog.status }}</dd>
+              <dd>{{ sendUpdateLog.display_status }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <template
