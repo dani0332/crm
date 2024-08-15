@@ -14,7 +14,7 @@ use App\Enums\TeamNameEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TiersIdEnum;
 use App\Enums\UserStatusEnum;
-use App\Jobs\SendOCBIntroEmailJob;
+use App\Jobs\OCB\SendCarOCBIntroEmailJob;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarQuote;
@@ -158,7 +158,7 @@ class CarAllocationService extends AllocationService
         $lead->tier_id = $tier->id;
         $lead->save();
         info('SIC flow is enabled for lead : '.$lead->uuid.' , the updated field : '.$lead->sic_flow_enabled);
-        SendOCBIntroEmailJob::dispatch($lead->uuid, null, true);
+        SendCarOCBIntroEmailJob::dispatch($lead->uuid, null, true);
         info('SIC flow is email is dispatched for lead : '.$lead->uuid);
     }
 
@@ -231,6 +231,7 @@ class CarAllocationService extends AllocationService
     public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource, $teamId)
     {
         $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
+        info('Users against tierID '.$tierId.' are: '.json_encode($tierUserIds->toArray()));
 
         $tierUserIds = $this->executeRevivalCheck($leadSource, $tierUserIds);
 
@@ -241,6 +242,7 @@ class CarAllocationService extends AllocationService
             } else {
                 $teamUserIds = [];
             }
+            info('TeamID is: '.$teamId.' and available users for this team are: '.json_encode($teamUserIds));
             $tierUserIds = array_intersect($tierUserIds->toArray(), $teamUserIds);
         }
 
@@ -261,8 +263,11 @@ class CarAllocationService extends AllocationService
 
             // If eligible users are found, log the results and return them.
             if ($eligibleUsers && count($eligibleUsers) > 0) {
+                info('Fetching Users with the availability status of: '.UserStatusEnum::getUserStatusText($status));
+
                 return $eligibleUsers->toArray();
             }
+            info('No Users were found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
         }
 
         // If no eligible users are found, return an empty array.
@@ -272,6 +277,8 @@ class CarAllocationService extends AllocationService
     public function getAdvisorsByStatus($status, $tierUserIds, $advisorId = null, $teamId = null)
     {
         $excludedUserIds = $this->getExcludedUserIds($teamId);
+
+        $excludedUserIds = $excludedUserIds ? $excludedUserIds->pluck('user_id')->toArray() : [];
 
         // Create a query to fetch lead allocations with their associated users.
         $query = LeadAllocation::with('leadAllocationUser')
@@ -285,7 +292,9 @@ class CarAllocationService extends AllocationService
                     ->orWhere('max_capacity', -1);
             })
             ->whereIn('user_id', $tierUserIds)
-            ->whereNotIn('user_id', $excludedUserIds)
+            ->when(! empty($excludedUserIds), function ($query) use ($excludedUserIds) {
+                $query->whereNotIn('user_id', $excludedUserIds);
+            })
             ->where('quote_type_id', QuoteTypes::CAR->id())
             ->orderBy('last_allocated');
 
@@ -369,6 +378,7 @@ class CarAllocationService extends AllocationService
     {
         // Extract user IDs from the eligible user data and convert them to an array.
         $availableUserIds = collect($eligibleUsers)->pluck('user_id')->toArray();
+        info('Available User IDs are: '.json_encode($availableUserIds));
 
         if (count($rules) > 0) {
             // If there are rules, retrieve user IDs from the rule records.
@@ -490,20 +500,8 @@ class CarAllocationService extends AllocationService
 
         // Attempt to find an existing car quote detail record for the given lead.
         $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $leadId)->first();
-
-        // Initialize a variable to store the old advisor assigned date.
-        $oldAdvisorAssignedDate = '';
-
-        if ($carQuoteDetail) {
-            // If a car quote detail record exists, store its old advisor assigned date.
-            $oldAdvisorAssignedDate = $carQuoteDetail->advisor_assigned_date;
-
-            // Update the existing quote detail record.
-            $this->updateExistingQuoteDetail($carQuoteDetail, $leadId);
-        } else {
-            // If no car quote detail record exists, create a new one.
-            $this->createNewQuoteDetail($leadId, CarQuoteRequestDetail::class, 'car_quote_request_id');
-        }
+        $oldAdvisorAssignedDate = $carQuoteDetail->advisor_assigned_date ?? '';
+        $this->upsertQuoteDetail($leadId, CarQuoteRequestDetail::class, 'car_quote_request_id');
 
         // Return the old advisor assigned date, if applicable.
         return $oldAdvisorAssignedDate;

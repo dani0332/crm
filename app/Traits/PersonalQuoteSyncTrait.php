@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Enums\QuoteSyncStatus;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypeShortCode;
 use App\Models\BikeQuote;
@@ -28,16 +29,41 @@ use App\Models\TravelQuoteRequestDetail;
 use App\Models\YachtQuote;
 use App\Models\YachtQuoteRequestDetail;
 use App\Repositories\PersonalQuoteRepository;
-use Exception;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 trait PersonalQuoteSyncTrait
 {
+    public $schemas = [];
+
+    public function cacheSchemas()
+    {
+        $this->schemas = [
+            'personal_quotes' => $this->getTableSchema('personal_quotes'),
+            'personal_quote_details' => $this->getTableSchema('personal_quote_details'),
+        ];
+    }
+
+    protected function getTableSchema($table)
+    {
+        $schema = [
+            'columns' => collect(Schema::getColumns($table))->keyBy('name')->all(),
+            'foreign_keys' => Schema::getForeignKeys($table),
+        ];
+
+        $schema['required_columns'] = $this->getRequiredColumns($schema['columns'], $schema['foreign_keys']);
+
+        return $schema;
+    }
+
     public function syncQuote($quote, $updatedFields)
     {
+        unset($updatedFields['created_at'], $updatedFields['updated_at']);
+        if (empty($updatedFields) || (count($updatedFields) <= 1 && isset($updatedFields['is_cold']))) {
+            return;
+        }
+
         $quoteTypeId = $this->getQuoteTypeId($quote::class);
         $uuid = $quote->uuid;
 
@@ -67,7 +93,6 @@ trait PersonalQuoteSyncTrait
 
     private function addQuoteSyncEntry($uuid, $quoteTypeId, $updatedFields)
     {
-        unset($updatedFields['created_at'], $updatedFields['updated_at']);
         QuoteSync::create([
             'is_synced' => 0,
             'quote_uuid' => $uuid,
@@ -82,8 +107,8 @@ trait PersonalQuoteSyncTrait
             if ($column === 'id' || $column === 'currently_insured_with') {
                 continue;
             }
-            if (Schema::hasColumn($quoteTable, $column)) {
-                $columnType = DB::getSchemaBuilder()->getColumnType($quoteTable, $column);
+            if (isset($this->schemas[$quoteTable]['columns'][$column])) {
+                $columnType = $this->schemas[$quoteTable]['columns'][$column]['type_name'];
                 $value = $this->formatColumnValue($columnType, $value);
                 if ($value !== null || $value !== '' || $value !== 'NULL') {
                     $quote->$column = $value;
@@ -103,53 +128,46 @@ trait PersonalQuoteSyncTrait
 
     private function processExistingQuote($quote, $entry)
     {
-        DB::transaction(function () use ($quote, $entry) {
-            if ($entry->quote_type_id) {
-                info('Entry for quote: '.$entry->quote_uuid.' found in personal quotes table');
-                try {
-                    $newValues = json_decode($entry->updated_fields, true);
-                    $this->syncTable($quote, $newValues, 'personal_quotes');
-                    $quote->quote_type_id = $entry->quote_type_id;
-                    $quote->save();
-                    $entry->update(['is_synced' => true, 'synced_at' => now()]);
-                    info('Entry for quote: '.$entry->quote_uuid.' updated in quote sync table');
-                } catch (Exception $e) {
-                    Log::error('QuoteSyncJob Error: '.$e->getMessage());
-                }
-            } else {
-                info('Entry for quote: '.$entry->quote_uuid.' found in personal quotes table but missing required fields');
-                $sourceQuote = $this->getQuoteRecord($entry->quote_type_id, $entry->quote_uuid);
-                if ($sourceQuote) {
-                    $this->syncTable($quote, $sourceQuote->getAttributes(), 'personal_quotes');
-                    $quote->quote_type_id = $entry->quote_type_id;
-                    $quote->save();
-                    $this->syncTable($quote, json_decode($entry->updated_fields, true), 'personal_quotes');
-                    $quote->quote_type_id = $entry->quote_type_id;
-                    $quote->save();
-                }
+        if ($entry->quote_type_id) {
+
+            // info('Entry for quote: '.$entry->quote_uuid.' found in personal quotes table');
+            $newValues = json_decode($entry->updated_fields, true);
+            $this->syncTable($quote, $newValues, 'personal_quotes');
+            $quote->quote_type_id = $entry->quote_type_id;
+            $quote->save();
+            QuoteSync::where('id', $entry->id)->update(['is_synced' => true, 'status' => QuoteSyncStatus::COMPLETED, 'synced_at' => now()]);
+            // info('Entry for quote: '.$entry->quote_uuid.' updated in quote sync table');
+
+        } else {
+
+            // info('Entry for quote: '.$entry->quote_uuid.' found in personal quotes table but missing required fields');
+            $sourceQuote = $this->getQuoteRecord($entry->quote_type_id, $entry->quote_uuid);
+            if ($sourceQuote) {
+                $this->syncTable($quote, $sourceQuote->getAttributes(), 'personal_quotes');
+                $quote->quote_type_id = $entry->quote_type_id;
+                $quote->save();
+                $this->syncTable($quote, json_decode($entry->updated_fields, true), 'personal_quotes');
+                $quote->quote_type_id = $entry->quote_type_id;
+                $quote->save();
+                QuoteSync::where('id', $entry->id)->update(['is_synced' => true, 'status' => QuoteSyncStatus::COMPLETED, 'synced_at' => now()]);
             }
-        });
+        }
 
         $this->upsertPersonalQuoteDetail($quote, json_decode($entry->updated_fields, true));
     }
 
     private function processQuoteNotFound($entry)
     {
-        info('Entry for quote: '.$entry->quote_uuid.' not found in personal quotes table');
+        // info('Entry for quote: '.$entry->quote_uuid.' not found in personal quotes table');
         $sourceQuote = $this->getQuoteRecord($entry->quote_type_id, $entry->quote_uuid);
 
         $personalQuote = null;
         if ($sourceQuote) {
-            try {
-                $newValues = json_decode($entry->updated_fields, true);
-                $personalQuote = $this->createPersonalQuoteFromSource($sourceQuote, $entry->quote_uuid, $entry->quote_type_id);
-                $this->syncTable($personalQuote, $newValues, 'personal_quotes');
-                $this->upsertPersonalQuoteDetail($personalQuote, $newValues);
-                $entry->update(['is_synced' => true, 'synced_at' => now()]);
-                info('Entry for quote: '.$personalQuote->id.' saved in personal quotes table');
-            } catch (Exception $e) {
-                Log::error('QuoteSyncJob Error: '.$e->getMessage().$e->getTraceAsString());
-            }
+            $newValues = json_decode($entry->updated_fields, true);
+            $personalQuote = $this->createPersonalQuoteFromSource($sourceQuote, $newValues, $entry->quote_uuid, $entry->quote_type_id);
+            $this->upsertPersonalQuoteDetail($personalQuote, $newValues);
+            QuoteSync::where('id', $entry->id)->update(['is_synced' => true, 'status' => QuoteSyncStatus::COMPLETED, 'synced_at' => now()]);
+            // info('Entry for quote: '.$personalQuote->id.' saved in personal quotes table');
         }
 
         return $personalQuote;
@@ -183,30 +201,27 @@ trait PersonalQuoteSyncTrait
      * @param  $sourceQuote  - Existing object of car/heath/travel/... quote
      * @param  $entry  - Entry from quote_sync table
      */
-    private function createPersonalQuoteFromSource($sourceQuote, $quoteUuid, $quoteTypeId)
+    private function createPersonalQuoteFromSource($sourceQuote, $newValues, $quoteUuid, $quoteTypeId)
     {
         $personalQuote = new PersonalQuote();
         $sourceAttributes = $sourceQuote->getAttributes();
         $this->syncTable($personalQuote, $sourceAttributes, 'personal_quotes');
         $personalQuote->quote_type_id = $quoteTypeId;
 
-        return DB::transaction(function () use ($personalQuote, $sourceAttributes, $quoteUuid, $quoteTypeId) {
-            $existingQuote = PersonalQuote::where('uuid', $quoteUuid)->where('quote_type_id', $quoteTypeId)->first();
-            if ($existingQuote) {
-                $this->syncTable($existingQuote, $sourceAttributes, 'personal_quotes');
-                $existingQuote->quote_type_id = $quoteTypeId;
-                $existingQuote->save();
+        // update missing required fields
+        $this->updateMissingFields($personalQuote, 'personal_quotes', $quoteTypeId);
+        $this->syncTable($personalQuote, $newValues, 'personal_quotes');
 
-                return $existingQuote;
-            } else {
+        $quoteTypeShortCode = QuoteTypeShortCode::getName($quoteTypeId);
+        $code = $quoteTypeShortCode.'-'.$quoteUuid;
+        $personalQuote = PersonalQuote::updateOrCreate(
+            [
+                'code' => $code,
+            ],
+            $personalQuote->getAttributes()
+        );
 
-                // update missing required fields
-                $this->updateMissingFields($personalQuote, 'personal_quotes', $quoteTypeId);
-                $personalQuote->save();
-
-                return $personalQuote;
-            }
-        });
+        return $personalQuote;
     }
 
     public function getQuoteTypeId($modelClassName)
@@ -275,23 +290,17 @@ trait PersonalQuoteSyncTrait
 
     private function upsertPersonalQuoteDetail($personalQuote, $newValues)
     {
-        $personalQuoteDetail = PersonalQuoteDetail::where('personal_quote_id', $personalQuote->id)->first();
-        $isNewInsert = false;
-        if (! $personalQuoteDetail) {
-            $isNewInsert = true;
-            $personalQuoteDetail = new PersonalQuoteDetail();
-        }
-
+        $personalQuoteDetail = new PersonalQuoteDetail();
         $this->syncTable($personalQuoteDetail, $newValues, 'personal_quote_details');
-
         $personalQuoteDetail->personal_quote_id = $personalQuote->id;
+        $this->updateMissingFields($personalQuoteDetail, 'personal_quote_details', $personalQuote->id);
 
-        if ($isNewInsert) {
-            // update missing required fields
-            $this->updateMissingFields($personalQuoteDetail, 'personal_quote_details', $personalQuote->id);
-        }
-
-        $personalQuoteDetail->save();
+        $personalQuoteDetail = PersonalQuoteDetail::updateOrCreate(
+            [
+                'personal_quote_id' => $personalQuote->id,
+            ],
+            $personalQuoteDetail->getAttributes()
+        );
 
         return $personalQuoteDetail;
     }
@@ -299,7 +308,7 @@ trait PersonalQuoteSyncTrait
     private function updateMissingFields($quote, $table, $identifier)
     {
 
-        $requiredFields = $this->getRequiredColumns($table);
+        $requiredFields = $this->schemas[$table]['required_columns'];
         if (! empty($requiredFields)) {
             $personalQuoteKeys = $quote->getAttributes();
             foreach ($requiredFields as $column => $detail) {
@@ -323,13 +332,12 @@ trait PersonalQuoteSyncTrait
     /**
      * Retrieve required columns for a table without defaults and excluding foreign keys
      *
-     * @param  $table  - Table name
+     * @param  $columns  - Column list
+     * @param  $foreignKeys  - Foriegn keys
      */
-    private function getRequiredColumns($table)
+    private function getRequiredColumns($columns, $foreignKeys)
     {
         $skipColumns = ['id'];
-        $columns = Schema::getColumns($table);
-        $foreignKeys = Schema::getForeignKeys($table);
         if (! empty($foreignKeys)) {
             $foreignKeys = collect($foreignKeys)->map(function ($foreignKey) {
                 return $foreignKey['columns'];

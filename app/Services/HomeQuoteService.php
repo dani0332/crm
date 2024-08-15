@@ -11,6 +11,7 @@ use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
 use App\Models\QuoteBatches;
 use App\Traits\AddPremiumAllLobs;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
 use Config;
@@ -24,6 +25,7 @@ class HomeQuoteService extends BaseService
     protected $query;
 
     use AddPremiumAllLobs;
+    use GenericQueriesAllLobs;
     use RolePermissionConditions;
 
     protected $leadAllocationService;
@@ -109,13 +111,15 @@ class HomeQuoteService extends BaseService
             'qrem.entity_type_code',
             'ent.industry_type_code',
             'ent.emirate_of_registration_id',
-            'hqr.price_without_vat',
+            'hqr.price_vat_applicable',
             'hqr.vat',
             'hqr.insurer_quote_number',
             'hqr.policy_issuance_status_id',
             'hqr.policy_issuance_status_other',
             'hqr.policy_start_date',
             'hqr.policy_issuance_date',
+            'hqr.policy_booking_date',
+            'hqr.insly_migrated',
         )
             ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
@@ -152,21 +156,9 @@ class HomeQuoteService extends BaseService
 
     public function getDetailEntity($id)
     {
-        $entity = HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
-        if (! $entity) {
-            $entity = $this->createDetailEntity($id);
-        }
-
-        return $entity;
-    }
-
-    public function createDetailEntity($id)
-    {
-        return HomeQuoteRequestDetail::create([
-            'home_quote_request_id' => $id,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
+        return HomeQuoteRequestDetail::firstOrCreate(
+            ['home_quote_request_id' => $id],
+        );
     }
 
     public function saveHomeQuote(Request $request)
@@ -238,7 +230,7 @@ class HomeQuoteService extends BaseService
             $dateTo = $this->parseDate($request['created_at_end'], true);
             $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
         }
-        if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
+        if (! empty($request->created_at_start) && ! empty($request->created_at_end) && empty($request->payment_due_date) && empty($request->booking_date)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
             $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
@@ -267,7 +259,10 @@ class HomeQuoteService extends BaseService
             $this->query->where('hqr.policy_number', $request->policy_number);
         }
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-            $this->query->where('hqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            $this->query->where(function ($query) use ($request) {
+                $query->where('hqr.policy_number', $request->previous_quote_policy_number)
+                    ->orWhere('hqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+            });
         }
         if (isset($request->renewal_batch) && $request->renewal_batch != '') {
             $this->query->where('hqr.renewal_batch', $request->renewal_batch);
@@ -282,7 +277,7 @@ class HomeQuoteService extends BaseService
         }
         if (Auth::user()->isSpecificTeamAdvisor('Home')) {
             // if user has advisor Role then fetch leads assigned to the user only
-            $this->query->where('hqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
+            $this->query->where('hqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
         }
 
         // quote_status filter
@@ -290,7 +285,7 @@ class HomeQuoteService extends BaseService
             $this->query->whereIn('quote_status_id', $request->quote_status);
         }
         // advisors filter
-        if (isset($request->advisors) && $request->advisors != '') {
+        if (isset($request->advisors) && is_array($request->advisors) && count($request->advisors) > 0) {
             $this->query->whereIn('advisor_id', $request->advisors);
         }
 
@@ -341,6 +336,8 @@ class HomeQuoteService extends BaseService
             }
         }
 
+        $this->adjustQueryByDateFilters($this->query, 'hqr');
+
         // sortBy filter
         if (isset($request->sortBy) && $request->sortBy != '') {
             return $this->query->orderBy($request->sortBy, $request->sortType);
@@ -389,15 +386,13 @@ class HomeQuoteService extends BaseService
 
     public function updateChildRecord($id)
     {
-        $childRecord = HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
-
-        if (empty($childRecord)) {
-            $childRecord = $this->createDetailEntity($id);
-        }
-
-        $childRecord->advisor_assigned_by_id = Auth::user()->id;
-        $childRecord->advisor_assigned_date = Carbon::now();
-        $childRecord->save();
+        HomeQuoteRequestDetail::updateOrCreate(
+            ['home_quote_request_id' => $id],
+            [
+                'advisor_assigned_date' => Carbon::now(),
+                'advisor_assigned_by_id' => Auth::user()->id,
+            ]
+        );
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
@@ -656,12 +651,13 @@ class HomeQuoteService extends BaseService
                             'paymentStatus',
                             'paymentMethod',
                             'documents',
+                            'verifiedByUser',
+                            'processJob',
                         ]);
                         $paymentSplit->orderBy('sr_no');
                     },
                 ]);
-                // This condition added to get the latest payment first for fetching Booking Details accordingly
-                $payment->orderBy('created_at', 'desc');
+                $payment->orderBy('created_at');
             },
         ])->first();
     }

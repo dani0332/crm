@@ -10,10 +10,10 @@ const loader = reactive({
 const page = usePage();
 
 let availableFilters = {
-  transaction_approved_dates:  ref([new Date(), new Date()]),
-  quote_type_id:'1',
-  teams:[],
-  userIds: []
+  transaction_approved_dates: ref([new Date(), new Date()]),
+  quote_type_id: '1',
+  teams: [],
+  userIds: [],
 };
 const { isRequired, isEmail } = useRules();
 const filters = reactive(availableFilters);
@@ -41,7 +41,7 @@ const tableHeader = [
   {
     text: 'Total Premium',
     value: 'total_premium',
-  }
+  },
 ];
 
 function onSubmit(isValid) {
@@ -65,7 +65,7 @@ function onSubmit(isValid) {
 function onReset() {
   router.visit('/reports/total-premium', {
     method: 'get',
-  data: {},
+    data: {},
     preserveScroll: true,
     onBefore: () => (loader.table = true),
     onSuccess: () => (loader.table = false),
@@ -86,16 +86,20 @@ function setQueryStringFilters() {
 }
 
 const fetchTeamUsers = () => {
-  axios.post('/get-users-by-team', { team_filter: filters.teams }).then(response => {
-    teamUsers.value = response.data;
-  })
-}
+  axios
+    .post('/get-users-by-team', { team_filter: filters.teams })
+    .then(response => {
+      teamUsers.value = response.data;
+    });
+};
 
 const fetchTeamsAgainstQuoteType = () => {
-  axios.post('/get-teams-by-product', {quote_type_id: filters.quote_type_id}).then(response => {
-    teamOptions.value = response.data.teams;
-  })
-}
+  axios
+    .post('/get-teams-by-product', { quote_type_id: filters.quote_type_id })
+    .then(response => {
+      teamOptions.value = response.data.teams;
+    });
+};
 
 onMounted(() => {
   setQueryStringFilters();
@@ -107,7 +111,7 @@ onMounted(() => {
   <div>
     <Head title="Total Premium Report" />
     <h1 class="text-2xl font-bold text-center text-primary-500 mb-4">
-        Total Premium Report
+      Total Premium Report
     </h1>
 
     <x-divider class="my-4" />
@@ -137,26 +141,26 @@ onMounted(() => {
           v-model="filters.teams"
           label="Teams"
           placeholder="Search by Teams"
-          :options="teamOptions.map(team  => ({
-            value: team.id,
-            label: team.name,
-          }))"
+          :options="
+            teamOptions.map(team => ({
+              value: team.id,
+              label: team.name,
+            }))
+          "
           @update:modelValue="fetchTeamUsers"
-          select-all
-          deselect-all
         />
 
-      <ComboBox
-        v-model="filters.userIds"
-        label="Advisor"
-        placeholder="Search by Advisor"
-        :options="teamUsers.map(user => ({
-          value: user.id,
-          label: user.name
-        }))"
-        select-all
-        deselect-all
-      />
+        <ComboBox
+          v-model="filters.userIds"
+          label="Advisor"
+          placeholder="Search by Advisor"
+          :options="
+            teamUsers.map(user => ({
+              value: user.id,
+              label: user.name,
+            }))
+          "
+        />
       </div>
       <div class="flex justify-end gap-3 mb-4">
         <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>

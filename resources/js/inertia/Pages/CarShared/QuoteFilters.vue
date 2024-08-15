@@ -13,7 +13,7 @@ const props = defineProps({
   dynamic_route: {
     type: String,
     default: '',
-    required: true
+    required: true,
   },
 });
 
@@ -77,7 +77,7 @@ const advisorOptions = computed(() => {
 
 const filters = reactive({
   code: '',
-    quote_batch_id: [],
+  quote_batch_id: [],
   first_name: '',
   last_name: '',
   email: '',
@@ -89,15 +89,15 @@ const filters = reactive({
   payment_status_id: [],
   is_ecommerce: '',
   quote_status_id: [],
-    tier_id: [],
-    vehicle_type_id: '',
-    car_type_insurance_id: '',
+  tier_id: [],
+  vehicle_type_id: '',
+  car_type_insurance_id: '',
   currently_insured_with: '',
   renewal_batch: '',
   renewal_expiry_date_start: '',
   renewal_expiry_date_end: '',
   policy_number: '',
-    advisor_id: [],
+  advisor_id: [],
   page: 1,
 });
 
@@ -345,29 +345,26 @@ onMounted(() => {
           placeholder="Search by Tier"
           :options="tierOptions"
         />
-        <x-select
+        <ComboBox
           v-model="filters.vehicle_type_id"
           label="Vehicle Type"
-          name="vehicle_type_id"
           placeholder="Search by Vehicle Type"
           :options="vehicleTypeOptions"
-          class="w-full"
+          :single="true"
         />
-        <x-select
+        <ComboBox
           v-model="filters.car_type_insurance_id"
           label="Type of Car Insurance"
-          name="car_type_insurance_id"
           placeholder="Search by Type of Car Insurance"
           :options="typeOfInsuranceOptions"
-          class="w-full"
+          :single="true"
         />
-        <x-select
+        <ComboBox
           v-model="filters.currently_insured_with"
           label="Currently Insured With"
-          name="currently_insured_with"
           placeholder="Search by Currently Insured With"
           :options="currentlyInsuredWith"
-          class="w-full"
+          :single="true"
         />
         <x-input
           v-model="filters.renewal_batch"

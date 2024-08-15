@@ -104,7 +104,6 @@ class LeadAllocationService extends BaseService
             return false;
         }
         try {
-            DB::beginTransaction();
             $leadAllocation = new LeadAllocation();
             $leadAllocation->user_id = $userId;
             $leadAllocation->allocation_count = 0;
@@ -113,26 +112,20 @@ class LeadAllocationService extends BaseService
             $leadAllocation->quote_type_id = $allocationRequest->quoteTypeId ?? null;
             $leadAllocation->is_available = false;
             $leadAllocation->save();
-
-            DB::commit();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
-            DB::rollback();
         }
     }
 
     public function updateUserAllocationRecord($userId, $allocationCount, $maxCapacity, $isAvailable, $quoteTypeId = null)
     {
         try {
-            DB::beginTransaction();
             $leadAllocation = LeadAllocation::where('user_id', $userId);
             if (! empty($quoteTypeId)) {
                 $leadAllocation = $leadAllocation->where('quote_type_id', $quoteTypeId);
             }
             $leadAllocation = $leadAllocation->first();
             if (! $leadAllocation) {
-                DB::commit();
-
                 return false;
             }
             if (isset($allocationCount)) {
@@ -149,10 +142,9 @@ class LeadAllocationService extends BaseService
             }
 
             $leadAllocation->save();
-            DB::commit();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
-            DB::rollback();
+
         }
     }
 
@@ -456,7 +448,7 @@ class LeadAllocationService extends BaseService
     public function getLeadAllocationRecordByUserId($userId, $quoteTypeId = null)
     {
         try {
-            $leadAllocation = LeadAllocation::latest()->where('user_id', $userId);
+            $leadAllocation = LeadAllocation::where('user_id', $userId);
             if (! empty($quoteTypeId)) {
                 $leadAllocation = $leadAllocation->where('quote_type_id', $quoteTypeId);
             }
@@ -668,23 +660,15 @@ class LeadAllocationService extends BaseService
 
     public function updateCarLeadDetailRecord($leadId)
     {
-        info('---- Inside updateCarLeadDetailRecord');
-        $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $leadId)->first();
-        if ($carQuoteDetail) {
-            $carQuoteDetail->advisor_assigned_date = now();
-            $carQuoteDetail->advisor_assigned_by_id = auth()->id();
-            $carQuoteDetail->save();
-            info('---- updateCarLeadDetailRecord - update done for advisor data and by id');
-        } else {
-            info('---- updateCarLeadDetailRecord - record not found creating new entry');
-            CarQuoteRequestDetail::create([
-                'car_quote_request_id' => $leadId,
+        info('---- Inside updateCarLeadDetailRecord - leadId : '.$leadId);
+        $upsertRecord = CarQuoteRequestDetail::updateOrCreate(
+            ['car_quote_request_id' => $leadId],
+            [
                 'advisor_assigned_date' => now(),
                 'advisor_assigned_by_id' => auth()->id(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
+            ]
+        );
+        info('---- updateCarLeadDetailRecord - updateOrCreate done for advisor data and by id - leadId : '.$leadId.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
     }
 
     public function getCarUnallocatedLeads()
@@ -1067,6 +1051,26 @@ class LeadAllocationService extends BaseService
         } catch (\Exception $e) {
             Log::error($e->getMessage());
         }
+    }
+
+    public function isCommercialVehicles($lead)
+    {
+        $isCommercial = false;
+        $commercialCarModel = CarModel::where('id', $lead->car_model_id)
+            ->where('is_commercial', true)
+            ->count();
+
+        if ($commercialCarModel) {
+            $isCommercial = true;
+        }
+
+        $commercialKeywords = CommercialKeyword::select('id', 'name')->get();
+        $commercialKeywordsCheck = in_array(strtolower(trim($lead->full_name)), array_column($commercialKeywords->toArray(), strtolower(trim('name'))));
+        if ($commercialKeywordsCheck) {
+            $isCommercial = true;
+        }
+
+        return $isCommercial;
     }
 
 }

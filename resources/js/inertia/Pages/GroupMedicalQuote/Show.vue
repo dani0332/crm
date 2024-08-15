@@ -1,7 +1,7 @@
 <script setup>
-import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
+import EntityRiskRatingScoreDetails from '../../Components/EntityRiskRatingScoreDetails.vue';
 
 defineProps({
   quote: Object,
@@ -30,11 +30,12 @@ defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   linkedQuoteDetails: Object,
-  record: Object,
   permissions: Object,
   enums: Object,
   bookPolicyDetails: Array,
   payments: Array,
+  lockLeadSectionsDetails: Object,
+  paymentDocument: Array,
 });
 
 const page = usePage();
@@ -123,7 +124,6 @@ const leadStatusForm = useForm({
   assigned_to_user_id: page.props.quote.advisor_id,
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quoteDetails.notes || null,
-  trans_code: page.props.quote.transapp_code || null,
   lostReason: page.props.quoteDetails.lost_reason_id || null,
 });
 
@@ -347,6 +347,12 @@ const linkEntity = () => {
     })
     .finally(() => (loader.tradeDetail = false));
 };
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
@@ -364,108 +370,148 @@ watch(
     }
   },
 );
+
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
+  createReusableTemplate();
+const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
+  createReusableTemplate();
 </script>
 
 <template>
   <div>
-    <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
-      <template #header> Duplicate Lead </template>
-      <x-form @submit="onCreateDuplicate" :auto-focus="false">
-        <div class="grid gap-4">
-          <x-select
-            v-model="leadDuplicateForm.lob_team"
-            label="LOBs"
-            :options="
-              allowedDuplicateLOB.map(lob => ({
-                value: lob,
-                label: lob,
-              }))
-            "
-            :rules="[isRequired]"
-            placeholder="Select LOB For Duplication"
-            class="w-full"
-            multiple
-          />
-          <x-select
-            v-model="leadDuplicateForm.lob_team_sub_selection"
-            label="Reason"
-            :rules="[isRequired]"
-            class="w-full"
-            :options="[
-              { value: 'new_enquiry', label: 'New enquiry' },
-              { value: 'record_only', label: 'Record purposes only' },
-            ]"
-          />
-          <x-button
-            color="orange"
-            type="submit"
-            :loading="leadDuplicateForm.processing"
-          >
-            Create Duplicate
+    <Head title="Group Medical Lead Detail" />
+    <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
+      <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
+      <div
+        class="flex gap-2 mb-3 justify-end"
+        v-if="readOnlyMode.isDisable === true"
+      >
+        <Link
+          v-if="
+            quoteDetails?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)
+          "
+          :href="`/legacy-policy/${quoteDetails?.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
           </x-button>
-        </div>
-      </x-form>
+        </Link>
+        <Link
+          v-else-if="
+            quote.source == leadSource.RENEWAL_UPLOAD &&
+            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+          "
+          :href="
+            route(
+              'view-legacy-policy.renewal-uploads',
+              quote.previous_quote_policy_number,
+            )
+          "
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <x-button
+          v-if="isDuplicateAllowed"
+          size="sm"
+          color="#ff5e00"
+          @click.prevent="openDuplicate"
+        >
+          Duplicate Lead
+        </x-button>
+        <Link :href="route('amt.index')" preserve-scroll>
+          <x-button size="sm" color="primary" tag="div">
+            Group Medical List
+          </x-button>
+        </Link>
+        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+          <Link v-if="!isDisabled" :href="route('amt.edit', quote.uuid)">
+            <x-button size="sm" tag="div">Edit</x-button>
+          </Link>
+          <x-button v-else :disabled="isDisabled" size="sm" tag="div"
+            >Edit</x-button
+          >
+        </LeadEditBtnTemplate>
+
+        <x-tooltip
+          v-if="lockLeadSectionsDetails.lead_details"
+          placement="bottom"
+        >
+          <LeadEditBtnReuseTemplate
+            v-if="!can(permissionsEnum.canEditQuote)"
+            :isDisabled="true"
+          />
+          <template #tooltip
+            >This lead is now locked as the policy has been booked. If changes
+            are needed, go to 'Send Update', select 'Add Update', and choose
+            'Correction of Policy'</template
+          >
+        </x-tooltip>
+        <template v-else>
+          <LeadEditBtnReuseTemplate v-if="!can(permissionsEnum.canEditQuote)" />
+        </template>
+      </div>
+    </div>
+    <x-modal
+      v-model="modals.duplicate"
+      size="md"
+      title="Duplicate Lead"
+      show-close
+      backdrop
+      is-form
+      @submit="onCreateDuplicate"
+    >
+      <div class="grid gap-4">
+        <x-select
+          v-model="leadDuplicateForm.lob_team"
+          label="LOBs"
+          :options="
+            allowedDuplicateLOB.map(lob => ({
+              value: lob,
+              label: lob,
+            }))
+          "
+          :rules="[isRequired]"
+          placeholder="Select LOB For Duplication"
+          class="w-full"
+          multiple
+        />
+        <x-select
+          v-model="leadDuplicateForm.lob_team_sub_selection"
+          label="Reason"
+          :rules="[isRequired]"
+          class="w-full"
+          :options="[
+            { value: 'new_enquiry', label: 'New enquiry' },
+            { value: 'record_only', label: 'Record purposes only' },
+          ]"
+        />
+      </div>
+      <template #secondary-action>
+        <x-button ghost tabindex="-1" @click="modals.duplicate = false"
+          >Cancel</x-button
+        >
+      </template>
+      <template #primary-action>
+        <x-button
+          color="orange"
+          type="submit"
+          :loading="leadDuplicateForm.processing"
+        >
+          Create Duplicate
+        </x-button>
+      </template>
     </x-modal>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div class="flex justify-between items-center flex-wrap gap-2">
-            <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
-          </div>
+          <div class="flex justify-between items-center flex-wrap gap-2"></div>
         </template>
         <template #body>
-          <x-divider class="my-4" />
-          <div class="flex gap-2 mb-3 justify-end">
-            <Link
-              v-if="
-                quoteDetails?.insly_id &&
-                can(permissionsEnum.VIEW_LEGACY_DETAILS)
-              "
-              :href="`/legacy-policy/${quoteDetails?.insly_id}`"
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-            <Link
-              v-else-if="
-                quote.source == leadSource.RENEWAL_UPLOAD &&
-                can(permissionsEnum.VIEW_LEGACY_DETAILS)
-              "
-              :href="
-                route(
-                  'view-legacy-policy.renewal-uploads',
-                  quote.previous_quote_policy_number,
-                )
-              "
-              preserve-scroll
-            >
-              <x-button size="sm" color="#ff5e00" tag="div">
-                View Legacy policy
-              </x-button>
-            </Link>
-            <x-button
-              v-if="isDuplicateAllowed"
-              size="sm"
-              color="#ff5e00"
-              @click.prevent="openDuplicate"
-            >
-              Duplicate Lead
-            </x-button>
-            <Link :href="route('amt.index')" preserve-scroll>
-              <x-button size="sm" color="primary" tag="div">
-                Group Medical List
-              </x-button>
-            </Link>
-            <Link
-              v-if="!can(permissionsEnum.canEditQuote)"
-              :href="route('amt.edit', quote.uuid)"
-            >
-              <x-button size="sm" tag="div">Edit</x-button>
-            </Link>
-          </div>
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div
@@ -477,7 +523,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -581,7 +627,7 @@ watch(
 
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -610,7 +656,7 @@ watch(
                 v-if="linkedQuoteDetails.childLeadsCount == 1"
               >
                 <div>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -714,6 +760,7 @@ watch(
                       color="primary"
                       class="mt-1"
                       :loading="loader.tradeSearch"
+                      v-if="readOnlyMode.isDisable === true"
                     >
                       Search
                     </x-button>
@@ -767,8 +814,15 @@ watch(
                     />
                   </dd>
                 </div>
+                <EntityRiskRatingScoreDetails
+                  :quote="quote"
+                  :modelType="'business'"
+                />
               </dl>
-              <div class="flex justify-end">
+              <div
+                class="flex justify-end"
+                v-if="readOnlyMode.isDisable === true"
+              >
                 <x-button
                   v-if="isProfileUpdateAllow"
                   class="mt-4"
@@ -803,17 +857,17 @@ watch(
           </dd>
         </div>
       </dl>
-      <div class="flex justify-end">
+      <template #actions>
         <x-button
-          class="mt-4"
           color="primary"
           size="sm"
           :loading="customerProfileForm.processing"
           @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
         >
           Search
         </x-button>
-      </div>
+      </template>
     </x-modal>
 
     <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
@@ -857,17 +911,18 @@ watch(
             />
           </dd>
         </div>
-        <div class="text-left space-x-4">
-          <x-button
-            size="sm"
-            color="orange"
-            @click.prevent="linkEntity"
-            :loading="loader.tradeDetail"
-          >
-            Link
-          </x-button>
-        </div>
       </dl>
+      <template #actions>
+        <x-button
+          size="sm"
+          color="orange"
+          @click.prevent="linkEntity"
+          :loading="loader.tradeDetail"
+          v-if="readOnlyMode.isDisable === true"
+        >
+          Link
+        </x-button>
+      </template>
     </x-modal>
 
     <UBODetails
@@ -903,7 +958,7 @@ watch(
       :expanded="sectionExpanded"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
@@ -920,10 +975,13 @@ watch(
                   label="Status"
                   :options="leadStatusOptions"
                   :disabled="
-                    quote.quote_status_id == quoteStatusEnum.TransactionApproved
+                    quote.quote_status_id ==
+                      quoteStatusEnum.TransactionApproved ||
+                    lockLeadSectionsDetails.lead_status
                   "
                   placeholder="Lead Status"
                   class="w-full"
+                  filterable
                 />
                 <x-textarea
                   v-model="leadStatusForm.notes"
@@ -932,26 +990,14 @@ watch(
                   placeholder="Lead Notes"
                   class="w-full"
                   :disabled="
-                    quote.quote_status_id == quoteStatusEnum.TransactionApproved
+                    quote.quote_status_id ==
+                      quoteStatusEnum.TransactionApproved ||
+                    lockLeadSectionsDetails.lead_status
                   "
                 />
               </div>
             </div>
             <div class="w-full md:w-2/3">
-              <x-input
-                v-if="
-                  leadStatusForm.leadStatus ==
-                  quoteStatusEnum.TransactionApproved
-                "
-                :disabled="
-                  quote.quote_status_id == quoteStatusEnum.TransactionApproved
-                "
-                v-model="leadStatusForm.trans_code"
-                label="TransApp Code"
-                placeholder="TransApp Code is required"
-                class="w-full"
-                :error="leadStatusForm.errors.trans_code"
-              />
               <x-select
                 v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
                 v-model="leadStatusForm.lostReason"
@@ -965,6 +1011,7 @@ watch(
                 placeholder="Lost Reason is required"
                 class="w-full"
                 :error="leadStatusForm.errors.lostReason"
+                :disabled="lockLeadSectionsDetails.lead_status"
               />
               <x-field label="Transaction Type">
                 <x-input
@@ -976,7 +1023,7 @@ watch(
               </x-field>
             </div>
           </div>
-          <div class="flex justify-end">
+          <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
             <x-button
               class="mt-4"
               color="emerald"
@@ -984,11 +1031,26 @@ watch(
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
               :disabled="
-                quote.quote_status_id == quoteStatusEnum.TransactionApproved
+                quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
+                isDisabled
               "
+              v-if="readOnlyMode.isDisable === true"
             >
               Change Status
             </x-button>
+          </StatusUpdateButtonTemplate>
+          <div class="flex justify-end">
+            <x-tooltip
+              v-if="lockLeadSectionsDetails.lead_status"
+              placement="bottom"
+            >
+              <StatusUpdateButtonReuseTemplate :isDisabled="true" />
+              <template #tooltip>
+                The lead status cannot be manually updated once it has reached
+                'Transaction Approved'
+              </template>
+            </x-tooltip>
+            <StatusUpdateButtonReuseTemplate v-else />
           </div>
         </template>
       </Collapsible>
@@ -1008,23 +1070,17 @@ watch(
       :quoteType="page.props.quoteType"
       :payments="quote.payments"
     />
+
     <PaymentTableNew
       v-if="isNewPaymentStructure"
       :quoteType="page.props.quoteType"
       :payments="quote.payments"
+      :paymentDocument="paymentDocument"
       :proformaPayment="
         quote.payments.find(
           item =>
             item.payment_methods_code ===
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
-        )
-      "
-      :paymentDocument="
-        documentTypes.filter(
-          item =>
-            item.code === 'GMQPD' ||
-            item.code === 'GMQPDR' ||
-            item.code === 'GMQDPDR',
         )
       "
       :quoteRequest="quote"
@@ -1043,18 +1099,19 @@ watch(
 
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
-      :record="record"
+      :quote="quote"
       modelType="Business"
       :expanded="sectionExpanded"
     />
 
-    <QuoteDocuments
+    <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
       :insly-id="quoteDetails?.insly_id"
       :expanded="sectionExpanded"
+      quoteType="Business"
     />
 
     <BookPolicy
@@ -1064,7 +1121,7 @@ watch(
           permissionEnum.SEND_INSLY_BOOK_POLICY,
         ])
       "
-      :quote="record"
+      :quote="quote"
       quoteType="Business"
       modelType="Group Medical"
       :bookPolicyDetails="bookPolicyDetails"

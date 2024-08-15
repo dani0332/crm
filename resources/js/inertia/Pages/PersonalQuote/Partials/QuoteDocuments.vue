@@ -1,7 +1,4 @@
 <script setup>
-import { fileUploadErrorMessage } from '@/inertia/Composables/utilities.js';
-import { computed } from 'vue';
-
 const props = defineProps({
   quote: Object,
   quoteDocuments: Object,
@@ -18,7 +15,7 @@ const props = defineProps({
     required: false,
     default: () => ({}),
   },
-  selectedCategory: {
+  sendUpdateLog: {
     type: Object,
     required: true,
   },
@@ -26,21 +23,27 @@ const props = defineProps({
     type: String,
     required: false,
   },
+  quoteType: {
+    type: String,
+    required: false,
+  },
 });
 
 const page = usePage();
+const selectedTab = ref(0);
 const notification = useNotifications('toast');
 const sendUpdateStatusEnum = page.props.sendUpdateStatusEnum;
 
-const rowsPerPage = props.extras?.pageType === 'send-update-log' ? 10 : 15;
+const rowsPerPage = props.extras?.pageType === 'send-update' ? 10 : 15;
 const isSendUpdatePage =
-  props.extras?.pageType === 'send-update-log' ? true : false;
+  props.extras?.pageType === 'send-update' ? true : false;
 const isUploading = ref(false);
 const memberTabs = ref('quote-documents');
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const leadSource = page.props.leadSource;
+const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
 
 const quoteDocumentsTable = reactive({
   isLoading: false,
@@ -60,6 +63,10 @@ const quoteDocumentsTable = reactive({
     {
       text: 'Created By',
       value: 'created_by.email',
+    },
+    {
+      text: 'Action',
+      value: 'action',
     },
   ],
 });
@@ -98,14 +105,25 @@ const confirmDeleteDoc = () => {
   );
 };
 
+const isStating = ref(false);
+const isLoading = ref(false);
+const isNotConfirmed = ref(false);
+const loader = reactive({
+  sendUpdateSectionBtn: false,
+  sendUpdate: false,
+  selectInvoice: false,
+});
+
 const modals = reactive({
+  sendConfirm: false,
+  isConfirmed: false,
   doc: false,
   docConfirm: false,
 });
 
 const docForm = useForm({
-  quote_id: usePage().props.quote.id || null,
-  quote_uuid: usePage().props.quote.code || null,
+  quote_id: page.props.quote.id || null,
+  quote_uuid: page.props.quote.code || null,
   quote_type_id: null,
   document_type_code: null,
   file: null,
@@ -121,7 +139,7 @@ const uploadFile = (doc, filesWithInfo, memberId) => {
       title: 'File upload failed',
       position: 'top',
     });
-    docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
+    docForm.setError({ error: useFileUploadErrorMessage(doc, rejectReason) });
     return false;
   }
   isUploading.value = true;
@@ -150,18 +168,23 @@ const uploadFile = (doc, filesWithInfo, memberId) => {
       },
     });
 };
-
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 const isEN = computed(() => {
   return (
     isSendUpdatePage &&
-    props.selectedCategory?.subCategory.slug === sendUpdateStatusEnum.EN
+    props.sendUpdateLog.category.code === sendUpdateStatusEnum.EN
   );
 });
 
 const isCPU = computed(() => {
   return (
     isSendUpdatePage &&
-    props.selectedCategory?.subCategory.slug === sendUpdateStatusEnum.CPU
+    props.sendUpdateLog.category.code === sendUpdateStatusEnum.CPU
   );
 });
 
@@ -169,22 +192,22 @@ const sendUpdateButton = computed(() => {
   return (
     (isEN.value || isCPU.value) &&
     props.updateBtn &&
-    props.updateBtn !== 'Send Update' &&
-    can(permissionsEnum.SEND_UPDATE_TO_CUSTOMER_BUTTON)
+    props.updateBtn !== sendUpdateStatusEnum.SU
   );
 });
+
 const sendUpdateValidation = () => {
+  loader.sendUpdateSectionBtn = true;
   axios
-    .post('send-update-validation', {
+    .post('send-update-customer-validation', {
       quoteType: props.quoteType,
-      quoteUuid: props.realQuote.uuid,
+      quoteUuid: props.quote.uuid,
       sendUpdateId: props.sendUpdateLog.id,
+      action: sendUpdateStatusEnum?.ACTION_SUC,
     })
     .then(response => {
-      if (response.status == 200) {
-        modals.sendConfirm = true;
-        isStating.value = response.data.message;
-      }
+      modals.sendConfirm = true;
+      isStating.value = response.data.message;
     })
     .catch(function (errors) {
       let responseError = errors.response.data.errors.error;
@@ -194,8 +217,78 @@ const sendUpdateValidation = () => {
           position: 'top',
         });
       });
+    })
+    .finally(() => {
+      loader.sendUpdateSectionBtn = false;
     });
 };
+
+const permissionEnum = page.props.permissionsEnum;
+
+const [sendUpdateCustConfirmBtnTemp, SendUpdateCustReuseBtnTemp] =
+  createReusableTemplate();
+
+const submitToCustomer = () => {
+  if (!modals.isConfirmed) {
+    isNotConfirmed.value = true;
+    return;
+  }
+  isLoading.value = true;
+  let url = 'send-update-to-customer';
+  let data = {
+    sendUpdateId: props.sendUpdateLog.id,
+    quoteType: props.quoteType,
+    action: sendUpdateStatusEnum?.ACTION_SUC,
+    isEmailSent: props.sendUpdateLog.is_email_sent,
+  };
+  axios
+    .post(url, data)
+    .then(response => {
+      if (response.status == 200) {
+        Object.keys(response.data).forEach(function (key) {
+          notification.success({
+            title: response.data[key],
+            position: 'top',
+          });
+        });
+        router.reload({ preserveState: true });
+        modals.sendConfirm = isLoading.value = false;
+      }
+    })
+    .catch(err => {
+      const flash_messages = err.response.data.errors;
+      Object.keys(flash_messages).forEach(function (key) {
+        notification.error({
+          title: flash_messages[key],
+          position: 'top',
+        });
+      });
+    })
+    .finally(() => {
+      modals.sendConfirm = false;
+      isLoading.value = false;
+      isNotConfirmed.value = false;
+    });
+};
+
+const sendUpdatePermissionCheck = computed(() => {
+  if (
+    props.updateBtn === sendUpdateStatusEnum.SUC &&
+    props.sendUpdateLog.status === sendUpdateStatusEnum.UPDATE_SENT_TO_CUSTOMER
+  ) {
+    return true;
+  }
+
+  if (props.updateBtn === sendUpdateStatusEnum.SU) {
+    return !can(permissionEnum.BOOK_UPDATE_BUTTON);
+  } else if (props.updateBtn === sendUpdateStatusEnum.SUC) {
+    return !can(permissionEnum.SEND_UPDATE_TO_CUSTOMER_BUTTON);
+  } else if (props.updateBtn === sendUpdateStatusEnum.SNBU) {
+    return !can(permissionEnum.SEND_AND_BOOK_UPDATE_BUTTON);
+  }
+
+  return true;
+});
 </script>
 
 <template>
@@ -212,6 +305,13 @@ const sendUpdateValidation = () => {
       <template #body>
         <x-divider class="my-4" />
         <div class="flex gap-2 mb-4 justify-end">
+          <DownloadDocuments
+            v-if="can(permissionsEnum.DOWNLOAD_ALL_DOCUMENTS)"
+            :quote="page.props.quote"
+            :quoteDocuments="
+              page.props.quote.documents ?? page.props.quoteDocuments
+            "
+          />
           <Link
             v-if="inslyId && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
             :href="`/legacy-policy/${inslyId}`"
@@ -259,7 +359,10 @@ const sendUpdateValidation = () => {
               {{ item.original_name }}
             </a>
           </template>
-          <template #item-action="{ doc_name }" v-if="!isSendUpdatePage">
+          <template
+            #item-action="{ doc_name }"
+            v-if="can(permissionEnum.DOCUMENT_DELETE)"
+          >
             <div>
               <x-button
                 size="xs"
@@ -278,7 +381,9 @@ const sendUpdateValidation = () => {
             color="orange"
             class="mt-5"
             v-if="sendUpdateButton"
+            :loading="loader.sendUpdateSectionBtn"
             @click="sendUpdateValidation"
+            :disabled="sendUpdatePermissionCheck"
           >
             {{ props.updateBtn }}
           </x-button>
@@ -286,9 +391,13 @@ const sendUpdateValidation = () => {
       </template>
     </Collapsible>
 
-    <x-modal v-model="modals.doc" size="xl" show-close backdrop>
-      <template #header> Upload Documents </template>
-
+    <x-modal
+      v-model="modals.doc"
+      size="xl"
+      title="Upload Documents"
+      show-close
+      backdrop
+    >
       <x-alert
         color="error"
         class="mb-5"
@@ -299,45 +408,84 @@ const sendUpdateValidation = () => {
         </ul>
       </x-alert>
 
-      <div
-        v-for="documentType in documentTypes"
-        :key="documentType.id"
-        class="grid md:grid-cols-2 gap-2 my-4 border-b"
-      >
-        <div class="flex flex-col gap-1">
-          <h5 class="text-sm font-semibold">
-            {{ documentType.text }} {{ documentType.is_required ? '*' : '' }}
-          </h5>
-          <p class="text-xs">Max files: {{ documentType.max_files }}</p>
-          <p class="text-xs">Supported: {{ documentType.accepted_files }}</p>
-          <p class="text-xs">Max file size: {{ documentType.max_size }} MB</p>
-        </div>
-        <div class="pb-4">
-          <Dropzone
-            :id="documentType.id"
-            :accept="documentType.accepted_files"
-            :max-files="documentType.max_files"
-            :max-size="documentType.max_size"
-            :loading="docForm.processing"
-            @change="uploadFile(documentType, $event)"
-          />
-          <a
-            v-for="quoteDocument in quoteDocuments.filter(
-              d => d.document_type_code == documentType.code,
-            )"
-            :key="quoteDocument.id"
-            :href="storageUrl + quoteDocument.doc_url"
-            target="_blank"
-            class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+      <x-tab-group v-model="selectedTab" variant="block">
+        <x-tab
+          :value="index"
+          :label="key.replace(/_/g, ' ')"
+          v-for="(docType, key, index) in documentTypes"
+        >
+          <div
+            v-for="documentType in docType"
+            :key="documentType.id"
+            class="grid md:grid-cols-2 gap-2 my-4 border-b"
           >
-            {{ quoteDocument.original_name || quoteDocument.doc_name }}
-          </a>
-        </div>
-      </div>
+            <div class="flex flex-col gap-1">
+              <h5 class="text-sm font-semibold">
+                {{ documentType.text }}
+                <span class="text-red-500">{{
+                  documentType.is_required ? '*' : ''
+                }}</span>
+              </h5>
+              <p class="text-xs">Max files: {{ documentType.max_files }}</p>
+              <p class="text-xs">
+                Supported: {{ documentType.accepted_files }}
+              </p>
+              <p class="text-xs">
+                Max file size: {{ documentType.max_size }} MB
+              </p>
+            </div>
+            <div class="pb-4">
+              <Dropzone
+                :id="documentType.id"
+                :accept="documentType.accepted_files"
+                :max-files="documentType.max_files"
+                :max-size="documentType.max_size"
+                :loading="docForm.processing"
+                @change="uploadFile(documentType, $event)"
+                :isDisabled="
+                  documentType.code ==
+                    documentTypeCodeEnum.SEND_UPDATE_AUDIT_RECORD &&
+                  !can(permissionEnum.AUDITDOCUMENT_UPLOAD)
+                "
+              />
+              <div v-if="isSendUpdatePage">
+                <a
+                  v-for="quoteDocument in quoteDocuments.filter(
+                    d => d.document_type_text == documentType.text,
+                  )"
+                  :key="quoteDocument.id"
+                  :href="storageUrl + quoteDocument.doc_url"
+                  target="_blank"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                >
+                  {{ quoteDocument.original_name || quoteDocument.doc_name }}
+                </a>
+              </div>
+              <div v-else>
+                <a
+                  v-for="quoteDocument in quoteDocuments.filter(
+                    d => d.document_type_code == documentType.code,
+                  )"
+                  :key="quoteDocument.id"
+                  :href="storageUrl + quoteDocument.doc_url"
+                  target="_blank"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                >
+                  {{ quoteDocument.original_name || quoteDocument.doc_name }}
+                </a>
+              </div>
+            </div>
+          </div>
+        </x-tab>
+      </x-tab-group>
     </x-modal>
 
-    <x-modal v-model="modals.docConfirm" show-close backdrop>
-      <template #header> Delete Document </template>
+    <x-modal
+      v-model="modals.docConfirm"
+      title="Delete Document"
+      show-close
+      backdrop
+    >
       <p>Are you sure you want to delete this document?</p>
       <template #actions>
         <div class="text-right space-x-4">
@@ -352,6 +500,60 @@ const sendUpdateValidation = () => {
           >
             Delete
           </x-button>
+        </div>
+      </template>
+    </x-modal>
+
+    <sendUpdateCustConfirmBtnTemp>
+      <x-button
+        size="sm"
+        color="error"
+        @click.prevent="submitToCustomer"
+        :disabled="!modals.isConfirmed"
+        :loading="isLoading"
+      >
+        Confirm
+      </x-button>
+    </sendUpdateCustConfirmBtnTemp>
+
+    <x-modal
+      v-model="modals.sendConfirm"
+      title="Send Update"
+      show-close
+      backdrop
+    >
+      <x-alert
+        color="orange"
+        light
+        type="error"
+        class="text-sm mb-4"
+        v-if="isStating"
+      >
+        {{ isStating }}
+      </x-alert>
+      <x-checkbox
+        v-model="modals.isConfirmed"
+        label="I confirm and attest that all information recorded is correct. I confirm I am in compliance with the COC."
+      />
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button
+            size="sm"
+            ghost
+            :disabled="isLoading"
+            @click.prevent="modals.sendConfirm = false"
+          >
+            Cancel
+          </x-button>
+          <template v-if="!modals.isConfirmed">
+            <x-tooltip placement="left">
+              <SendUpdateCustReuseBtnTemp />
+              <template #tooltip>
+                Please select the checkbox to proceed
+              </template>
+            </x-tooltip>
+          </template>
+          <SendUpdateCustReuseBtnTemp v-else />
         </div>
       </template>
     </x-modal>

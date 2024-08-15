@@ -9,13 +9,16 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Models\Team;
 use App\Models\Tier;
+use App\Models\UserManager;
 use App\Services\ComprehensiveConversionDashboardService;
 use App\Services\DashboardService;
 use App\Services\TierService;
+use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -23,6 +26,7 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+    use GetUserTreeTrait;
     use TeamHierarchyTrait;
 
     protected $dashboardService;
@@ -35,6 +39,8 @@ class DashboardController extends Controller
 
         $comprehensiveDashboardPermissions = implode('|', PermissionsEnum::getComprehensiveDashboardPermissions());
         $this->middleware(['permission:'.$comprehensiveDashboardPermissions], ['only' => ['renderComprehensiveDashboard']]);
+
+        $this->middleware('readonly_db');
     }
 
     /**
@@ -128,8 +134,14 @@ class DashboardController extends Controller
     public function getRecentDailyStats(Request $request)
     {
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
-        $startDate = Carbon::parse(explode(',', $request->range)[0])->startOfDay()->format($dateFormat);
-        $endDate = Carbon::parse(explode(',', $request->range)[1])->endOfDay()->format($dateFormat);
+        if (isset($request->range) && $request->range != null) {
+            $date = explode(',', $request->range);
+            $startDate = Carbon::parse($date[0])->startOfDay()->format($dateFormat);
+            $endDate = Carbon::parse($date[1])->endOfDay()->format($dateFormat);
+        } else {
+            $startDate = now()->startOfDay()->format($dateFormat);
+            $endDate = now()->endOfDay()->format($dateFormat);
+        }
         $filters = [
             'startDate' => $startDate,
             'endDate' => $endDate,
@@ -344,6 +356,24 @@ class DashboardController extends Controller
             ->where('users.is_active', true)
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderByDesc('quote_batches.start_date')->orderBy('users.email');
+
+        if (
+            ! auth()->user()->hasAnyRole([
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ]) && auth()->user()->isManagerORDeputy()
+        ) {
+            $userIds = $this->walkTree(auth()->user()->id, quoteTypeCode::Car);
+            $userIds = UserManager::where('manager_id', auth()->user()->id)
+                ->get()
+                ->filter(function ($user) use ($userIds) {
+                    return in_array($user->user_id, $userIds);
+                })
+                ->pluck('user_id')
+                ->toArray();
+            $records = $records->whereIn('car_quote_request.advisor_id', $userIds);
+        }
 
         if (isset($request->tiers) && $request->tiers != 'undefined') {
             $records->whereIn('tiers.id', $request->tiers);

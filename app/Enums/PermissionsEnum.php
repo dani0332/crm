@@ -241,10 +241,10 @@ final class PermissionsEnum extends Enum
     public const RENEWAL_BATCH_REPORT = 'renewal-batch-report';
     public const REVIVAL_CONVERSION_REPORT_VIEW = 'revival-conversion-report-view';
     public const PAUSE_AUTO_FOLLOWUPS = 'pause-auto-followups';
-    public const EMBEDDED_PRODUCT_ADVISOR = 'embedded-product-view';
-    public const EMBEDDED_PRODUCT_ADMIN = 'embedded-product-payment-cancel';
+    public const EMBEDDED_PRODUCT_VIEW = 'embedded-product-view';
+    public const EMBEDDED_PRODUCT_PAYMENT_CANCEL = 'embedded-product-payment-cancel';
+    public const EMBEDDED_PRODUCT_CONFIG = 'embedded-product-config';
     public const BOOK_POLICY_EDIT = 'book-policy-edit';
-    public const EmbeddedProductView = 'embedded-product-view';
     public const SEND_UPDATE_CREATE = 'send-update-create';
     public const EXPORT_PLAN_DETAIL = 'export-plan-detail';
     public const EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE = 'export-leads-detail-with-email-mobile';
@@ -321,38 +321,94 @@ final class PermissionsEnum extends Enum
     public const YACHT_COMPREHENSIVE_DASHBOARD = 'yacht-comprehensive-dashboard';
     public const CORPLINE_COMPREHENSIVE_DASHBOARD = 'corpline-comprehensive-dashboard';
     public const GROUPMEDICAL_COMPREHENSIVE_DASHBOARD = 'groupmedicals-comprehensive-dashboard';
+    public const QUOTE_SYNC_LOGS = 'quote-sync-logs';
+    public const CONVERSION_AS_AT_REPORT = 'conversion-as-at-report';
+    public const MOTOR_AS_AT_REPORT_MANAGER = 'motor-as-at-report-manager';
+    public const HEALTH_AS_AT_REPORT_MANAGER = 'health-as-at-report-manager';
+    public const TRAVEL_AS_AT_REPORT_MANAGER = 'travel-as-at-report-manager';
+    public const LIFE_AS_AT_REPORT_MANAGER = 'life-as-at-report-manager';
+    public const HOME_AS_AT_REPORT_MANAGER = 'home-as-at-report-manager';
+    public const PET_AS_AT_REPORT_MANAGER = 'pet-as-at-report-manager';
+    public const CYCLE_AS_AT_REPORT_MANAGER = 'cycle-as-at-report-manager';
+    public const YACHT_AS_AT_REPORT_MANAGER = 'yacht-as-at-report-manager';
+    public const BUSINESS_AS_AT_REPORT_MANAGER = 'business-as-at-report-manager';
+    public const GROUPMEDICALS_AS_AT_REPORT_MANAGER = 'groupmedicals-as-at-report-manager';
+    public const ACCESS_REPORT_SM = 'access-report-sm';
+    public const BIKE_DISTRIBUTION_REPORT = 'bike-distribution-report';
+    public const HEALTH_DISTRIBUTION_REPORT = 'health-distribution-report';
+    public const TRAVEL_DISTRIBUTION_REPORT = 'travel-distribution-report';
+    public const LIFE_DISTRIBUTION_REPORT = 'life-distribution-report';
+    public const HOME_DISTRIBUTION_REPORT = 'home-distribution-report';
+    public const PET_DISTRIBUTION_REPORT = 'pet-distribution-report';
+    public const CYCLE_DISTRIBUTION_REPORT = 'cycle-distribution-report';
+    public const YACHT_DISTRIBUTION_REPORT = 'yacht-distribution-report';
+    public const CORPLINE_DISTRIBUTION_REPORT = 'corpline-distribution-report';
+    public const GROUPMEDICAL_DISTRIBUTION_REPORT = 'groupmedicals-distribution-report';
+    public const ADD_MANUAL_HEALTH_PLAN = 'add-manual-health-plan';
+    public const DOCUMENT_DELETE = 'document-delete';
+    public const SEND_UPDATE_ADD_BOOKING = 'send-update-add-booking';
+    public const PAYMENTS_DISCOUNT_EDIT = 'payments-discount-edit';
+    public const EXTRACT_REPORT = 'extract-report';
+    public const INPL_USER = 'inpl-user';
+    public const INPL_APPROVER = 'inpl-approver';
+    public const DOCUMENT_VERIFY = 'document-verify';
+    public const DEPARTMENT_CREATE = 'department-create';
+    public const DEPARTMENT_UPDATE = 'department-update';
+    public const DEPARTMENT_LIST = 'department-list';
+    public const AUDITDOCUMENT_UPLOAD = 'auditdocument-upload';
+    public const DOWNLOAD_ALL_DOCUMENTS = 'download-all-documents';
+    public const TRAVEL_HAPEX = 'travel-hapex';
+    public const All_QUOTES_VIEWONLY_ACCESS = 'all-quotes-view-only-access';
+    public const CUSTOMER_RISKRRATING_OVERRIDE = 'customer-riskrrating-override';
 
     public static function getAdvisorConversionReportPermissions()
     {
         return [
-            PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW,
-            PermissionsEnum::BIKE_CONVERSION_REPORT,
-            PermissionsEnum::HEALTH_CONVERSION_REPORT,
-            PermissionsEnum::TRAVEL_CONVERSION_REPORT,
-            PermissionsEnum::LIFE_CONVERSION_REPORT,
-            PermissionsEnum::HOME_CONVERSION_REPORT,
-            PermissionsEnum::PET_CONVERSION_REPORT,
-            PermissionsEnum::CYCLE_CONVERSION_REPORT,
-            PermissionsEnum::YACHT_CONVERSION_REPORT,
-            PermissionsEnum::CORPLINE_CONVERSION_REPORT,
-            PermissionsEnum::GROUPMEDICAL_CONVERSION_REPORT,
+            self::ADVISOR_CONVERSION_REPORT_VIEW,
+            self::BIKE_CONVERSION_REPORT,
+            self::HEALTH_CONVERSION_REPORT,
+            self::TRAVEL_CONVERSION_REPORT,
+            self::LIFE_CONVERSION_REPORT,
+            self::HOME_CONVERSION_REPORT,
+            self::PET_CONVERSION_REPORT,
+            self::CYCLE_CONVERSION_REPORT,
+            self::YACHT_CONVERSION_REPORT,
+            self::CORPLINE_CONVERSION_REPORT,
+            self::GROUPMEDICAL_CONVERSION_REPORT,
         ];
     }
 
     public static function getComprehensiveDashboardPermissions()
     {
         return [
-            PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW,
-            PermissionsEnum::BIKE_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::HEALTH_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::TRAVEL_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::LIFE_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::HOME_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::PET_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::CYCLE_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::YACHT_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::CORPLINE_COMPREHENSIVE_DASHBOARD,
-            PermissionsEnum::GROUPMEDICAL_COMPREHENSIVE_DASHBOARD,
+            self::COMPREHENSIVE_DASHBOARD_VIEW,
+            self::BIKE_COMPREHENSIVE_DASHBOARD,
+            self::HEALTH_COMPREHENSIVE_DASHBOARD,
+            self::TRAVEL_COMPREHENSIVE_DASHBOARD,
+            self::LIFE_COMPREHENSIVE_DASHBOARD,
+            self::HOME_COMPREHENSIVE_DASHBOARD,
+            self::PET_COMPREHENSIVE_DASHBOARD,
+            self::CYCLE_COMPREHENSIVE_DASHBOARD,
+            self::YACHT_COMPREHENSIVE_DASHBOARD,
+            self::CORPLINE_COMPREHENSIVE_DASHBOARD,
+            self::GROUPMEDICAL_COMPREHENSIVE_DASHBOARD,
+        ];
+    }
+
+    public static function getAdvisorDistributionReportPermissions()
+    {
+        return [
+            self::ADVISOR_DISTRIBUTION_REPORT_VIEW,
+            self::BIKE_DISTRIBUTION_REPORT,
+            self::HEALTH_DISTRIBUTION_REPORT,
+            self::TRAVEL_DISTRIBUTION_REPORT,
+            self::LIFE_DISTRIBUTION_REPORT,
+            self::HOME_DISTRIBUTION_REPORT,
+            self::PET_DISTRIBUTION_REPORT,
+            self::CYCLE_DISTRIBUTION_REPORT,
+            self::YACHT_DISTRIBUTION_REPORT,
+            self::CORPLINE_DISTRIBUTION_REPORT,
+            self::GROUPMEDICAL_DISTRIBUTION_REPORT,
         ];
     }
 }

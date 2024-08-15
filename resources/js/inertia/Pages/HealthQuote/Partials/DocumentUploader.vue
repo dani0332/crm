@@ -1,5 +1,4 @@
 <script setup>
-import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
 defineProps({
   members: Array,
   docTypes: Object,
@@ -21,15 +20,15 @@ const docForm = useForm({
 });
 
 const uploadFile = (doc, memberId, filesWithInfo) => {
-  const { files, rejectReason} = filesWithInfo;
+  const { files, rejectReason } = filesWithInfo;
   if (files.length == 0) {
     notification.error({
       title: 'File upload failed',
       position: 'top',
     });
-    docForm.setError({error: fileUploadErrorMessage(doc, rejectReason)});
-    return false
-  };
+    docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
+    return false;
+  }
 
   isUploading.value = true;
   docForm
@@ -66,7 +65,11 @@ const uploadFile = (doc, memberId, filesWithInfo) => {
     >
       <x-spinner class="w-10 h-10 text-primary-600" />
     </div>
-    <x-alert color="error" class="mb-5" v-if="Object.keys(docForm.errors).length">
+    <x-alert
+      color="error"
+      class="mb-5"
+      v-if="Object.keys(docForm.errors).length"
+    >
       <ul>
         <li v-for="error in docForm?.errors">{{ error }}</li>
       </ul>
@@ -81,7 +84,7 @@ const uploadFile = (doc, memberId, filesWithInfo) => {
           >
             <div class="flex flex-col gap-1">
               <h5 class="text-sm font-semibold">
-                {{ docType.text }} {{ docType.is_required ? '*' : ''}}
+                {{ docType.text }} {{ docType.is_required ? '*' : '' }}
               </h5>
               <p class="text-xs">Max files: {{ docType.max_files }}</p>
               <p class="text-xs">Supported: {{ docType.accepted_files }}</p>
@@ -123,7 +126,7 @@ const uploadFile = (doc, memberId, filesWithInfo) => {
         >
           <div class="flex flex-col gap-1">
             <h5 class="text-sm font-semibold">
-              {{ docType.text }} {{ docType.is_required ? '*' : ''}}
+              {{ docType.text }} {{ docType.is_required ? '*' : '' }}
             </h5>
             <p class="text-xs">Max files: {{ docType.max_files }}</p>
             <p class="text-xs">Supported: {{ docType.accepted_files }}</p>

@@ -52,7 +52,11 @@ const onToggle = ({ id, active }) => {
     <Head title="Embedded Products" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Embedded Products</h2>
-      <x-button size="sm" color="#ff5e00" href="/embedded-products/create">
+      <x-button
+        size="sm"
+        color="#ff5e00"
+        :href="route('embedded-products.create')"
+      >
         Create Embedded Product
       </x-button>
     </div>

@@ -11,12 +11,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\JetskiQuoteRequest;
 use App\Models\ApplicationStorage;
 use App\Repositories\ActivityRepository;
-use App\Repositories\DocumentTypeRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\JetskiQuoteRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
+use App\Repositories\PaymentRepository;
 use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
@@ -24,6 +24,7 @@ use App\Repositories\UserRepository;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
+use App\Services\QuoteDocumentService;
 
 class JetskiQuoteController extends Controller
 {
@@ -91,6 +92,12 @@ class JetskiQuoteController extends Controller
      */
     public function show($uuid)
     {
+
+        /* Start - Temporarily adding for correcting historic data  */
+        $quote = JetskiQuoteRepository::where('uuid', $uuid)->first();
+        (new PaymentRepository())->updatePriceVatApplicableAndVat($quote, QuoteTypes::JETSKI->value);
+        /* End - Temporarily adding for correcting historic data  */
+
         $quote = JetskiQuoteRepository::getBy('uuid', $uuid);
 
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
@@ -99,7 +106,8 @@ class JetskiQuoteController extends Controller
 
         $quote->load('documents.createdBy');
 
-        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::JETSKI->id())->get();
+        @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypes::JETSKI->id());
+
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::JETSKI->id());
@@ -110,7 +118,7 @@ class JetskiQuoteController extends Controller
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::JETSKI->id(),
             'quote_request_id' => $quote->id,
-        ])->with('assignee')->orderBy('created_at', 'desc')->get();
+        ])->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 
@@ -120,13 +128,14 @@ class JetskiQuoteController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote->id);
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
 
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::JETSKI->id());
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($quote->uuid);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
 
         return inertia('JetskiQuote/Show', [
             'quoteType' => QuoteTypes::JETSKI,
@@ -152,6 +161,8 @@ class JetskiQuoteController extends Controller
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
             'sendUpdateEnum' => $sendUpdateEnum,
+            'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
+            'paymentDocument' => $paymentDocument,
         ]);
     }
 

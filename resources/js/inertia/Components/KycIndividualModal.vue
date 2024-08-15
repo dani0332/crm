@@ -7,7 +7,7 @@ const hasRole = role => useHasRole(role);
 const convertDate = date => useConvertDate(date);
 const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
 const isLoading = ref(false);
-
+const rolesEnum = page.props.rolesEnum;
 const props = defineProps({
   roles: Array,
   quote: Object,
@@ -25,7 +25,7 @@ const props = defineProps({
   residentialStatus: Array,
   companyPosition: Array,
   customerDetails: Object,
-
+  kycLogs: Array,
 });
 
 const rules = {
@@ -37,33 +37,66 @@ const rules = {
   isPhone: v =>
     /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,10}$/im.test(v) ||
     'Phone must be valid',
-    nameCheck: v => {
-        const pattern = /^[a-zA-Z0-9\s]+$/;
-        if(v == null || v == '') return true;
-        return pattern.test(v) || 'Special characters are not allowed in Name';
-    }
+  nameCheck: v => {
+    const pattern = /^[a-zA-Z0-9\s]+$/;
+    if (v == null || v == '') return true;
+    return pattern.test(v) || 'Special characters are not allowed in Name';
+  },
 };
+const kycLogsValue = computed(() => {
+  if (props.kycLogs) {
+    const logsStatus = props.kycLogs.filter(val => {
+      return val.decision === 'rejected' || val.decision === 'Escalated';
+    });
+    if (logsStatus.length > 0) {
+      return 1;
+    } else {
+      return 2;
+    }
+  }
+  return 2;
+});
+const incomeSource = computed(() => {
+  if (props.customerDetails?.detail?.source_of_income === 'employed') {
+    return 2;
+  } else if (props.customerDetails?.detail?.source_of_income === 'business') {
+    return 1;
+  }
+  return null;
+});
 
 const kycForm = reactive({
   quote_uuid: props.quote.uuid,
   customer_id: props.quote.customer_id,
-  first_name: props.quote?.customer.insured_first_name ?? props.quote.first_name,
+  first_name:
+    props.quote?.customer.insured_first_name ?? props.quote.first_name,
   last_name: props.quote?.customer.insured_last_name ?? props.quote.last_name,
   dob: convertDate(props.quote.dob) || '',
   nationality_id: props.quote.nationality_id ?? null,
-  country_of_residence: props.customerDetails?.detail?.country_of_residence ?? 56,
+  country_of_residence:
+    props.customerDetails?.detail?.country_of_residence ?? 56,
   place_of_birth: props.customerDetails?.detail?.place_of_birth ?? null,
-  resident_status: props.customerDetails?.detail?.residential_status ?? 'uaeResident',
-  residential_address: props.customerDetails?.detail?.residential_address ?? null,
+  resident_status:
+    props.customerDetails?.detail?.residential_status ?? 'uaeResident',
+  residential_address:
+    props.customerDetails?.detail?.residential_address ?? null,
   mobile_number: props.quote.mobile_no,
   email: props.quote.email,
   customer_tenure: props.customerDetails?.detail?.customer_tenure ?? null,
   id_type: props.customerDetails?.detail?.id_type ?? 'emiratesId',
-  id_number: props.customerDetails?.detail?.id_number ?? props.customerDetails?.emirates_id_number ?? null,
+  id_number:
+    props.customerDetails?.detail?.id_number ??
+    props.customerDetails?.emirates_id_number ??
+    null,
   id_issue_date: convertDate(props.customerDetails?.detail?.id_issuance_date),
-  id_expiry_date: convertDate(props.customerDetails?.detail?.id_expiry_date ?? props.customerDetails?.emirates_id_expiry_date),
-  mode_of_contact: props.customerDetails?.detail?.mode_of_contact ?? 'phoneAndEmail',
-  mode_of_delivery: props.customerDetails?.detail?.mode_of_delivery ?? 'mod-delivery-pse',
+  id_expiry_date: convertDate(
+    props.customerDetails?.detail?.id_expiry_date ??
+      props.customerDetails?.emirates_id_expiry_date,
+  ),
+  mode_of_contact:
+    props.customerDetails?.detail?.mode_of_contact ?? 'phoneAndEmail',
+  mode_of_delivery:
+    props.customerDetails?.detail?.mode_of_delivery ?? 'mod-delivery-pse',
   income_source: props.customerDetails?.detail?.source_of_income ?? null,
   company_name: props.customerDetails?.detail?.employer_company_name ?? null,
   professional_title: props.customerDetails?.detail?.job_title ?? null,
@@ -71,8 +104,22 @@ const kycForm = reactive({
   trade_license: props.customerDetails?.detail?.trade_license_no ?? null,
   company_position: props.customerDetails?.detail?.position_in_company ?? null,
   pep: props.customerDetails?.detail?.pep ?? props.amlQuoteStatus,
-  financial_sanctions: props.customerDetails?.detail?.financial_sanctions ?? props.amlQuoteStatus,
-  dual_nationality: props.customerDetails?.detail?.dual_nationality ?? props.amlQuoteStatus,
+  financial_sanctions:
+    props.customerDetails?.detail?.financial_sanctions ?? props.amlQuoteStatus,
+  dual_nationality:
+    props.customerDetails?.detail?.dual_nationality ?? props.amlQuoteStatus,
+  transaction_pattern:
+    props.customerDetails?.detail?.transaction_pattern ?? 'no_changes',
+  premium_tenure:
+    props.customerDetails?.detail?.premium_tenure ?? 'single_premium',
+  in_sanction_list:
+    props.customerDetails?.detail?.in_sanction_list ?? props.amlQuoteStatus, // kycLogsValue.value
+  deal_sanction_list:
+    props.customerDetails?.detail?.deal_sanction_list ?? props.amlQuoteStatus, // kycLogsValue.value
+  is_operation_high_risk:
+    props.customerDetails?.detail?.is_operation_high_risk ??
+    props.amlQuoteStatus, // kycLogsValue.value
+  is_partner: props.customerDetails?.detail?.is_partner ?? incomeSource.value,
 });
 
 const incomeSourceFields = reactive({
@@ -84,15 +131,16 @@ function changeIncomeSource(val) {
   if (val === 'employed') {
     incomeSourceFields.employed = true;
     incomeSourceFields.business = false;
+    kycForm.is_partner = 2;
   } else if (val === 'business') {
     incomeSourceFields.employed = false;
     incomeSourceFields.business = true;
+    kycForm.is_partner = 1;
   }
 }
 
 const isNationalityEmpty = ref(false);
 const isPlaceOfBirthEmpty = ref(false);
-
 
 const onKycSubmit = isValid => {
   if (!kycForm.nationality_id) isNationalityEmpty.value = true;
@@ -101,7 +149,7 @@ const onKycSubmit = isValid => {
   if (!kycForm.place_of_birth) isPlaceOfBirthEmpty.value = true;
   else isPlaceOfBirthEmpty.value = false;
 
-  if(!isValid) return;
+  if (!isValid) return;
 
   if (confirm('Are you sure you want to create and save the document?')) {
     isLoading.value = true;
@@ -113,11 +161,11 @@ const onKycSubmit = isValid => {
             title: 'KYC Document uploaded.',
             position: 'top',
           });
-             router.reload({
-                replace: true,
-                preserveScroll: true,
-                preserveState: true,
-            });
+          router.reload({
+            replace: true,
+            preserveScroll: true,
+            preserveState: true,
+          });
         } else {
           notification.error({
             title: 'Document not uploaded.',
@@ -207,19 +255,60 @@ const complianceRules = computed(() => {
     ? [rules.isRequired]
     : [];
 });
+const transactionPatternOptions = [
+  {
+    value: 'count_pattern_changes',
+    label: 'Yes - Count Pattern Changes',
+  },
+  {
+    value: 'behaviour_changes',
+    label: 'Yes - Behaviour Changes',
+  },
+  {
+    value: 'business_model_changes',
+    label: 'Yes - Business Model Changes',
+  },
+  {
+    value: 'no_changes',
+    label: 'No Changes',
+  },
+  {
+    value: 'not_applicable',
+    label: 'Not Applicable',
+  },
+];
+const premiumTenureOptions = [
+  {
+    value: 'single_premium',
+    label: 'Single Premium',
+  },
+  {
+    value: 'quarter_premium',
+    label: 'Quarterly/Semi-Annual',
+  },
+  {
+    value: 'monthly',
+    label: 'Monthly',
+  },
+];
+const activeField = ref(true);
+function activePatternField() {
+  if (hasRole(rolesEnum.COMPLIANCE) || hasRole(rolesEnum.ComplianceSuperUser)) {
+    activeField.value = false;
+  }
+}
 
 onMounted(() => {
   complianceDisable.isDisable = !(
     can(permissionsEnum.AMLDecisionUpdate) ||
     can(permissionsEnum.AMLDecisionUpdateTrueMatch)
   );
-
+  activePatternField();
   changeIncomeSource(props.customerDetails?.detail?.source_of_income ?? null);
 });
 </script>
 
 <template>
-
   <x-form @submit="onKycSubmit" :auto-focus="false">
     <div class="grid md:grid-cols-4 gap-4">
       <x-input
@@ -236,7 +325,7 @@ onMounted(() => {
         label="First Name"
         placeholder="First Name"
         class="w-full"
-        :rules="[isRequired , rules.nameCheck]"
+        :rules="[isRequired, rules.nameCheck]"
       />
 
       <x-input
@@ -244,7 +333,7 @@ onMounted(() => {
         label="Last Name"
         placeholder="Last Name"
         class="w-full"
-        :rules="[isRequired , rules.nameCheck]"
+        :rules="[isRequired, rules.nameCheck]"
       />
 
       <DatePicker
@@ -303,6 +392,7 @@ onMounted(() => {
         label="Mobile number"
         placeholder="Mobile number"
         :rules="[isRequired]"
+        :disabled="true"
       />
 
       <x-input
@@ -311,6 +401,7 @@ onMounted(() => {
         placeholder="Email"
         type="email"
         :rules="[isRequired]"
+        :disabled="true"
       />
 
       <x-input
@@ -348,7 +439,6 @@ onMounted(() => {
         label="ID expiry date"
         :rules="[isRequired]"
       />
-
     </div>
 
     <div class="grid md:grid-cols-3 gap-4">
@@ -367,6 +457,21 @@ onMounted(() => {
         placeholder="Mode of delivery"
         :rules="[isRequired]"
       />
+      <div>
+        <label
+          class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+        >
+          Premium Tenure
+        </label>
+        <x-select
+          v-model="kycForm.premium_tenure"
+          :options="premiumTenureOptions"
+          placeholder="Premium Tenure"
+          class="w-full"
+          :single="true"
+          :rules="[isRequired]"
+        />
+      </div>
     </div>
 
     <div class="grid md:grid-cols-1 gap-4">
@@ -452,61 +557,83 @@ onMounted(() => {
       </h3>
     </div>
 
-    <div class="grid md:grid-cols-2 gap-4 mb-1">
+    <div class="flex justify-between gap-4 mb-1">
       <x-label> Is the customer a PEP? </x-label>
       <div class="grid md:grid-cols-2">
-        <x-radio
-          v-model="kycForm.pep"
-          :value="1"
-          label="Yes"
-          :rules="complianceRules"
-          :disabled="complianceDisable.isDisable"
-        />
-        <x-radio
-          v-model="kycForm.pep"
-          :value="2"
-          label="No"
-          :rules="complianceRules"
-          :disabled="complianceDisable.isDisable"
-        />
+        <x-form-group v-model="kycForm.pep" :rules="complianceRules">
+          <x-radio
+            :value="1"
+            label="Yes"
+            :disabled="complianceDisable.isDisable"
+          />
+          <x-radio
+            :value="2"
+            label="No"
+            :disabled="complianceDisable.isDisable"
+          />
+        </x-form-group>
       </div>
     </div>
 
-    <div class="grid md:grid-cols-2 gap-4 mb-1">
+    <div class="flex justify-between gap-4 mb-1">
       <x-label>
         Is the customer or business subjected to financial sanctions / or
         connected with prescribed terrorist organizations?
       </x-label>
+
       <div class="grid md:grid-cols-2 mt-3">
-        <x-radio
+        <x-form-group
           v-model="kycForm.financial_sanctions"
-          :value="1"
-          label="Yes"
           :rules="complianceRules"
-          :disabled="complianceDisable.isDisable"
-        />
-        <x-radio
-          v-model="kycForm.financial_sanctions"
-          :value="2"
-          label="No"
-          :rules="complianceRules"
-          :disabled="complianceDisable.isDisable"
-        />
+        >
+          <x-radio
+            :value="1"
+            label="Yes"
+            :disabled="complianceDisable.isDisable"
+          />
+          <x-radio
+            :value="2"
+            label="No"
+            :disabled="complianceDisable.isDisable"
+          />
+        </x-form-group>
       </div>
     </div>
 
-    <div class="grid md:grid-cols-2 gap-4">
+    <div class="flex justify-between gap-4 mb-1">
       <x-label> Does the customer have dual nationality?</x-label>
       <div class="grid md:grid-cols-2">
-        <x-radio
+        <x-form-group
           v-model="kycForm.dual_nationality"
+          :rules="complianceRules"
+        >
+          <x-radio
+            :value="1"
+            label="Yes"
+            :disabled="complianceDisable.isDisable"
+          />
+          <x-radio
+            :value="2"
+            label="No"
+            :disabled="complianceDisable.isDisable"
+          />
+        </x-form-group>
+      </div>
+    </div>
+    <div class="grid md:grid-cols-2 gap-4">
+      <x-label
+        >Is the Natural Person listed in any Sanction/OOL/SIP list?</x-label
+      >
+      <div class="grid md:grid-cols-2">
+        <x-radio
+          v-model="kycForm.in_sanction_list"
           :value="1"
           label="Yes"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"
         />
         <x-radio
-          v-model="kycForm.dual_nationality"
+          v-model="kycForm.in_sanction_list"
           :value="2"
           label="No"
           :rules="complianceRules"
@@ -514,8 +641,103 @@ onMounted(() => {
         />
       </div>
     </div>
+    <div class="grid md:grid-cols-2 gap-4">
+      <x-label
+        >Is the Natural Person an Owner/Shareholder/Partner in any
+        Organization?</x-label
+      >
+      <div class="grid md:grid-cols-2">
+        <x-radio
+          v-model="kycForm.is_partner"
+          :value="1"
+          label="Yes"
+          :rules="complianceRules"
+          :disabled="complianceDisable.isDisable"
+        />
+        <x-radio
+          v-model="kycForm.is_partner"
+          :value="2"
+          label="No"
+          :rules="complianceRules"
+          :disabled="complianceDisable.isDisable"
+        />
+      </div>
+    </div>
+    <div class="grid md:grid-cols-2 gap-4">
+      <x-label
+        >Does the Natural Person intend to provide professional services in any
+        sanctions-listed country/ies?</x-label
+      >
+      <div class="grid md:grid-cols-2">
+        <x-radio
+          v-model="kycForm.deal_sanction_list"
+          :value="1"
+          label="Yes"
+          :rules="complianceRules"
+          :disabled="complianceDisable.isDisable"
+        />
+        <x-radio
+          v-model="kycForm.deal_sanction_list"
+          :value="2"
+          label="No"
+          :rules="complianceRules"
+          :disabled="complianceDisable.isDisable"
+        />
+      </div>
+    </div>
+    <div class="grid md:grid-cols-2 gap-4">
+      <x-label
+        >Is the Natural Person controlling/involved in any business listed in
+        High-Risk Countries?</x-label
+      >
+      <div class="grid md:grid-cols-2">
+        <x-radio
+          v-model="kycForm.is_operation_high_risk"
+          :value="1"
+          label="Yes"
+          :rules="complianceRules"
+          :disabled="complianceDisable.isDisable"
+        />
+        <x-radio
+          v-model="kycForm.is_operation_high_risk"
+          :value="2"
+          label="No"
+          :rules="complianceRules"
+          :disabled="complianceDisable.isDisable"
+        />
+      </div>
+    </div>
+    <div class="grid md:grid-cols-2 gap-4 mt-4">
+      <div>
+        <label
+          class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+        >
+          Transaction Pattern changes
+        </label>
+        <x-select
+          v-model="kycForm.transaction_pattern"
+          :options="transactionPatternOptions"
+          placeholder="Transaction Pattern"
+          class="w-full"
+          :single="true"
+          :disabled="activeField"
+          :rules="[isRequired]"
+        />
+      </div>
+    </div>
 
-    <div class="flex justify-center gap-3 mt-7">
+    <template #secondary-action>
+      <x-button
+        ghost
+        tabindex="-1"
+        size="sm"
+        @click.prevent="status(false)"
+        class="px-6"
+      >
+        Cancel
+      </x-button>
+    </template>
+    <template #primary-action>
       <x-button
         :loading="isLoading"
         size="sm"
@@ -525,6 +747,6 @@ onMounted(() => {
       >
         Save
       </x-button>
-    </div>
+    </template>
   </x-form>
 </template>

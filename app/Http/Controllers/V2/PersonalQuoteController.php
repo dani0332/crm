@@ -10,17 +10,19 @@ use App\Http\Requests\PersonalQuoteStatusRequest;
 use App\Http\Requests\QuotesDocumentRequest;
 use App\Repositories\PersonalQuoteRepository;
 use App\Services\CentralService;
+use App\Services\CustomerService;
 use App\Traits\GenericQueriesAllLobs;
 
 class PersonalQuoteController extends Controller
 {
     use GenericQueriesAllLobs;
+
     /**
      * @return \Illuminate\Http\RedirectResponse
      */
     public function updateStatus($quoteType, $quoteId, PersonalQuoteStatusRequest $request)
     {
-        $response = app(PersonalQuoteRepository::class)->updateStatuses($quoteType, $quoteId, $request->validated());
+        $response = PersonalQuoteRepository::updateStatuses($quoteType, $quoteId, $request->validated());
 
         // Update payment allocation status when lead status changes when lead status as Policy Issue
         app(CentralService::class)->updatePaymentAllocation($quoteType, $quoteId);
@@ -85,7 +87,8 @@ class PersonalQuoteController extends Controller
      */
     public function changePrimaryContact($quoteId, ChangePrimaryContactRequest $request)
     {
-        PersonalQuoteRepository::changePrimaryContact($quoteId, $request->validated());
+        $quoteObject = PersonalQuoteRepository::findOrFail($quoteId);
+        app(CustomerService::class)->makeAdditionalContactPrimary($quoteObject, $request->key, $request->value);
 
         return back();
     }

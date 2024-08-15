@@ -28,6 +28,7 @@ class DocumentTypeCode extends Enum
     const SEND_UPDATE_CUSTOMER_DOCUMENTS = 'SUCD'; // Customer documents
     const SEND_UPDATE_UW_EMAIL_CORRESPONDENCE = 'SUUWEC'; // UW email Correspondence
     const ISSUING_DOCUMENTS = 'ISSUING_DOCUMENTS';
+    const SEND_UPDATE_AUDIT_RECORD = 'SUAR'; // Send Update Audit Record
 
     // This is the same as the one in the database and we are using this as a text not it's code
     // The reason behind this code is different for all lob's but text is sames that's why we are using this as a text
@@ -42,12 +43,18 @@ class DocumentTypeCode extends Enum
     const HOMPD = 'HOMPD';
     const CYCPD = 'CYCPD';
     const CLPD = 'CLPD';
+    const CLPDR = 'CLPDR';
+    const CLDPDR = 'CLDPDR';
     const GMQPD = 'GMQPD';
+    const GMQPDR = 'GMQPDR';
+    const GMQDPDR = 'GMQDPDR';
     const PPD = 'PPD';
     const YPD = 'YPD';
+    const PPR = 'PPR';
     const CTIRBB = 'CTIRBB'; // Tax Invoice Raised By Buyer
     const TI = 'TI'; // Tax Invoice
-    const PPR = 'PPR'; // Proforma Payment Request
+    const COMPANY_BUSINESS_TYPE_OF_CUSTOMER = 'CBTC'; // Tax Invoice
+    const INDIVIDUAL_BUSINESS_TYPE_OF_CUSTOMER = 'IBTC'; // Tax Invoice
     const CPD_RECEIPT = 'CPDR';
     const BPD_RECEIPT = 'BPDR';
     const TPD_RECEIPT = 'TPDR';
@@ -59,4 +66,8 @@ class DocumentTypeCode extends Enum
     const GMQPD_RECEIPT = 'GMQPDR';
     const PPD_RECEIPT = 'PPDR';
     const YPD_RECEIPT = 'YPDR';
+    const QD = 'QD';
+    const AML = 'AML';
+    const E_TICKETS = 'E_TICKETS';
+    const AUDIT = 'AUDIT';
 }

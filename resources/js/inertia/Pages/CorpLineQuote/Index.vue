@@ -56,9 +56,9 @@ const filters = reactive({
   mobile_no: '',
   created_at_start: '',
   created_at_end: '',
-  quote_status_id: '',
-  advisor_id: '',
-  business_type_of_insurance_id: '',
+  quote_status_id: [],
+  advisor_id: [],
+  business_type_of_insurance_id: [],
   company_name: '',
   page: 1,
   previous_quote_policy_number: '',
@@ -67,7 +67,25 @@ const filters = reactive({
   payment_status: [],
   is_cold: false,
   is_stale: false,
+  payment_due_date: '',
+  booking_date: '',
 });
+
+watch(
+  () => filters,
+  () => {
+    if (
+      (filters.created_at_start && filters.created_at_end) ||
+      filters.payment_due_date ||
+      filters.booking_date
+    ) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
+  },
+  { deep: true, immediate: true },
+);
 
 const leadStatusOptions = computed(() => {
   return page.props.dropdownSource.quote_status_id.map(status => ({
@@ -135,6 +153,30 @@ const tableHeader = ref([
   { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
 ]);
 
+const setIntialState = () => {
+  Object.assign(filters, {
+    code: '',
+    first_name: '',
+    last_name: '',
+    email: '',
+    mobile_no: '',
+    created_at_start: '',
+    created_at_end: '',
+    quote_status_id: [],
+    advisor_id: [],
+    business_type_of_insurance_id: [],
+    company_name: '',
+    page: 1,
+    previous_quote_policy_number: '',
+    renewal_batch: '',
+    is_renewal: '',
+    payment_status: [],
+    is_cold: false,
+    is_stale: false,
+  });
+  filtersCount.value = 0;
+};
+
 function resetFilters() {
   removedSavedParams();
   router.visit(route('business.index'), {
@@ -147,6 +189,9 @@ function resetFilters() {
     onBefore: () => {
       filters.page = 1;
       loader.table = true;
+    },
+    onSuccess: () => {
+      setIntialState();
     },
   });
 }
@@ -184,8 +229,8 @@ const handleSelectedFilters = selectedFilters => {
     filters.created_at_end = selectedFilters.created_at_end;
   }
 
-  if (selectedFilters.quote_status) {
-    filters.quote_status = selectedFilters.quote_status;
+  if (selectedFilters.quote_status_id) {
+    filters.quote_status_id = selectedFilters.quote_status_id;
   }
 
   if (selectedFilters.payment_status) {
@@ -246,9 +291,13 @@ const onDataExport = () => {
 function setQueryStringFilters() {
   for (const [key] of Object.entries(params)) {
     if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key];
+      filters[key.substring(0, key.length - 2)] = params[key].map(value =>
+        isNaN(parseInt(value)) ? value : parseInt(value),
+      );
     } else {
-      filters[key] = params[key];
+      filters[key] = isNaN(parseInt(params[key]))
+        ? params[key]
+        : parseInt(params[key]);
     }
   }
 }
@@ -283,6 +332,45 @@ watch(
     if (oldValue !== newValue) onSubmit(true);
   },
 );
+
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
+
+const resetDateFilters = filterName => {
+  const filterMappings = {
+    payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
+    booking_date: ['payment_due_date', 'created_at_start', 'created_at_end'],
+    created_at: ['booking_date', 'payment_due_date'],
+  };
+
+  const filtersToReset =
+    filterMappings[filterName] ||
+    (filterName.startsWith('created_at') ? filterMappings.created_at : []);
+
+  filtersToReset.forEach(filter => {
+    filters[filter] = '';
+  });
+};
+
+[
+  'payment_due_date',
+  'booking_date',
+  'created_at_start',
+  'created_at_end',
+].forEach(filterName => {
+  watch(
+    () => filters[filterName],
+    newValue => {
+      if (newValue) {
+        resetDateFilters(filterName);
+      }
+    },
+  );
+});
 </script>
 
 <template>
@@ -311,10 +399,24 @@ watch(
           @toggleFilters="showFilters = !showFilters"
         />
         <Link :href="route('business.cards')">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View</x-button>
+          <x-button
+            size="sm"
+            color="#1d83bc"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Cards View</x-button
+          >
         </Link>
         <Link :href="route('business.create')">
-          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead</x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Create Lead</x-button
+          >
         </Link>
       </template>
     </StickyHeader>
@@ -349,7 +451,7 @@ watch(
     <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -425,20 +527,17 @@ watch(
           />
         </x-field>
         <x-field label="Lead Status">
-          <x-select
+          <ComboBox
             v-model="filters.quote_status_id"
-            name="quote_status_id"
             placeholder="Search by Lead Status"
             :options="leadStatusOptions"
-            class="w-full"
           />
         </x-field>
         <x-field label="BUSINESS INSURANCE TYPE">
-          <x-select
+          <ComboBox
             v-model="filters.business_type_of_insurance_id"
-            placeholder="INSURANCE TYPE"
+            placeholder="Search by Insurance Type"
             :options="insuranceTypeOptions"
-            class="w-full"
           />
         </x-field>
         <x-field
@@ -446,25 +545,23 @@ watch(
           v-if="
             !hasAnyRole([
               rolesEnum.CorpLineRenewalAdvisor,
-              rolesEnum.CorpLineNewBusinessAdvisor,
               rolesEnum.CorpLineAdvisor,
             ])
           "
         >
-          <x-select
+          <ComboBox
             v-model="filters.advisor_id"
             placeholder="Search by Advisor"
             :options="advisorOptions"
-            class="w-full"
           />
         </x-field>
         <x-input
           v-model="filters.previous_quote_policy_number"
           type="text"
           name="previous_quote_policy_number"
-          label="Previous Policy Number"
+          label="Policy Number"
           class="w-full"
-          placeholder="Search by Previous Policy Number"
+          placeholder="Policy Number"
         />
         <x-input
           v-model="filters.renewal_batch"
@@ -476,7 +573,7 @@ watch(
         />
         <x-select
           v-model="filters.is_renewal"
-          label="Is Renewal"
+          label="Renewal"
           placeholder="Search by Renewal"
           :options="[
             { value: '', label: 'All' },
@@ -484,6 +581,23 @@ watch(
             { value: 'No', label: 'No' },
           ]"
           class="w-full"
+        />
+
+        <DatePicker
+          v-model="filters.payment_due_date"
+          label="Payment Due Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.booking_date"
+          label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
@@ -497,11 +611,12 @@ watch(
           >
             Export
           </x-button>
-          <x-tooltip v-else position="right">
+          <x-tooltip v-else placement="right">
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates are required to export data.
+                Created dates or payment due date or booking date are required
+                to export data.
               </span>
             </template>
           </x-tooltip>
@@ -516,7 +631,12 @@ watch(
           >
             Search
           </x-button>
-          <x-button size="sm" color="primary" @click.prevent="resetFilters">
+          <x-button
+            size="sm"
+            color="primary"
+            @click.prevent="resetFilters"
+            :loading="loader.table"
+          >
             Reset
           </x-button>
         </div>
@@ -538,6 +658,8 @@ watch(
                 placeholder="Select Advisor"
                 class="flex-1 w-auto"
                 :rules="[isRequired]"
+                filterable
+                v-if="readOnlyMode.isDisable === true"
               />
               <div class="mb-3 md:pt-6">
                 <x-button
@@ -545,6 +667,7 @@ watch(
                   size="sm"
                   type="submit"
                   :loading="assignForm.processing"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Assign
                 </x-button>

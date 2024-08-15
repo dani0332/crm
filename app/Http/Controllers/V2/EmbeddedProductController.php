@@ -5,18 +5,21 @@ namespace App\Http\Controllers\V2;
 use App\Enums\PermissionsEnum;
 use App\Exports\EmbeddedProductReport;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AlfredProtectDocumentSyncRequest;
 use App\Http\Requests\EmbeddedProducDocumentRequest;
 use App\Http\Requests\EmbeddedProductRequest;
 use App\Models\EmbeddedProduct;
 use App\Repositories\EmbeddedProductRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class EmbeddedProductController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_ADMIN, ['except' => ['sendDocument', 'downloadDocument']]);
-        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_ADVISOR.'|'.PermissionsEnum::EMBEDDED_PRODUCT_ADMIN, ['only' => ['sendDocument', 'downloadDocument']]);
+        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_CONFIG, ['except' => ['sendDocument', 'downloadDocument', 'cancelPayment']]);
+        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_PAYMENT_CANCEL, ['only' => ['cancelPayment']]);
+        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_VIEW, ['only' => ['sendDocument', 'downloadDocument']]);
     }
 
     /**
@@ -117,9 +120,20 @@ class EmbeddedProductController extends Controller
 
     public function sendDocument(EmbeddedProducDocumentRequest $request)
     {
-        EmbeddedProductRepository::sendDocument($request->validated());
+        $data = $request->validated();
+        $quoteId = $data['quoteId'];
+        $modelType = $data['modelType'];
+        $epId = $data['epId'];
+        EmbeddedProductRepository::SendDocumentsByLead($quoteId, $modelType, $epId);
 
         return redirect()->back()->with('success', 'Certificate send Successfully');
+    }
+
+    public function syncDocument(AlfredProtectDocumentSyncRequest $request)
+    {
+        EmbeddedProductRepository::syncDocument($request->validated());
+
+        return redirect()->back()->with('success', 'Re-gerating resquest processing');
     }
 
     public function downloadDocument(EmbeddedProducDocumentRequest $request)
@@ -174,5 +188,20 @@ class EmbeddedProductController extends Controller
         $response = EmbeddedProductRepository::cancelPayment($request->all());
 
         return response($response['data'], $response['code']);
+    }
+
+    public function force(Request $request)
+    {
+        $file_content = Storage::disk('azureIM')->get($request->path);
+        $file = explode('/', $request->path);
+        $lastIndex = count($file);
+
+        return response()
+            ->streamDownload(
+                function () use ($file_content) {
+                    echo $file_content;
+                },
+                $file[$lastIndex - 1]
+            );
     }
 }

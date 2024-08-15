@@ -13,6 +13,8 @@ const props = defineProps({
   leadStatuses: Array,
   advisors: Array,
   teams: Object,
+  areBothTeamsPresent: Boolean,
+  is_renewal: String,
 });
 
 const page = usePage();
@@ -22,11 +24,7 @@ const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 
 const isAllowed = computed(() => {
-  return !hasAnyRole([
-    rolesEnum.PetAdvisor,
-    rolesEnum.PetRenewalAdvisor,
-    rolesEnum.PetNewBusinessAdvisor,
-  ]);
+  return !hasAnyRole([rolesEnum.PetAdvisor, rolesEnum.PetRenewalAdvisor]);
 });
 
 watch(
@@ -65,7 +63,6 @@ const channel = pusher.subscribe(
 const listen = () => {
   channel.bind('leads.count', function (e) {
     leadsCount.value = e.totalLeadsCount;
-    console.log('leads.count', e.totalLeadsCount);
   });
 };
 
@@ -76,6 +73,7 @@ const params = useUrlSearchParams('history');
 const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(false);
 const filtersCount = ref(0);
+
 const filters = reactive({
   date: null,
   status_filters: null,
@@ -87,9 +85,9 @@ const filters = reactive({
   created_at_start: '',
   created_at_end: '',
   quote_status: [],
-  advisor_id: [],
+  advisors: [],
   is_ecommerce: '',
-  is_renewal: '',
+  is_renewal: props.is_renewal,
   page: 1,
   previous_quote_policy_number_text: '',
   renewal_batch: '',
@@ -97,6 +95,8 @@ const filters = reactive({
   is_cold: '',
   stale_at: '',
 });
+
+provide('filters', filters);
 
 const leadStatusOptions = computed(() => {
   return page.props.leadStatuses.map(status => ({
@@ -237,7 +237,7 @@ onUnmounted(() => {
     <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -313,9 +313,22 @@ onUnmounted(() => {
         </x-field>
         <x-field label="Advisor" v-if="isAllowed">
           <ComboBox
-            v-model="filters.advisor_id"
+            v-model="filters.advisors"
             placeholder="Search by Advisor"
             :options="advisorOptions"
+          />
+        </x-field>
+        <x-field label="Renewal">
+          <x-select
+            :disabled="!props.areBothTeamsPresent"
+            v-model="filters.is_renewal"
+            placeholder="Search by Renewal"
+            :options="[
+              { value: '', label: 'All' },
+              { value: 'Yes', label: 'Yes' },
+              { value: 'No', label: 'No' },
+            ]"
+            class="w-full"
           />
         </x-field>
         <x-field label="Is Ecommerce">
@@ -334,9 +347,9 @@ onUnmounted(() => {
           v-model="filters.previous_quote_policy_number_text"
           type="text"
           name="previous_quote_policy_number"
-          label="Previous Policy Number"
+          label="Policy Number"
           class="w-full"
-          placeholder="Search by Previous Policy Number"
+          placeholder="Policy Number"
         />
         <x-input
           v-model="filters.renewal_batch"

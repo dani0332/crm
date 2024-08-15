@@ -84,6 +84,11 @@ class LifeQuoteService extends BaseService
                 'lqr.kyc_decision',
                 'lqr.insurance_provider_id',
                 'ip.text AS insurance_provider_text',
+                'lqr.insly_migrated',
+                'lqr.policy_issuance_status_id',
+                'lqr.insurer_quote_number',
+                'lqr.policy_issuance_date',
+                'lqr.insly_migrated',
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', 'lqr.id')
             ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')
@@ -159,21 +164,9 @@ class LifeQuoteService extends BaseService
 
     public function getDetailEntity($id)
     {
-        $entity = LifeQuoteRequestDetail::where('life_quote_request_id', $id)->first();
-        if (! $entity) {
-            $entity = $this->createDetailEntity($id);
-        }
-
-        return $entity;
-    }
-
-    public function createDetailEntity($id)
-    {
-        return LifeQuoteRequestDetail::create([
-            'life_quote_request_id' => $id,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
+        return LifeQuoteRequestDetail::firstOrCreate(
+            ['life_quote_request_id' => $id]
+        );
     }
 
     public function getLeadsForAssignment()
@@ -431,15 +424,13 @@ class LifeQuoteService extends BaseService
 
     public function updateChildRecord($id)
     {
-        $childRecord = LifeQuoteRequestDetail::where('life_quote_request_id', $id)->first();
-
-        if (empty($childRecord)) {
-            $childRecord = $this->createDetailEntity($id);
-        }
-
-        $childRecord->advisor_assigned_by_id = Auth::user()->id;
-        $childRecord->advisor_assigned_date = Carbon::now();
-        $childRecord->save();
+        LifeQuoteRequestDetail::updateOrCreate(
+            ['life_quote_request_id' => $id],
+            [
+                'advisor_assigned_date' => Carbon::now(),
+                'advisor_assigned_by_id' => auth()->id(),
+            ]
+        );
     }
 
     public function fillModelProperties()

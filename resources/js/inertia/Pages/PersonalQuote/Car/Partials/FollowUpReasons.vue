@@ -4,7 +4,7 @@ const props = defineProps({
   uuid: String,
   source: String,
   followUpId: String,
-  kyoEndPoint: String
+  kyoEndPoint: String,
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -28,7 +28,6 @@ const date = ref('');
 let isloading = ref(false);
 
 const maxDate = computed(() => {
-  
   let days = props.source == 'Renewal_upload' ? 14 : 9;
   return new Date(new Date().setDate(new Date().getDate() + days));
 });
@@ -57,7 +56,7 @@ const getPauseReaons = () => {
       })
       .catch(error => {
         console.log(error);
-      });    
+      });
   } catch (error) {
     console.log(error);
   }
@@ -86,15 +85,12 @@ function onSubmit() {
   if (valid) {
     isloading.value = true;
     axios
-      .post(
-        `${props.kyoEndPoint}/followups/${props.followUpId}/pause`,
-        {
-          reason_id: getReasonId.value[0].id,
-          action_by_email: usePage().props.auth.user.email,
-          resume_date: date.value.split('T')[0],
-          notes: notes.value,
-        },
-      )
+      .post(`${props.kyoEndPoint}/followups/${props.followUpId}/pause`, {
+        reason_id: getReasonId.value[0].id,
+        action_by_email: usePage().props.auth.user.email,
+        resume_date: date.value.split('T')[0],
+        notes: notes.value,
+      })
       .then(response => {
         if (response.data.success) {
           notification.success({
@@ -119,54 +115,61 @@ function onSubmit() {
 onMounted(() => getPauseReaons());
 </script>
 <template>
-  <x-modal v-model="value" backdrop size="lg" :show-close="true">
-    <x-form class="p-5" @submit="onSubmit" :auto-focus="false">
-      <!-- <div > -->
-      <p class="font-bold">Select a reason:</p>
-      <div class="py-1 px-5" v-for="reason in reasons" :key="reason.code">
-        <x-radio
-          v-model="selectedReason"
-          :value="reason.code"
-          :label="reason.text"
-        />
-        <x-field
-          class="pt-2 ml-7"
-          label="Reason for client request:"
-          v-if="showInput && reason.code == 'followupLater'"
-        >
-          <x-input
-            v-model="notes"
-            type="text"
-            class="w-full"
-            placeholder="reason"
-          />
-        </x-field>
-      </div>
+  <x-modal
+    v-model="value"
+    backdrop
+    size="lg"
+    :show-close="true"
+    is-form
+    @submit="onSubmit"
+  >
+    <!-- <div > -->
+    <p class="font-bold">Select a reason:</p>
+    <div class="py-1 px-5" v-for="reason in reasons" :key="reason.code">
+      <x-radio
+        v-model="selectedReason"
+        :value="reason.code"
+        :label="reason.text"
+      />
       <x-field
-        class="mt-5"
-        label="Choose the date to resume Automated Follow-ups"
+        class="pt-2 ml-7"
+        label="Reason for client request:"
+        v-if="showInput && reason.code == 'followupLater'"
       >
-        <DatePicker
-          :disabled="selectedReason == 'lostCase'"
-          v-model="date"
-          :min-date="new Date()"
-          :max-date="maxDate"
+        <x-input
+          v-model="notes"
+          type="text"
           class="w-full"
+          placeholder="reason"
         />
       </x-field>
-      <div class="flex justify-end gap-3 mt-5">
-        <x-button type="submit" size="sm" color="primary" :loading="isloading">
-          Ok
-        </x-button>
-        <x-button
-          size="sm"
-          color="rose"
-          @click.prevent="emit('update:modelValue')"
-        >
-          Cancel
-        </x-button>
-      </div>
-      <!-- </div> -->
-    </x-form>
+    </div>
+    <x-field
+      class="mt-5"
+      label="Choose the date to resume Automated Follow-ups"
+    >
+      <DatePicker
+        :disabled="selectedReason == 'lostCase'"
+        v-model="date"
+        :min-date="new Date()"
+        :max-date="maxDate"
+        class="w-full"
+      />
+    </x-field>
+    <template #primary-action>
+      <x-button type="submit" size="sm" color="primary" :loading="isloading">
+        Ok
+      </x-button>
+    </template>
+    <template #secondary-action>
+      <x-button
+        size="sm"
+        color="rose"
+        @click.prevent="emit('update:modelValue')"
+      >
+        Cancel
+      </x-button>
+    </template>
+    <!-- </div> -->
   </x-modal>
 </template>

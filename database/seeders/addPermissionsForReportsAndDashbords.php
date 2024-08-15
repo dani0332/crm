@@ -18,7 +18,6 @@ class addPermissionsForReportsAndDashbords extends Seeder
     {
         $adminRoleId = Role::where('name', 'ADMIN')->first()->id;
         $carManagerRoleId = Role::where('name', 'CAR_MANAGER')->first()->id;
-        $carDeputyManagerRoleId = Role::where('name', 'CAR_DEPUTY_MANAGER')->first()->id;
         $carAdvisorRoleId = Role::where('name', 'CAR_ADVISOR')->first()->id;
         $leadPoolRoleId = Role::where('name', 'LEAD_POOL')->first()->id;
 
@@ -37,9 +36,6 @@ class addPermissionsForReportsAndDashbords extends Seeder
                     'permission_id' => $leadDistributionId,
                 ], [
                     'role_id' => $carManagerRoleId,
-                    'permission_id' => $leadDistributionId,
-                ], [
-                    'role_id' => $carDeputyManagerRoleId,
                     'permission_id' => $leadDistributionId,
                 ], [
                     'role_id' => $leadPoolRoleId,

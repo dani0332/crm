@@ -13,6 +13,7 @@ use App\Models\HomeAccomodationType;
 use App\Models\HomePossessionType;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
+use App\Traits\GenericQueriesAllLobs;
 use Config;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -20,6 +21,8 @@ use Illuminate\Support\Facades\DB;
 
 class PetQuoteRepository extends BaseRepository
 {
+    use GenericQueriesAllLobs;
+
     public function model()
     {
         return (in_array(quoteTypeCode::Pet, newUi())) ? PersonalQuote::class : PetQuote::class;
@@ -48,8 +51,6 @@ class PetQuoteRepository extends BaseRepository
             'utmSource' => '',
             'utmMedium' => '',
             'utmCampaign' => '',
-            'iliveinAccommodationTypeId' => $request['ilivein_accommodation_type_id'],
-            'iamPossesionTypeId' => $request['iam_possesion_type_id'],
             'source' => $sourceName,
             'referenceUrl' => $appUrl,
             'quoteTypeId' => intval(QuoteTypes::PET->id()),
@@ -60,8 +61,6 @@ class PetQuoteRepository extends BaseRepository
 
         if (isset($response->quoteUID)) {
             $quote = $this->byQuoteTypeId(QuoteTypes::PET->id())->where('uuid', $response->quoteUID)->firstOrFail();
-
-            $quote->update(['premium' => $request['premium']]);
         }
 
         return $response;
@@ -104,10 +103,21 @@ class PetQuoteRepository extends BaseRepository
             ->when(\auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
+            ->when(! empty(request()->is_renewal), function ($query) {
+                $isRenewal = request()->is_renewal;
+                if ($isRenewal == quoteTypeCode::yesText) {
+                    $query->whereNotNull('previous_quote_policy_number');
+                } elseif ($isRenewal == quoteTypeCode::noText) {
+                    $query->whereNull('previous_quote_policy_number');
+                }
+            })
             ->filter(! $forExport, $forTotalLeadsCount)
-            ->withFakeLeadCriteria($forTotalLeadsCount)
-            ->orderBy(request()->sortBy ?? 'created_at', request()->sortType ?? 'desc');
+            ->withFakeLeadCriteria($forTotalLeadsCount);
 
+        $this->adjustQueryByDateFilters($query, 'personal_quotes');
+        if (request()->sortBy) {
+            $query->orderBy('personal_quotes.'.request()->sortBy ?? 'personal_quotes.created_at', request()->sortType ?? 'desc');
+        }
         if ($forTotalLeadsCount) {
             //PD Revert
             return 0;
@@ -133,7 +143,19 @@ class PetQuoteRepository extends BaseRepository
                 'quoteDetail.previousAdvisor',
                 'transactionType',
                 'payments' => function ($q) {
-                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider', 'paymentSplits.paymentStatus', 'paymentSplits.paymentMethod', 'paymentSplits.documents']);
+                    $q->with([
+                        'paymentStatus',
+                        'personalPlan',
+                        'paymentMethod',
+                        'paymentStatusLogs',
+                        'insuranceProvider',
+                        'paymentable',
+                        'paymentSplits.paymentStatus',
+                        'paymentSplits.paymentMethod',
+                        'paymentSplits.documents',
+                        'paymentSplits.verifiedByUser',
+                        'paymentSplits.processJob',
+                    ]);
                 },
                 'createdBy',
                 'updatedBy',

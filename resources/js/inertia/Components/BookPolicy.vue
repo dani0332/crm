@@ -2,6 +2,7 @@
 const page = usePage();
 const notification = useNotifications('toast');
 const { isRequired } = useRules();
+
 const props = defineProps({
   quote: {
     type: Object,
@@ -31,9 +32,17 @@ const props = defineProps({
 });
 
 const isLoading = ref(false);
+const isAMLNotClearedForTravelQuote = ref(false);
+const isExpandedCommissionSchedule = ref([]);
 const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const kycEnums = page.props.kycEnums;
+const paymentMethodsEnum = page.props.paymentMethodsEnum;
+const paymentStatusEnum = page.props.paymentStatusEnum;
+const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
+const insuranceProviderCodeEnum = page.props.insuranceProviderCodeEnum;
+const sendPolicyTypeEnum = page.props.sendPolicyTypeEnum;
 const canAny = permissions => useCanAny(permissions);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const dateToYMD = date => {
@@ -113,10 +122,46 @@ const transactionPaymentStatus = computed(() => {
     return 'Paid';
   }
 });
+
+const formatAmount = amount => {
+  const parsedAmount = parseFloat(amount);
+  if (isNaN(parsedAmount)) {
+    return '0.00';
+  }
+  return parsedAmount.toLocaleString('en-US', {
+    style: 'decimal',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+// use Broker Invoice Number as Insurer Commission Tax Invoice Number for specific insurance providers
+const binAsInsurerCommissionTaxInvoiceNumber = () => {
+  let brokerInvoiceNo = page.props.bookPolicyDetails?.brokerInvoiceNo;
+  let insuranceProvider = page.props.quote?.insurance_provider;
+  if (!insuranceProvider) {
+    // If insurance_provider is not available, use insurance_provider_details
+    insuranceProvider = page.props.quote?.insurance_provider_details;
+  }
+  let insuranceProviderCode = insuranceProvider?.code;
+  let allowedInsuranceProvider = [
+    insuranceProviderCodeEnum.AAIC,
+    insuranceProviderCodeEnum.ALNC,
+    insuranceProviderCodeEnum.OALLIANZ,
+    insuranceProviderCodeEnum.CIG,
+    insuranceProviderCodeEnum.FPIL,
+    insuranceProviderCodeEnum.MTL,
+    insuranceProviderCodeEnum.NHICD,
+    insuranceProviderCodeEnum.ZILL,
+  ];
+  if (allowedInsuranceProvider.includes(insuranceProviderCode)) {
+    return brokerInvoiceNo;
+  }
+  return '';
+};
 const bpForm = useForm({
-  booking_date:
-    dateToDMYWithTime(page.props.quote?.policy_booking_date) ||
-    currentDateTime.value,
+  parent_duplicate_quote_id: page.props.quote?.parent_duplicate_quote_id,
+  booking_date: dateToDMYWithTime(page.props.quote?.policy_booking_date) || '',
   transaction_payment_status:
     page.props.bookPolicyDetails.transactionPaymentStatus,
   invoice_date: dateToYMD(page.props.payments[0]?.insurer_invoice_date) || '',
@@ -124,12 +169,13 @@ const bpForm = useForm({
   broker_invoice_number: page.props.bookPolicyDetails.brokerInvoiceNo || '',
   insurer_tax_invoice_number: page.props?.payments[0]?.insurer_tax_number || '',
   insurer_commmission_invoice_number:
-    page.props?.payments[0]?.insurer_commmission_invoice_number || '',
+    page.props?.payments[0]?.insurer_commmission_invoice_number ||
+    binAsInsurerCommissionTaxInvoiceNumber(),
   commission_vat_not_applicable:
     page.props?.payments[0]?.commission_vat_not_applicable || '',
   commission_vat_applicable:
     page.props?.payments[0]?.commission_vat_applicable || '',
-  commission_percentage: page.props?.payments[0]?.commmission_percentage || '',
+  commission_percentage: page.props?.payments[0]?.commmission_percentage || 0,
   vat_on_commission: page.props?.payments[0]?.commission_vat || '',
   total_commission: page.props?.payments[0]?.commission || '',
   payment_code: page.props?.payments[0]?.code,
@@ -139,6 +185,11 @@ const bpForm = useForm({
   modelType: props.modelType,
   transaction_payment_status_tool_tip:
     page.props.bookPolicyDetails.paymentStatusTooltip,
+  line_of_business: page.props?.bookPolicyDetails?.lineOfBusiness,
+  isPolicyCancelledOrPending:
+    page.props?.bookPolicyDetails?.isPolicyCancelledOrPending,
+  isPolicyCancelledOrPendingToolTtip:
+    page.props?.bookPolicyDetails?.isPolicyCancelledOrPendingToolTtip,
 });
 
 let is_lacking_payment = ref(
@@ -155,15 +206,9 @@ watch(
 const onUpdatebookPolicyDetails = isValid => {
   showInsufficientPaymentAlert();
   if (isValid) {
-    bpForm.booking_date = currentDateTime;
     bpForm.post('/quotes/update-booking-policy', {
       preserveScroll: true,
       onSuccess: () => {
-        notification.success({
-          title: 'Book policy details update Successfully',
-          position: 'top',
-        });
-
         bp.isEditing = false;
       },
       onError: errors => {
@@ -197,6 +242,13 @@ const confirmSendPolicy = () => {
 };
 
 const submitPolicy = () => {
+  if (isAMLNotClearedForTravelQuote.value) {
+    notification.error({
+      title: 'Kindly clear the AML.',
+      position: 'top',
+    });
+    return;
+  }
   isLoading.value = true;
   let url = '/quotes/send-booking-policy';
   let data = {
@@ -224,10 +276,12 @@ const submitPolicy = () => {
       const flash_messages = err.response.data.errors;
 
       Object.keys(flash_messages).forEach(function (key) {
-        notification.error({
-          title: flash_messages[key],
-          position: 'top',
-        });
+        if (flash_messages[key]) {
+          notification.error({
+            title: flash_messages[key],
+            position: 'top',
+          });
+        }
       });
     })
     .finally(() => {
@@ -236,99 +290,158 @@ const submitPolicy = () => {
     });
 };
 
+const calculateVatOnCommission = commissionVatApplicable => {
+  if (Number(commissionVatApplicable) > 0) {
+    return useRoundIt(commissionVatApplicable * page.props.vat);
+  } else {
+    return 0;
+  }
+};
+const calculateCommissionPercentage = (
+  totalCommissionWithoutVat,
+  totalPriceWithoutVat,
+) => {
+  if (totalCommissionWithoutVat > 0) {
+    return useRoundIt((totalCommissionWithoutVat / totalPriceWithoutVat) * 100);
+  } else {
+    return 0;
+  }
+};
+
 const calculateCommission = () => {
-  if (
-    bpForm.commission_vat_applicable > 0 &&
-    bpForm.commission_vat_not_applicable > 0
-  ) {
-    if (Number(bpForm.commission_vat_applicable) > 0) {
-      bpForm.vat_on_commission = (
-        bpForm.commission_vat_applicable * page.props.vat
-      ).toFixed(2);
-    }
-    let totalCommissionWithoutVat =
-      Number(bpForm.commission_vat_not_applicable) +
-      Number(bpForm.commission_vat_applicable);
+  let totalPriceWithoutVat =
+    Number(props.quote?.price_vat_applicable) +
+    Number(props.quote?.price_vat_not_applicable);
+
+  let totalCommissionWithoutVat =
+    Number(bpForm.commission_vat_not_applicable) +
+    Number(bpForm.commission_vat_applicable);
+
+  if (totalCommissionWithoutVat > 0) {
+    bpForm.vat_on_commission = calculateVatOnCommission(
+      bpForm.commission_vat_applicable,
+    );
     bpForm.total_commission =
-      totalCommissionWithoutVat + Number(bpForm.vat_on_commission);
+      totalCommissionWithoutVat + useRoundIt(bpForm.vat_on_commission);
 
-    bpForm.commission_percentage = (
-      (totalCommissionWithoutVat /
-        (Number(props.quote?.price_vat_not_applicable) +
-          Number(props.quote?.price_without_vat))) *
-      100
-    ).toFixed(2);
-  } else if (bpForm.commission_vat_applicable > 0) {
-    if (Number(props.quote?.price_without_vat) > 0) {
-      bpForm.commission_percentage = (
-        (bpForm.commission_vat_applicable / props.quote?.price_without_vat) *
-        100
-      ).toFixed(2);
-
-      bpForm.vat_on_commission = (
-        bpForm.commission_vat_applicable * page.props.vat
-      ).toFixed(2);
-      bpForm.total_commission = (
-        Number(bpForm.vat_on_commission) +
-        Number(bpForm.commission_vat_applicable)
-      ).toFixed(2);
+    if (totalPriceWithoutVat > 0) {
+      bpForm.commission_percentage = calculateCommissionPercentage(
+        totalCommissionWithoutVat,
+        totalPriceWithoutVat,
+      );
     } else {
-      bpForm.commission_vat_applicable = '';
+      bpForm.commission_percentage = 0;
       notification.error({
-        title: 'Please add Policy Detail Price (VAT APPLICABLE)',
+        title: 'Total Price is zero for this Policy!',
         position: 'top',
       });
-    }
-  } else if (bpForm.commission_vat_not_applicable > 0) {
-    if (Number(props.quote?.price_vat_not_applicable) > 0) {
-      bpForm.commission_percentage = (
-        (bpForm.commission_vat_not_applicable /
-          props.quote?.price_vat_not_applicable) *
-        100
-      ).toFixed(2);
-
-      bpForm.total_commission = Number(
-        bpForm.commission_vat_not_applicable,
-      ).toFixed(2);
-    } else {
+      /*bpForm.commission_vat_applicable = '';
       bpForm.commission_vat_not_applicable = '';
       notification.error({
-        title: 'Please add Policy Detail Price (VAT NOT APPLICABLE)',
+        title:
+          'Please add Price (VAT APPLICABLE) or Price (VAT Not APPLICABLE) in Policy Detail Section',
         position: 'top',
-      });
+      });*/
     }
   } else {
-    bpForm.commission_percentage = '';
-    bpForm.vat_on_commission = '';
-    bpForm.total_commission = '';
+    bpForm.commission_percentage = 0;
+    bpForm.vat_on_commission = 0;
+    bpForm.total_commission = 0;
   }
 };
 
 const disableCommissionVatNotApplicable = computed(() => {
-  return (
-    !bp.isEditing ||
-    (page.props.quoteType != quoteTypeCodeEnum.Life &&
-      page.props.quoteType != quoteTypeCodeEnum.Business &&
-      page.props.quoteType != quoteTypeCodeEnum.Health)
-  );
+  // Disable Commission vat nor applicable for all LOBs
+  return true;
+  /*return (
+      !bp.isEditing ||
+      (page.props.quoteType != quoteTypeCodeEnum.Life &&
+        page.props.quoteType != quoteTypeCodeEnum.Business &&
+        page.props.quoteType != quoteTypeCodeEnum.Health)
+    );*/
 });
+
 const disableCommissionVatApplicable = computed(() => {
-  return (
-    !bp.isEditing ||
-    (page.props.quoteType == quoteTypeCodeEnum.Life &&
-      page.props.quoteType != quoteTypeCodeEnum.Business &&
-      page.props.quoteType != quoteTypeCodeEnum.Health)
-  );
+  // Enable Commission vat nor applicable for all LOBs
+  return !bp.isEditing;
+  /*return (
+      !bp.isEditing ||
+      (page.props.quoteType == quoteTypeCodeEnum.Life &&
+        page.props.quoteType != quoteTypeCodeEnum.Business &&
+        page.props.quoteType != quoteTypeCodeEnum.Health)
+    );*/
 });
+const showSendAndBookPolicyButtonBlock = computed(() => {
+  const { quote_status_id } = props.quote;
+  const { TransactionApproved, PolicyIssued } = page.props.quoteStatusEnum;
+
+  return [TransactionApproved, PolicyIssued].includes(quote_status_id);
+});
+
 const showSendAndBookPolicyButton = computed(() => {
+  let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
+  let permission = permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON;
+  if (sendPolicyType == sendPolicyTypeEnum.SAGE) {
+    permission = permissionsEnum.SEND_AND_BOOK_POLICY_BUTTON;
+  }
+  return props.bookPolicyDetails?.sendButton && can(permission);
+});
+
+const disableSendAndBookPolicyButton = computed(() => {
+  let sendPolicyType = props.bookPolicyDetails?.sendPolicyType;
+  let permission = permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON;
+  if (sendPolicyType == sendPolicyTypeEnum.SAGE) {
+    permission = permissionsEnum.SEND_AND_BOOK_POLICY_BUTTON;
+  }
+
+  let isPolicyStatusCancellationPending =
+    props.quote.quote_status_id ==
+    page.props.quoteStatusEnum.CancellationPending;
   return (
-    props.quote.quote_status_id ==
-      page.props.quoteStatusEnum.TransactionApproved ||
-    props.quote.quote_status_id == page.props.quoteStatusEnum.PolicyIssued ||
-    props.quote.quote_status_id ==
-      page.props.quoteStatusEnum.CancellationPending
+    !props.bookPolicyDetails?.sendButton &&
+    !isPolicyStatusCancellationPending &&
+    !can(permission)
   );
 });
+
+const disableBookPolicyButton = computed(() => {
+  return (
+    !props.bookPolicyDetails?.bookButton ||
+    bp.isEditing ||
+    !can(permissionsEnum.BOOK_POLICY_BUTTON)
+  );
+});
+
+const isTravelQuoteAndAMLNotCleared = () => {
+  const bookPolicyButtonLabel = props.bookPolicyDetails?.text;
+  const isSendPolicyToCustomerButton =
+    bookPolicyButtonLabel === sendPolicyTypeEnum.CUSTOMER_BUTTON_TEXT;
+  const isQuoteTypeTravel = page.props.quoteType == quoteTypeCodeEnum.Travel;
+  const isPolicyAMLScreeningCleared =
+    props.quote.kyc_decision == kycEnums.COMPLETE;
+
+  if (
+    isQuoteTypeTravel &&
+    !isPolicyAMLScreeningCleared &&
+    !isSendPolicyToCustomerButton
+  ) {
+    let allowedQuoteStatuesForAMLAlert = [
+      page.props.quoteStatusEnum.TransactionApproved,
+      page.props.quoteStatusEnum.PolicyIssued,
+      page.props.quoteStatusEnum.PolicySentToCustomer,
+    ];
+    if (allowedQuoteStatuesForAMLAlert.includes(props.quote.quote_status_id)) {
+      notification.error({
+        title: 'Kindly clear the AML.',
+        position: 'top',
+        timeout: 30000,
+      });
+    }
+
+    isAMLNotClearedForTravelQuote.value = true;
+  }
+};
+
 const showActionButtons = computed(() => {
   // Hide buttons only when policy is cancelled and have a chilrd lead
   return (
@@ -371,6 +484,27 @@ const showInsufficientPaymentAlert = () => {
     });
   }
 };
+const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] =
+  createReusableTemplate();
+
+const isShowingTransactionPaymentStatus = computed(() => {
+  const policyStatuses = [
+    page.props.quoteStatusEnum.PolicyBooked,
+    page.props.quoteStatusEnum.CancellationPending,
+    page.props.quoteStatusEnum.PolicyCancelled,
+    page.props.quoteStatusEnum.PolicyCancelledReissued,
+  ];
+  return policyStatuses.includes(props.quote.quote_status_id);
+});
+onBeforeMount(() => {
+  isTravelQuoteAndAMLNotCleared();
+});
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -409,8 +543,9 @@ const showInsufficientPaymentAlert = () => {
                   <x-tooltip>
                     <label
                       class="border-b-2 border-dotted border-black uppercase"
-                      >Invoice Description</label
                     >
+                      Invoice Description
+                    </label>
                     <template #tooltip>
                       <span class="custom-tooltip-content">{{
                         productionProcessTooltipEnum.INVOICE_DESCRIPTION
@@ -434,32 +569,30 @@ const showInsufficientPaymentAlert = () => {
                     </template>
                   </x-tooltip>
                 </dt>
-                <dd>{{ props?.quoteType }}</dd>
+                <dd>{{ bpForm.line_of_business }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <x-tooltip>
-                  <label class="border-b-2 border-dotted border-black uppercase"
+                  <label
+                    class="font-medium border-b-2 border-dotted border-black uppercase"
                     >Transaction Payment Status</label
                   >
                   <template #tooltip>
-                    <span class="custom-tooltip-content">{{
-                      productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS
-                    }}</span>
+                    <span class="custom-tooltip-content">
+                      {{
+                        productionProcessTooltipEnum.TRANSACTION_PAYMENT_STATUS
+                      }}
+                    </span>
                   </template>
                 </x-tooltip>
-                <template
-                  v-if="
-                    props.quote.quote_status_id ==
-                    page.props.quoteStatusEnum.PolicyBooked
-                  "
-                >
-                  <x-tooltip position="center">
-                    <dd class="border-b border-dotted border-black">
+                <template v-if="isShowingTransactionPaymentStatus">
+                  <x-tooltip placement="left">
+                    <dd class="border-b border-dotted border-black inline">
                       {{ bpForm.transaction_payment_status }}
                     </dd>
                     <template #tooltip>
-                      {{ bpForm.transaction_payment_status_tool_tip }}</template
-                    >
+                      {{ bpForm.transaction_payment_status_tool_tip }}
+                    </template>
                   </x-tooltip>
                 </template>
                 <template v-else>
@@ -608,7 +741,7 @@ const showInsufficientPaymentAlert = () => {
                     </template>
                   </x-tooltip>
                 </dt>
-                <dd>{{ bpForm.commission_percentage }}</dd>
+                <dd>{{ bpForm.commission_percentage }}%</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">
@@ -699,8 +832,151 @@ const showInsufficientPaymentAlert = () => {
               <div class="w-full md:w-1/2"></div>
               <div class="w-full md:w-1/2" />
             </div>
+            <div class="grid-cols-12 mt-5">
+              <div class="p-4 rounded shadow mb-6 bg-white">
+                <div class="flex justify-between gap-4 items-center mb-4">
+                  <h3 class="font-semibold text-primary-800 text-lg">
+                    Commission Schedule
+                  </h3>
+                </div>
+                <div class="vue3-easy-data-table tablefixed custom-height">
+                  <div
+                    class="vue3-easy-data-table__main fixed-header hoverable border-cell custom-height manage-payment-table-parent-div"
+                  >
+                    <table>
+                      <thead class="vue3-easy-data-table__header">
+                        <tr>
+                          <th class="relative group text-center">
+                            <span class="">Payment No</span>
+                          </th>
+                          <th class="inner-th-class">
+                            <span class="">Payment Ref ID</span>
+                          </th>
+
+                          <th class="inner-th-class">
+                            <span class="">Commission (without VAT)</span>
+                          </th>
+                          <th class="inner-th-class">
+                            <span class="">VAT</span>
+                          </th>
+
+                          <th class="inner-th-class">
+                            <span class="">Total Commission</span>
+                          </th>
+                        </tr>
+                      </thead>
+
+                      <tbody class="vue3-easy-data-table__body">
+                        <template
+                          v-for="(item, index) in payments"
+                          :key="item.code"
+                        >
+                          <template
+                            v-if="
+                              item.total_payments > 0 && item.commission > 0
+                            "
+                          >
+                            <tr>
+                              <td class="text-center">
+                                <span
+                                  class="expand-pointer"
+                                  @click="
+                                    isExpandedCommissionSchedule[index] =
+                                      !isExpandedCommissionSchedule[index]
+                                  "
+                                  >{{
+                                    isExpandedCommissionSchedule[index]
+                                      ? '&and;'
+                                      : '&or;'
+                                  }}
+                                </span>
+                              </td>
+                              <td>{{ item.code }}</td>
+                              <td>
+                                {{
+                                  formatAmount(item.commission_vat_applicable)
+                                }}
+                              </td>
+                              <td>{{ formatAmount(item.commission_vat) }}</td>
+                              <td>{{ formatAmount(item.commission) }}</td>
+                            </tr>
+                            <template
+                              v-if="isExpandedCommissionSchedule[index]"
+                            >
+                              <tr
+                                v-for="splitPayment in item.payment_splits"
+                                :key="splitPayment.id"
+                              >
+                                <td class="text-center">
+                                  {{ splitPayment.sr_no }}
+                                </td>
+                                <td></td>
+                                <td>
+                                  {{
+                                    formatAmount(
+                                      splitPayment.commission_vat_applicable,
+                                    )
+                                  }}
+                                </td>
+                                <td>
+                                  {{
+                                    formatAmount(splitPayment.commission_vat)
+                                  }}
+                                </td>
+                                <td>
+                                  {{
+                                    formatAmount(
+                                      Number(
+                                        splitPayment.commission_vat_applicable,
+                                      ) + Number(splitPayment.commission_vat),
+                                    )
+                                  }}
+                                </td>
+                              </tr>
+                            </template>
+                          </template>
+                        </template>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <EditBookPolicyBtnTemplate v-slot="{ isDisabled }">
+              <x-button
+                class="mt-4 mr-2"
+                color="emerald"
+                size="sm"
+                @click.prevent="bp.isEditing = true"
+                :disabled="isDisabled"
+                v-if="readOnlyMode.isDisable === true"
+              >
+                Edit
+              </x-button>
+            </EditBookPolicyBtnTemplate>
+
+            <div
+              v-if="bpForm.isPolicyCancelledOrPending"
+              class="flex justify-end"
+            >
+              <x-tooltip>
+                <x-button class="mt-4 mr-2" color="emerald" size="sm" disabled>
+                  Edit
+                </x-button>
+                <x-button size="sm" color="orange" class="mt-4" disabled>
+                  Send and Book Policy
+                </x-button>
+                <template #tooltip>
+                  <span class="custom-tooltip-content">{{
+                    bpForm.isPolicyCancelledOrPendingToolTtip
+                  }}</span>
+                </template>
+              </x-tooltip>
+            </div>
+
             <div v-if="showActionButtons" class="flex justify-end">
-              <template v-if="showSendAndBookPolicyButton">
+              <template v-if="showSendAndBookPolicyButtonBlock">
                 <x-button
                   v-if="bp.isEditing"
                   class="mt-4 mr-2"
@@ -726,19 +1002,48 @@ const showInsufficientPaymentAlert = () => {
                 >
                   Update
                 </x-button>
-                <x-button
-                  v-if="
-                    !bp.isEditing &&
-                    props.bookPolicyDetails?.editButton &&
-                    can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
-                  "
-                  class="mt-4 mr-2"
-                  color="emerald"
-                  size="sm"
-                  @click.prevent="bp.isEditing = true"
+                <x-tooltip
+                  v-if="page.props.lockLeadSectionsDetails.lead_details"
+                  position="bottom"
                 >
-                  Edit
-                </x-button>
+                  <EditBookPolicyBtnResuseTemplate
+                    v-if="
+                      !bp.isEditing &&
+                      props.bookPolicyDetails?.editButton &&
+                      can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
+                    "
+                    :isDisabled="true"
+                  />
+                  <template #tooltip>
+                    This lead is now locked as the policy has been booked. If
+                    changes are needed, go to 'Send Update', select 'Add
+                    Update', and choose 'Correction of Policy'
+                  </template>
+                </x-tooltip>
+
+                <template v-else>
+                  <EditBookPolicyBtnResuseTemplate
+                    v-if="
+                      !bp.isEditing &&
+                      props.bookPolicyDetails?.editButton &&
+                      can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
+                    "
+                  />
+                </template>
+                <x-tooltip>
+                  <x-button
+                    size="sm"
+                    color="orange"
+                    class="mt-4"
+                    disabled
+                    v-if="disableSendAndBookPolicyButton"
+                  >
+                    {{ props.bookPolicyDetails?.text }}
+                  </x-button>
+                  <template #tooltip>
+                    <span>{{ 'Please update the booking details.' }}</span>
+                  </template>
+                </x-tooltip>
                 <template v-if="is_lacking_payment">
                   <x-tooltip>
                     <x-button
@@ -747,7 +1052,7 @@ const showInsufficientPaymentAlert = () => {
                       class="mt-4"
                       @click.prevent="confirmSendPolicy"
                       :disabled="bp.isEditing || is_lacking_payment"
-                      v-if="props.bookPolicyDetails?.sendButton"
+                      v-if="showSendAndBookPolicyButton"
                     >
                       {{ props.bookPolicyDetails?.text }}
                     </x-button>
@@ -765,14 +1070,12 @@ const showInsufficientPaymentAlert = () => {
                     color="orange"
                     class="mt-4"
                     @click.prevent="confirmSendPolicy"
-                    :disabled="bp.isEditing || is_lacking_payment"
-                    v-if="
-                      props.bookPolicyDetails?.sendButton &&
-                      canAny([
-                        permissionsEnum.SEND_POLICY_TO_CUSTOMER_BUTTON,
-                        permissionsEnum.SEND_AND_BOOK_POLICY_BUTTON,
-                      ])
+                    :disabled="
+                      bp.isEditing ||
+                      is_lacking_payment ||
+                      isAMLNotClearedForTravelQuote
                     "
+                    v-if="showSendAndBookPolicyButton"
                   >
                     {{ props.bookPolicyDetails?.text }}
                   </x-button>
@@ -795,7 +1098,7 @@ const showInsufficientPaymentAlert = () => {
                   </x-button>
                   <template #tooltip>
                     <span>{{
-                      'The button is not accessible because policy has been booked'
+                      "This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'"
                     }}</span>
                   </template>
                 </x-tooltip>
@@ -843,59 +1146,97 @@ const showInsufficientPaymentAlert = () => {
                   >
                     Update
                   </x-button>
-                  <div
-                    v-if="
-                      !bp.isEditing &&
-                      props.bookPolicyDetails?.editButton &&
-                      can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
-                    "
+
+                  <x-tooltip
+                    v-if="page.props.lockLeadSectionsDetails.lead_details"
+                    position="bottom"
                   >
-                    <x-button
-                      class="mt-4 mr-2"
-                      color="emerald"
-                      size="sm"
-                      :disabled="!props.bookPolicyDetails?.editButton"
-                      @click.prevent="bp.isEditing = true"
-                    >
-                      Edit
-                    </x-button>
-                  </div>
+                    <EditBookPolicyBtnResuseTemplate
+                      v-if="
+                        !bp.isEditing &&
+                        props.bookPolicyDetails?.editButton &&
+                        can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
+                      "
+                      :isDisabled="true"
+                    />
+                    <template #tooltip>
+                      This lead is now locked as the policy has been booked. If
+                      changes are needed, go to 'Send Update', select 'Add
+                      Update', and choose 'Correction of Policy'
+                    </template>
+                  </x-tooltip>
+
+                  <template v-else>
+                    <EditBookPolicyBtnResuseTemplate
+                      v-if="
+                        !bp.isEditing &&
+                        props.bookPolicyDetails?.editButton &&
+                        can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
+                      "
+                      :isDisabled="!props.bookPolicyDetails?.editButton"
+                    />
+                  </template>
 
                   <template
                     v-if="
-                      props.bookPolicyDetails?.editButton &&
+                      (props.bookPolicyDetails?.bookButton ||
+                        props.bookPolicyDetails?.policyCancelled) &&
                       can(permissionsEnum.BOOK_POLICY_BUTTON)
                     "
                   >
-                    <x-button
-                      size="sm"
-                      class="mt-4 mr-2"
-                      color="orange"
-                      :disabled="
-                        !props.bookPolicyDetails?.editButton ||
-                        bp.isEditing ||
-                        !can(permissionsEnum.BOOK_POLICY_BUTTON)
-                      "
-                      @click.prevent="confirmSendPolicy"
-                    >
-                      Book Policy
-                    </x-button></template
-                  >
-                  <template v-else>
-                    <x-tooltip>
+                    <x-tooltip v-if="props.bookPolicyDetails.policyCancelled">
                       <x-button
                         size="sm"
                         class="mt-4 mr-2"
                         color="orange"
                         :disabled="
-                          !props.bookPolicyDetails?.editButton ||
-                          !can(permissionsEnum.BOOK_POLICY_BUTTON)
+                          disableBookPolicyButton ||
+                          isAMLNotClearedForTravelQuote
                         "
+                        @click.prevent="confirmSendPolicy"
+                      >
+                        {{ props.bookPolicyDetails?.text }}
+                      </x-button>
+                      <template #tooltip>
+                        <span>
+                          {{
+                            `Cancellation for the ${bpForm.parent_duplicate_quote_id} is still pending`
+                          }}
+                        </span>
+                      </template>
+                    </x-tooltip>
+
+                    <x-button
+                      v-else
+                      size="sm"
+                      class="mt-4 mr-2"
+                      color="orange"
+                      :disabled="
+                        disableBookPolicyButton || isAMLNotClearedForTravelQuote
+                      "
+                      @click.prevent="confirmSendPolicy"
+                    >
+                      <x-tooltip>
+                        <span>{{ props.bookPolicyDetails?.text }}</span>
+                        <template #tooltip>
+                          <span>Please update the booking details.</span>
+                        </template>
+                      </x-tooltip>
+                    </x-button>
+                  </template>
+                  <template v-else>
+                    <x-tooltip>
+                      <x-button
+                        v-if="can(permissionsEnum.BOOK_POLICY_BUTTON)"
+                        size="sm"
+                        class="mt-4 mr-2"
+                        color="orange"
+                        :disabled="true"
                       >
                         Book Policy
                       </x-button>
                       <template #tooltip>
-                        <span>{{ 'Please update the booking details.' }}</span>
+                        <span>Please update the booking details.</span>
                       </template>
                     </x-tooltip>
                   </template>
@@ -906,8 +1247,13 @@ const showInsufficientPaymentAlert = () => {
         </x-form>
       </template>
     </Collapsible>
-    <x-modal v-model="modals.sendPolicyConfirm" size="lg" show-close backdrop>
-      <template #header> Send Policy </template>
+    <x-modal
+      v-model="modals.sendPolicyConfirm"
+      size="lg"
+      title="Send Policy"
+      show-close
+      backdrop
+    >
       <x-alert
         color="orange"
         light
@@ -948,8 +1294,12 @@ const showInsufficientPaymentAlert = () => {
         </div>
       </template>
     </x-modal>
-    <x-modal v-model="modals.sendPolicyPopup" show-close backdrop>
-      <template #header> Are you sure you want to continue? </template>
+    <x-modal
+      v-model="modals.sendPolicyPopup"
+      title="Are you sure you want to continue?"
+      show-close
+      backdrop
+    >
       <div class="text-center">
         <p class="font-semibold pt-3">
           {{ props.bookPolicyDetails.paymentStatusHeading }}
@@ -977,3 +1327,11 @@ const showInsufficientPaymentAlert = () => {
     </x-modal>
   </div>
 </template>
+<style scoped>
+.expand-pointer {
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: bold;
+  color: #1d83bc;
+}
+</style>

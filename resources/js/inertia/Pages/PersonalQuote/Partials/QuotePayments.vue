@@ -1,6 +1,4 @@
 <script setup>
-import { useCan } from '../../../Composables/can';
-
 const notification = useNotifications('toast');
 const page = usePage();
 const paymentLoader = ref(``);
@@ -18,8 +16,8 @@ defineProps({
   expanded: {
     type: Boolean,
     required: false,
-    default: true
-  }
+    default: true,
+  },
 });
 
 const paymentModal = ref(false);
@@ -232,6 +230,13 @@ const can = permission => useCan(permission);
 const hasRole = role => useHasRole(role);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
+
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -245,19 +250,23 @@ const rolesEnum = page.props.rolesEnum;
 
       <template #body>
         <x-divider class="my-4" />
-        <div class="mb-4 flex justify-end">
+        <div
+          class="mb-4 flex justify-end"
+          v-if="readOnlyMode.isDisable === true"
+        >
           <x-button
             v-if="
               can(permissionsEnum.PaymentsCreate) &&
               !can(permissionsEnum.ApprovePayments) &&
-              !hasRole(rolesEnum.PA) && enableManageOptions
+              !hasRole(rolesEnum.PA) &&
+              enableManageOptions
             "
             size="sm"
             color="orange"
             @click="addPaymentModal"
           >
-          Add Payment
-        </x-button>
+            Add Payment
+          </x-button>
         </div>
 
         <DataTable
@@ -281,9 +290,14 @@ const rolesEnum = page.props.rolesEnum;
             {{ payment_method?.name }}
           </template>
           <template #item-actions="item">
-            <div class="flex gap-2">
+            <div class="flex gap-2" v-if="readOnlyMode.isDisable === true">
               <template v-if="can(permissionsEnum.ApprovePayments)">
-                <x-button size="xs" color="error" @click="approvePayment(item)" v-if="enableManageOptions">
+                <x-button
+                  size="xs"
+                  color="error"
+                  @click="approvePayment(item)"
+                  v-if="enableManageOptions"
+                >
                   Approve
                 </x-button>
                 <x-button size="xs" disabled color="error"> Approved </x-button>
@@ -292,7 +306,7 @@ const rolesEnum = page.props.rolesEnum;
                 <x-button
                   size="xs"
                   color="orange"
-                  v-if="item.copy_link_button  && enableManageOptions"
+                  v-if="item.copy_link_button && enableManageOptions"
                   @click="generateCCLink(item)"
                   :loading="paymentLoader == item.code"
                 >
@@ -301,7 +315,11 @@ const rolesEnum = page.props.rolesEnum;
                 <x-button
                   size="xs"
                   color="emerald"
-                  v-if="can(permissionsEnum.PaymentsEdit) && item.edit_button && enableManageOptions"
+                  v-if="
+                    can(permissionsEnum.PaymentsEdit) &&
+                    item.edit_button &&
+                    enableManageOptions
+                  "
                   @click="editPaymentModal(item)"
                 >
                   Edit
@@ -313,73 +331,81 @@ const rolesEnum = page.props.rolesEnum;
       </template>
     </Collapsible>
 
-    <x-modal v-model="paymentModal" size="lg" show-close backdrop>
-      <template #header>
-        <span class="text-primary-800 font-semibold">
-          {{
-            paymentForm.status == 'create' ? 'New Payment' : 'Update Payment'
-          }}
-        </span>
+    <x-modal
+      v-model="paymentModal"
+      size="lg"
+      :title="`${paymentForm.status == 'create' ? 'New Payment' : 'Update Payment'}`"
+      show-close
+      backdrop
+      is-form
+      @submit="addPayment"
+    >
+      <div class="w-full grid md:grid-cols-2 gap-5">
+        <x-input
+          class="w-full"
+          :rules="[rules.isRequired]"
+          label="Price Including VAT*"
+          v-model="paymentForm.captured_amount"
+          :error="paymentForm.errors.captured_amount"
+        />
+
+        <x-select
+          class="w-full"
+          v-model="paymentForm.collection_type"
+          :options="collectionTypes"
+          label="Collection Type*"
+          disabled
+          :rules="[rules.isRequired]"
+          :error="paymentForm.errors.collection_type"
+        >
+        </x-select>
+
+        <x-select
+          class="w-full md:col-span-2"
+          v-model="paymentForm.payment_methods_code"
+          :options="paymentMethodOptions"
+          label="Payment Method*"
+          disabled
+          :rules="[rules.isRequired]"
+          :error="paymentForm.errors.payment_methods_code"
+        >
+        </x-select>
+
+        <x-select
+          class="w-full md:col-span-2"
+          v-model="paymentForm.insurance_provider_id"
+          :options="insuranceProviderOptions"
+          label="Provider Name*"
+          :rules="[rules.isRequired]"
+          :error="paymentForm.errors.insurance_provider_id"
+        >
+        </x-select>
+      </div>
+      <template #secondary-action>
+        <x-button
+          ghost
+          tabindex="-1"
+          @click.prevent="paymentModal = false"
+          size="sm"
+        >
+          Cancel
+        </x-button>
       </template>
-      <x-form @submit="addPayment" :auto-focus="false">
-        <div class="w-full grid md:grid-cols-2 gap-5">
-          <x-input
-            class="w-full"
-            :rules="[rules.isRequired]"
-            label="Price Including VAT*"
-            v-model="paymentForm.captured_amount"
-            :error="paymentForm.errors.captured_amount"
-          />
-
-          <x-select
-            class="w-full"
-            v-model="paymentForm.collection_type"
-            :options="collectionTypes"
-            label="Collection Type*"
-            disabled
-            :rules="[rules.isRequired]"
-            :error="paymentForm.errors.collection_type"
+      <template #primary-action>
+        <div
+          class="w-full md:col-span-2 flex justify-end"
+          v-if="paymentForm.status == 'create' || paymentForm.status == 'edit'"
+        >
+          <x-button
+            :loading="paymentForm.processing"
+            color="primary"
+            type="submit"
           >
-          </x-select>
-
-          <x-select
-            class="w-full md:col-span-2"
-            v-model="paymentForm.payment_methods_code"
-            :options="paymentMethodOptions"
-            label="Payment Method*"
-            disabled
-            :rules="[rules.isRequired]"
-            :error="paymentForm.errors.payment_methods_code"
-          >
-          </x-select>
-
-          <x-select
-            class="w-full md:col-span-2"
-            v-model="paymentForm.insurance_provider_id"
-            :options="insuranceProviderOptions"
-            label="Provider Name*"
-            :rules="[rules.isRequired]"
-            :error="paymentForm.errors.insurance_provider_id"
-          >
-          </x-select>
-
-          <div
-            class="w-full md:col-span-2 flex justify-end"
-            v-if="
-              paymentForm.status == 'create' || paymentForm.status == 'edit'
-            "
-          >
-            <x-button
-              :loading="paymentForm.processing"
-              color="primary"
-              type="submit"
-            >
-              {{ paymentForm.status == 'create' ? 'Create' : 'Update' }}
-              Payment
-            </x-button>
-          </div>
+            {{ paymentForm.status == 'create' ? 'Create' : 'Update' }}
+            Payment
+          </x-button>
         </div>
-      </x-form>
+      </template>
     </x-modal>
   </div>
 </template>

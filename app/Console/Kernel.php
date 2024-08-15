@@ -4,10 +4,10 @@ namespace App\Console;
 
 use App\Console\Commands\UpdateManualOffline;
 use App\Jobs\CarLost\CarSoldResubmissions;
-use App\Jobs\CarLost\UnconSubmissionReminder;
 use Carbon\Carbon;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Illuminate\Support\Stringable;
 
 class Kernel extends ConsoleKernel
 {
@@ -29,6 +29,8 @@ class Kernel extends ConsoleKernel
         Commands\UpdateStaleLeads::class,
         Commands\AutomateActivitiesCommand::class,
         Commands\PaymentOverdueStatus::class,
+        Commands\AlfredFollowUpSchedulerCommand::class,
+        Commands\ProcessCCPaymentsCommand::class,
     ];
 
     /**
@@ -41,13 +43,14 @@ class Kernel extends ConsoleKernel
         $schedule
             ->command('UpdateUserStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
-        $schedule->command('PaymentOverdueStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
+        $schedule->command('PaymentOverdueStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(5);
+        $schedule->command('ProcessCCPaymentsCommand:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
         /*$schedule->job(new UnconSubmissionReminder)
-            ->tuesdays()
-            ->fridays()
-            ->withoutOverlapping(1)->onOneServer()
-            ->at('9:00');*/
+        ->tuesdays()
+        ->fridays()
+        ->withoutOverlapping(1)->onOneServer()
+        ->at('9:00');*/
 
         //send leads which are resubmitted for car sold approval yesterday
         $schedule->job((new CarSoldResubmissions))
@@ -64,8 +67,18 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('ResetLeadAllocationCounts:cron')->timezone('Asia/Dubai')->dailyAt('23:55')->onOneServer()->withoutOverlapping();
 
-        $schedule->command('QuoteSyncUpdate:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(10);
-        $schedule->command('QuoteSyncCleanup:cron')->dailyAt('03:00')->onOneServer()->withoutOverlapping(1);
+        $schedule->command('QuoteSyncUpdate:cron')
+            ->everyFiveMinutes()
+            ->onOneServer()
+            ->withoutOverlapping(29)
+            ->onSuccess(function (Stringable $output) {
+                info('----------- QuoteSyncJob Completed -----------'.$output);
+            })
+            ->onFailure(function (Stringable $output) {
+                info('----------- QuoteSyncJob Failed -----------'.$output);
+            });
+
+        $schedule->command('QuoteSyncCleanup:cron')->dailyAt('03:00')->onOneServer()->withoutOverlapping(30);
         $schedule->command(UpdateManualOffline::class)
             ->timezone('Asia/Dubai')
             ->dailyAt('08:58')
@@ -76,11 +89,22 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping(1);
 
-        // $schedule->command('UpdateStaleLeads:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping(1);
-        $schedule->command('ActivitiesAutomate:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping(1);
+        $schedule->command('UpdateStaleLeads:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
+        $schedule->command('ActivitiesAutomate:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
 
-        $schedule->command('Dtt')->timezone('Asia/Dubai')->daily()->onOneServer()->withoutOverlapping(1)->at('09:00');
-        $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->daily()->onOneServer()->withoutOverlapping(1)->at('11:45');
+        $schedule->command('Dtt')->timezone('Asia/Dubai')->dailyAt('09:00')->onOneServer()->withoutOverlapping();
+        $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->dailyAt('11:45')->onOneServer()->withoutOverlapping();
+        // $schedule->command('alfred:followupEmails')->timezone('Asia/Dubai')->weekly()->mondays()->at('11:00')->onOneServer()->withoutOverlapping();
+
+        // $schedule->command('CorplineDataMigration:cron')->timezone('Asia/Dubai')->dailyAt('11:05')
+        //     ->onOneServer()
+        //     ->withoutOverlapping()
+        //     ->onSuccess(function (Stringable $output) {
+        //         info('----------- Business Data Migrations Completed -----------'.$output);
+        //     })
+        //     ->onFailure(function (Stringable $output) {
+        //         info('----------- Business Data Migrations Failed -----------'.$output);
+        //     });
     }
 
     /**
