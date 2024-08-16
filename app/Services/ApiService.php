@@ -148,26 +148,34 @@ class ApiService
         return apiResponse(null, Response::HTTP_OK, 'OCB email triggered successfully!');
     }
 
-    private function performLeadAllocation($allocationType, $allocationId, $teamId)
+    private function allocateLead($allocationType, $leadId, $teamId)
     {
-        info('------ Lead allocation started for lead : '.$allocationId.' ------');
-        $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId, $teamId);
-        if (is_null($allocationStrategy)) {
-            info('-- Exception against - allocationType: '.$allocationId.' and allocationId: '.$allocationId.' --');
-            throw new InvalidArgumentException("Allocation strategy for type '$allocationType -- $allocationId' not found.");
+        info("------ Lead allocation started for lead: $leadId ------");
+    
+        // Create allocation strategy
+        $strategy = AllocationFactory::createStrategy($allocationType, $leadId, $teamId);
+        if (is_null($strategy)) {
+            $errorMessage = "Allocation strategy for type '$allocationType' and lead '$leadId' not found.";
+            info("-- Exception: $errorMessage --");
+            throw new InvalidArgumentException($errorMessage);
         }
-        $responsePayload = $allocationStrategy->executeSteps();
-        $status = $responsePayload['status'];
-        $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
-        $message = $responsePayload['message'];
-        if ($rest['advisorId'] == 0 || $rest['tierId'] == 0) {
-            $message = 'Allocation failed: '.$responsePayload['message'];
+    
+        // Execute allocation steps
+        $response = $strategy->executeSteps();
+        $status = $response['status'];
+        $message = $response['message'];
+        $allocationResponse = array_diff_key($response, ['status' => '', 'message' => '']);
+    
+        // Check for failed allocation
+        if (empty($allocationResponse['advisorId']) || empty($allocationResponse['tierId'])) {
+            $message = "Allocation failed: $message";
         }
-
-        info('------ Lead allocation ended for lead '.$allocationId.' ------');
-
-        return apiResponse($rest, $status, $message);
+    
+        info("------ Lead allocation ended for lead: $leadId ------");
+    
+        return apiResponse($allocationResponse, $status, $message);
     }
+    
 
     public function triggerSICWorkflow(SICWorkflowRequest $request)
     {
