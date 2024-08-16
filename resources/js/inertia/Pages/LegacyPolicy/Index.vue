@@ -5,7 +5,7 @@ defineProps({
   coveragePolicyMapping: Array,
 });
 
-const { isRequired } = useRules();
+const { isRequired, emptyOrNumericAndNoSpecialChar } = useRules();
 
 const page = usePage();
 const loader = reactive({
@@ -24,6 +24,7 @@ function onReset() {
 }
 
 function onSubmit(isValid) {
+  return;
   if (isValid) {
     filters.page = 1;
     Object.keys(filters).forEach(
@@ -120,6 +121,7 @@ const productName = item => {
           name="mobile_no"
           label="Mobile Number"
           class="w-full"
+          :rules="[emptyOrNumericAndNoSpecialChar]"
           placeholder="Search by Mobile Number"
         />
       </div>
