@@ -25,11 +25,11 @@ class TravelAllocation implements Allocation
     public function executeSteps($overrideAdvisorId = false)
     {
         try {
-            info(self::class . " - executeSteps: Travel Allocation started for allocation id : {$this->allocationId}");
+            info(self::class." - executeSteps: Travel Allocation started for allocation id : {$this->allocationId}");
             $lead = $this->fetchLead($overrideAdvisorId);
 
             if (! $lead) {
-                info(self::class . " - executeSteps: Lead not found for : {$this->allocationId}");
+                info(self::class." - executeSteps: Lead not found for : {$this->allocationId}");
 
                 return ['advisorId' => 0, 'message' => 'Lead not found or not under fetch criteria']; // when lead is not on criteria or not found
             }
@@ -37,7 +37,7 @@ class TravelAllocation implements Allocation
             $advisor = $this->fetchAvailableAdvisor();
 
             if (! $advisor) {
-                info(self::class . " - executeSteps: No advisor found against lead : {$lead->uuid}");
+                info(self::class." - executeSteps: No advisor found against lead : {$lead->uuid}");
 
                 return ['advisorId' => 0, 'message' => 'Advisor not found'];
             }
@@ -47,10 +47,10 @@ class TravelAllocation implements Allocation
             return ['advisorId' => $advisor->id, 'message' => 'lead allocated successfully'];
         } catch (\Throwable $th) {
             $message = $th->getMessage() ?? '';
-            info('exception occurred in travel lead allocation with error : ' . $message);
-            info('exception occurred in travel lead allocation with error stack as  : ' . $th->getTraceAsString());
+            info('exception occurred in travel lead allocation with error : '.$message);
+            info('exception occurred in travel lead allocation with error stack as  : '.$th->getTraceAsString());
 
-            return 'exception occurred in travel lead allocation with error : ' . $message;
+            return 'exception occurred in travel lead allocation with error : '.$message;
         }
     }
 

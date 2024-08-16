@@ -121,11 +121,11 @@ class ApiService
         $message = 'Advisor assigned successfully!';
         if ($assignedAdvisorId['advisorId'] == 0) {
             $status = Response::HTTP_NOT_FOUND;
-            $message = 'Allocation failed: ' . $assignedAdvisorId['message'];
+            $message = 'Allocation failed: '.$assignedAdvisorId['message'];
         }
 
         $responseData = ['assignedAdvisorId' => $assignedAdvisorId['advisorId'], 'message' => $message];
-        info('------ Lead allocation request completed to assign advisor only for ' . $allocationId . ' ------');
+        info('------ Lead allocation request completed to assign advisor only for '.$allocationId.' ------');
 
         return apiResponse($responseData, $status, $message);
     }
@@ -163,11 +163,11 @@ class ApiService
         $message = 'Advisor assigned successfully!';
         if ($assignedAdvisorId['advisorId'] == 0) {
             $status = Response::HTTP_NOT_FOUND;
-            $message = 'Allocation failed: ' . $assignedAdvisorId['message'];
-        } 
+            $message = 'Allocation failed: '.$assignedAdvisorId['message'];
+        }
 
         $responseData = ['assignedAdvisorId' => $assignedAdvisorId['advisorId'], 'message' => $message];
-        info('------ Lead allocation ended for lead ' . $allocationId . ' ------');
+        info('------ Lead allocation ended for lead '.$allocationId.' ------');
 
         return apiResponse($responseData, $status, $message);
     }
@@ -211,11 +211,11 @@ class ApiService
         $message = 'Tier assigned successfully!';
         if ($tierId['advisorId'] == 0) {
             $status = Response::HTTP_NOT_FOUND;
-            $message = 'Allocation failed: ' . $tierId['message'];
+            $message = 'Allocation failed: '.$tierId['message'];
         }
 
         $responseData = ['assignedAdvisorId' => $tierId['advisorId'], 'message' => $message];
-        info('------ Lead allocation request completed to evaluate tier only for ' . $tierId['advisorId'] . ' ------');
+        info('------ Lead allocation request completed to evaluate tier only for '.$tierId['advisorId'].' ------');
 
         return apiResponse($responseData, $status, $message);
     }

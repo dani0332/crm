@@ -29,7 +29,7 @@ class BikeAllocation implements Allocation
             if (! $lead) {
                 info('Lead not found or not under fetch criteria for allocation id: '.$this->allocationId.' in BIKE allocation');
 
-                return ['advisorId' => 0, 'message'=>'Lead not found or not under fetch criteria']; // when lead is not on criteria or not found
+                return ['advisorId' => 0, 'message' => 'Lead not found or not under fetch criteria']; // when lead is not on criteria or not found
             }
 
             // Find the appropriate tier for the lead
@@ -48,6 +48,7 @@ class BikeAllocation implements Allocation
 
                 if (! empty($advisorId) && $advisorId == $lead->advisor_id) {
                     info('Advisor is same as previous advisor. Skipping for now.');
+
                     return ['advisorId' => $advisorId, 'message' => 'Advisor is same as previous advisor. Skipping for now'];
                 }
 
@@ -75,7 +76,7 @@ class BikeAllocation implements Allocation
             info('exception occurred in bike lead allocation with error : '.$message);
             info('exception occurred in bike lead allocation with error stack as  : '.$th->getTraceAsString());
 
-            return ['advisorId' => 0, 'message' => 'exception occurred in bike lead allocation with error : ' . $message];
+            return ['advisorId' => 0, 'message' => 'exception occurred in bike lead allocation with error : '.$message];
         }
     }
 

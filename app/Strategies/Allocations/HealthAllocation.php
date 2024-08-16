@@ -24,7 +24,7 @@ class HealthAllocation implements Allocation
             $lead = $this->fetchLead($overrideAdvisorId);
 
             if (! $lead) {
-                info('Lead not found or not under fetch criteria for allocation id: ' . $this->allocationId);
+                info('Lead not found or not under fetch criteria for allocation id: '.$this->allocationId);
 
                 return ['advisorId' => 0, 'message' => 'Lead not found or not under fetch criteria']; // when lead is not on criteria or not found
             }
@@ -32,7 +32,7 @@ class HealthAllocation implements Allocation
             $this->assignTeamBasedOnPrice($lead);
 
             if (! $lead->health_team_type) {
-                info('No health team found against lead : ' . $lead->uuid);
+                info('No health team found against lead : '.$lead->uuid);
 
                 return ['advisorId' => 0, 'message' => 'No health team found']; // when system is not able to identify sub team based on price
             }
@@ -40,7 +40,7 @@ class HealthAllocation implements Allocation
             $advisor = $this->fetchAvailableAdvisor($lead->health_team_type);
 
             if (! $advisor) {
-                info('No advisors found against lead : ' . $lead->uuid);
+                info('No advisors found against lead : '.$lead->uuid);
 
                 return ['advisorId' => 0, 'message' => 'Advisor not found']; // when no advisor is found
             }
@@ -50,10 +50,10 @@ class HealthAllocation implements Allocation
             return ['advisorId' => $advisor->id, 'message' => 'Assign the lead to the advisor'];
         } catch (\Throwable $th) {
             $message = $th->getMessage() ?? '';
-            info('exception occurred in health lead allocation with error : ' . $message);
-            info('exception occurred in health lead allocation with error stack as  : ' . $th->getTraceAsString());
+            info('exception occurred in health lead allocation with error : '.$message);
+            info('exception occurred in health lead allocation with error stack as  : '.$th->getTraceAsString());
 
-            return ['advisorId' => 0, 'message' => 'exception occurred in health lead allocation with error : ' . $message];
+            return ['advisorId' => 0, 'message' => 'exception occurred in health lead allocation with error : '.$message];
         }
     }
 

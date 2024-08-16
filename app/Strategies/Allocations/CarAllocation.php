@@ -54,6 +54,7 @@ class CarAllocation implements Allocation
                     info('Evaluate tier only. Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
                     $lead->tier_id = $tier->id;
                     $lead->save();
+
                     return ['advisorId' => $tier->id, 'message' => 'Evaluate tier only'];
                 }
                 info('Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
@@ -78,6 +79,7 @@ class CarAllocation implements Allocation
                     info('Advisor not found. Skipping for now.');
                     // Update the lead's tier information
                     $this->updateLeadTier($lead, $tier);
+
                     return ['advisorId' => 0, 'message' => 'Advisor not found'];
                 }
 
@@ -90,10 +92,10 @@ class CarAllocation implements Allocation
             }
         } catch (\Throwable $th) {
             $message = $th->getMessage() ?? '';
-            info('exception occurred in car lead allocation with error : '. $message);
+            info('exception occurred in car lead allocation with error : '.$message);
             info('exception occurred in car lead allocation with error stack as  : '.$th->getTraceAsString());
 
-            return ['advisorId' => 0, 'message' => 'exception occurred in car lead allocation with error : ' . $message];
+            return ['advisorId' => 0, 'message' => 'exception occurred in car lead allocation with error : '.$message];
         }
     }
 
