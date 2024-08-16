@@ -77,7 +77,7 @@ class BikeAllocation implements Allocation
             info('exception occurred in bike lead allocation with error : '.$message);
             info('exception occurred in bike lead allocation with error stack as  : '.$th->getTraceAsString());
 
-            return ['advisorId' => 0, 'message' => 'exception occurred in bike lead allocation with error : '.$message, 'status' => Response::HTTP_UNPROCESSABLE_ENTITY];
+            return ['advisorId' => 0, 'message' => 'exception occurred in bike lead allocation with error : '.$message, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
         }
     }
 
