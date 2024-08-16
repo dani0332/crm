@@ -403,7 +403,7 @@ class SendUpdateLogService
             'quote_type_id' => $quoteTypeId,
             'parent_lead_ref_id' => '',
             'uuid' => '',
-            'childLeadsCount' => $childRecords->count(),
+            'childLeadsCount' => 0,
             'childLeads' => '',
             'childLeadsUuid' => '',
         ];
