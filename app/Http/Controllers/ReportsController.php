@@ -473,7 +473,7 @@ class ReportsController extends Controller
         }
 
         return inertia('ManagementReport/index', [
-            'reportData' => $shouldLoadData ? ($reportData ?? $reportInstance->getReportData($request, $shouldLoadData)) : [] ,
+            'reportData' => $shouldLoadData ? ($reportData ?? $reportInstance->getReportData($request, $shouldLoadData)) : [],
             'filterOptions' => $reportInstance->getFilterOptions(),
             'defaultFilters' => $reportInstance->getDefaultFilters(),
             'reportName' => $reportCategory,
