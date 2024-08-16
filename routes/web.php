@@ -389,7 +389,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         });
 
         Route::group(['prefix' => 'quote-sync'], function () {
-            // Route::middleware('readonly_db')->group(function () {
+            Route::middleware('readonly_db')->group(function () {
+                Route::get('/temp', [QuoteSyncController::class, 'index'])->name('admin.quotesync');
+            });
             Route::get('/', [QuoteSyncController::class, 'index'])->name('admin.quotesync');
             Route::get('/view/{quoteSync}', [QuoteSyncController::class, 'show'])->name('admin.quotesync.show');
             // });
