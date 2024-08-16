@@ -118,9 +118,9 @@ class ApiService
         $responsePayload = $allocationStrategy->executeSteps($overrideAdvisorId);
         $status = $responsePayload['status'];
         $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
-        $message = $rest['message'];
+        $message = $responsePayload['message'];
         if ($rest['advisorId'] == 0) {
-            $message = 'Allocation failed: '.$rest['message'];
+            $message = 'Allocation failed: '.$responsePayload['message'];
         }
 
         info('------ Lead allocation request completed to assign advisor only for '.$allocationId.' ------');
@@ -159,9 +159,9 @@ class ApiService
         $responsePayload = $allocationStrategy->executeSteps();
         $status = $responsePayload['status'];
         $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
-        $message = $rest['message'];
+        $message = $responsePayload['message'];
         if ($rest['advisorId'] == 0 || $rest['tierId'] == 0) {
-            $message = 'Allocation failed: '.$rest['message'];
+            $message = 'Allocation failed: '.$responsePayload['message'];
         }
 
         info('------ Lead allocation ended for lead '.$allocationId.' ------');
@@ -206,9 +206,9 @@ class ApiService
         $responsePayload = $allocationStrategy->executeSteps(false, false, true);
         $status = $responsePayload['status'];
         $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
-        $message = $rest['message'];
+        $message = $responsePayload['message'];
         if ($rest['tierId'] == 0) {
-            $message = 'Tier failed: '.$rest['message'];
+            $message = 'Tier failed: '.$responsePayload['message'];
         }
 
         info('------ Lead allocation request completed to evaluate tier only for '.$rest['tierId'].' ------');
