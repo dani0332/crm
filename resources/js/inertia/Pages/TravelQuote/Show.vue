@@ -165,10 +165,30 @@ const onCreateDuplicate = isValid => {
   });
 };
 
-const genderText = gender =>
-  computed(() => {
-    return page.props.genderOptions[gender];
-  });
+const titleCase = str => {
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
+const genderText = gender => {
+  let genderText = '';
+
+  switch (gender) {
+    case 'M':
+      genderText = 'Male';
+      break;
+    case 'F':
+      genderText = 'Female';
+      break;
+    default:
+      genderText = gender || '';
+  }
+
+  return titleCase(genderText);
+};
 
 const lostReasonsOptions = computed(() => {
   return page.props.lostReasons.map(reason => ({
@@ -2207,7 +2227,7 @@ const onAddUpdate = () => {
               {{ relation?.text }}
             </template>
             <template #item-gender="{ gender }">
-              {{ gender === 'M' ? 'Male' : gender === 'F' ? 'Female' : '' }}
+              {{ genderText(gender) }}
             </template>
             <template #item-nationality="{ nationality }">
               {{ nationality?.text }}
