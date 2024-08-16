@@ -29,7 +29,7 @@ class BikeAllocation implements Allocation
             if (! $lead) {
                 info('Lead not found or not under fetch criteria for allocation id: '.$this->allocationId.' in BIKE allocation');
 
-                return 'Lead not found or not under fetch criteria'; // when lead is not on criteria or not found
+                return ['advisorId' => 0, 'message'=>'Lead not found or not under fetch criteria']; // when lead is not on criteria or not found
             }
 
             // Find the appropriate tier for the lead
@@ -48,8 +48,7 @@ class BikeAllocation implements Allocation
 
                 if (! empty($advisorId) && $advisorId == $lead->advisor_id) {
                     info('Advisor is same as previous advisor. Skipping for now.');
-
-                    return $advisorId;
+                    return ['advisorId' => $advisorId, 'message' => 'Advisor is same as previous advisor. Skipping for now'];
                 }
 
                 if ($advisorId && $advisorId != 0) {
@@ -59,23 +58,24 @@ class BikeAllocation implements Allocation
                     // Update the lead's tier information
                     $this->updateLeadTier($lead, $tier);
 
-                    return 'Advisor not found';
+                    return ['advisorId' => 0, 'message' => 'Advisor not found'];
                 }
                 info('Bike Allocation Ended.');
 
-                return $advisorId;
+                return ['advisorId' => $advisorId, 'message' => 'lead allocated successfully'];
             } else {
                 // Log that tier was not found for the lead and skip processing
                 info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
                 info('Bike Allocation Ended.');
 
-                return 'Tier not found';
+                return ['advisorId' => 0, 'message' => 'Tier not found'];
             }
         } catch (\Throwable $th) {
-            info('exception occurred in bike lead allocation with error : '.$th->getMessage());
+            $message = $th->getMessage() ?? '';
+            info('exception occurred in bike lead allocation with error : '.$message);
             info('exception occurred in bike lead allocation with error stack as  : '.$th->getTraceAsString());
 
-            return 'exception occurred in bike lead allocation with error : '.$th->getMessage();
+            return ['advisorId' => 0, 'message' => 'exception occurred in bike lead allocation with error : ' . $message];
         }
     }
 

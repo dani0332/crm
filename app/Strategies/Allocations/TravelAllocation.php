@@ -31,7 +31,7 @@ class TravelAllocation implements Allocation
             if (! $lead) {
                 info(self::class . " - executeSteps: Lead not found for : {$this->allocationId}");
 
-                return 'Lead not found or not under fetch criteria'; // when lead is not on criteria or not found
+                return ['advisorId' => 0, 'message' => 'Lead not found or not under fetch criteria']; // when lead is not on criteria or not found
             }
 
             $advisor = $this->fetchAvailableAdvisor();
@@ -39,18 +39,18 @@ class TravelAllocation implements Allocation
             if (! $advisor) {
                 info(self::class . " - executeSteps: No advisor found against lead : {$lead->uuid}");
 
-                return 0; // when no advisor is found
-                return 'Advisor not found';
+                return ['advisorId' => 0, 'message' => 'Advisor not found'];
             }
 
             $this->assignLead($lead, $advisor); // Assign the lead to the advisor
 
-            return $advisor->id;
+            return ['advisorId' => $advisor->id, 'message' => 'lead allocated successfully'];
         } catch (\Throwable $th) {
-            info('exception occurred in car lead allocation with error : ' . $th->getMessage());
-            info('exception occurred in car lead allocation with error stack as  : ' . $th->getTraceAsString());
+            $message = $th->getMessage() ?? '';
+            info('exception occurred in travel lead allocation with error : ' . $message);
+            info('exception occurred in travel lead allocation with error stack as  : ' . $th->getTraceAsString());
 
-            return 'exception occurred in bike lead allocation with error : ' . $th->getMessage();
+            return 'exception occurred in travel lead allocation with error : ' . $message;
         }
     }
 

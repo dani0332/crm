@@ -117,16 +117,14 @@ class ApiService
         $overrideAdvisorId = true;
         $assignedAdvisorId = $allocationStrategy->executeSteps($overrideAdvisorId);
 
-        if (is_numeric($assignedAdvisorId) && $assignedAdvisorId > 0) {
-            $message = 'Advisor assigned successfully!';
-            $status = Response::HTTP_OK;
-        } else {
-            $message = 'Allocation failed: ' . $assignedAdvisorId;
+        $status = Response::HTTP_OK;
+        $message = 'Advisor assigned successfully!';
+        if ($assignedAdvisorId['advisorId'] == 0) {
             $status = Response::HTTP_NOT_FOUND;
-
+            $message = 'Allocation failed: ' . $assignedAdvisorId['message'];
         }
 
-        $responseData = ['assignedAdvisorId' => $assignedAdvisorId, 'message' => $message];
+        $responseData = ['assignedAdvisorId' => $assignedAdvisorId['advisorId'], 'message' => $message];
         info('------ Lead allocation request completed to assign advisor only for ' . $allocationId . ' ------');
 
         return apiResponse($responseData, $status, $message);
@@ -161,10 +159,17 @@ class ApiService
             throw new InvalidArgumentException("Allocation strategy for type '$allocationType -- $allocationId' not found.");
         }
         $assignedAdvisorId = $allocationStrategy->executeSteps();
-        info('------ Lead allocation ended for lead : '.$allocationId.' ------');
-        $responseData = ['assignedAdvisorId' => $assignedAdvisorId];
+        $status = Response::HTTP_OK;
+        $message = 'Advisor assigned successfully!';
+        if ($assignedAdvisorId['advisorId'] == 0) {
+            $status = Response::HTTP_NOT_FOUND;
+            $message = 'Allocation failed: ' . $assignedAdvisorId['message'];
+        } 
 
-        return apiResponse($responseData, Response::HTTP_OK, 'Lead allocated successfully!');
+        $responseData = ['assignedAdvisorId' => $assignedAdvisorId['advisorId'], 'message' => $message];
+        info('------ Lead allocation ended for lead ' . $allocationId . ' ------');
+
+        return apiResponse($responseData, $status, $message);
     }
 
     public function triggerSICWorkflow(SICWorkflowRequest $request)
@@ -202,10 +207,17 @@ class ApiService
         info('------ Lead allocation request received to evaluate tier only for '.$allocationId.' ------');
         $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
         $tierId = $allocationStrategy->executeSteps(false, false, true);
-        $responseData = ['assignedTierId' => $tierId];
-        info('------ Lead allocation request completed to evaluate tier only for '.$allocationId.' ------');
+        $status = Response::HTTP_OK;
+        $message = 'Tier assigned successfully!';
+        if ($tierId['advisorId'] == 0) {
+            $status = Response::HTTP_NOT_FOUND;
+            $message = 'Allocation failed: ' . $tierId['message'];
+        }
 
-        return apiResponse($responseData, Response::HTTP_OK, 'Tier assigned successfully!');
+        $responseData = ['assignedAdvisorId' => $tierId['advisorId'], 'message' => $message];
+        info('------ Lead allocation request completed to evaluate tier only for ' . $tierId['advisorId'] . ' ------');
+
+        return apiResponse($responseData, $status, $message);
     }
 
     public function handleZeroPlansEmail(HandleZeroPlansRequest $request)
