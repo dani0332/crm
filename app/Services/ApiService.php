@@ -117,8 +117,8 @@ class ApiService
         $overrideAdvisorId = true;
         $responsePayload = $allocationStrategy->executeSteps($overrideAdvisorId);
         $status = $responsePayload['status'];
-        $rest = array_diff_key($responsePayload, array_flip(['status']));
-        $message = 'Advisor assigned successfully!';
+        $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
+        $message = $rest['message'];
         if ($rest['advisorId'] == 0) {
             $message = 'Allocation failed: '. $rest['message'];
         }
@@ -158,8 +158,8 @@ class ApiService
         }
         $responsePayload = $allocationStrategy->executeSteps();
         $status = $responsePayload['status'];
-        $rest = array_diff_key($responsePayload, array_flip(['status']));
-        $message = 'Advisor assigned successfully!';
+        $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
+        $message = $rest['message'];
         if ($rest['advisorId'] == 0 || $rest['tierId'] == 0) {
             $message = 'Allocation failed: '. $rest['message'];
         }
@@ -205,8 +205,8 @@ class ApiService
         $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
         $responsePayload = $allocationStrategy->executeSteps(false, false, true);
         $status = $responsePayload['status'];
-        $rest = array_diff_key($responsePayload, array_flip(['status']));
-        $message = 'Tier assigned successfully!';
+        $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
+        $message = $rest['message'];
         if ($rest['tierId'] == 0) {
             $message = 'Tier failed: '. $rest['message'];
         }
