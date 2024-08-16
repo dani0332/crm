@@ -120,7 +120,7 @@ class ApiService
         $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
         $message = $rest['message'];
         if ($rest['advisorId'] == 0) {
-            $message = 'Allocation failed: '. $rest['message'];
+            $message = 'Allocation failed: '.$rest['message'];
         }
 
         info('------ Lead allocation request completed to assign advisor only for '.$allocationId.' ------');
@@ -161,7 +161,7 @@ class ApiService
         $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
         $message = $rest['message'];
         if ($rest['advisorId'] == 0 || $rest['tierId'] == 0) {
-            $message = 'Allocation failed: '. $rest['message'];
+            $message = 'Allocation failed: '.$rest['message'];
         }
 
         info('------ Lead allocation ended for lead '.$allocationId.' ------');
@@ -208,10 +208,10 @@ class ApiService
         $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
         $message = $rest['message'];
         if ($rest['tierId'] == 0) {
-            $message = 'Tier failed: '. $rest['message'];
+            $message = 'Tier failed: '.$rest['message'];
         }
 
-        info('------ Lead allocation request completed to evaluate tier only for '. $rest['tierId'].' ------');
+        info('------ Lead allocation request completed to evaluate tier only for '.$rest['tierId'].' ------');
 
         return apiResponse($rest, $status, $message);
     }
