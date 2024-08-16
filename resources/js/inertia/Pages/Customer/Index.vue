@@ -36,7 +36,7 @@ const tableHeader = [
   { text: 'UPDATED AT', value: 'updated_at' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'POLICY START DATE', value: 'policy_start_date' },
-  { text: 'POLICY END DATE', value: 'renewal_expiry_date' },
+  { text: 'POLICY END DATE', value: 'policy_expiry_date' },
   { text: 'TYPE OF POLICY', value: 'quote_type_id' },
   { text: 'ADVISOR', value: 'advisor' },
 ];

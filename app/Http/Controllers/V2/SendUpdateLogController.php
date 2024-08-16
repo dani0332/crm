@@ -155,7 +155,7 @@ class SendUpdateLogController extends Controller
         // booking details section.
         $payments = $this->sendUpdateLogService->getPayments($realQuote->id, $realQuote->uuid, $quoteType);
 
-        if ($payments && is_countable($payments) && count($payments) > 0) {
+        if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
             // it will get all invoice_descriptions for booking details
             $paymentInvoices = collect($payments)->whereNotNull('insurer_tax_number')->pluck('insurer_tax_number');
             $sendUpdateLogInvoices = SendUpdateLogRepository::getSendUpdateLogInvoices($quoteTypeId, $realQuote->uuid);

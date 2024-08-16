@@ -89,7 +89,6 @@ class AdvisorConversionReportService extends BaseService
         });
 
         return $extendedQuery;
-
     }
 
     private function getCarQuoteQuery($lob)
@@ -120,7 +119,6 @@ class AdvisorConversionReportService extends BaseService
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
             ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
             ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
-            ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->where('users.is_active', true)
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
@@ -177,7 +175,6 @@ class AdvisorConversionReportService extends BaseService
             ->join('users', 'users.id', 'personal_quotes.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'personal_quotes.quote_batch_id')
             ->join('personal_quote_details', 'personal_quote_details.personal_quote_id', 'personal_quotes.id')
-            ->where('personal_quotes.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->where('personal_quotes.quote_type_id', $lobId->id)
             ->where('users.is_active', true)
             ->groupBy(
@@ -522,7 +519,6 @@ class AdvisorConversionReportService extends BaseService
                 $query->whereNull('personal_quotes.renewal_import_code');
             }
         }
-
         if (isset($filters->teamsFilter) && count($filters->teamsFilter) > 0) {
             $value = $filters->teamsFilter;
             $query->whereIn('users.id', function ($query) use ($value) {
@@ -538,7 +534,6 @@ class AdvisorConversionReportService extends BaseService
         if ((isset($filters->subeams) && count($filters->subeams) > 0)) {
             $value = $filters->subeams;
             $query->whereIn('users.id', function ($query) use ($value) {
-
                 $query->distinct()
                     ->select('users.id')
                     ->from('users')
@@ -585,7 +580,6 @@ class AdvisorConversionReportService extends BaseService
         }
 
         if ($lob === quoteTypeCode::Car) {
-
             if (isset($filters->tiersFilter) && count($filters->tiersFilter) > 0) {
                 $query->whereIn('personal_quotes.tier_id', $filters->tiersFilter);
             }
@@ -754,7 +748,6 @@ class AdvisorConversionReportService extends BaseService
         if ((isset($filters->subeams) && count($filters->subeams) > 0)) {
             $value = $filters->subeams;
             $query->whereIn('users.id', function ($query) use ($value) {
-
                 $query->distinct()
                     ->select('users.id')
                     ->from('users')
@@ -850,8 +843,6 @@ class AdvisorConversionReportService extends BaseService
             ->join('quote_status', 'quote_status.id', 'car_quote_request.quote_status_id')
             ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
             ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
-            ->whereNull('car_quote_request.renewal_import_code')
-            ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->orderBy('car_quote_request_detail.advisor_assigned_date', 'desc');
 
         return $query;
@@ -872,8 +863,6 @@ class AdvisorConversionReportService extends BaseService
             ->join('quote_batches', 'quote_batches.id', 'personal_quotes.quote_batch_id')
             ->join('personal_quote_details', 'personal_quote_details.personal_quote_id', 'personal_quotes.id')
             ->join('quote_status', 'quote_status.id', 'personal_quotes.quote_status_id')
-            ->whereNull('personal_quotes.renewal_import_code')
-            ->where('personal_quotes.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->where('personal_quotes.quote_type_id', $lobId->id)
             ->orderBy('personal_quote_details.advisor_assigned_date', 'desc');
 

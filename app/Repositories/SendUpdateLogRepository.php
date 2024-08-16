@@ -98,7 +98,6 @@ class SendUpdateLogRepository extends BaseRepository
                     $quoteModel = app($serviceFile)->getEntityPlain($realQuote->id)->load(['plan']);
                     $sendUpdate->insurance_provider_id = $quoteModel->plan->provider_id ?? null;
                     $sendUpdate->plan_id = $quoteModel->plan->id ?? null;
-                    $sendUpdate->plan_name = $quoteModel->plan->text ?? null;
                 } else {
                     $sendUpdate->insurance_provider_id = $realQuote->insuranceProvider->id ?? $realQuote->insurance_provider_id ?? null;
                     $sendUpdate->provider_name = $realQuote->insuranceProvider->text ?? $realQuote->insurance_provider_text ?? null;
@@ -372,7 +371,7 @@ class SendUpdateLogRepository extends BaseRepository
             'policy_number' => ($sendUpdate->policy_number ?? $quote->policy_number) ?? null,
             'issuance_date' => ($sendUpdate->issuance_date ?? $quote->policy_issuance_date) ?? null,
             'start_date' => ($sendUpdate->start_date ?? $quote->policy_start_date) ?? null,
-            'expiry_date' => ($sendUpdate->expiry_date ?? $quote->renewal_expiry_date) ?? null,
+            'expiry_date' => ($sendUpdate->expiry_date ?? $quote->policy_expiry_date) ?? null,
         ];
 
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
