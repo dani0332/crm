@@ -75,7 +75,7 @@ class DatabaseSeeder extends Seeder
             DepartmentPermissionSeeder::class,
             DocumentTypeAuditRecordSU::class, // Add new Document type for send update - Audit Records*/
 
-           // AddPaymentPermissionsSeeder::class,
+            // AddPaymentPermissionsSeeder::class,
             //AddSendUpdatesCategoriesInLookups::class,
 
         ]);
