@@ -26,7 +26,9 @@ const quotesSelected = ref([]);
 const canExport = ref(false);
 const page = usePage();
 const notification = useNotifications('toast');
-const quoteSegments = page.props.quoteSegments?.filter(segment => segment.value !== 'sic-revival');
+const quoteSegments = page.props.quoteSegments?.filter(
+  segment => segment.value !== 'sic-revival',
+);
 
 const filters = reactive({
   code: '',
