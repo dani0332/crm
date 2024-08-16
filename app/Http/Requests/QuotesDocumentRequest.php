@@ -2,17 +2,17 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\DocumentTypeCode;
+use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\DocumentType;
-use App\Enums\LeadSourceEnum;
 use App\Models\SendUpdateLog;
 use App\Rules\CustomFileType;
-use App\Enums\PermissionsEnum;
-use App\Enums\DocumentTypeCode;
-use App\Enums\PaymentStatusEnum;
+use App\Rules\ValidateBase64;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
-use App\Rules\ValidateBase64;
 
 class QuotesDocumentRequest extends FormRequest
 {
@@ -89,7 +89,7 @@ class QuotesDocumentRequest extends FormRequest
                     if (in_array(ucfirst(request()->quoteType), [quoteTypeCode::Health, quoteTypeCode::Travel]) && isset($quote->id) && ! empty(request()->member_detail_id)) {
                         //check for quote records if exists
                         $memberExists = $quote->customerMembers()->where('id', request('member_detail_id'))->exists();
-                        if (!$memberExists) {
+                        if (! $memberExists) {
                             $validator->errors()->add('member_detail_id', 'Invalid member detail id provided');
                         }
                     }
@@ -107,7 +107,7 @@ class QuotesDocumentRequest extends FormRequest
                     } else {
                         //validate if payment is authorized
                         if (request()->quoteType != strtolower(quoteTypeCode::Travel)) {
-                            if(isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
+                            if (isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
                                 $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized.');
                             }
                         }
@@ -118,9 +118,7 @@ class QuotesDocumentRequest extends FormRequest
                         $validator->errors()->add('file', 'You can only upload a maximum of '.$this->documentType->max_files.' files');
                     }
 
-
-
-                    if(!empty($quote) ){
+                    if (! empty($quote)) {
                         $uploadedDocuments = $quote->documents->where('document_type_code', request()->document_type_code)->count();
                     }
 
