@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Strategies;
+namespace App\Strategies\Allocations;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Models\TravelQuote;
@@ -24,26 +24,34 @@ class TravelAllocation implements Allocation
 
     public function executeSteps($overrideAdvisorId = false)
     {
-        info(self::class." - executeSteps: Travel Allocation started for allocation id : {$this->allocationId}");
-        $lead = $this->fetchLead($overrideAdvisorId);
+        try {
+            info(self::class . " - executeSteps: Travel Allocation started for allocation id : {$this->allocationId}");
+            $lead = $this->fetchLead($overrideAdvisorId);
 
-        if (! $lead) {
-            info(self::class." - executeSteps: Lead not found for : {$this->allocationId}");
+            if (! $lead) {
+                info(self::class . " - executeSteps: Lead not found for : {$this->allocationId}");
 
-            return false; // when lead is not on criteria or not found
+                return 'Lead not found or not under fetch criteria'; // when lead is not on criteria or not found
+            }
+
+            $advisor = $this->fetchAvailableAdvisor();
+
+            if (! $advisor) {
+                info(self::class . " - executeSteps: No advisor found against lead : {$lead->uuid}");
+
+                return 0; // when no advisor is found
+                return 'Advisor not found';
+            }
+
+            $this->assignLead($lead, $advisor); // Assign the lead to the advisor
+
+            return $advisor->id;
+        } catch (\Throwable $th) {
+            info('exception occurred in car lead allocation with error : ' . $th->getMessage());
+            info('exception occurred in car lead allocation with error stack as  : ' . $th->getTraceAsString());
+
+            return 'exception occurred in bike lead allocation with error : ' . $th->getMessage();
         }
-
-        $advisor = $this->fetchAvailableAdvisor();
-
-        if (! $advisor) {
-            info(self::class." - executeSteps: No advisor found against lead : {$lead->uuid}");
-
-            return 0; // when no advisor is found
-        }
-
-        $this->assignLead($lead, $advisor); // Assign the lead to the advisor
-
-        return $advisor->id;
     }
 
     private function fetchLead($overrideAdvisorId)
