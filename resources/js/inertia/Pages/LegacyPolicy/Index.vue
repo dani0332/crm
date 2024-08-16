@@ -24,7 +24,6 @@ function onReset() {
 }
 
 function onSubmit(isValid) {
-  return;
   if (isValid) {
     filters.page = 1;
     Object.keys(filters).forEach(
