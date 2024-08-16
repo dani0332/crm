@@ -47,6 +47,7 @@ class EndorsementReportService extends ManagementReport
 
         $query = SendUpdateLog::query()
             ->select(
+                'send_update_logs.id',
                 'send_update_logs.uuid',
                 'personal_quotes.quote_type_id',
                 'personal_quotes.business_type_of_insurance_id',
@@ -115,6 +116,7 @@ class EndorsementReportService extends ManagementReport
 
         $reversalQuery = SendUpdateLog::query()
             ->select(
+                'send_update_logs.id',
                 'send_update_logs.uuid',
                 'personal_quotes.quote_type_id',
                 'personal_quotes.business_type_of_insurance_id',
@@ -183,10 +185,10 @@ class EndorsementReportService extends ManagementReport
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
 
         $query = $query->union($reversalQuery);
+        $query = $query->orderBy('id', 'desc');
         
         $this->applyFilters($query, $request);
         $this->getUtmGroup($request, $query);
-
 
         if ($request->export == 1) {
             $data = $query->get();
