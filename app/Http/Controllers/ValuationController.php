@@ -28,7 +28,8 @@ class ValuationController extends Controller
         foreach ($dropdownSourceList as $value) {
             $data = (new DropdownSourceService())->getDropdownSource($value);
             $dropdownSource[$value] = $data;
-        } 
+        }
+
         return inertia('Valuation/Car', [
             'carMakes' => $carMakes,
             'dropdownSource' => $dropdownSource,
