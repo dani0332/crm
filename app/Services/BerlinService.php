@@ -151,7 +151,7 @@ class BerlinService extends BaseService
 
             if (isset($errorData['code']) && $errorData['code'] == 'CUSTOMER_NOT_FOUND') {
                 $customer = $this->customerService->getCustomerByEmail($customerEmail);
-                Log::warning('extendCustomerSubscription Customer Id: '.$customerId.' Customer Email: '.$customerEmail.' Error Code: '.$errorData['code'].' Customer not exist so cannot proceed to extend subscription, sending signup email to customer. API Message: '.$errorData['message']);
+                Log::warning('Berlin Service extendCustomerSubscription (Inside If) Customer Id: '.$customerId.' Customer Email: '.$customerEmail.' Customer not found in MA side (not signed up), sending signup email to customer. API Message: '.$errorData['message']);
                 MAWelcomeJob::dispatchIf(
                     $isImport || ! isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)),
                     $customer->first_name,
@@ -162,7 +162,7 @@ class BerlinService extends BaseService
                     $tag
                 );
             } else {
-                Log::error('Berlin Service - extendCustomerSubscription - Customer ID: '.$customerId.' Customer Email: '.$customerEmail.' Error Code: '.$errorData['code'].' - Status Code: '.$statusCode.' - '.$e->getMessage());
+                Log::error('Berlin Service extendCustomerSubscription (Inide Else) Customer ID: '.$customerId.' API Code: '.$errorData['code'].' - Status Code: '.$statusCode.' - '.$e->getMessage());
             }
         }
 
