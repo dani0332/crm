@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Strategies;
+namespace App\Strategies\Allocations;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Models\Tier;
@@ -29,7 +29,7 @@ class BikeAllocation implements Allocation
             if (! $lead) {
                 info('Lead not found or not under fetch criteria for allocation id: '.$this->allocationId.' in BIKE allocation');
 
-                return false; // when lead is not on criteria or not found
+                return 'Lead not found or not under fetch criteria'; // when lead is not on criteria or not found
             }
 
             // Find the appropriate tier for the lead
@@ -58,6 +58,8 @@ class BikeAllocation implements Allocation
                     info('Advisor not found. Skipping for now.');
                     // Update the lead's tier information
                     $this->updateLeadTier($lead, $tier);
+
+                    return 'Advisor not found';
                 }
                 info('Bike Allocation Ended.');
 
@@ -67,13 +69,13 @@ class BikeAllocation implements Allocation
                 info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
                 info('Bike Allocation Ended.');
 
-                return 0;
+                return 'Tier not found';
             }
         } catch (\Throwable $th) {
             info('exception occurred in bike lead allocation with error : '.$th->getMessage());
             info('exception occurred in bike lead allocation with error stack as  : '.$th->getTraceAsString());
 
-            return null;
+            return 'exception occurred in bike lead allocation with error : '.$th->getMessage();
         }
     }
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Strategies;
+namespace App\Strategies\Allocations;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Services\HealthAllocationService;
@@ -23,8 +23,9 @@ class HealthAllocation implements Allocation
         $lead = $this->fetchLead($overrideAdvisorId);
 
         if (! $lead) {
+            info('Lead not found or not under fetch criteria for allocation id: ' . $this->allocationId);
 
-            return false; // when lead is not on criteria or not found
+            return 'Lead not found or not under fetch criteria'; // when lead is not on criteria or not found
         }
 
         $this->assignTeamBasedOnPrice($lead);
@@ -32,7 +33,7 @@ class HealthAllocation implements Allocation
         if (! $lead->health_team_type) {
             info('No health team found against lead : '.$lead->uuid);
 
-            return 0; // when system is not able to identify sub team based on price
+            return 'No health team found'; // when system is not able to identify sub team based on price
         }
 
         $advisor = $this->fetchAvailableAdvisor($lead->health_team_type);
@@ -40,7 +41,7 @@ class HealthAllocation implements Allocation
         if (! $advisor) {
             info('No advisors found against lead : '.$lead->uuid);
 
-            return 0; // when no advisor is found
+            return 'Advisor not found'; // when no advisor is found
         }
 
         $this->assignLead($lead, $advisor); // Assign the lead to the advisor

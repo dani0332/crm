@@ -116,10 +116,20 @@ class ApiService
         $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
         $overrideAdvisorId = true;
         $assignedAdvisorId = $allocationStrategy->executeSteps($overrideAdvisorId);
-        $responseData = ['assignedAdvisorId' => $assignedAdvisorId];
-        info('------ Lead allocation request completed to assign advisor only for '.$allocationId.' ------');
 
-        return apiResponse($responseData, Response::HTTP_OK, 'Advisor assigned successfully!');
+        if (is_numeric($assignedAdvisorId) && $assignedAdvisorId > 0) {
+            $message = 'Advisor assigned successfully!';
+            $status = Response::HTTP_OK;
+        } else {
+            $message = 'Allocation failed: ' . $assignedAdvisorId;
+            $status = Response::HTTP_NOT_FOUND;
+
+        }
+
+        $responseData = ['assignedAdvisorId' => $assignedAdvisorId, 'message' => $message];
+        info('------ Lead allocation request completed to assign advisor only for ' . $allocationId . ' ------');
+
+        return apiResponse($responseData, $status, $message);
     }
 
     private function triggerOCBOnly($quoteUUID, $quoteTypeId = QuoteTypeId::Car)
