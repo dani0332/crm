@@ -26,6 +26,7 @@ const quotesSelected = ref([]);
 const canExport = ref(false);
 const page = usePage();
 const notification = useNotifications('toast');
+const quoteSegments = page.props.quoteSegments?.filter(segment => segment.value !== 'sic-revival');
 
 const filters = reactive({
   code: '',
@@ -46,6 +47,7 @@ const filters = reactive({
   renewal_batch: '',
   payment_due_date: '',
   booking_date: '',
+  segment_filter: '',
 });
 
 const loader = reactive({
@@ -474,6 +476,15 @@ const resetDateFilters = filterName => {
           range
           multi-calendars
           multi-calendars-solo
+        />
+        <ComboBox
+          v-if="can(permissionsEnum.SEGMENT_FILTER)"
+          label="Segment"
+          v-model="filters.segment_filter"
+          placeholder="Select Segment"
+          :options="quoteSegments"
+          class="w-full"
+          :single="true"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

@@ -44,7 +44,7 @@ class TravelQuoteService extends BaseService
     public function __construct(LeadAllocationService $leadAllocationService)
     {
         $this->leadAllocationService = $leadAllocationService;
-        $this->query = DB::table('travel_quote_request as tqr')->select(
+        $this->query = TravelQuote::as('tqr')->select(
             'tqr.id',
             'tqr.uuid',
             DB::raw('DATE_FORMAT(tqr.created_at, "%d-%m-%y %H:%i") as created_at'),
@@ -445,6 +445,7 @@ class TravelQuoteService extends BaseService
                 }
             }
         }
+        $this->query->filterBySegment();
         $this->adjustQueryByDateFilters($this->query, 'tqr');
 
         $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
