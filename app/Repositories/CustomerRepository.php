@@ -67,7 +67,7 @@ class CustomerRepository extends BaseRepository
                     });
                 })
                 ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
-                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date',
+                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Car.'" as quote_type_id'),
                     \DB::raw("'' as business_type_of_insurance_id"),
                 ])
@@ -83,7 +83,7 @@ class CustomerRepository extends BaseRepository
                     });
                 })
                 ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
-                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date',
+                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Home.'" as quote_type_id'),
                     \DB::raw("'' as business_type_of_insurance_id"),
                 ])
@@ -99,7 +99,7 @@ class CustomerRepository extends BaseRepository
                     });
                 })
                 ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
-                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date',
+                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Health.'" as quote_type_id'),
                     \DB::raw("'' as business_type_of_insurance_id"),
                 ])
@@ -115,7 +115,7 @@ class CustomerRepository extends BaseRepository
                     });
                 })
                 ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
-                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date',
+                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Life.'" as quote_type_id'),
                     \DB::raw("'' as business_type_of_insurance_id"),
                 ])
@@ -131,7 +131,7 @@ class CustomerRepository extends BaseRepository
                     });
                 })
                 ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
-                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date',
+                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Business.'" as quote_type_id'),
                     'business_type_of_insurance_id'])
                 ->orderBy('created_at', 'desc');
@@ -146,7 +146,7 @@ class CustomerRepository extends BaseRepository
                     });
                 })
                 ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
-                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date',
+                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Travel.'" as quote_type_id'),
                     \DB::raw("'' as business_type_of_insurance_id"),
                 ])
@@ -162,7 +162,7 @@ class CustomerRepository extends BaseRepository
                     });
                 })
                 ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
-                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date', 'quote_type_id',
+                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date', 'quote_type_id',
                     \DB::raw("'' as business_type_of_insurance_id"),
                 ])
                 ->orderBy('created_at', 'desc');

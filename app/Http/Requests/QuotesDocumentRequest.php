@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\DocumentTypeCode;
+use App\Enums\PermissionsEnum;
 use App\Models\DocumentType;
 use App\Models\SendUpdateLog;
 use App\Rules\CustomFileType;
@@ -57,6 +59,13 @@ class QuotesDocumentRequest extends FormRequest
                     $whereFilter = ['document_type_code' => request()->document_type_code];
                     $quoteDocuments = SendUpdateLog::where('id', request()->send_update_id ?? '')->first();
                     $uploadedDocuments = $quoteDocuments?->documents()->where($whereFilter)->count();
+
+                    if (request()->document_type_code == DocumentTypeCode::SEND_UPDATE_AUDIT_RECORD) {
+                        if (! auth()->user()->can(PermissionsEnum::AUDITDOCUMENT_UPLOAD)) {
+                            $validator->errors()->add('error', 'This section is for audit purposes only. Only authorised users can upload files here');
+                        }
+                    }
+
                 } else {
                     $quote = $this->getQuoteObject(request()->folder_path ?? '', request()->quote_id);
                     $uploadedDocuments = $quote->documents->where('document_type_code', request()->document_type_code)->count();

@@ -14,7 +14,7 @@ defineProps({
     required: false,
     type: Boolean,
     default: true,
-  }
+  },
 });
 
 const createPaymentModal = ref(false);
@@ -216,7 +216,8 @@ const approvePayment = payment => {
             v-if="
               can(permissionsEnum.PaymentsCreate) &&
               !can(permissionsEnum.ApprovePayments) &&
-              !hasRole(rolesEnum.PA) && enableManageOptions
+              !hasRole(rolesEnum.PA) &&
+              enableManageOptions
             "
             size="sm"
             color="orange"
@@ -268,7 +269,11 @@ const approvePayment = payment => {
                 <x-button
                   size="xs"
                   color="emerald"
-                  v-if="can(permissionsEnum.PaymentsEdit) && item.edit_button && enableManageOptions"
+                  v-if="
+                    can(permissionsEnum.PaymentsEdit) &&
+                    item.edit_button &&
+                    enableManageOptions
+                  "
                   @click="editPaymentModal(item)"
                 >
                   Edit
@@ -279,16 +284,13 @@ const approvePayment = payment => {
         </DataTable>
       </template>
     </Collapsible>
-    <x-modal v-model="createPaymentModal" size="lg" show-close backdrop>
-      <template #header>
-        <span class="text-primary-800 font-semibold">
-          {{
-            paymentMethodsForm.status == 'create'
-              ? 'New Payment'
-              : 'Update Payment'
-          }}
-        </span>
-      </template>
+    <x-modal
+      v-model="createPaymentModal"
+      size="lg"
+      :title="`${paymentMethodsForm.status == 'create' ? 'New Payment' : 'Update Payment'}`"
+      show-close
+      backdrop
+    >
       <x-form @submit="addPayment" :auto-focus="false">
         <div class="w-full grid md:grid-cols-2 gap-5">
           <x-input

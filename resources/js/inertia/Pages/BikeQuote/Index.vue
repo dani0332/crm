@@ -89,18 +89,23 @@ function setQueryStringFilters() {
     }
   }
 }
-
+const readOnlyMode = reactive({
+  isDisable: true,
+});
 onMounted(() => {
   setQueryStringFilters();
   if (hasRole(rolesEnum.BikeManager) || hasRole(rolesEnum.Admin)) {
     permissionAssignLeads.value = true;
   }
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 const tableHeader = [
   { text: 'Ref-ID', value: 'uuid' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
+  { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
+  { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
   { text: 'DOB', value: 'dob' },
   { text: 'LEAD STATUS', value: 'quote_status' },
   { text: 'ADVISOR', value: 'advisor' },
@@ -112,6 +117,7 @@ const tableHeader = [
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
   { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
+  { text: 'Renewal Batch', value: 'renewal_batch' },
 ];
 
 const can = permission => useCan(permission);
@@ -141,11 +147,49 @@ const onDataExport = () => {
   const url = route('data-extraction', 'bike');
   window.open(url + '?' + new URLSearchParams(data).toString());
 };
+function daysAgoFromAuthorizedDate(authorizedDate) {
+  // Check if authorizedDate is null or undefined
+  if (!authorizedDate) {
+    return;
+  }
+  const [datePart] = authorizedDate.split(' ');
 
+  const [day, month, year] = datePart.split('-').map(Number);
+
+  const parsedDate = new Date(year, month - 1, day);
+
+  // Check if the parsed date is valid
+  if (isNaN(parsedDate.getTime())) {
+    return 'Invalid date';
+  }
+
+  // Calculate the new date by adding 8 days to the authorized date
+  const newDate = new Date(parsedDate);
+  newDate.setDate(parsedDate.getDate() + 8);
+
+  // Get the current date
+  const currentDate = new Date();
+
+  // Calculate the difference in time
+  const differenceInTime = newDate.getTime() - currentDate.getTime();
+  const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+
+  // Check if the date has expired
+  if (Math.floor(differenceInDays) <= 0) {
+    return 'Expired';
+  }
+
+  // Return the difference in days
+  return Math.floor(differenceInDays) + ' days';
+}
 watch(
   () => filters,
   () => {
-    if ((filters.created_at_start && filters.created_at_end) || (filters.payment_due_date) || (filters.booking_date)) {
+    if (
+      (filters.created_at_start && filters.created_at_end) ||
+      filters.payment_due_date ||
+      filters.booking_date
+    ) {
       canExport.value = true;
     } else {
       canExport.value = false;
@@ -192,15 +236,17 @@ const resetDateFilters = filterName => {
 
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Bike Quotes List</h2>
-      <x-button
-        v-if="can(permissionsEnum.BikeQuotesCreate)"
-        size="sm"
-        color="#ff5e00"
-        :href="route('bike-quotes-create')"
-      >
-        <!-- href="/personal-quotes/bike/create" -->
-        Create Lead
-      </x-button>
+      <div v-if="readOnlyMode.isDisable === true">
+        <x-button
+          v-if="can(permissionsEnum.BikeQuotesCreate)"
+          size="sm"
+          color="#ff5e00"
+          :href="route('bike-quotes-create')"
+        >
+          <!-- href="/personal-quotes/bike/create" -->
+          Create Lead
+        </x-button>
+      </div>
     </div>
     <x-divider class="my-4" />
 
@@ -208,7 +254,7 @@ const resetDateFilters = filterName => {
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -363,11 +409,12 @@ const resetDateFilters = filterName => {
           >
             Export
           </x-button>
-          <x-tooltip v-else position="right">
+          <x-tooltip v-else placement="right">
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date are required to export data.
+                Created dates or payment due date or booking date are required
+                to export data.
               </span>
             </template>
           </x-tooltip>
@@ -395,7 +442,6 @@ const resetDateFilters = filterName => {
         />
       </div>
     </Transition>
-
     <DataTable
       v-model:items-selected="quotesSelected"
       table-class-name="tablefixed"
@@ -417,6 +463,16 @@ const resetDateFilters = filterName => {
           {{ code }}
         </Link>
         <span v-else>{{ code }}</span>
+      </template>
+      <template #item-authorized_at="item">
+        <p v-if="item?.payments[0]?.payment_status_id === 4">
+          {{ item?.payments[0]?.authorized_at }}
+        </p>
+      </template>
+      <template #item-expiry_date="item">
+        <p v-if="item?.payments[0]?.payment_status_id === 4">
+          {{ daysAgoFromAuthorizedDate(item.payments[0].authorized_at) }}
+        </p>
       </template>
 
       <template #item-advisor="{ advisor }">

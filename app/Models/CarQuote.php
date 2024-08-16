@@ -40,7 +40,7 @@ class CarQuote extends BaseModel
         'vehicle_type_id' => FilterTypes::EXACT,
         'car_type_insurance_id' => FilterTypes::EXACT,
         'renewal_batch' => FilterTypes::EXACT,
-        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'policy_expiry_date' => FilterTypes::DATE_BETWEEN,
         'policy_number' => FilterTypes::NULL_CHECK,
         'source' => FilterTypes::EXACT,
         'advisor_id' => FilterTypes::IN,
@@ -203,6 +203,11 @@ class CarQuote extends BaseModel
     public function payments()
     {
         return $this->morphMany(Payment::class, 'paymentable');
+    }
+
+    public function embeddedTransactions()
+    {
+        return $this->morphMany(EmbeddedTransaction::class, 'quote_request');
     }
 
     public function plan()

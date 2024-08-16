@@ -30,6 +30,7 @@ class Kernel extends ConsoleKernel
         Commands\AutomateActivitiesCommand::class,
         Commands\PaymentOverdueStatus::class,
         Commands\AlfredFollowUpSchedulerCommand::class,
+        Commands\ProcessCCPaymentsCommand::class,
     ];
 
     /**
@@ -43,6 +44,7 @@ class Kernel extends ConsoleKernel
             ->command('UpdateUserStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
         $schedule->command('PaymentOverdueStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(5);
+        $schedule->command('ProcessCCPaymentsCommand:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
         /*$schedule->job(new UnconSubmissionReminder)
         ->tuesdays()
@@ -103,7 +105,6 @@ class Kernel extends ConsoleKernel
         //     ->onFailure(function (Stringable $output) {
         //         info('----------- Business Data Migrations Failed -----------'.$output);
         //     });
-
     }
 
     /**

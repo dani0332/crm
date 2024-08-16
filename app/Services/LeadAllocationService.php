@@ -752,7 +752,7 @@ class LeadAllocationService extends BaseService
         /**
          * Following are the criteria to match and find a renewal
          * Search for a lead where source is Renewal_upload
-         * Search for a lead where renewal expiry date should be in between last 30 days and future 90 days
+         * Search for a lead where policy expiry date should be in between last 30 days and future 90 days
          * Search for a lead where email OR phone number (last 7 digits) matches
          * Search for a lead where car make and model id is same as what we have from current request.
          *
@@ -1055,22 +1055,22 @@ class LeadAllocationService extends BaseService
 
     public function isCommercialVehicles($lead)
     {
-        $_return = false;
+        $isCommercial = false;
         $commercialCarModel = CarModel::where('id', $lead->car_model_id)
             ->where('is_commercial', true)
             ->count();
 
         if ($commercialCarModel) {
-            $_return = true;
+            $isCommercial = true;
         }
 
         $commercialKeywords = CommercialKeyword::select('id', 'name')->get();
         $commercialKeywordsCheck = in_array(strtolower(trim($lead->full_name)), array_column($commercialKeywords->toArray(), strtolower(trim('name'))));
         if ($commercialKeywordsCheck) {
-            $_return = true;
+            $isCommercial = true;
         }
 
-        return $_return;
+        return $isCommercial;
     }
 
 }

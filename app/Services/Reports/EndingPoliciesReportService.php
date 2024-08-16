@@ -36,28 +36,31 @@ class EndingPoliciesReportService extends ManagementReport
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'p.payment_status_id')
             ->leftJoin('customer as c', 'c.id', '=', 'customer_id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
+            ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
             ->join('teams as t', 't.id', '=', 'ut.team_id')
             ->select(
-                DB::raw('CONCAT(c.first_name, " ", c.last_name) as customer_name'),
+                'c.first_name',
+                'c.last_name',
                 'policy_number',
                 'ip.text as insurer',
                 'qt.code as line_of_business',
-                DB::raw("DATE_FORMAT(personal_quotes.policy_start_date, '%Y-%m-%d') as policy_start_date"),
-                DB::raw("DATE_FORMAT(p.policy_expiry_date, '%Y-%m-%d') as policy_end_date"),
-                DB::raw('FORMAT(SUM(premium), 2) as collected_amount'),
-                DB::raw('FORMAT(SUM(price_vat_applicable), 2) as price_vat_applicable'),
-                DB::raw('FORMAT(SUM(vat), 2) as total_vat'),
-                DB::raw('FORMAT(SUM(price_vat_not_applicable), 2) as price_vat_not_applicable'),
-                DB::raw('FORMAT(SUM(p.discount_value), 2) as discount'),
-                DB::raw('FORMAT(SUM(price_vat_applicable + price_vat_not_applicable + vat - p.discount_value), 2) as total_price'),
-                DB::raw('FORMAT((SUM(price_vat_applicable + price_vat_not_applicable + vat - p.discount_value) - SUM(premium)), 2) as pending_balance'),
-                DB::raw('FORMAT(SUM(p.commission_vat_applicable), 2) as commission_vat_applicable'),
-                DB::raw('FORMAT(SUM(p.commission_vat), 2) as commission_vat'),
-                DB::raw('FORMAT(SUM(p.commission_vat_not_applicable), 2) as commission_vat_not_applicable'),
+                'personal_quotes.policy_start_date',
+                'p.policy_expiry_date as policy_end_date',
+                DB::raw('SUM(premium) as collected_amount'),
+                DB::raw('SUM(personal_quotes.price_vat_applicable) as price_vat_applicable'),
+                DB::raw('SUM(vat) as total_vat'),
+                DB::raw('SUM(price_vat_not_applicable) as price_vat_not_applicable'),
+                DB::raw('SUM(p.discount_value) as discount'),
+                DB::raw('SUM(personal_quotes.price_vat_applicable + price_vat_not_applicable + vat - p.discount_value) as total_price'),
+                DB::raw('(SUM(personal_quotes.price_vat_applicable + price_vat_not_applicable + vat - p.discount_value) - SUM(premium)) as pending_balance'),
+                DB::raw('SUM(p.commission_vat_applicable) as commission_vat_applicable'),
+                DB::raw('SUM(p.commission_vat) as commission_vat'),
+                DB::raw('SUM(p.commission_vat_not_applicable) as commission_vat_not_applicable'),
                 'pi.name as policy_issuer',
                 'u.name as advisor',
+                'dp.name as department',
                 'personal_quotes.source',
                 'personal_quotes.notes',
             );
@@ -74,6 +77,7 @@ class EndingPoliciesReportService extends ManagementReport
 
         if ($request->export == 1) {
             $data = $query->get();
+            $this->formatData($data);
 
             //Columns that are not integar and should not be summed
             $nonIntegarIndexes = [0, 1, 2, 3, 4, 5, 16, 17, 18, 19];
@@ -85,8 +89,30 @@ class EndingPoliciesReportService extends ManagementReport
                 $nonIntegarIndexes
             );
         } else {
-            return $query->simplePaginate(100)->withQueryString();
+            $data = $query->simplePaginate(100)->withQueryString();
+            $this->formatData($data);
+
+            return $data;
         }
+    }
+
+    private function formatData(&$data)
+    {
+        $data->map(function ($item) {
+            $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
+            $item->policy_start_date = ! empty($item->policy_start_date) ? Carbon::parse($item->policy_start_date)->format('Y-m-d') : null;
+            $item->policy_end_date = ! empty($item->policy_end_date) ? Carbon::parse($item->policy_end_date)->format('Y-m-d') : null;
+            $item->collected_amount = number_format($item->collected_amount, 2);
+            $item->price_vat_applicable = number_format($item->price_vat_applicable, 2);
+            $item->total_vat = number_format($item->total_vat, 2);
+            $item->price_vat_not_applicable = number_format($item->price_vat_not_applicable, 2);
+            $item->discount = number_format($item->discount, 2);
+            $item->total_price = number_format($item->total_price, 2);
+            $item->pending_balance = number_format($item->pending_balance, 2);
+            $item->commission_vat_applicable = number_format($item->commission_vat_applicable, 2);
+            $item->commission_vat = number_format($item->commission_vat, 2);
+            $item->commission_vat_not_applicable = number_format($item->commission_vat_not_applicable, 2);
+        });
     }
 
     public function getDefaultFilters()
@@ -134,7 +160,7 @@ class EndingPoliciesReportService extends ManagementReport
     {
         return [
             $quote->customer_name ?? 'N/A',
-            $quote->policy_number ?? 'N/A',
+            $quote->policy_number ? '="'.$quote->policy_number.'"' : 'N/A',
             $quote->insurer ?? 'N/A',
             $quote->line_of_business ?? 'N/A',
             $quote->policy_start_date ?? 'N/A',

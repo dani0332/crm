@@ -139,15 +139,19 @@ const filters = reactive({
   is_cold: false,
   is_stale: false,
   status_filters: null,
-  payment_due_date:"",
-  booking_date: ""
+  payment_due_date: '',
+  booking_date: '',
 });
 
 const canExport = ref(false);
 watch(
   () => filters,
   () => {
-    if ((filters.created_at_start && filters.created_at_end) || (filters.payment_due_date) || (filters.booking_date)) {
+    if (
+      (filters.created_at_start && filters.created_at_end) ||
+      filters.payment_due_date ||
+      filters.booking_date
+    ) {
       canExport.value = true;
     } else {
       canExport.value = false;
@@ -357,6 +361,12 @@ watch(
   },
 );
 
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 const resetDateFilters = filterName => {
   const filterMappings = {
     payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
@@ -388,7 +398,6 @@ const resetDateFilters = filterName => {
     },
   );
 });
-
 </script>
 
 <template>
@@ -417,11 +426,25 @@ const resetDateFilters = filterName => {
           @toggleFilters="showFilters = !showFilters"
         />
         <Link :href="route('health.cards')">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
+          <x-button
+            size="sm"
+            color="#1d83bc"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Cards View
+          </x-button>
         </Link>
 
         <Link :href="route('health.create')">
-          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Create Lead
+          </x-button>
         </Link>
       </template>
     </StickyHeader>
@@ -439,7 +462,7 @@ const resetDateFilters = filterName => {
     <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -593,7 +616,7 @@ const resetDateFilters = filterName => {
           name="assigned_to_date_end"
           label="Advisor Assigned Date End"
         />
-        
+
         <DatePicker
           v-model="filters.payment_due_date"
           label="Payment Due Date"
@@ -623,11 +646,12 @@ const resetDateFilters = filterName => {
           >
             Export
           </x-button>
-          <x-tooltip v-else position="right">
+          <x-tooltip v-else placement="right">
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date are required to export data.
+                Created dates or payment due date or booking date are required
+                to export data.
               </span>
             </template>
           </x-tooltip>
@@ -660,6 +684,8 @@ const resetDateFilters = filterName => {
                 placeholder="Select Subteam"
                 class="flex-1 w-auto"
                 :rules="[isRequired]"
+                filterable
+                v-if="readOnlyMode.isDisable === true"
               />
               <x-select
                 v-model="assignForm.assigned_to_id_new"
@@ -668,6 +694,8 @@ const resetDateFilters = filterName => {
                 placeholder="Select Advisor"
                 class="flex-1 w-auto"
                 :rules="[isRequired]"
+                filterable
+                v-if="readOnlyMode.isDisable === true"
               />
 
               <div class="mb-3 md:pt-6">
@@ -676,6 +704,7 @@ const resetDateFilters = filterName => {
                   size="sm"
                   type="submit"
                   :loading="assignForm.processing"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Assign
                 </x-button>

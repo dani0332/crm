@@ -4,6 +4,7 @@ const props = defineProps({
   products: Array,
   teams: Array,
   subTeams: Array,
+  departments: Array,
   user: Object,
   userRole: Object,
   selectedAdditionalTeams: Array,
@@ -22,6 +23,7 @@ const notification = useToast();
 
 const { isRequired, isMobileNo, isEmail, allowEmpty } = useRules();
 const subTeams = ref([]);
+const departments = ref([]);
 const teams = ref([]);
 const managers = ref([]);
 const isError = ref(false);
@@ -63,6 +65,7 @@ const userForm = useForm({
   permissions: props?.userPermissions ?? null,
   calendar_link: props.user?.calendar_link ?? null,
   phone_calendar_link: props.user?.phone_calendar_link ?? null,
+  department_id: props.user?.department_id ?? null,
 });
 
 const isAdvisor = computed(() => {
@@ -90,6 +93,15 @@ const computedTeams = computed(() => {
 const computedSubTeams = computed(() => {
   if (subTeams.value.length > 0)
     return subTeams.value.map(item => ({ value: item.id, label: item.name }));
+  else return [];
+});
+
+const computedDepartments = computed(() => {
+  if (page.props.departments?.length > 0)
+    return page.props.departments?.map(item => ({
+      value: item.id,
+      label: item.name,
+    }));
   else return [];
 });
 
@@ -315,13 +327,22 @@ watch(
       </x-field>
       <x-field label="SUB TEAM">
         <ComboBox
-            v-model="userForm.sub_team_id"
-            placeholder="Select sub team"
-            :options="computedSubTeams"
-            :single="true"
-            :loading="loader.subTeamLoader"
+          v-model="userForm.sub_team_id"
+          placeholder="Select sub team"
+          :options="computedSubTeams"
+          :single="true"
+          :loading="loader.subTeamLoader"
         />
       </x-field>
+      <x-field label="Department">
+        <ComboBox
+          v-model="userForm.department_id"
+          placeholder="Select Department"
+          :options="computedDepartments"
+          :single="true"
+        />
+      </x-field>
+
       <x-field label="LOB VISIBILITY">
         <ComboBox
           :multiple="true"
