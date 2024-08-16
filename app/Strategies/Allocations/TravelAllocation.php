@@ -6,6 +6,7 @@ use App\Enums\AssignmentTypeEnum;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\TravelAllocationService;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -31,7 +32,7 @@ class TravelAllocation implements Allocation
             if (! $lead) {
                 info(self::class." - executeSteps: Lead not found for : {$this->allocationId}");
 
-                return ['advisorId' => 0, 'message' => 'Lead not found or not under fetch criteria']; // when lead is not on criteria or not found
+                return ['advisorId' => 0, 'message' => 'Lead not found or not under fetch criteria', 'status' => Response::HTTP_NOT_FOUND]; // when lead is not on criteria or not found
             }
 
             $advisor = $this->fetchAvailableAdvisor();
@@ -39,18 +40,18 @@ class TravelAllocation implements Allocation
             if (! $advisor) {
                 info(self::class." - executeSteps: No advisor found against lead : {$lead->uuid}");
 
-                return ['advisorId' => 0, 'message' => 'Advisor not found'];
+                return ['advisorId' => 0, 'message' => 'Advisor not found', 'status' => Response::HTTP_NOT_FOUND];
             }
 
             $this->assignLead($lead, $advisor); // Assign the lead to the advisor
 
-            return ['advisorId' => $advisor->id, 'message' => 'lead allocated successfully'];
+            return ['advisorId' => $advisor->id, 'message' => 'lead allocated successfully', 'status' => Response::HTTP_OK];
         } catch (\Throwable $th) {
             $message = $th->getMessage() ?? '';
             info('exception occurred in travel lead allocation with error : '.$message);
             info('exception occurred in travel lead allocation with error stack as  : '.$th->getTraceAsString());
 
-            return 'exception occurred in travel lead allocation with error : '.$message;
+            return ['advisorId' => 0, 'message' => 'exception occurred in travel lead allocation with error : ' . $message, 'status' => Response::HTTP_UNPROCESSABLE_ENTITY];
         }
     }
 
