@@ -39,7 +39,7 @@ class SageApiService
     protected $sagePassword;
     protected $sageRequestUrl;
     protected $sageBatchNumber;
-    protected $sageCompany;
+    protected $sageDBName;
     protected $recursiveCallStatus;
 
     public function __construct()
@@ -48,7 +48,7 @@ class SageApiService
         $this->sageLogin = env('SAGE_300_LOGIN');
         $this->sagePassword = env('SAGE_300_PASSWORD');
         $this->sageRequestUrl = env('SAGE_300_BASE_URL').env('SAGE_300_VERSION');
-        $this->sageCompany = env('SAGE_300_COMPANY');
+        $this->sageDBName = env('SAGE_300_CUSTOM_API_DB_NAME');
         $this->sageBatchNumber = '';
         $this->recursiveCallStatus = SageEnum::STATUS_SUCCESS;
     }
@@ -1237,7 +1237,7 @@ class SageApiService
                         $invoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
                         $invoicePaymentSchedule->amtdue = $amountDue;
                         $invoicePaymentSchedule->amtduehc = $amountDue;
-                        $invoicePaymentSchedule->audtorg = $this->sageCompany;
+                        $invoicePaymentSchedule->audtorg = $this->sageDBName;
                     }
                 }
 
@@ -1817,7 +1817,7 @@ class SageApiService
                     $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
                     $aPInvoicePaymentSchedule->amtdue = $dueAmount;
                     $aPInvoicePaymentSchedule->amtduehc = $dueAmount;
-                    $aPInvoicePaymentSchedule->audtorg = $this->sageCompany;
+                    $aPInvoicePaymentSchedule->audtorg = $this->sageDBName;
                 }
             } else {
                 $errorMessage = 'Error while getting split payment schedule from sage';
