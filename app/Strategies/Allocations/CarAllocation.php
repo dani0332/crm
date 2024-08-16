@@ -84,7 +84,7 @@ class CarAllocation implements Allocation
                     return ['advisorId' => 0, 'message' => 'Advisor not found', 'status' => Response::HTTP_NOT_FOUND];
                 }
 
-                return ['advisorId' => $advisorId, 'message' => 'lead allocated successfully', 'status' => Response::HTTP_OK];
+                return ['advisorId' => $advisorId, 'message' => 'Advisor assigned successfully!', 'status' => Response::HTTP_OK];
             } else {
                 // Log that tier was not found for the lead and skip processing
                 info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');

@@ -45,7 +45,7 @@ class TravelAllocation implements Allocation
 
             $this->assignLead($lead, $advisor); // Assign the lead to the advisor
 
-            return ['advisorId' => $advisor->id, 'message' => 'lead allocated successfully', 'status' => Response::HTTP_OK];
+            return ['advisorId' => $advisor->id, 'message' => 'Advisor assigned successfully!', 'status' => Response::HTTP_OK];
         } catch (\Throwable $th) {
             $message = $th->getMessage() ?? '';
             info('exception occurred in travel lead allocation with error : ' . $message);
