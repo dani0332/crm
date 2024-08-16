@@ -159,7 +159,7 @@ class EndorsementReportService extends ManagementReport
 
     protected function filterTeams($query, $teamIds)
     {
-        if (!empty($teamIds)) {
+        if (! empty($teamIds)) {
             $userIds = $this->getUsersByTeamIds($teamIds)->pluck('id')->toArray();
             $query->whereIn('personal_quotes.advisor_id', $userIds);
         }
