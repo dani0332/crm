@@ -148,7 +148,7 @@ class ApiService
         return apiResponse(null, Response::HTTP_OK, 'OCB email triggered successfully!');
     }
 
-    private function allocateLead($allocationType, $leadId, $teamId)
+    private function performLeadAllocation($allocationType, $leadId, $teamId)
     {
         info("------ Lead allocation started for lead: $leadId ------");
 
