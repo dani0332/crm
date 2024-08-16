@@ -10,6 +10,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\ReportsLeadTypeEnum;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
@@ -605,7 +606,7 @@ class AdvisorConversionReportService extends BaseService
             }
 
             if (isset($filters->segment_filter) && $filters->segment_filter != 'all') {
-                $query = $query->filterBySegment($filters->segment_filter, quoteTypeCode::Car);
+                $query = $query->filterBySegment($filters->segment_filter, QuoteTypeId::Car);
             }
         }
 
@@ -802,7 +803,7 @@ class AdvisorConversionReportService extends BaseService
         }
 
         if (isset($filters->segment_filter) && $filters->segment_filter != 'all') {
-            $query = $query->filterBySegment($filters->segment_filter, quoteTypeCode::Car);
+            $query = $query->filterBySegment($filters->segment_filter, QuoteTypeId::Car);
         }
 
         if (! empty($filters->vehicle_type) && $filters->vehicle_type != 'All') {

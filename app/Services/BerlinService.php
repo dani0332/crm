@@ -139,7 +139,7 @@ class BerlinService extends BaseService
                         'Authorization' => 'Basic '.$magicUrlGeneratauthBasic,
                     ],
                     'body' => $customerDataJson,
-                    'timeout' => 10,
+                    'timeout' => 20,
                 ]
             );
 
@@ -151,7 +151,7 @@ class BerlinService extends BaseService
 
             if (isset($errorData['code']) && $errorData['code'] == 'CUSTOMER_NOT_FOUND') {
                 $customer = $this->customerService->getCustomerByEmail($customerEmail);
-                Log::warning('Berlin Service - extendCustomerSubscription (Inside If) Customer Id: '.$customerId.' Customer Email: '.$customerEmail.' Customer not found in MA side (not signed up), sending signup email to customer. API Message: '.$errorData['message']);
+                Log::warning('Berlin Service - extendCustomerSubscription - Success - Customer ID: '.$customerId.' - Sending MA Welcome Email. API Message: '.$errorData['message']);
                 MAWelcomeJob::dispatchIf(
                     $isImport || ! isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)),
                     $customer->first_name,
@@ -164,7 +164,7 @@ class BerlinService extends BaseService
 
                 $statusCode = 201;
             } else {
-                Log::error('Berlin Service - extendCustomerSubscription (Inside Else) Customer ID: '.$customerId.' API Code: '.$errorData['code'].' - Status Code: '.$statusCode.' - '.$e->getMessage());
+                Log::error('Berlin Service - extendCustomerSubscription - Fail - Customer ID: '.$customerId.' Status Code: '.$statusCode.' - Message: '.$e->getMessage());
             }
         }
 
