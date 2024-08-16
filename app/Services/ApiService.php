@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Factories\AllocationFactory;
 use App\Http\Requests\ActivityApiRequest;
@@ -176,7 +177,7 @@ class ApiService
         }
         $existingActivity = Activities::where('quote_uuid', $request->entityUId)
             ->Where('status', 0)
-            ->Where('source', 'Instant Alfred')
+            ->Where('source', LeadSourceEnum::INSTANT_ALFRED)
             ->first();
         if ($existingActivity) {
             return response()->json(['message' => 'An existing activity was found. Please Mark Done the current activity before creating a new one.'], 409);
@@ -208,7 +209,7 @@ class ApiService
 
         $activity = Activities::where('quote_uuid', $request->entityUId)
             ->Where('status', 0)
-            ->Where('source', 'Instant Alfred')
+            ->Where('source', LeadSourceEnum::INSTANT_ALFRED)
             ->first();
 
         if (! $activity) {

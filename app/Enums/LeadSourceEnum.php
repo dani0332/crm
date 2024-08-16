@@ -62,4 +62,5 @@ final class LeadSourceEnum extends Enum
     const TRAVEL_INSURANCEMARKET_AE = 'Travel - InsuranceMarket.ae';
     const WALK_IN_CLIENT = 'Walk In Client (not an existing client)';
     const WEB = 'web';
+    const INSTANT_ALFRED = 'INSTANT_ALFRED';
 }

@@ -208,7 +208,7 @@ class ActivitiesService extends BaseService
         $activity->created_at = Carbon::now();
         $activity->updated_at = Carbon::now();
         $activity->quote_status_id = $record?->quote_status_id ?? null;
-        $activity->source = 'Instant Alfred';
+        $activity->source = LeadSourceEnum::INSTANT_ALFRED;
         $activity->save();
 
         return $activity;
