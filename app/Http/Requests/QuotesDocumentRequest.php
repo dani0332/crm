@@ -95,7 +95,7 @@ class QuotesDocumentRequest extends FormRequest
                     }
 
                     if (! in_array(ucfirst(request()->quoteType), [quoteTypeCode::Health, quoteTypeCode::Travel]) && ! empty(request()->member_detail_id)) {
-                        $validator->errors()->add('member_detail_id', 'Member can be attached only for Health Insurance type');
+                        $validator->errors()->add('member_detail_id', 'Member can be attached only for Health or Travel Insurance type');
                     }
 
                     $quote_source = data_get($quote, 'source', '');
