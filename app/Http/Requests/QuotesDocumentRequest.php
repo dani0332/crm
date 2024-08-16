@@ -67,7 +67,7 @@ class QuotesDocumentRequest extends FormRequest
                     }
 
                 } else {
-                    $quote = $this->getQuoteObject(request()->folder_path ?? '', request()->quote_id);
+                    $quote = $this->getQuoteObjectBy(request()->folder_path ?? '', request()->quote_id, 'uuid');
                     $uploadedDocuments = $quote->documents->where('document_type_code', request()->document_type_code)->count();
                 }
                 //check for maximum number of files uploaded against selected quote and document type
