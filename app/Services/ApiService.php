@@ -115,19 +115,17 @@ class ApiService
         info('------ Lead allocation request received to assign advisor only for '.$allocationId.' ------');
         $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
         $overrideAdvisorId = true;
-        $assignedAdvisorId = $allocationStrategy->executeSteps($overrideAdvisorId);
+        $responsePayload = $allocationStrategy->executeSteps($overrideAdvisorId);
 
         $status = Response::HTTP_OK;
         $message = 'Advisor assigned successfully!';
-        if ($assignedAdvisorId['advisorId'] == 0) {
-            $status = Response::HTTP_NOT_FOUND;
-            $message = 'Allocation failed: ' . $assignedAdvisorId['message'];
+        if ($responsePayload['advisorId'] == 0 ) {
+            $message = 'Allocation failed: '. $responsePayload['message'];
         }
 
-        $responseData = ['assignedAdvisorId' => $assignedAdvisorId['advisorId'], 'message' => $message];
-        info('------ Lead allocation request completed to assign advisor only for ' . $allocationId . ' ------');
+        info('------ Lead allocation request completed to assign advisor only for '.$allocationId.' ------');
 
-        return apiResponse($responseData, $status, $message);
+        return apiResponse($responsePayload, $status, $message);
     }
 
     private function triggerOCBOnly($quoteUUID, $quoteTypeId = QuoteTypeId::Car)
@@ -158,18 +156,16 @@ class ApiService
             info('-- Exception against - allocationType: '.$allocationId.' and allocationId: '.$allocationId.' --');
             throw new InvalidArgumentException("Allocation strategy for type '$allocationType -- $allocationId' not found.");
         }
-        $assignedAdvisorId = $allocationStrategy->executeSteps();
+        $responsePayload = $allocationStrategy->executeSteps();
         $status = Response::HTTP_OK;
         $message = 'Advisor assigned successfully!';
-        if ($assignedAdvisorId['advisorId'] == 0) {
-            $status = Response::HTTP_NOT_FOUND;
-            $message = 'Allocation failed: ' . $assignedAdvisorId['message'];
-        } 
+        if ($responsePayload['advisorId'] == 0 || $responsePayload['tierId'] == 0) {
+            $message = 'Allocation failed: '. $responsePayload['message'];
+        }
 
-        $responseData = ['assignedAdvisorId' => $assignedAdvisorId['advisorId'], 'message' => $message];
-        info('------ Lead allocation ended for lead ' . $allocationId . ' ------');
+        info('------ Lead allocation ended for lead '.$allocationId.' ------');
 
-        return apiResponse($responseData, $status, $message);
+        return apiResponse($responsePayload, $status, $message);
     }
 
     public function triggerSICWorkflow(SICWorkflowRequest $request)
@@ -206,18 +202,16 @@ class ApiService
 
         info('------ Lead allocation request received to evaluate tier only for '.$allocationId.' ------');
         $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
-        $tierId = $allocationStrategy->executeSteps(false, false, true);
+        $responsePayload = $allocationStrategy->executeSteps(false, false, true);
         $status = Response::HTTP_OK;
         $message = 'Tier assigned successfully!';
-        if ($tierId['advisorId'] == 0) {
-            $status = Response::HTTP_NOT_FOUND;
-            $message = 'Allocation failed: ' . $tierId['message'];
+        if ($responsePayload['tierId'] == 0) {
+            $message = 'Tier failed: '. $responsePayload['message'];
         }
 
-        $responseData = ['assignedAdvisorId' => $tierId['advisorId'], 'message' => $message];
-        info('------ Lead allocation request completed to evaluate tier only for ' . $tierId['advisorId'] . ' ------');
+        info('------ Lead allocation request completed to evaluate tier only for '. $responsePayload['tierId'].' ------');
 
-        return apiResponse($responseData, $status, $message);
+        return apiResponse($responsePayload, $status, $message);
     }
 
     public function handleZeroPlansEmail(HandleZeroPlansRequest $request)
