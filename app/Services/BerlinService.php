@@ -163,7 +163,7 @@ class BerlinService extends BaseService
                 );
                 $statusCode = 201;
             } else {
-                Log::error('Berlin Service - extendCustomerSubscription (Inide Else) Customer ID: '.$customerId.' API Code: '.$errorData['code'].' - Status Code: '.$statusCode.' - '.$e->getMessage());
+                Log::error('Berlin Service - extendCustomerSubscription (Inside Else) Customer ID: '.$customerId.' API Code: '.$errorData['code'].' - Status Code: '.$statusCode.' - '.$e->getMessage());
             }
         }
 
