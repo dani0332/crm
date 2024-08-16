@@ -98,7 +98,7 @@ class DocumentTypeRepository extends BaseRepository
         }
 
         // Exclude documents with the 'TI' code from the query results.
-        if ($quoteType !== QuoteTypes::HEALTH->value){
+        if ($quoteType !== QuoteTypes::HEALTH->value) {
             $documentTypes->where('code', '!=', DocumentTypeCode::TI);
         }
 
