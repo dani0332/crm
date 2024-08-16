@@ -265,14 +265,18 @@ class AMLService
             $quoteCdbId = $quoteRefId;
             $htmlContent = View::make('AmlComplianceMail', compact('amlUrl', 'resultsFound', 'fullName', 'quoteTypeName', 'quoteCdbId'))->render();
 
-            $ccEmail = '';
+            $toEmails = array_map(function ($email) {
+                return ['email' => $email];
+            }, $emailRecipients);
+
+            $ccEmail = [];
             if (in_array($loginUserEmail, $emailRecipients) || ! $forComplianceSuperUser) {
-                $ccEmail = ['email' => $loginUserEmail];
+                $ccEmail[] = ['email' => $loginUserEmail];
             }
 
             $body = json_encode([
                 'sender' => ['name' => $fromName, 'email' => $fromEmail],
-                'to' => $emailRecipients,
+                'to' => $toEmails,
                 'cc' => $ccEmail,
                 'subject' => $emailSubject,
                 'htmlContent' => $htmlContent,
