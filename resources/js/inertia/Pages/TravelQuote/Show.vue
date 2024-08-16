@@ -3031,6 +3031,7 @@ const onAddUpdate = () => {
         permissions.isQuoteDocumentEnabled
       "
       @sendPolicyToClient="sendPolicyToClient"
+      @verifyDocuments="getupdateDocumentValidate(true)"
     />
 
     <BookPolicy
