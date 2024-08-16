@@ -20,6 +20,9 @@ const rules = {
 };
 const notification = useNotifications('toast');
 
+const getLink = (quote_uuid, quote_type_id) =>
+  buildCdbidLink(quote_uuid, quote_type_id);
+
 const activityForm = useForm({
   title: null,
   description: null,
@@ -421,7 +424,7 @@ onMounted(() => {
       </template>
 
       <template #item-cdbid="item">
-        <div v-html="buildCdbidLink(item.quote_uuid, item.quote_type_id)"></div>
+        <div v-html="getLink(item.quote_uuid, item.quote_type_id)"></div>
       </template>
 
       <template #item-due_date="item">

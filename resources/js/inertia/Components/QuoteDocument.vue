@@ -20,7 +20,11 @@ defineProps({
   sendPolicy: Boolean,
 });
 
-const emit = defineEmits(['copyUploadURL', 'sendPolicyToClient','verifyDocuments']);
+const emit = defineEmits([
+  'copyUploadURL',
+  'sendPolicyToClient',
+  'verifyDocuments',
+]);
 
 const page = usePage();
 const selectedTab = ref(0);
@@ -128,7 +132,7 @@ const sendPolicyToClient = () => {
 };
 
 const updateDocumentValidate = () => {
-  emit('verifyDocuments',true);
+  emit('verifyDocuments', true);
 };
 
 const onDocDelete = name => {
@@ -227,22 +231,23 @@ onMounted(() => {
           <x-tooltip placement="top">
             <x-button
               @click.prevent="updateDocumentValidate"
-              v-if="(can(permissionEnum.DOCUMENT_VERIFY)
-               ||
-               hasAnyRole([
-                rolesEnum.Admin,
-                rolesEnum.Engineering,
-                rolesEnum.TravelHapex,
-              ])
-              ) && quoteType == 'Travel'"
+              v-if="
+                (can(permissionEnum.DOCUMENT_VERIFY) ||
+                  hasAnyRole([
+                    rolesEnum.Admin,
+                    rolesEnum.Engineering,
+                    rolesEnum.TravelHapex,
+                  ])) &&
+                quoteType == 'Travel'
+              "
               size="sm"
               color="green"
             >
               Verify Documents
             </x-button>
             <template #tooltip>
-              Verify Documents: Clicking this button confirms that all
-              submitted documents are accurate and valid.</template
+              Verify Documents: Clicking this button confirms that all submitted
+              documents are accurate and valid.</template
             >
           </x-tooltip>
 
