@@ -148,10 +148,10 @@ class ApiService
         return apiResponse(null, Response::HTTP_OK, 'OCB email triggered successfully!');
     }
 
-    private function allocateLead($allocationType, $leadId, $teamId)
+    private function performLeadAllocation($allocationType, $leadId, $teamId)
     {
         info("------ Lead allocation started for lead: $leadId ------");
-    
+
         // Create allocation strategy
         $strategy = AllocationFactory::createStrategy($allocationType, $leadId, $teamId);
         if (is_null($strategy)) {
@@ -159,23 +159,22 @@ class ApiService
             info("-- Exception: $errorMessage --");
             throw new InvalidArgumentException($errorMessage);
         }
-    
+
         // Execute allocation steps
         $response = $strategy->executeSteps();
         $status = $response['status'];
         $message = $response['message'];
         $allocationResponse = array_diff_key($response, ['status' => '', 'message' => '']);
-    
+
         // Check for failed allocation
         if (empty($allocationResponse['advisorId']) || empty($allocationResponse['tierId'])) {
             $message = "Allocation failed: $message";
         }
-    
+
         info("------ Lead allocation ended for lead: $leadId ------");
-    
+
         return apiResponse($allocationResponse, $status, $message);
     }
-    
 
     public function triggerSICWorkflow(SICWorkflowRequest $request)
     {
