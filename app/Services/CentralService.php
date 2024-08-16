@@ -499,11 +499,10 @@ class CentralService
     {
         $collectionAmount = $paymentSplit ? $paymentSplit->collection_amount : $payment->captured_amount;
         $priceWithVat = $quote->price_with_vat;
-        info('fn: calculateAllocationStatus code : '.$payment->code.'  sage_reciept_id: '.$paymentSplit->sage_reciept_id.' payment status id: '.$paymentSplit->payment_status_id);
+        info('fn: calculateAllocationStatus code : '.$payment->code.'  sage_reciept_id: '.$paymentSplit->sage_reciept_id.' payment status id: '.$paymentSplit->payment_status_id . ' payment_methods_code: '. $payment->payment_methods_code . " Split Payment method " . $paymentSplit->payment_method);
         switch (true) {
             case $paymentSplit && $paymentSplit->sage_reciept_id == null:
                 info('Payment split sage_reciept_id is set to null');
-
                 return PaymentAllocationStatus::NOT_ALLOCATED;
             case in_array($payment->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::NEW]):
                 return null;
