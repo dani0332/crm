@@ -139,7 +139,7 @@ class BerlinService extends BaseService
                         'Authorization' => 'Basic '.$magicUrlGeneratauthBasic,
                     ],
                     'body' => $customerDataJson,
-                    'timeout' => 10,
+                    'timeout' => 20,
                 ]
             );
 
