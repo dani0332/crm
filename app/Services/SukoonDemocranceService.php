@@ -98,7 +98,7 @@ class SukoonDemocranceService
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
             ])->json();
-            
+
             if (isset($result['policy_number']) && $result['policy_number'] && ! $result['has_errors']) {
                 return $this->policyNumber = $result['policy_number'];
             }
@@ -315,7 +315,7 @@ class SukoonDemocranceService
     {
         $patternOfEID = '/^784-[0-9]{4}-[0-9]{7}-[0-9]{1}$/';
 
-        return preg_match($patternOfEID, $emiratesId) && $emiratesIdExpiryDate >= Carbon::now() && (!empty($address) || $address != '');
+        return preg_match($patternOfEID, $emiratesId) && $emiratesIdExpiryDate >= Carbon::now() && (! empty($address) || $address != '');
     }
 
     private function logFailure($operation, $message, $data = [])
