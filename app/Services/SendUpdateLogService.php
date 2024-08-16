@@ -350,7 +350,7 @@ class SendUpdateLogService
         $modelRelationDetails = $this->_getQuoteRelation($quoteModel, $quoteTypeCode);
         $quoteObject = $quoteModel::with(array_keys($modelRelationDetails['quoteRelations']))->find($requestData['ref_id']);
 
-        $countChildRecords = $quoteModel::where('code', $quoteObject->code)->count();
+        $countChildRecords = $quoteModel::where('parent_duplicate_quote_id', $quoteObject->code)->count();
         $childLeadDetails = [
             'childLeadsCount' => $countChildRecords,
             'parent_ref_id' => $quoteObject->code,
@@ -397,13 +397,13 @@ class SendUpdateLogService
     {
         $quoteTypeId = QuoteTypeId::getValue($quoteTypeCode);
         $quoteModel = $this->getModelObject($quoteTypeCode);
-        $childRecords = $quoteModel::where('code', $quote->code)->get();
+        $childRecords = $quoteModel::where('parent_duplicate_quote_id', $quote->code)->get();
 
         $_return = [
             'quote_type_id' => $quoteTypeId,
             'parent_lead_ref_id' => '',
             'uuid' => '',
-            'childLeadsCount' => 0,
+            'childLeadsCount' => $childRecords->count(),
             'childLeads' => '',
             'childLeadsUuid' => '',
         ];
