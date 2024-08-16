@@ -63,6 +63,7 @@ const props = defineProps({
   emailStatuses: Array,
   quoteNotes: Object,
   paymentDocument: Array,
+  noteDocumentType: Array,
 });
 
 const isManualPlansCount = ref(0);

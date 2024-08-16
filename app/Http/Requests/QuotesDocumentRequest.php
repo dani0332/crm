@@ -82,7 +82,6 @@ class QuotesDocumentRequest extends FormRequest
                     }
 
                 } else {
-
                     $quote = $this->getQuoteObjectBy(request()->folder_path ?? '', request()->quote_id, 'uuid');
                     /**
                      * documents can be attached to a member for health quote type
@@ -124,6 +123,7 @@ class QuotesDocumentRequest extends FormRequest
                     if(!empty($quote) ){
                         $uploadedDocuments = $quote->documents->where('document_type_code', request()->document_type_code)->count();
                     }
+
                 }
                 //check for maximum number of files uploaded against selected quote and document type
                 if ($this->documentType && ($uploadedDocuments >= $this->documentType->max_files)) {
