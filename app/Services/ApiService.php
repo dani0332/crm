@@ -205,8 +205,8 @@ class ApiService
         $status = $responsePayload['status'];
         $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
         $message = $responsePayload['message'];
-        if ($rest['advisorId'] == 0 || $rest['tierId'] == 0) {
-            $message = $rest['tierId'] == 0 ? 'Tier failed: ' . $responsePayload['message']: 'Allocation failed: ' . $responsePayload['message'];
+        if ((isset($rest['advisorId']) && $rest['advisorId'] == 0) || (isset($rest['tierId']) && $rest['tierId'] == 0)) {
+            $message = (isset($rest['tierId']) && $rest['tierId'] == 0) ? 'Tier failed: ' . $responsePayload['message']: 'Allocation failed: ' . $responsePayload['message'];
         }
 
         return [
