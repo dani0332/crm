@@ -2298,7 +2298,7 @@ class SageApiService
         $returnMessage['message'] = $errorMessage;
         $responseArray = $this->convertResponseToArray($response);
         $sageErrorMessage = $responseArray['error']['message']['value'] ?? $responseArray['error'] ?? null;
-        Log::error("SAGE API : $quote->uuid  : $sageErrorMessage");
+        Log::error("SAGE API : $quote->uuid  : " . json_encode($sageErrorMessage));
         $returnMessage['error'] = $sageErrorMessage;
 
         if ($storeSageApiLog) {
