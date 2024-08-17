@@ -63,22 +63,36 @@ class EndorsementReportService extends ManagementReport
                 'personal_quotes.policy_start_date as main_lead_policy_start_date',
                 'send_update_logs.invoice_date as payment_due_date',
                 'ps.due_date as due_date',
-                DB::raw('CASE WHEN send_update_logs.price_vat_applicable is not null THEN ps.price_vat_applicable ELSE 0 END as price_vat_applicable'),
-                'ps.price_vat as vat',
-                DB::raw('CASE WHEN send_update_logs.price_vat_applicable is null THEN ps.price_vat_applicable ELSE 0 END as price_vat_not_applicable'),
-                'ps.discount_value as discount',
+
+                DB::raw('CASE WHEN send_update_logs.price_vat_applicable is not null OR send_update_logs.price_vat_applicable != 0.00 
+                THEN IFNULL( ps.price_vat_applicable , send_update_logs.price_vat_applicable )
+                ELSE 0 END as price_vat_applicable'),
+
+                DB::raw('IFNULL(ps.price_vat, send_update_logs.total_vat_amount) as vat'),
+
+                DB::raw('CASE WHEN send_update_logs.price_vat_applicable is null OR send_update_logs.price_vat_applicable = 0.00
+                THEN IFNULL( ps.price_vat_applicable , send_update_logs.price_vat_not_applicable )
+                ELSE 0 END as price_vat_not_applicable'),
+
+                DB::raw('IFNULL(ps.discount_value, send_update_logs.discount) as discount'),
+
                 DB::raw('((
-                    IFNULL( ps.price_vat_applicable , 0 ) +
-                    IFNULL( ps.price_vat , 0 )) - IFNULL( ps.discount_value , 0 )) as total_price'),
-                DB::raw('CASE WHEN ps.sr_no=1 THEN send_update_logs.commission_vat_applicable ELSE 0 END as commission_vat_applicable'),
-                DB::raw('CASE WHEN ps.sr_no=1 THEN send_update_logs.vat_on_commission ELSE 0 END as commission_vat'),
-                DB::raw('CASE WHEN ps.sr_no=1 THEN p.commission_vat_not_applicable ELSE 0 END as commission_vat_not_applicable'),
-                'ps.collection_amount as collected_amount',
+                    IFNULL( ps.price_vat_applicable , IFNULL( send_update_logs.price_vat_applicable , 0 ) + IFNULL( send_update_logs.price_vat_not_applicable , 0 ) ) +
+                    IFNULL( IFNULL(ps.price_vat, send_update_logs.total_vat_amount) , 0 )) - IFNULL( IFNULL(ps.discount_value, send_update_logs.discount) , 0 )) as total_price'),
+
+                DB::raw('CASE WHEN ps.sr_no is NULL OR ps.sr_no=1 THEN send_update_logs.commission_vat_applicable ELSE 0 END as commission_vat_applicable'),
+
+                DB::raw('CASE WHEN ps.sr_no is NULL  OR ps.sr_no=1 THEN send_update_logs.vat_on_commission ELSE 0 END as commission_vat'),
+
+                DB::raw('CASE WHEN ps.sr_no is NULL  OR ps.sr_no=1 THEN IFNULL(p.commission_vat_not_applicable, send_update_logs.commission_vat_not_applicable) ELSE 0 END as commission_vat_not_applicable'),
+
+                DB::raw('IFNULL(ps.collection_amount, send_update_logs.price_with_vat) as collected_amount'),
+
                 'ps.verified_at as payment_date',
                 DB::raw('((
-                    IFNULL( ps.price_vat_applicable , 0 ) +
-                    IFNULL( ps.price_vat , 0 )) - IFNULL( ps.discount_value , 0 )) -
-                    IFNULL( ps.collection_amount, 0) as pending_balance'),
+                    IFNULL( ps.price_vat_applicable , IFNULL( send_update_logs.price_vat_applicable , 0 ) + IFNULL( send_update_logs.price_vat_not_applicable , 0 ) ) +
+                    IFNULL( IFNULL(ps.price_vat, send_update_logs.total_vat_amount) , 0 )) - IFNULL( IFNULL(ps.discount_value, send_update_logs.discount) , 0 )) -
+                    IFNULL( IFNULL(ps.collection_amount, send_update_logs.price_with_vat), 0) as pending_balance'),
                 'pq.collection_type as collects',
                 'ip.text as insurer',
                 'quote_type.text as line_of_business',
