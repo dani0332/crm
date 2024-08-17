@@ -1594,7 +1594,7 @@ class SageApiService
         $postedResponse['endPoint'] = $url;
         $postedResponse['payload'] = $patchPayload;
         if (isset($postedResponse['error'])) {
-            info('SAGE API: '.$quote->uuid . ' : AR Patch Request failed ' . json_encode($postedResponse['error']));
+            info('SAGE API: '.$quote->uuid.' : AR Patch Request failed '.json_encode($postedResponse['error']));
             $errorMessage = 'Error while making ar2 split payments patch to sage';
             $message = 'AR Patch Request failed';
 
@@ -1819,7 +1819,7 @@ class SageApiService
             $postedResponse['endPoint'] = $resp['url'] ?? $postedResponse['endPoint'] ?? null;
             $postedResponse['payload'] = $aPInvoicePaymentsSchedule;
             if (! $postedResponse['response']['status']) {
-                info('SAGE API: '.$quote->uuid . ' : AP Patch Request failed ' . json_encode($postedResponse['response']));
+                info('SAGE API: '.$quote->uuid.' : AP Patch Request failed '.json_encode($postedResponse['response']));
                 $errorMessage = 'Error while making AP split payments patch to sage';
                 $message = 'AP Patch Request failed';
 
@@ -2298,7 +2298,7 @@ class SageApiService
         $returnMessage['message'] = $errorMessage;
         $responseArray = $this->convertResponseToArray($response);
         $sageErrorMessage = $responseArray['error']['message']['value'] ?? $responseArray['error'] ?? null;
-        Log::error("SAGE API : $quote->uuid  : " . json_encode($sageErrorMessage));
+        Log::error("SAGE API : $quote->uuid  : ".json_encode($sageErrorMessage));
         $returnMessage['error'] = $sageErrorMessage;
 
         if ($storeSageApiLog) {
