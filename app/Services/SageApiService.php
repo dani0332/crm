@@ -195,7 +195,7 @@ class SageApiService
                 $responseError = isset($response['error']['code']) ? $response['error']['code'] : false;
                 if ($responseError && $responseError == SageEnum::ERROR_RECORD_DUPLICATE) {
                     $sageCustomerNumber = $customerPayload['customerNumber'];
-                } elseif (isset($response['CustomerNumber'])) {
+                } elseif (isset($response['CustomerNumber']) && array_key_exists('CustomerNumber', $response)) {
                     $sageCustomerNumber = $response['customerNumber'];
                 }
 
