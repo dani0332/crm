@@ -118,11 +118,11 @@ class BirdService extends BaseService
     {
         $webhook = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_OCB_NON_ADVISOR_FOLLOWUP_TEMPLATE)->first();
         if (! empty($webhook)) {
-            info('SIC Health Non Advisor Intro Email email template found REF:ID | '.$data->quoteUID.' Time: '.now());
+            info('SIC Health Non Advisor Intro Email email template found REF:ID | '.$data->quoteUID.' | Time: '.now());
 
             return $this->triggerWorkflow($webhook->value, $data);
         } else {
-            info('SIC Health Non Advisor Intro Email email template not found REF:ID | '.$data->quoteUID.' Time: '.now());
+            info('SIC Health Non Advisor Intro Email email template not found REF:ID | '.$data->quoteUID.' | Time: '.now());
 
             return false;
         }

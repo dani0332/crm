@@ -52,7 +52,7 @@ class HealthEmailService extends BaseService
     public function mappingEmailDataForOCBEmail($lead, $advisor, $plans)
     {
         return (object) [
-            'quoteUID' => $lead->code,
+            'quoteUID' => $lead->uuid,
             'customerEmail' => $lead->email,
             'uuid' => $lead->uuid,
             'customerFullName' => $lead->first_name.' '.$lead->last_name,
