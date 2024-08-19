@@ -252,7 +252,7 @@ let totalAllocationList = [];
 let renewedCountsList = [];
 
 const reportDataRef = reactive(page.props.reportData.data);
-const superRetentionDataRef = reactive(page.props.superRetentionData);
+const superRetentionDataRef = reactive(page.props.superRetentionData.data);
 
 function getMonthName(monthNumber) {
   const date = new Date();

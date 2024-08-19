@@ -7,10 +7,10 @@ use App\Services\BikeAllocationService;
 use App\Services\CarAllocationService;
 use App\Services\HealthAllocationService;
 use App\Services\TravelAllocationService;
-use App\Strategies\Allocations\BikeAllocation;
-use App\Strategies\Allocations\CarAllocation;
-use App\Strategies\Allocations\HealthAllocation;
-use App\Strategies\Allocations\TravelAllocation;
+use App\Strategies\BikeAllocation;
+use App\Strategies\CarAllocation;
+use App\Strategies\HealthAllocation;
+use App\Strategies\TravelAllocation;
 
 class AllocationFactory
 {

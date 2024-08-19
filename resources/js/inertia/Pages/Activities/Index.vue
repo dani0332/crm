@@ -424,11 +424,7 @@ onMounted(() => {
       </template>
 
       <template #item-cdbid="item">
-        <SanitizeHtml
-          v-if="(item.quote_uuid, item.quote_type_id)"
-          :html="getLink(item.quote_uuid, item.quote_type_id)"
-          class="text-primary-500 hover:underline"
-        />
+        <div v-html="getLink(item.quote_uuid, item.quote_type_id)"></div>
       </template>
 
       <template #item-due_date="item">

@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Strategies\Allocations;
+namespace App\Strategies;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Models\Tier;
 use App\Services\BikeAllocationService;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Http\Response;
 
 class BikeAllocation implements Allocation
 {
@@ -30,7 +29,7 @@ class BikeAllocation implements Allocation
             if (! $lead) {
                 info('Lead not found or not under fetch criteria for allocation id: '.$this->allocationId.' in BIKE allocation');
 
-                return ['advisorId' => 0, 'message' => 'Lead not found or not under fetch criteria', 'status' => Response::HTTP_NOT_FOUND]; // when lead is not on criteria or not found
+                return false; // when lead is not on criteria or not found
             }
 
             // Find the appropriate tier for the lead
@@ -50,7 +49,7 @@ class BikeAllocation implements Allocation
                 if (! empty($advisorId) && $advisorId == $lead->advisor_id) {
                     info('Advisor is same as previous advisor. Skipping for now.');
 
-                    return ['advisorId' => $advisorId, 'message' => 'Advisor is same as previous advisor. Skipping for now', 'status' => Response::HTTP_OK];
+                    return $advisorId;
                 }
 
                 if ($advisorId && $advisorId != 0) {
@@ -59,25 +58,22 @@ class BikeAllocation implements Allocation
                     info('Advisor not found. Skipping for now.');
                     // Update the lead's tier information
                     $this->updateLeadTier($lead, $tier);
-
-                    return ['advisorId' => 0, 'message' => 'Advisor not found', 'status' => Response::HTTP_NOT_FOUND];
                 }
                 info('Bike Allocation Ended.');
 
-                return ['advisorId' => $advisorId, 'message' => 'Advisor assigned successfully!', 'status' => Response::HTTP_OK];
+                return $advisorId;
             } else {
                 // Log that tier was not found for the lead and skip processing
                 info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
                 info('Bike Allocation Ended.');
 
-                return ['advisorId' => 0, 'message' => 'Tier not found', 'status' => Response::HTTP_UNPROCESSABLE_ENTITY];
+                return 0;
             }
         } catch (\Throwable $th) {
-            $message = $th->getMessage() ?? '';
-            info('exception occurred in bike lead allocation with error : '.$message);
+            info('exception occurred in bike lead allocation with error : '.$th->getMessage());
             info('exception occurred in bike lead allocation with error stack as  : '.$th->getTraceAsString());
 
-            return ['advisorId' => 0, 'message' => 'exception occurred in bike lead allocation with error : '.$message, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
+            return null;
         }
     }
 

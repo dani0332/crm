@@ -247,7 +247,7 @@ class CarAllocationService extends AllocationService
             ->where('name', '!=', TiersEnum::TIER_R)
             ->where(function ($query) use ($isSICFlowEnabled) {
                 if ($isSICFlowEnabled) {
-                    $query->where('name', '!=', TiersEnum::TIER_L);
+                    $query->whereNotIn('name', '!=', TiersEnum::TIER_L);
                 }
             });
 
