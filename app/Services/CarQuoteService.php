@@ -1232,7 +1232,7 @@ class CarQuoteService extends BaseService
 
         $plansDataArr = [
             'quoteUID' => $quoteUuId,
-            'getLatestRating' =>$getLatestRating,
+            'getLatestRating' => $getLatestRating,
             'lang' => 'en',
             'url' => strval(url()->current()),
             'ipAddress' => request()->ip(),
