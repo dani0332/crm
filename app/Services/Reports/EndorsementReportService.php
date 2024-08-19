@@ -204,7 +204,6 @@ class EndorsementReportService extends ManagementReport
         $query = $query->orderBy('id', 'desc');
 
         $this->applyFilters($query, $request);
-        
 
         if ($request->export == 1) {
             $data = $query->get();
