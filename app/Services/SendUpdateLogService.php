@@ -76,7 +76,7 @@ class SendUpdateLogService
             'plan_selected_at',
             'quote_batch_id',
             'renewal_batch',
-            'renewal_expiry_date',
+            'policy_expiry_date',
             'vat',
         ];
 
@@ -350,7 +350,7 @@ class SendUpdateLogService
         $modelRelationDetails = $this->_getQuoteRelation($quoteModel, $quoteTypeCode);
         $quoteObject = $quoteModel::with(array_keys($modelRelationDetails['quoteRelations']))->find($requestData['ref_id']);
 
-        $countChildRecords = $quoteModel::where('code', 'like', '%'.$quoteObject->code.'-%')->count();
+        $countChildRecords = $quoteModel::where('parent_duplicate_quote_id', $quoteObject->code)->count();
         $childLeadDetails = [
             'childLeadsCount' => $countChildRecords,
             'parent_ref_id' => $quoteObject->code,
@@ -397,7 +397,7 @@ class SendUpdateLogService
     {
         $quoteTypeId = QuoteTypeId::getValue($quoteTypeCode);
         $quoteModel = $this->getModelObject($quoteTypeCode);
-        $childRecords = $quoteModel::where('code', 'like', '%'.$quote->code.'-%')->get();
+        $childRecords = $quoteModel::where('parent_duplicate_quote_id', $quote->code)->get();
 
         $_return = [
             'quote_type_id' => $quoteTypeId,
@@ -722,8 +722,8 @@ class SendUpdateLogService
 
                 // Cases for Endorsment Financial Start
                 if ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE) {
-                    info('Book Update - Updating Renewal Expiry Date for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-                    $quote->update(['renewal_expiry_date' => $sendUpdateLog->expiry_date]);
+                    info('Book Update - Updating Policy Expiry Date for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+                    $quote->update(['policy_expiry_date' => $sendUpdateLog->expiry_date]);
                 }
 
                 if ($sendUpdateRequest->quoteType == quoteTypeCode::Car && $categoryCode == SendUpdateLogStatusEnum::EF) {
@@ -778,7 +778,7 @@ class SendUpdateLogService
                     $quote->update([
                         'policy_number' => $sendUpdateLog->policy_number,
                         'policy_start_date' => $sendUpdateLog->start_date,
-                        'renewal_expiry_date' => $sendUpdateLog->expiry_date,
+                        'policy_expiry_date' => $sendUpdateLog->expiry_date,
                         'policy_booking_date' => $currentDate,
                     ]);
                 }

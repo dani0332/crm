@@ -37,7 +37,7 @@ class TravelQuote extends Model implements AuditableContract
         'advisor_id' => FilterTypes::IN,
         'policy_number' => FilterTypes::EXACT,
         'source' => FilterTypes::EXACT,
-        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'policy_expiry_date' => FilterTypes::DATE_BETWEEN,
     ];
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
@@ -208,13 +208,14 @@ class TravelQuote extends Model implements AuditableContract
         });
     }
 
-    public function isPaymentAuthorized()
-    {
-        return $this->payments->count() > 0 && $this->payments->every(fn (Payment $payment) => $payment->isPaymentAuthorized());
-    }
-
     public function isMultiTrip()
     {
         return $this->coverage_code === TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP;
+    }
+
+    public function scopeFilterBySegment($query, $alias = 'tqr')
+    {
+        $segmentFilter = request()->input('segment_filter');
+        self::applySegmentFilter($query, $segmentFilter, $alias, QuoteTypeId::Travel);
     }
 }

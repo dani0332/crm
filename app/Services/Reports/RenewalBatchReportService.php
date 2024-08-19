@@ -60,17 +60,47 @@ class RenewalBatchReportService extends BaseService
 
         $query = $this->applyFilters($query, $request->all());
 
-        return $query->paginate(15)
-            ->withQueryString();
+        return $query->paginate(15)->withQueryString();
     }
 
-    private function getApprovedStatues()
+    private function getM2ReleaseDate()
     {
-        return implode(',', [
-            QuoteStatusEnum::PolicyDocumentsPending,
-            QuoteStatusEnum::PolicyIssued,
-            QuoteStatusEnum::PolicyBooked,
-        ]);
+        return cache()->remember('insly_m2_release_date', now()->addHour(), function () {
+            return Carbon::parse(getAppStorageValueByKey(ApplicationStorageEnums::INSLY_M2_RELEASE_DATE));
+        });
+    }
+
+    private function getCommonRenewedBindings($extra = [])
+    {
+        return [
+            ':m2ReleaseDate' => $this->getM2ReleaseDate(),
+            ':transactionApproved' => QuoteStatusEnum::TransactionApproved,
+            ...$extra,
+        ];
+    }
+
+    private function getRetentionRenewedBindings($reportDateEnd = null, $extra = [])
+    {
+        return $this->getCommonRenewedBindings(
+            [
+                ':reportDateEnd' => $reportDateEnd,
+                ':retentionStatuses' => implode(',', [
+                    QuoteStatusEnum::PolicyBooked,
+                    QuoteStatusEnum::PolicyCancelled,
+                ]),
+                ...$extra,
+            ]
+        );
+    }
+
+    private function getSuperRetentionRenewedBindings($extra = [])
+    {
+        return $this->getCommonRenewedBindings(
+            [
+                ':superRetentionStatuses' => QuoteStatusEnum::PolicyBooked,
+                ...$extra,
+            ]
+        );
     }
 
     /**
@@ -156,6 +186,7 @@ class RenewalBatchReportService extends BaseService
         }
         // get all available segments list
         $segments = array_merge(['all'], RenewalBatch::SGEMENT_TYPES_LIST);
+        $car = $this->getProductByName(quoteTypeCode::Car);
         //teams listing as per auth roles
         if ($authUserIsCEO || $authUserIsAccounts) {
             $authUserSubTeams = Team::where('is_active', true)
@@ -163,13 +194,33 @@ class RenewalBatchReportService extends BaseService
                 ->pluck('name', 'id')
                 ->toArray();
 
-            $car = $this->getProductByName(quoteTypeCode::Car);
             $authUserTeams = Team::where('is_active', true)
                 ->where('parent_team_id', $car->id)
                 ->where('type', TeamTypeEnum::TEAM)
                 ->pluck('name', 'id')
                 ->toArray();
         } else {
+            if ($authUserIsManager || $authUserIsRenewalsManager) {
+
+                $allowedTeams = [
+                    TeamNameEnum::RENEWALS,
+                    TeamNameEnum::MOTOR_COOPERATE_RENEWALS,
+                    TeamNameEnum::BDM,
+                    TeamNameEnum::SBDM,
+                    TeamNameEnum::PCP,
+                    TeamNameEnum::ORGANIC,
+                    TeamNameEnum::SIC_UNASSISTED,
+                ];
+
+                $authUserTeams = Team::where('is_active', true)
+                    ->where('parent_team_id', $car->id)
+                    ->where('type', TeamTypeEnum::TEAM)
+                    ->whereIn('id', $authUserTeamsIds)
+                    ->whereIn('name', $allowedTeams)
+                    ->pluck('name', 'id')
+                    ->toArray();
+            }
+
             $authUserSubTeams = $this->getSubTeamsByTeamIds($authUserTeamsIds)->toArray();
 
             $authUserSubTeams = array_reduce($authUserSubTeams, function ($carry, $item) {
@@ -497,7 +548,6 @@ class RenewalBatchReportService extends BaseService
 
         // get batch wise segmented advisors
         $batchWiseSegmentedAdvisors = $this->batchwiseSegmentedAdvisors($dataBatches);
-
         /**
          * query as per auth roles
          */
@@ -505,16 +555,30 @@ class RenewalBatchReportService extends BaseService
             && (! isset($filters->segment) || $filters->segment === 'all');
         if ($nonAdvisorWithNoFilter) {
             $query->addSelect(
-                DB::raw('SUM(CASE WHEN health_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyDocumentsPending.'
-                    , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.', '.QuoteStatusEnum::PolicyCancelled.')
-                    THEN 1 ELSE 0 END) as health_converted'),
+                DB::raw(
+                    strtr(
+                        'SUM(CASE WHEN (
+                                    (health_quote_request.quote_status_id IN (:superRetentionStatuses) and health_quote_request.quote_status_date >= ":m2ReleaseDate") OR
+                                    (health_quote_request.quote_status_id IN (:transactionApproved) and health_quote_request.quote_status_date < ":m2ReleaseDate")
+                                )
+                                THEN 1 ELSE 0 END) AS health_converted',
+                        $this->getSuperRetentionRenewedBindings()
+                    )
+                )
             );
         } elseif ($authUserIsAdvisor) {
             $query->addSelect(
-                DB::raw('SUM(CASE WHEN health_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyDocumentsPending.'
-                    , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.', '.QuoteStatusEnum::PolicyCancelled.')
-                    and health_quote_request.advisor_id = '.$authUserId.'
-                    THEN 1 ELSE 0 END) as health_converted'),
+                DB::raw(
+                    strtr(
+                        'SUM(CASE WHEN (
+                                    (health_quote_request.quote_status_id IN (:superRetentionStatuses) AND health_quote_request.quote_status_date >= ":m2ReleaseDate") OR
+                                    (health_quote_request.quote_status_id IN (:transactionApproved) AND health_quote_request.quote_status_date < ":m2ReleaseDate")
+                                )
+                                AND health_quote_request.advisor_id = :authUserId
+                                THEN 1 ELSE 0 END) AS health_converted',
+                        $this->getSuperRetentionRenewedBindings([':authUserId' => $authUserId])
+                    )
+                )
             );
         }
 
@@ -568,9 +632,17 @@ class RenewalBatchReportService extends BaseService
             $advisors = ! empty($advisorsFilter) ? implode(',', $advisorsFilter) : '0';
 
             $query->addSelect(
-                DB::raw('SUM(CASE WHEN health_quote_request.quote_status_id = '.QuoteStatusEnum::TransactionApproved.'
-                    and health_quote_request.advisor_id in ('.$advisors.')
-                    THEN 1 ELSE 0 END) as health_converted'),
+                DB::raw(
+                    strtr(
+                        'SUM(CASE WHEN (
+                                    (health_quote_request.quote_status_id IN (:superRetentionStatuses) AND health_quote_request.quote_status_date >= ":m2ReleaseDate") OR
+                                    (health_quote_request.quote_status_id IN (:transactionApproved) AND health_quote_request.quote_status_date < ":m2ReleaseDate")
+                                )
+                                AND health_quote_request.advisor_id IN (:advisors)
+                                THEN 1 ELSE 0 END) AS health_converted',
+                        $this->getSuperRetentionRenewedBindings([':advisors' => $advisors])
+                    )
+                )
             );
 
             $query = $query->whereIn('health_quote_request.advisor_id', $userIds);
@@ -627,7 +699,7 @@ class RenewalBatchReportService extends BaseService
                 ->get();
         }
 
-        if ($defaultBatchRange) {
+        if (! empty($defaultBatchRange)) {
             $dateTimeFormat = config('constants.DB_DATE_FORMAT_MATCH');
             $startDate = Carbon::parse($defaultBatchRange->last()->start_date)->startOfDay()->format($dateTimeFormat);
             $endDate = Carbon::parse($defaultBatchRange->first()->end_date)->endOfDay()->format($dateTimeFormat);
@@ -692,8 +764,15 @@ class RenewalBatchReportService extends BaseService
     {
         return $query->addSelect(
             DB::raw('count(DISTINCT car_quote_request.id) as total_allocated_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.$this->getApprovedStatues().')
-                and car_quote_request.quote_status_date <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as renewed'),
+            DB::raw(
+                strtr(
+                    'SUM(CASE WHEN (
+                            (car_quote_request.quote_status_id IN (:retentionStatuses) AND car_quote_request.quote_status_date <= ":reportDateEnd" AND car_quote_request.quote_status_date >= ":m2ReleaseDate") OR
+                            (car_quote_request.quote_status_id IN (:transactionApproved) AND car_quote_request.quote_status_date <= ":reportDateEnd" AND car_quote_request.quote_status_date < ":m2ReleaseDate")
+                        ) THEN 1 ELSE 0 END) AS renewed',
+                    $this->getRetentionRenewedBindings($reportDateEnd)
+                )
+            ),
 
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::CarSold.'
                 and car_lost_quote_logs.quote_status_id = '.QuoteStatusEnum::CarSold.'
@@ -725,11 +804,27 @@ class RenewalBatchReportService extends BaseService
 
             DB::raw('SUM(IF(car_quote_request.advisor_id in ('.$userIdsString.'), 1, 0)) as total_allocated_leads_by_all_advisors'),
 
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.$this->getApprovedStatues().')
-                    and car_quote_request.quote_status_date <= "'.$reportDateEnd.'" and car_quote_request.advisor_id in ('.$advisors.') THEN 1 ELSE 0 END) as renewed'),
+            DB::raw(
+                strtr(
+                    'SUM(CASE WHEN (
+                            (car_quote_request.quote_status_id IN (:retentionStatuses) AND car_quote_request.quote_status_date <= ":reportDateEnd" AND car_quote_request.quote_status_date >= ":m2ReleaseDate") OR
+                            (car_quote_request.quote_status_id IN (:transactionApproved) AND car_quote_request.quote_status_date <= ":reportDateEnd" AND car_quote_request.quote_status_date < ":m2ReleaseDate")
+                        ) AND car_quote_request.advisor_id IN (:advisors)
+                        THEN 1 ELSE 0 END) AS renewed',
+                    $this->getRetentionRenewedBindings($reportDateEnd, [':advisors' => $advisors])
+                )
+            ),
 
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.$this->getApprovedStatues().')
-                    and car_quote_request.quote_status_date <= "'.$reportDateEnd.'" and car_quote_request.advisor_id in ('.$userIdsString.') THEN 1 ELSE 0 END) as renewed_by_all_advisors'),
+            DB::raw(
+                strtr(
+                    'SUM(CASE WHEN (
+                            (car_quote_request.quote_status_id IN (:retentionStatuses) AND car_quote_request.quote_status_date <= ":reportDateEnd" AND car_quote_request.quote_status_date >= ":m2ReleaseDate") OR
+                            (car_quote_request.quote_status_id IN (:transactionApproved) AND car_quote_request.quote_status_date <= ":reportDateEnd" AND car_quote_request.quote_status_date < ":m2ReleaseDate")
+                        ) AND car_quote_request.advisor_id IN (:userIds)
+                        THEN 1 ELSE 0 END) AS renewed_by_all_advisors',
+                    $this->getRetentionRenewedBindings($reportDateEnd, [':userIds' => $userIdsString])
+                )
+            ),
 
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::CarSold.'
                     and car_lost_quote_logs.quote_status_id = '.QuoteStatusEnum::CarSold.'
@@ -777,11 +872,27 @@ class RenewalBatchReportService extends BaseService
 
             DB::raw('SUM(IF(car_quote_request.advisor_id in ('.$teamUsersIdsString.'), 1, 0)) as total_allocated_leads_by_all_advisors'),
 
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.$this->getApprovedStatues().')
-                and car_quote_request.quote_status_date <= "'.$reportDateEnd.'" and car_quote_request.advisor_id = "'.$authUserId.'" THEN 1 ELSE 0 END) as renewed'),
+            DB::raw(
+                strtr(
+                    'SUM(CASE WHEN (
+                            (car_quote_request.quote_status_id IN (:retentionStatuses) AND car_quote_request.quote_status_date <= ":reportDateEnd" AND car_quote_request.quote_status_date >= ":m2ReleaseDate") OR
+                            (car_quote_request.quote_status_id IN (:transactionApproved) AND car_quote_request.quote_status_date <= ":reportDateEnd" AND car_quote_request.quote_status_date < ":m2ReleaseDate")
+                        ) AND car_quote_request.advisor_id = :authUserId
+                        THEN 1 ELSE 0 END) AS renewed',
+                    $this->getRetentionRenewedBindings($reportDateEnd, [':authUserId' => $authUserId])
+                )
+            ),
 
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.$this->getApprovedStatues().')
-                and car_quote_request.quote_status_date <= "'.$reportDateEnd.'" and car_quote_request.advisor_id in ('.$teamUsersIdsString.') THEN 1 ELSE 0 END) as renewed_by_all_advisors'),
+            DB::raw(
+                strtr(
+                    'SUM(CASE WHEN (
+                            (car_quote_request.quote_status_id IN (:retentionStatuses) AND car_quote_request.quote_status_date <= ":reportDateEnd" AND car_quote_request.quote_status_date >= ":m2ReleaseDate") OR
+                            (car_quote_request.quote_status_id IN (:transactionApproved) AND car_quote_request.quote_status_date <= ":reportDateEnd" AND car_quote_request.quote_status_date < ":m2ReleaseDate")
+                        ) AND car_quote_request.advisor_id IN (:teamUsersIds)
+                        THEN 1 ELSE 0 END) AS renewed_by_all_advisors',
+                    $this->getRetentionRenewedBindings($reportDateEnd, [':teamUsersIds' => $teamUsersIdsString])
+                )
+            ),
 
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::CarSold.'
                 and car_lost_quote_logs.quote_status_id = '.QuoteStatusEnum::CarSold.'
@@ -830,9 +941,19 @@ class RenewalBatchReportService extends BaseService
             $segmentAdvisorsIdString = implode(',', $advisors);
 
             return $query->addSelect(
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.$this->getApprovedStatues().')
-                    and car_quote_request.advisor_id in ('.$segmentAdvisorsIdString.')
-                    and car_quote_request.quote_status_date <= "'.$reportDateEnd.'"  THEN 1 ELSE 0 END) as "'.$renewedAsColumn.'_for_'.$batchName.'"'),
+                DB::raw(
+                    strtr(
+                        'SUM(CASE WHEN (
+                                (car_quote_request.quote_status_id IN (:retentionStatuses) AND car_quote_request.quote_status_date <= ":reportDateEnd" AND car_quote_request.quote_status_date >= ":m2ReleaseDate") OR
+                                (car_quote_request.quote_status_id IN (:transactionApproved) AND car_quote_request.quote_status_date <= ":reportDateEnd" AND car_quote_request.quote_status_date < ":m2ReleaseDate")
+                            ) AND car_quote_request.advisor_id IN (:segmentAdvisors)
+                            THEN 1 ELSE 0 END) AS :as',
+                        $this->getRetentionRenewedBindings($reportDateEnd, [
+                            ':segmentAdvisors' => $segmentAdvisorsIdString,
+                            ':as' => "{$renewedAsColumn}_for_{$batchName}",
+                        ])
+                    )
+                ),
 
                 DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in ('.$segmentAdvisorsIdString.')
                     and car_quote_request.renewal_batch = "'.$batchName.'"
@@ -848,10 +969,19 @@ class RenewalBatchReportService extends BaseService
             $segmentAdvisorsIdString = implode(',', $advisors);
 
             return $query->addSelect(
-                DB::raw('SUM(CASE WHEN health_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.', '.QuoteStatusEnum::PolicyCancelled.'
-                    , '.QuoteStatusEnum::PolicyIssued.', '.QuoteStatusEnum::PolicySentToCustomer.', '.QuoteStatusEnum::PolicyBooked.')
-                    and health_quote_request.advisor_id in ('.$segmentAdvisorsIdString.')
-                    THEN 1 ELSE 0 END) as "'.$renewedAsColumn.'_for_'.$batchName.'"')
+                DB::raw(
+                    strtr('SUM(CASE WHEN (
+                                (health_quote_request.quote_status_id IN (:superRetentionStatuses) and health_quote_request.quote_status_date >= ":m2ReleaseDate") OR
+                                (health_quote_request.quote_status_id IN (:transactionApproved) and health_quote_request.quote_status_date < ":m2ReleaseDate")
+                            )
+                            AND health_quote_request.advisor_id IN (:advisorId)
+                            THEN 1 ELSE 0 END) AS :as',
+                        $this->getSuperRetentionRenewedBindings([
+                            ':advisorId' => $segmentAdvisorsIdString,
+                            ':as' => "{$renewedAsColumn}_for_{$batchName}",
+                        ])
+                    )
+                )
             );
         }
     }

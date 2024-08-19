@@ -362,7 +362,7 @@ onMounted(() => {
           v-model="filters.policyBookDate"
           placeholder="Select Start & End Date"
           range
-          :max-range="92"
+          :max-range="31"
           size="sm"
           model-type="yyyy-MM-dd"
           :rules="[isRequired]"
@@ -382,7 +382,7 @@ onMounted(() => {
           v-model="filters.paymentDueDate"
           placeholder="Select Start & End Date"
           range
-          :max-range="92"
+          :max-range="31"
           size="sm"
           model-type="yyyy-MM-dd"
           :rules="[isRequired]"
@@ -402,7 +402,7 @@ onMounted(() => {
           v-model="filters.policyExpiredDate"
           placeholder="Select Start & End Date"
           range
-          :max-range="92"
+          :max-range="31"
           size="sm"
           model-type="yyyy-MM-dd"
           :rules="[isRequired]"

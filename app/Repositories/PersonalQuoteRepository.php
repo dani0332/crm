@@ -188,7 +188,7 @@ class PersonalQuoteRepository extends BaseRepository
     public function fetchUpdatePolicyDetails($id, $data)
     {
         $quote = $this->findOrFail($id);
-        $quote->update(Arr::only($data, ['policy_number', 'policy_issuance_date', 'policy_start_date', 'renewal_expiry_date', 'premium']));
+        $quote->update(Arr::only($data, ['policy_number', 'policy_issuance_date', 'policy_start_date', 'policy_expiry_date', 'premium']));
 
         return $quote;
     }

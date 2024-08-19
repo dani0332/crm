@@ -652,7 +652,14 @@ watch(
         />
 
         <ComboBox
-          v-if="hasAnyRole([rolesEnum.SeniorManagement, rolesEnum.Accounts])"
+          v-if="
+            hasAnyRole([
+              rolesEnum.CarManager,
+              rolesEnum.RenewalsManager,
+              rolesEnum.SeniorManagement,
+              rolesEnum.Accounts,
+            ])
+          "
           v-model="filters.teams"
           label="Teams"
           placeholder="Search by Teams"
@@ -671,14 +678,13 @@ watch(
               rolesEnum.CarManager,
               rolesEnum.RenewalsManager,
               rolesEnum.SeniorManagement,
-              rolesEnum.Accounts,
             ])
           "
-          v-model="filters.advisors"
-          label="Advisors"
-          placeholder="Search by Advisors"
-          :options="advisorOptions"
-          :loading="loaders.advisorOptions"
+          v-model="filters.subTeams"
+          label="Sub Team"
+          placeholder="Search by Sub Team"
+          class="w-full"
+          :options="subTeamsOptions"
         />
 
         <ComboBox
@@ -687,13 +693,14 @@ watch(
               rolesEnum.CarManager,
               rolesEnum.RenewalsManager,
               rolesEnum.SeniorManagement,
+              rolesEnum.Accounts,
             ])
           "
-          v-model="filters.subTeams"
-          label="Sub Team"
-          placeholder="Search by Sub Team"
-          class="w-full"
-          :options="subTeamsOptions"
+          v-model="filters.advisors"
+          label="Advisors"
+          placeholder="Search by Advisors"
+          :options="advisorOptions"
+          :loading="loaders.advisorOptions"
         />
 
         <x-select
@@ -789,7 +796,6 @@ watch(
                 >
                   Advisor Retention
                 </th>
-
                 <th
                   class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
                 >
@@ -812,20 +818,17 @@ watch(
                   {{ useDateFormat(item.end_date, 'MMM DD').value }}
                 </td>
                 <td class="x-table-cell px-3 py-4 align-middle">
-                  {{ item.renewed.toLocaleString() }}
+                  {{ item.renewed?.toLocaleString() || 0 }}
                 </td>
                 <td class="x-table-cell px-3 py-4 align-middle">
-                  {{ item.total_allocated_leads.toLocaleString() }}
+                  {{ item.total_allocated_leads?.toLocaleString() || 0 }}
                 </td>
                 <td class="x-table-cell px-3 py-4 align-middle">
-                  {{ item.car_sold.toLocaleString() }}
+                  {{ item.car_sold?.toLocaleString() || 0 }}
                 </td>
-                <!-- // tempory hidden don't remove -->
-
                 <!-- <td class="x-table-cell px-3 py-4 align-middle">
-                                    {{ item.early_renewal.toLocaleString() }} // tempory hidden don't remove
-                                </td> -->
-
+                        {{ item.early_renewal.toLocaleString() }} // tempory hidden don't remove
+                    </td> -->
                 <td
                   v-if="
                     hasAnyRole([

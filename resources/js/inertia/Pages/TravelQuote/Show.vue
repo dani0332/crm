@@ -61,6 +61,7 @@ defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   travelDestinations: Object,
+  isAmlClearedForQuote: Boolean,
 });
 
 const permissionEnum = page.props.permissionsEnum;
@@ -116,7 +117,7 @@ const {
   isRequired,
   policy_number,
   premium,
-  renewal_expiry_date,
+  policy_expiry_date,
   policy_start_date,
   isEmail,
   isMobileNo,
@@ -165,10 +166,30 @@ const onCreateDuplicate = isValid => {
   });
 };
 
-const genderText = gender =>
-  computed(() => {
-    return page.props.genderOptions[gender];
-  });
+const titleCase = str => {
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
+const genderText = gender => {
+  let genderText = '';
+
+  switch (gender) {
+    case 'M':
+      genderText = 'Male';
+      break;
+    case 'F':
+      genderText = 'Female';
+      break;
+    default:
+      genderText = gender || '';
+  }
+
+  return titleCase(genderText);
+};
 
 const lostReasonsOptions = computed(() => {
   return page.props.lostReasons.map(reason => ({
@@ -490,7 +511,7 @@ const policyDetails = useForm({
   premium: page.props.quote.premium,
   policy_number: page.props.quote.policy_number || '',
   policy_start_date: dateToYMD(page.props.quote.policy_start_date),
-  renewal_expiry_date: dateToYMD(page.props.quote.renewal_expiry_date) || '',
+  policy_expiry_date: dateToYMD(page.props.quote.policy_expiry_date) || '',
   policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || '',
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
@@ -511,7 +532,7 @@ const submitPolicyDetails = isValid => {
     .transform(data => ({
       quote_policy_number: data.policy_number,
       quote_policy_start_date: data.policy_start_date,
-      quote_policy_expiry_date: data.renewal_expiry_date,
+      quote_policy_expiry_date: data.policy_expiry_date,
       quote_policy_issuance_date: data.policy_issuance_date,
       quote_premium: data.premium,
       modelType: data.modelType,
@@ -2207,7 +2228,7 @@ const onAddUpdate = () => {
               {{ relation?.text }}
             </template>
             <template #item-gender="{ gender }">
-              {{ gender === 'M' ? 'Male' : gender === 'F' ? 'Female' : '' }}
+              {{ genderText(gender) }}
             </template>
             <template #item-nationality="{ nationality }">
               {{ nationality?.text }}
@@ -2502,23 +2523,27 @@ const onAddUpdate = () => {
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
-                <dd>{{ selectedProviderPlan.premium }}</dd>
+                <dd>{{ selectedProviderPlan.premium ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AUTHORISED AT</dt>
+                <dd>{{ ecomDetails.paidAt ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAID AT</dt>
-                <dd>{{ ecomDetails.paidAt }}</dd>
+                <dd>{{ ecomDetails.paidAtPayment ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT STATUS</dt>
-                <dd>{{ ecomDetails.paymentStatus }}</dd>
+                <dd>{{ ecomDetails.paymentStatus ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PROVIDER NAME</dt>
-                <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
+                <dd>{{ selectedProviderPlan.providerName ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PLAN NAME</dt>
-                <dd>{{ selectedProviderPlan.planName ?? '' }}</dd>
+                <dd>{{ selectedProviderPlan.planName ?? 'N/A' }}</dd>
               </div>
             </dl>
           </div>
@@ -3011,6 +3036,7 @@ const onAddUpdate = () => {
         permissions.isQuoteDocumentEnabled
       "
       @sendPolicyToClient="sendPolicyToClient"
+      @verifyDocuments="getupdateDocumentValidate(true)"
     />
 
     <BookPolicy
@@ -3025,6 +3051,7 @@ const onAddUpdate = () => {
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+      :isAmlClearedForQuote="isAmlClearedForQuote"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
