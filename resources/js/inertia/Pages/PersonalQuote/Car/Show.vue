@@ -1650,7 +1650,7 @@ const onAddUpdate = () => {
 
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAID AT</dt>
-                <dd>{{ record.payment_paid_at ?? 'N/A'  }}</dd>
+                <dd>{{ record.payment_paid_at ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT STATUS</dt>
@@ -1666,7 +1666,7 @@ const onAddUpdate = () => {
                   {{
                     record.payment_gateway === 'NGENIUS'
                       ? 'CREDIT CARD'
-                      : record.payment_gateway ?? 'N/A'
+                      : (record.payment_gateway ?? 'N/A')
                   }}
                 </dd>
               </div>
@@ -1693,7 +1693,7 @@ const onAddUpdate = () => {
             </dl>
             <div class="grid sm:grid-cols-1 mt-3">
               <dt class="font-medium mb-3">ADDONS</dt>
-              <dd v-if="carQuotePlanAddons.length>0">          
+              <dd v-if="carQuotePlanAddons.length > 0">
                 <table style="width: 100%">
                   <thead></thead>
                   <tbody>
@@ -1733,8 +1733,8 @@ const onAddUpdate = () => {
                     </tr>
                   </tbody>
                 </table>
-                </dd>
-                <dd v-else>N/A</dd>
+              </dd>
+              <dd v-else>N/A</dd>
             </div>
           </div>
         </template>
