@@ -63,6 +63,7 @@ const props = defineProps({
   emailStatuses: Array,
   quoteNotes: Object,
   paymentDocument: Array,
+  noteDocumentType: Array,
 });
 
 const isManualPlansCount = ref(0);
@@ -3076,8 +3077,12 @@ const onAddUpdate = () => {
                 <dd>{{ mainPayment?.payment_status_message }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">PAID AT</dt>
+                <dt class="font-medium">AUTHORISED AT</dt>
                 <dd>{{ quote.paid_at ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAID AT</dt>
+                <dd>{{ quote.payment_paid_at ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NETWORK</dt>

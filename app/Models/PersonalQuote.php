@@ -3,8 +3,6 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
-use App\Enums\PermissionsEnum;
-use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
@@ -281,35 +279,9 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->morphMany(SageApiLog::class, 'section');
     }
 
-    public function scopeFilterBySegment($query, $segmentFilter, $quoteTypeCode)
+    public function scopeFilterBySegment($query, $segmentFilter, $quoteTypeId)
     {
-        self::applySegmentFilter($query, $segmentFilter, $quoteTypeCode);
-    }
-
-    public static function applySegmentFilter($query, $segmentFilter, $quoteTypeCode)
-    {
-        $user = auth()->user();
-        if ($user->can(PermissionsEnum::SEGMENT_FILTER) && $segmentFilter) {
-            $query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($query) use ($quoteTypeCode) {
-                $query->whereIn('personal_quotes.uuid', function ($query) use ($quoteTypeCode) {
-                    $query->distinct()
-                        ->select('quote_uuid')
-                        ->from('quote_tags')
-                        ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
-                        ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
-                        ->where('quote_type.code', $quoteTypeCode);
-                });
-            })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) use ($quoteTypeCode) {
-                $query->whereNotIn('personal_quotes.uuid', function ($query) use ($quoteTypeCode) {
-                    $query->distinct()
-                        ->select('quote_uuid')
-                        ->from('quote_tags')
-                        ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
-                        ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
-                        ->where('quote_type.code', $quoteTypeCode);
-                });
-            });
-        }
+        self::applySegmentFilter($query, $segmentFilter, 'personal_quotes', $quoteTypeId);
     }
 
     public function carPlan()

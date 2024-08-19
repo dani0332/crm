@@ -97,9 +97,6 @@ class DocumentTypeRepository extends BaseRepository
             });
         }
 
-        // Exclude documents with the 'TI' code from the query results.
-        $documentTypes->where('code', '!=', DocumentTypeCode::TI);
-
         return $documentTypes->pluck('code')->toArray();
     }
 

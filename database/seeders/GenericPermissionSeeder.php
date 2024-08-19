@@ -259,6 +259,7 @@ class GenericPermissionSeeder extends Seeder
         // $this->advisorDistributionReportSeeds();
         // $this->addMotorHeadNewRole();
         // $this->createAndAssignManulHealthPlanPermission();
+        $this->syncMasterPermissionList();
     }
 
     /**
@@ -282,7 +283,7 @@ class GenericPermissionSeeder extends Seeder
         if (! $role->hasPermissionTo(PermissionsEnum::ADD_MANUAL_HEALTH_PLAN)) {
             $role->givePermissionTo(PermissionsEnum::ADD_MANUAL_HEALTH_PLAN);
         }
-        $this->syncMasterPermissionList();
+
     }
 
     private function generateSegmentFilterPermission()

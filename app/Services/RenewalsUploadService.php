@@ -753,7 +753,7 @@ class RenewalsUploadService
                 'email' => $customerData['email'],
                 'mobile_no' => $customerData['mobile_no'],
                 'uuid' => $quoteUuid,
-                'code' => $renewalQuoteProcess->quote_type.'-'.$quoteUuid,
+                'code' => strtoupper($renewalQuoteProcess->quote_type).'-'.$quoteUuid,
                 'source' => LeadSourceEnum::RENEWAL_UPLOAD,
                 'advisor_id' => $advisorId,
                 'renewal_batch' => $data['batch'],

@@ -115,11 +115,17 @@ class ApiService
         info('------ Lead allocation request received to assign advisor only for '.$allocationId.' ------');
         $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
         $overrideAdvisorId = true;
-        $assignedAdvisorId = $allocationStrategy->executeSteps($overrideAdvisorId);
-        $responseData = ['assignedAdvisorId' => $assignedAdvisorId];
+        $responsePayload = $allocationStrategy->executeSteps($overrideAdvisorId);
+        $status = $responsePayload['status'];
+        $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
+        $message = $responsePayload['message'];
+        if ($rest['advisorId'] == 0) {
+            $message = 'Allocation failed: '.$responsePayload['message'];
+        }
+
         info('------ Lead allocation request completed to assign advisor only for '.$allocationId.' ------');
 
-        return apiResponse($responseData, Response::HTTP_OK, 'Advisor assigned successfully!');
+        return apiResponse($rest, $status, $message);
     }
 
     private function triggerOCBOnly($quoteUUID, $quoteTypeId = QuoteTypeId::Car)
@@ -142,19 +148,32 @@ class ApiService
         return apiResponse(null, Response::HTTP_OK, 'OCB email triggered successfully!');
     }
 
-    private function performLeadAllocation($allocationType, $allocationId, $teamId)
+    private function performLeadAllocation($allocationType, $leadId, $teamId)
     {
-        info('------ Lead allocation started for lead : '.$allocationId.' ------');
-        $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId, $teamId);
-        if (is_null($allocationStrategy)) {
-            info('-- Exception against - allocationType: '.$allocationId.' and allocationId: '.$allocationId.' --');
-            throw new InvalidArgumentException("Allocation strategy for type '$allocationType -- $allocationId' not found.");
-        }
-        $assignedAdvisorId = $allocationStrategy->executeSteps();
-        info('------ Lead allocation ended for lead : '.$allocationId.' ------');
-        $responseData = ['assignedAdvisorId' => $assignedAdvisorId];
+        info("------ Lead allocation started for lead: $leadId ------");
 
-        return apiResponse($responseData, Response::HTTP_OK, 'Lead allocated successfully!');
+        // Create allocation strategy
+        $strategy = AllocationFactory::createStrategy($allocationType, $leadId, $teamId);
+        if (is_null($strategy)) {
+            $errorMessage = "Allocation strategy for type '$allocationType' and lead '$leadId' not found.";
+            info("-- Exception: $errorMessage --");
+            throw new InvalidArgumentException($errorMessage);
+        }
+
+        // Execute allocation steps
+        $response = $strategy->executeSteps();
+        $status = $response['status'];
+        $message = $response['message'];
+        $allocationResponse = array_diff_key($response, ['status' => '', 'message' => '']);
+
+        // Check for failed allocation
+        if (empty($allocationResponse['advisorId']) || empty($allocationResponse['tierId'])) {
+            $message = "Allocation failed: $message";
+        }
+
+        info("------ Lead allocation ended for lead: $leadId ------");
+
+        return apiResponse($allocationResponse, $status, $message);
     }
 
     public function triggerSICWorkflow(SICWorkflowRequest $request)
@@ -191,11 +210,17 @@ class ApiService
 
         info('------ Lead allocation request received to evaluate tier only for '.$allocationId.' ------');
         $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
-        $tierId = $allocationStrategy->executeSteps(false, false, true);
-        $responseData = ['assignedTierId' => $tierId];
-        info('------ Lead allocation request completed to evaluate tier only for '.$allocationId.' ------');
+        $responsePayload = $allocationStrategy->executeSteps(false, false, true);
+        $status = $responsePayload['status'];
+        $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
+        $message = $responsePayload['message'];
+        if ($rest['tierId'] == 0) {
+            $message = 'Tier failed: '.$responsePayload['message'];
+        }
 
-        return apiResponse($responseData, Response::HTTP_OK, 'Tier assigned successfully!');
+        info('------ Lead allocation request completed to evaluate tier only for '.$rest['tierId'].' ------');
+
+        return apiResponse($rest, $status, $message);
     }
 
     public function handleZeroPlansEmail(HandleZeroPlansRequest $request)

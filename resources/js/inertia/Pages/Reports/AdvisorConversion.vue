@@ -1013,7 +1013,11 @@ const getAdvisorLabel = () => {
           v-model="filters.segment_filter"
           label="Segment"
           placeholder="Select Segment"
-          :options="quoteSegments"
+          :options="
+            quoteSegments?.filter(segment =>
+              filters.lob === 'Travel' ? segment.value !== 'sic-revival' : true,
+            )
+          "
           :single="true"
         />
       </div>
