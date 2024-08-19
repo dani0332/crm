@@ -70,7 +70,7 @@ final class QuoteStatusEnum extends Enum
     public const QuotedByUW = 67;
     public const SentForTransactionApproval = 68;
     public const RenewalTermsSent = 69;
-    public const PolicyPending = 70;
+    public const PolicyPending = 72;
     public const EarlyRenewal = 73;
     public const PolicyCancelledReissued = 74;
 
