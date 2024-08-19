@@ -458,8 +458,8 @@ class EmbeddedProductRepository extends BaseRepository
 
             $ccData = isset($advisor) ? [
                 [
-                    'email' => isset($advisor) ? $advisor->email : null,
-                    'name' => isset($advisor) ? $advisor->name : null,
+                    'email' => $advisor->email,
+                    'name' => $advisor->name,
                 ],
             ] : [];
 
