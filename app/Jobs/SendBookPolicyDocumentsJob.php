@@ -105,11 +105,15 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
                 $emailData->googleMeet = $quote->advisor->calendar_link;
             }
             if (in_array(ucfirst($this->data->model_type), [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel])) {
-                $emailData->currentInsurer = $quote->plan->insuranceProvider->text;
-                $roadsideAssistance = $quote->plan->insuranceProvider->roadside_phone_number;
+                if (isset($quote->plan) && isset($quote->plan->insuranceProvider)) {
+                    $emailData->currentInsurer = $quote->plan->insuranceProvider->text;
+                    $roadsideAssistance = $quote->plan->insuranceProvider->roadside_phone_number;
+                }
             } else {
-                $emailData->currentInsurer = $quote->insuranceProvider->text;
-                $roadsideAssistance = $quote->insuranceProvider->roadside_phone_number;
+                if (isset($quote->insuranceProvider)) {
+                    $emailData->currentInsurer = $quote->insuranceProvider->text;
+                    $roadsideAssistance = $quote->insuranceProvider->roadside_phone_number;
+                }
             }
 
             $emailData->emailTemplateId = $templateId;

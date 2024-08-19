@@ -120,7 +120,7 @@ trait PersonalQuoteSyncTrait
     private function formatColumnValue($columnType, $value)
     {
         if ($value && in_array($columnType, ['date', 'datetime'])) {
-            return Carbon::parse($value)->toDateTimeString();
+            return Carbon::parse($value)->setTimezone('Asia/Dubai')->toDateTimeString();
         }
 
         return $value;
