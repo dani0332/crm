@@ -52,7 +52,7 @@ class HealthEmailService extends BaseService
     public function mappingEmailDataForOCBEmail($lead, $advisor, $plans)
     {
         return (object) [
-            'healthQuoteId' => $lead->code,
+            'quoteUID' => $lead->code,
             'customerEmail' => $lead->email,
             'uuid' => $lead->uuid,
             'customerFullName' => $lead->first_name.' '.$lead->last_name,
@@ -62,7 +62,6 @@ class HealthEmailService extends BaseService
             'advisorDetails' => $advisor ?? null,
             'quotePlanLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid,
             'requestAdvisorLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
-            'plans' => $plans,
         ];
     }
 
