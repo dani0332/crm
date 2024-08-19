@@ -82,7 +82,7 @@ class CarAllocation implements Allocation
             info('Evaluate tier only. Tier finalized for lead : ' . $lead->uuid . ' is : ' . $tier->name);
             $lead->tier_id = $tier->id;
             $lead->save();
-            return AllocationFactory::createResponse(0, 'Tier evaluated successfully!', Response::HTTP_OK);
+            return AllocationFactory::createResponse(0, 'Tier evaluated successfully!', Response::HTTP_OK, $tier->id);
         }
 
         info('Tier finalized for lead : ' . $lead->uuid . ' is : ' . $tier->name);

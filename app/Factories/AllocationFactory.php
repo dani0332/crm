@@ -31,11 +31,12 @@ class AllocationFactory
     }
 
 
-    public static function createResponse(int $advisorId, string $message, int $status): array
+    public static function createResponse(int $advisorId, string $message, int $status, int $tierId = 0): array
     {
         return [
             'advisorId' => $advisorId,
             'message' => $message,
+            'tierId' => $tierId ?? 0,
             'status' => $status
         ];
     }

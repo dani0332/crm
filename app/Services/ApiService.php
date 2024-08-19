@@ -212,7 +212,7 @@ class ApiService
         return [
             'data' => [
                 'tierId' => $responsePayload['tierId'] ?? 0,
-                'advisorId' => $responsePayload['advisorId'] ?? 0,
+                'assignedAdvisorId' => $responsePayload['advisorId'] ?? 0,
             ],
             'message' => $message,
             'status' => $status
