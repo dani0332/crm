@@ -181,7 +181,7 @@ class ApiService
         $allocationId = $request->input('quoteUUID');
 
         info('------ Lead allocation request received to evaluate tier only for '.$allocationId.' ------');
-        $responsePayload = $this->executeAllocation($allocationType, $allocationId, true);
+        $responsePayload = $this->executeAllocation($allocationType, $allocationId, false, true);
         info('------ Lead allocation request completed to evaluate tier only for '. $responsePayload['tierId'].' ------');
 
         return apiResponse($responsePayload['data'], $responsePayload['status'], $responsePayload['message']);
