@@ -113,7 +113,6 @@ class HandleInertiaRequests extends Middleware
             'lookupsEnum' => getLookupsEnum(),
             'kycEnums' => Kyc::asArray(),
             'documentTypeCodeEnum' => DocumentTypeCode::asArray(),
-            'quoteTypeIdEnum' => QuoteTypeId::asArray(),
             'paymentFrequencyEnum' => PaymentFrequency::asArray(),
         ];
     }

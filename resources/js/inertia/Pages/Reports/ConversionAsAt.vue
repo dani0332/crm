@@ -7,6 +7,7 @@ const props = defineProps({
   quoteTypes: Object,
   displayByColumn: String,
   quoteTypeCodes: Object,
+  quoteTypeIdEnum: Object,
 });
 
 const notification = useToast();
@@ -360,7 +361,7 @@ const minDate = computed(() => {
           :single="true"
         />
         <ComboBox
-          v-if="filters.lob == quoteTypeIdEnum.Car"
+          v-if="filters.lob == props.quoteTypeIdEnum.Car"
           v-model="filters.tag"
           placeholder="SIC/PUA Filter"
           label="SIC/PUA Filter"
