@@ -28,6 +28,8 @@ class UpdateToCustomerRequest extends FormRequest
             'quoteUuid' => 'string',
             'quoteRefId' => 'integer',
             'paymentValidated' => 'boolean',
+            'inslyMigrated' => 'boolean',
+            'isEmailSent' => 'boolean',
         ];
     }
 }

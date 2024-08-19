@@ -3,7 +3,10 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
+use App\Enums\TravelQuoteEnum;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
@@ -34,7 +37,7 @@ class TravelQuote extends Model implements AuditableContract
         'advisor_id' => FilterTypes::IN,
         'policy_number' => FilterTypes::EXACT,
         'source' => FilterTypes::EXACT,
-        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'policy_expiry_date' => FilterTypes::DATE_BETWEEN,
     ];
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
@@ -67,12 +70,12 @@ class TravelQuote extends Model implements AuditableContract
 
     public function parent()
     {
-        return $this->belongsTo(TravelQuote::class, 'parent_id');
+        return $this->belongsTo(self::class, 'parent_id');
     }
 
     public function child()
     {
-        return $this->hasOne(TravelQuote::class, 'parent_id');
+        return $this->hasOne(self::class, 'parent_id');
     }
 
     public function quotePlan()
@@ -131,6 +134,7 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id')->select(['id', 'text']);
     }
+
     /**
      * get data by personal quote type.
      *
@@ -161,11 +165,11 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->morphMany(SageApiLog::class, 'section');
     }
+
     public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Activities::class, 'quote_request_id')
             ->where('quote_type_id', QuoteTypeId::Travel);
-
     }
 
     public function customerMembers()
@@ -176,5 +180,41 @@ class TravelQuote extends Model implements AuditableContract
     public function transactionType()
     {
         return $this->belongsTo(Lookup::class, 'transaction_type_id', 'id');
+    }
+
+    public function policyWording()
+    {
+        return $this->hasMany(TravelPlanPolicyWording::class, 'plan_id', 'plan_id');
+    }
+
+    public function TravelDestinations()
+    {
+        return $this->hasMany(TravelDestination::class, 'quote_id', 'id');
+    }
+
+    public function embeddedTransaction()
+    {
+        return $this->hasOne(EmbeddedTransaction::class, 'code', 'code');
+    }
+
+    public function scopeIsSICLead($q, QuoteTypes $quoteType)
+    {
+        $q->whereIn('uuid', function ($query) use ($quoteType) {
+            $query->distinct()
+                ->select('quote_uuid')
+                ->from('quote_tags')
+                ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
+                ->where('quote_tags.quote_type_id', $quoteType->id());
+        });
+    }
+
+    public function isPaymentAuthorized()
+    {
+        return $this->payments->count() > 0 && $this->payments->every(fn (Payment $payment) => $payment->isPaymentAuthorized());
+    }
+
+    public function isMultiTrip()
+    {
+        return $this->coverage_code === TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP;
     }
 }

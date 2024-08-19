@@ -26,7 +26,7 @@ class HomeQuote extends Model implements AuditableContract
         'code' => FilterTypes::EXACT,
         'email' => FilterTypes::EXACT,
         'source' => FilterTypes::EXACT,
-        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'policy_expiry_date' => FilterTypes::DATE_BETWEEN,
         'uuid' => FilterTypes::EXACT,
         'mobile_no' => FilterTypes::EXACT,
         'created_at' => FilterTypes::DATE_BETWEEN,
@@ -74,7 +74,7 @@ class HomeQuote extends Model implements AuditableContract
 
     public function advisor()
     {
-        return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no', 'profile_photo_path']);
+        return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no', 'profile_photo_path', 'calendar_link']);
     }
 
     public function customer()

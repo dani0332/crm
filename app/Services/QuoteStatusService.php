@@ -22,7 +22,7 @@ class QuoteStatusService
 
         if (checkPersonalQuotes($quoteType->code) && (! $AMLService->isDataMigrated($quoteTypeId, $quoteRequestId))) {
             $quoteRequestId = $AMLService->getPersonalQuoteId($quoteTypeId, $quoteRequestId);
-            $AMLService->updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, true, ['quote_status_id' => $quoteStatus->id, 'quote_status_date' => now()]);
+            $AMLService->updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, true, ['quote_status_id' => $quoteStatus->id]);
         }
 
         if (! empty($request)) {
@@ -30,6 +30,9 @@ class QuoteStatusService
             $fetchKycLog->update([
                 'decision' => $request['aml_decision'] ?? '',
                 'notes' => trim($request['notes']) ?? '',
+                'in_adverse_media' => isset($request['in_adverse_media']) ? trim($request['in_adverse_media']) : '',
+                'is_owner_pep' => isset($request['is_owner_pep']) ? trim($request['is_owner_pep']) : '',
+                'is_controlling_pep' => isset($request['is_controlling_pep']) ? trim($request['is_controlling_pep']) : '',
             ]);
 
             $kycLog = $fetchKycLog->first();

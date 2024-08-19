@@ -56,7 +56,9 @@ class HealthQuotesExport
                 "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
             as customer_type'),
             'hp.text as health_plan_name_text',
-            'ihp.text as plan_provider_name_text'
+            'ihp.text as plan_provider_name_text',
+            'hqr.renewal_batch',
+            'hqr.previous_policy_expiry_date'
         )->get();
     }
 
@@ -91,6 +93,8 @@ class HealthQuotesExport
             'FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?',
             'TYPE OF PLAN',
             'Provider Name',
+            'RENEWAL BATCH',
+            'PREVIOUS POLICY EXPIRY DATE',
         ];
     }
 
@@ -125,6 +129,8 @@ class HealthQuotesExport
             $quote->customer_type,
             $quote->health_plan_name_text,
             $quote->plan_provider_name_text,
+            $quote->renewal_batch,
+            $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
         ];
     }
 }
