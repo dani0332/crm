@@ -105,8 +105,8 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
             $capiResponse = Capi::request('/api/v1-save-car-quote', 'post', $dataArr);
 
-            if (!isset($capiResponse->errors) && !empty($capiResponse->quoteUID)) {
-                info($logPrefix . $this->lead->uuid . '- childLeadCreated - ' . $capiResponse->quoteUID);
+            if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
+                info($logPrefix.$this->lead->uuid.'- childLeadCreated - '.$capiResponse->quoteUID);
 
                 $payload = [
                     'quoteUID' => $capiResponse->quoteUID,
