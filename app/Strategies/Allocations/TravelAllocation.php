@@ -3,6 +3,7 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Factories\AllocationFactory;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\TravelAllocationService;
@@ -37,23 +38,23 @@ class TravelAllocation implements Allocation
 
             if (! $lead) {
                 info(self::class . " - executeSteps: Lead not found for : {$this->allocationId}");
-                $response = $this->createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
+                $response = AllocationFactory::createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             } else {
                 $advisor = $this->fetchAvailableAdvisor();
 
                 if (! $advisor) {
                     info(self::class . " - executeSteps: No advisor found against lead : {$lead->uuid}");
-                    $response = $this->createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
+                    $response = AllocationFactory::createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
                 } else {
                     $this->assignLead($lead, $advisor); // Assign the lead to the advisor
-                    $response = $this->createResponse($advisor->id, 'Advisor assigned successfully!', Response::HTTP_OK);
+                    $response = AllocationFactory::createResponse($advisor->id, 'Advisor assigned successfully!', Response::HTTP_OK);
                 }
             }
         } catch (\Throwable $th) {
             $message = $th->getMessage() ?? '';
             info('exception occurred in travel lead allocation with error : ' . $message);
             info('exception occurred in travel lead allocation with error stack as  : ' . $th->getTraceAsString());
-            $response = $this->createResponse(0, 'exception occurred in travel lead allocation with error : ' . $message, Response::HTTP_INTERNAL_SERVER_ERROR);
+            $response = AllocationFactory::createResponse(0, 'exception occurred in travel lead allocation with error : ' . $message, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         return $response;
@@ -79,14 +80,5 @@ class TravelAllocation implements Allocation
             DB::rollback();
             Log::error($e->getMessage());
         }
-    }
-
-    private function createResponse($advisorId, $message, $status)
-    {
-        return [
-            'advisorId' => $advisorId,
-            'message' => $message,
-            'status' => $status
-        ];
     }
 }

@@ -29,4 +29,14 @@ class AllocationFactory
 
         return $strategy;
     }
+
+
+    public static function createResponse(int $advisorId, string $message, int $status): array
+    {
+        return [
+            'advisorId' => $advisorId,
+            'message' => $message,
+            'status' => $status
+        ];
+    }
 }
