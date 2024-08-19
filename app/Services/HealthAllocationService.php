@@ -65,7 +65,7 @@ class HealthAllocationService extends AllocationService
         return $leads->get();
     }
     public function isSICLead($uuid){
-        return DB::table('quote_tags')->where('uuid', $uuid)
+        return DB::table('quote_tags')->where('quote_uuid', $uuid)
                         ->where('name', QuoteSegmentEnum::SIC->tag())
                         ->where('value',1)
                         ->exists();
