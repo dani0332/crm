@@ -68,7 +68,7 @@ class RenewalsUploadController extends Controller
     /**
      * fetch plans batch wise.
      *
-     * @param    $id
+     * @param  $id
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
     public function fetchPlans($batch)

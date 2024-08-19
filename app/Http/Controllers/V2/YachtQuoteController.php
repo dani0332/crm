@@ -86,7 +86,7 @@ class YachtQuoteController extends Controller
     }
 
     /**
-     * @param    $quoteTypeCode
+     * @param  $quoteTypeCode
      * @param  BikeQuoteRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
@@ -224,8 +224,8 @@ class YachtQuoteController extends Controller
     }
 
     /**
-     * @param    $quoteTypeCode
-     * @param    $quoteId
+     * @param  $quoteTypeCode
+     * @param  $quoteId
      * @param  BikeQuoteRequest  $request
      * @return void
      */

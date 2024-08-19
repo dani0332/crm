@@ -45,7 +45,7 @@ class EmbeddedProductController extends Controller
     }
 
     /**
-     * @param    $quoteTypeCode
+     * @param  $quoteTypeCode
      * @return \Illuminate\Http\RedirectResponse
      */
     public function store(EmbeddedProductRequest $request)

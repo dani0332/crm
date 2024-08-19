@@ -27,7 +27,7 @@ class CycleQuoteRepository extends BaseRepository
     /**
      * create new personal quote.
      *
-     * @param    $quoteTypeCode
+     * @param  $quoteTypeCode
      * @return mixed
      */
     public function fetchCreate($data)
