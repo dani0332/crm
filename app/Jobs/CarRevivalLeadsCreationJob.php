@@ -103,13 +103,10 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 'whatsappConsent' => true,
             ];
 
-            info($logPrefix . 'carRevivalParentLead -' . $this->lead->uuid . '- capiPayload - ' . json_encode($dataArr));
-
             $capiResponse = Capi::request('/api/v1-save-car-quote', 'post', $dataArr);
 
-            info($logPrefix . 'carRevivalParentLead -' . $this->lead->uuid . '- capiResponse -' . json_encode($capiResponse));
             if (!isset($capiResponse->errors) && !empty($capiResponse->quoteUID)) {
-                info($logPrefix . $this->lead->uuid . '- childLeadCreated - ' . $capiResponse->quoteUID . ' - CAPI Response-' . json_encode($capiResponse));
+                info($logPrefix . $this->lead->uuid . '- childLeadCreated - ' . $capiResponse->quoteUID);
 
                 $payload = [
                     'quoteUID' => $capiResponse->quoteUID,
