@@ -42,7 +42,7 @@ class CarQuoteFactory extends Factory
             'created_at' => now(),
             'code' => 'CAR-'.strtoupper($uuid),
             'created_by' => 17,
-            'renewal_expiry_date' => $this->faker->dateTime('now'),
+            'policy_expiry_date' => $this->faker->dateTime('now'),
             'tier_id' => $this->faker->randomElement(($tierIds)),
             'quote_batch_id' => $this->faker->randomElement(($quoteBatchIds)),
             //'advisor_id' => $this->faker->randomElement($users),

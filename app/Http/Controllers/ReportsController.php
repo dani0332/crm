@@ -44,7 +44,7 @@ class ReportsController extends Controller
         $advisorDistributionReportPermissions = implode('|', PermissionsEnum::getAdvisorDistributionReportPermissions());
         $this->middleware(['permission:'.$advisorDistributionReportPermissions], ['only' => ['renderAdvisorDistributionReport']]);
 
-        $this->middleware('readonly_db');
+        // $this->middleware('readonly_db');
     }
 
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
@@ -74,6 +74,7 @@ class ReportsController extends Controller
             'quoteBatchId' => $request->quote_batch_id,
             'page' => $request->page,
             'isCommercial' => $request->isCommercial,
+            'isEmbeddedProducts' => $request->isEmbeddedProducts,
             'lob' => $request->lob,
             'subeams' => $request->sub_teams,
             'vehicle_type' => $request->vehicle_type,

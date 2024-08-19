@@ -343,6 +343,13 @@ const handlePlanSelected = plan => {
     only: ['payments', 'paymentEntityModel'],
   });
 };
+
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -352,7 +359,7 @@ const handlePlanSelected = plan => {
         Available Plans
         <x-tag size="sm">{{ availablePlansItems.length || 0 }}</x-tag>
       </h3>
-      <div>
+      <div v-if="readOnlyMode.isDisable === true">
         <x-button-group v-if="selectedPlans.length > 0" size="sm">
           <x-button
             @click.prevent="onTogglePlans(false)"

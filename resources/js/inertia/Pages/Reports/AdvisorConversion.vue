@@ -226,6 +226,7 @@ const getFiltersObject = () => {
     teams: [],
     sub_teams: [],
     isCommercial: '',
+    isEmbeddedProducts: '',
     page: 1,
     vehicle_type: 'All',
     insurance_type: '',
@@ -945,6 +946,16 @@ const getAdvisorLabel = () => {
           :label="getAdvisorLabel()"
           :options="advisorOptions"
           :loading="loaders.advisorOptions"
+        />
+        <x-select
+          v-if="canShow('isEmbeddedProducts')"
+          v-model="filters.isEmbeddedProducts"
+          label="Include Embedded Products"
+          placeholder="Select any option"
+          :options="[
+            { value: 'true', label: 'Yes' },
+            { value: 'false', label: 'No' },
+          ]"
         />
         <x-select
           v-if="canShow('isCommercial')"

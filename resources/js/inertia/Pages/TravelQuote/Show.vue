@@ -1,5 +1,8 @@
 <script setup>
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
+import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import { computed } from 'vue';
+import DownloadDocuments from '../../Components/DownloadDocuments.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 
 const page = usePage();
@@ -113,7 +116,7 @@ const {
   isRequired,
   policy_number,
   premium,
-  renewal_expiry_date,
+  policy_expiry_date,
   policy_start_date,
   isEmail,
   isMobileNo,
@@ -487,7 +490,7 @@ const policyDetails = useForm({
   premium: page.props.quote.premium,
   policy_number: page.props.quote.policy_number || '',
   policy_start_date: dateToYMD(page.props.quote.policy_start_date),
-  renewal_expiry_date: dateToYMD(page.props.quote.renewal_expiry_date) || '',
+  policy_expiry_date: dateToYMD(page.props.quote.policy_expiry_date) || '',
   policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || '',
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
@@ -508,7 +511,7 @@ const submitPolicyDetails = isValid => {
     .transform(data => ({
       quote_policy_number: data.policy_number,
       quote_policy_start_date: data.policy_start_date,
-      quote_policy_expiry_date: data.renewal_expiry_date,
+      quote_policy_expiry_date: data.policy_expiry_date,
       quote_policy_issuance_date: data.policy_issuance_date,
       quote_premium: data.premium,
       modelType: data.modelType,
@@ -1029,6 +1032,7 @@ const customerProfileForm = useForm({
   company_address: page.props.quote.company_address ?? null,
   entity_type_code: page.props.quote.entity_type_code ?? 'Parent',
   industry_type_code: page.props.quote.industry_type_code ?? null,
+  passport_number: page.props.quote.passport_number ?? null,
   emirate_of_registration_id:
     page.props.quote.emirate_of_registration_id ?? null,
 });
@@ -1149,6 +1153,10 @@ onMounted(() => {
   }
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
+
+const isEmbeddedProduct = code => {
+  return code.includes('TRA-CAR');
+};
 
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);
 const selectedPlanIds = computed(() => {
@@ -1301,9 +1309,20 @@ const onAddUpdate = () => {
 <template>
   <div>
     <Head title="Travel Detail" />
-    <div class="flex justify-between items-center flex-wrap gap-2">
-      <h2 class="text-xl font-semibold">Travel Detail</h2>
-      <div class="flex gap-2" v-if="readOnlyMode.isDisable === true">
+    <div
+      class="flex justify-between items-center flex-wrap gap-2"
+      v-if="readOnlyMode.isDisable === true"
+    >
+      <h2 class="text-xl font-semibold">
+        Travel Detail
+        <span
+          class="inline-flex items-center rounded-md bg-yellow-300 px-2 py-1 text-xs font-medium text-yellow-900 ring-1 ring-inset ring-yellow-300/10"
+          v-if="isEmbeddedProduct(quote.code)"
+        >
+          {{ 'Car Embedded Product' }}
+        </span>
+      </h2>
+      <div class="flex gap-2">
         <Link
           v-if="quote?.insly_id"
           :href="`/legacy-policy/${quote.insly_id}`"
@@ -1933,6 +1952,7 @@ const onAddUpdate = () => {
                       @click.prevent="searchByTradeLicense"
                       size="xs"
                       color="primary"
+                      v-if="readOnlyMode.isDisable === true"
                     >
                       Search
                     </x-button>
@@ -2117,6 +2137,7 @@ const onAddUpdate = () => {
               color="orange"
               @click.prevent="onAddTraveler"
               :disabled="isDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Add Member
             </x-button>
@@ -2143,6 +2164,7 @@ const onAddUpdate = () => {
               @click.prevent="onEditTraveler(item)"
               outlined
               :disabled="isDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Edit
             </x-button>
@@ -2158,6 +2180,7 @@ const onAddUpdate = () => {
               "
               outlined
               :disabled="isDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Delete
             </x-button>
@@ -2389,6 +2412,7 @@ const onAddUpdate = () => {
                     "
                     placeholder="Lead Status"
                     class="w-full"
+                    filterable
                   />
                 </x-field>
                 <x-field label="NOTES">
@@ -2441,6 +2465,7 @@ const onAddUpdate = () => {
                 quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
                 isDisabled
               "
+              v-if="readOnlyMode.isDisable === true"
             >
               Change Status
             </x-button>
@@ -2562,6 +2587,7 @@ const onAddUpdate = () => {
               @click.prevent="modals.doc = true"
               size="sm"
               color="primary"
+              v-if="readOnlyMode.isDisable === true"
             >
               Upload Documents
             </x-button>
@@ -2604,6 +2630,7 @@ const onAddUpdate = () => {
                 color="error"
                 outlined
                 @click.prevent="onDocDelete(doc_name)"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Delete
               </x-button>
@@ -2678,7 +2705,7 @@ const onAddUpdate = () => {
                 age 0-64
               </h6>
             </div>
-            <div class="flex gap-2 mb-4">
+            <div class="flex gap-2 mb-4" v-if="readOnlyMode.isDisable === true">
               <x-button-group
                 v-if="selectedPlans.length > 0"
                 size="sm"
@@ -2786,6 +2813,7 @@ const onAddUpdate = () => {
                   <span>
                     <SelectPlan
                       v-if="!selectedPlanIds.includes(item.id)"
+                      :disabled="isEmbeddedProduct"
                       @update:selectedPlanChanged="handlePlanSelected"
                       :plan="item"
                       :quoteType="modelType"
@@ -2868,6 +2896,7 @@ const onAddUpdate = () => {
                       <SelectPlan
                         v-if="!selectedPlanIds.includes(item.id)"
                         @update:selectedPlanChanged="handlePlanSelected"
+                        :disabled="isEmbeddedProduct"
                         :plan="item"
                         :quoteType="modelType"
                         :uuid="quote.uuid"
@@ -3011,7 +3040,12 @@ const onAddUpdate = () => {
         <template #body>
           <x-divider class="my-4" />
           <div class="my-4 flex justify-end">
-            <x-button size="sm" color="orange" @click.prevent="addActivity">
+            <x-button
+              size="sm"
+              color="orange"
+              @click.prevent="addActivity"
+              v-if="readOnlyMode.isDisable === true"
+            >
               Add Activity
             </x-button>
           </div>
@@ -3042,6 +3076,7 @@ const onAddUpdate = () => {
                   outlined
                   :disabled="item.status === 1"
                   @click.prevent="activityEdit(item)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Edit
                 </x-button>
@@ -3051,6 +3086,7 @@ const onAddUpdate = () => {
                   :disabled="item.status === 1"
                   outlined
                   @click.prevent="activityDelete(item.id)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Delete
                 </x-button>

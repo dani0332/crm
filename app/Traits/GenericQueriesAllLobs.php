@@ -192,6 +192,30 @@ trait GenericQueriesAllLobs
         return $customer;
     }
 
+    public function inslyInsurances()
+    {
+        return [
+            QuoteTypes::BIKE->value => ['Bike insurance'],
+            QuoteTypes::BUSINESS->value => [
+                'business interruption insurance', 'contractors all risks', 'Cyber liability', 'directors and officers liability insurance',
+                'Engineering and plant insurance', 'fidelity guarantee', 'group life', 'group medical insurance', 'holiday homes',
+                'livestock insurance', 'machinery breakdown insurance', 'marine cargo (individual shipment) insurance',
+                'marine hull insurance', 'medical malpractice insurance', 'money insurance', 'motor fleet',
+                'open cover - marine cargo insurance', 'professional indemnity insurance', 'property insurance',
+                'public liability insurance', 'road transit (international)', 'road transit (UAE only)',
+                'sme packaged insurance', 'trade credit insurance', 'workmens compensation insurance',
+            ],
+            QuoteTypes::CAR->value => ['casco', 'motor insurance - Comprehensive', 'motor insurance - TPL'],
+            QuoteTypes::LIFE->value => ['Critical illness', 'Individual life insurance'],
+            QuoteTypes::HOME->value => ['Home insurance', 'personal accident', 'home insurance'],
+            QuoteTypes::TRAVEL->value => ['Inbound travel insurance', 'Outbound travel insurance'],
+            QuoteTypes::HEALTH->value => ['Individual or family medical'],
+            QuoteTypes::CYCLE->value => ['Pedal cycle insurance'],
+            QuoteTypes::PET->value => ['Pet insurance'],
+            QuoteTypes::YACHT->value => ['Yacht insurance'],
+        ];
+    }
+
     /**
      * add comments & improvements needed
      * This method called when we visit all LOB's details page
@@ -209,12 +233,12 @@ trait GenericQueriesAllLobs
         if ($payment) {
             $invoiceDescription = (new PaymentRepository())->generateInvoiceDescription($payment, $quoteType, $record);
             $brokerInvoiceNo = (new PaymentRepository())->generateBrokerInvoiceNumber($payment);
-        }
 
-        $getBINFromDBForPolicyStatuses = [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued,  QuoteStatusEnum::CancellationPending];
+            $getBINFromDBForPolicyStatuses = [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued,  QuoteStatusEnum::CancellationPending];
 
-        if (in_array($record->quote_status_id, $getBINFromDBForPolicyStatuses)) {
-            $brokerInvoiceNo = $payment->broker_invoice_number;
+            if (in_array($record->quote_status_id, $getBINFromDBForPolicyStatuses)) {
+                $brokerInvoiceNo = $payment->broker_invoice_number;
+            }
         }
 
         $bookPolicyDetails = [];
@@ -476,7 +500,7 @@ trait GenericQueriesAllLobs
 
     /**
      * Evaluates if all necessary policy details are filled for a given quote.
-     * such as policy number, policy issuance date, policy start date, renewal expiry date, and price with VAT are present.
+     * such as policy number, policy issuance date, policy start date, policy expiry date, and price with VAT are present.
      * Triggering from bookPolicyPayload
      *
      * @return bool
@@ -487,14 +511,14 @@ trait GenericQueriesAllLobs
             'policy_number' => $quote->policy_number,
             'policy_issuance_date' => $quote->policy_issuance_date,
             'policy_start_date' => $quote->policy_start_date,
-            'renewal_expiry_date' => $quote->renewal_expiry_date,
+            'policy_expiry_date' => $quote->policy_expiry_date,
             'insurer_quote_number' => $quote->insurer_quote_number,
         ]);
 
         $hasBasicPolicyDetails = ! empty($quote->policy_number) &&
                                 ! empty($quote->policy_issuance_date) &&
                                 ! empty($quote->policy_start_date) &&
-                                ! empty($quote->renewal_expiry_date) &&
+                                ! empty($quote->policy_expiry_date) &&
                                 $quote->price_with_vat >= 0;
 
         if (! $hasBasicPolicyDetails) {
@@ -694,7 +718,7 @@ trait GenericQueriesAllLobs
     private function updatePaymentAllocationStatus($quote)
     {
 
-        $payment = Payment::where('code', '=', $quote->code)->mainLeadPayment()->first();
+        $payment = Payment::where('code', '=', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
 
         if ($payment) {
             $capturedAmount = $payment->captured_amount;
@@ -704,12 +728,18 @@ trait GenericQueriesAllLobs
             $totalAmount = round($totalAmount, 2);
             $priceWithVat = round($priceWithVat, 2);
 
-            if ($capturedAmount == 0) {
+            $paymentSplits = $payment->paymentSplits->first();
+
+            if ($paymentSplits && $paymentSplits->sage_reciept_id == null) {
                 $paymentStatus = TransactionPaymentStatusEnum::UNPAID_TEXT;
-            } elseif ($totalAmount >= $priceWithVat) {
-                $paymentStatus = TransactionPaymentStatusEnum::FULLY_PAID_TEXT;
             } else {
-                $paymentStatus = TransactionPaymentStatusEnum::PARTIALLY_PAID_TEXT;
+                if ($capturedAmount == 0) {
+                    $paymentStatus = TransactionPaymentStatusEnum::UNPAID_TEXT;
+                } elseif ($totalAmount >= $priceWithVat) {
+                    $paymentStatus = TransactionPaymentStatusEnum::FULLY_PAID_TEXT;
+                } else {
+                    $paymentStatus = TransactionPaymentStatusEnum::PARTIALLY_PAID_TEXT;
+                }
             }
 
             $payment->transaction_payment_status = $paymentStatus;

@@ -382,7 +382,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
     <Head title="Group Medical Lead Detail" />
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
-      <div class="flex gap-2 mb-3 justify-end">
+      <div
+        class="flex gap-2 mb-3 justify-end"
+        v-if="readOnlyMode.isDisable === true"
+      >
         <Link
           v-if="
             quoteDetails?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)
@@ -608,8 +611,8 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">RENEWAL EXPIRY DATE</dt>
-                <dd>{{ quote.renewal_expiry_date }}</dd>
+                <dt class="font-medium">POLICY EXPIRY DATE</dt>
+                <dd>{{ quote.policy_expiry_date }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -757,6 +760,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                       color="primary"
                       class="mt-1"
                       :loading="loader.tradeSearch"
+                      v-if="readOnlyMode.isDisable === true"
                     >
                       Search
                     </x-button>
@@ -815,7 +819,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   :modelType="'business'"
                 />
               </dl>
-              <div class="flex justify-end">
+              <div
+                class="flex justify-end"
+                v-if="readOnlyMode.isDisable === true"
+              >
                 <x-button
                   v-if="isProfileUpdateAllow"
                   class="mt-4"
@@ -911,6 +918,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
           color="orange"
           @click.prevent="linkEntity"
           :loading="loader.tradeDetail"
+          v-if="readOnlyMode.isDisable === true"
         >
           Link
         </x-button>
@@ -973,6 +981,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   "
                   placeholder="Lead Status"
                   class="w-full"
+                  filterable
                 />
                 <x-textarea
                   v-model="leadStatusForm.notes"
@@ -1025,6 +1034,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
                 isDisabled
               "
+              v-if="readOnlyMode.isDisable === true"
             >
               Change Status
             </x-button>

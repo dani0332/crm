@@ -96,7 +96,7 @@ const policyDetailsForm = useForm({
   vat: page.props.quote.vat || 0,
   quote_policy_start_date: dateToYMD(page.props.quote.policy_start_date) || '',
   quote_policy_expiry_date:
-    dateToYMD(page.props.quote.renewal_expiry_date) || '',
+    dateToYMD(page.props.quote.policy_expiry_date) || '',
   amount_with_vat: 0,
   quote_plan_insurer_quote_number:
     planQuoteInsurerNumber.value || page.props.quote.insurer_quote_number,
@@ -343,6 +343,12 @@ watch(
     setQuotePlanInsurerNumber();
   },
 );
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -647,7 +653,10 @@ watch(
                 </template>
               </x-tooltip>
             </div>
-            <div class="flex justify-end">
+            <div
+              class="flex justify-end"
+              v-if="readOnlyMode.isDisable === true"
+            >
               <template
                 v-if="
                   quote.quote_status_id ==

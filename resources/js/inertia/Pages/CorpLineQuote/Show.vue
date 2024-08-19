@@ -829,8 +829,8 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">RENEWAL EXPIRY DATE</dt>
-                <dd>{{ quote.renewal_expiry_date }}</dd>
+                <dt class="font-medium">POLICY EXPIRY DATE</dt>
+                <dd>{{ quote.policy_expiry_date }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -937,6 +937,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                       size="xs"
                       color="primary"
                       class="mt-1"
+                      v-if="readOnlyMode.isDisable === true"
                     >
                       Search
                     </x-button>
@@ -991,7 +992,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   </dd>
                 </div>
               </dl>
-              <div class="flex justify-end">
+              <div
+                class="flex justify-end"
+                v-if="readOnlyMode.isDisable === true"
+              >
                 <x-button
                   v-if="isProfileUpdateAllow"
                   class="mt-4"
@@ -1156,6 +1160,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 "
                 placeholder="Lead Status"
                 class="w-full"
+                filterable
               />
               <x-textarea
                 v-model="leadStatusForm.notes"
@@ -1217,6 +1222,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
             :loading="loaders.leadStatus"
             @click.prevent="onLeadStatus"
             :disabled="disableStatusSection || isDisabled"
+            v-if="readOnlyMode.isDisable === true"
           >
             Change Status
           </x-button>
@@ -1343,7 +1349,12 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
         <template #body>
           <x-divider class="my-4" />
           <div class="mb-4 flex justify-end">
-            <x-button size="sm" color="orange" @click.prevent="addActivity">
+            <x-button
+              size="sm"
+              color="orange"
+              @click.prevent="addActivity"
+              v-if="readOnlyMode.isDisable === true"
+            >
               Add Activity
             </x-button>
           </div>
@@ -1374,6 +1385,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   outlined
                   :disabled="item.status === 1"
                   @click.prevent="activityEdit(item)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Edit
                 </x-button>
@@ -1383,6 +1395,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   :disabled="item.status === 1"
                   outlined
                   @click.prevent="activityDelete(item.id)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Delete
                 </x-button>

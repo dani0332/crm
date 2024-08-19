@@ -45,13 +45,14 @@ class CarQuoteExport
             'cqr.additional_notes',
             'u.name AS advisor_id_text',
             'cqr.policy_number',
-            DB::raw('DATE_FORMAT(cqr.renewal_expiry_date, "%d-%m-%Y") as renewal_expiry_date'),
+            DB::raw('DATE_FORMAT(cqr.policy_expiry_date, "%d-%m-%Y") as policy_expiry_date'),
             'cqr.is_gcc_standard',
             'cqr.is_modified',
             'cqr.premium',
             'ls.text as lost_reason',
             'cqr.quote_link',
-            'cqr.renewal_batch')->get();
+            'cqr.renewal_batch',
+            'cqr.previous_policy_expiry_date')->get();
     }
 
     public function headings(): array
@@ -89,13 +90,14 @@ class CarQuoteExport
             'ADDITIONAL NOTES',
             'ADVISOR',
             'POLICY NUMBER',
-            'RENEWAL EXPIRY DATE',
+            'POLICY EXPIRY DATE',
             'IS GCC STANDARD',
             'IS VEHICLE MODIFIED',
             'PREMIUM',
             'LOST REASON',
             'QUOTE LINK',
             'RENEWAL BATCH',
+            'PREVIOUS POLICY EXPIRY DATE',
         ];
     }
 
@@ -134,13 +136,14 @@ class CarQuoteExport
             $quote->additional_notes,
             $quote->advisor_id_text,
             $quote->policy_number,
-            $quote->renewal_expiry_date ? date(config('constants.datetime_format'), strtotime($quote->renewal_expiry_date)) : '',
+            $quote->policy_expiry_date ? date(config('constants.datetime_format'), strtotime($quote->policy_expiry_date)) : '',
             $quote->is_gcc_standard ? 'Yes' : 'No',
             $quote->is_modified ? 'Yes' : 'No',
             $quote->premium,
             $quote->lost_reason,
             $quote->quote_link,
             $quote->renewal_batch,
+            $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
         ];
     }
 

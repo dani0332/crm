@@ -113,6 +113,14 @@ final class ApplicationStorageEnums extends Enum
     public const SUKOON_TEMPLATE_TAX_INVOICE = 'SUKOON_TEMPLATE_TAX_INVOICE';
     public const SUKOON_TEMPLATE_TAX_INVOICE_BUYER = 'SUKOON_TEMPLATE_TAX_INVOICE_BUYER';
     public const LEAD_SOURCE_ECOMMERCE = 'LEAD_SOURCE_ECOMMERCE';
+
+    // Travel SIC 2.0
+    public const SIC_TRAVEL_WORKFLOW_ENABLE = 'SIC_TRAVEL_WORKFLOW_ENABLE';
+    public const SIC_TRAVEL_WORKFLOW_DISABLE = 'SIC_TRAVEL_WORKFLOW_DISABLE';
+    public const TRAVEL_EMAIL_TEMPLATE = 'TRAVEL_EMAIL_TEMPLATE';
+    public const SIC_TRAVEL_FOLLOWUP_TEMPLATE_ID = 'SIC_TRAVEL_FOLLOWUP_TEMPLATE_ID';
+    public const SIC_TRAVEL_EMAIL_CC = 'SIC_TRAVEL_EMAIL_CC';
+    public const TRAVEL_EMAIL_REPLY_TO = 'TRAVEL_EMAIL_REPLY_TO';
     public const DIS_INBOX_EMAIL_BCC = 'DIS_INBOX_EMAIL_BCC';
 
     // Health Plan Insurer Provider For Send & Book Policy
@@ -128,4 +136,5 @@ final class ApplicationStorageEnums extends Enum
     public const NEXTCARE_HEALTH_DOC = 'NEXTCARE_HEALTH_DOC';
     public const NAS_HEALTH_DOC = 'NAS_HEALTH_DOC';
     public const E_CARE_HEALTH_DOC = 'E_CARE_HEALTH_DOC';
+    public const INSLY_M2_RELEASE_DATE = 'INSLY_M2_RELEASE_DATE';
 }

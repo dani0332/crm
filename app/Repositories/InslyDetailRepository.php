@@ -358,6 +358,7 @@ class InslyDetailRepository extends BaseRepository
         }
         $dataArr['premium'] = $premium;
         $dataArr['source'] = LeadSourceEnum::INSLY;
+        $dataArr['insly_migrated'] = true;
         $dataArr['quote_status_id'] = QuoteStatusEnum::NewLead;
         if ($isPersonalQuote) {
             $dataArr['quote_type_id'] = $quoteTypeData->id;

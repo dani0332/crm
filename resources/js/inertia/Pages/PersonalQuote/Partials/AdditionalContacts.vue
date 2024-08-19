@@ -220,7 +220,12 @@ onMounted(() => {
       <template #content>
         <x-divider class="mb-4 mt-1" />
         <div class="flex flex-wrap gap-3 justify-end items-center mb-4">
-          <x-button size="sm" color="orange" @click="addContactModal">
+          <x-button
+            size="sm"
+            color="orange"
+            @click="addContactModal"
+            v-if="readOnlyMode.isDisable === true"
+          >
             Add Additional Contacts
           </x-button>
         </div>
@@ -243,6 +248,7 @@ onMounted(() => {
                 color="emerald"
                 outlined
                 @click.prevent="additionalContactPrimary(item)"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Make Primary
               </x-button>
