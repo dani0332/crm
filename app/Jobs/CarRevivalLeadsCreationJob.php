@@ -118,15 +118,13 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
                 $response = Ken::request('/send-ocb-whatsapp-revival', 'post', $payload);
 
-                info('CarRevivalLeadsCreationJob-send-ocb-whatsapp-revival -' . json_encode($response));
+                info($logPrefix . 'CarRevivalLeadsCreationJob-send-ocb-whatsapp-revival -' . json_encode($response));
 
                 $carQuote = $this->getQuoteObject(QuoteTypes::CAR->value, $capiResponse->quoteUID);
 
                 $listQuotePlans = app(CarQuoteService::class)->getPlans($capiResponse->quoteUID, true, true);
 
                 $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
-
-                // info('CarRevivalLeadsCreationJob - carRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$capiResponse->quoteUID.'- quotePlansCount '.$quotePlansCount);
 
                 if ($quotePlansCount == 0) {
                     $key = ApplicationStorageEnums::OCB_NEW_BUSINESS_ZERO_PLAN;
@@ -138,11 +136,9 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
 
                 $previousAdvisor = null;
-                if (!empty($carQuote->previous_advisor_id)) {
+                if (! empty($carQuote->previous_advisor_id)) {
                     $previousAdvisor = app(UserService::class)->getUserById($carQuote->previous_advisor_id);
                 }
-
-                // info('CarRevivalLeadsCreationJob - carRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$capiResponse->quoteUID.'- previousAdvisor '.json_encode($previousAdvisor));
                 $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
 
                 $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
@@ -180,11 +176,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                         'email_sent' => true,
                     ]);
 
-                    // info('CarRevivalLeadsCreationJob - carRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$capiResponse->quoteUID.'-dttRevivalsInsertedUUID - '.$capiResponse->quoteUID);
-
                     CarQuote::find($this->lead->id)->update(['is_revived' => true]);
-
-                    // info('CarRevivalLeadsCreationJob - carRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$capiResponse->quoteUID.'- parentLeadIsRevived - '.$this->lead->id);
                 } else {
                     info($logPrefix . 'carRevivalParentLead -' . $this->lead->uuid . '- childLead - ' . $capiResponse->quoteUID . 'emailIsNotSent - ' . $emailData->customerEmail);
                 }
