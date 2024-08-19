@@ -177,7 +177,6 @@ class HealthQuoteService extends BaseService
             'hqr.policy_issuance_status_id',
             'hqr.policy_issuance_status_other',
             'hqr.stale_at',
-            'hqr.health_plan_type_id',
             DB::raw('DATE_FORMAT(hqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
             'hqr.insly_migrated',
         )
