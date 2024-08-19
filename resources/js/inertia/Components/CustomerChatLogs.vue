@@ -10,6 +10,11 @@ const props = defineProps({
   customerName: {
     type: String,
   },
+  expanded: {
+    required: false,
+    type: Boolean,
+    default: true,
+  },
 });
 
 const showChatLogs = ref(false);
@@ -79,39 +84,47 @@ onMounted(async () => {
 <template>
   <div>
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex justify-between items-center">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          InstantAlfred Chat Logs
-        </h3>
-      </div>
-      <x-divider class="mb-4 mt-1"></x-divider>
-      <DataTable
-        table-class-name="tablefixed compact"
-        :headers="tableHeaders"
-        :items="tableData || []"
-        border-cell
-        hide-rows-per-page
-        hide-footer
-      >
-        <template #item-action="item">
-          <x-button
-            size="xs"
-            color="primary"
-            outlined
-            @click="showChat(item)"
-            :loading="loader"
-          >
-            View
-          </x-button>
+
+      <Collapsible :expanded="expanded">
+        <template #header>
+          <div class="flex justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">
+              InstantAlfred Chat Logs
+            </h3>
+          </div>
         </template>
-      </DataTable>
+        <template #body>
+          <x-divider class="mb-4 mt-1"></x-divider>
+          <DataTable
+          table-class-name="tablefixed compact"
+          :headers="tableHeaders"
+          :items="tableData || []"
+          border-cell
+          hide-rows-per-page
+          hide-footer
+        >
+          <template #item-action="item">
+            <x-button
+              size="xs"
+              color="primary"
+              outlined
+              @click="showChat(item)"
+              :loading="loader"
+            >
+              View
+            </x-button>
+          </template>
+        </DataTable>
+        </template>
+      </Collapsible>
+
+      <chat-logs-modal
+        :showChatLogs="showChatLogs"
+        :chatMessages="chatMessages"
+        :customerName="customerName"
+        @update:showChatLogs="showChatLogs = $event"
+      />
     </div>
-    <chat-logs-modal
-      :showChatLogs="showChatLogs"
-      :chatMessages="chatMessages"
-      :customerName="customerName"
-      @update:showChatLogs="showChatLogs = $event"
-    ></chat-logs-modal>
   </div>
 </template>
 <style>

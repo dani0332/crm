@@ -3866,6 +3866,8 @@ const onAddUpdate = () => {
       :customerName="quote?.first_name + ' ' + quote?.last_name"
       :quoteId="quote.uuid"
       :quoteType="'HEALTH'"
+      :expanded="sectionExpanded"
+
     />
 
     <AuditLogs

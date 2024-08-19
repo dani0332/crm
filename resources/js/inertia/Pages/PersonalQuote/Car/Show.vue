@@ -4003,6 +4003,7 @@ const onAddUpdate = () => {
       :customerName="record?.first_name + ' ' + record?.last_name"
       :quoteId="quote.uuid"
       :quoteType="'CAR'"
+      :expanded="sectionExpanded"
     />
   </div>
   <AuditLogs
