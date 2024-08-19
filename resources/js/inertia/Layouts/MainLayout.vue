@@ -6,6 +6,7 @@ import OnlineStatusToggle from "../Components/OnlineStatusToggle.vue";
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const getAuthorisePaymentCount = computed(()=>page.props.getAuthorisePaymentCount)
+const checkAuthUserRole = computed(()=>page.props.checkAuthUserRole)
 const navLinks = computed(() => page.props.sidebar);
 const openSidebar = ref(false);
 const bannerInfo = computed(() => {
@@ -34,7 +35,11 @@ const onLogout = () => {
 
 
 const urls = computed(()=>{
-    return `/quotes/car?page=1&segment_filter=all&payment_status_id=4`;
+    if(checkAuthUserRole.value){
+        return `/reports/payment-summary`;
+    }else{
+        return `/quotes/car?page=1&segment_filter=all&payment_status_id=4`;
+    }
 
 })
 
