@@ -109,7 +109,7 @@ const advisorOptions = computed(() => {
   }));
 });
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
   setQueryStringFilters();
@@ -117,8 +117,7 @@ onMounted(() => {
     permissionAssignLeads.value = true;
   }
 
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
-
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 const tableHeader = [
@@ -139,8 +138,7 @@ const tableHeader = [
     text: 'Previous Policy Number',
     value: 'previous_quote_policy_number',
   },
-    { text: 'Renewal Batch', value: 'renewal_batch' },
-
+  { text: 'Renewal Batch', value: 'renewal_batch' },
 ];
 
 const onDataExport = () => {
@@ -160,7 +158,6 @@ watch(
   },
   { deep: true, immediate: true },
 );
-
 </script>
 
 <template>
@@ -168,16 +165,16 @@ watch(
     <Head title="JetSki Quotes" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">JetSki Quotes List</h2>
-        <div v-if="readOnlyMode.isDisable === true">
-      <x-button
-        v-if="can(permissionsEnum.JetskiQuotesCreate)"
-        size="sm"
-        color="#ff5e00"
-        :href="route('jetski-quotes-create')"
-      >
-        Create Lead
-      </x-button>
-        </div>
+      <div v-if="readOnlyMode.isDisable === true">
+        <x-button
+          v-if="can(permissionsEnum.JetskiQuotesCreate)"
+          size="sm"
+          color="#ff5e00"
+          :href="route('jetski-quotes-create')"
+        >
+          Create Lead
+        </x-button>
+      </div>
     </div>
     <x-divider class="my-4" />
 
@@ -185,7 +182,7 @@ watch(
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -326,7 +323,7 @@ watch(
           >
             Export
           </x-button>
-          <x-tooltip v-else position="right">
+          <x-tooltip v-else placement="right">
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">

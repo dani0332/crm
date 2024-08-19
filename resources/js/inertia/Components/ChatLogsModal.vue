@@ -60,37 +60,37 @@ const checkCaption = (whatsapp_request, UserAudio) => {
 
   if (data) {
     const { caption, mime_type } = JSON.parse(data);
-
-    
-    if(whatsapp_request && whatsapp_request?.type === 'image'){
-      return caption ? `User has shared an image with a message: ${caption}`  : `User has shared an image`
+    if (whatsapp_request && whatsapp_request?.type === 'image') {
+      return caption
+        ? `User has shared an image with a message: ${caption}`
+        : `User has shared an image`;
     }
-
     return caption
       ? `User has shared a ${mime_type} with a message: ${caption}`
       : `User has shared a ${whatsapp_request.type}`;
   }
 
   const { blob_payload_type } = whatsapp_request;
+
   const message =
-    whatsapp_request?.payload.body?.image?.text ??
-    whatsapp_request?.payload.body?.document?.text ??
-    whatsapp_request?.payload.body?.file?.text ??
-    whatsapp_request?.payload.body?.location?.text ??
-    whatsapp_request?.payload.body?.contacts?.text ??
-    whatsapp_request?.payload.body?.video?.text ??
-    whatsapp_request?.payload.body?.sticker?.text;
+    whatsapp_request?.payload?.body?.image?.text ??
+    whatsapp_request?.payload?.body?.document?.text ??
+    whatsapp_request?.payload?.body?.file?.text ??
+    whatsapp_request?.payload?.body?.location?.text ??
+    whatsapp_request?.payload?.body?.contacts?.text ??
+    whatsapp_request?.payload?.body?.video?.text ??
+    whatsapp_request?.payload?.body?.sticker?.text;
 
   if (blob_payload_type === 'audio' && UserAudio != null && UserAudio != '') {
     return `${UserAudio}`;
   }
 
-  if(blob_payload_type === 'image'){
+  if (blob_payload_type === 'image') {
     return message
-    ? `User has shared an ${blob_payload_type} with a message: ${message}`
-    : blob_payload_type
-      ? `User has shared an ${blob_payload_type}`
-      : false;
+      ? `User has shared an ${blob_payload_type} with a message: ${message}`
+      : blob_payload_type
+        ? `User has shared an ${blob_payload_type}`
+        : false;
   }
 
   return message

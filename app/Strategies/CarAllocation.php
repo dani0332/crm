@@ -59,7 +59,7 @@ class CarAllocation implements Allocation
                 }
                 info('Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
                 // Find available users for the tier
-                $availableUsers = $this->findAvailableUsers($tier->id, $lead->source);
+                $availableUsers = $this->findAvailableUsers($tier->id, $lead->source, $lead);
 
                 // Find custom rules for the lead
                 $rules = $this->findRules($lead);

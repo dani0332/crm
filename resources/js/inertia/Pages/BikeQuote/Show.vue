@@ -1,18 +1,11 @@
 <script setup>
-import AddOn from '@/inertia/Components/AddOn.vue';
 import AvailablePlans from '@/inertia/Pages/BikeQuote/AvailablePlans.vue';
-import MemberDetails from '../../Components/MemberDetails.vue';
-import MigratePayment from '../../Components/MigratePayment.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue';
-import PlanDetails from '../../Components/PlanDetails.vue';
-import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
-import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
-import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+import LazyBookingDetails from '../SendUpdateLog/Partials/BookingDetails.vue';
 
 defineProps({
   quote: Object,
@@ -53,6 +46,17 @@ defineProps({
   paymentTooltipEnum: Object,
   websiteURL: String,
   linkedQuoteDetails: Object,
+  vatPercentage: Number,
+  isAmlClearedForPayment: Boolean,
+  permissions: Object,
+  enums: Object,
+  payments: Array,
+  bookPolicyDetails: Array,
+  sendUpdateOptions: Array,
+  sendUpdateLogs: Array,
+  hasPolicyIssuedStatus: Boolean,
+  lockLeadSectionsDetails: Object,
+  paymentDocument: Array,
 });
 
 const assumptionState = reactive({
@@ -68,6 +72,10 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const permissionsEnum = page.props.permissionsEnum;
+const leadSource = page.props.leadSource;
+const notification = useToast();
+const permissionEnum = page.props.permissionsEnum;
+const canAny = permissions => useCanAny(permissions);
 
 const bike_current_insurance_status = computed(() => {
   if (
@@ -133,8 +141,6 @@ const currentInsuranceOptions = computed(() => {
 const bikeBodyType = computed(() => {
   return [{ value: 1, label: 'Bike' }];
 });
-
-const notification = useToast();
 
 const industryTypeOptions = computed(() => {
   return page.props.industryType?.map(indType => ({
@@ -222,7 +228,6 @@ const tradeLicenseEntity = reactive({
   triggeredFrom: false,
 });
 
-
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
@@ -299,295 +304,352 @@ const linkEntity = () => {
 const paymentStatusEnum = page.props.paymentStatusEnum;
 
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
-
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
+const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
+const getDetailPageRoute = (uuid, quote_type_id) =>
+  useGetShowPageRoute(uuid, quote_type_id, null);
+
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
+  createReusableTemplate();
+
+const isAddUpdate = ref(false);
+const onAddUpdate = () => {
+  isAddUpdate.value = true;
+};
 </script>
 
 <template>
   <div>
     <Head title="Bike Quotes" />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-        <div class="flex justify-between items-center flex-wrap gap-2">
-          <h2 class="text-lg font-semibold text-primary-800">E-COM Detail</h2>
-      </div>
-      <x-divider class="my-4" />
-          <div class="text-sm">
-              <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">PRICE</dt>
-                      <dd>{{ quote?.premium ?? '' }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">PAID AT</dt>
-                      <dd>{{ quote?.paid_at ?? '' }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">PAYMENT STATUS</dt>
-                      <dd>{{ quote?.payment_status?.text }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">PROVIDER NAME</dt>
-                      <dd>{{quote?.car_plan?.insurance_provider?.text}}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">PAYMENT METHOD</dt>
-                      <dd>{{quote?.payments[0]?.payment_method?.name}}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">PLAN NAME</dt>
-                      <dd>{{ quote?.car_plan?.text }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">ECOMMERCE</dt>
-                      <dd>{{ quote?.is_ecommerce == 1 ? 'Yes' : 'No' }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">QUOTE LINK</dt>
-                      <dd>{{ quote?.quote_link ?? '' }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">ORDER REFERENCE</dt>
-                      <dd>{{ quote?.payments[0]?.reference ?? '' }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">PAYMENT REFERENCE</dt>
-                      <dd>{{ quote?.payments[0]?.code ?? '' }}</dd>
-                  </div>
-              </dl>
-
-              <AddOn v-if="bikeQuotePlanAddons.length > 0" :quotePlanAddons="bikeQuotePlanAddons" />
-          </div>
-      </div>
-
-      <div class="p-4 rounded shadow mb-6 bg-white">
-        <Collapsible :expanded="sectionExpanded">
-          <template #header>
-          <div class="flex justify-between items-center">
-            <h3 class="font-semibold  text-lg">Bike Details</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4"></x-divider>
-          <div class="flex justify-end items-center mb-4">
-        <div class="flex gap-2">
-            <Link
+    <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
+      <h2 class="text-xl font-semibold">Bike Detail</h2>
+      <div class="flex gap-2">
+        <Link
           v-if="quote.quote_detail?.insly_id"
           :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
           preserve-scroll
         >
-          <x-button size="sm" color="#ff5e00" tag="div" v-if="readOnlyMode.isDisable === true">
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
             View Legacy policy
           </x-button>
         </Link>
-        <Link v-if="can(permissionsEnum.BikeQuotesEdit)" :href="route('bike-quotes-edit', quote.uuid)">
-                <x-button size="sm" tag="div" v-if="readOnlyMode.isDisable === true">Edit</x-button>
-            </Link>
-            <Link :href="route('bike-quotes-list')" preserve-scroll v-if="can(permissionsEnum.BikeQuotesList)">
-                <x-button size="sm" tag="div" v-if="readOnlyMode.isDisable === true">Bike Quotes</x-button>
-            </Link>
-        </div>
-    </div>
-    <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
-          <div
-            class="grid sm:grid-cols-2"
-            v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
-          >
-            <dt class="font-medium">ID</dt>
-            <dd>{{ quote?.id }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <div>
-              <x-tooltip position="bottom">
-                <label
-                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                >
-                  Ref-ID
-                </label>
-                <template #tooltip> Reference ID </template>
-              </x-tooltip>
-            </div>
-            <div>{{ quote?.code }}</div>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CUSTOMER TYPE</dt>
-            <dd>{{ quote?.customer_type }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">ADVISOR</dt>
-            <dd>{{ quote?.advisor?.name }}</dd>
-          </div>
-            <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">AML STATUS</dt>
-                <dd v-if="quote?.kyc_decision === 'Complete'">KYC - Complete</dd>
-                <dd v-else>KYC - Pending</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">CUSTOMER AGE</dt>
-                <dd>{{ quote?.customer_age }}</dd>
-              </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">SOURCE</dt>
-            <dd>{{ quote?.source }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CREATED DATE</dt>
-            <dd>{{ quote?.created_at }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CREATED BY</dt>
-            <dd class="break-words">{{ quote?.created_by?.email }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">UPDATED BY</dt>
-            <dd class="break-words">{{ quote?.updated_by?.email }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">LAST MODIFIED DATE</dt>
-            <dd>{{ quote?.updated_at }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">LOST REASON</dt>
-            <dd>{{ quote?.quote_detail?.lost_reason?.text }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">DEVICE</dt>
-            <dd>{{ quote?.device }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">IS ECOMMERCE</dt>
-            <dd>{{ quote?.is_ecommerce ? 'Yes' : 'No' }}</dd>
-          </div>
-        </dl>
-      </div>
-
-      <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">Quote Details</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium uppercase">Bike Make</dt>
-                    <dd>{{ quote?.bike_quote?.bike_make?.text }}</dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium uppercase">Bike Model</dt>
-                    <dd>{{ quote?.bike_quote?.bike_model?.text }}</dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium uppercase">CC</dt>
-                    <dd>{{ quote?.bike_quote?.cubic_capacity }}</dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium uppercase"> Bike model year</dt>
-                    <dd>{{ quote?.bike_quote?.year_of_manufacture }}</dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium uppercase">First Registration Date</dt>
-                    <dd>{{ quote?.bike_quote?.year_of_first_registration }}</dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium uppercase">Bike value </dt>
-                    <dd>{{ quote?.bike_quote?.bike_value }}</dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium uppercase">Bike value (at enquiry)</dt>
-                    <dd>{{ quote?.bike_quote?.bike_value_tier }}</dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium uppercase">Seat Capacity</dt>
-                    <dd>{{ quote?.bike_quote?.seat_capacity }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium uppercase">Emirate Of Registration</dt>
-                    <dd>{{ quote?.bike_quote?.emirates?.text }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium uppercase">Type Of Bike Insurance</dt>
-                    <dd>{{ quote?.bike_quote?.car_type_insurance?.text }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2" v-if="quote.source == 'Renewal_upload'">
-                    <dt class="font-medium uppercase">Currently Insured With</dt>
-                    <dd>{{ quote?.currently_insured_with?.text }}</dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium uppercase">Claim History</dt>
-                    <dd> <dd>{{ quote?.bike_quote?.claim_history?.text }}</dd></dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium uppercase">Can You Provide No-Claims Letter From Your Previous Insurers?</dt>
-                    <dd>{{ quote?.bike_quote?.has_ncd_supporting_documents ? 'Yes' : 'No' }}</dd>
-                </div>
-
-                <div class="grid sm:grid-cols-2">
-                    <div>
-                        <x-tooltip position="bottom">
-                            <label
-                                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
-                            >
-                                Parent Ref-ID
-                            </label>
-                            <template #tooltip> Parent Reference ID </template>
-                        </x-tooltip>
-                    </div>
-                    <div>{{ quote?.parent_duplicate_quote_id }}</div>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                  <dt class="font-medium">TRANSACTION APPROVED AT</dt>
-                  <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
-              </div>
-            </dl>
-        </div>
-        </template>
-        </Collapsible>
-      </div>
-    <!-- <div class="flex justify-between items-center mb-4">
-        <h3 class="font-semibold text-xl">Bike Details</h3>
-        <div class="flex gap-2">
-            <Link
-          v-if="quote.quote_detail?.insly_id"
-          :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
+        <Link
+          v-else-if="
+            quote.source == leadSource.RENEWAL_UPLOAD &&
+            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+          "
+          :href="
+            route(
+              'view-legacy-policy.renewal-uploads',
+              quote.previous_quote_policy_number,
+            )
+          "
           preserve-scroll
         >
           <x-button size="sm" color="#ff5e00" tag="div">
             View Legacy policy
           </x-button>
         </Link>
-        <Link v-if="can(permissionsEnum.BikeQuotesEdit)" :href="route('bike-quotes-edit', quote.uuid)">
-                <x-button size="sm" tag="div">Edit</x-button>
-            </Link>
-            <Link :href="route('bike-quotes-list')" preserve-scroll v-if="can(permissionsEnum.BikeQuotesList)">
-                <x-button size="sm" tag="div">Bike Quotes</x-button>
-            </Link>
-        </div>
-    </div> -->
+        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+          <Link
+            v-if="!isDisabled"
+            :href="route('bike-quotes-edit', quote.uuid)"
+          >
+            <x-button size="sm" tag="div" v-if="readOnlyMode.isDisable === true"
+              >Edit</x-button
+            >
+          </Link>
+          <x-button v-else :disabled="isDisabled" size="sm" tag="div"
+            >Edit</x-button
+          >
+        </LeadEditBtnTemplate>
 
-      <!-- <div class="p-4 rounded shadow mb-6 bg-white">
+        <x-tooltip
+          v-if="lockLeadSectionsDetails.lead_details"
+          placement="bottom"
+        >
+          <LeadEditBtnReuseTemplate
+            v-if="can(permissionsEnum.BikeQuotesEdit)"
+            :isDisabled="true"
+          />
+          <template #tooltip
+            >This lead is now locked as the policy has been booked. If changes
+            are needed, go to 'Send Update', select 'Add Update', and choose
+            'Correction of Policy'</template
+          >
+        </x-tooltip>
+        <template v-else>
+          <LeadEditBtnReuseTemplate
+            v-if="can(permissionsEnum.BikeQuotesEdit)"
+          />
+        </template>
 
-    </div> -->
+        <Link
+          v-if="can(permissionsEnum.BikeQuotesList)"
+          :href="route('bike-quotes-list')"
+          preserve-scroll
+        >
+          <x-button size="sm" color="primary" tag="div"> Bike Quotes </x-button>
+        </Link>
+      </div>
+    </div>
 
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <div class="flex justify-between items-center flex-wrap gap-2">
+        <h2 class="text-lg font-semibold text-primary-800">E-COM Detail</h2>
+      </div>
+      <x-divider class="my-4" />
+      <div class="text-sm">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PRICE</dt>
+            <dd>{{ quote?.premium ?? '' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PAID AT</dt>
+            <dd>{{ quote?.paid_at ?? '' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PAYMENT STATUS</dt>
+            <dd>{{ quote?.payment_status?.text }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PROVIDER NAME</dt>
+            <dd>{{ quote?.car_plan?.insurance_provider?.text }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PAYMENT METHOD</dt>
+            <dd>{{ quote?.payments[0]?.payment_method?.name }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PLAN NAME</dt>
+            <dd>{{ quote?.car_plan?.text }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ECOMMERCE</dt>
+            <dd>{{ quote?.is_ecommerce == 1 ? 'Yes' : 'No' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">QUOTE LINK</dt>
+            <dd>{{ quote?.quote_link ?? '' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ORDER REFERENCE</dt>
+            <dd>{{ quote?.payments[0]?.reference ?? '' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PAYMENT REFERENCE</dt>
+            <dd>{{ quote?.payments[0]?.code ?? '' }}</dd>
+          </div>
+        </dl>
+
+        <AddOn
+          v-if="bikeQuotePlanAddons.length > 0"
+          :quotePlanAddons="bikeQuotePlanAddons"
+        />
+      </div>
+    </div>
+
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <Collapsible :expanded="sectionExpanded">
+        <template #body>
+          <x-divider class="my-4"></x-divider>
+
+          <div class="text-sm">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+              >
+                <dt class="font-medium">ID</dt>
+                <dd>{{ quote?.id }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      Ref-ID
+                    </label>
+                    <template #tooltip> Reference ID </template>
+                  </x-tooltip>
+                </div>
+                <div>{{ quote?.code }}</div>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CUSTOMER TYPE</dt>
+                <dd>{{ quote?.customer_type }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">ADVISOR</dt>
+                <dd>{{ quote?.advisor?.name }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd v-if="quote?.kyc_decision === 'Complete'">
+                  KYC - Complete
+                </dd>
+                <dd v-else>KYC - Pending</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CUSTOMER AGE</dt>
+                <dd>{{ quote?.customer_age }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">SOURCE</dt>
+                <dd>{{ quote?.source }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CREATED DATE</dt>
+                <dd>{{ quote?.created_at }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CREATED BY</dt>
+                <dd class="break-words">{{ quote?.created_by?.email }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">UPDATED BY</dt>
+                <dd class="break-words">{{ quote?.updated_by?.email }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">LAST MODIFIED DATE</dt>
+                <dd>{{ quote?.updated_at }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">LOST REASON</dt>
+                <dd>{{ quote?.quote_detail?.lost_reason?.text }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">DEVICE</dt>
+                <dd>{{ quote?.device }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">IS ECOMMERCE</dt>
+                <dd>{{ quote?.is_ecommerce ? 'Yes' : 'No' }}</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div class="mt-6">
+            <h3 class="font-semibold text-primary-800">Quote Details</h3>
+            <x-divider class="mb-4 mt-1" />
+          </div>
+
+          <div class="text-sm">
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Bike Make</dt>
+                <dd>{{ quote?.bike_quote?.bike_make?.text }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Bike Model</dt>
+                <dd>{{ quote?.bike_quote?.bike_model?.text }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">CC</dt>
+                <dd>{{ quote?.bike_quote?.cubic_capacity }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Bike model year</dt>
+                <dd>{{ quote?.bike_quote?.year_of_manufacture }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">First Registration Date</dt>
+                <dd>{{ quote?.bike_quote?.year_of_first_registration }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Bike value</dt>
+                <dd>{{ quote?.bike_quote?.bike_value }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Bike value (at enquiry)</dt>
+                <dd>{{ quote?.bike_quote?.bike_value_tier }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Seat Capacity</dt>
+                <dd>{{ quote?.bike_quote?.seat_capacity }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Emirate Of Registration</dt>
+                <dd>{{ quote?.bike_quote?.emirates?.text }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Type Of Bike Insurance</dt>
+                <dd>{{ quote?.bike_quote?.car_type_insurance?.text }}</dd>
+              </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="quote.source == 'Renewal_upload'"
+              >
+                <dt class="font-medium uppercase">Currently Insured With</dt>
+                <dd>{{ quote?.currently_insured_with?.text }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">Claim History</dt>
+                <dd>{{ quote?.bike_quote?.claim_history?.text }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">
+                  Can You Provide No-Claims Letter From Your Previous Insurers?
+                </dt>
+                <dd>
+                  {{
+                    quote?.bike_quote?.has_ncd_supporting_documents
+                      ? 'Yes'
+                      : 'No'
+                  }}
+                </dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <div>
+                  <x-tooltip position="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      Parent Ref-ID
+                    </label>
+                    <template #tooltip> Parent Reference ID </template>
+                  </x-tooltip>
+                </div>
+                <div>{{ quote?.parent_duplicate_quote_id }}</div>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
+              </div>
+            </dl>
+          </div>
+        </template>
+      </Collapsible>
+    </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
@@ -687,14 +749,17 @@ onMounted(() => {
             </div>
 
             <div class="grid sm:grid-cols-2">
-                <dt class="font-medium uppercase">UAE licence held for</dt>
-                <dd>{{ quote?.bike_quote?.uae_license_held_for?.text }}</dd>
+              <dt class="font-medium uppercase">UAE licence held for</dt>
+              <dd>{{ quote?.bike_quote?.uae_license_held_for?.text }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-                <dt class="font-medium uppercase">Home Country Driving License Held For</dt>
-                <dd>{{ quote?.bike_quote?.back_home_license_held_for?.text }}</dd>
+              <dt class="font-medium uppercase">
+                Home Country Driving License Held For
+              </dt>
+              <dd>{{ quote?.bike_quote?.back_home_license_held_for?.text }}</dd>
             </div>
             <RiskRatingScoreDetails
+              v-if="quote"
               :quote="quote"
               :modelType="'Bike'"
             />
@@ -794,7 +859,7 @@ onMounted(() => {
               </dd>
             </div>
           </dl>
-          <div class="flex justify-end">
+          <div class="flex justify-end" v-if="readOnlyMode.isDisable === true">
             <x-button
               v-if="isProfileUpdateAllow"
               class="mt-4"
@@ -826,18 +891,19 @@ onMounted(() => {
           </dd>
         </div>
       </dl>
-      <div class="flex justify-end">
-        <x-button
-          class="mt-4"
-          color="primary"
-          size="sm"
-          :loading="customerProfileForm.processing"
-          @click.prevent="searchByTradeLicense('SubEntity')"
-          v-if="readOnlyMode.isDisable === true"
-        >
-          Search
-        </x-button>
-      </div>
+      <template #actions>
+        <div class="flex justify-end">
+          <x-button
+            color="primary"
+            size="sm"
+            :loading="customerProfileForm.processing"
+            @click.prevent="searchByTradeLicense('SubEntity')"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Search
+          </x-button>
+        </div>
+      </template>
     </x-modal>
     <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
@@ -880,15 +946,20 @@ onMounted(() => {
             />
           </dd>
         </div>
+      </dl>
+      <template #actions>
         <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity">
+          <x-button
+            size="sm"
+            color="orange"
+            @click.prevent="linkEntity"
+            v-if="readOnlyMode.isDisable === true"
+          >
             Link
           </x-button>
         </div>
-      </dl>
+      </template>
     </x-modal>
-
-
 
     <MemberDetails
       v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
@@ -939,200 +1010,206 @@ onMounted(() => {
     <MigratePayment
       v-if="!isNewPaymentStructure"
       :quoteId="quote.id"
-      :paymentCode = "quote.code"
+      :paymentCode="quote.code"
       :quoteType="quoteType"
       :payments="quote.payments"
     />
 
-
     <div class="p-4 rounded shadow mb-6 bg-white">
-        <div>
-            <h3 class="font-semibold text-primary-800 text-lg">Assumptions</h3>
-            <x-divider class="mb-4 mt-1" />
+      <div>
+        <h3 class="font-semibold text-primary-800 text-lg">Assumptions</h3>
+        <x-divider class="mb-4 mt-1" />
+      </div>
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+        <div class="w-full md:w-1/2">
+          <x-field label="CC" required>
+            <x-input
+              v-model="assumptionsForm.cubic_capacity"
+              type="number"
+              placeholder="CC"
+              class="w-full"
+              :rules="[isRequired]"
+              :disabled="!assumptionState.isEditing"
+            />
+          </x-field>
         </div>
-        <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-            <div class="w-full md:w-1/2">
-                <x-field label="CC" required>
-                    <x-input
-                        v-model="assumptionsForm.cubic_capacity"
-                        type="number"
-                        placeholder="CC"
-                        class="w-full"
-                        :rules="[isRequired]"
-                        :disabled="!assumptionState.isEditing"
-                    />
-                </x-field>
-            </div>
-            <div class="w-full md:w-1/2">
-                <x-field label="Seat Capacity" required>
-                    <x-input
-                        v-model="assumptionsForm.seat_capacity"
-                        type="number"
-                        placeholder="Seat Capacity"
-                        class="w-full"
-                        :rules="[isRequired]"
-                        :disabled="!assumptionState.isEditing"
-                    />
-                </x-field>
-            </div>
+        <div class="w-full md:w-1/2">
+          <x-field label="Seat Capacity" required>
+            <x-input
+              v-model="assumptionsForm.seat_capacity"
+              type="number"
+              placeholder="Seat Capacity"
+              class="w-full"
+              :rules="[isRequired]"
+              :disabled="!assumptionState.isEditing"
+            />
+          </x-field>
         </div>
-        <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-            <div class="w-full md:w-1/2">
-                <div class="flex flex-col gap-4">
-                    <x-field label="Vehicle Body Type" required>
-                        <x-select
-                            v-model="assumptionsForm.vehicle_type_id"
-                            :options="bikeBodyType"
-                            placeholder="Vehicle Body Type"
-                            class="w-full"
-                            :rules="[isRequired]"
-                            :disabled="!assumptionState.isEditing"
-                        />
-                    </x-field>
-                </div>
-            </div>
-            <div class="w-full md:w-1/2">
-                <div class="flex flex-col gap-4">
-                    <x-field label="Is Bike modified?" required>
-                        <x-select
-                            v-model="assumptionsForm.is_modified"
-                            :options="isOptions"
-                            placeholder="Is Modified"
-                            class="w-full"
-                            :rules="[isRequired]"
-                            :disabled="!assumptionState.isEditing"
-                        />
-                    </x-field>
-                </div>
-            </div>
+      </div>
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+        <div class="w-full md:w-1/2">
+          <div class="flex flex-col gap-4">
+            <x-field label="Vehicle Body Type" required>
+              <x-select
+                v-model="assumptionsForm.vehicle_type_id"
+                :options="bikeBodyType"
+                placeholder="Vehicle Body Type"
+                class="w-full"
+                :rules="[isRequired]"
+                :disabled="!assumptionState.isEditing"
+              />
+            </x-field>
+          </div>
         </div>
-        <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-            <div class="w-full md:w-1/2">
-                <div class="flex flex-col gap-4">
-                    <x-field label="Is Bank Financed" required>
-                        <x-select
-                            v-model="assumptionsForm.is_bank_financed"
-                            :options="isOptions"
-                            placeholder="Is Bank Financed"
-                            class="w-full"
-                            :rules="[isRequired]"
-                            :disabled="!assumptionState.isEditing"
-                        />
-                    </x-field>
-                </div>
-            </div>
-            <div class="w-full md:w-1/2">
-                <div class="flex flex-col gap-4">
-                    <x-field label="Is GCC Standard?" required>
-                        <x-select
-                            v-model="assumptionsForm.is_gcc_standard"
-                            :options="isOptions"
-                            placeholder="Is GCC Standard"
-                            class="w-full"
-                            :rules="[isRequired]"
-                            :disabled="!assumptionState.isEditing"
-                        />
-                    </x-field>
-                </div>
-            </div>
+        <div class="w-full md:w-1/2">
+          <div class="flex flex-col gap-4">
+            <x-field label="Is Bike modified?" required>
+              <x-select
+                v-model="assumptionsForm.is_modified"
+                :options="isOptions"
+                placeholder="Is Modified"
+                class="w-full"
+                :rules="[isRequired]"
+                :disabled="!assumptionState.isEditing"
+              />
+            </x-field>
+          </div>
         </div>
-        <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-            <div class="w-full md:w-1/2">
-                <div class="flex flex-col gap-4">
-                    <x-field label="Current Insurance Status" required>
-                        <x-select
-                            v-model="assumptionsForm.current_insurance_status"
-                            :options="currentInsuranceOptions"
-                            placeholder="Current Insurance Status"
-                            class="w-full"
-                            :rules="[isRequired]"
-                            :disabled="!assumptionState.isEditing"
-                        />
-                    </x-field>
-                </div>
-            </div>
-            <div class="w-full md:w-1/2">
-                <div class="flex flex-col gap-4">
-                    <x-field label="Year Of First Registration" required>
-                        <x-select
-                            v-model="assumptionsForm.year_of_first_registration"
-                            :options="
-                                $page.props.yearsOfManufacture.map(year => {
-                                  return { value: year.id.toString(), label: year.text };
-                                })
-                              "
-                            placeholder="Year Of First Registration"
-                            class="w-full"
-                            :rules="[isRequired]"
-                            :disabled="!assumptionState.isEditing"
-                        />
-                    </x-field>
-                </div>
-            </div>
+      </div>
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+        <div class="w-full md:w-1/2">
+          <div class="flex flex-col gap-4">
+            <x-field label="Is Bank Financed" required>
+              <x-select
+                v-model="assumptionsForm.is_bank_financed"
+                :options="isOptions"
+                placeholder="Is Bank Financed"
+                class="w-full"
+                :rules="[isRequired]"
+                :disabled="!assumptionState.isEditing"
+              />
+            </x-field>
+          </div>
         </div>
-        <div class="flex justify-end" v-if="readOnlyMode.isDisable === true">
-            <x-button
-                v-if="assumptionState.isEditing"
-                class="mt-4 mr-2"
-                color="orange"
-                size="sm"
-                @click.prevent="assumptionState.isEditing = false"
-            >
-                Cancel
-            </x-button>
-            <x-button
-                v-if="assumptionState.isEditing"
-                class="mt-4"
-                color="primary"
-                size="sm"
-                :loading="assumptionsForm.processing"
-                @click.prevent="onUpdateAssumption"
-            >
-                Update
-            </x-button>
-            <x-button
-                v-if="!assumptionState.isEditing"
-                class="mt-4"
-                color="emerald"
-                size="sm"
-                @click.prevent="assumptionState.isEditing = true"
-            >
-                Edit Assumptions
-            </x-button>
+        <div class="w-full md:w-1/2">
+          <div class="flex flex-col gap-4">
+            <x-field label="Is GCC Standard?" required>
+              <x-select
+                v-model="assumptionsForm.is_gcc_standard"
+                :options="isOptions"
+                placeholder="Is GCC Standard"
+                class="w-full"
+                :rules="[isRequired]"
+                :disabled="!assumptionState.isEditing"
+              />
+            </x-field>
+          </div>
         </div>
+      </div>
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+        <div class="w-full md:w-1/2">
+          <div class="flex flex-col gap-4">
+            <x-field label="Current Insurance Status" required>
+              <x-select
+                v-model="assumptionsForm.current_insurance_status"
+                :options="currentInsuranceOptions"
+                placeholder="Current Insurance Status"
+                class="w-full"
+                :rules="[isRequired]"
+                :disabled="!assumptionState.isEditing"
+              />
+            </x-field>
+          </div>
+        </div>
+        <div class="w-full md:w-1/2">
+          <div class="flex flex-col gap-4">
+            <x-field label="Year Of First Registration" required>
+              <x-select
+                v-model="assumptionsForm.year_of_first_registration"
+                :options="
+                  $page.props.yearsOfManufacture.map(year => {
+                    return { value: year.id.toString(), label: year.text };
+                  })
+                "
+                placeholder="Year Of First Registration"
+                class="w-full"
+                :rules="[isRequired]"
+                :disabled="!assumptionState.isEditing"
+              />
+            </x-field>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end" v-if="readOnlyMode.isDisable === true">
+        <x-button
+          v-if="assumptionState.isEditing"
+          class="mt-4 mr-2"
+          color="orange"
+          size="sm"
+          @click.prevent="assumptionState.isEditing = false"
+        >
+          Cancel
+        </x-button>
+        <x-button
+          v-if="assumptionState.isEditing"
+          class="mt-4"
+          color="primary"
+          size="sm"
+          :loading="assumptionsForm.processing"
+          @click.prevent="onUpdateAssumption"
+        >
+          Update
+        </x-button>
+        <x-button
+          v-if="!assumptionState.isEditing"
+          class="mt-4"
+          color="emerald"
+          size="sm"
+          @click.prevent="assumptionState.isEditing = true"
+        >
+          Edit Assumptions
+        </x-button>
+      </div>
     </div>
 
     <AvailablePlans
-    :advisor="advisor"
-    :insuranceProviders="insuranceProviders"
-    :planURL="planURL"
-    :carPlanAddonsCodeEnum="carPlanAddonsCodeEnum" :carPlanTypeEnum="carPlanTypeEnum" :carPlanExclusionsCodeEnum="carPlanExclusionsCodeEnum" :quote="quote" :carPlanFeaturesCodeEnum="carPlanFeaturesCodeEnum"
-    :websiteURL="websiteURL"
-    :linkedQuoteDetails="linkedQuoteDetails"/>
+      :advisor="advisor"
+      :insuranceProviders="insuranceProviders"
+      :planURL="planURL"
+      :carPlanAddonsCodeEnum="carPlanAddonsCodeEnum"
+      :carPlanTypeEnum="carPlanTypeEnum"
+      :carPlanExclusionsCodeEnum="carPlanExclusionsCodeEnum"
+      :quote="quote"
+      :carPlanFeaturesCodeEnum="carPlanFeaturesCodeEnum"
+      :websiteURL="websiteURL"
+      :linkedQuoteDetails="linkedQuoteDetails"
+    />
 
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			:quoteType="quoteType"
-			:payments="quote.payments"
-            :paymentDocument="
-            page.props.documentTypeCodes.filter(item =>
-            ['BPD', 'BPDR', 'BDPDR'].includes(item.code),
-                )
-            "
-            :proformaPayment="
-                quote.payments.find(
-                item =>
-                    item.payment_methods_code ===
-                    page.props?.paymentMethodsEnum?.ProformaPaymentRequest,
-                )
-            "
-			:quoteRequest="quote"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="quote.payments"
+      :paymentDocument="paymentDocument"
+      :proformaPayment="
+        quote.payments.find(
+          item =>
+            item.payment_methods_code ===
+            page.props.paymentMethodsEnum.ProformaPaymentRequest,
+        )
+      "
+      :quoteRequest="quote"
+      :paymentStatusEnum="page.props.paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
-		/>
+      :bookPolicyDetails="bookPolicyDetails"
+    />
+
     <QuotePayments
       v-else
       :can="can"
@@ -1143,37 +1220,57 @@ onMounted(() => {
       :is-beta-user="isBetaUser"
       :personal-plans="personalPlans"
     />
-    <QuoteDocuments
+
+    <PolicyDetail
+      v-if="permissions.isQuoteDocumentEnabled"
+      :quote="quote"
+      modelType="Bike"
+      :expanded="sectionExpanded"
+    />
+
+    <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
+      :modelType="quoteType"
       :insly-id="quote?.quote_detail?.insly_id"
+      :expanded="sectionExpanded"
+      quote-type="Bike"
     />
 
-    <QuotePolicy
+    <BookPolicy
+      v-if="
+        canAny([
+          permissionEnum.VIEW_INSLY_BOOK_POLICY,
+          permissionEnum.SEND_INSLY_BOOK_POLICY,
+        ])
+      "
       :quote="quote"
-      :can="can"
-      :quoteStatusEnum="quoteStatusesEnum"
+      quoteType="Bike"
+      :bookPolicyDetails="bookPolicyDetails"
+      :payments="payments"
+      :expanded="sectionExpanded"
     />
 
     <EmailStatus :emailStatuses="emailStatuses" />
 
-
-   <!-- <EmbeddedProducts
-      :data="embeddedProducts"
-      :link="quote.uuid"
-      :code="quote.code"
-      :quote="quote"
-      :modelType="quoteType"
-    /> -->
-
-    <AuditLogs :id="$page.props.quote.id" :quote-type="quoteType" :quoteCode="$page.props.quote.code"/>
-
-    <ApiLogs
-      :type="'App\\Models\\PersonalQuote'"
-      :id="$page.props.quote.id"
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="quote"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
+      @onAddUpdate="onAddUpdate"
     />
+
+    <AuditLogs
+      :id="$page.props.quote.id"
+      :quote-type="quoteType"
+      :quoteCode="$page.props.quote.code"
+    />
+
+    <ApiLogs :type="'App\\Models\\PersonalQuote'" :id="$page.props.quote.id" />
     <LeadHistory :quote="$page.props.quote" />
   </div>
 </template>
