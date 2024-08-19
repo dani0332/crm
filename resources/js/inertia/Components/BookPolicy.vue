@@ -8,6 +8,10 @@ const props = defineProps({
     type: Object,
     default: {},
   },
+  isAmlClearedForQuote: {
+    type: Boolean,
+    default: false,
+  },
   quoteType: {
     type: String,
     default: '',
@@ -242,13 +246,6 @@ const confirmSendPolicy = () => {
 };
 
 const submitPolicy = () => {
-  if (isAMLNotClearedForTravelQuote.value) {
-    notification.error({
-      title: 'Kindly clear the AML.',
-      position: 'top',
-    });
-    return;
-  }
   isLoading.value = true;
   let url = '/quotes/send-booking-policy';
   let data = {
@@ -353,27 +350,24 @@ const calculateCommission = () => {
 const disableCommissionVatNotApplicable = computed(() => {
   // Disable Commission vat nor applicable for all LOBs
   return true;
-  /*return (
-      !bp.isEditing ||
-      (page.props.quoteType != quoteTypeCodeEnum.Life &&
-        page.props.quoteType != quoteTypeCodeEnum.Business &&
-        page.props.quoteType != quoteTypeCodeEnum.Health)
-    );*/
 });
 
 const disableCommissionVatApplicable = computed(() => {
   // Enable Commission vat nor applicable for all LOBs
   return !bp.isEditing;
-  /*return (
-      !bp.isEditing ||
-      (page.props.quoteType == quoteTypeCodeEnum.Life &&
-        page.props.quoteType != quoteTypeCodeEnum.Business &&
-        page.props.quoteType != quoteTypeCodeEnum.Health)
-    );*/
 });
 const showSendAndBookPolicyButtonBlock = computed(() => {
   const { quote_status_id } = props.quote;
-  const { TransactionApproved, PolicyIssued } = page.props.quoteStatusEnum;
+  const { TransactionApproved, PolicyIssued, AMLScreeningCleared } =
+    page.props.quoteStatusEnum;
+
+  const isQuoteTypeTravel = page.props.quoteType == quoteTypeCodeEnum.Travel;
+
+  if (isQuoteTypeTravel) {
+    return [TransactionApproved, PolicyIssued, AMLScreeningCleared].includes(
+      quote_status_id,
+    );
+  }
 
   return [TransactionApproved, PolicyIssued].includes(quote_status_id);
 });
@@ -417,9 +411,8 @@ const isTravelQuoteAndAMLNotCleared = () => {
   const isSendPolicyToCustomerButton =
     bookPolicyButtonLabel === sendPolicyTypeEnum.CUSTOMER_BUTTON_TEXT;
   const isQuoteTypeTravel = page.props.quoteType == quoteTypeCodeEnum.Travel;
-  const isPolicyAMLScreeningCleared =
-    props.quote.kyc_decision == kycEnums.COMPLETE;
-
+  const isPolicyAMLScreeningCleared = props.isAmlClearedForQuote;
+  console.log('isPolicyAMLScreeningCleared', isPolicyAMLScreeningCleared);
   if (
     isQuoteTypeTravel &&
     !isPolicyAMLScreeningCleared &&

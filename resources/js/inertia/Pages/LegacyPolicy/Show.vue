@@ -65,7 +65,7 @@ const submitLead = policy => {
     if (selectedLead.value.link != 'new') {
       window.open(selectedLead.value.link, '_blank');
     } else {
-      moveToImcrm(policy.policy?.policy_no, false);
+      moveToImcrm(policy.policy?.policy_oid, false);
       moveToImcrmModal.value = false;
     }
     // Add any additional logic for submitting the lead here
@@ -264,11 +264,11 @@ const installmentsTableHeader = [
   { text: 'Customer Payable', value: 'customer_payable' },
 ];
 /* payments ends */
-const moveToImcrm = async (policyNumber, validateAll = true) => {
+const moveToImcrm = async (policy_oid, validateAll = true) => {
   try {
     NProgress.start();
     const response = await axios.post('/legacy-policy/move-to-imcrm', {
-      policyNumber: policyNumber,
+      policy_oid: policy_oid,
       validateAll: validateAll,
       isInertia: true,
     });
@@ -341,7 +341,7 @@ const dateFormat = date => {
             size="sm"
             color="#ff5e00"
             :disabled="policy?.moved_to_imcrm"
-            @click="moveToImcrm(policy.policy?.policy_no)"
+            @click="moveToImcrm(policy.policy?.policy_oid)"
           >
             Move to IMCRM
           </x-button>
@@ -352,7 +352,7 @@ const dateFormat = date => {
           size="sm"
           color="#ff5e00"
           :disabled="policy?.moved_to_imcrm"
-          @click="moveToImcrm(policy.policy?.policy_no)"
+          @click="moveToImcrm(policy.policy?.policy_oid)"
         >
           Move to IMCRM
         </x-button>

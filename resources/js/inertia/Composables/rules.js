@@ -106,6 +106,13 @@ export const useRules = () => {
       'Price should be number and greater than 0'
     );
   };
+  const emptyOrNumericAndNoSpecialChar = v => {
+    return (
+      !v ||
+      /^[0-9]+$/.test(v) ||
+      'This field must be a number, special characters are not allowed.'
+    );
+  };
 
   return {
     isEmail,
@@ -125,5 +132,6 @@ export const useRules = () => {
     price_vat_applicable,
     vat,
     amount_with_vat,
+    emptyOrNumericAndNoSpecialChar,
   };
 };
