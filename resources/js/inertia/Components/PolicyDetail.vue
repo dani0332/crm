@@ -241,7 +241,7 @@ const rules = {
   },
   start_date: v => {
     if (v) {
-      const date = new Date(v);
+      const date = new Date(policyDetailsForm.quote_policy_start_date);
       let isDate = date instanceof Date;
       return isDate || 'Date format is incorrect';
     }
@@ -249,7 +249,7 @@ const rules = {
   },
   expiry_date: v => {
     if (v) {
-      const date = new Date(v);
+      const date = new Date(policyDetailsForm.quote_policy_expiry_date);
       const startDate = new Date(policyDetailsForm.quote_policy_start_date);
       if (startDate >= date) {
         return 'Expiry date should be greater than Start Date';

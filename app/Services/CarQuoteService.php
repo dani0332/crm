@@ -943,7 +943,7 @@ class CarQuoteService extends BaseService
         }
 
         if (auth()->user()->can(PermissionsEnum::SEGMENT_FILTER) && $request->has('segment_filter')) {
-            CarQuote::applySegmentFilter($this->query, $request->segment_filter, 'cqr');
+            CarQuote::applySegmentFilter($this->query, $request->segment_filter, 'cqr', QuoteTypeId::Car);
         }
         if ($request->transaction_approved_dates) {
 

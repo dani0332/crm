@@ -3501,23 +3501,6 @@ const splitPaymentTotalPrice = (
                           outlined
                           >Copy Payment Link</x-button
                         >
-                        <x-button
-                          v-if="
-                            can(permissionEnum.ApprovePayments) &&
-                            splitPayment.process_job?.status === 'failed'
-                          "
-                          size="xs"
-                          color="red"
-                          class="ml-2"
-                          @click="
-                            retrySplitPaymentModal(
-                              splitPayment.process_job?.id,
-                              splitPayment.process_job?.message,
-                            )
-                          "
-                          outlined
-                          >Retry</x-button
-                        >
                       </div>
                     </td>
                   </tr>

@@ -230,9 +230,6 @@ class ManagementReport
         if (! empty($teams) && count($teams) > 0) {
             $value = $teams;
             $query->whereIn('t.id', $value);
-        } else {
-            $teamIds = $this->getUserTeams(auth()->user()->id);
-            $query->whereIn('t.id', $teamIds->pluck('id'));
         }
 
         return $query;
