@@ -188,10 +188,10 @@ const checkCaption = (whatsapp_request, UserAudio) => {
                 >
               </div>
 
-              <SanitizeHtml
+              <div
                 v-else="message.msg"
-                :html="renderMarkdown(message.msg)"
-              />
+                v-html="renderMarkdown(message.msg)"
+              ></div>
               <div
                 class="absolute right-[-30px] text-red-600"
                 v-if="
@@ -219,7 +219,7 @@ const checkCaption = (whatsapp_request, UserAudio) => {
             </div>
             <div class="chat-header">InstantAlfred</div>
             <div class="chat-bubble text-sm">
-              <SanitizeHtml :html="renderMarkdown(message.msg)" />
+              <div v-html="renderMarkdown(message.msg)"></div>
             </div>
             <div class="chat-footer opacity-50">
               {{ message.created_at.split(' ')[1] }}

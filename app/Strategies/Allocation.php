@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Strategies\Allocations;
+namespace App\Strategies;
 
 interface Allocation
 {
