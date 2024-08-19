@@ -279,7 +279,7 @@ watch(
           class="w-full"
         />
       </x-field>
-      <x-field label="PASSWORD" required v-if="isAllowed && isEdit">
+      <x-field label="PASSWORD" required v-if="isAllowed">
         <x-input v-model="userForm.password" class="w-full" type="password" />
       </x-field>
       <x-field label="ROLES" required>
