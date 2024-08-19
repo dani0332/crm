@@ -13,7 +13,7 @@ const createLink = link => {
       icon: link.attributes.icon,
       value: link.url,
       href: link.url,
-      active: page.props.location.startsWith(link.url),
+      active: page.props.location.startsWith(link.url) || link.active,
       ...(link.attributes.external ? { target: '_blank' } : null),
     };
   }
