@@ -194,7 +194,7 @@ class ApiService
      * @param boolean $teamId
      * @return void
      */
-    private function executeAllocation($allocationType, $allocationId, $teamId = false)  
+    private function executeAllocation($allocationType, $allocationId, $teamId = false)
     {
         $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId, $teamId);
         if (is_null($allocationStrategy)) {
@@ -211,10 +211,10 @@ class ApiService
 
         return [
             'data' => [
-                'tierId' => $responsePayload['tierId'] ?? 0, 
-                'advisorId' => $responsePayload['advisorId'] ?? 0, 
+                'tierId' => $responsePayload['tierId'] ?? 0,
+                'advisorId' => $responsePayload['advisorId'] ?? 0,
             ],
-            'message' => $message, 
+            'message' => $message,
             'status' => $status
         ];
     }
