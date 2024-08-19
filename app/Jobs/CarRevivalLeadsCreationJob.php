@@ -55,16 +55,19 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
      */
     public function handle()
     {
+
+        $logPrefix = 'CarRevivalLeadsCreationJob -';
+
         $dttEnabled = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::DTT_ENABLED)->value('value');
         if ($dttEnabled == 0) {
-            info('CarRevivalLeadsCreationJob - Dtt is not enabled from cms');
+            info($logPrefix . 'Dtt is not enabled from cms');
 
             return false;
         }
 
         $this->lead->refresh();
         if ($this->lead->is_revived) {
-            info('CarRevivalLeadsCreationJob - ' . $this->lead->uuid . ' - Lead Already Revived');
+            info($logPrefix . $this->lead->uuid . ' - Lead Already Revived');
 
             return false;
         }
@@ -100,13 +103,13 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 'whatsappConsent' => true,
             ];
 
-            info('CarRevivalLeadsCreationJob - carRevivalParentLead -' . $this->lead->uuid . '- capiPayload - ' . json_encode($dataArr));
+            info($logPrefix . 'carRevivalParentLead -' . $this->lead->uuid . '- capiPayload - ' . json_encode($dataArr));
 
             $capiResponse = Capi::request('/api/v1-save-car-quote', 'post', $dataArr);
 
-            info('CarRevivalLeadsCreationJob - carRevivalParentLead -' . $this->lead->uuid . '- capiResponse -' . json_encode($capiResponse));
+            info($logPrefix . 'carRevivalParentLead -' . $this->lead->uuid . '- capiResponse -' . json_encode($capiResponse));
             if (!isset($capiResponse->errors) && !empty($capiResponse->quoteUID)) {
-                info('carRevivalParentLead -' . $this->lead->uuid . '- childLeadCreated - ' . $capiResponse->quoteUID . ' - CAPI Response-' . json_encode($capiResponse));
+                info($logPrefix . $this->lead->uuid . '- childLeadCreated - ' . $capiResponse->quoteUID . ' - CAPI Response-' . json_encode($capiResponse));
 
                 $payload = [
                     'quoteUID' => $capiResponse->quoteUID,
@@ -164,7 +167,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
 
                 if ($response == 201) {
-                    info('CarRevivalLeadsCreationJob - carRevivalParentLead -' . $this->lead->uuid . '-childLead - ' . $capiResponse->quoteUID . '- emailSent -- ' . $emailData->customerEmail);
+                    info($logPrefix . 'carRevivalParentLead -' . $this->lead->uuid . '-childLead - ' . $capiResponse->quoteUID . '- emailSent -- ' . $emailData->customerEmail);
 
                     // Get the latest quote batch and assign it to the lead.
                     $quoteBatch = QuoteBatches::latest()->first();
@@ -183,13 +186,13 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
                     // info('CarRevivalLeadsCreationJob - carRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$capiResponse->quoteUID.'- parentLeadIsRevived - '.$this->lead->id);
                 } else {
-                    info('CarRevivalLeadsCreationJob - carRevivalParentLead -' . $this->lead->uuid . '- childLead - ' . $capiResponse->quoteUID . 'emailIsNotSent - ' . $emailData->customerEmail);
+                    info($logPrefix . 'carRevivalParentLead -' . $this->lead->uuid . '- childLead - ' . $capiResponse->quoteUID . 'emailIsNotSent - ' . $emailData->customerEmail);
                 }
             } else {
-                info('CarRevivalLeadsCreationJob - carRevivalParentLead -' . $this->lead->uuid . '- capiResponseError - ' . json_encode($capiResponse));
+                info($logPrefix . 'carRevivalParentLead -' . $this->lead->uuid . '- capiResponseError - ' . json_encode($capiResponse));
             }
         } catch (\Exception $exception) {
-            Log::error('CarRevivalLeadsCreationJob - DTT Exception - ' . $this->lead->id . ' - Exception:' . $exception->getMessage());
+            Log::error($logPrefix . 'DTT Exception - ' . $this->lead->id . ' - Exception:' . $exception->getMessage());
         }
     }
 
