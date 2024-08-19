@@ -60,7 +60,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
         $dttEnabled = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::DTT_ENABLED)->value('value');
         if ($dttEnabled == 0) {
-            info($logPrefix.'Dtt is not enabled from cms');
+            info($logPrefix.' - Dtt is not enabled from cms');
 
             return false;
         }
@@ -115,7 +115,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
                 $response = Ken::request('/send-ocb-whatsapp-revival', 'post', $payload);
 
-                info($logPrefix.'CarRevivalLeadsCreationJob-send-ocb-whatsapp-revival -'.$capiResponse->quoteUID.' - '.json_encode($response));
+                info($logPrefix.' - send-ocb-whatsapp-revival -'.$capiResponse->quoteUID.' - '.json_encode($response));
 
                 $carQuote = $this->getQuoteObject(QuoteTypes::CAR->value, $capiResponse->quoteUID);
 
