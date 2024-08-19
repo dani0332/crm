@@ -56,7 +56,7 @@ class EmbeddedProductRepository extends BaseRepository
     }
 
     /**
-     * @param  $quoteType
+     * @param    $quoteType
      * @return mixed
      */
     public function fetchCreate($data)

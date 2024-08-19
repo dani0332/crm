@@ -31,7 +31,9 @@ class CarRevivalQuoteController extends Controller
 {
     use GenericQueriesAllLobs;
 
-    public function __construct() {}
+    public function __construct()
+    {
+    }
 
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
@@ -165,8 +167,8 @@ class CarRevivalQuoteController extends Controller
     }
 
     /**
-     * @param  $quoteTypeCode
-     * @param  $quoteId
+     * @param    $quoteTypeCode
+     * @param    $quoteId
      * @return void
      */
     public function update($uuid, CarRevivalQuoteRequest $carRevivalQuoteRequest)

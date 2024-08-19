@@ -76,7 +76,7 @@ class QuoteDocumentService extends BaseService
     }
 
     /**
-     * @param  $data  doc_name, doc_uuid
+     * @param    $data  doc_name, doc_uuid
      * @return \Illuminate\Http\JsonResponse
      */
     public function deleteQuoteDocument($quoteType, $data)
@@ -105,8 +105,8 @@ class QuoteDocumentService extends BaseService
     /**
      * upload quote document and store document record in db.
      *
-     * @param  $documentTypeCode
-     * @param  $uuid
+     * @param    $documentTypeCode
+     * @param    $uuid
      * @return \Illuminate\Http\JsonResponse
      */
     public function uploadQuoteDocument($fileOrBase64, $data, $quote, $isKyc = false, $isPaymentReceipt = false)
