@@ -36,7 +36,7 @@ class AllocationFactory
         return [
             'advisorId' => $advisorId,
             'message' => $message,
-            'tierId' => $tierId ?? 0,
+            $tierId != 0 && 'tierId' => $tierId,
             'status' => $status
         ];
     }
