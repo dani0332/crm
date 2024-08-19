@@ -181,7 +181,7 @@ class ApiService
         $allocationId = $request->input('quoteUUID');
 
         info('------ Lead allocation request received to evaluate tier only for '.$allocationId.' ------');
-        $responsePayload = $this->executeAllocation($allocationType, $allocationId);
+        $responsePayload = $this->executeAllocation($allocationType, $allocationId, true);
         info('------ Lead allocation request completed to evaluate tier only for '. $responsePayload['tierId'].' ------');
 
         return apiResponse($responsePayload['data'], $responsePayload['status'], $responsePayload['message']);
@@ -194,14 +194,14 @@ class ApiService
      * @param boolean $teamId
      * @return void
      */
-    private function executeAllocation($allocationType, $allocationId, $teamId = false)
+    private function executeAllocation($allocationType, $allocationId, $teamId = false, $tierOnly = false)
     {
         $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId, $teamId);
         if (is_null($allocationStrategy)) {
             info('-- Exception against - allocationType: ' . $allocationId . ' and allocationId: ' . $allocationId . ' --');
             throw new InvalidArgumentException("Allocation strategy for type '$allocationType -- $allocationId' not found.");
         }
-        $responsePayload = $allocationStrategy->executeSteps(false, false, true);
+        $responsePayload = $allocationStrategy->executeSteps(false, $tierOnly);
         $status = $responsePayload['status'];
         $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
         $message = $responsePayload['message'];
