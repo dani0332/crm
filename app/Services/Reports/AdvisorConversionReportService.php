@@ -10,6 +10,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\ReportsLeadTypeEnum;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
@@ -177,6 +178,9 @@ class AdvisorConversionReportService extends BaseService
             ->join('personal_quote_details', 'personal_quote_details.personal_quote_id', 'personal_quotes.id')
             ->where('personal_quotes.quote_type_id', $lobId->id)
             ->where('users.is_active', true)
+            ->when($lob === quoteTypeCode::Travel, function ($q) {
+                $q->filterBySegment(request()->segment_filter, QuoteTypeId::Travel);
+            })
             ->groupBy(
                 'personal_quotes.advisor_id',
                 'personal_quotes.quote_batch_id'
@@ -295,6 +299,7 @@ class AdvisorConversionReportService extends BaseService
             'segment_filter' => [
                 'lobs' => [
                     quoteTypeCode::Car,
+                    quoteTypeCode::Travel,
                 ],
             ],
         ];
@@ -605,7 +610,7 @@ class AdvisorConversionReportService extends BaseService
             }
 
             if (isset($filters->segment_filter) && $filters->segment_filter != 'all') {
-                $query = $query->filterBySegment($filters->segment_filter, quoteTypeCode::Car);
+                $query = $query->filterBySegment($filters->segment_filter, QuoteTypeId::Car);
             }
         }
 
@@ -802,7 +807,7 @@ class AdvisorConversionReportService extends BaseService
         }
 
         if (isset($filters->segment_filter) && $filters->segment_filter != 'all') {
-            $query = $query->filterBySegment($filters->segment_filter, quoteTypeCode::Car);
+            $query = $query->filterBySegment($filters->segment_filter, QuoteTypeId::Car);
         }
 
         if (! empty($filters->vehicle_type) && $filters->vehicle_type != 'All') {
