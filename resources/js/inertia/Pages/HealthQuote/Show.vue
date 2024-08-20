@@ -234,7 +234,6 @@ const memberCategoryText = memberCategoryId =>
 // });
 
 const subTeamOptions = [
-  { value: '', label: 'All' },
   { value: 'Best', label: 'Best' },
   { value: 'Good', label: 'Good' },
   { value: 'Entry-Level', label: 'Entry-Level' },
