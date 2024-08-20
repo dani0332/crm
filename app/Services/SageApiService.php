@@ -522,18 +522,18 @@ class SageApiService
                     'commission_vat' => $payment->commission_vat,
                 ]);
 
-                $response = ['payment' => $payment, 'splitPayments' => $splitPayments];
+                $mainLeadDetails = [
+                    'payment' => [
+                        'insurer_tax_number' => $payment->insurer_tax_number,
+                        'insurer_commmission_invoice_number' => $payment->insurer_commmission_invoice_number,
+                    ],
+                ];
 
-                if (! $checkInslyMigratedLead) {
-                    // Most CPD cases have no value then should it set as Credit Note - Need to verify this with Denber
-                    $mainLeadDetails = [
-                        'payment' => [
-                            'insurer_tax_number' => $payment->insurer_tax_number,
-                            'insurer_commmission_invoice_number' => $payment->insurer_commmission_invoice_number,
-                        ],
-                    ];
+                $response = ['payment' => $payment, 'splitPayments' => $splitPayments, 'mainLeadDetails' => $mainLeadDetails];
 
-                    $response['mainLeadDetails'] = $mainLeadDetails;
+                // Reminder: price_vat_applicable > 0 => Debit Note, if negative then should be Credit Note
+                if ($checkInslyMigratedLead && ($extras['send_update_log']->price_vat_applicable > 0)) {
+                    unset($response['mainLeadDetails']);
                 }
 
                 return $response;
