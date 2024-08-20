@@ -91,13 +91,13 @@ class TransAppService extends BaseService
                 $carQuoteObj->quote_status_id = LookUpModelHelper::getLookModel('QuoteStatus', ['code', '=', 'transaction_approved']); // Transaction Approved
                 $carQuoteObj->pa_id = null;
                 if ($carQuoteObj->save()) {
-                    $newPayment = new CarQuotePaymentHistory();
+                    $newPayment = new CarQuotePaymentHistory;
                     $newPayment->status = 'Transaction Approved';
                     $newPayment->notes = $approvalCode;
                     $newPayment->car_quote_id = $request->input('car_quote_id');
                     $newPayment->save();
 
-                    $createPolicy = new CarQuotePolicy();
+                    $createPolicy = new CarQuotePolicy;
                     $createPolicy->car_quote_id = $request->input('car_quote_id');
                     $createPolicy->transactions_id = $transaction->id;
                     $createPolicy->save();

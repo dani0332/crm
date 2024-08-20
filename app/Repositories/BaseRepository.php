@@ -34,7 +34,7 @@ abstract class BaseRepository
      */
     public function __construct()
     {
-        $this->app = new Application();
+        $this->app = new Application;
         $this->makeModel();
     }
 

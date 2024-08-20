@@ -60,7 +60,7 @@ class GenericCrudController extends Controller
             ['only' => ['index', 'create', 'store', 'edit', 'update', 'show']]
         );
 
-        $this->genericModel = new GenericModel();
+        $this->genericModel = new GenericModel;
         $this->crudService = $crudService;
         $this->dropdownSourceService = $dropdownSourceService;
         $this->insuranceProviderService = $insuranceProviderService;
