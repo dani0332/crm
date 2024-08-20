@@ -1255,6 +1255,9 @@ class CarQuoteService extends BaseService
         $client = new \GuzzleHttp\Client;
 
         try {
+
+            info('FN: getQuotePlans request ready for KEN api');
+
             $kenRequest = $client->post(
                 $plansApiEndPoint,
                 [
@@ -1270,6 +1273,8 @@ class CarQuoteService extends BaseService
 
             $getStatusCode = $kenRequest->getStatusCode();
 
+            info('FN: getQuotePlans response from KEN api status code: '.$getStatusCode);
+
             if ($getStatusCode == 200) {
                 $getContents = $kenRequest->getBody();
                 $getdecodeContents = json_decode($getContents);
@@ -1277,6 +1282,8 @@ class CarQuoteService extends BaseService
                 return $getdecodeContents;
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+            Log::error('FN: getQuotePlans response from KEN api error: '.$e->getMessage());
+
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
