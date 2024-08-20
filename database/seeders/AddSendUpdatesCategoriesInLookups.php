@@ -36,8 +36,9 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'key' => $type['key'],
                     'text' => $type['name'],
                     'code' => $type['code'],
-                    'description' => $type['tooltip'],
                     'parent_id' => $parentOption->id,
+                ], [
+                    'description' => $type['tooltip'],
                 ]);
                 // info("\tSub Type: ".$type['name']);
 
@@ -77,8 +78,9 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                             'key' => $subType['key'],
                             'text' => $subType['name'],
                             'code' => $subType['code'] ?? $code,
-                            'description' => $subType['tooltip'],
                             'parent_id' => $typeCategory->id,
+                        ], [
+                            'description' => $subType['tooltip'],
                         ]);
                     }
                 }
@@ -195,12 +197,24 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'key' => 'midterm-policy-cancellation',
                     'tooltip' => 'Select this if policyholders wish to terminate their insurance coverage before the policy ends. This is often chosen in situations like selling the car, exporting the car outside of the UAE or experiencing a total loss claim on their vehicle. Ensure to verify the reason with the policyholder and select accordingly.',
                 ],
+                [
+                    'name' => 'Additional commission booking',
+                    'key' => 'additional-commission-booking',
+                    'code' => SendUpdateLogStatusEnum::ACB,
+                    'tooltip' => '',
+                ],
+                [
+                    'name' => 'Additional tax invoice booking',
+                    'key' => 'additional-tax-invoice-booking',
+                    'code' => SendUpdateLogStatusEnum::ATIB,
+                    'tooltip' => '',
+                ],
             ],
             'Bike' => [
                 [
                     'name' => 'Add optional cover',
                     'key' => 'add-optional-cover',
-                    'code' => SendUpdateLogStatusEnum::AOCOV,
+                    'code' => 'BIAOCOV',
                     'tooltip' => "To include an additional coverage option such for Oman cover, Personal accident benefit covers, roadside assistance, etc. to enhance protection as per the policyholder's specific needs",
                 ],
                 [
@@ -222,6 +236,18 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'name' => 'Midterm policy cancellation',
                     'key' => 'midterm-policy-cancellation',
                     'tooltip' => 'Select this if policyholders wish to terminate their insurance coverage before the policy ends. This is often chosen in situations like selling the bike, exporting it outside of the UAE or experiencing a total loss claim on their vehicle. Ensure to verify the reason with the policyholder and select accordingly.',
+                ],
+                [
+                    'name' => 'Additional commission booking',
+                    'key' => 'additional-commission-booking',
+                    'code' => SendUpdateLogStatusEnum::ACB,
+                    'tooltip' => '',
+                ],
+                [
+                    'name' => 'Additional tax invoice booking',
+                    'key' => 'additional-tax-invoice-booking',
+                    'code' => SendUpdateLogStatusEnum::ATIB,
+                    'tooltip' => '',
                 ],
             ],
             'Health' => [
@@ -250,6 +276,18 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'key' => 'midterm-policy-cancellation',
                     'tooltip' => "This option allows policyholders to terminate their insurance before its scheduled end date. Common reasons include leaving the country, obtaining a new insurance policy elsewhere (e.g., a new employer), or the unfortunate event of the policyholder's passing. Always confirm the reason before processing.",
                 ],
+                [
+                    'name' => 'Additional commission booking',
+                    'key' => 'additional-commission-booking',
+                    'code' => SendUpdateLogStatusEnum::ACB,
+                    'tooltip' => '',
+                ],
+                [
+                    'name' => 'Additional tax invoice booking',
+                    'key' => 'additional-tax-invoice-booking',
+                    'code' => SendUpdateLogStatusEnum::ATIB,
+                    'tooltip' => '',
+                ],
             ],
             'Travel' => [
                 [
@@ -277,6 +315,18 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'key' => 'delete-member',
                     'tooltip' => 'This endorsement allows policyholders to remove an insured member from their travel insurance policy if needed. This may lead to a credit due to the policyholder.',
                 ],
+                [
+                    'name' => 'Additional commission booking',
+                    'key' => 'additional-commission-booking',
+                    'code' => SendUpdateLogStatusEnum::ACB,
+                    'tooltip' => '',
+                ],
+                [
+                    'name' => 'Additional tax invoice booking',
+                    'key' => 'additional-tax-invoice-booking',
+                    'code' => SendUpdateLogStatusEnum::ATIB,
+                    'tooltip' => '',
+                ],
             ],
             'Life' => [
                 [
@@ -288,6 +338,18 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'name' => 'Reinstatement',
                     'key' => 'reinstatement',
                     'tooltip' => 'Reinstatement refers to the act of bringing a lapsed or suspended life insurance policy back into active status. Ensure all conditions are met and necessary documentation is provided before proceeding with the reinstatement process. Be aware that additional payments may be required to fully reinstate the policy.',
+                ],
+                [
+                    'name' => 'Additional commission booking',
+                    'key' => 'additional-commission-booking',
+                    'code' => SendUpdateLogStatusEnum::ACB,
+                    'tooltip' => '',
+                ],
+                [
+                    'name' => 'Additional tax invoice booking',
+                    'key' => 'additional-tax-invoice-booking',
+                    'code' => SendUpdateLogStatusEnum::ATIB,
+                    'tooltip' => '',
                 ],
             ],
             'Home' => [
@@ -311,6 +373,18 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'key' => 'midterm-policy-cancellation',
                     'tooltip' => 'This selection is for instances when a policyholder opts to terminate their home insurance before its scheduled expiration. Reasons might include selling the property, transitioning to a different insurer, or other personal circumstances. Ensure all conditions are met for a midterm cancellation.',
                 ],
+                [
+                    'name' => 'Additional commission booking',
+                    'key' => 'additional-commission-booking',
+                    'code' => SendUpdateLogStatusEnum::ACB,
+                    'tooltip' => '',
+                ],
+                [
+                    'name' => 'Additional tax invoice booking',
+                    'key' => 'additional-tax-invoice-booking',
+                    'code' => SendUpdateLogStatusEnum::ATIB,
+                    'tooltip' => '',
+                ],
             ],
             'Pet' => [
                 [
@@ -323,6 +397,18 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'key' => 'midterm-policy-cancellation',
                     'tooltip' => "Select this if the policyholder wishes to terminate the pet insurance before its intended expiration date. This may be due to various reasons such as the pet's unfortunate passing, rehoming, or a change in the owner's circumstances. Remember, depending on the terms, some fees or penalties might apply for midterm cancellations.",
                 ],
+                [
+                    'name' => 'Additional commission booking',
+                    'key' => 'additional-commission-booking',
+                    'code' => SendUpdateLogStatusEnum::ACB,
+                    'tooltip' => '',
+                ],
+                [
+                    'name' => 'Additional tax invoice booking',
+                    'key' => 'additional-tax-invoice-booking',
+                    'code' => SendUpdateLogStatusEnum::ATIB,
+                    'tooltip' => '',
+                ],
             ],
             'Cycle' => [
                 [
@@ -334,6 +420,18 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'name' => 'Midterm policy cancellation',
                     'key' => 'midterm-policy-cancellation',
                     'tooltip' => 'Choose this option if the policyholder wants to terminate the cycle insurance before its scheduled end date. This can arise from selling the bicycle, switching to a different insurer, or other personal circumstances. Certain terms may apply, including potential fees or penalties for midterm cancellations.',
+                ],
+                [
+                    'name' => 'Additional commission booking',
+                    'key' => 'additional-commission-booking',
+                    'code' => SendUpdateLogStatusEnum::ACB,
+                    'tooltip' => '',
+                ],
+                [
+                    'name' => 'Additional tax invoice booking',
+                    'key' => 'additional-tax-invoice-booking',
+                    'code' => SendUpdateLogStatusEnum::ATIB,
+                    'tooltip' => '',
                 ],
             ],
             'Yacht' => [
@@ -352,6 +450,18 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'key' => 'midterm-policy-cancellation',
                     'tooltip' => "To have the flexibility to cancel their insurance policy before the scheduled expiration date. It's a valuable option for those who need to make changes to their coverage during the policy term.",
                 ],
+                [
+                    'name' => 'Additional commission booking',
+                    'key' => 'additional-commission-booking',
+                    'code' => SendUpdateLogStatusEnum::ACB,
+                    'tooltip' => '',
+                ],
+                [
+                    'name' => 'Additional tax invoice booking',
+                    'key' => 'additional-tax-invoice-booking',
+                    'code' => SendUpdateLogStatusEnum::ATIB,
+                    'tooltip' => '',
+                ],
             ],
             'MotorFleet' => [
                 [
@@ -367,7 +477,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                 [
                     'name' => 'Add optional cover',
                     'key' => 'add-optional-cover',
-                    'code' => SendUpdateLogStatusEnum::AOCOV,
+                    'code' => 'MFAOCOV',
                     'tooltip' => "To include an additional coverage option such for a rental car, Oman cover, GCC cover, Personal accident benefit covers, roadside assistance, etc. to enhance protection as per the policyholder's specific needs.",
                 ],
                 [
@@ -389,6 +499,18 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'name' => 'Midterm policy cancellation',
                     'key' => 'midterm-policy-cancellation',
                     'tooltip' => 'Select this if policyholders wish to terminate their insurance coverage before the policy ends. This is often chosen in situations like selling the car, exporting the car outside of the UAE or experiencing a total loss claim on their vehicle. Ensure to verify the reason with the policyholder and select accordingly.',
+                ],
+                [
+                    'name' => 'Additional commission booking',
+                    'key' => 'additional-commission-booking',
+                    'code' => SendUpdateLogStatusEnum::ACB,
+                    'tooltip' => '',
+                ],
+                [
+                    'name' => 'Additional tax invoice booking',
+                    'key' => 'additional-tax-invoice-booking',
+                    'code' => SendUpdateLogStatusEnum::ATIB,
+                    'tooltip' => '',
                 ],
             ],
             'GroupMedical' => [
@@ -426,6 +548,18 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'name' => 'Sub-group creation',
                     'key' => 'sub-group-creation',
                     'tooltip' => 'To add new member(s) into their existing health insurance policy, particularly those from a sister company, that requires to establish a sub-group within the group medical insurance policy.. This will involve an additional premium to be collected from the policyholder, please check with the insurer.',
+                ],
+                [
+                    'name' => 'Additional commission booking',
+                    'key' => 'additional-commission-booking',
+                    'code' => SendUpdateLogStatusEnum::ACB,
+                    'tooltip' => '',
+                ],
+                [
+                    'name' => 'Additional tax invoice booking',
+                    'key' => 'additional-tax-invoice-booking',
+                    'code' => SendUpdateLogStatusEnum::ATIB,
+                    'tooltip' => '',
                 ],
             ],
             'Corpline' => [
@@ -485,6 +619,18 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'name' => 'Policy period extension',
                     'key' => 'policy-period-extension',
                     'tooltip' => 'To extend the duration or terms of their existing or current insurance policy beyond the original expiration date, providing continuous coverage. This may involve collection of an additional premium amount, please check with the insurer.',
+                ],
+                [
+                    'name' => 'Additional commission booking',
+                    'key' => 'additional-commission-booking',
+                    'code' => SendUpdateLogStatusEnum::ACB,
+                    'tooltip' => '',
+                ],
+                [
+                    'name' => 'Additional tax invoice booking',
+                    'key' => 'additional-tax-invoice-booking',
+                    'code' => SendUpdateLogStatusEnum::ATIB,
+                    'tooltip' => '',
                 ],
             ],
             // 'Jetski' => [

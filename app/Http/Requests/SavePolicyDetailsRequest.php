@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\SendUpdateLog;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SavePolicyDetailsRequest extends FormRequest
@@ -21,14 +23,14 @@ class SavePolicyDetailsRequest extends FormRequest
      */
     public function rules(): array
     {
+        $sendUpdate = SendUpdateLog::find($this->id);
 
-        return [
+        $rules = [
             'first_name' => 'required|string|max:60',
             'last_name' => 'required|string|max:60',
             'insurance_provider_id' => 'sometimes|nullable|integer',
             'provider_name' => 'nullable|string',
             'plan_id' => 'sometimes|nullable|integer',
-            'plan_name' => 'nullable|string',
             'policy_number' => 'required|string|max:60',
             'issuance_date' => 'required|date',
             'start_date' => 'required|date',
@@ -38,5 +40,11 @@ class SavePolicyDetailsRequest extends FormRequest
             'id' => 'nullable|integer',
             'quote_type' => 'nullable|string',
         ];
+
+        if ($sendUpdate->category->code == SendUpdateLogStatusEnum::EF && $sendUpdate->option->code == SendUpdateLogStatusEnum::PPE) {
+            $rules['expiry_date'] = 'required|date|after:start_date';
+        }
+
+        return $rules;
     }
 }

@@ -100,7 +100,7 @@ class BerlinService extends BaseService
         return $apiResponse;
     }
 
-    public function extendCustomerSubscription($customerId, $customerEmail, $source, $tag)
+    public function extendCustomerSubscription($customerId, $customerEmail, $source, $tag, $isImport = false)
     {
         $customer = MyAlFredUser::select('signup_url', 'code')->where('customer_id', $customerId)->latest()->first();
 
@@ -139,7 +139,7 @@ class BerlinService extends BaseService
                         'Authorization' => 'Basic '.$magicUrlGeneratauthBasic,
                     ],
                     'body' => $customerDataJson,
-                    'timeout' => 10,
+                    'timeout' => 20,
                 ]
             );
 
@@ -149,11 +149,11 @@ class BerlinService extends BaseService
 
             $errorData = json_decode($e->getResponse()->getBody()->getContents(), true);
 
-            if ($errorData['code'] == 'CUSTOMER_NOT_FOUND') {
+            if (isset($errorData['code']) && $errorData['code'] == 'CUSTOMER_NOT_FOUND') {
                 $customer = $this->customerService->getCustomerByEmail($customerEmail);
-                Log::warning('extendCustomerSubscription Customer Id: '.$customerId.' Customer Email: '.$customerEmail.' Error Code: '.$errorData['code'].' Customer not exist so cannot proceed to extend subscription, sending signup email to customer. API Message: '.$errorData['message']);
-                MAWelcomeJob::dispatchUnless(
-                    isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)),
+                Log::warning('Berlin Service - extendCustomerSubscription - Success - Customer ID: '.$customerId.' - Sending MA Welcome Email. API Message: '.$errorData['message']);
+                MAWelcomeJob::dispatchIf(
+                    $isImport || ! isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)),
                     $customer->first_name,
                     $customer->last_name,
                     $customer->email,
@@ -161,8 +161,10 @@ class BerlinService extends BaseService
                     $source,
                     $tag
                 );
+
+                $statusCode = 201;
             } else {
-                Log::error('Berlin Service - extendCustomerSubscription - Customer ID: '.$customerId.' - Status Code: '.$statusCode.' - '.$e->getMessage());
+                Log::error('Berlin Service - extendCustomerSubscription - Fail - Customer ID: '.$customerId.' Status Code: '.$statusCode.' - Message: '.$e->getMessage());
             }
         }
 

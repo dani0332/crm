@@ -344,7 +344,22 @@ final class PermissionsEnum extends Enum
     public const YACHT_DISTRIBUTION_REPORT = 'yacht-distribution-report';
     public const CORPLINE_DISTRIBUTION_REPORT = 'corpline-distribution-report';
     public const GROUPMEDICAL_DISTRIBUTION_REPORT = 'groupmedicals-distribution-report';
+    public const ADD_MANUAL_HEALTH_PLAN = 'add-manual-health-plan';
     public const DOCUMENT_DELETE = 'document-delete';
+    public const SEND_UPDATE_ADD_BOOKING = 'send-update-add-booking';
+    public const PAYMENTS_DISCOUNT_EDIT = 'payments-discount-edit';
+    public const EXTRACT_REPORT = 'extract-report';
+    public const INPL_USER = 'inpl-user';
+    public const INPL_APPROVER = 'inpl-approver';
+    public const DOCUMENT_VERIFY = 'document-verify';
+    public const DEPARTMENT_CREATE = 'department-create';
+    public const DEPARTMENT_UPDATE = 'department-update';
+    public const DEPARTMENT_LIST = 'department-list';
+    public const AUDITDOCUMENT_UPLOAD = 'auditdocument-upload';
+    public const DOWNLOAD_ALL_DOCUMENTS = 'download-all-documents';
+    public const TRAVEL_HAPEX = 'travel-hapex';
+    public const All_QUOTES_VIEWONLY_ACCESS = 'all-quotes-view-only-access';
+    public const CUSTOMER_RISKRRATING_OVERRIDE = 'customer-riskrrating-override';
 
     public static function getAdvisorConversionReportPermissions()
     {

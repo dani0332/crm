@@ -3,9 +3,11 @@
 namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Jobs\ReAssignBikeLeadsJob;
 use App\Jobs\ReAssignCarLeadsJob;
 use App\Jobs\ReAssignHealthLeadsJob;
 use App\Services\ApplicationStorageService;
+use App\Services\BikeAllocationService;
 use App\Services\CarAllocationService;
 use App\Services\HealthAllocationService;
 use Carbon\Carbon;
@@ -54,12 +56,17 @@ class LeadsReassignment extends Command
         $shouldProceed = now()->between($start_time, $end_time) && ((int) config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 1) && ($enableLeadReassignment == 1);
         info('shouldProceed for lead reassignment started at : '.$currentIteration.' and value is : '.$shouldProceed);
 
-        if ($shouldProceed && ! now()->isWeekend()) {
+        $isHoliday = $this->isHoliday();
+
+        if ($shouldProceed && ! now()->isWeekend() && ! $isHoliday) {
             dispatch(new ReAssignCarLeadsJob(app(CarAllocationService::class), 0));
             info('Car lead reassignment job  for '.$currentIteration.' is dispatched');
 
             dispatch(new ReAssignHealthLeadsJob(app(HealthAllocationService::class), 0));
             info('Health lead reassignment job  for '.$currentIteration.' is dispatched');
+
+            dispatch(new ReAssignBikeLeadsJob(app(BikeAllocationService::class), 0));
+            info('Bike lead reassignment job  for '.$currentIteration.' is dispatched');
 
             info('------------------- Lead reassignment Command Finished for '.$currentIteration.' -------------------');
         } else {
@@ -68,5 +75,20 @@ class LeadsReassignment extends Command
 
             return;
         }
+    }
+
+    private function isHoliday()
+    {
+        // Eid Holidays For 2024
+        $exclusionDates = [
+            '2024-06-15',
+            '2024-06-16',
+            '2024-06-17',
+            '2024-06-18',
+        ];
+
+        $today = now()->format('Y-m-d');
+
+        return in_array($today, $exclusionDates);
     }
 }

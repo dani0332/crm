@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Activities;
 use App\Traits\GetUserTreeTrait;
+use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -22,16 +23,18 @@ class ActivityRepository extends BaseRepository
      */
     public function fetchGetData()
     {
-
         $assigneeIds = [];
         if (Auth::user()->isManagerOrDeputy()) {
             $assigneeIds = DB::table('user_manager')->where('manager_id', Auth::user()->id)->get()->pluck('user_id')->toArray();
         } else {
-            $assigneeIds = $this->walkTree(Auth::user()->id);
             array_push($assigneeIds, Auth::user()->id);
         }
 
-        return $this->with(['assignee'])
+        if (isset(request()->isCustom) && request()->isCustom === 'false') {
+            request()->due_date_time_end = Carbon::createFromFormat('d-m-Y', request()->due_date_time_end)->endOfDay()->toDateTimeString();
+        }
+
+        return $this->with(['assignee', 'quoteStatus'])
             ->whereIn('assignee_id', $assigneeIds)
             ->filter()
             ->orderBy('status')
@@ -44,7 +47,6 @@ class ActivityRepository extends BaseRepository
      */
     public function fetchCountActivities()
     {
-
         $assigneeIds = [];
         if (Auth::user()->isManagerOrDeputy()) {
             $assigneeIds = DB::table('user_manager')->where('manager_id', Auth::user()->id)->get()->pluck('user_id')->toArray();
@@ -53,12 +55,12 @@ class ActivityRepository extends BaseRepository
             array_push($assigneeIds, Auth::user()->id);
         }
 
-        return $this->with(['assignee'])
+        return $this->with(['assignee', 'quoteStatus'])
             ->filter()
             ->whereIn('assignee_id', $assigneeIds)
             ->count();
-
     }
+
     /**
      * @return mixed
      */
@@ -78,9 +80,10 @@ class ActivityRepository extends BaseRepository
             $activityData['quote_request_id'] = $quote->id;
             $activityData['quote_type_id'] = $quote->quote_type_id;
             $activityData['quote_uuid'] = $quote->uuid;
+            $activityData['quote_status_id'] = $quote->quote_status_id;
         }
 
-        return ActivityRepository::create($activityData);
+        return self::create($activityData);
     }
 
     /**

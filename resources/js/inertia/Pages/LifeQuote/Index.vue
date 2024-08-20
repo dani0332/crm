@@ -49,7 +49,10 @@ const filters = reactive({
   advisor_id: [],
   is_ecommerce: '',
   payment_status_id: '',
+  previous_quote_policy_number_text: '',
   page: 1,
+  payment_due_date: '',
+  booking_date: '',
 });
 
 const loader = reactive({
@@ -65,6 +68,7 @@ const tableHeader = reactive([
     { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true  },
   { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
   { text: 'ADVISOR', value: 'advisor', is_active: true },
+  { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
   {
     text: 'CREATED DATE',
     value: 'created_at',
@@ -76,6 +80,16 @@ const tableHeader = reactive([
   { text: 'SOURCE', value: 'source', is_active: true },
   { text: 'LOST REASON', value: 'lost_reason', is_active: true },
   { text: 'PRICE', value: 'premium', is_active: true },
+  {
+    text: 'Previous Policy Number',
+    value: 'previous_quote_policy_number',
+    is_active: true,
+  },
+  {
+    text: 'Renewal Batch',
+    value: 'renewal_batch',
+    is_active: true,
+  },
 ]);
 
 const advisorOptions = computed(() => {
@@ -179,11 +193,7 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
 const onExport = () => {
-  const data = { ...filters };
-  delete data.page;
-  Object.keys(data).forEach(
-    key => (data[key] === '' || data[key].length === 0) && delete data[key],
-  );
+  const data = useObjToUrl(filters);
   const url = route('data-extraction', 'life');
   window.open(url + '?' + new URLSearchParams(data).toString());
 };
@@ -192,9 +202,10 @@ watch(
   () => filters,
   () => {
     if (
-      filters.created_at_start &&
-      filters.created_at_end &&
-      can(permissionsEnum.DATA_EXTRACTION)
+      can(permissionsEnum.DATA_EXTRACTION) &&
+      ((filters.created_at_start && filters.created_at_end) ||
+        filters.payment_due_date ||
+        filters.booking_date)
     ) {
       canExport.value = true;
     } else {
@@ -203,7 +214,6 @@ watch(
   },
   { deep: true, immediate: true },
 );
-
 function daysAgoFromAuthorizedDate(authorizedDate) {
     // Check if authorizedDate is null or undefined
     if (!authorizedDate) {
@@ -240,8 +250,44 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
     return Math.floor(differenceInDays) + " days";
 }
 
+const readOnlyMode = reactive({
+  isDisable: true,
+});
 onMounted(() => {
   setQueryFilters();
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
+
+const resetDateFilters = filterName => {
+  const filterMappings = {
+    payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
+    booking_date: ['payment_due_date', 'created_at_start', 'created_at_end'],
+    created_at: ['booking_date', 'payment_due_date'],
+  };
+
+  const filtersToReset =
+    filterMappings[filterName] ||
+    (filterName.startsWith('created_at') ? filterMappings.created_at : []);
+
+  filtersToReset.forEach(filter => {
+    filters[filter] = '';
+  });
+};
+
+[
+  'payment_due_date',
+  'booking_date',
+  'created_at_start',
+  'created_at_end',
+].forEach(filterName => {
+  watch(
+    () => filters[filterName],
+    newValue => {
+      if (newValue) {
+        resetDateFilters(filterName);
+      }
+    },
+  );
 });
 </script>
 
@@ -252,10 +298,24 @@ onMounted(() => {
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3 flex">
         <Link href="/quotes/life/cards">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
+          <x-button
+            size="sm"
+            color="#1d83bc"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Cards View
+          </x-button>
         </Link>
         <Link :href="route('life-quotes-create')">
-          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Create Lead
+          </x-button>
         </Link>
       </div>
     </div>
@@ -263,7 +323,7 @@ onMounted(() => {
     <x-form @submit="filterQuotes" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -345,6 +405,15 @@ onMounted(() => {
             :options="advisorOptions"
           />
         </x-field>
+        <x-field label="Policy Number">
+          <x-input
+            v-model="filters.previous_quote_policy_number_text"
+            type="text"
+            name="previous_quote_policy_number"
+            class="w-full"
+            placeholder="Policy Number"
+          />
+        </x-field>
         <x-select
           v-model="filters.is_renewal"
           placeholder="Renewal"
@@ -354,6 +423,22 @@ onMounted(() => {
             { value: 'No', label: 'No' },
             { value: '', label: 'All' },
           ]"
+        />
+        <DatePicker
+          v-model="filters.payment_due_date"
+          label="Payment Due Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.booking_date"
+          label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
         />
       </div>
 
@@ -368,11 +453,12 @@ onMounted(() => {
           >
             Export
           </x-button>
-          <x-tooltip v-else position="right">
+          <x-tooltip v-else placement="right">
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates are required to export data.
+                Created dates or payment due date or booking date are required
+                to export data.
               </span>
             </template>
           </x-tooltip>
@@ -402,6 +488,8 @@ onMounted(() => {
                 placeholder="Select Advisor"
                 class="flex-1 w-auto"
                 :rules="[rules.isRequired]"
+                filterable
+                v-if="readOnlyMode.isDisable === true"
               />
               <div class="mb-3 md:pt-6">
                 <x-button
@@ -409,6 +497,7 @@ onMounted(() => {
                   size="sm"
                   type="submit"
                   :loading="assignForm.processing"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Assign
                 </x-button>

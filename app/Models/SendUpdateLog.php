@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,12 +11,20 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class SendUpdateLog extends Model implements AuditableContract
 {
-    use Auditable, HasFactory;
+    use Auditable;
 
     protected $guarded = [];
     protected $casts = [
         'car_addons' => 'json',
     ];
+    protected $appends = ['display_status'];
+    /*
+     * it will convert BOOK-UPDATE to Book Update.
+     */
+    public function getDisplayStatusAttribute(): string
+    {
+        return ucwords(str_replace('_', ' ', strtolower($this->status)));
+    }
 
     public function quoteType(): BelongsTo
     {
@@ -47,5 +54,15 @@ class SendUpdateLog extends Model implements AuditableContract
     public function sageApiLogs()
     {
         return $this->morphMany(SageApiLog::class, 'section');
+    }
+
+    public function emirates(): BelongsTo
+    {
+        return $this->belongsTo(Emirate::class, 'emirates_id');
+    }
+
+    public function insuranceProvider(): BelongsTo
+    {
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id')->select(['id', 'text']);
     }
 }

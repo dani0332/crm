@@ -40,21 +40,27 @@ let availableFilters = {
   payment_status: [],
   is_cold: '',
   stale_at: '',
+  payment_due_date: '',
+  booking_date: '',
 };
 
 const canExport = ref(false);
 const filters = reactive(availableFilters);
 
 watch(
-    () => filters,
-    () => {
-        if (filters.created_at_start && filters.created_at_end) {
-            canExport.value = true;
-        } else {
-            canExport.value = false;
-        }
-    },
-    { deep: true, immediate: true },
+  () => filters,
+  () => {
+    if (
+      (filters.created_at_start && filters.created_at_end) ||
+      filters.payment_due_date ||
+      filters.booking_date
+    ) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
+  },
+  { deep: true, immediate: true },
 );
 
 let params = useUrlSearchParams('history');
@@ -211,7 +217,9 @@ function setQueryStringFilters() {
     }
   }
 }
-
+const readOnlyMode = reactive({
+  isDisable: true,
+});
 onMounted(() => {
   params = getSavedQueryParams() || params;
   setQueryStringFilters();
@@ -234,6 +242,7 @@ onMounted(() => {
   }
 
   filtersCount.value = Object.keys(filtersCleaned).length;
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 watch(
@@ -278,6 +287,37 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
     return Math.floor(differenceInDays) + " days";
 }
 
+const resetDateFilters = filterName => {
+  const filterMappings = {
+    payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
+    booking_date: ['payment_due_date', 'created_at_start', 'created_at_end'],
+    created_at: ['booking_date', 'payment_due_date'],
+  };
+
+  const filtersToReset =
+    filterMappings[filterName] ||
+    (filterName.startsWith('created_at') ? filterMappings.created_at : []);
+
+  filtersToReset.forEach(filter => {
+    filters[filter] = '';
+  });
+};
+
+[
+  'payment_due_date',
+  'booking_date',
+  'created_at_start',
+  'created_at_end',
+].forEach(filterName => {
+  watch(
+    () => filters[filterName],
+    newValue => {
+      if (newValue) {
+        resetDateFilters(filterName);
+      }
+    },
+  );
+});
 </script>
 
 <template>
@@ -304,16 +344,25 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
           @toggleFilters="showFilters = !showFilters"
         />
         <Link :href="route('pet-quotes-card')">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
+          <x-button
+            size="sm"
+            color="#1d83bc"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Cards View
+          </x-button>
         </Link>
-        <x-button
-          v-if="can(permissionsEnum.PetQuotesCreate)"
-          size="sm"
-          color="#ff5e00"
-          :href="route('pet-quotes-create')"
-        >
-          Create Lead
-        </x-button>
+        <div v-if="readOnlyMode.isDisable === true">
+          <x-button
+            v-if="can(permissionsEnum.PetQuotesCreate)"
+            size="sm"
+            color="#ff5e00"
+            :href="route('pet-quotes-create')"
+          >
+            Create Lead
+          </x-button>
+        </div>
       </template>
     </StickyHeader>
 
@@ -350,7 +399,7 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
     <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -432,11 +481,7 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
         <x-field
           label="Advisor"
           v-if="
-            !hasAnyRole([
-              rolesEnum.PetAdvisor,
-              rolesEnum.PetRenewalAdvisor,
-              rolesEnum.PetNewBusinessAdvisor,
-            ])
+            !hasAnyRole([rolesEnum.PetAdvisor, rolesEnum.PetRenewalAdvisor])
           "
         >
           <ComboBox
@@ -445,7 +490,7 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
             :options="advisorOptions"
           />
         </x-field>
-        <x-field label="Is Renewal">
+        <x-field label="Renewal">
           <x-select
             v-model="filters.is_renewal"
             placeholder="Search by Renewal"
@@ -473,9 +518,9 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
           v-model="filters.previous_quote_policy_number_text"
           type="text"
           name="previous_quote_policy_number"
-          label="Previous Policy Number"
+          label="Policy Number"
           class="w-full"
-          placeholder="Search by Previous Policy Number"
+          placeholder="Policy Number"
         />
         <x-input
           v-model="filters.renewal_batch"
@@ -484,6 +529,23 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
           label="Renewal Batch"
           class="w-full"
           placeholder="Search by Renewal Batch"
+        />
+
+        <DatePicker
+          v-model="filters.payment_due_date"
+          label="Payment Due Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.booking_date"
+          label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
@@ -497,11 +559,12 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
           >
             Export
           </x-button>
-          <x-tooltip v-else position="right">
+          <x-tooltip v-else placement="right">
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates are required to export data.
+                Created dates or payment due date or booking date are required
+                to export data.
               </span>
             </template>
           </x-tooltip>
@@ -587,8 +650,8 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
         {{ currently_insured_with?.text }}
       </template>
 
-      <template #item-policy_number="{ pet_quote }">
-        {{ pet_quote?.policy_number }}
+      <template #item-policy_number="{ policy_number }">
+        {{ policy_number }}
       </template>
       <template #item-type_of_pet="{ pet_quote }">
         {{ pet_quote?.pet_type?.text }}
@@ -626,6 +689,11 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
         <div class="text-center">
           {{ is_ecommerce ? 'Yes' : 'No' }}
         </div>
+      </template>
+      <template
+        #item-previous_quote_policy_number="{ previous_quote_policy_number }"
+      >
+        {{ previous_quote_policy_number ?? 'N/A' }}
       </template>
     </DataTable>
 

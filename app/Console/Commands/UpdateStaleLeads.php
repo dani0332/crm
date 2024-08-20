@@ -39,6 +39,15 @@ class UpdateStaleLeads extends Command
      */
     public function handle()
     {
+        $specifiedDate = Carbon::parse('2024-06-22 23:59:59');
+        $currentDate = Carbon::now();
+
+        if ($currentDate->lessThan($specifiedDate)) {
+            info('UpdateStaleLeads Command will run after 2024-06-22 23:59:59');
+
+            return;
+        }
+
         // Need to verify status for all quote types which were included or excluded.
         $eligibleQuoteTypes = [
             HealthQuote::class,
@@ -68,6 +77,7 @@ class UpdateStaleLeads extends Command
             info('------------------- Update Stale Leads Command - Updating - '.now().' : '.$eligibleQuoteType.' -------------------');
             $eligibleQuoteType::whereNotIn('quote_status_id', $skipStatus)
                 ->where('quote_status_date', '<', Carbon::parse(date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')))->endOfDay())
+                ->where('quote_status_date', '>=', Carbon::parse('2023-05-23')->startOfDay())
                 ->when($eligibleQuoteType == BusinessQuote::class, function ($businessQuote) {
                     $businessQuote->whereNot('business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
                 })
@@ -90,7 +100,6 @@ class UpdateStaleLeads extends Command
                 ->where('stale_at', '<', Carbon::parse(date(config('constants.DATE_FORMAT_ONLY'), strtotime('-90 days')))->endOfDay())
                 ->chunkById(1000, function ($staleLeads) use ($eligibleQuoteType, $lostReasonId) {
                     foreach ($staleLeads as $staleLead) {
-
                         $activityDateCheck = $staleLead->activities->pluck('due_date')->contains(function ($value) {
                             return Carbon::createFromFormat(config('constants.DATE_FORMAT_ONLY'), Carbon::parse($value)->format(config('constants.DATE_FORMAT_ONLY')))->gt(Carbon::now());
                         });
@@ -131,7 +140,6 @@ class UpdateStaleLeads extends Command
                                     break;
                             }
                         }
-
                     }
                 });
             info('------------------- Updated Lost Status on Stale Leads for: '.$eligibleQuoteType.' -------------------');

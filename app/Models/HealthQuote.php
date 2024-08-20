@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\FilterTypes;
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypeId;
+use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -23,14 +24,18 @@ class HealthQuote extends Model implements AuditableContract
         'first_name' => FilterTypes::FREE,
         'last_name' => FilterTypes::FREE,
         'previous_quote_policy_number' => FilterTypes::EXACT,
+        'policy_number' => FilterTypes::EXACT,
         'code' => FilterTypes::EXACT,
         'email' => FilterTypes::EXACT,
         'source' => FilterTypes::EXACT,
-        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'policy_expiry_date' => FilterTypes::DATE_BETWEEN,
         'mobile_no' => FilterTypes::EXACT,
         'created_at' => FilterTypes::DATE_BETWEEN,
     ];
     protected $guarded = [];
+    protected $dispatchesEvents = [
+        'updated' => QuoteEmailUpdated::class,
+    ];
 
     public function emirate()
     {
@@ -204,5 +209,10 @@ class HealthQuote extends Model implements AuditableContract
         }
 
         return 'Price';
+    }
+
+    public function policyWording()
+    {
+        return $this->hasMany(HealthPlanPolicyWording::class, 'plan_id', 'plan_id');
     }
 }

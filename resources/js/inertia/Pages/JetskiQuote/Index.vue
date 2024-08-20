@@ -27,6 +27,7 @@ let availableFilters = {
   created_at_end: '',
   renewal_batch: '',
   previous_quote_policy_number: '',
+  previous_quote_policy_number_text: '',
   is_ecommerce: '',
   quote_status_id: '',
   page: 1,
@@ -107,12 +108,16 @@ const advisorOptions = computed(() => {
     label: advisor.name,
   }));
 });
-
+const readOnlyMode = reactive({
+  isDisable: true,
+});
 onMounted(() => {
   setQueryStringFilters();
   if (hasRole(rolesEnum.JetskiManager) || hasRole(rolesEnum.Admin)) {
     permissionAssignLeads.value = true;
   }
+
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 const tableHeader = [
@@ -123,6 +128,7 @@ const tableHeader = [
     { text: 'PAYMENT EXPIRY', value: 'expiry_date'  },
   { text: 'LEAD STATUS', value: 'quote_status' },
   { text: 'ADVISOR', value: 'advisor' },
+  { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   { text: 'PREMIUM', value: 'premium' },
@@ -130,9 +136,12 @@ const tableHeader = [
   { text: 'SOURCE', value: 'source' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
+  {
+    text: 'Previous Policy Number',
+    value: 'previous_quote_policy_number',
+  },
+  { text: 'Renewal Batch', value: 'renewal_batch' },
 ];
-
-
 
 const onDataExport = () => {
   const data = useObjToUrl(filters);
@@ -187,14 +196,16 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
     <Head title="JetSki Quotes" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">JetSki Quotes List</h2>
-      <x-button
-        v-if="can(permissionsEnum.JetskiQuotesCreate)"
-        size="sm"
-        color="#ff5e00"
-        :href="route('jetski-quotes-create')"
-      >
-        Create Lead
-      </x-button>
+      <div v-if="readOnlyMode.isDisable === true">
+        <x-button
+          v-if="can(permissionsEnum.JetskiQuotesCreate)"
+          size="sm"
+          color="#ff5e00"
+          :href="route('jetski-quotes-create')"
+        >
+          Create Lead
+        </x-button>
+      </div>
     </div>
     <x-divider class="my-4" />
 
@@ -202,7 +213,7 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -290,13 +301,23 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
             "
           />
         </x-field>
+        <x-field label="Policy Number">
+          <x-input
+            v-model="filters.previous_quote_policy_number_text"
+            type="text"
+            name="previous_quote_policy_number"
+            class="w-full"
+            placeholder="Policy Number"
+          />
+        </x-field>
+
         <x-field label="Advisor">
-            <ComboBox
-              v-model="filters.advisor_id"
-              placeholder="Search by Advisor"
-              :options="advisorOptionsFilter"
-            />
-          </x-field>
+          <ComboBox
+            v-model="filters.advisor_id"
+            placeholder="Search by Advisor"
+            :options="advisorOptionsFilter"
+          />
+        </x-field>
         <x-field label="Is Ecommerce">
           <x-select
             v-model="filters.is_ecommerce"
@@ -333,7 +354,7 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
           >
             Export
           </x-button>
-          <x-tooltip v-else position="right">
+          <x-tooltip v-else placement="right">
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
@@ -352,21 +373,20 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
       </div>
     </x-form>
     <Transition name="fade">
-        <div
-          v-if="quotesSelected.length > 0 && permissionAssignLeads"
-          class="mb-4"
-        >
-          <LeadAssignment
-            :selected="quotesSelected.map(e => e.id)"
-            :advisors="advisorOptions"
-            :quoteType="quoteType"
-            @success="onLeadAssigned"
-          />
-        </div>
-      </Transition>
+      <div
+        v-if="quotesSelected.length > 0 && permissionAssignLeads"
+        class="mb-4"
+      >
+        <LeadAssignment
+          :selected="quotesSelected.map(e => e.id)"
+          :advisors="advisorOptions"
+          :quoteType="quoteType"
+          @success="onLeadAssigned"
+        />
+      </div>
+    </Transition>
     <DataTable
-
-    v-model:items-selected="quotesSelected"
+      v-model:items-selected="quotesSelected"
       table-class-name="tablefixed"
       :headers="tableHeader"
       :loading="loader.table"

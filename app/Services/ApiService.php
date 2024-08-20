@@ -3,17 +3,21 @@
 namespace App\Services;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Factories\AllocationFactory;
 use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\EvaluateTierRequest;
+use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\SICWorkflowRequest;
-use App\Jobs\SendOCBIntroEmailJob;
 use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
+use App\Models\TravelQuote;
 use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 
 class ApiService
 {
@@ -96,7 +100,7 @@ class ApiService
         }
 
         if (! $assignAdvisor && $triggerOCB) {
-            return $this->triggerOCBOnly($allocationId);
+            return $this->triggerOCBOnly($allocationId, $allocationType);
         }
 
         if (! $assignAdvisor && ! $triggerOCB) {
@@ -111,41 +115,92 @@ class ApiService
         info('------ Lead allocation request received to assign advisor only for '.$allocationId.' ------');
         $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
         $overrideAdvisorId = true;
-        $assignedAdvisorId = $allocationStrategy->executeSteps($overrideAdvisorId);
-        $responseData = ['assignedAdvisorId' => $assignedAdvisorId];
+        $responsePayload = $allocationStrategy->executeSteps($overrideAdvisorId);
+        $status = $responsePayload['status'];
+        $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
+        $message = $responsePayload['message'];
+        if ($rest['advisorId'] == 0) {
+            $message = 'Allocation failed: '.$responsePayload['message'];
+        }
+
         info('------ Lead allocation request completed to assign advisor only for '.$allocationId.' ------');
 
-        return apiResponse($responseData, Response::HTTP_OK, 'Advisor assigned successfully!');
-
+        return apiResponse($rest, $status, $message);
     }
 
-    private function triggerOCBOnly($allocationId)
+    private function triggerOCBOnly($quoteUUID, $quoteTypeId = QuoteTypeId::Car)
     {
-        info('------ Lead allocation request received to send OCB only for '.$allocationId.' ------');
-        SendOCBIntroEmailJob::dispatch($allocationId, null, false);
-        info('------ Lead allocation request completed to send OCB only for '.$allocationId.' ------');
+        if (! $quoteTypeId) {
+            $quoteTypeId = QuoteTypeId::Car;
+        }
+        $quoteType = QuoteTypes::getName($quoteTypeId);
+        if (! $quoteType) {
+            return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
+        }
+
+        $ocbEmailJob = $quoteType?->ocbEmailJob();
+        if ($ocbEmailJob) {
+            info("------ Lead allocation request received to send OCB only for {$quoteUUID} ------");
+            dispatch(new $ocbEmailJob($quoteUUID, null, false));
+            info("------ Lead allocation request completed to send OCB only for {$quoteUUID} ------");
+        }
 
         return apiResponse(null, Response::HTTP_OK, 'OCB email triggered successfully!');
     }
 
-    private function performLeadAllocation($allocationType, $allocationId, $teamId)
+    private function performLeadAllocation($allocationType, $leadId, $teamId)
     {
-        info('------ Lead allocation started for lead : '.$allocationId.' ------');
-        $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId, $teamId);
-        $assignedAdvisorId = $allocationStrategy->executeSteps();
-        info('------ Lead allocation ended for lead : '.$allocationId.' ------');
-        $responseData = ['assignedAdvisorId' => $assignedAdvisorId];
+        info("------ Lead allocation started for lead: $leadId ------");
 
-        return apiResponse($responseData, Response::HTTP_OK, 'Lead allocated successfully!');
+        // Create allocation strategy
+        $strategy = AllocationFactory::createStrategy($allocationType, $leadId, $teamId);
+        if (is_null($strategy)) {
+            $errorMessage = "Allocation strategy for type '$allocationType' and lead '$leadId' not found.";
+            info("-- Exception: $errorMessage --");
+            throw new InvalidArgumentException($errorMessage);
+        }
+
+        // Execute allocation steps
+        $response = $strategy->executeSteps();
+        $status = $response['status'];
+        $message = $response['message'];
+        $allocationResponse = array_diff_key($response, ['status' => '', 'message' => '']);
+
+        // Check for failed allocation
+        if (empty($allocationResponse['advisorId']) || empty($allocationResponse['tierId'])) {
+            $message = "Allocation failed: $message";
+        }
+
+        info("------ Lead allocation ended for lead: $leadId ------");
+
+        return apiResponse($allocationResponse, $status, $message);
     }
 
     public function triggerSICWorkflow(SICWorkflowRequest $request)
     {
-        info('------ SIC workflow trigger request received for lead : '.$request->quoteUuid.' ------');
-        SendOCBIntroEmailJob::dispatch($request->quoteUuid, null, true);
-        info('------ SIC workflow trigger request completed for lead : '.$request->quoteUuid.' ------');
+        $quoteTypeId = QuoteTypeId::Car;
+        if ($request->has('quoteTypeId')) {
+            $quoteTypeId = $request->quoteTypeId;
+        }
+        $quoteType = QuoteTypes::getName($quoteTypeId);
+        if (! $quoteType) {
+            return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
+        }
 
-        return apiResponse(null, Response::HTTP_OK, 'SIC workflow triggered successfully!');
+        if (! $quoteType?->model()->where('uuid', $request->quoteUuid)->exists()) {
+            return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found!');
+        }
+
+        $ocbEmailJob = $quoteType?->ocbEmailJob();
+        if ($ocbEmailJob) {
+            info("------ SIC workflow trigger request received for lead : {$request->quoteUuid} ------");
+            dispatch(new $ocbEmailJob($request->quoteUuid, null, true));
+            info("------ SIC workflow trigger request completed for lead : {$request->quoteUuid} ------");
+
+            return apiResponse(null, Response::HTTP_OK, 'SIC workflow triggered successfully!');
+        }
+
+        return apiResponse(null, Response::HTTP_NOT_FOUND, 'OCB Email not found!');
     }
 
     public function evaluateTier(EvaluateTierRequest $request)
@@ -155,10 +210,48 @@ class ApiService
 
         info('------ Lead allocation request received to evaluate tier only for '.$allocationId.' ------');
         $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
-        $tierId = $allocationStrategy->executeSteps(false, false, true);
-        $responseData = ['assignedTierId' => $tierId];
-        info('------ Lead allocation request completed to evaluate tier only for '.$allocationId.' ------');
+        $responsePayload = $allocationStrategy->executeSteps(false, false, true);
+        $status = $responsePayload['status'];
+        $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
+        $message = $responsePayload['message'];
+        if ($rest['tierId'] == 0) {
+            $message = 'Tier failed: '.$responsePayload['message'];
+        }
 
-        return apiResponse($responseData, Response::HTTP_OK, 'Tier assigned successfully!');
+        info('------ Lead allocation request completed to evaluate tier only for '.$rest['tierId'].' ------');
+
+        return apiResponse($rest, $status, $message);
+    }
+
+    public function handleZeroPlansEmail(HandleZeroPlansRequest $request)
+    {
+        $quoteType = QuoteTypes::getName($request->quoteTypeId);
+        if (! $quoteType) {
+            return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
+        }
+
+        $lead = $quoteType?->model()->where('uuid', $request->quoteUuid)->first();
+
+        if (! $lead) {
+            return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found!');
+        }
+
+        if ($lead instanceof TravelQuote && $lead->isMultiTrip()) {
+            info(self::class." - handleZeroPlansEmail: First OCB Email Skipped because it is a Multi Trip Lead uuid: {$lead->uuid}");
+
+            return apiResponse(null, Response::HTTP_OK, 'First OCB Email Skipped because it is a Multi Trip Lead!');
+        }
+
+        $ocbEmailJob = $quoteType?->ocbEmailJob();
+
+        if (! $ocbEmailJob) {
+            return apiResponse(null, Response::HTTP_NOT_FOUND, 'OCB Email not found!');
+        }
+
+        info("------ Handling First OCB email when 0 Plans : {$request->quoteUuid} ------");
+        dispatch(new $ocbEmailJob($request->quoteUuid, null, handleZeroPlans: true));
+        info("------ Triggered Job for First OCB email when 0 Plans : {$request->quoteUuid} ------");
+
+        return apiResponse(null, Response::HTTP_OK, 'Email triggered successfully!');
     }
 }

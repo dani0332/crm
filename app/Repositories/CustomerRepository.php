@@ -18,10 +18,7 @@ use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Services\BerlinService;
-use App\Services\CustomerService;
 use App\Services\SendEmailCustomerService;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 
 class CustomerRepository extends BaseRepository
@@ -70,7 +67,7 @@ class CustomerRepository extends BaseRepository
                     });
                 })
                 ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
-                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date',
+                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Car.'" as quote_type_id'),
                     \DB::raw("'' as business_type_of_insurance_id"),
                 ])
@@ -86,7 +83,7 @@ class CustomerRepository extends BaseRepository
                     });
                 })
                 ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
-                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date',
+                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Home.'" as quote_type_id'),
                     \DB::raw("'' as business_type_of_insurance_id"),
                 ])
@@ -102,7 +99,7 @@ class CustomerRepository extends BaseRepository
                     });
                 })
                 ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
-                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date',
+                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Health.'" as quote_type_id'),
                     \DB::raw("'' as business_type_of_insurance_id"),
                 ])
@@ -118,7 +115,7 @@ class CustomerRepository extends BaseRepository
                     });
                 })
                 ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
-                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date',
+                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Life.'" as quote_type_id'),
                     \DB::raw("'' as business_type_of_insurance_id"),
                 ])
@@ -134,7 +131,7 @@ class CustomerRepository extends BaseRepository
                     });
                 })
                 ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
-                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date',
+                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Business.'" as quote_type_id'),
                     'business_type_of_insurance_id'])
                 ->orderBy('created_at', 'desc');
@@ -149,7 +146,7 @@ class CustomerRepository extends BaseRepository
                     });
                 })
                 ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
-                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date',
+                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Travel.'" as quote_type_id'),
                     \DB::raw("'' as business_type_of_insurance_id"),
                 ])
@@ -165,7 +162,7 @@ class CustomerRepository extends BaseRepository
                     });
                 })
                 ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
-                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date', 'quote_type_id',
+                ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'policy_expiry_date', 'quote_type_id',
                     \DB::raw("'' as business_type_of_insurance_id"),
                 ])
                 ->orderBy('created_at', 'desc');
@@ -196,10 +193,32 @@ class CustomerRepository extends BaseRepository
      */
     public function fetchStoreAdditionalContact($customerId, $data)
     {
-        $customer = $this->findOrFail($customerId);
-        $customer->additionalContactInfo()->create($data);
+        if ($data['key'] === GenericRequestEnum::EMAIL) {
+            $isExistEmail = CustomerAdditionalContact::where('customer_id', $customerId)
+                ->where('value', $data['value'])->where('key', 'email')->first();
 
-        return $customer;
+            if ($isExistEmail) {
+                return back()->with('success', 'Email Address already Exist. Please try another.');
+            }
+
+            $customer = $this->findOrFail($customerId);
+            $customer->additionalContactInfo()->create($data);
+
+            return $customer;
+        } elseif ($data['key'] === GenericRequestEnum::MOBILE_NO) {
+            $isExistMobile = CustomerAdditionalContact::where('customer_id', $customerId)
+                ->where('value', $data['value'])->where('key', 'mobile_no')->first();
+
+            if ($isExistMobile) {
+                return back()->with('success', 'Mobile Number already Exist. Please try another.');
+            }
+
+            $customer = $this->findOrFail($customerId);
+            $customer->additionalContactInfo()->create($data);
+
+            return $customer;
+        }
+
     }
 
     public function fetchGetAdditionalContacts($customerId, $quoteMobileNo)
@@ -244,72 +263,6 @@ class CustomerRepository extends BaseRepository
                 'value' => $customerPreInfo->value,
             ]);
         }
-    }
-
-    public function fetchMakeAdditionalContactPrimary($quoteObject, $request)
-    {
-        $_return = true;
-        try {
-            DB::beginTransaction();
-            if ($request['key'] == GenericRequestEnum::EMAIL) {
-                Log::info('Customer additional contact primary email updated. Previous Email: '.$quoteObject->email.' New Email: '.$request['value']);
-                $quoteObject->email = $request['value'];
-                $customerService = new CustomerService();
-                $customer = $customerService::getCustomerByEmail($request['value']);
-                if ($customer) {
-                    $quoteObject->customer_id = $customer->id;
-                    if (isset($request['quote_primary_email_address']) && isset($request['quote_customer_id'])) {
-                        CustomerAdditionalContact::updateOrCreate([
-                            'customer_id' => $request['quote_customer_id'],
-                            'key' => GenericRequestEnum::EMAIL,
-                            'value' => strtolower($request['quote_primary_email_address']),
-                        ]);
-
-                        // Replicate Old additional contact info with new customer
-                        $this->fetchReplicatePreviousAdditionalContacts($request['quote_customer_id'], $customer->id);
-                    }
-                } else {
-                    // Move current customer to additional contacts if not exists
-                    CustomerAdditionalContact::updateOrCreate([
-                        'customer_id' => $request['quote_customer_id'],
-                        'key' => GenericRequestEnum::EMAIL,
-                        'value' => strtolower($request['quote_primary_email_address']),
-                    ]);
-
-                    $customer = Customer::create([
-                        'first_name' => $quoteObject->first_name,
-                        'last_name' => $quoteObject->last_name,
-                        'mobile_no' => $quoteObject->mobile_no,
-                        'email' => $request['value'],
-                    ]);
-
-                    $quoteObject->customer_id = $customer->id;
-
-                    // Replicate Old additional contact info with new customer
-                    $this->fetchReplicatePreviousAdditionalContacts($request['quote_customer_id'], $customer->id);
-                }
-            } elseif ($request['key'] == GenericRequestEnum::MOBILE_NO) {
-                Log::info('Customer additional contact primary mobile_no updated. Previous Mobile_No: '.$quoteObject->mobile_no.' New Mobile_No: '.$request['value']);
-                $quoteObject->mobile_no = $request['value'];
-                if (isset($request['quote_primary_mobile_no']) && isset($request['quote_customer_id'])) {
-                    CustomerAdditionalContact::updateOrCreate([
-                        'customer_id' => $request['quote_customer_id'],
-                        'key' => 'mobile_no',
-                        'value' => trim($request['quote_primary_mobile_no']),
-                    ]);
-                }
-            }
-
-            $quoteObject->save();
-            DB::commit();
-
-        } catch (\Exception $exception) {
-            Log::error($exception->getMessage());
-            DB::rollback();
-            $_return = false;
-        }
-
-        return $_return;
     }
 
     public function fetchUpdateCustomerDetails($customerId, $data)

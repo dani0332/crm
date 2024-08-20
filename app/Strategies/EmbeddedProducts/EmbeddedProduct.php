@@ -2,6 +2,10 @@
 
 namespace App\Strategies\EmbeddedProducts;
 
+use App\Enums\EmbeddedProductEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Models\EmbeddedTransaction;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
@@ -16,14 +20,52 @@ class EmbeddedProduct
         throw new Exception('Method not implemented');
     }
 
+    public function getExcelColumns()
+    {
+        return [
+            'EP REF-ID',
+            'ADVISOR NAME',
+            'PAYMENT DATE',
+            'PLAN COMMENCEMENT DATE',
+            'PLAN END DATE',
+            'CERTIFICATE NUMBER',
+            'FULL NAME',
+            'EMIRATES ID NUMBER',
+            'DOB',
+            'AGE',
+            'VEHICLE',
+            'CONTRIBUTION AMOUNT',
+            'POLICY ISSUE STATUS',
+        ];
+    }
+
+    public function getExcelData($certificate)
+    {
+        return [
+            $certificate->ref_id,
+            $certificate->advisor_name,
+            $certificate->payment_date,
+            $certificate->plan_start_date,
+            $certificate->plan_end_date,
+            $certificate->certificate_number,
+            $certificate->name,
+            $certificate->emirates_id_number,
+            $certificate->dob,
+            $certificate->age,
+            $certificate->vehicle,
+            $certificate->contribution_amount,
+            $certificate->status,
+        ];
+    }
+
     /**
      * Retrieves sold transaction data from a dataset.
      *
      * @return Collection
      */
-    public function getTransactionData($dataset)
+    public function getTransactionData($dataset, $isAlfredProtect = false)
     {
-        $dataset->each(function ($item) {
+        $dataset->each(function ($item) use ($isAlfredProtect) {
             $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
             $quoteObject = $item->quoteRequest;
             $status = $quoteObject->quoteStatus->text ?? '';
@@ -31,6 +73,8 @@ class EmbeddedProduct
             $carMake = $quoteObject->carMake->text ?? '';
             $carModel = $quoteObject->carModel->text ?? '';
             $advisorName = $quoteObject->advisor->name ?? '';
+            $nationality = $quoteObject->customer->nationality->text ?? '';
+
             $age = isset($quoteObject->dob) ?
                 Carbon::parse($quoteObject->dob)->diffInYears(Carbon::now()).' Years'
                 : '';
@@ -39,8 +83,14 @@ class EmbeddedProduct
             if (! empty($planStartDate)) {
                 $planEndDate = Carbon::parse($quoteObject->policy_start_date)->addYear()->format($dateFormat);
             }
-            $firstName = $quoteObject->first_name ?? '';
-            $lastName = $quoteObject->last_name ?? '';
+
+            if (! empty($quoteObject->quoteRequestEntityMapping)) {
+                $firstName = $quoteObject->first_name ?? '';
+                $lastName = $quoteObject->last_name ?? '';
+            } else {
+                $firstName = $customer->insured_first_name ?? '';
+                $lastName = $customer->insured_last_name ?? '';
+            }
 
             $item->id = $item->id;
             $item->ref_id = $item->code;
@@ -54,15 +104,101 @@ class EmbeddedProduct
             $item->age = $age;
             $item->vehicle = $carMake.' '.$carModel;
             $item->contact_number = $quoteObject->mobile_no ?? '';
+            $item->nationality = $nationality ?? '';
             $item->email = $quoteObject->email ?? '';
             $item->contribution_amount = 'AED '.$item->price_with_vat.'/-';
             $item->status = $status;
             $item->policy_issuance_date = $quoteObject->policy_issuance_date ?? '';
             $item->emirates_id_number = $customer->emirates_id_number ?? '';
+            $item->lob = quoteTypeCode::getName($quoteObject::class) ?? '';
+
+            if ($isAlfredProtect) {
+                $item->plan_type = EmbeddedProductEnum::{$item->product->embeddedProduct->short_code}()->value;
+                $item->tax_invoice_no = $item->tax_invoice_no ?? '';
+                $item->tax_invoice_buyer_no = $item->tax_invoice_buyer_no ?? '';
+                $item->credit_note_no = $item->credit_note_no ?? '';
+                $item->credit_note_buyer_no = $item->credit_note_buyer_no ?? '';
+                $item->commission_with_vat = $item->commission_with_vat ?? '';
+                $item->premium_with_vat = $item->contribution_amount;
+            }
 
             return $item;
         });
 
         return $dataset;
+    }
+
+    public function filterReport($ep, $filters)
+    {
+        $productTransaction = EmbeddedTransaction::whereHas('product.embeddedProduct', function ($query) use ($ep) {
+            $query->where('id', $ep->id);
+        });
+        $dataset = $productTransaction->with(
+            'product.embeddedProduct',
+            'quoteRequest.customer',
+            'quoteRequest.customer.nationality',
+            'quoteRequest.carMake',
+            'quoteRequest.carModel',
+            'quoteRequest.quoteStatus',
+            'quoteRequest.advisor',
+            'quoteRequest.quoteRequestEntityMapping',
+        )->where('embedded_transactions.is_selected', true)
+            ->where('embedded_transactions.payment_status_id', PaymentStatusEnum::CAPTURED)
+            ->when(isset($filters['ref_id']), function ($query) use ($filters) {
+                $query->where('embedded_transactions.code', 'like', "%{$filters['ref_id']}%");
+            })
+            ->when(isset($filters['months']), function ($query) use ($filters) {
+                $startDate = Carbon::parse($filters['months'])->startOfMonth()->format('Y-m-d');
+                $endDate = Carbon::parse($filters['months'])->endOfMonth()->format('Y-m-d');
+                $query->whereBetween('embedded_transactions.paid_at', [$startDate, $endDate]);
+            })
+            ->when(isset($filters['name']), function ($query) use ($filters) {
+                $query->whereHas('quoteRequest', function ($query) use ($filters) {
+                    $name = $filters['name'];
+                    $query->where('first_name', 'like', "%{$name}%")
+                        ->orWhere('last_name', 'like', "%{$name}%");
+                });
+            })
+            ->when(isset($filters['email']), function ($query) use ($filters) {
+                $query->whereHas('quoteRequest', function ($query) use ($filters) {
+                    $email = $filters['email'];
+                    $query->where('email', 'like', "%{$email}%");
+                });
+            })
+            ->when(isset($filters['date_of_purchase']), function ($query) use ($filters) {
+                $query->whereHas('quoteRequest', function ($query) use ($filters) {
+                    $startDate = Carbon::parse($filters['date_of_purchase'][0])->startOfDay();
+                    $endDate = Carbon::parse($filters['date_of_purchase'][1])->endOfDay();
+                    $query->whereBetween('policy_issuance_date', [$startDate, $endDate]);
+                });
+            });
+
+        $sortBy = 'embedded_transactions.id';
+        $sortOrder = 'desc';
+        if (! empty($filters['sortBy']) && ! empty($filters['sortType'])) {
+            $sortableColumns = [
+                'payment_date' => 'embedded_transactions.paid_at',
+                'contribution_amount' => 'embedded_transactions.price_with_vat',
+            ];
+            $sortBy = $sortableColumns[$filters['sortBy']] ?? 'embedded_transactions.id';
+            $sortOrder = $filters['sortType'] ?? 'desc';
+        }
+
+        $dataset = $dataset->orderBy($sortBy, $sortOrder);
+
+        if (isset($filters['excel_export']) && $filters['excel_export'] == true) {
+            $dataset = $dataset->get();
+        } else {
+            $dataset = $dataset->simplePaginate()->withQueryString();
+        }
+
+        return $dataset;
+    }
+
+    public static function checkAlfredProtect($product)
+    {
+        $product = strtoupper(trim($product));
+
+        return in_array($product, EmbeddedProductEnum::getAlfredProtectCodes());
     }
 }

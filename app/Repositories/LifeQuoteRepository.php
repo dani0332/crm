@@ -70,16 +70,18 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchGetData()
     {
-        return $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason', 'paymentStatus',
+        $query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason', 'paymentStatus',
             'payments'])
             ->when(\auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
             ->filter()
             ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc')
-            ->simplePaginate()
-            ->withQueryString();
+            ->orderBy('life_quote_request.created_at', 'desc');
+
+        $this->adjustQueryByDateFilters($query, 'life_quote_request');
+
+        return $query->simplePaginate()->withQueryString();
     }
 
     public function fetchExport()
@@ -95,7 +97,7 @@ class LifeQuoteRepository extends BaseRepository
         $quote = $this->where($column, $value)->with(['advisor', 'quoteStatus', 'nationality', 'previousAdvisor', 'lifeQuoteRequestDetail.lostReason',
             'purposeOfInsurance', 'children', 'currency', 'insuranceTenure', 'numberOfYears', 'maritalStatus',
             'paymentStatus', 'customer.additionalContactInfo', 'transactionType', 'insuranceProvider',
-            'payments.paymentMethod', 'payments.paymentStatus', 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents', 'payments.paymentSplits.verifiedByUser',
+            'payments.paymentMethod', 'payments.paymentStatus', 'payments.paymentSplits.paymentStatus', 'payments.paymentSplits.paymentMethod', 'payments.paymentSplits.documents', 'payments.paymentSplits.verifiedByUser', 'payments.paymentSplits.processJob',
             'quoteRequestEntityMapping' => function ($entityMapping) {
                 $entityMapping->with('entity');
             },
@@ -112,7 +114,7 @@ class LifeQuoteRepository extends BaseRepository
             ])
             ->select([
                 'life_quote_request.*',
-                'renewal_expiry_date',
+                'policy_expiry_date',
                 'policy_start_date',
                 'policy_issuance_date',
                 \DB::raw('IF(EXISTS (
@@ -157,10 +159,12 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchExportData()
     {
-        return $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
+        $query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason'])
             ->filter(false)
-            ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc')
+            ->withFakeLeadCriteria();
+        $this->adjustQueryByDateFilters($query, 'life_quote_request');
+
+        return $query->orderBy('life_quote_request.created_at', 'desc')
             ->get();
     }
 

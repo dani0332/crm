@@ -1,7 +1,5 @@
 <script setup>
-import { router } from '@inertiajs/vue3';
 import { useSortable } from '@vueuse/integrations/useSortable';
-import axios from 'axios';
 
 const page = usePage();
 
@@ -202,7 +200,7 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
         v-if="quoteTypeId == 3 || quoteTypeId == 5"
         class="flex items-center gap-2"
       >
-        <x-tooltip align="left">
+        <x-tooltip placement="left">
           <x-icon icon="person" size="sm" class="text-primary-400" />
           <template #tooltip>
             <div class="max-w-[194px] text-xs">
@@ -225,11 +223,16 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
       </div>
 
       <div class="flex items-center gap-2">
-        <x-tooltip align="left">
+        <x-tooltip placement="left">
           <x-icon icon="money" size="sm" class="text-primary-400" />
           <template #tooltip>
             <div class="max-w-[194px] text-xs">
-              <span v-if="quoteType == 'Health'">
+              <span
+                v-if="
+                  (quoteType == 'Health' && title === 'Quoted') ||
+                  (quoteType == 'Health' && title === 'FollowedUp')
+                "
+              >
                 'Price Starting from' represents the lowest premium amount that
                 a client can pay to initiate insurance coverage, giving you an
                 overview of the potential business to close.
@@ -251,7 +254,7 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
       </div>
 
       <div class="flex items-center gap-2">
-        <x-tooltip align="left">
+        <x-tooltip placement="left">
           <x-icon icon="calendar" size="sm" class="text-primary-400" />
           <template #tooltip>
             <div class="max-w-[194px] text-xs">
@@ -267,30 +270,33 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
 
   <x-modal
     v-model="showModal"
+    title="Kinldy choose a reason for marking as 'Lost' "
     showClose
     backdrop
     @update:modelValue="handleConfirmation(false)"
+    is-form
+    @submit="onSubmit"
   >
-    <template #header>
-      <span>Kinldy choose a reason for marking as 'Lost' </span>
+    <x-field label="Lost Reason" required>
+      <x-select
+        v-model="leadForm.lostreason"
+        :options="lostReasonsOptions"
+        placeholder="Lost Reason is required"
+        class="w-full"
+        :rules="[isRequired]"
+      />
+    </x-field>
+    <template #secondary-action>
+      <x-button
+        tabindex="-1"
+        color="orange"
+        @click.prevent="handleConfirmation(false)"
+      >
+        Go Back
+      </x-button>
     </template>
-
-    <x-form @submit="onSubmit" :auto-focus="false">
-      <x-field label="Lost Reason" required>
-        <x-select
-          v-model="leadForm.lostreason"
-          :options="lostReasonsOptions"
-          placeholder="Lost Reason is required"
-          class="w-full"
-          :rules="[isRequired]"
-        />
-      </x-field>
-      <div class="text-right space-x-4 mt-4">
-        <x-button type="submit" :loading="loader">Continue</x-button>
-        <x-button color="orange" @click.prevent="handleConfirmation(false)">
-          Go Back
-        </x-button>
-      </div>
-    </x-form>
+    <template #primary-action>
+      <x-button type="submit" :loading="loader">Continue</x-button>
+    </template>
   </x-modal>
 </template>
