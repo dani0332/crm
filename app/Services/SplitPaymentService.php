@@ -619,7 +619,7 @@ class SplitPaymentService
                         $paymentSplit->sage_reciept_id = $sageResponse['response'];
                         $paymentSplit->save();
                     }, $maxRetries);
-                
+
                 } else {
                     $sageMessage = $sageResponse['response'];
                     if ($isFromJob) {
@@ -646,7 +646,7 @@ class SplitPaymentService
         }
 
         if (! $paymentSplit->payment->is_approved && ! $isFromJob) {
-            
+
             return $this->handleWithDeadlockRetries(function () use ($paymentSplit, $amountCollected, $modelType, $quoteId, $isFromJob) {
                 if (empty($paymentSplit->verified_at)) {
                     $paymentSplit->verified_at = now();
