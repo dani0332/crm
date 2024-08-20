@@ -236,6 +236,7 @@ class SaleSummaryReportService extends ManagementReport
         }
 
         $endorsementsQuery = $this->applyFilters($endorsementsQuery, $request, true, true);
+
         return $endorsementsQuery->get();
     }
 
