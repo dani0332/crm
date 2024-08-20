@@ -2458,7 +2458,6 @@ class SageApiService
             $returnMessage['message'] = 'Another Policy is being booked. Please wait 10-20 seconds before trying again.';
         }
 
-
         if ($storeSageApiLog) {
             $this->logSageApiCall($payload, $response, $quote, $currentStep, $totalSteps, $status);
         }
