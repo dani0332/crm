@@ -32,8 +32,8 @@ use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
-use App\Traits\SageLoggable;
 use App\Traits\HandlesDeadlockRetries;
+use App\Traits\SageLoggable;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -44,8 +44,8 @@ use PDF;
 class SplitPaymentService
 {
     use GenericQueriesAllLobs;
-    use SageLoggable;
     use HandlesDeadlockRetries;
+    use SageLoggable;
 
     public function calculateDiscount($totalSplitPayments, $discountValue)
     {
