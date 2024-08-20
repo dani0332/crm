@@ -1772,6 +1772,10 @@ const onAddUpdate = () => {
                   </span>
                 </dt>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ quote.transaction_approved_at }}</dd>
+              </div>
             </dl>
           </div>
         </template>
@@ -1800,11 +1804,6 @@ const onAddUpdate = () => {
             </x-tag>
             <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TRANSACTION APPROVED AT</dt>
-            <dd>{{ quote.transaction_approved_at }}</dd>
-          </div>
-
           <div
             class="grid sm:grid-cols-2"
             v-if="quoteRequest.child || quoteRequest.parent"
