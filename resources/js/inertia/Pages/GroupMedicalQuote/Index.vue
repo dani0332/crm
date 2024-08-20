@@ -40,8 +40,8 @@ const filters = reactive({
   last_name: '',
   email: '',
   mobile_no: '',
-  created_at_start: '',
-  created_at_end: '',
+  created_at_start: new Date() || '',
+  created_at_end: new Date() || '',
   leadStatus: [],
   advisor_id: '',
   page: 1,
@@ -108,12 +108,12 @@ function filterQuotes(isValid) {
       delete filters[key];
     }
   }
-  if (filters.created_at_start) {
-    filters.created_at_start = filters.created_at_start.split('T')[0];
-  }
-  if (filters.created_at_end) {
-    filters.created_at_end = filters.created_at_end.split('T')[0];
-  }
+  // if (filters.created_at_start) {
+  //   filters.created_at_start = filters.created_at_start.split('T')[0];
+  // }
+  // if (filters.created_at_end) {
+  //   filters.created_at_end = filters.created_at_end.split('T')[0];
+  // }
   router.visit(route('amt.index'), {
     method: 'get',
     data: {
@@ -170,7 +170,9 @@ function displayNotification() {
 function setQueryFilters() {
   let urlParams = new URLSearchParams(window.location.search);
   for (const [key, value] of urlParams) {
-    if (key.includes('[')) {
+    if (key == 'created_at_start' || key == 'created_at_end') {
+      filters[key] = useDateFormat(urlParams[key], 'YYYY-MM-DD').value;
+    } else if (key.includes('[')) {
       let index = key.replace('[]', '');
       filters[index] = urlParams.getAll(key).map(item => parseInt(item));
     } else {
@@ -333,14 +335,32 @@ const resetDateFilters = filterName => {
           <DatePicker
             v-model="filters.created_at_start"
             name="created_at_start"
-            :rules="[created_at_rule]"
+            :rules="
+              filters.previous_quote_policy_number ||
+              filters.code ||
+              filters.email ||
+              filters.renewal_batch ||
+              filters.payment_due_date ||
+              filters.booking_date
+                ? []
+                : [isRequired]
+            "
           />
         </x-field>
         <x-field label="Created Date End">
           <DatePicker
             v-model="filters.created_at_end"
             name="created_at_end"
-            :rules="[created_at_end_rule]"
+            :rules="
+              filters.previous_quote_policy_number ||
+              filters.code ||
+              filters.email ||
+              filters.renewal_batch ||
+              filters.payment_due_date ||
+              filters.booking_date
+                ? []
+                : [isRequired]
+            "
           />
         </x-field>
         <x-field label="Lead Status">
