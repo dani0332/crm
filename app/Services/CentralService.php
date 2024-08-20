@@ -41,7 +41,7 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Log;
+use Illuminate\Support\Facades\Log;
 
 class CentralService
 {
@@ -134,8 +134,8 @@ class CentralService
                 }
 
                 $response = in_array(ucfirst($lob), newUi()) ?
-                ((method_exists($repository, 'fetchCreateDuplicate') && ! checkPersonalQuotes(ucfirst($lob))) ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob))) :
-                Capi::request('/api/v1-save-'.strtolower($lob).'-quote', 'post', $dataArr);
+                    ((method_exists($repository, 'fetchCreateDuplicate') && ! checkPersonalQuotes(ucfirst($lob))) ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob))) :
+                    Capi::request('/api/v1-save-'.strtolower($lob).'-quote', 'post', $dataArr);
 
                 if (empty($response) || (isset($response->message) && str_contains($response->message, 'Error'))) {
                     $resp['errors'][] = 'Something went wrong while duplicating '.$lob.' quotes';
@@ -175,8 +175,8 @@ class CentralService
 
         $leadsIds = array_map('intval', explode(',', $leadsIds));
         $model = (in_array(ucfirst($request->modelType), $personalQuotes) && in_array(ucfirst($request->modelType), newUi())) ?
-        ['parent' => PersonalQuote::class, 'child' => PersonalQuoteDetail::class] :
-        ['parent' => (ucfirst($request->modelType).'Quote'), 'child' => (ucfirst($request->modelType).'QuoteRequestDetail')];
+            ['parent' => PersonalQuote::class, 'child' => PersonalQuoteDetail::class] :
+            ['parent' => (ucfirst($request->modelType).'Quote'), 'child' => (ucfirst($request->modelType).'QuoteRequestDetail')];
 
         if (! class_exists($model['parent'])) {
             vAbort('Something went wrong');
@@ -190,7 +190,7 @@ class CentralService
                 $getQuoteLead->save();
 
                 $parentFieldName = (in_array(ucfirst($request->modelType), $personalQuotes) && in_array(ucfirst($request->modelType), newUi())) ?
-                'personal_quote_id' : strtolower($request->modelType).'_quote_request_id';
+                    'personal_quote_id' : strtolower($request->modelType).'_quote_request_id';
 
                 $model['child']::updateOrCreate(
                     [$parentFieldName => $getQuoteLead->id],
@@ -200,7 +200,7 @@ class CentralService
         });
     }
 
-    public function loadAvailablePlans($type, $id)
+    public function loadAvailablePlans($type, $id, $isRenewalSort = false, $isDisabledEnabled = false)
     {
         $type = ucfirst($type);
         switch ($type) {
@@ -222,7 +222,6 @@ class CentralService
                             foreach ($plans as $plan) {
                                 if (isset($plan->planTypeId)) {
                                     $plan->plan_type = HealthPlanTypeEnum::typeName($plan->planTypeId)?->label();
-
                                 } else {
                                     $plan->plan_type = 'N/A';
                                 }
@@ -232,6 +231,8 @@ class CentralService
                 }
 
                 return $listQuotePlans;
+            case quoteTypeCode::Bike:
+                return $this->getPlans($type, $id, $isRenewalSort, $isDisabledEnabled);
             default:
                 return [];
         }
@@ -306,7 +307,7 @@ class CentralService
             case QuoteTypes::TRAVEL->value:
                 $endpoint = '/process-travel-quote-plan';
                 $data = [
-                    'quoteTypeId' => QuoteTypeId::Car,
+                    'quoteTypeId' => QuoteTypeId::Travel,
                     'quoteUID' => $uuid,
                     'callSource' => strtolower(LeadSourceEnum::IMCRM),
                     'plans' => [
@@ -329,9 +330,20 @@ class CentralService
                     'healthPlanCoPaymentId' => intval($data->copay_id),
                     'quoteUID' => $uuid,
                     'callSource' => strtolower(LeadSourceEnum::IMCRM),
+                    'url' => request()->url(),
                 ];
 
                 $response = Capi::request($endpoint, 'post', $data);
+                break;
+            case QuoteTypes::BIKE->value:
+                $endpoint = '/process-bike-quote-plan';
+                $data = [
+                    'planId' => intval($data->plan_id),
+                    'quoteTypeId' => QuoteTypeId::Bike,
+                    'quoteUID' => $uuid,
+                    'callSource' => strtolower(LeadSourceEnum::IMCRM),
+                ];
+                $response = Ken::request($endpoint, 'post', $data);
                 break;
         }
 
@@ -382,6 +394,57 @@ class CentralService
         return $planModel::find($planId);
     }
 
+    public function lockLeadSectionsDetails($quote)
+    {
+        $quote = (object) $quote;
+        $lockFunctionalities = [
+            'plan_selection' => false,
+            'plan_details' => false,
+            'lead_status' => false,
+            'lead_details' => false,
+            'member_details' => false,
+            'manage_payment' => false,
+        ];
+
+        $quoteStatuses = [
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::PolicyCancelledReissued,
+        ];
+
+        // Lock functionality check for Available Plans, Plan Details and Member Details
+        $quoteStatusForPlansAndMembers = array_merge($quoteStatuses, [
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicySentToCustomer,
+        ]);
+
+        if (in_array($quote->quote_status_id, $quoteStatusForPlansAndMembers)) {
+            $lockFunctionalities['plan_selection'] = true;
+            $lockFunctionalities['member_details'] = true;
+        }
+
+        // Lock functionality check for Lead status Section
+        $quoteStatusForLeadStatus = array_merge($quoteStatusForPlansAndMembers, [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::TransactionDeclined]);
+        if (in_array($quote->quote_status_id, $quoteStatusForLeadStatus)) {
+            $lockFunctionalities['lead_status'] = true;
+        }
+
+        // Lock functionality check for edit lead details
+        if (in_array($quote->quote_status_id, $quoteStatuses)) {
+            $lockFunctionalities['plan_details'] = true;
+            $lockFunctionalities['lead_details'] = true;
+        }
+
+        // Lock functionality check for Manage Payment
+        $quoteStatusForManagePayment = array_merge($quoteStatuses, [QuoteStatusEnum::PolicyBooked]);
+        if (in_array($quote->quote_status_id, $quoteStatusForManagePayment)) {
+            $lockFunctionalities['manage_payment'] = true;
+        }
+
+        return $lockFunctionalities;
+    }
+
     // This method is used to update payment allocation status when lead status is updated
     public function updatePaymentAllocation($modelType, $quote_uuid)
     {
@@ -392,12 +455,21 @@ class CentralService
         }
     }
 
+    /**
+     * After booking policy Processes payments by updating their allocation status based on the payment frequency and splits.
+     * This method handles different payment frequencies (e.g., upfront, semi-annual, quarterly, monthly, custom, split payments)
+     *
+     * @param void
+     */
     public function straightforwardPayments($payment, $paymentSplits, $quote)
     {
+        info('fn: straightforwardPayments for: '.$payment->code);
+
         if ($payment) {
-            $this->updatePaymentAllocationStatus($payment, $quote);
+            $paymentSplit = $paymentSplits->first();
+            info('Sage Receipt Id : '.$paymentSplit->sage_reciept_id);
+            $this->updatePaymentAllocationStatus($payment, $quote, $paymentSplit);
             if (in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SEMI_ANNUAL, PaymentFrequency::QUARTERLY, PaymentFrequency::MONTHLY, PaymentFrequency::CUSTOM])) {
-                $paymentSplit = $paymentSplits->first();
                 $this->firstSplitAllocationStatus($payment, $paymentSplit, $quote);
             }
 
@@ -407,39 +479,70 @@ class CentralService
         }
     }
 
-    private function updatePaymentAllocationStatus($payment, $quote)
+    /**
+     * This method handles just update payment allocation status
+     *
+     * @param void
+     */
+    private function updatePaymentAllocationStatus($payment, $quote, $paymentSplits)
     {
-        $payment->payment_allocation_status = $this->calculateAllocationStatus($payment, $quote);
+        $payment->payment_allocation_status = $this->calculateAllocationStatus($payment, $quote, $paymentSplits);
         $payment->save();
     }
 
+    /**
+     * This method return payment allocation status based on quote status
+     *
+     * @param string
+     */
     private function calculateAllocationStatus($payment, $quote, $paymentSplit = null)
     {
         $collectionAmount = $paymentSplit ? $paymentSplit->collection_amount : $payment->captured_amount;
         $priceWithVat = $quote->price_with_vat;
+        info('fn: calculateAllocationStatus code : '.$payment->code.'  sage_reciept_id: '.$paymentSplit->sage_reciept_id.' payment status id: '.$paymentSplit->payment_status_id.' payment_methods_code: '.$payment->payment_methods_code.' Split Payment method '.$paymentSplit->payment_method);
 
         switch (true) {
+            case $paymentSplit && $paymentSplit->sage_reciept_id == null:
+                info('Condition: Payment split sage_reciept_id is set to null');
+
+                return PaymentAllocationStatus::NOT_ALLOCATED;
             case in_array($payment->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::NEW]):
+                info('Condition: Payment status is PENDING, CREDIT_APPROVED, or NEW');
+
                 return null;
-            case $payment->frequency == PaymentFrequency::UPFRONT && $paymentSplit != null:
-                return $payment->payment_allocation_status;
             case $paymentSplit && in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED]):
+                info('Condition: Payment split status is PENDING or CREDIT_APPROVED');
+
                 return PaymentAllocationStatus::NOT_ALLOCATED;
             case $collectionAmount <= 0:
+                info('Condition: Collection amount is less than or equal to 0');
+
                 return PaymentAllocationStatus::UNPAID;
             case $collectionAmount <= $priceWithVat:
+                info('Condition: Collection amount is less than or equal to price with VAT');
+
                 return PaymentAllocationStatus::FULLY_ALLOCATED;
             default:
+                info('Condition: Default case, partially allocated');
+
                 return PaymentAllocationStatus::PARTIALLY_ALLOCATED;
         }
     }
 
+    /**
+     * Updates the allocation status of the first payment split based on the payment and quote details.
+     * This method is specifically used for payments with frequencies like upfront, semi-annual, quarterly, monthly and custom.
+     */
     private function firstSplitAllocationStatus($payment, $paymentSplit, $quote)
     {
         $paymentSplit->payment_allocation_status = $this->calculateAllocationStatus($payment, $quote, $paymentSplit);
         $paymentSplit->save();
     }
 
+    /**
+     * Updates the allocation status of the all payment  based on the payment and quote details.
+     * This method is specifically used for payments with frequency split payment
+     */
     private function updatePaymentSplitAllocationStatus($paymentSplits, $quote)
     {
         $collectedAmount = 0;
@@ -450,8 +553,15 @@ class CentralService
         }
     }
 
+    /**
+     * This method is used to final payment allocation status based in payment status and collected amount and price
+     */
     private function calculateSplitAllocationStatusWithCollectedAmount($paymentSplit, $quote, $collectedAmount)
     {
+        if ($paymentSplit && $paymentSplit->sage_reciept_id == null) {
+            return PaymentAllocationStatus::NOT_ALLOCATED;
+        }
+
         if (in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
             return PaymentAllocationStatus::NOT_ALLOCATED;
         }
@@ -627,4 +737,96 @@ class CentralService
         return false;
     }
 
+    public function getPlans($type, $id, $isRenewalSort = false, $isDisabledEnabled = false)
+    {
+        $quotePlans = $this->getQuotePlans($type, $id, $isRenewalSort, false, $isDisabledEnabled);
+        $listQuotePlans = [];
+        if (isset($quotePlans->message) && $quotePlans->message != '') {
+            $listQuotePlans = $quotePlans->message;
+        } else {
+            if ($type == quoteTypeCode::Health) {
+                if (gettype($quotePlans) != 'string') {
+                    $listQuotePlans = $quotePlans->quote->plans;
+                }
+            } else {
+                if (gettype($quotePlans) != 'string' && isset($quotePlans->quotes->plans)) {
+                    $listQuotePlans = $quotePlans->quotes->plans;
+                } elseif (! isset($quotePlans->quotes->plans)) {
+                    $listQuotePlans = 'Plans not available!';
+                } else {
+                    $listQuotePlans = $quotePlans;
+                }
+            }
+        }
+
+        return $listQuotePlans;
+    }
+
+    public function getQuotePlans($type, $id, $isRenewalSort = false, $getLatestRating = false, $isDisabledEnabled = false)
+    {
+        $modelName = checkPersonalQuotes(ucfirst($type)) ? 'PersonalQuote' : ucfirst($type).'Quote';
+        $model = '\\App\\Models\\'.$modelName;
+        $quoteUuId = $model::where('uuid', '=', $id)->value('uuid');
+        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-'.lcfirst($type).'-quote-plans';
+        $plansApiToken = config('constants.KEN_API_TOKEN');
+        $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
+        $plansApiUserName = config('constants.KEN_API_USER');
+        $plansApiPassword = config('constants.KEN_API_PWD');
+        $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
+
+        $plansDataArr = [
+            'quoteUID' => $quoteUuId,
+            'lang' => 'en',
+        ];
+
+        if ($type == quoteTypeCode::Car) {
+            $plansDataArr['getLatestRating'] = $getLatestRating;
+            $plansDataArr['url'] = strval(url()->current());
+            $plansDataArr['ipAddress'] = request()->ip();
+            $plansDataArr['userAgent'] = request()->header('User-Agent');
+            $plansDataArr['userId'] = strval(auth()->id());
+            $plansDataArr['filters'] = [[
+                'field' => 'isRenewalSort',
+                'value' => $isRenewalSort,
+            ]];
+            if ($isDisabledEnabled) {
+                $plansDataArr['filters'][] = [
+                    'field' => 'isDisabled',
+                    'value' => false,
+                ];
+            }
+        }
+
+        $client = new \GuzzleHttp\Client();
+
+        try {
+            $kenRequest = $client->post(
+                $plansApiEndPoint,
+                [
+                    'headers' => [
+                        'Content-Type' => 'application/json', 'Accept' => 'application/json',
+                        'x-api-token' => $plansApiToken,
+                        'Authorization' => 'Basic '.$authBasic,
+                    ],
+                    'body' => json_encode($plansDataArr),
+                    'timeout' => $plansApiTimeout,
+                ]
+            );
+
+            $getStatusCode = $kenRequest->getStatusCode();
+
+            if ($getStatusCode == 200) {
+                $getContents = $kenRequest->getBody();
+                $getdecodeContents = json_decode($getContents);
+
+                return $getdecodeContents;
+            }
+        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+            $response = $e->getResponse();
+            $contents = (string) $response->getBody();
+            $response = json_decode($contents);
+
+            info('fn: updateQuotePayment payment updated for quote uuid: '.$quoteUuId);
+        }
+    }
 }

@@ -7,19 +7,23 @@ use App\Http\Requests\ActivityApiRequest;
 use App\Http\Requests\APiFetchUrl;
 use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\EvaluateTierRequest;
+use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Services\ApiService;
+use App\Services\InboundEmailsHookService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
 {
-    private $apiService;
+    public $apiService;
+    public $inboundEmailsHookService;
 
-    public function __construct(ApiService $service)
+    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService)
     {
-        $this->apiService = $service;
+        $this->apiService = $apiService;
+        $this->inboundEmailsHookService = $inboundEmailsHookService;
     }
 
     public function fetchSignupUrl(APiFetchUrl $request)
@@ -39,7 +43,7 @@ class ApiController extends Controller
         try {
 
             // Log the incoming request parameters
-            info('API assignLeads called with request params as : '.json_encode($request->all()));
+            info(self::class.'assignLeads: request params as : '.json_encode($request->all()));
 
             // Check if lead allocation endpoint is disabled
             if ($this->apiService->isLeadAllocationEndpointDisabled()) {
@@ -75,6 +79,15 @@ class ApiController extends Controller
     public function getActivity(Request $request)
     {
         return $this->apiService->getActivity($request);
+    }
 
+    public function inboundEmailsHook()
+    {
+        return $this->inboundEmailsHookService->process();
+    }
+
+    public function handleZeroPlansEmail(HandleZeroPlansRequest $request)
+    {
+        return $this->apiService->handleZeroPlansEmail($request);
     }
 }

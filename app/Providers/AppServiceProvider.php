@@ -7,6 +7,7 @@ use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\Customer;
 use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
@@ -14,6 +15,8 @@ use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
 use App\Models\LifeQuote;
 use App\Models\LifeQuoteRequestDetail;
+use App\Models\Payment;
+use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Models\TravelQuote;
@@ -24,6 +27,7 @@ use App\Observers\BusinessQuoteDetailObserver;
 use App\Observers\BusinessQuoteObserver;
 use App\Observers\CarQuoteDetailObserver;
 use App\Observers\CarQuoteObserver;
+use App\Observers\CustomerObserver;
 use App\Observers\CycleQuoteObserver;
 use App\Observers\HealthQuoteDetailObserver;
 use App\Observers\HealthQuoteObserver;
@@ -31,6 +35,8 @@ use App\Observers\HomeQuoteDetailObserver;
 use App\Observers\HomeQuoteObserver;
 use App\Observers\LifeQuoteDetailObserver;
 use App\Observers\LifeQuoteObserver;
+use App\Observers\PaymentObserver;
+use App\Observers\PaymentSplitsObserver;
 use App\Observers\PersonalQuoteObserver;
 use App\Observers\PetQuoteObserver;
 use App\Observers\TravelQuoteDetailObserver;
@@ -87,6 +93,9 @@ class AppServiceProvider extends ServiceProvider
         CycleQuote::observe(CycleQuoteObserver::class);
         BikeQuote::observe(BikeQuoteObserver::class);
         PersonalQuote::observe(PersonalQuoteObserver::class);
+        Customer::observe(CustomerObserver::class);
+        Payment::observe(PaymentObserver::class);
+        PaymentSplits::observe(PaymentSplitsObserver::class);
         // DB::listen(function($query) {
         //     info(
         //         $query->sql,

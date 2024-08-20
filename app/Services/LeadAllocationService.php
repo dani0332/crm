@@ -660,23 +660,15 @@ class LeadAllocationService extends BaseService
 
     public function updateCarLeadDetailRecord($leadId)
     {
-        info('---- Inside updateCarLeadDetailRecord');
-        $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $leadId)->first();
-        if ($carQuoteDetail) {
-            $carQuoteDetail->advisor_assigned_date = now();
-            $carQuoteDetail->advisor_assigned_by_id = auth()->id();
-            $carQuoteDetail->save();
-            info('---- updateCarLeadDetailRecord - update done for advisor data and by id');
-        } else {
-            info('---- updateCarLeadDetailRecord - record not found creating new entry');
-            CarQuoteRequestDetail::create([
-                'car_quote_request_id' => $leadId,
+        info('---- Inside updateCarLeadDetailRecord - leadId : '.$leadId);
+        $upsertRecord = CarQuoteRequestDetail::updateOrCreate(
+            ['car_quote_request_id' => $leadId],
+            [
                 'advisor_assigned_date' => now(),
                 'advisor_assigned_by_id' => auth()->id(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
+            ]
+        );
+        info('---- updateCarLeadDetailRecord - updateOrCreate done for advisor data and by id - leadId : '.$leadId.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
     }
 
     public function getCarUnallocatedLeads()
@@ -760,7 +752,7 @@ class LeadAllocationService extends BaseService
         /**
          * Following are the criteria to match and find a renewal
          * Search for a lead where source is Renewal_upload
-         * Search for a lead where renewal expiry date should be in between last 30 days and future 90 days
+         * Search for a lead where policy expiry date should be in between last 30 days and future 90 days
          * Search for a lead where email OR phone number (last 7 digits) matches
          * Search for a lead where car make and model id is same as what we have from current request.
          *
@@ -1059,6 +1051,26 @@ class LeadAllocationService extends BaseService
         } catch (\Exception $e) {
             Log::error($e->getMessage());
         }
+    }
+
+    public function isCommercialVehicles($lead)
+    {
+        $isCommercial = false;
+        $commercialCarModel = CarModel::where('id', $lead->car_model_id)
+            ->where('is_commercial', true)
+            ->count();
+
+        if ($commercialCarModel) {
+            $isCommercial = true;
+        }
+
+        $commercialKeywords = CommercialKeyword::select('id', 'name')->get();
+        $commercialKeywordsCheck = in_array(strtolower(trim($lead->full_name)), array_column($commercialKeywords->toArray(), strtolower(trim('name'))));
+        if ($commercialKeywordsCheck) {
+            $isCommercial = true;
+        }
+
+        return $isCommercial;
     }
 
 }

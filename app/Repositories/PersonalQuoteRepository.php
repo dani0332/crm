@@ -12,6 +12,7 @@ use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
+use App\Services\CRUDService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
@@ -34,7 +35,7 @@ class PersonalQuoteRepository extends BaseRepository
      */
     public function fetchUpdateStatuses($quoteType, $quoteId, $data)
     {
-        return DB::transaction(function () use ($quoteId, $data) {
+        return DB::transaction(function () use ($quoteId, $data, $quoteType) {
             $quote = $this->where('id', $quoteId)->firstOrFail();
 
             $previousStatusId = $quote->quote_status_id;
@@ -45,6 +46,9 @@ class PersonalQuoteRepository extends BaseRepository
 
             if (! empty($data['notes'])) {
                 $quoteData['notes'] = $data['notes'];
+            }
+            if ($data['quote_status_id'] == QuoteStatusEnum::TransactionApproved) {
+                app(CRUDService::class)->calculateScore($quote, $quoteType);
             }
 
             $quote->update($quoteData);
@@ -77,6 +81,7 @@ class PersonalQuoteRepository extends BaseRepository
      */
     public function fetchUploadDocument($id, $file, $data)
     {
+        info('fn: fetchUploadDocument called');
         $quoteType = '';
         $query = DocumentTypeRepository::where('code', $data['document_type_code']);
         if (request()->quote_type_id) {
@@ -108,7 +113,8 @@ class PersonalQuoteRepository extends BaseRepository
             $docUuid = uniqid().rand(1, 100);
         }
 
-        return $quote->documents()->create([
+        // This data will store in quote doocumeets table
+        $document = [
             'doc_name' => $docName,
             'original_name' => $originalName,
             'doc_url' => $filePathAzure,
@@ -117,7 +123,10 @@ class PersonalQuoteRepository extends BaseRepository
             'document_type_text' => $documentType->text,
             'doc_uuid' => $docUuid,
             'created_by_id' => auth()->id(),
-        ]);
+        ];
+        info('Document array prepared for creation', $document);
+
+        return $quote->documents()->create($document);
     }
 
     /**
@@ -179,7 +188,7 @@ class PersonalQuoteRepository extends BaseRepository
     public function fetchUpdatePolicyDetails($id, $data)
     {
         $quote = $this->findOrFail($id);
-        $quote->update(Arr::only($data, ['policy_number', 'policy_issuance_date', 'policy_start_date', 'renewal_expiry_date', 'premium']));
+        $quote->update(Arr::only($data, ['policy_number', 'policy_issuance_date', 'policy_start_date', 'policy_expiry_date', 'premium']));
 
         return $quote;
     }

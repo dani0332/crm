@@ -26,6 +26,7 @@ function formatQuadTiers(tiers) {
 
 const tableHeader = [
   { text: 'ID', value: 'id' },
+  { text: 'Line Of Business', value: 'line_of_business' },
   { text: 'Name', value: 'name' },
   { text: 'Updated At', value: 'updated_at' },
   { text: 'Tire Name', value: 'tiers' },
@@ -168,8 +169,13 @@ const showDeleteModal = ref(false),
     }"
   />
 
-  <x-modal v-model="showDeleteModal" size="md" show-close backdrop>
-    <template #header> Delete Resource </template>
+  <x-modal
+    v-model="showDeleteModal"
+    size="md"
+    title="Delete Resource"
+    show-close
+    backdrop
+  >
     <p>Are you sure you want to delete selected resource?</p>
     <template #actions>
       <div class="text-right space-x-4">
