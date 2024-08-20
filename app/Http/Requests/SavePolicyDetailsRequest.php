@@ -31,7 +31,6 @@ class SavePolicyDetailsRequest extends FormRequest
             'insurance_provider_id' => 'sometimes|nullable|integer',
             'provider_name' => 'nullable|string',
             'plan_id' => 'sometimes|nullable|integer',
-            'plan_name' => 'nullable|string',
             'policy_number' => 'required|string|max:60',
             'issuance_date' => 'required|date',
             'start_date' => 'required|date',

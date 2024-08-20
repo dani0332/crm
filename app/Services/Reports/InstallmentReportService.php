@@ -131,12 +131,10 @@ class InstallmentReportService extends ManagementReport
 
     protected function filterTeams($query, $teamIds)
     {
-        if (empty($teamIds)) {
-            $teamIds = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();
+        if (! empty($teamIds)) {
+            $userIds = $this->getUsersByTeamIds($teamIds)->pluck('id')->toArray();
+            $query->whereIn('personal_quotes.advisor_id', $userIds);
         }
-
-        $userIds = $this->getUsersByTeamIds($teamIds)->pluck('id')->toArray();
-        $query->whereIn('personal_quotes.advisor_id', $userIds);
 
         return $query;
     }
@@ -160,6 +158,7 @@ class InstallmentReportService extends ManagementReport
     {
         return [
             'Ref-ID',
+            'Department',
             'Policy Number',
             'Transactions',
             'Policy Start Date',
@@ -196,6 +195,7 @@ class InstallmentReportService extends ManagementReport
     {
         return [
             $quote->code ?? 'N/A',
+            $quote->department ?? 'N/A',
             $quote->policy_number ?? 'N/A',
             $quote->transactions ?? 'N/A',
             $quote->policy_start_date ?? 'N/A',

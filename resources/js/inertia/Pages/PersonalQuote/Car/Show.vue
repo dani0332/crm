@@ -1,9 +1,9 @@
 <script setup>
-import PaymentTable from './Partials/PaymentTable.vue';
+import AssignTier from './Partials/AssignTier.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
+import PaymentTable from './Partials/PaymentTable.vue';
 
 defineProps({
   quote: Object,
@@ -626,7 +626,7 @@ const policyDetailsForm = useForm({
   quote_policy_vat_total_amount: vatAmount.value || null,
   quote_policy_start_date: dateToYMD(page.props.record.policy_start_date) || '',
   quote_policy_expiry_date:
-    dateToYMD(page.props.record.renewal_expiry_date) || '',
+    dateToYMD(page.props.record.policy_expiry_date) || '',
   quote_premium: page.props.record.premium || null,
   quote_plan_insurer_quote_number: planQuoteInsurerNumber.value || null,
   quote_policy_issuance_status: null,
@@ -1295,12 +1295,16 @@ const closeModal = v => {
   if (v) disableFollowUp.value = v;
   showfollowup.value = false;
 };
+const readOnlyMode = reactive({
+  isDisable: true,
+});
 onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+
   onLoadAvailablePlansData();
   if (can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)) {
     getFollowUpsByQuote();
   }
-
   // setLeadStatuses();
 });
 
@@ -1510,14 +1514,11 @@ const isPlanDetailEnabled = computed(() => {
     // Check rules for commercial
     return true;
   }
-
   if (page.props.record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD) {
     return page.props.record.vehicle_type_id_text == 'BIKE';
   }
-
   return false;
 });
-
 if (isPlanDetailEnabled.value && page.props.record.insurer_name !== '') {
   selectedProviderPlan.value.premium = page.props.record.price_with_vat;
   selectedProviderPlan.value.providerName = page.props.record.insurer_name;
@@ -1643,16 +1644,21 @@ const onAddUpdate = () => {
                 <dd>{{ selectedProviderPlan.premium ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AUTHORISED AT</dt>
+                <dd>{{ record.paid_at ?? 'N/A' }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAID AT</dt>
-                <dd>{{ record.paid_at ?? '' }}</dd>
+                <dd>{{ record.payment_paid_at ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT STATUS</dt>
-                <dd>{{ record.payment_status_id_text ?? '' }}</dd>
+                <dd>{{ record.payment_status_id_text ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PROVIDER NAME</dt>
-                <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
+                <dd>{{ selectedProviderPlan.providerName ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT METHOD</dt>
@@ -1660,13 +1666,13 @@ const onAddUpdate = () => {
                   {{
                     record.payment_gateway === 'NGENIUS'
                       ? 'CREDIT CARD'
-                      : record.payment_gateway
+                      : (record.payment_gateway ?? 'N/A')
                   }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PLAN NAME</dt>
-                <dd>{{ selectedProviderPlan.planName }}</dd>
+                <dd>{{ selectedProviderPlan.planName ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ECOMMERCE</dt>
@@ -1674,20 +1680,20 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">QUOTE LINK</dt>
-                <dd>{{ record.quote_link ?? '' }}</dd>
+                <dd>{{ record.quote_link ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ORDER REFERENCE</dt>
-                <dd>{{ record.order_reference ?? '' }}</dd>
+                <dd>{{ record.order_reference ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT REFERENCE</dt>
-                <dd>{{ record.payment_reference ?? '' }}</dd>
+                <dd>{{ record.payment_reference ?? 'N/A' }}</dd>
               </div>
             </dl>
             <div class="grid sm:grid-cols-1 mt-3">
               <dt class="font-medium mb-3">ADDONS</dt>
-              <dd>
+              <dd v-if="carQuotePlanAddons.length > 0">
                 <table style="width: 100%">
                   <thead></thead>
                   <tbody>
@@ -1728,6 +1734,7 @@ const onAddUpdate = () => {
                   </tbody>
                 </table>
               </dd>
+              <dd v-else>N/A</dd>
             </div>
           </div>
         </template>
@@ -1962,7 +1969,13 @@ const onAddUpdate = () => {
 
           <LeadEditBtnTemplate v-slot="{ isDisabled }">
             <Link v-if="!isDisabled" :href="route('car.edit', record.uuid)">
-              <x-button size="sm" color="primary" tag="div">Edit</x-button>
+              <x-button
+                size="sm"
+                color="primary"
+                tag="div"
+                v-if="readOnlyMode.isDisable === true"
+                >Edit</x-button
+              >
             </Link>
             <x-button
               v-else
@@ -2322,6 +2335,7 @@ const onAddUpdate = () => {
           size="sm"
           :loading="customerProfileForm.processing"
           @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
         >
           Search
         </x-button>
@@ -2431,6 +2445,7 @@ const onAddUpdate = () => {
                     leadStatusDisabled || lockLeadSectionsDetails.lead_status
                   "
                   :options="leadStatusOptions"
+                  filterable
                 />
                 <x-field
                   label="Lost Reason"
@@ -2718,6 +2733,7 @@ const onAddUpdate = () => {
               "
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
+              v-if="readOnlyMode.isDisable === true"
             >
               Change Status
             </x-button>
@@ -2959,6 +2975,7 @@ const onAddUpdate = () => {
                 size="sm"
                 color="rose"
                 @click="showfollowup = !showfollowup"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Pause Follow-up to customer
               </x-button>
@@ -2974,12 +2991,14 @@ const onAddUpdate = () => {
                 @click.prevent="onTogglePlans(false)"
                 :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
                 :loading="toggleLoader"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Show
               </x-button>
               <x-button
                 @click.prevent="onTogglePlans(true)"
                 :loading="toggleLoader"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Hide
               </x-button>
@@ -3004,6 +3023,7 @@ const onAddUpdate = () => {
                 record.advisor_id != $page.props.auth.user.id ||
                 page.props.linkedQuoteDetails.childLeadsCount > 0
               "
+              v-if="readOnlyMode.isDisable === true"
             >
               Send OCB Email to Customer
             </x-button>
@@ -3074,6 +3094,7 @@ const onAddUpdate = () => {
                 isDisabled,
                 puaPremium,
                 puaType,
+                isSystemDiscountPrice,
               }"
             >
               <p>{{ providerName }}</p>
@@ -3102,7 +3123,14 @@ const onAddUpdate = () => {
                 >
                   Hidden
                 </x-tag>
-
+                <x-tag
+                  v-if="isSystemDiscountPrice"
+                  size="xs"
+                  color="danger"
+                  class="mt-0.5 text-[10px]"
+                >
+                  SDP
+                </x-tag>
                 <x-tag
                   v-if="puaType"
                   size="xs"
@@ -3258,16 +3286,20 @@ const onAddUpdate = () => {
                 >
                   View
                 </x-button>
-                <x-button
-                  size="xs"
-                  color="error"
-                  outlined
-                  @click.prevent="copyPlanURL(item)"
-                  v-if="item.discountPremium + item.vat + totalPriceVAT > 0"
-                  :disabled="page.props.linkedQuoteDetails.childLeadsCount > 0"
-                >
-                  Copy
-                </x-button>
+                <div v-if="readOnlyMode.isDisable === true">
+                  <x-button
+                    size="xs"
+                    color="error"
+                    outlined
+                    @click.prevent="copyPlanURL(item)"
+                    v-if="item.discountPremium + item.vat + totalPriceVAT > 0"
+                    :disabled="
+                      page.props.linkedQuoteDetails.childLeadsCount > 0
+                    "
+                  >
+                    Copy
+                  </x-button>
+                </div>
                 <!-- <template
                   v-if="item.actualPremium > 0 && item.id != record.plan_id"
                 >
@@ -3680,6 +3712,7 @@ const onAddUpdate = () => {
                   color="primary"
                   outlined
                   @click.prevent="onEditMember(item)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Edit
                 </x-button>
@@ -3688,6 +3721,7 @@ const onAddUpdate = () => {
                   color="error"
                   outlined
                   @click.prevent="memberDelete(item.id)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Delete
                 </x-button>
@@ -3786,6 +3820,7 @@ const onAddUpdate = () => {
                 size="sm"
                 color="orange"
                 class="mr-2"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Add Activity
               </x-button>
@@ -3818,6 +3853,7 @@ const onAddUpdate = () => {
                   outlined
                   :disabled="item.status === 1"
                   @click.prevent="activityEdit(item)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Edit
                 </x-button>
@@ -3827,6 +3863,7 @@ const onAddUpdate = () => {
                   outlined
                   :disabled="item.status === 1"
                   @click.prevent="activityDelete(item.id)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Delete
                 </x-button>

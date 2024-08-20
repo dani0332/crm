@@ -48,7 +48,7 @@ use App\Enums\RolesEnum;
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="quote_policy_expiry_date"><b>Expiry Date</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">
-                            <input type="text" class="form-control" id="quote_policy_expiry_date" name="quote_policy_expiry_date" value="{{ $record->renewal_expiry_date ? $record->renewal_expiry_date : '' }}">
+                            <input type="text" class="form-control" id="quote_policy_expiry_date" name="quote_policy_expiry_date" value="{{ $record->policy_expiry_date ? $record->policy_expiry_date : '' }}">
                             </p>
                         </div>
                     </div>

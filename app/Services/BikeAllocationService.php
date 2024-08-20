@@ -24,6 +24,7 @@ use App\Models\InsuranceProvider;
 use App\Models\LeadAllocation;
 use App\Models\LeadSource;
 use App\Models\PersonalQuote;
+use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteBatches;
 use App\Models\Rule;
 use App\Models\RuleLeadSource;
@@ -494,16 +495,13 @@ class BikeAllocationService extends AllocationService
         // Log information about the update operation.
         info('About to update personal quote detail record for lead ID: '.$leadId);
 
-        // get BikeQuote from personal quote to store the data in BikeQuoteRequestDetail as we have foreign key constrained in bike_quote_request_detail if bike_quote_request
-        $bikeQuote = BikeQuote::where('personal_quote_id', $leadId)->first();
-
         // Attempt to find an existing bike quote detail record for the given lead.
-        $bikeQuoteDetail = BikeQuoteRequestDetail::where('bike_quote_request_id', $bikeQuote->id)->first();
+        $personalQuoteDetail = PersonalQuoteDetail::where('personal_quote_id', $leadId)->first();
 
         // Initialize a variable to store the old advisor assigned date.
-        $oldAdvisorAssignedDate = $bikeQuoteDetail->advisor_assigned_date ?? '';
+        $oldAdvisorAssignedDate = $personalQuoteDetail->advisor_assigned_date ?? '';
 
-        $this->upsertQuoteDetail($bikeQuote->id, BikeQuoteRequestDetail::class, 'bike_quote_request_id');
+        $this->upsertQuoteDetail($leadId, PersonalQuoteDetail::class, 'personal_quote_id');
 
         // Return the old advisor assigned date, if applicable.
         return $oldAdvisorAssignedDate;
@@ -545,7 +543,6 @@ class BikeAllocationService extends AllocationService
             $advisors = $this->getUnavailableAdvisor();
             if (count($advisors) > 0) {
                 $advisorIds = $advisors->pluck('user_id');
-                info('Inside reassignment general run and selected advisors are: '.json_encode($advisorIds->toArray()));
                 $leads->whereIn('advisor_id', $advisorIds);
             }
         }

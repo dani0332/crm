@@ -45,7 +45,7 @@ class CreatePersonalQuotesTable extends Migration
                 $table->foreign('advisor_id')->references('id')->on('users')->onDelete('no action');
                 $table->decimal('premium', 10, 2)->nullable();
                 $table->string('renewal_batch', 50)->nullable();
-                $table->dateTime('renewal_expiry_date')->nullable();
+                $table->dateTime('policy_expiry_date')->nullable();
                 $table->string('previous_quote_policy_number', 100)->nullable();
                 $table->string('renewal_import_code', 50)->nullable();
                 $table->date('previous_policy_expiry_date')->nullable();

@@ -1,6 +1,11 @@
 <script setup>
+import ToolTip from './../Components/ToolTip.vue';
+import { onMounted, reactive } from 'vue';
 import moment from 'moment';
 import NProgress from 'nprogress';
+import { computed } from 'vue';
+import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
+
 const notification = useNotifications('toast');
 const page = usePage();
 
@@ -134,6 +139,9 @@ const isCreditApprovalAllowed = ref(true);
 const isVerificationAllowed = ref(true);
 const isPaymentFrequencyNotSelected = ref(false);
 const isDiscountAllowed = ref(true);
+const isRetryModalOpen = ref(false);
+const retryProcessJobId = ref(0);
+const retryPaymentErrorMessage = ref('');
 
 const modal2Ref = ref(null);
 
@@ -178,14 +186,10 @@ if (
   props.isPlanDetailEnabled
 ) {
   initalPlanDetails =
-    props.quoteRequest.insurance_provider_details ??
-    props.quoteRequest.insurance_provider;
-} else if (quoteTypesToCheck.includes(props.quoteType)) {
-  initalPlanDetails = props.quoteRequest.plan;
-} else if (props.quoteType == 'Business' || props.quoteType == 'Home') {
-  initalPlanDetails =
     props.quoteRequest?.insurance_provider_details ??
     props.quoteRequest?.insurance_provider;
+} else if (quoteTypesToCheck.includes(props.quoteType)) {
+  initalPlanDetails = props.quoteRequest.plan;
 } else if (props.quoteType == 'Bike') {
   initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
 } else {
@@ -1573,6 +1577,43 @@ const addPaymentModal = () => {
   applyPermissions();
 };
 
+const retrySplitPaymentModal = (process_job_id, message) => {
+  console.log('retrySplitPaymentModal', process_job_id, message);
+  retryProcessJobId.value = process_job_id;
+  retryPaymentErrorMessage.value = message;
+  isRetryModalOpen.value = true;
+};
+
+const closeRetryModal = () => {
+  isRetryModalOpen.value = false;
+};
+
+const handleRetryPayment = async () => {
+  let retryData = {
+    payment_process_job_id: retryProcessJobId.value,
+    model_type: props.quoteType,
+    quote_id: props.quoteRequest.id,
+  };
+  retryForm
+    .transform(data => retryData)
+    .post('/payments/' + props.quoteType + '/retry-payment', {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success({
+          title: 'Payment has been retried',
+          position: 'top',
+        });
+        isRetryModalOpen.value = false;
+      },
+      onError: () => {
+        notification.error({
+          title: 'Payment retry failed',
+          position: 'top',
+        });
+      },
+    });
+};
+
 const editPaymentModal = (
   payment,
   split_payment_id,
@@ -1823,8 +1864,10 @@ const editPaymentModal = (
   ) {
     planDetail.value = payment.travel_plan;
 
-    planDetail.value['insurance_provider'] =
-      payment.travel_plan.insurance_provider;
+    if (!(props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
+      planDetail.value['insurance_provider'] =
+        payment.travel_plan.insurance_provider;
+    }
   }
 
   //Assign plan for Travel
@@ -1833,8 +1876,10 @@ const editPaymentModal = (
     (paymentMethodsForm.status == 'edit' || paymentMethodsForm.status == 'view')
   ) {
     planDetail.value = payment.travel_plan;
-    planDetail.value['insurance_provider'] =
-      payment.travel_plan.insurance_provider;
+    if (!(props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
+      planDetail.value['insurance_provider'] =
+        payment.travel_plan.insurance_provider;
+    }
   }
 
   if (capture_approval > 0) {
@@ -2309,6 +2354,10 @@ const documentForm = useForm({
   file: null,
 });
 
+const retryForm = useForm({
+  payment_process_job_id: null,
+});
+
 const deleteDocument = (docName, count) => {
   if (paymentMethodsForm.status == 'edit') {
     if (fileUploadModels.value[count]) {
@@ -2523,10 +2572,12 @@ const getCaptureValidation = computed(() => {
       if (paymentRecord.frequency === 'upfront') {
         let paymentSplitRec = paymentRecord.payment_splits[0];
         if (paymentSplitRec.payment_method.code === 'CC') {
-          if (
-            paymentSplitRec.payment_status_id ===
-            props.paymentStatusEnum.AUTHORISED
-          ) {
+          const validStatuses = [
+            props.paymentStatusEnum.AUTHORISED,
+            props.paymentStatusEnum.PAID,
+            props.paymentStatusEnum.PARTIALLY_PAID,
+          ];
+          if (validStatuses.includes(paymentSplitRec.payment_status_id)) {
             return true;
           }
           return false;
@@ -2801,6 +2852,8 @@ watch(
       props.isPlanDetailEnabled
     ) {
       initalPlanDetails = props.quoteRequest.insurance_provider_details;
+    } else if (quoteTypesToCheck.includes(props.quoteType)) {
+      initalPlanDetails = props.quoteRequest.plan;
     } else if (props.quoteType == 'Bike') {
       initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
       if (props.sendUpdate) {
@@ -2846,6 +2899,14 @@ const isMasterPaymentPaid = computed(() => {
     return true;
   }
   return false;
+});
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+
+  // setLeadStatuses();
 });
 
 let is_lacking_payment = ref(
@@ -2937,6 +2998,21 @@ const totalPriceFormat = computed(() => {
 const totalAmountFormat = computed(() => {
   return formatAmount(totalAmount.value);
 });
+
+const splitPaymentTotalPrice = (
+  splitPaymentNo,
+  splitPaymentAmount,
+  masterDiscountValue,
+) => {
+  let total = 0;
+  if (splitPaymentNo === 1 && masterDiscountValue > 0) {
+    total = splitPaymentAmount + masterDiscountValue;
+  } else {
+    total = splitPaymentAmount;
+  }
+
+  return formatAmount(total);
+};
 </script>
 
 <template>
@@ -3009,26 +3085,30 @@ const totalAmountFormat = computed(() => {
                   payments[0].total_amount + payments[0].discount_value
                 "
               />
-              <x-button
-                v-if="can(permissionEnum.PaymentsCreate)"
-                size="sm"
-                color="emerald"
-                @click="addPaymentModal"
-              >
-                Add Manual Payment
-              </x-button>
+              <div v-if="readOnlyMode.isDisable === true">
+                <x-button
+                  v-if="can(permissionEnum.PaymentsCreate)"
+                  size="sm"
+                  color="emerald"
+                  @click="addPaymentModal"
+                >
+                  Add Manual Payment
+                </x-button>
+              </div>
             </div>
           </template>
           <template v-else>
             <x-tooltip>
-              <x-button
-                v-if="can(permissionEnum.PaymentsCreate)"
-                size="sm"
-                color="emerald"
-                @click="addPaymentModal"
-              >
-                <span class="border-b border-dotted">Add Manual Payment</span>
-              </x-button>
+              <div v-if="readOnlyMode.isDisable === true">
+                <x-button
+                  v-if="can(permissionEnum.PaymentsCreate)"
+                  size="sm"
+                  color="emerald"
+                  @click="addPaymentModal"
+                >
+                  <span class="border-b border-dotted">Add Manual Payment</span>
+                </x-button>
+              </div>
               <template #tooltip>
                 <span>{{
                   paymentTooltipEnum.PAYMENT_MANAGEMENT_ADD_PAYMENT
@@ -3334,8 +3414,22 @@ const totalAmountFormat = computed(() => {
                       {{ formatAmount(splitPayment.price_vat_applicable) }}
                     </td>
                     <td>{{ formatAmount(splitPayment.price_vat) }}</td>
-                    <td>{{ formatAmount(splitPayment.payment_amount) }}</td>
-                    <td></td>
+                    <td>
+                      {{
+                        splitPaymentTotalPrice(
+                          splitPayment.sr_no,
+                          splitPayment.payment_amount,
+                          item.discount_value,
+                        )
+                      }}
+                    </td>
+                    <td>
+                      {{
+                        splitPayment.sr_no == 1
+                          ? formatAmount(item.discount_value)
+                          : ''
+                      }}
+                    </td>
                     <td>{{ formatAmount(splitPayment.payment_amount) }}</td>
                     <td>
                       {{
@@ -5395,6 +5489,69 @@ const totalAmountFormat = computed(() => {
         </div>
       </div>
     </x-modal>
+
+    <div
+      class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
+      v-if="isRetryModalOpen"
+    >
+      <div
+        class="modal-retry-container bg-white w-full max-w-full overflow-hidden rounded-lg"
+      >
+        <div class="modal-confirm-header text-base text-white bg-white">
+          <div
+            class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b"
+          >
+            <div class="flex items-center space-x-2">
+              Retry Payment Verification
+            </div>
+            <div class="flex items-center space-x-2">
+              <span
+                @click="closeRetryModal"
+                class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 cursor-pointer"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  tabindex="0"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  class="w-4 h-4 text-gray-800"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  ></path>
+                </svg>
+              </span>
+            </div>
+          </div>
+        </div>
+        <x-form @submit="handleRetryPayment" :auto-focus="false">
+          <div class="w-full h-full mt-2 flex flex-col">
+            <div
+              class="text-lg px-6 py-4 border-b flex justify-between items-start"
+            >
+              <div class="text-left">
+                <span> {{ retryPaymentErrorMessage }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="w-full h-full mt-2 flex flex-col items-center">
+            <x-button
+              size="lg"
+              type="submit"
+              color="orange"
+              class="px-4 py-2 mt-4 mb-4"
+              :loading="retryForm.processing"
+            >
+              <span>Retry</span></x-button
+            >
+          </div>
+        </x-form>
+      </div>
+    </div>
   </div>
 </template>
 <style scoped>
@@ -5457,6 +5614,19 @@ const totalAmountFormat = computed(() => {
   transform: translate(-50%, -50%);
   width: 75%;
   height: 37%;
+  background-color: hsla(0, 0%, 100%, 0.99);
+  border-radius: 8px; /* Adjust the radius for desired roundness */
+  padding: 2px;
+  z-index: 1050;
+  border: 1px solid #ccc; /* Grey color for the border */
+}
+
+.modal-retry-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 45%;
   background-color: hsla(0, 0%, 100%, 0.99);
   border-radius: 8px; /* Adjust the radius for desired roundness */
   padding: 2px;

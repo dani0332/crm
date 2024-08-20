@@ -20,6 +20,9 @@ const rules = {
 };
 const notification = useNotifications('toast');
 
+const getLink = (quote_uuid, quote_type_id) =>
+  buildCdbidLink(quote_uuid, quote_type_id);
+
 const activityForm = useForm({
   title: null,
   description: null,
@@ -421,7 +424,11 @@ onMounted(() => {
       </template>
 
       <template #item-cdbid="item">
-        <div v-html="buildCdbidLink(item.quote_uuid, item.quote_type_id)"></div>
+        <SanitizeHtml
+          v-if="(item.quote_uuid, item.quote_type_id)"
+          :html="getLink(item.quote_uuid, item.quote_type_id)"
+          class="text-primary-500 hover:underline"
+        />
       </template>
 
       <template #item-due_date="item">

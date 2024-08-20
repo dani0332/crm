@@ -39,7 +39,7 @@ class SageApiService
     protected $sagePassword;
     protected $sageRequestUrl;
     protected $sageBatchNumber;
-    protected $sageCompany;
+    protected $sageDBName;
     protected $recursiveCallStatus;
 
     public function __construct()
@@ -48,7 +48,7 @@ class SageApiService
         $this->sageLogin = env('SAGE_300_LOGIN');
         $this->sagePassword = env('SAGE_300_PASSWORD');
         $this->sageRequestUrl = env('SAGE_300_BASE_URL').env('SAGE_300_VERSION');
-        $this->sageCompany = env('SAGE_300_COMPANY');
+        $this->sageDBName = env('SAGE_300_CUSTOM_API_DB_NAME');
         $this->sageBatchNumber = '';
         $this->recursiveCallStatus = SageEnum::STATUS_SUCCESS;
     }
@@ -77,7 +77,7 @@ class SageApiService
         $sageRequest->invoiceDescription = $payment->invoice_description;
         $sageRequest->bookingDate = $quote['policy_booking_date'] ? date(env('DATE_FORMAT_ONLY'), strtotime($quote['policy_booking_date'])) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
         $sageRequest->policyBookingDate = $quote['policy_booking_date'] ? date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote['policy_booking_date'])) : Carbon::now()->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
-        $sageRequest->policyExpiryDate = date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote['renewal_expiry_date']));
+        $sageRequest->policyExpiryDate = date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote['policy_expiry_date']));
         $sageRequest->insurerInvoiceDate = date(env('DATE_FORMAT_ONLY'), strtotime($payment->insurer_invoice_date));
 
         if (! empty($paymentSplits)) {
@@ -196,7 +196,7 @@ class SageApiService
                 if ($responseError && $responseError == SageEnum::ERROR_RECORD_DUPLICATE) {
                     $sageCustomerNumber = $customerPayload['customerNumber'];
                 } elseif (isset($response['CustomerNumber'])) {
-                    $sageCustomerNumber = $response['customerNumber'];
+                    $sageCustomerNumber = $response['CustomerNumber'];
                 }
 
                 if ($sageCustomerNumber) {
@@ -222,7 +222,7 @@ class SageApiService
         return $sageCustomerNumber;
     }
 
-    public function verifySageCustomer($customerId, $data = null, $logModal = null, $sageLogArray = [], $totalSteps = 4)
+    public function verifySageCustomer($customerId, $data = null, $logModal = null, $sageLogArray = [], $totalSteps = 4, $advisorId = null)
     {
         $customer = Customer::find($customerId);
         $sageCustomerNumber = false;
@@ -234,7 +234,7 @@ class SageApiService
         if ($quoteEntity) {
             $data['entity'] = $quoteEntity;
             if ($quoteEntity->sage_customer_number) {
-                $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps);
+                $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps, SageEnum::STATUS_SUCCESS, $advisorId);
 
                 return $quoteEntity->sage_customer_number;
             }
@@ -243,7 +243,7 @@ class SageApiService
         if ($customer) {
             $customer->data = ! empty($data) ? $data : [];
             if ($customer->sage_customer_number && ! $quoteEntity) {
-                $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps);
+                $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps, SageEnum::STATUS_SUCCESS, $advisorId);
 
                 return $customer->sage_customer_number;
             } else {
@@ -271,10 +271,10 @@ class SageApiService
 
                 if ($sageCustomerNumber) {
                     if ($isLiveApiCallStep1) {
-                        $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps);
+                        $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps, SageEnum::STATUS_SUCCESS, $advisorId);
                     }
                 } else {
-                    $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps, 'fail');
+                    $this->logSageApiCall($payLoadOptions, $response, $logModal, 1, $totalSteps, SageEnum::STATUS_FAIL, $advisorId);
                 }
             }
         }
@@ -397,16 +397,20 @@ class SageApiService
             $response = '';
             $getingPaymentDetails = $this->getPaymentDetails($request, $extras);
 
+            // Need to update this code after Mirza's Implemenntation
             if ($extras['type'] == SageEnum::PT_SEND_UPDATE) {
                 $sendUpdateLog = SendUpdateLog::where('id', $request->sendUpdateId)->first();
                 $quoteDetails = [
                     'policy_booking_date' => $sendUpdateLog->booking_date,
-                    'renewal_expiry_date' => $sendUpdateLog->expiry_date,
+                    'policy_expiry_date' => $sendUpdateLog->expiry_date,
                     'policy_number' => $sendUpdateLog->policy_number,
                     'transaction_type_id' => $quote->transaction_type_id,
                     'advisor_id' => $sendUpdateLog->advisor_id,
                     'price_vat_applicable' => abs($getingPaymentDetails['payment']->total_price),
                     'price_with_vat' => abs($sendUpdateLog->price_with_vat),
+                    'insly_migrated' => $quote->insly_migrated,
+                    'insurance_provider_id' => $sendUpdateLog->insurance_provider_id,
+                    'booking_filled_by' => $sendUpdateLog->booking_filled_by,
                 ];
 
                 if (isset($getingPaymentDetails['mainLeadDetails'])) {
@@ -472,23 +476,25 @@ class SageApiService
 
                 return ['payment' => $payment, 'splitPayments' => $splitPayments];
             } else {
-                // If we don't have payment details then we fetched it from the Main Lead
-                info('Book Update - Fetching Payment details from Main Lead. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
                 $getQuoteDetails = $this->getQuoteObjectBy($request->quoteType, $request->quoteUuid, 'uuid');
-                $getQuoteDetails->load(['payments' => function ($query) {
-                    $query->whereNull('send_update_log_id');
-                }, 'payments.paymentSplits']);
+                $checkInslyMigratedLead = $this->checkInslyMigratedLead($request);
 
-                $payment = $getQuoteDetails->payments->first();
-                $splitPayments = $payment->paymentSplits;
+                if ($checkInslyMigratedLead) {
+                    info('Book Update - Creating payment details based on the send update - The lead originated from Insly. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
+                    $payment = new Payment();
+                    $splitPayments = collect([new PaymentSplits()]);
 
-                // Most CPD cases have no value then should it set as Credit Note
-                $mainLeadDetails = [
-                    'payment' => [
-                        'insurer_tax_number' => $payment->insurer_tax_number,
-                        'insurer_commmission_invoice_number' => $payment->insurer_commmission_invoice_number,
-                    ],
-                ];
+                } else {
+                    // If we don't have payment details then we fetched it from the Main Lead
+                    info('Book Update - Fetching Payment details from Main Lead. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
+
+                    $getQuoteDetails->load(['payments' => function ($query) {
+                        $query->whereNull('send_update_log_id');
+                    }, 'payments.paymentSplits']);
+
+                    $payment = $getQuoteDetails->payments->first();
+                    $splitPayments = $payment->paymentSplits;
+                }
 
                 $payment->fill([
                     'discount_value' => $extras['send_update_log']->discount,
@@ -516,9 +522,36 @@ class SageApiService
                     'commission_vat' => $payment->commission_vat,
                 ]);
 
-                return ['payment' => $payment, 'splitPayments' => $splitPayments, 'mainLeadDetails' => $mainLeadDetails];
+                $response = ['payment' => $payment, 'splitPayments' => $splitPayments];
+
+                if (! $checkInslyMigratedLead) {
+                    // Most CPD cases have no value then should it set as Credit Note - Need to verify this with Denber
+                    $mainLeadDetails = [
+                        'payment' => [
+                            'insurer_tax_number' => $payment->insurer_tax_number,
+                            'insurer_commmission_invoice_number' => $payment->insurer_commmission_invoice_number,
+                        ],
+                    ];
+
+                    $response['mainLeadDetails'] = $mainLeadDetails;
+                }
+
+                return $response;
             }
         }
+    }
+
+    public function checkInslyMigratedLead($request)
+    {
+        $inslyMigrated = false;
+        if ($request->inslyMigrated) {
+            $inslyMigrated = true;
+        } else {
+            $getQuoteDetails = $this->getQuoteDetailObject($request->quoteType, $request->quoteRefId);
+            $inslyMigrated = ! empty($getQuoteDetails->insly_id) && $getQuoteDetails->insly_id != null;
+        }
+
+        return $inslyMigrated;
     }
 
     private function handleSendUpdateCalls($quote, $sageRequestPayload, $payment, $splitPayments, $extras)
@@ -612,6 +645,8 @@ class SageApiService
                 'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
                 'extras' => [
                     'option_id' => $extras['option'] ?? null,
+                    'authDetails' => $extras['authDetails'] ?? [],
+
                 ],
             ]);
 
@@ -628,6 +663,7 @@ class SageApiService
                     'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
                     'extras' => [
                         'option_id' => $extras['option'] ?? null,
+                        'authDetails' => $extras['authDetails'] ?? [],
                     ],
                 ]);
             }
@@ -650,6 +686,7 @@ class SageApiService
                 'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
                 'extras' => [
                     'option_id' => $extras['option'] ?? null,
+                    'authDetails' => $extras['authDetails'] ?? [],
                 ],
             ]);
 
@@ -667,6 +704,7 @@ class SageApiService
                 'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
                 'extras' => [
                     'option_id' => $extras['option'] ?? null,
+                    'authDetails' => $extras['authDetails'] ?? [],
                 ],
             ]);
 
@@ -684,6 +722,9 @@ class SageApiService
                 'requestType' => SageEnum::SRT_CREATE_AR_DISC_INV,
                 'sendUpdateLog' => $extras['send_update_log'] ?? [],
                 'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
+                'extras' => [
+                    'authDetails' => $extras['authDetails'] ?? [],
+                ],
             ]);
 
             $totalSteps = $startingStep == 8 ? 13 : 15;
@@ -720,12 +761,20 @@ class SageApiService
         $checkAPInvoices = [SageEnum::SRT_CREATE_AP_PREM_INV, SageEnum::SRT_CREATE_AP_SPPAY_INV];
 
         $isOnlyDiscountReversal = false;
+        $isOnlyDiscount = false;
         $upFrontTotalSteps = 21;
         $nonUpFrontTotalSteps = 23;
+
         if (in_array(SageEnum::SRT_CREATE_AR_DISC_INV, $reverseSendUpdateTypes)) {
             $isOnlyDiscountReversal = $sendUpdateLog && (int) $sendUpdateLog->discount == 0;
             $upFrontTotalSteps = ($isOnlyDiscountReversal) ? 18 : 21;
             $nonUpFrontTotalSteps = ($isOnlyDiscountReversal) ? 20 : 23;
+        } else {
+            if ($sendUpdateLog->discount > 0) {
+                $isOnlyDiscount = true;
+                $upFrontTotalSteps = 17;
+                $nonUpFrontTotalSteps = 19;
+            }
         }
 
         foreach ($reverseSendUpdateTypes as $reverseSendUpdateTypeKey => $reverseSendUpdateType) {
@@ -747,6 +796,7 @@ class SageApiService
                         'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkARInvoices)->first() ?? [],
                         'extras' => [
                             'option_id' => $extras['option'] ?? null,
+                            'authDetails' => $extras['authDetails'] ?? [],
                         ],
                     ]);
                 }
@@ -766,6 +816,7 @@ class SageApiService
                         'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkAPInvoices)->first() ?? [],
                         'extras' => [
                             'option_id' => $extras['option'] ?? null,
+                            'authDetails' => $extras['authDetails'] ?? [],
                         ],
                     ]);
                 }
@@ -790,6 +841,7 @@ class SageApiService
                         'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkARInvoices)->first() ?? [],
                         'extras' => [
                             'option_id' => $extras['option'] ?? null,
+                            'authDetails' => $extras['authDetails'] ?? [],
                         ],
                     ]);
                 }
@@ -812,6 +864,7 @@ class SageApiService
                         'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkAPInvoices)->first() ?? [],
                         'extras' => [
                             'option_id' => $extras['option'] ?? null,
+                            'authDetails' => $extras['authDetails'] ?? [],
                         ],
                     ]);
                 }
@@ -834,8 +887,29 @@ class SageApiService
                     'requestType' => SageEnum::SRT_REV_CORR_AR_DIS_INV,
                     'sendUpdateLog' => $extras['send_update_log'] ?? [],
                     'reversalInvoice' => collect($invoicesForReverse)->where('sage_request_type', SageEnum::SRT_CREATE_AR_DISC_INV)->first() ?? [],
+                    'extras' => [
+                        'authDetails' => $extras['authDetails'] ?? [],
+                    ],
                 ]);
             }
+        }
+
+        if ($isOnlyDiscount) {
+            info('Book Update - Creating AR Discount Invoice and mark as posted');
+            $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
+                'iterator' => 0,
+                'lastIteration' => 2,
+                'startingStep' => $startingStep,
+                'totalSteps' => $totalSteps,
+                'entryType' => SageEnum::SCT_STRAIGHT,
+                'requestType' => SageEnum::SRT_CREATE_AR_DISC_INV,
+                'sendUpdateLog' => $extras['send_update_log'] ?? [],
+                'reversalInvoice' => [],
+                'extras' => [
+                    'authDetails' => $extras['authDetails'] ?? [],
+                    'only_correction' => true,
+                ],
+            ]);
         }
 
         $response = ['status' => $_REQUEST['status'] ?? true, 'message' => $_REQUEST['message'] ?? 'Invoices reversed and corrected successfully'];
@@ -859,6 +933,7 @@ class SageApiService
         $sageEntryType = $extraParams['entryType'];
         $arrayKey = isset($extraParams['arrayKey']) ? $extraParams['arrayKey'] : 0;
         $sageAPIsParams = SagePayloadFactory::handleSageAPIsParms($extraParams['requestType'], $sageEntryType);
+
         if (! isset($extraParams['recursiveCall']) && ($extraParams['startingStep'] < array_key_first($sageLogArray))) {
             $sageLogKey =
             $extraParams['startingStep'] = array_key_first($sageLogArray);
@@ -930,7 +1005,10 @@ class SageApiService
 
                 default:
                     if (in_array($extraParams['requestType'], [SageEnum::SRT_CREATE_AR_DISC_INV, SageEnum::SRT_REV_CORR_AR_DIS_INV])) {
-                        $payLoadOptions = SagePayloadFactory::{$methodName}($requestParms, $sageEntryType, SageEnum::SCT_DISCOUNT, ['sage_request_type' => $extraParams['requestType']]);
+                        $payLoadOptions = SagePayloadFactory::{$methodName}($requestParms, $sageEntryType, SageEnum::SCT_DISCOUNT, [
+                            'sage_request_type' => $extraParams['requestType'],
+                            'extras' => $extraParams['extras'] ?? [],
+                        ]);
                     } else {
                         if ($methodName == 'createPaymontRecieptOneInvoice') {
                             $payLoadOptions = SagePayloadFactory::{$methodName}($quote, $sageRequestPayload->customerId, $extraParams['payment'], $extraParams['splitPayments'], true);
@@ -980,7 +1058,7 @@ class SageApiService
                 $sageResponse : $resp;
 
             if ($conditionCheck) {
-                $this->logSageApiCall($payLoadOptions, $respParams, $quoteObject, $extraParams['startingStep'], $extraParams['totalSteps'], SageEnum::STATUS_FAIL);
+                $this->logSageApiCall($payLoadOptions, $respParams, $quoteObject, $extraParams['startingStep'], $extraParams['totalSteps'], SageEnum::STATUS_FAIL, $extraParams['extras']['authDetails']->id);
 
                 $responseMessage = isset($respParams['error']['message']['value']) ?
                     $respParams['error']['message']['value'] : $sageAPIsParams['extraDetails'][$methodName]['errorMessage'];
@@ -992,7 +1070,7 @@ class SageApiService
                 return $_REQUEST;
             } else {
                 if ($isLiveApiCall) {
-                    $this->logSageApiCall($payLoadOptions, $respParams, $quoteObject, $extraParams['startingStep'], $extraParams['totalSteps']);
+                    $this->logSageApiCall($payLoadOptions, $respParams, $quoteObject, $extraParams['startingStep'], $extraParams['totalSteps'], SageEnum::STATUS_SUCCESS, $extraParams['extras']['authDetails']->id);
                 }
             }
         }
@@ -1013,7 +1091,7 @@ class SageApiService
 
         if ($isFollowUpCondition) {
             if ($isLiveApiCall) {
-                $this->logSageApiCall($payLoadOptions, $sageResponse, $quoteObject, $extraParams['startingStep'], $extraParams['totalSteps']);
+                $this->logSageApiCall($payLoadOptions, $sageResponse, $quoteObject, $extraParams['startingStep'], $extraParams['totalSteps'], SageEnum::STATUS_SUCCESS, $extraParams['extras']['authDetails']->id);
             }
 
             if (in_array($extraParams['requestType'], [
@@ -1068,7 +1146,7 @@ class SageApiService
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, $recursiveCallData);
 
         } else {
-            $this->logSageApiCall($payLoadOptions, $sageResponse, $quoteObject, $extraParams['startingStep'], $extraParams['totalSteps'], SageEnum::STATUS_FAIL);
+            $this->logSageApiCall($payLoadOptions, $sageResponse, $quoteObject, $extraParams['startingStep'], $extraParams['totalSteps'], SageEnum::STATUS_FAIL, $extraParams['extras']['authDetails']->id);
 
             $responseMessage = isset($sageResponse['error']['message']['value']) ?
                     $sageResponse['error']['message']['value'] : $sageAPIsParams['extraDetails'][$methodName]['errorMessage'];
@@ -1114,7 +1192,7 @@ class SageApiService
             $this->sageBatchNumber = $postedResponse['BatchNumber'];
 
             if ($isLiveApiCall) {
-                $this->logSageApiCall(${$processDetails['methodName']}, $postedResponse, $quoteObject, $extras['startingStep'], $extras['totalSteps']); // 6
+                $this->logSageApiCall(${$processDetails['methodName']}, $postedResponse, $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_SUCCESS, $extras['extras']['authDetails']->id);
                 info('Book Update - Sage API Call - Method Name ('.$processDetails['methodName'].') - '.(! empty($extras['sendUpdateLog']) ? 'SendUpdateUUID' : 'QuoteUUID').': '.$quoteObject->uuid);
             }
 
@@ -1159,7 +1237,7 @@ class SageApiService
                         $invoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
                         $invoicePaymentSchedule->amtdue = $amountDue;
                         $invoicePaymentSchedule->amtduehc = $amountDue;
-                        $invoicePaymentSchedule->audtorg = $this->sageCompany;
+                        $invoicePaymentSchedule->audtorg = $this->sageDBName;
                     }
                 }
 
@@ -1209,7 +1287,7 @@ class SageApiService
                 $postedResponse['entry_type'] = $processDetails['entryType'];
 
                 if (($isARInvoicesCalls && isset($postedResponse['error'])) || (! $isARInvoicesCalls && $resp['status'] == false)) {
-                    $this->logSageApiCall($postedResponse, (($isARInvoicesCalls) ? $resp : $postedResponse), $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_FAIL);
+                    $this->logSageApiCall($postedResponse, (($isARInvoicesCalls) ? $resp : $postedResponse), $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_FAIL, $extras['extras']['authDetails']->id);
                     $responseMessage = ($isARInvoicesCalls && isset(json_decode($resp, true)['error']['message']['value'])) ?
                         json_decode($resp, true)['error']['message']['value'] : 'Error while making '.$processDetails['invoiceType'].' Split payments patch to sage';
                     $returnMessage['status'] = false;
@@ -1223,12 +1301,12 @@ class SageApiService
                 }
 
                 if ($isLiveApiCall) {
-                    $this->logSageApiCall($postedResponse, (($isARInvoicesCalls) ? $resp : $postedResponse), $quoteObject, $extras['startingStep'], $extras['totalSteps']);
+                    $this->logSageApiCall($postedResponse, (($isARInvoicesCalls) ? $resp : $postedResponse), $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_SUCCESS, $extras['extras']['authDetails']->id);
                 }
             }
 
         } else {
-            $this->logSageApiCall(${$processDetails['methodName']}, $postedResponse, $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_FAIL);
+            $this->logSageApiCall(${$processDetails['methodName']}, $postedResponse, $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_FAIL, $extras['extras']['authDetails']->id);
 
             $responseMessage = isset($postedResponse['error']['message']['value']) ?
                     $postedResponse['error']['message']['value'] : $processDetails['invoiceType'].' Split payment failed from Sage';
@@ -1484,35 +1562,12 @@ class SageApiService
 
         info('SAGE API:  Prepare Patch payload for Commission Spits  for '.$quote->uuid);
 
-        /* Add Vat on commission to the first Installment of commission */
-        /*
-        $vatOnCommission = floatval($payment->commission_vat);
-        $commission = floatval($payment->commission);
-        $commissionWithoutVat = ($commission - $vatOnCommission);
-        $commissionSplit = $commissionWithoutVat > 0 ? $commissionWithoutVat / count($paymentSplits) : 0;
-        $commissionSplitSumWithoutLastSplit = 0;
-        */
-
         foreach ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'] as $key => $value) {
             $paymentSplit = $paymentSplits[$key];
             $commissionSplit = $paymentSplit['commission_vat_applicable'];
             $vatOnCommission = $paymentSplit['commission_vat'];
 
             $dueCommissionSplitAmount = roundNumber(roundNumber($commissionSplit) + roundNumber($vatOnCommission));
-
-            /*if ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['PaymentNumber'] == 1) {
-            $dueCommissionSplitAmount = roundNumber(roundNumber($commissionSplit) + roundNumber($vatOnCommission));
-            }*/
-            /*
-             to prevent difference in amount due to rounding number, sum all the dueCommissionSplitAmount except the last one,
-             and then subtract that amount from the total commission with vat and use the result as dueAmount for last installment
-            */
-
-            /*if ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['PaymentNumber'] == count($paymentSplits)) {
-                $dueCommissionSplitAmount = floatval(sprintf('%.2f', $commission - $commissionSplitSumWithoutLastSplit));
-            } else {
-                $commissionSplitSumWithoutLastSplit += $dueCommissionSplitAmount;
-            }*/
 
             $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplit['due_date'])), $sageRequest->insurerInvoiceDate);
             // for upfront and split, due date should always be insurer invoice date for all child payment, for other frequencies, it should be the due date of the first child payment
@@ -1539,10 +1594,11 @@ class SageApiService
         $postedResponse['endPoint'] = $url;
         $postedResponse['payload'] = $patchPayload;
         if (isset($postedResponse['error'])) {
+            info('SAGE API: '.$quote->uuid.' : AR Patch Request failed '.json_encode($postedResponse['error']));
             $errorMessage = 'Error while making ar2 split payments patch to sage';
             $message = 'AR Patch Request failed';
 
-            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $patchPayload, $patchPayload, 3, 13, 'fail']);
+            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $postedResponse, $postedResponse, 3, 13, 'fail']);
         }
         if ($isLiveApiCallStep3) {
             $this->logSageApiCall($postedResponse, $postedResponse, $quote, 3, 13);
@@ -1689,7 +1745,8 @@ class SageApiService
             }
         } else {
             info('  ########## skipping of createAPInvoicePrem for : '.$quote->code.' dye to Zero Pricing ########## ');
-        }info('  ########## End of Upfront createAPInvoicePrem for : '.$quote->code.' ########## ');
+        }
+        info('  ########## End of Upfront createAPInvoicePrem for : '.$quote->code.' ########## ');
 
         $returnMessage['status'] = true;
         $returnMessage['message'] = 'AP Premium invoice created on sage';
@@ -1739,7 +1796,7 @@ class SageApiService
                     $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
                     $aPInvoicePaymentSchedule->amtdue = $dueAmount;
                     $aPInvoicePaymentSchedule->amtduehc = $dueAmount;
-                    $aPInvoicePaymentSchedule->audtorg = $this->sageCompany;
+                    $aPInvoicePaymentSchedule->audtorg = $this->sageDBName;
                 }
             } else {
                 $errorMessage = 'Error while getting split payment schedule from sage';
@@ -1762,6 +1819,7 @@ class SageApiService
             $postedResponse['endPoint'] = $resp['url'] ?? $postedResponse['endPoint'] ?? null;
             $postedResponse['payload'] = $aPInvoicePaymentsSchedule;
             if (! $postedResponse['response']['status']) {
+                info('SAGE API: '.$quote->uuid.' : AP Patch Request failed '.json_encode($postedResponse['response']));
                 $errorMessage = 'Error while making AP split payments patch to sage';
                 $message = 'AP Patch Request failed';
 
@@ -1924,11 +1982,21 @@ class SageApiService
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
         $isTotalPriceZero = $payment->total_price == 0;
+
+        /* Start: Temporary code for historic data to allow book polciy after m2 launch */
+        $isQuoteFallUnderSkippableCriteria = $this->skipApplyPrepaymentsForSpecificLeads($quote, $payment, $paymentSplits);
+        if ($isQuoteFallUnderSkippableCriteria['status']) {
+            return $isQuoteFallUnderSkippableCriteria;
+        }
+        /* End: Temporary code for historic data to allow book polciy after m2 launch */
+
         /* applyPaymentInvoices */
         $isTransactionPaidAndFrequencyUpfront = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::UPFRONT;
 
         if ($isTransactionPaidAndFrequencyUpfront && ! $isTotalPriceZero) {
             return $this->applyUpfrontPaymentInvoices($sageRequestDataArray);
+        } elseif ($isTotalPriceZero) {
+            info('  ########## applyUpfrontPaymentInvoices skipped  for : '.$quote->code.' due to zero price ########## ');
         }
 
         $isFrequencySplitAndFirstChildPaymentPaid = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::SPLIT_PAYMENTS;
@@ -2025,7 +2093,8 @@ class SageApiService
             $message = 'aRPostReceipts failed';
 
             return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostReceipts, $postedResponse, $currentStep, $totalSteps, 'fail']);
-        }info('SAGE API: '.$quote->uuid.' : aRPostReceipts completed successfully');
+        }
+        info('SAGE API: '.$quote->uuid.' : aRPostReceipts completed successfully');
         if ($isLiveApiCallStep15) {
             $this->logSageApiCall($aRPostReceipts, $postedResponse, $quote, $currentStep, $totalSteps);
         }
@@ -2224,12 +2293,12 @@ class SageApiService
         [$quote, $message, $errorMessage, $payload, $response, $currentStep, $totalSteps, $status] = $logDataArray;
 
         Log::error("SAGE API: $quote->uuid : $message");
-        Log::error($errorMessage);
+        Log::error("SAGE API: $quote->uuid : $errorMessage");
 
         $returnMessage['message'] = $errorMessage;
         $responseArray = $this->convertResponseToArray($response);
         $sageErrorMessage = $responseArray['error']['message']['value'] ?? $responseArray['error'] ?? null;
-        Log::error("SAGE API : $sageErrorMessage");
+        Log::error("SAGE API : $quote->uuid  : ".json_encode($sageErrorMessage));
         $returnMessage['error'] = $sageErrorMessage;
 
         if ($storeSageApiLog) {
@@ -2245,5 +2314,45 @@ class SageApiService
         }
 
         return json_decode($response, true);
+    }
+
+    public function skipApplyPrepaymentsForSpecificLeads($quote, $payment, $paymentSplits)
+    {
+        $returnMessage = ['status' => false, 'message' => null, 'error' => null];
+        $startDate = Carbon::parse('2024-04-23')->startOfDay();
+        $endDate = Carbon::parse('2024-08-15')->endOfDay();
+        $quoteCreatedAt = Carbon::parse($quote->created_at);
+
+        $isQuoteCreatedWithInDateRange = $quoteCreatedAt->between($startDate, $endDate);
+        $isPaymentMethodCreditApproval = $payment->payment_methods_code == PaymentMethodsEnum::CreditApproval;
+        $isPaymentFrequencySplitPayment = $payment->frequency == PaymentFrequency::SPLIT_PAYMENTS;
+
+        if ($isQuoteCreatedWithInDateRange && ! $isPaymentMethodCreditApproval) {
+            if ($isPaymentFrequencySplitPayment) {
+                $paymentSplitsWithNoSageReceipt = $paymentSplits->whereNull('sage_reciept_id')->count();
+                if ($paymentSplitsWithNoSageReceipt) {
+                    info('  ########## applyUpfrontPaymentInvoices skipped  for : '.$quote->code.' due to sage receipt not generated on sage ########## ');
+                    $returnMessage['status'] = true;
+                    $returnMessage['message'] = 'Apply Prepayment skipped due to sage receipt not generated on sage';
+
+                    return $returnMessage;
+                }
+
+                return $returnMessage;
+            } else {
+                $firstPaymentSplitWithNoSageReceipt = $paymentSplits->where('sr_no', 1)->whereNull('sage_reciept_id')->count();
+                if ($firstPaymentSplitWithNoSageReceipt) {
+                    info('  ########## applyUpfrontPaymentInvoices skipped  for : '.$quote->code.' due to sage receipt not generated on sage ########## ');
+                    $returnMessage['status'] = true;
+                    $returnMessage['message'] = 'Apply Prepayment skipped due to sage receipt not generated on sage';
+
+                    return $returnMessage;
+                }
+            }
+
+            return $returnMessage;
+        }
+
+        return $returnMessage;
     }
 }

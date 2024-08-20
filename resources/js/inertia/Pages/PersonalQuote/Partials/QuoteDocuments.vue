@@ -168,7 +168,12 @@ const uploadFile = (doc, filesWithInfo, memberId) => {
       },
     });
 };
-
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 const isEN = computed(() => {
   return (
     isSendUpdatePage &&
@@ -234,6 +239,7 @@ const submitToCustomer = () => {
     sendUpdateId: props.sendUpdateLog.id,
     quoteType: props.quoteType,
     action: sendUpdateStatusEnum?.ACTION_SUC,
+    isEmailSent: props.sendUpdateLog.is_email_sent,
   };
   axios
     .post(url, data)

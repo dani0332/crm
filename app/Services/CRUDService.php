@@ -2,15 +2,21 @@
 
 namespace App\Services;
 
+use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\Kyc;
 use App\Enums\LeadSourceEnum;
+use App\Enums\LookupsEnum;
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Ken;
 use App\Facades\Marshall;
@@ -18,19 +24,25 @@ use App\Jobs\CammyJob;
 use App\Jobs\CarLost\CarLostStatusRejected;
 use App\Jobs\IntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
+use App\Models\AML;
 use App\Models\ApplicationStorage;
 use App\Models\CarLostQuoteLog;
+use App\Models\Entity;
 use App\Models\GenericModel;
+use App\Models\Lookup;
 use App\Models\PaymentAction;
 use App\Models\QuoteStatusLog;
+use App\Models\QuoteType;
 use App\Models\SendUpdateLog;
 use App\Models\User;
+use App\Repositories\CustomerMembersRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use PDF;
 
 class CRUDService extends BaseService
 {
@@ -681,114 +693,463 @@ class CRUDService extends BaseService
 
     public function scoreBreakdown($quote, $type)
     {
-        $scoreList = [];
-        $customerScore = 0;
-        if ($quote->payments->first() && isset($quote->customer)) {
-            $paymentTopScore = 0;
-            $paymentMethod = '';
-            $paymentAuthorized = 0;
+        if ($type == 'business') {
+            return $this->scoreEntityBreakdown($quote);
+        } else {
+            $scoreList = [];
+            $customerScore = 0;
+            if ($quote->payments->first() && isset($quote->customer)) {
+                $paymentTopScore = 0;
+                $paymentMethod = '';
+                $paymentAuthorized = 0;
 
-            foreach ($quote->payments as $payment) {
-                $currentScore = in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_THREE_RATING) ? 3 : (in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_TWO_RATING) ? 2 : 2);
-                if ($currentScore > $paymentTopScore) {
-                    $paymentTopScore = $currentScore;
-                    $paymentMethod = $payment->payment_methods_code;
+                foreach ($quote->payments as $payment) {
+                    $currentScore = in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_THREE_RATING) ? 3 :
+                        (in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_TWO_RATING) ? 2 :
+                            (in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_ONE_RATING) ? 1 : 1));
+                    if ($currentScore > $paymentTopScore) {
+                        $paymentTopScore = $currentScore;
+                        if ($payment->payment_methods_code === PaymentMethodsEnum::Cash) {
+                            $paymentMethod = 'Cash';
+                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::BankTransfer) {
+                            $paymentMethod = 'Bank Transfer';
+                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::CreditCard) {
+                            $paymentMethod = 'Credit Card';
+                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::Cheque) {
+                            $paymentMethod = 'Cheque';
+                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::PostDatedCheque) {
+                            $paymentMethod = 'PostDatedCheque';
+                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::InsurerPayment) {
+                            $paymentMethod = 'Insurer Payment';
+                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::PartialPayment) {
+                            $paymentMethod = 'Partial Payment';
+                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::MultiplePayment) {
+                            $paymentMethod = 'Multiple Payment';
+                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::CreditApproval) {
+                            $paymentMethod = 'Credit Approval';
+                        } elseif ($payment->payment_methods_code === PaymentMethodsEnum::ProformaPaymentRequest) {
+                            $paymentMethod = 'Proforma Payment Request';
+                        } else {
+                            $paymentMethod = 'Insure Now Pay Later';
+                        }
+                    }
+                    if ($payment->premium_authorized != null) {
+                        $paymentAuthorized += $payment->premium_authorized;
+                    }
                 }
-                if ($payment->premium_authorized != null) {
-                    $paymentAuthorized += $payment->premium_authorized;
+                $quoteType = QuoteType::where('code', ucfirst($type))->first();
+                $amlStatus = (AMLService::checkAMLStatusFailed($quoteType->id, $quote->id));
+                $amlLogsValue = ['score' => 1, 'value' => 'No'];
+                if ($amlStatus == true) {
+                    $amlLogsValue = ['score' => 3, 'value' => 'Yes'];
                 }
+                if (isset($quote->customer->customerDetail)) {
+                    $customerDetail = $quote->customer->customerDetail;
+                    $jobType = Lookup::where(['key' => LookupsEnum::PROFESSIONAL_TITLE, 'code' => $customerDetail->job_title])->first();
+                    $jobTypeValue = $customerDetail->job_title;
+                    if (isset($jobType->text)) {
+                        $jobTypeValue = $jobType->text;
+                    }
+                    $jobScore = in_array(strtolower($customerDetail->job_title), Kyc::PROFESSION_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->job_title), Kyc::PROFESSION_TWO_RATING) ? 2 : 1);
+                    $scoreList[] = ['score' => $jobScore, 'text' => 'Profession - Professional Job Title', 'value' => $jobTypeValue];
+                    $customerScore += $jobScore;
+
+                    $residentScore = in_array(strtolower($customerDetail->residential_status), Kyc::RESIDENT_STATUS_THREE_RATING) ? 3 : 1;
+                    $residentType = Lookup::where(['key' => LookupsEnum::RESIDENT_STATUS, 'code' => $customerDetail->residential_status])->first();
+                    $residentTypeValue = $customerDetail->residential_status;
+                    if (isset($residentType->text)) {
+                        $residentTypeValue = $residentType->text;
+                    }
+                    $scoreList[] = ['score' => $residentScore, 'text' => 'Resident Status', 'value' => $residentTypeValue];
+                    $customerScore += $residentScore;
+
+                    if ($customerDetail->in_sanction_list == 1) {
+                        $text = 'Yes';
+                        $score = 3;
+                    } else {
+                        $text = 'No';
+                        $score = 1;
+                    }
+                    $scoreList[] = ['score' => $score, 'text' => 'Is the Natural Person listed in any Sanction/OOL/SIP list?', 'value' => $text];
+                    $customerScore += $score;
+
+                    $adverseMedia = $this->getAMLcompliance($quote->id, 'in_adverse_media', $amlLogsValue);
+                    $scoreList[] = ['score' => $adverseMedia['score'], 'text' => 'Is the Natural Person listed in any adverse media?', 'value' => $adverseMedia['value']];
+                    $customerScore += $adverseMedia['score'];
+
+                    // any PEP List/ Adverse Media not dynamic yet
+                    $ownerPep = $this->getAMLcompliance($quote->id, 'is_owner_pep', $amlLogsValue);
+                    $scoreList[] = ['score' => $ownerPep['score'], 'text' => 'Is the Natural Person listed in PEP/FPEP/HIO?', 'value' => $ownerPep['value']];
+                    $customerScore += $ownerPep['score'];
+
+                    $tenScore = in_array(strtolower($customerDetail->customer_tenure), Kyc::TENURE_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->customer_tenure), Kyc::TENURE_TWO_RATING) ? 2 : 1);
+                    $tenureValue = $tenScore == 1 ? '3 years and above' : ($tenScore == 2 ? 'Less than two years' : 'Less than 6 months');
+                    $scoreList[] = ['score' => $tenScore, 'text' => 'Tenure of Relationship in years', 'value' => $tenureValue];
+                    $customerScore += $tenScore;
+                    $empScore = in_array(strtolower($customerDetail->employment_sector), Kyc::EMPLOYMENT_SECTOR_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->employment_sector), Kyc::EMPLOYMENT_SECTOR_TWO_RATING) ? 2 : 1);
+                    $empType = Lookup::where(['key' => LookupsEnum::EMPLOYMENT_SECTOR, 'code' => $customerDetail->employment_sector])->first();
+                    $empTypeValue = $customerDetail->employment_sector;
+                    if (isset($empType->text)) {
+                        $empTypeValue = $empType->text;
+                    }
+                    $scoreList[] = ['score' => $empScore, 'text' => 'Employment Sector', 'value' => $empTypeValue];
+                    $customerScore += $empScore;
+
+                    if ($customerDetail->is_partner == 1) {
+                        $text = 'Yes';
+                        $score = 3;
+                    } else {
+                        $text = 'No';
+                        $score = 1;
+                    }
+                    $scoreList[] = ['score' => $score, 'text' => 'Is the Natural Person an Owner/Shareholder/Partner in any Organization?', 'value' => $text];
+                    $customerScore += $score;
+
+                    // Nationality
+                    if (isset($quote->customer->nationality)) {
+                        $nationalityScore = in_array(strtolower($quote->customer->nationality->country_name), Kyc::COUNTRY_NATIONALITY_FOUR_RATING) ? 4 : 1;
+                        $scoreList[] = ['score' => $nationalityScore, 'text' => 'Nationality', 'value' => $quote->customer->nationality->country_name];
+                        $customerScore += $nationalityScore;
+                    }
+
+                    if ($customerDetail->dual_nationality == 1) {
+                        $text = 'Yes';
+                        $score = 3;
+                    } else {
+                        $text = 'No';
+                        $score = 1;
+                    }
+                    $scoreList[] = ['score' => $score, 'text' => 'Does the Natural Person hold “Dual Nationality”?', 'value' => $text];
+                    $customerScore += $score;
+
+                    if ($customerDetail->deal_sanction_list == 1) {
+                        $text = 'Yes';
+                        $score = 3;
+                    } else {
+                        $text = 'No';
+                        $score = 1;
+                    }
+                    $scoreList[] = ['score' => $score, 'text' => 'Does the Natural Person intend to provide professional services in any sanctions-listed country/ies?', 'value' => $text];
+                    $customerScore += $score;
+
+                    if ($customerDetail->is_operation_high_risk == 1) {
+                        $text = 'Yes';
+                        $score = 3;
+                    } else {
+                        $text = 'No';
+                        $score = 1;
+                    }
+
+                    $scoreList[] = ['score' => $score, 'text' => 'Is the Natural Person controlling/involved in any business listed in High-Risk Countries?', 'value' => $text];
+                    $customerScore += $score;
+
+                    // Product type
+                    $customerScore += 1; // For products all product have 1
+                    $scoreList[] = ['score' => 1, 'text' => 'Types of Products', 'value' => $type];
+                    if (isset($customerDetail->premium_tenure)) {
+                        $transactionVolumesScore = in_array(strtolower($customerDetail->premium_tenure), Kyc::PREMIUM_TENURE_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->premium_tenure), Kyc::PREMIUM_TENURE_TWO_RATING) ? 2 : 1);
+                        $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Premium Tenure', 'value' => Kyc::PREMIUM_TENURE[$customerDetail->premium_tenure]];
+                        $customerScore += $transactionVolumesScore;
+                    }
+                    // Payment amount Transaction value / Premium (AED)
+                    $paymentScore = ($paymentAuthorized >= 1000000) ? 3 : (($paymentAuthorized >= 250001 && $paymentAuthorized <= 1000000) ? 2 : 1);
+                    $paymentAuthorizedValue = $paymentScore == 3 ? 'Above AED 1,000,000' : ($paymentScore == 2 ? 'AED 250,001 to AED 1,000,000' : 'Upto AED 250,000');
+                    $scoreList[] = ['score' => $paymentScore, 'text' => 'Transaction Value', 'value' => $paymentAuthorizedValue];
+                    $customerScore += $paymentScore;
+                    if (isset($customerDetail->transaction_pattern)) {
+                        $transactionVolumesScore = in_array(strtolower($customerDetail->transaction_pattern), Kyc::TRANSACTION_PATTERN_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->transaction_pattern), Kyc::TRANSACTION_PATTERN_ZERO_RATING) ? 0 : 1);
+                        $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Transaction Pattern changes', 'value' => Kyc::TRANSACTION_PATTERN[$customerDetail->transaction_pattern]];
+                        $customerScore += $transactionVolumesScore;
+                    }
+                    // payment mode
+                    $customerScore += $paymentTopScore;
+                    $scoreList[] = ['score' => $paymentTopScore, 'text' => 'Payment Mode', 'value' => $paymentMethod];
+                    if (isset($customerDetail->mode_of_delivery)) {
+                        $deliveryModeScore = in_array(strtolower($customerDetail->mode_of_delivery), Kyc::MODE_OF_DELIVERY_THREE_RATING) ? 3 : 1;
+                        $scoreList[] = ['score' => $deliveryModeScore, 'text' => 'Delivery Channel', 'value' => Kyc::MODE_OF_DELIVERY[$customerDetail->mode_of_delivery]];
+                        $customerScore += $deliveryModeScore;
+                    }
+
+                    $contactScore = '';
+                    $modTypeValue = '';
+                    if (isset($customerDetail->mode_of_contact)) {
+                        $contactScore = in_array(strtolower($customerDetail->mode_of_contact), Kyc::MODE_OF_CONTACT_THREE_RATING) ? 3 : 1;
+                        $modType = Lookup::where(['key' => LookupsEnum::MODE_OF_CONTACT, 'code' => $customerDetail->mode_of_contact])->first();
+                        $modTypeValue = $customerDetail->mode_of_contact;
+                        if (isset($modType->text)) {
+                            $modTypeValue = $modType->text;
+                        }
+                    }
+                    $scoreList[] = ['score' => $contactScore, 'text' => 'Mode Of Contact', 'value' => $modTypeValue];
+                    $customerScore += $contactScore;
+                }
+
+                return ['total' => $customerScore, 'score_list' => $scoreList];
             }
-
-            if (isset($quote->customer->customerDetail)) {
-                $customerDetail = $quote->customer->customerDetail;
-                $jobScore = in_array(strtolower($customerDetail->job_title), Kyc::PROFESSION_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->job_title), Kyc::PROFESSION_TWO_RATING) ? 2 : 1);
-                $scoreList[] = ['score' => $jobScore, 'text' => 'Profession - Professional Job Title', 'value' => str_replace('-', ' ', $customerDetail->job_title)];
-                $customerScore += $jobScore;
-
-                // Nationality
-                if (isset($quote->customer->nationality)) {
-                    $nationalityScore = in_array(strtolower($quote->customer->nationality->country_name), Kyc::COUNTRY_NATIONALITY_FOUR_RATING) ? 4 : 1;
-                    $scoreList[] = ['score' => $nationalityScore, 'text' => 'Nationality', 'value' => $quote->customer->nationality->country_name];
-                    $customerScore += $nationalityScore;
-                }
-                // Product type
-                $customerScore += 1; // For products all product have 1
-                $scoreList[] = ['score' => 1, 'text' => 'Product -Insurance Type', 'value' => $type];
-
-                // Payment amount Transaction value / Premium (AED)
-                $paymentScore = ($paymentAuthorized >= 100001) ? 3 : (($paymentAuthorized >= 55001 && $paymentAuthorized <= 100000) ? 2 : 1);
-                $scoreList[] = ['score' => $paymentScore, 'text' => 'Transaction value / Premium (AED)', 'value' => $paymentAuthorized];
-                $customerScore += $paymentScore;
-                // payment mode
-                $customerScore += $paymentTopScore;
-                $scoreList[] = ['score' => $paymentTopScore, 'text' => 'Mode of Payment', 'value' => $paymentMethod];
-
-                $residentScore = in_array(strtolower($customerDetail->residential_status), Kyc::RESIDENT_STATUS_THREE_RATING) ? 3 : 1;
-                $scoreList[] = ['score' => $residentScore, 'text' => 'Resident Status', 'value' => preg_replace('/[A-Z]/', ' '.'$0', $customerDetail->residential_status)];
-                $customerScore += $residentScore;
-
-                $scoreList[] = ['score' => 1, 'text' => 'Transaction Volume', 'value' => 1];
-                $customerScore += 1; // payment volume for future use
-
-                $deliveryModeScore = in_array(strtolower($customerDetail->mode_of_delivery), Kyc::MODE_OF_DELIVERY_THREE_RATING) ? 3 : 1;
-                $scoreList[] = ['score' => $deliveryModeScore, 'text' => 'Mode Of Delivery', 'value' => Kyc::MODE_OF_DELIVERY[$customerDetail->mode_of_delivery]];
-                $customerScore += $deliveryModeScore;
-
-                $contactScore = in_array(strtolower($customerDetail->mode_of_contact), Kyc::MODE_OF_CONTACT_THREE_RATING) ? 3 : 1;
-                $scoreList[] = ['score' => $contactScore, 'text' => 'Mode Of Contact', 'value' => preg_replace('/[A-Z]/', ' '.'$0', $customerDetail->mode_of_contact)];
-                $customerScore += $contactScore;
-
-                $empScore = in_array(strtolower($customerDetail->employment_sector), Kyc::EMPLOYMENT_SECTOR_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->employment_sector), Kyc::EMPLOYMENT_SECTOR_TWO_RATING) ? 2 : 1);
-                $scoreList[] = ['score' => $empScore, 'text' => 'Employment Sector', 'value' => preg_replace('/[A-Z]/', ' '.'$0', $customerDetail->employment_sector)];
-                $customerScore += $empScore;
-
-                $tenScore = in_array(strtolower($customerDetail->customer_tenure), Kyc::TENURE_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->customer_tenure), Kyc::TENURE_TWO_RATING) ? 2 : 1);
-                $scoreList[] = ['score' => $tenScore, 'text' => 'Customer Tenure with IM', 'value' => $customerDetail->customer_tenure];
-                $customerScore += $tenScore;
-            }
-
-            return $scoreList;
         }
     }
 
-    public function calculateScore($quote)
+    public function scoreEntityBreakdown($quote)
     {
-        if ($quote->payments->first() && isset($quote->customer)) {
-            $paymentTopScore = 0;
-            $paymentAuthorized = 0;
-            $customerScore = 0;
-            foreach ($quote->payments as $payment) {
-                $currentScore = in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_THREE_RATING) ? 3 : (in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_TWO_RATING) ? 2 : 2);
-                if ($currentScore > $paymentTopScore) {
-                    $paymentTopScore = $currentScore;
-                }
-                if ($payment->premium_authorized != null) {
-                    $paymentAuthorized += $payment->premium_authorized;
+        $scoreList = [];
+        $entityScore = 0;
+        if (! isset($quote->quoteRequestEntityMapping)) {
+            return;
+        }
+        $quoteId = $quote->id;
+
+        $amlStatus = (AMLService::checkAMLStatusFailed(5, $quote->id));
+        $amlLogsValue = ['score' => 1, 'value' => 'No'];
+        if ($amlStatus == true) {
+            $amlLogsValue = ['score' => 3, 'value' => 'Yes'];
+        }
+
+        $entity = Entity::where('id', $quote->quoteRequestEntityMapping->entity->id)->first();
+
+        $paymentTopScore = 0;
+        if (isset($entity->legal_structure) && $entity->legal_structure != '') {
+            $legalStructureScore = in_array(strtolower($entity->legal_structure), Kyc::ENTITY_LEGAL_STRUCTURE_THREE_RATING) ? 3 : (in_array(strtolower($entity->legal_structure), Kyc::ENTITY_LEGAL_STRUCTURE_TWO_RATING) ? 2 : 1);
+            $legalType = Lookup::where(['key' => LookupsEnum::LEGAL_STRUCTURE, 'code' => $entity->legal_structure])->first();
+            $legalStatusValue = $entity->legal_structure;
+            if (isset($legalType->text)) {
+                $legalStatusValue = $legalType->text;
+            }
+            $scoreList[] = ['score' => $legalStructureScore, 'text' => 'Legal Status Of The Entity', 'value' => $legalStatusValue];
+            $entityScore += $legalStructureScore;
+        }
+
+        // s
+        if (isset($entity->industry_type_code) && $entity->industry_type_code != '') {
+            $industryTypeCode = in_array(strtolower($entity->industry_type_code), Kyc::ENTITY_INDUSTRY_TYPE_ONE_RATING) ? 1 : (in_array(strtolower($entity->industry_type_code), Kyc::ENTITY_INDUSTRY_TYPE_TWO_RATING) ? 2 : 3);
+            $industryType = Lookup::where(['key' => LookupsEnum::COMPANY_TYPE, 'code' => $entity->industry_type_code])->first();
+            $industryTypeValue = $entity->industry_type_code;
+            if (isset($industryType->text)) {
+                $industryTypeValue = $industryType->text;
+            }
+            $scoreList[] = ['score' => $industryTypeCode, 'text' => 'Nature Of Business', 'value' => $industryTypeValue];
+            $entityScore += $industryTypeCode;
+        }
+
+        // sanctions
+        if ($entity->in_sanction_list == 1) {
+            $text = 'Yes';
+            $score = 3;
+        } else {
+            $text = 'No';
+            $score = 1;
+        }
+        $scoreList[] = ['score' => $score, 'text' => 'Does the Company name or Subsidiary/Affiliate entities feature in any sanction list?', 'value' => $text];
+        $entityScore += $score;
+
+        // Advers media not dynamic yet
+        $adverseMedia = $this->getAMLcompliance($quoteId, 'in_adverse_media', $amlLogsValue);
+        $scoreList[] = ['score' => $adverseMedia['score'], 'text' => 'Does the Company name or subsidiary / Affiliate entities feature in any adverse media?', 'value' => $adverseMedia['value']];
+        $entityScore += $adverseMedia['score'];
+
+        // any PEP List/ Adverse Media not dynamic yet
+        $ownerPep = $this->getAMLcompliance($quoteId, 'is_owner_pep', $amlLogsValue);
+        $scoreList[] = ['score' => $ownerPep['score'], 'text' => 'Does the owner/ Shareholder/Partner of the company feature in any PEP List/ Adverse Media?', 'value' => $ownerPep['value']];
+        $entityScore += $ownerPep['score'];
+
+        // Tenure of Relationship in years
+        $customerTenureScore = ($entity->customer_tenure == 3 || $entity->customer_tenure > 3) ? 1 : (($entity->customer_tenure <= 2 && $entity->customer_tenure > 1) ? 2 : 1);
+        $tenureValue = $customerTenureScore == 1 ? '3 years and above' : ($customerTenureScore == 2 ? 'Less than two years' : 'Less than 6 months');
+        $scoreList[] = ['score' => $customerTenureScore, 'text' => 'Tenure of Relationship in years', 'value' => $tenureValue];
+        $entityScore += $customerTenureScore;
+
+        $controlling = $this->getAMLcompliance($quoteId, 'is_controlling_pep', $amlLogsValue);
+        $scoreList[] = ['score' => $controlling['score'], 'text' => 'Is the controlling person a PEP/HIO/FPEP/Government Organization?', 'value' => $controlling['value']];
+        $entityScore += $controlling['score'];
+
+        // sanction Match
+        if ($entity->is_sanction_match == 1) {
+            $text = 'Yes';
+            $score = 3;
+        } else {
+            $text = 'No';
+            $score = 1;
+        }
+        $scoreList[] = ['score' => $score, 'text' => 'Is There A Sanction Match On The Owner/Partners/Bod, Senior Management, Group Company, Holding Company Or Related Company Names?', 'value' => $text];
+        $entityScore += $score;
+
+        if (isset($entity->corporationCountry)) {
+            $corporationScore = in_array(strtolower($entity->corporationCountry->country_name), Kyc::COUNTRY_NATIONALITY_FOUR_RATING) ? 4 : 1;
+            $scoreList[] = ['score' => $corporationScore, 'text' => 'Country Of Incorporation', 'value' => $entity->corporationCountry->country_name];
+            $entityScore += $corporationScore;
+        }
+        // FATF
+        if ($entity->in_fatf == 1) {
+            $text = 'Yes';
+            $score = 3;
+        } else {
+            $text = 'No';
+            $score = 1;
+        }
+        $scoreList[] = ['score' => $score, 'text' => 'Does the company have any subsidiary, affiliate, branch, or group/holding company in FATF-listed high-risk monitored jurisdiction?', 'value' => $text];
+        $entityScore += $score;
+
+        $ubos = CustomerMembersRepository::getBy($quote->id, QuoteTypes::BUSINESS->name, CustomerTypeEnum::Entity);
+        $ubScore = 1;
+        foreach ($ubos as $ub) {
+            $currrentUbScore = in_array(strtolower($ub->nationality->country_name), Kyc::COUNTRY_NATIONALITY_FOUR_RATING) ? 3 : 1;
+            if ($ubScore < $currrentUbScore) {
+                $currrentUbScore = $currrentUbScore;
+            }
+        }
+        if ($entity->is_owner_high_risk == 1) {
+            $text = 'Yes';
+            $score = 3;
+        } else {
+            $text = 'No';
+            $score = 1;
+        }
+
+        $scoreList[] = ['score' => $score, 'text' => 'Does the owner/ Shareholder/ Partner/Director of the company from High-Risk countries?', 'value' => $text];
+        $entityScore += $score;
+
+        //New Field
+
+        if ($entity->deal_sanction_list == 1) {
+            $text = 'Yes';
+            $score = 3;
+        } else {
+            $text = 'No';
+            $score = 1;
+        }
+        $scoreList[] = ['score' => $score, 'text' => 'Does the customer intend to deal with any country listed in the Sanctions List?', 'value' => $text];
+        $entityScore += $score;
+
+        //
+
+        if ($entity->is_operation_high_risk == 1) {
+            $text = 'Yes';
+            $score = 3;
+        } else {
+            $text = 'No';
+            $score = 1;
+        }
+        $scoreList[] = ['score' => $score, 'text' => 'Do the customer or subsidiary/ affiliate entities have operations in any High-Risk Countries?', 'value' => $text];
+        $entityScore += $score;
+
+        // products
+        $scoreList[] = ['score' => 1, 'text' => 'Types of Products', 'value' => 'Business'];
+        $entityScore += 1;
+
+        if (isset($entity->transaction_volume) && $entity->transaction_volume != '') {
+            $transactionVolumesScore = in_array(strtolower($entity->transaction_volume), Kyc::ENTITY_TRANSACTION_VOLUME_THREE_RATING) ? 3 : (in_array(strtolower($entity->transaction_volume), Kyc::ENTITY_TRANSACTION_VOLUME_TWO_RATING) ? 2 : 1);
+            $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Transaction Volume', 'value' => Kyc::TRANSACTION_VOLUME[$entity->transaction_volume]];
+            $entityScore += $transactionVolumesScore;
+        }
+
+        $paymentAuthorized = 0;
+        $paymentMethod = '';
+        foreach ($quote->payments as $payment) {
+            $currentScore = in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_THREE_RATING) ? 3 :
+                (in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_TWO_RATING) ? 2 :
+                    (in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_ONE_RATING) ? 1 : 1));
+            if ($currentScore > $paymentTopScore) {
+                $paymentTopScore = $currentScore;
+                if ($payment->payment_methods_code === PaymentMethodsEnum::Cash) {
+                    $paymentMethod = 'Cash';
+                } elseif ($payment->payment_methods_code === PaymentMethodsEnum::BankTransfer) {
+                    $paymentMethod = 'Bank Transfer';
+                } elseif ($payment->payment_methods_code === PaymentMethodsEnum::CreditCard) {
+                    $paymentMethod = 'Credit Card';
+                } elseif ($payment->payment_methods_code === PaymentMethodsEnum::Cheque) {
+                    $paymentMethod = 'Cheque';
+                } elseif ($payment->payment_methods_code === PaymentMethodsEnum::PostDatedCheque) {
+                    $paymentMethod = 'PostDatedCheque';
+                } elseif ($payment->payment_methods_code === PaymentMethodsEnum::InsurerPayment) {
+                    $paymentMethod = 'Insurer Payment';
+                } elseif ($payment->payment_methods_code === PaymentMethodsEnum::PartialPayment) {
+                    $paymentMethod = 'Partial Payment';
+                } elseif ($payment->payment_methods_code === PaymentMethodsEnum::MultiplePayment) {
+                    $paymentMethod = 'Multiple Payment';
+                } elseif ($payment->payment_methods_code === PaymentMethodsEnum::CreditApproval) {
+                    $paymentMethod = 'Credit Approval';
+                } elseif ($payment->payment_methods_code === PaymentMethodsEnum::ProformaPaymentRequest) {
+                    $paymentMethod = 'Proforma Payment Request';
+                } else {
+                    $paymentMethod = 'Insure Now Pay Later';
                 }
             }
-            if (isset($quote->customer->nationality)) {
-                $customerScore = in_array(strtolower($quote->customer->nationality->country_name), Kyc::COUNTRY_NATIONALITY_FOUR_RATING) ? 4 : 1;
+            if ($payment->premium_authorized != null) {
+                $paymentAuthorized += $payment->premium_authorized;
             }
-            $customerScore += ($paymentAuthorized >= 100001) ? 3 : (($paymentAuthorized >= 55001 && $paymentAuthorized <= 100000) ? 2 : 1);
-            $customerScore += 1; // For products all product have 1
-            $customerScore += 1; // payment volume for future use
-            $customerScore += $paymentTopScore;
+        }
 
-            if (isset($quote->customer->customerDetail)) {
-                $customerDetail = $quote->customer->customerDetail;
-                if (isset($customerDetail)) {
-                    $customerScore += in_array(strtolower($customerDetail->job_title), Kyc::PROFESSION_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->job_title), Kyc::PROFESSION_TWO_RATING) ? 2 : 1);
-                    $customerScore += in_array(strtolower($customerDetail->residential_status), Kyc::RESIDENT_STATUS_THREE_RATING) ? 3 : 1;
-                    $customerScore += in_array(strtolower($customerDetail->mode_of_delivery), Kyc::MODE_OF_DELIVERY_THREE_RATING) ? 3 : 1;
-                    $customerScore += in_array(strtolower($customerDetail->mode_of_contact), Kyc::MODE_OF_CONTACT_THREE_RATING) ? 3 : 1;
+        $transactionValueScore = ($paymentAuthorized >= 1000001) ? 3 : (($paymentAuthorized >= 250000 && $paymentAuthorized <= 1000000) ? 2 : 1);
+        $paymentAuthorizedValue = $transactionValueScore == 3 ? 'Above AED 1,000,000' : ($transactionValueScore == 2 ? 'AED 250,001 to AED 1,000,000' : 'Upto AED 250,000');
+        $scoreList[] = ['score' => $transactionValueScore, 'text' => 'Transaction Value', 'value' => $paymentAuthorizedValue];
+        $entityScore += $transactionValueScore;
+        if (isset($entity->transaction_activities)) {
+            $transactionVolumesScore = in_array(strtolower($entity->transaction_activities), Kyc::TRANSACTION_ACTIVITIES_THREE_RATING) ? 3 : (in_array(strtolower($entity->transaction_activities), Kyc::TRANSACTION_ACTIVITIES_TWO_RATING) ? 2 : 1);
+            $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Transaction Activities', 'value' => Kyc::TRANSACTION_ACTIVITIES[$entity->transaction_activities]];
+            $entityScore += $transactionVolumesScore;
+        }
 
-                    $customerScore += in_array(strtolower($customerDetail->employment_sector), Kyc::EMPLOYMENT_SECTOR_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->employment_sector), Kyc::EMPLOYMENT_SECTOR_TWO_RATING) ? 2 : 1);
-                    $customerScore += in_array(strtolower($customerDetail->customer_tenure), Kyc::TENURE_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->customer_tenure), Kyc::TENURE_TWO_RATING) ? 2 : 1);
+        if (isset($entity->transaction_pattern)) {
+            $transactionVolumesScore = in_array(strtolower($entity->transaction_pattern), Kyc::TRANSACTION_PATTERN_THREE_RATING) ? 3 : (in_array(strtolower($entity->transaction_pattern), Kyc::TRANSACTION_PATTERN_ZERO_RATING) ? 0 : 1);
+            $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Transaction Pattern changes', 'value' => Kyc::TRANSACTION_PATTERN[$entity->transaction_pattern]];
+            $entityScore += $transactionVolumesScore;
+        }
+        $scoreList[] = ['score' => $paymentTopScore, 'text' => 'Payment Mode', 'value' => $paymentMethod];
+        $entityScore += $paymentTopScore;
+        if (isset($entity->mode_of_contact)) {
+            $transactionVolumesScore = in_array(strtolower($entity->mode_of_contact), Kyc::ENTITY_MODE_OF_CONTACT_THREE_RATING) ? 3 : 1;
+            $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Mode of Contact', 'value' => $entity->mode_of_contact];
+            $entityScore += $transactionVolumesScore;
+        }
+        if (isset($entity->mode_of_delivery)) {
+            $transactionVolumesScore = in_array(strtolower($entity->mode_of_delivery), Kyc::ENTITY_MODE_OF_DELIVERY_THREE_RATING) ? 3 : 1;
+            $scoreList[] = ['score' => $transactionVolumesScore, 'text' => 'Delivery Channel', 'value' => Kyc::MODE_OF_DELIVERY[$entity->mode_of_delivery]];
+            $entityScore += $transactionVolumesScore;
+        }
 
-                    $quote->risk_score = $customerScore;
-                    $quote->save();
-                }
-            }
+        return ['total' => $entityScore, 'score_list' => $scoreList];
+    }
+
+    public function getAMLCompliance($quoteId, $column, $amlLogsValue)
+    {
+        $amlProperty = AML::where('quote_request_id', $quoteId)->where($column, 1)->first();
+        if (isset($amlProperty->id)) {
+            return ['score' => 3, 'value' => 'Yes'];
+        }
+        $amlFalseProperty = AML::where('quote_request_id', $quoteId)->where($column, 0)->first();
+        if (isset($amlFalseProperty->id)) {
+            return ['score' => 1, 'value' => 'No'];
+        }
+
+        return $amlLogsValue;
+    }
+
+    public function calculateScore($quote, $type)
+    {
+        if (strtolower($type) == 'business') {
+            $pdfName = 'Entity';
+            $results = $this->scoreEntityBreakdown($quote);
+        } else {
+            $results = $this->scoreBreakdown($quote, $type);
+            $pdfName = 'Individual';
+        }
+        if (isset($results['total'])) {
+            $quote->risk_score = $results['total'];
+            $quote->save();
+            $quoteType = strtolower($type);
+            $quoteModel = $this->getQuoteObjectBy($quoteType, $quote->uuid, 'uuid');
+            $data = $results;
+            $detail = $this->getQuoteDetailObject($quoteType, $quoteModel->id);
+            $data['document_type_code'] = QuoteDocumentsEnum::SCRDOC;
+            $data['pdf_name'] = 'Riskscore_'.$pdfName.'.pdf';
+            $data['quote_uuid'] = $quote->uuid;
+            $kycLogs = AML::where([
+                'quote_request_id' => $quoteModel->id,
+            ])->where('decision', '!=', AMLDecisionStatusEnum::RYU)->orderBy('created_at', 'desc')->get();
+            $pdf = PDF::loadView('pdf.risk_score_document', compact('quoteModel', 'detail', 'kycLogs', 'quoteType', 'data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
+            $pdf->setPaper('A4');
+            $pdfFile = $pdf->output();
+
+            app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quoteModel, true);
         }
     }
 
@@ -801,7 +1162,7 @@ class CRUDService extends BaseService
             QuoteStatusEnum::CancellationPending,
             QuoteStatusEnum::PolicyCancelled,
             QuoteStatusEnum::PolicyCancelledReissued,
-        ])) {
+        ]) || $record?->insly_migrated || $record?->insly_id) {
             return true;
         }
 

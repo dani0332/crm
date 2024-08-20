@@ -93,11 +93,10 @@ class InslyDetailRepository extends BaseRepository
 
     public function fetchSaveToImcrm($data)
     {
-        $policyNumber = $data['policyNumber'];
+        $policyID = $data['policy_oid'];
         $validateAll = $data['validateAll'];
 
-        $policy = $this->where('policy_no', $policyNumber)->first();
-
+        $policy = $this->where('policy_oid', $policyID)->first();
         $email = $policy['customer']['email'] ?? null;
         $inslyPolicyIssueDate = $policy['policy']['issue_date'] ?? null;
         if ($inslyPolicyIssueDate) {
@@ -107,6 +106,7 @@ class InslyDetailRepository extends BaseRepository
         $appUrl = config('constants.APP_URL');
 
         if (! empty($policy)) {
+            $policyNumber = $policy['policy']['policy_no'];
             $coverage = $policy['policy']['coverage'];
             $quoteType = $this->getQuoteTypeFromCoverage($coverage);
             $data = [];
@@ -358,6 +358,7 @@ class InslyDetailRepository extends BaseRepository
         }
         $dataArr['premium'] = $premium;
         $dataArr['source'] = LeadSourceEnum::INSLY;
+        $dataArr['insly_migrated'] = true;
         $dataArr['quote_status_id'] = QuoteStatusEnum::NewLead;
         if ($isPersonalQuote) {
             $dataArr['quote_type_id'] = $quoteTypeData->id;

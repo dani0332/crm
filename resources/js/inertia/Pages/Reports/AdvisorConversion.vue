@@ -226,6 +226,7 @@ const getFiltersObject = () => {
     teams: [],
     sub_teams: [],
     isCommercial: '',
+    isEmbeddedProducts: '',
     page: 1,
     vehicle_type: 'All',
     insurance_type: '',
@@ -947,6 +948,16 @@ const getAdvisorLabel = () => {
           :loading="loaders.advisorOptions"
         />
         <x-select
+          v-if="canShow('isEmbeddedProducts')"
+          v-model="filters.isEmbeddedProducts"
+          label="Include Embedded Products"
+          placeholder="Select any option"
+          :options="[
+            { value: 'true', label: 'Yes' },
+            { value: 'false', label: 'No' },
+          ]"
+        />
+        <x-select
           v-if="canShow('isCommercial')"
           v-model="filters.isCommercial"
           label="Commercial"
@@ -1002,7 +1013,11 @@ const getAdvisorLabel = () => {
           v-model="filters.segment_filter"
           label="Segment"
           placeholder="Select Segment"
-          :options="quoteSegments"
+          :options="
+            quoteSegments?.filter(segment =>
+              filters.lob === 'Travel' ? segment.value !== 'sic-revival' : true,
+            )
+          "
           :single="true"
         />
       </div>

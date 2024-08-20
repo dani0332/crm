@@ -77,6 +77,7 @@ class ReportsController extends Controller
             'quoteBatchId' => $request->quote_batch_id,
             'page' => $request->page,
             'isCommercial' => $request->isCommercial,
+            'isEmbeddedProducts' => $request->isEmbeddedProducts,
             'lob' => $request->lob,
             'subeams' => $request->sub_teams,
             'vehicle_type' => $request->vehicle_type,
@@ -460,12 +461,12 @@ class ReportsController extends Controller
 
     public function renderSaleManagementReport(Request $request)
     {
+        $shouldLoadData = isset($request->reportCategory);
         $reportCategory = ! isset($request->reportCategory) ? ManagementReportCategoriesEnum::SALE_SUMMARY : $request->reportCategory;
         $reportInstance = ManagementReportServiceFactory::createStrategy($reportCategory);
         $reportData = null;
         $endorsementData = null;
-
-        if ($reportCategory == ManagementReportCategoriesEnum::SALE_SUMMARY) {
+        if ($reportCategory == ManagementReportCategoriesEnum::SALE_SUMMARY && $shouldLoadData) {
             $rawReportData = $reportInstance->getReportData($request);
             $endorsementData = $reportInstance->getEndorsementsData($request);
             /**
@@ -475,7 +476,7 @@ class ReportsController extends Controller
         }
 
         return inertia('ManagementReport/index', [
-            'reportData' => $reportData ?? $reportInstance->getReportData($request),
+            'reportData' => $shouldLoadData ? ($reportData ?? $reportInstance->getReportData($request, $shouldLoadData)) : [],
             'filterOptions' => $reportInstance->getFilterOptions(),
             'defaultFilters' => $reportInstance->getDefaultFilters(),
             'reportName' => $reportCategory,

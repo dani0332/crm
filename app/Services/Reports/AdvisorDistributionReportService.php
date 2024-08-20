@@ -2,12 +2,14 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Models\CarQuote;
@@ -237,6 +239,11 @@ class AdvisorDistributionReportService extends BaseService
                     quoteTypeCode::Car,
                 ],
             ],
+            'isEmbeddedProducts' => [
+                'lobs' => [
+                    quoteTypeCode::Travel,
+                ],
+            ],
             'insurance_type' => [
                 'lobs' => [
                     quoteTypeCode::Travel,
@@ -384,10 +391,13 @@ class AdvisorDistributionReportService extends BaseService
         ];
         $lobs = $this->getLobByPermissions();
 
+        $isEmbeddedProducts = false;
+
         return [
             'lob' => count($lobs) == 1 ? reset($lobs) : '',
             'advisorAssignedDates' => $advisorAssignedDates,
             'isCommercial' => 'All',
+            'isEmbeddedProducts' => $isEmbeddedProducts,
         ];
     }
 
@@ -448,7 +458,7 @@ class AdvisorDistributionReportService extends BaseService
         }
 
         if (isset($filters->segment_filter) && $filters->segment_filter != 'all') {
-            $query = $query->filterBySegment($filters->segment_filter, quoteTypeCode::Car);
+            $query = $query->filterBySegment($filters->segment_filter, QuoteTypeId::Car);
         }
 
         return $query;
@@ -519,7 +529,7 @@ class AdvisorDistributionReportService extends BaseService
             }
 
             if (isset($filters->segment_filter) && $filters->segment_filter != 'all') {
-                $query = $query->filterBySegment($filters->segment_filter, quoteTypeCode::Car);
+                $query = $query->filterBySegment($filters->segment_filter, QuoteTypeId::Car);
             }
         }
 
@@ -542,8 +552,10 @@ class AdvisorDistributionReportService extends BaseService
         }
 
         if ($lob === quoteTypeCode::Travel) {
+            $isTravelQuote = false;
             if ((! empty($filters->insurance_type) && $filters->insurance_type != '') ||
                 (! empty($filters->travel_coverage) && $filters->travel_coverage != '')) {
+                $isTravelQuote = true;
                 $query->join('travel_quote_request', 'travel_quote_request.uuid', 'personal_quotes.uuid');
             }
             if (! empty($filters->insurance_type) && $filters->insurance_type != '') {
@@ -552,6 +564,11 @@ class AdvisorDistributionReportService extends BaseService
 
             if (! empty($filters->travel_coverage) && $filters->travel_coverage != '') {
                 $query->where('travel_quote_request.coverage_code', $filters->travel_coverage);
+            }
+
+            if (isset($filters->isEmbeddedProducts) && $filters->isEmbeddedProducts == 'false') {
+                $table = $isTravelQuote ? 'travel_quote_request.source' : 'source';
+                $query->where($table, '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
             }
         }
 

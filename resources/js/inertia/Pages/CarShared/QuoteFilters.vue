@@ -94,8 +94,8 @@ const filters = reactive({
   car_type_insurance_id: '',
   currently_insured_with: '',
   renewal_batch: '',
-  renewal_expiry_date_start: '',
-  renewal_expiry_date_end: '',
+  policy_expiry_date_start: '',
+  policy_expiry_date_end: '',
   policy_number: '',
   advisor_id: [],
   page: 1,
@@ -172,13 +172,13 @@ function setQueryStringFilters() {
   if (urlParams.has('renewal_batch')) {
     filters.renewal_batch = urlParams.get('renewal_batch');
   }
-  if (urlParams.has('renewal_expiry_date_start')) {
-    filters.renewal_expiry_date_start = urlParams.get(
-      'renewal_expiry_date_start',
+  if (urlParams.has('policy_expiry_date_start')) {
+    filters.policy_expiry_date_start = urlParams.get(
+      'policy_expiry_date_start',
     );
   }
-  if (urlParams.has('renewal_expiry_date_end')) {
-    filters.renewal_expiry_date_end = urlParams.get('renewal_expiry_date_end');
+  if (urlParams.has('policy_expiry_date_end')) {
+    filters.policy_expiry_date_end = urlParams.get('policy_expiry_date_end');
   }
   if (urlParams.has('policy_number')) {
     filters.policy_number = urlParams.get('policy_number');
@@ -375,14 +375,14 @@ onMounted(() => {
           placeholder="Search by Renewal Batch #"
         />
         <DatePicker
-          v-model="filters.renewal_expiry_date_start"
-          name="renewal_expiry_date"
-          label="Renewal Expiry Date Start"
+          v-model="filters.policy_expiry_date_start"
+          name="policy_expiry_date"
+          label="Policy Expiry Date Start"
         />
         <DatePicker
-          v-model="filters.renewal_expiry_date_end"
-          name="renewal_expiry_date_end"
-          label="Renewal Expiry Date End"
+          v-model="filters.policy_expiry_date_end"
+          name="policy_expiry_date_end"
+          label="Policy Expiry Date End"
         />
         <x-input
           v-model="filters.policy_number"

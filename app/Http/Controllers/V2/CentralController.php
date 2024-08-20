@@ -34,6 +34,7 @@ use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\MigratePaymentsRequest;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\QuoteNotesRequest;
+use App\Http\Requests\RetrySplitPaymentRequest;
 use App\Http\Requests\SendBookPolicyRequest;
 use App\Http\Requests\SplitPaymentApproveRequest;
 use App\Http\Requests\SplitPaymentUpdateRequest;
@@ -44,6 +45,7 @@ use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Http\Requests\UpdateTotalPriceRequest;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\ApplicationStorage;
+use App\Models\CcPaymentProcess;
 use App\Models\Customer;
 use App\Models\Entity;
 use App\Models\HealthQuote;
@@ -240,6 +242,9 @@ class CentralController extends Controller
             }
             $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
             $payment = Payment::where('code', $quote['code'])->mainLeadPayment()->with('paymentSplits')->first();
+            $payment->update([
+                'broker_invoice_number' => (new PaymentRepository())->generateBrokerInvoiceNumber($payment),
+            ]);
             $paymentSplits = $payment->paymentSplits;
             $data['quoteTypeId'] = $quoteTypeId;
             $data['id'] = $quote->id;
@@ -255,7 +260,7 @@ class CentralController extends Controller
             }
 
             if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
-                // dispath job to send email
+                // dispatch job to send email
                 dispatch(new SendBookPolicyDocumentsJob($request));
             }
 
@@ -332,6 +337,17 @@ class CentralController extends Controller
     public function updateTotalPrice(UpdateTotalPriceRequest $request)
     {
         $successMessage = PaymentRepository::updateTotalPrice($request);
+
+        return $successMessage;
+    }
+
+    // Retry CC split payment
+    public function retrySplitPayment(RetrySplitPaymentRequest $request)
+    {
+        $paymentProcessJob = CcPaymentProcess::find($request->payment_process_job_id);
+        info('Manual CC Payments Job Started For Payment Split ID: '.$paymentProcessJob->payment_splits_id);
+
+        $successMessage = app(SplitPaymentService::class)->processSplitPaymentApprove($paymentProcessJob->quote_type, $paymentProcessJob->quoteable_id, $paymentProcessJob->payment_splits_id, $paymentProcessJob->amount_captured, true);
 
         return $successMessage;
     }
@@ -535,4 +551,5 @@ class CentralController extends Controller
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
         }
     }
+
 }

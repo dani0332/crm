@@ -142,7 +142,11 @@ class QuoteDocumentService extends BaseService
                     return false;
                 }
             } elseif ($isKyc) {
-                $originalName = 'SystemGeneratedKycDocument.pdf';
+                if (isset($data['pdf_name'])) {
+                    $originalName = $data['pdf_name'];
+                } else {
+                    $originalName = 'SystemGeneratedKycDocument.pdf';
+                }
 
                 // Generate a unique filename
                 $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
@@ -215,7 +219,7 @@ class QuoteDocumentService extends BaseService
         }
 
         if (! isset($record->policy_number) || ! isset($record->policy_issuance_date) || ! isset($record->policy_start_date) ||
-            ! isset($record->premium) || ! isset($record->renewal_expiry_date) || ! isset($record->plan_id) ||
+            ! isset($record->premium) || ! isset($record->policy_expiry_date) || ! isset($record->plan_id) ||
             $record->advisor_id != auth()->user()->id) {
             return 0;
         }

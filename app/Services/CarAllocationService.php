@@ -7,6 +7,7 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\CarPlanType;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RuleTypeEnum;
@@ -14,7 +15,7 @@ use App\Enums\TeamNameEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TiersIdEnum;
 use App\Enums\UserStatusEnum;
-use App\Jobs\SendOCBIntroEmailJob;
+use App\Jobs\OCB\SendCarOCBIntroEmailJob;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarQuote;
@@ -26,7 +27,6 @@ use App\Models\LeadAllocation;
 use App\Models\LeadSource;
 use App\Models\QuoteBatches;
 use App\Models\Rule;
-use App\Models\RuleLeadSource;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Models\TierUser;
@@ -34,7 +34,6 @@ use App\Models\User;
 use App\Models\UserTeams;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class CarAllocationService extends AllocationService
 {
@@ -44,7 +43,7 @@ class CarAllocationService extends AllocationService
         $shouldIncludeDubaiNow = $this->getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
 
         // List of exempted lead sources
-        $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY, LeadSourceEnum::REVIVAL];
+        $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::INSLY, LeadSourceEnum::REVIVAL];
 
         // Add Dubai Now to exempted lead sources if $shouldIncludeDubaiNow is true
         if ($shouldIncludeDubaiNow) {
@@ -55,7 +54,17 @@ class CarAllocationService extends AllocationService
         $carQuoteQuery = CarQuote::where('uuid', $quoteId)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', $exemptedLeadSources)
-            ->where('is_renewal_tier_email_sent', 0);
+            ->where('is_renewal_tier_email_sent', 0)
+            ->where(function ($query) {
+                $query->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+                    ->orWhere(function ($query) {
+                        $query->where('sic_flow_enabled', 1)
+                            ->where(function ($query) {
+                                $query->where('payment_status_id', PaymentStatusEnum::AUTHORISED)
+                                    ->orWhere('sic_advisor_requested', 1);
+                            });
+                    });
+            });
 
         if (! $overrideAdvisorId) {
             $carQuoteQuery->whereNull('advisor_id');
@@ -158,17 +167,17 @@ class CarAllocationService extends AllocationService
         $lead->tier_id = $tier->id;
         $lead->save();
         info('SIC flow is enabled for lead : '.$lead->uuid.' , the updated field : '.$lead->sic_flow_enabled);
-        SendOCBIntroEmailJob::dispatch($lead->uuid, null, true);
+        SendCarOCBIntroEmailJob::dispatch($lead->uuid, null, true);
         info('SIC flow is email is dispatched for lead : '.$lead->uuid);
     }
 
     /**
      * @return array|mixed
      */
-    public function executeRevivalCheck($leadSource, $tierUserIds): mixed
+    public function executeRevivalAndRenewalCheck($leadSource, $tierUserIds, $teamId): mixed
     {
-        if ($leadSource == LeadSourceEnum::REVIVAL_REPLIED) {
-            // if lead source is revival replied then we should only assign to organic advisors
+        if ($leadSource == LeadSourceEnum::REVIVAL_REPLIED || ($leadSource == LeadSourceEnum::RENEWAL_UPLOAD && $teamId == 0)) {
+            // if lead source is revival replied or renewal upload then we should only assign to organic advisors
 
             // Retrieve the ID of Organic team.
             $organicId = Team::whereIn('name', [TeamNameEnum::ORGANIC])->pluck('id')->toArray();
@@ -228,12 +237,36 @@ class CarAllocationService extends AllocationService
         return null;
     }
 
+    public function findRenewalLeadTier($carLead): ?Tier
+    {
+        $isSICFlowEnabled = $carLead->sic_flow_enabled;
+        $tiersQuery = Tier::where('is_active', 1)
+            ->where('min_price', '<=', $carLead->car_value_tier)
+            ->where('max_price', '>=', $carLead->car_value_tier)
+            ->where('can_handle_tpl', 0)
+            ->where('name', '!=', TiersEnum::TIER_R)
+            ->where(function ($query) use ($isSICFlowEnabled) {
+                if ($isSICFlowEnabled) {
+                    $query->where('name', '!=', TiersEnum::TIER_L);
+                }
+            });
+
+        $tier = $tiersQuery->first();
+
+        if ($tier) {
+            return $tier;
+        }
+
+        // Return null if no matching tier is found.
+        return null;
+    }
+
     public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource, $teamId)
     {
         $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
         info('Users against tierID '.$tierId.' are: '.json_encode($tierUserIds->toArray()));
 
-        $tierUserIds = $this->executeRevivalCheck($leadSource, $tierUserIds);
+        $tierUserIds = $this->executeRevivalAndRenewalCheck($leadSource, $tierUserIds, $teamId);
 
         if ($teamId) {
             $teamUserIds = UserTeams::where('team_id', $teamId)->select('user_id')->get();
@@ -272,6 +305,23 @@ class CarAllocationService extends AllocationService
 
         // If no eligible users are found, return an empty array.
         return [];
+    }
+
+    public function updateTierBeforeEligibleUserIdentification($lead)
+    {
+        info('lead payment status is : '.$lead->payment_status_id.' and tier id is : '.$lead->tier_id.' and sic advisor requested is : '.$lead->sic_advisor_requested.' with UUID : '.$lead->uuid);
+        if (($lead->payment_status_id == PaymentStatusEnum::AUTHORISED || $lead->sic_advisor_requested == 1) && $lead->tier_id == TiersIdEnum::TIER_R) {
+            info('SIC lead payment is made and tier is Tier R lead with UUID: '.$lead->uuid);
+            $tier = $this->findRenewalLeadTier($lead);
+            if (! empty($tier) && $tier->id != $lead->tier_id) {
+                info('Tier is found for the lead with UUID: '.$lead->uuid.' and tier name is: '.$tier->name);
+                $this->updateLeadTier($lead, $tier);
+
+                return $tier->id;
+            } else {
+                return $lead->tier_id;
+            }
+        }
     }
 
     public function getAdvisorsByStatus($status, $tierUserIds, $advisorId = null, $teamId = null)
@@ -389,6 +439,14 @@ class CarAllocationService extends AllocationService
             // Find the intersection of available user IDs and rule user IDs.
             $finalEligibleUserIds = array_intersect($availableUserIds, $ruleUserIds);
 
+            // Check if the lead source indicates a SAP lead.
+            $isSAPLead = str_contains($lead->source, 'sap-') || str_contains($lead->source, 'partner.alfred.ae');
+            if ($isSAPLead) {
+                // If the lead source is SAP, get eligible users for SAP leads.
+                info('SAP lead found, so filtering eligible users for SAP lead');
+                $finalEligibleUserIds = $this->getEligibleUserForSAPLead($ruleUserIds);
+            }
+
             info('Rule found, and users against the rule are: '.json_encode($finalEligibleUserIds));
         } else {
             // If no rules are found, get user IDs from rule lead sources.
@@ -478,6 +536,7 @@ class CarAllocationService extends AllocationService
         $lead->advisor_id = $userId;
         $lead->cost_per_lead = $tier->cost_per_lead;
         $lead->auto_assigned = true;
+        $lead->sic_flow_enabled = 0;
         $lead->assignment_type = $assignmentType;
 
         // Get the latest quote batch and assign it to the lead.
@@ -581,5 +640,17 @@ class CarAllocationService extends AllocationService
         ]);
 
         info('Tier with name : '.$tier->name.' is assigned to car lead with uuid : '.$lead->uuid);
+    }
+
+    public function getEligibleUserForSAPLead($ruleUserIds): array
+    {
+        // Create a query to fetch lead allocations with their associated users.
+        $sapUserIds = LeadAllocation::with('leadAllocationUser')
+            ->whereIn('user_id', $ruleUserIds) // it will be the rule user ids for SAP rule only
+            ->where('quote_type_id', QuoteTypes::CAR->id())
+            ->orderBy('last_allocated')
+            ->pluck('user_id')->toArray();
+
+        return $sapUserIds;
     }
 }
