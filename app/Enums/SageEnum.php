@@ -160,4 +160,8 @@ final class SageEnum extends Enum
     const SF_SPLIT_PAYMENT = 'split_payments';
     const AR_INVOICE = 'AR Invoice';
     const AP_INVOICE = 'AP Invoice';
+
+    // Sage Batch Status
+    const SAGE_STATUS_POSTED = 'Posted';
+    const SAGE_STATUS_OPEN = 'Open';
 }

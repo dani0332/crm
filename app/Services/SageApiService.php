@@ -1038,10 +1038,24 @@ class SageApiService
             info('Book Update - Sage API Call - Method Name ('.$methodName.') Already called - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$extraParams['sendUpdateLog']->uuid);
 
         } else {
-            $resp = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload'] ?? [], $sageAPIsParams['extraDetails'][$methodName]['verb'] ?? 'POST');
-            $sageResponse = json_decode($resp, true);
-            info('Book Update - Sage API Call - Method Name ('.$methodName.') - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$extraParams['sendUpdateLog']->uuid);
+            // Reminder:: Retrigger Post Invoice if it's not already posted
+            $isPostingCall = false;
+            $batchStatus = SageEnum::SAGE_STATUS_OPEN;
+            if (isset($sageLogArray[$sageLogKey]) && $sageLogArray[$sageLogKey]['status'] == SageEnum::STATUS_FAIL && in_array($methodName, ['aRPostInvoices', 'aPPostInvoices'])) {
+                $urlForGetInvoice = ($methodName == 'aRPostInvoices') ? 'AR/ARInvoiceBatches('.$payLoadOptions['payload']['PostBatchFrom'].')' : 'AP/APInvoiceBatches('.$payLoadOptions['payload']['FromBatch'].')';
+                $invoiceResponse = json_decode($this->postToSage300($urlForGetInvoice, [], 'GET'), true);
+                $batchStatus = $invoiceResponse['BatchStatus'];
+                $isPostingCall = true;
+            }
 
+            if ($isPostingCall && $batchStatus == SageEnum::SAGE_STATUS_POSTED) {
+                $sageResponse = $payLoadOptions['payload'];
+                info('Book Update - Sage API Call By Pass (Status already '.SageEnum::SAGE_STATUS_POSTED.') - Method Name ('.$methodName.') - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$extraParams['sendUpdateLog']->uuid);
+            } else {
+                $resp = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload'] ?? [], $sageAPIsParams['extraDetails'][$methodName]['verb'] ?? 'POST');
+                $sageResponse = json_decode($resp, true);
+                info('Book Update - Sage API Call - Method Name ('.$methodName.') - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$extraParams['sendUpdateLog']->uuid);
+            }
         }
 
         if (in_array($methodName, ['createARInvoicePremAndComm', 'createAPInvoicePrem', 'createARInvoiceDis', 'createPaymontRecieptOneInvoice', 'arSplitPrepaymentPayload']) && isset($sageResponse['BatchNumber'])) {
