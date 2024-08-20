@@ -123,8 +123,8 @@ class AmtController extends Controller
         if (isset($request->first_name) && $request->first_name != '') {
             $data->where('bqr.first_name', 'like', '%'.$request->first_name.'%');
         }
-        if (isset($request->created_at_start) && $request->created_at_start != '' 
-        && isset($request->created_at_end) 
+        if (isset($request->created_at_start) && $request->created_at_start != ''
+        && isset($request->created_at_end)
         && $request->created_at_end != ''
         && empty($request->email)
         && empty($request->code)
@@ -137,7 +137,7 @@ class AmtController extends Controller
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
             $data->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
         }
-        
+
         if (isset($request->last_name) && $request->last_name != '') {
             $data->where('bqr.last_name', 'like', '%'.$request->last_name.'%');
         }

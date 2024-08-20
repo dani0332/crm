@@ -21,7 +21,6 @@ use Config;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Psy\Readline\Hoa\Console;
 
 class BusinessQuoteService extends BaseService
 {
@@ -291,8 +290,8 @@ class BusinessQuoteService extends BaseService
             && empty($request->booking_date)
             && ! isset($request->previous_quote_policy_number)
         ) {
-            $dateFrom = Carbon::parse($request['created_at_start'])->startOfDay()->toDateTimeString();;
-            $dateTo =  Carbon::parse($request['created_at_end'])->endOfDay()->toDateTimeString();
+            $dateFrom = Carbon::parse($request['created_at_start'])->startOfDay()->toDateTimeString();
+            $dateTo = Carbon::parse($request['created_at_end'])->endOfDay()->toDateTimeString();
             $this->query->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
         }
 
