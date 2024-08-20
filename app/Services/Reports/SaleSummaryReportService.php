@@ -77,35 +77,29 @@ class SaleSummaryReportService extends ManagementReport
 
         if ($request->groupBy == 'advisor') {
             $query->addSelect('u.name as advisor', 'dp.name as department');
-            $query->whereNotNull('advisor_id');
         }
 
         if ($request->groupBy == 'department') {
             $query->addSelect('dp.name as department');
-            $query->whereNotNull('u.department_id');
         }
 
         if ($request->groupBy == 'customer_group') {
             $query->leftJoin('customer', 'personal_quotes.customer_id', '=', 'customer.id')
                 ->addSelect(DB::raw("CONCAT(customer.first_name, ' ', customer.last_name) as customer_group"));
-            $query->whereNotNull('customer_id');
         }
 
         if ($request->groupBy == 'insurer') {
             $query->join('insurance_provider', 'insurance_provider.id', '=', 'p.insurance_provider_id')
                 ->addSelect('insurance_provider.text as insurer');
-            $query->whereNotNull('p.insurance_provider_id');
         }
 
         if ($request->groupBy == 'policy_issuer') {
             $query->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
                 ->addSelect('pi.name as policy_issuer');
-            $query->whereNotNull('p.policy_issuer_id');
         }
 
         if ($request->groupBy == 'line_of_business') {
             $query->addSelect('quote_type.code as line_of_business');
-            $query->whereNotNull('quote_type.code');
         }
 
         if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
