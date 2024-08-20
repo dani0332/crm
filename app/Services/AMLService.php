@@ -285,7 +285,7 @@ class AMLService
                 $bodyData['cc'] = $ccEmail;
             }
             $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
-            $client = new \GuzzleHttp\Client();
+            $client = new \GuzzleHttp\Client;
             $clientRequest = $client->post(
                 $url,
                 [
