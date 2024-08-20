@@ -76,7 +76,7 @@ class SendBookPolicyRequest extends FormRequest
                         $isPaymentNotUpfrontOrSplit = ! in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]);
                         $isPaymentPaidOrCaptured = in_array($splits[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
                         $isPaymentUpfrontOrSplitAndPaidOrCaptured = $isPaymentNotUpfrontOrSplit && $isPaymentPaidOrCaptured;
-                        $isQuoteFallUnderSkippableCriteria = (new SageApiService())->skipApplyPrepaymentsForSpecificLeads($quote, $payment, $splits);
+                        $isQuoteFallUnderSkippableCriteria = (new SageApiService)->skipApplyPrepaymentsForSpecificLeads($quote, $payment, $splits);
                         if (! $isQuoteFallUnderSkippableCriteria['status']) {
                             if ($isPaymentUpfrontOrSplitAndPaidOrCaptured) {
                                 if (! empty($splits)) {

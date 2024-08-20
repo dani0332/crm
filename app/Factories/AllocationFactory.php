@@ -18,13 +18,13 @@ class AllocationFactory
     {
         $strategy = null;
         if ($allocationType == QuoteTypeId::Car) {
-            $strategy = new CarAllocation(new CarAllocationService(), $allocationId, $teamId);
+            $strategy = new CarAllocation(new CarAllocationService, $allocationId, $teamId);
         } elseif ($allocationType == QuoteTypeId::Health) {
-            $strategy = new HealthAllocation(new HealthAllocationService(), $allocationId);
+            $strategy = new HealthAllocation(new HealthAllocationService, $allocationId);
         } elseif ($allocationType == QuoteTypeId::Bike) {
-            $strategy = new BikeAllocation(new BikeAllocationService(), $allocationId);
+            $strategy = new BikeAllocation(new BikeAllocationService, $allocationId);
         } elseif ($allocationType == QuoteTypeId::Travel) {
-            $strategy = new TravelAllocation(new TravelAllocationService(), $allocationId, $teamId);
+            $strategy = new TravelAllocation(new TravelAllocationService, $allocationId, $teamId);
         }
 
         return $strategy;

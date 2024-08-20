@@ -36,7 +36,7 @@ class ProcessSyncAlfredProtect implements ShouldQueue
      */
     public function handle(): void
     {
-        $strategy = new AlfredProtect();
+        $strategy = new AlfredProtect;
 
         $quoteTypeId = QuoteTypeId::Car;
         $transactions = $this->quoteObject->embeddedTransactions()->where([

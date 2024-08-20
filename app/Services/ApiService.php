@@ -59,7 +59,7 @@ class ApiService
         if (gettype($WEGenerateUrlResponse) == 'string') {
             Customer::where('id', $customer->id)->update(['is_we_sent' => true]);
 
-            $newMyAlFredUser = new MyAlFredUser();
+            $newMyAlFredUser = new MyAlFredUser;
             $newMyAlFredUser->signup_url = $WEGenerateUrlResponse;
             $newMyAlFredUser->customer_id = $customer->id;
             $newMyAlFredUser->code = substr($WEGenerateUrlResponse, strpos($WEGenerateUrlResponse, 'signup/') + 7); // code;
