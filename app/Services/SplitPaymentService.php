@@ -32,6 +32,7 @@ use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\HandlesDeadlockRetries;
 use App\Traits\SageLoggable;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -43,6 +44,7 @@ use PDF;
 class SplitPaymentService
 {
     use GenericQueriesAllLobs;
+    use HandlesDeadlockRetries;
     use SageLoggable;
 
     public function calculateDiscount($totalSplitPayments, $discountValue)
@@ -579,6 +581,7 @@ class SplitPaymentService
         $paymentSplit = PaymentSplits::find($splitPaymentId);
         $sendUpdateId = $paymentSplit->payment->send_update_log_id;
         $mainLeadObject = $this->getQuoteObject($modelType, $quoteId);
+        $maxRetries = 2;
 
         if (! empty($sendUpdateId) && $sendUpdateId > 0) {
             $quoteModel = SendUpdateLogRepository::getLogById($sendUpdateId);
@@ -611,8 +614,12 @@ class SplitPaymentService
 
                 $sageResponse = $this->createSageRecipt($request, $paymentSplit, $amountCollected);
                 if ($sageResponse['status'] == 'success') {
-                    $paymentSplit->sage_reciept_id = $sageResponse['response'];
-                    $paymentSplit->save();
+
+                    $this->handleWithDeadlockRetries(function () use ($paymentSplit, $sageResponse) {
+                        $paymentSplit->sage_reciept_id = $sageResponse['response'];
+                        $paymentSplit->save();
+                    }, $maxRetries);
+
                 } else {
                     $sageMessage = $sageResponse['response'];
                     if ($isFromJob) {
@@ -639,8 +646,8 @@ class SplitPaymentService
         }
 
         if (! $paymentSplit->payment->is_approved && ! $isFromJob) {
-            DB::beginTransaction();
-            try {
+
+            return $this->handleWithDeadlockRetries(function () use ($paymentSplit, $amountCollected, $modelType, $quoteId, $isFromJob) {
                 if (empty($paymentSplit->verified_at)) {
                     $paymentSplit->verified_at = now();
                     $paymentSplit->verified_by = Auth::user()->id;
@@ -666,15 +673,7 @@ class SplitPaymentService
                 if ($isFromJob) {
                     $this->processMasterPaymentApprove($modelType, $quoteId, $parentPayment->send_update_log_id, true);
                 }
-                DB::commit();
-            } catch (Exception $exception) {
-                if ($isFromJob) {
-                    CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $exception->getMessage()]);
-                } else {
-                    Log::error('Error in processSplitPaymentApprove '.$quoteModel->code.': '.$exception->getMessage());
-                }
-                DB::rollBack();
-            }
+            }, $maxRetries, $splitPaymentId, $quoteModel->code, $isFromJob);
         } elseif ($isFromJob) {
             CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
         }
