@@ -53,7 +53,6 @@ class BirdService extends BaseService
 
         try {
             info('Bird Webhook URL : '.$url);
-            info('Bird Webhook Data : '.json_encode($data));
             info('Starting Bird Webhook Request Ref-ID:'.$data->uuid ?? '');
             // Configure the HTTP request with headers
             $request = Http::withHeaders([
@@ -104,11 +103,11 @@ class BirdService extends BaseService
 
         $webhook = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_OCB_FOLLOWUP_TEMPLATE)->first();
         if (! empty($webhook)) {
-            info('SIC Health OCB email template found REF:ID| '.$data->quoteUID.' | Time: '.now());
+            info('SIC Health OCB email template found REF:ID| '.$data->quoteUID.' |Time: '.now());
 
             return $this->triggerWorkflow($webhook->value, $data);
         } else {
-            info('SIC Health OCB email template not found REF:ID| '.$data->quoteUID.' | Time: '.now());
+            info('SIC Health OCB email template not found REF:ID| '.$data->quoteUID.' |Time: '.now());
 
             return false;
         }
