@@ -2,22 +2,23 @@
 
 namespace App\Services;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\DefaultAdvisorEnum;
-use App\Enums\EnvEnum;
-use App\Enums\LeadSourceEnum;
-use App\Enums\QuoteTypeId;
-use App\Enums\UserStatusEnum;
-use App\Facades\Capi;
-use App\Jobs\UpdateSendPolicySubjectJob;
-use App\Models\ApplicationStorage;
-use App\Models\Customer;
-use App\Models\InsuranceProvider;
-use App\Models\User;
-use Carbon\Carbon;
 use Exception;
-use Illuminate\Support\Facades\Http;
+use Carbon\Carbon;
+use App\Models\User;
+use App\Facades\Capi;
+use App\Enums\EnvEnum;
+use App\Models\Customer;
+use App\Enums\QuoteTypeId;
+use App\Enums\LeadSourceEnum;
+use App\Enums\UserStatusEnum;
+use App\Enums\DefaultAdvisorEnum;
+use App\Models\InsuranceProvider;
+use App\Models\ApplicationStorage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
+use App\Enums\ApplicationStorageEnums;
+use App\Jobs\OCAHealthFollowupEmailJob;
+use App\Jobs\UpdateSendPolicySubjectJob;
 
 class SendEmailCustomerService extends BaseService
 {
@@ -582,8 +583,13 @@ class SendEmailCustomerService extends BaseService
                 $msg = $response->msg;
             }
             info('RM Intro Email Error for HEA-'.$quoteUuid.' - Response Code: '.$response->status.' - Message: '.$msg);
+
         } elseif ($response && isset($response->message)) {
+
             info('RM Intro Email Triggered to CAPI for HEA-'.$quoteUuid.' - Message: '.$response->message);
+            OCAHealthFollowupEmailJob::dispatch($quoteUuid);
+            info('OCAHealthFollowupEmailJob dispatched for HEA-'.$quoteUuid.' - Time: '.now());
+
         }
     }
 
