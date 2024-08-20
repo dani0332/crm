@@ -136,8 +136,11 @@ class RenewalBatchReportService extends BaseService
 
         $query = $this->applySuperRetentionFilters($query, $request->all());
 
-        return $query->paginate(15)
-            ->withQueryString();
+        info(self::class.' - Super Retention Query Executed', [
+            'query' => $query->toRawSql(),
+        ]);
+
+        return $query->get();
     }
 
     /**
