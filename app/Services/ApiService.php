@@ -116,7 +116,7 @@ class ApiService
         $responsePayload = $this->executeAllocation($allocationType, $allocationId, false, false, true);
         info('------ Lead allocation request completed to assign advisor only for '.$allocationId.' ------');
 
-        return apiResponse($responsePayload['data'], $responsePayload['status'], $responsePayload['message']);
+        return apiResponse($responsePayload['data'], Response::HTTP_OK, $responsePayload['message']);
     }
 
     private function triggerOCBOnly($quoteUUID, $quoteTypeId = QuoteTypeId::Car)
@@ -145,7 +145,7 @@ class ApiService
         $responsePayload = $this->executeAllocation($allocationType, $leadId, $teamId);
         info('------ Lead allocation ended for lead '.$leadId.' ------');
 
-        return apiResponse($responsePayload['data'], $responsePayload['status'], $responsePayload['message']);
+        return apiResponse($responsePayload['data'], Response::HTTP_OK, $responsePayload['message']);
     }
 
     public function triggerSICWorkflow(SICWorkflowRequest $request)
@@ -184,7 +184,7 @@ class ApiService
         $responsePayload = $this->executeAllocation($allocationType, $allocationId, false, true);
         info('------ Lead allocation request completed to evaluate tier only for '.$responsePayload['tierId'].' ------');
 
-        return apiResponse($responsePayload['data'], $responsePayload['status'], $responsePayload['message']);
+        return apiResponse($responsePayload['data'], Response::HTTP_OK, $responsePayload['message']);
     }
     /**
      * This function use to allocate the lead to advisor on the basis of lead type Bike, Car, Health, Travel
@@ -213,9 +213,9 @@ class ApiService
             'data' => [
                 'tierId' => $responsePayload['tierId'] ?? 0,
                 'assignedAdvisorId' => $responsePayload['advisorId'] ?? 0,
+                'status' => $status,
             ],
             'message' => $message,
-            'status' => $status,
         ];
     }
 
