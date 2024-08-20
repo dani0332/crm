@@ -581,6 +581,7 @@ class SplitPaymentService
         $paymentSplit = PaymentSplits::find($splitPaymentId);
         $sendUpdateId = $paymentSplit->payment->send_update_log_id;
         $mainLeadObject = $this->getQuoteObject($modelType, $quoteId);
+        $maxRetries = 2;
 
         if (! empty($sendUpdateId) && $sendUpdateId > 0) {
             $quoteModel = SendUpdateLogRepository::getLogById($sendUpdateId);
@@ -613,8 +614,12 @@ class SplitPaymentService
 
                 $sageResponse = $this->createSageRecipt($request, $paymentSplit, $amountCollected);
                 if ($sageResponse['status'] == 'success') {
-                    $paymentSplit->sage_reciept_id = $sageResponse['response'];
-                    $paymentSplit->save();
+
+                    $this->handleWithDeadlockRetries(function () use ($paymentSplit, $sageResponse) {
+                        $paymentSplit->sage_reciept_id = $sageResponse['response'];
+                        $paymentSplit->save();
+                    }, $maxRetries);
+                
                 } else {
                     $sageMessage = $sageResponse['response'];
                     if ($isFromJob) {
@@ -642,8 +647,6 @@ class SplitPaymentService
 
         if (! $paymentSplit->payment->is_approved && ! $isFromJob) {
             
-            $maxRetries = 2;
-
             return $this->handleWithDeadlockRetries(function () use ($paymentSplit, $amountCollected, $modelType, $quoteId, $isFromJob) {
                 if (empty($paymentSplit->verified_at)) {
                     $paymentSplit->verified_at = now();
