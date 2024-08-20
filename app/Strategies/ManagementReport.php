@@ -81,7 +81,7 @@ class ManagementReport
             'departments' => $departments,
         ];
     }
-    public function applyFilters($query, $request, $endorsementsQuery = false)
+    public function applyFilters($query, $request, $endorsementsQuery = false, $isSSR = false)
     {
         $this->applyDateFilters($query, $request, $endorsementsQuery);
 
@@ -98,7 +98,9 @@ class ManagementReport
         }
 
         // filter teams
-        $query = $this->filterTeams($query, $request['teams'] ?? []);
+        if(!$isSSR) {
+            $query = $this->filterTeams($query, $request['teams'] ?? []);
+        }
 
         if (isset($request['subTeams']) && ! empty($request['subTeams'])) {
             $query->whereIn('u.sub_team_id', $request['subTeams']);

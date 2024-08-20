@@ -45,23 +45,21 @@ class SaleSummaryReportService extends ManagementReport
         $query = PersonalQuote::query()
             ->leftJoin('users as u', 'personal_quotes.advisor_id', '=', 'u.id')
             ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
-            ->leftJoin('user_team', 'u.id', '=', 'user_team.user_id')
-            ->leftJoin('teams as t', 'user_team.team_id', '=', 't.id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->selectRaw('
             COUNT(DISTINCT(personal_quotes.uuid)) as total_policies,
             COUNT(DISTINCT(personal_quotes.uuid)) as total_transaction,
-            SUM(personal_quotes.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) as price_vat_applicable,
-            IFNULL(SUM(personal_quotes.vat) / COUNT(DISTINCT(user_team.team_id)),0) as total_vat,
-            IFNULL(SUM(personal_quotes.price_vat_not_applicable) / COUNT(DISTINCT(user_team.team_id)),0) as price_vat_not_applicable,
-            IFNULL(SUM(p.discount_value) / COUNT(DISTINCT(user_team.team_id)),0) as discount,
-            IFNULL(SUM(p.commission_vat_applicable) / COUNT(DISTINCT(user_team.team_id)),0) as commission_vat_applicable,
-            IFNULL( ( SUM(personal_quotes.price_vat_applicable) / COUNT(DISTINCT(user_team.team_id)) ), 0) +
-                IFNULL( ( SUM(personal_quotes.price_vat_not_applicable) / COUNT(DISTINCT(user_team.team_id)) ), 0) +
-                IFNULL( ( SUM(personal_quotes.vat) / COUNT(DISTINCT(user_team.team_id)) ), 0) -
-                IFNULL( ( SUM(p.discount_value) / COUNT(DISTINCT(user_team.team_id)) ), 0) as total_price
+            SUM(personal_quotes.price_vat_applicable) as price_vat_applicable,
+            IFNULL(SUM(personal_quotes.vat),0) as total_vat,
+            IFNULL(SUM(personal_quotes.price_vat_not_applicable),0) as price_vat_not_applicable,
+            IFNULL(SUM(p.discount_value) ,0) as discount,
+            IFNULL(SUM(p.commission_vat_applicable) ,0) as commission_vat_applicable,
+            IFNULL( ( SUM(personal_quotes.price_vat_applicable)  ), 0) +
+                IFNULL( ( SUM(personal_quotes.price_vat_not_applicable) ), 0) +
+                IFNULL( ( SUM(personal_quotes.vat)  ), 0) -
+                IFNULL( ( SUM(p.discount_value) ), 0) as total_price    
             ')
             ->when($request->groupBy, function ($query, $groupBy) use ($request) {
                 $groupByArray = [];
@@ -107,7 +105,17 @@ class SaleSummaryReportService extends ManagementReport
                 $join->on('p.code', '=', 'ps.code');
             });
         }
-        $this->applyFilters($query, $request);
+        $this->applyFilters($query, $request, false, true);
+
+        $teams = $request['teams'] ?? [];
+        if (! empty($teams) && count($teams) > 0) {
+            $value = $teams;
+            $query->whereIn('u.id',function ($query) use ($value) {
+                $query->select('user_team.user_id')
+                    ->from('user_team')
+                    ->whereIn('user_team.team_id', $value);
+            });
+        }
         $data = $query->get();
         $this->formatData($data);
 
