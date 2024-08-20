@@ -298,7 +298,7 @@ class AMLService
                 'subject' => $emailSubject,
                 'htmlContent' => $htmlContent,
             ], JSON_UNESCAPED_SLASHES);
-            $client = new \GuzzleHttp\Client();
+            $client = new \GuzzleHttp\Client;
             $clientRequest = $client->post(
                 $url,
                 [
@@ -331,7 +331,7 @@ class AMLService
             return false;
         }
 
-        $bridgerInsightService = new BridgerInsightService();
+        $bridgerInsightService = new BridgerInsightService;
         $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
         $matchResultsForUpdate = [];
