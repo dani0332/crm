@@ -356,6 +356,8 @@ class RenewalsUploadService
      */
     public function getPlans($id)
     {
+        info('FetchPlans FN: getPlans from ken api for id: ' . $id);
+
         $quotePlans = $this->carQuoteService->getQuotePlans($id, false, true);
 
         if (isset($quotePlans->quotes)) {
@@ -449,6 +451,7 @@ class RenewalsUploadService
      */
     public function fetchQuotePlans(RenewalQuoteProcess $renewalQuoteProcess, RenewalStatusProcess $renewalStatusProcess)
     {
+        info('FetchPlans FN: fetchRenewalPlans individual lead plan process started for policy_number: '.$renewalQuoteProcess->policy_number);
         $leadData = (object) $renewalQuoteProcess->data;
 
         $quoteType = $this->getQuoteTypeByShortCode($renewalQuoteProcess->quote_type);
@@ -484,6 +487,7 @@ class RenewalsUploadService
 
             info('FetchPlans FN: fetchRenewalPlans'.' fetching plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
             $plansResponse = $this->getPlans($quote->uuid);
+            info('FetchPlans FN: getPlans from ken api response completed.');
             if ($plansResponse === true) {
                 info('FetchPlans FN: fetchRenewalPlans'.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
                 //update status to plans fetched
