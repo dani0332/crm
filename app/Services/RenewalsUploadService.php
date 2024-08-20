@@ -356,7 +356,7 @@ class RenewalsUploadService
      */
     public function getPlans($id)
     {
-        info('FetchPlans FN: getPlans from ken api for id: ' . $id);
+        info('FetchPlans FN: getPlans from ken api for id: '.$id);
 
         $quotePlans = $this->carQuoteService->getQuotePlans($id, false, true);
 

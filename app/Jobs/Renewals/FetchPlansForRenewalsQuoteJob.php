@@ -45,7 +45,7 @@ class FetchPlansForRenewalsQuoteJob implements ShouldQueue, StackableJob
      */
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
-        info('FetchPlansForRenewalsQuoteJob: job being started for policy_number: ' . $this->renewalQuoteProcess->policy_number);
+        info('FetchPlansForRenewalsQuoteJob: job being started for policy_number: '.$this->renewalQuoteProcess->policy_number);
         $renewalsUploadService->fetchQuotePlans($this->renewalQuoteProcess, $this->renewalStatusProcess);
     }
 
