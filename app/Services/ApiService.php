@@ -141,9 +141,9 @@ class ApiService
 
     private function performLeadAllocation($allocationType, $leadId, $teamId)
     {
-        info('------ Lead allocation started for lead : '. $leadId.' ------');
+        info('------ Lead allocation started for lead : '.$leadId.' ------');
         $responsePayload = $this->executeAllocation($allocationType, $leadId, $teamId);
-        info('------ Lead allocation ended for lead '. $leadId.' ------');
+        info('------ Lead allocation ended for lead '.$leadId.' ------');
 
         return apiResponse($responsePayload['data'], $responsePayload['status'], $responsePayload['message']);
     }
@@ -182,23 +182,23 @@ class ApiService
 
         info('------ Lead allocation request received to evaluate tier only for '.$allocationId.' ------');
         $responsePayload = $this->executeAllocation($allocationType, $allocationId, false, true);
-        info('------ Lead allocation request completed to evaluate tier only for '. $responsePayload['tierId'].' ------');
+        info('------ Lead allocation request completed to evaluate tier only for '.$responsePayload['tierId'].' ------');
 
         return apiResponse($responsePayload['data'], $responsePayload['status'], $responsePayload['message']);
     }
     /**
      * This function use to allocate the lead to advisor on the basis of lead type Bike, Car, Health, Travel
      *
-     * @param String $allocationType
-     * @param String $allocationId
-     * @param boolean $teamId
+     * @param  string  $allocationType
+     * @param  string  $allocationId
+     * @param  bool  $teamId
      * @return void
      */
     private function executeAllocation($allocationType, $allocationId, $teamId = false, $tierOnly = false, $overrideAdvisorId = false)
     {
         $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId, $teamId);
         if (is_null($allocationStrategy)) {
-            info('-- Exception against - allocationType: ' . $allocationId . ' and allocationId: ' . $allocationId . ' --');
+            info('-- Exception against - allocationType: '.$allocationId.' and allocationId: '.$allocationId.' --');
             throw new InvalidArgumentException("Allocation strategy for type '$allocationType -- $allocationId' not found.");
         }
         $responsePayload = $allocationStrategy->executeSteps($overrideAdvisorId, $teamId, $tierOnly);
@@ -206,7 +206,7 @@ class ApiService
         $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
         $message = $responsePayload['message'];
         if ((isset($rest['advisorId']) && $rest['advisorId'] == 0) || (isset($rest['tierId']) && $rest['tierId'] == 0)) {
-            $message = (isset($rest['tierId']) && $rest['tierId'] == 0) ? 'Tier failed: ' . $responsePayload['message']: 'Allocation failed: ' . $responsePayload['message'];
+            $message = (isset($rest['tierId']) && $rest['tierId'] == 0) ? 'Tier failed: '.$responsePayload['message'] : 'Allocation failed: '.$responsePayload['message'];
         }
 
         return [
@@ -215,7 +215,7 @@ class ApiService
                 'assignedAdvisorId' => $responsePayload['advisorId'] ?? 0,
             ],
             'message' => $message,
-            'status' => $status
+            'status' => $status,
         ];
     }
 

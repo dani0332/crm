@@ -26,21 +26,24 @@ class HealthAllocation implements Allocation
             $lead = $this->fetchLead($overrideAdvisorId);
 
             if (! $lead) {
-                info('Lead not found or not under fetch criteria for allocation id: ' . $this->allocationId);
+                info('Lead not found or not under fetch criteria for allocation id: '.$this->allocationId);
+
                 return AllocationFactory::createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             }
 
             $this->assignTeamBasedOnPrice($lead);
 
             if (! $lead->health_team_type) {
-                info('No health team found against lead : ' . $lead->uuid);
+                info('No health team found against lead : '.$lead->uuid);
+
                 return AllocationFactory::createResponse(0, 'No health team found', Response::HTTP_NOT_FOUND);
             }
 
             $advisor = $this->fetchAvailableAdvisor($lead->health_team_type);
 
             if (! $advisor) {
-                info('No advisors found against lead : ' . $lead->uuid);
+                info('No advisors found against lead : '.$lead->uuid);
+
                 return AllocationFactory::createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
             }
 
@@ -49,9 +52,10 @@ class HealthAllocation implements Allocation
             return AllocationFactory::createResponse($advisor->id, 'Advisor assigned successfully!', Response::HTTP_OK);
         } catch (\Throwable $th) {
             $message = $th->getMessage() ?? '';
-            info('exception occurred in health lead allocation with error : ' . $message);
-            info('exception occurred in health lead allocation with error stack as  : ' . $th->getTraceAsString());
-            return AllocationFactory::createResponse(0, 'exception occurred in health lead allocation with error : ' . $message, Response::HTTP_INTERNAL_SERVER_ERROR);
+            info('exception occurred in health lead allocation with error : '.$message);
+            info('exception occurred in health lead allocation with error stack as  : '.$th->getTraceAsString());
+
+            return AllocationFactory::createResponse(0, 'exception occurred in health lead allocation with error : '.$message, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 

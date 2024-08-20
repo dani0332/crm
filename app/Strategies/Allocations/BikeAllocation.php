@@ -31,7 +31,7 @@ class BikeAllocation implements Allocation
             $lead = $this->fetchLead($overrideAdvisorId);
 
             if (! $lead) {
-                info('Lead not found or not under fetch criteria for allocation id: ' . $this->allocationId . ' in BIKE allocation');
+                info('Lead not found or not under fetch criteria for allocation id: '.$this->allocationId.' in BIKE allocation');
                 $response = AllocationFactory::createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             } else {
                 // Find the appropriate tier for the lead
@@ -39,7 +39,7 @@ class BikeAllocation implements Allocation
 
                 // If a valid tier is found
                 if ($tier) {
-                    info('Tier finalized for lead : ' . $lead->uuid . ' is : ' . $tier->name);
+                    info('Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
                     // Find available users for the tier
                     $availableUsers = $this->findAvailableUsers($tier->id, $lead->bikeQuote->source);
 
@@ -62,16 +62,16 @@ class BikeAllocation implements Allocation
                     }
                 } else {
                     // Log that tier was not found for the lead and skip processing
-                    info('Tier not found for lead: ' . $lead->uuid . '. Skipping for now.');
+                    info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
                     $response = AllocationFactory::createResponse(0, 'Tier not found', Response::HTTP_UNPROCESSABLE_ENTITY);
                 }
             }
             info('Bike Allocation Ended.');
         } catch (\Throwable $th) {
             $message = $th->getMessage() ?? '';
-            info('exception occurred in bike lead allocation with error : ' . $message);
-            info('exception occurred in bike lead allocation with error stack as  : ' . $th->getTraceAsString());
-            $response = AllocationFactory::createResponse(0, 'exception occurred in bike lead allocation with error : ' . $message, Response::HTTP_INTERNAL_SERVER_ERROR);
+            info('exception occurred in bike lead allocation with error : '.$message);
+            info('exception occurred in bike lead allocation with error stack as  : '.$th->getTraceAsString());
+            $response = AllocationFactory::createResponse(0, 'exception occurred in bike lead allocation with error : '.$message, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         return $response;

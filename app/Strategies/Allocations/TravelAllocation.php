@@ -29,21 +29,21 @@ class TravelAllocation implements Allocation
         $response = [
             'advisorId' => 0,
             'message' => '',
-            'status' => Response::HTTP_INTERNAL_SERVER_ERROR
+            'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
         ];
 
         try {
-            info(self::class . " - executeSteps: Travel Allocation started for allocation id : {$this->allocationId}");
+            info(self::class." - executeSteps: Travel Allocation started for allocation id : {$this->allocationId}");
             $lead = $this->fetchLead($overrideAdvisorId);
 
             if (! $lead) {
-                info(self::class . " - executeSteps: Lead not found for : {$this->allocationId}");
+                info(self::class." - executeSteps: Lead not found for : {$this->allocationId}");
                 $response = AllocationFactory::createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             } else {
                 $advisor = $this->fetchAvailableAdvisor();
 
                 if (! $advisor) {
-                    info(self::class . " - executeSteps: No advisor found against lead : {$lead->uuid}");
+                    info(self::class." - executeSteps: No advisor found against lead : {$lead->uuid}");
                     $response = AllocationFactory::createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
                 } else {
                     $this->assignLead($lead, $advisor); // Assign the lead to the advisor
@@ -52,9 +52,9 @@ class TravelAllocation implements Allocation
             }
         } catch (\Throwable $th) {
             $message = $th->getMessage() ?? '';
-            info('exception occurred in travel lead allocation with error : ' . $message);
-            info('exception occurred in travel lead allocation with error stack as  : ' . $th->getTraceAsString());
-            $response = AllocationFactory::createResponse(0, 'exception occurred in travel lead allocation with error : ' . $message, Response::HTTP_INTERNAL_SERVER_ERROR);
+            info('exception occurred in travel lead allocation with error : '.$message);
+            info('exception occurred in travel lead allocation with error stack as  : '.$th->getTraceAsString());
+            $response = AllocationFactory::createResponse(0, 'exception occurred in travel lead allocation with error : '.$message, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         return $response;

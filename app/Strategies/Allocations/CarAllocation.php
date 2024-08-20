@@ -27,14 +27,15 @@ class CarAllocation implements Allocation
         $response = [
             'advisorId' => 0,
             'message' => '',
-            'status' => Response::HTTP_INTERNAL_SERVER_ERROR
+            'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
         ];
 
         try {
             $lead = $this->fetchLead($overrideAdvisorId);
 
             if (! $lead) {
-                info('Lead not found or not under fetch criteria for allocation id: ' . $this->allocationId);
+                info('Lead not found or not under fetch criteria for allocation id: '.$this->allocationId);
+
                 return AllocationFactory::createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             }
 
@@ -43,14 +44,14 @@ class CarAllocation implements Allocation
             if ($tier) {
                 $response = $this->processTier($lead, $tier, $evaluateTierOnly);
             } else {
-                info('Tier not found for lead: ' . $lead->uuid . '. Skipping for now.');
+                info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
                 $response = AllocationFactory::createResponse(0, 'Tier not found', Response::HTTP_NOT_FOUND);
             }
         } catch (\Throwable $th) {
             $message = $th->getMessage() ?? '';
-            info('exception occurred in car lead allocation with error : ' . $message);
-            info('exception occurred in car lead allocation with error stack as  : ' . $th->getTraceAsString());
-            $response = AllocationFactory::createResponse(0, 'exception occurred in car lead allocation with error : ' . $message, Response::HTTP_INTERNAL_SERVER_ERROR);
+            info('exception occurred in car lead allocation with error : '.$message);
+            info('exception occurred in car lead allocation with error stack as  : '.$th->getTraceAsString());
+            $response = AllocationFactory::createResponse(0, 'exception occurred in car lead allocation with error : '.$message, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         return $response;
@@ -61,7 +62,7 @@ class CarAllocation implements Allocation
         $tier = $lead->tier_id != null ? $this->getTier($lead->tier_id) : $this->findTier($lead);
 
         if ($tier) {
-            info('check the lead and identify if the tier update is required : ' . $lead->uuid);
+            info('check the lead and identify if the tier update is required : '.$lead->uuid);
             $updatedTierId = $this->carAllocationService->updateTierBeforeEligibleUserIdentification($lead);
 
             if (! empty($updatedTierId) && $updatedTierId != $lead->tier_id) {
@@ -76,31 +77,35 @@ class CarAllocation implements Allocation
 
     private function processTier($lead, $tier, $evaluateTierOnly)
     {
-        info('Tier identified. Proceeding to finalize the tier for lead : ' . $lead->uuid . ' with UUID : ' . $lead->uuid . ' and tier name : ' . $tier->name);
+        info('Tier identified. Proceeding to finalize the tier for lead : '.$lead->uuid.' with UUID : '.$lead->uuid.' and tier name : '.$tier->name);
 
         if ($evaluateTierOnly) {
-            info('Evaluate tier only. Tier finalized for lead : ' . $lead->uuid . ' is : ' . $tier->name);
+            info('Evaluate tier only. Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
             $lead->tier_id = $tier->id;
             $lead->save();
+
             return AllocationFactory::createResponse(0, 'Tier evaluated successfully!', Response::HTTP_OK, $tier->id);
         }
 
-        info('Tier finalized for lead : ' . $lead->uuid . ' is : ' . $tier->name);
+        info('Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
         $availableUsers = $this->findAvailableUsers($tier->id, $lead->source, $lead);
         $rules = $this->findRules($lead);
         $advisorId = $this->finalizeAdvisors($lead, $tier, $availableUsers, $rules);
 
         if (! empty($advisorId) && $advisorId == $lead->advisor_id) {
             info('Advisor is same as previous advisor. Skipping for now.');
+
             return AllocationFactory::createResponse($advisorId, 'Advisor is same as previous advisor. Skipping for now', Response::HTTP_OK);
         }
 
         if ($advisorId && $advisorId != 0) {
             $this->assignLead($lead, $advisorId, $tier);
+
             return AllocationFactory::createResponse($advisorId, 'Advisor assigned successfully!', Response::HTTP_OK);
         } else {
             info('Advisor not found. Skipping for now.');
             $this->updateLeadTier($lead, $tier);
+
             return AllocationFactory::createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
         }
     }
