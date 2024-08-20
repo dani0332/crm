@@ -41,6 +41,7 @@ class PaymentNotifications implements ShouldBroadcastNow
     public function broadcastWith()
     {
         info('Notification Send', [$this->uuid]);
+
         return [
             'uuid' => $this->uuid,
             'advisorId' => $this->advisorId,

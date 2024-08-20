@@ -25,7 +25,7 @@ class PaymentNotificationEmailJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($user, $userData ,$getExpireOneDay)
+    public function __construct($user, $userData, $getExpireOneDay)
     {
         $this->user = $user;
         $this->getExpireOneDay = $getExpireOneDay;

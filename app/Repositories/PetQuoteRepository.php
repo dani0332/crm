@@ -100,7 +100,7 @@ class PetQuoteRepository extends BaseRepository
             'advisor',
             'petQuote.petQuoteRequestDetail.lostReason:id,text',
             'paymentStatus',
-            'payments'
+            'payments',
         ])
             ->when(\auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
