@@ -9,6 +9,7 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\RuleTypeEnum;
 use App\Enums\TeamNameEnum;
@@ -90,7 +91,7 @@ class BikeAllocationService extends AllocationService
                 $bikeValue = $firstAxaValuation->bikeValue;
             }
 
-            info('bike value as per valuation engine for GIG is '.$bikeValue.' for lead : '.$bikeLead->uuid);
+            info('bike value as per valuation engine for GIG is ' . $bikeValue . ' for lead : ' . $bikeLead->uuid);
             $tiersQuery->where('min_price', '<=', $bikeValue)->where('max_price', '>=', $bikeValue);
         }
     }
@@ -133,7 +134,7 @@ class BikeAllocationService extends AllocationService
         // Calculate the year of manufacture that is 15 years ago from the current date.
         $yearOfManufacture = now()->subYear(15)->year;
 
-        info('yearOfManufacture is: '.$yearOfManufacture.' and number of plans found are: '.count($plans));
+        info('yearOfManufacture is: ' . $yearOfManufacture . ' and number of plans found are: ' . count($plans));
 
         return [$plans, $yearOfManufacture];
     }
@@ -172,7 +173,7 @@ class BikeAllocationService extends AllocationService
             if (strlen($dateString) === 11 && strpos($dateString, '-') !== false) {
                 $dateParts = explode('-', $dateString);
                 if (strlen($dateParts[1]) === 3) {  // Month is a 3-letter abbreviation
-                    $reformattedDate = $dateParts[2].'-'.$dateParts[1].'-'.$dateParts[0];
+                    $reformattedDate = $dateParts[2] . '-' . $dateParts[1] . '-' . $dateParts[0];
                     $userDob = Carbon::createFromFormat('Y-M-d', $reformattedDate);
                 } else {
                     // Handle cases where the format isn't as expected (e.g., full month name)
@@ -206,7 +207,7 @@ class BikeAllocationService extends AllocationService
         if ($bikeLead->bikeQuote->year_of_manufacture < $yearOfManufacture) {
             // Check if more than one plan is found against the bike lead.
             if (count($plans) > 0) {
-                info('More than one plan found against bike lead: '.$bikeLead->uuid);
+                info('More than one plan found against bike lead: ' . $bikeLead->uuid);
                 // Determine the tier based on a value and return the first matching tier.
                 $this->getTierBasedOnValue($bikeLead, $tiersQuery);
 
@@ -237,7 +238,7 @@ class BikeAllocationService extends AllocationService
     public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource)
     {
         $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
-        info('Users against tierID '.$tierId.' are: '.json_encode($tierUserIds->toArray()));
+        info('Users against tierID ' . $tierId . ' are: ' . json_encode($tierUserIds->toArray()));
 
         $tierUserIds = $this->executeRevivalCheck($leadSource, $tierUserIds);
 
@@ -258,11 +259,11 @@ class BikeAllocationService extends AllocationService
 
             // If eligible users are found, log the results and return them.
             if ($eligibleUsers && count($eligibleUsers) > 0) {
-                info('Fetching Users with the availability status of: '.UserStatusEnum::getUserStatusText($status));
+                info('Fetching Users with the availability status of: ' . UserStatusEnum::getUserStatusText($status));
 
                 return $eligibleUsers->toArray();
             }
-            info('No Users were found with the availability status of: '.UserStatusEnum::getUserStatusText($status));
+            info('No Users were found with the availability status of: ' . UserStatusEnum::getUserStatusText($status));
         }
 
         // If no eligible users are found, return an empty array.
@@ -373,28 +374,28 @@ class BikeAllocationService extends AllocationService
     {
         // Extract user IDs from the eligible user data and convert them to an array.
         $availableUserIds = collect($eligibleUsers)->pluck('user_id')->toArray();
-        info('Available User IDs are: '.json_encode($availableUserIds));
+        info('Available User IDs are: ' . json_encode($availableUserIds));
 
         if (count($rules) > 0) {
             // If there are rules, retrieve user IDs from the rule records.
             $ruleUserIds = $this->getUserIdsFromRuleRecords($rules);
 
-            info('Rule user IDs are: '.json_encode($ruleUserIds));
+            info('Rule user IDs are: ' . json_encode($ruleUserIds));
 
             // Find the intersection of available user IDs and rule user IDs.
             $finalEligibleUserIds = array_intersect($availableUserIds, $ruleUserIds);
 
-            info('Rule found, and users against the rule are: '.json_encode($finalEligibleUserIds));
+            info('Rule found, and users against the rule are: ' . json_encode($finalEligibleUserIds));
         } else {
             // If no rules are found, get user IDs from rule lead sources.
             $ruleUsers = $this->getRuleUsers();
 
-            info('No rule found against this lead ('.$lead->uuid.'), so filtering rule users: '.json_encode($ruleUsers));
+            info('No rule found against this lead (' . $lead->uuid . '), so filtering rule users: ' . json_encode($ruleUsers));
 
             // Find the difference between available user IDs and rule users.
             $finalEligibleUserIds = array_diff($availableUserIds, $ruleUsers);
 
-            info('Final login and available users after rule exclusion are: '.json_encode($finalEligibleUserIds));
+            info('Final login and available users after rule exclusion are: ' . json_encode($finalEligibleUserIds));
         }
 
         $finalEligibleUserIds = $this->fetchOnlyBikeEligibleAdvisors($finalEligibleUserIds);
@@ -438,7 +439,7 @@ class BikeAllocationService extends AllocationService
 
     public function processLeadAssignment($lead, $userId, $tier, $assignmentType): void
     {
-        info('About to assign bike lead with UUID: '.$lead->uuid.' to user with ID: '.$userId);
+        info('About to assign bike lead with UUID: ' . $lead->uuid . ' to user with ID: ' . $userId);
 
         //Store the previous Assignment Type
         $previousAssignmentType = $lead->assignment_type;
@@ -449,17 +450,17 @@ class BikeAllocationService extends AllocationService
         // Assign the lead to the user and get the associated quote.
         $bikeQuote = $this->assignLeadToUserAndGetQuote($lead, $userId, $tier, $assignmentType);
 
-        info('Advisor and tier assignment completed for lead with UUID: '.$bikeQuote->uuid.' to user with ID: '.$userId.' and tier name: '.$tier->name);
+        info('Advisor and tier assignment completed for lead with UUID: ' . $bikeQuote->uuid . ' to user with ID: ' . $userId . ' and tier name: ' . $tier->name);
 
         // Update the bike lead detail record and store the previous advisor assigned date.
         $previousAdvisorAssignedDate = $this->updateBikeLeadDetailRecord($bikeQuote->id);
 
-        info('Updating user record in lead allocation table with count increment for User ID: '.$userId);
+        info('Updating user record in lead allocation table with count increment for User ID: ' . $userId);
 
         // Depending on the assignment type, either add or adjust allocation counts.
-        $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($userId) : $this->adjustAllocationCounts($userId, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType);
+        $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($userId, QuoteTypes::BIKE->id()) : $this->adjustAllocationCounts($userId, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType, QuoteTypes::BIKE->id());
 
-        info('Completed assignment of lead, and lead count update is done for quote with code: '.$bikeQuote->code);
+        info('Completed assignment of lead, and lead count update is done for quote with code: ' . $bikeQuote->code);
     }
 
     private function assignLeadToUserAndGetQuote($lead, $userId, $tier, $assignmentType): mixed
@@ -467,7 +468,7 @@ class BikeAllocationService extends AllocationService
         // Assign the lead to the advisor and send an email
         // Check if the lead was previously assigned to an advisor and log the change.
         if (! empty($lead->advisor_id)) {
-            info('Lead with UUID: '.$lead->uuid.' was previously assigned to User ID: '.$lead->advisor_id.' and is now being assigned to User ID: '.$userId);
+            info('Lead with UUID: ' . $lead->uuid . ' was previously assigned to User ID: ' . $lead->advisor_id . ' and is now being assigned to User ID: ' . $userId);
         }
 
         // Update lead properties.
@@ -482,7 +483,7 @@ class BikeAllocationService extends AllocationService
         $lead->quote_batch_id = $quoteBatch->id;
 
         // Log information about the quote batch assignment.
-        info('About to assign Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name.' to Quote with UUID: '.$lead->uuid);
+        info('About to assign Quote Batch with ID: ' . $quoteBatch->id . ' and Name: ' . $quoteBatch->name . ' to Quote with UUID: ' . $lead->uuid);
 
         // Save the updated lead.
         $lead->save();
@@ -493,7 +494,7 @@ class BikeAllocationService extends AllocationService
     public function updateBikeLeadDetailRecord($leadId)
     {
         // Log information about the update operation.
-        info('About to update personal quote detail record for lead ID: '.$leadId);
+        info('About to update personal quote detail record for lead ID: ' . $leadId);
 
         // Attempt to find an existing bike quote detail record for the given lead.
         $personalQuoteDetail = PersonalQuoteDetail::where('personal_quote_id', $leadId)->first();
@@ -511,7 +512,7 @@ class BikeAllocationService extends AllocationService
     {
         // Calculate the start date for lead retrieval
         $from = now()->subDay()->setTime(12, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
-        info('Leads will be picked up in reassignment from : '.$from.' until : '.now()->toDateTimeString());
+        info('Leads will be picked up in reassignment from : ' . $from . ' until : ' . now()->toDateTimeString());
 
         // Check if Dubai Now exclusion should be applied
         $shouldIncludeDubaiNow = $this->getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
@@ -537,7 +538,7 @@ class BikeAllocationService extends AllocationService
         // Filter by advisor ID if provided , which mean reassignment is going to run for a single advisor
         if ($advisorId != 0) {
             $leads->where('advisor_id', $advisorId);
-            info('Inside reassignment single run and selected advisor is: '.$advisorId);
+            info('Inside reassignment single run and selected advisor is: ' . $advisorId);
         } else {
             // If advisor ID is not provided, get unavailable advisors and filter leads by them
             $advisors = $this->getUnavailableAdvisor();
@@ -549,7 +550,7 @@ class BikeAllocationService extends AllocationService
 
         // Filter leads by tier (if applicable)
         if (! empty($tierR)) {
-            info('Inside Tier Condition for reassignment job and selected tier is: '.$tierR->name.' with Tier Id: '.$tierR->id);
+            info('Inside Tier Condition for reassignment job and selected tier is: ' . $tierR->name . ' with Tier Id: ' . $tierR->id);
             $leads->where('tier_id', '!=', $tierR->id);
         }
 
@@ -581,7 +582,7 @@ class BikeAllocationService extends AllocationService
             'tier_id' => $tier->id,
         ]);
 
-        info('Tier with name : '.$tier->name.' is assigned to bike lead with uuid : '.$lead->uuid);
+        info('Tier with name : ' . $tier->name . ' is assigned to bike lead with uuid : ' . $lead->uuid);
     }
 
     public function fetchOnlyBikeEligibleAdvisors($userIds)
@@ -602,7 +603,7 @@ class BikeAllocationService extends AllocationService
 
             return $matchingRoles->isNotEmpty() && $isValidTeam;
         });
-        info('Final eligible users after filtering for bike advisors: '.json_encode($finalEligibleUserIds));
+        info('Final eligible users after filtering for bike advisors: ' . json_encode($finalEligibleUserIds));
 
         return $finalEligibleUserIds;
     }
