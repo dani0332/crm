@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\API\ApiController;
 use App\Http\Controllers\API\V1\CarQuoteController;
 use App\Http\Controllers\API\V1\EmbeddedProductController;
