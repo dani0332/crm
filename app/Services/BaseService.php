@@ -26,7 +26,7 @@ class BaseService
     public function getGenericModel($type = null): GenericModel
     {
         $type = $type ?? 'GenericModel';
-        $this->genericModel = $this->fillModel(new GenericModel(), $type);
+        $this->genericModel = $this->fillModel(new GenericModel, $type);
 
         return $this->genericModel;
     }
@@ -77,37 +77,37 @@ class BaseService
 
     public function dropdownValues($key, $quoteTypeId)
     {
-        return (new DropdownSourceService())->getDropdownSource($key, $quoteTypeId);
+        return (new DropdownSourceService)->getDropdownSource($key, $quoteTypeId);
     }
 
     public function quoteDocumentEnabled($type)
     {
-        return (new QuoteDocumentService())->isEnabled($type);
+        return (new QuoteDocumentService)->isEnabled($type);
     }
 
     public function getQuoteDocuments($quoteId, $type)
     {
-        return (new QuoteDocumentService())->getQuoteDocuments($quoteId, $type);
+        return (new QuoteDocumentService)->getQuoteDocuments($quoteId, $type);
     }
 
     public function displaySendPolicyButton($record, $quoteDocuments, $quoteTypeId)
     {
-        return (new QuoteDocumentService())->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
+        return (new QuoteDocumentService)->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
     }
 
     public function getQuoteDocumentsForUpload($type)
     {
-        return (new QuoteDocumentService())->getQuoteDocumentsForUpload($type);
+        return (new QuoteDocumentService)->getQuoteDocumentsForUpload($type);
     }
 
     public function getEmailStatus($typeId, $quoteId)
     {
-        return (new EmailStatusService())->getEmailStatus($typeId, $quoteId);
+        return (new EmailStatusService)->getEmailStatus($typeId, $quoteId);
     }
 
     public function getAdditionalContacts($customerId, $mobileNo)
     {
-        return (new CustomerService())->getAdditionalContacts($customerId, $mobileNo);
+        return (new CustomerService)->getAdditionalContacts($customerId, $mobileNo);
     }
 
     public function audits($auditableId, $auditableType)

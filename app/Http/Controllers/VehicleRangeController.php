@@ -74,7 +74,7 @@ class VehicleRangeController extends Controller
                 return redirect()->back()->with('message', 'Range with same Make, Model, Insurer already exists.')->withInput($request->input());
             }
         }
-        $range = new VehicleRange();
+        $range = new VehicleRange;
         $range->lower_limit = $request->lower_limit;
         $range->upper_limit = $request->upper_limit;
         if ($request->car_model_id) {

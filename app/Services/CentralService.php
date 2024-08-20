@@ -797,7 +797,7 @@ class CentralService
             }
         }
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client;
 
         try {
             $kenRequest = $client->post(

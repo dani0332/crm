@@ -3,6 +3,7 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Factories\AllocationFactory;
 use App\Models\Tier;
 use App\Services\BikeAllocationService;
 use Illuminate\Database\Eloquent\Collection;
@@ -21,6 +22,8 @@ class BikeAllocation implements Allocation
 
     public function executeSteps($overrideAdvisorId = false)
     {
+        $response = AllocationFactory::createResponse(0, '', Response::HTTP_INTERNAL_SERVER_ERROR);
+
         try {
             info('Bike Allocation Started.');
 
@@ -29,56 +32,49 @@ class BikeAllocation implements Allocation
 
             if (! $lead) {
                 info('Lead not found or not under fetch criteria for allocation id: '.$this->allocationId.' in BIKE allocation');
-
-                return ['advisorId' => 0, 'message' => 'Lead not found or not under fetch criteria', 'status' => Response::HTTP_NOT_FOUND]; // when lead is not on criteria or not found
-            }
-
-            // Find the appropriate tier for the lead
-            $tier = $lead->tier_id != null ? $this->getTier($lead->tier_id) : $this->findTier($lead);
-
-            // If a valid tier is found
-            if ($tier) {
-                info('Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
-                // Find available users for the tier
-                $availableUsers = $this->findAvailableUsers($tier->id, $lead->bikeQuote->source);
-
-                // Find custom rules for the lead
-                $rules = $this->findRules($lead);
-                // Determine the final advisor for the lead based on tier, users, and rules
-                $advisorId = $this->finalizeAdvisors($lead, $availableUsers, $rules);
-
-                if (! empty($advisorId) && $advisorId == $lead->advisor_id) {
-                    info('Advisor is same as previous advisor. Skipping for now.');
-
-                    return ['advisorId' => $advisorId, 'message' => 'Advisor is same as previous advisor. Skipping for now', 'status' => Response::HTTP_OK];
-                }
-
-                if ($advisorId && $advisorId != 0) {
-                    $this->assignLead($lead, $advisorId, $tier);
-                } else {
-                    info('Advisor not found. Skipping for now.');
-                    // Update the lead's tier information
-                    $this->updateLeadTier($lead, $tier);
-
-                    return ['advisorId' => 0, 'message' => 'Advisor not found', 'status' => Response::HTTP_NOT_FOUND];
-                }
-                info('Bike Allocation Ended.');
-
-                return ['advisorId' => $advisorId, 'message' => 'Advisor assigned successfully!', 'status' => Response::HTTP_OK];
+                $response = AllocationFactory::createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             } else {
-                // Log that tier was not found for the lead and skip processing
-                info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
-                info('Bike Allocation Ended.');
+                // Find the appropriate tier for the lead
+                $tier = $lead->tier_id != null ? $this->getTier($lead->tier_id) : $this->findTier($lead);
 
-                return ['advisorId' => 0, 'message' => 'Tier not found', 'status' => Response::HTTP_UNPROCESSABLE_ENTITY];
+                // If a valid tier is found
+                if ($tier) {
+                    info('Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
+                    // Find available users for the tier
+                    $availableUsers = $this->findAvailableUsers($tier->id, $lead->bikeQuote->source);
+
+                    // Find custom rules for the lead
+                    $rules = $this->findRules($lead);
+                    // Determine the final advisor for the lead based on tier, users, and rules
+                    $advisorId = $this->finalizeAdvisors($lead, $availableUsers, $rules);
+
+                    if (! empty($advisorId) && $advisorId == $lead->advisor_id) {
+                        info('Advisor is same as previous advisor. Skipping for now.');
+                        $response = AllocationFactory::createResponse($advisorId, 'Advisor is same as previous advisor. Skipping for now', Response::HTTP_OK);
+                    } elseif ($advisorId && $advisorId != 0) {
+                        $this->assignLead($lead, $advisorId, $tier);
+                        $response = AllocationFactory::createResponse($advisorId, 'Advisor assigned successfully!', Response::HTTP_OK);
+                    } else {
+                        info('Advisor not found. Skipping for now.');
+                        // Update the lead's tier information
+                        $this->updateLeadTier($lead, $tier);
+                        $response = AllocationFactory::createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
+                    }
+                } else {
+                    // Log that tier was not found for the lead and skip processing
+                    info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
+                    $response = AllocationFactory::createResponse(0, 'Tier not found', Response::HTTP_UNPROCESSABLE_ENTITY);
+                }
             }
+            info('Bike Allocation Ended.');
         } catch (\Throwable $th) {
             $message = $th->getMessage() ?? '';
             info('exception occurred in bike lead allocation with error : '.$message);
             info('exception occurred in bike lead allocation with error stack as  : '.$th->getTraceAsString());
-
-            return ['advisorId' => 0, 'message' => 'exception occurred in bike lead allocation with error : '.$message, 'status' => Response::HTTP_INTERNAL_SERVER_ERROR];
+            $response = AllocationFactory::createResponse(0, 'exception occurred in bike lead allocation with error : '.$message, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+
+        return $response;
     }
 
     protected function fetchLead($overrideAdvisorId): mixed

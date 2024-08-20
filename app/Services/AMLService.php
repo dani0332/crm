@@ -246,7 +246,24 @@ class AMLService
             $emailSubject = $emailSystem.' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteRefId;
         }
 
-        self::sendAmlComplianceMail($amlQuoteUrl, $amlResultCount, $customerOrEntityName, $quoteType, $quoteRefId, $emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser);
+        Mail::send(
+            ['html' => 'AmlComplianceMail'],
+            [
+                'amlUrl' => $amlQuoteUrl,
+                'resultsFound' => $amlResultCount,
+                'fullName' => $customerOrEntityName,
+                'quoteTypeName' => $quoteType,
+                'quoteCdbId' => $quoteRefId,
+            ],
+            function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser) {
+                $message->to($emailRecipients);
+                if (in_array($loginUserEmail, $emailRecipients) || ! $forComplianceSuperUser) {
+                    $message->cc($loginUserEmail);
+                }
+                $message->subject($emailSubject);
+                $message->from($fromEmail, $fromName);
+            }
+        );
     }
 
     private static function sendAmlComplianceMail($amlQuoteUrl, $amlResultCount, $customerOrEntityName, $quoteType, $quoteRefId, $emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser)
@@ -281,7 +298,7 @@ class AMLService
                 'subject' => $emailSubject,
                 'htmlContent' => $htmlContent,
             ], JSON_UNESCAPED_SLASHES);
-            $client = new \GuzzleHttp\Client();
+            $client = new \GuzzleHttp\Client;
             $clientRequest = $client->post(
                 $url,
                 [
@@ -314,7 +331,7 @@ class AMLService
             return false;
         }
 
-        $bridgerInsightService = new BridgerInsightService();
+        $bridgerInsightService = new BridgerInsightService;
         $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
         $matchResultsForUpdate = [];

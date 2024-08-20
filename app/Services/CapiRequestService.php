@@ -18,7 +18,7 @@ class CapiRequestService
         $apiToken = config('constants.CENTRAL_API_TOKEN');
         $apiTimeout = config('constants.CENTRAL_API_TIMEOUT');
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client;
         $capiRequest = $client->post(
             $apiEndPoint,
             [
