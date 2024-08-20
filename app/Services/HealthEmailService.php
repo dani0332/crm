@@ -28,7 +28,7 @@ class HealthEmailService extends BaseService
         if ($triggerSICWorkFlow) {
             if (! $lead->sic_flow_enabled) {
                 // Dispatch the job with a 30 mint delay
-                SICHealthFollowupEmailJob::dispatch($lead->uuid)->delay(Carbon::now()->minutes(30));
+                SICHealthFollowupEmailJob::dispatch($lead->uuid);
                 info('SIC Health workflow event triggered for lead: Ref-ID: '.$lead->uuid.' |Time: '.now());
                 info('SICHealthFollowupEmailJob Dispatched - Ref ID:'.$lead->uuid.'|  Time: '.now());
             } else {
