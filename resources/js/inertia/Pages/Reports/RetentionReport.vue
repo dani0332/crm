@@ -335,7 +335,7 @@ function onSubmit(isValid=true) {
     }
     if (filters.displayBy == ''){
       notification.error({
-        title: 'Please select display by filter',
+        title: 'Please select view by filter',
         position: 'top',
       });
       return
@@ -506,7 +506,7 @@ watch(
         <ComboBox
           v-model="filters.displayBy"
           placeholder="Search by Group"
-          label="Display by"
+          label="View by"
           :options="displayBy"
           class="w-full"
           :single="true"
@@ -582,7 +582,7 @@ watch(
             </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Select LOB and select display by and select month or select expiry date   
+                Select LOB and select view by and select month or select expiry date   
               </span>
             </template>
           </x-tooltip>
