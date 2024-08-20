@@ -867,7 +867,7 @@ class SendUpdateLogService
 
         $carQuote = CarQuote::where('uuid', $quoteUuid)->first();
 
-        return $carQuote->plan->carAddons->toArray();
+        return $carQuote?->plan?->carAddons->toArray();
     }
 
     public function sendUpdateToCustomerEmailData($sendUpdateLog, $action): array
