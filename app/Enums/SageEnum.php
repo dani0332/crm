@@ -28,7 +28,6 @@ final class SageEnum extends Enum
     const STATUS_SUCCESS = 'success';
     const STATUS_FAIL = 'fail';
     const STATUS_PAID = 'paid';
-    const BATCH_STATUS_POSTED = 'Posted';
 
     // -------------------------------------- Sage Request Types Start --------------------------------------------
 

@@ -1498,7 +1498,7 @@ class SageApiService
                     $arInvoiceBatch = $this->postToSage300('AR/ARInvoiceBatches('.$sageResponse['BatchNumber'].')', [], 'GET');
                     info('SAGE API :  Status of  AR invoice batch '.$arInvoiceBatch);
                     $arInvoiceBatch = json_decode($arInvoiceBatch, true);
-                    if ($arInvoiceBatch['BatchStatus'] == SageEnum::BATCH_STATUS_POSTED) {
+                    if ($arInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                         info('SAGE API : AR invoice bacth '.$sageResponse['BatchNumber'].' already posted for '.$quote->code);
                         $postedResponse = $aRPostInvoices['payload'];
                         $isAlreadyPosted = true;
@@ -1674,7 +1674,7 @@ class SageApiService
                 info('SAGE API :  Status of  AR invoice batch '.$arInvoiceBatch);
                 $arInvoiceBatch = json_decode($arInvoiceBatch, true);
 
-                if ($arInvoiceBatch['BatchStatus'] == SageEnum::BATCH_STATUS_POSTED) {
+                if ($arInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                     info('SAGE API : AR invoice batch '.$batchNumber.' already posted for '.$quote->code);
                     $postedResponse = $aRPostInvoices['payload'];
                     $isAlreadyPosted = true;
@@ -1777,7 +1777,7 @@ class SageApiService
                         info('SAGE API :  Status of  AP invoice batch '.$aPInvoiceBatch);
                         $aPInvoiceBatch = json_decode($aPInvoiceBatch, true);
 
-                        if ($aPInvoiceBatch['BatchStatus'] == SageEnum::BATCH_STATUS_POSTED) {
+                        if ($aPInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                             info('SAGE API : AP invoice batch '.$postedResponse['BatchNumber'].' already posted for '.$quote->code);
                             $postedResponse = $aPPostInvoices['payload'];
                             $isAlreadyPosted = true;
@@ -1933,7 +1933,7 @@ class SageApiService
                     info('SAGE API :  Status of  AP invoice batch '.$aPInvoiceBatch);
                     $aPInvoiceBatch = json_decode($aPInvoiceBatch, true);
 
-                    if ($aPInvoiceBatch['BatchStatus'] == SageEnum::BATCH_STATUS_POSTED) {
+                    if ($aPInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                         info('SAGE API : AP invoice batch '.$postedResponse['BatchNumber'].' already posted for '.$quote->code);
                         $postedResponse = $aPPostInvoices['payload'];
                         $isAlreadyPosted = true;
@@ -2037,7 +2037,7 @@ class SageApiService
                         info('SAGE API :  Status of  AR invoice batch '.$arInvoiceBatch);
                         $arInvoiceBatch = json_decode($arInvoiceBatch, true);
 
-                        if ($arInvoiceBatch['BatchStatus'] == SageEnum::BATCH_STATUS_POSTED) {
+                        if ($arInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                             info('SAGE API : AR invoice batch '.$postedResponse['BatchNumber'].' already posted for '.$quote->code);
                             $postedResponse = $aRPostInvoices['payload'];
                             $isAlreadyPosted = true;
@@ -2192,7 +2192,7 @@ class SageApiService
                 info('SAGE API :  Status of  AR Prepayment Receipts batch '.$aRReceiptBatch);
                 $aRReceiptBatch = json_decode($aRReceiptBatch, true);
 
-                if ($aRReceiptBatch['BatchStatus'] == SageEnum::BATCH_STATUS_POSTED) {
+                if ($aRReceiptBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                     info('SAGE API : AR Prepayment Receipts batch '.$batchNumber.' already posted for '.$quote->code);
                     $postedResponse = $aRPostReceipts['payload'];
                     $isAlreadyPosted = true;
@@ -2301,7 +2301,7 @@ class SageApiService
                 info('SAGE API :  Status of  AR Prepayment Receipts batch '.$aRReceiptBatch);
                 $aRReceiptBatch = json_decode($aRReceiptBatch, true);
 
-                if ($aRReceiptBatch['BatchStatus'] == SageEnum::BATCH_STATUS_POSTED) {
+                if ($aRReceiptBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                     info('SAGE API : AP Prepayment Receipts batch '.$batchNumber.' already posted for '.$quote->code);
                     $postedResponse = $aRPostReceipts['payload'];
                     $isAlreadyPosted = true;
@@ -2409,7 +2409,7 @@ class SageApiService
                 info('SAGE API :  Status of  AR Prepayment Receipts batch '.$aRReceiptBatch);
                 $aRReceiptBatch = json_decode($aRReceiptBatch, true);
 
-                if ($aRReceiptBatch['BatchStatus'] == SageEnum::BATCH_STATUS_POSTED) {
+                if ($aRReceiptBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                     info('SAGE API : AP Prepayment Receipts batch '.$batchNumber.' already posted for '.$quote->code);
                     $postedResponse = $aRPostReceipts['payload'];
                     $isAlreadyPosted = true;
@@ -2508,10 +2508,5 @@ class SageApiService
         }
 
         return $returnMessage;
-    }
-
-    public function isCurrentSageBatchPosted($quote, $payment, $paymentSplits)
-    {
-
     }
 }
