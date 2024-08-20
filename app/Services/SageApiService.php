@@ -2454,6 +2454,10 @@ class SageApiService
         $sageErrorMessage = $responseArray['error']['message']['value'] ?? $responseArray['error'] ?? null;
         Log::error("SAGE API : $quote->uuid  : ".json_encode($sageErrorMessage));
         $returnMessage['error'] = $sageErrorMessage;
+        if (str_contains($sageErrorMessage, 'Processing conflict')) {
+            $returnMessage['message'] = 'Another Policy is being booked. Please try again later.';
+        }
+
 
         if ($storeSageApiLog) {
             $this->logSageApiCall($payload, $response, $quote, $currentStep, $totalSteps, $status);
