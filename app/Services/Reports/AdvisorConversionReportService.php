@@ -381,7 +381,7 @@ class AdvisorConversionReportService extends BaseService
             ->toArray();
 
         $lobs = $this->getLobByPermissions();
-        $dropdownSourceService = new DropdownSourceService();
+        $dropdownSourceService = new DropdownSourceService;
 
         $insuranceFor = [
             quoteTypeCode::Health => $dropdownSourceService->getDropdownSource('cover_for_id'),

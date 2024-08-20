@@ -72,7 +72,7 @@ class YachtQuoteRepository extends BaseRepository
 
             $quote->yachtQuote()->updateOrCreate(
                 ['personal_quote_id' => $quote->id],
-                Arr::only($data, (new YachtQuote())->allowedColumns())
+                Arr::only($data, (new YachtQuote)->allowedColumns())
             );
 
             return $quote;

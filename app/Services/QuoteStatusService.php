@@ -16,7 +16,7 @@ class QuoteStatusService
 
     public function updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, $request = [], $notes = null)
     {
-        $AMLService = new AMLService();
+        $AMLService = new AMLService;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $quoteStatus = QuoteStatus::where('code', $quoteStatusType)->firstOrFail();
 
