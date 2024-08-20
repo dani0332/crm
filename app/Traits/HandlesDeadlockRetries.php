@@ -2,11 +2,11 @@
 
 namespace App\Traits;
 
+use App\Enums\PaymentProcessJobEnum;
+use App\Models\CcPaymentProcess;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Models\CcPaymentProcess;
-use App\Enums\PaymentProcessJobEnum;
 
 trait HandlesDeadlockRetries
 {
@@ -41,15 +41,15 @@ trait HandlesDeadlockRetries
                     }
                     sleep(1); // Optional: wait a bit before retrying
                 } else {
-                    
-                    if($splitPaymentId > 0) {
+
+                    if ($splitPaymentId > 0) {
                         if ($isFromJob) {
                             CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $exception->getMessage()]);
                         } else {
                             Log::error('Error in processSplitPaymentApprove '.$quoteCode.': '.$exception->getMessage());
                         }
                     }
-                    
+
                     Log::error('Error: '.$exception->getMessage());
 
                     return ['status' => 'error', 'message' => $exception->getMessage()];
