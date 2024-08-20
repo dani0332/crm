@@ -234,9 +234,7 @@ const memberCategoryText = memberCategoryId =>
 // });
 
 const subTeamOptions = [
-  { value: 'RM-NB', label: 'RM-NB' },
-  { value: 'RM-SPEED', label: 'RM-SPEED' },
-  { value: 'EBP', label: 'EBP' },
+  { value: '', label: 'All' },
   { value: 'Best', label: 'Best' },
   { value: 'Good', label: 'Good' },
   { value: 'Entry-Level', label: 'Entry-Level' },
