@@ -512,12 +512,7 @@ class ReportsController extends Controller
             'filterOptions' => $retentionReportService->getFilterOptions(),
             'filtersByLob' => $retentionReportService->getFiltersByLob(),
             'reportData' => $retentionReportData,
-            'productName' => $retentionReportService->getUserPorductName(),
-            'monthNames' => MonthNameEnum::all(),
-            'RetentionReportEnum' => RetentionReportEnum::asArray(),
-            'isShowBatchColumn' => $retentionReportService->isShowBatchColumn($retentionReportData),
             'footerData' => $footerData,
-            'baseURL' => $retentionReportService->buildQuoteURL($request)
         ]);
     }
 

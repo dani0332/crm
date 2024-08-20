@@ -50,12 +50,13 @@ class RetentionReportService extends BaseService
     public function getReportData($request, $isExport=false)
     {
         // If the model object is not found or the user is not an advisor or manager and no permission, return an empty array
-        if (!$this->isAdvisorManager()) {
+        if (!$this->isAdvisorManager() || $this->getQuoteType($request) === '') {
             return [];
         }
 
         // Build the query based on the model object and request parameters
         $query = $this->buildQuery($request);
+
         $allData = $query->get();
 
         $aggregatedData= $this->getSummarizedData($allData);
@@ -82,7 +83,7 @@ class RetentionReportService extends BaseService
     private function getQuoteType($request)
     {
         // Return the 'lob' parameter from the request if it exists, otherwise return the user's product name
-        return $request['lob'] ?? $this->getUserPorductName();
+        return $request['lob'];
     }
 
     /**

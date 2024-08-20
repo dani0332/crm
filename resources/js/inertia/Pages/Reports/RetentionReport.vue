@@ -1,16 +1,12 @@
 <script setup>
 import { filter } from 'lodash';
+import { ref } from 'vue';
 
 const props = defineProps({
   filterOptions: Object,
   filtersByLob: Object,
   reportData: Object,
-  productName: String,
-  monthNames: Array,
-  RetentionReportEnum: Array,
-  isShowBatchColumn: Boolean,
   footerData: Array,
-  baseURL: String
 });
 
 const page = usePage();
@@ -19,10 +15,41 @@ const isMounted = ref(false);
 const advisorOptions = ref([]);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const notification = useToast();
-const RetentionReportEnum = props.RetentionReportEnum 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const canExport = ref(false);
+
+// Remove from Enum on the Request of Ahsan
+const RetentionReportEnum = {
+  RETENTION: 'RETENTION',
+  MONTHLY: 'MONTHLY',
+  BATCH: 'BATCH',
+  LOST: 'LOST',
+  INVALID: 'INVALID',
+  SALES: 'SALES',
+  TOTAL: 'TOTAL',
+
+  MONTH_HEADING: 'The policies expiring in the selected month.',
+  BATCH_HEADING: 'This will show all the policies that are expiring in the selected batch.',
+  START_DATE_HEADING: 'This date will display the start date of the Batch. If you\'re using a "Monthly" filter, this date will represent the start of the selected month for data display.',
+  END_DATE_HEADING: 'This date will display the end date of the Batch. If you\'re using a "Monthly" filter, this date will represent the end of the selected month for data display',
+  ADVISOR_NAME_HEADING: 'This displays the policies handled by the selected advisor',
+  TOTAL_HEADING: 'The total number of leads in a specific month assigned to you within the selected time range.',
+  LOST_HEADING: 'The number of leads that have been marked as "Lost"',
+  INVALID_HEADING: 'The number of leads marked as "Fake" or "Duplicate."',
+  POLICIES_BOOKED_HEADING: 'The number of leads that you\'ve won. Great job turning these into successes!',
+  VOLUME_NET_RETENTION_HEADING: 'The ratio of won leads to the total leads, excluding invalid leads. VOLUME NET RETENTION= (SALES)/(TOTAL-INVALID)',
+  VOLUME_GROSS_RETENTION_HEADING: 'The ratio of won leads to the total leads, including all leads. VOLUME GROSS RETENTION= (SALES)/(TOTAL)',
+  RELATIVE_RETENTION_HEADING: 'The difference between the average Net Retention of the renewals and the Net Retention of an advisor.',
+
+  TOTAL_COLUMN: 'Sum of selected leads.',
+  LOST_COLUMN: 'Sum of selected leads classified as "Lost".',
+  INVALID_COLUMN: 'Sum of selected leads classified as "Invalid".',
+  SALES_COLUMN: 'Sum of selected leads that resulted in sales.',
+  VOLUME_NET_RETENTION_COLUMN: 'Total net retention volume of the selected leads. [ Formula ➝ (Total Won leads)/(Sum of Total Leads - Total Invalid leads) ]',
+  VOLUME_GROSS_RETENTION_COLUMN: 'Total gross retention volume of the selected leads. [ Formula ➝ (Total Won leads)/(Sum of Total Leads) ]',
+  RELATIVE_RETENTION_COLUMN: 'The percentage of a particular advisor relative to other advisors of a particular team.'
+};
 
 const objToUrl = obj => {
   Object.keys(obj).forEach(
@@ -40,7 +67,7 @@ const objToUrl = obj => {
 
 const getFiltersObject = () => {
   return {
-    lob: props.productName,
+    lob: '',
     displayBy: '',
     policyExpiryDate: [],
     teams: [],
@@ -85,7 +112,23 @@ const quoteTypesOptions = computed(() => {
 });
 
 const monthOptions = computed(() => {
-  const monthOptions = [...Object.values(page.props.monthNames).map((text, index) =>({
+  // Remove from ENUM on the request of Ahsan
+  const monthNames = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December'
+  ];
+
+  const monthOptions = [...Object.values(monthNames).map((text, index) =>({
     label: text,
     value: index+1,
   }))];
@@ -196,6 +239,8 @@ const onLobChange = (e, isOnMounted = false) => {
   } else {
     loadAdvisorsByLob(e);
   }
+
+  onSubmit(false)
 };
 
 const isDisabled = (element) => {
@@ -261,9 +306,6 @@ onMounted(() => {
   const queryParams = new URLSearchParams(window.location.search)
   filters.lob = queryParams.get('lob') || '';
   filters.displayBy = queryParams.get('displayBy') || '';
-  if (filters.lob == ''){
-    filters.lob = props.productName
-  }
   if (filters.lob !== ''){
     onLobChange(filters.lob, true);
   }
@@ -460,7 +502,7 @@ const headers = [
   { text: 'Relative Retention', value: 'relative_retention', tooltip: RetentionReportEnum.RELATIVE_RETENTION_HEADING},
 ];
 
-if (props.isShowBatchColumn) {
+if (filters.displayBy === RetentionReportEnum.BATCH) {
   headers.splice(1, 0, { text: 'Batch', value: 'batch', tooltip: RetentionReportEnum.BATCH_HEADING});
   headers.splice(2, 0, { text: 'Start Date', value: 'start_date', tooltip: RetentionReportEnum.START_DATE_HEADING});
   headers.splice(3, 0, { text: 'End Date', value: 'end_date', tooltip: RetentionReportEnum.END_DATE_HEADING});
@@ -480,6 +522,25 @@ watch(
   },
   { deep: true, immediate: true },
 );
+
+function buildQuoteURL() {
+  // Define the mapping of quote types to their corresponding paths
+  const quoteTypePaths = {
+    Car: 'car.show',
+    Health: 'health.show',
+    Travel: 'travel.show',
+    Bike: 'bike-quotes-show',
+    Pet: 'pet-quotes-show',
+    Cycle: 'cycle-quotes-show',
+    Yacht: 'yacht-quotes-show',
+    Life: 'life-quotes-show',
+    Home: 'home.show',
+    GroupMedical: 'amt.show',
+    CORPLINE: 'business.show'
+  };
+  // Return the path corresponding to the quote type, or null if not found
+  return quoteTypePaths[filters.lob] || null;
+}
 </script>
 
 <template>
@@ -703,9 +764,9 @@ watch(
       <template #body-append>
         <tr v-if="reportData.length > 0 || reportData.data && reportData.data.length > 0" class="total-row">
           <td class="direction-left">Total</td>
-          <td v-if="isShowBatchColumn"></td>
-          <td v-if="isShowBatchColumn"></td>
-          <td v-if="isShowBatchColumn"></td>
+          <td v-if="filters.displayBy === RetentionReportEnum.BATCH"></td>
+          <td v-if="filters.displayBy === RetentionReportEnum.BATCH"></td>
+          <td v-if="filters.displayBy === RetentionReportEnum.BATCH"></td>
           <td></td>
           <td>{{ footerData.total }}</td>
           <td>{{ footerData.lost }}</td>
@@ -759,7 +820,7 @@ watch(
             hide-footer
           >
           <template #item-code="{ code, uuid }">
-            <a :href="route(baseURL, uuid)" target="_blank" class="text-primary-500 hover:underline">
+            <a :href="route(buildQuoteURL(), uuid)" target="_blank" class="text-primary-500 hover:underline">
               {{ code }}
             </a>
           </template>
