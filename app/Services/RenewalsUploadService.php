@@ -356,7 +356,7 @@ class RenewalsUploadService
      */
     public function getPlans($id)
     {
-        info('FetchPlans FN: getPlans from ken api for id: ' . $id);
+        info('FetchPlans FN: getPlans from ken api for id: '.$id);
 
         $quotePlans = $this->carQuoteService->getQuotePlans($id, false, true);
 
@@ -367,7 +367,7 @@ class RenewalsUploadService
         if (! empty($quotePlans->message)) {
             return $quotePlans->message;
         }
-        
+
         return $quotePlans;
     }
 
@@ -451,7 +451,7 @@ class RenewalsUploadService
      */
     public function fetchQuotePlans(RenewalQuoteProcess $renewalQuoteProcess, RenewalStatusProcess $renewalStatusProcess)
     {
-        info('FetchPlans FN: fetchRenewalPlans individual lead plan process started for policy_number: ' . $renewalQuoteProcess->policy_number);
+        info('FetchPlans FN: fetchRenewalPlans individual lead plan process started for policy_number: '.$renewalQuoteProcess->policy_number);
 
         $leadData = (object) $renewalQuoteProcess->data;
 
