@@ -2455,7 +2455,7 @@ class SageApiService
         Log::error("SAGE API : $quote->uuid  : ".json_encode($sageErrorMessage));
         $returnMessage['error'] = $sageErrorMessage;
         if (str_contains($sageErrorMessage, 'Processing conflict')) {
-            $returnMessage['message'] = 'Another Policy is being booked. Please try again later.';
+            $returnMessage['message'] = 'Another Policy is being booked. Please wait 10-20 seconds before trying again.';
         }
 
 
