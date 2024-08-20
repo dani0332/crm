@@ -97,10 +97,7 @@ class ManagementReport
             }
         }
 
-        // filter teams
-        if(!$isSSR) {
-            $query = $this->filterTeams($query, $request['teams'] ?? []);
-        }
+        $query = $this->filterTeams($query, $request['teams'] ?? [], $isSSR);
 
         if (isset($request['subTeams']) && ! empty($request['subTeams'])) {
             $query->whereIn('u.sub_team_id', $request['subTeams']);
@@ -227,11 +224,26 @@ class ManagementReport
         }
     }
 
-    protected function filterTeams($query, $teams)
+    protected function filterTeams($query, $teams, $isSSR = false)
     {
+        if (! $isSSR) {
+            if (! empty($teams) && count($teams) > 0) {
+                $value = $teams;
+                $query->whereIn('t.id', $value);
+            }
+
+            return $query;
+        }
+
+        if ($teams && ! is_array($teams)) {
+            $teams = [$teams];
+        }
         if (! empty($teams) && count($teams) > 0) {
-            $value = $teams;
-            $query->whereIn('t.id', $value);
+            $query->whereIn('u.id', function ($query) use ($teams) {
+                $query->select('user_team.user_id')
+                    ->from('user_team')
+                    ->whereIn('user_team.team_id', $teams);
+            });
         }
 
         return $query;
