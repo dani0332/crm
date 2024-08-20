@@ -1582,20 +1582,6 @@ class CRUDController extends Controller
         $oldEntity = $this->crudService->getEntityByUUID($request->quote_uuid, $request->modelType);
         $result = $this->crudService->updateQuoteStatus($request);
         $entity = $result['entity'];
-        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
-            // Check if the lead status is "Quoted"
-            info('inside health email service ');
-            $healthEmailService  = new HealthEmailService();
-            if ((isset($request->leadStatus) && $request->leadStatus == QuoteStatusEnum::Quoted)) {
-                // Create a new instance of HealthEmailService
-                info("sending oca  health email follow ups for Ref-ID : ".$entity->uuid." lead status : ".$request->leadStatus.' | time: '.now());
-                // Send the Health OCA email using the HealthEmailService
-                $healthEmailService->triggerOCAFollowups($entity);
-            }
-            if($request->leadStatus == QuoteStatusEnum::ApplicationPending){
-                $healthEmailService->triggerPendingHealthFollowupEmails($entity);
-            }
-        }
         $plainEntity = $this->crudService->getLeadPlainEntityByUUID($request->modelType, $request->quote_uuid);
         if ($request->leadStatus == QuoteStatusEnum::TransactionApproved) {
             $this->crudService->calculateScore($plainEntity);

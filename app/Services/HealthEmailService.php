@@ -26,8 +26,7 @@ class HealthEmailService extends BaseService
     {
         // Retrieve plans with available ratings for the given lead
 
-        info('Sending OCA Health followups email for lead: '.$lead->uuid.' | time: '.now());
-           $lead->oca_flow_enabled  = false;
+        info('Sending OCA Health followups email for lead: '.$lead->uuid.' | Time: '.now());
             if (! $lead->oca_flow_enabled) {
                 $advisor = User::where('id', $lead->advisor_id)->first();
                 $emailData = $this->mappingEmailDataForOCAEmail($lead, $advisor);
@@ -41,8 +40,8 @@ class HealthEmailService extends BaseService
                     else {
                         $responseCode = null;
                     }
-                    // $lead->oca_flow_enabled = true;
-                    // $lead->save();
+                    $lead->oca_flow_enabled = true;
+                    $lead->save();
                     info('OCA Health workflow event triggered for lead: '.$lead->uuid.' and oca_flow_enabled: '.$lead->oca_flow_enabled);
                     info('OCA Health workflow response: '.$responseCode);
                 } else {
