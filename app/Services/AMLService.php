@@ -246,24 +246,7 @@ class AMLService
             $emailSubject = $emailSystem.' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteRefId;
         }
 
-        Mail::send(
-            ['html' => 'AmlComplianceMail'],
-            [
-                'amlUrl' => $amlQuoteUrl,
-                'resultsFound' => $amlResultCount,
-                'fullName' => $customerOrEntityName,
-                'quoteTypeName' => $quoteType,
-                'quoteCdbId' => $quoteRefId,
-            ],
-            function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser) {
-                $message->to($emailRecipients);
-                if (in_array($loginUserEmail, $emailRecipients) || ! $forComplianceSuperUser) {
-                    $message->cc($loginUserEmail);
-                }
-                $message->subject($emailSubject);
-                $message->from($fromEmail, $fromName);
-            }
-        );
+        self::sendAmlComplianceMail($amlQuoteUrl, $amlResultCount, $customerOrEntityName, $quoteType, $quoteRefId, $emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser);
     }
 
     private static function sendAmlComplianceMail($amlQuoteUrl, $amlResultCount, $customerOrEntityName, $quoteType, $quoteRefId, $emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser)
@@ -291,14 +274,18 @@ class AMLService
                 $ccEmail[] = ['email' => $loginUserEmail];
             }
 
-            $body = json_encode([
+            $bodyData = [
                 'sender' => ['name' => $fromName, 'email' => $fromEmail],
                 'to' => $toEmails,
-                'cc' => $ccEmail,
                 'subject' => $emailSubject,
                 'htmlContent' => $htmlContent,
-            ], JSON_UNESCAPED_SLASHES);
-            $client = new \GuzzleHttp\Client;
+            ];
+
+            if (! empty($ccEmail)) {
+                $bodyData['cc'] = $ccEmail;
+            }
+            $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
+            $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
                 $url,
                 [
