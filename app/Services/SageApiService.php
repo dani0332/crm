@@ -70,7 +70,7 @@ class SageApiService
             $businessTypeOfInsuranceCode = $businessTypeOfInsurance->code;
         }
 
-        $sageRequest = new \stdClass();
+        $sageRequest = new \stdClass;
 
         // $sageRequest->discount = 2;
         $sageRequest->discount = floatval($payment->discount_value);
@@ -481,8 +481,8 @@ class SageApiService
 
                 if ($checkInslyMigratedLead) {
                     info('Book Update - Creating payment details based on the send update - The lead originated from Insly. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
-                    $payment = new Payment();
-                    $splitPayments = collect([new PaymentSplits()]);
+                    $payment = new Payment;
+                    $splitPayments = collect([new PaymentSplits]);
 
                 } else {
                     // If we don't have payment details then we fetched it from the Main Lead
@@ -1215,7 +1215,7 @@ class SageApiService
                 $resp = $this->postToSage300($url, [], 'GET');
                 $postedResponse = json_decode($resp, true);
             } else {
-                $postedResponse = (new SageCustomApiService())->getAPInvoicePaymentScheduleByBatchNumber($this->sageBatchNumber);
+                $postedResponse = (new SageCustomApiService)->getAPInvoicePaymentScheduleByBatchNumber($this->sageBatchNumber);
             }
 
             if (($isARInvoicesCalls && empty($postedResponse['Invoices'][0]['InvoicePaymentSchedules'])) || (! $isARInvoicesCalls && $postedResponse['status'] == false)) {
@@ -1289,7 +1289,7 @@ class SageApiService
                         $postedResponse = json_decode($resp, true);
                     } else {
                         $payLoadOptions = $invoicePaymentSchedules;
-                        $resp = (new SageCustomApiService())->updateAPInvoicePaymentSchedule($this->sageBatchNumber, $invoicePaymentSchedules);
+                        $resp = (new SageCustomApiService)->updateAPInvoicePaymentSchedule($this->sageBatchNumber, $invoicePaymentSchedules);
                         $postedResponse['response'] = $resp;
                     }
                 }
@@ -1844,7 +1844,7 @@ class SageApiService
             }
 
             info('SAGE API :  Prepare Patch payload for SpitPayments  for '.$quote->code);
-            $aPInvoicePaymentsScheduleResponse = (new SageCustomApiService())->getAPInvoicePaymentScheduleByBatchNumber($postedResponse['BatchNumber']);
+            $aPInvoicePaymentsScheduleResponse = (new SageCustomApiService)->getAPInvoicePaymentScheduleByBatchNumber($postedResponse['BatchNumber']);
 
             if ($aPInvoicePaymentsScheduleResponse['status']) {
                 $aPInvoicePaymentsSchedule = $aPInvoicePaymentsScheduleResponse['response'];
@@ -1877,7 +1877,7 @@ class SageApiService
                 $postedResponse = json_decode($sageLogArray[7]['response'], true);
             } else {
                 info('SAGE API :  Send Patch Request  for '.$quote->code);
-                $resp = (new SageCustomApiService())->updateAPInvoicePaymentSchedule($postedResponse['BatchNumber'], $aPInvoicePaymentsSchedule);
+                $resp = (new SageCustomApiService)->updateAPInvoicePaymentSchedule($postedResponse['BatchNumber'], $aPInvoicePaymentsSchedule);
                 $postedResponse['response'] = $resp;
             }
 

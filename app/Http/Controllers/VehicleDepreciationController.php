@@ -88,7 +88,7 @@ class VehicleDepreciationController extends Controller
                 return redirect()->back()->with('message', 'Depreciation with same Make, Model, Insurer already exists.')->withInput($request->input());
             }
         }
-        $depreciation = new VehicleDepreciation();
+        $depreciation = new VehicleDepreciation;
         $depreciation->first_year = $request->first_year;
         $depreciation->second_year = $request->second_year;
         $depreciation->third_year = $request->third_year;

@@ -231,8 +231,8 @@ trait GenericQueriesAllLobs
         // Retrieve the first payment belongs to lead not to send update
         $payment = $payments->whereNull('send_update_log_id')->first();
         if ($payment) {
-            $invoiceDescription = (new PaymentRepository())->generateInvoiceDescription($payment, $quoteType, $record);
-            $brokerInvoiceNo = (new PaymentRepository())->generateBrokerInvoiceNumber($payment);
+            $invoiceDescription = (new PaymentRepository)->generateInvoiceDescription($payment, $quoteType, $record);
+            $brokerInvoiceNo = (new PaymentRepository)->generateBrokerInvoiceNumber($payment);
 
             $getBINFromDBForPolicyStatuses = [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued,  QuoteStatusEnum::CancellationPending];
 
@@ -362,7 +362,7 @@ trait GenericQueriesAllLobs
             $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
             info('Is policy details filled for  : '.$quote->uuid.' '.$isPolicyDetailsFilled);
             if ($isPolicyDetailsFilled) {
-                $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments($type, $id);
+                $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);
                 $isAllRequiredDocumentAreUploaded = $this->isAllRequiredDocumentAreUploaded($quoteDocuments, $type, $quote);
                 info('Is all required documens filled for  : '.$quote->uuid.' '.$isAllRequiredDocumentAreUploaded);
                 if ($isAllRequiredDocumentAreUploaded) {
