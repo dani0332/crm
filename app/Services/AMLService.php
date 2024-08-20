@@ -274,14 +274,18 @@ class AMLService
                 $ccEmail[] = ['email' => $loginUserEmail];
             }
 
-            $body = json_encode([
+            $bodyData = [
                 'sender' => ['name' => $fromName, 'email' => $fromEmail],
                 'to' => $toEmails,
-                'cc' => $ccEmail,
                 'subject' => $emailSubject,
                 'htmlContent' => $htmlContent,
-            ], JSON_UNESCAPED_SLASHES);
-            $client = new \GuzzleHttp\Client();
+            ];
+
+            if (! empty($ccEmail)) {
+                $bodyData['cc'] = $ccEmail;
+            }
+            $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
+            $client = new \GuzzleHttp\Client;
             $clientRequest = $client->post(
                 $url,
                 [
@@ -314,7 +318,7 @@ class AMLService
             return false;
         }
 
-        $bridgerInsightService = new BridgerInsightService();
+        $bridgerInsightService = new BridgerInsightService;
         $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
         $matchResultsForUpdate = [];

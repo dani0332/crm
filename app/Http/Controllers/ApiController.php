@@ -81,7 +81,7 @@ class ApiController extends Controller
      */
     public function respondCollection($data, $transformer)
     {
-        $manager = new Manager();
+        $manager = new Manager;
         $resource = new Collection($data, $transformer);
         $res = $manager->createData($resource)->toArray();
 

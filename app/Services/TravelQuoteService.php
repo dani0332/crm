@@ -189,7 +189,7 @@ class TravelQuoteService extends BaseService
 
             foreach ($request->members as $member) {
                 $memberDob = \Carbon\Carbon::parse($member['dob'])->format('Y-m-d');
-                $memberData = new \stdClass();
+                $memberData = new \stdClass;
                 if (isset($member['primary'])) {
                     $memberData->primary = true;
                     $travelQuote['dob'] = $memberDob;
@@ -780,7 +780,7 @@ class TravelQuoteService extends BaseService
             ...$extraData,
         ];
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client;
 
         try {
             $kenRequest = $client->post(

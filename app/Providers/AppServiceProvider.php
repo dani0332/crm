@@ -57,15 +57,15 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->bind(CarAllocationService::class, function ($app) {
-            return new CarAllocationService();
+            return new CarAllocationService;
         });
 
         $this->app->bind(HealthAllocationService::class, function ($app) {
-            return new HealthAllocationService();
+            return new HealthAllocationService;
         });
 
         $this->app->singletonIf(LeadsCountService::class, function ($app) {
-            return new LeadsCountService();
+            return new LeadsCountService;
         });
     }
 

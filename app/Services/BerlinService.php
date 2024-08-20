@@ -25,7 +25,7 @@ class BerlinService extends BaseService
     public function getCustomerInviteCode()
     {
         $inviteCodeGeneratauthBasic = base64_encode($this->berlinUserName.':'.$this->berlinAuthPassword);
-        $clientBerlin = new \GuzzleHttp\Client();
+        $clientBerlin = new \GuzzleHttp\Client;
 
         try {
             $berlinRequest = $clientBerlin->post(
@@ -67,7 +67,7 @@ class BerlinService extends BaseService
         $magicUrlGeneratePassword = config('constants.BERLIN_BASIC_AUTH_PASSWORD');
 
         $magicUrlGeneratauthBasic = base64_encode($magicUrlGenerateUserName.':'.$magicUrlGeneratePassword);
-        $clientBerlin = new \GuzzleHttp\Client();
+        $clientBerlin = new \GuzzleHttp\Client;
 
         try {
             $berlinRequest = $clientBerlin->post(
@@ -127,7 +127,7 @@ class BerlinService extends BaseService
         $customerDataArr['email'] = $customerEmail;
         $customerDataJson = json_encode($customerDataArr);
         $magicUrlGeneratauthBasic = base64_encode($this->berlinUserName.':'.$this->berlinAuthPassword);
-        $clientExtendSubscription = new \GuzzleHttp\Client();
+        $clientExtendSubscription = new \GuzzleHttp\Client;
 
         try {
             $requestExtendSubscription = $clientExtendSubscription->post(

@@ -1268,7 +1268,7 @@ class CarQuoteService extends BaseService
             ];
         }
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client;
 
         try {
             $kenRequest = $client->post(
@@ -1415,7 +1415,7 @@ class CarQuoteService extends BaseService
                 $plan_id = CarQuote::where('uuid', '=', $request->car_quote_uuid)->value('plan_id');
                 if ($plan_id == $request->car_plan_id) {
                     $request->merge(['plan_id' => $request->car_plan_id]);
-                    (new CentralService())->updateSelectedPlan(quoteTypeCode::Car, $request->car_quote_uuid, $request);
+                    (new CentralService)->updateSelectedPlan(quoteTypeCode::Car, $request->car_quote_uuid, $request);
                 }
                 $this->lockCarQuote($request->car_quote_uuid);
             }

@@ -47,7 +47,7 @@ class SendSmsCustomerService extends BaseService
             $smsUsername = config('constants.SMS_USERNAME');
             $smsPassword = config('constants.SMS_PASSWORD');
 
-            $client = new \GuzzleHttp\Client();
+            $client = new \GuzzleHttp\Client;
             $clientRequest = $client->request('POST', $smsEndpoint, ['query' => [
                 'username' => $smsUsername,
                 'password' => $smsPassword,
@@ -75,7 +75,7 @@ class SendSmsCustomerService extends BaseService
             $smsUsername = config('constants.SMS_USERNAME');
             $smsPassword = config('constants.SMS_PASSWORD');
 
-            $response = (new \GuzzleHttp\Client())->post($smsEndpoint, [
+            $response = (new \GuzzleHttp\Client)->post($smsEndpoint, [
                 'json' => [
                     'username' => $smsUsername,
                     'password' => $smsPassword,
@@ -120,7 +120,7 @@ class SendSmsCustomerService extends BaseService
             $smsUsername = config('constants.SMS_USERNAME');
             $smsPassword = config('constants.SMS_PASSWORD');
 
-            $client = new \GuzzleHttp\Client();
+            $client = new \GuzzleHttp\Client;
             $query = [
                 'username' => $smsUsername,
                 'password' => $smsPassword,
