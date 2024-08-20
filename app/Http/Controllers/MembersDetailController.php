@@ -91,7 +91,7 @@ class MembersDetailController extends Controller
     public function edit($id)
     {
         $data = HealthMemberDetail::find($id);
-        $lookUpService = new LookupService();
+        $lookUpService = new LookupService;
         $categories = $lookUpService->getMemberCategories($id);
         $salaries = $lookUpService->getSalaryBands($id);
 

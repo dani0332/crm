@@ -104,7 +104,7 @@ class LeadAllocationService extends BaseService
             return false;
         }
         try {
-            $leadAllocation = new LeadAllocation();
+            $leadAllocation = new LeadAllocation;
             $leadAllocation->user_id = $userId;
             $leadAllocation->allocation_count = 0;
             $leadAllocation->last_allocated = now()->timestamp;

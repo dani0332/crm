@@ -78,7 +78,7 @@ class InslyDetailRepository extends BaseRepository
     private function getQuoteTypeFromCoverage($coverage)
     {
         $coverage = $coverage ?? null;
-        $inslyCoverageArray = (new InslyDataService())->inslyInsurances();
+        $inslyCoverageArray = (new InslyDataService)->inslyInsurances();
         $quoteType = null;
         foreach ($inslyCoverageArray as $key => $item) {
             $lowerCaseCoverageValues = array_map('strtolower', $item);
@@ -234,7 +234,7 @@ class InslyDetailRepository extends BaseRepository
                         case QuoteTypes::PET->value:
                             $obj->petQuote()->updateOrCreate(
                                 ['personal_quote_id' => $id],
-                                Arr::only($payLoad, (new PetQuote())->allowedColumns())
+                                Arr::only($payLoad, (new PetQuote)->allowedColumns())
                             );
                             $obj->quoteDetail()->updateOrCreate(
                                 ['personal_quote_id' => $id],
@@ -244,7 +244,7 @@ class InslyDetailRepository extends BaseRepository
                         case QuoteTypes::BIKE->value:
                             $obj->bikeQuote()->updateOrCreate(
                                 ['personal_quote_id' => $id],
-                                Arr::only($payLoad, (new BikeQuote())->allowedColumns())
+                                Arr::only($payLoad, (new BikeQuote)->allowedColumns())
                             );
                             $obj->quoteDetail()->updateOrCreate(
                                 ['personal_quote_id' => $id],
@@ -254,7 +254,7 @@ class InslyDetailRepository extends BaseRepository
                         case QuoteTypes::CYCLE->value:
                             $obj->cycleQuote()->updateOrCreate(
                                 ['personal_quote_id' => $id],
-                                Arr::only($payLoad, (new CycleQuote())->allowedColumns())
+                                Arr::only($payLoad, (new CycleQuote)->allowedColumns())
                             );
                             $obj->quoteDetail()->updateOrCreate(
                                 ['personal_quote_id' => $id],
@@ -264,7 +264,7 @@ class InslyDetailRepository extends BaseRepository
                         case QuoteTypes::YACHT->value:
                             $obj->yachtQuote()->updateOrCreate(
                                 ['personal_quote_id' => $id],
-                                Arr::only($payLoad, (new YachtQuote())->allowedColumns())
+                                Arr::only($payLoad, (new YachtQuote)->allowedColumns())
                             );
                             $obj->quoteDetail()->updateOrCreate(
                                 ['personal_quote_id' => $id],
@@ -350,7 +350,7 @@ class InslyDetailRepository extends BaseRepository
         } else {
             $dataArr['customer_id'] = null;
         }
-        $capi = new CapiRequestService();
+        $capi = new CapiRequestService;
         $resp = $capi->getUUID($quoteTypeData->id);
         if ($resp) {
             $dataArr['uuid'] = $resp->uuid;
@@ -374,7 +374,7 @@ class InslyDetailRepository extends BaseRepository
     public function getCoverageList($user)
     {
         $coverage = [];
-        $inslyCoverageArray = (new InslyDataService())->inslyInsurances();
+        $inslyCoverageArray = (new InslyDataService)->inslyInsurances();
         if ($user->hasRole(RolesEnum::BikeAdvisor)) {
             $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::BIKE->value]);
         }
@@ -454,7 +454,7 @@ class InslyDetailRepository extends BaseRepository
     private function getBusinessTypeOfInsuranceIDFromCoverage($coverage)
     {
         $coverage = $coverage ?? null;
-        $inslyBusinessTypeOfInsurances = (new InslyDataService())->inslyBusinessTypeOfInsurance();
+        $inslyBusinessTypeOfInsurances = (new InslyDataService)->inslyBusinessTypeOfInsurance();
         $businessTypeOfInsurance = null;
         foreach ($inslyBusinessTypeOfInsurances as $key => $inslyBusinessTypeOfInsurance) {
             $lowercaseBusinessTypeOfInsurance = array_map('strtolower', $inslyBusinessTypeOfInsurance);

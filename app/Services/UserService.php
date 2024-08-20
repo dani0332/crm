@@ -22,7 +22,7 @@ class UserService extends BaseService
 
     public function createUserRecord(Request $request)
     {
-        $user = new User();
+        $user = new User;
         $user->name = $request->name;
         $user->email = $request->email;
         $user->mobile_no = $request->mobile_no;
