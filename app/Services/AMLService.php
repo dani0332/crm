@@ -27,6 +27,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\View;
 
 class AMLService
 {
@@ -244,6 +245,7 @@ class AMLService
             $fromName = config('constants.MAIL_FROM_NAME');
             $emailSubject = $emailSystem.' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteRefId;
         }
+
         Mail::send(
             ['html' => 'AmlComplianceMail'],
             [
@@ -262,6 +264,56 @@ class AMLService
                 $message->from($fromEmail, $fromName);
             }
         );
+    }
+
+    private static function sendAmlComplianceMail($amlQuoteUrl, $amlResultCount, $customerOrEntityName, $quoteType, $quoteRefId, $emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser)
+    {
+        try {
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => config('constants.SENDINBLUE_KEY'),
+                'Content-Type' => 'application/json',
+            ];
+            $url = config('constants.SIB_URL');
+            $amlUrl = $amlQuoteUrl ? $amlQuoteUrl : 'N/A';
+            $resultsFound = $amlResultCount ? $amlResultCount : 0;
+            $fullName = $customerOrEntityName ? $customerOrEntityName : 'N/A';
+            $quoteTypeName = $quoteType;
+            $quoteCdbId = $quoteRefId;
+            $htmlContent = View::make('AmlComplianceMail', compact('amlUrl', 'resultsFound', 'fullName', 'quoteTypeName', 'quoteCdbId'))->render();
+
+            $toEmails = array_map(function ($email) {
+                return ['email' => $email];
+            }, $emailRecipients);
+
+            $ccEmail = [];
+            if (in_array($loginUserEmail, $emailRecipients) || ! $forComplianceSuperUser) {
+                $ccEmail[] = ['email' => $loginUserEmail];
+            }
+
+            $body = json_encode([
+                'sender' => ['name' => $fromName, 'email' => $fromEmail],
+                'to' => $toEmails,
+                'cc' => $ccEmail,
+                'subject' => $emailSubject,
+                'htmlContent' => $htmlContent,
+            ], JSON_UNESCAPED_SLASHES);
+            $client = new \GuzzleHttp\Client();
+            $clientRequest = $client->post(
+                $url,
+                [
+                    'headers' => $headers,
+                    'body' => $body,
+                    'timeout' => 10,
+                ]
+            );
+
+            $responseCode = $clientRequest->getStatusCode();
+            info('sendAmlComplianceMail ---- Received Code : '.$responseCode);
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            $responseDetail = 'sendAmlComplianceMail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+        }
     }
 
     public static function getMemberOrUBODetails($request, $quoteType, $quoteRequestId)
