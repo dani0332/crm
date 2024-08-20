@@ -54,12 +54,12 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
-    {
-        text: 'POLICY EXPIRY DATE',
-        value: 'previous_policy_expiry_date',
-        is_active: true,
-        sortable: true,
-    },
+  {
+    text: 'POLICY EXPIRY DATE',
+    value: 'previous_policy_expiry_date',
+    is_active: true,
+    sortable: true,
+  },
   { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
   { text: 'SOURCE', value: 'source', is_active: true },
   { text: 'LOST REASON', value: 'lost_reason', is_active: true },
@@ -89,8 +89,8 @@ const filters = reactive({
   payment_status: [],
   is_cold: false,
   is_stale: false,
-    policy_expiry_date: '',
-    policy_expiry_date_end: '',
+  policy_expiry_date: '',
+  policy_expiry_date_end: '',
   payment_due_date: '',
   booking_date: '',
 });
@@ -133,15 +133,14 @@ const onDataExport = () => {
 
 function onSubmit(isValid) {
   if (isValid) {
-
-      if (validateDateRange()) {
-          notification.error({
-              title:
-                  'The selected date range exceeds one month. Please select a range within one month.',
-              position: 'top',
-          });
-          return;
-      }
+    if (validateDateRange()) {
+      notification.error({
+        title:
+          'The selected date range exceeds one month. Please select a range within one month.',
+        position: 'top',
+      });
+      return;
+    }
     serverOptions.value.page = 1;
 
     const filtersCleaned = cleanObj(filters);
@@ -268,31 +267,31 @@ watch(
 );
 
 const validateDateRange = () => {
-    const { policy_expiry_date, policy_expiry_date_end } = filters;
-    if (policy_expiry_date && policy_expiry_date_end) {
-        const startDate = new Date(policy_expiry_date);
-        const endDate = new Date(policy_expiry_date_end);
-        const oneMonthLater = new Date(startDate);
-        oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
-        // Adjust for months with fewer than 31 days
-        if (oneMonthLater.getDate() < startDate.getDate()) {
-            oneMonthLater.setDate(0);
-        }
-        if (endDate > oneMonthLater) {
-            return true;
-        }
+  const { policy_expiry_date, policy_expiry_date_end } = filters;
+  if (policy_expiry_date && policy_expiry_date_end) {
+    const startDate = new Date(policy_expiry_date);
+    const endDate = new Date(policy_expiry_date_end);
+    const oneMonthLater = new Date(startDate);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    // Adjust for months with fewer than 31 days
+    if (oneMonthLater.getDate() < startDate.getDate()) {
+      oneMonthLater.setDate(0);
     }
-    return false;
+    if (endDate > oneMonthLater) {
+      return true;
+    }
+  }
+  return false;
 };
 const formatDate = date => {
-    if (!date) return '';
-    // Split the date into parts: day, month, year
-    const [day, month, year] = date.split('-');
-    // Create a new Date object using the parsed parts
-    const parsedDate = new Date(`${year}-${month}-${day}`);
-    // Format the date to '31 May 2023'
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return parsedDate.toLocaleDateString('en-GB', options);
+  if (!date) return '';
+  // Split the date into parts: day, month, year
+  const [day, month, year] = date.split('-');
+  // Create a new Date object using the parsed parts
+  const parsedDate = new Date(`${year}-${month}-${day}`);
+  // Format the date to '31 May 2023'
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  return parsedDate.toLocaleDateString('en-GB', options);
 };
 
 const resetDateFilters = filterName => {
@@ -478,18 +477,18 @@ const resetDateFilters = filterName => {
             :options="leadStatusOptions"
           />
         </x-field>
-          <x-field label="Policy Expiry Start Date">
-              <DatePicker
-                  v-model="filters.policy_expiry_date"
-                  name="policy_expiry_date"
-              />
-          </x-field>
-          <x-field label="Policy Expiry End Date">
-              <DatePicker
-                  v-model="filters.policy_expiry_date_end"
-                  name="policy_expiry_date_end"
-              />
-          </x-field>
+        <x-field label="Policy Expiry Start Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date"
+            name="policy_expiry_date"
+          />
+        </x-field>
+        <x-field label="Policy Expiry End Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date_end"
+            name="policy_expiry_date_end"
+          />
+        </x-field>
         <x-field
           label="Advisor"
           v-if="
@@ -640,18 +639,18 @@ const resetDateFilters = filterName => {
           <StaleLeadsBadge :date="stale_at" :align="`left`" />
         </Link>
       </template>
-        <template
-            #item-previous_policy_expiry_date="{
+      <template
+        #item-previous_policy_expiry_date="{
           previous_policy_expiry_date,
           source,
         }"
-        >
-            {{
-                source === 'Renewal_upload'
-                    ? formatDate(previous_policy_expiry_date)
-                    : ''
-            }}
-        </template>
+      >
+        {{
+          source === 'Renewal_upload'
+            ? formatDate(previous_policy_expiry_date)
+            : ''
+        }}
+      </template>
     </DataTable>
 
     <Pagination

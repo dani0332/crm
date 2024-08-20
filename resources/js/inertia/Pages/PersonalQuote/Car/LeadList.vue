@@ -50,11 +50,11 @@ const tableHeader = [
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with_text' },
   { text: 'CLAIM HISTORY', value: 'claim_history_id_text' },
   { text: 'CREATED DATE', value: 'created_at' },
-    {
-        text: 'POLICY EXPIRY DATE',
-        value: 'previous_policy_expiry_date',
-        sortable: true,
-    },
+  {
+    text: 'POLICY EXPIRY DATE',
+    value: 'previous_policy_expiry_date',
+    sortable: true,
+  },
   { text: 'ADVISOR ASSIGNED DATE', value: 'advisor_assigned_date' },
   { text: 'LEAD COST', value: 'cost_per_lead' },
   { text: 'LEAD STATUS', value: 'quote_status_id_text' },
@@ -232,8 +232,8 @@ const filters = reactive({
   transaction_approved_dates: page.props.transaction_approved_dates || '',
   payment_due_date: '',
   booking_date: '',
-    policy_expiry_date: '',
-    policy_expiry_date_end: '',
+  policy_expiry_date: '',
+  policy_expiry_date_end: '',
 });
 
 const teamUsers =
@@ -283,14 +283,14 @@ const rules = {
 
 function onSubmit(isValid) {
   if (isValid) {
-      if (validateDateRange()) {
-          notification.error({
-              title:
-                  'The selected date range exceeds one month. Please select a range within one month.',
-              position: 'top',
-          });
-          return;
-      }
+    if (validateDateRange()) {
+      notification.error({
+        title:
+          'The selected date range exceeds one month. Please select a range within one month.',
+        position: 'top',
+      });
+      return;
+    }
     filters.page = 1;
     let data = { ...filters };
     Object.keys(data).forEach(
@@ -431,31 +431,31 @@ const resetDateFilters = filterName => {
   );
 });
 const validateDateRange = () => {
-    const { policy_expiry_date, policy_expiry_date_end } = filters;
-    if (policy_expiry_date && policy_expiry_date_end) {
-        const startDate = new Date(policy_expiry_date);
-        const endDate = new Date(policy_expiry_date_end);
-        const oneMonthLater = new Date(startDate);
-        oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
-        // Adjust for months with fewer than 31 days
-        if (oneMonthLater.getDate() < startDate.getDate()) {
-            oneMonthLater.setDate(0);
-        }
-        if (endDate > oneMonthLater) {
-            return true;
-        }
+  const { policy_expiry_date, policy_expiry_date_end } = filters;
+  if (policy_expiry_date && policy_expiry_date_end) {
+    const startDate = new Date(policy_expiry_date);
+    const endDate = new Date(policy_expiry_date_end);
+    const oneMonthLater = new Date(startDate);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    // Adjust for months with fewer than 31 days
+    if (oneMonthLater.getDate() < startDate.getDate()) {
+      oneMonthLater.setDate(0);
     }
-    return false;
+    if (endDate > oneMonthLater) {
+      return true;
+    }
+  }
+  return false;
 };
 const formatDate = date => {
-    if (!date) return '';
-    // Split the date into parts: day, month, year
-    const [day, month, year] = date.split('-');
-    // Create a new Date object using the parsed parts
-    const parsedDate = new Date(`${year}-${month}-${day}`);
-    // Format the date to '31 May 2023'
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return parsedDate.toLocaleDateString('en-GB', options);
+  if (!date) return '';
+  // Split the date into parts: day, month, year
+  const [day, month, year] = date.split('-');
+  // Create a new Date object using the parsed parts
+  const parsedDate = new Date(`${year}-${month}-${day}`);
+  // Format the date to '31 May 2023'
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  return parsedDate.toLocaleDateString('en-GB', options);
 };
 </script>
 
@@ -647,16 +647,16 @@ const formatDate = date => {
           class="w-full"
           placeholder="Policy Number"
         />
-          <DatePicker
-              v-model="filters.policy_expiry_date"
-              name="policy_expiry_date"
-              label="Policy Expiry Start Date"
-          />
-          <DatePicker
-              v-model="filters.policy_expiry_date_end"
-              name="policy_expiry_date_end"
-              label="Policy Expiry End Date"
-          />
+        <DatePicker
+          v-model="filters.policy_expiry_date"
+          name="policy_expiry_date"
+          label="Policy Expiry Start Date"
+        />
+        <DatePicker
+          v-model="filters.policy_expiry_date_end"
+          name="policy_expiry_date_end"
+          label="Policy Expiry End Date"
+        />
         <ComboBox
           v-if="!hasRole(rolesEnum.CarAdvisor)"
           v-model="filters.advisor_id"
@@ -893,18 +893,18 @@ const formatDate = date => {
           </x-tag>
         </div>
       </template>
-        <template
-            #item-previous_policy_expiry_date="{
+      <template
+        #item-previous_policy_expiry_date="{
           previous_policy_expiry_date,
           source,
         }"
-        >
-            {{
-                source === 'Renewal_upload'
-                    ? formatDate(previous_policy_expiry_date)
-                    : ''
-            }}
-        </template>
+      >
+        {{
+          source === 'Renewal_upload'
+            ? formatDate(previous_policy_expiry_date)
+            : ''
+        }}
+      </template>
       <template #item-price_starting_from="item">
         <p v-if="item.price_starting_from != null">
           {{ fixedValue(item.price_starting_from) }}
