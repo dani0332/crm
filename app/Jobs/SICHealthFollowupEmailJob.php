@@ -69,6 +69,7 @@ class SICHealthFollowupEmailJob implements ShouldQueue
             'quoteUID' => $lead->uuid,
             'customerEmail' => $lead->email,
             'uuid' => $lead->uuid,
+            'refID'=> $lead->code,
             'customerFullName' => $lead->first_name.' '.$lead->last_name,
             'advisorId' => $advisor->id ?? null,
             'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),

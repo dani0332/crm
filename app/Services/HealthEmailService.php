@@ -47,6 +47,7 @@ class HealthEmailService extends BaseService
         return (object) [
             'quoteUID' => $lead->uuid,
             'customerEmail' => $lead->email,
+            'refID'=> $lead->code,
             'uuid' => $lead->uuid,
             'customerFullName' => $lead->first_name.' '.$lead->last_name,
             'advisorId' => $advisor->id ?? null,
