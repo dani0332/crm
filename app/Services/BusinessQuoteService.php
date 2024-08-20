@@ -286,7 +286,11 @@ class BusinessQuoteService extends BaseService
 
             $this->query->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
         }
-
+        if (isset($request->policy_expiry_date) && $request->policy_expiry_date != '') {
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['policy_expiry_date']));
+            $dateTo = date('Y-m-d 23:59:59', strtotime($request['policy_expiry_date_end']));
+            $this->query->whereBetween('bqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
+        }
         if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::CORPLINE) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('bqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
