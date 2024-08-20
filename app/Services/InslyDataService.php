@@ -14,7 +14,7 @@ class InslyDataService extends BaseService
 {
     public static function GetDataFromInsly($nextStartDate, $nextEndDate)
     {
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client;
         $user = Config::get('constants.INSLY_API_RENEWAL_USERNAME');
         $pass = Config::get('constants.INSLY_API_RENEWAL_PASSWORD');
         $uri = Config::get('constants.INSLY_API_RENEWAL_URI');
@@ -57,7 +57,7 @@ class InslyDataService extends BaseService
 
     public static function AddInslyRecordInDatabase($customer_name, $customer_email, $policy, $is_corrupt_data)
     {
-        $dataMapping = new InslyDataMapping();
+        $dataMapping = new InslyDataMapping;
         $dataMapping->customer_name = $customer_name;
         $dataMapping->customer_email = $customer_email;
         $dataMapping->insly_data = json_encode($policy);

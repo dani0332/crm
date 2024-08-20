@@ -376,7 +376,7 @@ class AMLController extends Controller
                     return redirect()->back()->with('success', 'AML Screening Completed');
                 }
 
-                $bridgerInsightService = new BridgerInsightService();
+                $bridgerInsightService = new BridgerInsightService;
                 $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
                 // Job dispatch for all members including customer
@@ -385,7 +385,7 @@ class AMLController extends Controller
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Entity) {
                 $entityDetailsForApi = [];
-                $bridgerInsightService = new BridgerInsightService();
+                $bridgerInsightService = new BridgerInsightService;
                 $bridgerAPIToken = $bridgerInsightService->getJWTToken();
                 $fetchEntity = Entity::where(['trade_license_no' => $AMLCheckRequest->trade_license_no])->first();
                 if (! $fetchEntity) {

@@ -59,7 +59,7 @@ class ApiService
         if (gettype($WEGenerateUrlResponse) == 'string') {
             Customer::where('id', $customer->id)->update(['is_we_sent' => true]);
 
-            $newMyAlFredUser = new MyAlFredUser();
+            $newMyAlFredUser = new MyAlFredUser;
             $newMyAlFredUser->signup_url = $WEGenerateUrlResponse;
             $newMyAlFredUser->customer_id = $customer->id;
             $newMyAlFredUser->code = substr($WEGenerateUrlResponse, strpos($WEGenerateUrlResponse, 'signup/') + 7); // code;
@@ -113,18 +113,10 @@ class ApiService
     private function assignAdvisorOnly($allocationType, $allocationId)
     {
         info('------ Lead allocation request received to assign advisor only for '.$allocationId.' ------');
-        $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
-        $overrideAdvisorId = true;
-        $responsePayload = $allocationStrategy->executeSteps($overrideAdvisorId);
-        $rest = array_diff_key($responsePayload, array_flip(['message']));
-        $message = $responsePayload['message'];
-        if ($rest['advisorId'] == 0) {
-            $message = 'Allocation failed: '.$responsePayload['message'];
-        }
-
+        $responsePayload = $this->executeAllocation($allocationType, $allocationId, false, false, true);
         info('------ Lead allocation request completed to assign advisor only for '.$allocationId.' ------');
 
-        return apiResponse($rest, Response::HTTP_OK, $message);
+        return apiResponse($responsePayload['data'], Response::HTTP_OK, $responsePayload['message']);
     }
 
     private function triggerOCBOnly($quoteUUID, $quoteTypeId = QuoteTypeId::Car)
@@ -149,29 +141,11 @@ class ApiService
 
     private function performLeadAllocation($allocationType, $leadId, $teamId)
     {
-        info("------ Lead allocation started for lead: $leadId ------");
+        info('------ Lead allocation started for lead : '.$leadId.' ------');
+        $responsePayload = $this->executeAllocation($allocationType, $leadId, $teamId);
+        info('------ Lead allocation ended for lead '.$leadId.' ------');
 
-        // Create allocation strategy
-        $strategy = AllocationFactory::createStrategy($allocationType, $leadId, $teamId);
-        if (is_null($strategy)) {
-            $errorMessage = "Allocation strategy for type '$allocationType' and lead '$leadId' not found.";
-            info("-- Exception: $errorMessage --");
-            throw new InvalidArgumentException($errorMessage);
-        }
-
-        // Execute allocation steps
-        $response = $strategy->executeSteps();
-        $message = $response['message'];
-        $allocationResponse = array_diff_key($response, array_flip(['message']));
-
-        // Check for failed allocation
-        if (empty($allocationResponse['advisorId']) || empty($allocationResponse['tierId'])) {
-            $message = "Allocation failed: $message";
-        }
-
-        info("------ Lead allocation ended for lead: $leadId ------");
-
-        return apiResponse($allocationResponse, Response::HTTP_OK, $message);
+        return apiResponse($responsePayload['data'], Response::HTTP_OK, $responsePayload['message']);
     }
 
     public function triggerSICWorkflow(SICWorkflowRequest $request)
@@ -207,17 +181,42 @@ class ApiService
         $allocationId = $request->input('quoteUUID');
 
         info('------ Lead allocation request received to evaluate tier only for '.$allocationId.' ------');
-        $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
-        $responsePayload = $allocationStrategy->executeSteps(false, false, true);
-        $rest = array_diff_key($responsePayload, array_flip(['message']));
+        $responsePayload = $this->executeAllocation($allocationType, $allocationId, false, true);
+        info('------ Lead allocation request completed to evaluate tier only for '.$responsePayload['tierId'].' ------');
+
+        return apiResponse($responsePayload['data'], Response::HTTP_OK, $responsePayload['message']);
+    }
+    /**
+     * This function use to allocate the lead to advisor on the basis of lead type Bike, Car, Health, Travel
+     *
+     * @param  string  $allocationType
+     * @param  string  $allocationId
+     * @param  bool  $teamId
+     * @return void
+     */
+    private function executeAllocation($allocationType, $allocationId, $teamId = false, $tierOnly = false, $overrideAdvisorId = false)
+    {
+        $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId, $teamId);
+        if (is_null($allocationStrategy)) {
+            info('-- Exception against - allocationType: '.$allocationId.' and allocationId: '.$allocationId.' --');
+            throw new InvalidArgumentException("Allocation strategy for type '$allocationType -- $allocationId' not found.");
+        }
+        $responsePayload = $allocationStrategy->executeSteps($overrideAdvisorId, $teamId, $tierOnly);
+        $status = $responsePayload['status'];
+        $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
         $message = $responsePayload['message'];
-        if ($rest['tierId'] == 0) {
-            $message = 'Tier failed: '.$responsePayload['message'];
+        if ((isset($rest['advisorId']) && $rest['advisorId'] == 0) || (isset($rest['tierId']) && $rest['tierId'] == 0)) {
+            $message = (isset($rest['tierId']) && $rest['tierId'] == 0) ? 'Tier failed: '.$responsePayload['message'] : 'Allocation failed: '.$responsePayload['message'];
         }
 
-        info('------ Lead allocation request completed to evaluate tier only for '.$rest['tierId'].' ------');
-
-        return apiResponse($rest, Response::HTTP_OK, $message);
+        return [
+            'data' => [
+                'tierId' => $responsePayload['tierId'] ?? 0,
+                'assignedAdvisorId' => $responsePayload['advisorId'] ?? 0,
+                'status' => $status,
+            ],
+            'message' => $message,
+        ];
     }
 
     public function handleZeroPlansEmail(HandleZeroPlansRequest $request)

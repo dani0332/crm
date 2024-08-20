@@ -101,13 +101,13 @@ class LifeQuoteController extends Controller
     {
         /* Start - Temporarily adding for correcting historic data  */
         $quote = LifeQuoteRepository::where('uuid', $uuid)->first();
-        (new PaymentRepository())->updatePriceVatApplicableAndVat($quote, QuoteTypes::LIFE->value);
+        (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::LIFE->value);
         /* End - Temporarily adding for correcting historic data  */
 
         $quote = LifeQuoteRepository::getBy('uuid', $uuid);
         $payments = $quote?->payments;
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Life);
-        $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::LIFE->value, $quote->code);
+        $duplicateAllowedLobs = (new CentralService)->duplicateAllowedLobsList(QuoteTypes::LIFE->value, $quote->code);
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::LIFE->value, $quote);
         $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($quote->id, QuoteTypes::LIFE->value);
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
@@ -169,7 +169,7 @@ class LifeQuoteController extends Controller
         @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Life);
 
         $isQuoteDocumentEnabled = app(BaseService::class)->quoteDocumentEnabled(QuoteTypes::LIFE->value);
-        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::LIFE->value, $quote->id);
+        $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::LIFE->value, $quote->id);
         $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::LIFE->value, $payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
 
@@ -197,7 +197,7 @@ class LifeQuoteController extends Controller
             'emirates' => $emirates,
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
-            'paymentMethods' => (new LookupService())->getPaymentMethods(),
+            'paymentMethods' => (new LookupService)->getPaymentMethods(),
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'payments' => $payments,
             'insuranceProviders' => $insuranceProviders,

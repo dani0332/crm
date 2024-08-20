@@ -5,6 +5,7 @@ const createLink = link => {
   if (link.children.length > 0) {
     return {
       label: link.title,
+      active: link.active,
       items: link.children.map(createLink),
     };
   } else {

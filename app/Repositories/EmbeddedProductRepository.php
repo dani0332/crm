@@ -590,13 +590,13 @@ class EmbeddedProductRepository extends BaseRepository
         $strategy = null;
         $shortCode = strtoupper($shortCode);
         if ($shortCode == 'MDX') {
-            $strategy = new MDX();
+            $strategy = new MDX;
         } elseif ($shortCode == EmbeddedProductEnum::TRAVEL) {
-            $strategy = new TravelAnnual();
+            $strategy = new TravelAnnual;
         } elseif ($isAlfredProtect) {
-            $strategy = new AlfredProtect();
+            $strategy = new AlfredProtect;
         } else {
-            $strategy = new EmbeddedProductStrategy();
+            $strategy = new EmbeddedProductStrategy;
         }
 
         return $strategy;

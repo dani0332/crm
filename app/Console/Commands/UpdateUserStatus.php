@@ -98,15 +98,15 @@ class UpdateUserStatus extends Command
                         $bikeId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Bike)->first()->pluck('id');
                         if ($this->userHaveProduct($userId, $carId)) {
                             info('System triggered car reassignment job for user : '.$session->user->name);
-                            ReAssignCarLeadsJob::dispatch(new CarAllocationService(), $userId);
+                            ReAssignCarLeadsJob::dispatch(new CarAllocationService, $userId);
                         }
                         if ($this->userHaveProduct($userId, $healthId)) {
                             info('System triggered health reassignment job for user : '.$session->user->name);
-                            ReAssignHealthLeadsJob::dispatch(new HealthAllocationService(), $userId);
+                            ReAssignHealthLeadsJob::dispatch(new HealthAllocationService, $userId);
                         }
                         if ($this->userHaveProduct($userId, $bikeId)) {
                             info('System triggered bike reassignment job for user : '.$session->user->name);
-                            ReAssignBikeLeadsJob::dispatch(new BikeAllocationService(), $userId);
+                            ReAssignBikeLeadsJob::dispatch(new BikeAllocationService, $userId);
                         }
                     }
                 } else {
