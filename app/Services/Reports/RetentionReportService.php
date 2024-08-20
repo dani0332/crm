@@ -379,7 +379,7 @@ class RetentionReportService extends BaseService
     {
         if (isset($request['month'])){
             // Get the start and end dates for the specified month
-            $monthDates = $this->getMonthDatesByNumber(Carbon::now()->format('y'), $request['month']);
+            $monthDates = $this->getMonthDatesByNumber($request['month']);
             // Apply the date range filter to the query
             $query->whereBetween($this->policyExpiryColumnName, [$monthDates['start_date'], $monthDates['end_date']]);
         }
@@ -391,17 +391,17 @@ class RetentionReportService extends BaseService
      *
      * @return array
      */
-    private function getMonthDatesByNumber($year, $monthNumber)
+    private function getMonthDatesByNumber($monthNumber)
     {
-       // Create Carbon instances for the start and end dates of the month
-       $startDate = Carbon::create($year, $monthNumber, 1);
-       $endDate = $startDate->copy()->endOfMonth();
-   
-       // Return the formatted start and end dates
-       return [
-           'start_date' => $startDate->format($this->dateFormat),
-           'end_date' => $endDate->format($this->dateFormat)
-       ];
+        // Create Carbon instances for the start and end dates of the month
+        $startDate = Carbon::createFromDate(Carbon::now()->year, $monthNumber, 1);
+        $endDate = $startDate->copy()->endOfMonth();
+    
+        // Return the formatted start and end dates
+        return [
+            'start_date' => $startDate->format($this->dateFormat),
+            'end_date' => $endDate->format($this->dateFormat)
+        ];
     }
 
     /**
