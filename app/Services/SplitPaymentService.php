@@ -33,6 +33,7 @@ use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
+use App\Traits\HandlesDeadlockRetries;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -44,6 +45,7 @@ class SplitPaymentService
 {
     use GenericQueriesAllLobs;
     use SageLoggable;
+    use HandlesDeadlockRetries;
 
     public function calculateDiscount($totalSplitPayments, $discountValue)
     {
@@ -639,8 +641,10 @@ class SplitPaymentService
         }
 
         if (! $paymentSplit->payment->is_approved && ! $isFromJob) {
-            DB::beginTransaction();
-            try {
+            
+            $maxRetries = 2;
+
+            return $this->handleWithDeadlockRetries(function () use ($paymentSplit, $amountCollected, $modelType, $quoteId, $isFromJob) {
                 if (empty($paymentSplit->verified_at)) {
                     $paymentSplit->verified_at = now();
                     $paymentSplit->verified_by = Auth::user()->id;
@@ -666,15 +670,7 @@ class SplitPaymentService
                 if ($isFromJob) {
                     $this->processMasterPaymentApprove($modelType, $quoteId, $parentPayment->send_update_log_id, true);
                 }
-                DB::commit();
-            } catch (Exception $exception) {
-                if ($isFromJob) {
-                    CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $exception->getMessage()]);
-                } else {
-                    Log::error('Error in processSplitPaymentApprove '.$quoteModel->code.': '.$exception->getMessage());
-                }
-                DB::rollBack();
-            }
+            }, $maxRetries, $splitPaymentId, $quoteModel->code, $isFromJob);
         } elseif ($isFromJob) {
             CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
         }
