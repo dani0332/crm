@@ -47,8 +47,6 @@ class PaymentExpireNotification extends Command
      */
     public function handle()
     {
-
-        $url = url('/');
         // CAR PAYMENT EXPIRE NOTIFICATION
         $carNotification = DB::table('car_quote_request as cqr')
             ->leftJoin('payments as py', 'py.code', '=', 'cqr.code')
@@ -71,7 +69,7 @@ class PaymentExpireNotification extends Command
             foreach ($carNotification as $car) {
                 $model = $this->getModelObject(strtolower('car'));
                 $model = $model::find($car->id);
-                $url .= '/quotes/'.strtolower('car').'/'.$model->uuid;
+                $url = url('/').'/quotes/'.strtolower('car').'/'.$model->uuid;
                 $quoteUuid = $car->uuid;
                 event(new PaymentExpireNotifications($model, $url, $quoteUuid));
             }
@@ -98,7 +96,7 @@ class PaymentExpireNotification extends Command
             foreach ($healthNotification as $health) {
                 $model = $this->getModelObject(strtolower('health'));
                 $model = $model::find($health->id);
-                $url .= '/quotes/'.strtolower('health').'/'.$model->uuid;
+                $url = url('/').'/quotes/'.strtolower('health').'/'.$model->uuid;
                 $quoteUuid = $health->uuid;
                 event(new PaymentExpireNotifications($model, $url, $quoteUuid));
             }
@@ -126,7 +124,7 @@ class PaymentExpireNotification extends Command
             foreach ($businessNotification as $business) {
                 $model = $this->getModelObject(strtolower('business'));
                 $model = $model::find($business->id);
-                $url .= "/quotes/business/$model->uuid";
+                $url = url('/')."/quotes/business/$model->uuid";
                 $quoteUuid = $business->uuid;
                 event(new PaymentExpireNotifications($model, $url, $quoteUuid));
             }
@@ -155,7 +153,7 @@ class PaymentExpireNotification extends Command
             foreach ($medicalNotification as $business) {
                 $model = $this->getModelObject(strtolower('business'));
                 $model = $model::find($business->id);
-                $url .= "/medical/amt/$model->uuid";
+                $url = url('/')."/medical/amt/$model->uuid";
                 $quoteUuid = $business->uuid;
                 event(new PaymentExpireNotifications($model, $url, $quoteUuid));
             }
@@ -186,7 +184,7 @@ class PaymentExpireNotification extends Command
             foreach ($bikeNotification as $bike) {
                 $model = $this->getModelObject(strtolower('bike'));
                 $model = $model::find($bike->id);
-                $url .= "/personal-quotes/bike/$model->uuid";
+                $url = url('/')."/personal-quotes/bike/$model->uuid";
                 $quoteUuid = $bike->uuid;
                 event(new PaymentExpireNotifications($model, $url, $quoteUuid));
             }
@@ -215,7 +213,7 @@ class PaymentExpireNotification extends Command
             foreach ($cycleNotification as $cycle) {
                 $model = $this->getModelObject(strtolower('cycle'));
                 $model = $model::find($cycle->id);
-                $url .= "/personal-quotes/cycle/$model->uuid";
+                $url = url('/')."/personal-quotes/cycle/$model->uuid";
                 $quoteUuid = $cycle->uuid;
                 event(new PaymentExpireNotifications($model, $url, $quoteUuid));
             }
@@ -244,7 +242,7 @@ class PaymentExpireNotification extends Command
             foreach ($yachtNotification as $yacht) {
                 $model = $this->getModelObject(strtolower('yacht'));
                 $model = $model::find($yacht->id);
-                $url .= "/personal-quotes/yacht/$model->uuid";
+                $url = url('/')."/personal-quotes/yacht/$model->uuid";
                 $quoteUuid = $yacht->uuid;
                 event(new PaymentExpireNotifications($model, $url, $quoteUuid));
             }
@@ -273,7 +271,7 @@ class PaymentExpireNotification extends Command
             foreach ($petNotification as $pet) {
                 $model = $this->getModelObject(strtolower('pet'));
                 $model = $model::find($pet->id);
-                $url .= "/personal-quotes/pet/$model->uuid";
+                $url = url('/')."/personal-quotes/pet/$model->uuid";
                 $quoteUuid = $pet->uuid;
                 event(new PaymentExpireNotifications($model, $url, $quoteUuid));
             }
@@ -302,7 +300,7 @@ class PaymentExpireNotification extends Command
             foreach ($jetkiNotification as $jetski) {
                 $model = $this->getModelObject(strtolower('jetski'));
                 $model = $model::find($jetski->id);
-                $url .= "/personal-quotes/jetski/$model->uuid";
+                $url = url('/')."/personal-quotes/jetski/$model->uuid";
                 $quoteUuid = $jetski->uuid;
                 event(new PaymentExpireNotifications($model, $url, $quoteUuid));
             }
@@ -331,7 +329,7 @@ class PaymentExpireNotification extends Command
             foreach ($homeNotification as $home) {
                 $model = $this->getModelObject(strtolower('home'));
                 $model = $model::find($home->id);
-                $url .= "/quotes/home/$model->uuid";
+                $url = url('/')."/quotes/home/$model->uuid";
                 $quoteUuid = $home->uuid;
                 event(new PaymentExpireNotifications($model, $url, $quoteUuid));
             }
@@ -360,7 +358,7 @@ class PaymentExpireNotification extends Command
             foreach ($lifeNotification as $life) {
                 $model = $this->getModelObject(strtolower('life'));
                 $model = $model::find($life->id);
-                $url .= "/quotes/life/$model->uuid";
+                $url = url('/')."/quotes/life/$model->uuid";
                 $quoteUuid = $life->uuid;
                 event(new PaymentExpireNotifications($model, $url, $quoteUuid));
             }
@@ -389,7 +387,7 @@ class PaymentExpireNotification extends Command
                 $model = $this->getModelObject(strtolower('travel'));
                 $model = $model::find($travel->id);
                 if (isset($model->uuid)) {
-                    $travelUrl = $url.'/quotes/travel/'.$model->uuid;
+                    $url = url('/').'/quotes/travel/'.$model->uuid;
                     $quoteUuid = $travel->uuid;
                     event(new PaymentExpireNotifications($model, $url, $quoteUuid));
                 }
