@@ -1039,7 +1039,7 @@ const getAdvisorLabel = () => {
 
     <DataTable
       ref="dataTableRef"
-      table-class-name="compact text-wrap"
+      table-class-name="compact text-wrap table-fixed"
       :loading="loaders.table"
       :headers="tableHeader"
       :items="reportData || []"
@@ -1252,6 +1252,7 @@ const getAdvisorLabel = () => {
       :title="`${currentTypeTitle}`"
       show-close
       backdrop
+      :has-actions="false"
     >
       <section class="min-h-[70vh]">
         <div v-if="!loaders.advisorLeadTable">
