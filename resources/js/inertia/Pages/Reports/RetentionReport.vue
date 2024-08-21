@@ -7,6 +7,7 @@ const props = defineProps({
   filtersByLob: Object,
   reportData: Object,
   footerData: Array,
+  filters: Array
 });
 
 const page = usePage();
@@ -76,7 +77,8 @@ const getFiltersObject = () => {
     page: 1,
     insurance_type: "",
     type: '',
-    advisor_id: ''
+    advisor_id: '',
+    filters: []
   }
 };
 
@@ -109,30 +111,6 @@ const quoteTypesOptions = computed(() => {
     value: page.props.filterOptions.lob[text],
   }))];
   return quoteTypesOptions
-});
-
-const monthOptions = computed(() => {
-  // Remove from ENUM on the request of Ahsan
-  const monthNames = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December'
-  ];
-
-  const monthOptions = [...Object.values(monthNames).map((text, index) =>({
-    label: text,
-    value: index+1,
-  }))];
-  return monthOptions
 });
 
 function onReset() {
@@ -581,16 +559,18 @@ function buildQuoteURL() {
           range
           size="sm"
           model-type="yyyy-MM-dd"
+          :max-range="31"
         />
         
-        <ComboBox
+        <DatePicker
+          label="Select month"
           v-if="filters.displayBy === RetentionReportEnum.MONTHLY"
           v-model="filters.month"
-          label="Select month"
-          placeholder="Select month"
-          :options="monthOptions"
           class="w-full"
-          :single="true"
+          :monthPicker="true"
+          placeholder="Select month"
+          format="MMM-yyyy"
+          :disableYear="true"
         />
 
         <ComboBox

@@ -33,12 +33,7 @@ class RetentionReportService extends BaseService
     
     public function __construct() {
         $this->dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
-        // Test DB
-        // $this->policyExpiryColumnName = 'policy_expiry_date';
-        // Development 
         $this->policyExpiryColumnName = 'personal_quotes.created_at';
-        // Stage DB
-        // $this->policyExpiryColumnName = 'renewal_expiry_date';
         $this->paginateData = 12;
     }
 
@@ -392,10 +387,12 @@ class RetentionReportService extends BaseService
      *
      * @return array
      */
-    private function getMonthDatesByNumber($monthNumber)
+    private function getMonthDatesByNumber($month)
     {
+        $year = $month['year'];
+        $monthNumber = $month['month'];
         // Create Carbon instances for the start and end dates of the month
-        $startDate = Carbon::createFromDate(Carbon::now()->year, $monthNumber, 1);
+        $startDate = Carbon::createFromDate($year, ($monthNumber + 1 ), 1);
         $endDate = $startDate->copy()->endOfMonth();
     
         // Return the formatted start and end dates

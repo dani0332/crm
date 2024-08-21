@@ -57,10 +57,9 @@ class ExportValidationRequest extends FormRequest
             $exportTye = $this->route('exportTye');
             $quoteType = $this->route('quoteType');
 
-            if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
+            if ((ucfirst($quoteType) == QuoteTypes::CAR->value) || $quoteType == RetentionReportEnum::RETENTION) {
                 $diffInDays = 31;
             }
-
     
             if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {
                 if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
@@ -85,8 +84,6 @@ class ExportValidationRequest extends FormRequest
                         $end = Carbon::parse($this->input('policyExpiryDate')[1])->endOfDay();
                         $error_fields = 'expiry date';
                     }
-                    // Will change once deploy on stage
-                    $diffInDays = 1000000;
                 }
                 if (empty($this->input('month'))){
                     $diff = $start->diffInDays($end);
