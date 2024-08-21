@@ -2,8 +2,12 @@
 
 namespace App\Exports;
 
+use App\Enums\EmbeddedProductEnum;
 use App\Models\EmbeddedProduct;
 use App\Repositories\EmbeddedProductRepository;
+use App\Strategies\EmbeddedProducts\AlfredProtect;
+use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
+use App\Strategies\EmbeddedProducts\TravelAnnual;
 use App\Traits\ExcelExportable;
 
 class EmbeddedProductReport
@@ -12,15 +16,25 @@ class EmbeddedProductReport
 
     private $embeddedProduct;
     private $filters;
+    private $epStrategy = null;
 
     public function __construct(EmbeddedProduct $embeddedProduct, $filters)
     {
         $this->embeddedProduct = $embeddedProduct;
         $this->filters = $filters;
+        $isTravel = $embeddedProduct->short_code === EmbeddedProductEnum::TRAVEL;
+        $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($this->embeddedProduct->short_code);
+        if ($isTravel) {
+            $this->epStrategy = new TravelAnnual;
+        } elseif ($isAlfredProtect) {
+            $this->epStrategy = new AlfredProtect;
+        } else {
+            $this->epStrategy = new EmbeddedProductStrategy;
+        }
     }
 
     /**
-     * @return \Illuminate\Support\Collection
+     * @return Illuminate\Support\Collection
      */
     public function collection()
     {
@@ -31,39 +45,11 @@ class EmbeddedProductReport
 
     public function headings(): array
     {
-        return [
-            'EP REF-ID',
-            'ADVISOR NAME',
-            'PAYMENT DATE',
-            'PLAN COMMENCEMENT DATE',
-            'PLAN END DATE',
-            'CERTIFICATE NUMBER',
-            'FULL NAME',
-            'EMIRATES ID NUMBER',
-            'DOB',
-            'AGE',
-            'VEHICLE',
-            'CONTRIBUTION AMOUNT',
-            'POLICY ISSUE STATUS',
-        ];
+        return $this->epStrategy->getExcelColumns();
     }
 
     public function map($certificate): array
     {
-        return [
-            $certificate->ref_id,
-            $certificate->advisor_name,
-            $certificate->payment_date,
-            $certificate->plan_start_date,
-            $certificate->plan_end_date,
-            $certificate->certificate_number,
-            $certificate->name,
-            $certificate->emirates_id_number,
-            $certificate->dob,
-            $certificate->age,
-            $certificate->vehicle,
-            $certificate->contribution_amount,
-            $certificate->status,
-        ];
+        return $this->epStrategy->getExcelData($certificate);
     }
 }

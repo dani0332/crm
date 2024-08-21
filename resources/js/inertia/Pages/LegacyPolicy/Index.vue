@@ -1,13 +1,11 @@
 <script setup>
-import { formatDate } from '@/inertia/Composables/utilities.js';
-
 defineProps({
   policies: Array,
   legacyPolicyMapping: Array,
   coveragePolicyMapping: Array,
 });
 
-const { isRequired } = useRules();
+const { isRequired, emptyOrNumericAndNoSpecialChar } = useRules();
 
 const page = usePage();
 const loader = reactive({
@@ -122,6 +120,7 @@ const productName = item => {
           name="mobile_no"
           label="Mobile Number"
           class="w-full"
+          :rules="[emptyOrNumericAndNoSpecialChar]"
           placeholder="Search by Mobile Number"
         />
       </div>

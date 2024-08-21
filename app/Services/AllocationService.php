@@ -55,7 +55,7 @@ class AllocationService
         $apiToken = config('constants.KEN_API_TOKEN');
         $apiTimeout = config('constants.KEN_API_TIMEOUT');
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client;
         $request = $client->post(
             $apiEndPoint,
             [
@@ -312,6 +312,23 @@ class AllocationService
             ->orderBy('last_allocated');
 
         return $query->get();
+    }
+
+    public function deductLeadAllocationCount($quoteModel, $quoteUuid)
+    {
+        $quote = $quoteModel::with('advisor')->where('uuid', $quoteUuid)->first();
+
+        if ($quote->advisor) {
+            $leadAllocation = LeadAllocation::where('user_id', $quote->advisor->id)->first();
+            $leadAllocation->allocation_count = $leadAllocation->allocation_count - 1;
+            if (in_array($quote->assignment_type, [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED])) {
+                $leadAllocation->auto_assignment_count = $leadAllocation->auto_assignment_count - 1;
+            } elseif (in_array($quote->assignment_type, [AssignmentTypeEnum::MANUAL_ASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED])) {
+                $leadAllocation->manual_assignment_count = $leadAllocation->manual_assignment_count - 1;
+            }
+            $leadAllocation->save();
+        }
+
     }
 
 }

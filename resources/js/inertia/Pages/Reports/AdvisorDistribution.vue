@@ -33,6 +33,7 @@ const filters = reactive({
   teams: [],
   sub_teams: [],
   isCommercial: 'All',
+  isEmbeddedProducts: '',
   segment_filter: 'all',
   page: 1,
   insurance_type: '',
@@ -41,7 +42,6 @@ const filters = reactive({
 });
 
 function onSubmit(isValid, isMounted = false) {
-
   if (!filters.lob && isMounted === false) {
     toast.error({
       title: 'Please select LOB',
@@ -74,7 +74,9 @@ function onSubmit(isValid, isMounted = false) {
           teams: Array.isArray(payLoad.teams) ? payLoad.teams : [payLoad.teams],
         }),
         ...(payLoad.sub_teams && {
-          sub_teams: Array.isArray(payLoad.sub_teams) ? payLoad.sub_teams : [payLoad.sub_teams],
+          sub_teams: Array.isArray(payLoad.sub_teams)
+            ? payLoad.sub_teams
+            : [payLoad.sub_teams],
         }),
       },
       preserveState: true,
@@ -108,22 +110,26 @@ function onReset() {
 const cleanFilters = filters => {
   filters = removeUnusedFilters(filters);
   Object.keys(filters).forEach(
-    key => (filters[key] === '' ||
-    filters[key] == null ||
-    filters[key].length == 0) &&
-    delete filters[key],
+    key =>
+      (filters[key] === '' ||
+        filters[key] == null ||
+        filters[key].length == 0) &&
+      delete filters[key],
   );
   return filters;
 };
 
 const removeUnusedFilters = filters => {
-    const filtersByLob = page.props.filtersByLob;
-    Object.keys(filtersByLob).forEach(key => {
-        if(filtersByLob[key]['lobs'] && !filtersByLob[key]['lobs'].includes(filters.lob)) {
-            delete filters[key];
-        }
-    });
-    return filters;
+  const filtersByLob = page.props.filtersByLob;
+  Object.keys(filtersByLob).forEach(key => {
+    if (
+      filtersByLob[key]['lobs'] &&
+      !filtersByLob[key]['lobs'].includes(filters.lob)
+    ) {
+      delete filters[key];
+    }
+  });
+  return filters;
 };
 
 function setQueryStringFilters() {
@@ -137,14 +143,14 @@ function setQueryStringFilters() {
 }
 
 const setDefaultValues = () => {
-    if (page.props.defaultFilters && !params['page']) {
-        Object.keys(page.props.defaultFilters).forEach(key => {
-            if (filters.hasOwnProperty(key)) {
-                filters[key] = page.props.defaultFilters[key];
-            }
-        });
-    }
-}
+  if (page.props.defaultFilters && !params['page']) {
+    Object.keys(page.props.defaultFilters).forEach(key => {
+      if (filters.hasOwnProperty(key)) {
+        filters[key] = page.props.defaultFilters[key];
+      }
+    });
+  }
+};
 
 onMounted(() => {
   setDefaultValues();
@@ -167,225 +173,241 @@ const calculateTotalSum = (data, key) => {
 };
 
 const setTableHeader = () => {
+  let headers = [
+    {
+      text: 'Advisor Name',
+      value: 'advisor_name',
+    },
+    {
+      text: 'Total Leads',
+      value: 'total_leads',
+    },
+  ];
+  canShowFooterColumn.value = false;
 
-    let headers = [
-        {
-            text: 'Advisor Name',
-            value: 'advisor_name',
-        },
-        {
-            text: 'Total Leads',
-            value: 'total_leads',
-        }
-    ];
-    canShowFooterColumn.value = false;
+  if ([quoteTypeCodeEnum.Car].includes(filters.lob)) {
+    headers.push(
+      {
+        text: 'TIER 0',
+        value: 'tier_0_lead_count',
+      },
+      {
+        text: 'TIER 1',
+        value: 'tier_1_lead_count',
+      },
+      {
+        text: 'TIER 2',
+        value: 'tier_2_lead_count',
+      },
+      {
+        text: 'TIER 3',
+        value: 'tier_3_lead_count',
+      },
+      {
+        text: 'TIER 4',
+        value: 'tier_4_lead_count',
+      },
+      {
+        text: 'TIER 5',
+        value: 'tier_5_lead_count',
+      },
+      {
+        text: 'TIER L',
+        value: 'tier_l_lead_count',
+      },
+      {
+        text: 'TIER H',
+        value: 'tier_h_lead_count',
+      },
+      {
+        text: 'TIER R',
+        value: 'tier_r_lead_count',
+      },
+      {
+        text: 'TIER 6 NON-ECOM',
+        value: 'tier_6_lead_count',
+      },
+      {
+        text: 'TIER 6 ECOM',
+        value: 'tier_6_lead_count_e',
+      },
+      {
+        text: 'TIER TR ECOM',
+        value: 'tier_tr_lead_count_e',
+      },
+      {
+        text: 'TIER TR NON-ECOM',
+        value: 'tier_tr_lead_count',
+      },
+      {
+        text: 'TOTAL LEAD COST',
+        value: 'total_lead_cost',
+      },
+    );
 
-    if([quoteTypeCodeEnum.Car].includes(filters.lob)) {
+    canShowFooterColumn.value = true;
+  }
 
-        headers.push(
-        {
-            text: 'TIER 0',
-            value: 'tier_0_lead_count',
-        },
-        {
-            text: 'TIER 1',
-            value: 'tier_1_lead_count',
-        },
-        {
-            text: 'TIER 2',
-            value: 'tier_2_lead_count',
-        },
-        {
-            text: 'TIER 3',
-            value: 'tier_3_lead_count',
-        },
-        {
-            text: 'TIER 4',
-            value: 'tier_4_lead_count',
-        },
-        {
-            text: 'TIER 5',
-            value: 'tier_5_lead_count',
-        },
-        {
-            text: 'TIER L',
-            value: 'tier_l_lead_count',
-        },
-        {
-            text: 'TIER H',
-            value: 'tier_h_lead_count',
-        },
-        {
-            text: 'TIER R',
-            value: 'tier_r_lead_count',
-        },
-        {
-            text: 'TIER 6 NON-ECOM',
-            value: 'tier_6_lead_count',
-        },
-        {
-            text: 'TIER 6 ECOM',
-            value: 'tier_6_lead_count_e',
-        },
-        {
-            text: 'TIER TR ECOM',
-            value: 'tier_tr_lead_count_e',
-        },
-        {
-            text: 'TIER TR NON-ECOM',
-            value: 'tier_tr_lead_count',
-        },
-        {
-            text: 'TOTAL LEAD COST',
-            value: 'total_lead_cost',
-        }
-        );
-
-        canShowFooterColumn.value = true;
-    }
-
-    tableHeader.value = headers;
+  tableHeader.value = headers;
 };
 
 const onLobChange = (e, isOnMounted = false) => {
+  if (!isOnMounted) {
+    filters.teams = [];
+    filters.sub_teams = [];
+    filters.advisors = [];
+    teamOptions.value = [];
+    subteamOptions.value = [];
+    advisorOptions.value = [];
+    filters.insurance_type = '';
+    filters.insurance_for = '';
+    filters.travel_coverage = '';
+    filters.isCommercial = '';
+    filters.is_ecommerce = '';
+    filters.tiers = [];
+  } else {
+    setTableHeader();
+  }
 
-    if(!isOnMounted) {
-        filters.teams = [];
-        filters.sub_teams = [];
-        filters.advisors = [];
-        teamOptions.value = [];
-        subteamOptions.value = [];
-        advisorOptions.value = [];
-        filters.insurance_type = '';
-        filters.insurance_for = '';
-        filters.travel_coverage = '';
-        filters.isCommercial = '';
-        filters.is_ecommerce = '';
-        filters.tiers = [];
+  if (!isOnMounted) {
+    filters.teams = [];
+    filters.sub_teams = [];
+    filters.advisors = [];
+    teamOptions.value = [];
+    subteamOptions.value = [];
+    advisorOptions.value = [];
+    filters.insurance_type = '';
+    filters.insurance_for = '';
+    filters.travel_coverage = '';
+    filters.isCommercial = '';
+    (filters.isEmbeddedProducts = ''), (filters.is_ecommerce = '');
+    filters.tiers = [];
+  } else {
+    setTableHeader();
+  }
 
-    } else {
-        setTableHeader()
-    }
-
-    if(filters.lob !== quoteTypeCodeEnum.Bike) {
-        loadTeams(e);
-    } else {
-        loadAdvisorsByLob(e);
-    }
+  if (filters.lob !== quoteTypeCodeEnum.Bike) {
+    loadTeams(e);
+  } else {
+    loadAdvisorsByLob(e);
+  }
 };
 
 const onTeamChange = (e, isOnMounted = false) => {
-
-if(!isOnMounted) {
+  if (!isOnMounted) {
     filters.sub_teams = [];
     subteamOptions.value = [];
     filters.advisors = [];
     advisorOptions.value = [];
-}
+  }
 
-if([quoteTypeCodeEnum.Car,
-    quoteTypeCodeEnum.GroupMedical
-].includes(filters.lob)) {
+  if (
+    [quoteTypeCodeEnum.Car, quoteTypeCodeEnum.GroupMedical].includes(
+      filters.lob,
+    )
+  ) {
     loadSubTeams(e);
 
-    if(!(isOnMounted && filters.sub_teams.length > 0)) {
-        loadAdvisors(e);
+    if (!(isOnMounted && filters.sub_teams.length > 0)) {
+      loadAdvisors(e);
     }
-} else {
+  } else {
     loadAdvisors(e);
-}
+  }
 };
 
 const onSubTeamChange = (e, isOnMounted = false) => {
-
-if(!isOnMounted) {
+  if (!isOnMounted) {
     filters.advisors = [];
-}
+  }
 
-advisorOptions.value = [];
+  advisorOptions.value = [];
 
-if (e.length == 0 &&
-    [quoteTypeCodeEnum.Car, quoteTypeCodeEnum.GroupMedical].includes(filters.lob) &&
-    filters.teams.length > 0) {
-
+  if (
+    e.length == 0 &&
+    [quoteTypeCodeEnum.Car, quoteTypeCodeEnum.GroupMedical].includes(
+      filters.lob,
+    ) &&
+    filters.teams.length > 0
+  ) {
     loadAdvisors(filters.teams);
-} else {
+  } else {
     loadAdvisorsBySubteams(e);
-}
+  }
 };
 
 const loadTeams = e => {
-if (e.length == 0) {
-return;
-}
-
-loaders.teamOptions = true;
-
-axios
-.post(`/reports/fetch-teams-by-lob`, {
-  lob: e,
-})
-.then(res => {
-  if (res.data.length > 0) {
-    teamOptions.value = Object.keys(res.data).map(key => ({
-      value: res.data[key].id.toString(),
-      label: res.data[key].name,
-    }));
+  if (e.length == 0) {
+    return;
   }
-})
-.finally(() => {
-  loaders.teamOptions = false;
-});
+
+  loaders.teamOptions = true;
+
+  axios
+    .post(`/reports/fetch-teams-by-lob`, {
+      lob: e,
+    })
+    .then(res => {
+      if (res.data.length > 0) {
+        teamOptions.value = Object.keys(res.data).map(key => ({
+          value: res.data[key].id.toString(),
+          label: res.data[key].name,
+        }));
+      }
+    })
+    .finally(() => {
+      loaders.teamOptions = false;
+    });
 };
 
 const loadSubTeams = e => {
-if (e.length == 0) {
-return;
-}
-
-loaders.subteamOptions = true;
-
-axios
-.post(`/reports/fetch-subteams-by-team`, {
-  teamIds: Array.isArray(e) ? e : [e],
-  lob: filters.lob,
-})
-.then(res => {
-  if (res.data.length > 0) {
-    subteamOptions.value = Object.keys(res.data).map(key => ({
-      value: res.data[key].id.toString(),
-      label: res.data[key].name,
-    }));
+  if (e.length == 0) {
+    return;
   }
-})
-.finally(() => {
-  loaders.subteamOptions = false;
-});
+
+  loaders.subteamOptions = true;
+
+  axios
+    .post(`/reports/fetch-subteams-by-team`, {
+      teamIds: Array.isArray(e) ? e : [e],
+      lob: filters.lob,
+    })
+    .then(res => {
+      if (res.data.length > 0) {
+        subteamOptions.value = Object.keys(res.data).map(key => ({
+          value: res.data[key].id.toString(),
+          label: res.data[key].name,
+        }));
+      }
+    })
+    .finally(() => {
+      loaders.subteamOptions = false;
+    });
 };
 
 const loadAdvisors = e => {
-if (e.length == 0) {
-return;
-}
-
-loaders.advisorOptions = true;
-
-axios
-.post(`/reports/fetch-advisor-by-team`, {
-  teamIds: Array.isArray(e) ? e : [e],
-  lob: filters.lob,
-})
-.then(res => {
-  if (res.data.length > 0) {
-    advisorOptions.value = Object.keys(res.data).map(key => ({
-      value: res.data[key].id.toString(),
-      label: res.data[key].name,
-    }));
+  if (e.length == 0) {
+    return;
   }
-})
-.finally(() => {
-  loaders.advisorOptions = false;
-});
+
+  loaders.advisorOptions = true;
+
+  axios
+    .post(`/reports/fetch-advisor-by-team`, {
+      teamIds: Array.isArray(e) ? e : [e],
+      lob: filters.lob,
+    })
+    .then(res => {
+      if (res.data.length > 0) {
+        advisorOptions.value = Object.keys(res.data).map(key => ({
+          value: res.data[key].id.toString(),
+          label: res.data[key].name,
+        }));
+      }
+    })
+    .finally(() => {
+      loaders.advisorOptions = false;
+    });
 };
 
 const loadAdvisorsBySubteams = e => {
@@ -414,114 +436,120 @@ const loadAdvisorsBySubteams = e => {
 };
 
 const loadAdvisorsByLob = e => {
-if (e.length == 0) {
-return;
-}
-
-loaders.advisorOptions = true;
-
-axios
-.post(`/reports/fetch-advisors-by-lob`, {
-  lob: e,
-})
-.then(res => {
-  if (res.data.length > 0) {
-    advisorOptions.value = Object.keys(res.data).map(key => ({
-      value: res.data[key].id.toString(),
-      label: res.data[key].name,
-    }));
+  if (e.length == 0) {
+    return;
   }
-})
-.finally(() => {
-  loaders.advisorOptions = false;
-});
+
+  loaders.advisorOptions = true;
+
+  axios
+    .post(`/reports/fetch-advisors-by-lob`, {
+      lob: e,
+    })
+    .then(res => {
+      if (res.data.length > 0) {
+        advisorOptions.value = Object.keys(res.data).map(key => ({
+          value: res.data[key].id.toString(),
+          label: res.data[key].name,
+        }));
+      }
+    })
+    .finally(() => {
+      loaders.advisorOptions = false;
+    });
 };
 
 const onInsuranceTypeChange = e => {
-filters.travel_coverage = '';
-}
+  filters.travel_coverage = '';
+};
 
-const canShow = (element) => {
-    if(page.props.filtersByLob &&
-    page.props.filtersByLob[element]) {
-        const lobs = page.props.filtersByLob[element]['lobs'] ?? [];
+const canShow = element => {
+  if (page.props.filtersByLob && page.props.filtersByLob[element]) {
+    const lobs = page.props.filtersByLob[element]['lobs'] ?? [];
 
-        if((lobs.length == 0 ||
-        (lobs.length != 0 && Object.values(lobs).includes(filters.lob)))) {
-            return true;
-        }
-
-        return false;
+    if (
+      lobs.length == 0 ||
+      (lobs.length != 0 && Object.values(lobs).includes(filters.lob))
+    ) {
+      return true;
     }
 
-    return true;
-}
+    return false;
+  }
 
-const isDisabled = (element) => {
-    if(page.props.filtersByLob &&
-      page.props.filtersByLob[element] &&
-      filters.lob) {
-      const canView = page.props.filtersByLob[element]['can_view'][[filters.lob]] ?? true;
+  return true;
+};
 
-        if(canView) {
-            return true;
-        }
+const isDisabled = element => {
+  if (
+    page.props.filtersByLob &&
+    page.props.filtersByLob[element] &&
+    filters.lob
+  ) {
+    const canView =
+      page.props.filtersByLob[element]['can_view'][[filters.lob]] ?? true;
 
-        return false;
+    if (canView) {
+      return true;
     }
 
-    return true;
-}
+    return false;
+  }
+
+  return true;
+};
 
 const getAdvisorLabel = () => {
-    let label = 'Advisors'
-    if (filters.lob !== quoteTypeCodeEnum.Bike &&
-    (!filters.teams || filters.teams.length == 0)) {
-        label = 'Advisors (select teams first)';
-    }
+  let label = 'Advisors';
+  if (
+    filters.lob !== quoteTypeCodeEnum.Bike &&
+    (!filters.teams || filters.teams.length == 0)
+  ) {
+    label = 'Advisors (select teams first)';
+  }
 
-    return label;
-}
+  return label;
+};
 
 const quoteTypesOptions = computed(() => {
-    return Object.keys(page.props.filterOptions.lob).map(text => ({
-        label: text,
-        value: page.props.filterOptions.lob[text],
-    }));
+  return Object.keys(page.props.filterOptions.lob).map(text => ({
+    label: text,
+    value: page.props.filterOptions.lob[text],
+  }));
 });
 
 const insuranceTypeOptions = computed(() => {
-    const types = page.props.filterOptions.insurance_type;
-    if(types[filters.lob]) {
-        return types[filters.lob].map(option => ({
-            value: option.value.toString(),
-            label: option.label,
-        }));
-    }
+  const types = page.props.filterOptions.insurance_type;
+  if (types[filters.lob]) {
+    return types[filters.lob].map(option => ({
+      value: option.value.toString(),
+      label: option.label,
+    }));
+  }
 
   return [];
 });
 
 const insuranceForOptions = computed(() => {
-    const types = page.props.filterOptions.insurance_for;
-    if(types[filters.lob]) {
-        return types[filters.lob].map(option => ({
-            value: option.id.toString(),
-            label: option.text,
-        }));
-    }
+  const types = page.props.filterOptions.insurance_for;
+  if (types[filters.lob]) {
+    return types[filters.lob].map(option => ({
+      value: option.id.toString(),
+      label: option.text,
+    }));
+  }
 
   return [];
 });
 
 const travelCoverageOptions = computed(() => {
-    const types = page.props.filterOptions.travel_coverage;
-    if (types[filters.lob] && types[filters.lob][filters.insurance_type]) {
-        return types[filters.lob][filters.insurance_type].map(option => ({
-            value: option.value,
-            label: option.label,
-        }));
-    }
+  const types = page.props.filterOptions.travel_coverage;
+  if (types[filters.lob] && types[filters.lob][filters.insurance_type]) {
+    return types[filters.lob][filters.insurance_type].map(option => ({
+      value: option.value,
+      label: option.label,
+    }));
+  }
 
   return [];
 });
@@ -537,7 +565,6 @@ const travelCoverageOptions = computed(() => {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-
         <ComboBox
           v-model="filters.lob"
           label="LOB"
@@ -557,13 +584,15 @@ const travelCoverageOptions = computed(() => {
           size="sm"
           model-type="yyyy-MM-dd"
         />
-        <x-tooltip position="top" v-if="canShow('tiers')">
-          <template #tooltip v-if="filters.lob === quoteTypeCodeEnum.Bike"> Development for Bike Tiers still in progress </template>
+        <x-tooltip placement="top" v-if="canShow('tiers')">
+          <template #tooltip v-if="filters.lob === quoteTypeCodeEnum.Bike">
+            Development for Bike Tiers still in progress
+          </template>
           <template #tooltip v-else> Select Tiers </template>
           <ComboBox
             :disabled="filters.lob === quoteTypeCodeEnum.Bike"
             :class="{
-                'opacity-50': filters.lob === quoteTypeCodeEnum.Bike,
+              'opacity-50': filters.lob === quoteTypeCodeEnum.Bike,
             }"
             v-model="filters.tiers"
             label="Tiers"
@@ -580,7 +609,7 @@ const travelCoverageOptions = computed(() => {
           v-if="canShow('teams')"
           :disabled="!isDisabled('teams')"
           :class="{
-              'opacity-50': !isDisabled('teams'),
+            'opacity-50': !isDisabled('teams'),
           }"
           v-model="filters.teams"
           label="Teams"
@@ -594,7 +623,7 @@ const travelCoverageOptions = computed(() => {
           v-if="canShow('sub_teams')"
           :disabled="!isDisabled('sub_teams')"
           :class="{
-              'opacity-50': !isDisabled('sub_teams'),
+            'opacity-50': !isDisabled('sub_teams'),
           }"
           v-model="filters.sub_teams"
           label="SubTeams"
@@ -608,14 +637,23 @@ const travelCoverageOptions = computed(() => {
           v-if="canShow('advisors')"
           :disabled="!isDisabled('advisors')"
           :class="{
-              'opacity-50': !isDisabled('advisors'),
+            'opacity-50': !isDisabled('advisors'),
           }"
           v-model="filters.advisors"
           :label="getAdvisorLabel()"
           :options="advisorOptions"
           :loading="loaders.advisorOptions"
         />
-
+        <x-select
+          v-if="canShow('isEmbeddedProducts')"
+          v-model="filters.isEmbeddedProducts"
+          label="Include Embedded Products"
+          placeholder="Select any option"
+          :options="[
+            { value: 'true', label: 'Yes' },
+            { value: 'false', label: 'No' },
+          ]"
+        />
         <x-select
           v-if="canShow('isCommercial')"
           v-model="filters.isCommercial"
@@ -633,11 +671,11 @@ const travelCoverageOptions = computed(() => {
           label="Lead Source"
           placeholder="Search by Lead Source"
           :options="
-          Object.keys(filterOptions.leadSources).map(key => ({
-          value: key,
-          label: filterOptions.leadSources[key],
-          }))
-        "
+            Object.keys(filterOptions.leadSources).map(key => ({
+              value: key,
+              label: filterOptions.leadSources[key],
+            }))
+          "
           :max-limit="3"
         />
         <x-select
@@ -645,7 +683,10 @@ const travelCoverageOptions = computed(() => {
           v-model="filters.insurance_type"
           label="Insurance Type"
           placeholder="Select insurance type"
-          :options="[ { value: '', label: 'Select insurance type' }, ...insuranceTypeOptions ]"
+          :options="[
+            { value: '', label: 'Select insurance type' },
+            ...insuranceTypeOptions,
+          ]"
           class="w-full"
           @update:model-value="onInsuranceTypeChange"
         />
@@ -654,22 +695,31 @@ const travelCoverageOptions = computed(() => {
           v-model="filters.insurance_for"
           label="Insurance For"
           placeholder="Select insurance for"
-          :options="[ { value: '', label: 'Select insurance for' }, ...insuranceForOptions ]"
+          :options="[
+            { value: '', label: 'Select insurance for' },
+            ...insuranceForOptions,
+          ]"
           class="w-full"
         />
         <x-select
           v-if="canShow('travel_coverage')"
           v-model="filters.travel_coverage"
-          :label=" !filters.insurance_type
-                ? `Travel Coverage (Select Insurance Type first)`
-                : `Travel Coverage`"
-            :options="[ { value: '', label: 'Select travel coverage' }, ...travelCoverageOptions ]"
+          :label="
+            !filters.insurance_type
+              ? `Travel Coverage (Select Insurance Type first)`
+              : `Travel Coverage`
+          "
+          :options="[
+            { value: '', label: 'Select travel coverage' },
+            ...travelCoverageOptions,
+          ]"
           placeholder="Select travel coverage"
-
           class="w-full"
         />
         <ComboBox
-          v-if="can(permissionsEnum.SEGMENT_FILTER) && canShow('segment_filter')"
+          v-if="
+            can(permissionsEnum.SEGMENT_FILTER) && canShow('segment_filter')
+          "
           v-model="filters.segment_filter"
           label="Segment"
           placeholder="Select Segment"

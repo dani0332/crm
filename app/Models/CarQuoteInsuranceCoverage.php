@@ -74,8 +74,8 @@ class CarQuoteInsuranceCoverage extends BaseModel
 
     public function processGetDSL($filters)
     {
-        $fractal = new Manager();
-        $fractal->setSerializer(new ArraySerializer());
+        $fractal = new Manager;
+        $fractal->setSerializer(new ArraySerializer);
         $data = self::processGetBaseDSL($filters, false);
         if ($data->count() < 1) {
             return null;

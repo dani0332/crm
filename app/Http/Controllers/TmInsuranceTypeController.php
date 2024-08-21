@@ -52,7 +52,7 @@ class TmInsuranceTypeController extends Controller
             'sort_order' => 'required|max:5',
         ]);
 
-        $TmInsuranceType = new TmInsuranceType();
+        $TmInsuranceType = new TmInsuranceType;
         $TmInsuranceType->code = $request->code;
         $TmInsuranceType->text = $request->text;
         $TmInsuranceType->text_ar = $request->text_ar;

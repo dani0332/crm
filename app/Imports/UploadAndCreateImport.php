@@ -134,7 +134,7 @@ class UploadAndCreateImport implements OnEachRow, SkipsOnFailure, WithChunkReadi
             'make' => ['index' => 12, 'title' => 'Car Make', 'rules' => 'max:50'],
             'model' => ['index' => 13, 'title' => 'Car Model', 'rules' => 'max:50'],
             'year' => ['index' => 14, 'title' => 'Model Year', 'rules' => 'max:4'],
-            'previous_advisor' => ['index' => 15, 'title' => 'Previous Advisor Email', 'rules' => 'max:100'],
+            'previous_advisor' => ['index' => 15, 'title' => 'Previous Advisor Email', 'rules' => 'nullable|max:100'],
             'object' => ['index' => 16, 'title' => 'Object', 'rules' => 'max:200'],
             'premium' => ['index' => 17, 'title' => 'Gross Premium', 'rules' => 'nullable|numeric'],
             'source' => ['index' => 18, 'title' => 'Sales Channel', 'rules' => 'max:100'],
