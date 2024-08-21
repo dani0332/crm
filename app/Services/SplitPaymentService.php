@@ -647,7 +647,7 @@ class SplitPaymentService
 
         if (! $paymentSplit->payment->is_approved && ! $isFromJob) {
 
-            return $this->handleWithDeadlockRetries(function () use ($paymentSplit, $amountCollected, $modelType, $quoteId, $isFromJob) {
+            $retryResponse = $this->handleWithDeadlockRetries(function () use ($paymentSplit, $amountCollected, $modelType, $quoteId, $isFromJob) {
                 if (empty($paymentSplit->verified_at)) {
                     $paymentSplit->verified_at = now();
                     $paymentSplit->verified_by = Auth::user()->id;
@@ -673,7 +673,16 @@ class SplitPaymentService
                 if ($isFromJob) {
                     $this->processMasterPaymentApprove($modelType, $quoteId, $parentPayment->send_update_log_id, true);
                 }
-            }, $maxRetries, $splitPaymentId, $quoteModel->code, $isFromJob);
+            }, $maxRetries);
+
+            if (isset($retryResponse['status']) && $retryResponse['status'] == PaymentProcessJobEnum::FAILED) {
+                if ($isFromJob) {
+                    CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $retryResponse['message']]);
+                } else {
+                    Log::error('Error in processSplitPaymentApprove '.$quoteModel->code.': '.$retryResponse['message']);
+                }
+            }
+
         } elseif ($isFromJob) {
             CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
         }
