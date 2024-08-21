@@ -27,8 +27,6 @@ const props = defineProps({
   uboDetails: Array,
 });
 
-
-
 const uboNationality = computed(() => {
   if (props.uboDetails.length > 0) {
     const uboDetail = props.uboDetails.filter(val => {
@@ -106,22 +104,22 @@ const kycForm = reactive({
 });
 
 const rules = {
-    isEmail: v =>
-        /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
-        'E-mail must be valid',
-    isRequired: v => !!v || 'This field is required',
-    allowEmpty: v => true || 'This field is required',
-    isPhone: v =>
-        /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,10}$/im.test(v) ||
-        'Phone must be valid',
-    isEmiratesId: v =>{
-        const pattern = /^\d{3}-\d{4}-\d{7}-\d{1}$/;
-        if(kycForm.id_document_type === 'emiratesId'){
-            return  pattern.test(v) || 'Enter the correct EID number format';
-        }else{
-            return true;
-        }
-    },
+  isEmail: v =>
+    /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
+    'E-mail must be valid',
+  isRequired: v => !!v || 'This field is required',
+  allowEmpty: v => true || 'This field is required',
+  isPhone: v =>
+    /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,10}$/im.test(v) ||
+    'Phone must be valid',
+  isEmiratesId: v => {
+    const pattern = /^\d{3}-\d{4}-\d{7}-\d{1}$/;
+    if (kycForm.id_document_type === 'emiratesId') {
+      return pattern.test(v) || 'Enter the correct EID number format';
+    } else {
+      return true;
+    }
+  },
 };
 
 const isNationalityEmpty = ref(false);
@@ -494,8 +492,12 @@ onMounted(() => {
       <x-input
         v-model="kycForm.id_number"
         label="Id number"
-        :placeholder="kycForm.id_document_type === 'emiratesId'?'xxx-xxxx-xxxxxxx-x':'ID number'"
-        :rules="[isRequired , rules.isEmiratesId]"
+        :placeholder="
+          kycForm.id_document_type === 'emiratesId'
+            ? 'xxx-xxxx-xxxxxxx-x'
+            : 'ID number'
+        "
+        :rules="[isRequired, rules.isEmiratesId]"
       />
 
       <div>
