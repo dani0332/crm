@@ -33,6 +33,7 @@ class FetchPlansForRenewalsQuoteJob implements ShouldQueue, StackableJob
      */
     public function __construct(RenewalQuoteProcess $renewalQuoteProcess, RenewalStatusProcess $renewalStatusProcess)
     {
+        info('FetchPlansForRenewalsQuoteJob: inside constructor');
         $this->renewalQuoteProcess = $renewalQuoteProcess;
         $this->renewalStatusProcess = $renewalStatusProcess;
     }
