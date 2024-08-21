@@ -64,7 +64,7 @@ class EndorsementReportService extends ManagementReport
                 'send_update_logs.invoice_date as payment_due_date',
                 'ps.due_date as due_date',
 
-                DB::raw('CASE WHEN send_update_logs.price_vat_applicable is not null OR send_update_logs.price_vat_applicable != 0.00 
+                DB::raw('CASE WHEN send_update_logs.price_vat_applicable is not null OR send_update_logs.price_vat_applicable != 0.00
                 THEN IFNULL( ps.price_vat_applicable , send_update_logs.price_vat_applicable )
                 ELSE 0 END as price_vat_applicable'),
 
@@ -147,17 +147,17 @@ class EndorsementReportService extends ManagementReport
                 'personal_quotes.policy_start_date as main_lead_policy_start_date',
                 DB::raw('IFNULL(p.insurer_invoice_date, IFNULL(s2.invoice_date, "")) as payment_due_date'),
                 'send_update_logs.invoice_date as due_date',
-                DB::raw('-1 * (CASE WHEN send_update_logs.price_vat_applicable is not null THEN 
+                DB::raw('-1 * (CASE WHEN send_update_logs.price_vat_applicable is not null THEN
                 IFNULL(s2.price_vat_applicable, IFNULL(p.price_vat_applicable, 0))
                 ELSE 0 END) as price_vat_applicable'),
                 DB::raw('-1 * IFNULL(s2.total_vat_amount, IFNULL(p.price_vat, 0)) as vat'),
-                DB::raw('-1 * (CASE WHEN send_update_logs.price_vat_applicable is null THEN 
+                DB::raw('-1 * (CASE WHEN send_update_logs.price_vat_applicable is null THEN
                 IFNULL(s2.price_vat_applicable, IFNULL(p.price_vat_applicable, 0))
                 ELSE 0 END) as price_vat_not_applicable'),
                 'p.discount_value as discount',
-                DB::raw('-1 * (( 
+                DB::raw('-1 * ((
                  IFNULL(s2.price_vat_applicable, IFNULL(p.price_vat_applicable, 0)) +
-                 IFNULL(IFNULL(s2.total_vat_amount, IFNULL(p.price_vat, 0)), 0)) - 
+                 IFNULL(IFNULL(s2.total_vat_amount, IFNULL(p.price_vat, 0)), 0)) -
                  IFNULL(p.discount_value, 0)) as total_price'),
                 DB::raw('-1 * IFNULL(s2.commission_vat_applicable, IFNULL(p.commission_vat_applicable, 0)) as commission_vat_applicable'),
                 DB::raw('-1 * IFNULL(p.commission_vat, IFNULL(s2.vat_on_commission, 0)) as commission_vat'),
@@ -246,7 +246,7 @@ class EndorsementReportService extends ManagementReport
         });
     }
 
-    protected function filterTeams($query, $teamIds)
+    protected function filterTeams($query, $teamIds, $isSSR = false)
     {
         if (! empty($teamIds)) {
             $userIds = $this->getUsersByTeamIds($teamIds)->pluck('id')->toArray();

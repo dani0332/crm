@@ -177,6 +177,7 @@ class HealthQuoteService extends BaseService
             'hqr.policy_issuance_status_id',
             'hqr.policy_issuance_status_other',
             'hqr.stale_at',
+            DB::raw('DATE_FORMAT(hqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
             'hqr.insly_migrated',
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
@@ -874,7 +875,7 @@ class HealthQuoteService extends BaseService
 
     public function convertLeadToGM($lead)
     {
-        $businessLead = new BusinessQuote();
+        $businessLead = new BusinessQuote;
         $businessLead->first_name = $lead->first_name;
         $businessLead->last_name = $lead->last_name;
         $businessLead->email = $lead->email;
@@ -908,7 +909,7 @@ class HealthQuoteService extends BaseService
 
     public function generateUUID()
     {
-        $client = new Client();
+        $client = new Client;
         $alphabets = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
         $nanoId = $client->formattedId($alphabets, 8);
 
@@ -935,7 +936,7 @@ class HealthQuoteService extends BaseService
             'lang' => 'en',
         ];
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client;
 
         try {
             $kenRequest = $client->post(
@@ -1001,7 +1002,7 @@ class HealthQuoteService extends BaseService
             'lang' => 'en',
         ];
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client;
 
         try {
             $kenRequest = $client->post(
@@ -1698,7 +1699,7 @@ class HealthQuoteService extends BaseService
             $payment = $embededTransaction->payments[0];
             $maxAmount = $payment->premium_captured - $payment->premium_refunded;
             if ($maxAmount >= $request->amount) {
-                $paymentAction = new PaymentAction();
+                $paymentAction = new PaymentAction;
                 $paymentAction->payment_code = $payment->code; //$embededTransaction->code;
                 $paymentAction->is_fulfilled = 0;
                 $paymentAction->action_type = 'REFUND';
