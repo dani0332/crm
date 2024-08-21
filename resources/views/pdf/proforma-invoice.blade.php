@@ -379,7 +379,7 @@
     $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
 
     $quoteType = $quote->quoteType;
-    if($quoteTypeId){
+    if(!$quoteType && $quoteTypeId){
         $quoteType = QuoteType::find($quoteTypeId);
     }
     $insuranceProvider = $proformaPaymentRequest->insuranceProvider;
