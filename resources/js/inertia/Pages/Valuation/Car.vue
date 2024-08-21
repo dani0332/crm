@@ -29,16 +29,16 @@ const bikeHeader = ref([
   { text: 'Bike Value Lower Limit', value: 'bikeValueLowerLimit' },
 ]);
 
-const computedHeader = computed(()=>{
-  if(valuationForm.quoteType === 'CAR'){
+const computedHeader = computed(() => {
+  if (valuationForm.quoteType === 'CAR') {
     return CarHeader.value;
-  }else{
+  } else {
     return bikeHeader.value;
   }
-})
+});
 
 const valuationForm = useForm({
-  quoteType : 'CAR',
+  quoteType: 'CAR',
   make_code: null,
   modelId: null,
   carTrim: null,
@@ -50,20 +50,20 @@ const error = ref(false);
 const getMake = computed(() => {
   if (valuationForm.quoteType === 'CAR') {
     return props.carMakes.map(item => ({
-    value: item.code,
-    label: item.text,
-  }));
+      value: item.code,
+      label: item.text,
+    }));
   } else {
     return props.dropdownSource.bike_make_id.map(item => ({
-    value: item.id,
-    label: item.text,
-  }));
+      value: item.id,
+      label: item.text,
+    }));
   }
 });
 
 const computedModels = computed(() => {
-    return carModels.value.map(item => ({ value: item.id, label: item.text}))
-})
+  return carModels.value.map(item => ({ value: item.id, label: item.text }));
+});
 
 const makeCodeError = computed(() => {
   return (valuationForm.make_code == null && error.value) ?? false;
@@ -83,7 +83,6 @@ const bikeMakeOptions = computed(() => {
     label: item.text,
   }));
 });
-
 
 function onSubmit(isValid) {
   if (
@@ -156,9 +155,11 @@ const onReset = () => {
 };
 
 const getBikeModel = (initial = false) => {
-  axios.get(`/bike-model-by-id?id=${valuationForm.make_code}`).then(({ data }) => {
-    carModels.value = [...data];
-  });
+  axios
+    .get(`/bike-model-by-id?id=${valuationForm.make_code}`)
+    .then(({ data }) => {
+      carModels.value = [...data];
+    });
 };
 
 const getModelBasedOnQuote = () => {
@@ -168,21 +169,21 @@ const getModelBasedOnQuote = () => {
     getBikeModel();
   }
 };
-
 </script>
 <template>
-  <Head title="Car Valuation" />
+  <Head title="Calculate Vehicle Valuation (Car & Bike)" />
   <div class="flex justify-between items-center">
-    <h2 class="text-xl font-semibold">Calculate Vehicle Valuation</h2>
+    <h2 class="text-xl font-semibold">
+      Calculate Vehicle Valuation (Car & Bike)
+    </h2>
   </div>
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid grid-cols-2 gap-4">
       <x-field label="Quote Type" required>
-
         <ComboBox
           :single="true"
-           v-model="valuationForm.quoteType"
+          v-model="valuationForm.quoteType"
           placeholder="Search by Quote Type"
           :options="[
             { value: 'CAR', label: 'Car' },
@@ -199,7 +200,7 @@ const getModelBasedOnQuote = () => {
           placeholder="Search by Make"
           :options="getMake"
           :rules="[isRequired]"
-           @update:modelValue="getModelBasedOnQuote($event)"
+          @update:modelValue="getModelBasedOnQuote($event)"
           :hasError="makeCodeError"
         />
       </x-field>
