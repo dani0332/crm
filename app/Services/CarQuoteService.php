@@ -1296,6 +1296,7 @@ class CarQuoteService extends BaseService
                 $getContents = $kenRequest->getBody();
                 info('FN: getQuotePlans response payload: ' . $getContents);
                 $getdecodeContents = json_decode($getContents);
+                info('FN: getQuotePlans response payload decoded: ' . $getdecodeContents);
 
                 return $getdecodeContents;
             }
