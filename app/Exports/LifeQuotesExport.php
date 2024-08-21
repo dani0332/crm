@@ -31,6 +31,7 @@ class LifeQuotesExport
             'LOST REASON',
             'IS ECOMMERCE',
             'RENEWAL BATCH',
+            'PREVIOUS POLICY EXPIRY DATE',
         ];
     }
 
@@ -51,6 +52,7 @@ class LifeQuotesExport
             optional($quote->lifeQuoteRequestDetail)?->lostReason->text ?? '',
             $quote->is_ecommerce ? 'Yes' : 'No',
             $quote->renewal_batch,
+            $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
         ];
     }
 }

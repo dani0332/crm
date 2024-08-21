@@ -5,22 +5,18 @@ const props = defineProps({
   quote: {
     type: Object,
     default: {},
-  },  
+  },
   modelType: String,
 });
 
 const providerPriceForm = useForm({
-  
-  price_vat : null,
+  price_vat: null,
   price_non_vat: null,
   insurer_quote_number: null,
-
 });
-
 
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
-
 </script>
 
 <template>
@@ -31,7 +27,6 @@ const rolesEnum = page.props.rolesEnum;
     </div>
     <x-form @submit="submitpolicyForm" :auto-focus="false">
       <div class="flex gap-6 w-full">
-
         <div class="w-full md:w-1/5">
           <x-input
             v-model="providerPriceForm.price_vat"
@@ -64,26 +59,17 @@ const rolesEnum = page.props.rolesEnum;
         <div class="w-full md:w-1/5">
           <x-input
             v-model="providerPriceForm.insurer_quote_number"
-            :error="providerPriceForm.errors.insurer_quote_number"            
+            :error="providerPriceForm.errors.insurer_quote_number"
             type="number"
             label="Insurer Quote Number"
             class="w-full"
           />
         </div>
-
-      </div>
-      
-    
-      <div class="text-right space-x-4 mt-12" >
-        <x-button
-          color="#26B99A"
-          type="submit"
-          size="sm"          
-          >Save</x-button
-        >        
       </div>
 
+      <div class="text-right space-x-4 mt-12">
+        <x-button color="#26B99A" type="submit" size="sm">Save</x-button>
+      </div>
     </x-form>
   </div>
 </template>
-

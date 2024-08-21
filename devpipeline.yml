@@ -1,49 +1,49 @@
 trigger:
-- none 
+  - none
 
 pool:
   vmImage: 'Ubuntu 20.04'
 steps:
-#- task: DownloadSecureFile@1
-#  name: fullchain
-#  displayName: 'Download cert file'
-#  inputs:
-#    secureFile: 'devcrm_fullchain.pem'
-#- task: DownloadSecureFile@1
-#  name: privkey
-#  displayName: 'Download cert file'
-#  inputs:
-#    secureFile: 'devcrm_privkey.pem'
-#    
-#- task: DownloadSecureFile@1
-#  name: fullchain01
-#  displayName: 'Download cert file'
-#  inputs:
-#    secureFile: 'devcrm01_fullchain.pem'
-#- task: DownloadSecureFile@1
-#  name: privkey01
-#  displayName: 'Download cert file'
-#  inputs:
-#    secureFile: 'devcrm01_privkey.pem'    
+  #- task: DownloadSecureFile@1
+  #  name: fullchain
+  #  displayName: 'Download cert file'
+  #  inputs:
+  #    secureFile: 'devcrm_fullchain.pem'
+  #- task: DownloadSecureFile@1
+  #  name: privkey
+  #  displayName: 'Download cert file'
+  #  inputs:
+  #    secureFile: 'devcrm_privkey.pem'
+  #
+  #- task: DownloadSecureFile@1
+  #  name: fullchain01
+  #  displayName: 'Download cert file'
+  #  inputs:
+  #    secureFile: 'devcrm01_fullchain.pem'
+  #- task: DownloadSecureFile@1
+  #  name: privkey01
+  #  displayName: 'Download cert file'
+  #  inputs:
+  #    secureFile: 'devcrm01_privkey.pem'
 
-#- task: DownloadSecureFile@1
-#  name: fullchain02
-#  displayName: 'Download cert file'
-#  inputs:
-#    secureFile: 'devcrm02_fullchain.pem'
-#- task: DownloadSecureFile@1
-#  name: privkey02
-#  displayName: 'Download cert file'
-#  inputs:
-#    secureFile: 'devcrm02_privkey.pem'    
-    
-#- script: |
-#    cp $(fullchain.secureFilePath) $(System.DefaultWorkingDirectory)/docker/
-#    cp $(privkey.secureFilePath) $(System.DefaultWorkingDirectory)/docker/
-#    cp $(fullchain01.secureFilePath) $(System.DefaultWorkingDirectory)/docker/
-#    cp $(privkey01.secureFilePath) $(System.DefaultWorkingDirectory)/docker/
-#    cp $(fullchain02.secureFilePath) $(System.DefaultWorkingDirectory)/docker/
-#    cp $(privkey02.secureFilePath) $(System.DefaultWorkingDirectory)/docker/
+  #- task: DownloadSecureFile@1
+  #  name: fullchain02
+  #  displayName: 'Download cert file'
+  #  inputs:
+  #    secureFile: 'devcrm02_fullchain.pem'
+  #- task: DownloadSecureFile@1
+  #  name: privkey02
+  #  displayName: 'Download cert file'
+  #  inputs:
+  #    secureFile: 'devcrm02_privkey.pem'
 
-- publish: '$(System.DefaultWorkingDirectory)'
-  artifact: '$(imcrmdev)'
+  #- script: |
+  #    cp $(fullchain.secureFilePath) $(System.DefaultWorkingDirectory)/docker/
+  #    cp $(privkey.secureFilePath) $(System.DefaultWorkingDirectory)/docker/
+  #    cp $(fullchain01.secureFilePath) $(System.DefaultWorkingDirectory)/docker/
+  #    cp $(privkey01.secureFilePath) $(System.DefaultWorkingDirectory)/docker/
+  #    cp $(fullchain02.secureFilePath) $(System.DefaultWorkingDirectory)/docker/
+  #    cp $(privkey02.secureFilePath) $(System.DefaultWorkingDirectory)/docker/
+
+  - publish: '$(System.DefaultWorkingDirectory)'
+    artifact: '$(imcrmdev)'

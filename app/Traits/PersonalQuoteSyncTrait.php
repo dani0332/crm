@@ -120,7 +120,7 @@ trait PersonalQuoteSyncTrait
     private function formatColumnValue($columnType, $value)
     {
         if ($value && in_array($columnType, ['date', 'datetime'])) {
-            return Carbon::parse($value)->toDateTimeString();
+            return Carbon::parse($value)->setTimezone('Asia/Dubai')->toDateTimeString();
         }
 
         return $value;
@@ -203,7 +203,7 @@ trait PersonalQuoteSyncTrait
      */
     private function createPersonalQuoteFromSource($sourceQuote, $newValues, $quoteUuid, $quoteTypeId)
     {
-        $personalQuote = new PersonalQuote();
+        $personalQuote = new PersonalQuote;
         $sourceAttributes = $sourceQuote->getAttributes();
         $this->syncTable($personalQuote, $sourceAttributes, 'personal_quotes');
         $personalQuote->quote_type_id = $quoteTypeId;
@@ -290,7 +290,7 @@ trait PersonalQuoteSyncTrait
 
     private function upsertPersonalQuoteDetail($personalQuote, $newValues)
     {
-        $personalQuoteDetail = new PersonalQuoteDetail();
+        $personalQuoteDetail = new PersonalQuoteDetail;
         $this->syncTable($personalQuoteDetail, $newValues, 'personal_quote_details');
         $personalQuoteDetail->personal_quote_id = $personalQuote->id;
         $this->updateMissingFields($personalQuoteDetail, 'personal_quote_details', $personalQuote->id);

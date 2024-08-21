@@ -36,6 +36,7 @@ class TravelQuoteExport
             'IS ECOMMERCE',
             'PAYMENT STATUS',
             'RENEWAL BATCH',
+            'PREVIOUS POLICY EXPIRY DATE',
         ];
     }
 
@@ -61,6 +62,7 @@ class TravelQuoteExport
             $quote->is_ecommerce ? 'Yes' : 'No',
             optional($quote->paymentStatus)->text,
             $quote->renewal_batch,
+            $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
         ];
     }
 }

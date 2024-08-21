@@ -29,6 +29,7 @@ class HomeQuoteExport
             'PREMIUM',
             'POLICY NUMBER',
             'RENEWAL BATCH',
+            'PREVIOUS POLICY EXPIRY DATE',
         ];
     }
 
@@ -48,6 +49,7 @@ class HomeQuoteExport
             $quote->premium,
             $quote->policy_number,
             $quote->renewal_batch,
+            $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
         ];
     }
 }

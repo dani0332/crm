@@ -16,7 +16,7 @@ const emit = defineEmits(['toggleFilters', 'selectedFilters']);
 const page = usePage();
 
 const toggle = ref(props.isShown);
-const showTooltip = ref(false);
+
 const selectedOptions = ref({
   date: 0,
   status: [],
@@ -237,27 +237,22 @@ onMounted(() => {
       </template>
     </x-popover>
 
-    <div
-      v-if="showTooltip"
-      class="flex text-sm absolute border h-10 bg-black/75 text-white rounded-lg top-[50px] items-center px-5"
-    >
-      Show/Hide filter
-    </div>
-    <x-button
-      @mouseenter="showTooltip = true"
-      @mouseleave="showTooltip = false"
-      size="xs"
-      color="sky"
-      class="rounded-l-none rounded-r-lg"
-      square
-      @click="toggleFilter"
-    >
-      <x-icon
-        icon="chevronDown"
+    <x-tooltip>
+      <x-button
         size="sm"
-        class="transition transform duration-300"
-        :class="isShown ? '' : 'rotate-180'"
-      />
-    </x-button>
+        color="sky"
+        class="rounded-l-none rounded-r-lg"
+        square
+        @click="toggleFilter"
+      >
+        <x-icon
+          icon="chevronDown"
+          size="sm"
+          class="transition transform duration-300"
+          :class="isShown ? '' : 'rotate-180'"
+        />
+      </x-button>
+      <template #tooltip> Show/Hide filter </template>
+    </x-tooltip>
   </div>
 </template>

@@ -31,6 +31,7 @@ class AmtQuoteExport
             'CREATED DATE',
             'LAST MODIFIED DATE',
             'RENEWAL BATCH',
+            'PREVIOUS POLICY EXPIRY DATE',
         ];
     }
 
@@ -50,6 +51,7 @@ class AmtQuoteExport
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             $quote->renewal_batch,
+            $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
         ];
     }
 }

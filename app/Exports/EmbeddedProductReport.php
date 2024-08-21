@@ -25,11 +25,11 @@ class EmbeddedProductReport
         $isTravel = $embeddedProduct->short_code === EmbeddedProductEnum::TRAVEL;
         $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($this->embeddedProduct->short_code);
         if ($isTravel) {
-            $this->epStrategy = new TravelAnnual();
+            $this->epStrategy = new TravelAnnual;
         } elseif ($isAlfredProtect) {
-            $this->epStrategy = new AlfredProtect();
+            $this->epStrategy = new AlfredProtect;
         } else {
-            $this->epStrategy = new EmbeddedProductStrategy();
+            $this->epStrategy = new EmbeddedProductStrategy;
         }
     }
 

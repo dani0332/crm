@@ -51,8 +51,8 @@ class UserController extends Controller
                 'u1.email',
                 DB::raw('(SELECT GROUP_CONCAT(roles.name) FROM users INNER JOIN model_has_roles ON model_has_roles.model_id = users.id INNER JOIN roles ON roles.id = model_has_roles.role_id WHERE users.id = u1.id GROUP BY users.name) as roles'),
                 'teams.name as teamName',
-                'u1.created_at',
-                'u1.updated_at',
+                DB::raw('DATE_FORMAT(u1.updated_at, "%Y-%m-%d %H:%i") as updated_at'),
+                DB::raw('DATE_FORMAT(u1.created_at, "%Y-%m-%d %H:%i") as created_at'),
                 'u1.is_active',
             ])
             ->leftJoin('user_team', 'user_team.user_id', '=', 'u1.id')
@@ -85,11 +85,13 @@ class UserController extends Controller
         $teams = [];
         $subTeams = [];
         $permissions = Permission::orderBy('name')->get();
+        $departments = $this->userService->getDepartmentsList();
 
         return inertia('Admin/Users/Form', [
             'roles' => $roles,
             'products' => $products,
             'teams' => $teams,
+            'departments' => $departments,
             'subTeams' => $subTeams,
             'permissions' => $permissions,
         ]);
@@ -162,7 +164,7 @@ class UserController extends Controller
     public function show(User $user)
     {
         $user['new_created_at'] = Carbon::createFromFormat('d-M-Y h:ia', $user->created_at)->format('Y-m-d H:i:s');
-        $user['new_updated_at'] = Carbon::createFromFormat('d-M-Y h:ia', $user->created_at)->format('Y-m-d H:i:s');
+        $user['new_updated_at'] = Carbon::createFromFormat('d-M-Y h:ia', $user->updated_at)->format('Y-m-d H:i:s');
 
         $subTeamName = '';
         $additionalTeamNames = '';
@@ -171,6 +173,7 @@ class UserController extends Controller
         $productName = implode(',', $this->getUserProducts($user->id)->pluck('name')->toArray());
         $user->roles = $user->roles->pluck('name')->toArray();
         $user->permissions = $user->permissions->pluck('name')->toArray();
+        $user->department = $user->department ?? '';
         if ($user->additional_team_ids != '') {
             $additionalTeamNamesArray = Team::whereIn('id', explode(',', $user->additional_team_ids))->where('type', TeamTypeEnum::PRODUCT)->pluck('name')->toArray();
             $additionalTeamNames = implode(', ', $additionalTeamNamesArray);
@@ -215,6 +218,7 @@ class UserController extends Controller
         $userManagerIds = $this->getUserManagers($user->id)->pluck('id')->toArray();
         $permissions = Permission::orderBy('name')->get();
         $userPermissions = $user->getDirectPermissions()->pluck('id')->toArray();
+        $departments = $this->userService->getDepartmentsList();
 
         return inertia('Admin/Users/Form', [
             'user' => $user,
@@ -222,6 +226,7 @@ class UserController extends Controller
             'userRole' => $userRole,
             'selectedAdditionalTeams' => $selectedAdditionalTeams,
             'subTeams' => $subTeams,
+            'departments' => $departments,
             'products' => $products,
             'userProductIds' => $userProductIds,
             'teams' => $teams,
@@ -260,6 +265,7 @@ class UserController extends Controller
         $user->landline_no = $request->landline_no;
         $user->calendar_link = $request->calendar_link;
         $user->phone_calendar_link = $request->phone_calendar_link;
+        $user->department_id = $request->department_id ?? null;
         if (isset($request->password)) {
             $user->password = bcrypt($request->password);
         }

@@ -10,6 +10,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\ReportsLeadTypeEnum;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
@@ -89,7 +90,6 @@ class AdvisorConversionReportService extends BaseService
         });
 
         return $extendedQuery;
-
     }
 
     private function getCarQuoteQuery($lob)
@@ -104,6 +104,7 @@ class AdvisorConversionReportService extends BaseService
                 'quote_batches.id as quote_batch_id',
                 DB::raw('SUM(CASE WHEN car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as total_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::NewLead.' and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as new_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::PolicyCancelled.' and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as cancelled_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::PriceTooHigh.', '.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.', '.QuoteStatusEnum::NotInterested.', '.QuoteStatusEnum::NotEligibleForInsurance.', '.QuoteStatusEnum::NotLookingForMotorInsurance.', '.QuoteStatusEnum::NonGccSpec.','.QuoteStatusEnum::AMLScreeningFailed.')  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as not_interested'),
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.', '.QuoteStatusEnum::PaymentPending.','.QuoteStatusEnum::AMLScreeningCleared.','.QuoteStatusEnum::PendingQuote.')  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as in_progress'),
                 DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
@@ -119,7 +120,6 @@ class AdvisorConversionReportService extends BaseService
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
             ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
             ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
-            ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->where('users.is_active', true)
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
@@ -176,9 +176,11 @@ class AdvisorConversionReportService extends BaseService
             ->join('users', 'users.id', 'personal_quotes.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'personal_quotes.quote_batch_id')
             ->join('personal_quote_details', 'personal_quote_details.personal_quote_id', 'personal_quotes.id')
-            ->where('personal_quotes.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->where('personal_quotes.quote_type_id', $lobId->id)
             ->where('users.is_active', true)
+            ->when($lob === quoteTypeCode::Travel, function ($q) {
+                $q->filterBySegment(request()->segment_filter, QuoteTypeId::Travel);
+            })
             ->groupBy(
                 'personal_quotes.advisor_id',
                 'personal_quotes.quote_batch_id'
@@ -297,6 +299,7 @@ class AdvisorConversionReportService extends BaseService
             'segment_filter' => [
                 'lobs' => [
                     quoteTypeCode::Car,
+                    quoteTypeCode::Travel,
                 ],
             ],
         ];
@@ -378,7 +381,7 @@ class AdvisorConversionReportService extends BaseService
             ->toArray();
 
         $lobs = $this->getLobByPermissions();
-        $dropdownSourceService = new DropdownSourceService();
+        $dropdownSourceService = new DropdownSourceService;
 
         $insuranceFor = [
             quoteTypeCode::Health => $dropdownSourceService->getDropdownSource('cover_for_id'),
@@ -461,7 +464,7 @@ class AdvisorConversionReportService extends BaseService
         ];
     }
 
-    public function applyFilters($query, $filters)
+    public function applyFilters($query, $filters, $isPopup = false)
     {
         $filters = (object) $filters;
         $lob = $filters->lob ?? '';
@@ -515,8 +518,12 @@ class AdvisorConversionReportService extends BaseService
 
         if (isset($filters->leadSourceFilter) && count($filters->leadSourceFilter) > 0) {
             $query->whereIn('personal_quotes.source', $filters->leadSourceFilter);
+        } else {
+            $query->whereNotIn('personal_quotes.source', [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO]);
+            if ($isPopup === true) {
+                $query->whereNull('personal_quotes.renewal_import_code');
+            }
         }
-
         if (isset($filters->teamsFilter) && count($filters->teamsFilter) > 0) {
             $value = $filters->teamsFilter;
             $query->whereIn('users.id', function ($query) use ($value) {
@@ -532,7 +539,6 @@ class AdvisorConversionReportService extends BaseService
         if ((isset($filters->subeams) && count($filters->subeams) > 0)) {
             $value = $filters->subeams;
             $query->whereIn('users.id', function ($query) use ($value) {
-
                 $query->distinct()
                     ->select('users.id')
                     ->from('users')
@@ -579,7 +585,6 @@ class AdvisorConversionReportService extends BaseService
         }
 
         if ($lob === quoteTypeCode::Car) {
-
             if (isset($filters->tiersFilter) && count($filters->tiersFilter) > 0) {
                 $query->whereIn('personal_quotes.tier_id', $filters->tiersFilter);
             }
@@ -605,7 +610,7 @@ class AdvisorConversionReportService extends BaseService
             }
 
             if (isset($filters->segment_filter) && $filters->segment_filter != 'all') {
-                $query = $query->filterBySegment($filters->segment_filter, quoteTypeCode::Car);
+                $query = $query->filterBySegment($filters->segment_filter, QuoteTypeId::Car);
             }
         }
 
@@ -672,7 +677,7 @@ class AdvisorConversionReportService extends BaseService
         return $query;
     }
 
-    public function applyFiltersForCar($query, $filters)
+    public function applyFiltersForCar($query, $filters, $isPopup = false)
     {
         $filters = (object) $filters;
 
@@ -727,6 +732,11 @@ class AdvisorConversionReportService extends BaseService
         }
         if (isset($filters->leadSourceFilter) && count($filters->leadSourceFilter) > 0) {
             $query->whereIn('car_quote_request.source', $filters->leadSourceFilter);
+        } else {
+            $query->whereNotIn('car_quote_request.source', [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO]);
+            if ($isPopup === true) {
+                $query->whereNull('car_quote_request.renewal_import_code');
+            }
         }
         if (isset($filters->teamsFilter) && count($filters->teamsFilter) > 0) {
             $value = $filters->teamsFilter;
@@ -743,7 +753,6 @@ class AdvisorConversionReportService extends BaseService
         if ((isset($filters->subeams) && count($filters->subeams) > 0)) {
             $value = $filters->subeams;
             $query->whereIn('users.id', function ($query) use ($value) {
-
                 $query->distinct()
                     ->select('users.id')
                     ->from('users')
@@ -766,6 +775,9 @@ class AdvisorConversionReportService extends BaseService
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::IN_PROGRESS) {
             $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::NotContactablePe, QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer, QuoteStatusEnum::Quoted, QuoteStatusEnum::PaymentPending, QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::PendingQuote])->where('source', '!=', LeadSourceEnum::IMCRM);
+        }
+        if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::CANCELLED_LEADS) {
+            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::PolicyCancelled])->where('source', '!=', LeadSourceEnum::IMCRM);
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::MANUAL_CREATED) {
             $query->where('source', LeadSourceEnum::IMCRM);
@@ -795,7 +807,7 @@ class AdvisorConversionReportService extends BaseService
         }
 
         if (isset($filters->segment_filter) && $filters->segment_filter != 'all') {
-            $query = $query->filterBySegment($filters->segment_filter, quoteTypeCode::Car);
+            $query = $query->filterBySegment($filters->segment_filter, QuoteTypeId::Car);
         }
 
         if (! empty($filters->vehicle_type) && $filters->vehicle_type != 'All') {
@@ -813,10 +825,10 @@ class AdvisorConversionReportService extends BaseService
         $lob = $filters['lob'] ?? quoteTypeCode::Car;
         if ($lob === quoteTypeCode::Car) {
             $query = $this->getCarQuoteAssignedLeadsQuery();
-            $query = $this->applyFiltersForCar($query, $filters);
+            $query = $this->applyFiltersForCar($query, $filters, true);
         } else {
             $query = $this->getPersonalQuoteAssignedLeadsQuery($lob);
-            $query = $this->applyFilters($query, $filters);
+            $query = $this->applyFilters($query, $filters, true);
         }
 
         return $query->paginate(10);
@@ -836,8 +848,6 @@ class AdvisorConversionReportService extends BaseService
             ->join('quote_status', 'quote_status.id', 'car_quote_request.quote_status_id')
             ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
             ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
-            ->whereNull('car_quote_request.renewal_import_code')
-            ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->orderBy('car_quote_request_detail.advisor_assigned_date', 'desc');
 
         return $query;
@@ -858,8 +868,6 @@ class AdvisorConversionReportService extends BaseService
             ->join('quote_batches', 'quote_batches.id', 'personal_quotes.quote_batch_id')
             ->join('personal_quote_details', 'personal_quote_details.personal_quote_id', 'personal_quotes.id')
             ->join('quote_status', 'quote_status.id', 'personal_quotes.quote_status_id')
-            ->whereNull('personal_quotes.renewal_import_code')
-            ->where('personal_quotes.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->where('personal_quotes.quote_type_id', $lobId->id)
             ->orderBy('personal_quote_details.advisor_assigned_date', 'desc');
 
