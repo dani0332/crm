@@ -165,79 +165,160 @@ class SaleSummaryReportService extends ManagementReport
         $distinctPaymentSplits = DB::table('payment_splits as dps')
             ->select('dps.code', 'due_date')
             ->groupBy('dps.code');
-
-        $endorsementsQuery = SendUpdateLog::query()
+            
+        $query = SendUpdateLog::query()
             ->leftJoin('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id')
-            ->leftJoin('lookups as l', 'send_update_logs.category_id', '=', 'l.id')
-            ->join('users as u', 'personal_quotes.advisor_id', '=', 'u.id')
-            ->join('departments as dp', 'dp.id', '=', 'u.department_id')
             ->leftJoin('payments as p', 'send_update_logs.id', '=', 'p.send_update_log_id')
-            ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
+            ->leftJoin('payment_splits as ps', 'p.code', '=', 'ps.code')
+            ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')            
+            ->leftJoin('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
+            ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
-            ->selectRaw(
-                'COUNT(DISTINCT(send_update_logs.uuid)) as total_endorsements,
-                IFNULL( ( SUM(send_update_logs.price_vat_applicable) ), 0) +
-                IFNULL( ( SUM(send_update_logs.price_vat_not_applicable) ), 0) +
-                IFNULL( ( SUM(send_update_logs.total_vat_amount) ), 0) -
-                IFNULL( ( SUM(send_update_logs.discount) ), 0) as total_endorsement_amount
-            '
+            ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
+            ->select(
+                DB::raw('COUNT(send_update_logs.uuid) as total_endorsements'),
+                DB::raw('((
+                    sum(IFNULL( ps.price_vat_applicable , IFNULL( send_update_logs.price_vat_applicable , 0 ) + IFNULL( send_update_logs.price_vat_not_applicable , 0 ))) +
+                    sum(IFNULL( IFNULL(ps.price_vat, send_update_logs.total_vat_amount) , 0 ))) - sum(IFNULL( IFNULL(ps.discount_value, send_update_logs.discount) , 0 ))) as total_endorsement_amount'),
             )
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds)
-            ->when($request->groupBy, function ($endorsementsQuery, $groupBy) use ($request) {
+            ->when($request->groupBy, function ($query, $groupBy) use ($request) {
                 $groupByArray = [];
                 $groupBy = $this->resolveGroupByColumn($groupBy);
                 array_push($groupByArray, $groupBy);
-                $utmGroupBy = $this->getUtmGroup($request, $endorsementsQuery);
+                $utmGroupBy = $this->getUtmGroup($request, $query);
                 if ($utmGroupBy) {
                     array_push($groupByArray, $utmGroupBy);
                 }
 
-                return $endorsementsQuery->groupBy($groupByArray);
+                return $query->groupBy($groupByArray);
             });
 
         if ($request->groupBy == 'advisor') {
             // Endorsements
-            $endorsementsQuery->addSelect('u.name as advisor', 'dp.name as department');
-            $endorsementsQuery->whereNotNull('personal_quotes.advisor_id');
+            $query->addSelect('u.name as advisor', 'dp.name as department');
+            $query->whereNotNull('personal_quotes.advisor_id');
         }
 
         if ($request->groupBy == 'customer_group') {
             // Endorsements
-            $endorsementsQuery->leftJoin('customer', 'personal_quotes.customer_id', '=', 'customer.id')
+            $query->leftJoin('customer', 'personal_quotes.customer_id', '=', 'customer.id')
                 ->addSelect(DB::raw("CONCAT(customer.first_name, ' ', customer.last_name) as customer_group"));
-            $endorsementsQuery->whereNotNull('personal_quotes.customer_id');
+            $query->whereNotNull('personal_quotes.customer_id');
         }
 
         if ($request->groupBy == 'insurer') {
             // Endorsements
-            $endorsementsQuery->join('insurance_provider', 'insurance_provider.id', '=', 'p.insurance_provider_id')
+            $query->join('insurance_provider', 'insurance_provider.id', '=', 'p.insurance_provider_id')
                 ->addSelect('insurance_provider.text as insurer');
-            $endorsementsQuery->whereNotNull('p.insurance_provider_id');
+            $query->whereNotNull('p.insurance_provider_id');
         }
 
         if ($request->groupBy == 'policy_issuer') {
             // Endorsements
-            $endorsementsQuery->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
+            $query->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
                 ->addSelect('pi.name as policy_issuer');
-            $endorsementsQuery->whereNotNull('p.policy_issuer_id');
+            $query->whereNotNull('p.policy_issuer_id');
         }
 
         if ($request->groupBy == 'line_of_business') {
             // Endorsements
-            $endorsementsQuery->addSelect('quote_type.code as line_of_business');
-            $endorsementsQuery->whereNotNull('quote_type.code');
+            $query->addSelect('quote_type.code as line_of_business');
+            $query->whereNotNull('quote_type.code');
         }
 
         if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
-            $endorsementsQuery->joinSub($distinctPaymentSplits, 'ps', function ($join) {
+            $query->joinSub($distinctPaymentSplits, 'ps', function ($join) {
                 $join->on('p.code', '=', 'ps.code');
             });
         }
+        $query = $this->applyFilters($query, $request, true, true);
 
-        $endorsementsQuery = $this->applyFilters($endorsementsQuery, $request, true, true);
+        $reversalQuery = SendUpdateLog::query()
+            ->leftJoin('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id')
+            ->leftJoin('payments as p', 'send_update_logs.reversal_invoice', '=', 'p.insurer_tax_number')
+            ->leftJoin('send_update_logs as S2', 'send_update_logs.reversal_invoice', '=', 's2.insurer_tax_invoice_number')
+            ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
+            ->leftJoin('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
+            ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
+            ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
+            ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
+            ->whereNotNull('send_update_logs.reversal_invoice')
+            ->select(
+                DB::raw('COUNT(send_update_logs.uuid) as total_endorsements'),
+                DB::raw('-1 * ((
+                 sum(IFNULL(s2.price_vat_applicable, IFNULL(p.price_vat_applicable, 0))) +
+                 sum(IFNULL(IFNULL(s2.total_vat_amount, IFNULL(p.price_vat, 0)), 0))) -
+                 sum(IFNULL(p.discount_value, 0))) as total_endorsement_amount'),
+            )
+            ->when($request->groupBy, function ($reversalQuery, $groupBy) use ($request) {
+                $groupByArray = [];
+                $groupBy = $this->resolveGroupByColumn($groupBy);
+                array_push($groupByArray, $groupBy);
+                $utmGroupBy = $this->getUtmGroup($request, $reversalQuery);
+                if ($utmGroupBy) {
+                    array_push($groupByArray, $utmGroupBy);
+                }
 
-        return $endorsementsQuery->get();
+                return $reversalQuery->groupBy($groupByArray);
+            });
+
+        if ($request->groupBy == 'advisor') {
+            // Endorsements
+            $reversalQuery->addSelect('u.name as advisor', 'dp.name as department');
+            $reversalQuery->whereNotNull('personal_quotes.advisor_id');
+        }
+
+        if ($request->groupBy == 'customer_group') {
+            // Endorsements
+            $reversalQuery->leftJoin('customer', 'personal_quotes.customer_id', '=', 'customer.id')
+                ->addSelect(DB::raw("CONCAT(customer.first_name, ' ', customer.last_name) as customer_group"));
+            $reversalQuery->whereNotNull('personal_quotes.customer_id');
+        }
+
+        if ($request->groupBy == 'insurer') {
+            // Endorsements
+            $reversalQuery->join('insurance_provider', 'insurance_provider.id', '=', 'p.insurance_provider_id')
+                ->addSelect('insurance_provider.text as insurer');
+            $reversalQuery->whereNotNull('p.insurance_provider_id');
+        }
+
+        if ($request->groupBy == 'policy_issuer') {
+            // Endorsements
+            $reversalQuery->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
+                ->addSelect('pi.name as policy_issuer');
+            $reversalQuery->whereNotNull('p.policy_issuer_id');
+        }
+
+        if ($request->groupBy == 'line_of_business') {
+            // Endorsements
+            $reversalQuery->addSelect('quote_type.code as line_of_business');
+            $reversalQuery->whereNotNull('quote_type.code');
+        }
+
+        if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
+            $reversalQuery->joinSub($distinctPaymentSplits, 'ps', function ($join) {
+                $join->on('p.code', '=', 'ps.code');
+            });
+        }
+        $reversalQuery = $this->applyFilters($reversalQuery, $request, true, true);
+        $endorsementsQuery = $query->union($reversalQuery);
+
+        $data = $endorsementsQuery->get();
+
+        $groupByColumn = $request->groupBy;
+        $data = collect($data
+        ->groupBy($groupByColumn)
+            ->map(function ($group, $groupByColumn) use ($request) {
+                return (Object)[
+                    $request->groupBy => $groupByColumn,
+                    'total_endorsements' => $group->sum('total_endorsements'),
+                    'total_endorsement_amount' => $group->sum('total_endorsement_amount'),
+                ];
+            })->values());
+
+        return $data;
     }
 
     private function formatData(&$data)
