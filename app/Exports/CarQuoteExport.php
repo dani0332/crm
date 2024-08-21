@@ -45,13 +45,14 @@ class CarQuoteExport
             'cqr.additional_notes',
             'u.name AS advisor_id_text',
             'cqr.policy_number',
-            DB::raw('DATE_FORMAT(cqr.renewal_expiry_date, "%d-%m-%Y") as renewal_expiry_date'),
+            DB::raw('DATE_FORMAT(cqr.policy_expiry_date, "%d-%m-%Y") as policy_expiry_date'),
             'cqr.is_gcc_standard',
             'cqr.is_modified',
             'cqr.premium',
             'ls.text as lost_reason',
             'cqr.quote_link',
-            'cqr.renewal_batch')->get();
+            'cqr.renewal_batch',
+            'cqr.previous_policy_expiry_date')->get();
     }
 
     public function headings(): array
@@ -89,13 +90,14 @@ class CarQuoteExport
             'ADDITIONAL NOTES',
             'ADVISOR',
             'POLICY NUMBER',
-            'RENEWAL EXPIRY DATE',
+            'POLICY EXPIRY DATE',
             'IS GCC STANDARD',
             'IS VEHICLE MODIFIED',
             'PREMIUM',
             'LOST REASON',
             'QUOTE LINK',
             'RENEWAL BATCH',
+            'PREVIOUS POLICY EXPIRY DATE',
         ];
     }
 
@@ -106,7 +108,7 @@ class CarQuoteExport
             $quote->quote_batch_id_text,
             $quote->first_name,
             $quote->last_name,
-            $quote->dob ? date('m/d/Y', strtotime($quote->dob)) : '',
+            $quote->dob ? date(config('constants.datetime_format'), strtotime($quote->dob)) : '',
             $quote->source,
             $quote->nationality_id_text,
             $quote->uae_license_held_for_id_text,
@@ -120,27 +122,28 @@ class CarQuoteExport
             $quote->current_insurance_status,
             $quote->currently_insured_with_text,
             $quote->claim_history_id_text,
-            date('m/d/Y H:i:s', strtotime($quote->created_at)),
-            $quote->advisor_assigned_date ? date('m/d/Y H:i:s', strtotime($quote->advisor_assigned_date)) : '',
+            date(config('constants.datetime_format'), strtotime($quote->created_at)),
+            $quote->advisor_assigned_date ? date(config('constants.datetime_format'), strtotime($quote->advisor_assigned_date)) : '',
             $quote->cost_per_lead,
             $quote->quote_status_id_text,
             $quote->payment_status_id_text,
             $quote->is_ecommerce ? 'Yes' : 'No',
             $quote->tier_id_text,
             $quote->visit_count,
-            $quote->next_followup_date ? date('m/d/Y H:i:s', strtotime($quote->next_followup_date)) : '',
-            date('m/d/Y H:i:s', strtotime($quote->updated_at)),
+            $quote->next_followup_date ? date(config('constants.datetime_format'), strtotime($quote->next_followup_date)) : '',
+            date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             $quote->updated_by,
             $quote->additional_notes,
             $quote->advisor_id_text,
             $quote->policy_number,
-            $quote->renewal_expiry_date ? date('m/d/Y', strtotime($quote->renewal_expiry_date)) : '',
+            $quote->policy_expiry_date ? date(config('constants.datetime_format'), strtotime($quote->policy_expiry_date)) : '',
             $quote->is_gcc_standard ? 'Yes' : 'No',
             $quote->is_modified ? 'Yes' : 'No',
             $quote->premium,
             $quote->lost_reason,
             $quote->quote_link,
             $quote->renewal_batch,
+            $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
         ];
     }
 

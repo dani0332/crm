@@ -10,6 +10,7 @@ class CarQuoteRequestAddOn extends Model
     use HasFactory;
 
     protected $table = 'car_quote_request_addon';
+    protected $guarded = [];
     public $access = [
 
         'write' => ['advisor', 'oe'],

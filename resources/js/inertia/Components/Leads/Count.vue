@@ -1,6 +1,4 @@
 <script setup>
-import { watch } from 'vue';
-
 const props = defineProps({
   leadsCount: {
     type: Number,
@@ -45,7 +43,7 @@ watch(
 
 <template>
   <div>
-    <x-tooltip position="right">
+    <x-tooltip placement="right">
       <x-tag size="sm" color="#777" class="lining-nums font-semibold">
         {{ totalCount }}
       </x-tag>

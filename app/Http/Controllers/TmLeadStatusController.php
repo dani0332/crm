@@ -51,7 +51,7 @@ class TmLeadStatusController extends Controller
             'sort_order' => 'required|max:5',
         ]);
 
-        $TmLeadStatus = new TmLeadStatus();
+        $TmLeadStatus = new TmLeadStatus;
         $TmLeadStatus->code = $request->code;
         $TmLeadStatus->text = $request->text;
         $TmLeadStatus->text_ar = $request->text_ar;
