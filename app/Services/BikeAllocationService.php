@@ -291,6 +291,7 @@ class BikeAllocationService extends AllocationService
             ->when(! empty($excludedUserIds), function ($query) use ($excludedUserIds) {
                 $query->whereNotIn('user_id', $excludedUserIds);
             })
+            ->where('quote_type_id', QuoteTypes::BIKE->id())
             ->orderBy('last_allocated');
 
         // Exclude a specific advisor if an advisor ID is provided.

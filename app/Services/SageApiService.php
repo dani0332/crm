@@ -2452,7 +2452,7 @@ class SageApiService
         $returnMessage['message'] = $errorMessage;
         $responseArray = $this->convertResponseToArray($response);
         $sageErrorMessage = $responseArray['error']['message']['value'] ?? $responseArray['error'] ?? null;
-        Log::error("SAGE API : $quote->uuid  : ".json_encode($sageErrorMessage));
+        Log::error("SAGE API : $quote->code  : ".json_encode($sageErrorMessage));
         $returnMessage['error'] = $sageErrorMessage;
         if (str_contains($sageErrorMessage, 'Processing conflict')) {
             $returnMessage['message'] = 'Please wait for 1 minute before booking again.';
