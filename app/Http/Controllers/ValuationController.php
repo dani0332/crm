@@ -26,7 +26,7 @@ class ValuationController extends Controller
         $dropdownSourceList = ['bike_make_id', 'bike_model_id'];
         $dropdownSource = [];
         foreach ($dropdownSourceList as $value) {
-            $data = (new DropdownSourceService())->getDropdownSource($value);
+            $data = (new DropdownSourceService)->getDropdownSource($value);
             $dropdownSource[$value] = $data;
         }
 
