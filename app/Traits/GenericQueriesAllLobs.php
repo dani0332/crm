@@ -358,7 +358,7 @@ trait GenericQueriesAllLobs
 
         $quote = $this->getQuoteObject($type, $id);
         info('fn: updateQuoteStatus called for : '.$quote->uuid);
-        if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
+        if (!in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicySentToCustomer]) || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
             $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
             info('Is policy details filled for  : '.$quote->uuid.' '.$isPolicyDetailsFilled);
             if ($isPolicyDetailsFilled) {
