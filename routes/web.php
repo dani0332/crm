@@ -677,5 +677,4 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 // Route::POST('/processInslyRenewalData', [RenewalDataProcessingController::class, 'FetchAndProcessInslyData'])
 //     ->withoutMiddleware([App\Http\Middleware\VerifyCsrfToken::class]);
 
-
 Route::get('/send-payment-email', [CRUDController::class, 'sendPaymentEmail']);
