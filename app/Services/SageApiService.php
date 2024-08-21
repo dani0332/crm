@@ -2188,7 +2188,7 @@ class SageApiService
             $isAlreadyPosted = false;
             if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_FAIL) {
                 info('SAGE API :  Check status of  AR Prepayment Receipts batch '.$batchNumber.'  for '.$quote->code);
-                $aRReceiptBatch = $this->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$batchNumber.")", [], 'GET');
+                $aRReceiptBatch = $this->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$batchNumber.')', [], 'GET');
                 info('SAGE API :  Status of  AR Prepayment Receipts batch '.$aRReceiptBatch);
                 $aRReceiptBatch = json_decode($aRReceiptBatch, true);
 
@@ -2297,7 +2297,7 @@ class SageApiService
             $isAlreadyPosted = false;
             if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_FAIL) {
                 info('SAGE API :  Check status of  AR Prepayment Receipts batch '.$batchNumber.'  for '.$quote->code);
-                $aRReceiptBatch = $this->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$batchNumber.")", [], 'GET');
+                $aRReceiptBatch = $this->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$batchNumber.')', [], 'GET');
                 info('SAGE API :  Status of  AR Prepayment Receipts batch '.$aRReceiptBatch);
                 $aRReceiptBatch = json_decode($aRReceiptBatch, true);
 
@@ -2405,7 +2405,7 @@ class SageApiService
             $isAlreadyPosted = false;
             if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_FAIL) {
                 info('SAGE API :  Check status of  AR Prepayment Receipts batch '.$batchNumber.'  for '.$quote->code);
-                $aRReceiptBatch = $this->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$batchNumber.")", [], 'GET');
+                $aRReceiptBatch = $this->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$batchNumber.')', [], 'GET');
                 info('SAGE API :  Status of  AR Prepayment Receipts batch '.$aRReceiptBatch);
                 $aRReceiptBatch = json_decode($aRReceiptBatch, true);
 
