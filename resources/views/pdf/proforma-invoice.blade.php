@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <title>Proforma Payment Request</title>
 
@@ -393,22 +394,22 @@
         $totalAmount =  $proformaPaymentRequest->total_price;
         $vat =  $sendUpdateLog->price_with_vat ? $totalAmount - $subTotal : 0; // if price with vat then vat = total - subTotal else 0
     }else{
-        $paidPayments = $quote->payments()->where('payment_status_id', PaymentStatusEnum::PAID)->get();
+
         if(explode('-', $quote->code)[0] == QuoteTypeShortCode::CAR){
             $carQuoteDetails = $quote->carQuoteRequestDetail;
             $subTotal =  $carQuoteDetails->actual_premium;
             $vat =  $carQuoteDetails->premium_vat;
             $totalAmount =  $subTotal + $vat;
         }else{
-            $subTotal =  floatval($quote->price_vat_applicable ?? 0) + floatval($quote->price_vat_not_applicable ?? 0 );
-            $totalAmount =  $quote->price_with_vat;
-            $vat =  $vatPercentage && $quote->price_vat_applicable ? (($quote->price_vat_applicable * $vatPercentage) / 100) : 0; // if amount with vat then vat = total - subTotal else 0
+            $subTotal =  $proformaPaymentRequest->price_vat_applicable;
+            $vat =  $proformaPaymentRequest->price_vat;
+            $totalAmount =  $subTotal + $vat;
         }
         if(explode('-', $quote->code)[0] == QuoteTypeShortCode::BUS){
             $entity = $quote?->quoteRequestEntityMapping?->entity;
         }
-    }
 
+    }
 
 @endphp
 
