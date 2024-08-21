@@ -1,5 +1,4 @@
 <script setup>
-import { ref, watch } from 'vue';
 import MemberDetailsModel from './MemberDetailsModel.vue';
 import UBODetailsModels from './UBODetailsModels.vue';
 import PayerDetails from './PayerDetails.vue';
@@ -18,7 +17,8 @@ const props = defineProps({
   lookups: Object,
   quoteAmlStatus: Number,
   customerDetails: Object,
-    cardHolderName:Object,
+  cardHolderName: Object,
+  kycLogs: Array,
 });
 
 const loader = ref({
@@ -108,8 +108,16 @@ const insuredFormDetails = useForm({
   id_issuance_authority:
     props.entityDetails?.entity?.id_issuance_authority ?? null,
 
-  insured_first_name: props.quoteDetails?.customer?.insured_first_name ?? (props.quoteType.code === 'Health' ? props.membersDetails[0]?.first_name : null),
-  insured_last_name: props.quoteDetails?.customer?.insured_last_name ?? (props.quoteType.code === 'Health' ? props.membersDetails[0]?.last_name : null),
+  insured_first_name:
+    props.quoteDetails?.customer?.insured_first_name ??
+    (props.quoteType.code === 'Health'
+      ? props.membersDetails[0]?.first_name
+      : null),
+  insured_last_name:
+    props.quoteDetails?.customer?.insured_last_name ??
+    (props.quoteType.code === 'Health'
+      ? props.membersDetails[0]?.last_name
+      : null),
   nationality_id: props.quoteDetails?.customer.nationality_id ?? null,
   dob: props.quoteDetails?.customer.dob ?? null,
 
@@ -124,11 +132,13 @@ const insuredFormDetails = useForm({
 });
 
 const rules = {
-    nameCheck: v => {
-        const pattern = /^[a-zA-Z0-9\s]+$/;
-        if(v == null || v == '') return true;
-        return pattern.test(v) || 'Special characters are not allowed in Insured Name';
-    }
+  nameCheck: v => {
+    const pattern = /^[a-zA-Z0-9\s]+$/;
+    if (v == null || v == '') return true;
+    return (
+      pattern.test(v) || 'Special characters are not allowed in Insured Name'
+    );
+  },
 };
 
 const submitQuoteUpdateForm = isValid => {
@@ -140,13 +150,13 @@ const submitQuoteUpdateForm = isValid => {
         position: 'top',
       });
     },
-    onSuccess: (response) => {
-        if (response.props.flash.length === 0) {
-            notification.success({
-                title: 'Quote is updated',
-                position: 'top',
-            });
-        }
+    onSuccess: response => {
+      if (response.props.flash.length === 0) {
+        notification.success({
+          title: 'Quote is updated',
+          position: 'top',
+        });
+      }
     },
   });
 };
@@ -314,7 +324,7 @@ const linkEntity = () => {
     .finally(() => (entityDetailsFound.value = false));
 };
 
-const is_insured = ref(false);
+const is_insured = ref(0);
 
 watch(
   props.membersDetails,
@@ -323,14 +333,19 @@ watch(
   },
   { immediate: true },
 );
-
 </script>
 
 <template>
   <div>
     <!-- Individual Type Insured Form -->
-    <x-modal v-model="showModal" size="xl" show-close backdrop>
-      <template #header>Update and Verify</template>
+    <x-modal
+      v-model="showModal"
+      size="xl"
+      title="Update and Verify"
+      show-close
+      backdrop
+      is-form
+    >
       <p class="text-center mb-10">
         Please confirm the Name, Nationality, and Date of Birth of the insured
         person(s) as per the Emirates ID
@@ -338,23 +353,19 @@ watch(
 
       <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 items-center">
-          <x-field
-            label="Insured First Name"
-          >
+          <x-field label="Insured First Name">
             <x-input
               v-model="insuredFormDetails.insured_first_name"
-              :rules="[isRequired , rules.nameCheck]"
+              :rules="[isRequired, rules.nameCheck]"
               placeholder="Insured First Name"
               type="text"
               class="w-full"
             />
           </x-field>
-          <x-field
-            label="Insured Last Name"
-          >
+          <x-field label="Insured Last Name">
             <x-input
               v-model="insuredFormDetails.insured_last_name"
-              :rules="[isRequired , rules.nameCheck]"
+              :rules="[isRequired, rules.nameCheck]"
               placeholder="Insured Last Name"
               type="text"
               class="w-full"
@@ -380,12 +391,12 @@ watch(
               :utc="true"
             />
           </x-field>
-          <div
-            class="flex gap-5 mb-5 align-center"
-          >
+          <div class="flex gap-5 mb-5 align-center">
             <p>Is the insured the payer?</p>
-            <x-radio v-model="is_insured" :value="true" label="Yes" />
-            <x-radio v-model="is_insured" :value="false" label="No" />
+            <x-form-group v-model="is_insured">
+              <x-radio :value="1" label="Yes" />
+              <x-radio :value="0" label="No" />
+            </x-form-group>
           </div>
         </dl>
 
@@ -443,6 +454,7 @@ watch(
           :companyPosition="props.lookups.company_position"
           :entity-details="props.entityDetails"
           :customer-details="props.customerDetails"
+          :kycLogs="kycLogs"
         />
       </x-form>
     </x-modal>
@@ -479,8 +491,13 @@ watch(
     </x-modal>
 
     <!-- Entity Type Insured Form -->
-    <x-modal v-model="modals.entityView" size="xl" show-close backdrop>
-      <template #header>Update and Verify</template>
+    <x-modal
+      v-model="modals.entityView"
+      size="xl"
+      title="Update and Verify"
+      show-close
+      backdrop
+    >
       <p class="text-center mb-10">
         Please Enter Entity details to change the Customer Type to 'Entity'
       </p>

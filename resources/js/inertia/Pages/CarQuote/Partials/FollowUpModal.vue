@@ -56,6 +56,8 @@ const followUpForm = ref({
           />
         </div>
       </div>
+    </div>
+    <template #actions>
       <div class="flex gap-2 justify-end">
         <x-button
           size="sm"
@@ -73,6 +75,6 @@ const followUpForm = ref({
           >Cancel
         </x-button>
       </div>
-    </div>
+    </template>
   </x-modal>
 </template>

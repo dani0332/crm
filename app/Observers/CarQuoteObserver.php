@@ -15,9 +15,10 @@ class CarQuoteObserver
 
     public function updated(CarQuote $lead)
     {
+        $dirty = $lead->getDirty();
         $changes = [];
 
-        foreach ($lead->getDirty() as $attribute => $value) {
+        foreach ($dirty as $attribute => $value) {
             if ($lead->isDirty($attribute)) {
                 $changes[$attribute] = [
                     'old' => $lead->getOriginal($attribute),
@@ -31,7 +32,6 @@ class CarQuoteObserver
             event(new CarQuoteAdvisorUpdated($lead, $oldAdvisorId));
         }
 
-        $dirty = $lead->getDirty();
         if ($lead->isDirty('quote_status_id') && $lead->quote_status_id === QuoteStatusEnum::TransactionApproved) {
             MAWelcomeJob::dispatchIf(
                 isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)) && $lead->customer,
@@ -42,6 +42,7 @@ class CarQuoteObserver
                 'CUSTOMER_UPDATE',
                 'customer-update-myalfred-we'
             );
+
             CarQuote::withoutEvents(function () use ($lead) {
                 $lead->update([
                     'transaction_approved_at' => now(),

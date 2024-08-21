@@ -31,9 +31,7 @@ class CarRevivalQuoteController extends Controller
 {
     use GenericQueriesAllLobs;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
@@ -176,11 +174,5 @@ class CarRevivalQuoteController extends Controller
         CarRevivalQuoteRepository::where(['uuid' => $uuid])->update($carRevivalQuoteRequest->validated());
 
         return back()->with('message', 'Quote updated successfully');
-    }
-
-    public function updateQuote(Request $request)
-    {
-
-        CarRevivalQuoteRepository::updateQuote($request);
     }
 }

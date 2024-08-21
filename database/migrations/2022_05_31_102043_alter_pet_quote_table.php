@@ -16,7 +16,7 @@ class AlterPetQuoteTable extends Migration
         Schema::table('pet_quote_request', function (Blueprint $table) {
             $table->string('policy_number', 100)->nullable();
             $table->bigInteger('previous_quote_id')->nullable();
-            $table->dateTime('renewal_expiry_date')->nullable();
+            $table->dateTime('policy_expiry_date')->nullable();
             $table->string('renewal_batch', 100)->nullable();
             $table->string('previous_quote_policy_number', 100)->nullable();
             $table->string('renewal_import_code', 100)->nullable();

@@ -16,7 +16,7 @@ class PostMarkService extends BaseService
                 'Content-Type' => 'application/json',
             ];
 
-            $client = new \GuzzleHttp\Client();
+            $client = new \GuzzleHttp\Client;
             $clientRequest = $client->post(
                 config('constants.POSTMARK_URL'),
                 [
