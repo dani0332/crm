@@ -2,52 +2,45 @@
 
 namespace App\Services;
 
-use Carbon\Carbon;
-use App\Models\User;
-use App\Services\BirdService;
-use App\Enums\HealthFacilityType;
-use App\Enums\HealthPlanTypeEnum;
-use App\Models\ApplicationStorage;
-use App\Services\HealthQuoteService;
 use App\Enums\ApplicationStorageEnums;
-
+use App\Models\ApplicationStorage;
+use App\Models\User;
 
 class HealthEmailService extends BaseService
 {
-
     protected $birdService;
     protected $healthQuoteService;
 
     public function __construct()
     {
-        $this->birdService =new BirdService();
+        $this->birdService = new BirdService;
     }
     public function triggerOCAFollowups($lead)
     {
         info('Sending OCA Health followups email for lead: '.$lead->uuid.' | Time: '.now());
-            if (! $lead->oca_flow_enabled) {
-                $advisor = User::where('id', $lead->advisor_id)->first();
-                $emailData = $this->mappingEmailDataForOCAEmail($lead, $advisor);
-                $eventName = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_OCA_HEALTH_WORKFLOW)->first();
-                info('OCA Health workflow key: '.$eventName->value);
-                if ($eventName) {
-                    if(!empty($emailData)){
-                        info("sendOCAHealthWorkFlow: OCA Health followups email for lead: ".$lead->uuid." | time: ".now());
-                        $responseCode = $this->birdService->sendOCAHealthWorkFlow($emailData);
-                    }
-                    else {
-                        $responseCode = null;
-                    }
-                    $lead->oca_flow_enabled = true;
-                    $lead->save();
-                    info('OCA Health workflow event triggered for lead: '.$lead->uuid.' and oca_flow_enabled: '.$lead->oca_flow_enabled);
-                    info('OCA Health workflow response: '.$responseCode);
+        if (! $lead->oca_flow_enabled) {
+            $advisor = User::where('id', $lead->advisor_id)->first();
+            $emailData = $this->mappingEmailDataForOCAEmail($lead, $advisor);
+            $eventName = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_OCA_HEALTH_WORKFLOW)->first();
+            info('OCA Health workflow key: '.$eventName->value);
+            if ($eventName) {
+                if (! empty($emailData)) {
+                    info('sendOCAHealthWorkFlow: OCA Health followups email for lead: '.$lead->uuid.' | time: '.now());
+                    $responseCode = $this->birdService->sendOCAHealthWorkFlow($emailData);
                 } else {
-                    info('OCA Health workflow key not found');
+                    $responseCode = null;
                 }
+                $lead->oca_flow_enabled = true;
+                $lead->save();
+                info('OCA Health workflow event triggered for lead: '.$lead->uuid.' and oca_flow_enabled: '.$lead->oca_flow_enabled);
+                info('OCA Health workflow response: '.$responseCode);
             } else {
-                info('OCA Health workflow already enabled for lead: '.$lead->uuid);
+                info('OCA Health workflow key not found');
             }
+        } else {
+            info('OCA Health workflow already enabled for lead: '.$lead->uuid);
+        }
+
         return $responseCode ?? null;
     }
     public function triggerPendingHealthFollowupEmails($lead)
@@ -55,24 +48,25 @@ class HealthEmailService extends BaseService
         // Retrieve plans with available ratings for the given lead
 
         info('triggerPendingHealthFollowupEmails: Sending AppPending Health followups email for lead: '.$lead->uuid.' | time: '.now());
-           $lead->pending_flow_enabled  = false;
-            if (! $lead->pending_flow_enabled) {
-                $advisor = User::where('id', $lead->advisor_id)->first();
-                $emailData = $this->mappingEmailDataForOCAEmail($lead, $advisor);
-                $eventName = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_APP_PENDING_HEALTH_WORKFLOW)->first();
-                info('triggerPendingHealthFollowupEmails Health workflow key: '.$eventName->value);
-                if ($eventName) {
-                    $responseCode = $this->birdService->sendAppPendingHealthWorkFlow($emailData);
-                    $lead->pending_flow_enabled = true;
-                    $lead->save();
-                    info('triggerPendingHealthFollowupEmails: Health workflow event triggered for lead: '.$lead->uuid.' and oca_flow_enabled: '.$lead->oca_flow_enabled);
-                    info('triggerPendingHealthFollowupEmails: Health workflow response: '.$responseCode);
-                } else {
-                    info('triggerPendingHealthFollowupEmails: Health workflow key not found');
-                }
+        $lead->pending_flow_enabled = false;
+        if (! $lead->pending_flow_enabled) {
+            $advisor = User::where('id', $lead->advisor_id)->first();
+            $emailData = $this->mappingEmailDataForOCAEmail($lead, $advisor);
+            $eventName = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_APP_PENDING_HEALTH_WORKFLOW)->first();
+            info('triggerPendingHealthFollowupEmails Health workflow key: '.$eventName->value);
+            if ($eventName) {
+                $responseCode = $this->birdService->sendAppPendingHealthWorkFlow($emailData);
+                $lead->pending_flow_enabled = true;
+                $lead->save();
+                info('triggerPendingHealthFollowupEmails: Health workflow event triggered for lead: '.$lead->uuid.' and oca_flow_enabled: '.$lead->oca_flow_enabled);
+                info('triggerPendingHealthFollowupEmails: Health workflow response: '.$responseCode);
             } else {
-                info('triggerPendingHealthFollowupEmails: Health workflow already enabled for lead: '.$lead->uuid);
+                info('triggerPendingHealthFollowupEmails: Health workflow key not found');
             }
+        } else {
+            info('triggerPendingHealthFollowupEmails: Health workflow already enabled for lead: '.$lead->uuid);
+        }
+
         return $responseCode ?? null;
     }
 

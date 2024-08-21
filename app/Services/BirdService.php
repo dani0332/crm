@@ -101,9 +101,11 @@ class BirdService extends BaseService
         $webhook = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_OCA_HEALTH_WORKFLOW)->first();
         if (! empty($webhook)) {
             info('Health OCA email template found REF:ID | '.$data->healthQuoteId.'| Time: '.now());
+
             return $this->triggerWorkflow($webhook->value, $data);
         } else {
             info('Health OCA email template not found REF:ID | '.$data->healthQuoteId.'| Time: '.now());
+
             return false;
         }
     }
@@ -113,13 +115,13 @@ class BirdService extends BaseService
         $webhook = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_APP_PENDING_HEALTH_WORKFLOW)->first();
         if (! empty($webhook)) {
             info('Health App Pending email template found REF:ID | '.$data->healthQuoteId.' Time: '.now());
+
             return $this->triggerWorkflow($webhook->value, $data);
         } else {
             info('Health App Pending emaill template not found REF:ID | '.$data->healthQuoteId.' Time: '.now());
+
             return false;
         }
     }
-
-
 
 }

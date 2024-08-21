@@ -450,7 +450,6 @@ class ApplicationStorageSeeder extends Seeder
             ]);
         }
 
-
         $sukoonConstants = [
             [
                 'key_name' => ApplicationStorageEnums::SUKOON_PAYMENT_GATEWAY,

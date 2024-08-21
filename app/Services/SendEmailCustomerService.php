@@ -2,24 +2,24 @@
 
 namespace App\Services;
 
-use Exception;
-use Carbon\Carbon;
-use App\Models\User;
-use App\Facades\Capi;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\DefaultAdvisorEnum;
 use App\Enums\EnvEnum;
-use App\Models\Customer;
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Enums\LeadSourceEnum;
 use App\Enums\UserStatusEnum;
-use App\Enums\DefaultAdvisorEnum;
-use App\Models\InsuranceProvider;
-use App\Models\ApplicationStorage;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
-use App\Enums\ApplicationStorageEnums;
+use App\Facades\Capi;
 use App\Jobs\OCAHealthFollowupEmailJob;
 use App\Jobs\UpdateSendPolicySubjectJob;
+use App\Models\ApplicationStorage;
+use App\Models\Customer;
+use App\Models\InsuranceProvider;
+use App\Models\User;
+use Carbon\Carbon;
+use Exception;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class SendEmailCustomerService extends BaseService
 {
@@ -1373,7 +1373,7 @@ class SendEmailCustomerService extends BaseService
                 $body['sender'] = ['name' => $emailData->advisorName, 'email' => $advisorCustomEmail];
             }
 
-           $response = ['code' => $responseCode, 'response' => $response, 'sent' => $isEmailSent] = $this->sendMail($body);
+            $response = ['code' => $responseCode, 'response' => $response, 'sent' => $isEmailSent] = $this->sendMail($body);
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $responseDetail = 'Send sendHealthOCAEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage().' '.$emailData->carQuoteId;
