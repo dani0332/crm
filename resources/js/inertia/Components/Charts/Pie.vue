@@ -74,4 +74,3 @@ const chartOptions = ref({
 <template>
   <Chart ref="chartRef" :options="chartOptions"></Chart>
 </template>
-  

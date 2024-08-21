@@ -37,8 +37,8 @@ const computedMessages = computed(() => {
 });
 
 const renderMarkdown = markdownString => {
-  if(!markdownString){
-    return 'no content available.'
+  if (!markdownString) {
+    return 'no content available.';
   }
   // Parse the markdown string
   const initialHtml = md.render(markdownString);
@@ -47,6 +47,57 @@ const renderMarkdown = markdownString => {
   const adjustedHtml = initialHtml.replace(/<a /g, '<a target="_blank" ');
 
   return adjustedHtml;
+};
+
+const checkCaption = (whatsapp_request, UserAudio) => {
+  const data =
+    whatsapp_request?.document ??
+    whatsapp_request?.location ??
+    whatsapp_request?.contacts ??
+    whatsapp_request?.video ??
+    whatsapp_request?.image ??
+    whatsapp_request?.sticker;
+
+  if (data) {
+    const { caption, mime_type } = JSON.parse(data);
+    if (whatsapp_request && whatsapp_request?.type === 'image') {
+      return caption
+        ? `User has shared an image with a message: ${caption}`
+        : `User has shared an image`;
+    }
+    return caption
+      ? `User has shared a ${mime_type} with a message: ${caption}`
+      : `User has shared a ${whatsapp_request.type}`;
+  }
+
+  const { blob_payload_type } = whatsapp_request;
+
+  const message =
+    whatsapp_request?.payload?.body?.image?.text ??
+    whatsapp_request?.payload?.body?.document?.text ??
+    whatsapp_request?.payload?.body?.file?.text ??
+    whatsapp_request?.payload?.body?.location?.text ??
+    whatsapp_request?.payload?.body?.contacts?.text ??
+    whatsapp_request?.payload?.body?.video?.text ??
+    whatsapp_request?.payload?.body?.sticker?.text;
+
+  if (blob_payload_type === 'audio' && UserAudio != null && UserAudio != '') {
+    return `${UserAudio}`;
+  }
+
+  if (blob_payload_type === 'image') {
+    return message
+      ? `User has shared an ${blob_payload_type} with a message: ${message}`
+      : blob_payload_type
+        ? `User has shared an ${blob_payload_type}`
+        : false;
+  }
+
+  return message
+    ? `User has shared a ${blob_payload_type} with a message: ${message}`
+    : blob_payload_type
+      ? `User has shared a ${blob_payload_type}`
+      : false;
 };
 </script>
 <template>
@@ -123,10 +174,30 @@ const renderMarkdown = markdownString => {
               >
             </div>
             <div class="chat-bubble text-sm relative flex items-center">
-              <div v-html="renderMarkdown(message.msg)"></div>
+              <div
+                v-if="
+                  message.whatsapp_request
+                    ? checkCaption(message.whatsapp_request, message.msg)
+                    : false
+                "
+              >
+                <span>
+                  {{
+                    checkCaption(message.whatsapp_request, message.msg)
+                  }}</span
+                >
+              </div>
+
+              <SanitizeHtml
+                v-else="message.msg"
+                :html="renderMarkdown(message.msg)"
+              />
               <div
                 class="absolute right-[-30px] text-red-600"
-                v-if="message?.whatsapp_request?.type == 'audio'||  message?.whatsapp_request?.type == 'voice'"
+                v-if="
+                  message?.whatsapp_request?.type == 'audio' ||
+                  message?.whatsapp_request?.type == 'voice'
+                "
               >
                 <x-icon icon="audio" />
               </div>
@@ -148,7 +219,7 @@ const renderMarkdown = markdownString => {
             </div>
             <div class="chat-header">InstantAlfred</div>
             <div class="chat-bubble text-sm">
-              <div v-html="renderMarkdown(message.msg)"></div>
+              <SanitizeHtml :html="renderMarkdown(message.msg)" />
             </div>
             <div class="chat-footer opacity-50">
               {{ message.created_at.split(' ')[1] }}

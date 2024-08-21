@@ -1,8 +1,4 @@
 <script setup>
-
-import XField from "../../Components/XField.vue";
-import {XForm} from "@indielayer/ui";
-
 const props = defineProps({
   aml: Object,
   amlResults: Array,
@@ -55,58 +51,65 @@ const decisionTitles = {
 };
 
 function submitDecision(decision) {
-    if ((props.aml.quote_type_id == 5 && fieldValidationscompany() && fieldValidationspartner()  && fieldValidationsperson() && complianceRules() )
-        || ( props.aml.quote_type_id != 5 &&  fieldValidationscompany() && fieldValidationsowner()  && complianceRules()) ) {
-
-        submitDecisionLoading.value = true;
+  if (
+    (props.aml.quote_type_id == 5 &&
+      fieldValidationscompany() &&
+      fieldValidationspartner() &&
+      fieldValidationsperson() &&
+      complianceRules()) ||
+    (props.aml.quote_type_id != 5 &&
+      fieldValidationscompany() &&
+      fieldValidationsowner() &&
+      complianceRules())
+  ) {
+    submitDecisionLoading.value = true;
     let quoteStatusCode = passingDecisions.includes(decision)
-        ? props.quoteStatusCode.AMLScreeningCleared
-        : props.quoteStatusCode.AMLScreeningFailed;
+      ? props.quoteStatusCode.AMLScreeningCleared
+      : props.quoteStatusCode.AMLScreeningFailed;
     let url = `${props.aml.quote_type_id}/details/${props.aml.quote_request_id}
     /quoteStatusUpdate/${quoteStatusCode}?notes=${decisionNotes.value}&in_adverse_media=${in_adverse_media.value}&is_owner_pep=${is_owner_pep.value}&is_controlling_pep=${is_controlling_pep.value}&aml_id=${props.aml.id}&aml_decision=${decision}
     &decisonsForUpdatePortal=[${JSON.stringify(decisionSelected.value)}]&result_id=${JSON.parse(props.aml.results)[0].ResultID}`;
 
     axios
-        .get(url)
-        .then(response => {
-          submitDecisionLoading.value = false;
-          decisionNotesModal.value = false;
-          if (response.data.status === 'success') {
-            notification.success({
-              title: response.data.message,
-              position: 'top',
-            });
-            window.location = `/kyc/aml/${props.aml.quote_type_id}/details/${props.aml.quote_request_id}`;
-          } else {
-            notification.error({
-              title: response.data.message,
-              position: 'top',
-            });
-          }
-        })
-        .catch(err => {
-          console.log(err);
-        });
+      .get(url)
+      .then(response => {
+        submitDecisionLoading.value = false;
+        decisionNotesModal.value = false;
+        if (response.data.status === 'success') {
+          notification.success({
+            title: response.data.message,
+            position: 'top',
+          });
+          window.location = `/kyc/aml/${props.aml.quote_type_id}/details/${props.aml.quote_request_id}`;
+        } else {
+          notification.error({
+            title: response.data.message,
+            position: 'top',
+          });
+        }
+      })
+      .catch(err => {
+        console.log(err);
+      });
   }
 }
 
 const submitAMLDecision = decision => {
-    setAllDecisionSelected();
-    decisionNotes.value = props.aml.notes;
+  setAllDecisionSelected();
+  decisionNotes.value = '';
   decisionNotesModal.value = true;
   decisionModalHeading.value = decisionTitles[decision];
   amlDecision.value = decision;
 };
 
-const setAllDecisionSelected = ()=>{
-    amlResults.value.filter((x) => {
-        if(x.decision == 'FalsePositive' || x.decision == 'TrueMatch'){
-            decisionSelected.value[x.ID] = x.decision;
-        }
-    });
-}
+const setAllDecisionSelected = () => {
+  amlResults.value.filter(x => {
+    if (x.decision == 'FalsePositive' || x.decision == 'TrueMatch') {
+      decisionSelected.value[x.ID] = x.decision;
+    }
+  });
+};
 const setSelectedOption = (e, item) => {
-
   decisionSelected.value[item.ID] = e;
   let index = amlResults.value.findIndex(
     x => x.EntityUniqueID == item.EntityUniqueID,
@@ -115,40 +118,45 @@ const setSelectedOption = (e, item) => {
   if (index != -1) amlResults.value[index].decision = e;
 
   let data = {
-      aml_id : props.aml.id,
-      aml_quote_url : `/kyc/aml/${props.aml.quote_type_id}/details/${props.aml.quote_request_id}`,
-      quote_id : props.aml.quote_request_id,
-      quote_ref_id : props.quoteObject.code,
-      customer_entity_name : props.aml.input,
-      quote_type_text : props.aml.quote_type_text,
-      bridger_response: props.aml.results_found,
-      last_updated_at : props.aml.updated_at,
-      bridger_match_id : item.ID,
-      bridger_decision_type: e
-
+    aml_id: props.aml.id,
+    aml_quote_url: `/kyc/aml/${props.aml.quote_type_id}/details/${props.aml.quote_request_id}`,
+    quote_id: props.aml.quote_request_id,
+    quote_ref_id: props.quoteObject.code,
+    customer_entity_name: props.aml.input,
+    quote_type_text: props.aml.quote_type_text,
+    bridger_response: props.aml.results_found,
+    last_updated_at: props.aml.updated_at,
+    bridger_match_id: item.ID,
+    bridger_decision_type: e,
   };
 
-  axios.post(`/kyc/send-bridger-response`, data)
-      .then(res => {
-          if (res.data.status === 'success') {
-              checkDecisionLockStatus.value = res.data.result_state === props.amlDecisionStatusCode.SENT_FOR_REVIEW;
-              notification.success({
-                  title: res.data.message,
-                  position: 'top',
-              });
-          } else if(res.data.status === 'error') {
-              notification.error({
-                  title: res.data.message,
-                  position: 'top',
-              });
-          }
-      })
-      .catch(err => {
-          console.log(err);
-      })
+  axios
+    .post(`/kyc/send-bridger-response`, data)
+    .then(res => {
+      if (res.data.status === 'success') {
+        checkDecisionLockStatus.value =
+          res.data.result_state === props.amlDecisionStatusCode.SENT_FOR_REVIEW;
+        notification.success({
+          title: res.data.message,
+          position: 'top',
+        });
+      } else if (res.data.status === 'error') {
+        notification.error({
+          title: res.data.message,
+          position: 'top',
+        });
+      }
+    })
+    .catch(err => {
+      console.log(err);
+    });
 };
 
-const checkDecisionLockStatus = ref((props.aml.decision === props.amlDecisionStatusCode.TRUE_MATCH_REJECT_RISK || props.aml.decision === props.amlDecisionStatusCode.SENT_FOR_REVIEW ) && hasRole(rolesEnum.COMPLIANCE));
+const checkDecisionLockStatus = ref(
+  (props.aml.decision === props.amlDecisionStatusCode.TRUE_MATCH_REJECT_RISK ||
+    props.aml.decision === props.amlDecisionStatusCode.SENT_FOR_REVIEW) &&
+    hasRole(rolesEnum.COMPLIANCE),
+);
 
 const isTrue = computed(() => {
   return amlResults.value.some(x => x.decision == 'TrueMatch');
@@ -160,8 +168,11 @@ const falsePositive = computed(() => {
 
 const notesRequired = ref(false);
 
-function complianceRules () {
-  if((hasRole(rolesEnum.COMPLIANCE) || hasRole(rolesEnum.ComplianceSuperUser)) && (decisionNotes.value == '' || decisionNotes.value == null )) {
+function complianceRules() {
+  if (
+    (hasRole(rolesEnum.COMPLIANCE) || hasRole(rolesEnum.ComplianceSuperUser)) &&
+    (decisionNotes.value == '' || decisionNotes.value == null)
+  ) {
     notesRequired.value = 'This field is required';
     return false;
   }
@@ -171,40 +182,40 @@ function complianceRules () {
 }
 const fieldRequired = ref(false);
 const fieldRequiredowner = ref(false);
-function fieldValidationsowner(){
-    if(is_owner_pep.value === '' || is_owner_pep.value === null ){
-        fieldRequiredowner.value = 'This field is required';
-        return false;
-    }
-    fieldRequiredowner.value = false;
-    return true
+function fieldValidationsowner() {
+  if (is_owner_pep.value === '' || is_owner_pep.value === null) {
+    fieldRequiredowner.value = 'This field is required';
+    return false;
+  }
+  fieldRequiredowner.value = false;
+  return true;
 }
 const fieldRequiredcompany = ref(false);
-function fieldValidationscompany(){
-    if(in_adverse_media.value === '' || in_adverse_media.value == null ){
-        fieldRequiredcompany.value = 'This field is required';
-        return false;
-    }
-    fieldRequiredcompany.value = false;
-    return true
+function fieldValidationscompany() {
+  if (in_adverse_media.value === '' || in_adverse_media.value == null) {
+    fieldRequiredcompany.value = 'This field is required';
+    return false;
+  }
+  fieldRequiredcompany.value = false;
+  return true;
 }
 const fieldRequiredpartner = ref(false);
-function fieldValidationspartner(){
-    if(is_owner_pep.value === '' || is_owner_pep.value === null ){
-        fieldRequiredpartner.value = 'This field is required';
-        return false;
-    }
-    fieldRequiredpartner.value = false;
-    return true
+function fieldValidationspartner() {
+  if (is_owner_pep.value === '' || is_owner_pep.value === null) {
+    fieldRequiredpartner.value = 'This field is required';
+    return false;
+  }
+  fieldRequiredpartner.value = false;
+  return true;
 }
 const fieldRequiredperson = ref(false);
-function fieldValidationsperson(){
-    if(is_controlling_pep.value === '' || is_controlling_pep.value === null){
-        fieldRequiredperson.value = 'This field is required';
-        return false;
-    }
-    fieldRequiredperson.value = false;
-    return true
+function fieldValidationsperson() {
+  if (is_controlling_pep.value === '' || is_controlling_pep.value === null) {
+    fieldRequiredperson.value = 'This field is required';
+    return false;
+  }
+  fieldRequiredperson.value = false;
+  return true;
 }
 </script>
 
@@ -310,7 +321,11 @@ function fieldValidationsperson(){
         </template>
 
         <template #item-date_of_birth="{ EntityDetails }">
-          {{ EntityDetails.AdditionalInfo.filter(x => x.Type === "DOB").map( dob => dob.Value).toString() ?? "" }}
+          {{
+            EntityDetails.AdditionalInfo.filter(x => x.Type === 'DOB')
+              .map(dob => dob.Value)
+              .toString() ?? ''
+          }}
         </template>
 
         <template #item-gender="{ EntityDetails }">
@@ -318,22 +333,35 @@ function fieldValidationsperson(){
         </template>
 
         <template #item-customer_id="{ EntityDetails }">
-          {{ EntityDetails.IDs.filter(x => x.Type === "ProprietaryUID").map( ProprietaryUID => ProprietaryUID.Number).toString() ?? "" }}
+          {{
+            EntityDetails.IDs.filter(x => x.Type === 'ProprietaryUID')
+              .map(ProprietaryUID => ProprietaryUID.Number)
+              .toString() ?? ''
+          }}
         </template>
 
         <template #item-address="{ EntityDetails }">
           {{
-              EntityDetails.Addresses ? EntityDetails.Addresses.map(
-                  address => (address.City ?? '') +' '+ (address.StateProvinceDistrict ?? '') +' '+ (address.Country ?? ''),
-              ).toString() : ''
+            EntityDetails.Addresses
+              ? EntityDetails.Addresses.map(
+                  address =>
+                    (address.City ?? '') +
+                    ' ' +
+                    (address.StateProvinceDistrict ?? '') +
+                    ' ' +
+                    (address.Country ?? ''),
+                ).toString()
+              : ''
           }}
         </template>
 
         <template #item-country="{ EntityDetails }">
           {{
-            EntityDetails.Addresses ? EntityDetails.Addresses.map(
-              nationality => nationality.Country,
-            ).toString() : ''
+            EntityDetails.Addresses
+              ? EntityDetails.Addresses.map(
+                  nationality => nationality.Country,
+                ).toString()
+              : ''
           }}
         </template>
 
@@ -376,96 +404,100 @@ function fieldValidationsperson(){
           True Match - Accept Risk
         </x-button>
       </div>
-      <x-modal v-model="decisionNotesModal" backdrop>
+      <x-modal
+        v-model="decisionNotesModal"
+        :title="`${decisionModalHeading}`"
+        backdrop
+      >
         <template #header>
           {{ decisionModalHeading }}
         </template>
-          <div v-if="aml.quote_type_id === 5">
-              <x-label>Does the Company name or subsidiary / Affiliate entities feature in any adverse media?</x-label>
-              <div class="grid md:grid-cols-2 mb-4 mt-2">
-                  <x-select
-                      v-model="in_adverse_media"
-                      :options="[
+        <div v-if="aml.quote_type_id === 5">
+          <x-label
+            >Does the Company name or subsidiary / Affiliate entities feature in
+            any adverse media?</x-label
+          >
+          <div class="grid md:grid-cols-2 mb-4 mt-2">
+            <x-select
+              v-model="in_adverse_media"
+              :options="[
                 { value: 1, label: 'Yes' },
                 { value: 0, label: 'No' },
               ]"
-                      placeholder="Select Result"
-                      class="w-full"
-                      :error="fieldRequiredcompany"
-
-                      size="xs"
-                  />
-              </div>
-
-              <x-label>Does the owner/ Shareholder/Partner of the company feature in any PEP List/ Adverse Media?</x-label>
-              <div class="grid md:grid-cols-2 mb-4 mt-2">
-                  <x-select
-                      v-model="is_owner_pep"
-                      :options="[
-                { value: 1, label: 'Yes' },
-                { value: 0, label: 'No' },
-              ]"
-                      placeholder="Select Result"
-                      class="w-full"
-                      :error="fieldRequiredpartner"
-
-                      size="xs"
-                  />
-
-              </div>
-              <x-label>Is the controlling person a PEP/HIO/FPEP/Government Organization?</x-label>
-              <div class="grid md:grid-cols-2 mb-4 mt-2">
-                  <x-select
-                      v-model="is_controlling_pep"
-                      :options="[
-                { value: 1, label: 'Yes' },
-                { value: 0, label: 'No' },
-              ]"
-                      placeholder="Select Result"
-                      class="w-full"
-
-                      :error="fieldRequiredperson"
-                      size="xs"
-                  />
-              </div>
+              placeholder="Select Result"
+              class="w-full"
+              :error="fieldRequiredcompany"
+              size="xs"
+            />
           </div>
 
-          <div v-else>
-              <x-label>Is the Natural Person listed in any adverse media?</x-label>
-              <div class="grid md:grid-cols-2 mb-4 mt-2">
-
-                  <x-select
-                      v-model="in_adverse_media"
-                      :options="[
+          <x-label
+            >Does the owner/ Shareholder/Partner of the company feature in any
+            PEP List/ Adverse Media?</x-label
+          >
+          <div class="grid md:grid-cols-2 mb-4 mt-2">
+            <x-select
+              v-model="is_owner_pep"
+              :options="[
                 { value: 1, label: 'Yes' },
                 { value: 0, label: 'No' },
               ]"
-                      placeholder="Select Result"
-                      class="w-full"
-                      size="xs"
-
-                      :error="fieldRequiredcompany"
-                  />
-
-
-              </div>
-
-              <x-label>Is the Natural Person listed in PEP/FPEP/HIO?</x-label>
-              <div class="grid md:grid-cols-2 mb-4 mt-2">
-                  <x-select
-                      v-model="is_owner_pep"
-                      :options="[
-                { value: 1, label: 'Yes' },
-                { value: 0, label: 'No' },
-              ]"
-                      placeholder="Select Result"
-                      class="w-full"
-                      size="xs"
-                      :error="fieldRequiredowner"
-                  />
-
-              </div>
+              placeholder="Select Result"
+              class="w-full"
+              :error="fieldRequiredpartner"
+              size="xs"
+            />
           </div>
+          <x-label
+            >Is the controlling person a PEP/HIO/FPEP/Government
+            Organization?</x-label
+          >
+          <div class="grid md:grid-cols-2 mb-4 mt-2">
+            <x-select
+              v-model="is_controlling_pep"
+              :options="[
+                { value: 1, label: 'Yes' },
+                { value: 0, label: 'No' },
+              ]"
+              placeholder="Select Result"
+              class="w-full"
+              :error="fieldRequiredperson"
+              size="xs"
+            />
+          </div>
+        </div>
+
+        <div v-else>
+          <x-label>Is the Natural Person listed in any adverse media?</x-label>
+          <div class="grid md:grid-cols-2 mb-4 mt-2">
+            <x-select
+              v-model="in_adverse_media"
+              :options="[
+                { value: 1, label: 'Yes' },
+                { value: 0, label: 'No' },
+              ]"
+              placeholder="Select Result"
+              class="w-full"
+              size="xs"
+              :error="fieldRequiredcompany"
+            />
+          </div>
+
+          <x-label>Is the Natural Person listed in PEP/FPEP/HIO?</x-label>
+          <div class="grid md:grid-cols-2 mb-4 mt-2">
+            <x-select
+              v-model="is_owner_pep"
+              :options="[
+                { value: 1, label: 'Yes' },
+                { value: 0, label: 'No' },
+              ]"
+              placeholder="Select Result"
+              class="w-full"
+              size="xs"
+              :error="fieldRequiredowner"
+            />
+          </div>
+        </div>
         <x-textarea
           v-model="decisionNotes"
           placeholder="Notes"

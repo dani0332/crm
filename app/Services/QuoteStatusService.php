@@ -14,9 +14,9 @@ class QuoteStatusService
 {
     use GenericQueriesAllLobs;
 
-    public function updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, $request = [])
+    public function updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, $request = [], $notes = null)
     {
-        $AMLService = new AMLService();
+        $AMLService = new AMLService;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $quoteStatus = QuoteStatus::where('code', $quoteStatusType)->firstOrFail();
 
@@ -55,6 +55,7 @@ class QuoteStatusService
             'quote_request_id' => $quoteRequestId,
             'current_quote_status_id' => $currentStatusId,
             'previous_quote_status_id' => $previousStatusId,
+            'notes' => $notes ?? null,
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ]);

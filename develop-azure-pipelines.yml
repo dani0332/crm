@@ -1,5 +1,5 @@
 trigger:
-- develop
+  - develop
 
 pool:
   vmImage: ubuntu-latest
@@ -8,15 +8,15 @@ variables:
   phpVersion: 7.2
 
 steps:
-#- task: DownloadSecureFile@1
-#  name: env
-#  displayName: 'Download env file'
-#  inputs:
-#    secureFile: '.env.crmstage'
-#- script: cp $(env.secureFilePath) $(System.DefaultWorkingDirectory)/
+  #- task: DownloadSecureFile@1
+  #  name: env
+  #  displayName: 'Download env file'
+  #  inputs:
+  #    secureFile: '.env.crmstage'
+  #- script: cp $(env.secureFilePath) $(System.DefaultWorkingDirectory)/
 
-- script: |
-    echo "Artifacts uploaded to $(System.DefaultWorkingDirectory)"
+  - script: |
+      echo "Artifacts uploaded to $(System.DefaultWorkingDirectory)"
 
-- publish: '$(System.DefaultWorkingDirectory)'
-  artifact: myalfredcrm
+  - publish: '$(System.DefaultWorkingDirectory)'
+    artifact: myalfredcrm

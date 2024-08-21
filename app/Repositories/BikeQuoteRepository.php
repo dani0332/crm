@@ -12,6 +12,7 @@ use App\Models\BikeQuote;
 use App\Models\InsuranceProvider;
 use App\Models\PersonalQuote;
 use App\Services\DropdownSourceService;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,8 @@ use Illuminate\Support\Facades\URL;
 
 class BikeQuoteRepository extends BaseRepository
 {
+    use GenericQueriesAllLobs;
+
     public function model()
     {
         return PersonalQuote::class;
@@ -88,7 +91,7 @@ class BikeQuoteRepository extends BaseRepository
 
             $quote->bikeQuote()->updateOrCreate(
                 ['personal_quote_id' => $quote->id],
-                Arr::only($data, (new BikeQuote())->allowedColumns())
+                Arr::only($data, (new BikeQuote)->allowedColumns())
             );
 
             return $quote;
@@ -105,7 +108,7 @@ class BikeQuoteRepository extends BaseRepository
         $dropdownSourceList = ['back_home_license_held_for_id', 'claim_history_id', 'car_type_insurance_id', 'emirate_of_registration_id', 'bike_make_id', 'bike_model_id', 'currently_insured_with_id'];
         $dropdownSource = [];
         foreach ($dropdownSourceList as $value) {
-            $data = (new DropdownSourceService())->getDropdownSource($value);
+            $data = (new DropdownSourceService)->getDropdownSource($value);
             $dropdownSource[$value] = $data;
         }
 
@@ -147,6 +150,7 @@ class BikeQuoteRepository extends BaseRepository
                         'paymentSplits.paymentMethod',
                         'paymentSplits.verifiedByUser',
                         'paymentSplits.documents',
+                        'paymentSplits.processJob',
                     ]);
                 },
                 'paymentStatus',
@@ -165,9 +169,10 @@ class BikeQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
+                'policy_expiry_date',
                 'policy_start_date',
                 'policy_issuance_date',
-                DB::raw('IF(EXISTS (
+                \DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
                     WHERE quote_type_id = '.QuoteTypeId::Bike.' AND quote_request_id = '.$this->getTable().'.id),
@@ -204,8 +209,10 @@ class BikeQuoteRepository extends BaseRepository
                 $query->where('advisor_id', \auth()->user()->id);
             })
             ->filter(! $forExport)
-            ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc');
+            ->withFakeLeadCriteria();
+
+        $this->adjustQueryByDateFilters($query, 'personal_quotes');
+        $this->orderBy('personal_quotes.created_at', 'desc');
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
     }
@@ -217,6 +224,7 @@ class BikeQuoteRepository extends BaseRepository
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');
     }
+
     public function fetchPersonalQuotesData($uuid)
     {
         $this->query = DB::table('personal_quotes as pqr')

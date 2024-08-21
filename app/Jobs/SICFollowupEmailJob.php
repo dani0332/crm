@@ -21,10 +21,10 @@ class SICFollowupEmailJob implements ShouldQueue
      */
     public $tries = 3;
 
-    public $timeout = 15;
+    public $timeout = 60;
     public $backoff = 60;
-    public $uuid;
-    public $quoteType;
+    private $uuid;
+    private $quoteType;
 
     public function __construct($uuid, QuoteTypes $quoteType)
     {
@@ -41,6 +41,8 @@ class SICFollowupEmailJob implements ShouldQueue
             'uuid' => $this->uuid,
             'quoteType' => $this->quoteType,
         ]);
+
+        $this->quoteType = $this->quoteType ?: QuoteTypes::CAR;
 
         $lead = $this->quoteType?->model()::where('uuid', $this->uuid)->first();
         if ($lead) {

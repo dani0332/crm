@@ -4,7 +4,9 @@ const props = defineProps({
   quote: Object,
 });
 const { isRequired } = useRules();
-
+const page = usePage();
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 const emit = defineEmits(['onLoadAvailablePlansData']);
 
 const notification = useToast();
@@ -187,6 +189,12 @@ const onToggleManual = () => {
     toggleManualLoader.value = false;
   }, 300);
 };
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -348,6 +356,7 @@ const onToggleManual = () => {
               size="sm"
               @click="onUpdatePlan"
               :loading="planForm.processing"
+              v-if="readOnlyMode.isDisable === true"
             >
               Update
             </x-button>
@@ -390,6 +399,7 @@ const onToggleManual = () => {
                 size="sm"
                 @click.prevent="onUpdatePlan"
                 :loading="planForm.processing"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Update
               </x-button>

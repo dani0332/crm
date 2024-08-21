@@ -16,7 +16,7 @@ class EmailStatusService extends BaseService
 
     public function addEmailStatus($emailData, $messageId, $emailSubject)
     {
-        $newEmailStatus = new EmailStatus();
+        $newEmailStatus = new EmailStatus;
         $newEmailStatus->quote_type_id = $emailData->quoteTypeId;
         $newEmailStatus->quote_id = $emailData->quoteId;
         $newEmailStatus->email_address = $emailData->customerEmail;
