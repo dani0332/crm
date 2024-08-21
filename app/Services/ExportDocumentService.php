@@ -53,7 +53,7 @@ class ExportDocumentService extends BaseService implements ExportDocumentInterfa
             return ['error' => 'Proforma Payment Request not found'];
         }
 
-        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.proforma-invoice', compact('quote', 'proformaPaymentRequest', 'isRequestFromSendUpdateLogPage' , 'quoteTypeId'));
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.proforma-invoice', compact('quote', 'proformaPaymentRequest', 'isRequestFromSendUpdateLogPage', 'quoteTypeId'));
 
         $pdfName = 'InsuranceMarket.ae™ Proforma Payment Request for '.$quote->first_name.' '.$quote->last_name.'-'.$proformaPaymentRequest->code.'('.($proformaPaymentRequestVersion + 1).')'.'.pdf';
 
