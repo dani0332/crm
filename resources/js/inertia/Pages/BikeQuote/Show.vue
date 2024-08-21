@@ -228,6 +228,9 @@ const tradeLicenseEntity = reactive({
   triggeredFrom: false,
 });
 
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+
 const entityTypeChange = event => {
   if (event === 'SubEntity') {
     getParentEntityModel.value = true;
@@ -636,6 +639,11 @@ const onAddUpdate = () => {
                   </x-tooltip>
                 </div>
                 <div>{{ quote?.parent_duplicate_quote_id }}</div>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
             </dl>
           </div>

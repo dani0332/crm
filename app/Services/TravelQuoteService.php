@@ -133,6 +133,7 @@ class TravelQuoteService extends BaseService
             'ent.industry_type_code',
             'ent.emirate_of_registration_id',
             'et.passport_number',
+            DB::raw('DATE_FORMAT(tqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
             'tqr.price_vat_not_applicable',
             'tqr.price_vat_applicable',
             'tqr.price_with_vat',
