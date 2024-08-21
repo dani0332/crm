@@ -331,7 +331,7 @@ const policyDetails = useForm({
   premium: page.props.quote.premium,
   policy_number: page.props.quote.policy_number || '',
   policy_start_date: dateToYMD(page.props.quote.policy_start_date),
-  renewal_expiry_date: dateToYMD(page.props.quote.renewal_expiry_date) || '',
+  policy_expiry_date: dateToYMD(page.props.quote.policy_expiry_date) || '',
   policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || '',
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
@@ -795,6 +795,10 @@ const onAddUpdate = () => {
                 <dt class="font-medium">DETAILS</dt>
                 <dd>{{ quote.details }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ quote.transaction_approved_at }}</dd>
+              </div>
             </dl>
           </div>
         </template>
@@ -1179,6 +1183,7 @@ const onAddUpdate = () => {
                   placeholder="Lead Status"
                   class="w-full"
                   label="Status"
+                  filterable
                 />
 
                 <x-select
@@ -1219,6 +1224,7 @@ const onAddUpdate = () => {
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
               :disabled="allowStatusUpdate || isDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Change Status
             </x-button>
@@ -1353,7 +1359,12 @@ const onAddUpdate = () => {
         <template #body>
           <x-divider class="my-4" />
           <div class="flex justify-end mb-4">
-            <x-button size="sm" color="orange" @click.prevent="addActivity">
+            <x-button
+              size="sm"
+              color="orange"
+              @click.prevent="addActivity"
+              v-if="readOnlyMode.isDisable === true"
+            >
               Add Activity
             </x-button>
           </div>
@@ -1383,6 +1394,7 @@ const onAddUpdate = () => {
                   outlined
                   :disabled="item.status === 1"
                   @click.prevent="activityEdit(item)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Edit
                 </x-button>
@@ -1392,6 +1404,7 @@ const onAddUpdate = () => {
                   :disabled="item.status === 1"
                   outlined
                   @click.prevent="activityDelete(item.id)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Delete
                 </x-button>

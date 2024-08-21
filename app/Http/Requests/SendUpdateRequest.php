@@ -67,7 +67,6 @@ class SendUpdateRequest extends FormRequest
                         $requiredDocuments = [
                             DocumentTypeCode::SEND_UPDATE_TAX_INVOICE,
                             DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER,
-                            DocumentTypeCode::SEND_UPDATE_RECEIPT,
                         ];
                         $requiredDocumentsForMPC = [
                             DocumentTypeCode::SEND_UPDATE_TAX_INVOICE,

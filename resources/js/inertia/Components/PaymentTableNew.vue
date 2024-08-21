@@ -1,9 +1,11 @@
 <script setup>
 import ToolTip from './../Components/ToolTip.vue';
-import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
 import { onMounted, reactive } from 'vue';
 import moment from 'moment';
 import NProgress from 'nprogress';
+import { computed } from 'vue';
+import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
+
 const notification = useNotifications('toast');
 const page = usePage();
 
@@ -184,14 +186,10 @@ if (
   props.isPlanDetailEnabled
 ) {
   initalPlanDetails =
-    props.quoteRequest.insurance_provider_details ??
-    props.quoteRequest.insurance_provider;
-} else if (quoteTypesToCheck.includes(props.quoteType)) {
-  initalPlanDetails = props.quoteRequest.plan;
-} else if (props.quoteType == 'Business' || props.quoteType == 'Home') {
-  initalPlanDetails =
     props.quoteRequest?.insurance_provider_details ??
     props.quoteRequest?.insurance_provider;
+} else if (quoteTypesToCheck.includes(props.quoteType)) {
+  initalPlanDetails = props.quoteRequest.plan;
 } else if (props.quoteType == 'Bike') {
   initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
 } else {
@@ -1866,8 +1864,10 @@ const editPaymentModal = (
   ) {
     planDetail.value = payment.travel_plan;
 
-    planDetail.value['insurance_provider'] =
-      payment.travel_plan.insurance_provider;
+    if (!(props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
+      planDetail.value['insurance_provider'] =
+        payment.travel_plan.insurance_provider;
+    }
   }
 
   //Assign plan for Travel
@@ -1876,8 +1876,10 @@ const editPaymentModal = (
     (paymentMethodsForm.status == 'edit' || paymentMethodsForm.status == 'view')
   ) {
     planDetail.value = payment.travel_plan;
-    planDetail.value['insurance_provider'] =
-      payment.travel_plan.insurance_provider;
+    if (!(props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
+      planDetail.value['insurance_provider'] =
+        payment.travel_plan.insurance_provider;
+    }
   }
 
   if (capture_approval > 0) {
@@ -2850,6 +2852,8 @@ watch(
       props.isPlanDetailEnabled
     ) {
       initalPlanDetails = props.quoteRequest.insurance_provider_details;
+    } else if (quoteTypesToCheck.includes(props.quoteType)) {
+      initalPlanDetails = props.quoteRequest.plan;
     } else if (props.quoteType == 'Bike') {
       initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
       if (props.sendUpdate) {
@@ -2994,6 +2998,21 @@ const totalPriceFormat = computed(() => {
 const totalAmountFormat = computed(() => {
   return formatAmount(totalAmount.value);
 });
+
+const splitPaymentTotalPrice = (
+  splitPaymentNo,
+  splitPaymentAmount,
+  masterDiscountValue,
+) => {
+  let total = 0;
+  if (splitPaymentNo === 1 && masterDiscountValue > 0) {
+    total = splitPaymentAmount + masterDiscountValue;
+  } else {
+    total = splitPaymentAmount;
+  }
+
+  return formatAmount(total);
+};
 </script>
 
 <template>
@@ -3395,8 +3414,22 @@ const totalAmountFormat = computed(() => {
                       {{ formatAmount(splitPayment.price_vat_applicable) }}
                     </td>
                     <td>{{ formatAmount(splitPayment.price_vat) }}</td>
-                    <td>{{ formatAmount(splitPayment.payment_amount) }}</td>
-                    <td></td>
+                    <td>
+                      {{
+                        splitPaymentTotalPrice(
+                          splitPayment.sr_no,
+                          splitPayment.payment_amount,
+                          item.discount_value,
+                        )
+                      }}
+                    </td>
+                    <td>
+                      {{
+                        splitPayment.sr_no == 1
+                          ? formatAmount(item.discount_value)
+                          : ''
+                      }}
+                    </td>
                     <td>{{ formatAmount(splitPayment.payment_amount) }}</td>
                     <td>
                       {{
@@ -3467,23 +3500,6 @@ const totalAmountFormat = computed(() => {
                           "
                           outlined
                           >Copy Payment Link</x-button
-                        >
-                        <x-button
-                          v-if="
-                            can(permissionEnum.ApprovePayments) &&
-                            splitPayment.process_job?.status === 'failed'
-                          "
-                          size="xs"
-                          color="red"
-                          class="ml-2"
-                          @click="
-                            retrySplitPaymentModal(
-                              splitPayment.process_job?.id,
-                              splitPayment.process_job?.message,
-                            )
-                          "
-                          outlined
-                          >Retry</x-button
                         >
                       </div>
                     </td>

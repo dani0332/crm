@@ -32,6 +32,7 @@ use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\HandlesDeadlockRetries;
 use App\Traits\SageLoggable;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -43,6 +44,7 @@ use PDF;
 class SplitPaymentService
 {
     use GenericQueriesAllLobs;
+    use HandlesDeadlockRetries;
     use SageLoggable;
 
     public function calculateDiscount($totalSplitPayments, $discountValue)
@@ -101,7 +103,7 @@ class SplitPaymentService
 
         $sageLogArray = $splitPayment->sageApiLogs->keyBy('step')->toArray();
 
-        $sageApiService = new SageApiService();
+        $sageApiService = new SageApiService;
         $sageCustomerNumber = $sageApiService->verifySageCustomer($request->customer_id, $customerData, $splitPayment, $sageLogArray, 4, $request->advisor_id);
         if ($sageCustomerNumber == '') {
             $returnMessage['response'] = 'Customer not found in sage';
@@ -578,10 +580,17 @@ class SplitPaymentService
     {
         $paymentSplit = PaymentSplits::find($splitPaymentId);
         $sendUpdateId = $paymentSplit->payment->send_update_log_id;
+        $mainLeadObject = $this->getQuoteObject($modelType, $quoteId);
+        $maxRetries = 2;
+
         if (! empty($sendUpdateId) && $sendUpdateId > 0) {
             $quoteModel = SendUpdateLogRepository::getLogById($sendUpdateId);
+            $quoteModel->fill([
+                'customer_id' => $mainLeadObject->customer_id,
+                'advisor_id' => $mainLeadObject->advisor_id,
+            ]);
         } else {
-            $quoteModel = $this->getQuoteObject($modelType, $quoteId);
+            $quoteModel = $mainLeadObject;
         }
 
         if ($isFromJob && ! $quoteModel) {
@@ -605,8 +614,12 @@ class SplitPaymentService
 
                 $sageResponse = $this->createSageRecipt($request, $paymentSplit, $amountCollected);
                 if ($sageResponse['status'] == 'success') {
-                    $paymentSplit->sage_reciept_id = $sageResponse['response'];
-                    $paymentSplit->save();
+
+                    $this->handleWithDeadlockRetries(function () use ($paymentSplit, $sageResponse) {
+                        $paymentSplit->sage_reciept_id = $sageResponse['response'];
+                        $paymentSplit->save();
+                    }, $maxRetries);
+
                 } else {
                     $sageMessage = $sageResponse['response'];
                     if ($isFromJob) {
@@ -633,8 +646,8 @@ class SplitPaymentService
         }
 
         if (! $paymentSplit->payment->is_approved && ! $isFromJob) {
-            DB::beginTransaction();
-            try {
+
+            return $this->handleWithDeadlockRetries(function () use ($paymentSplit, $amountCollected, $modelType, $quoteId, $isFromJob) {
                 if (empty($paymentSplit->verified_at)) {
                     $paymentSplit->verified_at = now();
                     $paymentSplit->verified_by = Auth::user()->id;
@@ -660,15 +673,7 @@ class SplitPaymentService
                 if ($isFromJob) {
                     $this->processMasterPaymentApprove($modelType, $quoteId, $parentPayment->send_update_log_id, true);
                 }
-                DB::commit();
-            } catch (Exception $exception) {
-                if ($isFromJob) {
-                    CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $exception->getMessage()]);
-                } else {
-                    Log::error('Error in processSplitPaymentApprove '.$quoteModel->code.': '.$exception->getMessage());
-                }
-                DB::rollBack();
-            }
+            }, $maxRetries, $splitPaymentId, $quoteModel->code, $isFromJob);
         } elseif ($isFromJob) {
             CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
         }
@@ -676,7 +681,7 @@ class SplitPaymentService
     }
 
     // function to process the master payment approve
-    public function processMasterPaymentApprove($modelType, $quoteId, $sendUpdateId, $isFromJob = false, $splitPaymentId = 0)
+    public function processMasterPaymentApprove($modelType, $quoteId, $sendUpdateId, $isFromJob = false, $splitPaymentId = 0, $paymentCode = '')
     {
         $canCaptureEp = false;
         // On failure, the capture button will render again and the user can try again
@@ -687,7 +692,13 @@ class SplitPaymentService
             } else {
                 $quoteModel = $this->getQuoteObject($modelType, $quoteId);
             }
-            $masterPayment = ($sendUpdateId > 0) ? $quoteModel->payments()->where('send_update_log_id', $sendUpdateId)->first() : $quoteModel->payments()->where('code', $quoteModel->code)->first();
+
+            if ($paymentCode != '') {
+                $masterPayment = $quoteModel->payments()->where('code', $paymentCode)->first();
+            } else {
+                $masterPayment = ($sendUpdateId > 0) ? $quoteModel->payments()->where('send_update_log_id', $sendUpdateId)->first() : $quoteModel->payments()->where('code', $quoteModel->code)->first();
+            }
+
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
             $masterPaymentStatus = $masterPayment->payment_status_id;
             $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
@@ -717,6 +728,8 @@ class SplitPaymentService
                     $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
                 } else {
                     $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
+                    app(CRUDService::class)->calculateScore($quoteModel, $modelType);
+                    info('Transaction Score Calculated: '.$quoteModel->code);
                 }
                 $quoteModel->save();
                 $canCaptureEp = true;
@@ -725,7 +738,7 @@ class SplitPaymentService
                 if ($customerData) {
                     $quoteOptions = QuoteTypeId::getOptions();
                     $responseExtend = app(BerlinService::class)->extendCustomerSubscription($customerData->id, $customerData->email, strtoupper($quoteOptions[$quoteTypeId]).'-QUOTE', strtolower($quoteOptions[$quoteTypeId]).'-quote-myalfred-we');
-                    info('Transaction Approved responseExtend: '.$responseExtend);
+                    info('Transaction Approved responseExtend for '.$quoteModel->code.': '.$responseExtend);
                 }
 
                 //Create duplicate lead for TRAVEL
@@ -820,23 +833,43 @@ class SplitPaymentService
     {
         $priceWithoutVat = $splitPaymentAmount;
         $vat = 0;
+        $priceVatNotApplicable = 0;
+
         $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
         if (! $vatValue) {
             return [$priceWithoutVat, $vat];
         }
         [$priceWithoutVat, $vat] = $this->calculateMasterPriceAndVat($frequency, $masterTotalPrice, $modelType, $quoteId, $send_update_id);
         if ($vat > 0) {
-            if ($frequency == PaymentFrequency::SPLIT_PAYMENTS) {
-                $vat = $vat / $totalSplitPayments;
-                $priceWithoutVat = $splitPaymentAmount - $vat;
-            } elseif ($splitPaymentNumber === 1) {
-                if ($frequency != PaymentFrequency::UPFRONT) {
-                    $priceWithoutVat = $splitPaymentAmount - $vat;
+            $discount = 0;
+
+            if ($send_update_id > 0) {
+                $quoteModel = SendUpdateLogRepository::getLogById($send_update_id);
+            } else {
+                $quoteModel = $this->getQuoteObject($modelType, $quoteId);
+                if (isset($quoteModel->price_vat_not_applicable) && $quoteModel->price_vat_not_applicable > 0) {
+                    $priceVatNotApplicable = $quoteModel->price_vat_not_applicable;
+                    $priceVatNotApplicable = $priceVatNotApplicable / $totalSplitPayments;
                 }
+            }
+            $splitPaymentAmount = $splitPaymentAmount - $priceVatNotApplicable;
+            $paymentDiscount = $quoteModel->payments()->where('code', $quoteModel->code)->value('discount_value');
+            if ($splitPaymentNumber === 1 && $paymentDiscount > 0) {
+                $splitPaymentAmount = $splitPaymentAmount + $paymentDiscount; //discount
+            }
+
+            if ($frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+                $priceWithoutVat = $splitPaymentAmount / (1 + ($vatValue / 100));
+                $vat = $priceWithoutVat * $vatValue / 100;
+            } elseif ($splitPaymentNumber === 1) {
+                $priceWithoutVat = $splitPaymentAmount - $vat;
             } else {
                 $priceWithoutVat = $splitPaymentAmount;
                 $vat = 0;
             }
+
+            $priceWithoutVat = $priceWithoutVat + $priceVatNotApplicable;
+
         } else {
             $priceWithoutVat = $splitPaymentAmount;
         }
@@ -849,6 +882,7 @@ class SplitPaymentService
     {
         $vat = 0;
         $priceWithoutVat = $masterTotalPrice;
+        $priceVatNotApplicable = 0;
         $vatValue = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
         if (! $vatValue) {
             return [$priceWithoutVat, $vat];
@@ -866,16 +900,26 @@ class SplitPaymentService
             }
         }
 
-        if (isset($quoteModel) && isset($quoteModel->price_vat_applicable) && $quoteModel->price_vat_applicable > 0) {
-            $computedPrice = $quoteModel->price_vat_applicable;
+        if (isset($quoteModel)) {
+            if (isset($quoteModel->price_vat_applicable) && $quoteModel->price_vat_applicable > 0) {
+                $computedPrice = $quoteModel->price_vat_applicable;
+            }
+            if (isset($quoteModel->price_vat_not_applicable) && $quoteModel->price_vat_not_applicable > 0) {
+                $priceVatNotApplicable = $quoteModel->price_vat_not_applicable;
+            }
+
         }
 
         if ($computedPrice > 0) {
-            $priceWithoutVat = $computedPrice;
-            $vat = ($priceWithoutVat * $vatValue) / 100;
+
             if (in_array($modelType, $ecommLobs) && ! $send_update_id) {
-                $priceWithoutVat = $computedPrice - $vat;
+                $priceWithoutVat = $computedPrice / (1 + ($vatValue / 100));
+                $vat = $priceWithoutVat * $vatValue / 100;
+            } else {
+                $priceWithoutVat = $computedPrice;
+                $vat = ($priceWithoutVat * $vatValue) / 100;
             }
+            $priceWithoutVat = $priceWithoutVat + $priceVatNotApplicable;
 
             return [$priceWithoutVat, $vat];
         }

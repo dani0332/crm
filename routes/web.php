@@ -198,7 +198,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('quotes/car-sold', [CarQuoteController::class, 'getCarSoldQuotes'])->name('car-sold-list');
         Route::get('quotes/car-uncontactable', [CarQuoteController::class, 'getCarUncontactableQuotes'])->name('car-uncontactable-list');
 
-        Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('data-extraction');
+        Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->name('data-extraction'); //->middleware(SetReadDbConnection::class)->name('data-extraction');
 
         Route::post('save-quote-notes', [CentralController::class, 'saveQuoteNotes'])->name('save-quote-notes');
         Route::post('update-quote-notes', [CentralController::class, 'updateQuoteNotes'])->name('update-quote-notes');
@@ -390,9 +390,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         Route::group(['prefix' => 'quote-sync'], function () {
             Route::middleware('readonly_db')->group(function () {
-                Route::get('/', [QuoteSyncController::class, 'index'])->name('admin.quotesync');
-                Route::get('/view/{quoteSync}', [QuoteSyncController::class, 'show'])->name('admin.quotesync.show');
+                Route::get('/temp', [QuoteSyncController::class, 'index'])->name('admin.quotesync');
             });
+            Route::get('/', [QuoteSyncController::class, 'index'])->name('admin.quotesync');
+            Route::get('/view/{quoteSync}', [QuoteSyncController::class, 'show'])->name('admin.quotesync.show');
+            // });
             Route::get('/edit/{quoteSync}', [QuoteSyncController::class, 'edit'])->name('admin.quotesync.edit');
             Route::put('/update/{quoteSync}', [QuoteSyncController::class, 'update'])->name('admin.quotesync.update');
             Route::post('/sync-stuck-entries', [QuoteSyncController::class, 'addStuckEntriesForSyncing'])->name('admin.quotesync.sync-stuck-entries');
@@ -552,6 +554,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('/get-reversal-entries', 'getReversalEntries')->name('get-reversal-entries');
         Route::post('/send-update-customer-validation', 'sendUpdateCustomerValidation')->name('send-update-customer-validation');
         Route::post('/send-update-to-customer', 'sendUpdateToCustomer')->name('send-update-to-customer');
+        Route::post('/save-provider-details', 'saveProviderDetails')->name('save-provider-details');
         Route::post('book-update', 'sendUpdate')->name('book-update');
     });
     Route::get('get-plans/{quoteType}/{providerId}/{planId?}', [CentralController::class, 'getQuoteWisePlans'])->name('get-quote-wise-plans');

@@ -214,7 +214,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                 [
                     'name' => 'Add optional cover',
                     'key' => 'add-optional-cover',
-                    'code' => SendUpdateLogStatusEnum::AOCOV,
+                    'code' => 'BIAOCOV',
                     'tooltip' => "To include an additional coverage option such for Oman cover, Personal accident benefit covers, roadside assistance, etc. to enhance protection as per the policyholder's specific needs",
                 ],
                 [
@@ -477,7 +477,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                 [
                     'name' => 'Add optional cover',
                     'key' => 'add-optional-cover',
-                    'code' => SendUpdateLogStatusEnum::AOCOV,
+                    'code' => 'MFAOCOV',
                     'tooltip' => "To include an additional coverage option such for a rental car, Oman cover, GCC cover, Personal accident benefit covers, roadside assistance, etc. to enhance protection as per the policyholder's specific needs.",
                 ],
                 [

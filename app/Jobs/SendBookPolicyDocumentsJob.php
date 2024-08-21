@@ -81,12 +81,12 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         if (! empty($templateId)) {
 
             $roadsideAssistance = '';
-            $emailData = new \stdClass();
+            $emailData = new \stdClass;
             $emailData->code = $quote->code;
             $emailData->customerEmail = $quote->email;
             $emailData->clientFullName = $quote->first_name.' '.$quote->last_name;
             $emailData->policy_number = $quote->policy_number;
-            $emailData->renewalDueDate = date('d/m/Y', strtotime($quote['renewal_expiry_date']));
+            $emailData->renewalDueDate = date('d/m/Y', strtotime($quote['policy_expiry_date']));
             $emailData->policyStartDate = date('d/m/Y', strtotime($quote['policy_start_date']));
             $emailData->quoteDocuments = $docs;
             $emailData->advisorName = '';
@@ -105,11 +105,15 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
                 $emailData->googleMeet = $quote->advisor->calendar_link;
             }
             if (in_array(ucfirst($this->data->model_type), [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel])) {
-                $emailData->currentInsurer = $quote->plan->insuranceProvider->text;
-                $roadsideAssistance = $quote->plan->insuranceProvider->roadside_phone_number;
+                if (isset($quote->plan) && isset($quote->plan->insuranceProvider)) {
+                    $emailData->currentInsurer = $quote->plan->insuranceProvider->text;
+                    $roadsideAssistance = $quote->plan->insuranceProvider->roadside_phone_number;
+                }
             } else {
-                $emailData->currentInsurer = $quote->insuranceProvider->text;
-                $roadsideAssistance = $quote->insuranceProvider->roadside_phone_number;
+                if (isset($quote->insuranceProvider)) {
+                    $emailData->currentInsurer = $quote->insuranceProvider->text;
+                    $roadsideAssistance = $quote->insuranceProvider->roadside_phone_number;
+                }
             }
 
             $emailData->emailTemplateId = $templateId;

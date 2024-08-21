@@ -123,6 +123,7 @@ onMounted(() => {
         color="orange"
         :loading="isLoading"
         @click.prevent="showConfirmation()"
+        v-if="readOnlyMode.isDisable === true"
       >
         Migrate Payment
       </x-button>

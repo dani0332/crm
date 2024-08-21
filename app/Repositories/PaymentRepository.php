@@ -28,6 +28,7 @@ use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
 use Exception;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -110,9 +111,27 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'updated_by' => $request->user()->id,
             ];
 
+            $inslyMigrated = false;
+
+            if ($quoteModel->parent_duplicate_quote_id) {
+                $parentModel = $this->getQuoteObjectBy($request->modelType, $quoteModel->parent_duplicate_quote_id, 'code');
+
+                $detail = null;
+                if ($parentModel) {
+                    $model = '\\App\\Models\\'.$request->modelType.'QuoteRequestDetail';
+                    $column = strtolower($request->modelType).'_quote_request_id';
+
+                    $detail = $model::where($column, $parentModel->id)->first();
+                }
+
+                if ($detail?->insly_id || $parentModel->insly_migrated) {
+                    $inslyMigrated = true;
+                }
+            }
+
             // Payment follow up count is now iterative (- nth+1) and not dependent on the count of payments in the quote
             // Count will be iterative for each payment added through the send update or Child lead
-            $mainLeadCode = implode('-', array_slice(explode('-', $quoteModel->code), 0, 2));
+            $mainLeadCode = $inslyMigrated ? $quoteModel->code : implode('-', array_slice(explode('-', $quoteModel->code), 0, 2));
             $paymentCount = $this->getPaymentsCountByLeadCode($mainLeadCode);
             $paymentInformation['code'] = ($paymentCount > 0) ? $mainLeadCode.'-'.$paymentCount : $mainLeadCode;
 
@@ -400,8 +419,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     }
                 }
             }
+
             // process master payment approve
-            $successMessage = app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType, $request->quote_id, $request->send_update_id);
+            $successMessage = app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType, $request->quote_id, $request->send_update_id, false, 0, $request->payment_code);
         }
 
         return $successMessage;

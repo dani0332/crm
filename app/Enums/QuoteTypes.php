@@ -4,6 +4,7 @@ namespace App\Enums;
 
 use App\Jobs\OCB\SendCarOCBIntroEmailJob;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
+use App\Jobs\SendHealthOCBIntroEmailJob;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
@@ -106,17 +107,17 @@ enum QuoteTypes: string
     public function model(): Model
     {
         return match ($this) {
-            self::CAR => checkPersonalQuotes($this->value) ? new PersonalQuote() : new CarQuote(),
-            self::HOME => checkPersonalQuotes($this->value) ? new PersonalQuote() : new HomeQuote(),
-            self::HEALTH => checkPersonalQuotes($this->value) ? new PersonalQuote() : new HealthQuote(),
-            self::LIFE => checkPersonalQuotes($this->value) ? new PersonalQuote() : new LifeQuote(),
-            self::BUSINESS, self::CORPLINE, self::GROUP_MEDICAL => checkPersonalQuotes($this->value) ? new PersonalQuote() : new BusinessQuote(),
-            self::BIKE => checkPersonalQuotes($this->value) ? new PersonalQuote() : new BikeQuote(),
-            self::YACHT => checkPersonalQuotes($this->value) ? new PersonalQuote() : new YachtQuote(),
-            self::TRAVEL => checkPersonalQuotes($this->value) ? new PersonalQuote() : new TravelQuote(),
-            self::PET => checkPersonalQuotes($this->value) ? new PersonalQuote() : new PetQuote(),
-            self::CYCLE => checkPersonalQuotes($this->value) ? new PersonalQuote() : new CycleQuote(),
-            self::JETSKI => checkPersonalQuotes($this->value) ? new PersonalQuote() : new JetskiQuote(),
+            self::CAR => checkPersonalQuotes($this->value) ? new PersonalQuote : new CarQuote,
+            self::HOME => checkPersonalQuotes($this->value) ? new PersonalQuote : new HomeQuote,
+            self::HEALTH => checkPersonalQuotes($this->value) ? new PersonalQuote : new HealthQuote,
+            self::LIFE => checkPersonalQuotes($this->value) ? new PersonalQuote : new LifeQuote,
+            self::BUSINESS, self::CORPLINE, self::GROUP_MEDICAL => checkPersonalQuotes($this->value) ? new PersonalQuote : new BusinessQuote,
+            self::BIKE => checkPersonalQuotes($this->value) ? new PersonalQuote : new BikeQuote,
+            self::YACHT => checkPersonalQuotes($this->value) ? new PersonalQuote : new YachtQuote,
+            self::TRAVEL => checkPersonalQuotes($this->value) ? new PersonalQuote : new TravelQuote,
+            self::PET => checkPersonalQuotes($this->value) ? new PersonalQuote : new PetQuote,
+            self::CYCLE => checkPersonalQuotes($this->value) ? new PersonalQuote : new CycleQuote,
+            self::JETSKI => checkPersonalQuotes($this->value) ? new PersonalQuote : new JetskiQuote,
             default => new PersonalQuote,
         };
     }
@@ -126,6 +127,7 @@ enum QuoteTypes: string
         return match ($this) {
             self::CAR => SendCarOCBIntroEmailJob::class,
             self::TRAVEL => SendTravelOCBIntroEmailJob::class,
+            self::HEALTH => SendHealthOCBIntroEmailJob::class,
             default => null,
         };
     }

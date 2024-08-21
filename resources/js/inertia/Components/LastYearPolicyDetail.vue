@@ -75,6 +75,12 @@ function onSubmit(isValid) {
 
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -159,7 +165,7 @@ const rolesEnum = page.props.rolesEnum;
                   <div>{{ props?.quote?.policy_number }}</div>
                 </div>
                 <div class="grid sm:grid-cols-2">
-                  <div class="font-medium">Renewal Expiry Date</div>
+                  <div class="font-medium">Policy Expiry Date</div>
                   <div>
                     {{ dateFormat(props?.quote?.previous_policy_expiry_date) }}
                   </div>
@@ -187,9 +193,11 @@ const rolesEnum = page.props.rolesEnum;
                 :error="policyForm.errors.renewal_batch"
               />
             </x-field>
-            <x-button v-if="allowEdit" color="primary" type="submit">
-              Update
-            </x-button>
+            <div v-if="readOnlyMode.isDisable === true">
+              <x-button v-if="allowEdit" color="primary" type="submit">
+                Update
+              </x-button>
+            </div>
           </div>
         </x-form>
       </template>

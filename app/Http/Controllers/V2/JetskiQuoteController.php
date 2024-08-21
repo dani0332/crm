@@ -95,7 +95,7 @@ class JetskiQuoteController extends Controller
 
         /* Start - Temporarily adding for correcting historic data  */
         $quote = JetskiQuoteRepository::where('uuid', $uuid)->first();
-        (new PaymentRepository())->updatePriceVatApplicableAndVat($quote, QuoteTypes::JETSKI->value);
+        (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::JETSKI->value);
         /* End - Temporarily adding for correcting historic data  */
 
         $quote = JetskiQuoteRepository::getBy('uuid', $uuid);
@@ -128,7 +128,7 @@ class JetskiQuoteController extends Controller
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote->id);
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
 
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::JETSKI->id());

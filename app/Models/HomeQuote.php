@@ -26,7 +26,7 @@ class HomeQuote extends Model implements AuditableContract
         'code' => FilterTypes::EXACT,
         'email' => FilterTypes::EXACT,
         'source' => FilterTypes::EXACT,
-        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'policy_expiry_date' => FilterTypes::DATE_BETWEEN,
         'uuid' => FilterTypes::EXACT,
         'mobile_no' => FilterTypes::EXACT,
         'created_at' => FilterTypes::DATE_BETWEEN,

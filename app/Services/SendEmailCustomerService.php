@@ -413,7 +413,7 @@ class SendEmailCustomerService extends BaseService
     public function getEmailSubjectFromSib($messageId)
     {
         try {
-            $client = new \GuzzleHttp\Client();
+            $client = new \GuzzleHttp\Client;
             $response = $client->request(
                 'GET',
                 $this->url.'s?messageId='.$messageId.'&sort=desc&limit=1&offset=0',
@@ -504,11 +504,6 @@ class SendEmailCustomerService extends BaseService
         try {
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
             info("sendLMSIntroEmail ---- Tag : {$tag} for ID : {$quoteId}");
-            $headers = [
-                'Accept' => 'application/json',
-                'api-key' => $this->apiKey,
-                'Content-Type' => 'application/json',
-            ];
             $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.' - ';
             $attachments = $this->getEmailAttachments($emailData);
 
@@ -545,7 +540,7 @@ class SendEmailCustomerService extends BaseService
                 'tags' => [
                     $tag,
                 ],
-                'attachment' => isset($attachments) ? $attachments : null,
+                'attachment' => ! empty($attachments) ? $attachments : null,
             ];
 
             if (! empty($bcc)) {
@@ -644,18 +639,8 @@ class SendEmailCustomerService extends BaseService
 
             info("sendNonAdvisorIntroEmail  , emailTemplateId: {$emailTemplateId} with QuoteId: {$quoteId}");
             $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
+            $attachments = $this->getEmailAttachments($emailData);
 
-            $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
-
-            if ($emailAttachments) {
-                $attachments = [];
-                foreach ($emailAttachments as $emailAttachment) {
-                    $attachments[] = [
-                        'url' => $emailAttachment,
-                        'name' => basename($emailAttachment),
-                    ];
-                }
-            }
             $bccAdditional = [];
             if ($quoteType === QuoteTypes::CAR) {
                 $additionalBcc = ApplicationStorage::where('key_name', ApplicationStorageEnums::LMS_INTRO_EMAIL_BCC)->first()->value;
@@ -664,12 +649,6 @@ class SendEmailCustomerService extends BaseService
                         'email' => $additionalContact,
                     ];
                 }
-            }
-            if (property_exists($emailData, 'pdfAttachment') && ! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
-                $attachments[] = [
-                    'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
-                    'name' => $emailData->pdfAttachment->name,
-                ];
             }
             $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.' - ';
             $emailData->env = $subjectEnvTag;
@@ -684,7 +663,7 @@ class SendEmailCustomerService extends BaseService
                 'tags' => [
                     $tag,
                 ],
-                'attachment' => isset($attachments) ? $attachments : null,
+                'attachment' => ! empty($attachments) ? $attachments : null,
             ];
 
             if (! empty($bccAdditional)) {
@@ -696,18 +675,7 @@ class SendEmailCustomerService extends BaseService
                 $body['replyTo'] = ['email' => getAppStorageValueByKey(ApplicationStorageEnums::TRAVEL_EMAIL_REPLY_TO), 'name' => 'InsuranceMarket.ae'];
             }
 
-            $response = Http::withHeaders($headers)
-                ->beforeSending(function ($request) use ($quoteId) {
-                    info('sendNonAdvisorIntroEmail ---- Request is Sending '.$quoteId);
-                })
-                ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
-                ->retry(3, 90000)
-                ->post($this->url, $body);
-
-            info('sendNonAdvisorIntroEmail ---- Request Sent '.$quoteId);
-            $responseCode = $response->status();
-            info('sendNonAdvisorIntroEmail ---- Received Code : '.$responseCode.' '.$quoteId);
-            info('sendNonAdvisorIntroEmail ---- response object : '.json_encode($response->object()));
+            ['code' => $responseCode, 'response' => $response, 'sent' => $isEmailSent] = $this->sendMail($body);
         } catch (Exception $ex) {
             $isEmailSent = 0;
             $responseCode = $ex->getCode();
@@ -876,7 +844,7 @@ class SendEmailCustomerService extends BaseService
             $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
             info('sendBookPolicyDocumentsEmail ---- body '.$body);
 
-            $client = new \GuzzleHttp\Client();
+            $client = new \GuzzleHttp\Client;
             $clientRequest = $client->post(
                 config('constants.SIB_URL'),
                 [
@@ -1039,7 +1007,7 @@ class SendEmailCustomerService extends BaseService
                 'email' => $sendPolicyUpdateEmail,
             ]];
 
-            $client = new \GuzzleHttp\Client();
+            $client = new \GuzzleHttp\Client;
             $clientRequest = $client->post(
                 $this->url,
                 [

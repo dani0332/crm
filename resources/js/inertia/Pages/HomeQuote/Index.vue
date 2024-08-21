@@ -544,6 +544,7 @@ const resetDateFilters = filterName => {
               class="flex-1 w-full"
               :rules="[isRequired]"
               label="Assign Advisor"
+              filterable
               v-if="readOnlyMode.isDisable === true"
             />
             <div class="mb-3 md:pt-6">

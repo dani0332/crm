@@ -60,7 +60,7 @@ class RuleService extends BaseService
         if (isset($request->name) && isset($request->lead_source_id)) {
             $existingRuleLeadSource = RuleDetail::where('lead_source_id', $request->lead_source_id)->get();
             if (count($existingRuleLeadSource) > 0) {
-                $errorResponse = new stdClass();
+                $errorResponse = new stdClass;
                 $errorResponse->message = 'Error: Rule against same Lead Source already exists';
 
                 return $errorResponse;
@@ -71,7 +71,7 @@ class RuleService extends BaseService
                 ->get();
 
             if (count($existingCommercialRule) > 0) {
-                $errorResponse = new stdClass();
+                $errorResponse = new stdClass;
                 $errorResponse->message = 'Error: Commercial rule already exist';
 
                 return $errorResponse;

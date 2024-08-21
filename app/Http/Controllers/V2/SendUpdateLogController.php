@@ -15,6 +15,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ReversalEntriesRequest;
 use App\Http\Requests\SaveBookingDetailsRequest;
 use App\Http\Requests\SavePolicyDetailsRequest;
+use App\Http\Requests\SaveProviderDetailsRequest;
 use App\Http\Requests\SendUpdateCustomerValidationRequest;
 use App\Http\Requests\SendUpdateRequest;
 use App\Http\Requests\UpdateToCustomerRequest;
@@ -154,7 +155,7 @@ class SendUpdateLogController extends Controller
         // booking details section.
         $payments = $this->sendUpdateLogService->getPayments($realQuote->id, $realQuote->uuid, $quoteType);
 
-        if ($payments && is_countable($payments) && count($payments) > 0) {
+        if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
             // it will get all invoice_descriptions for booking details
             $paymentInvoices = collect($payments)->whereNotNull('insurer_tax_number')->pluck('insurer_tax_number');
             $sendUpdateLogInvoices = SendUpdateLogRepository::getSendUpdateLogInvoices($quoteTypeId, $realQuote->uuid);
@@ -367,7 +368,7 @@ class SendUpdateLogController extends Controller
         }
 
         if ($log && isset($data['action']) && $data['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
-            $sendUpdateRequest = new SendUpdateRequest();
+            $sendUpdateRequest = new SendUpdateRequest;
 
             $isSendUpdateSuccess = $this->sendUpdate($sendUpdateRequest->merge($data));
             if ($isSendUpdateSuccess->status() == 200) {
@@ -419,8 +420,8 @@ class SendUpdateLogController extends Controller
         $paymentDetailsUpdate = false;
         $isPaymentFetchedFromMainLead = true;
 
-        if (! isset($sendUpdateRequest->paymentValidated)) {
-            // Add insufficient Payment Validations here
+        if (! isset($sendUpdateRequest->paymentValidated) && ! $sendUpdateRequest->inslyMigrated) {
+            // Add insuficient Payment Validations here
             $insufficientPaymentCheck = false;
             if ($payment && in_array($payment->payment_status_id, [PaymentStatusEnum::PARTIALLY_PAID, PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
                 $insufficientPaymentCheck = true;
@@ -470,5 +471,12 @@ class SendUpdateLogController extends Controller
         return response()->json([
             'options' => $options,
         ]);
+    }
+
+    public function saveProviderDetails(SaveProviderDetailsRequest $request)
+    {
+        SendUpdateLogRepository::saveProviderDetails($request->validated());
+
+        return redirect()->back();
     }
 }

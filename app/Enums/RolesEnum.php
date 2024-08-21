@@ -97,5 +97,6 @@ final class RolesEnum extends Enum
     public const Production = 'PRODUCTION';
     public const MotorHead = 'MOTOR_HEAD';
     public const OperationExecutive = 'OPERATION_EXECUTIVE';
+    public const NonCCPaymentVerifier = 'NON_CC_PAYMENT_VERIFIER';
     public const TravelHapex = 'HAPEX';
 }

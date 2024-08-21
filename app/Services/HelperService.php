@@ -44,7 +44,7 @@ class HelperService extends BaseService
 
     public function generateUUID()
     {
-        $client = new Client();
+        $client = new Client;
         $alphabets = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $nanoId = $client->formattedId($alphabets, 8);
 

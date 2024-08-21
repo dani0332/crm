@@ -35,7 +35,7 @@ class SIBService extends BaseService
             'listIds' => [(int) $listId],
             'updateEnabled' => true,
         ]);
-        $clientExtendSubscription = new \GuzzleHttp\Client();
+        $clientExtendSubscription = new \GuzzleHttp\Client;
         $apiResponse = null;
         try {
             $requestExtendSubscription = $clientExtendSubscription->post(
@@ -130,7 +130,7 @@ class SIBService extends BaseService
 
             $body = json_encode($body, JSON_UNESCAPED_SLASHES);
 
-            $client = new \GuzzleHttp\Client();
+            $client = new \GuzzleHttp\Client;
             $clientRequest = $client->post(
                 $url,
                 [
@@ -167,7 +167,7 @@ class SIBService extends BaseService
     public static function addEmailActivity($response, $isEmailSent, $customerEmail)
     {
         info('addEmailActivity -- adding email activity for '.$customerEmail);
-        $newEmailActivity = new EmailActivity();
+        $newEmailActivity = new EmailActivity;
         $newEmailActivity->api_response = $response;
         $newEmailActivity->successful = $isEmailSent;
         $newEmailActivity->email = $customerEmail;
@@ -202,7 +202,7 @@ class SIBService extends BaseService
             ],
         ]);
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client;
         $apiResponse = null;
         try {
             $request = $client->post(

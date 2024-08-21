@@ -50,6 +50,8 @@ const isAddUpdate = ref(false);
 const onAddUpdate = () => {
   isAddUpdate.value = true;
 };
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 </script>
 
 <template>
@@ -62,7 +64,10 @@ const onAddUpdate = () => {
           <h2 class="text-xl font-semibold">Jetski Detail</h2>
         </div>
         <template #body>
-          <div class="flex gap-2 mb-4 justify-end">
+          <div
+            class="flex gap-2 mb-4 justify-end"
+            v-if="readOnlyMode.isDisable === true"
+          >
             <Link
               v-if="quote.quote_detail?.insly_id"
               :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
@@ -170,6 +175,10 @@ const onAddUpdate = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">DEVICE</dt>
                 <dd>{{ quote.device }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
             </dl>
           </div>

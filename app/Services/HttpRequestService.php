@@ -8,7 +8,7 @@ class HttpRequestService extends BaseService
     {
         $authBasic = base64_encode($creds['apiUserName'].':'.$creds['apiPassword']);
 
-        $kenClient = new \GuzzleHttp\Client();
+        $kenClient = new \GuzzleHttp\Client;
         try {
             $kenRequest = $kenClient->post(
                 $creds['apiEndPoint'],
@@ -84,7 +84,7 @@ class HttpRequestService extends BaseService
             'callSource' => 'imcrm',
         ];
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client;
         try {
             // Make the API request
             $kenRequest = $client->post(

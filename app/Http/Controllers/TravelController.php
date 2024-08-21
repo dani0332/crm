@@ -113,7 +113,7 @@ class TravelController extends Controller
         abort_if(! $record, 404);
 
         /* Start - Temporarily adding for correcting historic data  */
-        (new PaymentRepository())->updatePriceVatApplicableAndVat($record, $this->genericModel->modelType);
+        (new PaymentRepository)->updatePriceVatApplicableAndVat($record, $this->genericModel->modelType);
         /* End - Temporarily adding for correcting historic data  */
 
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::TRAVEL->value, $record);
@@ -184,7 +184,7 @@ class TravelController extends Controller
 
         $assignmentTypes = [GenericRequestEnum::ASSIGN_WITHOUT_EMAIL => 'Without Email', GenericRequestEnum::ASSIGN_WITH_EMAIL => 'With Email'];
         $isQuoteDocumentEnabled = $this->travelQuoteService->quoteDocumentEnabled($this->genericModel->modelType);
-        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments($this->genericModel->modelType, $record->id);
+        $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($this->genericModel->modelType, $record->id);
         $displaySendPolicyButton = $this->travelQuoteService->displaySendPolicyButton($record, $quoteDocuments, self::TYPE_ID);
         $documentTypes = $documentType = $this->travelQuoteService->getQuoteDocumentsForUpload(self::TYPE_ID);
         $documentTypes = collect($documentTypes)->groupBy('category');
@@ -223,9 +223,11 @@ class TravelController extends Controller
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
+        $isAmlClearedForQuote = app(CentralService::class)->amlClearedFromLog($record->id, QuoteTypes::TRAVEL->value);
 
         return inertia('TravelQuote/Show', [
             'quote' => $record,
+            'isAmlClearedForQuote' => $isAmlClearedForQuote,
             'fieldsToDisplay' => $fields,
             'modelType' => $this->genericModel->modelType,
             'quoteTypeId' => QuoteTypeId::Travel,

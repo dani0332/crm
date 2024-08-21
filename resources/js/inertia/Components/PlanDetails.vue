@@ -285,6 +285,7 @@ watch(
           size="sm"
           :loading="formProcessing"
           :disabled="isDisabled"
+          v-if="readOnlyMode.isDisable === true"
         >
           Save
         </x-button>

@@ -377,7 +377,7 @@ class CRUDService extends BaseService
                 if ($entity->quotes_status_id != $previousQuoteStatus) {
                     $previousStatusIdChanged = true;
                 }
-                $activityResponse = (new CentralService())->saveAndAssignActivitesToAdvisor($entity, $quoteTypeId[strtolower($request->modelType)], $previousStatusIdChanged);
+                $activityResponse = (new CentralService)->saveAndAssignActivitesToAdvisor($entity, $quoteTypeId[strtolower($request->modelType)], $previousStatusIdChanged);
             }
 
             // ========= assign renewal batch to HEALTH LOB leads upon transaction approved =========
@@ -1162,7 +1162,7 @@ class CRUDService extends BaseService
             QuoteStatusEnum::CancellationPending,
             QuoteStatusEnum::PolicyCancelled,
             QuoteStatusEnum::PolicyCancelledReissued,
-        ]) || ( isset($record->insly_migrated) && isset($record->insly_migrated) && ($record?->insly_migrated || $record?->insly_id) ) ) {
+        ]) || $record?->insly_migrated || $record?->insly_id) {
             return true;
         }
 

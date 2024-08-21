@@ -17,4 +17,5 @@ final class SagePaymentMethodsEnum extends Enum
     const SAGE_CHEQUE = 'CHEQUE';
     const SAGE_POST_DATED_CHEQUE = 'PDC';
     const SAGE_INSURER_PAYMENT = 'IP';
+    const SAGE_INSURER_NOW_PAY_LATER = 'INPL';
 }

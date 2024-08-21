@@ -61,6 +61,7 @@ defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   travelDestinations: Object,
+  isAmlClearedForQuote: Boolean,
 });
 
 const permissionEnum = page.props.permissionsEnum;
@@ -116,7 +117,7 @@ const {
   isRequired,
   policy_number,
   premium,
-  renewal_expiry_date,
+  policy_expiry_date,
   policy_start_date,
   isEmail,
   isMobileNo,
@@ -165,10 +166,30 @@ const onCreateDuplicate = isValid => {
   });
 };
 
-const genderText = gender =>
-  computed(() => {
-    return page.props.genderOptions[gender];
-  });
+const titleCase = str => {
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
+const genderText = gender => {
+  let genderText = '';
+
+  switch (gender) {
+    case 'M':
+      genderText = 'Male';
+      break;
+    case 'F':
+      genderText = 'Female';
+      break;
+    default:
+      genderText = gender || '';
+  }
+
+  return titleCase(genderText);
+};
 
 const lostReasonsOptions = computed(() => {
   return page.props.lostReasons.map(reason => ({
@@ -490,7 +511,7 @@ const policyDetails = useForm({
   premium: page.props.quote.premium,
   policy_number: page.props.quote.policy_number || '',
   policy_start_date: dateToYMD(page.props.quote.policy_start_date),
-  renewal_expiry_date: dateToYMD(page.props.quote.renewal_expiry_date) || '',
+  policy_expiry_date: dateToYMD(page.props.quote.policy_expiry_date) || '',
   policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || '',
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
@@ -511,7 +532,7 @@ const submitPolicyDetails = isValid => {
     .transform(data => ({
       quote_policy_number: data.policy_number,
       quote_policy_start_date: data.policy_start_date,
-      quote_policy_expiry_date: data.renewal_expiry_date,
+      quote_policy_expiry_date: data.policy_expiry_date,
       quote_policy_issuance_date: data.policy_issuance_date,
       quote_premium: data.premium,
       modelType: data.modelType,
@@ -1751,6 +1772,10 @@ const onAddUpdate = () => {
                   </span>
                 </dt>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ quote.transaction_approved_at }}</dd>
+              </div>
             </dl>
           </div>
         </template>
@@ -1779,7 +1804,6 @@ const onAddUpdate = () => {
             </x-tag>
             <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
-
           <div
             class="grid sm:grid-cols-2"
             v-if="quoteRequest.child || quoteRequest.parent"
@@ -1952,6 +1976,7 @@ const onAddUpdate = () => {
                       @click.prevent="searchByTradeLicense"
                       size="xs"
                       color="primary"
+                      v-if="readOnlyMode.isDisable === true"
                     >
                       Search
                     </x-button>
@@ -2136,6 +2161,7 @@ const onAddUpdate = () => {
               color="orange"
               @click.prevent="onAddTraveler"
               :disabled="isDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Add Member
             </x-button>
@@ -2162,6 +2188,7 @@ const onAddUpdate = () => {
               @click.prevent="onEditTraveler(item)"
               outlined
               :disabled="isDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Edit
             </x-button>
@@ -2177,6 +2204,7 @@ const onAddUpdate = () => {
               "
               outlined
               :disabled="isDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Delete
             </x-button>
@@ -2203,7 +2231,7 @@ const onAddUpdate = () => {
               {{ relation?.text }}
             </template>
             <template #item-gender="{ gender }">
-              {{ gender === 'M' ? 'Male' : gender === 'F' ? 'Female' : '' }}
+              {{ genderText(gender) }}
             </template>
             <template #item-nationality="{ nationality }">
               {{ nationality?.text }}
@@ -2408,6 +2436,7 @@ const onAddUpdate = () => {
                     "
                     placeholder="Lead Status"
                     class="w-full"
+                    filterable
                   />
                 </x-field>
                 <x-field label="NOTES">
@@ -2460,6 +2489,7 @@ const onAddUpdate = () => {
                 quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
                 isDisabled
               "
+              v-if="readOnlyMode.isDisable === true"
             >
               Change Status
             </x-button>
@@ -2496,23 +2526,27 @@ const onAddUpdate = () => {
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
-                <dd>{{ selectedProviderPlan.premium }}</dd>
+                <dd>{{ selectedProviderPlan.premium ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AUTHORISED AT</dt>
+                <dd>{{ ecomDetails.paidAt ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAID AT</dt>
-                <dd>{{ ecomDetails.paidAt }}</dd>
+                <dd>{{ ecomDetails.paidAtPayment ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT STATUS</dt>
-                <dd>{{ ecomDetails.paymentStatus }}</dd>
+                <dd>{{ ecomDetails.paymentStatus ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PROVIDER NAME</dt>
-                <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
+                <dd>{{ selectedProviderPlan.providerName ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PLAN NAME</dt>
-                <dd>{{ selectedProviderPlan.planName ?? '' }}</dd>
+                <dd>{{ selectedProviderPlan.planName ?? 'N/A' }}</dd>
               </div>
             </dl>
           </div>
@@ -2581,6 +2615,7 @@ const onAddUpdate = () => {
               @click.prevent="modals.doc = true"
               size="sm"
               color="primary"
+              v-if="readOnlyMode.isDisable === true"
             >
               Upload Documents
             </x-button>
@@ -2623,6 +2658,7 @@ const onAddUpdate = () => {
                 color="error"
                 outlined
                 @click.prevent="onDocDelete(doc_name)"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Delete
               </x-button>
@@ -2697,7 +2733,7 @@ const onAddUpdate = () => {
                 age 0-64
               </h6>
             </div>
-            <div class="flex gap-2 mb-4">
+            <div class="flex gap-2 mb-4" v-if="readOnlyMode.isDisable === true">
               <x-button-group
                 v-if="selectedPlans.length > 0"
                 size="sm"
@@ -3003,6 +3039,7 @@ const onAddUpdate = () => {
         permissions.isQuoteDocumentEnabled
       "
       @sendPolicyToClient="sendPolicyToClient"
+      @verifyDocuments="getupdateDocumentValidate(true)"
     />
 
     <BookPolicy
@@ -3017,6 +3054,7 @@ const onAddUpdate = () => {
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+      :isAmlClearedForQuote="isAmlClearedForQuote"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -3032,7 +3070,12 @@ const onAddUpdate = () => {
         <template #body>
           <x-divider class="my-4" />
           <div class="my-4 flex justify-end">
-            <x-button size="sm" color="orange" @click.prevent="addActivity">
+            <x-button
+              size="sm"
+              color="orange"
+              @click.prevent="addActivity"
+              v-if="readOnlyMode.isDisable === true"
+            >
               Add Activity
             </x-button>
           </div>
@@ -3063,6 +3106,7 @@ const onAddUpdate = () => {
                   outlined
                   :disabled="item.status === 1"
                   @click.prevent="activityEdit(item)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Edit
                 </x-button>
@@ -3072,6 +3116,7 @@ const onAddUpdate = () => {
                   :disabled="item.status === 1"
                   outlined
                   @click.prevent="activityDelete(item.id)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Delete
                 </x-button>

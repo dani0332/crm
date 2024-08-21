@@ -9,6 +9,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
@@ -223,7 +224,7 @@ class ComprehensiveConversionDashboardService extends BaseService
             ->toArray();
 
         $lobs = $this->getLobByPermissions();
-        $dropdownSourceService = new DropdownSourceService();
+        $dropdownSourceService = new DropdownSourceService;
 
         $insuranceFor = [
             quoteTypeCode::Health => $dropdownSourceService->getDropdownSource('cover_for_id'),
@@ -341,7 +342,7 @@ class ComprehensiveConversionDashboardService extends BaseService
             }
 
             if (isset($filters->segment_filter) && $filters->segment_filter != 'all') {
-                $query = $query->filterBySegment($filters->segment_filter, quoteTypeCode::Car);
+                $query = $query->filterBySegment($filters->segment_filter, QuoteTypeId::Car);
             }
         }
 

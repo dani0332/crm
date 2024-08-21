@@ -98,6 +98,9 @@ const onCreateDuplicate = isValid => {
   });
 };
 
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+
 const historyLoading = ref(false);
 
 // history data
@@ -315,7 +318,7 @@ const onAddUpdate = () => {
           Stale for {{ countDays }}
         </p>
       </template>
-      <template #default>
+      <template #default v-if="readOnlyMode.isDisable === true">
         <LeadNotes
           :documentType="noteDocumentType"
           :notes="quoteDocuments"
@@ -332,7 +335,12 @@ const onAddUpdate = () => {
             View Legacy policy
           </x-button>
         </Link>
-        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          @click.prevent="openDuplicate"
+          v-if="readOnlyMode.isDisable === true"
+        >
           Duplicate Lead
         </x-button>
         <Link
@@ -349,7 +357,9 @@ const onAddUpdate = () => {
             v-if="!isDisabled"
             :href="route('cycle-quotes-edit', quote.uuid)"
           >
-            <x-button size="sm" tag="div">Edit</x-button>
+            <x-button size="sm" tag="div" v-if="readOnlyMode.isDisable === true"
+              >Edit</x-button
+            >
           </Link>
           <x-button v-else :disabled="isDisabled" size="sm" tag="div"
             >Edit</x-button
@@ -607,6 +617,10 @@ const onAddUpdate = () => {
                 <dd>
                   {{ quote?.cycle_quote?.has_good_condition ? 'YES' : 'NO' }}
                 </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
             </dl>
           </div>

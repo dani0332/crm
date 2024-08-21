@@ -18,9 +18,10 @@ class TravelQuoteObserver
      */
     public function updated(TravelQuote $travelQuote): void
     {
+        $dirty = $travelQuote->getDirty();
         $changes = [];
 
-        foreach ($travelQuote->getDirty() as $attribute => $value) {
+        foreach ($dirty as $attribute => $value) {
             if ($travelQuote->isDirty($attribute)) {
                 $changes[$attribute] = [
                     'old' => $travelQuote->getOriginal($attribute),
@@ -34,7 +35,6 @@ class TravelQuoteObserver
             TravelQuoteAdvisorUpdated::dispatch($travelQuote, $oldAdvisorId);
         }
 
-        $dirty = $travelQuote->getDirty();
         if (
             $travelQuote->isDirty('quote_status_id') &&
             $travelQuote->quote_status_id === QuoteStatusEnum::TransactionApproved

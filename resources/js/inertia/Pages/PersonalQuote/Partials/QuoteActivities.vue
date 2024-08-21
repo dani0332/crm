@@ -171,7 +171,12 @@ onMounted(() => {
       <template #body>
         <x-divider class="my-4" />
         <div class="mb-4 flex justify-end">
-          <x-button size="sm" color="orange" @click.prevent="addActivity">
+          <x-button
+            size="sm"
+            color="orange"
+            @click.prevent="addActivity"
+            v-if="readOnlyMode.isDisable === true"
+          >
             Add Activity
           </x-button>
         </div>
@@ -206,6 +211,7 @@ onMounted(() => {
                 outlined
                 :disabled="item.status === 1"
                 @click.prevent="onEdit(item)"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Edit
               </x-button>
@@ -216,6 +222,7 @@ onMounted(() => {
                 :disabled="item.status === 1"
                 outlined
                 @click.prevent="confirmDelete(item.id)"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Delete
               </x-button>
