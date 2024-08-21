@@ -7,6 +7,7 @@ use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Factories\SagePayloadFactory;
@@ -137,10 +138,22 @@ class SageApiService
             $sageRequest->invoicePaymentStatus = $paymentSplits[0]['payment_status_id'];
         }
 
+        $insuranceProvider = null;
+
+        if (in_array(ucfirst($modelType), [QuoteTypes::CAR, QuoteTypes::HEALTH, QuoteTypes::TRAVEL, QuoteTypes::BIKE])) {
+            $planRelationName = strtolower($modelType).'Plan';
+            $payment->load($planRelationName);
+            $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
+        }
+
+        if (! $insuranceProvider) {
+            $insuranceProvider = $payment->insuranceProvider;
+        }
+
         //Insurer GL Account and Vendor Number
-        $sageRequest->insurerGlLiaiblityAccount = $payment->insuranceProvider?->gl_liaiblity_account;
-        $sageRequest->sageVenderId = $payment->insuranceProvider?->sage_vendor_id;
-        $sageRequest->sageInsurerCustomerId = $payment->insuranceProvider?->sage_insurer_customer_id;
+        $sageRequest->insurerGlLiaiblityAccount = $insuranceProvider?->gl_liaiblity_account;
+        $sageRequest->sageVenderId = $insuranceProvider?->sage_vendor_id;
+        $sageRequest->sageInsurerCustomerId = $insuranceProvider?->sage_insurer_customer_id;
 
         return $sageRequest;
     }
