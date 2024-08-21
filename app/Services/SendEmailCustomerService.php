@@ -113,7 +113,7 @@ class SendEmailCustomerService extends BaseService
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->customerName,
                 ]],
-                count($cc) > 0 && 'cc' => $cc,
+                'cc' => count($cc) > 0 ? $cc : null,
                 'templateId' => (int) $emailTemplateId,
                 'params' => [
                     'customerName' => $emailData->customerName,
