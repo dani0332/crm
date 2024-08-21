@@ -28,27 +28,27 @@ const props = defineProps({
   kycLogs: Array,
 });
 const rules = {
-    isEmail: v =>
-        /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
-        'E-mail must be valid',
-    isRequired: v => !!v || 'This field is required',
-    allowEmpty: v => true || 'This field is required',
-    isPhone: v =>
-        /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,10}$/im.test(v) ||
-        'Phone must be valid',
-    nameCheck: v => {
-        const pattern = /^[a-zA-Z0-9\s]+$/;
-        if(v == null || v == '') return true;
-        return pattern.test(v) || 'Special characters are not allowed in Name';
-    },
-    isEmiratesId: v =>{
-        const pattern = /^\d{3}-\d{4}-\d{7}-\d{1}$/;
-        if(kycForm.id_type === 'emiratesId'){
-            return  pattern.test(v) || 'Enter the correct EID number format';
-        }else{
-            return true;
-        }
-    },
+  isEmail: v =>
+    /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
+    'E-mail must be valid',
+  isRequired: v => !!v || 'This field is required',
+  allowEmpty: v => true || 'This field is required',
+  isPhone: v =>
+    /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,10}$/im.test(v) ||
+    'Phone must be valid',
+  nameCheck: v => {
+    const pattern = /^[a-zA-Z0-9\s]+$/;
+    if (v == null || v == '') return true;
+    return pattern.test(v) || 'Special characters are not allowed in Name';
+  },
+  isEmiratesId: v => {
+    const pattern = /^\d{3}-\d{4}-\d{7}-\d{1}$/;
+    if (kycForm.id_type === 'emiratesId') {
+      return pattern.test(v) || 'Enter the correct EID number format';
+    } else {
+      return true;
+    }
+  },
 };
 
 const kycLogsValue = computed(() => {
