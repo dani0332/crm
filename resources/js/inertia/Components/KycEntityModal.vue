@@ -44,8 +44,6 @@ const rules = {
         }
     },
 };
-
-
 const uboNationality = computed(() => {
   if (props.uboDetails.length > 0) {
     const uboDetail = props.uboDetails.filter(val => {
@@ -121,8 +119,6 @@ const kycForm = reactive({
   mode_of_delivery: props.entityDetails?.entity?.mode_of_delivery ?? null,
   mode_of_contact: props.entityDetails?.entity?.mode_of_contact ?? null,
 });
-
-
 
 const isNationalityEmpty = ref(false);
 const isPositionEmpty = ref(false);
@@ -494,8 +490,12 @@ onMounted(() => {
       <x-input
         v-model="kycForm.id_number"
         label="Id number"
-        :placeholder="kycForm.id_document_type === 'emiratesId'?'xxx-xxxx-xxxxxxx-x':'ID number'"
-        :rules="[isRequired , rules.isEmiratesId]"
+        :placeholder="
+          kycForm.id_document_type === 'emiratesId'
+            ? 'xxx-xxxx-xxxxxxx-x'
+            : 'ID number'
+        "
+        :rules="[isRequired, rules.isEmiratesId]"
       />
 
       <div>

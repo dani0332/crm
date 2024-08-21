@@ -130,8 +130,6 @@ const kycForm = reactive({
   is_partner: props.customerDetails?.detail?.is_partner ?? incomeSource.value,
 });
 
-
-
 const incomeSourceFields = reactive({
   employed: false,
   business: false,
@@ -434,8 +432,10 @@ onMounted(() => {
       <x-input
         v-model="kycForm.id_number"
         label="ID number"
-        :placeholder="kycForm.id_type === 'emiratesId'?'xxx-xxxx-xxxxxxx-x':'ID number'"
-        :rules="[isRequired , rules.isEmiratesId]"
+        :placeholder="
+          kycForm.id_type === 'emiratesId' ? 'xxx-xxxx-xxxxxxx-x' : 'ID number'
+        "
+        :rules="[isRequired, rules.isEmiratesId]"
       />
 
       <DatePicker
