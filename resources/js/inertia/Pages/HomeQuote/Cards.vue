@@ -94,8 +94,8 @@ const filters = reactive({
   is_cold: false,
   is_stale: false,
   status_filters: null,
-    policy_expiry_date: '',
-    policy_expiry_date_end: '',
+  policy_expiry_date: '',
+  policy_expiry_date_end: '',
 });
 
 provide('filters', filters);
@@ -142,14 +142,14 @@ const handleSelectedFilters = selectedFilters => {
 
 function onSubmit(isValid) {
   if (isValid) {
-      if (validateDateRange()) {
-          notification.error({
-              title:
-                  'The selected date range exceeds one month. Please select a range within one month.',
-              position: 'top',
-          });
-          return;
-      }
+    if (validateDateRange()) {
+      notification.error({
+        title:
+          'The selected date range exceeds one month. Please select a range within one month.',
+        position: 'top',
+      });
+      return;
+    }
     serverOptions.value.page = 1;
 
     const filtersCleaned = cleanObj(filters);
@@ -214,21 +214,21 @@ onUnmounted(() => {
 });
 
 const validateDateRange = () => {
-    const { policy_expiry_date, policy_expiry_date_end } = filters;
-    if (policy_expiry_date && policy_expiry_date_end) {
-        const startDate = new Date(policy_expiry_date);
-        const endDate = new Date(policy_expiry_date_end);
-        const oneMonthLater = new Date(startDate);
-        oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
-        // Adjust for months with fewer than 31 days
-        if (oneMonthLater.getDate() < startDate.getDate()) {
-            oneMonthLater.setDate(0);
-        }
-        if (endDate > oneMonthLater) {
-            return true;
-        }
+  const { policy_expiry_date, policy_expiry_date_end } = filters;
+  if (policy_expiry_date && policy_expiry_date_end) {
+    const startDate = new Date(policy_expiry_date);
+    const endDate = new Date(policy_expiry_date_end);
+    const oneMonthLater = new Date(startDate);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    // Adjust for months with fewer than 31 days
+    if (oneMonthLater.getDate() < startDate.getDate()) {
+      oneMonthLater.setDate(0);
     }
-    return false;
+    if (endDate > oneMonthLater) {
+      return true;
+    }
+  }
+  return false;
 };
 </script>
 
@@ -334,18 +334,18 @@ const validateDateRange = () => {
             :options="leadStatusOptions"
           />
         </x-field>
-          <x-field label="Policy Expiry Start Date">
-              <DatePicker
-                  v-model="filters.policy_expiry_date"
-                  name="policy_expiry_date"
-              />
-          </x-field>
-          <x-field label="Policy Expiry End Date">
-              <DatePicker
-                  v-model="filters.policy_expiry_date_end"
-                  name="policy_expiry_date_end"
-              />
-          </x-field>
+        <x-field label="Policy Expiry Start Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date"
+            name="policy_expiry_date"
+          />
+        </x-field>
+        <x-field label="Policy Expiry End Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date_end"
+            name="policy_expiry_date_end"
+          />
+        </x-field>
         <x-field label="Advisor" v-if="isAllowed">
           <ComboBox
             v-if="!hasRole(rolesEnum.Advisor)"

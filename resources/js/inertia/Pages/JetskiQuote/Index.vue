@@ -31,8 +31,8 @@ let availableFilters = {
   is_ecommerce: '',
   quote_status_id: '',
   page: 1,
-    policy_expiry_date: '',
-    policy_expiry_date_end: '',
+  policy_expiry_date: '',
+  policy_expiry_date_end: '',
 };
 
 const filters = reactive(availableFilters);
@@ -49,14 +49,14 @@ const rolesEnum = page.props.rolesEnum;
 
 function onSubmit(isValid) {
   if (isValid) {
-      if (validateDateRange()) {
-          notification.error({
-              title:
-                  'The selected date range exceeds one month. Please select a range within one month.',
-              position: 'top',
-          });
-          return;
-      }
+    if (validateDateRange()) {
+      notification.error({
+        title:
+          'The selected date range exceeds one month. Please select a range within one month.',
+        position: 'top',
+      });
+      return;
+    }
     filters.page = 1;
 
     Object.keys(filters).forEach(
@@ -139,11 +139,11 @@ const tableHeader = [
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-    {
-        text: 'POLICY EXPIRY DATE',
-        value: 'previous_policy_expiry_date',
-        sortable: true,
-    },
+  {
+    text: 'POLICY EXPIRY DATE',
+    value: 'previous_policy_expiry_date',
+    sortable: true,
+  },
   { text: 'PREMIUM', value: 'premium' },
   { text: 'POLICY NO', value: 'policy_no' },
   { text: 'SOURCE', value: 'source' },
@@ -174,26 +174,26 @@ watch(
   { deep: true, immediate: true },
 );
 const formatDate = date => {
-    if (!date) return '';
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    return new Date(date).toLocaleDateString('en-GB', options);
+  if (!date) return '';
+  const options = { year: 'numeric', month: 'short', day: 'numeric' };
+  return new Date(date).toLocaleDateString('en-GB', options);
 };
 const validateDateRange = () => {
-    const { policy_expiry_date, policy_expiry_date_end } = filters;
-    if (policy_expiry_date && policy_expiry_date_end) {
-        const startDate = new Date(policy_expiry_date);
-        const endDate = new Date(policy_expiry_date_end);
-        const oneMonthLater = new Date(startDate);
-        oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
-        // Adjust for months with fewer than 31 days
-        if (oneMonthLater.getDate() < startDate.getDate()) {
-            oneMonthLater.setDate(0);
-        }
-        if (endDate > oneMonthLater) {
-            return true;
-        }
+  const { policy_expiry_date, policy_expiry_date_end } = filters;
+  if (policy_expiry_date && policy_expiry_date_end) {
+    const startDate = new Date(policy_expiry_date);
+    const endDate = new Date(policy_expiry_date_end);
+    const oneMonthLater = new Date(startDate);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    // Adjust for months with fewer than 31 days
+    if (oneMonthLater.getDate() < startDate.getDate()) {
+      oneMonthLater.setDate(0);
     }
-    return false;
+    if (endDate > oneMonthLater) {
+      return true;
+    }
+  }
+  return false;
 };
 </script>
 
@@ -307,18 +307,18 @@ const validateDateRange = () => {
             "
           />
         </x-field>
-          <x-field label="Policy Expiry Start Date">
-              <DatePicker
-                  v-model="filters.policy_expiry_date"
-                  name="policy_expiry_date"
-              />
-          </x-field>
-          <x-field label="Policy Expiry End Date">
-              <DatePicker
-                  v-model="filters.policy_expiry_date_end"
-                  name="policy_expiry_date_end"
-              />
-          </x-field>
+        <x-field label="Policy Expiry Start Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date"
+            name="policy_expiry_date"
+          />
+        </x-field>
+        <x-field label="Policy Expiry End Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date_end"
+            name="policy_expiry_date_end"
+          />
+        </x-field>
         <x-field label="Policy Number">
           <x-input
             v-model="filters.previous_quote_policy_number_text"
@@ -432,18 +432,18 @@ const validateDateRange = () => {
       <template #item-quote_status="{ quote_status }">
         {{ quote_status?.text }}
       </template>
-        <template
-            #item-previous_policy_expiry_date="{
+      <template
+        #item-previous_policy_expiry_date="{
           previous_policy_expiry_date,
           source,
         }"
-        >
-            {{
-                source === 'Renewal_upload'
-                    ? formatDate(previous_policy_expiry_date)
-                    : ''
-            }}
-        </template>
+      >
+        {{
+          source === 'Renewal_upload'
+            ? formatDate(previous_policy_expiry_date)
+            : ''
+        }}
+      </template>
 
       <template #item-currently_insured_with="{ currently_insured_with }">
         {{ currently_insured_with?.text }}
