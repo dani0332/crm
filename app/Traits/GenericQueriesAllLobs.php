@@ -232,7 +232,7 @@ trait GenericQueriesAllLobs
         $payment = $payments->whereNull('send_update_log_id')->first();
         if ($payment) {
             $invoiceDescription = (new PaymentRepository)->generateInvoiceDescription($payment, $quoteType, $record);
-            $brokerInvoiceNo = (new PaymentRepository)->generateBrokerInvoiceNumber($payment);
+            $brokerInvoiceNo = (new PaymentRepository)->generateBrokerInvoiceNumber($payment, $quoteType);
 
             $getBINFromDBForPolicyStatuses = [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued,  QuoteStatusEnum::CancellationPending];
 

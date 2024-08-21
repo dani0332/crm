@@ -140,7 +140,8 @@ class SageApiService
 
         $insuranceProvider = null;
 
-        if (in_array(ucfirst($modelType), [QuoteTypes::CAR, QuoteTypes::HEALTH, QuoteTypes::TRAVEL, QuoteTypes::BIKE])) {
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
+        if (in_array(ucfirst($modelType), $allowedQuoteTypes)) {
             $planRelationName = strtolower($modelType).'Plan';
             $payment->load($planRelationName);
             $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
