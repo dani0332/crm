@@ -8,14 +8,16 @@ defineProps({
   expanded: {
     type: Boolean,
     required: false,
-    default: true
-  }
+    default: true,
+  },
 });
 
 const notification = useNotifications('toast');
 const compareDueDate = useCompareDueDate;
 
 const page = usePage();
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -39,13 +41,13 @@ const advisorOptions = computed(() => {
 });
 
 const activityTable = [
-    { text: 'Client Name', value: 'client_name' },
-    { text: 'Lead Status', value: 'quote_status.text' },
-    { text: 'Title', value: 'title' },
-    { text: 'Followup Date', value: 'due_date' },
-    { text: 'Assigned To', value: 'assignee' },
-    { text: 'Done', value: 'status', width: 60, align: 'center' },
-    { text: 'Action', value: 'action' },
+  { text: 'Client Name', value: 'client_name' },
+  { text: 'Lead Status', value: 'quote_status.text' },
+  { text: 'Title', value: 'title' },
+  { text: 'Followup Date', value: 'due_date' },
+  { text: 'Assigned To', value: 'assignee' },
+  { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Action', value: 'action' },
 ];
 
 const activityForm = useForm({
@@ -147,6 +149,12 @@ const onDeleteConfirmation = () => {
     },
   });
 };
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -163,7 +171,12 @@ const onDeleteConfirmation = () => {
       <template #body>
         <x-divider class="my-4" />
         <div class="mb-4 flex justify-end">
-          <x-button size="sm" color="orange" @click.prevent="addActivity">
+          <x-button
+            size="sm"
+            color="orange"
+            @click.prevent="addActivity"
+            v-if="readOnlyMode.isDisable === true"
+          >
             Add Activity
           </x-button>
         </div>
@@ -198,6 +211,7 @@ const onDeleteConfirmation = () => {
                 outlined
                 :disabled="item.status === 1"
                 @click.prevent="onEdit(item)"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Edit
               </x-button>
@@ -208,6 +222,7 @@ const onDeleteConfirmation = () => {
                 :disabled="item.status === 1"
                 outlined
                 @click.prevent="confirmDelete(item.id)"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Delete
               </x-button>
@@ -216,65 +231,77 @@ const onDeleteConfirmation = () => {
         </DataTable>
       </template>
     </Collapsible>
-    <x-modal v-model="modals.activity" size="lg" show-close backdrop>
-      <template #header>
-        {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
+    <x-modal
+      v-model="modals.activity"
+      size="lg"
+      :title="`${activityActionEdit ? 'Edit' : 'Add'} Lead Activity`"
+      show-close
+      backdrop
+      is-form
+      @submit="onSubmit"
+    >
+      <div class="grid gap-4">
+        <x-input
+          v-model="activityForm.title"
+          label="Title*"
+          :rules="[rules.isRequired]"
+          class="w-full"
+        />
+
+        <x-textarea
+          v-model="activityForm.description"
+          label="Description*"
+          :rules="[rules.isRequired]"
+          :adjust-to-text="false"
+          class="w-full"
+        />
+
+        <x-select
+          v-model="activityForm.assignee_id"
+          label="Assignee*"
+          :options="advisorOptions"
+          :rules="[rules.isRequired]"
+          placeholder="Select Assignee"
+          class="w-full"
+        />
+
+        <x-input
+          v-model="activityForm.due_date"
+          label="Due Date*"
+          type="datetime-local"
+          :rules="[rules.isRequired]"
+          class="w-full"
+        />
+      </div>
+
+      <template #secondary-action>
+        <x-button
+          ghost
+          tabindex="-1"
+          size="sm"
+          @click.prevent="modals.activity = false"
+        >
+          Cancel
+        </x-button>
       </template>
-
-      <x-form @submit="onSubmit" :auto-focus="false">
-        <div class="grid gap-4">
-          <x-input
-            v-model="activityForm.title"
-            label="Title*"
-            :rules="[rules.isRequired]"
-            class="w-full"
-          />
-
-          <x-textarea
-            v-model="activityForm.description"
-            label="Description*"
-            :rules="[rules.isRequired]"
-            :adjust-to-text="false"
-            class="w-full"
-          />
-
-          <x-select
-            v-model="activityForm.assignee_id"
-            label="Assignee*"
-            :options="advisorOptions"
-            :rules="[rules.isRequired]"
-            placeholder="Select Assignee"
-            class="w-full"
-          />
-
-          <x-input
-            v-model="activityForm.due_date"
-            label="Due Date*"
-            type="datetime-local"
-            :rules="[rules.isRequired]"
-            class="w-full"
-          />
-        </div>
-
-        <div class="text-right space-x-4 mt-12">
-          <x-button size="sm" @click.prevent="modals.activity = false">
-            Cancel
-          </x-button>
-
-          <x-button
-            size="sm"
-            color="emerald"
-            :loading="activityForm.processing"
-            type="submit"
-          >
-            {{ activityActionEdit ? 'Update' : 'Save' }}
-          </x-button>
-        </div>
-      </x-form>
+      <template #primary-action>
+        <x-button
+          size="sm"
+          color="emerald"
+          :loading="activityForm.processing"
+          type="submit"
+        >
+          {{ activityActionEdit ? 'Update' : 'Save' }}
+        </x-button>
+      </template>
     </x-modal>
 
-    <x-modal v-model="modals.activityConfirm" show-close backdrop>
-      <template #header> Delete Activity </template>
+    <x-modal
+      v-model="modals.activityConfirm"
+      title="Delete Activity"
+      show-close
+      backdrop
+    >
       <p>Are you sure you want to delete this activity?</p>
       <template #actions>
         <div class="text-right space-x-4">

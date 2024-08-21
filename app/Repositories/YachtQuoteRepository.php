@@ -72,7 +72,7 @@ class YachtQuoteRepository extends BaseRepository
 
             $quote->yachtQuote()->updateOrCreate(
                 ['personal_quote_id' => $quote->id],
-                Arr::only($data, (new YachtQuote())->allowedColumns())
+                Arr::only($data, (new YachtQuote)->allowedColumns())
             );
 
             return $quote;
@@ -100,6 +100,7 @@ class YachtQuoteRepository extends BaseRepository
                         'paymentSplits.paymentMethod',
                         'paymentSplits.verifiedByUser',
                         'paymentSplits.documents',
+                        'paymentSplits.processJob',
                     ]);
                 },
                 'createdBy',
@@ -114,7 +115,7 @@ class YachtQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
-                'renewal_expiry_date',
+                'policy_expiry_date',
                 'policy_start_date',
                 'policy_issuance_date',
                 \DB::raw('IF(EXISTS (

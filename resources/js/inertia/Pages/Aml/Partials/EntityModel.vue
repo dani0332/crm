@@ -7,7 +7,7 @@ const props = defineProps({
   modelValue: { type: Boolean, default: false },
   quoteType: Object,
   quoteDetails: Object,
-    entityDetails: {type: Object},
+  entityDetails: { type: Object },
   nationalities: Object,
   membersDetails: Object,
   uboDetails: Object,
@@ -16,11 +16,11 @@ const props = defineProps({
   legalStructure: Object,
   quoteAmlStatus: Number,
   customerDetails: Object,
+  kycLogs: Array,
 });
 
-
 if (props.entityDetails.entity === undefined) {
-    props.entityDetails.entity = {company_name:null};
+  props.entityDetails.entity = { company_name: null };
 }
 
 const loader = ref({
@@ -48,7 +48,7 @@ const nationalitiesOptions = computed(() => {
   }));
 });
 
-const is_insured = ref(false);
+const is_insured = ref(0);
 
 watch(
   props.membersDetails,
@@ -89,13 +89,13 @@ const insuredDetailsSubmit = isValid => {
         position: 'top',
       });
     },
-    onSuccess: (response) => {
-        if (response.props.flash.length === 0) {
-            notification.success({
-                title: 'Quote is updated',
-                position: 'top',
-            });
-        }
+    onSuccess: response => {
+      if (response.props.flash.length === 0) {
+        notification.success({
+          title: 'Quote is updated',
+          position: 'top',
+        });
+      }
     },
     onFinish: () => {
       modals.addContact = false;
@@ -158,9 +158,6 @@ const searchByTradeLicense = () => {
 
 const componentKey = ref(0);
 
-
-
-
 const linkEntity = () => {
   loader.value.link = true;
   let entityDetails = {
@@ -172,30 +169,36 @@ const linkEntity = () => {
     .post(route('link-entity-details'), entityDetails)
     .then(res => {
       entityFound.value = false;
-       const response =  res.data.response;
+      const response = res.data.response;
       insuredFormDetails.company_name = response.company_name;
-        insuredFormDetails.company_address = response.company_address;
-        insuredFormDetails.industry_type_code = response.industry_type_code;
-       props.entityDetails.entity.company_name = res.data.response.company_name;
-        props.entityDetails.entity.email = response.email;
-        props.entityDetails.entity.registered_address = response.registered_address;
-        props.entityDetails.entity.communication_address = response.communication_address;
-        props.entityDetails.entity.legal_structure = response.legal_structure;
-        props.entityDetails.entity.industry_type_code = response.industry_type_code;
-        props.entityDetails.entity.country_of_corporation = response.country_of_corporation;
-        props.entityDetails.entity.mobile_no = response.mobile_no;
-        props.entityDetails.entity.website = response.website;
-        props.entityDetails.entity.id_type = response.id_type;
-        props.entityDetails.entity.id_number = response.id_number;
-        props.entityDetails.entity.id_issuance_date = response.id_issuance_date;
-        props.entityDetails.entity.id_expiry_date = response.id_expiry_date;
-        props.entityDetails.entity.issuance_place = response.issuance_place;
-        props.entityDetails.entity.id_issuance_authority = response.id_issuance_authority;
-        props.entityDetails.entity.pep = response.pep;
-        props.entityDetails.entity.financial_sanctions = response.financial_sanctions;
-        props.entityDetails.entity.dual_nationality = response.dual_nationality;
-        props.entityDetails.entity.quote_member = response.quote_member;
-        componentKey.value += 1
+      insuredFormDetails.company_address = response.company_address;
+      insuredFormDetails.industry_type_code = response.industry_type_code;
+      props.entityDetails.entity.company_name = res.data.response.company_name;
+      props.entityDetails.entity.email = response.email;
+      props.entityDetails.entity.registered_address =
+        response.registered_address;
+      props.entityDetails.entity.communication_address =
+        response.communication_address;
+      props.entityDetails.entity.legal_structure = response.legal_structure;
+      props.entityDetails.entity.industry_type_code =
+        response.industry_type_code;
+      props.entityDetails.entity.country_of_corporation =
+        response.country_of_corporation;
+      props.entityDetails.entity.mobile_no = response.mobile_no;
+      props.entityDetails.entity.website = response.website;
+      props.entityDetails.entity.id_type = response.id_type;
+      props.entityDetails.entity.id_number = response.id_number;
+      props.entityDetails.entity.id_issuance_date = response.id_issuance_date;
+      props.entityDetails.entity.id_expiry_date = response.id_expiry_date;
+      props.entityDetails.entity.issuance_place = response.issuance_place;
+      props.entityDetails.entity.id_issuance_authority =
+        response.id_issuance_authority;
+      props.entityDetails.entity.pep = response.pep;
+      props.entityDetails.entity.financial_sanctions =
+        response.financial_sanctions;
+      props.entityDetails.entity.dual_nationality = response.dual_nationality;
+      props.entityDetails.entity.quote_member = response.quote_member;
+      componentKey.value += 1;
 
       notification.success({
         title: res.data.message,
@@ -212,10 +215,22 @@ const linkEntity = () => {
 };
 
 const show = ref(true);
+const uboNationality = computed(() => {
+  if (props.uboDetails) {
+    const uboDetail = props.uboDetails.filter(val => {
+      return val.nationality.code === 'Afghan';
+    });
+    if (uboDetail.length > 0) {
+      return 1;
+    } else {
+      return 2;
+    }
+  }
+  return 1;
+});
 </script>
 
 <template>
-
   <AppModal
     :showClose="true"
     :showHeader="true"
@@ -262,12 +277,12 @@ const show = ref(true);
               class="w-full"
             />
           </x-field>
-          <div
-            class="flex gap-5 mt-2 items-center"
-          >
+          <div class="flex gap-5 mt-2 items-center">
             <p>Is the insured the payer?</p>
-            <x-radio v-model="is_insured" :value="true" label="Yes" />
-            <x-radio v-model="is_insured" :value="false" label="No" />
+            <x-form-group v-model="is_insured">
+              <x-radio :value="1" label="Yes" />
+              <x-radio :value="0" label="No" />
+            </x-form-group>
           </div>
         </dl>
         <div v-if="entityFound" class="mb-5">
@@ -361,8 +376,9 @@ const show = ref(true);
           :ubo-relation="props.lookups.ubo_relation"
           :entity-details="props.entityDetails"
           :industry-type="props.lookups.company_type"
+          :kycLogs="kycLogs"
+          :uboDetails="uboDetails"
           :key="componentKey"
-
         />
       </x-form>
     </template>
@@ -401,8 +417,13 @@ const show = ref(true);
   </AppModal>
 
   <!-- Individual Type Insured Form -->
-  <x-modal v-model="modals.individualView" size="xl" show-close backdrop>
-    <template #header>Update and Verify</template>
+  <x-modal
+    v-model="modals.individualView"
+    size="xl"
+    title="Update and Verify"
+    show-close
+    backdrop
+  >
     <p class="text-center mb-10">
       Please confirm the Name, Nationality, and Date of Birth of the insured
       person(s) as per the Emirates ID
@@ -410,9 +431,7 @@ const show = ref(true);
 
     <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
       <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-        <x-field
-          label="Insured First Name"
-        >
+        <x-field label="Insured First Name">
           <x-input
             v-model="insuredFormDetails.insured_first_name"
             :rules="[isRequired]"
@@ -421,9 +440,7 @@ const show = ref(true);
             class="w-full"
           />
         </x-field>
-        <x-field
-          label="Insured Last Name"
-        >
+        <x-field label="Insured Last Name">
           <x-input
             v-model="insuredFormDetails.insured_last_name"
             :rules="[isRequired]"
@@ -450,12 +467,12 @@ const show = ref(true);
             class="w-full"
           />
         </x-field>
-        <div
-          class="flex gap-5 mb-5 align-center"
-        >
+        <div class="flex gap-5 mb-5 align-center">
           <p>Is the insured the payer?</p>
-          <x-radio v-model="is_insured" :value="true" label="Yes" />
-          <x-radio v-model="is_insured" :value="false" label="No" />
+          <x-form-group v-model="is_insured">
+            <x-radio :value="1" label="Yes" />
+            <x-radio :value="0" label="No" />
+          </x-form-group>
         </div>
       </dl>
       <x-divider class="mb-4 mt-1" />
@@ -511,7 +528,6 @@ const show = ref(true);
         :residentialStatus="props.lookups.resident_status"
         :companyPosition="props.lookups.company_position"
         :modeOfDelivery="props.lookups.mode_of_delivery"
-
       />
     </x-form>
   </x-modal>

@@ -51,8 +51,8 @@ const filters = reactive({
   payment_status_id: '',
   previous_quote_policy_number_text: '',
   page: 1,
-  payment_due_date:"",
-  booking_date: ""
+  payment_due_date: '',
+  booking_date: '',
 });
 
 const loader = reactive({
@@ -83,11 +83,11 @@ const tableHeader = reactive([
     value: 'previous_quote_policy_number',
     is_active: true,
   },
-    {
-        text: 'Renewal Batch',
-        value: 'renewal_batch',
-        is_active: true,
-    },
+  {
+    text: 'Renewal Batch',
+    value: 'renewal_batch',
+    is_active: true,
+  },
 ]);
 
 const advisorOptions = computed(() => {
@@ -200,7 +200,10 @@ watch(
   () => filters,
   () => {
     if (
-      can(permissionsEnum.DATA_EXTRACTION) && ((filters.created_at_start && filters.created_at_end) || (filters.payment_due_date) || (filters.booking_date))
+      can(permissionsEnum.DATA_EXTRACTION) &&
+      ((filters.created_at_start && filters.created_at_end) ||
+        filters.payment_due_date ||
+        filters.booking_date)
     ) {
       canExport.value = true;
     } else {
@@ -209,9 +212,12 @@ watch(
   },
   { deep: true, immediate: true },
 );
-
+const readOnlyMode = reactive({
+  isDisable: true,
+});
 onMounted(() => {
   setQueryFilters();
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 const resetDateFilters = filterName => {
@@ -254,10 +260,24 @@ const resetDateFilters = filterName => {
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3 flex">
         <Link href="/quotes/life/cards">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
+          <x-button
+            size="sm"
+            color="#1d83bc"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Cards View
+          </x-button>
         </Link>
         <Link :href="route('life-quotes-create')">
-          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Create Lead
+          </x-button>
         </Link>
       </div>
     </div>
@@ -265,7 +285,7 @@ const resetDateFilters = filterName => {
     <x-form @submit="filterQuotes" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -395,11 +415,12 @@ const resetDateFilters = filterName => {
           >
             Export
           </x-button>
-          <x-tooltip v-else position="right">
+          <x-tooltip v-else placement="right">
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date are required to export data.
+                Created dates or payment due date or booking date are required
+                to export data.
               </span>
             </template>
           </x-tooltip>
@@ -429,6 +450,8 @@ const resetDateFilters = filterName => {
                 placeholder="Select Advisor"
                 class="flex-1 w-auto"
                 :rules="[rules.isRequired]"
+                filterable
+                v-if="readOnlyMode.isDisable === true"
               />
               <div class="mb-3 md:pt-6">
                 <x-button
@@ -436,6 +459,7 @@ const resetDateFilters = filterName => {
                   size="sm"
                   type="submit"
                   :loading="assignForm.processing"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Assign
                 </x-button>

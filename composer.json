@@ -1,110 +1,113 @@
 {
-    "name": "laravel/laravel",
-    "type": "project",
-    "description": "The Laravel Framework.",
-    "keywords": [
-        "framework",
-        "laravel"
+  "name": "laravel/laravel",
+  "type": "project",
+  "description": "The Laravel Framework.",
+  "keywords": [
+    "framework",
+    "laravel"
+  ],
+  "license": "MIT",
+  "require": {
+    "php": "^8.1",
+    "arielmejiadev/larapex-charts": "^6.0",
+    "baopham/dynamodb": "^6.4",
+    "barryvdh/laravel-dompdf": "^2.0",
+    "bensampo/laravel-enum": "^v6.6.3",
+    "beyondcode/laravel-websockets": "^1.14",
+    "doctrine/dbal": "^3.3",
+    "guzzlehttp/guzzle": "^7.4",
+    "hidehalo/nanoid-php": "^1.1",
+    "illuminate/contracts": "^10.0",
+    "illuminate/support": "^10.0",
+    "inertiajs/inertia-laravel": "^0.6.9",
+    "laravel/framework": "^10.0",
+    "laravel/horizon": "^5.10",
+    "laravel/jetstream": "^2.3",
+    "laravel/legacy-factories": "^1.1",
+    "laravel/sanctum": "^3.2",
+    "laravel/socialite": "^5.2",
+    "laravel/telescope": "^4.14",
+    "laravel/tinker": "^2.5",
+    "laravelcollective/html": "^6.2",
+    "league/flysystem-aws-s3-v3": "^3.0",
+    "livewire/livewire": "^2.0",
+    "maatwebsite/excel": "^3.1",
+    "matthewbdaly/laravel-azure-storage": "^2.0.8",
+    "mongodb/laravel-mongodb": "^4.0",
+    "owen-it/laravel-auditing": "^13.0",
+    "parsecsv/php-parsecsv": "^1.3",
+    "predis/predis": "^2.2",
+    "pusher/pusher-php-server": "^7.2",
+    "rappasoft/laravel-livewire-tables": "^2.8",
+    "sammyjo20/laravel-haystack": "^2.0.0",
+    "sentry/sentry-laravel": "^3.2",
+    "spatie/laravel-fractal": "^6.0.3",
+    "spatie/laravel-navigation": "^1.2",
+    "spatie/laravel-permission": "^5.11.0",
+    "tightenco/ziggy": "^2.0",
+    "yajra/laravel-datatables-oracle": "^10.8",
+    "jjaffeux/postmark-inbound-php": ">=3.0"
+  },
+  "require-dev": {
+    "spatie/laravel-ignition": "^2.3",
+    "fakerphp/faker": "^1.9.1",
+    "laravel/pint": "^1.0",
+    "laravel/sail": "^1.6",
+    "laravel/ui": "^4.2.2",
+    "mockery/mockery": "^1.4.2",
+    "nunomaduro/collision": "^6.1",
+    "phpunit/phpunit": "^9.3.3"
+  },
+  "autoload": {
+    "files": [
+      "app/helpers/Helper.php"
     ],
-    "license": "MIT",
-    "require": {
-        "php": "^8.1",
-        "arielmejiadev/larapex-charts": "^6.0",
-        "baopham/dynamodb": "^6.4",
-        "barryvdh/laravel-dompdf": "^2.0",
-        "bensampo/laravel-enum": "^v6.6.3",
-        "beyondcode/laravel-websockets": "^1.14",
-        "doctrine/dbal": "^3.3",
-        "guzzlehttp/guzzle": "^7.4",
-        "hidehalo/nanoid-php": "^1.1",
-        "illuminate/contracts": "^10.0",
-        "illuminate/support": "^10.0",
-        "inertiajs/inertia-laravel": "^0.6.9",
-        "laravel/framework": "^10.0",
-        "laravel/horizon": "^5.10",
-        "laravel/jetstream": "^2.3",
-        "laravel/legacy-factories": "^1.1",
-        "laravel/sanctum": "^3.2",
-        "laravel/socialite": "^5.2",
-        "laravel/telescope": "^4.14",
-        "laravel/tinker": "^2.5",
-        "laravelcollective/html": "^6.2",
-        "league/flysystem-aws-s3-v3": "^3.0",
-        "livewire/livewire": "^2.0",
-        "maatwebsite/excel": "^3.1",
-        "matthewbdaly/laravel-azure-storage": "^2.0.8",
-        "mongodb/laravel-mongodb": "^4.0",
-        "owen-it/laravel-auditing": "^13.0",
-        "parsecsv/php-parsecsv": "^1.3",
-        "predis/predis": "^2.2",
-        "pusher/pusher-php-server": "^7.2",
-        "rappasoft/laravel-livewire-tables": "^2.8",
-        "sammyjo20/laravel-haystack": "^2.0.0",
-        "sentry/sentry-laravel": "^3.2",
-        "spatie/laravel-fractal": "^6.0.3",
-        "spatie/laravel-navigation": "^1.2",
-        "spatie/laravel-permission": "^5.11.0",
-        "tightenco/ziggy": "^2.0",
-        "yajra/laravel-datatables-oracle": "^10.8",
-        "jjaffeux/postmark-inbound-php": ">=3.0"
+    "psr-4": {
+      "App\\": "app/",
+      "Database\\Factories\\": "database/factories/",
+      "Database\\Seeders\\": "database/seeders/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "post-autoload-dump": [
+      "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+      "@php artisan package:discover --ansi"
+    ],
+    "post-root-package-install": [
+      "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
+    ],
+    "post-create-project-cmd": [
+      "@php artisan key:generate --ansi"
+    ],
+    "post-update-cmd": [
+      "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+    ],
+    "serve": "composer install && doppler run -- php artisan serve",
+    "pint:fix": "vendor/bin/pint"
+  },
+  "extra": {
+    "laravel": {
+      "dont-discover": []
     },
-    "require-dev": {
-        "spatie/laravel-ignition": "^2.3",
-        "fakerphp/faker": "^1.9.1",
-        "laravel/pint": "^1.0",
-        "laravel/sail": "^1.6",
-        "laravel/ui": "^4.2.2",
-        "mockery/mockery": "^1.4.2",
-        "nunomaduro/collision": "^6.1",
-        "phpunit/phpunit": "^9.3.3"
-    },
-    "autoload": {
-        "files": [
-            "app/helpers/Helper.php"
-        ],
-        "psr-4": {
-            "App\\": "app/",
-            "Database\\Factories\\": "database/factories/",
-            "Database\\Seeders\\": "database/seeders/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Tests\\": "tests/"
-        }
-    },
-    "scripts": {
-        "post-autoload-dump": [
-            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover --ansi"
-        ],
-        "post-root-package-install": [
-            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
-        ],
-        "post-create-project-cmd": [
-            "@php artisan key:generate --ansi"
-        ],
-        "serve": "composer install && doppler run -- php artisan serve",
-        "pint:fix": "vendor/bin/pint"
-    },
-    "extra": {
-        "laravel": {
-            "dont-discover": []
-        },
-        "hooks": {
-            "pre-commit": [
-                "vendor/bin/pint"
-            ]
-        }
-    },
-    "config": {
-        "optimize-autoloader": true,
-        "preferred-install": "dist",
-        "sort-packages": true,
-        "allow-plugins": {
-            "php-http/discovery": true
-        }
-    },
-    "minimum-stability": "dev",
-    "prefer-stable": true
+    "hooks": {
+      "pre-commit": [
+        "vendor/bin/pint"
+      ]
+    }
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "preferred-install": "dist",
+    "sort-packages": true,
+    "allow-plugins": {
+      "php-http/discovery": true
+    }
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
 }

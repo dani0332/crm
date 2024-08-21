@@ -26,6 +26,8 @@ const props = defineProps({
 const page = usePage();
 const notification = useToast();
 const { isRequired } = useRules();
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 
 const modals = reactive({
   member: false,
@@ -173,6 +175,13 @@ const [EditMemberButtonTemplate, EditMemberButtonReuseTemplate] =
   createReusableTemplate();
 const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
   createReusableTemplate();
+
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -194,6 +203,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
             size="sm"
             color="orange"
             :disabled="isDisabled"
+            v-if="readOnlyMode.isDisable === true"
           >
             Add Member
           </x-button>
@@ -227,6 +237,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
             outlined
             @click.prevent="onEditMember(item)"
             :disabled="isDisabled"
+            v-if="readOnlyMode.isDisable === true"
           >
             Edit
           </x-button>
@@ -239,6 +250,7 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
             outlined
             @click.prevent="memberDelete(item.id)"
             :disabled="isDisabled"
+            v-if="readOnlyMode.isDisable === true"
           >
             Delete
           </x-button>
@@ -320,62 +332,74 @@ const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
       </template>
     </Collapsible>
 
-    <x-modal v-model="modals.member" size="lg" show-close backdrop>
-      <template #header>
-        {{ memberActionEdit ? 'Edit' : 'Add' }} Member
+    <x-modal
+      v-model="modals.member"
+      size="lg"
+      :title="`${memberActionEdit ? 'Edit' : 'Add'} Member`"
+      show-close
+      backdrop
+      is-form
+      @submit="onMemberSubmit"
+    >
+      <div class="grid md:grid-cols-2 gap-4">
+        <input type="hidden" :value="memberForm.id" />
+        <x-input
+          v-model="memberForm.first_name"
+          label="Member Name*"
+          placeholder="Member Name"
+          :rules="[isRequired]"
+        />
+        <ComboBox
+          v-model="memberForm.nationality_id"
+          label="Nationality"
+          :options="nationalitiesOptions"
+          placeholder="Select Nationality"
+          :single="true"
+          :hasError="memberFieldReq.nationality"
+        />
+        <DatePicker
+          v-model="memberForm.dob"
+          label="DOB*"
+          :hasError="memberFieldReq.dob"
+          :rules="[isRequired]"
+        />
+        <x-select
+          v-model="memberForm.relation_code"
+          label="Relation"
+          :options="memberRelationOptions"
+          placeholder="Select Relation"
+          class="w-full"
+        />
+      </div>
+
+      <template #secondary-action>
+        <x-button
+          ghost
+          tabindex="-1"
+          size="sm"
+          @click.prevent="modals.member = false"
+        >
+          Cancel
+        </x-button>
       </template>
-
-      <x-form @submit="onMemberSubmit" :auto-focus="false">
-        <div class="grid md:grid-cols-2 gap-4">
-          <input type="hidden" :value="memberForm.id" />
-          <x-input
-            v-model="memberForm.first_name"
-            label="Member Name*"
-            placeholder="Member Name"
-            :rules="[isRequired]"
-          />
-          <ComboBox
-            v-model="memberForm.nationality_id"
-            label="Nationality"
-            :options="nationalitiesOptions"
-            placeholder="Select Nationality"
-            :single="true"
-            :hasError="memberFieldReq.nationality"
-          />
-          <DatePicker
-            v-model="memberForm.dob"
-            label="DOB*"
-            :hasError="memberFieldReq.dob"
-            :rules="[isRequired]"
-          />
-          <x-select
-            v-model="memberForm.relation_code"
-            label="Relation"
-            :options="memberRelationOptions"
-            placeholder="Select Relation"
-            class="w-full"
-          />
-        </div>
-
-        <div class="text-right space-x-4 mt-8">
-          <x-button size="sm" @click.prevent="modals.member = false">
-            Cancel
-          </x-button>
-
-          <x-button
-            size="sm"
-            color="emerald"
-            :loading="memberForm.processing"
-            type="submit"
-          >
-            {{ memberActionEdit ? 'Update' : 'Save' }}
-          </x-button>
-        </div>
-      </x-form>
+      <template #primary-action>
+        <x-button
+          size="sm"
+          color="emerald"
+          :loading="memberForm.processing"
+          type="submit"
+        >
+          {{ memberActionEdit ? 'Update' : 'Save' }}
+        </x-button>
+      </template>
     </x-modal>
 
-    <x-modal v-model="modals.memberConfirm" show-close backdrop>
-      <template #header> Delete Member Detail </template>
+    <x-modal
+      v-model="modals.memberConfirm"
+      title="Delete Member Detail"
+      show-close
+      backdrop
+    >
       <p>Are you sure you want to delete this?</p>
       <template #actions>
         <div class="text-right space-x-4">

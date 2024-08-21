@@ -78,7 +78,7 @@ class VehicleValueController extends Controller
         if ($existingValue) {
             return redirect()->back()->with('message', 'Vechile Value with same Make, Model, Insurer already exists.')->withInput($request->input());
         }
-        $range = new VehicleValue();
+        $range = new VehicleValue;
         $range->current_value = $request->current_value;
         $range->car_model_id = $request->car_model_value;
         $range->car_make_id = $request->car_make_value;

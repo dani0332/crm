@@ -10,4 +10,5 @@ final class ManagementReportTypeEnum extends Enum
     const TRANSACTION_PAYMENTS = 'Transaction Payments';
     const EXPIRING_POLICIES = 'Expiring Policies';
     const ACTIVE_POLICIES = 'Active Policies';
+    const BOOKED_POLICIES = 'Booked Policies';
 }

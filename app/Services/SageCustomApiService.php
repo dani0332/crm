@@ -21,17 +21,17 @@ class SageCustomApiService
     private mixed $sageCustomApiUserName;
     private string $sageBaseUrl;
     private string $sageCustomApiVersion;
-    private string $sageCompany;
+    private string $sageDBName;
     private mixed $bearerToken = null;
     private mixed $maxAttempts = 10;
 
     public function __construct()
     {
-        $this->sageCustomApiUserName = env('SAGE_300_CUSTOM_API_USERNAME');
-        $this->sageCustomApiPassword = env('SAGE_300_CUSTOM_API_USER_PASSWORD');
-        $this->sageBaseUrl = env('SAGE_300_BASE_URL');
-        $this->sageCompany = env('SAGE_300_COMPANY');
-        $this->sageCustomApiVersion = env('SAGE_300_CUSTOM_API_VERSION');
+        $this->sageCustomApiUserName = config('constants.SAGE_300_CUSTOM_API_USERNAME');
+        $this->sageCustomApiPassword = config('constants.SAGE_300_CUSTOM_API_USER_PASSWORD');
+        $this->sageBaseUrl = config('constants.SAGE_300_BASE_URL');
+        $this->sageCustomApiVersion = config('constants.SAGE_300_CUSTOM_API_VERSION');
+        $this->sageDBName = config('constants.SAGE_300_CUSTOM_API_DB_NAME');
         $this->bearerToken = Cache::store('redis')->get(SageEnum::SAGE_CUSTOM_API_AUTH_TOKEN_CACHE_KEY) ?? $this->getToken();
     }
 
@@ -44,7 +44,7 @@ class SageCustomApiService
         $loginUrl = $this->sageBaseUrl.$this->sageCustomApiVersion.SageEnum::SAGE_CUSTOM_API_GET_AUTH_TOKEN_ENDPOINT;
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
-            'X-Database-Name' => $this->sageCompany,
+            'X-Database-Name' => $this->sageDBName,
         ])->post($loginUrl, [
             'username' => $this->sageCustomApiUserName,
             'password' => $this->sageCustomApiPassword,
@@ -81,7 +81,7 @@ class SageCustomApiService
         $getAPInvoicePaymentScheduleUrl = $this->sageBaseUrl.$this->sageCustomApiVersion.SageEnum::SAGE_CUSTOM_API_GET_AP_PAYMENT_SCHEDULE_ENDPOINT.$batchNumber;
         $response = Http::withHeaders([
             'Authorization' => 'Bearer '.$this->bearerToken,
-            'X-Database-Name' => $this->sageCompany,
+            'X-Database-Name' => $this->sageDBName,
         ])->get($getAPInvoicePaymentScheduleUrl);
 
         if ($response->successful()) {
@@ -128,7 +128,7 @@ class SageCustomApiService
         $response = Http::withHeaders([
             'Authorization' => 'Bearer '.$this->bearerToken,
             'Content-Type' => 'application/json',
-            'X-Database-Name' => $this->sageCompany,
+            'X-Database-Name' => $this->sageDBName,
         ])->put($updateAPInvoicePaymentScheduleUrl, $aPInvoicePaymentsSchedule);
 
         if ($response->successful()) {
@@ -176,7 +176,7 @@ class SageCustomApiService
                 if (! $quoteType) {
                     $quoteType = str_replace('Quote', '', class_basename($modelClass));
                 }
-                $sageRequest = (new SageApiService())->sagePayLoad($quoteType, $payment, $quote, $paymentSplits);
+                $sageRequest = (new SageApiService)->sagePayLoad($quoteType, $payment, $quote, $paymentSplits);
                 $sageLogArray = $quote->sageApiLogs->keyBy('step')->toArray();
 
                 // createAPInvoicePrem
@@ -192,7 +192,7 @@ class SageCustomApiService
                     } else {
                         info('SAGE API:  Send createAPInvoicePrem  for '.$quote->uuid);
                         $createAPInvoicePrem = SagePayloadFactory::createAPInvoicePrem($sageRequest);
-                        $resp = (new SageApiService())->postToSage300($createAPInvoicePrem['endPoint'], $createAPInvoicePrem['payload']);
+                        $resp = (new SageApiService)->postToSage300($createAPInvoicePrem['endPoint'], $createAPInvoicePrem['payload']);
                         $postedResponse = json_decode($resp, true);
                     }
 
@@ -210,7 +210,7 @@ class SageCustomApiService
                         } else {
                             info('SAGE API:  Send readyToPostInvoiceAP  for '.$quote->uuid);
                             $readyToPostInvoiceAP = SagePayloadFactory::readyToPostInvoiceAP($postedResponse['BatchNumber']);
-                            $readyToPostResponse = (new SageApiService())->postToSage300($readyToPostInvoiceAP['endPoint'], $readyToPostInvoiceAP['payload'], 'PATCH');
+                            $readyToPostResponse = (new SageApiService)->postToSage300($readyToPostInvoiceAP['endPoint'], $readyToPostInvoiceAP['payload'], 'PATCH');
                         }
 
                         if ($readyToPostResponse !== '') {
@@ -219,7 +219,7 @@ class SageCustomApiService
                             $returnMessage['status'] = false;
                             $returnMessage['message'] = 'Error while making AP invoice ready to post to sage';
 
-                            $readyToPostResponseArray = (new SageApiService())->convertResponseToArray($readyToPostResponse);
+                            $readyToPostResponseArray = (new SageApiService)->convertResponseToArray($readyToPostResponse);
                             $errorMessage = $readyToPostResponseArray['error']['message']['value'] ?? null;
                             Log::error('SAGE API : '.$errorMessage);
                             $returnMessage['error'] = $errorMessage;
@@ -240,7 +240,7 @@ class SageCustomApiService
                         } else {
                             info('SAGE API:  Send aPPostInvoices  for '.$quote->uuid);
                             $aPPostInvoices = SagePayloadFactory::aPPostInvoices($postedResponse['BatchNumber']);
-                            $resp = (new SageApiService())->postToSage300($aPPostInvoices['endPoint'], $aPPostInvoices['payload']);
+                            $resp = (new SageApiService)->postToSage300($aPPostInvoices['endPoint'], $aPPostInvoices['payload']);
                             $postedResponse = json_decode($resp, true);
                         }
 
@@ -286,7 +286,7 @@ class SageCustomApiService
                     } else {
                         info('SAGE API:  Send createAPInvoiceSplitPayments  for '.$quote->uuid);
                         $createAPInvoicePrem = SagePayloadFactory::createAPInvoiceSplitPayments($sageRequest, $paymentSplits);
-                        $resp = (new SageApiService())->postToSage300($createAPInvoicePrem['endPoint'], $createAPInvoicePrem['payload']);
+                        $resp = (new SageApiService)->postToSage300($createAPInvoicePrem['endPoint'], $createAPInvoicePrem['payload']);
                         $postedResponse = json_decode($resp, true);
                     }
 
@@ -300,7 +300,7 @@ class SageCustomApiService
                         }
 
                         info('SAGE API:  Prepare Patch payload for SpitPayments  for '.$quote->uuid);
-                        $aPInvoicePaymentsScheduleResponse = (new SageCustomApiService())->getAPInvoicePaymentScheduleByBatchNumber($postedResponse['BatchNumber']);
+                        $aPInvoicePaymentsScheduleResponse = (new SageCustomApiService)->getAPInvoicePaymentScheduleByBatchNumber($postedResponse['BatchNumber']);
 
                         if ($aPInvoicePaymentsScheduleResponse['status']) {
                             $aPInvoicePaymentsSchedule = $aPInvoicePaymentsScheduleResponse['response'];
@@ -333,7 +333,7 @@ class SageCustomApiService
                             $postedResponse = json_decode($sageLogArray[7]['response'], true);
                         } else {
                             info('SAGE API:  Send Patch Request  for '.$quote->uuid);
-                            $resp = (new SageCustomApiService())->updateAPInvoicePaymentSchedule($postedResponse['BatchNumber'], $aPInvoicePaymentsSchedule);
+                            $resp = (new SageCustomApiService)->updateAPInvoicePaymentSchedule($postedResponse['BatchNumber'], $aPInvoicePaymentsSchedule);
                             $postedResponse['response'] = $resp;
                         }
 
@@ -364,7 +364,7 @@ class SageCustomApiService
                         } else {
                             info('SAGE API:  Send readyToPostInvoiceAP  for '.$quote->uuid);
                             $readyToPostInvoiceAP = SagePayloadFactory::readyToPostInvoiceAP($apBatchNumber);
-                            $readyToPostResponse = (new SageApiService())->postToSage300($readyToPostInvoiceAP['endPoint'], $readyToPostInvoiceAP['payload'], 'PATCH');
+                            $readyToPostResponse = (new SageApiService)->postToSage300($readyToPostInvoiceAP['endPoint'], $readyToPostInvoiceAP['payload'], 'PATCH');
                         }
 
                         if ($readyToPostResponse !== '') {
@@ -373,7 +373,7 @@ class SageCustomApiService
                             $returnMessage['status'] = false;
                             $returnMessage['message'] = 'Error while making AP invoice ready to post to sage';
 
-                            $readyToPostResponseArray = (new SageApiService())->convertResponseToArray($readyToPostResponse);
+                            $readyToPostResponseArray = (new SageApiService)->convertResponseToArray($readyToPostResponse);
                             $errorMessage = $readyToPostResponseArray['error']['message']['value'] ?? null;
                             Log::error('SAGE API : '.$errorMessage);
                             $returnMessage['error'] = $errorMessage;
@@ -394,7 +394,7 @@ class SageCustomApiService
                         } else {
                             info('SAGE API:  Send aPPostInvoices  for '.$quote->uuid);
                             $aPPostInvoices = SagePayloadFactory::aPPostInvoices($postedResponse['BatchNumber']);
-                            $resp = (new SageApiService())->postToSage300($aPPostInvoices['endPoint'], $aPPostInvoices['payload']);
+                            $resp = (new SageApiService)->postToSage300($aPPostInvoices['endPoint'], $aPPostInvoices['payload']);
                             $postedResponse = json_decode($resp, true);
                         }
 

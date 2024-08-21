@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\GenericRequestEnum;
 use App\Models\CarMake;
 use Illuminate\Database\Seeder;
 
@@ -15,10 +16,10 @@ class CarMakeSeeder extends Seeder
         $carMakeDetails = CarMake::latest()->first();
         $carMakeCode = ($carMakeDetails->code + 1);
 
-        CarMake::updateOrCreate(['text' => 'MOTOR BIKE'], [
+        CarMake::updateOrCreate(['text' => GenericRequestEnum::MOTOR_BIKE], [
             'code' => $carMakeCode,
-            'text_ar' => 'MOTOR BIKE',
-            'axa_car_make' => 'MOTORBIKE',
+            'text_ar' => GenericRequestEnum::MOTOR_BIKE,
+            'axa_car_make' => GenericRequestEnum::MOTORBIKE,
             'is_active' => 0,
         ]);
     }

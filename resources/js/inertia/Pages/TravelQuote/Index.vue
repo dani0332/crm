@@ -26,6 +26,9 @@ const quotesSelected = ref([]);
 const canExport = ref(false);
 const page = usePage();
 const notification = useNotifications('toast');
+const quoteSegments = page.props.quoteSegments?.filter(
+  segment => segment.value !== 'sic-revival',
+);
 
 const filters = reactive({
   code: '',
@@ -44,8 +47,9 @@ const filters = reactive({
   coverage_code: '',
   previous_quote_policy_number: '',
   renewal_batch: '',
-  payment_due_date:"",
-  booking_date: ""
+  payment_due_date: '',
+  booking_date: '',
+  segment_filter: '',
 });
 
 const loader = reactive({
@@ -226,7 +230,11 @@ const onDataExport = () => {
 watch(
   () => filters,
   () => {
-    if ((filters.created_at_start && filters.created_at_end) || (filters.payment_due_date) || (filters.booking_date)) {
+    if (
+      (filters.created_at_start && filters.created_at_end) ||
+      filters.payment_due_date ||
+      filters.booking_date
+    ) {
       canExport.value = true;
     } else {
       canExport.value = false;
@@ -235,8 +243,12 @@ watch(
   { deep: true, immediate: true },
 );
 
+const readOnlyMode = reactive({
+  isDisable: true,
+});
 onMounted(() => {
   setQueryFilters();
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 const resetDateFilters = filterName => {
   const filterMappings = {
@@ -276,17 +288,34 @@ const resetDateFilters = filterName => {
     <Head title="Travel List" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
-      <div class="flex space-x-2 items-center">
+      <div
+        class="flex space-x-2 items-center"
+        v-if="readOnlyMode.isDisable === true"
+      >
         <Link :href="route('travel.expired.upload')" v-if="permissions.admin">
           <x-button size="sm" color="#1d83bc" tag="div">
             Upload Expired Leads
           </x-button>
         </Link>
         <Link :href="route('travel.cards')">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
+          <x-button
+            size="sm"
+            color="#1d83bc"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Cards View
+          </x-button>
         </Link>
         <Link :href="route('travel.create')">
-          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Create Lead
+          </x-button>
         </Link>
       </div>
     </div>
@@ -294,7 +323,7 @@ const resetDateFilters = filterName => {
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -450,6 +479,15 @@ const resetDateFilters = filterName => {
           multi-calendars
           multi-calendars-solo
         />
+        <ComboBox
+          v-if="can(permissionsEnum.SEGMENT_FILTER)"
+          label="Segment"
+          v-model="filters.segment_filter"
+          placeholder="Select Segment"
+          :options="quoteSegments"
+          class="w-full"
+          :single="true"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -462,11 +500,12 @@ const resetDateFilters = filterName => {
           >
             Export
           </x-button>
-          <x-tooltip v-else position="right">
+          <x-tooltip v-else placement="right">
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date are required to export data.
+                Created dates or payment due date or booking date are required
+                to export data.
               </span>
             </template>
           </x-tooltip>
@@ -489,13 +528,15 @@ const resetDateFilters = filterName => {
         >
           <x-form @submit="onAssignLead" :auto-focus="false">
             <div class="w-full flex flex-col md:flex-row gap-4">
-              <x-field label="Assign Advisor">
+              <x-field label="Assign Advisor" class="w-full">
                 <x-select
                   v-model="assignForm.assigned_to_id_new"
                   :options="advisorOptions"
                   placeholder="Select Advisor"
-                  class="flex-1 w-auto"
+                  class="flex-1 w-full"
                   :rules="[rules.isRequired]"
+                  filterable
+                  v-if="readOnlyMode.isDisable === true"
                 />
               </x-field>
 
@@ -505,6 +546,7 @@ const resetDateFilters = filterName => {
                   size="sm"
                   type="submit"
                   :loading="assignForm.processing"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Assign
                 </x-button>
@@ -552,10 +594,10 @@ const resetDateFilters = filterName => {
             coverage_code != null
               ? coverage_code
               : days_cover_for <= 92
-              ? travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
-              : travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
-                '/' +
-                travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
+                ? travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
+                : travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
+                  '/' +
+                  travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
           }}
         </div>
       </template>
@@ -574,16 +616,16 @@ const resetDateFilters = filterName => {
             direction_code == travelQuoteEnum.TRAVEL_UAE_OUTBOUND
               ? 'Outbound'
               : direction_code == travelQuoteEnum.TRAVEL_UAE_INBOUND
-              ? 'Inbound'
-              : currently_located_in_id_text ==
-                  travelQuoteEnum.LOCATION_UAE_TEXT &&
-                region_cover_for_id != travelQuoteEnum.REGION_COVER_ID_UAE
-              ? 'Outbound'
-              : destination_id_text ==
-                  travelQuoteEnum.LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
-                region_cover_for_id == travelQuoteEnum.REGION_COVER_ID_UAE
-              ? 'Inbound'
-              : ''
+                ? 'Inbound'
+                : currently_located_in_id_text ==
+                      travelQuoteEnum.LOCATION_UAE_TEXT &&
+                    region_cover_for_id != travelQuoteEnum.REGION_COVER_ID_UAE
+                  ? 'Outbound'
+                  : destination_id_text ==
+                        travelQuoteEnum.LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
+                      region_cover_for_id == travelQuoteEnum.REGION_COVER_ID_UAE
+                    ? 'Inbound'
+                    : ''
           }}
         </div>
       </template>

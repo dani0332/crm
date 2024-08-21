@@ -18,9 +18,10 @@ class CarQuoteObserver
 
     public function updated(CarQuote $lead)
     {
+        $dirty = $lead->getDirty();
         $changes = [];
 
-        foreach ($lead->getDirty() as $attribute => $value) {
+        foreach ($dirty as $attribute => $value) {
             if ($lead->isDirty($attribute)) {
                 $changes[$attribute] = [
                     'old' => $lead->getOriginal($attribute),
