@@ -177,6 +177,7 @@ class HealthQuoteService extends BaseService
             'hqr.policy_issuance_status_id',
             'hqr.policy_issuance_status_other',
             'hqr.stale_at',
+            DB::raw('DATE_FORMAT(hqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
             'hqr.insly_migrated',
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
