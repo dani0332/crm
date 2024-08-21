@@ -409,7 +409,7 @@ class RenewalsUploadService
             }
 
             if ($jobs != null && count($jobs)) {
-                info($logPrefix.count($jobs).' found to schedule for fetch plans');
+                info($logPrefix.' '.count($jobs).' found to schedule for fetch plans');
 
                 Haystack::build()
                     ->onQueue('renewals')
