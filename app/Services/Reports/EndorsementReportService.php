@@ -128,6 +128,7 @@ class EndorsementReportService extends ManagementReport
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
         $this->getUtmGroup($request, $query);
+        $this->applyFilters($query, $request);
 
         $reversalQuery = SendUpdateLog::query()
             ->select(
@@ -199,11 +200,10 @@ class EndorsementReportService extends ManagementReport
             ->whereNotNull('send_update_logs.reversal_invoice')
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
         $this->getUtmGroup($request, $reversalQuery);
+        $this->applyFilters($reversalQuery, $request);
 
         $query = $query->union($reversalQuery);
         $query = $query->orderBy('id', 'desc');
-
-        $this->applyFilters($query, $request);
 
         if ($request->export == 1) {
             $data = $query->get();
