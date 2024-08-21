@@ -238,7 +238,7 @@ class CentralService
         }
     }
 
-    public function updateQuotePayment($quote, $priceWithVat)
+    public function updateQuotePayment($quote, $priceWithVat, $insuranceProviderId)
     {
         info('fn: updateQuotePayment called');
 
@@ -248,6 +248,10 @@ class CentralService
             $payment = $quote->payments->first();
 
             $paymentData = ['total_price' => $priceWithVat];
+
+            if ($insuranceProviderId) {
+                $paymentData['insurance_provider_id'] = $insuranceProviderId;
+            }
 
             if ($priceWithVat > $payment->total_price && in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])) {
                 $paymentData['payment_status_id'] = PaymentStatusEnum::PARTIALLY_PAID;
@@ -281,7 +285,7 @@ class CentralService
 
             $quote->update($data->toArray());
 
-            $this->updateQuotePayment($quote, $data->price_with_vat);
+            $this->updateQuotePayment($quote, $data->price_with_vat, $data->insurance_provider_id);
 
             return true;
         });
