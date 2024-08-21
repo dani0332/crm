@@ -111,6 +111,7 @@ class HomeQuoteService extends BaseService
             'qrem.entity_type_code',
             'ent.industry_type_code',
             'ent.emirate_of_registration_id',
+            DB::raw('DATE_FORMAT(hqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
             'hqr.price_vat_applicable',
             'hqr.vat',
             'hqr.insurer_quote_number',
