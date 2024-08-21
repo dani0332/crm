@@ -1,15 +1,11 @@
 <script setup>
-import QuoteForm from "@/inertia/Pages/CarShared/QuoteForm.vue";
+import QuoteForm from '@/inertia/Pages/CarShared/QuoteForm.vue';
 
 defineProps({
-    quote: Object
+  quote: Object,
 });
-
 </script>
 
 <template>
-    <QuoteForm
-        dynamic_route="revival"
-        :quote="quote"
-    />
+  <QuoteForm dynamic_route="revival" :quote="quote" />
 </template>

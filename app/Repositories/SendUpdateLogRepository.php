@@ -10,12 +10,14 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Jobs\SendUpdateToCustomerJob;
 use App\Models\CarQuote;
 use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\SendUpdateLogService;
+use App\Services\SplitPaymentService;
 use App\Traits\PersonalQuoteSyncTrait;
 use Illuminate\Support\Str;
 
@@ -30,10 +32,21 @@ class SendUpdateLogRepository extends BaseRepository
     public function fetchCreate($data)
     {
         try {
-            $code = $data['childCategory']['slug'];
-            $count = $this->fetchGetCount($code);
+            $category = $data['childCategory']['slug']; // EF, EN, CI, CIR, CPU, CPD.
+            $count = $this->fetchGetCount($category); // get count of send update log by category.
+            $baseCode = $category.'-'.date('m').date('y').'-'; // CPD-0824- or EF-0824- etc.
+            $code = $baseCode.($count + 1); // CPD-0824-48 or EF-0824-48 etc.
 
-            $code = $code.'-'.date('m').date('y').'-'.($count + 1);
+            $attempts = 0;
+            while (SendUpdateLog::where('code', $code)->exists() && $attempts < 10) {
+                $count++;
+                $code = $baseCode.$count;
+                $attempts++;
+            }
+
+            if ($attempts >= 10) {
+                vAbort('Send Update Log Code generation failed.');
+            }
 
             $uuid = strtoupper(Str::random(6));
 
@@ -51,10 +64,6 @@ class SendUpdateLogRepository extends BaseRepository
 
             $data['personal_quote_id'] = $personalQuote?->id ?? null;
 
-            if (! empty($personalQuote->insurance_provider_id)) {
-                $insuranceProvider = InsuranceProviderRepository::getById($personalQuote->insurance_provider_id);
-            }
-
             $sendUpdate = $this->create([
                 'personal_quote_id' => $data['personal_quote_id'],
                 'quote_uuid' => $data['quote_uuid'],
@@ -64,8 +73,8 @@ class SendUpdateLogRepository extends BaseRepository
                 'status' => $data['status'],
                 'uuid' => $uuid,
                 'code' => $code,
-                'provider_name' => isset($insuranceProvider) ? $insuranceProvider->text : '',
                 'insurance_provider_id' => $personalQuote->insurance_provider_id ?? null,
+                'created_by' => auth()->user()->id,
             ]);
             // it will check if send update type is Correction of Policy Details or Enorsement Financial with subtype Policy Period Extension, it will save
             // insurance_provider_id and plan_id.
@@ -84,10 +93,8 @@ class SendUpdateLogRepository extends BaseRepository
                     $quoteModel = app($serviceFile)->getEntityPlain($realQuote->id)->load(['plan']);
                     $sendUpdate->insurance_provider_id = $quoteModel->plan->provider_id ?? null;
                     $sendUpdate->plan_id = $quoteModel->plan->id ?? null;
-                    $sendUpdate->plan_name = $quoteModel->plan->text ?? null;
                 } else {
                     $sendUpdate->insurance_provider_id = $realQuote->insuranceProvider->id ?? $realQuote->insurance_provider_id ?? null;
-                    $sendUpdate->provider_name = $realQuote->insuranceProvider->text ?? $realQuote->insurance_provider_text ?? null;
                 }
 
                 $sendUpdate->save();
@@ -158,7 +165,9 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchFindByQuoteUuid($uuid)
     {
-        return $this->where(['quote_uuid' => $uuid])->get();
+        return $this->with(['category', 'option'])
+            ->where('quote_uuid', $uuid)
+            ->get();
     }
 
     public function fetchUpdateLogPriceDetails($data)
@@ -228,10 +237,25 @@ class SendUpdateLogRepository extends BaseRepository
         return $result;
     }
 
-    public function fetchSendUpdateToCustomer($data)
+    public function fetchSaveProviderDetails($data)
     {
         try {
-            $sendUpdateLog = $this->find($data['sendUpdateId']);
+            $result = $this->find($data['send_update_log_id'])->update([
+                'insurance_provider_id' => $data['insurance_provider_id'],
+            ]);
+        } catch (\Exception $ex) {
+            $result = (object) [
+                'message' => $ex->getMessage(),
+            ];
+        }
+
+        return $result;
+    }
+
+    public function fetchSendUpdateToCustomer($data)
+    {
+        $sendUpdateLog = $this->find($data['sendUpdateId']);
+        try {
             if ($data['quoteType'] == quoteTypeCode::Car && $sendUpdateLog->category->code == SendUpdateLogStatusEnum::EN) {
                 $quote = CarQuote::where('uuid', $sendUpdateLog->quote_uuid)->first();
                 if (! empty($sendUpdateLog->emirates_id)) { // will work on Change of Emirates (with no financial impact).
@@ -241,16 +265,25 @@ class SendUpdateLogRepository extends BaseRepository
                 }
             }
 
-            $result = $sendUpdateLog->update([
-                'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
-            ]);
+            dispatch(new SendUpdateToCustomerJob($sendUpdateLog, $data));
 
-            if ($result) {
-                app(SendUpdateLogService::class)->sendUpdateToCustomerEmail($sendUpdateLog, $data['action']);
-            }
+            /*$sendUpdateLog->update([
+                'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
+            ]);*/
+
+            // temporary comments.
+            /*if (! $sendUpdateLog->is_email_sent) {
+                dispatch(new SendUpdateToCustomerJob($sendUpdateLog, $data));
+            } else {
+                $sendUpdateLog->update([
+                    'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
+                ]);
+            }*/
             info('Send update to Customer - Send Update Code: '.$sendUpdateLog->code.' - Status update to: '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
+            $result = true;
         } catch (\Exception $ex) {
             logger()->error('Send Update to Customer - Failed - Send Update Code: '.$sendUpdateLog->code.' - Error : '.$ex->getMessage());
+
             $result = (object) [
                 'message' => $ex->getMessage(),
             ];
@@ -294,8 +327,13 @@ class SendUpdateLogRepository extends BaseRepository
 
             $payment = Payment::where('send_update_log_id', $data['id'])->firstOrFail();
             if ($payment) {
-                app(SendUpdateLogService::class)->sendUpdatePriceAndDiscount($sendUpdate, $payment);
+                $sendUpdateLogService = app(SendUpdateLogService::class);
+                info('Send update - Updating Booking details and Commission Schedule in Payments - SendUpdateUUID: '.$sendUpdate->uuid);
+                $sendUpdateLogService->sendUpdatePriceAndDiscount($sendUpdate, $payment);
+                $sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate, true);
+                app(SplitPaymentService::class)->updateCommissionSchedule($payment);
             }
+
         } catch (\Exception $ex) {
             $result = (object) [
                 'message' => $ex->getMessage(),
@@ -315,14 +353,19 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function checkPolicyDetailsFilled($sendUpdate, $quoteTypeId, $quote)
     {
+        $insuranceProviderId = ($sendUpdate->insurance_provider_id ?? $quote->insurance_provider_id) ?? null;
+        if ($quoteTypeId == QuoteTypeId::Car && is_null($insuranceProviderId)) {
+            $insuranceProviderId = $quote->car_plan_provider_id ?? null;
+        }
+
         $sendUpdatePolicyDetails = [
             'first_name' => ($sendUpdate->first_name ?? $quote->first_name) ?? null,
             'last_name' => ($sendUpdate->last_name ?? $quote->last_name) ?? null,
-            'insurance_provider_id' => ($sendUpdate->insurance_provider_id ?? ($quote->insurance_provider_id ?? $quote->car_plan_provider_id)) ?? null,
+            'insurance_provider_id' => $insuranceProviderId,
             'policy_number' => ($sendUpdate->policy_number ?? $quote->policy_number) ?? null,
             'issuance_date' => ($sendUpdate->issuance_date ?? $quote->policy_issuance_date) ?? null,
             'start_date' => ($sendUpdate->start_date ?? $quote->policy_start_date) ?? null,
-            'expiry_date' => ($sendUpdate->expiry_date ?? $quote->renewal_expiry_date) ?? null,
+            'expiry_date' => ($sendUpdate->expiry_date ?? $quote->policy_expiry_date) ?? null,
         ];
 
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {

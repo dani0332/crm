@@ -1,6 +1,4 @@
 <script setup>
-import { useFormatPrice } from '../Composables/utilities';
-
 const page = usePage();
 const notification = useToast();
 const props = defineProps({
@@ -159,16 +157,25 @@ const can = permission => useCan(permission);
 const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 
-const [SavePlanDetailsButtonTemplate, SavePlanDetailsButtonReuseTemplate] = createReusableTemplate();
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
+const [SavePlanDetailsButtonTemplate, SavePlanDetailsButtonReuseTemplate] =
+  createReusableTemplate();
 
-watch(() => props.isAddUpdate, () => {
-  planDetailsForm.insurance_provider_id  = null;
+watch(
+  () => props.isAddUpdate,
+  () => {
+    planDetailsForm.insurance_provider_id = null;
     planDetailsForm.price_vat_applicable = null;
     planDetailsForm.price_vat_not_applicable = null;
     planDetailsForm.price_with_vat = null;
     planDetailsForm.insurer_quote_number = null;
-  });
-
+  },
+);
 </script>
 
 <template>
@@ -208,10 +215,11 @@ watch(() => props.isAddUpdate, () => {
                     rules.lengthCheck,
                   ]
             "
-            :disabled="(
-              props.quoteType == quoteTypeCodeEnum.Life &&
-              props.quoteType != quoteTypeCodeEnum.Business
-            ) || page.props.lockLeadSectionsDetails.plan_details"
+            :disabled="
+              (props.quoteType == quoteTypeCodeEnum.Life &&
+                props.quoteType != quoteTypeCodeEnum.Business) ||
+              page.props.lockLeadSectionsDetails.plan_details
+            "
             label="Price (VAT Applicable)"
             class="w-full uppercase"
             type="text"
@@ -234,10 +242,11 @@ watch(() => props.isAddUpdate, () => {
                 : []
             "
             :error="planDetailsForm.errors.price_vat_not_applicable"
-            :disabled="(
-              props.quoteType != quoteTypeCodeEnum.Life &&
-              props.quoteType != quoteTypeCodeEnum.Business
-            ) || page.props.lockLeadSectionsDetails.plan_details"
+            :disabled="
+              (props.quoteType != quoteTypeCodeEnum.Life &&
+                props.quoteType != quoteTypeCodeEnum.Business) ||
+              page.props.lockLeadSectionsDetails.plan_details
+            "
             type="text"
             label="Price (VAT not applicable)"
             class="w-full uppercase"
@@ -276,16 +285,22 @@ watch(() => props.isAddUpdate, () => {
           size="sm"
           :loading="formProcessing"
           :disabled="isDisabled"
+          v-if="readOnlyMode.isDisable === true"
         >
           Save
         </x-button>
       </SavePlanDetailsButtonTemplate>
 
       <div class="flex mb-3 justify-end">
-        <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_details" position="bottom">
-          <SavePlanDetailsButtonReuseTemplate :isDisabled="true"/>
+        <x-tooltip
+          v-if="page.props.lockLeadSectionsDetails.plan_details"
+          placement="bottom"
+        >
+          <SavePlanDetailsButtonReuseTemplate :isDisabled="true" />
           <template #tooltip>
-            This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'
+            This lead is now locked as the policy has been booked. If changes
+            are needed, go to 'Send Update', select 'Add Update', and choose
+            'Correction of Policy'
           </template>
         </x-tooltip>
         <SavePlanDetailsButtonReuseTemplate v-else />

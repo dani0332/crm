@@ -8,6 +8,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TiersEnum;
@@ -40,7 +41,7 @@ class DashboardController extends Controller
         $comprehensiveDashboardPermissions = implode('|', PermissionsEnum::getComprehensiveDashboardPermissions());
         $this->middleware(['permission:'.$comprehensiveDashboardPermissions], ['only' => ['renderComprehensiveDashboard']]);
 
-        $this->middleware('readonly_db');
+        // $this->middleware('readonly_db');
     }
 
     /**
@@ -135,8 +136,9 @@ class DashboardController extends Controller
     {
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         if (isset($request->range) && $request->range != null) {
-            $startDate = Carbon::parse(explode(',', $request->range)[0])->startOfDay()->format($dateFormat);
-            $endDate = Carbon::parse(explode(',', $request->range)[1])->endOfDay()->format($dateFormat);
+            $date = explode(',', $request->range);
+            $startDate = Carbon::parse($date[0])->startOfDay()->format($dateFormat);
+            $endDate = Carbon::parse($date[1])->endOfDay()->format($dateFormat);
         } else {
             $startDate = now()->startOfDay()->format($dateFormat);
             $endDate = now()->endOfDay()->format($dateFormat);
@@ -150,7 +152,7 @@ class DashboardController extends Controller
         ];
         $todaysLeads = CarQuote::whereBetween('created_at', [$startDate, $endDate])
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO])
             ->get();
 
         $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($filters);
@@ -225,7 +227,7 @@ class DashboardController extends Controller
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
             ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
-            ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO])
             ->where('users.is_active', true)
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderByDesc('quote_batches.start_date')->orderBy('users.email');
@@ -351,7 +353,7 @@ class DashboardController extends Controller
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
             ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
-            ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO])
             ->where('users.is_active', true)
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderByDesc('quote_batches.start_date')->orderBy('users.email');
@@ -415,7 +417,7 @@ class DashboardController extends Controller
         }
 
         if (isset($request->segment_filter) && $request->segment_filter != 'all') {
-            $records = $records->filterBySegment($request->segment_filter, quoteTypeCode::Car);
+            $records = $records->filterBySegment($request->segment_filter, QuoteTypeId::Car);
         }
 
         $labels = [];

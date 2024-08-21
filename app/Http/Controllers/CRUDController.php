@@ -6,25 +6,18 @@ use DataTables;
 use Carbon\Carbon;
 use App\Models\Tier;
 use App\Models\User;
-use App\Facades\Capi;
 use App\Enums\PuaEnum;
-use App\Models\CarMake;
-use App\Models\Emirate;
 use App\Models\Payment;
 use App\Enums\RolesEnum;
 use App\Enums\TiersEnum;
-use App\Models\CarQuote;
 use App\Enums\QuoteTypes;
 use App\Enums\CarPlanType;
 use App\Enums\CarTeamType;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
-use App\Events\LeadsCount;
 use App\Enums\TeamNameEnum;
 use App\Models\Nationality;
 use App\Enums\quoteTypeCode;
-use App\Models\DocumentType;
-use App\Models\GenericModel;
 use App\Services\AMLService;
 use Illuminate\Http\Request;
 use App\Enums\HealthTeamType;
@@ -39,14 +32,26 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Events\LeadsCount;
+use App\Facades\Capi;
+use App\Http\Requests\ExportPlansPdfRequest;
+use App\Http\Requests\StorePaymentRequest;
+use App\Http\Requests\UpdateLeadStatusRequest;
+use App\Http\Requests\UpdatePolicyDetailRequest;
+use App\Jobs\CarRenewalEmailJob;
+use App\Jobs\SyncSIBContactJob;
+use App\Models\ApplicationStorage;
+use App\Models\CarMake;
+use App\Models\CarQuote;
+use App\Models\DocumentType;
+use App\Models\Emirate;
+use App\Models\GenericModel;
 use App\Models\HealthPlanType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
-use App\Jobs\SyncSIBContactJob;
 use App\Services\LookupService;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\PaymentStatusEnum;
-use App\Jobs\CarRenewalEmailJob;
 use App\Models\PaymentStatusLog;
 use App\Services\CentralService;
 use App\Enums\GenericRequestEnum;
@@ -58,8 +63,6 @@ use App\Services\CarQuoteService;
 use App\Services\CustomerService;
 use App\Services\PetQuoteService;
 use App\Enums\CarPlanFeaturesCode;
-use App\Jobs\SendOCBIntroEmailJob;
-use App\Models\ApplicationStorage;
 use App\Services\EmailDataService;
 use App\Services\HomeQuoteService;
 use App\Services\LifeQuoteService;
@@ -90,19 +93,15 @@ use Illuminate\Support\Facades\Redirect;
 use App\Repositories\HomeQuoteRepository;
 use App\Repositories\QuoteNoteRepository;
 use App\Services\NotesForCustomerService;
-use App\Http\Requests\StorePaymentRequest;
 use App\Repositories\LostReasonRepository;
 use App\Services\SendEmailCustomerService;
 use App\Repositories\HealthQuoteRepository;
 use App\Repositories\NationalityRepository;
 use App\Services\ApplicationStorageService;
-use App\Http\Requests\ExportPlansPdfRequest;
 use App\Repositories\RenewalBatchRepository;
 use App\Repositories\SendUpdateLogRepository;
-use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
-use App\Http\Requests\UpdatePolicyDetailRequest;
 use App\Repositories\InsuranceProviderRepository;
 
 class CRUDController extends Controller
@@ -158,7 +157,7 @@ class CRUDController extends Controller
         EmailDataService $emailDataService,
         AllocationService $allocationService,
     ) {
-        $this->genericModel = new GenericModel();
+        $this->genericModel = new GenericModel;
         $this->healthQuoteService = $healthService;
         $this->teamsService = $teamsService;
         $this->crudService = $crudService;
@@ -539,6 +538,10 @@ class CRUDController extends Controller
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         abort_if(! $record, 404);
 
+        /* Start - Temporarily adding for correcting historic data  */
+        (new PaymentRepository)->updatePriceVatApplicableAndVat($record, $this->genericModel->modelType);
+        /* End - Temporarily adding for correcting historic data  */
+
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($this->genericModel->modelType, $record);
         $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($record->id, $quoteType);
 
@@ -831,7 +834,7 @@ class CRUDController extends Controller
 
             @[$documentTypes, $paymentDocument] = $this->quoteDocumentService->getDocumentTypes(QuoteTypeId::Home);
 
-            $quoteDocument = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::HOME->value, $record->id);
+            $quoteDocument = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::HOME->value, $record->id);
             $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::HOME->value, $payments, $quoteDocument);
             $noteDocumentType = DocumentType::where('code', DocumentTypeCode::OD)->first();
             $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::HOME->name);
@@ -1558,9 +1561,6 @@ class CRUDController extends Controller
             if ($request->leadStatus == QuoteStatusEnum::TransactionApproved || $request->leadStatus == QuoteStatusEnum::PolicyIssued) {
                 // MS: dispatch sib work flow
                 SyncSIBContactJob::dispatch($lead);
-
-                // Ep send documents
-                EmbeddedProductRepository::sendDocumentsByLead($request->leadId, $request->modelType);
             }
 
             if (in_array($request->leadStatus, [QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer])) {
@@ -1582,10 +1582,17 @@ class CRUDController extends Controller
         $oldEntity = $this->crudService->getEntityByUUID($request->quote_uuid, $request->modelType);
         $result = $this->crudService->updateQuoteStatus($request);
         $entity = $result['entity'];
-        $plainEntity = $this->crudService->getLeadPlainEntityByUUID($request->modelType, $request->quote_uuid);
         if ($request->leadStatus == QuoteStatusEnum::TransactionApproved) {
-            $this->crudService->calculateScore($plainEntity);
+            $plainEntity = $this->getQuoteObject($request->modelType, $request->leadId);
+            $this->crudService->calculateScore($plainEntity, $request->modelType);
         }
+
+        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
+        && ($request->leadStatus == QuoteStatusEnum::TransactionApproved || $request->leadStatus == QuoteStatusEnum::PolicyIssued)) {
+            // Ep send documents
+            EmbeddedProductRepository::sendDocumentsByLead($request->leadId, $request->modelType);
+        }
+
         // courtesy email
         $lobs = [quoteTypeCode::Business];
         if ($oldEntity->quote_status_id != $entity->quote_status_id && $entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! in_array($request->modelType, $lobs)) {
@@ -1773,7 +1780,7 @@ class CRUDController extends Controller
             'policy_number' => $request->quote_policy_number ?? '',
             'policy_issuance_date' => isset($request->quote_policy_issuance_date) ? Carbon::parse($request->quote_policy_issuance_date)->format('Y-m-d') : null,
             'policy_start_date' => isset($request->quote_policy_start_date) ? Carbon::parse($request->quote_policy_start_date)->format('Y-m-d') : null,
-            'renewal_expiry_date' => isset($request->quote_policy_expiry_date) ? Carbon::parse($request->quote_policy_expiry_date)->format('Y-m-d') : null,
+            'policy_expiry_date' => isset($request->quote_policy_expiry_date) ? Carbon::parse($request->quote_policy_expiry_date)->format('Y-m-d') : null,
             'price_vat_not_applicable' => $request->price_vat_notapplicable ?? '',
             'price_vat_applicable' => $request->price_vat_applicable ?? '',
             'price_with_vat' => $request->amount_with_vat ?? '',
@@ -1991,11 +1998,13 @@ class CRUDController extends Controller
     public function sendOCBEmailNB(Request $request, $quoteType, $quoteUuId)
     {
         if ($quoteUuId) {
-            Log::info('sendOCBEmailNB OCB email sending started for quote uuid: '.$quoteUuId);
 
-            SendOCBIntroEmailJob::dispatch($quoteUuId, null);
-
-            info('sendOCBEmailNB OCB email Job dispatched for quote uuid: '.$quoteUuId);
+            $ocbEmailJob = QuoteTypes::getName(QuoteTypes::getIdFromValue($quoteType))?->ocbEmailJob();
+            if ($ocbEmailJob) {
+                Log::info("sendOCBEmailNB OCB email sending started for quote uuid: {$quoteUuId}");
+                dispatch(new $ocbEmailJob($request->quoteUuid, null));
+                info("sendOCBEmailNB OCB email Job dispatched for quote uuid: {$quoteUuId}");
+            }
 
             return response()->json(['success' => 'OCB NB email sent to customer !']);
         } else {
@@ -2045,7 +2054,7 @@ class CRUDController extends Controller
 
     public function riskRatingDetails($quoteType, $uuid)
     {
-        $quoteModel = $this->getQuoteObject($quoteType, $uuid);
+        $quoteModel = $this->getQuoteObjectBy($quoteType, $uuid, 'uuid');
         $response = $this->crudService->scoreBreakdown($quoteModel, $quoteType);
 
         return $response;

@@ -16,7 +16,7 @@ class QuoteStatusService
 
     public function updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, $request = [], $notes = null)
     {
-        $AMLService = new AMLService();
+        $AMLService = new AMLService;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $quoteStatus = QuoteStatus::where('code', $quoteStatusType)->firstOrFail();
 
@@ -30,6 +30,9 @@ class QuoteStatusService
             $fetchKycLog->update([
                 'decision' => $request['aml_decision'] ?? '',
                 'notes' => trim($request['notes']) ?? '',
+                'in_adverse_media' => isset($request['in_adverse_media']) ? trim($request['in_adverse_media']) : '',
+                'is_owner_pep' => isset($request['is_owner_pep']) ? trim($request['is_owner_pep']) : '',
+                'is_controlling_pep' => isset($request['is_controlling_pep']) ? trim($request['is_controlling_pep']) : '',
             ]);
 
             $kycLog = $fetchKycLog->first();

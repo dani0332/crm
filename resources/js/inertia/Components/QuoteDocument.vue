@@ -1,5 +1,5 @@
 <script setup>
-import DownloadDocuments from "./DownloadDocuments.vue";
+import DownloadDocuments from './DownloadDocuments.vue';
 
 defineProps({
   quote: Object,
@@ -20,7 +20,11 @@ defineProps({
   sendPolicy: Boolean,
 });
 
-const emit = defineEmits(['copyUploadURL', 'sendPolicyToClient']);
+const emit = defineEmits([
+  'copyUploadURL',
+  'sendPolicyToClient',
+  'verifyDocuments',
+]);
 
 const page = usePage();
 const selectedTab = ref(0);
@@ -28,6 +32,8 @@ const uploadingStatus = ref({});
 const errorMsg = ref({});
 const successStatus = ref({});
 const can = permission => useCan(permission);
+const hasAnyRole = roles => useHasAnyRole(roles);
+const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
 const quoteDocumentsTable = reactive({
@@ -52,7 +58,7 @@ const quoteDocumentsTable = reactive({
     {
       text: 'Action',
       value: 'action',
-    }
+    },
   ],
 });
 
@@ -73,7 +79,7 @@ const docForm = reactive({
 
 const uploadFile = (doc, filesWithInfo) => {
   successStatus.value[doc.id] = false;
-  errorMsg.value[doc.id] ='';
+  errorMsg.value[doc.id] = '';
   const { files, rejectReason } = filesWithInfo;
   if (files.length == 0) {
     notification.error({
@@ -125,6 +131,10 @@ const sendPolicyToClient = () => {
   emit('sendPolicyToClient');
 };
 
+const updateDocumentValidate = () => {
+  emit('verifyDocuments', true);
+};
+
 const onDocDelete = name => {
   modals.docConfirm = true;
   confirmDeleteData.docs = name;
@@ -163,7 +173,13 @@ const uploadDocumentModal = () => {
   modals.doc = true;
   successStatus.value = {};
   errorMsg.value = {};
-}
+};
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -180,12 +196,17 @@ const uploadDocumentModal = () => {
       <template #body>
         <x-divider class="my-4" />
 
-        <div class="flex gap-2 mb-4 justify-end">
-            <DownloadDocuments
-                v-if="can(permissionEnum.DOWNLOAD_ALL_DOCUMENTS)"
-                :quote="page.props.quote"
-                :quoteDocuments="page.props.quote.documents ?? page.props.quoteDocuments"
-            />
+        <div
+          class="flex gap-2 mb-4 justify-end"
+          v-if="readOnlyMode.isDisable === true"
+        >
+          <DownloadDocuments
+            v-if="can(permissionEnum.DOWNLOAD_ALL_DOCUMENTS)"
+            :quote="page.props.quote"
+            :quoteDocuments="
+              page.props.quote.documents ?? page.props.quoteDocuments
+            "
+          />
           <Link
             v-if="inslyId && can(permissionEnum.VIEW_LEGACY_DETAILS)"
             :href="`/legacy-policy/${inslyId}`"
@@ -207,7 +228,34 @@ const uploadDocumentModal = () => {
           >
             Copy upload Link
           </x-button>
-          <x-button @click.prevent="uploadDocumentModal" size="sm" color="orange">
+          <x-tooltip placement="top">
+            <x-button
+              @click.prevent="updateDocumentValidate"
+              v-if="
+                (can(permissionEnum.DOCUMENT_VERIFY) ||
+                  hasAnyRole([
+                    rolesEnum.Admin,
+                    rolesEnum.Engineering,
+                    rolesEnum.TravelHapex,
+                  ])) &&
+                quoteType == 'Travel'
+              "
+              size="sm"
+              color="green"
+            >
+              Verify Documents
+            </x-button>
+            <template #tooltip>
+              Verify Documents: Clicking this button confirms that all submitted
+              documents are accurate and valid.</template
+            >
+          </x-tooltip>
+
+          <x-button
+            @click.prevent="uploadDocumentModal"
+            size="sm"
+            color="orange"
+          >
             Upload Documents
           </x-button>
           <x-button
@@ -237,13 +285,17 @@ const uploadDocumentModal = () => {
               {{ item.original_name }}
             </a>
           </template>
-          <template v-if="can(permissionEnum.DOCUMENT_DELETE)" #item-action="{ doc_name }">
+          <template
+            v-if="can(permissionEnum.DOCUMENT_DELETE)"
+            #item-action="{ doc_name }"
+          >
             <div>
               <x-button
                 size="xs"
                 color="error"
                 outlined
                 @click.prevent="onDocDelete(doc_name)"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Delete
               </x-button>
@@ -253,10 +305,14 @@ const uploadDocumentModal = () => {
       </template>
     </Collapsible>
 
-    <x-modal v-model="modals.doc" size="xl" show-close backdrop>
-      <template #header> Upload Documents </template>
-
-      <x-tab-group v-model="selectedTab" class="pb-10" variant="block">
+    <x-modal
+      v-model="modals.doc"
+      size="xl"
+      title="Upload Documents"
+      show-close
+      backdrop
+    >
+      <x-tab-group v-model="selectedTab" variant="block">
         <x-tab
           :value="index"
           :label="key.replace(/_/g, ' ')"
@@ -308,7 +364,10 @@ const uploadDocumentModal = () => {
                 :max-size="documentType.max_size"
                 :loading="uploadingStatus[documentType.id]"
                 :document-type-code="documentType.code"
-                :isDisabled="documentType.code == documentTypeCodeEnum.AUDIT && !can(permissionEnum.AUDITDOCUMENT_UPLOAD)"
+                :isDisabled="
+                  documentType.code == documentTypeCodeEnum.AUDIT &&
+                  !can(permissionEnum.AUDITDOCUMENT_UPLOAD)
+                "
                 @change="uploadFile(documentType, $event)"
               />
 
@@ -331,8 +390,12 @@ const uploadDocumentModal = () => {
         </x-tab>
       </x-tab-group>
     </x-modal>
-    <x-modal v-model="modals.docConfirm" show-close backdrop>
-      <template #header> Delete Document </template>
+    <x-modal
+      v-model="modals.docConfirm"
+      title="Delete Document"
+      show-close
+      backdrop
+    >
       <p>Are you sure you want to delete this document?</p>
       <template #actions>
         <div class="text-right space-x-4">

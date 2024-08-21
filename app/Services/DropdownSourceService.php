@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Models\BusinessInsuranceType;
 use App\Models\CarAddOn;
 use App\Models\CarMake;
@@ -100,7 +101,7 @@ class DropdownSourceService extends BaseService
     public function getDropdownSource($type, $quoteTypeId = false)
     {
         $data = '';
-        $lookUpService = new LookupService();
+        $lookUpService = new LookupService;
         switch ($type) {
             case 'parent_team_id':
                 $data = Team::whereNull('parent_team_id')->where('type', 1)->get();
@@ -235,7 +236,7 @@ class DropdownSourceService extends BaseService
                 $data = CarTypeInsurance::select('id', 'text')->where('is_active', true)->get();
                 break;
             case 'claim_history_id':
-                $data = ClaimHistory::select('id', 'text')->where('is_active', true)->get();
+                $data = ClaimHistory::select('id', 'text', 'quote_type_id')->where('is_active', true)->get();
                 break;
             case 'plan_id':
                 $data = CarPlan::select('id', 'text')->get();
@@ -319,12 +320,25 @@ class DropdownSourceService extends BaseService
                             ->select('id', 'text')
                             ->get();
                     }
-
                 }
                 // =========== end =================
                 break;
             case 'plan_type_id':
                 $data = HealthPlanType::where('is_active', 1)->select('id', 'text')->orderBy('id')->get();
+                break;
+            case 'bike_make_id':
+                $distinctCarMakeCodes = CarModel::where('quote_type_id', QuoteTypeId::Bike)
+                    ->where('is_active', true)
+                    ->distinct('car_make_code')
+                    ->pluck('car_make_code')
+                    ->toArray();
+                $data = CarMake::select('id', 'text')->whereIn('code', $distinctCarMakeCodes)->where('is_active', true)->get();
+                break;
+            case 'bike_model_id':
+                $data = [];
+                break;
+            case 'line_of_business':
+                $data = Team::where('is_active', true)->get();
                 break;
             default:
                 break;

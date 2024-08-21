@@ -10,9 +10,11 @@ const props = defineProps({
   genericRequestEnum: Object,
 });
 const { isRequired } = useRules();
-
 const page = usePage();
 const emit = defineEmits(['onLoadAvailablePlansData']);
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+
 const notification = useToast();
 const coreInsurer = ['AXA', 'OIC', 'TM', 'QIC', 'RSA'];
 const halfLiveInsurer = [
@@ -70,7 +72,10 @@ const planForm = useForm({
   is_create: 0,
   addons: props.plan.addons,
   insurerTrim: props.plan.insurerTrimId || null,
-  insurer_quote_no: (props.plan.insurerQuoteNo != null && props.plan.insurerQuoteNo != '') ? props.plan.insurerQuoteNo : '',
+  insurer_quote_no:
+    props.plan.insurerQuoteNo != null && props.plan.insurerQuoteNo != ''
+      ? props.plan.insurerQuoteNo
+      : '',
   is_manual_update: props.plan.isManualUpdate,
   ancillary_excess: props.plan.ancillaryExcess,
   current_url: usePage().url,
@@ -109,7 +114,7 @@ const onTogglePlans = () => {
         title: 'Plan has been updated',
         position: 'top',
       });
-      emit("onLoadAvailablePlansData")
+      emit('onLoadAvailablePlansData');
     })
     .catch(error => {
       notification.error({
@@ -160,7 +165,7 @@ const onUpdatePlan = () => {
       preserveScroll: true,
       preserveState: true,
       onSuccess: () => {
-        emit("onLoadAvailablePlansData")
+        emit('onLoadAvailablePlansData');
       },
     });
 };
@@ -190,8 +195,14 @@ const onToggleManual = () => {
   }, 300);
 };
 
-const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReusableTemplate();
-
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
+const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
+  createReusableTemplate();
 </script>
 
 <template>
@@ -244,13 +255,19 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReus
               />
             </div>
             <div class="grid sm:grid-cols-2 mb-3">
-              <x-tooltip v-if="page.props.lockLeadSectionsDetails.plan_selection" position="bottom">
-                <ToggleManualButtonReuseTemplate :isDisabled="true"/>
+              <x-tooltip
+                v-if="page.props.lockLeadSectionsDetails.plan_selection"
+                placement="bottom"
+              >
+                <ToggleManualButtonReuseTemplate :isDisabled="true" />
                 <template #tooltip>
-                  No further action allowed on issued policy, If changes are required, such as increase in price, please proceed through the 'Send Update' feature using the 'Correction of Policy' option.
+                  No further action allowed on issued policy, If changes are
+                  required, such as increase in price, please proceed through
+                  the 'Send Update' feature using the 'Correction of Policy'
+                  option.
                 </template>
               </x-tooltip>
-              <ToggleManualButtonReuseTemplate v-else/>
+              <ToggleManualButtonReuseTemplate v-else />
             </div>
 
             <div class="grid sm:grid-cols-2">
@@ -265,8 +282,8 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReus
                     ? coreInsurer.includes(props.plan.providerCode)
                       ? 'Premium workshop'
                       : halfLiveInsurer.includes(props.plan.providerCode)
-                      ? 'Non-Agency workshop'
-                      : 'NON-AGENCY'
+                        ? 'Non-Agency workshop'
+                        : 'NON-AGENCY'
                     : props.plan.repairType
                 }}
               </dd>
@@ -275,7 +292,10 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReus
               <dt class="mt-2">Insurer Quote No.:</dt>
               <x-input
                 v-model="planForm.insurer_quote_no"
-                :disabled="!planForm.is_manual_update || page.props.lockLeadSectionsDetails.plan_selection"
+                :disabled="
+                  !planForm.is_manual_update ||
+                  page.props.lockLeadSectionsDetails.plan_selection
+                "
                 :error="showInsurerError ? 'This field is required' : ''"
                 maxlength="50"
                 size="sm"
@@ -285,7 +305,10 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReus
               <dt class="mt-2">Price:</dt>
               <x-input
                 v-model="planForm.actual_premium"
-                :disabled="!planForm.is_manual_update || page.props.lockLeadSectionsDetails.plan_selection"
+                :disabled="
+                  !planForm.is_manual_update ||
+                  page.props.lockLeadSectionsDetails.plan_selection
+                "
                 size="sm"
                 type="number"
               />
@@ -317,7 +340,10 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReus
               <dt class="mt-2">Excess:</dt>
               <x-input
                 v-model="planForm.excess"
-                :disabled="!planForm.is_manual_update || page.props.lockLeadSectionsDetails.plan_selection"
+                :disabled="
+                  !planForm.is_manual_update ||
+                  page.props.lockLeadSectionsDetails.plan_selection
+                "
                 type="number"
                 size="sm"
               />
@@ -341,6 +367,12 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReus
                 class="w-full"
                 :disabled="page.props.lockLeadSectionsDetails.plan_selection"
               />
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="">System Discounted Price:</dt>
+              <dd>
+                {{ props.plan.isSystemDiscountPrice ? 'YES' : 'NO' }}
+              </dd>
             </div>
             <div class="grid sm:grid-cols-2"></div>
             <div class="grid sm:grid-cols-2">
@@ -372,12 +404,13 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReus
             </div>
           </dl>
           <br />
-          <div class="flex justify-end">
+          <div class="flex justify-end" v-if="readOnlyMode.isDisable === true">
             <x-button
               v-if="
                 (access.carManagerCanEdit ||
-                access.carAdvisorCanEdit ||
-                notAdvisorAndManagerAndPA) && !page.props.lockLeadSectionsDetails.plan_selection
+                  access.carAdvisorCanEdit ||
+                  notAdvisorAndManagerAndPA) &&
+                !page.props.lockLeadSectionsDetails.plan_selection
               "
               color="primary"
               size="sm"
@@ -419,12 +452,16 @@ const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] = createReus
               <dt class="font-bold">Total Price with VAT:</dt>
               <dd>AED: {{ totalPremiumWithVat.toFixed(2) }}</dd>
             </div>
-            <div class="flex justify-end">
+            <div
+              class="flex justify-end"
+              v-if="readOnlyMode.isDisable === true"
+            >
               <x-button
                 v-if="
                   (access.carManagerCanEdit ||
-                  access.carAdvisorCanEdit ||
-                  notAdvisorAndManagerAndPA) && !page.props.lockLeadSectionsDetails.plan_selection
+                    access.carAdvisorCanEdit ||
+                    notAdvisorAndManagerAndPA) &&
+                  !page.props.lockLeadSectionsDetails.plan_selection
                 "
                 color="primary"
                 class="mt-5"

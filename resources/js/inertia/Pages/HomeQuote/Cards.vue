@@ -26,7 +26,6 @@ const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 
-
 const isAllowed = computed(() => {
   return !hasAnyRole([rolesEnum.HomeAdvisor, rolesEnum.HomeRenewalAdvisor]);
 });
@@ -73,8 +72,6 @@ const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(false);
 const filtersCount = ref(0);
 
-
-
 const filters = reactive({
   code: '',
   first_name: '',
@@ -87,7 +84,7 @@ const filters = reactive({
   quote_status: [],
   advisors: [],
   is_ecommerce: '',
-  is_renewal:  props.is_renewal,
+  is_renewal: props.is_renewal,
   previous_quote_policy_number: '',
   renewal_batch: '',
   date: null,
@@ -240,7 +237,7 @@ onUnmounted(() => {
     <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >

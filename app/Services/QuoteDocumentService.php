@@ -2,11 +2,14 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\DocumentTypeCategory;
 use App\Enums\DocumentTypeCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\ApplicationStorage;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
@@ -54,10 +57,22 @@ class QuoteDocumentService extends BaseService
 
     public function getSendUpdateDocumentTypes(): array
     {
-        return DocumentType::where(['category' => SendUpdateLogStatusEnum::SEND_UPDATE, 'is_active' => true])
+        $sendUpdateDocumentTypes = DocumentType::active()
+            ->whereIn('category', [SendUpdateLogStatusEnum::SEND_UPDATE, DocumentTypeCategory::QUOTE_AND_ENDORSEMENT])
             ->orderBy('sort_order')
-            ->get()
-            ->toArray();
+            ->get();
+
+        // Document types for send updates are grouped by category.
+        $documentTypesByCategory = $sendUpdateDocumentTypes->groupBy('category');
+        $groupedDocumentTypesByCategory = $documentTypesByCategory->map(function ($documentType) {
+            return $documentType->toArray();
+        });
+
+        foreach ($documentTypesByCategory as $category => $documentTypeByCategory) {
+            $groupedDocumentTypesByCategory->put($category, $documentTypesByCategory->get($category)->toArray());
+        }
+
+        return $groupedDocumentTypesByCategory->toArray();
     }
 
     /**
@@ -127,7 +142,11 @@ class QuoteDocumentService extends BaseService
                     return false;
                 }
             } elseif ($isKyc) {
-                $originalName = 'SystemGeneratedKycDocument.pdf';
+                if (isset($data['pdf_name'])) {
+                    $originalName = $data['pdf_name'];
+                } else {
+                    $originalName = 'SystemGeneratedKycDocument.pdf';
+                }
 
                 // Generate a unique filename
                 $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
@@ -200,7 +219,7 @@ class QuoteDocumentService extends BaseService
         }
 
         if (! isset($record->policy_number) || ! isset($record->policy_issuance_date) || ! isset($record->policy_start_date) ||
-            ! isset($record->premium) || ! isset($record->renewal_expiry_date) || ! isset($record->plan_id) ||
+            ! isset($record->premium) || ! isset($record->policy_expiry_date) || ! isset($record->plan_id) ||
             $record->advisor_id != auth()->user()->id) {
             return 0;
         }
@@ -355,5 +374,34 @@ class QuoteDocumentService extends BaseService
         }
 
         return [];
+    }
+    /**
+     * Get app download linked for Health LOB
+     *
+     * @return array
+     */
+    public function getAppDownloadLink($modelType, $quote)
+    {
+        $appDownloadLink = '';
+        if (ucfirst($modelType) == quoteTypeCode::Health) {
+            $plan = $quote->plan;
+            $code = $plan->insuranceProvider->code.'_HEALTH_DOC';
+            $providerHealthDoc = ApplicationStorage::where('key_name', $code)->first()->value ?? null;
+            // If no document found against provider  will check health network document
+            if ($providerHealthDoc == null) {
+                $healthNetwork = $plan->healthNetwork;
+                $code = str_replace(' ', '_', $healthNetwork->text).'_HEALTH_DOC';
+                $providerHealthDoc = ApplicationStorage::where('key_name', $code)->first()->value ?? null;
+            }
+            // If these two documents then we send complete url
+            if (in_array($code, [ApplicationStorageEnums::BUP_HEALTH_DOC, ApplicationStorageEnums::CIG_HEALTH_DOC])) {
+                $appDownloadLink = $providerHealthDoc;
+            } else {
+                $baseUrl = config('constants.AZURE_IM_STORAGE_URL');
+                $appDownloadLink = $baseUrl.$providerHealthDoc;
+            }
+        }
+
+        return $appDownloadLink;
     }
 }
