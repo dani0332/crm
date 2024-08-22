@@ -120,11 +120,11 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('users as pi', 'pi.id', '=', 'send_update_logs.created_by')
             ->join('departments as dp', 'dp.id', '=', 'u.department_id')
             ->join('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
-            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
+            ->join('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
             ->leftJoin('payment_methods as pm', 'pm.code', '=', 'ps.payment_method')
             ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'ps.payment_gateway_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
-            ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
+            ->join('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
         $this->getUtmGroup($request, $query);
@@ -193,9 +193,9 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('users as pi', 'pi.id', '=', 'send_update_logs.created_by')
             ->join('departments as dp', 'dp.id', '=', 'u.department_id')
             ->join('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
-            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
+            ->join('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
-            ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
+            ->join('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
             ->whereNotNull('send_update_logs.reversal_invoice')
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);

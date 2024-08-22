@@ -45,7 +45,7 @@ class SaleSummaryReportService extends ManagementReport
         $query = PersonalQuote::query()
             ->join('users as u', 'personal_quotes.advisor_id', '=', 'u.id')
             ->join('departments as dp', 'dp.id', '=', 'u.department_id')
-            ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
+            ->join('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->selectRaw('
@@ -82,7 +82,7 @@ class SaleSummaryReportService extends ManagementReport
         }
 
         if ($request->groupBy == 'customer_group') {
-            $query->leftJoin('customer', 'personal_quotes.customer_id', '=', 'customer.id')
+            $query->join('customer', 'personal_quotes.customer_id', '=', 'customer.id')
                 ->addSelect(DB::raw("CONCAT(customer.first_name, ' ', customer.last_name) as customer_name"))
                 ->addSelect('customer.id as customer_group');
         }
@@ -175,7 +175,7 @@ class SaleSummaryReportService extends ManagementReport
             ->join('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
             ->join('departments as dp', 'dp.id', '=', 'u.department_id')
             ->join('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
-            ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
+            ->join('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->select(
                 DB::raw('COUNT(send_update_logs.uuid) as total_endorsements'),
                 DB::raw('((
@@ -207,14 +207,14 @@ class SaleSummaryReportService extends ManagementReport
 
         if ($request->groupBy == 'customer_group') {
             // Endorsements
-            $query->leftJoin('customer', 'personal_quotes.customer_id', '=', 'customer.id')
+            $query->join('customer', 'personal_quotes.customer_id', '=', 'customer.id')
                 ->addSelect(DB::raw("CONCAT(customer.first_name, ' ', customer.last_name) as customer_name"))
                 ->addSelect('customer.id as customer_group');
         }
 
         if ($request->groupBy == 'insurer') {
             // Endorsements
-            $query->leftJoin('insurance_provider', 'insurance_provider.id', '=', 'p.insurance_provider_id')
+            $query->join('insurance_provider', 'insurance_provider.id', '=', 'p.insurance_provider_id')
                 ->addSelect('insurance_provider.text as insurer');
         }
 
@@ -244,7 +244,7 @@ class SaleSummaryReportService extends ManagementReport
             ->join('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
             ->join('departments as dp', 'dp.id', '=', 'u.department_id')
             ->join('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
-            ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
+            ->join('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->whereNotNull('send_update_logs.reversal_invoice')
             ->select(
                 DB::raw('COUNT(send_update_logs.uuid) as total_endorsements'),
@@ -276,14 +276,14 @@ class SaleSummaryReportService extends ManagementReport
 
         if ($request->groupBy == 'customer_group') {
             // Endorsements
-            $reversalQuery->leftJoin('customer', 'personal_quotes.customer_id', '=', 'customer.id')
+            $reversalQuery->join('customer', 'personal_quotes.customer_id', '=', 'customer.id')
                 ->addSelect(DB::raw("CONCAT(customer.first_name, ' ', customer.last_name) as customer_name"))
                 ->addSelect('customer.id as customer_group');
         }
 
         if ($request->groupBy == 'insurer') {
             // Endorsements
-            $reversalQuery->leftJoin('insurance_provider', 'insurance_provider.id', '=', 'p.insurance_provider_id')
+            $reversalQuery->join('insurance_provider', 'insurance_provider.id', '=', 'p.insurance_provider_id')
                 ->addSelect('insurance_provider.text as insurer');
         }
 
