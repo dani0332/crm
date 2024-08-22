@@ -962,7 +962,9 @@ const onReversalEdit = () => {
 const checkDiscount = (newPrice, oldPrice) => {
   let paymentTotalPrice = Number(props?.payments[0]?.total_price);
   let paymentTotalAmount = Number(props?.payments[0]?.total_amount);
-  let savedPriceWithVat = isCPD.value ? Number(reversalEntry.price_with_vat) : Number(props.sendUpdateLog?.price_with_vat);
+  let savedPriceWithVat = isCPD.value
+    ? Number(reversalEntry.price_with_vat)
+    : Number(props.sendUpdateLog?.price_with_vat);
   let savedDiscount =
     Number(props?.payments[0]?.discount_value) ||
     Number(props.sendUpdateLog.discount) ||
@@ -1025,7 +1027,10 @@ const noDiscountType = computed(() => {
     sendUpdateStatusEnum.ED,
   ];
 
-  return noDiscountTypeOptions.includes(props.sendUpdateLog?.option?.code) || isCIOrCIR.value;
+  return (
+    noDiscountTypeOptions.includes(props.sendUpdateLog?.option?.code) ||
+    isCIOrCIR.value
+  );
 });
 
 watch(
