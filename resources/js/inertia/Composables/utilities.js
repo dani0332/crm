@@ -1,31 +1,38 @@
-export const useRoundIt = (num, decimalPlaces = 2) => {
+export const useRoundIt = (num, decimalPlaces = 2) =>
+{
   const p = Math.pow(10, decimalPlaces);
   const n = num * p * (1 + Number.EPSILON);
   return Math.round(n) / p;
 };
 
-export const useCleanObj = reactive => {
-  Object.keys(reactive).forEach(key => {
+export const useCleanObj = reactive =>
+{
+  Object.keys(reactive).forEach(key =>
+  {
     if (
       reactive[key] === null ||
       reactive[key] === undefined ||
       reactive[key] === '' ||
       reactive[key] === false ||
       reactive[key].length === 0
-    ) {
+    )
+    {
       delete reactive[key];
     }
   });
   return reactive;
 };
 
-export const useObjToUrl = obj => {
+export const useObjToUrl = obj =>
+{
   Object.keys(obj).forEach(
     key => (obj[key] === '' || obj[key]?.length === 0) && delete obj[key],
   );
   return Object.keys(obj)
-    .map(key => {
-      if (Array.isArray(obj[key])) {
+    .map(key =>
+    {
+      if (Array.isArray(obj[key]))
+      {
         return obj[key].map(value => `${key}[]=${value}`).join('&');
       }
       return `${key}=${obj[key]}`;
@@ -37,7 +44,8 @@ export const useGetShowPageRoute = (
   uuid,
   quoteTypeId,
   business_type_of_insurance_id,
-) => {
+) =>
+{
   let business_route =
     business_type_of_insurance_id == 5
       ? route('amt.show', uuid)
@@ -60,37 +68,47 @@ export const useGetShowPageRoute = (
 };
 
 // Function to format the date
-export const formatDate = dateObject => {
-  if (dateObject && dateObject.$date && dateObject.$date.$numberLong) {
+export const formatDate = dateObject =>
+{
+  if (dateObject && dateObject.$date && dateObject.$date.$numberLong)
+  {
     const timestamp = parseInt(dateObject.$date.$numberLong);
     const formattedDate = new Date(timestamp);
     const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
     return formattedDate.toLocaleDateString('en-US', options);
-  } else if (dateObject && dateObject.includes('-')) {
+  } else if (dateObject && dateObject.includes('-'))
+  {
     return dateObject;
   }
   return null;
 };
 
-export const useGenerateQueryString = filters => {
+export const useGenerateQueryString = filters =>
+{
   const query = {};
-  Object.keys(filters).forEach(key => {
-    if (Array.isArray(filters[key]) && filters[key].length > 0) {
+  Object.keys(filters).forEach(key =>
+  {
+    if (Array.isArray(filters[key]) && filters[key].length > 0)
+    {
       query[key] = filters[key];
-    } else if (filters[key] !== '' && filters[key] != null) {
+    } else if (filters[key] !== '' && filters[key] != null)
+    {
       query[key] = filters[key];
     }
   });
   return query;
 };
 
-export const useConvertDate = date => {
-  if (date == null) {
+export const useConvertDate = date =>
+{
+  if (date == null)
+  {
     return null;
   }
 
   const splitedDate = date.split('-');
-  if (splitedDate[0].length === 4) {
+  if (splitedDate[0].length === 4)
+  {
     return date;
   }
 
@@ -98,40 +116,49 @@ export const useConvertDate = date => {
   return `${year}-${month}-${day}`;
 };
 
-export const useDaysSinceStale = payload => {
+export const useDaysSinceStale = payload =>
+{
   const quoteRequest = payload;
   let stale_days = quoteRequest
     ? Math.round((new Date() - new Date(quoteRequest)) / (1000 * 60 * 60 * 24))
     : false;
 
-  if (typeof stale_days === 'number' && stale_days <= 90) {
+  if (typeof stale_days === 'number' && stale_days <= 90)
+  {
     stale_days += 1;
-    if (stale_days == 1) {
+    if (stale_days == 1)
+    {
       return stale_days + ' day';
     } else return stale_days + ' days';
-  } else {
+  } else
+  {
     return false;
   }
 };
 
-export const useFormatPrice = (price, thousandSeparator = false) => {
+export const useFormatPrice = (price, thousandSeparator = false) =>
+{
   return thousandSeparator
     ? parseFloat(price).toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
     : parseFloat(price).toFixed(2);
 };
 
-export const useFileUploadErrorMessage = (doc, rejectReason) => {
+export const useFileUploadErrorMessage = (doc, rejectReason) =>
+{
   let errorMessage = '';
-  if (rejectReason.code == 'file-too-large') {
+  if (rejectReason.code == 'file-too-large')
+  {
     errorMessage =
       'File size must be less than ' + doc.max_size + ' MB for ' + doc.text;
-  } else if (rejectReason.code == 'file-invalid-type') {
+  } else if (rejectReason.code == 'file-invalid-type')
+  {
     errorMessage =
       'You can only upload a ' + doc.accepted_files + ' for ' + doc.text;
-  } else {
+  } else
+  {
     errorMessage =
       'You can only upload a ' +
       doc.accepted_files +
@@ -158,7 +185,8 @@ export const useFileUploadErrorMessage = (doc, rejectReason) => {
 //   return errorMessage;
 // };
 
-export const useCompareDueDate = dueDateString => {
+export const useCompareDueDate = dueDateString =>
+{
   // reminder needs to be changed after testing
   const currentDate = new Date();
 
@@ -172,10 +200,13 @@ export const useCompareDueDate = dueDateString => {
   return currentDate > dueDate;
 };
 
-export const useCalculateTotalSum = (data, key) => {
-  const totalSum = data.reduce((accumulator, currentItem) => {
+export const useCalculateTotalSum = (data, key) =>
+{
+  const totalSum = data.reduce((accumulator, currentItem) =>
+  {
     // Ensure the current item has the specified key
-    if (key in currentItem) {
+    if (key in currentItem)
+    {
       // Parse the value to a number and add it to the accumulator
       let value = currentItem[key] != null ? currentItem[key] : 0;
       accumulator += +parseFloat(value.toString().replace(/,/g, '')) || 0;
@@ -186,7 +217,8 @@ export const useCalculateTotalSum = (data, key) => {
   return totalSum.toFixed(2);
 };
 
-export const getPreviousDate = (days = 30, format = 'DD-MMM-YYYY') => {
+export const getPreviousDate = (days = 30, format = 'DD-MMM-YYYY') =>
+{
   // Get the current date
   let currentDate = new Date();
 
@@ -196,17 +228,22 @@ export const getPreviousDate = (days = 30, format = 'DD-MMM-YYYY') => {
   return useDateFormat(previousDate, format).value;
 };
 
-export const setQueryStringFilters = (params, filters) => {
-  for (const [key] of Object.entries(params)) {
-    if (key.includes('[]')) {
+export const setQueryStringFilters = (params, filters) =>
+{
+  for (const [key] of Object.entries(params))
+  {
+    if (key.includes('[]'))
+    {
       filters[key.substring(0, key.length - 2)] = params[key];
-    } else {
+    } else
+    {
       filters[key] = params[key];
     }
   }
 };
 
-export const saveQueryParams = () => {
+export const saveQueryParams = () =>
+{
   let { component, url } = router.page;
   let routes = [
     'HealthQuote/Index',
@@ -217,28 +254,33 @@ export const saveQueryParams = () => {
     'HomeQuote/Index',
   ];
 
-  if (routes.includes(component)) {
+  if (routes.includes(component))
+  {
     const urlWithParams = { url: component, params: url };
     // Serialize the object to JSON
     localStorage.setItem(component, JSON.stringify(urlWithParams));
   }
 };
 
-export const removedSavedParams = () => {
+export const removedSavedParams = () =>
+{
   let { component } = router.page;
   localStorage.removeItem(component);
 };
 
-export const getSavedQueryParams = () => {
+export const getSavedQueryParams = () =>
+{
   let { component } = router.page;
   const savedParams = localStorage.getItem(component);
-  if (savedParams) {
+  if (savedParams)
+  {
     let routerInfo = JSON.parse(savedParams);
     const params = new URLSearchParams(routerInfo.params.split('?')[1]);
 
     // Convert the URLSearchParams object into an object
     const queryParams = {};
-    for (const [key, value] of params.entries()) {
+    for (const [key, value] of params.entries())
+    {
       queryParams[key] = value;
     }
 
@@ -247,11 +289,13 @@ export const getSavedQueryParams = () => {
   }
   return false;
 };
-export const maskEmail = emails => {
+export const maskEmail = emails =>
+{
   if (!emails) return null;
   return emails
     .split(',')
-    .map(email => {
+    .map(email =>
+    {
       const [localPart, domainPart] = email.split('@');
       const maskedLocalPart =
         localPart.substring(0, Math.ceil(localPart.length / 2)) +
@@ -261,8 +305,10 @@ export const maskEmail = emails => {
     .join(',');
 };
 
-export const maskPhone = mobile_no => {
-  if (mobile_no) {
+export const maskPhone = mobile_no =>
+{
+  if (mobile_no)
+  {
     return mobile_no
       .split('')
       .map((char, index) => (index < mobile_no.length / 2 ? char : '*'))
@@ -270,10 +316,12 @@ export const maskPhone = mobile_no => {
   }
   return null;
 };
-export const parseDate = dateString => {
+export const parseDate = dateString =>
+{
   // Preliminary check for the DD-MM-YYYY format
   const ddMmYyyyRegex = /^\d{2}-\d{2}-\d{4}$/;
-  if (ddMmYyyyRegex.test(dateString)) {
+  if (ddMmYyyyRegex.test(dateString))
+  {
     return dateString;
   }
 
@@ -309,10 +357,13 @@ export const parseDate = dateString => {
     'dec',
   ];
 
-  for (const { regex, parts } of patterns) {
+  for (const { regex, parts } of patterns)
+  {
     const match = dateString.match(regex);
-    if (match) {
-      const dateParts = parts.reduce((acc, part, index) => {
+    if (match)
+    {
+      const dateParts = parts.reduce((acc, part, index) =>
+      {
         acc[part] =
           part === 'month' && isNaN(match[index + 1])
             ? months.indexOf(match[index + 1].substring(0, 3).toLowerCase()) + 1
@@ -337,7 +388,8 @@ export const parseDate = dateString => {
   throw new Error('Invalid date format');
 };
 
-export function getQuoteType(id, returnType = 'code') {
+export function getQuoteType(id, returnType = 'code')
+{
   const types = {
     1: { code: 'CAR', id: 'car', link: '/quotes' },
     2: { code: 'HOM', id: 'home', link: '/quotes' },
@@ -351,16 +403,33 @@ export function getQuoteType(id, returnType = 'code') {
   return types[id] ? types[id][returnType] : '';
 }
 
-export function buildCdbidLink(quote_uuid, quote_type_id) {
-  if (quote_uuid) {
+export function buildCdbidLink(quote_uuid, quote_type_id)
+{
+  if (quote_uuid)
+  {
     const url = `${getQuoteType(quote_type_id, 'link')}/${getQuoteType(quote_type_id, 'id')}/${quote_uuid}`;
     const CDBID = `${getQuoteType(quote_type_id, 'code')}-${quote_uuid.toUpperCase()}`;
     return `<a target="_blank" class="text-primary-500 hover:underline flex items-center space-x-1" href="${url}">${CDBID}</a>`;
-  } else {
+  } else
+  {
     return '';
   }
 }
 
-export const userHasRequiredTeams = (givenTeams, userTeams) => {
+export const userHasRequiredTeams = (givenTeams, userTeams) =>
+{
   return givenTeams.every(team => userTeams.includes(team));
+};
+
+export const calculateDaysDifference = (start_date, end_date) =>
+{
+  if (start_date && end_date)
+  {
+    const start = new Date(start_date);
+    const end = new Date(end_date);
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  }
+  return 0;
 };
