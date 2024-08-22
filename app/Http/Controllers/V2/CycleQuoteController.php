@@ -139,6 +139,7 @@ class CycleQuoteController extends Controller
 
         /* Start - Temporarily adding for correcting historic data  */
         $quote = CycleQuoteRepository::where('uuid', $uuid)->first();
+        abort_if(! $quote, 404);
         (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::CYCLE->value);
         /* End - Temporarily adding for correcting historic data  */
 
