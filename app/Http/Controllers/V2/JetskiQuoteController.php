@@ -95,7 +95,7 @@ class JetskiQuoteController extends Controller
 
         /* Start - Temporarily adding for correcting historic data  */
         $quote = JetskiQuoteRepository::where('uuid', $uuid)->first();
-        (new PaymentRepository())->updatePriceVatApplicableAndVat($quote, QuoteTypes::JETSKI->value);
+        (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::JETSKI->value);
         /* End - Temporarily adding for correcting historic data  */
 
         $quote = JetskiQuoteRepository::getBy('uuid', $uuid);

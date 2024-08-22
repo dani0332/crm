@@ -101,7 +101,7 @@ class DropdownSourceService extends BaseService
     public function getDropdownSource($type, $quoteTypeId = false)
     {
         $data = '';
-        $lookUpService = new LookupService();
+        $lookUpService = new LookupService;
         switch ($type) {
             case 'parent_team_id':
                 $data = Team::whereNull('parent_team_id')->where('type', 1)->get();

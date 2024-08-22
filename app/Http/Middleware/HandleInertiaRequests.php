@@ -312,7 +312,7 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::CorpLineQuotesList,
             PermissionsEnum::VehicleValuationList,
         ])) {
-            $nav = $nav->add('Car', '', function (Section $section) {
+            $nav = $nav->add('Valuation', '', function (Section $section) {
                 $section
                     ->add('Valuation', route('valuation'), fn ($s) => $s->attributes(['icon' => 'car']))
                     ->add('Vehicle Depreciation', route('vehicledepreciation.index'), fn ($s) => $s->attributes(['icon' => 'car']));

@@ -9,7 +9,7 @@ class EmailActivityService extends BaseService
     public function addEmailActivity($getResponse, $isEmailSent, $customerEmail)
     {
         if ($getResponse) {
-            $newEmailActivity = new EmailActivity();
+            $newEmailActivity = new EmailActivity;
             $newEmailActivity->api_response = $getResponse;
             $newEmailActivity->successful = $isEmailSent;
             $newEmailActivity->email = $customerEmail;
