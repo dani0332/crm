@@ -161,10 +161,10 @@ onMounted(() => {
             <dt class="font-medium">QUOTE STATUS</dt>
             <dd>{{ quoteRequest?.quote_status?.text ?? '' }}</dd>
           </div>
-            <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">AML STATUS</dt>
-                <dd>{{ quoteRequest?.aml_status?.text ?? '' }}</dd>
-            </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">AML STATUS</dt>
+            <dd>{{ quoteRequest?.aml_status?.text ?? '' }}</dd>
+          </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PHONE NUMBER</dt>
             <dd>{{ quoteRequest.mobile_no }}</dd>

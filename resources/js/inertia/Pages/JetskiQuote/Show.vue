@@ -140,10 +140,10 @@ const dateFormat = date =>
                 <dt class="font-medium">ADVISOR</dt>
                 <dd class="break-words">{{ quote.advisor?.email }}</dd>
               </div>
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium">AML STATUS</dt>
-                    <dd>{{ quote?.aml_status?.text ?? '' }}</dd>
-                </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ quote?.aml_status?.text ?? '' }}</dd>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>

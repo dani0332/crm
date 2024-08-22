@@ -771,10 +771,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 <dt class="font-medium">CUSTOMER TYPE</dt>
                 <dd>{{ quote.customer_type }}</dd>
               </div>
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium">AML STATUS</dt>
-                    <dd>{{ quote?.aml_status_text ?? '' }}</dd>
-                </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ quote?.aml_status_text ?? '' }}</dd>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
                 <dd>{{ quote.next_followup_date }}</dd>
