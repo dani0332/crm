@@ -13,11 +13,21 @@ class SICHealthConfig extends Model implements AuditableContract
 {
     use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
 
-    protected $table = 'sic_health_configs';
+    protected $table = 'sic_configs';
     protected $guarded = [];
-    protected $casts = [
-        'plan_types' => 'json',
-        'member_categories' => 'json',
-        'nationalities' => 'json',
-    ];
+
+
+    public function planTypes()
+    {
+        return $this->morphToMany(HealthPlanType::class, 'configurable', 'sic_configables', 'sic_config_id', 'configurable_id');
+    }
+    public function nationalities()
+    {
+        return $this->morphToMany(Nationality::class, 'configable');
+    }
+
+    public function memberCategories()
+    {
+        return $this->morphToMany(MemberCategory::class, 'configable');
+    }
 }

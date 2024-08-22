@@ -15,7 +15,7 @@ class SICHealthController extends Controller
     public $sicHealthConfigService;
     public function __construct(SICHealthConfigService $sicHealthConfigService)
     {
-        $this->middleware('permission:'.PermissionsEnum::SIC_HEALTH_CONFIG, ['only' => ['index', 'store',]]);
+        // $this->middleware('permission:'.PermissionsEnum::SIC_HEALTH_CONFIG, ['only' => ['index', 'store',]]);
         $this->sicHealthConfigService = $sicHealthConfigService;
 
     }
