@@ -123,7 +123,7 @@ class AmtController extends Controller
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
             $data->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
         }
-        if (isset($request->policy_expiry_date) && $request->policy_expiry_date != '') {
+        if (isset($request->policy_expiry_date) && $request->policy_expiry_date != '' && isset($request->policy_expiry_date_end) && $request->policy_expiry_date_end != '') {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['policy_expiry_date']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['policy_expiry_date_end']));
             $data->whereBetween('bqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);

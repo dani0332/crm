@@ -214,6 +214,7 @@ const formatDate = date => {
       :key="id"
       :href="getUrl(uuid, quoteTypeId)"
       target="_blank"
+      rel="noopener"
       :id="id"
       class="block p-3 mt-2 border space-y-2 hover:transition hover:border-primary-500 rounded"
       :class="[
