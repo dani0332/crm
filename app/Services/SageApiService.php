@@ -159,7 +159,6 @@ class SageApiService
         return $sageRequest;
     }
 
-    // Code Refactor, Old function verifySageCustomer updated function sageCustomer
     public function sageCustomer($quoteTypeId, $quote, $totalSteps = 4)
     {
         $response = '';
@@ -213,12 +212,20 @@ class SageApiService
                     $sageCustomerNumber = $response['CustomerNumber'];
                 }
 
+                // If the customer already exists on Sage
+                if (isset($sageLogArray[1]) && $sageCustomerNumber == false && $sageLogArray[1]['status'] != SageEnum::STATUS_SUCCESS) {
+                    $customerSageDbPayload = json_decode($sageLogArray[1]['sage_payload'], true);
+                    if (isset($customerSageDbPayload['CustomerNumber'])) {
+                        $sageCustomerNumber = $customerSageDbPayload['CustomerNumber'];
+                    }
+                }
+
                 if ($sageCustomerNumber) {
                     if ($isLiveApiCallStep1) {
                         $this->logSageApiCall($customerPayload, $response, $quote, 1, $totalSteps);
                     }
                 } else {
-                    $this->logSageApiCall($customerPayload, $response, $quote, 1, $totalSteps, 'fail');
+                    $this->logSageApiCall($customerPayload, $response, $quote, 1, $totalSteps, SageEnum::STATUS_FAIL);
                 }
             }
         }
@@ -725,7 +732,7 @@ class SageApiService
             $startingStep = 10;
         }
 
-        if ($sageRequestPayload->discount > 0) {
+        if ($sageRequestPayload->discount > 0 && ! in_array(($extras['option'] ?? ''), [SendUpdateLogStatusEnum::ATIB, SendUpdateLogStatusEnum::ACB])) {
             info('Book Update - Creating AR Discount Invoice and mark as posted');
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                 'iterator' => 0,
