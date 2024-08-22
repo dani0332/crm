@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Facades\Ken;
+use App\Services\DropdownSourceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -22,8 +23,16 @@ class ValuationController extends Controller
     {
         $carMakes = DB::table('car_make')->where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
 
+        $dropdownSourceList = ['bike_make_id', 'bike_model_id'];
+        $dropdownSource = [];
+        foreach ($dropdownSourceList as $value) {
+            $data = (new DropdownSourceService)->getDropdownSource($value);
+            $dropdownSource[$value] = $data;
+        }
+
         return inertia('Valuation/Car', [
             'carMakes' => $carMakes,
+            'dropdownSource' => $dropdownSource,
         ]);
     }
 
