@@ -121,6 +121,7 @@ class YachtQuoteController extends Controller
 
         /* Start - Temporarily adding for correcting historic data  */
         $quote = YachtQuoteRepository::where('uuid', $uuid)->first();
+        abort_if(! $quote, 404);
         (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::YACHT->value);
         /* End - Temporarily adding for correcting historic data  */
 
