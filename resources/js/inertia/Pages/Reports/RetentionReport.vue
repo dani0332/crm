@@ -7,7 +7,8 @@ const props = defineProps({
   filtersByLob: Object,
   reportData: Object,
   footerData: Array,
-  filters: Array
+  filters: Array,
+  productName: String,
 });
 
 const page = usePage();
@@ -68,7 +69,7 @@ const objToUrl = obj => {
 
 const getFiltersObject = () => {
   return {
-    lob: '',
+    lob: props.productName,
     displayBy: '',
     policyExpiryDate: [],
     teams: [],
@@ -283,8 +284,21 @@ onMounted(() => {
   const queryParams = new URLSearchParams(window.location.search)
   filters.lob = queryParams.get('lob') || '';
   filters.displayBy = queryParams.get('displayBy') || '';
-  if (filters.lob !== ''){
-    onLobChange(filters.lob, true);
+  if (filters.lob == ''){
+    filters.lob = props.productName
+    filters.displayBy = RetentionReportEnum.BATCH
+  }
+
+  // if (filters.lob !== ''){
+  //   onLobChange(filters.lob, true);
+  // }
+
+  if([quoteTypeCodeEnum.Health,
+      quoteTypeCodeEnum.CORPLINE
+  ].includes(filters.lob)) {
+    loadTeams(filters.lob);
+  } else {
+    loadAdvisorsByLob(filters.lob);
   }
 
 });

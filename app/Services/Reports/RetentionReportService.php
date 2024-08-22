@@ -33,14 +33,15 @@ class RetentionReportService extends BaseService
     
     public function __construct() {
         $this->dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
-        $this->policyExpiryColumnName = 'personal_quotes.created_at';
+        $this->policyExpiryColumnName = 'personal_quotes.policy_expiry_date';
+        // $this->policyExpiryColumnName = 'personal_quotes.created_at';
         $this->paginateData = 12;
     }
 
     /**
      * Retrieves report data based on LOB & other request parameters.
      *
-     * @return array
+    * @return array
      */
     public function getReportData($request, $isExport=false)
     {
@@ -78,7 +79,7 @@ class RetentionReportService extends BaseService
     private function getQuoteType($request)
     {
         // Return the 'lob' parameter from the request if it exists, otherwise return the user's product name
-        return $request['lob'];
+        return $request['lob'] ?? $this->getUserPorductName();
     }
 
     /**
@@ -138,6 +139,12 @@ class RetentionReportService extends BaseService
      */
     private function applyFilters($query, $request)
     {
+        // Apply permission-based filters to the query
+        $this->applyPermissionFilters($query, $request);
+
+        // Apply advisor-related filters to the query
+        $this->applyAdvisorFilters($query, $request);
+
         // Apply line of business filters
         $this->applyLineOfBusinessFilters($query, $request);
 
@@ -147,14 +154,8 @@ class RetentionReportService extends BaseService
         // Apply team-related filters to the query
         $this->applyTeamFilters($query, $request);
     
-        // Apply advisor-related filters to the query
-        $this->applyAdvisorFilters($query, $request);
-    
         // Apply quote type filters to the query
         $this->applyQuoteTypeFilters($query, $request);
-    
-        // Apply permission-based filters to the query
-        $this->applyPermissionFilters($query, $request);
 
         // Apply additional filters based on the 'displayBy' parameter in the request
         $this->applyDisplayByFilters($query, $request);
@@ -445,13 +446,9 @@ class RetentionReportService extends BaseService
     {
         $productName = '';
         // Get the products associated with the authenticated user
-        $products = $this->getUserProducts(auth()->user()->id);
-        // Check if the user has any products and set the product name excluding "Car"
-        foreach ($products as $product) {
-            if ($product->name !== quoteTypeCode::Car) {
-                $productName = $product->name;
-                break;
-            }
+        $products = $this->getUserProducts(auth()->user()->id)->where('name', '!=', quoteTypeCode::Car);
+        if (count($products) === 1){
+            $productName = $products->first()->name;
         }
         return $productName;
     }

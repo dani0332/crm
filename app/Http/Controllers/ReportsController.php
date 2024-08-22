@@ -513,6 +513,7 @@ class ReportsController extends Controller
             'filtersByLob' => $retentionReportService->getFiltersByLob(),
             'reportData' => $retentionReportData,
             'footerData' => $footerData,
+            'productName' => $retentionReportService->getUserPorductName()
         ]);
     }
 
