@@ -1031,7 +1031,6 @@ const noDiscountType = computed(() => {
 watch(
   () => bookingDetailsForm.price_with_vat,
   (newValue, oldValue) => {
-    console.log(newValue);
     if (! (noDiscountType.value || ignoreCheckDiscount.value)) {
       checkDiscount(newValue, oldValue);
     }
