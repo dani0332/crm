@@ -134,6 +134,7 @@ class BikeQuoteController extends Controller
     {
         /* Start - Temporarily adding for correcting historic data  */
         $quote = BikeQuoteRepository::where('uuid', $uuid)->first();
+        abort_if(! $quote, 404);
         (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::BIKE->value);
         /* End - Temporarily adding for correcting historic data  */
 
