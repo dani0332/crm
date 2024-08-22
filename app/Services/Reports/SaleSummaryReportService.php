@@ -84,7 +84,7 @@ class SaleSummaryReportService extends ManagementReport
         if ($request->groupBy == 'customer_group') {
             $query->leftJoin('customer', 'personal_quotes.customer_id', '=', 'customer.id')
                 ->addSelect(DB::raw("CONCAT(customer.first_name, ' ', customer.last_name) as customer_name"))
-                ->addSelect("customer.id as customer_group");
+                ->addSelect('customer.id as customer_group');
         }
 
         if ($request->groupBy == 'insurer') {
@@ -166,12 +166,12 @@ class SaleSummaryReportService extends ManagementReport
         $distinctPaymentSplits = DB::table('payment_splits as dps')
             ->select('dps.code', 'due_date')
             ->groupBy('dps.code');
-            
+
         $query = SendUpdateLog::query()
             ->join('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id')
             ->leftJoin('payments as p', 'send_update_logs.id', '=', 'p.send_update_log_id')
             ->leftJoin('payment_splits as ps', 'p.code', '=', 'ps.code')
-            ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')            
+            ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
             ->join('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
             ->join('departments as dp', 'dp.id', '=', 'u.department_id')
             ->join('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
@@ -209,7 +209,7 @@ class SaleSummaryReportService extends ManagementReport
             // Endorsements
             $query->leftJoin('customer', 'personal_quotes.customer_id', '=', 'customer.id')
                 ->addSelect(DB::raw("CONCAT(customer.first_name, ' ', customer.last_name) as customer_name"))
-                ->addSelect("customer.id as customer_group");
+                ->addSelect('customer.id as customer_group');
         }
 
         if ($request->groupBy == 'insurer') {
@@ -278,7 +278,7 @@ class SaleSummaryReportService extends ManagementReport
             // Endorsements
             $reversalQuery->leftJoin('customer', 'personal_quotes.customer_id', '=', 'customer.id')
                 ->addSelect(DB::raw("CONCAT(customer.first_name, ' ', customer.last_name) as customer_name"))
-                ->addSelect("customer.id as customer_group");
+                ->addSelect('customer.id as customer_group');
         }
 
         if ($request->groupBy == 'insurer') {
@@ -310,9 +310,9 @@ class SaleSummaryReportService extends ManagementReport
 
         $groupByColumn = $request->groupBy;
         $data = collect($data
-        ->groupBy($groupByColumn)
+            ->groupBy($groupByColumn)
             ->map(function ($group, $groupByColumn) use ($request) {
-                return (Object)[
+                return (object) [
                     $request->groupBy => $groupByColumn,
                     'total_endorsements' => $group->sum('total_endorsements'),
                     'total_endorsement_amount' => $group->sum('total_endorsement_amount'),
