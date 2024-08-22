@@ -167,13 +167,13 @@ class SaleSummaryReportService extends ManagementReport
             ->groupBy('dps.code');
             
         $query = SendUpdateLog::query()
-            ->leftJoin('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id')
+            ->join('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id')
             ->leftJoin('payments as p', 'send_update_logs.id', '=', 'p.send_update_log_id')
             ->leftJoin('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')            
-            ->leftJoin('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
-            ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
-            ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
+            ->join('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
+            ->join('departments as dp', 'dp.id', '=', 'u.department_id')
+            ->join('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->select(
                 DB::raw('COUNT(send_update_logs.uuid) as total_endorsements'),
@@ -235,13 +235,13 @@ class SaleSummaryReportService extends ManagementReport
         $query = $this->applyFilters($query, $request, true, true);
 
         $reversalQuery = SendUpdateLog::query()
-            ->leftJoin('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id')
+            ->join('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id')
             ->leftJoin('payments as p', 'send_update_logs.reversal_invoice', '=', 'p.insurer_tax_number')
             ->leftJoin('send_update_logs as S2', 'send_update_logs.reversal_invoice', '=', 's2.insurer_tax_invoice_number')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
-            ->leftJoin('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
-            ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
-            ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
+            ->join('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
+            ->join('departments as dp', 'dp.id', '=', 'u.department_id')
+            ->join('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->whereNotNull('send_update_logs.reversal_invoice')
             ->select(
