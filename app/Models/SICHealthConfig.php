@@ -17,17 +17,23 @@ class SICHealthConfig extends Model implements AuditableContract
     protected $guarded = [];
 
 
-    public function planTypes()
+    public function sicConfigables()
     {
-        return $this->morphToMany(HealthPlanType::class, 'configurable', 'sic_configables', 'sic_config_id', 'configurable_id');
+        return $this->morphMany(SICConfigable::class, 'configable');
+    }
+
+    public function healthPlanTypes()
+    {
+        return $this->hasManyThrough(HealthPlanType::class, SICConfigable::class, 'sic_config_id', 'id', 'id', 'configurable_id');
     }
     public function nationalities()
     {
-        return $this->morphToMany(Nationality::class, 'configable');
+        return $this->hasManyThrough(Nationality::class, SICConfigable::class, 'sic_config_id', 'id', 'id', 'configurable_id');
+
     }
 
     public function memberCategories()
     {
-        return $this->morphToMany(MemberCategory::class, 'configable');
+        return $this->hasManyThrough(MemberCategory::class, SICConfigable::class, 'sic_config_id', 'id', 'id', 'configurable_id');
     }
 }

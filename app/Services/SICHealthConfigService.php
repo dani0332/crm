@@ -15,7 +15,11 @@ class SICHealthConfigService extends BaseService
 {
     public function getEntity()
     {
-        return SICHealthConfig::latest()->first();
+        $sic = SICHealthConfig::where('quote_type_id', QuoteTypeId::Health)
+        ->with('healthPlanTypes','nationalities','memberCategories')
+        ->first();
+
+        dd($sic);
     }
 
     public function saveEntity($id, $data)
@@ -59,10 +63,10 @@ class SICHealthConfigService extends BaseService
         // }
     }
 
-    public function syncData(array $Ids, $configId, $configurableType)
+    public function syncData(array $ids, $configId, $configurableType)
     {
 
-        DB::transaction(function () use ($Ids, $configId,$configurableType) {
+        DB::transaction(function () use ($ids, $configId,$configurableType) {
 
             // Fetch existing records for the given configId
             $existingRecords = DB::table('sic_configables')
@@ -72,8 +76,8 @@ class SICHealthConfigService extends BaseService
                 ->toArray();
 
             // Determine which IDs need to be inserted and deleted
-            $idsToInsert = array_diff($Ids, $existingRecords);
-            $idsToDelete = array_diff($existingRecords, $Ids);
+            $idsToInsert = array_diff($ids, $existingRecords);
+            $idsToDelete = array_diff($existingRecords, $ids);
 
             // Insert new records if any
             if ($idsToInsert) {
