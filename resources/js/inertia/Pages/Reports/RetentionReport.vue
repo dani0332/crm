@@ -78,7 +78,6 @@ const getFiltersObject = () => {
     insurance_type: "",
     type: '',
     advisor_id: '',
-    filters: []
   }
 };
 

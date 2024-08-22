@@ -45,8 +45,8 @@ class RetentionReportService extends BaseService
     public function getReportData($request, $isExport=false)
     {
         // If the model object is not found or the user is not an advisor or manager and no permission, return an empty array
-        if (!$this->isAdvisorManager() || $this->getQuoteType($request) === '') {
-            return [];
+        if ($this->getQuoteType($request) == null || !$this->isAdvisorManager()) {
+            return [[], []];
         }
 
         // Build the query based on the model object and request parameters
@@ -189,7 +189,7 @@ class RetentionReportService extends BaseService
         $query->where('quote_type_id', $lobId->id);
 
         // Uncomment when move to stage or when we have renewel_upload data 
-        // $query->where('source', LeadSourceEnum::RENEWAL_UPLOAD);
+        $query->where('source', LeadSourceEnum::RENEWAL_UPLOAD);
         if (in_array($quoteType, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE])){
             if ($quoteType == quoteTypeCode::GroupMedical){
                 $query->where('business_type_of_insurance_id', '=', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
@@ -353,7 +353,7 @@ class RetentionReportService extends BaseService
     {
         // Select batch name, start date, and end date from the quote_batches table
         $query->selectRaw("quote_batches.name as batch, quote_batches.start_date, quote_batches.end_date")
-            ->join('quote_batches', 'quote_batch_id', '=', 'quote_batches.id');
+            ->join('quote_batches', 'renewal_batch', '=', 'quote_batches.id');
 
         // Check if 'policyExpiryDate' parameter is set in the request
         if (isset($request['policyExpiryDate'])) {
