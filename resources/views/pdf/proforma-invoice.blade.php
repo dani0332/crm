@@ -372,13 +372,17 @@
     use App\Enums\PaymentStatusEnum;
     use App\Enums\QuoteTypeShortCode;
     use App\Models\ApplicationStorage;
+    use App\Models\QuoteType;
 
     $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
 
     $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
 
     $quoteType = $quote->quoteType;
-    $insuranceProvider = $quote->insuranceProvider;
+    if(!$quoteType && $quoteTypeId){
+        $quoteType = QuoteType::find($quoteTypeId);
+    }
+    $insuranceProvider = $proformaPaymentRequest->insuranceProvider;
     $advisor = $quote->advisor;
     $invoiceDate = Carbon\Carbon::parse($proformaPaymentRequest->collection_date)->format($dateFormat);
     $customer = $quote->customer;
@@ -642,7 +646,7 @@
                     @else
                         {{ $quoteType?->text }} <br />
                     @endif
-                    {{ $insuranceProvider?->text }}
+                    ({{ $insuranceProvider?->text }})
                 </td>
                 <td>
                     {{ number_format($subTotal, 2 , '.', ',') }}

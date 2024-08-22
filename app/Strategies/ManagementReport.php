@@ -226,6 +226,10 @@ class ManagementReport
 
     protected function filterTeams($query, $teams, $isSSR = false)
     {
+        if ($teams && ! is_array($teams)) {
+            $teams = [$teams];
+        }
+
         if (! $isSSR) {
             if (! empty($teams) && count($teams) > 0) {
                 $value = $teams;
@@ -235,9 +239,6 @@ class ManagementReport
             return $query;
         }
 
-        if ($teams && ! is_array($teams)) {
-            $teams = [$teams];
-        }
         if (! empty($teams) && count($teams) > 0) {
             $query->whereIn('u.id', function ($query) use ($teams) {
                 $query->select('user_team.user_id')

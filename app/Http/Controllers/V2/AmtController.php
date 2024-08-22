@@ -243,6 +243,7 @@ class AmtController extends Controller
             'uuid' => $id,
             'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
         ]);
+        abort_if(! $record, 404);
 
         /* Start - Temporarily adding for correcting historic data  */
         (new PaymentRepository)->updatePriceVatApplicableAndVat($record, QuoteTypes::BUSINESS->value);

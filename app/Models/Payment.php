@@ -169,6 +169,16 @@ class Payment extends Model implements Auditable
         return $this->belongsTo(HealthPlan::class, 'plan_id');
     }
 
+    public function carPlan()
+    {
+        return $this->belongsTo(CarPlan::class, 'plan_id');
+    }
+
+    public function bikePlan()
+    {
+        return $this->belongsTo(CarPlan::class, 'plan_id');
+    }
+
     // Should be removed because it's already declared above paymentStatusLogs()
     public function paymentStatusLog()
     {
