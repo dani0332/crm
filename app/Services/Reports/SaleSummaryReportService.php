@@ -198,34 +198,33 @@ class SaleSummaryReportService extends ManagementReport
         if ($request->groupBy == 'advisor') {
             // Endorsements
             $query->addSelect('u.name as advisor', 'dp.name as department');
-            $query->whereNotNull('personal_quotes.advisor_id');
+        }
+
+        if ($request->groupBy == 'department') {
+            $query->addSelect('dp.name as department');
         }
 
         if ($request->groupBy == 'customer_group') {
             // Endorsements
             $query->leftJoin('customer', 'personal_quotes.customer_id', '=', 'customer.id')
                 ->addSelect(DB::raw("CONCAT(customer.first_name, ' ', customer.last_name) as customer_group"));
-            $query->whereNotNull('personal_quotes.customer_id');
         }
 
         if ($request->groupBy == 'insurer') {
             // Endorsements
-            $query->join('insurance_provider', 'insurance_provider.id', '=', 'p.insurance_provider_id')
+            $query->leftJoin('insurance_provider', 'insurance_provider.id', '=', 'p.insurance_provider_id')
                 ->addSelect('insurance_provider.text as insurer');
-            $query->whereNotNull('p.insurance_provider_id');
         }
 
         if ($request->groupBy == 'policy_issuer') {
             // Endorsements
             $query->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
                 ->addSelect('pi.name as policy_issuer');
-            $query->whereNotNull('p.policy_issuer_id');
         }
 
         if ($request->groupBy == 'line_of_business') {
             // Endorsements
             $query->addSelect('quote_type.code as line_of_business');
-            $query->whereNotNull('quote_type.code');
         }
 
         if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
@@ -267,34 +266,33 @@ class SaleSummaryReportService extends ManagementReport
         if ($request->groupBy == 'advisor') {
             // Endorsements
             $reversalQuery->addSelect('u.name as advisor', 'dp.name as department');
-            $reversalQuery->whereNotNull('personal_quotes.advisor_id');
+        }
+
+        if ($request->groupBy == 'department') {
+            $reversalQuery->addSelect('dp.name as department');
         }
 
         if ($request->groupBy == 'customer_group') {
             // Endorsements
             $reversalQuery->leftJoin('customer', 'personal_quotes.customer_id', '=', 'customer.id')
                 ->addSelect(DB::raw("CONCAT(customer.first_name, ' ', customer.last_name) as customer_group"));
-            $reversalQuery->whereNotNull('personal_quotes.customer_id');
         }
 
         if ($request->groupBy == 'insurer') {
             // Endorsements
-            $reversalQuery->join('insurance_provider', 'insurance_provider.id', '=', 'p.insurance_provider_id')
+            $reversalQuery->leftJoin('insurance_provider', 'insurance_provider.id', '=', 'p.insurance_provider_id')
                 ->addSelect('insurance_provider.text as insurer');
-            $reversalQuery->whereNotNull('p.insurance_provider_id');
         }
 
         if ($request->groupBy == 'policy_issuer') {
             // Endorsements
             $reversalQuery->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
                 ->addSelect('pi.name as policy_issuer');
-            $reversalQuery->whereNotNull('p.policy_issuer_id');
         }
 
         if ($request->groupBy == 'line_of_business') {
             // Endorsements
             $reversalQuery->addSelect('quote_type.code as line_of_business');
-            $reversalQuery->whereNotNull('quote_type.code');
         }
 
         if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
