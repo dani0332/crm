@@ -66,6 +66,14 @@ const userForm = useForm({
   calendar_link: props.user?.calendar_link ?? null,
   phone_calendar_link: props.user?.phone_calendar_link ?? null,
   department_id: props.user?.department_id ?? null,
+  address_type: null,
+  villa_apartment_office_no: null,
+  floor_no: null,
+  villa_building_name: null,
+  street_name: null,
+  area: null,
+  city: null,
+  landmark: null,
 });
 
 const isAdvisor = computed(() => {
@@ -219,6 +227,12 @@ watch(
   },
   { deep: true },
 );
+
+const addressTypes = [
+  { value: '', label: 'No Address Type' }, // option for leaving it blank
+  { value: '1', label: 'Home' },
+  { value: '2', label: 'Office' },
+];
 </script>
 <template>
   <Head :title="isEdit ? 'Edit Users' : 'Create Users'" />
@@ -279,6 +293,75 @@ watch(
           class="w-full"
         />
       </x-field>
+      <x-field label="Address Type">
+        <ComboBox
+          v-model="userForm.address_type"
+          placeholder="Select address type"
+          :options="addressTypes"
+          :single="true"
+        />
+      </x-field>
+      <x-field label="ADDRESS">
+        <div class="flex flex-wrap -mx-2">
+          <div class="w-1/2 px-2">
+            <x-input
+              type="text"
+              v-model="userForm.villa_apartment_office_no"
+              placeholder="Villa/Apartment/Office No."
+              class="w-full"
+            />
+          </div>
+          <div class="w-1/2 px-2">
+            <x-input
+              type="text"
+              v-model="userForm.floor_no"
+              placeholder="Floor No."
+              class="w-full"
+            />
+          </div>
+          <div class="w-1/2 px-2">
+            <x-input
+              type="text"
+              v-model="userForm.villa_building_name"
+              placeholder="Villa/Building Name"
+              class="w-full"
+            />
+          </div>
+          <div class="w-1/2 px-2">
+            <x-input
+              type="text"
+              v-model="userForm.street_name"
+              placeholder="Street"
+              class="w-full"
+            />
+          </div>
+          <div class="w-1/2 px-2">
+            <x-input
+              type="text"
+              v-model="userForm.area"
+              placeholder="Area"
+              class="w-full"
+            />
+          </div>
+          <div class="w-1/2 px-2">
+            <x-input
+              type="text"
+              v-model="userForm.city"
+              placeholder="City"
+              class="w-full"
+            />
+          </div>
+          <div class="w-1/2 px-2">
+            <x-input
+              type="text"
+              v-model="userForm.landmark"
+              placeholder="Landmark"
+              class="w-full"
+            />
+          </div>
+        </div>
+      </x-field>
+
       <x-field label="PASSWORD" required v-if="isAllowed">
         <x-input v-model="userForm.password" class="w-full" type="password" />
       </x-field>
