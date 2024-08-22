@@ -40,7 +40,8 @@ const modals = reactive({
   cancelPayment: false,
 });
 
-const { isRequired, isEmail, isNumberOrDecimal, isMobileNo } = useRules();
+const { isRequired, isEmail, isNumberOrDecimal, isMobileNo, isNumber } =
+  useRules();
 
 const cancelPaymentForm = item => {
   paymentForm.reset();
