@@ -83,7 +83,8 @@ class SaleSummaryReportService extends ManagementReport
 
         if ($request->groupBy == 'customer_group') {
             $query->leftJoin('customer', 'personal_quotes.customer_id', '=', 'customer.id')
-                ->addSelect(DB::raw("CONCAT(customer.first_name, ' ', customer.last_name) as customer_group"));
+                ->addSelect(DB::raw("CONCAT(customer.first_name, ' ', customer.last_name) as customer_name"))
+                ->addSelect("customer.id as customer_group");
         }
 
         if ($request->groupBy == 'insurer') {
@@ -207,7 +208,8 @@ class SaleSummaryReportService extends ManagementReport
         if ($request->groupBy == 'customer_group') {
             // Endorsements
             $query->leftJoin('customer', 'personal_quotes.customer_id', '=', 'customer.id')
-                ->addSelect(DB::raw("CONCAT(customer.first_name, ' ', customer.last_name) as customer_group"));
+                ->addSelect(DB::raw("CONCAT(customer.first_name, ' ', customer.last_name) as customer_name"))
+                ->addSelect("customer.id as customer_group");
         }
 
         if ($request->groupBy == 'insurer') {
@@ -275,7 +277,8 @@ class SaleSummaryReportService extends ManagementReport
         if ($request->groupBy == 'customer_group') {
             // Endorsements
             $reversalQuery->leftJoin('customer', 'personal_quotes.customer_id', '=', 'customer.id')
-                ->addSelect(DB::raw("CONCAT(customer.first_name, ' ', customer.last_name) as customer_group"));
+                ->addSelect(DB::raw("CONCAT(customer.first_name, ' ', customer.last_name) as customer_name"))
+                ->addSelect("customer.id as customer_group");
         }
 
         if ($request->groupBy == 'insurer') {
