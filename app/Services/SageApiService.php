@@ -7,6 +7,7 @@ use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Factories\SagePayloadFactory;
@@ -137,15 +138,27 @@ class SageApiService
             $sageRequest->invoicePaymentStatus = $paymentSplits[0]['payment_status_id'];
         }
 
+        $insuranceProvider = null;
+
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
+        if (in_array(ucfirst($modelType), $allowedQuoteTypes)) {
+            $planRelationName = strtolower($modelType).'Plan';
+            $payment->load($planRelationName);
+            $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
+        }
+
+        if (! $insuranceProvider) {
+            $insuranceProvider = $payment->insuranceProvider;
+        }
+
         //Insurer GL Account and Vendor Number
-        $sageRequest->insurerGlLiaiblityAccount = $payment->insuranceProvider?->gl_liaiblity_account;
-        $sageRequest->sageVenderId = $payment->insuranceProvider?->sage_vendor_id;
-        $sageRequest->sageInsurerCustomerId = $payment->insuranceProvider?->sage_insurer_customer_id;
+        $sageRequest->insurerGlLiaiblityAccount = $insuranceProvider?->gl_liaiblity_account;
+        $sageRequest->sageVenderId = $insuranceProvider?->sage_vendor_id;
+        $sageRequest->sageInsurerCustomerId = $insuranceProvider?->sage_insurer_customer_id;
 
         return $sageRequest;
     }
 
-    // Code Refactor, Old function verifySageCustomer updated function sageCustomer
     public function sageCustomer($quoteTypeId, $quote, $totalSteps = 4)
     {
         $response = '';
@@ -199,12 +212,20 @@ class SageApiService
                     $sageCustomerNumber = $response['CustomerNumber'];
                 }
 
+                // If the customer already exists on Sage
+                if (isset($sageLogArray[1]) && $sageCustomerNumber == false && $sageLogArray[1]['status'] != SageEnum::STATUS_SUCCESS) {
+                    $customerSageDbPayload = json_decode($sageLogArray[1]['sage_payload'], true);
+                    if (isset($customerSageDbPayload['CustomerNumber'])) {
+                        $sageCustomerNumber = $customerSageDbPayload['CustomerNumber'];
+                    }
+                }
+
                 if ($sageCustomerNumber) {
                     if ($isLiveApiCallStep1) {
                         $this->logSageApiCall($customerPayload, $response, $quote, 1, $totalSteps);
                     }
                 } else {
-                    $this->logSageApiCall($customerPayload, $response, $quote, 1, $totalSteps, 'fail');
+                    $this->logSageApiCall($customerPayload, $response, $quote, 1, $totalSteps, SageEnum::STATUS_FAIL);
                 }
             }
         }
@@ -711,7 +732,7 @@ class SageApiService
             $startingStep = 10;
         }
 
-        if ($sageRequestPayload->discount > 0) {
+        if ($sageRequestPayload->discount > 0 && ! in_array(($extras['option'] ?? ''), [SendUpdateLogStatusEnum::ATIB, SendUpdateLogStatusEnum::ACB])) {
             info('Book Update - Creating AR Discount Invoice and mark as posted');
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                 'iterator' => 0,
@@ -2188,7 +2209,7 @@ class SageApiService
             $isAlreadyPosted = false;
             if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_FAIL) {
                 info('SAGE API :  Check status of  AR Prepayment Receipts batch '.$batchNumber.'  for '.$quote->code);
-                $aRReceiptBatch = $this->postToSage300('AR/ARReceiptAndAdjustmentBatches(BatchRecordType="CA",BatchNumber='.$batchNumber.')', [], 'GET');
+                $aRReceiptBatch = $this->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$batchNumber.')', [], 'GET');
                 info('SAGE API :  Status of  AR Prepayment Receipts batch '.$aRReceiptBatch);
                 $aRReceiptBatch = json_decode($aRReceiptBatch, true);
 
@@ -2297,7 +2318,7 @@ class SageApiService
             $isAlreadyPosted = false;
             if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_FAIL) {
                 info('SAGE API :  Check status of  AR Prepayment Receipts batch '.$batchNumber.'  for '.$quote->code);
-                $aRReceiptBatch = $this->postToSage300('AR/ARReceiptAndAdjustmentBatches(BatchRecordType="CA",BatchNumber='.$batchNumber.')', [], 'GET');
+                $aRReceiptBatch = $this->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$batchNumber.')', [], 'GET');
                 info('SAGE API :  Status of  AR Prepayment Receipts batch '.$aRReceiptBatch);
                 $aRReceiptBatch = json_decode($aRReceiptBatch, true);
 
@@ -2405,7 +2426,7 @@ class SageApiService
             $isAlreadyPosted = false;
             if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_FAIL) {
                 info('SAGE API :  Check status of  AR Prepayment Receipts batch '.$batchNumber.'  for '.$quote->code);
-                $aRReceiptBatch = $this->postToSage300('AR/ARReceiptAndAdjustmentBatches(BatchRecordType="CA",BatchNumber='.$batchNumber.')', [], 'GET');
+                $aRReceiptBatch = $this->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$batchNumber.')', [], 'GET');
                 info('SAGE API :  Status of  AR Prepayment Receipts batch '.$aRReceiptBatch);
                 $aRReceiptBatch = json_decode($aRReceiptBatch, true);
 
@@ -2452,7 +2473,7 @@ class SageApiService
         $returnMessage['message'] = $errorMessage;
         $responseArray = $this->convertResponseToArray($response);
         $sageErrorMessage = $responseArray['error']['message']['value'] ?? $responseArray['error'] ?? null;
-        Log::error("SAGE API : $quote->uuid  : ".json_encode($sageErrorMessage));
+        Log::error("SAGE API : $quote->code  : ".json_encode($sageErrorMessage));
         $returnMessage['error'] = $sageErrorMessage;
         if (str_contains($sageErrorMessage, 'Processing conflict')) {
             $returnMessage['message'] = 'Please wait for 1 minute before booking again.';
