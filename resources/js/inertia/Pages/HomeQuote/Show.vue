@@ -1507,7 +1507,6 @@ const onAddUpdate = () => {
         </template>
       </x-modal>
     </div>
-
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>

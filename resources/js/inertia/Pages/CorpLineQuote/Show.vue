@@ -1536,7 +1536,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
     </x-accordion>
     <!-- <div class="p-4 rounded shadow mb-6 bg-white">
     </div>
-
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
