@@ -28,6 +28,8 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Enums\QuoteSegmentEnum;
+use App\Enums\QuoteTypeId;
 
 class AdvisorConversionReportService extends BaseService
 {
@@ -291,6 +293,7 @@ class AdvisorConversionReportService extends BaseService
             'segment_filter' => [
                 'lobs' => [
                     quoteTypeCode::Car,
+                    quoteTypeCode::Health,
                 ],
             ],
         ];
@@ -605,6 +608,27 @@ class AdvisorConversionReportService extends BaseService
                 $query->join('health_quote_request', function ($join) use ($filters) {
                     $join->on('health_quote_request.uuid', 'personal_quotes.uuid')
                         ->where('health_quote_request.cover_for_id', $filters->insurance_for);
+                });
+            }
+
+            if(isset($filters->segment_filter)) {
+                $segmentFilter = $filters->segment_filter;
+                $this->query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($query) {
+                    $query->whereIn('hqr.uuid', function ($subQuery) {
+                        $subQuery->distinct()
+                            ->select('quote_uuid')
+                            ->from('quote_tags')
+                            ->where('name', QuoteSegmentEnum::SIC->tag())
+                            ->where('quote_type_id', QuoteTypeId::Health);
+                    });
+                })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) {
+                    $query->whereNotIn('hqr.uuid', function ($subQuery) {
+                        $subQuery->distinct()
+                            ->select('quote_uuid')
+                            ->from('quote_tags')
+                            ->where('name', QuoteSegmentEnum::SIC->tag())
+                            ->where('quote_type_id', QuoteTypeId::Health);
+                    });
                 });
             }
         }

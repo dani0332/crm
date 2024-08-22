@@ -1,6 +1,9 @@
 <script setup>
+
+
 const props = defineProps({
     sicHealthConfig: Object,
+    relations:Object,
     nationalities: Object,
     memberCategories: Object,
     healthTypes: Object,
@@ -16,16 +19,28 @@ const SICHealthConfigForm = useForm({
   id : props.sicHealthConfig?.id ?? null,
   min_age: props.sicHealthConfig?.min_age ?? 0,
   max_age: props.sicHealthConfig?.max_age ?? 0,
-  plan_types: props.sicHealthConfig?.plan_types ?? [],
+  plan_types: [],
   is_type: props.sicHealthConfig?.is_type ?? false,
-  nationalities: props.sicHealthConfig?.nationalities ?? [],
-  member_categories: props.sicHealthConfig?.member_categories ?? [],
+  nationalities:  [],
+  member_categories: [],
   is_nationality: props.sicHealthConfig?.is_nationality ?? false,
   is_member_category: props.sicHealthConfig?.is_member_category ?? false,
   is_age: props.sicHealthConfig?.is_age ?? false,
 
 });
 
+onMounted(() => {
+    console.log(props.relations);
+  if (props.relations?.health_plan_types?.length > 0) {
+    SICHealthConfigForm.plan_types = props.relations?.health_plan_types.map((item)=>item.id) ?? [];
+  }
+  if(props.relations?.nationalities?.length > 0){
+    SICHealthConfigForm.nationalities = props.relations?.nationalities.map((item)=>item.id) ?? [];
+  }
+  if(props.relations?.member_categories?.length > 0){
+    SICHealthConfigForm.member_categories = props.relations?.member_categories.map((item)=>item.id) ?? [];
+  }
+});
 function onSubmit(isValid) {
 
   if (isValid) {

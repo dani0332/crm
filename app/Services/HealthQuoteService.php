@@ -46,6 +46,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use PDF;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
+use App\Enums\QuoteSegmentEnum;
 
 class HealthQuoteService extends BaseService
 {
@@ -489,6 +490,26 @@ class HealthQuoteService extends BaseService
         if (isset($request->is_ecommerce)) {
             $isEcommerce = $request->is_ecommerce == 'Yes' ? 1 : 0;
             $this->query->where('hqr.is_ecommerce', $isEcommerce);
+        }
+        if( $request->has('segment_filter')) {
+            $segmentFilter = $request->input('segment_filter');
+            $this->query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($query) {
+                $query->whereIn('hqr.uuid', function ($subQuery) {
+                    $subQuery->distinct()
+                        ->select('quote_uuid')
+                        ->from('quote_tags')
+                        ->where('name', QuoteSegmentEnum::SIC->tag())
+                        ->where('quote_type_id', QuoteTypeId::Health);
+                });
+            })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) {
+                $query->whereNotIn('hqr.uuid', function ($subQuery) {
+                    $subQuery->distinct()
+                        ->select('quote_uuid')
+                        ->from('quote_tags')
+                        ->where('name', QuoteSegmentEnum::SIC->tag())
+                        ->where('quote_type_id', QuoteTypeId::Health);
+                });
+            });
         }
 
         $this->adjustQueryByDateFilters($this->query, 'hqr');

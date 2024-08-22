@@ -19,21 +19,7 @@ class SICHealthConfig extends Model implements AuditableContract
 
     public function sicConfigables()
     {
-        return $this->morphMany(SICConfigable::class, 'configable');
+      return $this->hasMany(SICConfigable::class,'sic_config_id','id');
     }
 
-    public function healthPlanTypes()
-    {
-        return $this->hasManyThrough(HealthPlanType::class, SICConfigable::class, 'sic_config_id', 'id', 'id', 'configurable_id');
-    }
-    public function nationalities()
-    {
-        return $this->hasManyThrough(Nationality::class, SICConfigable::class, 'sic_config_id', 'id', 'id', 'configurable_id');
-
-    }
-
-    public function memberCategories()
-    {
-        return $this->hasManyThrough(MemberCategory::class, SICConfigable::class, 'sic_config_id', 'id', 'id', 'configurable_id');
-    }
 }

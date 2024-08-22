@@ -27,7 +27,8 @@ class SICHealthController extends Controller
 
         return inertia('Admin/SICHealth/SicHealthConfigForm', [
             'nationalities' => NationalityRepository::withActive()->get(),
-            'sicHealthConfig' => $sicHealthConfig,
+            'sicHealthConfig' => $sicHealthConfig->data,
+            'relations' => $sicHealthConfig->relations,
             'healthTypes' => $healthTypes,
             'memberCategories' => app(LookupService::class)->getMemberCategories(),
         ]);

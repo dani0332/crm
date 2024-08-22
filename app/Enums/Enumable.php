@@ -23,5 +23,21 @@ trait Enumable
         }
 
         return $values;
+}
+
+    public static function withLabelsForHealth(): array
+    {
+        $values = [];
+        $caseList = collect(self::cases())->whereNotIn('value',QuoteSegmentEnum::SIC_REVIVAL->value);
+        foreach ($caseList as $case) {
+            if($case->value != QuoteSegmentEnum::SIC_REVIVAL){
+                $values[] = [
+                    'value' => $case->value,
+                    'label' => $case->label(),
+                ];
+            }
+        }
+        return $values;
     }
+
 }
