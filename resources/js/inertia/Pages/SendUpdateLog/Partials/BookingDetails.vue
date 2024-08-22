@@ -333,6 +333,7 @@ const calculatePriceDetailsForATIB = () => {
 };
 
 const calculateCommission = () => {
+  ignoreCheckDiscount.value = false;
   if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ACB) {
     calculateCommisionDetailsForACB();
   } else if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB) {
@@ -616,7 +617,10 @@ onMounted(() => {
   }
 });
 
+const ignoreCheckDiscount = ref(false);
+
 const onUpdateReversal = () => {
+  ignoreCheckDiscount.value = true;
   state.reversalSectionEdit = !state.reversalSectionEdit;
   bookingDetailsForm.transaction_payment_status = 'N/A';
   bookingDetailsForm.invoice_date = reversalEntry.invoice_date || '';
@@ -642,6 +646,7 @@ const onUpdateReversal = () => {
   bookingDetailsForm.total_vat_amount =
     reversalEntry.total_vat_amount || '0.00';
   bookingDetailsForm.price_with_vat = reversalEntry.price_with_vat;
+  bookingDetailsForm.discount = null;
 };
 
 function convertToNumber(value) {
@@ -957,7 +962,7 @@ const onReversalEdit = () => {
 const checkDiscount = (newPrice, oldPrice) => {
   let paymentTotalPrice = Number(props?.payments[0]?.total_price);
   let paymentTotalAmount = Number(props?.payments[0]?.total_amount);
-  let savedPriceWithVat = Number(props.sendUpdateLog?.price_with_vat);
+  let savedPriceWithVat = isCPD.value ? Number(reversalEntry.price_with_vat) : Number(props.sendUpdateLog?.price_with_vat);
   let savedDiscount =
     Number(props?.payments[0]?.discount_value) ||
     Number(props.sendUpdateLog.discount) ||
@@ -1020,16 +1025,14 @@ const noDiscountType = computed(() => {
     sendUpdateStatusEnum.ED,
   ];
 
-  return !(
-    noDiscountTypeOptions.includes(props.sendUpdateLog?.option?.code) ||
-    isCIOrCIR.value
-  );
+  return noDiscountTypeOptions.includes(props.sendUpdateLog?.option?.code) || isCIOrCIR.value;
 });
 
 watch(
   () => bookingDetailsForm.price_with_vat,
   (newValue, oldValue) => {
-    if (noDiscountType.value) {
+    console.log(newValue);
+    if (! (noDiscountType.value || ignoreCheckDiscount.value)) {
       checkDiscount(newValue, oldValue);
     }
   },
