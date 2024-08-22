@@ -140,10 +140,10 @@ class SplitPaymentService
 
             if ($readyToPostResponse !== '') {
                 $readyToPostArray = json_decode($readyToPostResponse, true);
-               
+
                 if (isset($readyToPostArray['error']['message']['value']) && strpos($readyToPostArray['error']['message']['value'], 'status from POSTED')) {
                     info('SAGE API Payments:  Check status of  AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  for '.$quote->code);
-                   
+
                     $aRReceiptBatch = $sageApiService->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$sageResponse['BatchNumber'].')', [], 'GET');
                     info('SAGE API Payments:  Status of  AR Prepayment Receipts batch '.$aRReceiptBatch);
                     $aRReceiptBatch = json_decode($aRReceiptBatch, true);
@@ -154,9 +154,10 @@ class SplitPaymentService
                     } else {
                         $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, SageEnum::STATUS_FAIL, $request->advisor_id);
                         $returnMessage['response'] = 'Error while making ready to post to sage';
+
                         return $returnMessage;
                     }
-                    
+
                 } else {
                     $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
                 }
@@ -167,30 +168,30 @@ class SplitPaymentService
             }
 
             $isLiveApiCallStep4 = true;
-            
-                if (isset($sageLogArray[4]) && $sageLogArray[4]['status'] == 'success') {
-                    $isLiveApiCallStep4 = false;
-                    $postedResponse = json_decode($sageLogArray[4]['response'], true);
-                } else {
-                    $aRPostReceipts = SagePayloadFactory::aRPostReceiptsPayment($sageResponse['BatchNumber']);
-                    $postedResponse = $sageApiService->postToSage300($aRPostReceipts['endPoint'], $aRPostReceipts['payload']);
-                    $postedResponse = json_decode($postedResponse, true);
-                }
 
-                if($isAlreadyPosted && isset($aRPostReceipts)){
-                    $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
-                } else {
-                    if (isset($postedResponse['error'])) {
-                        $returnMessage['response'] = 'Error while posting to sage';
-                        $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4, SageEnum::STATUS_FAIL, $request->advisor_id);
+            if (isset($sageLogArray[4]) && $sageLogArray[4]['status'] == 'success') {
+                $isLiveApiCallStep4 = false;
+                $postedResponse = json_decode($sageLogArray[4]['response'], true);
+            } else {
+                $aRPostReceipts = SagePayloadFactory::aRPostReceiptsPayment($sageResponse['BatchNumber']);
+                $postedResponse = $sageApiService->postToSage300($aRPostReceipts['endPoint'], $aRPostReceipts['payload']);
+                $postedResponse = json_decode($postedResponse, true);
+            }
 
-                        return $returnMessage;
-                    } else {
-                        if ($isLiveApiCallStep4) {
-                            $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
-                        }
+            if ($isAlreadyPosted && isset($aRPostReceipts)) {
+                $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
+            } else {
+                if (isset($postedResponse['error'])) {
+                    $returnMessage['response'] = 'Error while posting to sage';
+                    $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4, SageEnum::STATUS_FAIL, $request->advisor_id);
+
+                    return $returnMessage;
+                } else {
+                    if ($isLiveApiCallStep4) {
+                        $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
                     }
                 }
+            }
 
             $documentNumberForReciept = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
             $returnMessage = ['status' => 'success', 'response' => $documentNumberForReciept];
