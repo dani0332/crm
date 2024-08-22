@@ -31,9 +31,7 @@ class CarRevivalQuoteController extends Controller
 {
     use GenericQueriesAllLobs;
 
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
@@ -118,8 +116,17 @@ class CarRevivalQuoteController extends Controller
                 'assignee' => User::where('id', $activity->assignee_id)->first()->name,
                 'assignee_id' => $activity->assignee_id,
                 'status' => $activity->status,
+                'quote_status_id' => $activity->quote_status_id,
+                'quote_status' => $activity?->quoteStatus,
             ];
             array_push($activities, $updatedActivity);
+        }
+
+        foreach ($payments as $payment) {
+            $payment->payment_status_text = $payment->paymentStatus->text;
+            $payment->last_payment_status_created_at = $payment->paymentStatusLogs->last() != null ? $payment->paymentStatusLogs->last()->created_at : '';
+            $payment->payment_method_name = $payment->paymentMethod->name;
+            $payment->insurance_provider_id_text = $payment->insuranceProvider->text;
         }
 
         $customerAdditionalContacts = app(CustomerService::class)->getAdditionalContacts($record->customer_id, $record->mobile_no);
@@ -167,11 +174,5 @@ class CarRevivalQuoteController extends Controller
         CarRevivalQuoteRepository::where(['uuid' => $uuid])->update($carRevivalQuoteRequest->validated());
 
         return back()->with('message', 'Quote updated successfully');
-    }
-
-    public function updateQuote(Request $request)
-    {
-
-        CarRevivalQuoteRepository::updateQuote($request);
     }
 }

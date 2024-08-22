@@ -3,10 +3,8 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
-use App\Enums\PermissionsEnum;
-use App\Enums\QuoteSegmentEnum;
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Auth;
@@ -39,7 +37,7 @@ class CarQuote extends BaseModel
         'vehicle_type_id' => FilterTypes::EXACT,
         'car_type_insurance_id' => FilterTypes::EXACT,
         'renewal_batch' => FilterTypes::EXACT,
-        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'policy_expiry_date' => FilterTypes::DATE_BETWEEN,
         'policy_number' => FilterTypes::NULL_CHECK,
         'source' => FilterTypes::EXACT,
         'advisor_id' => FilterTypes::IN,
@@ -48,6 +46,9 @@ class CarQuote extends BaseModel
         'renewal_batch' => FilterTypes::EXACT,
         'mobile_no' => FilterTypes::EXACT,
         'quote_batch_id' => FilterTypes::IN,
+    ];
+    protected $dispatchesEvents = [
+        'updated' => QuoteEmailUpdated::class,
     ];
 
     public function getFullNameAttribute()
@@ -153,7 +154,7 @@ class CarQuote extends BaseModel
 
     public function insuranceProvider()
     {
-        return $this->hasOne(InsuranceProvider::class, 'text', 'currently_insured_with')->select(['id', 'text']);
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id')->select(['id', 'text']);
     }
 
     public function car_model_id()
@@ -204,6 +205,11 @@ class CarQuote extends BaseModel
     public function payments()
     {
         return $this->morphMany(Payment::class, 'paymentable');
+    }
+
+    public function embeddedTransactions()
+    {
+        return $this->morphMany(EmbeddedTransaction::class, 'quote_request');
     }
 
     public function plan()
@@ -263,7 +269,7 @@ class CarQuote extends BaseModel
 
     public function advisor()
     {
-        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no']);
+        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no', 'profile_photo_path', 'calendar_link']);
     }
 
     public function batch()
@@ -301,6 +307,11 @@ class CarQuote extends BaseModel
         return $this->morphMany(CustomerMembers::class, 'quote');
     }
 
+    public function sageApiLogs()
+    {
+        return $this->morphMany(SageApiLog::class, 'section');
+    }
+
     public function scopeRelationWhere($query, $isGetList, $filters)
     {
         if (Auth::user()->hasRole('pa') && $isGetList) {
@@ -312,33 +323,7 @@ class CarQuote extends BaseModel
     public function scopeFilterBySegment($query)
     {
         $segmentFilter = request()->input('segment_filter');
-        self::applySegmentFilter($query, $segmentFilter);
-    }
-
-    public static function applySegmentFilter($query, $segmentFilter, $alias = 'car_quote_request')
-    {
-        $user = auth()->user();
-        if ($user->can(PermissionsEnum::SEGMENT_FILTER) && $segmentFilter) {
-            $query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($query) use ($alias) {
-                $query->whereIn("{$alias}.uuid", function ($query) {
-                    $query->distinct()
-                        ->select('quote_uuid')
-                        ->from('quote_tags')
-                        ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
-                        ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
-                        ->where('quote_type.code', quoteTypeCode::Car);
-                });
-            })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) use ($alias) {
-                $query->whereNotIn("{$alias}.uuid", function ($query) {
-                    $query->distinct()
-                        ->select('quote_uuid')
-                        ->from('quote_tags')
-                        ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
-                        ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
-                        ->where('quote_type.code', quoteTypeCode::Car);
-                });
-            });
-        }
+        self::applySegmentFilter($query, $segmentFilter, 'car_quote_request', QuoteTypeId::Car);
     }
 
     /*****  NewRelationships so old should not effect */
@@ -516,8 +501,25 @@ class CarQuote extends BaseModel
             ->where('quote_type_id', QuoteTypeId::Car);
     }
 
+    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Activities::class, 'quote_request_id')
+            ->where('quote_type_id', QuoteTypeId::Car);
+    }
+
     public function duplicateInquiryLog(): MorphMany
     {
         return $this->morphMany(DuplicateInquiryLog::class, 'loggable');
+    }
+
+    public function policyWording()
+    {
+        return $this->hasMany(CarPlanPolicyWording::class, 'plan_id', 'plan_id');
+    }
+
+    // Get insurance provider for plan details section
+    public function insuranceProviderDetails()
+    {
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
 }

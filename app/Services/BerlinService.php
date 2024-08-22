@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Jobs\MAWelcomeJob;
 use App\Models\MyAlFredUser;
 use Illuminate\Support\Facades\Log;
@@ -24,7 +25,7 @@ class BerlinService extends BaseService
     public function getCustomerInviteCode()
     {
         $inviteCodeGeneratauthBasic = base64_encode($this->berlinUserName.':'.$this->berlinAuthPassword);
-        $clientBerlin = new \GuzzleHttp\Client();
+        $clientBerlin = new \GuzzleHttp\Client;
 
         try {
             $berlinRequest = $clientBerlin->post(
@@ -66,7 +67,7 @@ class BerlinService extends BaseService
         $magicUrlGeneratePassword = config('constants.BERLIN_BASIC_AUTH_PASSWORD');
 
         $magicUrlGeneratauthBasic = base64_encode($magicUrlGenerateUserName.':'.$magicUrlGeneratePassword);
-        $clientBerlin = new \GuzzleHttp\Client();
+        $clientBerlin = new \GuzzleHttp\Client;
 
         try {
             $berlinRequest = $clientBerlin->post(
@@ -99,7 +100,7 @@ class BerlinService extends BaseService
         return $apiResponse;
     }
 
-    public function extendCustomerSubscription($customerId, $customerEmail, $source, $tag)
+    public function extendCustomerSubscription($customerId, $customerEmail, $source, $tag, $isImport = false)
     {
         $customer = MyAlFredUser::select('signup_url', 'code')->where('customer_id', $customerId)->latest()->first();
 
@@ -126,7 +127,7 @@ class BerlinService extends BaseService
         $customerDataArr['email'] = $customerEmail;
         $customerDataJson = json_encode($customerDataArr);
         $magicUrlGeneratauthBasic = base64_encode($this->berlinUserName.':'.$this->berlinAuthPassword);
-        $clientExtendSubscription = new \GuzzleHttp\Client();
+        $clientExtendSubscription = new \GuzzleHttp\Client;
 
         try {
             $requestExtendSubscription = $clientExtendSubscription->post(
@@ -138,7 +139,7 @@ class BerlinService extends BaseService
                         'Authorization' => 'Basic '.$magicUrlGeneratauthBasic,
                     ],
                     'body' => $customerDataJson,
-                    'timeout' => 10,
+                    'timeout' => 20,
                 ]
             );
 
@@ -148,12 +149,22 @@ class BerlinService extends BaseService
 
             $errorData = json_decode($e->getResponse()->getBody()->getContents(), true);
 
-            if ($errorData['code'] == 'CUSTOMER_NOT_FOUND') {
+            if (isset($errorData['code']) && $errorData['code'] == 'CUSTOMER_NOT_FOUND') {
                 $customer = $this->customerService->getCustomerByEmail($customerEmail);
-                Log::warning('extendCustomerSubscription Customer Id: '.$customerId.' Customer Email: '.$customerEmail.' Error Code: '.$errorData['code'].' Customer not exist so cannot proceed to extend subscription, sending signup email to customer. API Message: '.$errorData['message']);
-                dispatch(new MAWelcomeJob($customer->first_name, $customer->last_name, $customer->email, $customer->mobile_no, $source, $tag));
+                Log::warning('Berlin Service - extendCustomerSubscription - Success - Customer ID: '.$customerId.' - Sending MA Welcome Email. API Message: '.$errorData['message']);
+                MAWelcomeJob::dispatchIf(
+                    $isImport || ! isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)),
+                    $customer->first_name,
+                    $customer->last_name,
+                    $customer->email,
+                    $customer->mobile_no,
+                    $source,
+                    $tag
+                );
+
+                $statusCode = 201;
             } else {
-                Log::error('Berlin Service - extendCustomerSubscription - Customer ID: '.$customerId.' - Status Code: '.$statusCode.' - '.$e->getMessage());
+                Log::error('Berlin Service - extendCustomerSubscription - Fail - Customer ID: '.$customerId.' Status Code: '.$statusCode.' - Message: '.$e->getMessage());
             }
         }
 

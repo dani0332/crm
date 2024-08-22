@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
 use App\Jobs\MAWelcomeJob;
 use App\Models\Customer;
@@ -125,7 +126,15 @@ class CustomerController extends Controller
         $customer->save();
 
         if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && ! $customer->is_we_sent) {
-            dispatch(new MAWelcomeJob($customer->first_name, $customer->last_name, $customer->email, $customer->mobile_no, 'CUSTOMER_UPDATE', 'customer-update-myalfred-we'));
+            MAWelcomeJob::dispatchUnless(
+                isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)),
+                $customer->first_name,
+                $customer->last_name,
+                $customer->email,
+                $customer->mobile_no,
+                'CUSTOMER_UPDATE',
+                'customer-update-myalfred-we'
+            );
         }
 
         return redirect('customer/'.$customer->uuid)->with('success', 'Customer information has been updated.');
@@ -189,38 +198,9 @@ class CustomerController extends Controller
                 'message' => $validator->errors(),
             ]]);
         }
+
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
-        if ($request->key == GenericRequestEnum::EMAIL) {
-            $quoteObject->email = $request->value;
-            if ($quoteObject->customer && ! $this->customerService->getCustomerByEmail($request->value)) {
-                Log::info('Customer additional contact primary email updated. Previous Email: '.$quoteObject->email.' New Email: '.$request->value);
-                $quoteObject->customer->update(['email' => $request->value]);
-            } else {
-                if ($request->isInertia) {
-                    return redirect()->back()->withErrors(['Email Address already in use for a customer.']);
-                }
-
-                return response()->json(['data' => [
-                    'message' => 'Email Address already in use for a customer.',
-                ]]);
-            }
-        } elseif ($request->key == GenericRequestEnum::MOBILE_NO) {
-            $quoteObject->mobile_no = $request->value;
-            if ($quoteObject->customer) {
-                Log::info('Customer additional contact primary mobile_no updated. Previous Mobile_No: '.$quoteObject->mobile_no.' New Mobile_No: '.$request->value);
-                $quoteObject->customer->update(['mobile_no' => $request->value]);
-
-                if (isset($request->quote_primary_mobile_no) && isset($request->quote_customer_id)) {
-                    CustomerAdditionalContact::create([
-                        'customer_id' => $request->quote_customer_id,
-                        'key' => 'mobile_no',
-                        'value' => trim($request->quote_primary_mobile_no),
-                    ]);
-                }
-            }
-            // Add quote_previous_primary_mobile_no in customer_additional_contact
-        }
-        $quoteObject->save();
+        $this->customerService->makeAdditionalContactPrimary($quoteObject, $request->key, $request->value);
 
         if (isset($request->isInertia) && $request->isInertia) {
             return redirect()->back();
@@ -252,31 +232,32 @@ class CustomerController extends Controller
         $key = $request->additional_contact_type;
         $value = $request->additional_contact_val;
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
-
         if ($key == GenericRequestEnum::EMAIL) {
-            $isAdditionalEmailExist = $this->customerService->checkAdditionalEmailExist($quoteObject, $value);
+            $isExistEmail = CustomerAdditionalContact::where('customer_id', $request->customer_id)
+                ->where('value', $request->additional_contact_val)->where('key', 'email')->first();
 
-            if ($isAdditionalEmailExist) {
+            if ($isExistEmail) {
                 if ($request->isInertia) {
-                    vAbort('Email Address already in use for a customer. Please try another.');
+                    vAbort('Email already Exist. Please try another.');
                 }
 
                 return response()->json(['error' => [
-                    'message' => 'Email Address already in use for a customer. Please try another.',
+                    'message' => 'Email already Exist. Please try another.',
                 ]]);
             }
         }
 
         if ($key == GenericRequestEnum::MOBILE_NO) {
-            $isAdditionalMobileNoExist = $this->customerService->checkAdditionalMobileNoExist($quoteObject, $value);
+            $isExistMobile = CustomerAdditionalContact::where('customer_id', $request->customer_id)
+                ->where('value', $request->additional_contact_val)->where('key', 'mobile_no')->first();
 
-            if ($isAdditionalMobileNoExist) {
+            if ($isExistMobile) {
                 if ($request->isInertia) {
-                    vAbort('Mobile Number already in use for a customer. Please try another.');
+                    vAbort('Mobile Number already Exist. Please try another.');
                 }
 
                 return response()->json(['error' => [
-                    'message' => 'Mobile Number already in use for a customer. Please try another.',
+                    'message' => 'Mobile Number already Exist. Please try another.',
                 ]]);
             }
         }

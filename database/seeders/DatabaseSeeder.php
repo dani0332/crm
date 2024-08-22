@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use Illuminate\Console\Application;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -14,39 +15,18 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            // RenewalsPermissionSeeder::class,
-            // addCarQuoteSearchPermission::class,
-            // QuoteStatusTableSeeder::class,
-            // UtmLeadsSalesReportSeeder::class,
-            // CarLostStorageSeeder::class,
-            // AddPersonalLobsProducts::class,
-            // addCarQuoteNewStatuses::class,
-            // CommercialKeywordsSeeder::class,
-            // RuleTypeSeeder::class,
-            // CommercialMakeModelKeywordsPermissionsSeeder::class,
-            // FetchRuleDetailsTableRecordsFromRuleLeadSourceSeeder::class,
-            // ApplicationStorageSeeder::class,
-            // SlabsTableSeeder::class,
-            // AddPersonalLobsProducts::class,
-            // addTeamThresholdViewPermission::class,
-            // PetBikeMigrationSeeder::class
-            // InsurerQuoteTypeMappingSeeder::class,
-            // addTeamAllocationThresholdViewPermission::class,
-            // addQuoteAllocationSwitch::class,
-            // CreateAndAssignSubTeamsToAdvisors::class,
-            // AddApiLogViewToPermssion::class,
-            // AutofollowupSeeder::class,
-            // addReassignmentTime::class,
-            // GenericPermissionSeeder::class,
-            // addDubaiNowLeadSourceExemptionInAppStorage::class,
-            LookupSeeder::class,
+            //  LookupSeeder::class,
+            // LostReasonsTableSeeder::class,
+            // AddGenericRolePermissionSeeder::class,
+            // addDubaiNowEmailGroup::class,
+            // DubaiLeadSource::class,
+            // ActivitySchedulesSeeder::class,
+            //  DocumentTypeSeeder::class,
             //            AddNewDocumentTypesSeeder::class,
             // UpdateCustomerToHealthAndTravelMemberDetails::class,
-            GenericPermissionSeeder::class,
-            AddLegacyPaymentsPermssion::class,
+            // GenericPermissionSeeder::class,
             /*addSICWorkflow::class,
             UpdateRenewalTemplateStorageSeeder::class,
-            ApplicationStorageSeeder::class,
             addDubaiNowEmailGroup::class,
             DubaiLeadSource::class,*/
             // AddNewDocumentTypesSeeder::class,
@@ -57,16 +37,48 @@ class DatabaseSeeder extends Seeder
             updateDocTypePayment::class,
             AddSageFlagApplicationStorage::class,
             AddTempUpdateTotalPricePermission::class,
+
             PaymentLookupSeeder::class,
             InsuranceQuoteTypeSeeder::class,
-            AddPaymentPermissionsSeeder::class,
+            ,
             TotalPremiumReportPermissionSeeder::class,*/
 
             // dtt seeder
-            AddDttFlagApplicationStorage::class,
-            DttOCBNewBusinessSeeder::class,
-            RevivalConversionReportPermissionSeeder::class,
+            // AddDttFlagApplicationStorage::class,
+            // DttOCBNewBusinessSeeder::class,
+            // RevivalConversionReportPermissionSeeder::class,
             // end
+            // AddCrossLOBSeeder::class,
+            // MapBusinessTypeOfInsuranceIdsFromBusinessQuotesToPersonalQuotesTableSeeder::class,
+            // BusinessTypeInsuranceSeeder::class,
+            // MarineSeeder::class,
+            // ImcrmUsersRolesCleaner::class,
+            // AddeTicketDocumentTypeSeeder::class,
+            // DocumentVerifyPermissionSeeder::class,
+
+            /* AddLOBsClaimHistoryOptionsSeeder::class,
+            AddRenewalTemplateStorageSeeder::class,
+            CarMakeSeeder::class,
+            AddPaymentPermissions::class,
+            AddCreateSendUpdatePermissionToAllRoles::class,
+
+            InslyRoles::class,
+            InslyPermissions::class,
+            QuoteStatusMapSeeder::class,
+            QuoteStatusSeeder::class,
+            ApplicationStorageSeeder::class,
+            addInsuranceProvidersConfiguration::class,
+            RevokeTempPaymentUpdatePermissionsSeeder::class,
+            addPermissionsForInsurerNowPayment::class,
+            AddeTicketDocumentTypeSeeder::class,
+            DocumentVerifyPermissionSeeder::class,
+            DepartmentPermissionSeeder::class,
+            DocumentTypeAuditRecordSU::class, // Add new Document type for send update - Audit Records*/
+
+            // AddPaymentPermissionsSeeder::class,
+            //AddSendUpdatesCategoriesInLookups::class,
+            AMLStatusTableSeeder::class,
+
         ]);
     }
 }

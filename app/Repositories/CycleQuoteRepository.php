@@ -9,6 +9,7 @@ use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\CycleQuote;
 use App\Models\PersonalQuote;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,13 +17,15 @@ use Illuminate\Support\Facades\URL;
 
 class CycleQuoteRepository extends BaseRepository
 {
+    use GenericQueriesAllLobs;
+
     public function model()
     {
         return PersonalQuote::class;
     }
 
     /**
-     * create new personal quote
+     * create new personal quote.
      *
      * @param  $quoteTypeCode
      * @return mixed
@@ -58,8 +61,13 @@ class CycleQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($forExport = false)
+    public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
+        $request = request();
+
+        $sort_by = isset($request->sortBy) && $request->sortBy != '' ? $request->sortBy : 'created_at';
+        $sort_type = isset($request->sortType) && $request->sortType != '' ? $request->sortType : 'desc';
+
         $query = $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with([
             'quoteStatus',
             'currentlyInsuredWith',
@@ -68,11 +76,24 @@ class CycleQuoteRepository extends BaseRepository
             ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
-            ->filter(! $forExport)
-            ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc');
+            ->when(isset(request()->advisors) && ! empty(request()->advisors), function ($query) {
+                $advisors = request()->advisors;
+                $query->whereIn('advisor_id', $advisors)->whereNotNull('advisor_id');
+            })
+            ->filter(! $forExport, $forTotalLeadsCount)
+            ->withFakeLeadCriteria($forTotalLeadsCount);
 
-        return ($forExport) ? $query->get() : $query->simplePaginate();
+        $this->adjustQueryByDateFilters($query, 'personal_quotes');
+
+        $query->orderBy('personal_quotes.'.$sort_by, $sort_type);
+
+        if ($forTotalLeadsCount) {
+            //PD Revert
+            return 0;
+            // return $query->count();
+        }
+
+        return ($forExport) ? $query->get() : $query;
     }
 
     public function fetchExport()
@@ -103,7 +124,7 @@ class CycleQuoteRepository extends BaseRepository
 
             $quote->cycleQuote()->updateOrCreate(
                 ['personal_quote_id' => $quote->id],
-                Arr::only($data, (new CycleQuote())->allowedColumns())
+                Arr::only($data, (new CycleQuote)->allowedColumns())
             );
 
             return $quote;
@@ -111,7 +132,7 @@ class CycleQuoteRepository extends BaseRepository
     }
 
     /**
-     * get all dropdown options required for form
+     * get all dropdown options required for form.
      *
      * @return array
      */
@@ -147,15 +168,18 @@ class CycleQuoteRepository extends BaseRepository
                         'paymentSplits' => function ($query) {
                             $query->orderBy('sr_no', 'asc');
                         },
-                        'paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider',
+                        'paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider', 'paymentable',
                         'paymentSplits.paymentStatus',
                         'paymentSplits.paymentMethod',
+                        'paymentSplits.verifiedByUser',
                         'paymentSplits.documents',
+                        'paymentSplits.processJob',
                     ]);
                 },
                 'customer',
                 'createdBy',
                 'updatedBy',
+                'customer.additionalContactInfo',
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },
@@ -165,6 +189,9 @@ class CycleQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
+                'policy_expiry_date',
+                'policy_start_date',
+                'policy_issuance_date',
                 \DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping

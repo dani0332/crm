@@ -175,8 +175,8 @@ const openFollowUpModal = () => {
     !filters.renewal_batch && !filters.quote_batch_id
       ? 'Please select quote batch or renewl batch'
       : filters.renewal_batch && filters.quote_batch_id
-      ? 'Please select either quote batch or renewl batch'
-      : '';
+        ? 'Please select either quote batch or renewl batch'
+        : '';
   if (title) notification.error({ title: title, position: 'top' });
   else showFollowUpModal.value = true;
 };
@@ -203,7 +203,7 @@ const openFollowUpModal = () => {
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >

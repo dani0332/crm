@@ -1,45 +1,71 @@
 <script setup>
-import { reactive, computed, onMounted, ref } from 'vue';
-import { Head, router, usePage, Link, useForm } from '@inertiajs/vue3';
-import { useNotifications } from '@indielayer/ui';
-import { useHasRole } from '../../Composables/can';
-
 defineProps({
   quotes: Object,
   leadStatuses: Array,
   advisors: Array,
   isManualAllocationAllowed: Boolean,
+  totalCount: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const page = usePage();
-const notification = useNotifications('toast');
+const hasRole = role => useHasRole(role);
+const hasAnyRole = role => useHasAnyRole(role);
+const rolesEnum = page.props.rolesEnum;
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+
+const { isRequired } = useRules();
 
 const loader = reactive({
   table: false,
   export: false,
 });
 
-const canExport = ref(false);
-const quotesSelected = ref([]),
-  assignAdvisor = ref(null),
-  assignmentType = ref(null),
-  isDisabled = ref(false);
+const quotesSelected = ref([]);
 
-const tableHeader = [
-  { text: 'Ref-ID', value: 'code' },
-  { text: 'FIRST NAME', value: 'first_name' },
-  { text: 'LAST NAME', value: 'last_name' },
-  { text: 'LEAD STATUS', value: 'quote_status_id_text' },
-  { text: 'ADVISOR', value: 'advisor_id_text' },
-  { text: 'CREATED DATE', value: 'created_at' },
-  { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-  { text: 'SOURCE', value: 'source' },
-  { text: 'LOST REASON', value: 'lost_reason' },
-  { text: 'PRICE', value: 'premium' },
-  { text: 'POLICY NUMBER', value: 'policy_number' },
-  { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
-  { text: 'Renewal Batch', value: 'renewal_batch' },
-];
+let params = useUrlSearchParams('history');
+const cleanObj = obj => useCleanObj(obj);
+const showFilters = ref(true);
+const filtersCount = ref(0);
+const serverOptions = ref({
+  page: 1,
+  sortBy: 'created_at',
+  sortType: 'desc',
+});
+
+const tableHeader = ref([
+  { text: 'Ref-ID', value: 'code', is_active: true },
+  { text: 'FIRST NAME', value: 'first_name', is_active: true },
+  { text: 'LAST NAME', value: 'last_name', is_active: true },
+  { text: 'LEAD STATUS', value: 'quote_status_id_text', is_active: true },
+  { text: 'ADVISOR', value: 'advisor_id_text', is_active: true },
+  {
+    text: 'CREATED DATE',
+    value: 'created_at',
+    is_active: true,
+    sortable: true,
+  },
+  {
+    text: 'LAST MODIFIED DATE',
+    value: 'updated_at',
+    is_active: true,
+    sortable: true,
+  },
+  { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
+  { text: 'SOURCE', value: 'source', is_active: true },
+  { text: 'LOST REASON', value: 'lost_reason', is_active: true },
+  { text: 'PRICE', value: 'price_with_vat', is_active: true, sortable: true },
+  { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
+  {
+    text: 'Previous Policy Number',
+    value: 'previous_quote_policy_number',
+    is_active: true,
+  },
+  { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
+]);
 
 const filters = reactive({
   code: '',
@@ -52,11 +78,31 @@ const filters = reactive({
   quote_status_id: [],
   advisors: [],
   is_renewal: '',
-  page: 1,
   previous_quote_policy_number: '',
   renewal_batch: '',
+  payment_status: [],
+  is_cold: false,
+  is_stale: false,
+  payment_due_date: '',
+  booking_date: '',
 });
 
+const canExport = ref(false);
+watch(
+  () => filters,
+  () => {
+    if (
+      (filters.created_at_start && filters.created_at_end) ||
+      filters.payment_due_date ||
+      filters.booking_date
+    ) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
+  },
+  { deep: true, immediate: true },
+);
 const leadStatusOptions = computed(() => {
   return page.props.leadStatuses.map(status => ({
     value: status.id,
@@ -70,22 +116,27 @@ const advisorOptions = computed(() => {
     label: advisor.name,
   }));
 });
+
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'home');
   window.open(url + '?' + new URLSearchParams(data).toString());
 };
+
 function onSubmit(isValid) {
   if (isValid) {
-    filters.page = 1;
-    Object.keys(filters).forEach(
-      key =>
-        (filters[key] === '' || filters[key].length === 0) &&
-        delete filters[key],
-    );
+    serverOptions.value.page = 1;
+
+    const filtersCleaned = cleanObj(filters);
+
+    filtersCount.value = Object.keys(filtersCleaned).length;
+
     router.visit(route('home.index'), {
       method: 'get',
-      data: filters,
+      data: {
+        ...filtersCleaned,
+        ...serverOptions.value,
+      },
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loader.table = true),
@@ -97,6 +148,7 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
+  removedSavedParams();
   router.visit(route('home.index'), {
     method: 'get',
     data: { page: 1 },
@@ -106,49 +158,35 @@ function onReset() {
   });
 }
 
-function setQueryStringFilters() {
-  let queryString = window.location.search;
-  let urlParams = new URLSearchParams(queryString);
+const handleSelectedFilters = selectedFilters => {
+  if (selectedFilters.created_at_start && selectedFilters.created_at_end) {
+    filters.created_at_start = selectedFilters.created_at_start;
+    filters.created_at_end = selectedFilters.created_at_end;
+  }
 
-  if (urlParams.has('code')) {
-    filters.code = urlParams.get('code');
+  if (selectedFilters.quote_status) {
+    filters.quote_status = selectedFilters.quote_status;
   }
-  if (urlParams.has('first_name')) {
-    filters.first_name = urlParams.get('first_name');
+
+  if (selectedFilters.payment_status) {
+    filters.payment_status = selectedFilters.payment_status;
   }
-  if (urlParams.has('last_name')) {
-    filters.last_name = urlParams.get('last_name');
-  }
-  if (urlParams.has('email')) {
-    filters.email = urlParams.get('email');
-  }
-  if (urlParams.has('mobile_no')) {
-    filters.mobile_no = urlParams.get('mobile_no');
-  }
-  if (urlParams.has('created_at_start')) {
-    filters.created_at_start = urlParams.get('created_at_start');
-  }
-  if (urlParams.has('created_at_end')) {
-    filters.created_at_end = urlParams.get('created_at_end');
-  }
-  if (urlParams.has('quote_status_id[]')) {
-    filters.quote_status_id = urlParams
-      .getAll('quote_status_id[]')
-      .map(status => parseInt(status));
-  }
-  if (urlParams.has('advisors[]')) {
-    filters.advisors = urlParams
-      .getAll('advisors[]')
-      .map(status => parseInt(status));
-  }
-  if (urlParams.has('is_renewal')) {
-    filters.is_renewal = urlParams.get('is_renewal');
+
+  filters.is_cold = selectedFilters.cold;
+  filters.is_stale = selectedFilters.stale;
+
+  onSubmit(true);
+};
+
+function setQueryStringFilters() {
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key];
+    } else {
+      filters[key] = params[key];
+    }
   }
 }
-
-const rules = {
-  isRequired: v => !!v || 'Please select this option',
-};
 
 const assignForm = useForm({
   assigned_to_id_new: null,
@@ -175,34 +213,144 @@ function onAssignLead(isValid) {
   }
 }
 
-const hasRole = role => useHasRole(role);
-const rolesEnum = page.props.rolesEnum;
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+
 onMounted(() => {
+  params = getSavedQueryParams() || params;
+
   setQueryStringFilters();
+
+  let filtersCleaned = cleanObj(filters);
+
+  if (filtersCleaned.sortBy) {
+    serverOptions.value.sortBy = filtersCleaned.sortBy;
+    delete filtersCleaned.sortBy;
+  }
+
+  if (filtersCleaned.sortType) {
+    serverOptions.value.sortType = filtersCleaned.sortType;
+    delete filtersCleaned.sortType;
+  }
+
+  if (filtersCleaned.page) {
+    serverOptions.value.page = filtersCleaned.page;
+    delete filtersCleaned.page;
+  }
+
+  filtersCount.value = Object.keys(filtersCleaned).length;
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 watch(
-  () => filters,
-  () => {
-    if (filters.created_at_start && filters.created_at_end) {
-      canExport.value = true;
-    } else {
-      canExport.value = false;
-    }
+  () => serverOptions.value,
+  (newValue, oldValue) => {
+    if (oldValue !== newValue) onSubmit(true);
   },
-  { deep: true, immediate: true },
 );
 
-const can = permission => useCan(permission);
-const permissionsEnum = page.props.permissionsEnum;
+const resetDateFilters = filterName => {
+  const filterMappings = {
+    payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
+    booking_date: ['payment_due_date', 'created_at_start', 'created_at_end'],
+    created_at: ['booking_date', 'payment_due_date'],
+  };
+
+  const filtersToReset =
+    filterMappings[filterName] ||
+    (filterName.startsWith('created_at') ? filterMappings.created_at : []);
+
+  filtersToReset.forEach(filter => {
+    filters[filter] = '';
+  });
+};
+
+[
+  'payment_due_date',
+  'booking_date',
+  'created_at_start',
+  'created_at_end',
+].forEach(filterName => {
+  watch(
+    () => filters[filterName],
+    newValue => {
+      if (newValue) {
+        resetDateFilters(filterName);
+      }
+    },
+  );
+});
 </script>
 
 <template>
   <div>
     <Head title="Home List" />
-    <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Home List</h2>
-      <div class="space-x-3">
+    <StickyHeader>
+      <template v-slot:header>
+        <h2 class="text-xl font-semibold">Home List</h2>
+        <!-- PD Revert
+          <LeadsCount
+          :leadsCount="$page.props.totalCount"
+          :key="$page.props.totalCount"
+        /> -->
+      </template>
+      <template #default>
+        <ColumnSelection
+          v-model:columns="tableHeader"
+          storage-key="home-list"
+        />
+
+        <FiltersButton
+          :is-shown="showFilters"
+          :filters="filters"
+          :filters-count="filtersCount"
+          @selected-filters="handleSelectedFilters"
+          @toggleFilters="showFilters = !showFilters"
+        />
+
+        <Link :href="route('home-cardView')">
+          <x-button
+            size="sm"
+            color="#1d83bc"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Cards View
+          </x-button>
+        </Link>
+
+        <Link :href="route('home.create')">
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Create Lead
+          </x-button>
+        </Link>
+      </template>
+    </StickyHeader>
+    <!-- <div class="flex justify-between items-center">
+      <div class="flex items-center gap-5">
+        <h2 class="text-xl font-semibold">Home List</h2>
+        <LeadsCount :leadsCount="$page.props.totalCount" />
+      </div>
+      <div class="flex space-x-2 items-center">
+        <ColumnSelection
+          v-model:columns="tableHeader"
+          storage-key="home-list"
+        />
+
+        <FiltersButton
+          :is-shown="showFilters"
+          :filters="filters"
+          :filters-count="filtersCount"
+          @selected-filters="handleSelectedFilters"
+          @toggleFilters="showFilters = !showFilters"
+        />
+
         <Link :href="route('home-cardView')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
@@ -211,12 +359,12 @@ const permissionsEnum = page.props.permissionsEnum;
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
         </Link>
       </div>
-    </div>
+    </div> -->
     <x-divider class="my-4" />
-    <x-form @submit="onSubmit" :auto-focus="false">
+    <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -285,15 +433,19 @@ const permissionsEnum = page.props.permissionsEnum;
             :options="leadStatusOptions"
           />
         </x-field>
-        <x-field label="Advisor">
+        <x-field
+          label="Advisor"
+          v-if="
+            !hasAnyRole([rolesEnum.HomeAdvisor, rolesEnum.HomeRenewalAdvisor])
+          "
+        >
           <ComboBox
-            v-if="!hasRole(rolesEnum.Advisor)"
             v-model="filters.advisors"
             placeholder="Search by Advisor"
             :options="advisorOptions"
           />
         </x-field>
-        <x-field label="Is Renewal">
+        <x-field label="Renewal">
           <x-select
             v-model="filters.is_renewal"
             placeholder="Search by Renewal"
@@ -309,9 +461,9 @@ const permissionsEnum = page.props.permissionsEnum;
           v-model="filters.previous_quote_policy_number"
           type="text"
           name="previous_quote_policy_number"
-          label="Previous Policy Number"
+          label="Policy Number"
           class="w-full"
-          placeholder="Search by Previous Policy Number"
+          placeholder="Policy Number"
         />
         <x-input
           v-model="filters.renewal_batch"
@@ -320,6 +472,22 @@ const permissionsEnum = page.props.permissionsEnum;
           label="Renewal Batch"
           class="w-full"
           placeholder="Search by Renewal Batch"
+        />
+        <DatePicker
+          v-model="filters.payment_due_date"
+          label="Payment Due Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.booking_date"
+          label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
@@ -333,18 +501,26 @@ const permissionsEnum = page.props.permissionsEnum;
           >
             Export
           </x-button>
-          <x-tooltip v-else position="right">
+          <x-tooltip v-else placement="right">
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates are required to export data.
+                Created dates or payment due date or booking date are required
+                to export data.
               </span>
             </template>
           </x-tooltip>
         </div>
         <div v-else />
         <div class="flex justify-self-end gap-3">
-          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            type="submit"
+            :loading="loader.table"
+          >
+            Search
+          </x-button>
           <x-button size="sm" color="primary" @click.prevent="onReset">
             Reset
           </x-button>
@@ -366,8 +542,10 @@ const permissionsEnum = page.props.permissionsEnum;
               :options="advisorOptions"
               placeholder="Select Advisor"
               class="flex-1 w-full"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               label="Assign Advisor"
+              filterable
+              v-if="readOnlyMode.isDisable === true"
             />
             <div class="mb-3 md:pt-6">
               <x-button
@@ -375,6 +553,7 @@ const permissionsEnum = page.props.permissionsEnum;
                 size="sm"
                 type="submit"
                 :loading="assignForm.processing"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Assign
               </x-button>
@@ -385,6 +564,7 @@ const permissionsEnum = page.props.permissionsEnum;
     </section>
     <DataTable
       v-model:items-selected="quotesSelected"
+      v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :loading="loader.table"
       :headers="tableHeader"
@@ -394,12 +574,13 @@ const permissionsEnum = page.props.permissionsEnum;
       hide-footer
       fixed-checkbox
     >
-      <template #item-code="{ code, uuid }">
+      <template #item-code="{ code, uuid, stale_at, price_with_vat }">
         <Link
           :href="route('home.show', uuid)"
-          class="text-primary-500 hover:underline"
+          class="text-primary-500 hover:underline flex items-center space-x-1"
         >
-          {{ code }}
+          <span>{{ code }}</span>
+          <StaleLeadsBadge :date="stale_at" :align="`left`" />
         </Link>
       </template>
     </DataTable>

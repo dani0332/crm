@@ -161,27 +161,11 @@ class CarRevivalQuoteRepository extends BaseRepository
         return $result;
     }
 
-    public function fetchupdateQuote($data)
+    public function fetchupdateQuote(CarQuote $lead)
     {
-        $inbound = new \Postmark\Inbound(file_get_contents('php://input'));
-
-        $subject = $inbound->Subject();
-
-        preg_match('/(?<=CAR-)\w+/', $subject, $matches);
-        if (! empty($matches[0])) {
-            $uuid = $matches[0];
-            $lead = CarQuote::where('uuid', $uuid)->first();
-            if (! $lead) {
-                info('UpdateLeadSource - UUID - '.$uuid.' - not found');
-
-                return false;
-            }
-            $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
-            DttRevival::where('uuid', $uuid)->update(['reply_received' => 1]);
-            info('UpdateLeadSource  - UUID - '.$uuid.' - source updated to Revival');
-        } else {
-            info('UpdateLeadSource uuid not found in subject');
-        }
+        $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
+        DttRevival::where('uuid', $lead->uuid)->update(['reply_received' => 1]);
+        info('UpdateLeadSource  - UUID - '.$lead->uuid.' - source updated to Revival');
     }
 
     public function fetchGetReportsData($request)
@@ -193,7 +177,7 @@ class CarRevivalQuoteRepository extends BaseRepository
 
         $query = $this
             ->select(
-                'quote_batch_id',
+                'dtt_revivals.revival_quote_batch_id as quote_batch_id',
                 DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN 1 ELSE NULL END) as conversion_captured'),
                 DB::raw('COUNT(CASE  WHEN source = "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE NULL END) as total_revived'),
                 DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' and  quote_status_id = '.QuoteStatusEnum::TransactionApproved.' THEN 1 ELSE NULL END) as captured'),
@@ -202,8 +186,8 @@ class CarRevivalQuoteRepository extends BaseRepository
                 DB::raw('COUNT(CASE  WHEN reply_received = 1 THEN 1 ELSE NULL END) as reply_received_count'),
             )
             ->leftjoin('dtt_revivals', 'dtt_revivals.quote_id', 'car_quote_request.id')
-            ->whereNotNull(['quote_batch_id', 'payment_status_id'])
-            ->orderBy('quote_batch_id', 'desc');
+            ->whereNotNull(['dtt_revivals.revival_quote_batch_id', 'payment_status_id'])
+            ->orderBy('dtt_revivals.revival_quote_batch_id', 'desc');
 
         if (! empty($leadSource)) {
             $query->where('source', $leadSource);
@@ -213,15 +197,15 @@ class CarRevivalQuoteRepository extends BaseRepository
         if (! empty($carInsurancetypeId)) {
             $query->where('car_type_insurance_id', $carInsurancetypeId);
         }
-        $record = $query->groupBy('quote_batch_id')->get()->toArray();
+        $record = $query->groupBy('dtt_revivals.revival_quote_batch_id')->get()->toArray();
 
         $data = [];
         foreach ($record as $item) {
             $batch = QuoteBatches::find($item['quote_batch_id'])->name;
             $c['quote_batch_id'] = $batch;
             $c['conversion_captured'] = $item['conversion_captured'];
-            $c['total_revived'] = $item['total_revived'];
-            $c['ratio'] = $item['conversion_captured'] > 0 ? round(($item['conversion_captured'] / $item['total_revived']) * 100, 2).'%' : null;
+            $c['total_revived'] = $item['email_sent_count'];
+            $c['ratio'] = $item['conversion_captured'] > 0 ? round(($item['conversion_captured'] / $item['email_sent_count']) * 100, 2).'%' : null;
             $data['conversionRate'][] = $c;
 
             $ac['quote_batch_id'] = $batch;

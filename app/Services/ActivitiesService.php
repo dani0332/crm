@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\Activities;
 use App\Models\QuoteStatus;
@@ -33,7 +34,7 @@ class ActivitiesService extends BaseService
 
     public function getActivityByLeadId($id, $type)
     {
-        return Activities::where('quote_request_id', $id)->where('quote_type_id', $this->getQuoteTypeId($type))->orderBy('created_at', 'desc')->get();
+        return Activities::with(['quoteStatus'])->where('quote_request_id', $id)->where('quote_type_id', $this->getQuoteTypeId($type))->orderBy('created_at', 'desc')->get();
     }
 
     public function getGridData(Request $request)
@@ -104,7 +105,7 @@ class ActivitiesService extends BaseService
 
     public function createActivity(Request $request, $record)
     {
-        $activity = new Activities();
+        $activity = new Activities;
         $activity->uuid = $this->helperService->generateUUID();
         if (isset($record) && $record != '') {
             $activity->client_name = $record->first_name.' '.$record->last_name;
@@ -125,6 +126,7 @@ class ActivitiesService extends BaseService
         $activity->title = $request->title;
         $activity->created_at = Carbon::now();
         $activity->updated_at = Carbon::now();
+        $activity->quote_status_id = $record?->quote_status_id ?? null;
         $activity->save();
 
         return $activity;
@@ -132,46 +134,24 @@ class ActivitiesService extends BaseService
 
     public function getQuoteTypeId($modelType)
     {
-        $quoteTypeId = null;
-        switch ($modelType) {
-            case 'car':
-                $quoteTypeId = QuoteTypeId::Car;
-                break;
-            case 'home':
-                $quoteTypeId = QuoteTypeId::Home;
-                break;
-            case 'life':
-                $quoteTypeId = QuoteTypeId::Life;
-                break;
-            case 'travel':
-                $quoteTypeId = QuoteTypeId::Travel;
-                break;
-            case 'health':
-                $quoteTypeId = QuoteTypeId::Health;
-                break;
-            case 'business':
-                $quoteTypeId = QuoteTypeId::Business;
-                break;
-            case 'pet':
-                $quoteTypeId = QuoteTypeId::Pet;
-                break;
-            case 'cycle':
-                $quoteTypeId = QuoteTypeId::Cycle;
-                break;
-            case 'jetski':
-                $quoteTypeId = QuoteTypeId::Jetski;
-                break;
-            case 'bike':
-                $quoteTypeId = QuoteTypeId::Bike;
-                break;
-            case 'yacht':
-                $quoteTypeId = QuoteTypeId::Yacht;
-                break;
-            default:
-                break;
-        }
+        $quoteTypeIds = [
+            quoteTypeCode::Car => QuoteTypeId::Car,
+            quoteTypeCode::Home => QuoteTypeId::Home,
+            quoteTypeCode::Life => QuoteTypeId::Life,
+            quoteTypeCode::Travel => QuoteTypeId::Travel,
+            quoteTypeCode::Health => QuoteTypeId::Health,
+            quoteTypeCode::Business => QuoteTypeId::Business,
+            quoteTypeCode::Pet => QuoteTypeId::Pet,
+            quoteTypeCode::Cycle => QuoteTypeId::Cycle,
+            quoteTypeCode::Jetski => QuoteTypeId::Jetski,
+            quoteTypeCode::Bike => QuoteTypeId::Bike,
+            quoteTypeCode::Yacht => QuoteTypeId::Yacht,
+            quoteTypeCode::GroupMedical => QuoteTypeId::Business,
+        ];
 
-        return $quoteTypeId;
+        $modelType = ucwords($modelType);
+
+        return $quoteTypeIds[$modelType] ?? null;
     }
 
     public function filterActivitiesByPeriod($activities, $period)

@@ -8,6 +8,7 @@ use App\Enums\quoteTypeCode;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Models\PetQuoteRequestDetail;
+use App\Models\QuoteBatches;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\RolePermissionConditions;
 use Auth;
@@ -58,7 +59,7 @@ class PetQuoteService extends BaseService
                 'pqr.previous_quote_id',
                 'pqr.renewal_batch',
                 'pqr.previous_quote_policy_number',
-                'pqr.renewal_expiry_date',
+                'pqr.policy_expiry_date',
                 'pqr.device',
                 'pqr.previous_policy_expiry_date',
                 'pqr.previous_quote_policy_premium',
@@ -77,7 +78,8 @@ class PetQuoteService extends BaseService
                 'pqr.customer_id',
                 'pqr.parent_duplicate_quote_id',
                 'pqr.renewal_import_code',
-                'prq.risk_score',
+                'pqr.risk_score',
+                'pqr.insly_migrated',
             )
             ->leftJoin('pet_quote_request_detail as pqrd', 'pqrd.pet_quote_request_id', 'pqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'pqrd.lost_reason_id')
@@ -131,7 +133,7 @@ class PetQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return $this->query->where('pqr.uuid', $id)->firstOrFail();
+        return PetQuote::where('uuid', $id)->firstOrFail();
     }
 
     public function getEntityPlain($id)
@@ -152,21 +154,7 @@ class PetQuoteService extends BaseService
 
     public function getDetailEntity($id)
     {
-        $entity = PetQuoteRequestDetail::where('pet_quote_request_id', $id)->firstOrFail();
-        if (! $entity) {
-            $entity = $this->createDetailEntity($id);
-        }
-
-        return $entity;
-    }
-
-    public function createDetailEntity($id)
-    {
-        return PetQuoteRequestDetail::create([
-            'pet_quote_request_id' => $id,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-        ]);
+        return PetQuoteRequestDetail::firstOrCreate(['pet_quote_request_id' => $id]);
     }
 
     public function getLeadsForAssignment()
@@ -191,7 +179,7 @@ class PetQuoteService extends BaseService
         }
         if ($request->ajax()) {
             if (empty($request->email) && empty($request->code) && empty($request->first_name) &&
-                    empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
+                empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
                 $this->query->where('pqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
@@ -207,7 +195,7 @@ class PetQuoteService extends BaseService
 
             if (Auth::user()->isSpecificTeamAdvisor('Pet')) {
                 // if user has advisor Role then fetch leads assigned to the user only
-                $this->query->where('pqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
+                $this->query->where('pqr.advisor_id', Auth::user()->id); // fetch leads assigned to the user
             }
             if (isset($request->code) && $request->code != '') {
                 $this->query->where('pqr.code', $request->code);
@@ -225,7 +213,10 @@ class PetQuoteService extends BaseService
                 $this->query->where('pqr.mobile_no', $request->mobile_no);
             }
             if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-                $this->query->where('pqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+                $this->query->where(function ($query) use ($request) {
+                    $query->where('pqr.policy_number', $request->previous_quote_policy_number)
+                        ->orWhere('pqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+                });
             }
             if (isset($request->renewal_batch) && $request->renewal_batch != '') {
                 $this->query->where('pqr.renewal_batch', $request->renewal_batch);
@@ -271,34 +262,9 @@ class PetQuoteService extends BaseService
             }
         }
 
-        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
-        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
-        if ($column != '' && $column != 0 && $direction != '') {
-            $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
-            $isAdmin = Auth::user()->hasRole('ADMIN');
-            if ($isAdmin || $isManagerORDeputy == '1') {
-                if ($column == 6) {
-                    $column = 'pqr.created_at';
-                }
-                if ($column == 7) {
-                    $column = 'pqr.updated_at';
-                }
-                if ($column == 8) {
-                    $column = 'pqrd.next_followup_date';
-                }
-            } else {
-                if ($column == 5) {
-                    $column = 'pqr.created_at';
-                }
-                if ($column == 6) {
-                    $column = 'pqr.updated_at';
-                }
-                if ($column == 7) {
-                    $column = 'pqrd.next_followup_date';
-                }
-            }
-
-            return $this->query->orderBy($column, $direction);
+        // sortBy filter
+        if (isset($request->sortBy) && $request->sortBy != '') {
+            return $this->query->orderBy($request->sortBy, $request->sortType);
         } else {
             return $this->query->orderBy('pqr.created_at', 'DESC');
         }
@@ -413,15 +379,13 @@ class PetQuoteService extends BaseService
 
     public function updateChildRecord($id)
     {
-        $childRecord = PetQuoteRequestDetail::where('pet_quote_request_id', $id)->first();
-
-        if (empty($childRecord)) {
-            $childRecord = $this->createDetailEntity($id);
-        }
-
-        $childRecord->advisor_assigned_by_id = Auth::user()->id;
-        $childRecord->advisor_assigned_date = Carbon::now();
-        $childRecord->save();
+        PetQuoteRequestDetail::updateOrCreate(
+            ['pet_quote_request_id' => $id],
+            [
+                'advisor_assigned_date' => Carbon::now(),
+                'advisor_assigned_by_id' => Auth::user()->id,
+            ]
+        );
     }
 
     public function fillModelProperties()
@@ -455,7 +419,7 @@ class PetQuoteService extends BaseService
             'iam_possesion_type_id' => 'select|title|required',
             'previous_quote_id' => 'readonly|title',
             'is_renewal' => '|static|title|Yes,No',
-            'renewal_expiry_date' => 'input|date|title|range',
+            'policy_expiry_date' => 'input|date|title|range',
             'renewal_batch' => 'input|none',
             'previous_quote_policy_number' => 'input|title',
             'previous_policy_expiry_date' => 'input|date|title|range',
@@ -503,7 +467,7 @@ class PetQuoteService extends BaseService
             case 'previous_quote_id':
                 $title = 'Previous Quote Id';
                 break;
-            case 'renewal_expiry_date':
+            case 'policy_expiry_date':
                 $title = 'Expiry Date';
                 break;
             case 'previous_quote_policy_number':
@@ -540,9 +504,9 @@ class PetQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            'create' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,device,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_import_code',
-            'list' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,device,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,next_followup_date,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info,renewal_import_code',
-            'update' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,device,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_import_code',
+            'create' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,device,renewal_batch,previous_quote_policy_number,policy_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_import_code',
+            'list' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,device,renewal_batch,previous_quote_policy_number,policy_expiry_date,is_renewal,previous_quote_id,email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,next_followup_date,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info,renewal_import_code',
+            'update' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,device,renewal_batch,previous_quote_policy_number,policy_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_import_code',
             'show' => 'source,is_renewal,previous_quote_id,quote_status_id,next_followup_date,transapp_code',
         ];
     }
@@ -556,9 +520,9 @@ class PetQuoteService extends BaseService
     {
         $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'previous_quote_policy_number', 'previous_policy_expiry_date', 'renewal_batch', 'previous_quote_policy_premium'];
         $model->renewalSkipProperties = [
-            'create' => 'premium,parent_duplicate_quote_id,previous_quote_policy_premium,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_import_code',
-            'list' => 'parent_duplicate_quote_id,premium,policy_number,renewal_expiry_date,is_renewal,email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info,next_followup_date,lost_reason,source,transapp_code,previous_quote_id,renewal_import_code',
-            'update' => 'premium,parent_duplicate_quote_id,previous_quote_policy_premium,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_import_code',
+            'create' => 'premium,parent_duplicate_quote_id,previous_quote_policy_premium,renewal_batch,previous_quote_policy_number,policy_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_import_code',
+            'list' => 'parent_duplicate_quote_id,premium,policy_number,policy_expiry_date,is_renewal,email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info,next_followup_date,lost_reason,source,transapp_code,previous_quote_id,renewal_import_code',
+            'update' => 'premium,parent_duplicate_quote_id,previous_quote_policy_premium,renewal_batch,previous_quote_policy_number,policy_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_import_code',
             'show' => 'source,id,next_followup_date,lost_reason,is_renewal,previous_quote_id,quote_status_id,transapp_code',
         ];
     }
@@ -567,9 +531,9 @@ class PetQuoteService extends BaseService
     {
         $model->newBusinessSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number'];
         $model->newBusinessSkipProperties = [
-            'create' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date,renewal_import_code',
-            'list' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,others_info,member_category_id,salary_band_id,gender,is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,lead_type_id,renewal_expiry_date,previous_quote_id,renewal_import_code',
-            'update' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date,renewal_import_code',
+            'create' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,policy_expiry_date,renewal_import_code',
+            'list' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,others_info,member_category_id,salary_band_id,gender,is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,lead_type_id,policy_expiry_date,previous_quote_id,renewal_import_code',
+            'update' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,policy_expiry_date,renewal_import_code',
             'show' => 'source,member_category_id,salary_band_id,gender,is_renewal,id,next_followup_date,previous_quote_id,quote_status_id,transapp_code',
         ];
     }
@@ -587,7 +551,8 @@ class PetQuoteService extends BaseService
             $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
         }
         $userId = (int) $request->assigned_to_id_new;
-        Log::info('Leads ids to assign: '.json_encode($leadsIds));
+        $quoteBatch = QuoteBatches::latest()->first();
+        Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
         $result = [];
         foreach ($leadsIds as $leadId) {
             if (in_array(quoteTypeCode::Pet, newUi())) {
@@ -598,6 +563,7 @@ class PetQuoteService extends BaseService
 
             if ($lead) {
                 $lead->advisor_id = $userId;
+                $lead->quote_batch_id = $quoteBatch->id;
                 $lead->save();
                 $this->updateChildRecord($lead->id);
             }

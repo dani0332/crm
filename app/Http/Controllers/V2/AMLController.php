@@ -10,8 +10,11 @@ use App\Enums\LookupsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TravelQuoteEnum;
+use App\Enums\WorkflowTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
@@ -42,8 +45,8 @@ use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
 use App\Services\BridgerInsightService;
-use App\Services\CheckAmlService;
 use App\Services\QuoteStatusService;
+use App\Services\SIBService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DataTables;
@@ -286,7 +289,7 @@ class AMLController extends Controller
 
                 if (auth()->user()->hasRole(RolesEnum::ComplianceSuperUser) ||
                     (auth()->user()->hasRole(RolesEnum::COMPLIANCE) && request()->aml_decision == AMLDecisionStatusEnum::FALSE_POSITIVE)) {
-                    app(CheckAmlService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
+                    app(AMLService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
                 }
 
                 $response = ['status' => $response['status'], 'message' => $response['message'].' and '.$responseMessage['message']];
@@ -374,7 +377,7 @@ class AMLController extends Controller
                     return redirect()->back()->with('success', 'AML Screening Completed');
                 }
 
-                $bridgerInsightService = new BridgerInsightService();
+                $bridgerInsightService = new BridgerInsightService;
                 $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
                 // Job dispatch for all members including customer
@@ -383,7 +386,7 @@ class AMLController extends Controller
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Entity) {
                 $entityDetailsForApi = [];
-                $bridgerInsightService = new BridgerInsightService();
+                $bridgerInsightService = new BridgerInsightService;
                 $bridgerAPIToken = $bridgerInsightService->getJWTToken();
                 $fetchEntity = Entity::where(['trade_license_no' => $AMLCheckRequest->trade_license_no])->first();
                 if (! $fetchEntity) {
@@ -606,11 +609,16 @@ class AMLController extends Controller
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ]);
-
+            if ($quoteTypeId == QuoteTypeId::Health || $quoteTypeId == QuoteTypeId::Home || $quoteTypeId == QuoteTypeId::Cycle || $quoteTypeId == QuoteTypeId::Pet || $quoteTypeId == QuoteTypeId::Yacht || $quoteTypeId == QuoteTypeId::Corpline) {
+                $quoteDetails->stale_at = null;
+            }
             $quoteDetails->quote_status_id = QuoteStatusEnum::AMLScreeningCleared;
             $quoteDetails->aml_status_id = AMLStatusEnum::AMLScreeningCleared;
             $quoteDetails->save();
-
+            // this event only working for travel lob
+            if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
+                $this->stopHapexReminder($quoteDetails);
+            }
             info('AML Screening Bridger - Potential Matche(s) not Found, Quote Status changed to AML Screening Cleared');
         } else {
             QuoteStatusLog::create([
@@ -625,9 +633,83 @@ class AMLController extends Controller
             $quoteDetails->quote_status_id = QuoteStatusEnum::AMLScreeningFailed;
             $quoteDetails->aml_status_id = AMLStatusEnum::AMLScreeningFailed;
             $quoteDetails->save();
-
+            if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
+                if (isset($quoteDetails->is_documents_valid) && ! $quoteDetails->is_documents_valid) {
+                    $this->sendHapexReminder($quoteDetails);
+                }
+            }
             info('AML Screening Bridger - Potential Matche(s) Found, Quote Status changed to AML Screening Failed');
         }
         session()->forget('amlResponseCheck');
+    }
+    public function updateQuoteComment(Request $request)
+    {
+        $request->validate([
+            'compliance_comments' => 'required|string',
+            'modelType' => 'required',
+            'quote_id' => 'required',
+        ]);
+
+        $model = '\\App\\Models\\'.ucwords($request->modelType).'Quote';
+        if (checkPersonalQuotes(ucwords($request->modelType))) {
+            $model = '\\App\\Models\\PersonalQuote';
+        }
+        $quoteModel = $model::where('id', $request->quote_id)->first();
+        $quoteModel->update([
+            'compliance_comments' => $request->compliance_comments,
+        ]);
+
+        return response()->json(['message' => 'Comment added successfully', 'data' => $quoteModel]);
+    }
+    public function stopHapexReminder($quote)
+    {
+        SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);
+
+        return true;
+    }
+
+    public function mapHapexMailPayload($quote)
+    {
+        $directionCode = $quote['direction_code'] == TravelQuoteEnum::TRAVEL_UAE_INBOUND ? TravelQuoteEnum::IN_BOUND : TravelQuoteEnum::OUT_BOUND;
+
+        return [
+            'carQuoteId' => $quote->code,
+            'customerName' => "{$quote->first_name} {$quote->last_name}",
+            'direction_code' => $quote->direction_code,
+            'advisor' => ! empty($quote->advisor) ? (object) [
+                'name' => $quote->advisor->name,
+                'email' => $quote->advisor->email,
+                'phone' => $quote->advisor->mobile_no,
+                'directLine' => $quote->advisor->landline_no,
+                'whatsapp' => $quote->advisor->mobile_no,
+            ] : [],
+            'uploadDocsPage' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL').$quote->uuid.'/thankyou/'.$directionCode,
+        ];
+    }
+
+    public function mapHapexPlans($plans)
+    {
+        return collect($plans)->map(function ($plan) {
+            return [
+                'id' => $plan->id,
+                'planName' => $plan->name,
+                'repairType' => $plan->travelType,
+                'vat' => $plan->vat,
+                'actualPremium' => $plan->actualPremium,
+                'discountPremium' => $plan->discountPremium,
+                'benefits' => collect($plan->benefits->exclusion)->map(function ($benefit) {
+                    return (object) [
+                        'value' => $benefit->text,
+                        'code' => $benefit->code,
+                    ];
+                }),
+            ];
+        });
+    }
+    public function sendHapexReminder($quote)
+    {
+        SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_EMAIL_REMINDER, $quote, null, $this->mapHapexMailPayload($quote));
+
+        return true;
     }
 }

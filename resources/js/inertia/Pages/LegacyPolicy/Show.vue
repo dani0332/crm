@@ -1,11 +1,7 @@
 <script setup>
+import NProgress from 'nprogress';
 import LegacyCard from '../LegacyPolicy/Partials/LegacyCard';
 import DocumentListing from './Partials/DocumentListing.vue';
-import {
-  formatDate,
-  maskEmail,
-  maskPhone,
-} from '../../Composables/utilities.js';
 
 const props = defineProps({
   policy: Object,
@@ -13,6 +9,7 @@ const props = defineProps({
 
 const page = usePage();
 const permissionEnum = page.props.permissionsEnum;
+const notification = useNotifications('toast');
 const moveToImcrmModal = ref(false);
 const can = permission => useCan(permission);
 const itemCount = ref(false);
@@ -68,19 +65,18 @@ const submitLead = policy => {
     if (selectedLead.value.link != 'new') {
       window.open(selectedLead.value.link, '_blank');
     } else {
-      moveToImcrm(policy.policy?.policy_no, false);
+      moveToImcrm(policy.policy?.policy_oid, false);
       moveToImcrmModal.value = false;
     }
-
-    console.log('Link URL:', selectedLead.value.link);
-    console.log('Selected Document:', selectedLead.value.code);
     // Add any additional logic for submitting the lead here
   } else {
-    console.log('No document selected. Cannot submit lead.');
+    notification.warning({
+      title: 'Select Lead or Check Radio Button to proceed!',
+      position: 'top',
+    });
   }
 };
 
-const notification = useNotifications('toast');
 const single = ref(true);
 const lobLink = ref('');
 const lobCode = ref('');
@@ -114,7 +110,6 @@ const dynamicTableHeader = computed(() => {
     },
     { text: 'Advisor', value: 'advisor_name', key: 'advisor' },
   ];
-  console.log(props.policy.quoteType);
 
   // Exclude columns according if quote type is car
   if (props.policy.quoteType === 'Car') {
@@ -269,14 +264,15 @@ const installmentsTableHeader = [
   { text: 'Customer Payable', value: 'customer_payable' },
 ];
 /* payments ends */
-const moveToImcrm = async (policyNumber, validateAll = true) => {
+const moveToImcrm = async (policy_oid, validateAll = true) => {
   try {
+    NProgress.start();
     const response = await axios.post('/legacy-policy/move-to-imcrm', {
-      policyNumber: policyNumber,
+      policy_oid: policy_oid,
       validateAll: validateAll,
       isInertia: true,
     });
-    console.log(response);
+    NProgress.done();
     if (response?.data.status == 201) {
       notification.success({
         title: response.data.message,
@@ -295,7 +291,6 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
       });
     } else {
       if (response?.data.type == 'policy_number') {
-        console.log(response?.data.data[0].code);
         moveToImcrmModal.value = true;
         lobLink.value = response?.data.data[0].link;
         lobCode.value = response?.data.data[0].code;
@@ -332,7 +327,7 @@ const dateFormat = date => {
       <h2 class="text-xl font-semibold">Legacy Policy Detail</h2>
 
       <div class="flex gap-2">
-        <x-tooltip position="bottom" v-if="policy?.moved_to_imcrm">
+        <x-tooltip placement="bottom" v-if="policy?.moved_to_imcrm">
           <label
             class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
           >
@@ -346,7 +341,7 @@ const dateFormat = date => {
             size="sm"
             color="#ff5e00"
             :disabled="policy?.moved_to_imcrm"
-            @click="moveToImcrm(policy.policy?.policy_no)"
+            @click="moveToImcrm(policy.policy?.policy_oid)"
           >
             Move to IMCRM
           </x-button>
@@ -357,7 +352,7 @@ const dateFormat = date => {
           size="sm"
           color="#ff5e00"
           :disabled="policy?.moved_to_imcrm"
-          @click="moveToImcrm(policy.policy?.policy_no)"
+          @click="moveToImcrm(policy.policy?.policy_oid)"
         >
           Move to IMCRM
         </x-button>
@@ -659,18 +654,20 @@ const dateFormat = date => {
       </template>
     </div>
 
-    <x-modal v-model="moveToImcrmModal" size="lg" show-close backdrop>
+    <x-modal
+      v-model="moveToImcrmModal"
+      size="lg"
+      :title="`${!single ? 'Lead Detail' : ''}`"
+      show-close
+      backdrop
+    >
       <div v-if="single">
         This policy already exists in IMCRM as REF:ID
         <Link :href="`${lobLink}`" class="text-primary-500 hover:underline">
           {{ lobCode }}
         </Link>
       </div>
-
-      <template #header v-if="!single"> Lead Detail </template>
       <p v-if="!single">Do you want to use existing details?</p>
-      <template #actions> </template>
-
       <DataTable
         v-model:items-selected="quotesSelected"
         table-class-name="tablefixed"
@@ -713,7 +710,7 @@ const dateFormat = date => {
         >
       </div>
 
-      <div class="flex justify-end my-4 gap-3 mb-4">
+      <template #actions>
         <x-button
           size="sm"
           color="#ff5e00"
@@ -725,7 +722,7 @@ const dateFormat = date => {
         <x-button size="sm" color="primary" @click="moveToImcrmModal = false">
           Cancel
         </x-button>
-      </div>
+      </template>
     </x-modal>
   </div>
 </template>

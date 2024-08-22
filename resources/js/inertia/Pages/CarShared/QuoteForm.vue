@@ -1,6 +1,4 @@
 <script setup>
-import { computed } from 'vue';
-
 const page = usePage();
 const notification = useToast();
 const { isRequired, isEmail } = useRules();

@@ -1,53 +1,60 @@
 <script setup>
 // Component Props and State Initialization
-defineProps({
+const props = defineProps({
   activities: Object,
   advisors: Object,
   cannotUseAssignee: Boolean,
-  totalActivities: Number   
+  totalActivities: Number,
 });
 
 // Vue Composition API
 const page = usePage();
-const selectedOption  = ref('');
+const selectedOption = ref('');
 const customStartDate = ref(null);
-const customEndDate   = ref(null);
-const activityLoader  = ref(false);
+const customEndDate = ref(null);
+const activityLoader = ref(false);
 const activityActionEdit = ref(false);
 const isOverDue = ref(false);
 const rules = {
   isRequired: v => !!v || 'This field is required',
 };
 const notification = useNotifications('toast');
+
+const getLink = (quote_uuid, quote_type_id) =>
+  buildCdbidLink(quote_uuid, quote_type_id);
+
 const activityForm = useForm({
   title: null,
   description: null,
   due_date: null,
   assignee_id: page.props.auth.user.id,
-  status: null,  
+  status: null,
   activity_id: null,
 });
 const modals = reactive({
   activity: false,
   activityConfirm: false,
 });
+
 const filters = reactive({
   assignee_id: '',
   status: '',
-  due_date_start: '',  
-  due_date_end: '',  
-  due_date_time_start: '',  
-  due_date_time_end: '',    
+  due_date_time_start: '',
+  due_date_time_end: '',
   page: 1,
+  isCustom: false,
 });
+
 const loader = reactive({
   table: false,
   export: false,
 });
+
 const activityTable = [
-  { text: 'Title', value: 'title' },
   { text: 'REF ID', value: 'cdbid' },
   { text: 'Client Name', value: 'client_name' },
+  { text: 'Lead Status', value: 'quote_status.text' },
+  { text: 'Title', value: 'title' },
   { text: 'Followup Date', value: 'due_date' },
   { text: 'Assigned To', value: 'assignee.name' },
   { text: 'Done', value: 'status', width: 60, align: 'center' },
@@ -60,15 +67,10 @@ function filterActivities(isValid) {
     return;
   }
 
-  if(isOverDue.value ){
-    if(filters.status  == '1') {
-      filters.due_date_end  = '1/1/1970';
-    } else {
-      const today = new Date();
-      const yesterday = new Date(today);
-      yesterday.setDate(today.getDate() - 1); 
-      filters.due_date_end = yesterday.toLocaleDateString();    
-    }    
+  if (isOverDue.value) {
+    if (filters.status == '1') {
+      filters.due_date_end = '1/1/1970';
+    }
   }
 
   for (const key in filters) {
@@ -76,6 +78,7 @@ function filterActivities(isValid) {
       delete filters[key];
     }
   }
+
   router.visit('/activities', {
     method: 'get',
     data: {
@@ -92,6 +95,7 @@ function filterActivities(isValid) {
     },
   });
 }
+
 function resetFilters() {
   router.visit('/activities', {
     method: 'get',
@@ -101,6 +105,7 @@ function resetFilters() {
     onSuccess: () => (loader.table = false),
   });
 }
+
 function setQueryFilters() {
   let query = router.page.url.split('?')[1];
   if (query) {
@@ -111,87 +116,67 @@ function setQueryFilters() {
     });
   }
 }
+
 function resetDates(option) {
   const today = new Date();
   let startDate, endDate;
-  if(isOverDue.value ){
+  if (isOverDue.value) {
     filters.status = '';
   }
   isOverDue.value = false;
-  selectedOption.value = option; 
+  selectedOption.value = option;
   if (option == 'today') {
-    startDate = today.toLocaleDateString();
-    endDate = today.toLocaleDateString();
-  }  else if (option == 'tomorrow') {
+    startDate = endDate = useDateFormat(today, 'DD-MM-YYYY');
+  } else if (option == 'tomorrow') {
     const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1); 
-    startDate = tomorrow.toLocaleDateString();
-    endDate = tomorrow.toLocaleDateString();
-  }  else if (option == 'tweek') {
-    const firstDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 1));
-    const lastDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 7));    
-    startDate = firstDayOfWeek.toLocaleDateString();
-    endDate = lastDayOfWeek.toLocaleDateString();
+    tomorrow.setDate(today.getDate() + 1);
+    startDate = endDate = useDateFormat(tomorrow, 'DD-MM-YYYY');
+  } else if (option == 'tweek') {
+    const firstDayOfWeek = new Date(
+      today.setDate(today.getDate() - today.getDay() + 1),
+    );
+    const lastDayOfWeek = new Date(
+      today.setDate(today.getDate() - today.getDay() + 7),
+    );
+    startDate = useDateFormat(firstDayOfWeek, 'DD-MM-YYYY');
+    endDate = useDateFormat(lastDayOfWeek, 'DD-MM-YYYY');
   } else if (option == 'tmonth') {
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    startDate = firstDayOfMonth.toLocaleDateString();
-    endDate = lastDayOfMonth.toLocaleDateString();
-  }  else if (option == 'overdue') {
+    const lastDayOfMonth = new Date(
+      today.getFullYear(),
+      today.getMonth() + 1,
+      0,
+    );
+    startDate = useDateFormat(firstDayOfMonth, 'DD-MM-YYYY');
+    endDate = useDateFormat(lastDayOfMonth, 'DD-MM-YYYY');
+  } else if (option == 'overdue') {
     const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1); 
-    startDate = '1/1/1970';
+    yesterday.setDate(today.getDate() - 1);
     filters.status = '0';
-    isOverDue.value = true;
-    endDate = yesterday.toLocaleDateString();    
+    isOverDue.value = false;
+
+    startDate = useDateFormat('01/01/1970', 'DD-MM-YYYY');
+    endDate = useDateFormat(yesterday, 'DD-MM-YYYY');
   } else if (option === 'custom') {
     // Handle the custom option by setting the custom start and end dates
     selectedOption.value = option;
     customStartDate.value = null; // Clear previously selected dates
     customEndDate.value = null;
+    filters.isCustom = true;
   }
   if (option != 'custom') {
-    filters.due_date_time_start  = '';
-    filters.due_date_time_end    = '';
-    filters.due_date_start  = startDate;
-    filters.due_date_end    = endDate;
+    filters.due_date_time_start = startDate.value;
+    filters.due_date_time_end = endDate.value;
+
     filterActivities(1); // Call the filterActivities function
   }
 }
 function applyCustomDates() {
   if (customStartDate.value && customEndDate.value) {
-    // Update the filters with the selected custom dates
-    filters.due_date_start  = '';
-    filters.due_date_end    = '';
     filters.due_date_time_start = customStartDate.value;
     filters.due_date_time_end = customEndDate.value;
     filterActivities(1); // Call the filterActivities function
   }
-}
-
-// Helper Functions
-function buildCdbidLink(quote_uuid, quote_type_id) { 
-    if (quote_uuid) {
-      var url = '/quotes/' + getQuoteType(quote_type_id,'id') + '/' + quote_uuid;
-        var quoteTypeCode = getQuoteType(quote_type_id);
-        var CDBID = quoteTypeCode + '-' + quote_uuid.toUpperCase();
-        return "<a target='_blank' href='" + url + "'>" + CDBID +"</a>";
-    } else {
-        return '';
-    }  
-}
-function getQuoteType(id, returnType = 'code') {
-  const types = {
-    1: { code: 'CAR-', id: 'car' },
-    2: { code: 'HOM-', id: 'home' },
-    3: { code: 'HEA-', id: 'health' },
-    4: { code: 'LIF-', id: 'life' },
-    5: { code: 'BUS-', id: 'business' },
-    6: { code: 'BIK-', id: 'bike' },
-    7: { code: 'YAC-', id: 'yacht' },
-    8: { code: 'TRA-', id: 'travel' },
-  };
-  return types[id][returnType] || '';
 }
 
 // CRUD Functions
@@ -266,7 +251,8 @@ const onSubmit = isValid => {
         title: 'Activity saved',
         position: 'top',
       });
-    }, onError: (errors) => {
+    },
+    onError: errors => {
       //console.error('Form submission error:', errors);
       notification.error({
         title: 'Activity save error',
@@ -280,36 +266,34 @@ const onSubmit = isValid => {
 };
 
 // Component hooks
-watch(
-  () => filters,
-  { deep: true, immediate: true },
-);
-onBeforeMount(() => { 
+watch(() => filters, { deep: true, immediate: true });
+
+onBeforeMount(() => {
   resetDates('today');
 });
+
 onMounted(() => {
   setQueryFilters();
 });
-
 </script>
 
 <template>
   <div>
     <Head title="Activities" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Search Activity </h2>
+      <h2 class="text-xl font-semibold">Search Activity</h2>
       <div class="space-x-3">
         <x-button size="sm" color="orange" @click.prevent="addActivity">
           Create Activity
-        </x-button>        
+        </x-button>
       </div>
     </div>
-   
+
     <x-divider class="my-4" />
 
     <x-form @submit="filterActivities" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
-        <x-select
+        <ComboBox
           v-model="filters.assignee_id"
           label="Assigned To"
           placeholder="Select Assigned To"
@@ -317,96 +301,102 @@ onMounted(() => {
           :options="[
             { value: null, label: 'All' },
             // Loop through advisorArray to generate options
-            ...advisors.map(advisor => ({ value: advisor.id, label: advisor.name })),
+            ...advisors.map(advisor => ({
+              value: advisor.id,
+              label: advisor.name,
+            })),
           ]"
+          :single="true"
         />
-        <x-select
+        <ComboBox
           v-model="filters.status"
           label="Status"
           placeholder="Select Activity Status"
           :options="[
             { value: '1', label: 'Done' },
-            { value: '0', label: 'Pending' },            
+            { value: '0', label: 'Pending' },
           ]"
+          :single="true"
         />
-      </div>      
+      </div>
       <div class="flex justify-end gap-3 mb-4 mt-1">
-        <div class="flex gap-3"> 
+        <div class="flex gap-3">
           <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
           <x-button size="sm" color="primary" @click.prevent="resetFilters">
             Reset
           </x-button>
         </div>
       </div>
-
     </x-form>
     <x-divider class="my-2" />
     <div class="flex justify-between items-center mb-4 mt-1">
       <h2 class="text-left text-xl font-bold">Activities</h2>
       <div class="flex gap-3">
-      <x-button
-        size="sm"
-        :color="selectedOption === 'overdue' ? 'primary' : 'secondary'"
-        @click.prevent="resetDates('overdue')"
-      >
-        Overdue
-      </x-button>
-      <x-button
-        size="sm"
-        :color="selectedOption === 'today' ? 'primary' : 'secondary'"
-        @click.prevent="resetDates('today')"
-      >
-        Today
-      </x-button>
-      <x-button
-        size="sm"
-        :color="selectedOption === 'tomorrow' ? 'primary' : 'secondary'"
-        @click.prevent="resetDates('tomorrow')"
-      >
-        Tomorrow
-      </x-button>
-      <x-button
-        size="sm"
-        :color="selectedOption === 'tweek' ? 'primary' : 'secondary'"
-        @click.prevent="resetDates('tweek')"
-      >
-        This Week
-      </x-button>
-      <x-button
-        size="sm"
-        :color="selectedOption === 'tmonth' ? 'primary' : 'secondary'"
-        @click.prevent="resetDates('tmonth')"
-      >
-        This Month
-      </x-button>
-      <x-button
-        size="sm"
-        :color="selectedOption === 'custom' ? 'primary' : 'secondary'"
-        @click.prevent="resetDates('custom')"
-      >
-        Custom
-      </x-button>    
-    </div>  
-</div>
- <!-- Custom Date Range Picker -->
-  <div v-if="selectedOption === 'custom'">
+        <x-button
+          size="sm"
+          :color="selectedOption === 'overdue' ? 'primary' : 'secondary'"
+          @click.prevent="resetDates('overdue')"
+        >
+          Overdue
+        </x-button>
+        <x-button
+          size="sm"
+          :color="selectedOption === 'today' ? 'primary' : 'secondary'"
+          @click.prevent="resetDates('today')"
+        >
+          Today
+        </x-button>
+        <x-button
+          size="sm"
+          :color="selectedOption === 'tomorrow' ? 'primary' : 'secondary'"
+          @click.prevent="resetDates('tomorrow')"
+        >
+          Tomorrow
+        </x-button>
+        <x-button
+          size="sm"
+          :color="selectedOption === 'tweek' ? 'primary' : 'secondary'"
+          @click.prevent="resetDates('tweek')"
+        >
+          This Week
+        </x-button>
+        <x-button
+          size="sm"
+          :color="selectedOption === 'tmonth' ? 'primary' : 'secondary'"
+          @click.prevent="resetDates('tmonth')"
+        >
+          This Month
+        </x-button>
+        <x-button
+          size="sm"
+          :color="selectedOption === 'custom' ? 'primary' : 'secondary'"
+          @click.prevent="resetDates('custom')"
+        >
+          Custom
+        </x-button>
+      </div>
+    </div>
+    <!-- Custom Date Range Picker -->
+    <div v-if="selectedOption === 'custom'">
       <div class="flex gap-3">
         <x-input
-            v-model="customStartDate"
-            label="Start Date"
-            type="datetime-local"
-            class="w-full"
-          />
+          v-model="customStartDate"
+          label="Start Date"
+          type="datetime-local"
+          class="w-full"
+        />
         <x-input
-            v-model="customEndDate"
-            label="End Date"
-            type="datetime-local"
-            class="w-full"
-          />
+          v-model="customEndDate"
+          label="End Date"
+          type="datetime-local"
+          class="w-full"
+        />
       </div>
       <div class="flex justify-end gap-3 mb-4 mt-1">
-        <div class="flex gap-3"> 
-          <x-button size="sm" color="primary" @click="applyCustomDates">Apply</x-button>
+        <div class="flex gap-3">
+          <x-button size="sm" color="primary" @click="applyCustomDates"
+            >Apply</x-button
+          >
         </div>
       </div>
       <x-divider class="my-2" />
@@ -425,32 +415,37 @@ onMounted(() => {
       hide-footer
       fixed-checkbox
     >
-    
-    <template #item-title="{ title }">
-      <div class="w-40 whitespace-normal">{{ title }}</div>
-    </template>
+      <template #item-title="{ title }">
+        <div class="w-40 whitespace-normal">{{ title }}</div>
+      </template>
 
-    <template #item-client_name="{ client_name }">
-      <div class="w-32 whitespace-normal">{{ client_name }}</div>
-    </template>
+      <template #item-client_name="{ client_name }">
+        <div class="w-32 whitespace-normal">{{ client_name }}</div>
+      </template>
 
-    <template #item-cdbid="item">
-      <div v-html="buildCdbidLink(item.quote_uuid, item.quote_type_id)"></div>
-    </template>
+      <template #item-cdbid="item">
+        <SanitizeHtml
+          v-if="(item.quote_uuid, item.quote_type_id)"
+          :html="getLink(item.quote_uuid, item.quote_type_id)"
+          class="text-primary-500 hover:underline"
+        />
+      </template>
 
-    <template #item-due_date="item">
-      <td
-        :class="{
-          'bg-red-500': item.is_overdue === true,
-          'rounded': item.is_overdue === true,
-          'flex items-center justify-center w-full h-full': true
-        }">
-        {{ item.due_date }}
-      </td>
-    </template>
+      <template #item-due_date="item">
+        <td
+          :class="{
+            'bg-red-500': item.is_overdue === true,
+            rounded: item.is_overdue === true,
+            'flex items-center justify-center w-full h-full': true,
+          }"
+        >
+          {{ item.due_date }}
+        </td>
+      </template>
 
-    <template #item-status="{ status, id }">
+      <template #item-status="{ status, id }">
         <x-checkbox
+          :key="id"
           color="emerald"
           size="xl"
           :modelValue="status === 1"
@@ -482,7 +477,7 @@ onMounted(() => {
           </x-button>
         </div>
       </template>
-  </DataTable>
+    </DataTable>
     <Pagination
       :links="{
         next: activities.next_page_url,
@@ -493,68 +488,83 @@ onMounted(() => {
       }"
     />
 
-    <x-modal v-model="modals.activity" size="lg" show-close backdrop>
-      <template #header>
-        {{ activityActionEdit ? 'Edit' : 'Add' }} Activity
+    <x-modal
+      v-model="modals.activity"
+      size="lg"
+      :title="`${activityActionEdit ? 'Edit' : 'Add'} Activity`"
+      show-close
+      backdrop
+      is-form
+      @submit="onSubmit"
+    >
+      <div class="grid gap-4">
+        <x-input
+          v-model="activityForm.title"
+          label="Title*"
+          :rules="[rules.isRequired]"
+          class="w-full"
+        />
+
+        <x-textarea
+          v-model="activityForm.description"
+          label="Description*"
+          :rules="[rules.isRequired]"
+          :adjust-to-text="false"
+          class="w-full"
+        />
+        <div v-if="activityActionEdit">
+          <x-select
+            v-model="activityForm.assignee_id"
+            label="Assignee*"
+            :options="[
+              ...advisors.map(advisor => ({
+                value: advisor.id,
+                label: advisor.name,
+              })),
+            ]"
+            :rules="[rules.isRequired]"
+            :disabled="cannotUseAssignee"
+            placeholder="Select Assignee"
+            class="w-full"
+          />
+        </div>
+        <x-input
+          v-model="activityForm.due_date"
+          label="Due Date*"
+          type="datetime-local"
+          :rules="[rules.isRequired]"
+          class="w-full"
+        />
+      </div>
+
+      <template #secondary-action>
+        <x-button
+          ghost
+          tabindex="-1"
+          size="sm"
+          @click.prevent="modals.activity = false"
+        >
+          Cancel
+        </x-button>
       </template>
-
-      <x-form @submit="onSubmit" :auto-focus="false">
-        <div class="grid gap-4">
-          <x-input
-            v-model="activityForm.title"
-            label="Title*"
-            :rules="[rules.isRequired]"
-            class="w-full"
-          />
-
-          <x-textarea
-            v-model="activityForm.description"
-            label="Description*"
-            :rules="[rules.isRequired]"
-            :adjust-to-text="false"
-            class="w-full"
-          />
-          <div v-if="activityActionEdit">
-            <x-select
-              v-model="activityForm.assignee_id"
-              label="Assignee*"
-              :options="[            
-                  ...advisors.map(advisor => ({ value: advisor.id, label: advisor.name })),
-                ]"
-              :rules="[rules.isRequired]"
-              :disabled="cannotUseAssignee"
-              placeholder="Select Assignee"
-              class="w-full"
-            />
-         </div>
-          <x-input
-            v-model="activityForm.due_date"
-            label="Due Date*"
-            type="datetime-local"
-            :rules="[rules.isRequired]"
-            class="w-full"
-          />
-        </div>
-
-        <div class="text-right space-x-4 mt-12">
-          <x-button size="sm" @click.prevent="modals.activity = false">
-            Cancel
-          </x-button>
-
-          <x-button
-            size="sm"
-            color="emerald"
-            :loading="activityForm.processing"
-            type="submit"
-          >
-            {{ activityActionEdit ? 'Update' : 'Save' }}
-          </x-button>
-        </div>
-      </x-form>
+      <template #primary-action>
+        <x-button
+          size="sm"
+          color="emerald"
+          :loading="activityForm.processing"
+          type="submit"
+        >
+          {{ activityActionEdit ? 'Update' : 'Save' }}
+        </x-button>
+      </template>
     </x-modal>
 
-    <x-modal v-model="modals.activityConfirm" show-close backdrop>
-      <template #header> Delete Activity </template>
+    <x-modal
+      v-model="modals.activityConfirm"
+      title="Delete Activity"
+      show-close
+      backdrop
+    >
       <p>Are you sure you want to delete this activity?</p>
       <template #actions>
         <div class="text-right space-x-4">

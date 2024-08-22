@@ -8,6 +8,7 @@ use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\UserStatusEnum;
 use App\Jobs\CammyJob;
@@ -16,6 +17,7 @@ use App\Jobs\IntroEmailJob;
 use App\Mail\HealthAssignmentIssueEmail;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
+use App\Models\QuoteBatches;
 use App\Models\Team;
 use App\Models\User;
 use Carbon\Carbon;
@@ -74,14 +76,12 @@ class HealthAllocationService extends AllocationService
 
         if ($healthTeam) {
             info('assignHealthTeamBasedOnStartingPrice filtered team is : '.$healthTeam->name);
-            $lead->update([
-                'health_team_type' => $healthTeam->name,
-            ]);
+            $lead->health_team_type = $healthTeam->name;
+            $lead->save();
         } else {
             info('assignHealthTeamBasedOnStartingPrice team not found against : '.$lead->uuid);
-            $lead->update([
-                'is_error_email_sent' => true,
-            ]);
+            $lead->is_error_email_sent = true;
+            $lead->save();
             Mail::send(new HealthAssignmentIssueEmail($lead->code, $priceStartingFrom));
         }
     }
@@ -99,6 +99,7 @@ class HealthAllocationService extends AllocationService
 
         foreach ($statusOrder as $status) {
             $eligibleUser = $this->getAdvisorByStatus($status, $leadTeam);
+
             if ($eligibleUser) {
                 info('eligible user found for team : '.$leadTeam.' with status : '.$status.' and user id :'.$eligibleUser->user_id);
 
@@ -116,13 +117,15 @@ class HealthAllocationService extends AllocationService
         return User::join('lead_allocation as la', 'la.user_id', '=', 'users.id')
             ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
             ->join('roles as r', 'r.id', '=', 'mhr.role_id')
-            ->join('teams as t', 't.id', '=', 'users.sub_team_id')
+            ->join('user_team as ut', 'ut.user_id', '=', 'users.id')
+            ->join('teams as t', 't.id', '=', 'ut.team_id')
             ->where('users.status', $status)
             ->where(function ($query) {
                 $query->whereRaw('la.allocation_count < la.max_capacity')
                     ->orWhere('la.max_capacity', '=', -1);
             })
             ->whereIn('r.name', [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])
+            ->where('la.quote_type_id', QuoteTypes::HEALTH->id())
             ->where('users.is_active', true)
             ->where('t.name', $leadTeam)
             ->orderBy('la.last_allocated', 'asc')->first();
@@ -136,14 +139,16 @@ class HealthAllocationService extends AllocationService
         $lead->advisor_id = $advisor->id;
         $lead->assignment_type = $assignmentType;
         $lead->quote_updated_at = now();
+        $quoteBatch = QuoteBatches::latest()->first();
+        $lead->quote_batch_id = $quoteBatch->id;
         $lead->save();
-        info('Lead Id '.$lead->uuid.' assigned to advisor : '.$advisor->name);
+        info('Lead Id '.$lead->uuid.' assigned to advisor : '.$advisor->name.' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
 
         $previousAdvisorAssignedDate = $this->updateQuoteDetail($lead->id);
 
         if ($lead->source != LeadSourceEnum::REFERRAL) {
             info('lead source is not referral so about to update allocation record');
-            $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($advisor->id) : $this->adjustAllocationCounts($advisor->id, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType);
+            $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($advisor->id, QuoteTypes::HEALTH->id()) : $this->adjustAllocationCounts($advisor->id, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType, QuoteTypes::HEALTH->id());
         }
 
         Haystack::build()
@@ -163,14 +168,8 @@ class HealthAllocationService extends AllocationService
         info('about to update health quote detail record for : '.$leadId);
 
         $quoteDetail = HealthQuoteRequestDetail::where('health_quote_request_id', $leadId)->first();
-        $oldAdvisorAssignedDate = '';
-
-        if ($quoteDetail) {
-            $oldAdvisorAssignedDate = $quoteDetail->advisor_assigned_date;
-            $this->updateExistingQuoteDetail($quoteDetail, $leadId);
-        } else {
-            $this->createNewQuoteDetail($leadId, HealthQuoteRequestDetail::class, 'health_quote_request_id');
-        }
+        $oldAdvisorAssignedDate = $quoteDetail->advisor_assigned_date ?? '';
+        $this->upsertQuoteDetail($leadId, HealthQuoteRequestDetail::class, 'health_quote_request_id');
 
         return $oldAdvisorAssignedDate;
     }

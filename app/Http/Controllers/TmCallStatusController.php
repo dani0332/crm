@@ -62,7 +62,7 @@ class TmCallStatusController extends Controller
             'sort_order' => 'required|max:5',
         ]);
 
-        $tmCallStatus = new TmCallStatus();
+        $tmCallStatus = new TmCallStatus;
         $tmCallStatus->code = $request->code;
         $tmCallStatus->text = $request->text;
         $tmCallStatus->text_ar = $request->text_ar;

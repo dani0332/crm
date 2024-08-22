@@ -13,15 +13,16 @@ use Carbon\Carbon;
 class QuoteStatusService
 {
     use GenericQueriesAllLobs;
-    public function updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, $request = [])
+
+    public function updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, $request = [], $notes = null)
     {
-        $checkAMlService = new CheckAmlService();
+        $AMLService = new AMLService;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $quoteStatus = QuoteStatus::where('code', $quoteStatusType)->firstOrFail();
 
-        if (checkPersonalQuotes($quoteType->code) && (! $checkAMlService->isDataMigrated($quoteTypeId, $quoteRequestId))) {
-            $quoteRequestId = $checkAMlService->getPersonalQuoteId($quoteTypeId, $quoteRequestId);
-            $checkAMlService->updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, true, ['quote_status_id' => $quoteStatus->id]);
+        if (checkPersonalQuotes($quoteType->code) && (! $AMLService->isDataMigrated($quoteTypeId, $quoteRequestId))) {
+            $quoteRequestId = $AMLService->getPersonalQuoteId($quoteTypeId, $quoteRequestId);
+            $AMLService->updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, true, ['quote_status_id' => $quoteStatus->id]);
         }
 
         if (! empty($request)) {
@@ -29,6 +30,9 @@ class QuoteStatusService
             $fetchKycLog->update([
                 'decision' => $request['aml_decision'] ?? '',
                 'notes' => trim($request['notes']) ?? '',
+                'in_adverse_media' => isset($request['in_adverse_media']) ? trim($request['in_adverse_media']) : '',
+                'is_owner_pep' => isset($request['is_owner_pep']) ? trim($request['is_owner_pep']) : '',
+                'is_controlling_pep' => isset($request['is_controlling_pep']) ? trim($request['is_controlling_pep']) : '',
             ]);
 
             $kycLog = $fetchKycLog->first();
@@ -51,6 +55,7 @@ class QuoteStatusService
             'quote_request_id' => $quoteRequestId,
             'current_quote_status_id' => $currentStatusId,
             'previous_quote_status_id' => $previousStatusId,
+            'notes' => $notes ?? null,
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ]);

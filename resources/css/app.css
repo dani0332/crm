@@ -48,6 +48,13 @@ label {
   @apply overflow-x-auto;
 }
 
+.overflow-hidden-table {
+  overflow: unset !important;
+}
+
+.overflow-hidden-table .vue3-easy-data-table__main {
+  overflow: unset !important;
+}
 /* Scrollbar styles */
 .vue3-easy-data-table__main::-webkit-scrollbar {
   @apply h-1.5 bg-transparent cursor-pointer;
@@ -103,12 +110,24 @@ label {
 .tablefixed .vue3-easy-data-table__body tr td {
   @apply whitespace-nowrap;
 }
+
+.table-fixed-width {
+  @apply md:overflow-visible sm:overflow-x-auto;
+}
+
+.table-fixed-width .vue3-easy-data-table__main {
+  @apply md:overflow-visible sm:overflow-x-auto;
+}
 /* Table body tr */
 .vue3-easy-data-table__body tr {
   @apply hover:bg-primary-50 transition;
 }
 .vue3-easy-data-table__body.row-alternation tr {
   @apply even:bg-slate-50;
+}
+
+.text-wrap .vue3-easy-data-table__header tr th {
+  text-wrap: wrap;
 }
 
 /* table head sort icons */
@@ -388,92 +407,50 @@ border-primary animate-spin;
   min-height: 38px;
 }
 
-.arrow-t .x-popover-container::after {
-  content: '';
-  position: absolute;
-  top: -9px;
-  left: 50%;
-  margin-left: -5px;
-  border-width: 5px;
-  border-style: solid;
-  border-color: rgb(55, 65, 81) transparent transparent transparent;
-  transform: rotate(180deg);
-}
-
-.arrow-l .x-popover-container::after {
-  content: '';
-  position: absolute;
-  left: -5px;
-  top: 10px;
-  margin-left: -5px;
-  border-width: 5px;
-  border-style: solid;
-  border-color: rgb(28, 124, 178) transparent transparent transparent;
-  transform: rotate(90deg);
-}
-
 .x-popover-container.max-h-72 {
   @apply !max-h-48;
 }
 
-.arrow-l-dark .x-popover-container::after {
-  content: '';
-  position: absolute;
-  top: 100%; /* Change 'top' to move the arrow to the top position */
-  left: 50%; /* Center the arrow horizontally */
-  margin-left: -5px;
-  border-width: 5px;
-  border-style: solid;
-  border-color: rgb(55 65 81) transparent transparent transparent;
-  transform: rotate(360deg);
-}
 .x-notification {
   @apply z-50;
 }
 
-.arrow-r .x-popover-container::after {
-  content: '';
-  position: absolute;
-  top: 14%; /* Change 'top' to move the arrow to the top position */
-  right: -4.2%; /* Center the arrow horizontally */
-  /* margin-right: -5px; */
-  border-width: 5px;
-  border-style: solid;
-  border-color: rgb(55 65 81) transparent transparent transparent;
-  transform: rotate(270deg);
-}
-
-.arrow-b .x-popover-container::after {
-  content: '';
-  position: absolute;
-  bottom: -9px;
-  left: 50%;
-  margin-left: -5px;
-  border-width: 5px;
-  border-style: solid;
-  border-color: rgb(55 65 81) transparent transparent transparent;
-}
-
-.vue3-easy-data-table.plain  {
-    @apply shadow-none ring-0;
+.vue3-easy-data-table.plain {
+  @apply shadow-none ring-0;
 }
 
 .plain .vue3-easy-data-table__header tr {
-    @apply bg-white;
+  @apply bg-white;
 }
 
 .plain .vue3-easy-data-table__header tr th {
-    @apply text-gray-600 font-semibold;
+  @apply text-gray-600 font-semibold;
 }
 
-.plain .vue3-easy-data-table__body tr td{
-    @apply font-normal;
+.plain .vue3-easy-data-table__body tr td {
+  @apply font-normal;
 }
 
 .large-tip .x-popover-container {
-    @apply max-w-[420px];
+  @apply max-w-[420px];
 }
 
 .large-tip .arrow-t .x-popover-container::after {
-    left: 63%;
+  left: 63%;
+}
+
+@media (max-width: 1250px) {
+  .comprehensive-conversion-container {
+    height: auto !important;
+  }
+}
+
+@media (max-width: 1250px) {
+  .comprehensive-conversion-container {
+    height: auto !important;
+  }
+}
+
+.yoyo-tip .max-w-xs {
+  @apply max-w-2xl;
 }

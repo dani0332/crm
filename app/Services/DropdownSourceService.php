@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Models\BusinessInsuranceType;
 use App\Models\CarAddOn;
 use App\Models\CarMake;
@@ -13,6 +14,7 @@ use App\Models\ClaimHistory;
 use App\Models\CurrencyType;
 use App\Models\Emirate;
 use App\Models\HealthCoverFor;
+use App\Models\HealthPlanType;
 use App\Models\HomeAccomodationType;
 use App\Models\HomePossessionType;
 use App\Models\InsuranceProvider;
@@ -98,9 +100,8 @@ class DropdownSourceService extends BaseService
 
     public function getDropdownSource($type, $quoteTypeId = false)
     {
-        $advisorType = strtoupper(explode('/', request()->path())[1]);
         $data = '';
-        $lookUpService = new LookupService();
+        $lookUpService = new LookupService;
         switch ($type) {
             case 'parent_team_id':
                 $data = Team::whereNull('parent_team_id')->where('type', 1)->get();
@@ -185,6 +186,7 @@ class DropdownSourceService extends BaseService
                 $data = YearOfManufacture::select('text as id', 'text')->orderBy('sort_order')->get();
                 break;
             case 'advisor_id':
+                $advisorType = strtoupper(explode('/', request()->path())[1]);
                 if (Auth::user()->isRenewalUser() || Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor()) {
                     $advisorType = $advisorType.'_RENEWAL';
                 }
@@ -195,7 +197,7 @@ class DropdownSourceService extends BaseService
                     $data = DB::table('users as u')->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))
                         ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
                         ->join('roles as r', 'mhr.role_id', '=', 'r.id')
-                        ->whereIn('r.name', ['RM_ADVISOR', 'EBP_ADVISOR', 'HEALTH_WCU_ADVISOR'])->get();
+                        ->whereIn('r.name', ['RM_ADVISOR', 'EBP_ADVISOR'])->get();
                 } elseif (strtolower($advisorType) == strtolower(quoteTypeCode::Business)) {
                     $data = DB::table('users as u')->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))
                         ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
@@ -234,7 +236,7 @@ class DropdownSourceService extends BaseService
                 $data = CarTypeInsurance::select('id', 'text')->where('is_active', true)->get();
                 break;
             case 'claim_history_id':
-                $data = ClaimHistory::select('id', 'text')->where('is_active', true)->get();
+                $data = ClaimHistory::select('id', 'text', 'quote_type_id')->where('is_active', true)->get();
                 break;
             case 'plan_id':
                 $data = CarPlan::select('id', 'text')->get();
@@ -318,9 +320,25 @@ class DropdownSourceService extends BaseService
                             ->select('id', 'text')
                             ->get();
                     }
-
                 }
                 // =========== end =================
+                break;
+            case 'plan_type_id':
+                $data = HealthPlanType::where('is_active', 1)->select('id', 'text')->orderBy('id')->get();
+                break;
+            case 'bike_make_id':
+                $distinctCarMakeCodes = CarModel::where('quote_type_id', QuoteTypeId::Bike)
+                    ->where('is_active', true)
+                    ->distinct('car_make_code')
+                    ->pluck('car_make_code')
+                    ->toArray();
+                $data = CarMake::select('id', 'text')->whereIn('code', $distinctCarMakeCodes)->where('is_active', true)->get();
+                break;
+            case 'bike_model_id':
+                $data = [];
+                break;
+            case 'line_of_business':
+                $data = Team::where('is_active', true)->get();
                 break;
             default:
                 break;

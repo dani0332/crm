@@ -99,7 +99,7 @@ class JetskiQuoteRepository extends BaseRepository
         return $this->byQuoteTypeId(QuoteTypes::JETSKI->id())
             ->where($column, $value)
             ->with(['amlStatus', 'jetskiQuote', 'nationality', 'advisor', 'quoteDetail.lostReason', 'payments' => function ($q) {
-                $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
+                $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentable']);
             }, 'createdBy', 'updatedBy', 'customer.additionalContactInfo', 'documents' => function ($q) {
                 $q->with('createdBy')->orderBy('created_at', 'desc');
             }])->firstOrFail();

@@ -22,7 +22,7 @@ class LeadStatusService extends BaseService
         if ($existingStatus != null) {
             return 'Error: name already exists';
         }
-        $leadStatus = new QuoteStatus();
+        $leadStatus = new QuoteStatus;
         $leadStatus->code = $request->text;
         $leadStatus->text = $request->text;
         $leadStatus->is_active = true;

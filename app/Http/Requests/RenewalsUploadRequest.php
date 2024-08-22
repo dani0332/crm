@@ -31,6 +31,7 @@ class RenewalsUploadRequest extends FormRequest
 
         if (! empty(request()->renewals_upload_type) && request()->renewals_upload_type == 'update') {
             $rules['skip_plans'] = 'required';
+            $rules['is_sic'] = 'required';
         }
 
         return $rules;

@@ -12,8 +12,8 @@ use App\Models\CarQuote;
 use App\Models\DttRevival;
 use App\Models\Tier;
 use App\Services\ApplicationStorageService;
-use App\Services\CarEmailService;
 use App\Services\CarQuoteService;
+use App\Services\EmailServices\CarEmailService;
 use App\Services\SendEmailCustomerService;
 use App\Services\UserService;
 use Carbon\Carbon;
@@ -134,7 +134,10 @@ class DttFollowUp extends Command
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
                     $emailData->templateId = (int) $emailTemplateId;
                     $emailData->subject = 'Reminder: Purchase Your Motor Policy '.$lead->code;
-                    $leads[] = $emailData;
+                    $emailData->tag = 'reminder-purchase-your-motor-policy';
+                    if ($item->follow_up_email_count == 0) {
+                        $leads[] = $emailData;
+                    }
                 }
                 // after seven days
                 if ($today->eq($afterSevenDays)) {
@@ -146,7 +149,10 @@ class DttFollowUp extends Command
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
                     $emailData->templateId = (int) $emailTemplateId;
                     $emailData->subject = 'Reminder: Purchase Your Motor Policy '.$lead->code;
-                    $leads[] = $emailData;
+                    $emailData->tag = 'reminder-purchase-your-motor-policy';
+                    if ($item->follow_up_email_count == 1) {
+                        $leads[] = $emailData;
+                    }
                 }
                 // after thirteen days
                 if ($today->eq($aftertThirteenDays)) {
@@ -158,7 +164,10 @@ class DttFollowUp extends Command
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
                     $emailData->templateId = (int) $emailTemplateId;
                     $emailData->subject = 'Friendly Reminder: Secure Your Motor Policy Today '.$lead->code;
-                    $leads[] = $emailData;
+                    $emailData->tag = 'friendly-reminder-secure-your-motor-policy';
+                    if ($item->follow_up_email_count == 2) {
+                        $leads[] = $emailData;
+                    }
                 }
                 // after twenty days
                 if ($today->eq($afterTwentyDays)) {
@@ -170,7 +179,10 @@ class DttFollowUp extends Command
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
                     $emailData->templateId = (int) $emailTemplateId;
                     $emailData->subject = 'Gentle Reminder: Secure Your Motor Policy Today '.$lead->code;
-                    $leads[] = $emailData;
+                    $emailData->tag = 'gentle-reminder-secure-your-motor-policy';
+                    if ($item->follow_up_email_count == 3) {
+                        $leads[] = $emailData;
+                    }
                 }
                 // after twentyeight days
                 if ($today->eq($afterTwentyeightDays)) {
@@ -182,7 +194,10 @@ class DttFollowUp extends Command
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
                     $emailData->templateId = (int) $emailTemplateId;
                     $emailData->subject = 'Final Reminder: Secure Your Motor Policy Now '.$lead->code;
-                    $leads[] = $emailData;
+                    $emailData->tag = 'final-reminder-secure-your-motor-policy';
+                    if ($item->follow_up_email_count == 4) {
+                        $leads[] = $emailData;
+                    }
                 }
             }
         }

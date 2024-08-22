@@ -16,6 +16,14 @@ const isEdit = computed(() => {
   return route().current().includes('edit');
 });
 
+const initialEditCategoryId = computed(() => {
+  if (route().current().includes('edit')) {
+    return props.quote.member_category_id;
+  }
+});
+
+let previouslySelectedCategoryId = ref(initialEditCategoryId.value);
+
 const genderSelect = computed(() => {
   return Object.keys(props.genderOptions).map(status => ({
     value: status,
@@ -51,7 +59,60 @@ const quoteForm = useForm({
   has_dental: props.quote?.has_dental || null,
   has_worldwide_cover: props.quote?.has_worldwide_cover || null,
   has_home: props.quote?.has_home || null,
+  plan_type_id: props.quote?.health_plan_type_id || null,
 });
+
+const memberCategorySalaryMapping = {
+  'Investor or Partner': 2,
+  'Golden visa': 2,
+  'Self-employed or Freelancer': 2,
+  'Domestic worker': 1,
+  'Dependent spouse': 2,
+  'Dependent child': 2,
+  'Dependent parent': 2,
+  'Dependent sibling or Other relatives': 2,
+  'Employee with salary AED 4000 and below': 1,
+  'Employee with salary above AED 4000': 2,
+};
+
+const salaryBrandMapping = {
+  1: 'AED 4000 and below',
+  2: 'More than AED 4000',
+};
+
+const selectedSalaryBand = computed(() => {
+  return route().current().includes('edit');
+});
+
+watch(
+  () => quoteForm.member_category_id,
+  (newValue, oldValue) => {
+    if (newValue) {
+      if (
+        !isEdit.value ||
+        (isEdit.value &&
+          (newValue !== initialEditCategoryId.value ||
+            (newValue === initialEditCategoryId.value &&
+              newValue !== previouslySelectedCategoryId.value)))
+      ) {
+        //fetch category text
+        const selectedCategory = props.dropdownSource.member_category_id.find(
+          option => option.id === newValue,
+        );
+
+        // fetch salary band id based on category text
+        const salaryBandId = memberCategorySalaryMapping[selectedCategory.text];
+
+        // if quote status is Transaction Approved do not auto-popualte salary band automatically
+        if (props.quote.quote_status_id != 15) {
+          quoteForm.salary_band_id = salaryBandId;
+        }
+        previouslySelectedCategoryId.value = newValue;
+      }
+    }
+  },
+  { immediate: true },
+);
 
 function onSubmit(isValid) {
   if (quoteForm.nationality_id == null) {
@@ -248,9 +309,10 @@ function onSubmit(isValid) {
           />
         </x-field>
 
-        <x-field label="MEMBER CATEGORY">
+        <x-field label="MEMBER CATEGORY" required>
           <x-select
             v-model="quoteForm.member_category_id"
+            :rules="[isRequired]"
             :options="
               dropdownSource.member_category_id.map(item => ({
                 value: item.id,
@@ -274,9 +336,10 @@ function onSubmit(isValid) {
           />
         </x-field>
 
-        <x-field label="GENDER">
+        <x-field label="GENDER" required>
           <x-select
             v-model="quoteForm.gender"
+            :rules="[isRequired]"
             :options="genderSelect"
             class="w-full"
           />
@@ -284,6 +347,20 @@ function onSubmit(isValid) {
 
         <x-field v-if="!isEdit" label="POLICY START DATE">
           <x-input v-model="quoteForm.policy_start_date" class="w-full" />
+        </x-field>
+        <x-field label="TYPE OF PLAN">
+          <x-select
+            v-model="quoteForm.plan_type_id"
+            :options="
+              dropdownSource.plan_type_id.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            class="w-full"
+            placeholder="Select plan type"
+            :rules="[isRequired]"
+          />
         </x-field>
 
         <x-field>
