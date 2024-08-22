@@ -10,6 +10,7 @@ use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\SICWorkflowRequest;
+use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
@@ -17,8 +18,6 @@ use App\Models\TravelQuote;
 use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
-use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
-use App\Jobs\SendOCBIntroEmailJob;
 use InvalidArgumentException;
 
 class ApiService
@@ -28,7 +27,7 @@ class ApiService
         try {
             return $this->checkmyAlredLink($request->email, $request);
         } catch (Exception $e) {
-            Log::error($e->getLine() . ' ' . $e->getMessage() . ' ' . $e->getFile());
+            Log::error($e->getLine().' '.$e->getMessage().' '.$e->getFile());
 
             return response()->json(['message' => 'Something went wrong. Please try again later.'], 500);
         }
@@ -114,9 +113,9 @@ class ApiService
 
     private function assignAdvisorOnly($allocationType, $allocationId)
     {
-        info('------ Lead allocation request received to assign advisor only for ' . $allocationId . ' ------');
+        info('------ Lead allocation request received to assign advisor only for '.$allocationId.' ------');
         $responsePayload = $this->executeAllocation($allocationType, $allocationId, false, false, true);
-        info('------ Lead allocation request completed to assign advisor only for ' . $allocationId . ' ------');
+        info('------ Lead allocation request completed to assign advisor only for '.$allocationId.' ------');
 
         return apiResponse($responsePayload['data'], Response::HTTP_OK, $responsePayload['message']);
     }
@@ -143,9 +142,9 @@ class ApiService
 
     private function performLeadAllocation($allocationType, $leadId, $teamId)
     {
-        info('------ Lead allocation started for lead : ' . $leadId . ' ------');
+        info('------ Lead allocation started for lead : '.$leadId.' ------');
         $responsePayload = $this->executeAllocation($allocationType, $leadId, $teamId);
-        info('------ Lead allocation ended for lead ' . $leadId . ' ------');
+        info('------ Lead allocation ended for lead '.$leadId.' ------');
 
         return apiResponse($responsePayload['data'], Response::HTTP_OK, $responsePayload['message']);
     }
@@ -182,9 +181,9 @@ class ApiService
         $allocationType = $request->input('quoteTypeId');
         $allocationId = $request->input('quoteUUID');
 
-        info('------ Lead allocation request received to evaluate tier only for ' . $allocationId . ' ------');
+        info('------ Lead allocation request received to evaluate tier only for '.$allocationId.' ------');
         $responsePayload = $this->executeAllocation($allocationType, $allocationId, false, true);
-        info('------ Lead allocation request completed to evaluate tier only for ' . $responsePayload['tierId'] . ' ------');
+        info('------ Lead allocation request completed to evaluate tier only for '.$responsePayload['tierId'].' ------');
 
         return apiResponse($responsePayload['data'], Response::HTTP_OK, $responsePayload['message']);
     }
@@ -200,7 +199,7 @@ class ApiService
     {
         $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId, $teamId);
         if (is_null($allocationStrategy)) {
-            info('-- Exception against - allocationType: ' . $allocationId . ' and allocationId: ' . $allocationId . ' --');
+            info('-- Exception against - allocationType: '.$allocationId.' and allocationId: '.$allocationId.' --');
             throw new InvalidArgumentException("Allocation strategy for type '$allocationType -- $allocationId' not found.");
         }
         $responsePayload = $allocationStrategy->executeSteps($overrideAdvisorId, $teamId, $tierOnly);
@@ -208,7 +207,7 @@ class ApiService
         $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
         $message = $responsePayload['message'];
         if ((isset($rest['advisorId']) && $rest['advisorId'] == 0) || (isset($rest['tierId']) && $rest['tierId'] == 0)) {
-            $message = (isset($rest['tierId']) && $rest['tierId'] == 0) ? 'Tier failed: ' . $responsePayload['message'] : 'Allocation failed: ' . $responsePayload['message'];
+            $message = (isset($rest['tierId']) && $rest['tierId'] == 0) ? 'Tier failed: '.$responsePayload['message'] : 'Allocation failed: '.$responsePayload['message'];
         }
 
         return [
@@ -235,7 +234,7 @@ class ApiService
         }
 
         if ($lead instanceof TravelQuote && $lead->isMultiTrip()) {
-            info(self::class . " - handleZeroPlansEmail: First OCB Email Skipped because it is a Multi Trip Lead uuid: {$lead->uuid}");
+            info(self::class." - handleZeroPlansEmail: First OCB Email Skipped because it is a Multi Trip Lead uuid: {$lead->uuid}");
 
             return apiResponse(null, Response::HTTP_OK, 'First OCB Email Skipped because it is a Multi Trip Lead!');
         }
