@@ -732,7 +732,7 @@ class SageApiService
             $startingStep = 10;
         }
 
-        if ($sageRequestPayload->discount > 0 && !in_array(($extras['option'] ?? ''), [SendUpdateLogStatusEnum::ATIB, SendUpdateLogStatusEnum::ACB])) {
+        if ($sageRequestPayload->discount > 0 && ! in_array(($extras['option'] ?? ''), [SendUpdateLogStatusEnum::ATIB, SendUpdateLogStatusEnum::ACB])) {
             info('Book Update - Creating AR Discount Invoice and mark as posted');
             $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
                 'iterator' => 0,
