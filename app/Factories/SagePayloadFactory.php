@@ -1053,6 +1053,10 @@ class SagePayloadFactory
                 'OptionalField' => 'COMMAMOUNT',
                 'Value' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat), // commission including vat means commission_vat_applicable,
             ],
+            [
+                'OptionalField' => 'TOTALCOMM',
+                'Value' => $request->commission,
+            ],
         ];
 
         return $optionalArray;
