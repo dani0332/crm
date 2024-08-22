@@ -363,12 +363,12 @@ const minDate = computed(() => {
         <ComboBox
           v-if="filters.lob == props.quoteTypeIdEnum.Car"
           v-model="filters.tag"
-          placeholder="SIC/PUA Filter"
-          label="SIC/PUA Filter"
+          placeholder="SIC/PUA"
+          label="SIC/PUA"
           :options="[
-            { value: '', label: 'Select' },
-            { value: 'sic', label: 'Filter by SIC Leads' },
-            { value: 'non-sic', label: 'Filter by PUA Leads' },
+            { value: '', label: 'All' },
+            { value: 'sic', label: 'SIC' },
+            { value: 'non-sic', label: 'PUA' },
           ]"
           class="w-full"
           :single="true"
