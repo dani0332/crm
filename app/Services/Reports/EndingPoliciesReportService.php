@@ -30,16 +30,13 @@ class EndingPoliciesReportService extends ManagementReport
 
         $query = PersonalQuote::query()
             ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
-            ->leftJoin('quote_type as qt', 'qt.id', '=', 'quote_type_id')
+            ->join('quote_type as qt', 'qt.id', '=', 'quote_type_id')
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'insurance_provider_id')
             ->leftJoin('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'p.payment_status_id')
             ->leftJoin('customer as c', 'c.id', '=', 'customer_id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
             ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
-            ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
-            ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
-            ->join('teams as t', 't.id', '=', 'ut.team_id')
             ->select(
                 'c.first_name',
                 'c.last_name',
@@ -65,7 +62,7 @@ class EndingPoliciesReportService extends ManagementReport
                 'personal_quotes.notes',
             );
 
-        $this->applyFilters($query, $request);
+        $this->applyFilters($query, $request, isSSR: true);
 
         $utmGroupBy = $this->getUtmGroup($request, $query);
 
