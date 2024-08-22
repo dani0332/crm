@@ -1963,6 +1963,10 @@ const onAddUpdate = () => {
                 <dt class="font-medium">ENQUIRY COUNT</dt>
                 <dd>{{ record.enquiry_count }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ record.transaction_approved_at }}</dd>
+              </div>
             </dl>
           </div>
           <x-divider class="mb-4 mt-4" />
