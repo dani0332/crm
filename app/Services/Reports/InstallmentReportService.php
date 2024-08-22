@@ -78,7 +78,6 @@ class InstallmentReportService extends ManagementReport
             ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
             ->leftJoin('departments as dp', 'u.department_id', '=', 'dp.id')
-            ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
             ->leftJoin('payment_methods as pm', 'pm.code', '=', 'ps.payment_method')
             ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'ps.payment_gateway_id')

@@ -45,7 +45,7 @@ class SaleDetailReportService extends ManagementReport
                 'personal_quotes.uuid',
                 'personal_quotes.source',
                 'personal_quotes.code',
-                't.name as team',
+                DB::raw('IFNULL(GROUP_CONCAT(DISTINCT t.name SEPARATOR ", "), "") as team'),
                 'personal_quotes.price_vat_applicable',
                 'personal_quotes.vat',
                 'personal_quotes.price_vat_not_applicable',
@@ -79,7 +79,6 @@ class SaleDetailReportService extends ManagementReport
             ->join('payment_status', 'payment_status.id', '=', 'p.payment_status_id')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
             ->join('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
-            ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
             ->leftJoin('departments as dp', 'u.department_id', '=', 'dp.id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
