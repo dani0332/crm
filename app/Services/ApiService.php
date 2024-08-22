@@ -16,6 +16,7 @@ use App\Models\Activities;
 use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
+use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Models\TravelQuote;
 use Exception;
@@ -276,8 +277,10 @@ class ApiService
             $modelType = QuoteType::select('code')->find($request->quoteTypeId);
         }
         $record = '';
-        if (isset($request->entityUId)) {
+        if (isset($request->entityUId) && ! checkPersonalQuotes($modelType->code)) {
             $record = app(CRUDService::class)->getEntity($modelType->code, $request->entityUId);
+        } else {
+            $record = PersonalQuote::where('uuid', $request->entityUId)->first();
         }
         if (is_null($record->advisor_id)) {
             return response()->json(['message' => 'No advisor has been assigned to this lead.'], 404);
@@ -297,7 +300,6 @@ class ApiService
         }
 
         $activity = Activities::where('quote_uuid', $request->entityUId)
-            ->Where('status', 0)
             ->Where('source', LeadSourceEnum::INSTANT_ALFRED)
             ->first();
 
