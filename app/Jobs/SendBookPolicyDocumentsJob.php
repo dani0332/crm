@@ -29,8 +29,9 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
      * Create a new job instance.
      */
     private $data = null;
+
     private $code = null;
-    
+
     public function __construct($payload, $code)
     {
         info('job: SendBookPolicyDocumentsJob constructor for: '.$code);
