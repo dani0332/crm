@@ -1043,11 +1043,11 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    public function sendPaymentNotificationEmail($user, $userData, $getExpireOneDay)
+    public function sendPaymentNotificationEmail($user, $userData,$totalLead)
     {
         $emailTemplateId = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_NOTIFICATION_EMAIL_TEMPLATE)->value('value');
         try {
-            $tag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.'-';
+            $tag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv . '-';
             $headers = [
                 'Accept' => 'application/json',
                 'api-key' => $this->apiKey,
@@ -1069,20 +1069,18 @@ class SendEmailCustomerService extends BaseService
                 $total_leads += $users->total_leads;
             }
             $leadData = [
-                'total_leads' => $total_leads ? $total_leads : 0,
                 'total_premium' => $total_premium ? $total_premium : 0,
                 'date' => Carbon::now()->toDateString(),
             ];
 
             $params = [
                 'advisor_name' => $userData->name,
-                'total_leads' => $leadData['total_leads'],
+                'total_leads' => $totalLead,
                 'total_premium' => $leadData['total_premium'],
-                'leads_expire' => $getExpireOneDay ? $getExpireOneDay : 0,
+                'leads_expire' => $total_leads ? $total_leads : 0,
                 'date' => $leadData['date'],
                 'paymentDoc' => $url,
             ];
-
             if (empty($params['total_leads']) || empty($params['total_premium']) || empty($params['date'])) {
                 return;
             }
@@ -1097,7 +1095,7 @@ class SendEmailCustomerService extends BaseService
             ];
 
             $body = json_encode([
-                'sender' => ['name' => $tag.' '.'IMCRM Payment Notification Alert', 'email' => 'no-reply@alert.insurancemarket.email'],
+                'sender' => ['name' => $tag . ' ' . 'IMCRM Payment Notification Alert', 'email' => 'no-reply@alert.insurancemarket.email'],
                 'to' => $advisorData,
                 'replyTo' => $replyTo,
                 //  'bcc' => array_merge($bccAdditional),  //    'bcc' => array_merge($bccAdditional, $bcc),
@@ -1114,10 +1112,10 @@ class SendEmailCustomerService extends BaseService
                 ]
             );
             $responseCode = $clientRequest->getStatusCode();
-            info('sendPaymentNotificationEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
+            info('sendPaymentNotificationEmail ---- response object : ' . json_encode($clientRequest->getBody()->getContents()));
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $responseDetail = 'sendPaymentNotificationEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+            $responseDetail = 'sendPaymentNotificationEmail: Code/Message: ' . $responseCode . '/' . $ex->getMessage();
             Log::error($responseDetail);
         }
     }

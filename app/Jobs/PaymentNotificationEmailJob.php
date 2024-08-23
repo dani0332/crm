@@ -14,7 +14,7 @@ class PaymentNotificationEmailJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     private $user = null;
-    private $getExpireOneDay = null;
+    private $totalLead = null;
     private $userData = null;
     public $tries = 3;
     public $timeout = 30;
@@ -25,11 +25,11 @@ class PaymentNotificationEmailJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($user, $userData, $getExpireOneDay)
+    public function __construct($user, $userData, $totalLead)
     {
         $this->user = $user;
-        $this->getExpireOneDay = $getExpireOneDay;
         $this->userData = $userData;
+        $this->totalLead = $totalLead;
     }
 
     /**
@@ -49,6 +49,6 @@ class PaymentNotificationEmailJob implements ShouldQueue
 
             return false;
         }
-        $sendEmailCustomerService->sendPaymentNotificationEmail($this->user, $this->userData, $this->getExpireOneDay);
+        $sendEmailCustomerService->sendPaymentNotificationEmail($this->user, $this->userData, $this->totalLead);
     }
 }

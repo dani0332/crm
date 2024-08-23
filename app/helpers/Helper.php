@@ -13,7 +13,6 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessQuote;
-use App\Models\CarQuote;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
@@ -719,27 +718,16 @@ if (! function_exists('mimeContentType')) {
 }
 
 if (! function_exists('getAuthorisePaymentCount')) {
-    function getAuthorisePaymentCount()
+    function getAuthorisePaymentCount($userId = null)
     {
 
-        if (! Auth::check()) {
+        if (! Auth::check() && $userId == null) {
             return 0;
         }
+        $userId = $userId != null ? $userId : Auth::user()->id;
+        $user = User::where('id', $userId)->first();
+        $userTeams = $user->getUserTeams($userId);
 
-        $carCount = 0;
-        // for uat car quote move to personal quotes
-        /*  CarQuote::where('payment_status_id', PaymentStatusEnum::AUTHORISED)
-          ->where('advisor_id', Auth::user()->id)
-          ->count() */
-        $userId = Auth::user()->id;
-        $userTeams = Auth::user()->getUserTeams(Auth::user()->id);
-        if (empty($userTeams)) {
-            return 0;
-        }
-
-        $personalCount = 0;
-        $travelCount = 0;
-        $lifeCount = 0;
         $personalCount = DB::table('personal_quotes')
             ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
             ->join('users', 'users.id', 'personal_quotes.advisor_id')
@@ -761,9 +749,7 @@ if (! function_exists('getAuthorisePaymentCount')) {
             ->join('teams', 'teams.id', '=', 'user_team.team_id')
             ->where('life_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED);
 
-
-
-        if (Auth::user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::HealthManager, RolesEnum::TravelManager, RolesEnum::LifeManager, RolesEnum::HomeManager, RolesEnum::PetManager, RolesEnum::BikeManager, RolesEnum::CycleManager, RolesEnum::YachtManager, RolesEnum::JetskiManager, RolesEnum::BusinessManager])) {
+        if ($user->hasAnyRole([RolesEnum::CarManager, RolesEnum::HealthManager, RolesEnum::TravelManager, RolesEnum::LifeManager, RolesEnum::HomeManager, RolesEnum::PetManager, RolesEnum::BikeManager, RolesEnum::CycleManager, RolesEnum::YachtManager, RolesEnum::JetskiManager, RolesEnum::BusinessManager])) {
             $personalCount = $personalCount->whereIn('teams.name', $userTeams)->count();
 
             $travelCount = $travelCount->whereIn('teams.name', $userTeams)->count();

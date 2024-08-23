@@ -145,7 +145,7 @@ class SendPaymentEmail extends Command
         //        return User::whereHas('roles', function ($query) use ($roles) {
         //            $query->whereIn('name', $roles);
         //        })->get(['id', 'email', 'name']);
-        $userIds = [116, 1000, 1080, 968];
+        $userIds = [1129, 116, 1000, 1080, 968];
 
         return User::whereIn('id', $userIds)->whereHas('roles', function ($query) use ($roles) {
             $query->whereIn('name', $roles);
@@ -154,13 +154,11 @@ class SendPaymentEmail extends Command
 
     public function getPaymentNotificationData($role, $userData, $table, $quoteTypeId = null)
     {
+        $totalLead = getAuthorisePaymentCount($userData->id);
         $teamName = $userData->getUserTeams($userData->id);
 
         $query = DB::table($table)
             ->select(
-                'users.id as advisor_id',
-                'users.name as advisor_name',
-                'users.email as advisor_email',
                 DB::raw('COUNT(*) as total_leads'),
                 DB::raw('SUM('.$table.'.premium) as total_premium'),
                 DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
@@ -175,30 +173,14 @@ class SendPaymentEmail extends Command
             ->when($quoteTypeId !== null, function ($query) use ($quoteTypeId, $table) {
                 return $query->where($table.'.quote_type_id', $quoteTypeId);
             })
-            ->groupBy('users.id', 'users.name', 'expiry_days')
+            ->groupBy('expiry_days')
             ->having('expiry_days', '=', 1)
             ->orderBy('total_leads', 'desc');
-
-        $getExpireOneDay = DB::table($table)->select(
-            DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
-        )
-            ->leftJoin('payments as py', 'py.code', '=', $table.'.code')
-            ->join('users', 'users.id', $table.'.advisor_id')
-            ->join('user_team', 'user_team.user_id', 'users.id')
-            ->join('teams', 'teams.id', '=', 'user_team.team_id')
-            ->where($table.'.payment_status_id', PaymentStatusEnum::AUTHORISED)
-            ->whereIn('teams.name', $teamName)
-            ->when($quoteTypeId !== null, function ($query) use ($quoteTypeId, $table) {
-                return $query->where($table.'.quote_type_id', $quoteTypeId);
-            })
-            ->groupBy('users.id', 'users.name', 'expiry_days')
-            ->having('expiry_days', '=', 1)
-            ->count();
         $user = $query->get();
-
         if ($user->isNotEmpty()) {
             info("PaymentNotification Job Dispatch For {$role}");
-            PaymentNotificationEmailJob::dispatch($user, $userData, $getExpireOneDay);
+            info('Payment Email Send to User: '.$userData->email);
+            PaymentNotificationEmailJob::dispatch($user, $userData, $totalLead);
         }
     }
 
