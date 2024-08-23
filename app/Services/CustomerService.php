@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Enums\GenericRequestEnum;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
+use App\Models\CustomerAddress;
+use Illuminate\Support\Facades\Log;
 
 class CustomerService extends BaseService
 {
@@ -169,7 +171,7 @@ class CustomerService extends BaseService
             $customer = null;
             $previousEmail = $lead->email;
             if ($lead->customer && ! $this->getCustomerByEmail($value)) {
-                info('Customer additional contact primary email updated. Previous Email: '.$lead->email.' New Email: '.$value);
+                info('Customer additional contact primary email updated. Previous Email: ' . $lead->email . ' New Email: ' . $value);
                 $customerArray = [
                     'first_name' => $lead->first_name,
                     'last_name' => $lead->last_name,
@@ -178,7 +180,7 @@ class CustomerService extends BaseService
                     'dob' => $lead->dob,
                 ];
                 $customer = Customer::create($customerArray);
-                $customer->update(['code' => 'IND-'.$customer->id]);
+                $customer->update(['code' => 'IND-' . $customer->id]);
                 $getCustomerAdditionalContact = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
                     ->get();
                 foreach ($getCustomerAdditionalContact as $contact) {
@@ -277,7 +279,7 @@ class CustomerService extends BaseService
             }
             $lead->update(['mobile_no' => $value]);
             if ($lead->customer) {
-                info('Customer additional contact primary mobile_no updated. Previous Mobile_No: '.$lead->mobile_no.' New Mobile_No: '.$value);
+                info('Customer additional contact primary mobile_no updated. Previous Mobile_No: ' . $lead->mobile_no . ' New Mobile_No: ' . $value);
                 $lead->customer->update(['mobile_no' => $value]);
             }
         }
@@ -291,5 +293,41 @@ class CustomerService extends BaseService
     public function getCustomerIdByEmail(string $email): ?int
     {
         return optional(Customer::where('email', $email)->first())->id;
+    }
+
+    public function getCustomerAddressData($data)
+    {
+        $customerId = $this->getCustomerIdByEmail($data->email);
+        $quoteUuid = $data->uuid ?? null;
+
+        if (!$customerId || !$quoteUuid) {
+            Log::warning('Missing required data: email or quote UUID is not provided.', [
+                'email' => $customerId,
+                'quote_uuid' => $quoteUuid,
+            ]);
+            return null;
+        }
+
+        try {
+            $customerAddress = CustomerAddress::where('customer_id', $customerId)
+                ->where('quote_uuid', $quoteUuid)
+                ->first();
+
+            if (!$customerAddress) {
+                Log::info('Customer address not found.', [
+                    'email' => $customerId,
+                    'quote_uuid' => $quoteUuid,
+                ]);
+            }
+
+            return $customerAddress;
+        } catch (\Exception $e) {
+            Log::error('Failed to retrieve customer address.', [
+                'email' => $customerId,
+                'quote_uuid' => $quoteUuid,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
     }
 }

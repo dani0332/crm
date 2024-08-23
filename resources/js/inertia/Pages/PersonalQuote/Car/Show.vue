@@ -94,10 +94,13 @@ defineProps({
   paymentDocument: Array,
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
+  customerAddressData: Object,
 });
 const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
+
+console.log('quote', page.props);
 
 const canAny = permissions => useCanAny(permissions);
 const selectedProviderPlan = ref({
@@ -1561,6 +1564,29 @@ const onAddUpdate = () => {
   selectedProviderPlan.value.premium = '';
   isAddUpdate.value = true;
 };
+
+const fullAddress = computed(() => {
+  const {
+    office_number,
+    floor_number,
+    building_name,
+    street,
+    area,
+    city,
+    landmark,
+  } = page.props.customerAddressData;
+  return [
+    office_number,
+    floor_number,
+    building_name,
+    street,
+    area,
+    city,
+    landmark,
+  ]
+    .filter(part => part) // remove any empty parts
+    .join(', '); // join with comma and space
+});
 </script>
 
 <template>
@@ -2146,6 +2172,21 @@ const onAddUpdate = () => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
                   <dd>{{ record.email }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">ADDRESS TYPE</dt>
+                  <dd>{{ customerAddressData.type }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">
+                    {{
+                      !customerAddressData.type ||
+                      customerAddressData.type === 'Home'
+                        ? 'RESIDENT ADDRESS'
+                        : 'OFFICE ADDRESS'
+                    }}
+                  </dt>
+                  <dd>{{ fullAddress }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
