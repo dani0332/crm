@@ -631,7 +631,7 @@ const onAddUpdate = () => {
                 <dt>
                   <x-tooltip placement="bottom">
                     <label
-                        class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
                       Parent Ref-ID
                     </label>
@@ -640,14 +640,14 @@ const onAddUpdate = () => {
                 </dt>
                 <dd>
                   <Link
-                      v-if="quote?.parent_duplicate_quote_id"
-                      :href="
+                    v-if="quote?.parent_duplicate_quote_id"
+                    :href="
                       getDetailPageRoute(
                         linkedQuoteDetails.uuid,
                         linkedQuoteDetails.quote_type_id,
                       )
                     "
-                      class="text-primary-500 hover:underline"
+                    class="text-primary-500 hover:underline"
                   >
                     {{ quote?.parent_duplicate_quote_id ?? '' }}
                   </Link>
@@ -655,13 +655,13 @@ const onAddUpdate = () => {
               </div>
 
               <div
-                  class="grid sm:grid-cols-2"
-                  v-if="linkedQuoteDetails.childLeadsCount == 1"
+                class="grid sm:grid-cols-2"
+                v-if="linkedQuoteDetails.childLeadsCount == 1"
               >
                 <dt>
                   <x-tooltip placement="bottom">
                     <label
-                        class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
                       CHILD REF-ID
                     </label>
@@ -675,13 +675,13 @@ const onAddUpdate = () => {
                 </dt>
                 <dd>
                   <Link
-                      :href="
+                    :href="
                       getDetailPageRoute(
                         linkedQuoteDetails.childLeadsUuid,
                         linkedQuoteDetails.quote_type_id,
                       )
                     "
-                      class="text-primary-500 hover:underline"
+                    class="text-primary-500 hover:underline"
                   >
                     {{ linkedQuoteDetails.childLeads ?? '' }}
                   </Link>
