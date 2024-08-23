@@ -63,6 +63,10 @@ trait FilterCriteria
                                 $startDate = date('Y-m-d H:i:s', strtotime(request()->{$key.'_time_start'}));
                                 $endDate = date('Y-m-d H:i:s', strtotime(request()->{$key.'_time_end'}));
                                 $query->whereBetween($key, [$startDate, $endDate]);
+                            } elseif (isset(request()->{'policy_expiry_date'}) && isset(request()->{'policy_expiry_date_end'})) {
+                                $startDate = date('Y-m-d H:i:s', strtotime(request()->{'policy_expiry_date'}));
+                                $endDate = date('Y-m-d H:i:s', strtotime(request()->{'policy_expiry_date_end'}));
+                                $query->whereBetween('previous_policy_expiry_date', [$startDate, $endDate]);
                             }
                             break;
                         default:

@@ -1797,9 +1797,11 @@ class CRUDController extends Controller
         Log::info('Updating policy_issuer_id  : '.auth()->id());
 
         // store policy issuer
-        $payment = $quoteModel->payments->first();
-        $payment->policy_issuer_id = auth()->id();
-        $payment->save();
+        $payment = $quoteModel->payments()->mainLeadPayment()->first();
+        if ($payment) {
+            $payment->policy_issuer_id = auth()->id();
+            $payment->save();
+        }
 
         // update status policy issued of req fulfilled
         $this->updateQuoteStatus($request->modelType, $request->quote_id);
