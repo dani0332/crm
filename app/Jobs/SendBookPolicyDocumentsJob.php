@@ -29,9 +29,13 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
      * Create a new job instance.
      */
     private $data = null;
-    public function __construct($payload)
+    private $code = null;
+    
+    public function __construct($payload, $code)
     {
+        info('job: SendBookPolicyDocumentsJob constructor for: '.$code);
         $this->data = $payload;
+        $this->code = $code;
     }
 
     /**
@@ -39,11 +43,9 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
      */
     public function handle(SendEmailCustomerService $sendEmailCustomerService, QuoteDocumentService $quoteDocumentService)
     {
+        info('job: SendBookPolicyDocumentsJob started for: '.$this->code);
         $insuranceType = '';
         $planName = '';
-
-        info('job: SendBookPolicyDocumentsJob started');
-
         // In case of Group Medical & Corpline, modelType is used & for rest of the LOBs model_type is used
         // Basically we are different to identify the template which will send to customer after policy booking
         $modelType = ucfirst(! empty($this->data->modelType) ? $this->data->modelType : $this->data->model_type);
@@ -55,14 +57,14 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             // This will give handbook document from relevant policy wording table only for mentioned LOB's
             if (in_array($modelType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
                 $handBookDocuments = app(QuoteDocumentService::class)->getHandBookDocuments($quote);
-                info('Handbook documents retrieved: '.json_encode($handBookDocuments));
+                info('Handbook documents retrieved for : '.$quote->code.' '.json_encode($handBookDocuments));
             }
             // First Retrieve document types marked for sending to the customer, then fetch the corresponding uploaded documents
             $documentTypeCodes = DocumentTypeRepository::quoteDocumentsSentToCustomerCode($this->data->model_type, $quote);
             $docs = app(QuoteDocumentService::class)->getQuoteDocuments($this->data->model_type, $this->data->quote_id, $documentTypeCodes);
-            info('Quote documents which need to send to customer through email retrieved: '.json_encode($docs));
+            info('Quote documents which need to send to customer through email retrieved for : '.$quote->code.' '.json_encode($docs));
         } catch (Exception $ex) {
-            Log::error('Send BookPolicy Documents Job Error '.$ex->getMessage());
+            Log::error('Send BookPolicy Documents Job Error for:  '.$quote->code.' '.$ex->getMessage());
             $docs = [];
         }
 
@@ -120,9 +122,9 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->handBookDocuments = $handBookDocuments;
             $emailData->roadsideAssistance = $roadsideAssistance;
             $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
-            info('Send Book Policy Documents Job Email Data '.json_encode($emailData));
+            info('Send Book Policy Documents Job Email Data for : '.$quote->code.' '.json_encode($emailData));
             $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
-            info('Send Book Policy Documents Job Response '.json_encode($response));
+            info('Send Book Policy Documents Job Response for '.$quote->code.' '.json_encode($response));
         }
     }
 
