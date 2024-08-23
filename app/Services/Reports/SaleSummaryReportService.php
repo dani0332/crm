@@ -74,11 +74,13 @@ class SaleSummaryReportService extends ManagementReport
             });
 
         if ($request->groupBy == 'advisor') {
-            $query->addSelect('u.name as advisor', 'dp.name as department');
+            $query
+            ->addSelect(DB::raw('IFNULL(u.name, "N/A") as advisor'))
+            ->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
         }
 
         if ($request->groupBy == 'department') {
-            $query->addSelect('dp.name as department');
+            $query->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
         }
 
         if ($request->groupBy == 'customer_group') {
@@ -89,12 +91,12 @@ class SaleSummaryReportService extends ManagementReport
 
         if ($request->groupBy == 'insurer') {
             $query->join('insurance_provider', 'insurance_provider.id', '=', 'p.insurance_provider_id')
-                ->addSelect('insurance_provider.text as insurer');
+                ->addSelect(DB::raw('IFNULL(insurance_provider.text, "N/A") as insurer'));
         }
 
         if ($request->groupBy == 'policy_issuer') {
             $query->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
-                ->addSelect('pi.name as policy_issuer');
+                ->addSelect(DB::raw('IFNULL(pi.name, "N/A") as policy_issuer'));
         }
 
         if ($request->groupBy == 'line_of_business') {
@@ -199,11 +201,13 @@ class SaleSummaryReportService extends ManagementReport
 
         if ($request->groupBy == 'advisor') {
             // Endorsements
-            $query->addSelect('u.name as advisor', 'dp.name as department');
+            $query
+            ->addSelect(DB::raw('IFNULL(u.name, "N/A") as advisor'))
+            ->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
         }
 
         if ($request->groupBy == 'department') {
-            $query->addSelect('dp.name as department');
+            $query->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
         }
 
         if ($request->groupBy == 'customer_group') {
@@ -218,13 +222,13 @@ class SaleSummaryReportService extends ManagementReport
             $query
                 ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
                 ->leftJoin('insurance_provider as ip2', 'ip2.id', '=', 'send_update_logs.insurance_provider_id')
-                ->addSelect(DB::raw('CASE WHEN l.code="CII"  OR ip.text is null THEN ip2.text ELSE ip.text END as insurer'));
+                ->addSelect(DB::raw('CASE WHEN l.code="CII"  OR ip.text is null THEN IFNULL(ip2.text, "N/A") ELSE IFNULL(ip.text, "N/A") END as insurer'));
         }
 
         if ($request->groupBy == 'policy_issuer') {
             // Endorsements
             $query->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
-                ->addSelect('pi.name as policy_issuer');
+                ->addSelect(DB::raw('IFNULL(pi.name, "N/A") as policy_issuer'));
         }
 
         if ($request->groupBy == 'line_of_business') {
@@ -273,11 +277,13 @@ class SaleSummaryReportService extends ManagementReport
 
         if ($request->groupBy == 'advisor') {
             // Endorsements
-            $reversalQuery->addSelect('u.name as advisor', 'dp.name as department');
+            $reversalQuery
+                ->addSelect(DB::raw('IFNULL(u.name, "N/A") as advisor'))
+                ->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
         }
 
         if ($request->groupBy == 'department') {
-            $reversalQuery->addSelect('dp.name as department');
+            $reversalQuery->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
         }
 
         if ($request->groupBy == 'customer_group') {
@@ -292,13 +298,13 @@ class SaleSummaryReportService extends ManagementReport
             $reversalQuery
                 ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
                 ->leftJoin('insurance_provider as ip2', 'ip2.id', '=', 'send_update_logs.insurance_provider_id')
-                ->addSelect(DB::raw('CASE WHEN l.code="CII"  OR ip.text is null THEN ip2.text ELSE ip.text END as insurer'));
+                ->addSelect(DB::raw('CASE WHEN l.code="CII"  OR ip.text is null THEN IFNULL(ip2.text, "N/A") ELSE IFNULL(ip.text, "N/A") END as insurer'));
         }
 
         if ($request->groupBy == 'policy_issuer') {
             // Endorsements
             $reversalQuery->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
-                ->addSelect('pi.name as policy_issuer');
+                ->addSelect(DB::raw('IFNULL(pi.name, "N/A") as policy_issuer'));
         }
 
         if ($request->groupBy == 'line_of_business') {
