@@ -75,8 +75,8 @@ class SaleSummaryReportService extends ManagementReport
 
         if ($request->groupBy == 'advisor') {
             $query
-            ->addSelect(DB::raw('IFNULL(u.name, "N/A") as advisor'))
-            ->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
+                ->addSelect(DB::raw('IFNULL(u.name, "N/A") as advisor'))
+                ->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
         }
 
         if ($request->groupBy == 'department') {
@@ -202,8 +202,8 @@ class SaleSummaryReportService extends ManagementReport
         if ($request->groupBy == 'advisor') {
             // Endorsements
             $query
-            ->addSelect(DB::raw('IFNULL(u.name, "N/A") as advisor'))
-            ->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
+                ->addSelect(DB::raw('IFNULL(u.name, "N/A") as advisor'))
+                ->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
         }
 
         if ($request->groupBy == 'department') {
