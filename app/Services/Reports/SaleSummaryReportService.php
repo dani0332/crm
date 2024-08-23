@@ -43,9 +43,9 @@ class SaleSummaryReportService extends ManagementReport
             ->selectRaw('DISTINCT(code), due_date');
 
         $query = PersonalQuote::query()
-            ->join('users as u', 'personal_quotes.advisor_id', '=', 'u.id')
-            ->join('departments as dp', 'dp.id', '=', 'u.department_id')
-            ->join('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
+            ->leftJoin('users as u', 'personal_quotes.advisor_id', '=', 'u.id')
+            ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
+            ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->selectRaw('
@@ -168,15 +168,15 @@ class SaleSummaryReportService extends ManagementReport
             ->groupBy('dps.code');
 
         $query = SendUpdateLog::query()
-            ->join('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id')
+            ->leftJoin('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
             ->leftJoin('payments as p', 'send_update_logs.id', '=', 'p.send_update_log_id')
             ->leftJoin('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
-            ->join('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
-            ->join('departments as dp', 'dp.id', '=', 'u.department_id')
-            ->join('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
-            ->join('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
+            ->leftJoin('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
+            ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
+            ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
+            ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->select(
                 DB::raw('COUNT(send_update_logs.uuid) as total_endorsements'),
                 DB::raw('((
@@ -208,7 +208,7 @@ class SaleSummaryReportService extends ManagementReport
 
         if ($request->groupBy == 'customer_group') {
             // Endorsements
-            $query->join('customer', 'personal_quotes.customer_id', '=', 'customer.id')
+            $query->leftJoin('customer', 'personal_quotes.customer_id', '=', 'customer.id')
                 ->addSelect(DB::raw("CONCAT(customer.first_name, ' ', customer.last_name) as customer_name"))
                 ->addSelect('customer.id as customer_group');
         }
@@ -240,15 +240,15 @@ class SaleSummaryReportService extends ManagementReport
         $query = $this->applyFilters($query, $request, true, true);
 
         $reversalQuery = SendUpdateLog::query()
-            ->join('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id')
+            ->leftJoin('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
             ->leftJoin('payments as p', 'send_update_logs.reversal_invoice', '=', 'p.insurer_tax_number')
             ->leftJoin('send_update_logs as S2', 'send_update_logs.reversal_invoice', '=', 's2.insurer_tax_invoice_number')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
-            ->join('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
-            ->join('departments as dp', 'dp.id', '=', 'u.department_id')
-            ->join('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
-            ->join('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
+            ->leftJoin('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
+            ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
+            ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
+            ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->whereNotNull('send_update_logs.reversal_invoice')
             ->select(
                 DB::raw('COUNT(send_update_logs.uuid) as total_endorsements'),
@@ -282,7 +282,7 @@ class SaleSummaryReportService extends ManagementReport
 
         if ($request->groupBy == 'customer_group') {
             // Endorsements
-            $reversalQuery->join('customer', 'personal_quotes.customer_id', '=', 'customer.id')
+            $reversalQuery->leftJoin('customer', 'personal_quotes.customer_id', '=', 'customer.id')
                 ->addSelect(DB::raw("CONCAT(customer.first_name, ' ', customer.last_name) as customer_name"))
                 ->addSelect('customer.id as customer_group');
         }
