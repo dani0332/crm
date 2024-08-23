@@ -1050,12 +1050,12 @@ class SagePayloadFactory
                 'Value' => $request->originalInsurerCommissionNumber,
             ],
             [
-                'OptionalField' => 'COMMAMOUNT',
-                'Value' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat), // commission including vat means commission_vat_applicable,
+                'OptionalField' => 'COMAMOUNT',
+                'Value' => $request->commissionIncludingVat > 0 ? (string) roundNumber($request->commissionIncludingVat) : (string) roundNumber($request->commissionWithOutVat), // commission including vat means commission_vat_applicable,
             ],
             [
-                'OptionalField' => 'TOTALCOMM',
-                'Value' => $request->commission,
+                'OptionalField' => 'TOTALCOM',
+                'Value' => (string) $request->commission,
             ],
         ];
 
