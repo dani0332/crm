@@ -218,7 +218,7 @@ class SaleSummaryReportService extends ManagementReport
             $query
                 ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
                 ->leftJoin('insurance_provider as ip2', 'ip2.id', '=', 'send_update_logs.insurance_provider_id')
-                ->addSelect(DB::raw('CASE WHEN l.code="CII" THEN ip2.text ELSE ip.text END as insurer'));
+                ->addSelect(DB::raw('CASE WHEN l.code="CII"  OR ip.text is null THEN ip2.text ELSE ip.text END as insurer'));
         }
 
         if ($request->groupBy == 'policy_issuer') {
@@ -292,7 +292,7 @@ class SaleSummaryReportService extends ManagementReport
             $reversalQuery
                 ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
                 ->leftJoin('insurance_provider as ip2', 'ip2.id', '=', 'send_update_logs.insurance_provider_id')
-                ->addSelect(DB::raw('CASE WHEN l.code="CII" THEN ip2.text ELSE ip.text END as insurer'));
+                ->addSelect(DB::raw('CASE WHEN l.code="CII"  OR ip.text is null THEN ip2.text ELSE ip.text END as insurer'));
         }
 
         if ($request->groupBy == 'policy_issuer') {

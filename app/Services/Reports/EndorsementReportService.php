@@ -94,7 +94,7 @@ class EndorsementReportService extends ManagementReport
                     IFNULL( IFNULL(ps.price_vat, send_update_logs.total_vat_amount) , 0 )) - IFNULL( IFNULL(ps.discount_value, send_update_logs.discount) , 0 )) -
                     IFNULL( IFNULL(ps.collection_amount, send_update_logs.price_with_vat), 0) as pending_balance'),
                 'pq.collection_type as collects',
-                DB::raw('CASE WHEN l.code="CII" THEN ip2.text ELSE ip.text END as insurer'),
+                DB::raw('CASE WHEN l.code="CII" OR ip.text is null THEN ip2.text ELSE ip.text END as insurer'),
                 'quote_type.text as line_of_business',
                 'personal_quotes.first_name',
                 'personal_quotes.last_name',
@@ -168,7 +168,7 @@ class EndorsementReportService extends ManagementReport
                 DB::raw("'N/A' as payment_date"),
                 DB::raw("'0.00' as pending_balance"),
                 'pq.collection_type as collects',
-                DB::raw('CASE WHEN l.code="CII" THEN ip2.text ELSE ip.text END as insurer'),
+                DB::raw('CASE WHEN l.code="CII" OR ip.text is null THEN ip2.text ELSE ip.text END as insurer'),
                 'quote_type.text as line_of_business',
                 'personal_quotes.first_name',
                 'personal_quotes.last_name',
