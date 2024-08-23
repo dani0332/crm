@@ -134,7 +134,8 @@ class BikeQuoteController extends Controller
     {
         /* Start - Temporarily adding for correcting historic data  */
         $quote = BikeQuoteRepository::where('uuid', $uuid)->first();
-        (new PaymentRepository())->updatePriceVatApplicableAndVat($quote, QuoteTypes::BIKE->value);
+        abort_if(! $quote, 404);
+        (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::BIKE->value);
         /* End - Temporarily adding for correcting historic data  */
 
         $quote = BikeQuoteRepository::getBy('uuid', $uuid);
@@ -181,7 +182,7 @@ class BikeQuoteController extends Controller
         }
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
         $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::BIKE->value);
-        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::BIKE->value, $quote->id);
+        $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::BIKE->value, $quote->id);
         $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::BIKE->value, $quote->payments, $quoteDocuments);
         $yearsOfManufacture = app(LookupService::class)->getYearsOfManufacture();
 

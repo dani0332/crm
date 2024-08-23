@@ -368,7 +368,7 @@ class SendUpdateLogController extends Controller
         }
 
         if ($log && isset($data['action']) && $data['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
-            $sendUpdateRequest = new SendUpdateRequest();
+            $sendUpdateRequest = new SendUpdateRequest;
 
             $isSendUpdateSuccess = $this->sendUpdate($sendUpdateRequest->merge($data));
             if ($isSendUpdateSuccess->status() == 200) {

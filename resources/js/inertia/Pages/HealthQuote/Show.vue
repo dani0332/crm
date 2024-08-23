@@ -234,9 +234,6 @@ const memberCategoryText = memberCategoryId =>
 // });
 
 const subTeamOptions = [
-  { value: 'RM-NB', label: 'RM-NB' },
-  { value: 'RM-SPEED', label: 'RM-SPEED' },
-  { value: 'EBP', label: 'EBP' },
   { value: 'Best', label: 'Best' },
   { value: 'Good', label: 'Good' },
   { value: 'Entry-Level', label: 'Entry-Level' },
@@ -2120,6 +2117,10 @@ const onAddUpdate = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ENQUIRY COUNT</dt>
                 <dd>{{ quote.enquiry_count }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ quote.transaction_approved_at }}</dd>
               </div>
             </dl>
           </div>

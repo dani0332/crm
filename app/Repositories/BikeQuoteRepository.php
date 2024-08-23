@@ -91,7 +91,7 @@ class BikeQuoteRepository extends BaseRepository
 
             $quote->bikeQuote()->updateOrCreate(
                 ['personal_quote_id' => $quote->id],
-                Arr::only($data, (new BikeQuote())->allowedColumns())
+                Arr::only($data, (new BikeQuote)->allowedColumns())
             );
 
             return $quote;
@@ -108,7 +108,7 @@ class BikeQuoteRepository extends BaseRepository
         $dropdownSourceList = ['back_home_license_held_for_id', 'claim_history_id', 'car_type_insurance_id', 'emirate_of_registration_id', 'bike_make_id', 'bike_model_id', 'currently_insured_with_id'];
         $dropdownSource = [];
         foreach ($dropdownSourceList as $value) {
-            $data = (new DropdownSourceService())->getDropdownSource($value);
+            $data = (new DropdownSourceService)->getDropdownSource($value);
             $dropdownSource[$value] = $data;
         }
 

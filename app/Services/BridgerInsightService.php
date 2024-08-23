@@ -34,7 +34,7 @@ class BridgerInsightService
     {
         $tokenEndPoint = $this->bridgerEndPoint.'/api/Token/Issue';
         $bridgerAuthBasic = base64_encode($this->bridgerClientID.'/'.$this->bridgerUserName.':'.$this->bridgerPassword);
-        $bridgerClient = new \GuzzleHttp\Client();
+        $bridgerClient = new \GuzzleHttp\Client;
         $_return = ['status' => true];
 
         try {
@@ -71,7 +71,7 @@ class BridgerInsightService
             $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
             $amlQuoteUrl = config('constants.APP_URL').'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteDetails->id;
             $bridgerEndPoint = $this->bridgerEndPoint.'/api/Lists/Search';
-            $bridgerClient = new \GuzzleHttp\Client();
+            $bridgerClient = new \GuzzleHttp\Client;
             $getBasicConfiguration = $this->getBridgerXGBasicConfig();
 
             switch ($customerType) {
@@ -265,7 +265,7 @@ class BridgerInsightService
     public function updateDecisionOnLexisNexis($bridgerToken, $request, $decisions)
     {
         $bridgerEndPoint = $this->bridgerEndPoint.'/api/Results/SetRecordState';
-        $bridgerClient = new \GuzzleHttp\Client();
+        $bridgerClient = new \GuzzleHttp\Client;
 
         $amlUpdateData = [
             'ClientContext' => [

@@ -81,7 +81,7 @@ class ManagementReport
             'departments' => $departments,
         ];
     }
-    public function applyFilters($query, $request, $endorsementsQuery = false)
+    public function applyFilters($query, $request, $endorsementsQuery = false, $isSSR = false)
     {
         $this->applyDateFilters($query, $request, $endorsementsQuery);
 
@@ -97,8 +97,7 @@ class ManagementReport
             }
         }
 
-        // filter teams
-        $query = $this->filterTeams($query, $request['teams'] ?? []);
+        $query = $this->filterTeams($query, $request['teams'] ?? [], $isSSR);
 
         if (isset($request['subTeams']) && ! empty($request['subTeams'])) {
             $query->whereIn('u.sub_team_id', $request['subTeams']);
@@ -225,11 +224,27 @@ class ManagementReport
         }
     }
 
-    protected function filterTeams($query, $teams)
+    protected function filterTeams($query, $teams, $isSSR = false)
     {
+        if ($teams && ! is_array($teams)) {
+            $teams = [$teams];
+        }
+
+        if (! $isSSR) {
+            if (! empty($teams) && count($teams) > 0) {
+                $value = $teams;
+                $query->whereIn('t.id', $value);
+            }
+
+            return $query;
+        }
+
         if (! empty($teams) && count($teams) > 0) {
-            $value = $teams;
-            $query->whereIn('t.id', $value);
+            $query->whereIn('u.id', function ($query) use ($teams) {
+                $query->select('user_team.user_id')
+                    ->from('user_team')
+                    ->whereIn('user_team.team_id', $teams);
+            });
         }
 
         return $query;
@@ -354,7 +369,7 @@ class ManagementReport
     private static function mapEndorsementsToReport($item, $endorsementData, $request)
     {
         foreach ($endorsementData as $endorsement) {
-            if ($item[$request->groupBy] === $endorsement[$request->groupBy]) {
+            if ($item[$request->groupBy] === $endorsement->{$request->groupBy}) {
                 $item->total_endorsements = $endorsement->total_endorsements ?? 0;
                 $item->total_transaction = $item->total_policies + $item->total_endorsements;
                 $item->endorsements_amount = (float) $endorsement->total_endorsement_amount;
@@ -388,7 +403,7 @@ class ManagementReport
          * check if there are any endorsements that are not in the report data
          */
         foreach ($endorsementData as $endorsement) {
-            $found = $reportData->contains($request->groupBy, $endorsement[$request->groupBy]);
+            $found = $reportData->contains($request->groupBy, $endorsement->{$request->groupBy});
             if (! $found) {
                 $endorsement->total_policies = 0;
                 $endorsement->endorsements_amount = (float) $endorsement->total_endorsement_amount;

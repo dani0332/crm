@@ -82,7 +82,7 @@ class ApplicationStorageService extends BaseService
 
     public function saveApplicationStorage(Request $request)
     {
-        $applicationStorage = new ApplicationStorage();
+        $applicationStorage = new ApplicationStorage;
         $applicationStorage->key_name = $request->key_name;
         $applicationStorage->value = $request->value;
         $applicationStorage->is_active = 1;

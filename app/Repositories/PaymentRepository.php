@@ -12,6 +12,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Models\CarQuote;
@@ -658,20 +659,41 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return $quote->payments()->where('insurer_tax_number', $invoiceNumber)->first();
     }
 
-    public function generateBrokerInvoiceNumber($payment): string
+    public function generateBrokerInvoiceNumber($payment, $quoteType): string
     {
-        $insurance_provider_id = $payment->insurance_provider_id;
-        $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
-        //$insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
-        $latestBINByInsurer = Payment::whereNotNull('broker_invoice_number')->where('insurance_provider_id', $insurance_provider_id)->orderBy('updated_at', 'desc')->first()?->broker_invoice_number;
+        $insuranceProvider = null;
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
+        if (in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
+            $planRelationName = strtolower($quoteType).'Plan';
+            $payment->load($planRelationName);
+            $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
+        }
+
+        if (! $insuranceProvider) {
+            $insuranceProvider = $payment->insuranceProvider;
+        }
+
+        $insuranceProviderCode = $insuranceProvider->code;
+        $latestBINByInsurer = Payment::whereNotNull('broker_invoice_number')->where('insurance_provider_id', $insuranceProvider->id)->orderBy('updated_at', 'desc')->first()?->broker_invoice_number;
         $insuranceProviderLeadCount = (int) str_replace($insuranceProviderCode, '', $latestBINByInsurer) + 1;
 
         return $insuranceProviderCode.$insuranceProviderLeadCount;
     }
     public function generateInvoiceDescription($payment, $quoteType, $record): string
     {
-        $insurance_provider_id = $payment->insurance_provider_id;
-        $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
+        $insuranceProvider = null;
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
+        if (in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
+            $planRelationName = strtolower($quoteType).'Plan';
+            $payment->load($planRelationName);
+            $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
+        }
+
+        if (! $insuranceProvider) {
+            $insuranceProvider = $payment->insuranceProvider;
+        }
+
+        $insuranceProviderCode = $insuranceProvider->code;
 
         return substr($insuranceProviderCode.'-'.ucfirst($quoteType).'-'.$record->policy_number, 0, 60);
     }

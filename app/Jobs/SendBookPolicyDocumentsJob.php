@@ -81,7 +81,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         if (! empty($templateId)) {
 
             $roadsideAssistance = '';
-            $emailData = new \stdClass();
+            $emailData = new \stdClass;
             $emailData->code = $quote->code;
             $emailData->customerEmail = $quote->email;
             $emailData->clientFullName = $quote->first_name.' '.$quote->last_name;
