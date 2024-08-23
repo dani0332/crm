@@ -253,6 +253,8 @@ class SaleSummaryReportService extends ManagementReport
                  sum(IFNULL(IFNULL(s2.total_vat_amount, IFNULL(p.price_vat, 0)), 0))) -
                  sum(IFNULL(p.discount_value, 0))) as total_endorsement_amount'),
             )
+            ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
+            ->whereIn('send_update_logs.category_id', $endrosementCategoryIds)
             ->when($request->groupBy, function ($reversalQuery, $groupBy) use ($request) {
                 $groupByArray = [];
                 $groupBy = $this->resolveGroupByColumn($groupBy);
