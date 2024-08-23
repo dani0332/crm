@@ -613,8 +613,8 @@ class AdvisorConversionReportService extends BaseService
 
             if(isset($filters->segment_filter)) {
                 $segmentFilter = $filters->segment_filter;
-                $this->query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($query) {
-                    $query->whereIn('hqr.uuid', function ($subQuery) {
+                $query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($query) {
+                    $query->whereIn('uuid', function ($subQuery) {
                         $subQuery->distinct()
                             ->select('quote_uuid')
                             ->from('quote_tags')
@@ -622,7 +622,7 @@ class AdvisorConversionReportService extends BaseService
                             ->where('quote_type_id', QuoteTypeId::Health);
                     });
                 })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) {
-                    $query->whereNotIn('hqr.uuid', function ($subQuery) {
+                    $query->whereNotIn('uuid', function ($subQuery) {
                         $subQuery->distinct()
                             ->select('quote_uuid')
                             ->from('quote_tags')
