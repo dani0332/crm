@@ -318,7 +318,7 @@ class SaleSummaryReportService extends ManagementReport
             });
         }
         $reversalQuery = $this->applyFilters($reversalQuery, $request, true, true);
-        $endorsementsQuery = $query->union($reversalQuery);
+        $endorsementsQuery = $query->unionAll($reversalQuery);
 
         $data = $endorsementsQuery->get();
 
