@@ -204,7 +204,7 @@ class EndorsementReportService extends ManagementReport
         $this->getUtmGroup($request, $reversalQuery);
         $this->applyFilters($reversalQuery, $request);
 
-        $query = $query->union($reversalQuery);
+        $query = $query->unionAll($reversalQuery);
         $query = $query->orderBy('id', 'desc');
 
         if ($request->export == 1) {
