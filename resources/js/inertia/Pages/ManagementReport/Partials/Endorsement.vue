@@ -308,7 +308,7 @@ const isIntegerColumn = key => {
       {{ endorsement_sub_type ?? 'N/A' }}
     </template>
     <template #body-append>
-      <tr v-if="reportData.data.length > 0" class="total-row">
+      <tr v-if="reportData.data.length > 0" class="total-row sticky bottom-0">
         <td class="direction-left">Total</td>
         <td
           v-for="header in tableHeader.slice(1, tableHeader.length)"
