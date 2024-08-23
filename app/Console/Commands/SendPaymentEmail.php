@@ -163,7 +163,8 @@ class SendPaymentEmail extends Command
                 'users.email as advisor_email',
                 DB::raw('COUNT(*) as total_leads'),
                 DB::raw('SUM('.$table.'.premium) as total_premium'),
-                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
+
             )
             ->leftJoin('payments as py', 'py.code', '=', $table.'.code')
             ->join('users', 'users.id', $table.'.advisor_id')
@@ -174,20 +175,25 @@ class SendPaymentEmail extends Command
             ->when($quoteTypeId !== null, function ($query) use ($quoteTypeId, $table) {
                 return $query->where($table.'.quote_type_id', $quoteTypeId);
             })
-            ->groupBy('users.id', 'users.name')
+            ->groupBy('users.id', 'users.name', 'expiry_days')
+            ->having('expiry_days', '=', 1)
             ->orderBy('total_leads', 'desc');
 
         $getExpireOneDay = DB::table($table)->select(
             DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
         )
             ->leftJoin('payments as py', 'py.code', '=', $table.'.code')
-            ->having('expiry_days', '=', 1)
+            ->join('users', 'users.id', $table.'.advisor_id')
+            ->join('user_team', 'user_team.user_id', 'users.id')
+            ->join('teams', 'teams.id', '=', 'user_team.team_id')
             ->where($table.'.payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->whereIn('teams.name', $teamName)
             ->when($quoteTypeId !== null, function ($query) use ($quoteTypeId, $table) {
                 return $query->where($table.'.quote_type_id', $quoteTypeId);
             })
+            ->groupBy('users.id', 'users.name', 'expiry_days')
+            ->having('expiry_days', '=', 1)
             ->count();
-
         $user = $query->get();
 
         if ($user->isNotEmpty()) {

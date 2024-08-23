@@ -547,7 +547,8 @@ class ReportService extends BaseService
                     'users.name as advisor_name',
                     DB::raw('COUNT(*) as total_leads'),
                     DB::raw('SUM(car_quote_request.premium) as total_premium'),
-                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
                 )
                 ->leftJoin('payments as py', 'py.code', '=', 'car_quote_request.code')
                 ->join('users', 'users.id', 'car_quote_request.advisor_id')
@@ -566,7 +567,8 @@ class ReportService extends BaseService
                     'users.name as advisor_name',
                     DB::raw('COUNT(*) as total_leads'),
                     DB::raw('SUM(health_quote_request.premium) as total_premium'),
-                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
                 )
                 ->leftJoin('payments as py', 'py.code', '=', 'health_quote_request.code')
                 ->join('users', 'users.id', 'health_quote_request.advisor_id')
@@ -585,7 +587,8 @@ class ReportService extends BaseService
                     'users.name as advisor_name',
                     DB::raw('COUNT(*) as total_leads'),
                     DB::raw('SUM(business_quote_request.premium) as total_premium'),
-                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
                 )
                 ->leftJoin('payments as py', 'py.code', '=', 'business_quote_request.code')
                 ->join('users', 'users.id', 'business_quote_request.advisor_id')
@@ -604,7 +607,9 @@ class ReportService extends BaseService
                     'users.name as advisor_name',
                     DB::raw('COUNT(*) as total_leads'),
                     DB::raw('SUM(travel_quote_request.premium) as total_premium'),
-                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
+
                 )
                 ->leftJoin('payments as py', 'py.code', '=', 'travel_quote_request.code')
                 ->join('users', 'users.id', 'travel_quote_request.advisor_id')
@@ -623,7 +628,8 @@ class ReportService extends BaseService
                     'users.name as advisor_name',
                     DB::raw('COUNT(*) as total_leads'),
                     DB::raw('SUM(personal_quotes.premium) as total_premium'),
-                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
                 )
                 ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
                 ->join('users', 'users.id', 'personal_quotes.advisor_id')
@@ -643,7 +649,8 @@ class ReportService extends BaseService
                     'users.name as advisor_name',
                     DB::raw('COUNT(*) as total_leads'),
                     DB::raw('SUM(personal_quotes.premium) as total_premium'),
-                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
                 )
                 ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
                 ->join('users', 'users.id', 'personal_quotes.advisor_id')
@@ -663,7 +670,8 @@ class ReportService extends BaseService
                     'users.name as advisor_name',
                     DB::raw('COUNT(*) as total_leads'),
                     DB::raw('SUM(personal_quotes.premium) as total_premium'),
-                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
                 )
                 ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
                 ->join('users', 'users.id', 'personal_quotes.advisor_id')
@@ -683,7 +691,8 @@ class ReportService extends BaseService
                     'users.name as advisor_name',
                     DB::raw('COUNT(*) as total_leads'),
                     DB::raw('SUM(life_quote_request.premium) as total_premium'),
-                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
                 )
                 ->leftJoin('payments as py', 'py.code', '=', 'life_quote_request.code')
                 ->join('users', 'users.id', 'life_quote_request.advisor_id')
@@ -702,7 +711,8 @@ class ReportService extends BaseService
                     'users.name as advisor_name',
                     DB::raw('COUNT(*) as total_leads'),
                     DB::raw('SUM(personal_quotes.premium) as total_premium'),
-                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
                 )
                 ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
                 ->join('users', 'users.id', 'personal_quotes.advisor_id')
@@ -722,7 +732,8 @@ class ReportService extends BaseService
                     'users.name as advisor_name',
                     DB::raw('COUNT(*) as total_leads'),
                     DB::raw('SUM(personal_quotes.premium) as total_premium'),
-                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
                 )
                 ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
                 ->join('users', 'users.id', 'personal_quotes.advisor_id')
@@ -742,7 +753,8 @@ class ReportService extends BaseService
                     'users.name as advisor_name',
                     DB::raw('COUNT(*) as total_leads'),
                     DB::raw('SUM(personal_quotes.premium) as total_premium'),
-                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at')
+                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
+                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
                 )
                 ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
                 ->join('users', 'users.id', 'personal_quotes.advisor_id')
@@ -772,7 +784,8 @@ class ReportService extends BaseService
             $query->whereDate('py.authorized_at', '<=', $request->expireDate);
         }
         if (isset($request->todayDate) && $query != null) {
-            $query->whereBetween('py.authorized_at', $request->todayDate);
+            $query->having('expiry_days', '=', 1)
+                ->groupBy('users.id', 'users.name', 'expiry_days');
         }
         if (isset($request->tomorrowDate) && $query != null) {
             $query->whereDate('py.authorized_at', '=', $request->tomorrowDate);
