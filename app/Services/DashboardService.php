@@ -23,7 +23,7 @@ class DashboardService extends BaseService
 
     public function getDashboardStatsByDate($start, $end, $type)
     {
-        $tableName = $type . '_quote_request';
+        $tableName = $type.'_quote_request';
         $stats = DB::select('
                     SELECT *
                     FROM (
@@ -38,10 +38,10 @@ class DashboardService extends BaseService
                     SUM(CASE WHEN q.quote_status_id=15 THEN 1 ELSE 0 END) tran_approved_total,
                     SUM(CASE WHEN q.is_ecommerce THEN 1 ELSE 0 END) ecom_total,
                     u.email
-                    FROM ' . $tableName . " q
+                    FROM '.$tableName." q
                     LEFT OUTER JOIN users u on u.id = q.advisor_id
                     WHERE q.quote_status_id NOT IN (9,35)
-                    AND q.created_at BETWEEN '" . $start . "' and '" . $end . "'
+                    AND q.created_at BETWEEN '".$start."' and '".$end."'
                     AND q.renewal_import_code IS NULL
                     GROUP BY q.advisor_id)  a order by a.email;");
 
@@ -59,7 +59,7 @@ class DashboardService extends BaseService
     {
         $pastDate = Carbon::now()->subWeeks($noOfWeeksInPast);
 
-        return 'Week : ' . $pastDate->startOfWeek()->format('d M Y') . ' - ' . $pastDate->endOfWeek()->format('d M Y');
+        return 'Week : '.$pastDate->startOfWeek()->format('d M Y').' - '.$pastDate->endOfWeek()->format('d M Y');
     }
 
     public function getLeadsCountByTier($filters)
@@ -110,8 +110,8 @@ class DashboardService extends BaseService
     public function getLeadsCountRevival($filters)
     {
         $query = CarQuote::select(
-            DB::raw('sum(CASE WHEN car_quote_request.source = "' . LeadSourceEnum::REVIVAL . '" THEN 1 ELSE 0 END) as revival_leads'),
-            DB::raw('sum(CASE WHEN car_quote_request.source != "' . LeadSourceEnum::REVIVAL . '" THEN 1 ELSE 0 END) as non_revival_leads'),
+            DB::raw('sum(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as revival_leads'),
+            DB::raw('sum(CASE WHEN car_quote_request.source != "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as non_revival_leads'),
         )
             ->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']])
             ->whereNull('advisor_id')
@@ -175,7 +175,7 @@ class DashboardService extends BaseService
             $usersCount = count($teamUserIds);
 
             $leadsCount = $todaysLeads->whereIn('advisor_id', array_unique($teamUserIds->toArray()))->count();
-            $stats = $leadsCount . ' / ' . $usersCount . ' =  ' . number_format((float) $usersCount == 0 ? 0 : $leadsCount / $usersCount, 2, '.', '');
+            $stats = $leadsCount.' / '.$usersCount.' =  '.number_format((float) $usersCount == 0 ? 0 : $leadsCount / $usersCount, 2, '.', '');
 
             $teamWiseLeadsAssignedAverage[] = [
                 'totalUsersUnderTeam' => $usersCount,
