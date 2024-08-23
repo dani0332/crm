@@ -69,7 +69,7 @@ const quoteForm = useForm({
     props.quote?.has_ncd_supporting_documents || null,
   car_value_tier: props.quote?.car_value_tier || '',
   car_value: props.quote?.car_value || '',
-  addressObj:{
+  addressObj: {
     address_type: null,
     villa_apartment_office_no: null,
     floor_no: null,
@@ -304,73 +304,73 @@ const addressTypes = [
         </x-field>
 
         <x-field label="Address Type">
-            <ComboBox
-              v-model="quoteForm.addressObj.address_type"
-              placeholder="Select address type"
-              :options="addressTypes"
-              :single="true"
-            />
-          </x-field>
-          <x-field label="ADDRESS">
-            <div class="flex flex-wrap -mx-2">
-              <div class="w-1/2 px-2">
-                <x-input
-                  type="text"
-                  v-model="quoteForm.addressObj.villa_apartment_office_no"
-                  placeholder="Villa/Apartment/Office No."
-                  class="w-full"
-                />
-              </div>
-              <div class="w-1/2 px-2">
-                <x-input
-                  type="text"
-                  v-model="quoteForm.addressObj.floor_no"
-                  placeholder="Floor No."
-                  class="w-full"
-                />
-              </div>
-              <div class="w-1/2 px-2">
-                <x-input
-                  type="text"
-                  v-model="quoteForm.addressObj.villa_building_name"
-                  placeholder="Villa/Building Name"
-                  class="w-full"
-                />
-              </div>
-              <div class="w-1/2 px-2">
-                <x-input
-                  type="text"
-                  v-model="quoteForm.addressObj.street_name"
-                  placeholder="Street"
-                  class="w-full"
-                />
-              </div>
-              <div class="w-1/2 px-2">
-                <x-input
-                  type="text"
-                  v-model="quoteForm.addressObj.area"
-                  placeholder="Area"
-                  class="w-full"
-                />
-              </div>
-              <div class="w-1/2 px-2">
-                <x-input
-                  type="text"
-                  v-model="quoteForm.addressObj.city"
-                  placeholder="City"
-                  class="w-full"
-                />
-              </div>
-              <div class="w-1/2 px-2">
-                <x-input
-                  type="text"
-                  v-model="quoteForm.addressObj.landmark"
-                  placeholder="Landmark"
-                  class="w-full"
-                />
-              </div>
+          <ComboBox
+            v-model="quoteForm.addressObj.address_type"
+            placeholder="Select address type"
+            :options="addressTypes"
+            :single="true"
+          />
+        </x-field>
+        <x-field label="ADDRESS">
+          <div class="flex flex-wrap -mx-2">
+            <div class="w-1/2 px-2">
+              <x-input
+                type="text"
+                v-model="quoteForm.addressObj.villa_apartment_office_no"
+                placeholder="Villa/Apartment/Office No."
+                class="w-full"
+              />
             </div>
-          </x-field>
+            <div class="w-1/2 px-2">
+              <x-input
+                type="text"
+                v-model="quoteForm.addressObj.floor_no"
+                placeholder="Floor No."
+                class="w-full"
+              />
+            </div>
+            <div class="w-1/2 px-2">
+              <x-input
+                type="text"
+                v-model="quoteForm.addressObj.villa_building_name"
+                placeholder="Villa/Building Name"
+                class="w-full"
+              />
+            </div>
+            <div class="w-1/2 px-2">
+              <x-input
+                type="text"
+                v-model="quoteForm.addressObj.street_name"
+                placeholder="Street"
+                class="w-full"
+              />
+            </div>
+            <div class="w-1/2 px-2">
+              <x-input
+                type="text"
+                v-model="quoteForm.addressObj.area"
+                placeholder="Area"
+                class="w-full"
+              />
+            </div>
+            <div class="w-1/2 px-2">
+              <x-input
+                type="text"
+                v-model="quoteForm.addressObj.city"
+                placeholder="City"
+                class="w-full"
+              />
+            </div>
+            <div class="w-1/2 px-2">
+              <x-input
+                type="text"
+                v-model="quoteForm.addressObj.landmark"
+                placeholder="Landmark"
+                class="w-full"
+              />
+            </div>
+          </div>
+        </x-field>
 
         <x-field label="DATE OF BIRTH" required>
           <DatePicker
