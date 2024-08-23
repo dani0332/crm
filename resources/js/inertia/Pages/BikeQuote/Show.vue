@@ -628,17 +628,64 @@ const onAddUpdate = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <div>
-                  <x-tooltip position="bottom">
+                <dt>
+                  <x-tooltip placement="bottom">
                     <label
-                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                        class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
                       Parent Ref-ID
                     </label>
                     <template #tooltip> Parent Reference ID </template>
                   </x-tooltip>
-                </div>
-                <div>{{ quote?.parent_duplicate_quote_id }}</div>
+                </dt>
+                <dd>
+                  <Link
+                      v-if="quote?.parent_duplicate_quote_id"
+                      :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.uuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                      class="text-primary-500 hover:underline"
+                  >
+                    {{ quote?.parent_duplicate_quote_id ?? '' }}
+                  </Link>
+                </dd>
+              </div>
+
+              <div
+                  class="grid sm:grid-cols-2"
+                  v-if="linkedQuoteDetails.childLeadsCount == 1"
+              >
+                <dt>
+                  <x-tooltip placement="bottom">
+                    <label
+                        class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      CHILD REF-ID
+                    </label>
+                    <template #tooltip>
+                      The Child Reference ID acts as an individual identifier
+                      for dependents under the main lead. It's our way of
+                      efficiently organizing and accessing each person's records
+                      within the system.
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd>
+                  <Link
+                      :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.childLeadsUuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                      class="text-primary-500 hover:underline"
+                  >
+                    {{ linkedQuoteDetails.childLeads ?? '' }}
+                  </Link>
+                </dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
