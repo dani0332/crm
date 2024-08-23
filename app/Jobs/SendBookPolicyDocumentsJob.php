@@ -58,12 +58,10 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             // This will give handbook document from relevant policy wording table only for mentioned LOB's
             if (in_array($modelType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
                 $handBookDocuments = app(QuoteDocumentService::class)->getHandBookDocuments($quote);
-                info('Handbook documents retrieved for : '.$quote->code.' '.json_encode($handBookDocuments));
             }
             // First Retrieve document types marked for sending to the customer, then fetch the corresponding uploaded documents
             $documentTypeCodes = DocumentTypeRepository::quoteDocumentsSentToCustomerCode($this->data->model_type, $quote);
             $docs = app(QuoteDocumentService::class)->getQuoteDocuments($this->data->model_type, $this->data->quote_id, $documentTypeCodes);
-            info('Quote documents which need to send to customer through email retrieved for : '.$quote->code.' '.json_encode($docs));
         } catch (Exception $ex) {
             Log::error('Send BookPolicy Documents Job Error for:  '.$quote->code.' '.$ex->getMessage());
             $docs = [];
@@ -123,7 +121,6 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->handBookDocuments = $handBookDocuments;
             $emailData->roadsideAssistance = $roadsideAssistance;
             $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
-            info('Send Book Policy Documents Job Email Data for : '.$quote->code.' '.json_encode($emailData));
             $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
             info('Send Book Policy Documents Job Response for '.$quote->code.' '.json_encode($response));
         }
