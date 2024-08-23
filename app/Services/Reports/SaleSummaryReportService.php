@@ -352,7 +352,7 @@ class SaleSummaryReportService extends ManagementReport
             'department' => 'u.department_id',
         ];
 
-        if($isEndorsementQuery) {
+        if ($isEndorsementQuery) {
             $mapping['insurer'] = 'insurer';
         }
 
