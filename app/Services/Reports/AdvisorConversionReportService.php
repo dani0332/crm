@@ -76,7 +76,6 @@ class AdvisorConversionReportService extends BaseService
             $query = $this->getPersonsalQuoteQuery($lob);
             $query = $this->applyFilters($query, $filters);
         }
-
         $query = $query->get();
 
         // map operation to calculate gross and net conversions of records
@@ -109,8 +108,8 @@ class AdvisorConversionReportService extends BaseService
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.', '.QuoteStatusEnum::PaymentPending.','.QuoteStatusEnum::AMLScreeningCleared.','.QuoteStatusEnum::PendingQuote.')  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as in_progress'),
                 DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.')  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as bad_leads'),
-                DB::raw('SUM(CASE WHEN (car_quote_request.payment_status_id = "'.PaymentStatusEnum::CAPTURED.'"  OR car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.')) and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as sale_leads'),
-                DB::raw('SUM(CASE WHEN (car_quote_request.payment_status_id = "'.PaymentStatusEnum::CAPTURED.'"  OR car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.')) and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as created_sale_leads'),
+                DB::raw('SUM(CASE WHEN (car_quote_request.payment_status_id in ('.PaymentStatusEnum::PAID.', '.PaymentStatusEnum::PARTIALLY_PAID.', '.PaymentStatusEnum::CREDIT_APPROVED.', '.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')  AND car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyBooked.')) and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as sale_leads'),
+                DB::raw('SUM(CASE WHEN (car_quote_request.payment_status_id in ('.PaymentStatusEnum::PAID.', '.PaymentStatusEnum::PARTIALLY_PAID.', '.PaymentStatusEnum::CREDIT_APPROVED.', '.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')  AND car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyBooked.')) and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as created_sale_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::IMRenewal.' THEN 1 ELSE 0 END)  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" as afia_renewals_count'),
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
             )
@@ -168,8 +167,8 @@ class AdvisorConversionReportService extends BaseService
                 DB::raw('SUM(CASE WHEN personal_quotes.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.', '.QuoteStatusEnum::PaymentPending.','.QuoteStatusEnum::AMLScreeningCleared.','.QuoteStatusEnum::PendingQuote.')  and personal_quotes.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as in_progress'),
                 DB::raw('SUM(CASE WHEN personal_quotes.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
                 DB::raw('SUM(CASE WHEN personal_quotes.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.')  and personal_quotes.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as bad_leads'),
-                DB::raw('SUM(CASE WHEN (personal_quotes.payment_status_id = "'.PaymentStatusEnum::CAPTURED.'"  OR personal_quotes.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.')) and personal_quotes.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as sale_leads'),
-                DB::raw('SUM(CASE WHEN (personal_quotes.payment_status_id = "'.PaymentStatusEnum::CAPTURED.'"  OR personal_quotes.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.')) and personal_quotes.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as created_sale_leads'),
+                DB::raw('SUM(CASE WHEN (personal_quotes.payment_status_id in ('.PaymentStatusEnum::PAID.', '.PaymentStatusEnum::PARTIALLY_PAID.', '.PaymentStatusEnum::CREDIT_APPROVED.', '.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')  AND personal_quotes.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyBooked.')) and personal_quotes.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as sale_leads'),
+                DB::raw('SUM(CASE WHEN (personal_quotes.payment_status_id in ('.PaymentStatusEnum::PAID.', '.PaymentStatusEnum::PARTIALLY_PAID.', '.PaymentStatusEnum::CREDIT_APPROVED.', '.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')  AND personal_quotes.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyBooked.')) and personal_quotes.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as created_sale_leads'),
                 DB::raw('SUM(CASE WHEN personal_quotes.quote_status_id = '.QuoteStatusEnum::IMRenewal.' THEN 1 ELSE 0 END)  and personal_quotes.source != "'.LeadSourceEnum::IMCRM.'" as afia_renewals_count'),
                 DB::raw('SUM(CASE WHEN personal_quotes.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and personal_quotes.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
             )
@@ -187,7 +186,6 @@ class AdvisorConversionReportService extends BaseService
             )
             ->orderBy('personal_quotes.quote_batch_id')
             ->orderBy('users.email');
-
         if (
             ! auth()->user()->hasAnyRole([
                 RolesEnum::LeadPool,
@@ -573,14 +571,14 @@ class AdvisorConversionReportService extends BaseService
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::SALE_LEAD) {
             $query->where(function ($query) {
-                $query->whereIn('personal_quotes.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued])
-                    ->orWhere('personal_quotes.payment_status_id', PaymentStatusEnum::CAPTURED);
+                $query->whereIn('personal_quotes.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyBooked])
+                    ->WhereIn('personal_quotes.payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID, PaymentStatusEnum::CREDIT_APPROVED]);
             })->where('personal_quotes.source', '!=', LeadSourceEnum::IMCRM);
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::CREATED_SALE_LEAD) {
             $query->where(function ($query) {
-                $query->whereIn('personal_quotes.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued])
-                    ->orWhere('personal_quotes.payment_status_id', PaymentStatusEnum::CAPTURED);
+                $query->whereIn('personal_quotes.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyBooked])
+                    ->WhereIn('personal_quotes.payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID, PaymentStatusEnum::CREDIT_APPROVED]);
             })->where('personal_quotes.source', '=', LeadSourceEnum::IMCRM);
         }
 
@@ -790,14 +788,14 @@ class AdvisorConversionReportService extends BaseService
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::SALE_LEAD) {
             $query->where(function ($query) {
-                $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued])
-                    ->orWhere('car_quote_request.payment_status_id', PaymentStatusEnum::CAPTURED);
+                $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyBooked])
+                    ->WhereIn('car_quote_request.payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID, PaymentStatusEnum::CREDIT_APPROVED]);
             })->where('source', '!=', LeadSourceEnum::IMCRM);
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::CREATED_SALE_LEAD) {
             $query->where(function ($query) {
-                $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued])
-                    ->orWhere('car_quote_request.payment_status_id', PaymentStatusEnum::CAPTURED);
+                $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyBooked])
+                    ->WhereIn('car_quote_request.payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID, PaymentStatusEnum::CREDIT_APPROVED]);
             })->where('source', '=', LeadSourceEnum::IMCRM);
         }
 
