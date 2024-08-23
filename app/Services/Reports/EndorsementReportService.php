@@ -94,7 +94,7 @@ class EndorsementReportService extends ManagementReport
                     IFNULL( IFNULL(ps.price_vat, send_update_logs.total_vat_amount) , 0 )) - IFNULL( IFNULL(ps.discount_value, send_update_logs.discount) , 0 )) -
                     IFNULL( IFNULL(ps.collection_amount, send_update_logs.price_with_vat), 0) as pending_balance'),
                 'pq.collection_type as collects',
-                'ip.text as insurer',
+                DB::raw('CASE WHEN l.code="CII" OR ip.text is null THEN ip2.text ELSE ip.text END as insurer'),
                 'quote_type.text as line_of_business',
                 'personal_quotes.first_name',
                 'personal_quotes.last_name',
@@ -120,7 +120,8 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('users as pi', 'pi.id', '=', 'send_update_logs.created_by')
             ->join('departments as dp', 'dp.id', '=', 'u.department_id')
             ->join('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
-            ->join('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
+            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
+            ->leftJoin('insurance_provider as ip2', 'ip2.id', '=', 'send_update_logs.insurance_provider_id')
             ->leftJoin('payment_methods as pm', 'pm.code', '=', 'ps.payment_method')
             ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'ps.payment_gateway_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
@@ -167,7 +168,7 @@ class EndorsementReportService extends ManagementReport
                 DB::raw("'N/A' as payment_date"),
                 DB::raw("'0.00' as pending_balance"),
                 'pq.collection_type as collects',
-                'ip.text as insurer',
+                DB::raw('CASE WHEN l.code="CII" OR ip.text is null THEN ip2.text ELSE ip.text END as insurer'),
                 'quote_type.text as line_of_business',
                 'personal_quotes.first_name',
                 'personal_quotes.last_name',
@@ -193,7 +194,8 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('users as pi', 'pi.id', '=', 'send_update_logs.created_by')
             ->join('departments as dp', 'dp.id', '=', 'u.department_id')
             ->join('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
-            ->join('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
+            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
+            ->leftJoin('insurance_provider as ip2', 'ip2.id', '=', 'send_update_logs.insurance_provider_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->join('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)

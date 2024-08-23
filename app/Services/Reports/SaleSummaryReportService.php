@@ -169,6 +169,7 @@ class SaleSummaryReportService extends ManagementReport
 
         $query = SendUpdateLog::query()
             ->join('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id')
+            ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
             ->leftJoin('payments as p', 'send_update_logs.id', '=', 'p.send_update_log_id')
             ->leftJoin('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
@@ -186,7 +187,7 @@ class SaleSummaryReportService extends ManagementReport
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds)
             ->when($request->groupBy, function ($query, $groupBy) use ($request) {
                 $groupByArray = [];
-                $groupBy = $this->resolveGroupByColumn($groupBy);
+                $groupBy = $this->resolveGroupByColumn($groupBy, true);
                 array_push($groupByArray, $groupBy);
                 $utmGroupBy = $this->getUtmGroup($request, $query);
                 if ($utmGroupBy) {
@@ -214,8 +215,10 @@ class SaleSummaryReportService extends ManagementReport
 
         if ($request->groupBy == 'insurer') {
             // Endorsements
-            $query->join('insurance_provider', 'insurance_provider.id', '=', 'p.insurance_provider_id')
-                ->addSelect('insurance_provider.text as insurer');
+            $query
+                ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
+                ->leftJoin('insurance_provider as ip2', 'ip2.id', '=', 'send_update_logs.insurance_provider_id')
+                ->addSelect(DB::raw('CASE WHEN l.code="CII"  OR ip.text is null THEN ip2.text ELSE ip.text END as insurer'));
         }
 
         if ($request->groupBy == 'policy_issuer') {
@@ -238,6 +241,7 @@ class SaleSummaryReportService extends ManagementReport
 
         $reversalQuery = SendUpdateLog::query()
             ->join('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id')
+            ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
             ->leftJoin('payments as p', 'send_update_logs.reversal_invoice', '=', 'p.insurer_tax_number')
             ->leftJoin('send_update_logs as S2', 'send_update_logs.reversal_invoice', '=', 's2.insurer_tax_invoice_number')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
@@ -257,7 +261,7 @@ class SaleSummaryReportService extends ManagementReport
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds)
             ->when($request->groupBy, function ($reversalQuery, $groupBy) use ($request) {
                 $groupByArray = [];
-                $groupBy = $this->resolveGroupByColumn($groupBy);
+                $groupBy = $this->resolveGroupByColumn($groupBy, true);
                 array_push($groupByArray, $groupBy);
                 $utmGroupBy = $this->getUtmGroup($request, $reversalQuery);
                 if ($utmGroupBy) {
@@ -285,8 +289,10 @@ class SaleSummaryReportService extends ManagementReport
 
         if ($request->groupBy == 'insurer') {
             // Endorsements
-            $reversalQuery->join('insurance_provider', 'insurance_provider.id', '=', 'p.insurance_provider_id')
-                ->addSelect('insurance_provider.text as insurer');
+            $reversalQuery
+                ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
+                ->leftJoin('insurance_provider as ip2', 'ip2.id', '=', 'send_update_logs.insurance_provider_id')
+                ->addSelect(DB::raw('CASE WHEN l.code="CII"  OR ip.text is null THEN ip2.text ELSE ip.text END as insurer'));
         }
 
         if ($request->groupBy == 'policy_issuer') {
@@ -335,7 +341,7 @@ class SaleSummaryReportService extends ManagementReport
         });
     }
 
-    private function resolveGroupByColumn($groupBy)
+    private function resolveGroupByColumn($groupBy, $isEndorsementQuery = false)
     {
         $mapping = [
             'policy_issuer' => 'p.policy_issuer_id',
@@ -345,6 +351,10 @@ class SaleSummaryReportService extends ManagementReport
             'line_of_business' => 'quote_type.code',
             'department' => 'u.department_id',
         ];
+
+        if ($isEndorsementQuery) {
+            $mapping['insurer'] = 'insurer';
+        }
 
         return $mapping[$groupBy] ?? $groupBy;
     }
