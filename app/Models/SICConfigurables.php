@@ -7,10 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class SICConfigable extends Model implements AuditableContract
+class SICConfigurables extends Model implements AuditableContract
 {
     use Auditable, HasFactory;
-    protected $table = 'sic_configables';
+    protected $table = 'sic_configurables';
 
     public function configurable()
     {

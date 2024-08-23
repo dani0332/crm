@@ -17,9 +17,9 @@ class SICHealthConfig extends Model implements AuditableContract
     protected $guarded = [];
 
 
-    public function sicConfigables()
+    public function sicConfigurables()
     {
-      return $this->hasMany(SICConfigable::class,'sic_config_id','id');
+      return $this->hasMany(SICConfigurables::class,'sic_config_id','id');
     }
 
 }

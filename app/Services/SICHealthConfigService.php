@@ -16,13 +16,13 @@ class SICHealthConfigService extends BaseService
     public function getEntity()
     {
         $sic = SICHealthConfig::where('quote_type_id', QuoteTypeId::Health)
-            ->with('sicConfigables.configurable') // Eager load the 'configurable' relationship
+            ->with('sicConfigurables.configurable') // Eager load the 'configurable' relationship
             ->first();
         // Initialize an array to group configurables by their model name
         $data = [];
-        if (!empty($sic) && !empty($sic->sicConfigables)) {
+        if (!empty($sic) && !empty($sic->sicConfigurables)) {
             // Get grouped data using the relationList method
-            $groupedData = $this->relationList($sic->sicConfigables);
+            $groupedData = $this->relationList($sic->sicConfigurables);
             // Process and format the grouped data
             foreach ($groupedData as $alias => $configurables) {
                 // Create a new array for each alias with the alias as the key
@@ -39,7 +39,7 @@ class SICHealthConfigService extends BaseService
         return (object) ['data' => $sic, 'relations' => $data];
     }
 
-    public function relationList($sicConfigables)
+    public function relationList($sicConfigurables)
     {
         // Define aliases for each model class
         $modelAliases = [
@@ -50,9 +50,9 @@ class SICHealthConfigService extends BaseService
         ];
         // Initialize an array to hold grouped data
         $groupedConfigurable = [];
-        // Loop through each sicConfigable and group by model class
-        foreach ($sicConfigables as $sicConfigable) {
-            $configurable = $sicConfigable->configurable;
+        // Loop through each SicConfigurables and group by model class
+        foreach ($sicConfigurables as $sicConfigurable) {
+            $configurable = $sicConfigurable->configurable;
             $modelClass = get_class($configurable); // Get the fully qualified class name
             // Use the alias or default to class name if alias not defined
             $alias = $modelAliases[$modelClass] ?? class_basename($modelClass);
@@ -109,7 +109,7 @@ class SICHealthConfigService extends BaseService
         DB::transaction(function () use ($ids, $configId, $configurableType) {
 
             // Fetch existing records for the given configId
-            $existingRecords = DB::table('sic_configables')
+            $existingRecords = DB::table('sic_configurables')
                 ->where('sic_config_id', $configId)
                 ->where('configurable_type', $configurableType)
                 ->pluck('configurable_id')
@@ -129,12 +129,12 @@ class SICHealthConfigService extends BaseService
                     'updated_at' => now(),
                 ], $idsToInsert);
 
-                DB::table('sic_configables')->insert($insertData);
+                DB::table('sic_configurables')->insert($insertData);
             }
 
             // Delete records that are no longer in the provided list
             if ($idsToDelete) {
-                DB::table('sic_configables')
+                DB::table('sic_configurables')
                     ->where('sic_config_id', $configId)
                     ->where('configurable_type', $configurableType)
                     ->whereIn('configurable_id', $idsToDelete)
