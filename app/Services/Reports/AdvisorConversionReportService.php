@@ -207,7 +207,7 @@ class AdvisorConversionReportService extends BaseService
 
             $query = $query->whereIn('personal_quotes.advisor_id', $userIds);
         }
-       
+
         return $query;
     }
 
@@ -578,7 +578,7 @@ class AdvisorConversionReportService extends BaseService
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::CREATED_SALE_LEAD) {
             $query->where(function ($query) {
                 $query->whereIn('personal_quotes.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyBooked])
-                ->WhereIn('personal_quotes.payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID, PaymentStatusEnum::CREDIT_APPROVED]);
+                    ->WhereIn('personal_quotes.payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID, PaymentStatusEnum::CREDIT_APPROVED]);
             })->where('personal_quotes.source', '=', LeadSourceEnum::IMCRM);
         }
 
@@ -795,7 +795,7 @@ class AdvisorConversionReportService extends BaseService
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::CREATED_SALE_LEAD) {
             $query->where(function ($query) {
                 $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyBooked])
-                ->WhereIn('car_quote_request.payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID, PaymentStatusEnum::CREDIT_APPROVED]);
+                    ->WhereIn('car_quote_request.payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID, PaymentStatusEnum::CREDIT_APPROVED]);
             })->where('source', '=', LeadSourceEnum::IMCRM);
         }
 
