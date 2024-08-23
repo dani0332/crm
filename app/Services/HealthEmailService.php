@@ -76,13 +76,17 @@ class HealthEmailService extends BaseService
             'quoteUID' => $lead->code,
             'customerEmail' => $lead->email,
             'refID' => $lead->uuid,
-            'customerFullName' => $lead->first_name.' '.$lead->last_name,
+            'customerName' => $lead->first_name.' '.$lead->last_name,
             'advisorId' => $advisor->id ?? null,
             'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
             'advisorDetails' => $advisor ?? null,
             'quotePlanLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid,
             'requestAdvisorLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
+            'landLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
+            'mobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
+            'whatsAppNumber'=> !empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
+            'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
         ];
     }
 

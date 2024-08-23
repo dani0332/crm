@@ -626,7 +626,7 @@ class SendEmailCustomerService extends BaseService
         } elseif ($response && isset($response->message)) {
 
             info('RM Intro Email Triggered to CAPI for HEA-'.$quoteUuid.' - Message: '.$response->message);
-            OCAHealthFollowupEmailJob::dispatch($quoteUuid);
+            OCAHealthFollowupEmailJob::dispatch($quoteUuid)->delay(Carbon::now()->addMinutes(10));
             info('OCAHealthFollowupEmailJob dispatched for HEA-'.$quoteUuid.' - Time: '.now());
 
         }
