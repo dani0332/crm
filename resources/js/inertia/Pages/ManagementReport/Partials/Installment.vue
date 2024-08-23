@@ -167,7 +167,7 @@ const isIntegerColumn = key => {
 <template>
   <DataTable
     class="mt-4"
-    table-class-name=""
+    table-class-name="table-fixed"
     :loading="loader"
     :headers="tableHeader"
     :items="props.reportData.data || []"
