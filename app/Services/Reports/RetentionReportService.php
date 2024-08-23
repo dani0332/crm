@@ -34,7 +34,6 @@ class RetentionReportService extends BaseService
     public function __construct() {
         $this->dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $this->policyExpiryColumnName = 'personal_quotes.policy_expiry_date';
-        // $this->policyExpiryColumnName = 'personal_quotes.created_at';
         $this->paginateData = 12;
     }
 

@@ -457,12 +457,15 @@ function onFetchLeadsInfo(advisor_id, type, page=1){
   filters.type = type;
   filters.page = page
   filters.advisor_id = advisor_id;
-  let payLoad = cleanFilters(filters);
-  payLoad = addMissingFilters(payLoad)
+  let payload = cleanFilters(filters);
+  payload = addMissingFilters(payload)
+  if (!payload.policyExpiryDate && !payload.month) {
+    delete payload.displayBy;
+  }
   axios
     .get(`/reports/fetch-retention-leads-data`, {
       params: {
-        ...payLoad,
+        ...payload,
       }
     })
     .then(response => {
