@@ -33,31 +33,26 @@ class OCAHealthFollowupEmailJob implements ShouldQueue
         try {
             $healthLead = HealthQuote::where('uuid', $this->quoteUuid)->first();
             if (empty($healthLead)) {
-                info('OCAHealthFollowupEmailJob - Health Lead Not Found - Ref ID: '.$this->quoteUuid.'| Time: '.now());
+                info('OCAHealthFollowupEmailJob - Health Lead Not Found - Ref ID: ' . $this->quoteUuid . '| Time: ' . now());
 
                 return;
             }
-            if (empty($healthLead->advisor_id)) {
-                if ($healthLead->quote_status_id == QuoteStatusEnum::Quoted) {
-                    info('sending oca  health email follow ups for Ref-ID : '.$healthLead->uuid.' lead status id : '.$healthLead->quote_status_id.' : Quoted | Time: '.now());
-                    // Send the Health OCA email using the HealthEmailService
-                    $healthEmailService->triggerOCAFollowups($healthLead);
-                } else {
-                    info('OCAHealthFollowupEmailJob - Health Lead Not Triggered OCAFollowups with Quoted Status - Ref ID: '.$healthLead->uuid.'|Time: '.now());
-                }
-                if ($healthLead->quote_status_id == QuoteStatusEnum::ApplicationPending) {
-                    info('sending oca  health email follow ups for Ref-ID : '.$healthLead->uuid.' lead status id : '.$healthLead->quote_status_id.' : ApplicationPending | Time: '.now());
-                    // Send the Health OCA email using the HealthEmailService
-                    $healthEmailService->triggerPendingHealthFollowupEmails($healthLead);
-                } else {
-                    info('OCAHealthFollowupEmailJob - Health Lead Not Triggered OCAFollowups with Quoted Status - Ref ID: '.$healthLead->uuid.'| Time: '.now());
-                }
-
+            if ($healthLead->quote_status_id == QuoteStatusEnum::Quoted) {
+                info('sending oca  health email follow ups for Ref-ID : ' . $healthLead->uuid . ' lead status id : ' . $healthLead->quote_status_id . ' : Quoted | Time: ' . now());
+                // Send the Health OCA email using the HealthEmailService
+                $healthEmailService->triggerOCAFollowups($healthLead);
             } else {
-                info('OCAHealthFollowupEmailJob - Health Lead Advisor Available - Ref ID: '.$healthLead->uuid.'- Time: '.now());
+                info('OCAHealthFollowupEmailJob - Health Lead Not Triggered OCAFollowups with Quoted Status - Ref ID: ' . $healthLead->uuid . '|Time: ' . now());
+            }
+            if ($healthLead->quote_status_id == QuoteStatusEnum::ApplicationPending) {
+                info('sending oca  health email follow ups for Ref-ID : ' . $healthLead->uuid . ' lead status id : ' . $healthLead->quote_status_id . ' : ApplicationPending | Time: ' . now());
+                // Send the Health OCA email using the HealthEmailService
+                $healthEmailService->triggerPendingHealthFollowupEmails($healthLead);
+            } else {
+                info('OCAHealthFollowupEmailJob - Health Lead Not Triggered OCAFollowups with Quoted Status - Ref ID: ' . $healthLead->uuid . '| Time: ' . now());
             }
         } catch (\Throwable $th) {
-            info('OCAHealthFollowupEmailJob - Exception'.$th->getMessage().' - Ref ID: '.$healthLead->uuid.'- Time: '.now());
+            info('OCAHealthFollowupEmailJob - Exception' . $th->getMessage() . ' - Ref ID: ' . $healthLead->uuid . '- Time: ' . now());
         }
     }
 }
