@@ -125,9 +125,11 @@ class CustomerService extends BaseService
         $additionalEmail = CustomerAdditionalContact::where(['key' => GenericRequestEnum::EMAIL, 'value' => $newAdditionalEmail])
             ->first();
 
-        if ($newAdditionalEmail == strtolower($lead->email)
+        if (
+            $newAdditionalEmail == strtolower($lead->email)
             || $customer && $newAdditionalEmail == strtolower($customer->email)
-            || $additionalEmail && $newAdditionalEmail == strtolower($additionalEmail->value)) {
+            || $additionalEmail && $newAdditionalEmail == strtolower($additionalEmail->value)
+        ) {
             return true;
         } else {
             return false;
@@ -140,9 +142,11 @@ class CustomerService extends BaseService
         $additionalMobileNo = CustomerAdditionalContact::where(['key' => GenericRequestEnum::MOBILE_NO, 'value' => $newAdditionalMobileNo])
             ->first();
 
-        if ($newAdditionalMobileNo == $lead->mobile_no
-        || $customer && $newAdditionalMobileNo == $customer->mobile_no
-        || $additionalMobileNo && $newAdditionalMobileNo == $additionalMobileNo->value) {
+        if (
+            $newAdditionalMobileNo == $lead->mobile_no
+            || $customer && $newAdditionalMobileNo == $customer->mobile_no
+            || $additionalMobileNo && $newAdditionalMobileNo == $additionalMobileNo->value
+        ) {
             return true;
         } else {
             return false;
@@ -165,7 +169,7 @@ class CustomerService extends BaseService
             $customer = null;
             $previousEmail = $lead->email;
             if ($lead->customer && ! $this->getCustomerByEmail($value)) {
-                info('Customer additional contact primary email updated. Previous Email: '.$lead->email.' New Email: '.$value);
+                info('Customer additional contact primary email updated. Previous Email: ' . $lead->email . ' New Email: ' . $value);
                 $customerArray = [
                     'first_name' => $lead->first_name,
                     'last_name' => $lead->last_name,
@@ -174,7 +178,7 @@ class CustomerService extends BaseService
                     'dob' => $lead->dob,
                 ];
                 $customer = Customer::create($customerArray);
-                $customer->update(['code' => 'IND-'.$customer->id]);
+                $customer->update(['code' => 'IND-' . $customer->id]);
                 $getCustomerAdditionalContact = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
                     ->get();
                 foreach ($getCustomerAdditionalContact as $contact) {
@@ -273,7 +277,7 @@ class CustomerService extends BaseService
             }
             $lead->update(['mobile_no' => $value]);
             if ($lead->customer) {
-                info('Customer additional contact primary mobile_no updated. Previous Mobile_No: '.$lead->mobile_no.' New Mobile_No: '.$value);
+                info('Customer additional contact primary mobile_no updated. Previous Mobile_No: ' . $lead->mobile_no . ' New Mobile_No: ' . $value);
                 $lead->customer->update(['mobile_no' => $value]);
             }
         }
@@ -282,5 +286,10 @@ class CustomerService extends BaseService
     public function getCustomerCampaignFollowups($id)
     {
         return Customer::select('id', 'email', 'campaign_followups', 'last_followup_sent_at')->where('id', $id)->first();
+    }
+
+    public function getCustomerIdByEmail(string $email): ?int
+    {
+        return optional(Customer::where('email', $email)->first())->id;
     }
 }
