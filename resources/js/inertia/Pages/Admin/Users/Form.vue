@@ -219,12 +219,6 @@ watch(
   },
   { deep: true },
 );
-
-const addressTypes = [
-  { value: '', label: 'No Address Type' }, // option for leaving it blank
-  { value: '1', label: 'Home' },
-  { value: '2', label: 'Office' },
-];
 </script>
 <template>
   <Head :title="isEdit ? 'Edit Users' : 'Create Users'" />

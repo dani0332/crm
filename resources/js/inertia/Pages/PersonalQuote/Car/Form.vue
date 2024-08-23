@@ -212,6 +212,12 @@ const cylinderValidation = event => {
     event.preventDefault();
   }
 };
+
+const addressTypes = [
+  { value: '', label: 'No Address Type' }, // option for leaving it blank
+  { value: 'Home', label: 'Home' },
+  { value: 'Office', label: 'Office' },
+];
 </script>
 
 <template>
