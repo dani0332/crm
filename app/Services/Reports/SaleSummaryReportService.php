@@ -95,8 +95,10 @@ class SaleSummaryReportService extends ManagementReport
         }
 
         if ($request->groupBy == 'policy_issuer') {
-            $query->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
-                ->addSelect(DB::raw('IFNULL(pi.name, "N/A") as policy_issuer'));
+            $query
+                ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
+                ->addSelect('p.policy_issuer_id as policy_issuer')
+                ->addSelect('pi.name as policy_issuer_name');
         }
 
         if ($request->groupBy == 'line_of_business') {
@@ -227,8 +229,10 @@ class SaleSummaryReportService extends ManagementReport
 
         if ($request->groupBy == 'policy_issuer') {
             // Endorsements
-            $query->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
-                ->addSelect(DB::raw('IFNULL(pi.name, "N/A") as policy_issuer'));
+            $query
+                ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
+                ->addSelect('p.policy_issuer_id as policy_issuer')
+                ->addSelect('pi.name as policy_issuer_name');
         }
 
         if ($request->groupBy == 'line_of_business') {
@@ -303,8 +307,10 @@ class SaleSummaryReportService extends ManagementReport
 
         if ($request->groupBy == 'policy_issuer') {
             // Endorsements
-            $reversalQuery->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
-                ->addSelect(DB::raw('IFNULL(pi.name, "N/A") as policy_issuer'));
+            $reversalQuery
+                ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
+                ->addSelect('p.policy_issuer_id as policy_issuer')
+                ->addSelect('pi.name as policy_issuer_name');
         }
 
         if ($request->groupBy == 'line_of_business') {
