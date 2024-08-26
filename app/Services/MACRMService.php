@@ -19,14 +19,14 @@ class MACRMService
                     config('constants.MACRM_BASIC_AUTH_PASSWORD'),
                 )
                 ->withHeader('Referer', trim(config('constants.APP_URL'), '/'))
-                ->beforeSending(fn () => info(self::class.' - Calling MACRM API...'))
+                ->beforeSending(fn() => info(self::class . ' - Calling MACRM API...'))
                 ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
                 ->retry(3, 90000, function (Exception $exception) {
-                    info(self::class." - API failed with below error: {$exception->getMessage()}");
+                    info(self::class . " - API failed with below error: {$exception->getMessage()}");
                     $shouldRetry = $exception->getCode() !== 422;
 
                     if ($shouldRetry) {
-                        info(self::class.' - Going to retry...');
+                        info(self::class . ' - Going to retry...');
                     }
 
                     return $shouldRetry;
@@ -38,7 +38,7 @@ class MACRMService
                 'object' => $response->object(),
             ];
         } catch (Exception $e) {
-            Log::error(self::class." - Error: {$e->getMessage()}");
+            Log::error(self::class . " - Error: {$e->getMessage()}");
 
             return [
                 'ok' => false,
@@ -57,9 +57,9 @@ class MACRMService
             ['ok' => $ok, 'object' => $response] = self::sendRequest('/couriers/submit-eps', $leadData);
 
             if ($ok) {
-                info(self::class." - Synced Courier Quote with MACRM for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: {$response->message}");
+                info(self::class . " - Synced Courier Quote with MACRM for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: {$response->message}");
             } else {
-                info(self::class." - Courier Quote Syncing with MACRM Failed for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: {$response->message}");
+                info(self::class . " - Courier Quote Syncing with MACRM Failed for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: {$response->message}");
             }
 
             return $ok;
@@ -84,9 +84,9 @@ class MACRMService
                     ]);
 
                     if ($ok) {
-                        info(self::class." - Canceled Courier Quote on MACRM for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: {$response->message}");
+                        info(self::class . " - Canceled Courier Quote on MACRM for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: {$response->message}");
                     } else {
-                        info(self::class." - Courier Quote Canceling on MACRM Failed for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: {$response->message}");
+                        info(self::class . " - Courier Quote Canceling on MACRM Failed for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: {$response->message}");
                     }
 
                     return $ok;
@@ -101,8 +101,7 @@ class MACRMService
 
     public static function pendingCourierQuote($quote, $quoteTypeId)
     {
-        $leadData = getCourierQuote($quote, $quoteTypeId, [QuoteStatusEnum::PendingQuote]);
-        // dd($leadData);
+        $leadData = getCourierQuote($quote, $quoteTypeId, [QuoteStatusEnum::PolicyIssued]);
 
         if ($leadData) {
             $leadData = Arr::dot($leadData);
@@ -115,9 +114,11 @@ class MACRMService
                 ]);
 
                 if ($ok) {
-                    info(self::class." - Pending Courier Quote on MACRM for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: {$response->message}");
+                    info(self::class . 'Respone: ' . json_encode($response));
+                    info(self::class . 'Ok' . json_encode($ok));
+                    info(self::class . " - Pending Courier Quote on MACRM for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: {$response->message}");
                 } else {
-                    info(self::class." - Courier Quote Pending on MACRM Failed for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: {$response->message}");
+                    info(self::class . " - Courier Quote Pending on MACRM Failed for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: {$response->message}");
                 }
 
                 return $ok;

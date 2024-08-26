@@ -303,7 +303,7 @@ const addressTypes = [
           />
         </x-field>
 
-        <x-field label="Address Type">
+        <!-- <x-field label="Address Type">
           <ComboBox
             v-model="quoteForm.addressObj.address_type"
             placeholder="Select address type"
@@ -370,7 +370,7 @@ const addressTypes = [
               />
             </div>
           </div>
-        </x-field>
+        </x-field> -->
 
         <x-field label="DATE OF BIRTH" required>
           <DatePicker

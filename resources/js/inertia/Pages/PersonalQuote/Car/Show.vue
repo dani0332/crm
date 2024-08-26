@@ -1566,6 +1566,12 @@ const onAddUpdate = () => {
 };
 
 const fullAddress = computed(() => {
+  const address = page.props?.customerAddressData;
+
+  if (!address) {
+    return null; // Return null if customerAddressData is null or undefined
+  }
+
   const {
     office_number,
     floor_number,
@@ -1574,8 +1580,9 @@ const fullAddress = computed(() => {
     area,
     city,
     landmark,
-  } = page.props.customerAddressData;
-  return [
+  } = address;
+
+  const parts = [
     office_number,
     floor_number,
     building_name,
@@ -1583,10 +1590,20 @@ const fullAddress = computed(() => {
     area,
     city,
     landmark,
-  ]
-    .filter(part => part) // remove any empty parts
-    .join(', '); // join with comma and space
+  ];
+
+  // Check if all parts are null or undefined
+  const allPartsAreNull = parts.every(part => part == null);
+
+  if (allPartsAreNull) {
+    return null;
+  }
+
+  // Filter out null or undefined parts and join the rest with comma and space
+  return parts.filter(part => part).join(', ');
 });
+
+
 </script>
 
 <template>
@@ -2173,21 +2190,21 @@ const fullAddress = computed(() => {
                   <dt class="font-medium">EMAIL</dt>
                   <dd>{{ record.email }}</dd>
                 </div>
-                <div class="grid sm:grid-cols-2">
+                <!-- <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">ADDRESS TYPE</dt>
-                  <dd>{{ customerAddressData.type }}</dd>
+                  <dd>{{ customerAddressData?.type }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">
                     {{
-                      !customerAddressData.type ||
-                      customerAddressData.type === 'Home'
+                      !customerAddressData?.type ||
+                      customerAddressData?.type === 'Home'
                         ? 'RESIDENT ADDRESS'
                         : 'OFFICE ADDRESS'
                     }}
                   </dt>
                   <dd>{{ fullAddress }}</dd>
-                </div>
+                </div> -->
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">NATIONALITY</dt>
                   <dd>{{ record.nationality_id_text }}</dd>
