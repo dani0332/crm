@@ -44,7 +44,7 @@ class ReportsController extends Controller
         $advisorDistributionReportPermissions = implode('|', PermissionsEnum::getAdvisorDistributionReportPermissions());
         $this->middleware(['permission:'.$advisorDistributionReportPermissions], ['only' => ['renderAdvisorDistributionReport']]);
 
-        // $this->middleware('readonly_db');
+        $this->middleware('readonly_db');
     }
 
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
@@ -381,9 +381,11 @@ class ReportsController extends Controller
 
     public function renderConversionAsAtReport(Request $request, ConversionAsAtReportService $conversionAsAtReportService)
     {
+
         $displayBy = $request->displayBy ?? null;
         $quoteTypes = QuoteTypeId::getOptions();
         $quoteTypeCodes = quoteTypeCode::asArray();
+        $quoteTypeIdEnum = QuoteTypeId::asArray();
 
         return inertia('Reports/ConversionAsAt', [
             'reportData' => $conversionAsAtReportService->getReportData($request),
@@ -391,6 +393,7 @@ class ReportsController extends Controller
             'quoteTypes' => $quoteTypes,
             'displayByColumn' => $displayBy,
             'quoteTypeCodes' => $quoteTypeCodes,
+            'quoteTypeIdEnum' => $quoteTypeIdEnum,
         ]);
     }
 

@@ -1252,6 +1252,7 @@ const getAdvisorLabel = () => {
       :title="`${currentTypeTitle}`"
       show-close
       backdrop
+      :has-actions="false"
     >
       <section class="min-h-[70vh]">
         <div v-if="!loaders.advisorLeadTable">
