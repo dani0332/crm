@@ -29,7 +29,7 @@ class Test extends Command
      */
     public function handle()
     {
-        $lead = CarQuote::find(171967);
+        $lead = CarQuote::find(181178);
         SyncCourierQuoteWithMacrm::dispatch($lead, QuoteTypeId::Car);
         dd('done');
         CancelCourierQuoteOnMACRM::dispatch($lead, QuoteTypeId::Car);

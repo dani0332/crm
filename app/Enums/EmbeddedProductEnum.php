@@ -12,7 +12,7 @@ final class EmbeddedProductEnum extends Enum
     const AP2 = 'Gold';
     const AP3 = 'Platinum';
     const TRAVEL = 'TRA';
-    const COURIER = 'MDX';
+    const COURIER = 'COU';
 
     // used in report for source
     const SRC_CAR_EMBEDDED_PRODUCT = 'CAR EMBEDDED PRODUCT';
