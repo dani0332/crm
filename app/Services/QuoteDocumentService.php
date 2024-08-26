@@ -175,15 +175,15 @@ class QuoteDocumentService extends BaseService
                 // Set the filename for Azure storage
                 $fileNameAzure = uniqid() . '_' . $data['quote_uuid'] . '_original_' . $docName;
                 $filePathAzure = $fileOrBase64->storeAs('documents/' . $documentType->folder_path, $fileNameAzure, 'azureIM');
+            }
 
-                // watermark only for pdf files
-                if ($fileMimeType == 'application/pdf') {
-                    $watermarkData = $this->watermarkPdf($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
-                } elseif ($fileMimeType == 'image/jpeg' || $fileMimeType == 'image/png' || $fileMimeType == 'image/jpg') {
-                    $watermarkData = $this->watermarkImage($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
-                } elseif ($fileMimeType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || $fileMimeType == 'application/msword') {
-                    $watermarkData = $this->watermarkWordDocs($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
-                }
+            // watermark only for pdf files
+            if ($fileMimeType == 'application/pdf') {
+                $watermarkData = $this->watermarkPdf($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
+            } elseif ($fileMimeType == 'image/jpeg' || $fileMimeType == 'image/png' || $fileMimeType == 'image/jpg') {
+                $watermarkData = $this->watermarkImage($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
+            } elseif ($fileMimeType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || $fileMimeType == 'application/msword') {
+                $watermarkData = $this->watermarkWordDocs($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
             }
 
             // Generate a unique UUID
@@ -438,18 +438,6 @@ class QuoteDocumentService extends BaseService
         if (!file_exists(storage_path('/app/temp'))) {
             mkdir(storage_path('/app/temp'), 0775, true);
         }
-
-        /**
-         * Please don't remove it for now, thanks
-         */
-
-        // ImageWatermarker::input($file)
-        //     ->watermark(public_path('images/watermark1.png'))
-        //     ->output(storage_path('app/temp/'.$docName))
-        //     ->position(Position::MIDDLE_LEFT, 0, 0)
-        //     ->asBackground()
-        //     ->resolution(96)
-        //     ->save();
 
         $filePath = $file->storeAs('temp', $docName);
         $outputPath = storage_path('app/temp/' . $docName);
