@@ -347,7 +347,7 @@ class SagePayloadFactory
     {
         // Payload creation logic for default scenario
         $taxClass = 2;
-        if ($request->commissionIncludingVat > 0) { // commission including vat means commission_vat_applicable,
+        if ($request->commissionIncludingVat > 0) { // commissionIncludingVat means commission_vat_applicable,
             $taxClass = 1;
         }
         $premiumDescription = 'P.'.$request->invoiceDescription;
@@ -356,7 +356,7 @@ class SagePayloadFactory
         $optionalFields = self::createOptionalFields($request);
         $optionalFields[] = [
             'OptionalField' => 'COMAMOUNT',
-            'Value' => $request->commissionIncludingVat > 0 ? (string) roundNumber($request->commissionIncludingVat) : (string) roundNumber($request->commissionWithOutVat), // commission including vat means commission_vat_applicable,
+            'Value' => $request->commissionIncludingVat > 0 ? (string) roundNumber($request->commissionIncludingVat) : (string) roundNumber($request->commissionWithOutVat), // commissionIncludingVat means commission_vat_applicable,
         ];
         $optionalFields[] = [
             'OptionalField' => 'TOTALCOMM',
@@ -405,8 +405,8 @@ class SagePayloadFactory
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => $taxClass,
                     'TaxAmount1' => roundNumber($request->vatOnCommission),
-                    'DocumentTotalBeforeTax' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat), // commission including vat means commission_vat_applicable,
-                    'DocumentTotalIncludingTax' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat), /// commission including vat means commission_vat_applicable,
+                    'DocumentTotalBeforeTax' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat), // commissionIncludingVat means commission_vat_applicable,
+                    'DocumentTotalIncludingTax' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat), /// commissionIncludingVat means commission_vat_applicable,
                     'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
                     'InvoiceDetails' => [
                         [
@@ -414,8 +414,8 @@ class SagePayloadFactory
                             'TaxClass1' => $taxClass,
                             'TaxAmount1' => roundNumber($request->vatOnCommission),
                             'RevenueAccount' => '60010',
-                            'ExtendedAmountWithTIP' => roundNumber($request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat), // commission including vat means commission_vat_applicable,
-                            'ExtendedAmountWithoutTIP' => roundNumber($request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat), // commission including vat means commission_vat_applicable,
+                            'ExtendedAmountWithTIP' => roundNumber($request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat), // commissionIncludingVat means commission_vat_applicable,
+                            'ExtendedAmountWithoutTIP' => roundNumber($request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat), // commissionIncludingVat means commission_vat_applicable,
                         ],
                     ],
                     'InvoicePaymentSchedules' => [
@@ -494,7 +494,7 @@ class SagePayloadFactory
     {
         // Payload creation logic for default scenario
         $taxClass = 2;
-        if ($request->commissionIncludingVat > 0) { // commission including vat means commission_vat_applicable,
+        if ($request->commissionIncludingVat > 0) { // commissionIncludingVat means commission_vat_applicable,
             $taxClass = 1;
         }
         $entryType = SageEnum::SCT_STRAIGHT;
@@ -504,7 +504,7 @@ class SagePayloadFactory
         $optionalFields = self::createOptionalFields($request);
         $optionalFields[] = [
             'OptionalField' => 'COMAMOUNT',
-            'Value' => $request->commissionIncludingVat > 0 ? (string) roundNumber($request->commissionIncludingVat) : (string) roundNumber($request->commissionWithOutVat), // commission including vat means commission_vat_applicable,
+            'Value' => $request->commissionIncludingVat > 0 ? (string) roundNumber($request->commissionIncludingVat) : (string) roundNumber($request->commissionWithOutVat), // commissionIncludingVat means commission_vat_applicable,
         ];
         $optionalFields[] = [
             'OptionalField' => 'TOTALCOMM',
@@ -551,8 +551,8 @@ class SagePayloadFactory
                     'TaxGroup' => 'VAT',
                     'TaxClass1' => $taxClass,
                     'TaxAmount1' => roundNumber($request->vatOnCommission),
-                    'DocumentTotalBeforeTax' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat), // commission including vat means commission_vat_applicable,
-                    'DocumentTotalIncludingTax' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat), // commission including vat means commission_vat_applicable,
+                    'DocumentTotalBeforeTax' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat), // commissionIncludingVat means commission_vat_applicable,
+                    'DocumentTotalIncludingTax' => $request->commissionIncludingVat > 0 ? roundNumber($request->commissionIncludingVat) : roundNumber($request->commissionWithOutVat), // commissionIncludingVat means commission_vat_applicable,
                     'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format),
                     'Terms' => self::getTermsCode(count($splitPayments)),
                     'InvoiceDetails' => [
@@ -561,8 +561,8 @@ class SagePayloadFactory
                             'TaxClass1' => $taxClass,
                             'TaxAmount1' => roundNumber($request->vatOnCommission),
                             'RevenueAccount' => '60010',
-                            'ExtendedAmountWithTIP' => roundNumber($request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat), // commission including vat means commission_vat_applicable,
-                            'ExtendedAmountWithoutTIP' => roundNumber($request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat), // commission including vat means commission_vat_applicable,
+                            'ExtendedAmountWithTIP' => roundNumber($request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat), // commissionIncludingVat means commission_vat_applicable,
+                            'ExtendedAmountWithoutTIP' => roundNumber($request->commissionIncludingVat > 0 ? $request->commissionIncludingVat : $request->commissionWithOutVat), // commissionIncludingVat means commission_vat_applicable,
                         ],
                     ],
                     'InvoicePaymentSchedules' => [],
