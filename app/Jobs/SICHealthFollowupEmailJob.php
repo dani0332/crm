@@ -37,7 +37,7 @@ class SICHealthFollowupEmailJob implements ShouldQueue
      */
     public function handle(BirdService $birdService)
     {
-        $sicEventName = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
+    $sicEventName = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
         $lead = HealthQuote::where('uuid', $this->quoteUuid)->first();
         if(empty($lead)){
             info('SICHealthFollowupEmailJob - Lead not found forRef-ID: '.$this->quoteUuid.' | Time: '.now());

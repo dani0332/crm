@@ -17,20 +17,32 @@ class HealthEmailService extends BaseService
     public function sendHealthOCBIntroEmail($lead, $healthQuoteService, $triggerSICWorkFlow = false)
     {
         // Retrieve plans with available ratings for the given lead
-        $quote = $healthQuoteService->getQuotePlans($lead->uuid);
-        if (! $quote->quote->plans) {
-            info('No plans found for lead: '.$lead->uuid.' | time: '.now());
-        }
-        $advisor = User::where('id', $lead->advisor_id)->first();
-        $emailData = $this->mappingEmailDataForOCBEmail($lead, $advisor);
-        $responseCode = $this->birdService->sendHealthOCBEmail($emailData);
-        info('sic sendHealthOCBEmail - Ref ID:'.$lead->uuid.' |Time: '.now());
+
+        info('sic sendHealthOCBEmail - Ref ID:'.$lead->uuid.'| Time: '.now());
         if ($triggerSICWorkFlow) {
             if (! $lead->sic_flow_enabled) {
-                // Dispatch the job with a 30 mint delay
-                SICHealthFollowupEmailJob::dispatch($lead->uuid);
-                info('SIC Health workflow event triggered for lead: Ref-ID: '.$lead->uuid.' |Time: '.now());
-                info('SICHealthFollowupEmailJob Dispatched - Ref ID:'.$lead->uuid.'|  Time: '.now());
+                $advisor = User::where('id', $lead->advisor_id)->first();
+                $emailData = $this->mappingEmailDataForOCBEmail($lead, $advisor);
+                // $responseCode = $this->birdService->sendHealthOCBEmail($emailData);
+                // // Dispatch the job with a 30 mint delay
+                // SICHealthFollowupEmailJob::dispatch($lead->uuid);
+                // info('SIC Health workflow event triggered for lead: Ref-ID: '.$lead->uuid.' |Time: '.now());
+                // info('SICHealthFollowupEmailJob Dispatched - Ref ID:'.$lead->uuid.'|  Time: '.now());
+                $sicEventName = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
+
+                if (!$lead->sic_flow_enabled) {
+                    if ($sicEventName) {
+                        $responseCode = $this->birdService->sendSICHealthWorkFlow($emailData);
+                        $lead->sic_flow_enabled = true;
+                        $lead->save();
+                        info('SIC Health workflow event triggered for lead: ' . $lead->uuid . ' and sic_flow_enabled: Ref-ID' . $lead->sic_flow_enabled . '|Time: ' . now());
+                        info('SIC Health workflow response: ' . $responseCode . ' | Ref-ID' . $lead->sic_flow_enabled . '|Time: ' . now());
+                    } else {
+                        info('SIC Health workflow key not found for lead : Ref-ID: ' . $lead->uuid . ' |Time: ' . now());
+                    }
+                } else {
+                    info('SIC Health workflow already enabled for lead: : Ref-ID: ' . $lead->uuid . ' |Time: ' . now());
+                }
             } else {
                 info('SIC Health workflow already enabled for lead Ref-ID: '.$lead->uuid.' | Time: '.now() );
             }
@@ -39,7 +51,7 @@ class HealthEmailService extends BaseService
             info('triggerSICWorkFlow:'.$triggerSICWorkFlow .' | - SIC Health workflow not enabled for lead Ref-ID: '.$lead->uuid.' | Time: '.now() );
         }
 
-        return $responseCode;
+        return $responseCode ?? null;
     }
 
     public function mappingEmailDataForOCBEmail($lead, $advisor)
