@@ -914,10 +914,11 @@ class CarQuoteService extends BaseService
             $dateTo = $this->parseDate($request['advisor_assigned_date_end'], false);
             $this->query->whereBetween('cqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
-        if (isset($request->policy_expiry_date) && $request->policy_expiry_date != '') {
+        if (isset($request->policy_expiry_date) && $request->policy_expiry_date != '' && isset($request->policy_expiry_date_end) && $request->policy_expiry_date_end != '') {
             $dateFrom = $this->parseDate($request['policy_expiry_date'], true);
             $dateTo = $this->parseDate($request['policy_expiry_date_end'], false);
             $this->query->whereBetween('cqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
+
         }
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
@@ -1271,6 +1272,9 @@ class CarQuoteService extends BaseService
         $client = new \GuzzleHttp\Client;
 
         try {
+
+            info('FN: getQuotePlans request ready for KEN api');
+
             $kenRequest = $client->post(
                 $plansApiEndPoint,
                 [
@@ -1287,13 +1291,19 @@ class CarQuoteService extends BaseService
 
             $getStatusCode = $kenRequest->getStatusCode();
 
+            info('FN: getQuotePlans response from KEN api status code: '.$getStatusCode);
+
             if ($getStatusCode == 200) {
                 $getContents = $kenRequest->getBody();
+                info('FN: getQuotePlans response ready');
                 $getdecodeContents = json_decode($getContents);
+                info('FN: getQuotePlans response payload decoded now');
 
                 return $getdecodeContents;
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+            Log::error('FN: getQuotePlans response from KEN api error: '.$e->getMessage());
+
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);

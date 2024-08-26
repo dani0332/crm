@@ -138,6 +138,12 @@ const isIntegerColumn = key => {
     hide-footer
     :rows-per-page="100"
   >
+    <template #item-customer_group="{ customer_name }">
+      {{ customer_name ?? '' }}
+    </template>
+    <template #item-policy_issuer="{ policy_issuer_name }">
+      {{ policy_issuer_name ?? '' }}
+    </template>
     <template #item-total_policies="{ total_policies }">
       {{ total_policies ?? 0 }}
     </template>

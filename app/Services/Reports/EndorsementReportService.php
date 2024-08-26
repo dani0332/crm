@@ -64,7 +64,7 @@ class EndorsementReportService extends ManagementReport
                 'send_update_logs.invoice_date as payment_due_date',
                 'ps.due_date as due_date',
 
-                DB::raw('CASE WHEN send_update_logs.price_vat_applicable is not null OR send_update_logs.price_vat_applicable != 0.00 
+                DB::raw('CASE WHEN send_update_logs.price_vat_applicable is not null OR send_update_logs.price_vat_applicable != 0.00
                 THEN IFNULL( ps.price_vat_applicable , send_update_logs.price_vat_applicable )
                 ELSE 0 END as price_vat_applicable'),
 
@@ -94,7 +94,7 @@ class EndorsementReportService extends ManagementReport
                     IFNULL( IFNULL(ps.price_vat, send_update_logs.total_vat_amount) , 0 )) - IFNULL( IFNULL(ps.discount_value, send_update_logs.discount) , 0 )) -
                     IFNULL( IFNULL(ps.collection_amount, send_update_logs.price_with_vat), 0) as pending_balance'),
                 'pq.collection_type as collects',
-                'ip.text as insurer',
+                DB::raw('CASE WHEN l.code="CII" OR ip.text is null THEN ip2.text ELSE ip.text END as insurer'),
                 'quote_type.text as line_of_business',
                 'personal_quotes.first_name',
                 'personal_quotes.last_name',
@@ -121,6 +121,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
+            ->leftJoin('insurance_provider as ip2', 'ip2.id', '=', 'send_update_logs.insurance_provider_id')
             ->leftJoin('payment_methods as pm', 'pm.code', '=', 'ps.payment_method')
             ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'ps.payment_gateway_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
@@ -128,6 +129,7 @@ class EndorsementReportService extends ManagementReport
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
         $this->getUtmGroup($request, $query);
+        $this->applyFilters($query, $request);
 
         $reversalQuery = SendUpdateLog::query()
             ->select(
@@ -147,17 +149,17 @@ class EndorsementReportService extends ManagementReport
                 'personal_quotes.policy_start_date as main_lead_policy_start_date',
                 DB::raw('IFNULL(p.insurer_invoice_date, IFNULL(s2.invoice_date, "")) as payment_due_date'),
                 'send_update_logs.invoice_date as due_date',
-                DB::raw('-1 * (CASE WHEN send_update_logs.price_vat_applicable is not null THEN 
+                DB::raw('-1 * (CASE WHEN send_update_logs.price_vat_applicable is not null THEN
                 IFNULL(s2.price_vat_applicable, IFNULL(p.price_vat_applicable, 0))
                 ELSE 0 END) as price_vat_applicable'),
                 DB::raw('-1 * IFNULL(s2.total_vat_amount, IFNULL(p.price_vat, 0)) as vat'),
-                DB::raw('-1 * (CASE WHEN send_update_logs.price_vat_applicable is null THEN 
+                DB::raw('-1 * (CASE WHEN send_update_logs.price_vat_applicable is null THEN
                 IFNULL(s2.price_vat_applicable, IFNULL(p.price_vat_applicable, 0))
                 ELSE 0 END) as price_vat_not_applicable'),
                 'p.discount_value as discount',
-                DB::raw('-1 * (( 
+                DB::raw('-1 * ((
                  IFNULL(s2.price_vat_applicable, IFNULL(p.price_vat_applicable, 0)) +
-                 IFNULL(IFNULL(s2.total_vat_amount, IFNULL(p.price_vat, 0)), 0)) - 
+                 IFNULL(IFNULL(s2.total_vat_amount, IFNULL(p.price_vat, 0)), 0)) -
                  IFNULL(p.discount_value, 0)) as total_price'),
                 DB::raw('-1 * IFNULL(s2.commission_vat_applicable, IFNULL(p.commission_vat_applicable, 0)) as commission_vat_applicable'),
                 DB::raw('-1 * IFNULL(p.commission_vat, IFNULL(s2.vat_on_commission, 0)) as commission_vat'),
@@ -166,7 +168,7 @@ class EndorsementReportService extends ManagementReport
                 DB::raw("'N/A' as payment_date"),
                 DB::raw("'0.00' as pending_balance"),
                 'pq.collection_type as collects',
-                'ip.text as insurer',
+                DB::raw('CASE WHEN l.code="CII" OR ip.text is null THEN ip2.text ELSE ip.text END as insurer'),
                 'quote_type.text as line_of_business',
                 'personal_quotes.first_name',
                 'personal_quotes.last_name',
@@ -193,17 +195,17 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
+            ->leftJoin('insurance_provider as ip2', 'ip2.id', '=', 'send_update_logs.insurance_provider_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
             ->whereNotNull('send_update_logs.reversal_invoice')
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
         $this->getUtmGroup($request, $reversalQuery);
+        $this->applyFilters($reversalQuery, $request);
 
-        $query = $query->union($reversalQuery);
+        $query = $query->unionAll($reversalQuery);
         $query = $query->orderBy('id', 'desc');
-
-        $this->applyFilters($query, $request);
 
         if ($request->export == 1) {
             $data = $query->get();
@@ -246,7 +248,7 @@ class EndorsementReportService extends ManagementReport
         });
     }
 
-    protected function filterTeams($query, $teamIds)
+    protected function filterTeams($query, $teamIds, $isSSR = false)
     {
         if (! empty($teamIds)) {
             $userIds = $this->getUsersByTeamIds($teamIds)->pluck('id')->toArray();
