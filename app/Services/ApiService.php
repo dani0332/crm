@@ -301,7 +301,7 @@ class ApiService
 
         $activity = Activities::where('quote_uuid', $request->entityUId)
             ->Where('source', LeadSourceEnum::INSTANT_ALFRED)
-            ->first();
+            ->latest()->first();
 
         if (! $activity) {
             return response()->json(['message' => 'Activity Not Found'], 404);
