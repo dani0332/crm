@@ -349,11 +349,11 @@ class SaleSummaryReportService extends ManagementReport
     public function formatData(&$data)
     {
         $data->map(function ($item) {
-            $item->price_vat_applicable = number_format($item->price_vat_applicable, 2);
-            $item->total_vat = number_format($item->total_vat, 2);
-            $item->price_vat_not_applicable = number_format($item->price_vat_not_applicable, 2);
-            $item->discount = number_format($item->discount, 2);
-            $item->commission_vat_applicable = number_format($item->commission_vat_applicable, 2);
+            $item->price_vat_applicable = isset($item->price_vat_applicable) ? number_format($item->price_vat_applicable, 2) : '0.00';
+            $item->total_vat = isset($item->total_vat) ? number_format($item->total_vat, 2) : '0.00';
+            $item->price_vat_not_applicable = isset($item->price_vat_not_applicable) ? number_format($item->price_vat_not_applicable, 2) : '0.00';
+            $item->discount = isset($item->discount) ? number_format($item->discount, 2) : '0.00';
+            $item->commission_vat_applicable = isset($item->commission_vat_applicable) ? number_format($item->commission_vat_applicable, 2) : '0.00';
         });
     }
 
