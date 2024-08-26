@@ -432,7 +432,12 @@ const validateDateRange = () => {
   return false;
 };
 
-const formatDate = date => useDateFormat(date, 'DD-MMM-YYYY').value;
+const formatDate = dateString => {
+  if (!dateString) return '';
+  const [day, month, year] = dateString.split('-');
+  const date = new Date(year, month - 1, day);
+  return useDateFormat(date, 'DD-MMM-YYYY').value;
+};
 </script>
 
 <template>
