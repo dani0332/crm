@@ -729,6 +729,7 @@ if (! function_exists('getAuthorisePaymentCount')) {
         $userTeams = $user->getUserTeams($userId);
 
         $personalCount = DB::table('personal_quotes')
+            ->distinct()
             ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
             ->join('users', 'users.id', 'personal_quotes.advisor_id')
             ->join('user_team', 'user_team.user_id', 'users.id')
@@ -736,6 +737,7 @@ if (! function_exists('getAuthorisePaymentCount')) {
             ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED);
 
         $travelCount = DB::table('travel_quote_request')
+            ->distinct()
             ->leftJoin('payments as py', 'py.code', '=', 'travel_quote_request.code')
             ->join('users', 'users.id', 'travel_quote_request.advisor_id')
             ->join('user_team', 'user_team.user_id', 'users.id')
@@ -743,6 +745,7 @@ if (! function_exists('getAuthorisePaymentCount')) {
             ->where('travel_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED);
 
         $lifeCount = DB::table('life_quote_request')
+            ->distinct()
             ->leftJoin('payments as py', 'py.code', '=', 'life_quote_request.code')
             ->join('users', 'users.id', 'life_quote_request.advisor_id')
             ->join('user_team', 'user_team.user_id', 'users.id')
@@ -750,17 +753,17 @@ if (! function_exists('getAuthorisePaymentCount')) {
             ->where('life_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED);
 
         if ($user->hasAnyRole([RolesEnum::CarManager, RolesEnum::HealthManager, RolesEnum::TravelManager, RolesEnum::LifeManager, RolesEnum::HomeManager, RolesEnum::PetManager, RolesEnum::BikeManager, RolesEnum::CycleManager, RolesEnum::YachtManager, RolesEnum::JetskiManager, RolesEnum::BusinessManager])) {
-            $personalCount = $personalCount->whereIn('teams.name', $userTeams)->count();
+            $personalCount = $personalCount->whereIn('teams.name', $userTeams)->count('personal_quotes.id');
 
-            $travelCount = $travelCount->whereIn('teams.name', $userTeams)->count();
+            $travelCount = $travelCount->whereIn('teams.name', $userTeams)->count('travel_quote_request.id');
 
-            $lifeCount = $lifeCount->whereIn('teams.name', $userTeams)->count();
+            $lifeCount = $lifeCount->whereIn('teams.name', $userTeams)->count('life_quote_request.id');
         } else {
-            $personalCount = $personalCount->where('personal_quotes.advisor_id', $userId)->count();
+            $personalCount = $personalCount->where('personal_quotes.advisor_id', $userId)->count('personal_quotes.id');
 
-            $travelCount = $travelCount->where('travel_quote_request.advisor_id', $userId)->count();
+            $travelCount = $travelCount->where('travel_quote_request.advisor_id', $userId)->count('travel_quote_request.id');
 
-            $lifeCount = $lifeCount->where('life_quote_request.advisor_id', $userId)->count();
+            $lifeCount = $lifeCount->where('life_quote_request.advisor_id', $userId)->count('life_quote_request.id');
         }
 
         $totalCount = $personalCount + $travelCount + $lifeCount;
