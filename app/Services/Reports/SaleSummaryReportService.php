@@ -113,7 +113,6 @@ class SaleSummaryReportService extends ManagementReport
         $this->applyFilters($query, $request, false, true);
 
         $data = $query->get();
-        $this->formatData($data);
 
         if ($request->export == 1) {
 
@@ -126,6 +125,8 @@ class SaleSummaryReportService extends ManagementReport
              * Process endorsements data for pdf
              */
             $processedData = $this->processEndorsementsData($data, $endorsementsData, $request);
+
+            $this->formatData($processedData);
 
             // Columns that are not integar and should not be summed
             $nonIntegarIndexes = [0];
@@ -186,6 +187,7 @@ class SaleSummaryReportService extends ManagementReport
                 DB::raw('((
                     sum(IFNULL( ps.price_vat_applicable , IFNULL( send_update_logs.price_vat_applicable , 0 ) + IFNULL( send_update_logs.price_vat_not_applicable , 0 ))) +
                     sum(IFNULL( IFNULL(ps.price_vat, send_update_logs.total_vat_amount) , 0 ))) - sum(IFNULL( IFNULL(ps.discount_value, send_update_logs.discount) , 0 ))) as total_endorsement_amount'),
+                DB::raw('sum(CASE WHEN ps.sr_no is NULL OR ps.sr_no=1 THEN IFNULL(send_update_logs.commission_vat_applicable, 0) ELSE 0 END) as commission_vat_applicable'),
             )
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds)
@@ -264,6 +266,7 @@ class SaleSummaryReportService extends ManagementReport
                  sum(IFNULL(s2.price_vat_applicable, IFNULL(p.price_vat_applicable, 0))) +
                  sum(IFNULL(IFNULL(s2.total_vat_amount, IFNULL(p.price_vat, 0)), 0))) -
                  sum(IFNULL(p.discount_value, 0))) as total_endorsement_amount'),
+                DB::raw('sum(-1 * IFNULL(s2.commission_vat_applicable, IFNULL(p.commission_vat_applicable, 0))) as commission_vat_applicable'),
             )
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds)
@@ -336,20 +339,21 @@ class SaleSummaryReportService extends ManagementReport
                     $request->groupBy => $groupByColumn,
                     'total_endorsements' => $group->sum('total_endorsements'),
                     'total_endorsement_amount' => $group->sum('total_endorsement_amount'),
+                    'commission_vat_applicable' => $group->sum('commission_vat_applicable'),
                 ];
             })->values());
 
         return $data;
     }
 
-    private function formatData(&$data)
+    public function formatData(&$data)
     {
         $data->map(function ($item) {
-            $item->price_vat_applicable = number_format($item->price_vat_applicable, 2);
-            $item->total_vat = number_format($item->total_vat, 2);
-            $item->price_vat_not_applicable = number_format($item->price_vat_not_applicable, 2);
-            $item->discount = number_format($item->discount, 2);
-            $item->commission_vat_applicable = number_format($item->commission_vat_applicable, 2);
+            $item->price_vat_applicable = isset($item->price_vat_applicable) ? number_format($item->price_vat_applicable, 2) : '0.00';
+            $item->total_vat = isset($item->total_vat) ? number_format($item->total_vat, 2) : '0.00';
+            $item->price_vat_not_applicable = isset($item->price_vat_not_applicable) ? number_format($item->price_vat_not_applicable, 2) : '0.00';
+            $item->discount = isset($item->discount) ? number_format($item->discount, 2) : '0.00';
+            $item->commission_vat_applicable = isset($item->commission_vat_applicable) ? number_format($item->commission_vat_applicable, 2) : '0.00';
         });
     }
 

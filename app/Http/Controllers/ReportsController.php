@@ -473,6 +473,7 @@ class ReportsController extends Controller
              * process the endorsements data
              */
             $reportData = ManagementReport::processEndorsementsData($rawReportData, $endorsementData, $request);
+            $reportInstance->formatData($reportData);
         }
 
         return inertia('ManagementReport/index', [
