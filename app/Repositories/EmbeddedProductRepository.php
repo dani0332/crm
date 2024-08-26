@@ -359,8 +359,6 @@ class EmbeddedProductRepository extends BaseRepository
             return 'Embedded Product not found';
         }
 
-        $product_name = $ep->product_name;
-        $product_description = $ep->description;
         $short_code = $ep->short_code;
         $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($short_code);
 
