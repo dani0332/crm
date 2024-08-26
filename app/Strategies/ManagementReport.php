@@ -59,7 +59,7 @@ class ManagementReport
 
         $leadSources = LeadSource::query()
             ->select('name')
-            ->where('is_active', 1)->where('is_applicable_for_rules', 0)
+            ->where('is_active', 1)
             ->whereNotNull('name')
             ->orderBy('name')
             ->get()

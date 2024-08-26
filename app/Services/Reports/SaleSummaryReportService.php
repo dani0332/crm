@@ -43,9 +43,9 @@ class SaleSummaryReportService extends ManagementReport
             ->selectRaw('DISTINCT(code), due_date');
 
         $query = PersonalQuote::query()
-            ->join('users as u', 'personal_quotes.advisor_id', '=', 'u.id')
-            ->join('departments as dp', 'dp.id', '=', 'u.department_id')
-            ->join('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
+            ->leftJoin('users as u', 'personal_quotes.advisor_id', '=', 'u.id')
+            ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
+            ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->selectRaw('
@@ -74,11 +74,13 @@ class SaleSummaryReportService extends ManagementReport
             });
 
         if ($request->groupBy == 'advisor') {
-            $query->addSelect('u.name as advisor', 'dp.name as department');
+            $query
+                ->addSelect(DB::raw('IFNULL(u.name, "N/A") as advisor'))
+                ->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
         }
 
         if ($request->groupBy == 'department') {
-            $query->addSelect('dp.name as department');
+            $query->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
         }
 
         if ($request->groupBy == 'customer_group') {
@@ -89,12 +91,14 @@ class SaleSummaryReportService extends ManagementReport
 
         if ($request->groupBy == 'insurer') {
             $query->join('insurance_provider', 'insurance_provider.id', '=', 'p.insurance_provider_id')
-                ->addSelect('insurance_provider.text as insurer');
+                ->addSelect(DB::raw('IFNULL(insurance_provider.text, "N/A") as insurer'));
         }
 
         if ($request->groupBy == 'policy_issuer') {
-            $query->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
-                ->addSelect('pi.name as policy_issuer');
+            $query
+                ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
+                ->addSelect('p.policy_issuer_id as policy_issuer')
+                ->addSelect('pi.name as policy_issuer_name');
         }
 
         if ($request->groupBy == 'line_of_business') {
@@ -168,15 +172,15 @@ class SaleSummaryReportService extends ManagementReport
             ->groupBy('dps.code');
 
         $query = SendUpdateLog::query()
-            ->join('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id')
+            ->leftJoin('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
             ->leftJoin('payments as p', 'send_update_logs.id', '=', 'p.send_update_log_id')
             ->leftJoin('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
-            ->join('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
-            ->join('departments as dp', 'dp.id', '=', 'u.department_id')
-            ->join('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
-            ->join('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
+            ->leftJoin('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
+            ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
+            ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
+            ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->select(
                 DB::raw('COUNT(send_update_logs.uuid) as total_endorsements'),
                 DB::raw('((
@@ -199,16 +203,18 @@ class SaleSummaryReportService extends ManagementReport
 
         if ($request->groupBy == 'advisor') {
             // Endorsements
-            $query->addSelect('u.name as advisor', 'dp.name as department');
+            $query
+                ->addSelect(DB::raw('IFNULL(u.name, "N/A") as advisor'))
+                ->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
         }
 
         if ($request->groupBy == 'department') {
-            $query->addSelect('dp.name as department');
+            $query->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
         }
 
         if ($request->groupBy == 'customer_group') {
             // Endorsements
-            $query->join('customer', 'personal_quotes.customer_id', '=', 'customer.id')
+            $query->leftJoin('customer', 'personal_quotes.customer_id', '=', 'customer.id')
                 ->addSelect(DB::raw("CONCAT(customer.first_name, ' ', customer.last_name) as customer_name"))
                 ->addSelect('customer.id as customer_group');
         }
@@ -218,13 +224,15 @@ class SaleSummaryReportService extends ManagementReport
             $query
                 ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
                 ->leftJoin('insurance_provider as ip2', 'ip2.id', '=', 'send_update_logs.insurance_provider_id')
-                ->addSelect(DB::raw('CASE WHEN l.code="CII"  OR ip.text is null THEN ip2.text ELSE ip.text END as insurer'));
+                ->addSelect(DB::raw('CASE WHEN l.code="CII"  OR ip.text is null THEN IFNULL(ip2.text, "N/A") ELSE IFNULL(ip.text, "N/A") END as insurer'));
         }
 
         if ($request->groupBy == 'policy_issuer') {
             // Endorsements
-            $query->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
-                ->addSelect('pi.name as policy_issuer');
+            $query
+                ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
+                ->addSelect('p.policy_issuer_id as policy_issuer')
+                ->addSelect('pi.name as policy_issuer_name');
         }
 
         if ($request->groupBy == 'line_of_business') {
@@ -240,15 +248,15 @@ class SaleSummaryReportService extends ManagementReport
         $query = $this->applyFilters($query, $request, true, true);
 
         $reversalQuery = SendUpdateLog::query()
-            ->join('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id')
+            ->leftJoin('personal_quotes', 'send_update_logs.personal_quote_id', '=', 'personal_quotes.id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
             ->leftJoin('payments as p', 'send_update_logs.reversal_invoice', '=', 'p.insurer_tax_number')
             ->leftJoin('send_update_logs as S2', 'send_update_logs.reversal_invoice', '=', 's2.insurer_tax_invoice_number')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
-            ->join('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
-            ->join('departments as dp', 'dp.id', '=', 'u.department_id')
-            ->join('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
-            ->join('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
+            ->leftJoin('users as u', 'u.id', '=', 'personal_quotes.advisor_id')
+            ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
+            ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
+            ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->whereNotNull('send_update_logs.reversal_invoice')
             ->select(
                 DB::raw('COUNT(send_update_logs.uuid) as total_endorsements'),
@@ -273,16 +281,18 @@ class SaleSummaryReportService extends ManagementReport
 
         if ($request->groupBy == 'advisor') {
             // Endorsements
-            $reversalQuery->addSelect('u.name as advisor', 'dp.name as department');
+            $reversalQuery
+                ->addSelect(DB::raw('IFNULL(u.name, "N/A") as advisor'))
+                ->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
         }
 
         if ($request->groupBy == 'department') {
-            $reversalQuery->addSelect('dp.name as department');
+            $reversalQuery->addSelect(DB::raw('IFNULL(dp.name, "N/A") as department'));
         }
 
         if ($request->groupBy == 'customer_group') {
             // Endorsements
-            $reversalQuery->join('customer', 'personal_quotes.customer_id', '=', 'customer.id')
+            $reversalQuery->leftJoin('customer', 'personal_quotes.customer_id', '=', 'customer.id')
                 ->addSelect(DB::raw("CONCAT(customer.first_name, ' ', customer.last_name) as customer_name"))
                 ->addSelect('customer.id as customer_group');
         }
@@ -292,13 +302,15 @@ class SaleSummaryReportService extends ManagementReport
             $reversalQuery
                 ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
                 ->leftJoin('insurance_provider as ip2', 'ip2.id', '=', 'send_update_logs.insurance_provider_id')
-                ->addSelect(DB::raw('CASE WHEN l.code="CII"  OR ip.text is null THEN ip2.text ELSE ip.text END as insurer'));
+                ->addSelect(DB::raw('CASE WHEN l.code="CII"  OR ip.text is null THEN IFNULL(ip2.text, "N/A") ELSE IFNULL(ip.text, "N/A") END as insurer'));
         }
 
         if ($request->groupBy == 'policy_issuer') {
             // Endorsements
-            $reversalQuery->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
-                ->addSelect('pi.name as policy_issuer');
+            $reversalQuery
+                ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
+                ->addSelect('p.policy_issuer_id as policy_issuer')
+                ->addSelect('pi.name as policy_issuer_name');
         }
 
         if ($request->groupBy == 'line_of_business') {
@@ -312,7 +324,7 @@ class SaleSummaryReportService extends ManagementReport
             });
         }
         $reversalQuery = $this->applyFilters($reversalQuery, $request, true, true);
-        $endorsementsQuery = $query->union($reversalQuery);
+        $endorsementsQuery = $query->unionAll($reversalQuery);
 
         $data = $endorsementsQuery->get();
 
