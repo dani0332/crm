@@ -444,8 +444,10 @@ class HandleInertiaRequests extends Middleware
             });
         }
         $adminMenuPermissions = [
-            PermissionsEnum::UsersList, PermissionsEnum::RoleList,
-            PermissionsEnum::TeamsList, PermissionsEnum::RENEWAL_BATCHES_LIST,
+            PermissionsEnum::UsersList,
+            PermissionsEnum::RoleList,
+            PermissionsEnum::TeamsList,
+            PermissionsEnum::RENEWAL_BATCHES_LIST,
             PermissionsEnum::COMMERCIAL_KEYWORDS,
             PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
             PermissionsEnum::RULE_CONFIG_LIST,
