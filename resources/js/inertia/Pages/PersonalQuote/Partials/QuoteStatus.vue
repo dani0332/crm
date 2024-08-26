@@ -19,7 +19,9 @@ const permissionsEnum = page.props.permissionsEnum;
 const can = permission => useCan(permission);
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const quoteStatusOptions = computed(() => {
-  return props.quoteStatuses.map(status => ({
+  return props.quoteStatuses
+      .filter(status => status.id !== 6 && status.id !== 7)
+      .map(status => ({
     value: status.id,
     label: status.text,
   }));
