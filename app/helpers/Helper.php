@@ -1336,7 +1336,8 @@ if (! function_exists('getCourierQuote')) {
 
             return null;
         } catch (Exception $e) {
-            Log::error('getCourierQuote: Error retrieving quote: '. $e->getMessage());
+            Log::error('getCourierQuote: Error retrieving quote: '.$e->getMessage());
+
             return null;
         }
     }
