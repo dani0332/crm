@@ -355,7 +355,7 @@ class EmbeddedProductRepository extends BaseRepository
         $epId = $data['epId'];
 
         $ep = $this->where('id', $epId)->first();
-        if (!$ep) {
+        if (! $ep) {
             return 'Embedded Product not found';
         }
 
@@ -376,8 +376,9 @@ class EmbeddedProductRepository extends BaseRepository
         $advisorData = $this->fetchAdvisorData($quoteObject);
         $transaction = $this->fetchTransaction($modelType, $quoteId, $optionsIds);
 
-        if (!$this->canSendDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction)) {
-            info('Documents cannot be sent ' . json_encode(['uuid' => $quoteObject->uuid, 'ep category' => $ep->product_category, 'quote status' => $quoteObject->quote_status_id, 'transaction' => $transaction]));
+        if (! $this->canSendDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction)) {
+            info('Documents cannot be sent '.json_encode(['uuid' => $quoteObject->uuid, 'ep category' => $ep->product_category, 'quote status' => $quoteObject->quote_status_id, 'transaction' => $transaction]));
+
             return 'Documents cannot be sent';
         }
 
@@ -395,20 +396,20 @@ class EmbeddedProductRepository extends BaseRepository
     private function fetchAttachments($ep, $isAlfredProtect)
     {
         $attachments = [];
-        $websiteURL = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
+        $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $documents = json_decode($ep->company_documents);
 
-        if (!empty($documents)) {
+        if (! empty($documents)) {
             foreach ($documents as $item) {
                 $path = $item->path;
-                $pwDoc = $path !== '' ? $websiteURL . $path : '';
-                if (!empty($path) && !$isAlfredProtect) {
+                $pwDoc = $path !== '' ? $websiteURL.$path : '';
+                if (! empty($path) && ! $isAlfredProtect) {
                     $fileInfo = new finfo(FILEINFO_MIME_TYPE);
                     $file = file_get_contents($pwDoc);
                     $mimeType = $fileInfo->buffer($file);
                     $attachments[] = [
                         'Content' => base64_encode(file_get_contents($pwDoc)),
-                        'Name' => $ep->display_name . '- Policy Wordings.pdf',
+                        'Name' => $ep->display_name.'- Policy Wordings.pdf',
                         'ContentType' => $mimeType,
                     ];
                 }
@@ -421,14 +422,14 @@ class EmbeddedProductRepository extends BaseRepository
     private function fetchAttachmentUrls($ep, $isAlfredProtect)
     {
         $attachmentsUrls = [];
-        $websiteURL = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
+        $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $documents = json_decode($ep->company_documents);
 
-        if (!empty($documents)) {
+        if (! empty($documents)) {
             foreach ($documents as $item) {
                 $path = $item->path;
-                $pwDoc = $path !== '' ? $websiteURL . $path : '';
-                if (!empty($path) && $isAlfredProtect) {
+                $pwDoc = $path !== '' ? $websiteURL.$path : '';
+                if (! empty($path) && $isAlfredProtect) {
                     $attachmentsUrls[] = $pwDoc;
                 }
             }
@@ -453,6 +454,7 @@ class EmbeddedProductRepository extends BaseRepository
     private function fetchTransaction($modelType, $quoteId, $optionsIds)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+
         return EmbeddedTransaction::where([
             ['quote_type_id', '=', $quoteTypeId],
             ['quote_request_id', '=', $quoteId],
@@ -469,10 +471,10 @@ class EmbeddedProductRepository extends BaseRepository
         $firstName = $quoteObject->quoteRequestEntityMapping ? $quoteObject->first_name ?? '' : $quoteObject->customer->insured_first_name ?? '';
         $lastName = $quoteObject->quoteRequestEntityMapping ? $quoteObject->last_name ?? '' : $quoteObject->customer->insured_last_name ?? '';
 
-        info('Send Alfred Protect Email Template ID: ' . $emailTemplateId);
-        $emailData = (object)[
-            'quoteCdbId' => $short_code . '-' . $quoteObject->code,
-            'customerName' => $firstName . ' ' . $lastName,
+        info('Send Alfred Protect Email Template ID: '.$emailTemplateId);
+        $emailData = (object) [
+            'quoteCdbId' => $short_code.'-'.$quoteObject->code,
+            'customerName' => $firstName.' '.$lastName,
             'customerEmail' => $quoteObject->email,
             'advisorName' => $advisorData['name'] ?? null,
             'advisorEmailAddress' => $advisorData['email'] ?? null,
@@ -481,12 +483,12 @@ class EmbeddedProductRepository extends BaseRepository
             'advisorMobileNo' => $advisorData['mobile_no'] ?? null,
             'documentUrl' => $attachmentsUrls,
         ];
-        info('Send Alfred Protect Email Data: ' . json_encode($emailData));
+        info('Send Alfred Protect Email Data: '.json_encode($emailData));
 
         $ccData = isset($advisorData['email']) ? [['email' => $advisorData['email'], 'name' => $advisorData['name']]] : [];
 
         $response = app(SendEmailCustomerService::class)->sendEmail($emailTemplateId, $emailData, 'policy-documents-alfred-protect', $ccData);
-        info('Send Alfred Protect Email Response: ' . json_encode($response));
+        info('Send Alfred Protect Email Response: '.json_encode($response));
 
         if ($response == 201) {
             return $this->handleAjaxResponse('Certificate sent successfully.', 'success');
@@ -516,13 +518,13 @@ class EmbeddedProductRepository extends BaseRepository
             'Attachments' => $attachments,
             'TemplateModel' => [
                 'params' => [
-                    'customerName' => $quoteObject->first_name . ' ' . $quoteObject->last_name,
+                    'customerName' => $quoteObject->first_name.' '.$quoteObject->last_name,
                     'isMedex' => strtoupper($short_code) == 'MDX',
                     'productName' => $ep->product_name,
                     'productDescription' => $ep->description,
-                    'advisor' => (object)$advisorData,
+                    'advisor' => (object) $advisorData,
                 ],
-                'subject' => 'Thank you for your purchase of ' . $ep->product_name . ' with InsuranceMarket.ae - ' . $short_code . '-' . $quoteObject->code,
+                'subject' => 'Thank you for your purchase of '.$ep->product_name.' with InsuranceMarket.ae - '.$short_code.'-'.$quoteObject->code,
             ],
             'MessageStream' => config('constants.EMBEDDED_PRODUCTS_POSTMARK_STREAM'),
         ], JSON_UNESCAPED_SLASHES);
