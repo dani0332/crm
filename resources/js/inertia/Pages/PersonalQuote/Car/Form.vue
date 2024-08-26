@@ -71,7 +71,8 @@ const quoteForm = useForm({
   car_value: props.quote?.car_value || '',
   addressObj: {
     address_type: page.props.customerAddressData?.type || null,
-    villa_apartment_office_no: page.props.customerAddressData?.office_number || null,
+    villa_apartment_office_no:
+      page.props.customerAddressData?.office_number || null,
     floor_no: page.props.customerAddressData?.floor_number || null,
     villa_building_name: page.props.customerAddressData?.building_name || null,
     street_name: page.props.customerAddressData?.street || null,

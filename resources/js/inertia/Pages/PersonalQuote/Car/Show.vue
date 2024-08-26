@@ -1602,8 +1602,6 @@ const fullAddress = computed(() => {
   // Filter out null or undefined parts and join the rest with comma and space
   return parts.filter(part => part).join(', ');
 });
-
-
 </script>
 
 <template>
