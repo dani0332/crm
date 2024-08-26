@@ -57,7 +57,7 @@ label {
 }
 /* Scrollbar styles */
 .vue3-easy-data-table__main::-webkit-scrollbar {
-  @apply h-1.5 bg-transparent cursor-pointer;
+  @apply h-1.5 w-1.5 bg-transparent cursor-pointer;
 }
 
 .vue3-easy-data-table__main::-webkit-scrollbar-track {
@@ -94,8 +94,14 @@ label {
 }
 
 /* Fixed header */
-.vue3-easy-data-table__main.fixed-header.show-shadow.table-fixed .shadow {
-  @apply bg-primary-50 border-r;
+
+.table-fixed .vue3-easy-data-table__main {
+  max-height: 80dvh;
+  thead tr {
+    position: sticky;
+    top: 0;
+    z-index: 9;
+  }
 }
 
 /* Table body td tag */
