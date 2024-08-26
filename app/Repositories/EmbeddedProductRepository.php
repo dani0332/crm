@@ -389,7 +389,7 @@ class EmbeddedProductRepository extends BaseRepository
         if ($isAlfredProtect) {
             return $this->sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData);
         } else {
-            return $this->sendMedexEmail($short_code, $quoteObject, $certificate_number, $premium, $capturedAt, $attachments, $advisorData);
+            return $this->sendMedexEmail($short_code, $quoteObject, $certificate_number, $premium, $capturedAt, $attachments, $advisorData, $ep);
         }
     }
 
@@ -497,7 +497,7 @@ class EmbeddedProductRepository extends BaseRepository
         }
     }
 
-    private function sendMedexEmail($short_code, $quoteObject, $certificate_number, $premium, $capturedAt, $attachments, $advisorData)
+    private function sendMedexEmail($short_code, $quoteObject, $certificate_number, $premium, $capturedAt, $attachments, $advisorData, $ep)
     {
         $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium, $capturedAt);
         if ($pdf) {
