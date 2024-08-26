@@ -97,6 +97,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->googleMeet = '';
             $emailData->insuranceType = $insuranceType;
             $emailData->planName = $planName;
+            $emailData->currentInsurer = '';
             if (! empty($quote->advisor)) {
                 $emailData->advisorName = $quote->advisor->name;
                 $emailData->advisorEmail = $quote->advisor->email;
