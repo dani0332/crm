@@ -70,14 +70,14 @@ const quoteForm = useForm({
   car_value_tier: props.quote?.car_value_tier || '',
   car_value: props.quote?.car_value || '',
   addressObj: {
-    address_type: null,
-    villa_apartment_office_no: null,
-    floor_no: null,
-    villa_building_name: null,
-    street_name: null,
-    area: null,
-    city: null,
-    landmark: null,
+    address_type: page.props.customerAddressData?.type || null,
+    villa_apartment_office_no: page.props.customerAddressData?.office_number || null,
+    floor_no: page.props.customerAddressData?.floor_number || null,
+    villa_building_name: page.props.customerAddressData?.building_name || null,
+    street_name: page.props.customerAddressData?.street || null,
+    area: page.props.customerAddressData?.area || null,
+    city: page.props.customerAddressData?.city || null,
+    landmark: page.props.customerAddressData?.landmark || null,
   },
 });
 
