@@ -427,15 +427,9 @@
             ['code' => 'guaranteedRepairs', 'title' => 'Guaranteed Repairs', 'type' => ['inclusion', 'exclusion']],
             ['code' => 'breakdownCover', 'title' => '24 Hour Accident and Breakdown Recovery', 'type' => 'addons'],
             ['code' => 'ambulanceCover', 'title' => 'Ambulance Cover', 'type' => ['inclusion', 'exclusion']],
-            [
-                'code' => 'excessForWindscreenDamage',
-                'title' => 'Excess for Windscreen Damage',
-                'type' => ['inclusion', 'exclusion'],
-            ],
             ['code' => 'heading', 'title' => 'Optional Covers', 'type' => ''],
             ['code' => 'driverCover', 'title' => 'Driver Cover', 'type' => 'addons'],
             ['code' => 'passengerCover', 'title' => 'Passengers Cover', 'type' => 'addons'],
-            ['code' => 'carHire', 'title' => 'Hire car Benefit', 'type' => 'addons'],
             ['code' => 'spacer'],
             [
                 'code' => 'discountPremium',

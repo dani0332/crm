@@ -219,7 +219,7 @@ class CentralController extends Controller
         info('fn: sendBookingPolicy called for '.$quote->uuid.' policy type '.$request->send_policy_type);
 
         if ($request->send_policy_type == SendPolicyTypeEnum::CUSTOMER) {
-            dispatch(new SendBookPolicyDocumentsJob($request));
+            dispatch(new SendBookPolicyDocumentsJob($request, $quote->code));
 
             $quote->update([
                 'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
@@ -238,7 +238,7 @@ class CentralController extends Controller
             $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
             $payment = Payment::where('code', $quote['code'])->mainLeadPayment()->with('paymentSplits')->first();
             $payment->update([
-                'broker_invoice_number' => (new PaymentRepository)->generateBrokerInvoiceNumber($payment),
+                'broker_invoice_number' => (new PaymentRepository)->generateBrokerInvoiceNumber($payment, $request->model_type),
             ]);
             $paymentSplits = $payment->paymentSplits;
             $data['quoteTypeId'] = $quoteTypeId;
@@ -256,7 +256,7 @@ class CentralController extends Controller
 
             if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
                 // dispatch job to send email
-                dispatch(new SendBookPolicyDocumentsJob($request));
+                dispatch(new SendBookPolicyDocumentsJob($request, $quote->code));
             }
 
             $quote->update([
