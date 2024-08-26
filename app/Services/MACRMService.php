@@ -101,7 +101,7 @@ class MACRMService
 
     public static function pendingCourierQuote($quote, $quoteTypeId)
     {
-        $leadData = getCourierQuote($quote, $quoteTypeId, [QuoteStatusEnum::PolicyIssued]);
+        $leadData = getCourierQuote($quote, $quoteTypeId, [QuoteStatusEnum::PendingQuote]);
 
         if ($leadData) {
             $leadData = Arr::dot($leadData);
