@@ -187,7 +187,7 @@ class ActivitiesService extends BaseService
 
     public function createApiActivity(Request $request, $record, $modelType)
     {
-        $activity = new Activities();
+        $activity = new Activities;
         $activity->uuid = $this->helperService->generateUUID();
         if (isset($record) && $record != '') {
             $activity->client_name = $record->first_name.' '.$record->last_name;
