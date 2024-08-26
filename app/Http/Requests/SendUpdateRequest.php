@@ -141,10 +141,8 @@ class SendUpdateRequest extends FormRequest
                 }
             }
 
-            if (app(SendUpdateLogService::class)->isPaymentVisible($sendUpdateCategoryCode, $categorySubType)) {
-                if ($sendUpdateLog->payments->isEmpty()) {
-                    $validator->errors()->add('error', 'Please add payment details');
-                }
+            if (app(SendUpdateLogService::class)->isPaymentVisible($sendUpdateCategoryCode, $categorySubType) && $sendUpdateLog->payments->isEmpty()) {
+                $validator->errors()->add('error', 'Please add payment details');
             }
         });
     }
