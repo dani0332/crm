@@ -332,8 +332,8 @@ class SendUpdateLogRepository extends BaseRepository
                 app(SplitPaymentService::class)->updateCommissionSchedule($payment);
 
                 $insuranceProviderId = $sendUpdate->insurance_provider_id ?? $payment->insurance_provider_id ?? null;
-                if ($insuranceProviderId) {
-                    $insuranceProviderCode = InsuranceProviderRepository::where('id', $insuranceProviderId)->value('code');
+                if ($insuranceProviderId && ($insuranceProvider = InsuranceProviderRepository::where('id', $insuranceProviderId)->first())) {
+                    $insuranceProviderCode = $insuranceProvider->code;
                     $bookingDetails['broker_invoice_number'] = $sendUpdateLogService->generateBrokerInvoiceNumber($sendUpdate, $insuranceProviderCode, $insuranceProviderId);
                 } else {
                     vAbort('Send Update Log provider code not found.');
