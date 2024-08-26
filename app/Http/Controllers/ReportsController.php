@@ -44,7 +44,7 @@ class ReportsController extends Controller
         $advisorDistributionReportPermissions = implode('|', PermissionsEnum::getAdvisorDistributionReportPermissions());
         $this->middleware(['permission:'.$advisorDistributionReportPermissions], ['only' => ['renderAdvisorDistributionReport']]);
 
-        // $this->middleware('readonly_db');
+        $this->middleware('readonly_db');
     }
 
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
@@ -473,6 +473,7 @@ class ReportsController extends Controller
              * process the endorsements data
              */
             $reportData = ManagementReport::processEndorsementsData($rawReportData, $endorsementData, $request);
+            $reportInstance->formatData($reportData);
         }
 
         return inertia('ManagementReport/index', [
