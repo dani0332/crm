@@ -457,16 +457,7 @@ class SendUpdateLogService
         $sendUpdateLogCategory = LookupRepository::where('id', $sendUpdateLog->category_id)->value('code');
 
         $insuranceProviderCode = InsuranceProviderRepository::where('id', $insuranceProviderId)->value('code');
-        if (empty($sendUpdateLog->broker_invoice_number)) {
-            $insuranceProviderLeadCount = Payment::where('insurance_provider_id', $insuranceProviderId)->count();
-
-            $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
-            if (SendUpdateLog::where('broker_invoice_number', $brokerInvoiceNumber)->whereNot('uuid', $sendUpdateLog->uuid)->exists()) {
-                $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
-            }
-        } else {
-            $brokerInvoiceNumber = $sendUpdateLog->broker_invoice_number;
-        }
+        $brokerInvoiceNumber = $this->generateBrokerInvoiceNumber($sendUpdateLog, $insuranceProviderCode, $insuranceProviderId);
 
         if (empty($sendUpdateLog->invoice_description)) {
             if ($quoteType == quoteTypeCode::Business && $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
@@ -1023,5 +1014,36 @@ class SendUpdateLogService
         }
 
         return $array;
+    }
+
+    private function generateUniqueBrokerInvoiceNumber($insuranceProviderCode, $insuranceProviderLeadCount, $sendUpdateLog)
+    {
+        $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
+        $attempts = 0;
+
+        while (SendUpdateLog::where('broker_invoice_number', $brokerInvoiceNumber)
+            ->whereNot('uuid', $sendUpdateLog->uuid)
+            ->exists() && $attempts < 10) {
+            $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
+            $attempts++;
+        }
+
+        if ($attempts >= 10) {
+            vAbort('Send Update Log Broker Invoice Number generation failed.');
+        }
+
+        return $brokerInvoiceNumber;
+    }
+
+    public function generateBrokerInvoiceNumber($sendUpdateLog, $insuranceProviderCode, $insuranceProviderId): string
+    {
+        if (empty($sendUpdateLog->broker_invoice_number)) {
+            $insuranceProviderLeadCount = Payment::where('insurance_provider_id', $insuranceProviderId)->count();
+            $brokerInvoiceNumber = $this->generateUniqueBrokerInvoiceNumber($insuranceProviderCode, $insuranceProviderLeadCount, $sendUpdateLog);
+        } else {
+            $brokerInvoiceNumber = $sendUpdateLog->broker_invoice_number;
+        }
+
+        return $brokerInvoiceNumber;
     }
 }
