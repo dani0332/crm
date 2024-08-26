@@ -612,7 +612,7 @@ class AMLController extends Controller
             if ($quoteTypeId == QuoteTypeId::Health || $quoteTypeId == QuoteTypeId::Home || $quoteTypeId == QuoteTypeId::Cycle || $quoteTypeId == QuoteTypeId::Pet || $quoteTypeId == QuoteTypeId::Yacht || $quoteTypeId == QuoteTypeId::Corpline) {
                 $quoteDetails->stale_at = null;
             }
-//            $quoteDetails->quote_status_id = QuoteStatusEnum::AMLScreeningCleared;
+            //            $quoteDetails->quote_status_id = QuoteStatusEnum::AMLScreeningCleared;
             $quoteDetails->aml_status_id = AMLStatusEnum::AMLScreeningCleared;
             $quoteDetails->save();
             // this event only working for travel lob
@@ -630,7 +630,7 @@ class AMLController extends Controller
                 'updated_at' => Carbon::now(),
             ]);
 
-//            $quoteDetails->quote_status_id = QuoteStatusEnum::AMLScreeningFailed;
+            //            $quoteDetails->quote_status_id = QuoteStatusEnum::AMLScreeningFailed;
             $quoteDetails->aml_status_id = AMLStatusEnum::AMLScreeningFailed;
             $quoteDetails->save();
             if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
