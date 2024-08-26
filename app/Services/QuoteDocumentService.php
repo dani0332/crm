@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCategory;
 use App\Enums\DocumentTypeCode;
-use setasign\Fpdi\Fpdi;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
@@ -23,6 +22,7 @@ use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
 use PhpOffice\PhpWord\IOFactory;
+use setasign\Fpdi\Fpdi;
 
 class QuoteDocumentService extends BaseService
 {
@@ -117,7 +117,7 @@ class QuoteDocumentService extends BaseService
      */
     public function uploadQuoteDocument($fileOrBase64, $data, $quote, $isKyc = false, $isPaymentReceipt = false)
     {
-        if (!($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
+        if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
             return response()->json(['error' => 'Invalid document type code provided'], 500);
         }
         try {
@@ -127,24 +127,24 @@ class QuoteDocumentService extends BaseService
                 @[$extension, $fileMimeType, $file_data] = getBase64FileInfo($fileOrBase64);
 
                 // Generate a unique filename
-                $docName = preg_replace('/\s+/', '', uniqid() . '_' . $data['document_type_code'] . '.' . $extension);
-                $fileNameAzure = uniqid() . '_' . $data['quote_uuid'] . '_' . $docName;
+                $docName = preg_replace('/\s+/', '', uniqid().'_'.$data['document_type_code'].'.'.$extension);
+                $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
 
                 // Set the filename for Azure storage
-                $filePathAzure = 'documents/' . $documentType->folder_path . '/' . $fileNameAzure;
+                $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
                 Storage::disk('azureIM')->put($filePathAzure, base64_decode($file_data));
             } elseif ($isPaymentReceipt) {
-                $originalName = 'Receipt-' . $data['pdf_filename'] . '.pdf';
+                $originalName = 'Receipt-'.$data['pdf_filename'].'.pdf';
 
                 // Generate a unique filename
-                $docName = preg_replace('/\s+/', '', uniqid() . '_' . $originalName);
+                $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
                 $fileMimeType = 'application/pdf';
 
                 // Set the filename for Azure storage
-                $fileNameAzure = uniqid() . '_' . $data['quote_uuid'] . '_' . $docName;
-                $filePathAzure = 'documents/' . $documentType->folder_path . '/' . $fileNameAzure;
+                $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
+                $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
                 $uploaded = Storage::disk('azureIM')->put($filePathAzure, $fileOrBase64);
-                if (!$uploaded) {
+                if (! $uploaded) {
                     return false;
                 }
             } elseif ($isKyc) {
@@ -155,26 +155,26 @@ class QuoteDocumentService extends BaseService
                 }
 
                 // Generate a unique filename
-                $docName = preg_replace('/\s+/', '', uniqid() . '_' . $originalName);
+                $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
                 $fileMimeType = $documentType->accepted_files;
 
                 // Set the filename for Azure storage
-                $fileNameAzure = uniqid() . '_' . $data['quote_uuid'] . '_' . $docName;
-                $filePathAzure = 'documents/' . $documentType->folder_path . '/' . $fileNameAzure;
+                $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
+                $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
                 $uploaded = Storage::disk('azureIM')->put($filePathAzure, $fileOrBase64);
-                if (!$uploaded) {
+                if (! $uploaded) {
                     return false;
                 }
             } else {
                 $originalName = sanitizeFileName($fileOrBase64->getClientOriginalName());
 
                 // Generate a unique filename
-                $docName = preg_replace('/\s+/', '', uniqid() . '_' . $originalName);
+                $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
                 $fileMimeType = $fileOrBase64->getClientMimeType();
 
                 // Set the filename for Azure storage
-                $fileNameAzure = uniqid() . '_' . $data['quote_uuid'] . '_original_' . $docName;
-                $filePathAzure = $fileOrBase64->storeAs('documents/' . $documentType->folder_path, $fileNameAzure, 'azureIM');
+                $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_original_'.$docName;
+                $filePathAzure = $fileOrBase64->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
             }
 
             // watermark only for pdf files
@@ -189,11 +189,11 @@ class QuoteDocumentService extends BaseService
             // Generate a unique UUID
             $docUuid = uniqid();
             while (QuoteDocument::where('doc_uuid', $docUuid)->first()) {
-                $docUuid = uniqid() . rand(1, 100);
+                $docUuid = uniqid().rand(1, 100);
             }
 
             return $quote->documents()->create([
-                'doc_name' => 'original_' . $docName,
+                'doc_name' => 'original_'.$docName,
                 'watermarked_doc_name' => $watermarkData['watermarked_doc_name'] ?? null,
                 'original_name' => $originalName,
                 'doc_url' => $filePathAzure,
@@ -208,7 +208,7 @@ class QuoteDocumentService extends BaseService
                 'created_by_id' => auth()->id(),
             ]);
         } catch (\Exception $exception) {
-            Log::info('CL: ' . get_class() . ' FN: uploadQuoteDocument  UUID: ' . $data['quote_uuid'] . ' Error Code/Message: ' . $exception->getCode() . '/' . $exception->getMessage());
+            Log::info('CL: '.get_class().' FN: uploadQuoteDocument  UUID: '.$data['quote_uuid'].' Error Code/Message: '.$exception->getCode().'/'.$exception->getMessage());
 
             return response()->json(['error' => 'Document upload failed, please try again'], 500);
         }
@@ -218,7 +218,7 @@ class QuoteDocumentService extends BaseService
     {
         $quoteDocument = QuoteDocument::where('doc_uuid', $id)->first();
 
-        if (!$quoteDocument) {
+        if (! $quoteDocument) {
             abort(404);
         }
 
@@ -227,11 +227,11 @@ class QuoteDocumentService extends BaseService
 
     public function showSendPolicyButton($record, $quoteDocuments, $quoteTypeId)
     {
-        if (!$record) {
+        if (! $record) {
             return 0;
         }
 
-        if (!auth()->user()->hasRole(RolesEnum::BetaUser)) {
+        if (! auth()->user()->hasRole(RolesEnum::BetaUser)) {
             return false;
         }
 
@@ -242,7 +242,7 @@ class QuoteDocumentService extends BaseService
         }
 
         $documentUploadTypes = $this->getQuoteDocumentsForUpload($quoteTypeId);
-        if (!$documentUploadTypes) {
+        if (! $documentUploadTypes) {
             return 0;
         }
         $displaySendPolicyButton = 1;
@@ -435,15 +435,15 @@ class QuoteDocumentService extends BaseService
      */
     public function watermarkPdf($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType)
     {
-        if (!file_exists(storage_path('/app/temp'))) {
+        if (! file_exists(storage_path('/app/temp'))) {
             mkdir(storage_path('/app/temp'), 0775, true);
         }
 
         $filePath = $file->storeAs('temp', $docName);
-        $outputPath = storage_path('app/temp/' . $docName);
+        $outputPath = storage_path('app/temp/'.$docName);
 
         $pdf = new Fpdi();
-        $pageCount = $pdf->setSourceFile(storage_path('app/' . $filePath));
+        $pageCount = $pdf->setSourceFile(storage_path('app/'.$filePath));
 
         $watermarkImagePath = public_path('images/watermark1.png');
         $watermarkImageAA4Path = public_path('images/watermarkAA4.png');
@@ -452,12 +452,11 @@ class QuoteDocumentService extends BaseService
             $templateId = $pdf->importPage($pageNo);
             $size = $pdf->getTemplateSize($templateId);
 
-            Log::info('Page size: ' . json_encode($size));
+            Log::info('Page size: '.json_encode($size));
 
             $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
             // Add watermark
-            if ($size['orientation'] === "P")
-            {
+            if ($size['orientation'] === 'P') {
                 $pdf->Image($watermarkImagePath, 0, 0, $size['width'], $size['height'], '', '', '', false, 300, '', false, false, 0);
             } else {
                 $pdf->Image($watermarkImageAA4Path, 0, 0, $size['width'], $size['height'], '', '', '', false, 300, '', false, false, 0);
@@ -467,7 +466,6 @@ class QuoteDocumentService extends BaseService
         }
 
         $pdf->Output($outputPath, 'F');
-
 
         return $this->storeWatermarkedMedia($docName, $data, $quote, $documentType, $originalName, $fileMimeType);
     }
@@ -486,7 +484,7 @@ class QuoteDocumentService extends BaseService
      */
     public function watermarkImage($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType)
     {
-        if (!file_exists(storage_path('/app/temp'))) {
+        if (! file_exists(storage_path('/app/temp'))) {
             mkdir(storage_path('/app/temp'), 0775, true);
         }
 
@@ -502,7 +500,7 @@ class QuoteDocumentService extends BaseService
             15
         );
 
-        $image->save(storage_path('app/temp/' . $docName));
+        $image->save(storage_path('app/temp/'.$docName));
 
         return $this->storeWatermarkedMedia($docName, $data, $quote, $documentType, $originalName, $fileMimeType);
     }
@@ -520,21 +518,21 @@ class QuoteDocumentService extends BaseService
      */
     public function storeWatermarkedMedia($docName, $data, $quote, $documentType, $originalName, $fileMimeType)
     {
-        $watermarkedFile = new \Illuminate\Http\File(storage_path('app/temp/' . $docName));
+        $watermarkedFile = new \Illuminate\Http\File(storage_path('app/temp/'.$docName));
 
         // Set the filename for Azure storage
-        $watermarkedFileNameAzure = uniqid() . '_' . $data['quote_uuid'] . '_' . $docName;
+        $watermarkedFileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
         // upload file to azure
-        $filePathAzure = Storage::disk('azureIM')->putFileAs('documents/' . $documentType->folder_path, $watermarkedFile, $watermarkedFileNameAzure);
+        $filePathAzure = Storage::disk('azureIM')->putFileAs('documents/'.$documentType->folder_path, $watermarkedFile, $watermarkedFileNameAzure);
 
         // Generate a unique UUID
         $docUuid = uniqid();
         while (QuoteDocument::where('doc_uuid', $docUuid)->first()) {
-            $docUuid = uniqid() . rand(1, 100);
+            $docUuid = uniqid().rand(1, 100);
         }
 
         // delete temp file
-        unlink(storage_path('app/temp/' . $docName));
+        unlink(storage_path('app/temp/'.$docName));
 
         return [
             'watermarked_doc_name' => $docName,
@@ -544,7 +542,7 @@ class QuoteDocumentService extends BaseService
 
     public function watermarkWordDocs($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType)
     {
-        if (!file_exists(storage_path('/app/temp'))) {
+        if (! file_exists(storage_path('/app/temp'))) {
             mkdir(storage_path('/app/temp'), 0775, true);
         }
 

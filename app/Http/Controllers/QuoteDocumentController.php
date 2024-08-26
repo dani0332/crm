@@ -235,7 +235,7 @@ class QuoteDocumentController extends Controller
             $documentType = DocumentType::where('code', $quoteDocument->document_type_code)->where('is_active', 1)->first();
 
             if ($documentType && $documentType->send_to_customer == 1) {
-                $quoteDocumentUrls[] = $azureStorageUrl.$azureStorageContainer.'/'.$quoteDocument->watermarked_doc_url??$quoteDocument->doc_url;
+                $quoteDocumentUrls[] = $azureStorageUrl.$azureStorageContainer.'/'.$quoteDocument->watermarked_doc_url ?? $quoteDocument->doc_url;
             }
         }
 
