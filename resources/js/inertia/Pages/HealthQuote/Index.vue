@@ -438,6 +438,8 @@ const formatDate = date => {
   const options = { year: 'numeric', month: 'long', day: 'numeric' };
   return parsedDate.toLocaleDateString('en-GB', options);
 };
+
+const formatDate = date => useDateFormat(date, 'DD-MMM-YYYY').value;
 </script>
 
 <template>
