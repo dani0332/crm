@@ -456,14 +456,14 @@ class SendUpdateLogService
         }
         $sendUpdateLogCategory = LookupRepository::where('id', $sendUpdateLog->category_id)->value('code');
 
-        $insuranceProviderCode = InsuranceProviderRepository::where('id', $insuranceProviderId)->value('code');
-        $brokerInvoiceNumber = $this->generateBrokerInvoiceNumber($sendUpdateLog, $insuranceProviderCode, $insuranceProviderId);
+        $insuranceProvider = InsuranceProviderRepository::find($insuranceProviderId);
+        $brokerInvoiceNumber = $this->generateBrokerInvoiceNumber($sendUpdateLog, $insuranceProvider);
 
         if (empty($sendUpdateLog->invoice_description)) {
             if ($quoteType == quoteTypeCode::Business && $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
-                $invoiceDescription = $insuranceProviderCode.'-'.quoteTypeCode::GroupMedical.'-'.$quote->policy_number;
+                $invoiceDescription = $insuranceProvider->code.'-'.quoteTypeCode::GroupMedical.'-'.$quote->policy_number;
             } else {
-                $invoiceDescription = $insuranceProviderCode.'-'.$quoteType.'-'.$quote->policy_number;
+                $invoiceDescription = $insuranceProvider->code.'-'.$quoteType.'-'.$quote->policy_number;
             }
 
             if ($sendUpdateLogCategory == SendUpdateLogStatusEnum::EF) {
@@ -1035,11 +1035,11 @@ class SendUpdateLogService
         return $brokerInvoiceNumber;
     }
 
-    public function generateBrokerInvoiceNumber($sendUpdateLog, $insuranceProviderCode, $insuranceProviderId): string
+    public function generateBrokerInvoiceNumber($sendUpdateLog, $insuranceProvider): string
     {
         if (empty($sendUpdateLog->broker_invoice_number)) {
-            $insuranceProviderLeadCount = Payment::where('insurance_provider_id', $insuranceProviderId)->count();
-            $brokerInvoiceNumber = $this->generateUniqueBrokerInvoiceNumber($insuranceProviderCode, $insuranceProviderLeadCount, $sendUpdateLog);
+            $insuranceProviderLeadCount = Payment::where('insurance_provider_id', $insuranceProvider->id)->count();
+            $brokerInvoiceNumber = $this->generateUniqueBrokerInvoiceNumber($insuranceProvider->code, $insuranceProviderLeadCount, $sendUpdateLog);
         } else {
             $brokerInvoiceNumber = $sendUpdateLog->broker_invoice_number;
         }

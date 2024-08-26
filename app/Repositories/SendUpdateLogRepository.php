@@ -333,8 +333,7 @@ class SendUpdateLogRepository extends BaseRepository
 
                 $insuranceProviderId = $sendUpdate->insurance_provider_id ?? $payment->insurance_provider_id ?? null;
                 if ($insuranceProviderId && ($insuranceProvider = InsuranceProviderRepository::where('id', $insuranceProviderId)->first())) {
-                    $insuranceProviderCode = $insuranceProvider->code;
-                    $bookingDetails['broker_invoice_number'] = $sendUpdateLogService->generateBrokerInvoiceNumber($sendUpdate, $insuranceProviderCode, $insuranceProviderId);
+                    $bookingDetails['broker_invoice_number'] = $sendUpdateLogService->generateBrokerInvoiceNumber($sendUpdate, $insuranceProvider);
                 } else {
                     vAbort('Send Update Log provider code not found.');
                 }
