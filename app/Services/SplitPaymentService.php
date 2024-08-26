@@ -141,8 +141,8 @@ class SplitPaymentService
             if ($readyToPostResponse !== '') {
                 $readyToPostArray = json_decode($readyToPostResponse, true);
 
-                if (isset($readyToPostArray['error']['message']['value']) && strpos($readyToPostArray['error']['message']['value'], 'status from POSTED')) {
-                    info('SAGE API Payments:  Check status of  AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  for '.$quote->code);
+                if (isset($readyToPostArray['error']['message']['value'])) {
+                    info('SAGE API Payments:  Check status of  AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].'  for '.$quote->code.'  Error '.$readyToPostArray['error']['message']['value']);
 
                     $aRReceiptBatch = $sageApiService->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$sageResponse['BatchNumber'].')', [], 'GET');
                     info('SAGE API Payments:  Status of  AR Prepayment Receipts batch '.$aRReceiptBatch);
@@ -168,12 +168,11 @@ class SplitPaymentService
             }
 
             $isLiveApiCallStep4 = true;
-
+            $aRPostReceipts = SagePayloadFactory::aRPostReceiptsPayment($sageResponse['BatchNumber']);
             if (isset($sageLogArray[4]) && $sageLogArray[4]['status'] == 'success') {
                 $isLiveApiCallStep4 = false;
                 $postedResponse = json_decode($sageLogArray[4]['response'], true);
             } else {
-                $aRPostReceipts = SagePayloadFactory::aRPostReceiptsPayment($sageResponse['BatchNumber']);
                 $postedResponse = $sageApiService->postToSage300($aRPostReceipts['endPoint'], $aRPostReceipts['payload']);
                 $postedResponse = json_decode($postedResponse, true);
             }
