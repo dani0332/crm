@@ -10,6 +10,7 @@ use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
+use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\QuoteDocumentService;
 use App\Services\CRUDService;
@@ -29,9 +30,11 @@ class PersonalQuoteRepository extends BaseRepository
     }
 
     /**
+     * function renamed from fetchUpdateStatus, because updateStatus named function already in GenericQueriesAllLobs
+     *
      * @return mixed
      */
-    public function fetchUpdateStatus($quoteType, $quoteId, $data)
+    public function fetchUpdateStatuses($quoteType, $quoteId, $data)
     {
         return DB::transaction(function () use ($quoteId, $data, $quoteType) {
             $quote = $this->where('id', $quoteId)->firstOrFail();
@@ -59,7 +62,7 @@ class PersonalQuoteRepository extends BaseRepository
                 $quote->quoteDetail()->updateOrCreate(['personal_quote_id' => $quote->id], $detailData);
             }
 
-            $activityCreated = (new CentralService())->saveAndAssignActivitesToAdvisor($quote, $quote->quote_type_id);
+            $activityCreated = (new CentralService)->saveAndAssignActivitesToAdvisor($quote, $quote->quote_type_id);
 
             QuoteStatusLog::create([
                 'quote_type_id' => $quote->quote_type_id,
@@ -79,14 +82,25 @@ class PersonalQuoteRepository extends BaseRepository
      */
     public function fetchUploadDocument($id, $file, $data)
     {
+        info('fn: fetchUploadDocument called');
+        $quoteType = '';
         $quoteDocumentService = app(QuoteDocumentService::class);
 
         $query = DocumentTypeRepository::where('code', $data['document_type_code']);
         if (request()->quote_type_id) {
             $query->where('quote_type_id', request()->quote_type_id);
         }
+        if (isset(request()->quote_type)) {
+            $quoteType = request()->quote_type;
+        }
+
         $documentType = $query->first();
-        $quote = $this->getQuoteObject(request()->folder_path ?? '', $id);
+
+        if (request()->is_send_update) {
+            $quote = SendUpdateLog::where('id', request()->send_update_id ?? '')->first();
+        } else {
+            $quote = $this->getQuoteObject($quoteType ?? '', $id);
+        }
 
         $originalName = $file->getClientOriginalName();
         $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
@@ -110,7 +124,8 @@ class PersonalQuoteRepository extends BaseRepository
             $docUuid = uniqid().rand(1, 100);
         }
 
-        return $quote->documents()->create([
+        // This data will store in quote doocumeets table
+        $document = [
             'doc_name' => 'original_'.$docName,
             'watermarked_doc_name' => $watermarkData['watermarked_doc_name'] ?? null,
             'original_name' => $originalName,
@@ -121,7 +136,10 @@ class PersonalQuoteRepository extends BaseRepository
             'document_type_text' => $documentType->text,
             'doc_uuid' => $docUuid,
             'created_by_id' => auth()->id(),
-        ]);
+        ];
+        info('Document array prepared for creation', $document);
+
+        return $quote->documents()->create($document);
     }
 
     /**
@@ -183,7 +201,7 @@ class PersonalQuoteRepository extends BaseRepository
     public function fetchUpdatePolicyDetails($id, $data)
     {
         $quote = $this->findOrFail($id);
-        $quote->update(Arr::only($data, ['policy_number', 'policy_issuance_date', 'policy_start_date', 'renewal_expiry_date', 'premium']));
+        $quote->update(Arr::only($data, ['policy_number', 'policy_issuance_date', 'policy_start_date', 'policy_expiry_date', 'premium']));
 
         return $quote;
     }
@@ -220,5 +238,10 @@ class PersonalQuoteRepository extends BaseRepository
         $dataArr['quoteTypeId'] = intval(array_search($quoteTypeId, QuoteTypeId::getOptions()));
 
         return Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
+    }
+
+    public function fetchGetById($quoteId)
+    {
+        return $this->where('id', $quoteId)->first();
     }
 }

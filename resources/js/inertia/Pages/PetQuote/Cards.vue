@@ -22,7 +22,7 @@ const page = usePage();
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
-
+const notification = useNotifications('toast');
 const isAllowed = computed(() => {
   return !hasAnyRole([rolesEnum.PetAdvisor, rolesEnum.PetRenewalAdvisor]);
 });
@@ -74,7 +74,6 @@ const cleanObj = obj => useCleanObj(obj);
 const showFilters = ref(false);
 const filtersCount = ref(0);
 
-
 const filters = reactive({
   date: null,
   status_filters: null,
@@ -95,6 +94,8 @@ const filters = reactive({
   payment_status: [],
   is_cold: '',
   stale_at: '',
+  policy_expiry_date: '',
+  policy_expiry_date_end: '',
 });
 
 provide('filters', filters);
@@ -141,6 +142,14 @@ const handleSelectedFilters = selectedFilters => {
 
 function onSubmit(isValid) {
   if (isValid) {
+    if (validateDateRange()) {
+      notification.error({
+        title:
+          'The selected date range exceeds one month. Please select a range within one month.',
+        position: 'top',
+      });
+      return;
+    }
     serverOptions.value.page = 1;
 
     const filtersCleaned = cleanObj(filters);
@@ -202,6 +211,24 @@ onUnmounted(() => {
   channel.unbind('leads.count');
   channel.unsubscribe('public.' + page.props.appEnv + '.total-leads-count');
 });
+
+const validateDateRange = () => {
+  const { policy_expiry_date, policy_expiry_date_end } = filters;
+  if (policy_expiry_date && policy_expiry_date_end) {
+    const startDate = new Date(policy_expiry_date);
+    const endDate = new Date(policy_expiry_date_end);
+    const oneMonthLater = new Date(startDate);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    // Adjust for months with fewer than 31 days
+    if (oneMonthLater.getDate() < startDate.getDate()) {
+      oneMonthLater.setDate(0);
+    }
+    if (endDate > oneMonthLater) {
+      return true;
+    }
+  }
+  return false;
+};
 </script>
 
 <template>
@@ -238,7 +265,7 @@ onUnmounted(() => {
     <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -312,6 +339,18 @@ onUnmounted(() => {
             :options="leadStatusOptions"
           />
         </x-field>
+        <x-field label="Policy Expiry Start Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date"
+            name="policy_expiry_date"
+          />
+        </x-field>
+        <x-field label="Policy Expiry End Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date_end"
+            name="policy_expiry_date_end"
+          />
+        </x-field>
         <x-field label="Advisor" v-if="isAllowed">
           <ComboBox
             v-model="filters.advisors"
@@ -321,7 +360,7 @@ onUnmounted(() => {
         </x-field>
         <x-field label="Renewal">
           <x-select
-          :disabled="!props.areBothTeamsPresent"
+            :disabled="!props.areBothTeamsPresent"
             v-model="filters.is_renewal"
             placeholder="Search by Renewal"
             :options="[

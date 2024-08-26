@@ -1,6 +1,4 @@
 <script setup>
-import { usePage } from '@inertiajs/vue3';
-import { watchEffect } from 'vue';
 import AppModal from './AppModal.vue';
 
 const props = defineProps({
@@ -25,15 +23,6 @@ const isUploading = ref(false);
 const notes = ref(props.notes);
 const expandNotes = ref(false);
 const uploadedFiles = ref([]);
-
-const docForm = useForm({
-  quote_id: props.quote?.id || null,
-  quote_uuid: props.quote?.code || null,
-  quote_type: props.modelType,
-  quote_type_id: null,
-  document_type_code: null,
-  file: null,
-});
 
 const dateFormat = date => useDateFormat(date, 'DD-MMM-YYYY h:mm:ss a').value;
 
@@ -254,53 +243,12 @@ watch(
     notes.value = props.notes;
   },
 );
-
-// const uploadData = () => {
-//   let url = `/quotes/${props.modelType}/documents/store`;
-//   const { files, rejectReason } = filesWithInfo;
-//   if (files.length == 0) {
-//     notification.error({
-//       title: 'File upload failed',
-//       position: 'top',
-//     });
-//     docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
-//     return false;
-//   }
-//   isUploading.value = true;
-//   docForm
-//     .transform(data => ({
-//       ...data,
-//       quote_type_id: doc.quote_type_id,
-//       document_type_code: doc.code,
-//       folder_path: doc.folder_path,
-//       files: files,
-//     }))
-//     .post(url, {
-//       preserveScroll: true,
-//       preserveState: true,
-
-//       onError: errors => {
-//         docForm.setError(errors.error);
-//         notification.error({
-//           title: 'File upload failed',
-//           position: 'top',
-//         });
-//       },
-//       onFinish: () => {
-//         isUploading.value = false;
-//       },
-//     });
-// };
-// const { files, open, reset, onChange } = useFileDialog({
-//   accept: 'image/*', // Set to accept only image files
-//   directory: false, // Select directories instead of files if set true
-// });
 </script>
 <template>
   <div v-if="can(permissionsEnum.SAVE_QUOTE_NOTES)">
     <x-tooltip>
       <x-button size="sm" color="emerald" @click="showModal = true">
-        Notes ({{ notes.data.length }})
+        Notes ({{ notes?.data?.length }})
       </x-button>
       <template #tooltip>
         <span
@@ -355,21 +303,18 @@ watch(
           <template v-if="note.length < 40">
             {{ note }}
           </template>
-          <x-collapse
-            :expanded="expandNotes"
-            v-else
-            icon="chevronDown"
-            show-icon
-          >
-            <div class="bg-gray-10 w-80">
-              {{ note.slice(0, 40) }}
-            </div>
-            <template #content>
-              <div>
-                {{ note.slice(40, note.length) }}
+          <x-accordion v-else show-icon icon="chevronDown">
+            <x-accordion-item :expanded="expandNotes">
+              <div class="bg-gray-10 w-80">
+                {{ note.slice(0, 40) }}
               </div>
-            </template>
-          </x-collapse>
+              <template #content>
+                <div>
+                  {{ note.slice(40, note.length) }}
+                </div>
+              </template>
+            </x-accordion-item>
+          </x-accordion>
         </template>
         <template #item-action="item">
           <div class="flex gap-2">
@@ -443,7 +388,7 @@ watch(
           hidden
         />
 
-        <x-tooltip position="top" align="top">
+        <x-tooltip placement="top">
           <x-button
             size="sm"
             color="primary"

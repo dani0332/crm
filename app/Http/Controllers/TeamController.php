@@ -70,7 +70,7 @@ class TeamController extends Controller
         }
         $this->validate($request, $validateArray);
 
-        $team = new Team();
+        $team = new Team;
         if (isset($request->type) && TeamTypeEnum::TEAM || $request->type == TeamTypeEnum::SUB_TEAM) {
             $team->parent_team_id = $request->parent_team_id;
         }

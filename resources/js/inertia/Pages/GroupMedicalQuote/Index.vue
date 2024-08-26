@@ -47,6 +47,10 @@ const filters = reactive({
   page: 1,
   previous_quote_policy_number: '',
   renewal_batch: '',
+  payment_due_date: '',
+  booking_date: '',
+  policy_expiry_date: '',
+  policy_expiry_date_end: '',
 });
 
 const leadStatusOptions = computed(() => {
@@ -75,6 +79,11 @@ const tableHeader = [
   { text: 'SOURCE', value: 'source' },
   { text: 'CREATED AT', value: 'created_at' },
   { text: 'Updated AT', value: 'updated_at' },
+  {
+    text: 'POLICY EXPIRY DATE',
+    value: 'previous_policy_expiry_date',
+    sortable: true,
+  },
   { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
   { text: 'Renewal Batch', value: 'renewal_batch' },
 ];
@@ -99,6 +108,14 @@ function resetFilters() {
 
 function filterQuotes(isValid) {
   if (!isValid) {
+    return;
+  }
+  if (validateDateRange()) {
+    notification.error({
+      title:
+        'The selected date range exceeds one month. Please select a range within one month.',
+      position: 'top',
+    });
     return;
   }
   for (const key in filters) {
@@ -189,7 +206,11 @@ const onDataExport = () => {
 watch(
   () => filters,
   () => {
-    if (filters.created_at_start && filters.created_at_end) {
+    if (
+      (filters.created_at_start && filters.created_at_end) ||
+      filters.payment_due_date ||
+      filters.booking_date
+    ) {
       canExport.value = true;
     } else {
       canExport.value = false;
@@ -199,12 +220,80 @@ watch(
 );
 
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    setQueryFilters();
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  setQueryFilters();
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
+const resetDateFilters = filterName => {
+  const filterMappings = {
+    payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
+    booking_date: ['payment_due_date', 'created_at_start', 'created_at_end'],
+    created_at: ['booking_date', 'payment_due_date'],
+  };
+
+  const filtersToReset =
+    filterMappings[filterName] ||
+    (filterName.startsWith('created_at') ? filterMappings.created_at : []);
+
+  filtersToReset.forEach(filter => {
+    filters[filter] = '';
+  });
+};
+
+[
+  'payment_due_date',
+  'booking_date',
+  'created_at_start',
+  'created_at_end',
+].forEach(filterName => {
+  watch(
+    () => filters[filterName],
+    newValue => {
+      if (newValue) {
+        resetDateFilters(filterName);
+      }
+    },
+  );
+});
+
+const validateDateRange = () => {
+  const { policy_expiry_date, policy_expiry_date_end } = filters;
+  if (policy_expiry_date && policy_expiry_date_end) {
+    const startDate = new Date(policy_expiry_date);
+    const endDate = new Date(policy_expiry_date_end);
+    const oneMonthLater = new Date(startDate);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    // Adjust for months with fewer than 31 days
+    if (oneMonthLater.getDate() < startDate.getDate()) {
+      oneMonthLater.setDate(0);
+    }
+    if (endDate > oneMonthLater) {
+      return true;
+    }
+  }
+  return false;
+};
+function formatDate(dateString) {
+  const monthNames = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  const [day, month, year] = dateString.split('-');
+  const formattedMonth = monthNames[parseInt(month, 10) - 1];
+  return `${day} ${formattedMonth} ${year}`;
+}
 </script>
 
 <template>
@@ -214,11 +303,25 @@ onMounted(() => {
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3">
         <Link :href="route('amt.cardsView')">
-          <x-button size="sm" color="#1d83bc" tag="div" v-if="readOnlyMode.isDisable === true"> Cards View </x-button>
+          <x-button
+            size="sm"
+            color="#1d83bc"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Cards View
+          </x-button>
         </Link>
 
         <Link :href="route('amt.create')">
-          <x-button size="sm" color="#ff5e00" tag="div" v-if="readOnlyMode.isDisable === true"> Create Lead </x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Create Lead
+          </x-button>
         </Link>
       </div>
     </div>
@@ -226,7 +329,7 @@ onMounted(() => {
     <x-form @submit="filterQuotes" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -299,6 +402,18 @@ onMounted(() => {
             :options="leadStatusOptions"
           />
         </x-field>
+        <x-field label="Policy Expiry Start Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date"
+            name="policy_expiry_date"
+          />
+        </x-field>
+        <x-field label="Policy Expiry End Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date_end"
+            name="policy_expiry_date_end"
+          />
+        </x-field>
         <x-field label="Advisor">
           <ComboBox
             v-model="filters.advisor_id"
@@ -325,6 +440,22 @@ onMounted(() => {
           class="w-full"
           placeholder="Search by Renewal Batch"
         />
+        <DatePicker
+          v-model="filters.payment_due_date"
+          label="Payment Due Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.booking_date"
+          label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -337,11 +468,12 @@ onMounted(() => {
           >
             Export
           </x-button>
-          <x-tooltip v-else position="right">
+          <x-tooltip v-else placement="right">
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates are required to export data.
+                Created dates or payment due date or booking date are required
+                to export data.
               </span>
             </template>
           </x-tooltip>
@@ -410,7 +542,18 @@ onMounted(() => {
           {{ code }}
         </a>
       </template>
-
+      <template
+        #item-previous_policy_expiry_date="{
+          previous_policy_expiry_date,
+          source,
+        }"
+      >
+        {{
+          source === 'Renewal_upload'
+            ? formatDate(previous_policy_expiry_date)
+            : ''
+        }}
+      </template>
       <template #item-source="{ source }">
         <a
           :href="source && source.includes('http') ? source : '#'"

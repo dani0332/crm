@@ -9,6 +9,7 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\RuleTypeEnum;
 use App\Enums\TeamNameEnum;
@@ -24,6 +25,7 @@ use App\Models\InsuranceProvider;
 use App\Models\LeadAllocation;
 use App\Models\LeadSource;
 use App\Models\PersonalQuote;
+use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteBatches;
 use App\Models\Rule;
 use App\Models\RuleLeadSource;
@@ -289,6 +291,7 @@ class BikeAllocationService extends AllocationService
             ->when(! empty($excludedUserIds), function ($query) use ($excludedUserIds) {
                 $query->whereNotIn('user_id', $excludedUserIds);
             })
+            ->where('quote_type_id', QuoteTypes::BIKE->id())
             ->orderBy('last_allocated');
 
         // Exclude a specific advisor if an advisor ID is provided.
@@ -456,7 +459,7 @@ class BikeAllocationService extends AllocationService
         info('Updating user record in lead allocation table with count increment for User ID: '.$userId);
 
         // Depending on the assignment type, either add or adjust allocation counts.
-        $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($userId) : $this->adjustAllocationCounts($userId, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType);
+        $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($userId, QuoteTypes::BIKE->id()) : $this->adjustAllocationCounts($userId, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType, QuoteTypes::BIKE->id());
 
         info('Completed assignment of lead, and lead count update is done for quote with code: '.$bikeQuote->code);
     }
@@ -494,16 +497,13 @@ class BikeAllocationService extends AllocationService
         // Log information about the update operation.
         info('About to update personal quote detail record for lead ID: '.$leadId);
 
-        // get BikeQuote from personal quote to store the data in BikeQuoteRequestDetail as we have foreign key constrained in bike_quote_request_detail if bike_quote_request
-        $bikeQuote = BikeQuote::where('personal_quote_id', $leadId)->first();
-
         // Attempt to find an existing bike quote detail record for the given lead.
-        $bikeQuoteDetail = BikeQuoteRequestDetail::where('bike_quote_request_id', $bikeQuote->id)->first();
+        $personalQuoteDetail = PersonalQuoteDetail::where('personal_quote_id', $leadId)->first();
 
         // Initialize a variable to store the old advisor assigned date.
-        $oldAdvisorAssignedDate = $bikeQuoteDetail->advisor_assigned_date ?? '';
+        $oldAdvisorAssignedDate = $personalQuoteDetail->advisor_assigned_date ?? '';
 
-        $this->upsertQuoteDetail($bikeQuote->id, BikeQuoteRequestDetail::class, 'bike_quote_request_id');
+        $this->upsertQuoteDetail($leadId, PersonalQuoteDetail::class, 'personal_quote_id');
 
         // Return the old advisor assigned date, if applicable.
         return $oldAdvisorAssignedDate;

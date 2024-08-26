@@ -1,8 +1,8 @@
 $(document).ready(function () {
-    var maxField = 10; //Input fields increment limitation
-    var addButton = $('#add_additional_btn'); //Add button selector
-    var wrapper = $('#additional_info'); //Input field wrapper
-    var fieldHTML = `
+  var maxField = 10; //Input fields increment limitation
+  var addButton = $('#add_additional_btn'); //Add button selector
+  var wrapper = $('#additional_info'); //Input field wrapper
+  var fieldHTML = `
         <div class="item form-group">
             <div class="col">
                 <span class="col-form-label col-md-6 col-sm-6"><b> Email Address (Optional)</b> </span>
@@ -16,21 +16,20 @@ $(document).ready(function () {
             
         </div> `;
 
-    var x = 0; //Initial field counter is 1
-    //Once add button is clicked
-    $(addButton).click(function(){
-        //Check maximum number of input fields
-        if(x < maxField){
-            x++; //Increment field counter
-            $(wrapper).append(fieldHTML); //Add field html
-        }
-    });
-    
-    //Once remove button is clicked
-    $(wrapper).on('click', '.remove_additional_btn', function(e){
-        e.preventDefault();
-        $(this).parent('div').remove(); //Remove field html
-        x--; //Decrement field counter
-    });
-});
+  var x = 0; //Initial field counter is 1
+  //Once add button is clicked
+  $(addButton).click(function () {
+    //Check maximum number of input fields
+    if (x < maxField) {
+      x++; //Increment field counter
+      $(wrapper).append(fieldHTML); //Add field html
+    }
+  });
 
+  //Once remove button is clicked
+  $(wrapper).on('click', '.remove_additional_btn', function (e) {
+    e.preventDefault();
+    $(this).parent('div').remove(); //Remove field html
+    x--; //Decrement field counter
+  });
+});

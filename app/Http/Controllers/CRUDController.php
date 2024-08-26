@@ -27,15 +27,17 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TiersEnum;
+use App\Enums\TravelQuoteEnum;
 use App\Events\LeadsCount;
 use App\Facades\Capi;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
+use App\Http\Requests\UpdatePolicyDetailRequest;
 use App\Jobs\CarRenewalEmailJob;
-use App\Jobs\SendOCBIntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
@@ -47,8 +49,8 @@ use App\Models\HealthPlanType;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
+use App\Models\PolicyIssuanceStatus;
 use App\Models\QuoteDocument;
-use App\Models\QuoteType;
 use App\Models\Tier;
 use App\Models\User;
 use App\Repositories\AuditRepository;
@@ -60,21 +62,23 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\NationalityRepository;
+use App\Repositories\PaymentRepository;
 use App\Repositories\QuoteNoteRepository;
 use App\Repositories\RenewalBatchRepository;
+use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\ActivitiesService;
 use App\Services\AllocationService;
 use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
 use App\Services\BusinessQuoteService;
-use App\Services\CarEmailService;
 use App\Services\CarQuoteService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\EmailDataService;
+use App\Services\EmailServices\CarEmailService;
 use App\Services\EmailStatusService;
 use App\Services\HealthQuoteService;
 use App\Services\HomeQuoteService;
@@ -85,6 +89,7 @@ use App\Services\NotesForCustomerService;
 use App\Services\PetQuoteService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
+use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Services\TeamService;
 use App\Services\TierService;
@@ -152,7 +157,7 @@ class CRUDController extends Controller
         EmailDataService $emailDataService,
         AllocationService $allocationService,
     ) {
-        $this->genericModel = new GenericModel();
+        $this->genericModel = new GenericModel;
         $this->healthQuoteService = $healthService;
         $this->teamsService = $teamsService;
         $this->crudService = $crudService;
@@ -533,6 +538,11 @@ class CRUDController extends Controller
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         abort_if(! $record, 404);
 
+        /* Start - Temporarily adding for correcting historic data  */
+        (new PaymentRepository)->updatePriceVatApplicableAndVat($record, $this->genericModel->modelType);
+        /* End - Temporarily adding for correcting historic data  */
+
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($this->genericModel->modelType, $record);
         $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($record->id, $quoteType);
 
         $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
@@ -541,6 +551,7 @@ class CRUDController extends Controller
         }
         $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
         $payments = $paymentEntityModel->payments;
+
         $mainPayment = $paymentEntityModel->payments()->where('code', '=', $paymentEntityModel->code)->first();
         $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
 
@@ -551,6 +562,19 @@ class CRUDController extends Controller
         $isNewBusinessUser = false;
         $model = $this->genericModel;
         $model_name = $this->genericModel->modelType.'Quote';
+
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+        $sendUpdateEnum = (object) [];
+        $hasPolicyIssuedStatus = $this->crudService->hasAtleastOneStatusPolicyIssued($record);
+
+        if ($hasPolicyIssuedStatus) {
+            $sendUpdateOptions = $this->lookupService->getSendUpdateOptions($quoteTypeId);
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
+        }
+
+        $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
 
         $customTitles = $customTableList = [];
         if (Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor()) {
@@ -636,6 +660,8 @@ class CRUDController extends Controller
         }
 
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
+
         $puaTypeEnum = PuaEnum::asArray();
         $isNewPaymentStructure = app(SplitPaymentService::class)->isNewPaymentStructure($payments);
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
@@ -644,7 +670,6 @@ class CRUDController extends Controller
             $carInsuranceProviders = [];
             $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
             $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
-            $listQuotePlans = $this->carQuoteService->getPlans($id);
             $vehicleTypes = $this->lookupService->getVehicleTypes();
             $trimList = $this->lookupService->getTrimListByCarModel($record->car_model_id);
             $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
@@ -694,27 +719,16 @@ class CRUDController extends Controller
                     $carInsuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Car);
                 }
             }
-            // return view('shared.show', compact([
-            //     'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList', 'embeddedProducts',
-            //     'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'mainPayment',
-            //     'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits',
-            //     'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
-            //     'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
-            //     'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-            //     'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access',
-            // ]));
 
             $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
             $carPlanFeaturesCodeEnum = CarPlanFeaturesCode::asArray();
             $carPlanExclusionsCodeEnum = CarPlanExclusionsCode::asArray();
             $carPlanAddonsCodeEnum = CarPlanAddonsCode::asArray();
-            $quoteStatusEnum = QuoteStatusEnum::asArray();
             $leadSourceEnum = LeadSourceEnum::asArray();
-            $paymentStatusEnum = PaymentStatusEnum::asArray();
             $genericRequestEnum = GenericRequestEnum::asArray();
             $carPlanTypeEnum = CarPlanType::asArray();
             $docUploadURL = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$record->uuid.'/thankyou';
-            $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Car);
+            @[$documentTypes, $paymentDocument] = $this->quoteDocumentService->getDocumentTypes(QuoteTypeId::Car);
             $quoteDocuments = array_values($quoteDocuments->toArray());
             $planURL = $ecomCarInsuranceQuoteUrl.$record->uuid;
             $storageUrl = storageUrl();
@@ -735,34 +749,28 @@ class CRUDController extends Controller
             $customerTypeEnum = CustomerTypeEnum::asArray();
             $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
             $nationalities = NationalityRepository::withActive()->get();
+            $insuranceProvidersByQuoteType = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::CAR->id());
+            $commercialRules = $this->leadAllocationService->isCommercialVehicles($record);
+            $clientInquiryLogs = $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [];
+            $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
 
             return inertia('PersonalQuote/Car/Show', compact([
-                'record', 'quote', 'model', 'customTitles', 'customTableList', 'paymentStatusEnum', 'quoteStatusEnum', 'leadSourceEnum', 'isBetaUser',
+                'record', 'sendUpdateOptions', 'sendUpdateLogs', 'quote', 'model', 'customTitles', 'customTableList', 'leadSourceEnum', 'isBetaUser', 'sendUpdateEnum',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'docUploadURL', 'isPlanUpdateActive', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'websiteURL', 'insuranceProviders', 'leadDocsStoragePath',
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses', 'carPlanAddonsCodeEnum', 'tiersExceptTierR', 'isTierRAssigned',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled', 'embeddedProducts', 'genericRequestEnum',
-                'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
+                'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
-                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'isAmlClearedForPayment', 'clientInquiryLogs', 'puaTypeEnum',
+                'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'hasPolicyIssuedStatus', 'insuranceProvidersByQuoteType',
+                'vatPercentage', 'commercialRules', 'isAmlClearedForPayment', 'clientInquiryLogs', 'policyIssuanceStatus', 'bookPolicyDetails', 'linkedQuoteDetails', 'puaTypeEnum',
+                'lockLeadSectionsDetails', 'paymentDocument',
             ]));
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $ecomTravelInsuranceQuoteUrl = config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL');
-            $listQuotePlans = '';
-            $quotePlans = $this->travelQuoteService->getQuotePlans($id);
-            if (isset($quotePlans->message) && $quotePlans->message != '') {
-                $listQuotePlans = $quotePlans->message;
-            } else {
-                if (gettype($quotePlans) != 'string') {
-                    $listQuotePlans = $quotePlans->quotes->plans;
-                } else {
-                    $listQuotePlans = $quotePlans;
-                }
-            }
-
             $membersDetail = $this->travelQuoteService->getMembersDetail($record->id);
 
             return view('shared.show', compact([
@@ -772,7 +780,7 @@ class CRUDController extends Controller
                 'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'mainPayment', 'paymentMethods', 'insuranceProviders', 'emailStatuses',
                 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-                'quoteTypeId', 'tiers', 'access', 'isNewPaymentStructure',
+                'quoteTypeId', 'tiers', 'access', 'isNewPaymentStructure', 'hasPolicyIssuedStatus',
             ]));
         }
 
@@ -824,7 +832,10 @@ class CRUDController extends Controller
                 })->sortBy('label')->values();
             }
 
-            $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Home);
+            @[$documentTypes, $paymentDocument] = $this->quoteDocumentService->getDocumentTypes(QuoteTypeId::Home);
+
+            $quoteDocument = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::HOME->value, $record->id);
+            $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::HOME->value, $payments, $quoteDocument);
             $noteDocumentType = DocumentType::where('code', DocumentTypeCode::OD)->first();
             $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::HOME->name);
 
@@ -832,6 +843,9 @@ class CRUDController extends Controller
                 'storageUrl' => storageUrl(),
                 'quoteDocuments' => $quoteDocuments,
                 'quote' => $record,
+                'record' => $record,
+                'sendUpdateOptions' => $sendUpdateOptions,
+                'sendUpdateLogs' => $sendUpdateLogs,
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
                 'leadStatuses' => array_values($leadStatuses->toArray()),
                 'advisors' => $advisors,
@@ -852,8 +866,8 @@ class CRUDController extends Controller
                     'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && ! auth()->user()->hasRole(RolesEnum::PA),
                     'isPA' => auth()->user()->hasRole(RolesEnum::PA),
                     'isAdvisor' => auth()->user()->hasRole(RolesEnum::EBPAdvisor) || auth()->user()->hasRole(RolesEnum::HealthAdvisor) || auth()->user()->hasRole(RolesEnum::RMAdvisor),
+                    'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
                 ],
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'modelType' => $quoteType,
                 'quoteTypeId' => $quoteTypeId,
                 'notProductionApproval' => $notProductionApproval,
@@ -871,29 +885,23 @@ class CRUDController extends Controller
                 'emirates' => $emirates,
                 'quoteType' => QuoteTypes::HOME,
                 'paymentTooltipEnum' => PaymentTooltip::asArray(),
-                'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                 'documentTypes' => $documentTypes,
+                'bookPolicyDetails' => $bookPolicyDetails,
                 'noteDocumentType' => $noteDocumentType,
                 'quoteNotes' => $quoteNotes,
                 'vatPercentage' => $vatPercentage,
                 'isNewPaymentStructure' => $isNewPaymentStructure,
                 'isAmlClearedForPayment' => $isAmlClearedForPayment,
+                'sendUpdateEnum' => $sendUpdateEnum,
+                'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+                'linkedQuoteDetails' => $linkedQuoteDetails,
+                'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
+                'paymentDocument' => $paymentDocument,
             ]);
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) { // Health plans to display on detail view
             $this->carQuoteService->addOrUpdateQuoteViewCount($record, QuoteTypeId::Health);
-            $listQuotePlans = [];
-            $quotePlans = $this->healthQuoteService->getQuotePlans($id);
-            if (isset($quotePlans->message) && $quotePlans->message != '') {
-                $listQuotePlans = [];
-            } else {
-                if (gettype($quotePlans) != 'string') {
-                    $listQuotePlans = $quotePlans->quote->plans;
-                } else {
-                    $listQuotePlans = [];
-                }
-            }
             $coPayment = $this->healthQuoteService->getCoPayment($id);
             $uboDetails = CustomerMembersRepository::getBy($record->id, QuoteTypes::HEALTH->name, CustomerTypeEnum::Entity);
             $membersDetail = CustomerMembersRepository::getBy($record->id, QuoteTypes::HEALTH->name);
@@ -906,11 +914,10 @@ class CRUDController extends Controller
             $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
             $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
             $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
-            $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Health);
             $noteDocumentType = DocumentType::where('code', DocumentTypeCode::OD)->first();
             $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
-            $documentTypes = collect($documentTypes)->groupBy('category');
 
+            @[$documentTypes, $paymentDocument] = $this->quoteDocumentService->getDocumentTypes(QuoteTypeId::Health);
             $quoteDocuments = $quoteDocuments->map(function ($quoteDocument) {
                 $quoteDocument->created_by_name = isset($quoteDocument->createdBy->name) ? $quoteDocument->createdBy->name : null;
 
@@ -961,6 +968,7 @@ class CRUDController extends Controller
 
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HEALTH->id(), $record->id);
             $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
+            $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
             $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::HEALTH->name);
             $teams = $this->crudService->getUserTeams(Auth::user()->id);
 
@@ -970,6 +978,8 @@ class CRUDController extends Controller
                 'paymentLink' => $paymentLink,
                 'emailStatuses' => $emailStatuses,
                 'quote' => $record,
+                'sendUpdateOptions' => $sendUpdateOptions,
+                'sendUpdateLogs' => $sendUpdateLogs,
                 'genderOptions' => $this->crudService->getGenderOptions(),
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
                 'leadStatuses' => array_values($leadStatuses->toArray()),
@@ -995,8 +1005,8 @@ class CRUDController extends Controller
                 'lostReasons' => $lostReasons,
                 'permissions' => [
                     'pa' => auth()->user()->hasRole(RolesEnum::PA),
+                    'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
                 ],
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'hashCollapsibleStatuses' => $hashCollapsibleStatuses,
                 'modelType' => $quoteType,
                 'quoteTypeId' => $quoteTypeId,
@@ -1025,13 +1035,22 @@ class CRUDController extends Controller
                 'industryType' => $industryType,
                 'UBOsDetails' => $uboDetails,
                 'UBORelations' => $uboRelations,
+                'enums' => [
+                    'travelQuoteEnum' => TravelQuoteEnum::asArray(),
+                ],
+                'bookPolicyDetails' => $bookPolicyDetails,
+                'sendUpdateEnum' => $sendUpdateEnum,
+                'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
                 'staleDays' => $record->stale_at, now()->diffInDays(Carbon::parse("$record->stale_at")),
                 'noteDocumentType' => $noteDocumentType,
                 'quoteNotes' => $quoteNotes,
                 'clientInquiryLogs' => $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [],
                 'isNewPaymentStructure' => $isNewPaymentStructure,
+                'linkedQuoteDetails' => $linkedQuoteDetails,
                 'isAmlClearedForPayment' => $isAmlClearedForPayment,
+                'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
                 'clientInquiryLogs' => $clientInquiryLogs,
+                'paymentDocument' => $paymentDocument,
             ]);
         } else {
             return view('shared.show', compact([
@@ -1320,6 +1339,7 @@ class CRUDController extends Controller
     private function fillModelByModelType($type, Request $request)
     {
         $modelType = json_decode($request->get('modelType'), true) ?? $type;
+
         if ($modelType == null) {
             $modelType = $request->get('modelType');
         }
@@ -1583,6 +1603,8 @@ class CRUDController extends Controller
 
             info('Courtesy Email CAPI Response - : '.json_encode($response));
         }
+        // Update payment allocation status
+        app(CentralService::class)->updatePaymentAllocation($request->modelType, $request->quote_uuid);
         if ($entity->health_team_type != null && $entity->quote_status_id == QuoteStatusEnum::Qualified) {
             return redirect()->to('/quotes/health')->with('success', ' Lead status has been updated successfully');
         }
@@ -1744,23 +1766,52 @@ class CRUDController extends Controller
         return $this->notesForCustomerService->notesSendToCustomer($request);
     }
 
-    public function updateQuotePolicy(Request $request)
+    public function updateQuotePolicy(UpdatePolicyDetailRequest $policyDetailRequest)
     {
-        $model = '\\App\\Models\\'.ucwords($request->modelType).'Quote';
-        $quoteModel = $model::where('id', $request->quote_id)->first();
+        info('fn: updateQuotePolicy called');
+
+        $request = (object) $policyDetailRequest->validated();
+        $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (! $quoteModel) {
             return redirect()->back()->with('success', 'Error Updating Policy Details.');
         }
-
         $quoteModel->update([
-            'policy_number' => $request->quote_policy_number,
-            'policy_issuance_date' => Carbon::parse($request->quote_policy_issuance_date)->format('Y-m-d'),
-            'policy_start_date' => Carbon::parse($request->quote_policy_start_date)->format('Y-m-d'),
-            'renewal_expiry_date' => Carbon::parse($request->quote_policy_expiry_date)->format('Y-m-d'),
-            'premium' => $request->quote_premium,
+            'policy_number' => $request->quote_policy_number ?? '',
+            'policy_issuance_date' => isset($request->quote_policy_issuance_date) ? Carbon::parse($request->quote_policy_issuance_date)->format('Y-m-d') : null,
+            'policy_start_date' => isset($request->quote_policy_start_date) ? Carbon::parse($request->quote_policy_start_date)->format('Y-m-d') : null,
+            'policy_expiry_date' => isset($request->quote_policy_expiry_date) ? Carbon::parse($request->quote_policy_expiry_date)->format('Y-m-d') : null,
+            'price_vat_not_applicable' => $request->price_vat_notapplicable ?? '',
+            'price_vat_applicable' => $request->price_vat_applicable ?? '',
+            'price_with_vat' => $request->amount_with_vat ?? '',
+            'vat' => $request->vat ?? '',
+            'insurer_quote_number' => $request->quote_plan_insurer_quote_number ?? '',
+            'policy_issuance_status_id' => $request->quote_policy_issuance_status ?? null,
+            'policy_issuance_status_other' => $request->quote_policy_issuance_status_other ?? '',
         ]);
 
-        return redirect()->back()->with('success', 'Quote Policy Detail has been updated.');
+        if (! empty(request()->quote_policy_issuance_status) && request()->price_with_vat <= 0 && empty(request()->quote_policy_number)) {
+            $quoteModel->update([
+                'quote_status_id' => QuoteStatusEnum::PolicyPending,
+            ]);
+        }
+        Log::info('Updating policy_issuer_id  : '.auth()->id());
+
+        // store policy issuer
+        $payment = $quoteModel->payments()->mainLeadPayment()->first();
+        if ($payment) {
+            $payment->policy_issuer_id = auth()->id();
+            $payment->save();
+        }
+
+        // update status policy issued of req fulfilled
+        $this->updateQuoteStatus($request->modelType, $request->quote_id);
+        $this->updatePriceAndDiscount($quoteModel);
+
+        Log::info('Policy details update successfully for : '.$quoteModel->uuid);
+
+        return redirect()->back()->with([
+            'success' => 'Policy details has been updated.',
+        ]);
     }
 
     public function manualPlanToggle(Request $request)
@@ -1849,7 +1900,14 @@ class CRUDController extends Controller
         ];
 
         $count = $quoteModel->payments->count();
-        $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
+        if ($request->send_update_id) { // it will check if the payment is added from send update.
+            $paymentInformation['send_update_log_id'] = $request->send_update_id;
+            $paymentInformation['code'] = app(SendUpdateLogService::class)->getPaymentCode($quoteModel->code);
+            // it will make $quoteModel as SendUpdateLog model.
+            $quoteModel = SendUpdateLogRepository::getLogById($request->send_update_id);
+        } else {
+            $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
+        }
 
         if ($request->reference) {
             $paymentInformation['reference'] = $request->reference;
@@ -1857,6 +1915,7 @@ class CRUDController extends Controller
         if ($request->payment_methods != PaymentMethodsEnum::CreditCard && $request->payment_methods != PaymentMethodsEnum::InsureNowPayLater) {
             $paymentInformation['authorized_at'] = now();
         }
+
         $payment = Payment::create($paymentInformation);
         $quoteModel->payments()->save($payment);
         $paymentLog = new PaymentStatusLog([
@@ -1865,8 +1924,11 @@ class CRUDController extends Controller
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
         $paymentLog->save();
-        $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
+        if (! $request->send_update_id) { // it will check if the payment is added from send update.
+            $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
+        }
         $quoteModel->save();
 
         return back()->with('success', 'Payment has been created');
@@ -1937,11 +1999,13 @@ class CRUDController extends Controller
     public function sendOCBEmailNB(Request $request, $quoteType, $quoteUuId)
     {
         if ($quoteUuId) {
-            Log::info('sendOCBEmailNB OCB email sending started for quote uuid: '.$quoteUuId);
 
-            SendOCBIntroEmailJob::dispatch($quoteUuId, null);
-
-            info('sendOCBEmailNB OCB email Job dispatched for quote uuid: '.$quoteUuId);
+            $ocbEmailJob = QuoteTypes::getName(QuoteTypes::getIdFromValue($quoteType))?->ocbEmailJob();
+            if ($ocbEmailJob) {
+                Log::info("sendOCBEmailNB OCB email sending started for quote uuid: {$quoteUuId}");
+                dispatch(new $ocbEmailJob($request->quoteUuid, null));
+                info("sendOCBEmailNB OCB email Job dispatched for quote uuid: {$quoteUuId}");
+            }
 
             return response()->json(['success' => 'OCB NB email sent to customer !']);
         } else {
@@ -1991,7 +2055,7 @@ class CRUDController extends Controller
 
     public function riskRatingDetails($quoteType, $uuid)
     {
-        $quoteModel = $this->getQuoteObject($quoteType, $uuid);
+        $quoteModel = $this->getQuoteObjectBy($quoteType, $uuid, 'uuid');
         $response = $this->crudService->scoreBreakdown($quoteModel, $quoteType);
 
         return $response;

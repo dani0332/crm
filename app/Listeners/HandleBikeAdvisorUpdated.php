@@ -43,8 +43,9 @@ class HandleBikeAdvisorUpdated
 
         $lead = $event->lead;
 
-        if ($lead->source == LeadSourceEnum::RENEWAL_UPLOAD) {
-            info('lead is source is renewal upload. Skipping intro email job');
+        $skippableSources = [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY];
+        if (in_array($lead->source, $skippableSources)) {
+            info('lead is source is '.$lead->source.' upload. Skipping intro email job');
 
             return;
         }

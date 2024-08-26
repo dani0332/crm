@@ -30,12 +30,12 @@ use App\Models\Tier;
 use App\Repositories\ActivityRepository;
 use App\Repositories\BikeQuoteRepository;
 use App\Repositories\CustomerMembersRepository;
-use App\Repositories\DocumentTypeRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
+use App\Repositories\PaymentRepository;
 use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
@@ -132,15 +132,17 @@ class BikeQuoteController extends Controller
      */
     public function show($uuid)
     {
-        $quote = BikeQuoteRepository::getBy('uuid', $uuid);
+        /* Start - Temporarily adding for correcting historic data  */
+        $quote = BikeQuoteRepository::where('uuid', $uuid)->first();
+        abort_if(! $quote, 404);
+        (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::BIKE->value);
+        /* End - Temporarily adding for correcting historic data  */
 
-        // $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::BIKE->value, $quote);
+        $quote = BikeQuoteRepository::getBy('uuid', $uuid);
+        $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::BIKE->value, $quote);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::BIKE->name);
-        // @[$documentTypes, $documentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Bike);
-
-        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
-        $documentTypeCodes = $documentTypes->pluck('code')->toArray();
+        @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Bike);
 
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
@@ -168,20 +170,20 @@ class BikeQuoteController extends Controller
             })->values();
         }
 
-        // $sendUpdateOptions = [];
-        // $sendUpdateLogs = [];
-        // $sendUpdateEnum = (object) [];
-        // $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
+        $sendUpdateOptions = [];
+        $sendUpdateLogs = [];
+        $sendUpdateEnum = (object) [];
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
 
-        // if ($hasPolicyIssuedStatus) {
-        //     $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BIKE->id());
-        //     $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($quote->uuid);
-        //     $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
-        // }
+        if ($hasPolicyIssuedStatus) {
+            $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::BIKE->id());
+            $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($quote->uuid);
+            $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
+        }
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
         $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::BIKE->value);
-        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::BIKE->value, $quote->id);
-        // $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::BIKE->value, $quote->payments, $quoteDocuments);
+        $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::BIKE->value, $quote->id);
+        $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::BIKE->value, $quote->payments, $quoteDocuments);
         $yearsOfManufacture = app(LookupService::class)->getYearsOfManufacture();
 
         // We user personal quotes id in email status
@@ -195,6 +197,7 @@ class BikeQuoteController extends Controller
         $ecomBikeInsuranceQuoteUrl = config('constants.ECOM_BIKE_INSURANCE_QUOTE_URL');
         $planURL = $ecomBikeInsuranceQuoteUrl.$quote->uuid;
         $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
 
         return inertia('BikeQuote/Show', [
             'quoteType' => QuoteTypes::BIKE,
@@ -228,15 +231,13 @@ class BikeQuoteController extends Controller
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],
-            // 'bookPolicyDetails' => $bookPolicyDetails,
+            'bookPolicyDetails' => $bookPolicyDetails,
             'payments' => $quote->payments->toArray() ?? [],
-            // 'sendUpdateOptions' => $sendUpdateOptions,
-            // 'sendUpdateLogs' => $sendUpdateLogs,
-            // 'sendUpdateEnum' => $sendUpdateEnum,
-            // 'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
-            'documentTypeCodes' => $documentTypeCodes,
-            // 'linkedQuoteDetails' => $linkedQuoteDetails,
-            'record' => $quote,
+            'sendUpdateOptions' => $sendUpdateOptions,
+            'sendUpdateLogs' => $sendUpdateLogs,
+            'sendUpdateEnum' => $sendUpdateEnum,
+            'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
+            'linkedQuoteDetails' => $linkedQuoteDetails,
             'yearsOfManufacture' => $yearsOfManufacture,
             'emailStatuses' => $emailStatuses,
             'bikeQuotePlanAddons' => $bikeQuotePlanAddons,
@@ -247,6 +248,8 @@ class BikeQuoteController extends Controller
             'carPlanTypeEnum' => $carPlanTypeEnum,
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'websiteURL' => $websiteURL,
+            'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
+            'paymentDocument' => $paymentDocument,
         ]);
     }
 
@@ -261,6 +264,7 @@ class BikeQuoteController extends Controller
 
         return redirect('personal-quotes/bike/'.$uuid)->with('message', 'Quote updated successfully');
     }
+
     public function bikeAssumptionsUpdate(Request $request)
     {
         $quoteID = BikeQuoteRepository::bikeAssumptionsUpdateProcess($request);

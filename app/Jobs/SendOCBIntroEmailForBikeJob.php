@@ -28,7 +28,7 @@ class SendOCBIntroEmailForBikeJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable;
 
     public $tries = 3;
-    public $timeout = 15;
+    public $timeout = 60;
     public $backoff = 300;
     private $quoteUuid;
     private $previousAdvisor;

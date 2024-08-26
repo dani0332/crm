@@ -87,23 +87,28 @@ const creatQuotePlan = isValid => {
   }
 
   if (!isValid) return;
-  addPlanForm.post(`/quotes/bike/${page.props.quote.uuid}/bike-plan-manual-process`, {
-    preserveScroll: true,
-    onSuccess: response => {
-      if (response?.props?.flash?.error != 'Plan Modification is not allowed') {
-        notification.success({
-          title: 'Bike Quote Plan created successfully',
+  addPlanForm.post(
+    `/quotes/bike/${page.props.quote.uuid}/bike-plan-manual-process`,
+    {
+      preserveScroll: true,
+      onSuccess: response => {
+        if (
+          response?.props?.flash?.error != 'Plan Modification is not allowed'
+        ) {
+          notification.success({
+            title: 'Bike Quote Plan created successfully',
+            position: 'top',
+          });
+        }
+      },
+      onError: errors => {
+        notification.error({
+          title: 'Something went wrong!',
           position: 'top',
         });
-      }
+      },
     },
-    onError: errors => {
-      notification.error({
-        title: 'Something went wrong!',
-        position: 'top',
-      });
-    },
-  });
+  );
 };
 
 const validateDecimal = event => {
@@ -125,7 +130,11 @@ const getAddonVat = item => {
 
   if (item && item.addons && Array.isArray(item.addons)) {
     item.addons.forEach(addon => {
-      if (addon && addon.carAddonOption && Array.isArray(addon.carAddonOption)) {
+      if (
+        addon &&
+        addon.carAddonOption &&
+        Array.isArray(addon.carAddonOption)
+      ) {
         addon.carAddonOption.forEach(option => {
           if (option && option.isSelected && option.price !== 0) {
             addonVat += parseInt(option.price, 10) + option.vat;
@@ -137,7 +146,6 @@ const getAddonVat = item => {
 
   return addonVat;
 };
-
 </script>
 <template>
   <x-form @submit="creatQuotePlan" :auto-focus="false">

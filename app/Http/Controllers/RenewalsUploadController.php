@@ -194,7 +194,7 @@ class RenewalsUploadController extends Controller
         $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
         $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
 
-        $renewalsUploadLead = new RenewalsUploadLeads();
+        $renewalsUploadLead = new RenewalsUploadLeads;
         $renewalsUploadLead->file_name = $fileName;
         $renewalsUploadLead->file_path = $azureStorageUrl.$azureStorageContainer.'/'.$filePathAzure;
         $renewalsUploadLead->status = ProcessStatusCode::IN_PROGRESS;
@@ -229,6 +229,7 @@ class RenewalsUploadController extends Controller
             'renewals_upload_leads.file_name as file_name',
             'renewals_upload_leads.total_records as total_records',
             'renewals_upload_leads.good as good',
+            'renewals_upload_leads.is_sic as is_sic',
             'renewals_upload_leads.cannot_upload as cannot_upload',
             'renewals_upload_leads.status as status',
             'renewals_upload_leads.created_at as created_at',

@@ -12,6 +12,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -32,6 +33,7 @@ use App\Models\Lookup;
 use App\Models\PaymentAction;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteType;
+use App\Models\SendUpdateLog;
 use App\Models\User;
 use App\Repositories\CustomerMembersRepository;
 use App\Traits\GenericQueriesAllLobs;
@@ -366,6 +368,7 @@ class CRUDService extends BaseService
                     CammyJob::dispatch($entity, 'unsub');
                 }
             }
+            $quoteTypeId = constant(QuoteTypeId::class.'::'.$request->modelType);
 
             $activityResponse = false;
             $previousStatusIdChanged = false;
@@ -374,7 +377,7 @@ class CRUDService extends BaseService
                 if ($entity->quotes_status_id != $previousQuoteStatus) {
                     $previousStatusIdChanged = true;
                 }
-                $activityResponse = (new CentralService())->saveAndAssignActivitesToAdvisor($entity, $quoteTypeId[strtolower($request->modelType)], $previousStatusIdChanged);
+                $activityResponse = (new CentralService)->saveAndAssignActivitesToAdvisor($entity, $quoteTypeId[strtolower($request->modelType)], $previousStatusIdChanged);
             }
 
             // ========= assign renewal batch to HEALTH LOB leads upon transaction approved =========
@@ -634,11 +637,18 @@ class CRUDService extends BaseService
                         'is_manager_approved' => 1,
                     ]
                 );
+
                 $data = [
                     'uuid' => $quoteModel->uuid,
                     'type_id' => $quoteTypeId,
                     'code' => $paymentSplit->code.'-'.$paymentSplit->sr_no,
                 ];
+
+                // Payload update for Send Update to Payment Gateway
+                if (get_class($quoteModel) == SendUpdateLog::class) {
+                    $data['type_id'] = GenericRequestEnum::SEND_UPDATE_QUOTE_TYPE_MARSHAL;
+                }
+
                 $processResponse = $this->processCapturePayment($data);
 
                 return response($processResponse, 200);
@@ -1126,10 +1136,10 @@ class CRUDService extends BaseService
             $quote->risk_score = $results['total'];
             $quote->save();
             $quoteType = strtolower($type);
-            $quoteModel = $this->getQuoteObject($quoteType, $quote->uuid);
+            $quoteModel = $this->getQuoteObjectBy($quoteType, $quote->uuid, 'uuid');
             $data = $results;
             $detail = $this->getQuoteDetailObject($quoteType, $quoteModel->id);
-            $data['document_type_code'] = 'SCRDOC';
+            $data['document_type_code'] = QuoteDocumentsEnum::SCRDOC;
             $data['pdf_name'] = 'Riskscore_'.$pdfName.'.pdf';
             $data['quote_uuid'] = $quote->uuid;
             $kycLogs = AML::where([
@@ -1141,6 +1151,22 @@ class CRUDService extends BaseService
 
             app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quoteModel, true);
         }
+    }
+
+    public function hasAtleastOneStatusPolicyIssued($record): bool
+    {
+        if (isset($record->quote_status_id) && in_array($record->quote_status_id, [
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued,
+        ]) || $record?->insly_migrated || $record?->insly_id) {
+            return true;
+        }
+
+        return false;
     }
 
     public function getInquiryLogs($modelType, $uuid)

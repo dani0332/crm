@@ -67,12 +67,20 @@ const filters = reactive({
   payment_status: [],
   is_cold: false,
   is_stale: false,
+  payment_due_date: '',
+  booking_date: '',
+  policy_expiry_date: '',
+  policy_expiry_date_end: '',
 });
 
 watch(
   () => filters,
   () => {
-    if (filters.created_at_start && filters.created_at_end) {
+    if (
+      (filters.created_at_start && filters.created_at_end) ||
+      filters.payment_due_date ||
+      filters.booking_date
+    ) {
       canExport.value = true;
     } else {
       canExport.value = false;
@@ -127,6 +135,12 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
+  {
+    text: 'POLICY EXPIRY DATE',
+    value: 'previous_policy_expiry_date',
+    is_active: true,
+    sortable: true,
+  },
   { text: 'PRICE', value: 'price_with_vat', is_active: true, sortable: true },
   {
     text: 'NUMBER OF EMPLOYEES',
@@ -167,6 +181,8 @@ const setIntialState = () => {
     payment_status: [],
     is_cold: false,
     is_stale: false,
+    policy_expiry_date: '',
+    policy_expiry_date_end: '',
   });
   filtersCount.value = 0;
 };
@@ -192,6 +208,14 @@ function resetFilters() {
 
 function onSubmit(isValid) {
   if (isValid) {
+    if (validateDateRange()) {
+      notification.error({
+        title:
+          'The selected date range exceeds one month. Please select a range within one month.',
+        position: 'top',
+      });
+      return;
+    }
     serverOptions.value.page = 1;
 
     const filtersCleaned = cleanObj(filters);
@@ -289,7 +313,9 @@ function setQueryStringFilters() {
         isNaN(parseInt(value)) ? value : parseInt(value),
       );
     } else {
-      filters[key] = params[key];
+      filters[key] = isNaN(parseInt(params[key]))
+        ? params[key]
+        : parseInt(params[key]);
     }
   }
 }
@@ -326,11 +352,65 @@ watch(
 );
 
 const readOnlyMode = reactive({
-    isDisable: true,
+  isDisable: true,
 });
 onMounted(() => {
-    readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
+
+const resetDateFilters = filterName => {
+  const filterMappings = {
+    payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
+    booking_date: ['payment_due_date', 'created_at_start', 'created_at_end'],
+    created_at: ['booking_date', 'payment_due_date'],
+  };
+
+  const filtersToReset =
+    filterMappings[filterName] ||
+    (filterName.startsWith('created_at') ? filterMappings.created_at : []);
+
+  filtersToReset.forEach(filter => {
+    filters[filter] = '';
+  });
+};
+
+[
+  'payment_due_date',
+  'booking_date',
+  'created_at_start',
+  'created_at_end',
+].forEach(filterName => {
+  watch(
+    () => filters[filterName],
+    newValue => {
+      if (newValue) {
+        resetDateFilters(filterName);
+      }
+    },
+  );
+});
+const validateDateRange = () => {
+  const { policy_expiry_date, policy_expiry_date_end } = filters;
+  if (policy_expiry_date && policy_expiry_date_end) {
+    const startDate = new Date(policy_expiry_date);
+    const endDate = new Date(policy_expiry_date_end);
+    const oneMonthLater = new Date(startDate);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    // Adjust for months with fewer than 31 days
+    if (oneMonthLater.getDate() < startDate.getDate()) {
+      oneMonthLater.setDate(0);
+    }
+    if (endDate > oneMonthLater) {
+      return true;
+    }
+  }
+  return false;
+};
+const formatDate = date => {
+  if (!date) return '';
+  const options = { year: 'numeric', month: 'short', day: 'numeric' };
+  return new Date(date).toLocaleDateString('en-GB', options);
+};
 </script>
 
 <template>
@@ -359,10 +439,24 @@ onMounted(() => {
           @toggleFilters="showFilters = !showFilters"
         />
         <Link :href="route('business.cards')">
-          <x-button size="sm" color="#1d83bc" tag="div"  v-if="readOnlyMode.isDisable === true"> Cards View</x-button>
+          <x-button
+            size="sm"
+            color="#1d83bc"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Cards View</x-button
+          >
         </Link>
         <Link :href="route('business.create')">
-          <x-button size="sm" color="#ff5e00" tag="div"  v-if="readOnlyMode.isDisable === true"> Create Lead</x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Create Lead</x-button
+          >
         </Link>
       </template>
     </StickyHeader>
@@ -397,7 +491,7 @@ onMounted(() => {
     <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -479,6 +573,18 @@ onMounted(() => {
             :options="leadStatusOptions"
           />
         </x-field>
+        <x-field label="Policy Expiry Start Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date"
+            name="policy_expiry_date"
+          />
+        </x-field>
+        <x-field label="Policy Expiry End Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date_end"
+            name="policy_expiry_date_end"
+          />
+        </x-field>
         <x-field label="BUSINESS INSURANCE TYPE">
           <ComboBox
             v-model="filters.business_type_of_insurance_id"
@@ -528,6 +634,23 @@ onMounted(() => {
           ]"
           class="w-full"
         />
+
+        <DatePicker
+          v-model="filters.payment_due_date"
+          label="Payment Due Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.booking_date"
+          label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -540,11 +663,12 @@ onMounted(() => {
           >
             Export
           </x-button>
-          <x-tooltip v-else position="right">
+          <x-tooltip v-else placement="right">
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates are required to export data.
+                Created dates or payment due date or booking date are required
+                to export data.
               </span>
             </template>
           </x-tooltip>
@@ -586,6 +710,7 @@ onMounted(() => {
                 placeholder="Select Advisor"
                 class="flex-1 w-auto"
                 :rules="[isRequired]"
+                filterable
                 v-if="readOnlyMode.isDisable === true"
               />
               <div class="mb-3 md:pt-6">
@@ -634,6 +759,18 @@ onMounted(() => {
         >
           {{ source }}
         </a>
+      </template>
+      <template
+        #item-previous_policy_expiry_date="{
+          previous_policy_expiry_date,
+          source,
+        }"
+      >
+        {{
+          source === 'Renewal_upload'
+            ? formatDate(previous_policy_expiry_date)
+            : ''
+        }}
       </template>
     </DataTable>
 

@@ -18,7 +18,7 @@ class TMLeadsService
         $tmInsuranceTypeCode = TmInsuranceType::where('id', '=', $request->tm_insurance_types_id)->value('code');
 
         if ($type == 'create') {
-            $tmLead = new TmLead();
+            $tmLead = new TmLead;
 
             $tmLeadStatusEnum = tmLeadStatusCode::NewLead;
             $tmLeadStatusId = TmLeadStatus::where('code', '=', $tmLeadStatusEnum)->value('id');
@@ -91,7 +91,7 @@ class TMLeadsService
                 if (empty($phones[$i]) && empty($emails[$i])) {
                     continue;
                 }
-                $model = new TmLeadContactInformation();
+                $model = new TmLeadContactInformation;
                 $model->phone_number = $phones[$i];
                 $model->email_address = $emails[$i];
                 $model->tm_lead_id = $tmLead->id;

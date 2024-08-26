@@ -1,5 +1,4 @@
 <script setup>
-import {fileUploadErrorMessage} from "@/inertia/Composables/utilities.js";
 
 defineProps({
     quote: Object,
