@@ -1637,7 +1637,7 @@ class SageApiService
         if (isset($sageLogArray[3]) && $sageLogArray[3]['status'] == 'success') {
             info('SAGE API :  Patch Request  Sent Already for '.$quote->code);
             $isLiveApiCallStep3 = false;
-            $postedResponse = json_decode($sageLogArray[3]['response'], true);
+            $postedResponse = ! empty($sageLogArray[3]['response']) ? json_decode($sageLogArray[3]['response'], true) : [];
         } else {
             info('SAGE API :  Send Patch Request  for '.$quote->code);
             $resp = $this->postToSage300($url, $postedResponse, 'PATCH');
@@ -1895,7 +1895,7 @@ class SageApiService
             if (isset($sageLogArray[7]) && $sageLogArray[7]['status'] == 'success') {
                 info('SAGE API :  Patch Request  Sent Already for '.$quote->code);
                 $isLiveApiCallStep7 = false;
-                $postedResponse = json_decode($sageLogArray[7]['response'], true);
+                $postedResponse = ! empty($sageLogArray[7]['response']) ? json_decode($sageLogArray[7]['response'], true) : [];
             } else {
                 info('SAGE API :  Send Patch Request  for '.$quote->code);
                 $resp = (new SageCustomApiService)->updateAPInvoicePaymentSchedule($postedResponse['BatchNumber'], $aPInvoicePaymentsSchedule);

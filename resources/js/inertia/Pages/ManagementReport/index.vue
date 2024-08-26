@@ -89,7 +89,7 @@ let filters = reactive({
   teams: [],
   subTeams: [],
   leadSources: [],
-  includeCancelledPolicies: null,
+  includeCancelledPolicies: 'Yes',
   groupBy: route().params.groupBy ?? 'advisor',
   utmGroupBy: [],
   export: 0, //false
