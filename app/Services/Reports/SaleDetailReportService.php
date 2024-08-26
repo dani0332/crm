@@ -63,7 +63,7 @@ class SaleDetailReportService extends ManagementReport
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'payment_status.text as transaction_payment_status',
                 'p.captured_at as date_paid',
-                'personal_quotes.premium_captured as collected_amount',
+                'p.captured_amount as collected_amount',
                 'personal_quotes.first_name',
                 'personal_quotes.last_name',
                 'cm.code as customer_type',
@@ -130,6 +130,7 @@ class SaleDetailReportService extends ManagementReport
             $item->payment_due_date = ! empty($item->payment_due_date) ? Carbon::parse($item->payment_due_date)->format('Y-m-d') : null;
             $item->due_date = ! empty($item->due_date) ? Carbon::parse($item->due_date)->format('Y-m-d') : null;
             $item->total_price = number_format($item->total_price, 2);
+            $item->collected_amount = number_format($item->collected_amount, 2);
             $item->total_commission = number_format($item->total_commission, 2);
             $item->collects = strtoupper($item->collects);
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
