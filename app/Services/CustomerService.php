@@ -171,7 +171,7 @@ class CustomerService extends BaseService
             $customer = null;
             $previousEmail = $lead->email;
             if ($lead->customer && ! $this->getCustomerByEmail($value)) {
-                info('Customer additional contact primary email updated. Previous Email: '.$lead->email.' New Email: '.$value);
+                info('Customer additional contact primary email updated. Previous Email: ' . $lead->email . ' New Email: ' . $value);
                 $customerArray = [
                     'first_name' => $lead->first_name,
                     'last_name' => $lead->last_name,
@@ -180,7 +180,7 @@ class CustomerService extends BaseService
                     'dob' => $lead->dob,
                 ];
                 $customer = Customer::create($customerArray);
-                $customer->update(['code' => 'IND-'.$customer->id]);
+                $customer->update(['code' => 'IND-' . $customer->id]);
                 $getCustomerAdditionalContact = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
                     ->get();
                 foreach ($getCustomerAdditionalContact as $contact) {
@@ -279,7 +279,7 @@ class CustomerService extends BaseService
             }
             $lead->update(['mobile_no' => $value]);
             if ($lead->customer) {
-                info('Customer additional contact primary mobile_no updated. Previous Mobile_No: '.$lead->mobile_no.' New Mobile_No: '.$value);
+                info('Customer additional contact primary mobile_no updated. Previous Mobile_No: ' . $lead->mobile_no . ' New Mobile_No: ' . $value);
                 $lead->customer->update(['mobile_no' => $value]);
             }
         }
@@ -301,8 +301,8 @@ class CustomerService extends BaseService
         $quoteUuid = $data->uuid ?? null;
 
         if (! $customerId || ! $quoteUuid) {
-            Log::warning('Missing required data: email or quote UUID is not provided.', [
-                'email' => $customerId,
+            Log::warning('Missing required data: customerId or quote UUID is not provided.', [
+                'customerId' => $customerId,
                 'quote_uuid' => $quoteUuid,
             ]);
 
@@ -316,7 +316,7 @@ class CustomerService extends BaseService
 
             if (! $customerAddress) {
                 Log::info('Customer address not found.', [
-                    'email' => $customerId,
+                    'customerId' => $customerId,
                     'quote_uuid' => $quoteUuid,
                 ]);
             }
@@ -324,7 +324,7 @@ class CustomerService extends BaseService
             return $customerAddress;
         } catch (\Exception $e) {
             Log::error('Failed to retrieve customer address.', [
-                'email' => $customerId,
+                'customerId' => $customerId,
                 'quote_uuid' => $quoteUuid,
                 'error' => $e->getMessage(),
             ]);
