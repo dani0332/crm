@@ -287,6 +287,7 @@ onMounted(() => {
             </a>
           </template>
           <template
+            v-if="can(permissionEnum.DOCUMENT_DELETE)"
             #item-action="{ doc_name }"
           >
             <div>
