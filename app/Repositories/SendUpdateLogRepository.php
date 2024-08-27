@@ -214,8 +214,9 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchSavePolicyDetails($data)
     {
+        $sendUpdate = $this->find($data['id']);
         try {
-            $result = $this->find($data['id'])->update([
+            $result = $sendUpdate->update([
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'insurance_provider_id' => $data['insurance_provider_id'],
@@ -232,6 +233,7 @@ class SendUpdateLogRepository extends BaseRepository
             $result = (object) [
                 'message' => $ex->getMessage(),
             ];
+            info('Unable to save Policy Details - SendUpdateUUID: '.$sendUpdate->uuid.' - Error: '.$ex->getMessage());
         }
 
         return $result;
