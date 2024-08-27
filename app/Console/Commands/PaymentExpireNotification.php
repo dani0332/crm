@@ -93,7 +93,7 @@ class PaymentExpireNotification extends Command
             ->whereNotNull('advisor_id')
             ->whereNotNull('py.authorized_at')
             ->where('rq.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
-            ->having('expiry_days', '=', 1);
+            ->having('expiry_days', '=', 2);
 
         if ($quoteTypeId !== null && Schema::hasColumn($tableName, 'quote_type_id')) {
             $query->where('rq.quote_type_id', '=', $quoteTypeId);

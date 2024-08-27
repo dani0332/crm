@@ -70,9 +70,10 @@ function formatNumber(number) {
   if (number === 0 || number === '' || number === null) {
     return '0.00';
   } else {
-    return parseFloat(number)
-      .toFixed(2)
-      .replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      return new Intl.NumberFormat('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+      }).format(parseFloat(number));
   }
 }
 const activeButton = ref('');
@@ -247,7 +248,7 @@ function showCustomDate() {
     <template #item-advisor_name="{ advisor_name, advisor_id }">
       <div class="text-left">
         <Link
-          :href="`/quotes/car?page=1&segment_filter=all&payment_status_id=4&advisor_id[]=${[advisor_id]}`"
+            v-bind:href="`/quotes/car?page=1&segment_filter=all&payment_status_id=4&advisor_id[]=${[advisor_id]}`"
           class="text-black underline"
         >
           {{ advisor_name }}
