@@ -21,12 +21,7 @@ class HealthEmailService extends BaseService
         if ($triggerSICWorkFlow) {
             if (! $lead->sic_flow_enabled) {
                 $advisor = User::where('id', $lead->advisor_id)->first();
-                $emailData = $this->mappingEmailDataForOCBEmail($lead, $advisor);
-                // $responseCode = $this->birdService->sendHealthOCBEmail($emailData);
-                // // Dispatch the job with a 30 mint delay
-                // SICHealthFollowupEmailJob::dispatch($lead->uuid);
-                // info('SIC Health workflow event triggered for lead: Ref-ID: '.$lead->uuid.' |Time: '.now());
-                // info('SICHealthFollowupEmailJob Dispatched - Ref ID:'.$lead->uuid.'|  Time: '.now());
+                $emailData = $this->mappingEmailDataForEmail($lead, $advisor);
                 $sicEventName = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
 
                 if (! $lead->sic_flow_enabled) {
@@ -52,13 +47,13 @@ class HealthEmailService extends BaseService
         return $responseCode ?? null;
     }
 
-    public function mappingEmailDataForOCBEmail($lead, $advisor)
+
+    public function mappingEmailDataFormail($lead, $advisor)
     {
         return (object) [
             'quoteUID' => $lead->uuid,
             'customerEmail' => $lead->email,
             'refID' => $lead->code,
-            'uuid' => $lead->uuid,
             'customerFullName' => $lead->first_name.' '.$lead->last_name,
             'advisorId' => $advisor->id ?? null,
             'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
@@ -66,6 +61,13 @@ class HealthEmailService extends BaseService
             'advisorDetails' => $advisor ?? null,
             'quotePlanLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid,
             'requestAdvisorLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
+            'quotePlanApiLink' => config('constants.KEN_API_ENDPOINT').'/get-health-quote-plans-order-priority?'.$lead->uuid.'&lang=en&isModified=true',
+            'ApiToken' => config('constants.KEN_API_TOKEN'),
+            'basicAuth'=> 'Basic '.base64_encode(config('constants.KEN_API_USER').':'.config('constants.KEN_API_PWD')),
+            'landLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
+            'mobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
+            'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
+            'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
         ];
     }
 
