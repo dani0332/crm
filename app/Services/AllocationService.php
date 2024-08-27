@@ -55,7 +55,7 @@ class AllocationService
         $apiToken = config('constants.KEN_API_TOKEN');
         $apiTimeout = config('constants.KEN_API_TIMEOUT');
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client;
         $request = $client->post(
             $apiEndPoint,
             [

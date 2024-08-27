@@ -138,6 +138,11 @@ class AmtController extends Controller
             $data->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
         }
 
+        if (isset($request->policy_expiry_date) && $request->policy_expiry_date != '' && isset($request->policy_expiry_date_end) && $request->policy_expiry_date_end != '') {
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['policy_expiry_date']));
+            $dateTo = date('Y-m-d 23:59:59', strtotime($request['policy_expiry_date_end']));
+            $data->whereBetween('bqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
+        }
         if (isset($request->last_name) && $request->last_name != '') {
             $data->where('bqr.last_name', 'like', '%'.$request->last_name.'%');
         }
@@ -214,7 +219,7 @@ class AmtController extends Controller
 
         return inertia('GroupMedicalQuote/Form', [
             'businessInsuranceType' => $businessInsuranceType,
-            'quote' => new BusinessQuote(),
+            'quote' => new BusinessQuote,
         ]);
     }
 
@@ -258,9 +263,10 @@ class AmtController extends Controller
             'uuid' => $id,
             'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
         ]);
+        abort_if(! $record, 404);
 
         /* Start - Temporarily adding for correcting historic data  */
-        (new PaymentRepository())->updatePriceVatApplicableAndVat($record, QuoteTypes::BUSINESS->value);
+        (new PaymentRepository)->updatePriceVatApplicableAndVat($record, QuoteTypes::BUSINESS->value);
         /* End - Temporarily adding for correcting historic data  */
 
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::BUSINESS->value, $record);
@@ -332,7 +338,7 @@ class AmtController extends Controller
         }
 
         $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::BUSINESS->value);
-        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::BUSINESS->value, $record->id);
+        $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::BUSINESS->value, $record->id);
         $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::GROUP_MEDICAL->value, $record->payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
 

@@ -124,7 +124,7 @@ class CycleQuoteRepository extends BaseRepository
 
             $quote->cycleQuote()->updateOrCreate(
                 ['personal_quote_id' => $quote->id],
-                Arr::only($data, (new CycleQuote())->allowedColumns())
+                Arr::only($data, (new CycleQuote)->allowedColumns())
             );
 
             return $quote;

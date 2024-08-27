@@ -15,7 +15,7 @@ class PostMarkServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->bind('PostMark', function ($app) {
-            return new PostMarkService();
+            return new PostMarkService;
         });
     }
 

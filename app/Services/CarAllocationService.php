@@ -247,7 +247,7 @@ class CarAllocationService extends AllocationService
             ->where('name', '!=', TiersEnum::TIER_R)
             ->where(function ($query) use ($isSICFlowEnabled) {
                 if ($isSICFlowEnabled) {
-                    $query->whereNotIn('name', '!=', TiersEnum::TIER_L);
+                    $query->where('name', '!=', TiersEnum::TIER_L);
                 }
             });
 
@@ -440,7 +440,7 @@ class CarAllocationService extends AllocationService
             $finalEligibleUserIds = array_intersect($availableUserIds, $ruleUserIds);
 
             // Check if the lead source indicates a SAP lead.
-            $isSAPLead = str_contains($lead->source, 'sap-') || str_contains($lead->source, 'partner.alfred.ae');
+            $isSAPLead = str_contains($lead->source, 'sap-') || str_contains($lead->source, 'partner.alfred.ae') || str_contains($lead->source, 'partner/car-insurance/gems');
             if ($isSAPLead) {
                 // If the lead source is SAP, get eligible users for SAP leads.
                 info('SAP lead found, so filtering eligible users for SAP lead');

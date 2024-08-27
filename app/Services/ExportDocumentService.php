@@ -33,6 +33,7 @@ class ExportDocumentService extends BaseService implements ExportDocumentInterfa
         if (! $quote) {
             return ['error' => 'Quote  not found'];
         }
+        $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($quoteType));
         /* filter_var is used to convert boolean values sent from frontend  */
         $isRequestFromSendUpdateLogPage = $request->has('isSendUpdateLogRoute') && filter_var($request->isSendUpdateLogRoute, FILTER_VALIDATE_BOOLEAN);
 
@@ -52,7 +53,7 @@ class ExportDocumentService extends BaseService implements ExportDocumentInterfa
             return ['error' => 'Proforma Payment Request not found'];
         }
 
-        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.proforma-invoice', compact('quote', 'proformaPaymentRequest', 'isRequestFromSendUpdateLogPage'));
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.proforma-invoice', compact('quote', 'proformaPaymentRequest', 'isRequestFromSendUpdateLogPage', 'quoteTypeId'));
 
         $pdfName = 'InsuranceMarket.ae™ Proforma Payment Request for '.$quote->first_name.' '.$quote->last_name.'-'.$proformaPaymentRequest->code.'('.($proformaPaymentRequestVersion + 1).')'.'.pdf';
 

@@ -107,17 +107,17 @@ enum QuoteTypes: string
     public function model(): Model
     {
         return match ($this) {
-            self::CAR => checkPersonalQuotes($this->value) ? new PersonalQuote() : new CarQuote(),
-            self::HOME => checkPersonalQuotes($this->value) ? new PersonalQuote() : new HomeQuote(),
-            self::HEALTH => checkPersonalQuotes($this->value) ? new PersonalQuote() : new HealthQuote(),
-            self::LIFE => checkPersonalQuotes($this->value) ? new PersonalQuote() : new LifeQuote(),
-            self::BUSINESS, self::CORPLINE, self::GROUP_MEDICAL => checkPersonalQuotes($this->value) ? new PersonalQuote() : new BusinessQuote(),
-            self::BIKE => checkPersonalQuotes($this->value) ? new PersonalQuote() : new BikeQuote(),
-            self::YACHT => checkPersonalQuotes($this->value) ? new PersonalQuote() : new YachtQuote(),
-            self::TRAVEL => checkPersonalQuotes($this->value) ? new PersonalQuote() : new TravelQuote(),
-            self::PET => checkPersonalQuotes($this->value) ? new PersonalQuote() : new PetQuote(),
-            self::CYCLE => checkPersonalQuotes($this->value) ? new PersonalQuote() : new CycleQuote(),
-            self::JETSKI => checkPersonalQuotes($this->value) ? new PersonalQuote() : new JetskiQuote(),
+            self::CAR => checkPersonalQuotes($this->value) ? new PersonalQuote : new CarQuote,
+            self::HOME => checkPersonalQuotes($this->value) ? new PersonalQuote : new HomeQuote,
+            self::HEALTH => checkPersonalQuotes($this->value) ? new PersonalQuote : new HealthQuote,
+            self::LIFE => checkPersonalQuotes($this->value) ? new PersonalQuote : new LifeQuote,
+            self::BUSINESS, self::CORPLINE, self::GROUP_MEDICAL => checkPersonalQuotes($this->value) ? new PersonalQuote : new BusinessQuote,
+            self::BIKE => checkPersonalQuotes($this->value) ? new PersonalQuote : new BikeQuote,
+            self::YACHT => checkPersonalQuotes($this->value) ? new PersonalQuote : new YachtQuote,
+            self::TRAVEL => checkPersonalQuotes($this->value) ? new PersonalQuote : new TravelQuote,
+            self::PET => checkPersonalQuotes($this->value) ? new PersonalQuote : new PetQuote,
+            self::CYCLE => checkPersonalQuotes($this->value) ? new PersonalQuote : new CycleQuote,
+            self::JETSKI => checkPersonalQuotes($this->value) ? new PersonalQuote : new JetskiQuote,
             default => new PersonalQuote,
         };
     }

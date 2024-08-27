@@ -129,7 +129,7 @@ class InstallmentReportService extends ManagementReport
         });
     }
 
-    protected function filterTeams($query, $teamIds)
+    protected function filterTeams($query, $teamIds, $isSSR = false)
     {
         if (! empty($teamIds)) {
             $userIds = $this->getUsersByTeamIds($teamIds)->pluck('id')->toArray();

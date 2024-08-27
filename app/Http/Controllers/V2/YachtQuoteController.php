@@ -121,7 +121,8 @@ class YachtQuoteController extends Controller
 
         /* Start - Temporarily adding for correcting historic data  */
         $quote = YachtQuoteRepository::where('uuid', $uuid)->first();
-        (new PaymentRepository())->updatePriceVatApplicableAndVat($quote, QuoteTypes::YACHT->value);
+        abort_if(! $quote, 404);
+        (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::YACHT->value);
         /* End - Temporarily adding for correcting historic data  */
 
         $quote = YachtQuoteRepository::getBy('uuid', $uuid);
@@ -174,7 +175,7 @@ class YachtQuoteController extends Controller
         }
 
         $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::YACHT->value);
-        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::YACHT->value, $quote->id);
+        $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::YACHT->value, $quote->id);
         $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::YACHT->value, $quote->payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
 

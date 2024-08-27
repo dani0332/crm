@@ -39,7 +39,7 @@ class TeamService extends BaseService
         if ($existingTeam != null) {
             return 'Error: name already exists';
         }
-        $team = new Team();
+        $team = new Team;
         $team->name = $request->name;
         if (isset($request->parent_team_id)) {
             $team->parent_team_id = $request->parent_team_id;
