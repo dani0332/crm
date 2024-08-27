@@ -143,7 +143,10 @@ const urls = computed(() => {
               <!--                ADD BANER HERE-->
               <x-button class="w-full" size="sm">
                 <div class="items-center">
-                  <Link v-bind:href="urls" style="text-decoration: underline dotted">
+                  <Link
+                    v-bind:href="urls"
+                    style="text-decoration: underline dotted"
+                  >
                     Payment Authorised: {{ getAuthorisePaymentCount }}
                   </Link>
                 </div>
