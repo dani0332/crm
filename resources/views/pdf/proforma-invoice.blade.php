@@ -495,8 +495,7 @@
     <table class="tbl-disclaimer">
         <tr>
             <td class="text-left">
-                This document is issued for the sole purpose of collection of premium on behalf of Oriental Insurance
-                Company LTD, and should not be construed as an Official Tax Invoice compliant with FTA regulations. To
+                This document is issued for the sole purpose of collection of premium on behalf of {{ $insuranceProvider?->text }}, and should not be construed as an Official Tax Invoice compliant with FTA regulations. To
                 receive Tax Invoice and avail Input Vat credit, please reach out to your contact in AFIA who will obtain
                 the document from the Insurer and send it across to you.
             </td>
