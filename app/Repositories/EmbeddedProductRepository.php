@@ -362,9 +362,8 @@ class EmbeddedProductRepository extends BaseRepository
         $short_code = $ep->short_code;
         $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($short_code);
 
-        $attachments = $this->fetchAttachments($ep, $isAlfredProtect);
-        $attachmentsUrls = $this->fetchAttachmentUrls($ep, $isAlfredProtect);
-
+        [$attachments, $attachmentsUrls] = $this->fetchAttachments($ep, $isAlfredProtect);
+        
         $optionsIds = $ep->prices ? $ep->prices->pluck('id') : [];
         $quoteObject = $this->getQuoteObject($modelType, $quoteId);
         if (empty($quoteObject)) {
@@ -394,6 +393,7 @@ class EmbeddedProductRepository extends BaseRepository
     private function fetchAttachments($ep, $isAlfredProtect)
     {
         $attachments = [];
+        $attachmentsUrls = [];
         $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $documents = json_decode($ep->company_documents);
 
@@ -410,31 +410,15 @@ class EmbeddedProductRepository extends BaseRepository
                         'Name' => $ep->display_name.'- Policy Wordings.pdf',
                         'ContentType' => $mimeType,
                     ];
-                }
-            }
-        }
-
-        return $attachments;
-    }
-
-    private function fetchAttachmentUrls($ep, $isAlfredProtect)
-    {
-        $attachmentsUrls = [];
-        $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-        $documents = json_decode($ep->company_documents);
-
-        if (! empty($documents)) {
-            foreach ($documents as $item) {
-                $path = $item->path;
-                $pwDoc = $path !== '' ? $websiteURL.$path : '';
-                if (! empty($path) && $isAlfredProtect) {
+                } else {
                     $attachmentsUrls[] = $pwDoc;
                 }
             }
         }
 
-        return $attachmentsUrls;
+        return [$attachments, $attachmentsUrls];
     }
+
 
     private function fetchAdvisorData($quoteObject)
     {
