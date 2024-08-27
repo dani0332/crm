@@ -518,8 +518,10 @@ const onLobChange = (e, isOnMounted = false) => {
       quoteTypeCodeEnum.GroupMedical,
     ].includes(filters.lob)
   ) {
-    if(filters.lob == quoteTypeCodeEnum.Health){
-        quoteSegments = quoteSegments.filter(segment => segment.value !== 'sic-revival');
+    if (filters.lob == quoteTypeCodeEnum.Health) {
+      quoteSegments = quoteSegments.filter(
+        segment => segment.value !== 'sic-revival',
+      );
     }
 
     loadTeams(e);

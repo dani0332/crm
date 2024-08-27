@@ -9,7 +9,7 @@ defineProps({
   todayManualCount: Number,
   yesterdayAutoCount: Number,
   yesterdayManualCount: Number,
-  quoteSegments:Object,
+  quoteSegments: Object,
   totalCount: {
     type: Number,
     default: 0,
