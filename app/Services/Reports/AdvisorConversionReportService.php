@@ -8,6 +8,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -30,7 +31,6 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Enums\QuoteSegmentEnum;
 
 class AdvisorConversionReportService extends BaseService
 {
@@ -621,7 +621,7 @@ class AdvisorConversionReportService extends BaseService
                 });
             }
 
-            if(isset($filters->segment_filter)) {
+            if (isset($filters->segment_filter)) {
                 $segmentFilter = $filters->segment_filter;
                 $query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($query) {
                     $query->whereIn('uuid', function ($subQuery) {

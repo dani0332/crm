@@ -2,28 +2,28 @@
 
 namespace App\Services;
 
-use Carbon\Carbon;
-use App\Models\Team;
-use App\Models\User;
-use App\Jobs\CammyJob;
-use App\Enums\RolesEnum;
-use App\Enums\QuoteTypes;
-use App\Jobs\IntroEmailJob;
-use App\Models\HealthQuote;
-use App\Enums\quoteTypeCode;
-use App\Models\QuoteBatches;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
-use App\Enums\UserStatusEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Jobs\GetQuotePlansJob;
 use App\Enums\QuoteSegmentEnum;
-use App\Enums\AssignmentTypeEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
+use App\Enums\UserStatusEnum;
+use App\Jobs\CammyJob;
+use App\Jobs\GetQuotePlansJob;
+use App\Jobs\IntroEmailJob;
+use App\Mail\HealthAssignmentIssueEmail;
+use App\Models\HealthQuote;
+use App\Models\HealthQuoteRequestDetail;
+use App\Models\QuoteBatches;
+use App\Models\Team;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use App\Enums\ApplicationStorageEnums;
-use App\Mail\HealthAssignmentIssueEmail;
-use App\Models\HealthQuoteRequestDetail;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class HealthAllocationService extends AllocationService
@@ -64,27 +64,28 @@ class HealthAllocationService extends AllocationService
 
         return $leads->get();
     }
-    public function isSICLead($uuid){
+    public function isSICLead($uuid)
+    {
         return DB::table('quote_tags')->where('quote_uuid', $uuid)
-                        ->where('name', QuoteSegmentEnum::SIC->tag())
-                        ->where('value',1)
-                        ->exists();
+            ->where('name', QuoteSegmentEnum::SIC->tag())
+            ->where('value', 1)
+            ->exists();
     }
 
     public function assignTeamBasedOnPrice($lead)
     {
         info('Inside assignHealthTeamBasedOnStartingPrice for quote : '.$lead->uuid);
         if ($this->isSICLead($lead->uuid)) {
-            if (!empty($lead->plan_id) && !empty($lead->premium)) {
+            if (! empty($lead->plan_id) && ! empty($lead->premium)) {
                 $priceStartingFrom = $lead->premium;
-                 info("plan found against Ref-ID: {$lead->uuid} with plan id: {$lead->plan_id} | with premium: {$lead->premium} | Time: " . now());
+                info("plan found against Ref-ID: {$lead->uuid} with plan id: {$lead->plan_id} | with premium: {$lead->premium} | Time: ".now());
             } else {
                 $priceStartingFrom = $lead->price_starting_from;
-                info("plan not found against Ref-ID: {$lead->uuid} with plan id: {$lead->plan_id} | with premium: {$lead->premium} | Time: " . now());
+                info("plan not found against Ref-ID: {$lead->uuid} with plan id: {$lead->plan_id} | with premium: {$lead->premium} | Time: ".now());
             }
         } else {
             $priceStartingFrom = $lead->price_starting_from;
-             info("no sic lead against Ref-ID: {$lead->uuid} with plan id: {$lead->plan_id} | with premium: {$lead->premium} | Time: " . now());
+            info("no sic lead against Ref-ID: {$lead->uuid} with plan id: {$lead->plan_id} | with premium: {$lead->premium} | Time: ".now());
         }
         $healthTeam = Team::where('allocation_threshold_enabled', true)
             ->where('min_price', '<=', $priceStartingFrom)

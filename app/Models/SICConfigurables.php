@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
-use OwenIt\Auditing\Auditable;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class SICConfigurables extends Model implements AuditableContract
 {
     use Auditable, HasFactory;
+
     protected $table = 'sic_configurables';
 
     public function configurable()
@@ -21,6 +22,5 @@ class SICConfigurables extends Model implements AuditableContract
     {
         return get_class($this->configurable);
     }
-
 
 }
