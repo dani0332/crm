@@ -10,6 +10,7 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class PaymentExpireNotification extends Command
 {
@@ -47,353 +48,61 @@ class PaymentExpireNotification extends Command
      */
     public function handle()
     {
-        // CAR PAYMENT EXPIRE NOTIFICATION
-        $carNotification = DB::table('car_quote_request as cqr')
-            ->leftJoin('payments as py', 'py.code', '=', 'cqr.code')
-            ->select(
-                'cqr.id',
-                'cqr.code as uuid',
-                'cqr.advisor_id as advisor_id',
-                'cqr.payment_status_id as payment_status_id',
-                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
-            )
-            ->whereNotNull('advisor_id')
-            ->where('cqr.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
-            ->whereNotNull('py.authorized_at')
-            ->having('expiry_days', '=', 1)
-            ->get();
+        $this->processNotifications('car_quote_request', 'car');
+        $this->processNotifications('health_quote_request', 'health');
+        $this->processNotifications('business_quote_request', 'business');
+        $this->processNotifications('business_quote_request', 'business', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical), 'medical/amt');
+        $this->processNotifications('personal_quotes', 'bike', QuoteTypeId::Bike, 'personal-quotes/bike');
+        $this->processNotifications('personal_quotes', 'cycle', QuoteTypeId::Cycle, 'personal-quotes/cycle');
+        $this->processNotifications('personal_quotes', 'yacht', QuoteTypeId::Yacht, 'personal-quotes/yacht');
+        $this->processNotifications('personal_quotes', 'pet', QuoteTypeId::Pet, 'personal-quotes/pet');
+        $this->processNotifications('personal_quotes', 'jetski', QuoteTypeId::Jetski, 'personal-quotes/jetski');
+        $this->processNotifications('personal_quotes', 'home', QuoteTypeId::Home, 'quotes/home');
+        $this->processNotifications('personal_quotes', 'life', QuoteTypeId::Life, 'quotes/life');
+        $this->processNotifications('travel_quote_request', 'travel', null, 'quotes/travel');
+    }
 
-        if (! empty($carNotification)) {
-            info('Car Quotes Expire Notification Job Start');
-            foreach ($carNotification as $car) {
-                $model = $this->getModelObject(strtolower('car'));
-                $model = $model::find($car->id);
-                $url = url('/').'/quotes/'.strtolower('car').'/'.$model->uuid;
-                $quoteUuid = $car->uuid;
-                event(new PaymentExpireNotifications($model, $url, $quoteUuid));
-            }
-        }
-        // HEALTH PAYMENT EXPIRE NOTIFICATION
-        $healthNotification = DB::table('health_quote_request as hqr')
-            ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
+    private function processNotifications(
+        string $tableName,
+        string $type,
+        ?int $quoteTypeId = null,
+        ?string $customPath = null
+    ) {
+        $query = DB::table("$tableName as rq")
+            ->leftJoin('payments as py', 'py.code', '=', 'rq.code')
             ->select(
-                'hqr.id',
-                'hqr.code as uuid',
-                'hqr.advisor_id as advisor_id',
-                'hqr.payment_status_id as payment_status_id',
+                'rq.id',
+                'rq.code as uuid',
+                'rq.advisor_id as advisor_id',
+                'rq.payment_status_id as payment_status_id',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
                 DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
             )
             ->whereNotNull('advisor_id')
             ->whereNotNull('py.authorized_at')
-            ->where('hqr.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
-            ->having('expiry_days', '=', 1)
-            ->get();
+            ->where('rq.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
+            ->having('expiry_days', '=', 1);
 
-        if (! empty($healthNotification)) {
-            info('Health Quotes Expire Notification Job Start');
-            foreach ($healthNotification as $health) {
-                $model = $this->getModelObject(strtolower('health'));
-                $model = $model::find($health->id);
-                $url = url('/').'/quotes/'.strtolower('health').'/'.$model->uuid;
-                $quoteUuid = $health->uuid;
-                event(new PaymentExpireNotifications($model, $url, $quoteUuid));
-            }
+        if ($quoteTypeId !== null && Schema::hasColumn($tableName, 'quote_type_id')) {
+            $query->where('rq.quote_type_id', '=', $quoteTypeId);
         }
 
-        // BUSINESS PAYMENT EXPIRE NOTIFICATION
-        $businessNotification = DB::table('business_quote_request as bqr')
-            ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
-            ->select(
-                'bqr.id',
-                'bqr.code as uuid',
-                'bqr.advisor_id as advisor_id',
-                'bqr.payment_status_id as payment_status_id',
-                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
-            )
-            ->whereNotNull('advisor_id')
-            ->whereNotNull('py.authorized_at')
-            ->where('bqr.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
-            ->having('expiry_days', '=', 1)
-            ->get();
+        $notifications = $query->get();
 
-        if (! empty($businessNotification)) {
-            info('Business Quotes Expire Notification Job Start');
-            foreach ($businessNotification as $business) {
-                $model = $this->getModelObject(strtolower('business'));
-                $model = $model::find($business->id);
-                $url = url('/')."/quotes/business/$model->uuid";
-                $quoteUuid = $business->uuid;
-                event(new PaymentExpireNotifications($model, $url, $quoteUuid));
-            }
+        if ($notifications->isEmpty()) {
+            return;
         }
 
-        // BUSINESS QUOTE MEDICAL PAYMENT EXPIRE NOTIFICATION
-        $medicalNotification = DB::table('business_quote_request as bqr')
-            ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
-            ->select(
-                'bqr.id',
-                'bqr.code as uuid',
-                'bqr.advisor_id as advisor_id',
-                'bqr.payment_status_id as payment_status_id',
-                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
-            )
-            ->whereNotNull('advisor_id')
-            ->whereNotNull('py.authorized_at')
-            ->where('bqr.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
-            ->where('bqr.business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical))
-            ->having('expiry_days', '=', 1)
-            ->get();
+        info(ucfirst($type).' Quotes Expire Notification Job Start');
 
-        if (! empty($medicalNotification)) {
-            info('Group Medical Quotes Expire Notification Job Start');
-            foreach ($medicalNotification as $business) {
-                $model = $this->getModelObject(strtolower('business'));
-                $model = $model::find($business->id);
-                $url = url('/')."/medical/amt/$model->uuid";
-                $quoteUuid = $business->uuid;
-                event(new PaymentExpireNotifications($model, $url, $quoteUuid));
-            }
+        foreach ($notifications as $notification) {
+            $model = $this->getModelObject(strtolower($type));
+            $model = $model::find($notification->id);
+            $path = $customPath ?? "quotes/$type/$model->uuid";
+            $url = url('/')."/$path";
+            $quoteUuid = $notification->uuid;
+            event(new PaymentExpireNotifications($model, $url, $quoteUuid));
         }
-
-        // PERSONAL QUOTES NOTIFICATION //
-
-        // BIKE QUOTE  PAYMENT EXPIRE NOTIFICATION
-        $bikeNotification = DB::table('personal_quotes as pq')
-            ->leftJoin('payments as py', 'py.code', '=', 'pq.code')
-            ->select(
-                'pq.id',
-                'pq.code as uuid',
-                'pq.advisor_id as advisor_id',
-                'pq.payment_status_id as payment_status_id',
-                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
-            )
-            ->whereNotNull('advisor_id')
-            ->whereNotNull('py.authorized_at')
-            ->where('py.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
-            ->where('pq.quote_type_id', QuoteTypeId::Bike)
-            ->having('expiry_days', '=', 1)
-            ->get();
-
-        if (! empty($bikeNotification)) {
-            info('Bike Quotes Expire Notification Job Start');
-            foreach ($bikeNotification as $bike) {
-                $model = $this->getModelObject(strtolower('bike'));
-                $model = $model::find($bike->id);
-                $url = url('/')."/personal-quotes/bike/$model->uuid";
-                $quoteUuid = $bike->uuid;
-                event(new PaymentExpireNotifications($model, $url, $quoteUuid));
-            }
-        }
-
-        // CYcle QUOTE  PAYMENT EXPIRE NOTIFICATION
-        $cycleNotification = DB::table('personal_quotes as pq')
-            ->leftJoin('payments as py', 'py.code', '=', 'pq.code')
-            ->select(
-                'pq.id',
-                'pq.code as uuid',
-                'pq.advisor_id as advisor_id',
-                'pq.payment_status_id as payment_status_id',
-                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
-            )
-            ->whereNotNull('advisor_id')
-            ->whereNotNull('py.authorized_at')
-            ->where('py.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
-            ->where('pq.quote_type_id', QuoteTypeId::Cycle)
-            ->having('expiry_days', '=', 1)
-            ->get();
-
-        if (! empty($cycleNotification)) {
-            info('Cycle Quotes Expire Notification Job Start');
-            foreach ($cycleNotification as $cycle) {
-                $model = $this->getModelObject(strtolower('cycle'));
-                $model = $model::find($cycle->id);
-                $url = url('/')."/personal-quotes/cycle/$model->uuid";
-                $quoteUuid = $cycle->uuid;
-                event(new PaymentExpireNotifications($model, $url, $quoteUuid));
-            }
-        }
-
-        // YACHT QUOTE  PAYMENT EXPIRE NOTIFICATION
-        $yachtNotification = DB::table('personal_quotes as pq')
-            ->leftJoin('payments as py', 'py.code', '=', 'pq.code')
-            ->select(
-                'pq.id',
-                'pq.code as uuid',
-                'pq.advisor_id as advisor_id',
-                'pq.payment_status_id as payment_status_id',
-                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
-            )
-            ->whereNotNull('advisor_id')
-            ->whereNotNull('py.authorized_at')
-            ->where('py.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
-            ->where('pq.quote_type_id', QuoteTypeId::Yacht)
-            ->having('expiry_days', '=', 1)
-            ->get();
-
-        if (! empty($yachtNotification)) {
-            info('Yacht Quotes Expire Notification Job Start');
-            foreach ($yachtNotification as $yacht) {
-                $model = $this->getModelObject(strtolower('yacht'));
-                $model = $model::find($yacht->id);
-                $url = url('/')."/personal-quotes/yacht/$model->uuid";
-                $quoteUuid = $yacht->uuid;
-                event(new PaymentExpireNotifications($model, $url, $quoteUuid));
-            }
-        }
-
-        // PET QUOTE  PAYMENT EXPIRE NOTIFICATION
-        $petNotification = DB::table('personal_quotes as pq')
-            ->leftJoin('payments as py', 'py.code', '=', 'pq.code')
-            ->select(
-                'pq.id',
-                'pq.code as uuid',
-                'pq.advisor_id as advisor_id',
-                'pq.payment_status_id as payment_status_id',
-                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
-            )
-            ->whereNotNull('advisor_id')
-            ->whereNotNull('py.authorized_at')
-            ->where('py.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
-            ->where('pq.quote_type_id', QuoteTypeId::Pet)
-            ->having('expiry_days', '=', 1)
-            ->get();
-
-        if (! empty($petNotification)) {
-            info('Pet Quotes Expire Notification Job Start');
-            foreach ($petNotification as $pet) {
-                $model = $this->getModelObject(strtolower('pet'));
-                $model = $model::find($pet->id);
-                $url = url('/')."/personal-quotes/pet/$model->uuid";
-                $quoteUuid = $pet->uuid;
-                event(new PaymentExpireNotifications($model, $url, $quoteUuid));
-            }
-        }
-
-        // JETSKI QUOTE  PAYMENT EXPIRE NOTIFICATION
-        $jetkiNotification = DB::table('personal_quotes as pq')
-            ->leftJoin('payments as py', 'py.code', '=', 'pq.code')
-            ->select(
-                'pq.id',
-                'pq.code as uuid',
-                'pq.advisor_id as advisor_id',
-                'pq.payment_status_id as payment_status_id',
-                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
-            )
-            ->whereNotNull('advisor_id')
-            ->whereNotNull('py.authorized_at')
-            ->where('py.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
-            ->where('pq.quote_type_id', QuoteTypeId::Jetski)
-            ->having('expiry_days', '=', 1)
-            ->get();
-
-        if (! empty($jetkiNotification)) {
-            info('JETKI Quotes Expire Notification Job Start');
-            foreach ($jetkiNotification as $jetski) {
-                $model = $this->getModelObject(strtolower('jetski'));
-                $model = $model::find($jetski->id);
-                $url = url('/')."/personal-quotes/jetski/$model->uuid";
-                $quoteUuid = $jetski->uuid;
-                event(new PaymentExpireNotifications($model, $url, $quoteUuid));
-            }
-        }
-
-        // Home QUOTE  PAYMENT EXPIRE NOTIFICATION
-        $homeNotification = DB::table('personal_quotes as pq')
-            ->leftJoin('payments as py', 'py.code', '=', 'pq.code')
-            ->select(
-                'pq.id',
-                'pq.code as uuid',
-                'pq.advisor_id as advisor_id',
-                'pq.payment_status_id as payment_status_id',
-                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
-            )
-            ->whereNotNull('advisor_id')
-            ->whereNotNull('py.authorized_at')
-            ->where('py.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
-            ->where('pq.quote_type_id', QuoteTypeId::Home)
-            ->having('expiry_days', '=', 1)
-            ->get();
-
-        if (! empty($homeNotification)) {
-            info('Home Quotes Expire Notification Job Start');
-            foreach ($homeNotification as $home) {
-                $model = $this->getModelObject(strtolower('home'));
-                $model = $model::find($home->id);
-                $url = url('/')."/quotes/home/$model->uuid";
-                $quoteUuid = $home->uuid;
-                event(new PaymentExpireNotifications($model, $url, $quoteUuid));
-            }
-        }
-
-        // LIFE QUOTE  PAYMENT EXPIRE NOTIFICATION
-        $lifeNotification = DB::table('personal_quotes as pq')
-            ->leftJoin('payments as py', 'py.code', '=', 'pq.code')
-            ->select(
-                'pq.id',
-                'pq.code as uuid',
-                'pq.advisor_id as advisor_id',
-                'pq.payment_status_id as payment_status_id',
-                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
-            )
-            ->whereNotNull('advisor_id')
-            ->whereNotNull('py.authorized_at')
-            ->where('py.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
-            ->where('pq.quote_type_id', QuoteTypeId::Life)
-            ->having('expiry_days', '=', 1)
-            ->get();
-
-        if (! empty($lifeNotification)) {
-            info('Life Quotes Expire Notification Job Start');
-            foreach ($lifeNotification as $life) {
-                $model = $this->getModelObject(strtolower('life'));
-                $model = $model::find($life->id);
-                $url = url('/')."/quotes/life/$model->uuid";
-                $quoteUuid = $life->uuid;
-                event(new PaymentExpireNotifications($model, $url, $quoteUuid));
-            }
-        }
-
-        // Travel QUOTE  PAYMENT EXPIRE NOTIFICATION
-        $travelNotification = DB::table('travel_quote_request as tqr')
-            ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
-            ->select(
-                'tqr.id',
-                'tqr.code as uuid',
-                'tqr.advisor_id as advisor_id',
-                'tqr.payment_status_id as payment_status_id',
-                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
-            )
-            ->whereNotNull('advisor_id')
-            ->whereNotNull('py.authorized_at')
-            ->where('tqr.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
-            ->having('expiry_days', '=', 1)
-            ->get();
-
-        if (! empty($travelNotification)) {
-            info('Travel Quotes Expire Notification Job Start');
-            foreach ($travelNotification as $travel) {
-                $model = $this->getModelObject(strtolower('travel'));
-                $model = $model::find($travel->id);
-                if (isset($model->uuid)) {
-                    $url = url('/').'/quotes/travel/'.$model->uuid;
-                    $quoteUuid = $travel->uuid;
-                    event(new PaymentExpireNotifications($model, $url, $quoteUuid));
-                }
-            }
-        }
-
     }
 
 }
