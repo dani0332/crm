@@ -80,7 +80,6 @@ class DatabaseSeeder extends Seeder
             //AddSendUpdatesCategoriesInLookups::class,
             ApplicationStorageSeeder::class,
 
-
         ]);
     }
 }

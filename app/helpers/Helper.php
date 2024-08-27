@@ -775,6 +775,7 @@ if (! function_exists('paymentAuthorizeDay')) {
     function paymentAuthorizeDay()
     {
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+
         return intval($authorizedDays->value);
 
     }
