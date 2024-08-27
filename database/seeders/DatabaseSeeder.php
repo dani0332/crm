@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
             //  DocumentTypeSeeder::class,
             //            AddNewDocumentTypesSeeder::class,
             // UpdateCustomerToHealthAndTravelMemberDetails::class,
-            // GenericPermissionSeeder::class,
+            GenericPermissionSeeder::class,
             /*addSICWorkflow::class,
             UpdateRenewalTemplateStorageSeeder::class,
             addDubaiNowEmailGroup::class,

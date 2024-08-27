@@ -2078,11 +2078,4 @@ class CRUDController extends Controller
         return $response;
     }
 
-    public function sendPaymentEmail()
-    {
-        Artisan::call('SendPaymentEmail:cron');
-
-        return 1;
-    }
-
 }

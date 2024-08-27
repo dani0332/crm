@@ -64,7 +64,7 @@ class SendPaymentEmail extends Command
             $table = null;
             $quoteTypeId = null;
 
-            switch (true) {
+            switch ($userData) {
                 case $userData->hasRole(RolesEnum::CarManager):
                     $role = 'Car';
                     $table = 'car_quote_request';
@@ -142,12 +142,7 @@ class SendPaymentEmail extends Command
             RolesEnum::CorplineManager,
         ];
 
-        //        return User::whereHas('roles', function ($query) use ($roles) {
-        //            $query->whereIn('name', $roles);
-        //        })->get(['id', 'email', 'name']);
-        $userIds = [1129, 116, 1000, 1080, 968];
-
-        return User::whereIn('id', $userIds)->whereHas('roles', function ($query) use ($roles) {
+        return User::whereHas('roles', function ($query) use ($roles) {
             $query->whereIn('name', $roles);
         })->get(['id', 'email', 'name']);
     }

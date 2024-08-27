@@ -535,288 +535,87 @@ class ReportService extends BaseService
     {
         $userRole = auth()->user();
         $userTeams = Auth::user()->getUserTeams(Auth::user()->id);
-        $query = '';
+        $leadTables = [
+            RolesEnum::CarManager => ['table' => 'car_quote_request', 'quoteType' => null],
+            RolesEnum::HealthManager => ['table' => 'health_quote_request', 'quoteType' => null],
+            RolesEnum::BusinessManager => ['table' => 'business_quote_request', 'quoteType' => null],
+            RolesEnum::TravelManager => ['table' => 'travel_quote_request', 'quoteType' => null],
+            RolesEnum::HomeManager => ['table' => 'personal_quotes', 'quoteType' => QuoteTypeId::Home],
+            RolesEnum::PetManager => ['table' => 'personal_quotes', 'quoteType' => QuoteTypeId::Pet],
+            RolesEnum::YachtManager => ['table' => 'personal_quotes', 'quoteType' => QuoteTypeId::Yacht],
+            RolesEnum::LifeManager => ['table' => 'life_quote_request', 'quoteType' => null],
+            RolesEnum::BikeManager => ['table' => 'personal_quotes', 'quoteType' => QuoteTypeId::Bike],
+            RolesEnum::CycleManager => ['table' => 'personal_quotes', 'quoteType' => QuoteTypeId::Cycle],
+            RolesEnum::JetskiManager => ['table' => 'personal_quotes', 'quoteType' => QuoteTypeId::Jetski],
+        ];
 
-        if ($userRole->hasRole(RolesEnum::CarManager)) {
+        $query = null;
 
-            $query = DB::table('car_quote_request');
-
-            $query
-                ->select(
-                    'users.id as advisor_id',
-                    'users.name as advisor_name',
-                    DB::raw('COUNT(*) as total_leads'),
-                    DB::raw('SUM(car_quote_request.premium) as total_premium'),
-                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
-                )
-                ->distinct()
-                ->leftJoin('payments as py', 'py.code', '=', 'car_quote_request.code')
-                ->join('users', 'users.id', 'car_quote_request.advisor_id')
-                ->join('user_team', 'user_team.user_id', 'users.id')
-                ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                ->where('car_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                ->whereIn('teams.name', $userTeams)
-                ->groupBy('users.id', 'users.name')
-                ->orderBy('total_leads', 'desc');
-        } elseif ($userRole->hasRole(RolesEnum::HealthManager)) {
-            $query = DB::table('health_quote_request');
-
-            $query
-                ->select(
-                    'users.id as advisor_id',
-                    'users.name as advisor_name',
-                    DB::raw('COUNT(*) as total_leads'),
-                    DB::raw('SUM(health_quote_request.premium) as total_premium'),
-                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
-                )
-                ->distinct()
-                ->leftJoin('payments as py', 'py.code', '=', 'health_quote_request.code')
-                ->join('users', 'users.id', 'health_quote_request.advisor_id')
-                ->join('user_team', 'user_team.user_id', 'users.id')
-                ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                ->where('health_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                ->whereIn('teams.name', $userTeams)
-                ->groupBy('users.id', 'users.name')
-                ->orderBy('total_leads', 'desc');
-        } elseif ($userRole->hasRole(RolesEnum::BusinessManager)) {
-            $query = DB::table('business_quote_request');
-
-            $query
-                ->select(
-                    'users.id as advisor_id',
-                    'users.name as advisor_name',
-                    DB::raw('COUNT(*) as total_leads'),
-                    DB::raw('SUM(business_quote_request.premium) as total_premium'),
-                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
-                )
-                ->distinct()
-                ->leftJoin('payments as py', 'py.code', '=', 'business_quote_request.code')
-                ->join('users', 'users.id', 'business_quote_request.advisor_id')
-                ->join('user_team', 'user_team.user_id', 'users.id')
-                ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                ->where('business_quote_request.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                ->whereIn('teams.name', $userTeams)
-                ->groupBy('users.id', 'users.name')
-                ->orderBy('total_leads', 'desc');
-        } elseif ($userRole->hasRole(RolesEnum::TravelManager)) {
-            $query = DB::table('travel_quote_request');
-
-            $query
-                ->select(
-                    'users.id as advisor_id',
-                    'users.name as advisor_name',
-                    DB::raw('COUNT(*) as total_leads'),
-                    DB::raw('SUM(travel_quote_request.premium) as total_premium'),
-                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
-
-                )
-                ->distinct()
-                ->leftJoin('payments as py', 'py.code', '=', 'travel_quote_request.code')
-                ->join('users', 'users.id', 'travel_quote_request.advisor_id')
-                ->join('user_team', 'user_team.user_id', 'users.id')
-                ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                ->whereIn('teams.name', $userTeams)
-                ->groupBy('users.id', 'users.name')
-                ->orderBy('total_leads', 'desc');
-        } elseif ($userRole->hasRole(RolesEnum::HomeManager)) {
-            $query = DB::table('personal_quotes');
-
-            $query
-                ->select(
-                    'users.id as advisor_id',
-                    'users.name as advisor_name',
-                    DB::raw('COUNT(*) as total_leads'),
-                    DB::raw('SUM(personal_quotes.premium) as total_premium'),
-                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
-                )
-                ->distinct()
-                ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
-                ->join('users', 'users.id', 'personal_quotes.advisor_id')
-                ->join('user_team', 'user_team.user_id', 'users.id')
-                ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                ->where('personal_quotes.quote_type_id', QuoteTypeId::Home)
-                ->whereIn('teams.name', $userTeams)
-                ->groupBy('users.id', 'users.name')
-                ->orderBy('total_leads', 'desc');
-        } elseif ($userRole->hasRole(RolesEnum::PetManager)) {
-            $query = DB::table('personal_quotes');
-
-            $query
-                ->select(
-                    'users.id as advisor_id',
-                    'users.name as advisor_name',
-                    DB::raw('COUNT(*) as total_leads'),
-                    DB::raw('SUM(personal_quotes.premium) as total_premium'),
-                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
-                )
-                ->distinct()
-                ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
-                ->join('users', 'users.id', 'personal_quotes.advisor_id')
-                ->join('user_team', 'user_team.user_id', 'users.id')
-                ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                ->where('personal_quotes.quote_type_id', QuoteTypeId::Pet)
-                ->whereIn('teams.name', $userTeams)
-                ->groupBy('users.id', 'users.name')
-                ->orderBy('total_leads', 'desc');
-        } elseif ($userRole->hasRole(RolesEnum::YachtManager)) {
-            $query = DB::table('personal_quotes');
-
-            $query
-                ->select(
-                    'users.id as advisor_id',
-                    'users.name as advisor_name',
-                    DB::raw('COUNT(*) as total_leads'),
-                    DB::raw('SUM(personal_quotes.premium) as total_premium'),
-                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
-                )
-                ->distinct()
-                ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
-                ->join('users', 'users.id', 'personal_quotes.advisor_id')
-                ->join('user_team', 'user_team.user_id', 'users.id')
-                ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                ->where('personal_quotes.quote_type_id', QuoteTypeId::Yacht)
-                ->whereIn('teams.name', $userTeams)
-                ->groupBy('users.id', 'users.name')
-                ->orderBy('total_leads', 'desc');
-        } elseif ($userRole->hasRole(RolesEnum::LifeManager)) {
-            $query = DB::table('life_quote_request');
-
-            $query
-                ->select(
-                    'users.id as advisor_id',
-                    'users.name as advisor_name',
-                    DB::raw('COUNT(*) as total_leads'),
-                    DB::raw('SUM(life_quote_request.premium) as total_premium'),
-                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
-                )
-                ->distinct()
-                ->leftJoin('payments as py', 'py.code', '=', 'life_quote_request.code')
-                ->join('users', 'users.id', 'life_quote_request.advisor_id')
-                ->join('user_team', 'user_team.user_id', 'users.id')
-                ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                ->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                ->whereIn('teams.name', $userTeams)
-                ->groupBy('users.id', 'users.name')
-                ->orderBy('total_leads', 'desc');
-        } elseif ($userRole->hasRole(RolesEnum::BikeManager)) {
-            $query = DB::table('personal_quotes');
-
-            $query
-                ->select(
-                    'users.id as advisor_id',
-                    'users.name as advisor_name',
-                    DB::raw('COUNT(*) as total_leads'),
-                    DB::raw('SUM(personal_quotes.premium) as total_premium'),
-                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
-                )
-                ->distinct()
-                ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
-                ->join('users', 'users.id', 'personal_quotes.advisor_id')
-                ->join('user_team', 'user_team.user_id', 'users.id')
-                ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                ->where('personal_quotes.quote_type_id', QuoteTypeId::Bike)
-                ->whereIn('teams.name', $userTeams)
-                ->groupBy('users.id', 'users.name')
-                ->orderBy('total_leads', 'desc');
-        } elseif ($userRole->hasRole(RolesEnum::CycleManager)) {
-            $query = DB::table('personal_quotes');
-
-            $query
-                ->select(
-                    'users.id as advisor_id',
-                    'users.name as advisor_name',
-                    DB::raw('COUNT(*) as total_leads'),
-                    DB::raw('SUM(personal_quotes.premium) as total_premium'),
-                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
-                )
-                ->distinct()
-                ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
-                ->join('users', 'users.id', 'personal_quotes.advisor_id')
-                ->join('user_team', 'user_team.user_id', 'users.id')
-                ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                ->where('personal_quotes.quote_type_id', QuoteTypeId::Cycle)
-                ->whereIn('teams.name', $userTeams)
-                ->groupBy('users.id', 'users.name')
-                ->orderBy('total_leads', 'desc');
-        } elseif ($userRole->hasRole(RolesEnum::JetskiManager)) {
-            $query = DB::table('personal_quotes');
-
-            $query
-                ->select(
-                    'users.id as advisor_id',
-                    'users.name as advisor_name',
-                    DB::raw('COUNT(*) as total_leads'),
-                    DB::raw('SUM(personal_quotes.premium) as total_premium'),
-                    DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                    DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
-                )
-                ->distinct()
-                ->leftJoin('payments as py', 'py.code', '=', 'personal_quotes.code')
-                ->join('users', 'users.id', 'personal_quotes.advisor_id')
-                ->join('user_team', 'user_team.user_id', 'users.id')
-                ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                ->where('personal_quotes.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                ->where('personal_quotes.quote_type_id', QuoteTypeId::Jetski)
-                ->whereIn('teams.name', $userTeams)
-                ->groupBy('users.id', 'users.name')
-                ->orderBy('total_leads', 'desc');
-        }
-
-        //FILTERS
-        if (isset($request->teams) && $query != null) {
-            $teamIds = $request->teams;
-            $query->whereIn('users.id', function ($subQuery) use ($teamIds) {
-                $subQuery
-                    ->select('users.id')
+        foreach ($leadTables as $role => $details) {
+            if ($userRole->hasRole($role)) {
+                $query = DB::table($details['table'])
+                    ->select(
+                        'users.id as advisor_id',
+                        'users.name as advisor_name',
+                        DB::raw('COUNT(*) as total_leads'),
+                        DB::raw('SUM('.$details['table'].'.premium) as total_premium'),
+                        DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
+                        DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
+                    )
                     ->distinct()
-                    ->from('users')
-                    ->join('user_team', 'users.id', '=', 'user_team.user_id')
+                    ->leftJoin('payments as py', 'py.code', '=', $details['table'].'.code')
+                    ->join('users', 'users.id', $details['table'].'.advisor_id')
+                    ->join('user_team', 'user_team.user_id', 'users.id')
                     ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                    ->whereIn('teams.id', $teamIds);
-            });
-        }
-        if (isset($request->expireDate) && $query != null) {
-            $query->whereDate('py.authorized_at', '<=', $request->expireDate);
-        }
-        if (isset($request->todayDate) && $query != null) {
-            $query->having('expiry_days', '=', 1)
-                ->groupBy('users.id', 'users.name', 'expiry_days');
-        }
-        if (isset($request->tomorrowDate) && $query != null) {
-            $query->whereDate('py.authorized_at', '=', $request->tomorrowDate);
-        }
-        if (isset($request->thisWeek) && $query != null) {
-            $startOfWeek = $request->thisWeek[0];
-            $endOfWeek = $request->thisWeek[1];
+                    ->where($details['table'].'.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                    ->whereIn('teams.name', $userTeams)
+                    ->groupBy('users.id', 'users.name')
+                    ->orderBy('total_leads', 'desc');
 
-            $query->whereBetween('py.authorized_at', [$startOfWeek, $endOfWeek]);
-        }
-        if (isset($request->customDate) && $query != null) {
-            $query->whereBetween('py.authorized_at', $request->customDate);
+                if ($details['quoteType']) {
+                    $query->where($details['table'].'.quote_type_id', $details['quoteType']);
+                }
+
+                break;
+            }
         }
 
-        if (! empty($query)) {
+        if ($query) {
+            if (isset($request->teams)) {
+                $teamIds = $request->teams;
+                $query->whereIn('users.id', function ($subQuery) use ($teamIds) {
+                    $subQuery
+                        ->select('users.id')
+                        ->distinct()
+                        ->from('users')
+                        ->join('user_team', 'users.id', '=', 'user_team.user_id')
+                        ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                        ->whereIn('teams.id', $teamIds);
+                });
+            }
+            if (isset($request->expireDate)) {
+                $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL 8 DAY)'), '<=', $request->expireDate);
+            }
+            if (isset($request->todayDate)) {
+                $query->having('expiry_days', '=', 1)
+                    ->groupBy('users.id', 'users.name', 'expiry_days');
+            }
+            if (isset($request->tomorrowDate)) {
+                $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL 8 DAY)'), '=', $request->tomorrowDate);
+            }
+            if (isset($request->thisWeek)) {
+                $startOfWeek = $request->thisWeek[0];
+                $endOfWeek = $request->thisWeek[1];
+                $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL 8 DAY)'), [$startOfWeek, $endOfWeek]);
+            }
+            if (isset($request->customDate)) {
+                $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL 8 DAY)'), $request->customDate);
+            }
+
             return $query->simplePaginate(5)->withQueryString();
-
         }
 
         return false;
-
     }
+
 }

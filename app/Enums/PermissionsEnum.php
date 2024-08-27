@@ -360,6 +360,7 @@ final class PermissionsEnum extends Enum
     public const TRAVEL_HAPEX = 'travel-hapex';
     public const All_QUOTES_VIEWONLY_ACCESS = 'all-quotes-view-only-access';
     public const CUSTOMER_RISKRRATING_OVERRIDE = 'customer-riskrrating-override';
+    public const MANAGER_AUTHORISED_PAYMENT_SUMMARY = 'manager-authorised-payment-summary';
 
     public static function getAdvisorConversionReportPermissions()
     {
