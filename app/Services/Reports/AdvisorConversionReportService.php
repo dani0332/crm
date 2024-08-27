@@ -101,16 +101,63 @@ class AdvisorConversionReportService extends BaseService
                 'quote_batches.name as batch_name',
                 'users.name as advisor_name',
                 'quote_batches.id as quote_batch_id',
-                DB::raw('SUM(CASE WHEN car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as total_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::NewLead.' and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as new_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::PriceTooHigh.', '.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.', '.QuoteStatusEnum::NotInterested.', '.QuoteStatusEnum::NotEligibleForInsurance.', '.QuoteStatusEnum::NotLookingForMotorInsurance.', '.QuoteStatusEnum::NonGccSpec.','.QuoteStatusEnum::AMLScreeningFailed.')  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as not_interested'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.', '.QuoteStatusEnum::PaymentPending.','.QuoteStatusEnum::AMLScreeningCleared.','.QuoteStatusEnum::PendingQuote.')  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as in_progress'),
-                DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.')  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as bad_leads'),
-                DB::raw('SUM(CASE WHEN (car_quote_request.payment_status_id in ('.PaymentStatusEnum::PAID.', '.PaymentStatusEnum::PARTIALLY_PAID.', '.PaymentStatusEnum::CREDIT_APPROVED.', '.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')  AND car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyBooked.')) and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as sale_leads'),
-                DB::raw('SUM(CASE WHEN (car_quote_request.payment_status_id in ('.PaymentStatusEnum::PAID.', '.PaymentStatusEnum::PARTIALLY_PAID.', '.PaymentStatusEnum::CREDIT_APPROVED.', '.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')  AND car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyBooked.')) and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as created_sale_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::IMRenewal.' THEN 1 ELSE 0 END)  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" as afia_renewals_count'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
+                DB::raw(
+                    strtr('SUM(CASE WHEN car_quote_request.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as total_leads', $this->getBindings())
+                ),
+                DB::raw(
+                    strtr('SUM(CASE WHEN car_quote_request.quote_status_id = :newLead and car_quote_request.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as new_leads', $this->getBindings([':newLead' => QuoteStatusEnum::NewLead]))
+                ),
+                DB::raw(
+                    strtr('SUM(CASE WHEN car_quote_request.quote_status_id in (:notInterestedStatuses) and car_quote_request.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as not_interested', $this->getBindings([':notInterestedStatuses' => [
+                        QuoteStatusEnum::PriceTooHigh,
+                        QuoteStatusEnum::PolicyPurchasedBeforeFirstCall,
+                        QuoteStatusEnum::NotInterested,
+                        QuoteStatusEnum::NotEligibleForInsurance,
+                        QuoteStatusEnum::NotLookingForMotorInsurance,
+                        QuoteStatusEnum::NonGccSpec,
+                        QuoteStatusEnum::AMLScreeningFailed,
+                    ]]))
+                ),
+                DB::raw(
+                    strtr('SUM(CASE WHEN car_quote_request.quote_status_id in (:inProgressStatuses) and car_quote_request.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as in_progress', $this->getBindings([':inProgressStatuses' => [
+                        QuoteStatusEnum::NotContactablePe,
+                        QuoteStatusEnum::FollowupCall,
+                        QuoteStatusEnum::Interested,
+                        QuoteStatusEnum::NoAnswer,
+                        QuoteStatusEnum::Quoted,
+                        QuoteStatusEnum::PaymentPending,
+                        QuoteStatusEnum::AMLScreeningCleared,
+                        QuoteStatusEnum::PendingQuote,
+                    ]]))
+                ),
+                DB::raw(
+                    strtr('SUM(CASE WHEN car_quote_request.source IN (:excludedSources) THEN 1 ELSE 0 END) as manual_created', $this->getBindings())
+                ),
+                DB::raw(
+                    strtr('SUM(CASE WHEN car_quote_request.quote_status_id in (:badLeadsStatuses)  and car_quote_request.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as bad_leads', $this->getBindings())
+                ),
+                DB::raw(
+                    strtr('SUM(CASE WHEN (
+                                (car_quote_request.quote_status_id in (:approvedStatuses) and car_quote_request.quote_status_date < ":policyBookingDate") OR
+                                (car_quote_request.quote_status_id = :policyBookedStatus and car_quote_request.quote_status_date >= ":policyBookingDate")
+                            ) and car_quote_request.source NOT IN (:excludedSources) THEN 1 ELSE 0 END
+                        ) as sale_leads', $this->getBindings())
+                ),
+                DB::raw(
+                    strtr('SUM(CASE WHEN (
+                                (car_quote_request.quote_status_id in (:approvedStatuses) and car_quote_request.quote_status_date < ":policyBookingDate") OR
+                                (car_quote_request.quote_status_id = :policyBookedStatus and car_quote_request.quote_status_date >= ":policyBookingDate")
+                            ) and car_quote_request.source IN (:excludedSources) THEN 1 ELSE 0 END
+                        ) as created_sale_leads', $this->getBindings())
+                ),
+                DB::raw(
+                    strtr('SUM(CASE WHEN car_quote_request.quote_status_id = :imRenewal THEN 1 ELSE 0 END) and car_quote_request.source NOT IN (:excludedSources) as afia_renewals_count', $this->getBindings([
+                        ':imRenewal' => QuoteStatusEnum::IMRenewal,
+                    ]))
+                ),
+                DB::raw(
+                    strtr('SUM(CASE WHEN car_quote_request.quote_status_id in (:badLeadsStatuses) and car_quote_request.source IN (:excludedSources) THEN 1 ELSE 0 END) as manual_created_bad_leads', $this->getBindings())
+                ),
             )
             ->filterBySegment()
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
@@ -147,6 +194,29 @@ class AdvisorConversionReportService extends BaseService
         return $query;
     }
 
+    private function getBindings($extra = [])
+    {
+        $excludedSources = implode(',', array_map(fn ($source) => "'$source'", [LeadSourceEnum::IMCRM, LeadSourceEnum::INSLY]));
+
+        $data = [
+            ':excludedSources' => $excludedSources,
+            ':policyBookingDate' => Carbon::parse('2024-09-01')->toDateTimeString(),
+            ':policyBookedStatus' => QuoteStatusEnum::PolicyBooked,
+            ':approvedStatuses' => implode(',', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyBooked]),
+            ':badLeadsStatuses' => implode(',', [QuoteStatusEnum::Duplicate, QuoteStatusEnum::Fake]),
+        ];
+
+        foreach ($extra as $key => $item) {
+            if (is_array($item)) {
+                $data[$key] = implode(',', $item);
+            } else {
+                $data[$key] = $item;
+            }
+        }
+
+        return $data;
+    }
+
     private function getPersonsalQuoteQuery($lob)
     {
         $lobFiltered = in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE]) ? quoteTypeCode::Business : $lob;
@@ -160,16 +230,63 @@ class AdvisorConversionReportService extends BaseService
                 'quote_batches.name as batch_name',
                 'quote_batches.id as quote_batch_id',
                 'users.name as advisor_name',
-                DB::raw('SUM(CASE WHEN personal_quotes.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as total_leads'),
-                DB::raw('SUM(CASE WHEN personal_quotes.quote_status_id = '.QuoteStatusEnum::NewLead.' and personal_quotes.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as new_leads'),
-                DB::raw('SUM(CASE WHEN personal_quotes.quote_status_id in ('.QuoteStatusEnum::PriceTooHigh.', '.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.', '.QuoteStatusEnum::NotInterested.', '.QuoteStatusEnum::NotEligibleForInsurance.', '.QuoteStatusEnum::NotLookingForMotorInsurance.', '.QuoteStatusEnum::NonGccSpec.','.QuoteStatusEnum::AMLScreeningFailed.')  and personal_quotes.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as not_interested'),
-                DB::raw('SUM(CASE WHEN personal_quotes.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.', '.QuoteStatusEnum::PaymentPending.','.QuoteStatusEnum::AMLScreeningCleared.','.QuoteStatusEnum::PendingQuote.')  and personal_quotes.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as in_progress'),
-                DB::raw('SUM(CASE WHEN personal_quotes.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
-                DB::raw('SUM(CASE WHEN personal_quotes.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.')  and personal_quotes.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as bad_leads'),
-                DB::raw('SUM(CASE WHEN (personal_quotes.payment_status_id in ('.PaymentStatusEnum::PAID.', '.PaymentStatusEnum::PARTIALLY_PAID.', '.PaymentStatusEnum::CREDIT_APPROVED.', '.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')  AND personal_quotes.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyBooked.')) and personal_quotes.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as sale_leads'),
-                DB::raw('SUM(CASE WHEN (personal_quotes.payment_status_id in ('.PaymentStatusEnum::PAID.', '.PaymentStatusEnum::PARTIALLY_PAID.', '.PaymentStatusEnum::CREDIT_APPROVED.', '.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')  AND personal_quotes.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyBooked.')) and personal_quotes.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as created_sale_leads'),
-                DB::raw('SUM(CASE WHEN personal_quotes.quote_status_id = '.QuoteStatusEnum::IMRenewal.' THEN 1 ELSE 0 END)  and personal_quotes.source != "'.LeadSourceEnum::IMCRM.'" as afia_renewals_count'),
-                DB::raw('SUM(CASE WHEN personal_quotes.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and personal_quotes.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
+                DB::raw(
+                    strtr('SUM(CASE WHEN personal_quotes.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as total_leads', $this->getBindings())
+                ),
+                DB::raw(
+                    strtr('SUM(CASE WHEN personal_quotes.quote_status_id = :newLead and personal_quotes.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as new_leads', $this->getBindings([':newLead' => QuoteStatusEnum::NewLead]))
+                ),
+                DB::raw(
+                    strtr('SUM(CASE WHEN personal_quotes.quote_status_id in (:notInterestedStatuses) and personal_quotes.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as not_interested', $this->getBindings([':notInterestedStatuses' => [
+                        QuoteStatusEnum::PriceTooHigh,
+                        QuoteStatusEnum::PolicyPurchasedBeforeFirstCall,
+                        QuoteStatusEnum::NotInterested,
+                        QuoteStatusEnum::NotEligibleForInsurance,
+                        QuoteStatusEnum::NotLookingForMotorInsurance,
+                        QuoteStatusEnum::NonGccSpec,
+                        QuoteStatusEnum::AMLScreeningFailed,
+                    ]]))
+                ),
+                DB::raw(
+                    strtr('SUM(CASE WHEN personal_quotes.quote_status_id in (:inProgressStatuses) and personal_quotes.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as in_progress', $this->getBindings([':inProgressStatuses' => [
+                        QuoteStatusEnum::NotContactablePe,
+                        QuoteStatusEnum::FollowupCall,
+                        QuoteStatusEnum::Interested,
+                        QuoteStatusEnum::NoAnswer,
+                        QuoteStatusEnum::Quoted,
+                        QuoteStatusEnum::PaymentPending,
+                        QuoteStatusEnum::AMLScreeningCleared,
+                        QuoteStatusEnum::PendingQuote,
+                    ]]))
+                ),
+                DB::raw(
+                    strtr('SUM(CASE WHEN personal_quotes.source IN (:excludedSources) THEN 1 ELSE 0 END) as manual_created', $this->getBindings())
+                ),
+                DB::raw(
+                    strtr('SUM(CASE WHEN personal_quotes.quote_status_id in (:badLeadsStatuses)  and personal_quotes.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as bad_leads', $this->getBindings())
+                ),
+                DB::raw(
+                    strtr('SUM(CASE WHEN (
+                                (personal_quotes.quote_status_id in (:approvedStatuses) and personal_quotes.quote_status_date < ":policyBookingDate") OR
+                                (personal_quotes.quote_status_id = :policyBookedStatus and personal_quotes.quote_status_date >= ":policyBookingDate")
+                            ) and personal_quotes.source NOT IN (:excludedSources) THEN 1 ELSE 0 END
+                        ) as sale_leads', $this->getBindings())
+                ),
+                DB::raw(
+                    strtr('SUM(CASE WHEN (
+                                (personal_quotes.quote_status_id in (:approvedStatuses) and personal_quotes.quote_status_date < ":policyBookingDate") OR
+                                (personal_quotes.quote_status_id = :policyBookedStatus and personal_quotes.quote_status_date >= ":policyBookingDate")
+                            ) and personal_quotes.source IN (:excludedSources) THEN 1 ELSE 0 END
+                        ) as created_sale_leads', $this->getBindings())
+                ),
+                DB::raw(
+                    strtr('SUM(CASE WHEN personal_quotes.quote_status_id = :imRenewal THEN 1 ELSE 0 END) and personal_quotes.source NOT IN (:excludedSources) as afia_renewals_count', $this->getBindings([
+                        ':imRenewal' => QuoteStatusEnum::IMRenewal,
+                    ]))
+                ),
+                DB::raw(
+                    strtr('SUM(CASE WHEN personal_quotes.quote_status_id in (:badLeadsStatuses) and personal_quotes.source IN (:excludedSources) THEN 1 ELSE 0 END) as manual_created_bad_leads', $this->getBindings())
+                ),
             )
             ->join('users', 'users.id', 'personal_quotes.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'personal_quotes.quote_batch_id')
