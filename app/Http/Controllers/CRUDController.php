@@ -757,6 +757,9 @@ class CRUDController extends Controller
             $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
 
             $customerAddressData = $this->customerService->getCustomerAddressData($record);
+            // $carQuote = getCarQuoteByUuid($record->id);
+            // $quoteCourier = app(MACRMService::class)->getCourierQuoteStatus($carQuote, QuoteTypes::CAR->id());
+            $quoteCourierStatus = null;
 
             return inertia('PersonalQuote/Car/Show', compact([
                 'record',
@@ -848,6 +851,7 @@ class CRUDController extends Controller
                 'lockLeadSectionsDetails',
                 'paymentDocument',
                 'customerAddressData',
+                'quoteCourierStatus',
             ]));
         }
 
@@ -1251,8 +1255,9 @@ class CRUDController extends Controller
         if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
             $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
             $customerAddressData = $this->customerService->getCustomerAddressData($record);
-            $carQuote = getCarQuoteByUuid($id);
-            $quoteCourier = app(MACRMService::class)->getCourierQuoteStatus($carQuote, QuoteTypes::CAR->id());
+            // $carQuote = getCarQuoteByUuid($id);
+            // $quoteCourier = app(MACRMService::class)->getCourierQuoteStatus($carQuote, QuoteTypes::CAR->id());
+            $quoteCourierStatus = null;
 
             return inertia('PersonalQuote/Car/Form', [
                 'quote' => $record,
@@ -1261,6 +1266,7 @@ class CRUDController extends Controller
                 'isRenewalUser' => $isRenewalUser,
                 'model' => json_encode($model->properties),
                 'customerAddressData' => $customerAddressData,
+                'quoteCourierStatus' => $quoteCourierStatus,
             ]);
         }
 

@@ -304,7 +304,7 @@ const addressTypes = [
           />
         </x-field>
 
-        <!-- <x-field label="Address Type">
+        <x-field label="Address Type" v-if="page.props.quoteCourierStatus == 'Pending'">
           <ComboBox
             v-model="quoteForm.addressObj.address_type"
             placeholder="Select address type"
@@ -312,7 +312,7 @@ const addressTypes = [
             :single="true"
           />
         </x-field>
-        <x-field label="ADDRESS">
+        <x-field label="ADDRESS" v-if="page.props.quoteCourierStatus == 'Pending'">
           <div class="flex flex-wrap -mx-2">
             <div class="w-1/2 px-2">
               <x-input
@@ -371,7 +371,7 @@ const addressTypes = [
               />
             </div>
           </div>
-        </x-field> -->
+        </x-field>
 
         <x-field label="DATE OF BIRTH" required>
           <DatePicker
