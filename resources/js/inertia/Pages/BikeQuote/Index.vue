@@ -194,11 +194,11 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
     return 'Expired';
   }
 
-    if(Math.floor(differenceInDays) === 1){
-        return Math.floor(differenceInDays) + " day";
-    }else {
-        return Math.floor(differenceInDays) + " days";
-    }
+  if (Math.floor(differenceInDays) === 1) {
+    return Math.floor(differenceInDays) + ' day';
+  } else {
+    return Math.floor(differenceInDays) + ' days';
+  }
 }
 watch(
   () => filters,

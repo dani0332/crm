@@ -1,10 +1,10 @@
 <script setup>
 const page = usePage();
 const props = defineProps({
-    quoteType: String,
-    quoteId: Number,
-    paymentCode: String,
-    payments: Array,
+  quoteType: String,
+  quoteId: Number,
+  paymentCode: String,
+  payments: Array,
 });
 
 const notification = useNotifications('toast');

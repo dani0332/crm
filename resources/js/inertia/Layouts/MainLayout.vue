@@ -1,7 +1,7 @@
 <script setup>
-import PaymentNotification from "../Components/PaymentNotification.vue";
-import PaymentExpireNotifications from "../Components/PaymentExpireNotification.vue"
-import OnlineStatusToggle from "../Components/OnlineStatusToggle.vue";
+import PaymentNotification from '../Components/PaymentNotification.vue';
+import PaymentExpireNotifications from '../Components/PaymentExpireNotification.vue';
+import OnlineStatusToggle from '../Components/OnlineStatusToggle.vue';
 const page = usePage();
 
 const createLink = link => {
@@ -24,8 +24,10 @@ const createLink = link => {
 };
 
 const user = computed(() => page.props.auth.user);
-const getAuthorisePaymentCount = computed(()=>page.props.getAuthorisePaymentCount)
-const checkAuthUserRole = computed(()=>page.props.checkAuthUserRole)
+const getAuthorisePaymentCount = computed(
+  () => page.props.getAuthorisePaymentCount,
+);
+const checkAuthUserRole = computed(() => page.props.checkAuthUserRole);
 const navLinks = computed(() => page.props.sidebar);
 const openSidebar = ref(false);
 const bannerInfo = computed(() => {
@@ -50,13 +52,12 @@ const onLogout = () => {
   });
 };
 
-const urls = computed(()=>{
-    if(checkAuthUserRole.value){
-        return `/reports/payment-summary`;
-    }else{
-        return `/quotes/car?page=1&segment_filter=all&payment_status_id=4`;
-    }
-
+const urls = computed(() => {
+  if (checkAuthUserRole.value) {
+    return `/reports/payment-summary`;
+  } else {
+    return `/quotes/car?page=1&segment_filter=all&payment_status_id=4`;
+  }
 });
 </script>
 
@@ -137,17 +138,16 @@ const urls = computed(()=>{
               <OnlineStatusToggle :user="user" />
               <!-- <UserStatus /> -->
               <PaymentNotification />
-                <PaymentExpireNotifications/>
+              <PaymentExpireNotifications />
 
-<!--                ADD BANER HERE-->
-                <x-button class="w-full"  size="sm">
+              <!--                ADD BANER HERE-->
+              <x-button class="w-full" size="sm">
                 <div class="items-center">
-
-                    <Link :href="urls" style="text-decoration: underline dotted;">
-                        Payment Authorised: {{getAuthorisePaymentCount}}
-                    </Link>
+                  <Link :href="urls" style="text-decoration: underline dotted">
+                    Payment Authorised: {{ getAuthorisePaymentCount }}
+                  </Link>
                 </div>
-                </x-button>
+              </x-button>
 
               <x-popover align="right" block>
                 <x-button size="sm" ghost>

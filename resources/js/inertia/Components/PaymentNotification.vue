@@ -16,27 +16,25 @@ const channel = pusher.subscribe(
   'public.' + page.props.appEnv + '.activity.user',
 );
 const listen = () => {
-    channel.bind('payment.notification', function (e) {
-        if (e.advisorId === page.props.auth.user.id) {
-            notificationData.value = {
-                imageUrl: '/image/alfred-theme.png',
-                title: 'Payment',
-                message: e.message,
-                url: e.url,
-                uuid : e.uuid,
-                quoteType : e.quoteType,
-                timeout: 30000
-            };
-            showNotification.value = true;
-        }
-    });
+  channel.bind('payment.notification', function (e) {
+    if (e.advisorId === page.props.auth.user.id) {
+      notificationData.value = {
+        imageUrl: '/image/alfred-theme.png',
+        title: 'Payment',
+        message: e.message,
+        url: e.url,
+        uuid: e.uuid,
+        quoteType: e.quoteType,
+        timeout: 30000,
+      };
+      showNotification.value = true;
+    }
+  });
 };
 const hideNotification = () => {
-    console.log('Parent function called!');
-    showNotification.value = false;
+  console.log('Parent function called!');
+  showNotification.value = false;
 };
-
-
 
 onMounted(() => {
   listen();
@@ -49,19 +47,18 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div>
-        <CustomNotification
-            v-if="showNotification"
-            :imageUrl="notificationData.imageUrl"
-            :title="notificationData.title"
-            :message="notificationData.message"
-            :uuid="notificationData.uuid"
-            :quoteType="notificationData.quoteType"
-            :url="notificationData.url"
-            :timeout="notificationData.timeout"
-            :callHideFunction="hideNotification"
-            @close="showNotification = false"
-        />
-    </div>
+  <div>
+    <CustomNotification
+      v-if="showNotification"
+      :imageUrl="notificationData.imageUrl"
+      :title="notificationData.title"
+      :message="notificationData.message"
+      :uuid="notificationData.uuid"
+      :quoteType="notificationData.quoteType"
+      :url="notificationData.url"
+      :timeout="notificationData.timeout"
+      :callHideFunction="hideNotification"
+      @close="showNotification = false"
+    />
+  </div>
 </template>
-

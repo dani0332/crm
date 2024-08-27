@@ -134,8 +134,8 @@ const tableHeader = [
   { text: 'Ref-ID', value: 'uuid' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
-    { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at'},
-    { text: 'PAYMENT EXPIRY', value: 'expiry_date'  },
+  { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
+  { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
   { text: 'LEAD STATUS', value: 'quote_status' },
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
@@ -176,35 +176,35 @@ watch(
   { deep: true, immediate: true },
 );
 function daysAgoFromAuthorizedDate(authorizedDate) {
-    if (!authorizedDate) {
-        return
-    }
-    const [day, month, year] = authorizedDate.split('-').map(Number);
-    const parsedDate = new Date(year, month - 1, day);
-    if (isNaN(parsedDate.getTime())) {
-        return "Invalid date";
-    }
+  if (!authorizedDate) {
+    return;
+  }
+  const [day, month, year] = authorizedDate.split('-').map(Number);
+  const parsedDate = new Date(year, month - 1, day);
+  if (isNaN(parsedDate.getTime())) {
+    return 'Invalid date';
+  }
 
-    // Calculate the new date by adding 8 days to the authorized date
-    const newDate = new Date(parsedDate);
-    newDate.setDate(parsedDate.getDate() + 8);
+  // Calculate the new date by adding 8 days to the authorized date
+  const newDate = new Date(parsedDate);
+  newDate.setDate(parsedDate.getDate() + 8);
 
-    const currentDate = new Date();
+  const currentDate = new Date();
 
-    // Calculate the difference in time
-    const differenceInTime = newDate.getTime() - currentDate.getTime();
-    const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+  // Calculate the difference in time
+  const differenceInTime = newDate.getTime() - currentDate.getTime();
+  const differenceInDays = differenceInTime / (1000 * 3600 * 24);
 
-    // Check if the date has expired
-    if (Math.floor(differenceInDays) <= 0) {
-        return "Expired";
-    }
+  // Check if the date has expired
+  if (Math.floor(differenceInDays) <= 0) {
+    return 'Expired';
+  }
 
-    if(Math.floor(differenceInDays) === 1){
-        return Math.floor(differenceInDays) + " day";
-    }else {
-        return Math.floor(differenceInDays) + " days";
-    }
+  if (Math.floor(differenceInDays) === 1) {
+    return Math.floor(differenceInDays) + ' day';
+  } else {
+    return Math.floor(differenceInDays) + ' days';
+  }
 }
 
 const formatDate = date => {
@@ -458,12 +458,16 @@ const validateDateRange = () => {
         </Link>
         <span v-else>{{ code }}</span>
       </template>
-        <template #item-authorized_at="item">
-            <p v-if="item?.payment_status?.text === 'AUTHORISED'">{{ item?.payments[0]?.authorized_at }}</p>
-        </template>
-        <template #item-expiry_date="item">
-            <p v-if="item?.payment_status?.text === 'AUTHORISED'">{{daysAgoFromAuthorizedDate(item?.payments[0]?.authorized_at)}}</p>
-        </template>
+      <template #item-authorized_at="item">
+        <p v-if="item?.payment_status?.text === 'AUTHORISED'">
+          {{ item?.payments[0]?.authorized_at }}
+        </p>
+      </template>
+      <template #item-expiry_date="item">
+        <p v-if="item?.payment_status?.text === 'AUTHORISED'">
+          {{ daysAgoFromAuthorizedDate(item?.payments[0]?.authorized_at) }}
+        </p>
+      </template>
 
       <template #item-advisor="{ advisor }">
         {{ advisor?.email }}
