@@ -334,10 +334,7 @@ class SendUpdateLogRepository extends BaseRepository
                 $sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate, true);
                 app(SplitPaymentService::class)->updateCommissionSchedule($payment);
 
-                $insuranceProviderId = $sendUpdate->insurance_provider_id ?? $payment->insurance_provider_id ?? null;
-                if (! $insuranceProviderId) {
-                    $insuranceProviderId = $payment->insurance_provider_id ?? null;
-                }
+                $insuranceProviderId = $insuranceProviderId ?? $payment->insurance_provider_id ?? null;
             }
 
             if ($insuranceProviderId && ($insuranceProvider = InsuranceProviderRepository::where('id', $insuranceProviderId)->first())) {
