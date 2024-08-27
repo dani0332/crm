@@ -150,6 +150,7 @@ const filters = reactive({
   booking_date: '',
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  segment_filter: '',
 });
 
 const canExport = ref(false);
@@ -350,7 +351,6 @@ const permissionsEnum = page.props.permissionsEnum;
 onMounted(() => {
   params = getSavedQueryParams() || params;
   setQueryStringFilters();
-
   let filtersCleaned = cleanObj(filters);
 
   if (filtersCleaned.sortBy) {

@@ -30,7 +30,6 @@ const SICHealthConfigForm = useForm({
 });
 
 onMounted(() => {
-    console.log(props.relations);
   if (props.relations?.health_plan_types?.length > 0) {
     SICHealthConfigForm.plan_types = props.relations?.health_plan_types.map((item)=>item.id) ?? [];
   }
@@ -96,7 +95,9 @@ const ageRangeValid = computed(() => {
     });
 </script>
 <template>
-    <Head title="SIC Health Configuration" />
+    <Head>
+        <title>SIC Health Configuration</title>
+    </Head>
     <div class="card p-4 shadow-md rounded-lg mb-4">
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">

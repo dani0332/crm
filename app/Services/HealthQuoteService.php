@@ -500,24 +500,19 @@ class HealthQuoteService extends BaseService
             $isEcommerce = $request->is_ecommerce == 'Yes' ? 1 : 0;
             $this->query->where('hqr.is_ecommerce', $isEcommerce);
         }
-        if( $request->has('segment_filter')) {
+        if ($request->has('segment_filter')) {
             $segmentFilter = $request->input('segment_filter');
-            $this->query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($query) {
-                $query->whereIn('hqr.uuid', function ($subQuery) {
-                    $subQuery->distinct()
-                        ->select('quote_uuid')
-                        ->from('quote_tags')
-                        ->where('name', QuoteSegmentEnum::SIC->tag())
-                        ->where('quote_type_id', QuoteTypeId::Health);
-                });
-            })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) {
-                $query->whereNotIn('hqr.uuid', function ($subQuery) {
-                    $subQuery->distinct()
-                        ->select('quote_uuid')
-                        ->from('quote_tags')
-                        ->where('name', QuoteSegmentEnum::SIC->tag())
-                        ->where('quote_type_id', QuoteTypeId::Health);
-                });
+            $subQueryCallback = function ($subQuery) {
+                $subQuery->distinct()
+                    ->select('quote_uuid')
+                    ->from('quote_tags')
+                    ->where('name', QuoteSegmentEnum::SIC->tag())
+                    ->where('quote_type_id', QuoteTypeId::Health);
+            };
+            $this->query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($query) use ($subQueryCallback) {
+                $query->whereIn('hqr.uuid', $subQueryCallback);
+            })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) use ($subQueryCallback) {
+                $query->whereNotIn('hqr.uuid', $subQueryCallback);
             });
         }
 
