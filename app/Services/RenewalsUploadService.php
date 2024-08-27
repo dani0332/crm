@@ -24,6 +24,7 @@ use App\Enums\RenewalsUploadType;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Exports\RenewalQuotesExport;
+use App\Facades\Ken;
 use App\Imports\TravelUploadAndCreateImport;
 use App\Imports\UploadAndCreateImport;
 use App\Imports\UploadAndUpdateImport;
@@ -1279,6 +1280,12 @@ class RenewalsUploadService
                         $emailTemplateId = 551; // keeping it as a fallback
                     }
                 }
+
+                // $endpoint = '/process-car-quote-plan';
+                // $data = [
+                //     'quoteUID' => $uuid,
+                // ];
+                // $response = Ken::request($endpoint, 'post', $data);
 
                 $previousAdvisor = null;
                 if (! empty($carQuote->previous_advisor_id)) {
