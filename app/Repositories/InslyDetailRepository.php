@@ -284,7 +284,10 @@ class InslyDetailRepository extends BaseRepository
                     $policy->code = $obj->code;
                     $policy->save();
                 }
-                $data[] = $this->where('policy_no', $policyNumber)->first()->toArray();
+                $inslyPolicy = $this->where('policy_no', $policyNumber)->first();
+                if ($inslyPolicy) {
+                    $data[] = $inslyPolicy->toArray();
+                }
 
                 return [
                     'status' => 201,
