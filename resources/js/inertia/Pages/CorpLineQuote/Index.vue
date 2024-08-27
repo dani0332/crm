@@ -464,11 +464,8 @@ const validateDateRange = () => {
   }
   return false;
 };
-const formatDate = date => {
-  if (!date) return '';
-  const options = { year: 'numeric', month: 'short', day: 'numeric' };
-  return new Date(date).toLocaleDateString('en-GB', options);
-};
+const formatDate = dateString =>
+  useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY').value;
 </script>
 
 <template>

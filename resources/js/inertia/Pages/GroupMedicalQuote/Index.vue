@@ -332,25 +332,8 @@ const validateDateRange = () => {
   }
   return false;
 };
-function formatDate(dateString) {
-  const monthNames = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  const [day, month, year] = dateString.split('-');
-  const formattedMonth = monthNames[parseInt(month, 10) - 1];
-  return `${day} ${formattedMonth} ${year}`;
-}
+const formatDate = dateString =>
+  useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY').value;
 </script>
 
 <template>

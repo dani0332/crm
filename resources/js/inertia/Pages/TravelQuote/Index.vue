@@ -347,13 +347,13 @@ const validateDateRange = () => {
   }
   return false;
 };
+
 const formatDate = date => {
   if (!date) return '';
   const [datePart] = date.split(' ');
   const [day, month, year] = datePart.split('-');
   const parsedDate = new Date(`${year}-${month}-${day}`);
-  const options = { year: 'numeric', month: 'short', day: 'numeric' };
-  return parsedDate.toLocaleDateString('en-GB', options).replace(',', '');
+  return useDateFormat(parsedDate, 'DD-MMM-YYYY').value;
 };
 </script>
 

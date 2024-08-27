@@ -206,12 +206,8 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
     return Math.floor(differenceInDays) + ' days';
   }
 }
-
-const formatDate = date => {
-  if (!date) return '';
-  const options = { year: 'numeric', month: 'short', day: 'numeric' };
-  return new Date(date).toLocaleDateString('en-GB', options);
-};
+const formatDate = dateString =>
+  useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY').value;
 const validateDateRange = () => {
   const { policy_expiry_date, policy_expiry_date_end } = filters;
   if (policy_expiry_date && policy_expiry_date_end) {
