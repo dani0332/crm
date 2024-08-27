@@ -296,12 +296,12 @@ class SendUpdateLogRepository extends BaseRepository
     {
         try {
             $sendUpdate = $this->find($data['id']);
-            $isNegative = app(SendUpdateLogService::class)->isNegativeValue($sendUpdate);
+            $sendUpdateLogService = app(SendUpdateLogService::class);
+            $isNegative = $sendUpdateLogService->isNegativeValue($sendUpdate);
             $bookingDetails = [
                 'is_booking_filled' => SendUpdateLogStatusEnum::BOOKING_FILLED,
                 // 'booking_date' => $data['booking_date'], // commented this because it will update when Sage Invoice created through Send Update
                 'invoice_description' => $data['invoice_description'],
-                'broker_invoice_number' => $data['broker_invoice_number'],
                 'transaction_payment_status' => $data['transaction_payment_status'],
                 'invoice_date' => $data['invoice_date'],
                 'insurer_tax_invoice_number' => $data['insurer_tax_invoice_number'] ?? null,
@@ -323,8 +323,6 @@ class SendUpdateLogRepository extends BaseRepository
                 $bookingDetails = array_merge($bookingDetails, ['reversal_invoice' => $data['reversal_invoice']]);
             }
 
-            $result = $sendUpdate->update($bookingDetails);
-
             $payment = Payment::where('send_update_log_id', $data['id'])->firstOrFail();
             if ($payment) {
                 $sendUpdateLogService = app(SendUpdateLogService::class);
@@ -332,7 +330,16 @@ class SendUpdateLogRepository extends BaseRepository
                 $sendUpdateLogService->sendUpdatePriceAndDiscount($sendUpdate, $payment);
                 $sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate, true);
                 app(SplitPaymentService::class)->updateCommissionSchedule($payment);
+
+                $insuranceProviderId = $sendUpdate->insurance_provider_id ?? $payment->insurance_provider_id ?? null;
+                if ($insuranceProviderId && ($insuranceProvider = InsuranceProviderRepository::where('id', $insuranceProviderId)->first())) {
+                    $bookingDetails['broker_invoice_number'] = $sendUpdateLogService->generateBrokerInvoiceNumber($sendUpdate, $insuranceProvider);
+                } else {
+                    vAbort('Send Update Log provider code not found.');
+                }
             }
+
+            $result = $sendUpdate->update($bookingDetails);
 
         } catch (\Exception $ex) {
             $result = (object) [

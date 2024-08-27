@@ -61,7 +61,7 @@ class PersonalQuoteRepository extends BaseRepository
                 $quote->quoteDetail()->updateOrCreate(['personal_quote_id' => $quote->id], $detailData);
             }
 
-            $activityCreated = (new CentralService())->saveAndAssignActivitesToAdvisor($quote, $quote->quote_type_id);
+            $activityCreated = (new CentralService)->saveAndAssignActivitesToAdvisor($quote, $quote->quote_type_id);
 
             QuoteStatusLog::create([
                 'quote_type_id' => $quote->quote_type_id,

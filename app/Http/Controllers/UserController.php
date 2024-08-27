@@ -51,8 +51,8 @@ class UserController extends Controller
                 'u1.email',
                 DB::raw('(SELECT GROUP_CONCAT(roles.name) FROM users INNER JOIN model_has_roles ON model_has_roles.model_id = users.id INNER JOIN roles ON roles.id = model_has_roles.role_id WHERE users.id = u1.id GROUP BY users.name) as roles'),
                 'teams.name as teamName',
-                'u1.created_at',
-                'u1.updated_at',
+                DB::raw('DATE_FORMAT(u1.updated_at, "%Y-%m-%d %H:%i") as updated_at'),
+                DB::raw('DATE_FORMAT(u1.created_at, "%Y-%m-%d %H:%i") as created_at'),
                 'u1.is_active',
             ])
             ->leftJoin('user_team', 'user_team.user_id', '=', 'u1.id')
@@ -164,7 +164,7 @@ class UserController extends Controller
     public function show(User $user)
     {
         $user['new_created_at'] = Carbon::createFromFormat('d-M-Y h:ia', $user->created_at)->format('Y-m-d H:i:s');
-        $user['new_updated_at'] = Carbon::createFromFormat('d-M-Y h:ia', $user->created_at)->format('Y-m-d H:i:s');
+        $user['new_updated_at'] = Carbon::createFromFormat('d-M-Y h:ia', $user->updated_at)->format('Y-m-d H:i:s');
 
         $subTeamName = '';
         $additionalTeamNames = '';

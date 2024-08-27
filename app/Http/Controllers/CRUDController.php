@@ -159,7 +159,7 @@ class CRUDController extends Controller
         EmailDataService $emailDataService,
         AllocationService $allocationService,
     ) {
-        $this->genericModel = new GenericModel();
+        $this->genericModel = new GenericModel;
         $this->healthQuoteService = $healthService;
         $this->teamsService = $teamsService;
         $this->crudService = $crudService;
@@ -541,7 +541,7 @@ class CRUDController extends Controller
         abort_if(! $record, 404);
 
         /* Start - Temporarily adding for correcting historic data  */
-        (new PaymentRepository())->updatePriceVatApplicableAndVat($record, $this->genericModel->modelType);
+        (new PaymentRepository)->updatePriceVatApplicableAndVat($record, $this->genericModel->modelType);
         /* End - Temporarily adding for correcting historic data  */
 
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($this->genericModel->modelType, $record);
@@ -836,7 +836,7 @@ class CRUDController extends Controller
 
             @[$documentTypes, $paymentDocument] = $this->quoteDocumentService->getDocumentTypes(QuoteTypeId::Home);
 
-            $quoteDocument = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::HOME->value, $record->id);
+            $quoteDocument = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::HOME->value, $record->id);
             $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::HOME->value, $payments, $quoteDocument);
             $noteDocumentType = DocumentType::where('code', DocumentTypeCode::OD)->first();
             $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::HOME->name);
@@ -1814,9 +1814,11 @@ class CRUDController extends Controller
         Log::info('Updating policy_issuer_id  : '.auth()->id());
 
         // store policy issuer
-        $payment = $quoteModel->payments->first();
-        $payment->policy_issuer_id = auth()->id();
-        $payment->save();
+        $payment = $quoteModel->payments()->mainLeadPayment()->first();
+        if ($payment) {
+            $payment->policy_issuer_id = auth()->id();
+            $payment->save();
+        }
 
         // update status policy issued of req fulfilled
         $this->updateQuoteStatus($request->modelType, $request->quote_id);

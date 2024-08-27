@@ -40,7 +40,7 @@ const expanded = items => {
           </template>
           <template #content="{ expand }">
             <ui-menu
-              class="ml-4 border-l border-secondary-600 pl-1"
+              class="ml-4 border-l border-secondary-700 pl-1"
               :items="item.items"
               :collapsible="collapsible"
               :collapse-icon="item.collapseIcon || collapseIcon"

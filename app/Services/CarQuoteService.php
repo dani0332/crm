@@ -205,6 +205,7 @@ class CarQuoteService extends BaseService
                 'cqr.policy_booking_date',
                 //'cqr.aml_status_id',
                 DB::raw('GROUP_CONCAT(team.name) as team_name'),
+                DB::raw('DATE_FORMAT(cqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
                 'cqr.insly_migrated',
             )
             ->leftJoin('payments as py', 'py.code', '=', 'cqr.code')
@@ -918,10 +919,11 @@ class CarQuoteService extends BaseService
             $dateTo = $this->parseDate($request['advisor_assigned_date_end'], false);
             $this->query->whereBetween('cqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
-        if (isset($request->policy_expiry_date) && $request->policy_expiry_date != '') {
+        if (isset($request->policy_expiry_date) && $request->policy_expiry_date != '' && isset($request->policy_expiry_date_end) && $request->policy_expiry_date_end != '') {
             $dateFrom = $this->parseDate($request['policy_expiry_date'], true);
             $dateTo = $this->parseDate($request['policy_expiry_date_end'], false);
             $this->query->whereBetween('cqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
+
         }
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
@@ -953,10 +955,10 @@ class CarQuoteService extends BaseService
             $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
             $freshLoad = ! isset($request->page);
             $startDate = isset($request->transaction_approved_dates) ?
-            Carbon::parse($request->transaction_approved_dates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
+                Carbon::parse($request->transaction_approved_dates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
 
             $endDate = isset($request->transaction_approved_dates) ?
-            Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
+                Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
 
             $this->query->whereBetween('cqr.transaction_approved_at', [$startDate, $endDate]);
         }
@@ -1184,8 +1186,23 @@ class CarQuoteService extends BaseService
     {
         $carQuote = CarQuote::select(
             [
-                'id', 'code', 'uuid', 'advisor_id', 'first_name', 'last_name', 'email', 'car_make_id', 'customer_id',
-                'car_model_id', 'currently_insured_with', 'quote_status_id', 'payment_status_id', 'policy_number', 'policy_expiry_date', 'previous_quote_policy_number', 'previous_policy_expiry_date',
+                'id',
+                'code',
+                'uuid',
+                'advisor_id',
+                'first_name',
+                'last_name',
+                'email',
+                'car_make_id',
+                'customer_id',
+                'car_model_id',
+                'currently_insured_with',
+                'quote_status_id',
+                'payment_status_id',
+                'policy_number',
+                'policy_expiry_date',
+                'previous_quote_policy_number',
+                'previous_policy_expiry_date',
             ]
         )->with(['advisor', 'carMake', 'carModel', 'customer' => function ($q) {
             $q->select('id', 'first_name', 'last_name')->with(['additionalContacts' => function ($q) {
@@ -1254,14 +1271,18 @@ class CarQuoteService extends BaseService
             ];
         }
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client;
 
         try {
+
+            info('FN: getQuotePlans request ready for KEN api');
+
             $kenRequest = $client->post(
                 $plansApiEndPoint,
                 [
                     'headers' => [
-                        'Content-Type' => 'application/json', 'Accept' => 'application/json',
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
                         'x-api-token' => $plansApiToken,
                         'Authorization' => 'Basic '.$authBasic,
                     ],
@@ -1272,13 +1293,19 @@ class CarQuoteService extends BaseService
 
             $getStatusCode = $kenRequest->getStatusCode();
 
+            info('FN: getQuotePlans response from KEN api status code: '.$getStatusCode);
+
             if ($getStatusCode == 200) {
                 $getContents = $kenRequest->getBody();
+                info('FN: getQuotePlans response ready');
                 $getdecodeContents = json_decode($getContents);
+                info('FN: getQuotePlans response payload decoded now');
 
                 return $getdecodeContents;
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+            Log::error('FN: getQuotePlans response from KEN api error: '.$e->getMessage());
+
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
@@ -1400,7 +1427,7 @@ class CarQuoteService extends BaseService
                 $plan_id = CarQuote::where('uuid', '=', $request->car_quote_uuid)->value('plan_id');
                 if ($plan_id == $request->car_plan_id) {
                     $request->merge(['plan_id' => $request->car_plan_id]);
-                    (new CentralService())->updateSelectedPlan(quoteTypeCode::Car, $request->car_quote_uuid, $request);
+                    (new CentralService)->updateSelectedPlan(quoteTypeCode::Car, $request->car_quote_uuid, $request);
                 }
                 $this->lockCarQuote($request->car_quote_uuid);
             }

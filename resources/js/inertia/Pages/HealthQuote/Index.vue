@@ -74,6 +74,12 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
+  {
+    text: 'POLICY EXPIRY DATE',
+    value: 'previous_policy_expiry_date',
+    is_active: true,
+    sortable: true,
+  },
   { text: 'HEALTH TEAM TYPE', value: 'health_team_type', is_active: true },
   { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
   { text: 'LOST REASON', value: 'lost_reason', is_active: true },
@@ -143,6 +149,8 @@ const filters = reactive({
   status_filters: null,
   payment_due_date: '',
   booking_date: '',
+  policy_expiry_date: '',
+  policy_expiry_date_end: '',
 });
 
 const canExport = ref(false);
@@ -224,6 +232,14 @@ const subTeamsOptions = [
 
 function onSubmit(isValid) {
   if (isValid) {
+    if (validateDateRange()) {
+      notification.error({
+        title:
+          'The selected date range exceeds one month. Please select a range within one month.',
+        position: 'top',
+      });
+      return;
+    }
     serverOptions.value.page = 1;
 
     const filtersCleaned = cleanObj(filters);
@@ -387,8 +403,11 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
         return "Expired";
     }
 
-    // Return the difference in days
-    return Math.floor(differenceInDays) + " days";
+    if(Math.floor(differenceInDays) === 1){
+        return Math.floor(differenceInDays) + " day";
+    }else {
+        return Math.floor(differenceInDays) + " days";
+    }
 }
 
 const readOnlyMode = reactive({
@@ -428,6 +447,30 @@ const resetDateFilters = filterName => {
     },
   );
 });
+const validateDateRange = () => {
+  const { policy_expiry_date, policy_expiry_date_end } = filters;
+  if (policy_expiry_date && policy_expiry_date_end) {
+    const startDate = new Date(policy_expiry_date);
+    const endDate = new Date(policy_expiry_date_end);
+    const oneMonthLater = new Date(startDate);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    // Adjust for months with fewer than 31 days
+    if (oneMonthLater.getDate() < startDate.getDate()) {
+      oneMonthLater.setDate(0);
+    }
+    if (endDate > oneMonthLater) {
+      return true;
+    }
+  }
+  return false;
+};
+const formatDate = date => {
+  if (!date) return '';
+  const [day, month, year] = date.split('-');
+  const parsedDate = new Date(`${year}-${month}-${day}`);
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  return parsedDate.toLocaleDateString('en-GB', options);
+};
 </script>
 
 <template>
@@ -564,6 +607,16 @@ const resetDateFilters = filterName => {
           name="quote_status"
           placeholder="Search by Lead Status"
           :options="leadStatusOptions"
+        />
+        <DatePicker
+          v-model="filters.policy_expiry_date"
+          name="policy_expiry_date"
+          label="Policy Expiry Start Date"
+        />
+        <DatePicker
+          v-model="filters.policy_expiry_date_end"
+          name="policy_expiry_date_end"
+          label="Policy Expiry End Date"
         />
         <ComboBox
           v-if="
@@ -778,6 +831,18 @@ const resetDateFilters = filterName => {
         <template #item-expiry_date="item">
             <p v-if="item.payment_status_text === 'AUTHORISED'">{{daysAgoFromAuthorizedDate(item.authorized_at)}}</p>
         </template>
+      <template
+        #item-previous_policy_expiry_date="{
+          previous_policy_expiry_date,
+          source,
+        }"
+      >
+        {{
+          source === 'Renewal_upload'
+            ? formatDate(previous_policy_expiry_date)
+            : ''
+        }}
+      </template>
       <template #item-price_starting_from="item">
         <p v-if="item.price_starting_from != null">
           {{ fixedValue(item.price_starting_from) }}

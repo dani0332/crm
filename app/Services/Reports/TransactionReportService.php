@@ -88,15 +88,13 @@ class TransactionReportService extends ManagementReport
             ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
             ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
-            ->leftJoin('user_team as ut', 'ut.user_id', '=', 'u.id')
-            ->leftJoin('teams as t', 't.id', '=', 'ut.team_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
             ->leftJoin('payment_methods as pm', 'pm.code', '=', 'p.payment_methods_code')
             ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'p.payment_gateway_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id');
 
-        $this->applyFilters($query, $request);
+        $this->applyFilters($query, $request, isSSR: true);
 
         $utmGroupBy = $this->getUtmGroup($request, $query);
 

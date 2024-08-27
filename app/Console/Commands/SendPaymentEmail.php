@@ -177,7 +177,7 @@ class SendPaymentEmail extends Command
             ->having('expiry_days', '=', 1)
             ->orderBy('total_leads', 'desc');
         $user = $query->get();
-        if ($user->isNotEmpty()) {
+        if ($user || $userData) {
             info("PaymentNotification Job Dispatch For {$role}");
             info('Payment Email Send to User: '.$userData->email);
             PaymentNotificationEmailJob::dispatch($user, $userData, $totalLead);

@@ -50,6 +50,8 @@ const filters = reactive({
   payment_due_date: '',
   booking_date: '',
   segment_filter: '',
+  policy_expiry_date: '',
+  policy_expiry_date_end: '',
 });
 
 const loader = reactive({
@@ -77,6 +79,11 @@ const tableHeader = [
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
+  {
+    text: 'POLICY EXPIRY DATE',
+    value: 'previous_policy_expiry_date',
+    sortable: true,
+  },
   { text: 'DATE OF BIRTH', value: 'dob' },
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'SOURCE', value: 'source' },
@@ -125,6 +132,14 @@ const subTeamOptions = [
 
 function onSubmit(isValid) {
   if (!isValid) {
+    return;
+  }
+  if (validateDateRange()) {
+    notification.error({
+      title:
+        'The selected date range exceeds one month. Please select a range within one month.',
+      position: 'top',
+    });
     return;
   }
   for (const key in filters) {
@@ -254,8 +269,11 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
         return "Expired";
     }
 
-    // Return the difference in days
-    return Math.floor(differenceInDays) + " days";
+    if(Math.floor(differenceInDays) === 1){
+        return Math.floor(differenceInDays) + " day";
+    }else {
+        return Math.floor(differenceInDays) + " days";
+    }
 }
 
 watch(
@@ -312,6 +330,31 @@ const resetDateFilters = filterName => {
     },
   );
 });
+const validateDateRange = () => {
+  const { policy_expiry_date, policy_expiry_date_end } = filters;
+  if (policy_expiry_date && policy_expiry_date_end) {
+    const startDate = new Date(policy_expiry_date);
+    const endDate = new Date(policy_expiry_date_end);
+    const oneMonthLater = new Date(startDate);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    // Adjust for months with fewer than 31 days
+    if (oneMonthLater.getDate() < startDate.getDate()) {
+      oneMonthLater.setDate(0);
+    }
+    if (endDate > oneMonthLater) {
+      return true;
+    }
+  }
+  return false;
+};
+const formatDate = date => {
+  if (!date) return '';
+  const [datePart] = date.split(' ');
+  const [day, month, year] = datePart.split('-');
+  const parsedDate = new Date(`${year}-${month}-${day}`);
+  const options = { year: 'numeric', month: 'short', day: 'numeric' };
+  return parsedDate.toLocaleDateString('en-GB', options).replace(',', '');
+};
 </script>
 
 <template>
@@ -422,6 +465,18 @@ const resetDateFilters = filterName => {
             name="quote_status_id"
             placeholder="Search by Lead Status"
             :options="leadsStatusOptions"
+          />
+        </x-field>
+        <x-field label="Policy Expiry Start Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date"
+            name="policy_expiry_date"
+          />
+        </x-field>
+        <x-field label="Policy Expiry End Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date_end"
+            name="policy_expiry_date_end"
           />
         </x-field>
         <x-field label="Advisor" v-if="!permissions.travelAdvisor">
@@ -616,6 +671,18 @@ const resetDateFilters = filterName => {
         <div class="text-center">
           {{ dob == '00-00-0000' ? '' : dob }}
         </div>
+      </template>
+      <template
+        #item-previous_policy_expiry_date="{
+          previous_policy_expiry_date,
+          source,
+        }"
+      >
+        {{
+          source === 'Renewal_upload'
+            ? formatDate(previous_policy_expiry_date)
+            : ''
+        }}
       </template>
 
       <template #item-is_ecommerce="{ is_ecommerce }">

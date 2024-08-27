@@ -18,7 +18,7 @@ defineProps({
 const page = usePage();
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
-
+const notification = useNotifications('toast');
 const loader = reactive({
   table: false,
   export: false,
@@ -43,6 +43,8 @@ let availableFilters = {
   stale_at: '',
   payment_due_date: '',
   booking_date: '',
+  policy_expiry_date: '',
+  policy_expiry_date_end: '',
 };
 
 const filters = reactive(availableFilters);
@@ -94,6 +96,12 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
+  {
+    text: 'POLICY EXPIRY DATE',
+    value: 'previous_policy_expiry_date',
+    is_active: true,
+    sortable: true,
+  },
   { text: 'PRICE', value: 'price_with_vat', is_active: true, sortable: true },
   { text: 'POLICY NO', value: 'policy_number', is_active: true },
   { text: 'SOURCE', value: 'source', is_active: true },
@@ -119,6 +127,14 @@ const permissionsEnum = page.props.permissionsEnum;
 
 function onSubmit(isValid) {
   if (isValid) {
+    if (validateDateRange()) {
+      notification.error({
+        title:
+          'The selected date range exceeds one month. Please select a range within one month.',
+        position: 'top',
+      });
+      return;
+    }
     serverOptions.value.page = 1;
 
     const filtersCleaned = cleanObj(filters);
@@ -277,8 +293,11 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
         return "Expired";
     }
 
-    // Return the difference in days
-    return Math.floor(differenceInDays) + " days";
+    if(Math.floor(differenceInDays) === 1){
+        return Math.floor(differenceInDays) + " day";
+    }else {
+        return Math.floor(differenceInDays) + " days";
+    }
 }
 const resetDateFilters = filterName => {
   const filterMappings = {
@@ -311,6 +330,27 @@ const resetDateFilters = filterName => {
     },
   );
 });
+const formatDate = date => {
+  if (!date) return '';
+  const options = { year: 'numeric', month: 'short', day: 'numeric' };
+  return new Date(date).toLocaleDateString('en-GB', options);
+};
+const validateDateRange = () => {
+  const { policy_expiry_date, policy_expiry_date_end } = filters;
+  if (policy_expiry_date && policy_expiry_date_end) {
+    const startDate = new Date(policy_expiry_date);
+    const endDate = new Date(policy_expiry_date_end);
+    const oneMonthLater = new Date(startDate);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    if (oneMonthLater.getDate() < startDate.getDate()) {
+      oneMonthLater.setDate(0);
+    }
+    if (endDate > oneMonthLater) {
+      return true;
+    }
+  }
+  return false;
+};
 </script>
 
 <template>
@@ -482,6 +522,18 @@ const resetDateFilters = filterName => {
             "
           />
         </x-field>
+        <x-field label="Policy Expiry Start Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date"
+            name="policy_expiry_date"
+          />
+        </x-field>
+        <x-field label="Policy Expiry End Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date_end"
+            name="policy_expiry_date_end"
+          />
+        </x-field>
         <x-field
           label="Advisor"
           v-if="
@@ -641,7 +693,18 @@ const resetDateFilters = filterName => {
       <template #item-advisor="{ advisor }">
         {{ advisor?.name }}
       </template>
-
+      <template
+        #item-previous_policy_expiry_date="{
+          previous_policy_expiry_date,
+          source,
+        }"
+      >
+        {{
+          source === 'Renewal_upload'
+            ? formatDate(previous_policy_expiry_date)
+            : ''
+        }}
+      </template>
       <template #item-quote_status="{ quote_status }">
         {{ quote_status?.text }}
       </template>

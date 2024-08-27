@@ -413,7 +413,7 @@ class SendEmailCustomerService extends BaseService
     public function getEmailSubjectFromSib($messageId)
     {
         try {
-            $client = new \GuzzleHttp\Client();
+            $client = new \GuzzleHttp\Client;
             $response = $client->request(
                 'GET',
                 $this->url.'s?messageId='.$messageId.'&sort=desc&limit=1&offset=0',
@@ -844,7 +844,7 @@ class SendEmailCustomerService extends BaseService
             $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
             info('sendBookPolicyDocumentsEmail ---- body '.$body);
 
-            $client = new \GuzzleHttp\Client();
+            $client = new \GuzzleHttp\Client;
             $clientRequest = $client->post(
                 config('constants.SIB_URL'),
                 [
@@ -1007,7 +1007,7 @@ class SendEmailCustomerService extends BaseService
                 'email' => $sendPolicyUpdateEmail,
             ]];
 
-            $client = new \GuzzleHttp\Client();
+            $client = new \GuzzleHttp\Client;
             $clientRequest = $client->post(
                 $this->url,
                 [
@@ -1069,7 +1069,7 @@ class SendEmailCustomerService extends BaseService
                 $total_leads += $users->total_leads;
             }
             $leadData = [
-                'total_premium' => $total_premium ? $total_premium : 0,
+                'total_premium' => $total_premium ? sprintf('%.2f', $total_premium) : 0,
                 'date' => Carbon::now()->toDateString(),
             ];
 

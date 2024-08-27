@@ -315,7 +315,7 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::CorpLineQuotesList,
             PermissionsEnum::VehicleValuationList,
         ])) {
-            $nav = $nav->add('Car', '', function (Section $section) {
+            $nav = $nav->add('Valuation', '', function (Section $section) {
                 $section
                     ->add('Valuation', route('valuation'), fn ($s) => $s->attributes(['icon' => 'car']))
                     ->add('Vehicle Depreciation', route('vehicledepreciation.index'), fn ($s) => $s->attributes(['icon' => 'car']));
@@ -447,8 +447,10 @@ class HandleInertiaRequests extends Middleware
             });
         }
         $adminMenuPermissions = [
-            PermissionsEnum::UsersList, PermissionsEnum::RoleList,
-            PermissionsEnum::TeamsList, PermissionsEnum::RENEWAL_BATCHES_LIST,
+            PermissionsEnum::UsersList,
+            PermissionsEnum::RoleList,
+            PermissionsEnum::TeamsList,
+            PermissionsEnum::RENEWAL_BATCHES_LIST,
             PermissionsEnum::COMMERCIAL_KEYWORDS,
             PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
             PermissionsEnum::RULE_CONFIG_LIST,

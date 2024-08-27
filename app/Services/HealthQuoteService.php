@@ -119,7 +119,7 @@ class HealthQuoteService extends BaseService
             'hqr.renewal_batch',
             'hqr.renewal_import_code',
             'hqr.previous_quote_policy_number',
-            'hqr.previous_policy_expiry_date',
+            DB::raw('DATE_FORMAT(hqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
             'hqr.previous_quote_policy_premium',
             'hqr.device',
             'hqr.wcu_id',
@@ -178,6 +178,7 @@ class HealthQuoteService extends BaseService
             'hqr.policy_issuance_status_other',
             'hqr.stale_at',
             DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
+            DB::raw('DATE_FORMAT(hqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
             'hqr.insly_migrated',
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
@@ -348,6 +349,11 @@ class HealthQuoteService extends BaseService
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], true);
             $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
+        }
+        if (isset($request->policy_expiry_date) && $request->policy_expiry_date != '' && isset($request->policy_expiry_date_end) && $request->policy_expiry_date_end != '') {
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['policy_expiry_date']));
+            $dateTo = date('Y-m-d 23:59:59', strtotime($request['policy_expiry_date_end']));
+            $this->query->whereBetween('hqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
         }
         if (! empty($request->created_at_start) && ! empty($request->created_at_end) && empty($request->payment_due_date) && empty($request->booking_date)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
@@ -876,7 +882,7 @@ class HealthQuoteService extends BaseService
 
     public function convertLeadToGM($lead)
     {
-        $businessLead = new BusinessQuote();
+        $businessLead = new BusinessQuote;
         $businessLead->first_name = $lead->first_name;
         $businessLead->last_name = $lead->last_name;
         $businessLead->email = $lead->email;
@@ -910,7 +916,7 @@ class HealthQuoteService extends BaseService
 
     public function generateUUID()
     {
-        $client = new Client();
+        $client = new Client;
         $alphabets = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
         $nanoId = $client->formattedId($alphabets, 8);
 
@@ -937,7 +943,7 @@ class HealthQuoteService extends BaseService
             'lang' => 'en',
         ];
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client;
 
         try {
             $kenRequest = $client->post(
@@ -1003,7 +1009,7 @@ class HealthQuoteService extends BaseService
             'lang' => 'en',
         ];
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client;
 
         try {
             $kenRequest = $client->post(
@@ -1700,7 +1706,7 @@ class HealthQuoteService extends BaseService
             $payment = $embededTransaction->payments[0];
             $maxAmount = $payment->premium_captured - $payment->premium_refunded;
             if ($maxAmount >= $request->amount) {
-                $paymentAction = new PaymentAction();
+                $paymentAction = new PaymentAction;
                 $paymentAction->payment_code = $payment->code; //$embededTransaction->code;
                 $paymentAction->is_fulfilled = 0;
                 $paymentAction->action_type = 'REFUND';
