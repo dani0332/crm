@@ -447,16 +447,6 @@ const validateDateRange = () => {
   }
   return false;
 };
-// const formatDate = date => {
-//   if (!date) return '';
-//   // Split the date into parts: day, month, year
-//   const [day, month, year] = date.split('-');
-//   // Create a new Date object using the parsed parts
-//   const parsedDate = new Date(`${year}-${month}-${day}`);
-//   // Format the date to '31 May 2023'
-//   const options = { year: 'numeric', month: 'long', day: 'numeric' };
-//   return parsedDate.toLocaleDateString('en-GB', options);
-// };
 
 const formatDate = dateString =>
   useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY').value;
