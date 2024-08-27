@@ -363,7 +363,7 @@ class EmbeddedProductRepository extends BaseRepository
         $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($short_code);
 
         [$attachments, $attachmentsUrls] = $this->fetchAttachments($ep, $isAlfredProtect);
-        
+
         $optionsIds = $ep->prices ? $ep->prices->pluck('id') : [];
         $quoteObject = $this->getQuoteObject($modelType, $quoteId);
         if (empty($quoteObject)) {
@@ -418,7 +418,6 @@ class EmbeddedProductRepository extends BaseRepository
 
         return [$attachments, $attachmentsUrls];
     }
-
 
     private function fetchAdvisorData($quoteObject)
     {
