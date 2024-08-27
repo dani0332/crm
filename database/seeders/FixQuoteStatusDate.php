@@ -25,7 +25,7 @@ class FixQuoteStatusDate extends Seeder
 
                     if ($lastHistoryWithLeadStatus && $lastHistoryWithLeadStatus->ModifiedAt) {
                         if (Carbon::parse($lastHistoryWithLeadStatus->ModifiedAt)->toDateTimeString() !== Carbon::parse($lead->quote_status_date)->toDateTimeString()) {
-                            info("FixQuoteStatusDate: Updating Lead Quote Status Date: {$lead->uuid}");
+                            info("FixQuoteStatusDate: Updating Lead Quote Status Date from {$lead->quote_status_date} to {$lastHistoryWithLeadStatus->ModifiedAt} for uuid: {$lead->uuid}");
                             HealthQuote::withoutEvents(function () use ($lead, $lastHistoryWithLeadStatus) {
                                 $lead->update([
                                     'quote_status_date' => Carbon::parse($lastHistoryWithLeadStatus->ModifiedAt),
