@@ -25,8 +25,8 @@ class SicConfigRequest extends FormRequest
             'is_nationality'=> 'nullable',
             'is_member_category' => 'nullable',
             'plan_types' => 'array|nullable',
-            'nationalities' => 'array | nullable',
-            'member_categories' => 'array |  nullable',
+            'nationalities' => 'array|nullable',
+            'member_categories' => 'array |nullable',
         ];
     }
 
