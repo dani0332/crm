@@ -15,7 +15,7 @@ class TravelQuoteObserver
 
     public function updating(TravelQuote $quote): void
     {
-        if ($quote->isDirty('quote_status_id')) {
+        if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
             $quote->quote_status_date = now();
         }
     }
