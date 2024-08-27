@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteBusinessTypeCode;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Events\PaymentExpireNotifications;
 use App\Traits\GenericQueriesAllLobs;
@@ -48,18 +49,29 @@ class PaymentExpireNotification extends Command
      */
     public function handle()
     {
-        $this->processNotifications('car_quote_request', 'car');
-        $this->processNotifications('health_quote_request', 'health');
-        $this->processNotifications('business_quote_request', 'business');
-        $this->processNotifications('business_quote_request', 'business', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical), 'medical/amt');
-        $this->processNotifications('personal_quotes', 'bike', QuoteTypeId::Bike, 'personal-quotes/bike');
-        $this->processNotifications('personal_quotes', 'cycle', QuoteTypeId::Cycle, 'personal-quotes/cycle');
-        $this->processNotifications('personal_quotes', 'yacht', QuoteTypeId::Yacht, 'personal-quotes/yacht');
-        $this->processNotifications('personal_quotes', 'pet', QuoteTypeId::Pet, 'personal-quotes/pet');
-        $this->processNotifications('personal_quotes', 'jetski', QuoteTypeId::Jetski, 'personal-quotes/jetski');
-        $this->processNotifications('personal_quotes', 'home', QuoteTypeId::Home, 'quotes/home');
-        $this->processNotifications('personal_quotes', 'life', QuoteTypeId::Life, 'quotes/life');
-        $this->processNotifications('travel_quote_request', 'travel', null, 'quotes/travel');
+        $leadTables = [
+            ['table' => 'car_quote_request', 'type' => quoteTypeCode::Car],
+            ['table' => 'health_quote_request', 'type' => quoteTypeCode::Health],
+            ['table' => 'business_quote_request', 'type' => quoteTypeCode::Business],
+            ['table' => 'business_quote_request', 'type' => quoteTypeCode::Business, 'quoteTypeId' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical), 'customPath' => 'medical/amt'],
+            ['table' => 'personal_quotes', 'type' => quoteTypeCode::Bike, 'quoteTypeId' => QuoteTypeId::Bike, 'customPath' => 'personal-quotes/bike'],
+            ['table' => 'personal_quotes', 'type' => quoteTypeCode::Cycle, 'quoteTypeId' => QuoteTypeId::Cycle, 'customPath' => 'personal-quotes/cycle'],
+            ['table' => 'personal_quotes', 'type' => quoteTypeCode::Yacht, 'quoteTypeId' => QuoteTypeId::Yacht, 'customPath' => 'personal-quotes/yacht'],
+            ['table' => 'personal_quotes', 'type' => quoteTypeCode::Pet, 'quoteTypeId' => QuoteTypeId::Pet, 'customPath' => 'personal-quotes/pet'],
+            ['table' => 'personal_quotes', 'type' => quoteTypeCode::Jetski, 'quoteTypeId' => QuoteTypeId::Jetski, 'customPath' => 'personal-quotes/jetski'],
+            ['table' => 'personal_quotes', 'type' => quoteTypeCode::Home, 'quoteTypeId' => QuoteTypeId::Home],
+            ['table' => 'personal_quotes', 'type' => quoteTypeCode::Life, 'quoteTypeId' => QuoteTypeId::Life],
+            ['table' => 'travel_quote_request', 'type' => quoteTypeCode::Travel],
+        ];
+
+        foreach ($leadTables as $tableData) {
+            $this->processNotifications(
+                $tableData['table'],
+                $tableData['type'],
+                $tableData['quoteTypeId'] ?? null,
+                $tableData['customPath'] ?? null
+            );
+        }
     }
 
     private function processNotifications(
@@ -98,7 +110,7 @@ class PaymentExpireNotification extends Command
         foreach ($notifications as $notification) {
             $model = $this->getModelObject(strtolower($type));
             $model = $model::find($notification->id);
-            $path = $customPath ?? "quotes/$type/$model->uuid";
+            $path = $customPath ? "$customPath/$model->uuid" : 'quotes/'.strtolower($type)."/$model->uuid";
             $url = url('/')."/$path";
             $quoteUuid = $notification->uuid;
             event(new PaymentExpireNotifications($model, $url, $quoteUuid));

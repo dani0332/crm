@@ -38,7 +38,7 @@ class PaymentExpireNotifications implements ShouldBroadcastNow
 
     public function broadcastWith()
     {
-        info('Payment Expire Notification sent to Advisor: '.$this->advisorId.' and Quote ID: '.$this->uuid);
+        info('Payment Expire Notification sent to Advisor: '.$this->advisorId.' and Quote ID: '.$this->quoteUuid);
 
         return [
             'uuid' => $this->uuid,
