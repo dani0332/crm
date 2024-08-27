@@ -16,6 +16,13 @@ class CarQuoteObserver
 {
     use PersonalQuoteSyncTrait;
 
+    public function updating(CarQuote $quote): void
+    {
+        if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
+            $quote->quote_status_date = now();
+        }
+    }
+
     public function updated(CarQuote $lead)
     {
         $dirty = $lead->getDirty();

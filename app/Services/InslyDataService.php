@@ -114,7 +114,7 @@ class InslyDataService extends BaseService
             quoteBusinessTypeCode::smeInsurance => ['sme packaged insurance'],
             quoteBusinessTypeCode::fidelityGuarantee => ['fidelity guarantee'],
             quoteBusinessTypeCode::goodsInTransit => ['road transit (uae only)'],
-            quoteBusinessTypeCode::MedicalMalpracticeInsurance => ['medical malpractice insurance'],
+            quoteBusinessTypeCode::medicalMalpractices => ['medical malpractice insurance'],
         ];
     }
 }
