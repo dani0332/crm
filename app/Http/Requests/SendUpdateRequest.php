@@ -6,6 +6,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
+use App\Services\SendUpdateLogService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SendUpdateRequest extends FormRequest
@@ -140,6 +141,9 @@ class SendUpdateRequest extends FormRequest
                 }
             }
 
+            if (app(SendUpdateLogService::class)->isPaymentVisible($sendUpdateCategoryCode, $categorySubType) && $sendUpdateLog->payments->isEmpty()) {
+                $validator->errors()->add('error', 'Please add payment details');
+            }
         });
     }
 }
