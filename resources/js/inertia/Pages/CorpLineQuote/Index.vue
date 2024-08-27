@@ -54,8 +54,8 @@ const filters = reactive({
   last_name: '',
   email: '',
   mobile_no: '',
-  created_at_start: '',
-  created_at_end: '',
+  created_at_start: new Date() || '',
+  created_at_end: new Date() || '',
   quote_status_id: [],
   advisor_id: [],
   business_type_of_insurance_id: [],
@@ -168,8 +168,8 @@ const setIntialState = () => {
     last_name: '',
     email: '',
     mobile_no: '',
-    created_at_start: '',
-    created_at_end: '',
+    created_at_start: new Date() || '',
+    created_at_end: new Date() || '',
     quote_status_id: [],
     advisor_id: [],
     business_type_of_insurance_id: [],
@@ -301,6 +301,29 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
 const onDataExport = () => {
+  let diff = calculateDaysDifference(
+    filters.created_at_start,
+    filters.created_at_end,
+  );
+
+  if (diff > 31) {
+    notification.error({
+      message: 'Maximum of 31 days (created date) are allowed to be exported.',
+      position: 'top',
+    });
+    return;
+  }
+
+  filters.created_at_start = useDateFormat(
+    filters.created_at_start,
+    'YYYY-MM-DD',
+  ).value;
+
+  filters.created_at_end = useDateFormat(
+    filters.created_at_end,
+    'YYYY-MM-DD',
+  ).value;
+
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'business');
   window.open(url + '?' + new URLSearchParams(data).toString());
@@ -308,7 +331,9 @@ const onDataExport = () => {
 
 function setQueryStringFilters() {
   for (const [key] of Object.entries(params)) {
-    if (key.includes('[]')) {
+    if (key == 'created_at_start' || key == 'created_at_end') {
+      filters[key] = useDateFormat(params[key], 'YYYY-MM-DD').value;
+    } else if (key.includes('[]')) {
       filters[key.substring(0, key.length - 2)] = params[key].map(value =>
         isNaN(parseInt(value)) ? value : parseInt(value),
       );
@@ -556,14 +581,32 @@ const formatDate = date => {
           <DatePicker
             v-model="filters.created_at_start"
             name="created_at_start"
-            :rules="[created_at_rule]"
+            :rules="
+              filters.previous_quote_policy_number ||
+              filters.code ||
+              filters.email ||
+              filters.renewal_batch ||
+              filters.payment_due_date ||
+              filters.booking_date
+                ? []
+                : [isRequired]
+            "
           />
         </x-field>
         <x-field label="Created Date End">
           <DatePicker
             v-model="filters.created_at_end"
             name="created_at_end"
-            :rules="[created_at_end_rule]"
+            :rules="
+              filters.previous_quote_policy_number ||
+              filters.code ||
+              filters.email ||
+              filters.renewal_batch ||
+              filters.payment_due_date ||
+              filters.booking_date
+                ? []
+                : [isRequired]
+            "
           />
         </x-field>
         <x-field label="Lead Status">
