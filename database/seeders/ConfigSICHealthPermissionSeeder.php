@@ -16,16 +16,16 @@ class ConfigSICHealthPermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        $roles = Role::whereIn('name', [RolesEnum::Admin,RolesEnum::Engineering])->get();
-        $permission =  Permission::firstOrCreate([
+        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
+        $permission = Permission::firstOrCreate([
             'name' => PermissionsEnum::SIC_HEALTH_CONFIG ?? 'sic-health-config',
             'guard_name' => 'web',
         ], [
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-         // Update permissions for each role
-         foreach ($roles as $role) {
+        // Update permissions for each role
+        foreach ($roles as $role) {
             // Check if the role already has the permission
             $record = DB::table('role_has_permissions')
                 ->where('role_id', $role->id)

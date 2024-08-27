@@ -47,5 +47,4 @@ class Nationality extends BaseModel
         return self::processGetBaseDSL($filters, 'nationality', ['code', 'id', 'text']);
     }
 
-    
 }

@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
-use Exception;
 use App\Enums\QuoteTypeId;
-use App\Models\Nationality;
 use App\Models\HealthPlanType;
 use App\Models\MemberCategory;
+use App\Models\Nationality;
 use App\Models\SICHealthConfig;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -20,7 +20,7 @@ class SICHealthConfigService extends BaseService
             ->first();
         // Initialize an array to group configurables by their model name
         $data = [];
-        if (!empty($sic) && !empty($sic->sicConfigurables)) {
+        if (! empty($sic) && ! empty($sic->sicConfigurables)) {
             // Get grouped data using the relationList method
             $groupedData = $this->relationList($sic->sicConfigurables);
             // Process and format the grouped data
@@ -35,7 +35,6 @@ class SICHealthConfigService extends BaseService
 
         }
 
-
         return (object) ['data' => $sic, 'relations' => $data];
     }
 
@@ -45,7 +44,7 @@ class SICHealthConfigService extends BaseService
         $modelAliases = [
             HealthPlanType::class => 'health_plan_types',
             Nationality::class => 'nationalities',
-            MemberCategory::class => 'member_categories'
+            MemberCategory::class => 'member_categories',
             // Add more model classes and their aliases as needed
         ];
         // Initialize an array to hold grouped data
@@ -57,49 +56,50 @@ class SICHealthConfigService extends BaseService
             // Use the alias or default to class name if alias not defined
             $alias = $modelAliases[$modelClass] ?? class_basename($modelClass);
             // Add configurable to the grouped data using alias
-            if (!isset($groupedConfigurable[$alias])) {
+            if (! isset($groupedConfigurable[$alias])) {
                 $groupedConfigurable[$alias] = [];
             }
             $groupedConfigurable[$alias][] = $configurable;
         }
+
         return $groupedConfigurable;
     }
     public function saveEntity($id, $data)
     {
 
         try {
-        $sicHealthConfig = SICHealthConfig::where('quote_type_id', QuoteTypeId::Health)->first();
-        $payload = [
-            'is_age' => $data['is_age'],
-            'min_age' => $data['min_age'],
-            'max_age' => $data['max_age'],
-            'is_type' => $data['is_type'],
-            'quote_type_id' => QuoteTypeId::Health,
-            'is_nationality' => $data['is_nationality'],
-            'is_member_category' => $data['is_member_category'],
-        ];
-        if (empty($sicHealthConfig)) {
-            $sicHealthConfig = SICHealthConfig::create($payload);
-        } else {
-            $sicHealthConfig->update($payload);
-        }
+            $sicHealthConfig = SICHealthConfig::where('quote_type_id', QuoteTypeId::Health)->first();
+            $payload = [
+                'is_age' => $data['is_age'],
+                'min_age' => $data['min_age'],
+                'max_age' => $data['max_age'],
+                'is_type' => $data['is_type'],
+                'quote_type_id' => QuoteTypeId::Health,
+                'is_nationality' => $data['is_nationality'],
+                'is_member_category' => $data['is_member_category'],
+            ];
+            if (empty($sicHealthConfig)) {
+                $sicHealthConfig = SICHealthConfig::create($payload);
+            } else {
+                $sicHealthConfig->update($payload);
+            }
 
-        // Sync relationships
-        if (isset($data['plan_types'])) {
-            $this->syncData($data['plan_types'], $sicHealthConfig->id, HealthPlanType::class);
-        }
+            // Sync relationships
+            if (isset($data['plan_types'])) {
+                $this->syncData($data['plan_types'], $sicHealthConfig->id, HealthPlanType::class);
+            }
 
-        if (isset($data['nationalities'])) {
-            $this->syncData($data['nationalities'], $sicHealthConfig->id, Nationality::class);
-        }
+            if (isset($data['nationalities'])) {
+                $this->syncData($data['nationalities'], $sicHealthConfig->id, Nationality::class);
+            }
 
-        if (isset($data['member_categories'])) {
-            $this->syncData($data['member_categories'], $sicHealthConfig->id, MemberCategory::class);
-        }
+            if (isset($data['member_categories'])) {
+                $this->syncData($data['member_categories'], $sicHealthConfig->id, MemberCategory::class);
+            }
 
-        return $sicHealthConfig;
+            return $sicHealthConfig;
         } catch (Exception $e) {
-        Log::error('SIC Health Config Error: ' . $e->getMessage());
+            Log::error('SIC Health Config Error: '.$e->getMessage());
         }
     }
 
@@ -121,7 +121,7 @@ class SICHealthConfigService extends BaseService
 
             // Insert new records if any
             if ($idsToInsert) {
-                $insertData = array_map(fn($planTypeId) => [
+                $insertData = array_map(fn ($planTypeId) => [
                     'sic_config_id' => $configId,
                     'configurable_type' => $configurableType,
                     'configurable_id' => $planTypeId,

@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Enums\PermissionsEnum;
 use App\Models\HealthPlanType;
+use App\Repositories\NationalityRepository;
 use App\Services\LookupService;
 use App\Services\SICHealthConfigService;
-use App\Repositories\NationalityRepository;
+use Illuminate\Http\Request;
 
 class SICHealthController extends Controller
 {
@@ -15,7 +15,7 @@ class SICHealthController extends Controller
     public $sicHealthConfigService;
     public function __construct(SICHealthConfigService $sicHealthConfigService)
     {
-        $this->middleware('permission:'.PermissionsEnum::SIC_HEALTH_CONFIG, ['only' => ['index', 'store',]]);
+        $this->middleware('permission:'.PermissionsEnum::SIC_HEALTH_CONFIG, ['only' => ['index', 'store']]);
         $this->sicHealthConfigService = $sicHealthConfigService;
 
     }
