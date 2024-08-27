@@ -144,7 +144,7 @@ class SendEmailCustomerService extends BaseService
         }
     }
 
-    public function sendEmail($emailTemplateId, $emailData, $tag)
+    public function sendEmail($emailTemplateId, $emailData, $tag, $cc = [])
     {
         try {
             $appEnv = config('constants.APP_ENV');
@@ -168,6 +168,7 @@ class SendEmailCustomerService extends BaseService
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->customerName,
                 ]],
+                'cc' => count($cc) > 0 ? $cc : null,
                 'templateId' => (int) $emailTemplateId,
                 'params' => [
                     'customerName' => $emailData->customerName,
