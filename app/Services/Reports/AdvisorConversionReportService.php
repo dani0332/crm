@@ -176,6 +176,14 @@ class AdvisorConversionReportService extends BaseService
 
     private function addSelect($query, $table)
     {
+        $getSaleLeadsQuery = function($sourceCondition, $as) use ($table) {
+            return strtr('SUM(CASE WHEN (
+                            (:table.quote_status_id in (:approvedStatuses) and :table.quote_status_date < ":policyBookingDate") OR
+                            (:table.quote_status_id = :policyBookedStatus and :table.quote_status_date >= ":policyBookingDate")
+                        ) and :table.source ' . $sourceCondition . ' (:excludedSources) THEN 1 ELSE 0 END
+                    ) as ' . $as, $this->getBindings($table));
+        };
+
         $query->addSelect(
             DB::raw(
                 strtr('SUM(CASE WHEN :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as total_leads', $this->getBindings($table))
@@ -195,20 +203,8 @@ class AdvisorConversionReportService extends BaseService
             DB::raw(
                 strtr('SUM(CASE WHEN :table.quote_status_id in (:badLeadsStatuses)  and :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as bad_leads', $this->getBindings($table))
             ),
-            DB::raw(
-                strtr('SUM(CASE WHEN (
-                            (:table.quote_status_id in (:approvedStatuses) and :table.quote_status_date < ":policyBookingDate") OR
-                            (:table.quote_status_id = :policyBookedStatus and :table.quote_status_date >= ":policyBookingDate")
-                        ) and :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END
-                    ) as sale_leads', $this->getBindings($table))
-            ),
-            DB::raw(
-                strtr('SUM(CASE WHEN (
-                            (:table.quote_status_id in (:approvedStatuses) and :table.quote_status_date < ":policyBookingDate") OR
-                            (:table.quote_status_id = :policyBookedStatus and :table.quote_status_date >= ":policyBookingDate")
-                        ) and :table.source IN (:excludedSources) THEN 1 ELSE 0 END
-                    ) as created_sale_leads', $this->getBindings($table))
-            ),
+            DB::raw($getSaleLeadsQuery('NOT IN', 'sale_leads')),
+            DB::raw($getSaleLeadsQuery('IN', 'created_sale_leads')),
             DB::raw(
                 strtr('SUM(CASE WHEN :table.quote_status_id = :imRenewal THEN 1 ELSE 0 END) and :table.source NOT IN (:excludedSources) as afia_renewals_count', $this->getBindings($table))
             ),
