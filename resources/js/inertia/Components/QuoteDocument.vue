@@ -108,6 +108,7 @@ const uploadFile = (doc, filesWithInfo) => {
       successStatus.value[doc.id] = true;
       router.reload({
         preserveScroll: true,
+        only: ['quoteDocuments'],
       });
     })
     .catch(error => {
