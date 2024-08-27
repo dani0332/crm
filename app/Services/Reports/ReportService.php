@@ -2,6 +2,7 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
@@ -10,6 +11,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
+use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\LeadSource;
 use App\Models\PaymentStatus;
@@ -535,6 +537,8 @@ class ReportService extends BaseService
     {
         $userRole = auth()->user();
         $userTeams = Auth::user()->getUserTeams(Auth::user()->id);
+        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+
         $leadTables = [
             RolesEnum::CarManager => ['table' => 'car_quote_request', 'quoteType' => null],
             RolesEnum::HealthManager => ['table' => 'health_quote_request', 'quoteType' => null],
@@ -560,7 +564,7 @@ class ReportService extends BaseService
                         DB::raw('COUNT(*) as total_leads'),
                         DB::raw('SUM('.$details['table'].'.premium) as total_premium'),
                         DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                        DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
+                        DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $authorizedDays->value DAY), NOW()) as expiry_days")
                     )
                     ->distinct()
                     ->leftJoin('payments as py', 'py.code', '=', $details['table'].'.code')
@@ -594,7 +598,7 @@ class ReportService extends BaseService
                 });
             }
             if (isset($request->expireDate)) {
-                $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL 8 DAY)'), '<=', $request->expireDate);
+                $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL  DAY)'), '<=', $request->expireDate);
             }
             if (isset($request->todayDate)) {
                 $query->having('expiry_days', '=', 1)

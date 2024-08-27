@@ -115,6 +115,7 @@ class HandleInertiaRequests extends Middleware
             'kycEnums' => Kyc::asArray(),
             'documentTypeCodeEnum' => DocumentTypeCode::asArray(),
             'paymentFrequencyEnum' => PaymentFrequency::asArray(),
+            'paymentAuthorizeDay' => paymentAuthorizeDay(),
         ];
     }
 

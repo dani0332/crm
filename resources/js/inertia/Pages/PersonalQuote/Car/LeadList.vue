@@ -405,7 +405,7 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
 
   // Calculate the new date by adding 8 days to the authorized date
   const newDate = new Date(parsedDate);
-  newDate.setDate(parsedDate.getDate() + 8);
+  newDate.setDate(parsedDate.getDate() + page.props.paymentAuthorizeDay);
 
   const currentDate = new Date();
 

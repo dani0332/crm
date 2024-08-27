@@ -2,10 +2,12 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Jobs\PaymentNotificationEmailJob;
+use App\Models\ApplicationStorage;
 use App\Models\User;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Console\Command;
@@ -47,6 +49,12 @@ class SendPaymentEmail extends Command
      */
     public function handle()
     {
+        $emailEnable = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION)->first();
+        if ($emailEnable && $emailEnable->value == 1) {
+            info('Payment Email is Disable');
+            return false;
+        }
+
         $getUsers = $this->getUsers();
         $userIds = $getUsers->pluck('id')->unique()->toArray();
         info('Payment Notification Email Job Dispatch');
@@ -149,6 +157,7 @@ class SendPaymentEmail extends Command
 
     public function getPaymentNotificationData($role, $userData, $table, $quoteTypeId = null)
     {
+        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $totalLead = getAuthorisePaymentCount($userData->id);
         $teamName = $userData->getUserTeams($userData->id);
 
@@ -156,8 +165,7 @@ class SendPaymentEmail extends Command
             ->select(
                 DB::raw('COUNT(*) as total_leads'),
                 DB::raw('SUM('.$table.'.premium) as total_premium'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
-
+                DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $authorizedDays->value DAY), NOW()) as expiry_days")
             )
             ->leftJoin('payments as py', 'py.code', '=', $table.'.code')
             ->join('users', 'users.id', $table.'.advisor_id')

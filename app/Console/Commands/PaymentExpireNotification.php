@@ -2,11 +2,13 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Events\PaymentExpireNotifications;
+use App\Models\ApplicationStorage;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Console\Command;
@@ -49,6 +51,13 @@ class PaymentExpireNotification extends Command
      */
     public function handle()
     {
+        $notificationEnable = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION)->first();
+        if ($notificationEnable && $notificationEnable->value == 1) {
+            info('Payment Expire Notification is Disable');
+
+            return false;
+        }
+
         $leadTables = [
             ['table' => 'car_quote_request', 'type' => quoteTypeCode::Car],
             ['table' => 'health_quote_request', 'type' => quoteTypeCode::Health],
@@ -80,6 +89,8 @@ class PaymentExpireNotification extends Command
         ?int $quoteTypeId = null,
         ?string $customPath = null
     ) {
+        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+
         $query = DB::table("$tableName as rq")
             ->leftJoin('payments as py', 'py.code', '=', 'rq.code')
             ->select(
@@ -88,7 +99,7 @@ class PaymentExpireNotification extends Command
                 'rq.advisor_id as advisor_id',
                 'rq.payment_status_id as payment_status_id',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
-                DB::raw('DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL 8 DAY), NOW()) as expiry_days')
+                DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $authorizedDays->value DAY), NOW()) as expiry_days")
             )
             ->whereNotNull('advisor_id')
             ->whereNotNull('py.authorized_at')

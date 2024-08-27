@@ -78,6 +78,8 @@ class DatabaseSeeder extends Seeder
 
             // AddPaymentPermissionsSeeder::class,
             //AddSendUpdatesCategoriesInLookups::class,
+            ApplicationStorageSeeder::class,
+
 
         ]);
     }
