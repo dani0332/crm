@@ -65,19 +65,19 @@ class SICConfigurableService extends BaseService
 
         return $groupedConfigurable;
     }
-    public function saveEntity($id, $data)
+    public function saveEntity($request)
     {
 
         try {
            $sicConfigurable = SICConfig::where('quote_type_id', QuoteTypeId::Health)->first();
             $payload = [
-                'is_age' => $data['is_age'],
-                'min_age' => $data['min_age'],
-                'max_age' => $data['max_age'],
-                'is_type' => $data['is_type'],
+                'is_age' => $request['is_age'],
+                'min_age' => $request['min_age'],
+                'max_age' => $request['max_age'],
+                'is_type' => $request['is_type'],
                 'quote_type_id' => QuoteTypeId::Health,
-                'is_nationality' => $data['is_nationality'],
-                'is_member_category' => $data['is_member_category'],
+                'is_nationality' => $request['is_nationality'],
+                'is_member_category' => $request['is_member_category'],
             ];
             if (empty($sicConfigurable)) {
                $sicConfigurable = SICConfig::create($payload);
@@ -85,16 +85,16 @@ class SICConfigurableService extends BaseService
                $sicConfigurable->update($payload);
             }
             // Sync relationships
-            if (isset($data['plan_types'])) {
-                $this->syncData($data['plan_types'],$sicConfigurable->id, HealthPlanType::class);
+            if (isset($request['plan_types'])) {
+                $this->syncData($request['plan_types'],$sicConfigurable->id, HealthPlanType::class);
             }
 
-            if (isset($data['nationalities'])) {
-                $this->syncData($data['nationalities'],$sicConfigurable->id, Nationality::class);
+            if (isset($request['nationalities'])) {
+                $this->syncData($request['nationalities'],$sicConfigurable->id, Nationality::class);
             }
 
-            if (isset($data['member_categories'])) {
-                $this->syncData($data['member_categories'],$sicConfigurable->id, MemberCategory::class);
+            if (isset($request['member_categories'])) {
+                $this->syncData($request['member_categories'],$sicConfigurable->id, MemberCategory::class);
             }
 
             return$sicConfigurable;
