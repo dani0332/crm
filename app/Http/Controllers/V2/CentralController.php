@@ -241,6 +241,7 @@ class CentralController extends Controller
 
             $quote->update([
                 'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
+                'quote_status_date' => now(),
             ]);
 
             info('Policy send to customer for '.$quote->uuid);
@@ -280,6 +281,7 @@ class CentralController extends Controller
             $quote->update([
                 'quote_status_id' => QuoteStatusEnum::PolicyBooked,
                 'policy_booking_date' => Carbon::now(),
+                'quote_status_date' => now(),
             ]);
 
             (new CentralService)->straightforwardPayments($payment, $paymentSplits, $quote);
@@ -553,6 +555,7 @@ class CentralController extends Controller
         if ($responseCode == 201) {
             if (isset($healthQuote)) {
                 $healthQuote->quote_status_id = QuoteStatusEnum::Quoted;
+                $healthQuote->quote_status_date = now();
                 $healthQuote->save();
             }
             info('sendHealthEmailOneClickBuy - OCB Email Sent & Quote Status Changed to "QUOTED" for quote uuid: '.$request->quote_uuid);
