@@ -511,7 +511,7 @@ class ApplicationStorageSeeder extends Seeder
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::ADVISOR_CONVERSION_QUOTE_STATUS_DATE],
             [
-                'value' => '2024-09-01',
+                'value' => '2024-12-01',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
