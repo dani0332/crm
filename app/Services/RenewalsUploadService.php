@@ -771,7 +771,7 @@ class RenewalsUploadService
             if ($isQuotePersonal) {
                 $detailData['additional_notes'] = $data['notes'].$customerData['notes'];
                 if ($previousAdvisor) {
-                    $quoteData['previous_advisor_id'] = $previousAdvisor->id;
+                    $detailData['previous_advisor_id'] = $previousAdvisor->id;
                 }
                 $quoteData['quote_type_id'] = $quoteType->id;
             } else {
