@@ -2189,11 +2189,17 @@ const fullAddress = computed(() => {
                   <dt class="font-medium">EMAIL</dt>
                   <dd>{{ record.email }}</dd>
                 </div>
-                <div class="grid sm:grid-cols-2" v-if="quoteCourierStatus == 'Pending'">
+                <div
+                  class="grid sm:grid-cols-2"
+                  v-if="quoteCourierStatus == 'Pending'"
+                >
                   <dt class="font-medium">ADDRESS TYPE</dt>
                   <dd>{{ customerAddressData?.type }}</dd>
                 </div>
-                <div class="grid sm:grid-cols-2" v-if="quoteCourierStatus == 'Pending'">
+                <div
+                  class="grid sm:grid-cols-2"
+                  v-if="quoteCourierStatus == 'Pending'"
+                >
                   <dt class="font-medium">
                     {{
                       !customerAddressData?.type ||
