@@ -156,7 +156,7 @@ class AdvisorConversionReportService extends BaseService
             ':excludedSources' => $excludedSources,
             ':quoteStatusDate' => $this->getAdvisorConversionQuoteStatusDate(),
             ':policyBookedStatus' => QuoteStatusEnum::PolicyBooked,
-            ':approvedStatuses' => implode(',', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyBooked]),
+            ':approvedStatuses' => implode(',', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicySentToCustomer]),
             ':badLeadsStatuses' => implode(',', [QuoteStatusEnum::Duplicate, QuoteStatusEnum::Fake]),
             ':imRenewal' => QuoteStatusEnum::IMRenewal,
             ':notInterestedStatuses' => implode(',', [
