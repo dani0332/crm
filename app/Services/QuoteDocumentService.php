@@ -492,8 +492,27 @@ class QuoteDocumentService extends BaseService
 
         $image = $manager->read($file);
 
+        // Get image dimensions
+        $imageWidth = $image->width();
+        $imageHeight = $image->height();
+
+        if ($imageWidth > 1000) {
+            $watermarkPath = public_path('images/watermark2AA4.png');
+        } else {
+            $watermarkPath = public_path('images/watermark2.png');
+        }
+
+        // resize the watermark based on the image size
+        $watermark = $manager->read($watermarkPath)->resize(
+            intval($imageWidth),
+            intval($imageHeight),
+            function ($constraint) {
+                $constraint->aspectRatio();
+            }
+        );
+
         $image->place(
-            public_path('images/watermark2.png'),
+            $watermark,
             'center',
             10,
             10,

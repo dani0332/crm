@@ -108,7 +108,6 @@ const uploadFile = (doc, filesWithInfo) => {
       successStatus.value[doc.id] = true;
       router.reload({
         preserveScroll: true,
-        only: ['quoteDocuments'],
       });
     })
     .catch(error => {
@@ -380,7 +379,7 @@ onMounted(() => {
                 :key="quoteDocument.id"
               >
                 <a
-                  :href="storageUrl + quoteDocument.doc_url"
+                  :href="storageUrl + (quoteDocument.watermarked_doc_url ?? quoteDocument.doc_url)"
                   target="_blank"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
                 >
