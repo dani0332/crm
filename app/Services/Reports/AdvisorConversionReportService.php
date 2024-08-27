@@ -146,7 +146,7 @@ class AdvisorConversionReportService extends BaseService
         return [
             ':table' => $table,
             ':excludedSources' => $excludedSources,
-            ':policyBookingDate' => Carbon::parse('2024-09-01')->toDateTimeString(),
+            ':quoteStatusDate' => Carbon::parse('2024-09-01')->toDateTimeString(),
             ':policyBookedStatus' => QuoteStatusEnum::PolicyBooked,
             ':approvedStatuses' => implode(',', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyBooked]),
             ':badLeadsStatuses' => implode(',', [QuoteStatusEnum::Duplicate, QuoteStatusEnum::Fake]),
@@ -176,12 +176,12 @@ class AdvisorConversionReportService extends BaseService
 
     private function addSelect($query, $table)
     {
-        $getSaleLeadsQuery = function($sourceCondition, $as) use ($table) {
+        $getSaleLeadsQuery = function ($sourceCondition, $as) use ($table) {
             return strtr('SUM(CASE WHEN (
-                            (:table.quote_status_id in (:approvedStatuses) and :table.quote_status_date < ":policyBookingDate") OR
-                            (:table.quote_status_id = :policyBookedStatus and :table.quote_status_date >= ":policyBookingDate")
-                        ) and :table.source ' . $sourceCondition . ' (:excludedSources) THEN 1 ELSE 0 END
-                    ) as ' . $as, $this->getBindings($table));
+                            (:table.quote_status_id in (:approvedStatuses) and :table.quote_status_date < ":quoteStatusDate") OR
+                            (:table.quote_status_id = :policyBookedStatus and :table.quote_status_date >= ":quoteStatusDate")
+                        ) and :table.source '.$sourceCondition.' (:excludedSources) THEN 1 ELSE 0 END
+                    ) as '.$as, $this->getBindings($table));
         };
 
         $query->addSelect(
