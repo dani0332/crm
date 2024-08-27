@@ -27,5 +27,4 @@ trait Enumable
 
         return $values;
     }
-
 }

@@ -40,27 +40,27 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
     {
         try {
             $lead = HealthQuote::where('uuid', $this->quoteUuid)->first();
+        
             if (! $lead) {
-                info('SendHealthOCBIntroEmailJob - Lead not found for uuid: '.$this->quoteUuid);
-
+                info("SendHealthOCBIntroEmailJob - Lead not found for UUID: {$this->quoteUuid}");
                 return;
             }
+        
             if ($lead->sic_flow_enabled) {
-                info('SendHealthOCBIntroEmailJob - SIC work flow is enabled on this lead already : '.$this->quoteUuid);
-
+                info("SendHealthOCBIntroEmailJob - SIC workflow is already enabled for UUID: {$this->quoteUuid}");
                 return;
-            } else {
-                info('SendHealthOCBIntroEmailJob - SIC work flow is not enabled on this lead : '.$this->quoteUuid);
-                $responseCode = $healthEmailService->sendHealthOCBIntroEmail($lead, $healthQuoteService, $this->triggerSICWorkflow);
-                if (in_array($responseCode, [200, 201])) {
-                    info('SendHealthOCBIntroEmailJob - OCB INTRO Email Sent: '.$responseCode.' Customer Email Address: '.$lead->email.' Quote UuId: '.$this->quoteUuid);
-                } else {
-                    Log::error('SendHealthOCBIntroEmailJob - OCB INTRO Email Not Sent: '.$responseCode.' Customer EmailAddress:'.$lead->email);
-                }
             }
+        
+            info("SendHealthOCBIntroEmailJob - SIC workflow is not enabled for UUID: {$this->quoteUuid}");
+            $responseCode = $healthEmailService->sendHealthOCBIntroEmail($lead, $healthQuoteService, $this->triggerSICWorkflow);
+        
+            $logMessage = in_array($responseCode, [200, 201])
+                ? "OCB INTRO Email Sent"
+                : "OCB INTRO Email Not Sent";
+        
+            info("SendHealthOCBIntroEmailJob - {$logMessage}: {$responseCode} | Email: {$lead->email} | UUID: {$this->quoteUuid}");
         } catch (Exception $e) {
-            info('SendHealthOCBIntroEmailJob - Error: '.$e->getMessage().' with stack trace: '.$e->getTraceAsString());
+            Log::error("SendHealthOCBIntroEmailJob - Exception: {$e->getMessage()} | Stack Trace: {$e->getTraceAsString()}");
         }
     }
-
 }
