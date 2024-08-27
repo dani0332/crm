@@ -1043,11 +1043,11 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    public function sendPaymentNotificationEmail($user, $userData,$totalLead)
+    public function sendPaymentNotificationEmail($user, $userData, $totalLead)
     {
         $emailTemplateId = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_NOTIFICATION_EMAIL_TEMPLATE)->value('value');
         try {
-            $tag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv . '-';
+            $tag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.'-';
             $headers = [
                 'Accept' => 'application/json',
                 'api-key' => $this->apiKey,
@@ -1095,14 +1095,14 @@ class SendEmailCustomerService extends BaseService
             ];
 
             $body = json_encode([
-                'sender' => ['name' => $tag . ' ' . 'IMCRM Payment Notification Alert', 'email' => 'no-reply@alert.insurancemarket.email'],
+                'sender' => ['name' => $tag.' '.'IMCRM Payment Notification Alert', 'email' => 'no-reply@alert.insurancemarket.email'],
                 'to' => $advisorData,
                 'replyTo' => $replyTo,
                 //  'bcc' => array_merge($bccAdditional),  //    'bcc' => array_merge($bccAdditional, $bcc),
                 'templateId' => intval($emailTemplateId),
                 'params' => $params,
             ], JSON_UNESCAPED_SLASHES);
-            $client = new \GuzzleHttp\Client();
+            $client = new \GuzzleHttp\Client;
             $clientRequest = $client->post(
                 $this->url,
                 [
@@ -1112,10 +1112,10 @@ class SendEmailCustomerService extends BaseService
                 ]
             );
             $responseCode = $clientRequest->getStatusCode();
-            info('sendPaymentNotificationEmail ---- response object : ' . json_encode($clientRequest->getBody()->getContents()));
+            info('sendPaymentNotificationEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $responseDetail = 'sendPaymentNotificationEmail: Code/Message: ' . $responseCode . '/' . $ex->getMessage();
+            $responseDetail = 'sendPaymentNotificationEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
             Log::error($responseDetail);
         }
     }
