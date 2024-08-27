@@ -16,7 +16,7 @@ class SICConfigurableController extends Controller
     public $sicConfigurableService;
     public function __construct(SICConfigurableService $sicConfigurableService)
     {
-        // $this->middleware('permission:'.PermissionsEnum::SIC_HEALTH_CONFIG, ['only' => ['index', 'store']]);
+        $this->middleware('permission:'.PermissionsEnum::SIC_HEALTH_CONFIG, ['only' => ['index', 'store']]);
         $this->sicConfigurableService = $sicConfigurableService;
 
     }
