@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Jobs\SICHealthFollowupEmailJob;
 use App\Models\User;
 
 class HealthEmailService extends BaseService
@@ -47,7 +46,6 @@ class HealthEmailService extends BaseService
         return $responseCode ?? null;
     }
 
-
     public function mappingEmailDataFormail($lead, $advisor)
     {
         return (object) [
@@ -63,7 +61,7 @@ class HealthEmailService extends BaseService
             'requestAdvisorLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
             'quotePlanApiLink' => config('constants.KEN_API_ENDPOINT').'/get-health-quote-plans-order-priority?'.$lead->uuid.'&lang=en&isModified=true',
             'ApiToken' => config('constants.KEN_API_TOKEN'),
-            'basicAuth'=> 'Basic '.base64_encode(config('constants.KEN_API_USER').':'.config('constants.KEN_API_PWD')),
+            'basicAuth' => 'Basic '.base64_encode(config('constants.KEN_API_USER').':'.config('constants.KEN_API_PWD')),
             'landLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
             'mobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
             'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
