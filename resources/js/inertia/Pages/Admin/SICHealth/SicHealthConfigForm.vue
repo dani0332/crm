@@ -1,6 +1,6 @@
 <script setup>
 const props = defineProps({
-  sicHealthConfig: Object,
+  sicConfigurable: Object,
   relations: Object,
   nationalities: Object,
   memberCategories: Object,
@@ -12,30 +12,30 @@ const notification = useToast();
 const { isRequired } = useRules();
 let errors = reactive({});
 
-const SICHealthConfigForm = useForm({
-  id: props.sicHealthConfig?.id ?? null,
-  min_age: props.sicHealthConfig?.min_age ?? 0,
-  max_age: props.sicHealthConfig?.max_age ?? 0,
+const sicConfigurableForm = useForm({
+  id: props.sicConfigurable?.id ?? null,
+  min_age: props.sicConfigurable?.min_age ?? 0,
+  max_age: props.sicConfigurable?.max_age ?? 0,
   plan_types: [],
-  is_type: props.sicHealthConfig?.is_type ?? false,
+  is_type: props.sicConfigurable?.is_type ?? false,
   nationalities: [],
   member_categories: [],
-  is_nationality: props.sicHealthConfig?.is_nationality ?? false,
-  is_member_category: props.sicHealthConfig?.is_member_category ?? false,
-  is_age: props.sicHealthConfig?.is_age ?? false,
+  is_nationality: props.sicConfigurable?.is_nationality ?? false,
+  is_member_category: props.sicConfigurable?.is_member_category ?? false,
+  is_age: props.sicConfigurable?.is_age ?? false,
 });
 
 onMounted(() => {
   if (props.relations?.health_plan_types?.length > 0) {
-    SICHealthConfigForm.plan_types =
+    sicConfigurableForm.plan_types =
       props.relations?.health_plan_types.map(item => item.id) ?? [];
   }
   if (props.relations?.nationalities?.length > 0) {
-    SICHealthConfigForm.nationalities =
+    sicConfigurableForm.nationalities =
       props.relations?.nationalities.map(item => item.id) ?? [];
   }
   if (props.relations?.member_categories?.length > 0) {
-    SICHealthConfigForm.member_categories =
+    sicConfigurableForm.member_categories =
       props.relations?.member_categories.map(item => item.id) ?? [];
   }
 });
@@ -43,10 +43,10 @@ function onSubmit(isValid) {
   if (isValid) {
     let method = 'post';
     let url = route('admin.sic-health-config.store');
-    SICHealthConfigForm.submit(method, url, {
+    sicConfigurableForm.submit(method, url, {
       onError: errors => {
         Object.keys(errors).forEach(function (key) {
-          SICHealthConfigForm.setError(key, errors[key]);
+          sicConfigurableForm.setError(key, errors[key]);
         });
         return false;
       },
@@ -78,8 +78,8 @@ const healthTypesOptions = computed(() => {
 });
 
 const ageRangeValid = computed(() => {
-  const minAge = parseInt(SICHealthConfigForm.min_age);
-  const maxAge = parseInt(SICHealthConfigForm.max_age);
+  const minAge = parseInt(sicConfigurableForm.min_age);
+  const maxAge = parseInt(sicConfigurableForm.max_age);
   if (minAge > maxAge) {
     errors.min_age = 'Min Age must be less than or equal to Max Age';
     return false;
@@ -106,14 +106,14 @@ const ageRangeValid = computed(() => {
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
         <div class="col-span-1 sm:col-span-1">
-          <x-checkbox v-model="SICHealthConfigForm.is_age" label="Age" />
+          <x-checkbox v-model="sicConfigurableForm.is_age" label="Age" />
           <div
             class="grid sm:grid-cols-2 gap-4"
-            v-if="SICHealthConfigForm.is_age"
+            v-if="sicConfigurableForm.is_age"
           >
             <x-field label="Min Age" required>
               <x-input
-                v-model="SICHealthConfigForm.min_age"
+                v-model="sicConfigurableForm.min_age"
                 placeholder="Min Age"
                 class="w-full"
                 :rules="[isRequired, ageRangeValid]"
@@ -122,7 +122,7 @@ const ageRangeValid = computed(() => {
             </x-field>
             <x-field label="Max Age" required>
               <x-input
-                v-model="SICHealthConfigForm.max_age"
+                v-model="sicConfigurableForm.max_age"
                 class="w-full"
                 placeholder="Max Age"
                 :rules="[isRequired]"
@@ -132,18 +132,18 @@ const ageRangeValid = computed(() => {
           </div>
         </div>
         <div class="col-span-1 sm:col-span-1">
-          <x-checkbox v-model="SICHealthConfigForm.is_type" label="Plan Type" />
+          <x-checkbox v-model="sicConfigurableForm.is_type" label="Plan Type" />
           <div
             class="grid sm:grid-cols-1 gap-4"
-            v-if="SICHealthConfigForm.is_type"
+            v-if="sicConfigurableForm.is_type"
           >
             <x-field label="Types">
               <ComboBox
-                v-model="SICHealthConfigForm.plan_types"
+                v-model="sicConfigurableForm.plan_types"
                 :options="healthTypesOptions"
                 :multiple="true"
                 :autocomplete="true"
-                :error="SICHealthConfigForm?.errors.plan_types"
+                :error="sicConfigurableForm?.errors.plan_types"
               />
             </x-field>
           </div>
@@ -154,40 +154,40 @@ const ageRangeValid = computed(() => {
         <!-- Nationality -->
         <div class="col-span-1 sm:col-span-1">
           <x-checkbox
-            v-model="SICHealthConfigForm.is_nationality"
+            v-model="sicConfigurableForm.is_nationality"
             label="Nationality"
           />
           <div
             class="grid sm:grid-cols-1 gap-4"
-            v-if="SICHealthConfigForm.is_nationality"
+            v-if="sicConfigurableForm.is_nationality"
           >
             <x-field label="Nationalities">
               <ComboBox
-                v-model="SICHealthConfigForm.nationalities"
+                v-model="sicConfigurableForm.nationalities"
                 :options="nationalitiesOptions"
                 :multiple="true"
                 :autocomplete="true"
-                :error="SICHealthConfigForm?.errors.nationalities"
+                :error="sicConfigurableForm?.errors.nationalities"
               />
             </x-field>
           </div>
         </div>
         <div class="col-span-1 sm:col-span-1">
           <x-checkbox
-            v-model="SICHealthConfigForm.is_member_category"
+            v-model="sicConfigurableForm.is_member_category"
             label="Member Category "
           />
           <div
             class="grid sm:grid-cols-1 gap-4"
-            v-if="SICHealthConfigForm.is_member_category"
+            v-if="sicConfigurableForm.is_member_category"
           >
             <x-field label="Member Categories">
               <ComboBox
-                v-model="SICHealthConfigForm.member_categories"
+                v-model="sicConfigurableForm.member_categories"
                 :options="memberCategoriesOptions"
                 :multiple="true"
                 :autocomplete="true"
-                :error="SICHealthConfigForm?.errors.member_categories"
+                :error="sicConfigurableForm?.errors.member_categories"
               />
             </x-field>
           </div>
@@ -196,8 +196,8 @@ const ageRangeValid = computed(() => {
     </x-form>
   </div>
   <AuditLogs
-    :type="'App\\Models\\SICHealthConfig'"
-    :id="$page.props.sicHealthConfig?.id"
+    :type="'App\\Models\\sicConfigurable'"
+    :id="$page.props.sicConfigurable?.id"
     :expanded="sectionExpanded"
   />
 </template>

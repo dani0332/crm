@@ -304,7 +304,7 @@ class CRUDController extends Controller
                 'todayManualCount' => $todayManualCount,
                 'yesterdayAutoCount' => $yesterdayAutoCount,
                 'yesterdayManualCount' => $yesterdayManualCount,
-                'quoteSegments' => QuoteSegmentEnum::withLabelsForHealth(),
+                'quoteSegments' => QuoteSegmentEnum::withLabels(QuoteTypeId::Health),
                 'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : HealthQuoteRepository::getData(true, true),
             ]);
         }

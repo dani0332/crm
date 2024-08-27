@@ -15,27 +15,21 @@ class HealthEmailService extends BaseService
     public function sendHealthOCBIntroEmail($lead, $healthQuoteService, $triggerSICWorkFlow = false)
     {
         // Retrieve plans with available ratings for the given lead
-
         info('sic sendHealthOCBEmail - Ref ID:'.$lead->uuid.'| Time: '.now());
         if ($triggerSICWorkFlow) {
             if (! $lead->sic_flow_enabled) {
-                $advisor = User::where('id', $lead->advisor_id)->first();
-                $emailData = $this->mappingEmailDataForEmail($lead, $advisor);
-                $sicEventName = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
-
-                if (! $lead->sic_flow_enabled) {
-                    if ($sicEventName) {
-                        $responseCode = $this->birdService->sendSICHealthWorkFlow($emailData);
+                    $advisor = User::where('id', $lead->advisor_id)->first();
+                    $emailData = $this->mappingEmailDataForMail($lead, $advisor);
+                    $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
+                    if ($sicEvent) {
+                        $responseCode = $this->birdService->triggerWebHookRequest($sicEvent->value,$emailData);
                         $lead->sic_flow_enabled = true;
                         $lead->save();
-                        info('SIC Health workflow event triggered for lead: '.$lead->uuid.' and sic_flow_enabled: Ref-ID'.$lead->sic_flow_enabled.'|Time: '.now());
-                        info('SIC Health workflow response: '.$responseCode.' | Ref-ID'.$lead->sic_flow_enabled.'|Time: '.now());
+                        info('SIC Health workflow event triggered for lead  Ref-ID'.$lead->uuid.'|Time: '.now());
+                        info('SIC Health workflow response: '.$responseCode.' | Ref-ID'.$lead->uuid.'|Time: '.now());
                     } else {
                         info('SIC Health workflow key not found for lead : Ref-ID: '.$lead->uuid.' |Time: '.now());
                     }
-                } else {
-                    info('SIC Health workflow already enabled for lead: : Ref-ID: '.$lead->uuid.' |Time: '.now());
-                }
             } else {
                 info('SIC Health workflow already enabled for lead Ref-ID: '.$lead->uuid.' | Time: '.now());
             }
@@ -46,7 +40,7 @@ class HealthEmailService extends BaseService
         return $responseCode ?? null;
     }
 
-    public function mappingEmailDataFormail($lead, $advisor)
+    public function mappingEmailDataForMail($lead, $advisor)
     {
         return (object) [
             'quoteUID' => $lead->uuid,

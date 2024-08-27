@@ -35,7 +35,7 @@ use App\Http\Controllers\RenewalsUploadController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SageApi;
-use App\Http\Controllers\SICHealthController;
+use App\Http\Controllers\SICConfigurableController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TmCallStatusController;
@@ -370,7 +370,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::group(['prefix' => 'admin'], function () {
         Route::resource('users', UserController::class);
         Route::resource('roles', RoleController::class);
-        Route::resource('sic-health-config', SICHealthController::class)->names([
+        Route::resource('sic-health-config', SICConfigurableController::class)->names([
             'index' => 'admin.sic-health-config.index',
             'store' => 'admin.sic-health-config.store',
         ]);
