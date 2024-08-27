@@ -34,6 +34,7 @@ class RetentionReportService extends BaseService
     public function __construct() {
         $this->dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $this->policyExpiryColumnName = 'personal_quotes.policy_expiry_date';
+        $this->policyExpiryColumnName = 'personal_quotes.created_at';
         $this->paginateData = 12;
     }
 
@@ -52,6 +53,7 @@ class RetentionReportService extends BaseService
         // Build the query based on the model object and request parameters
         $query = $this->buildQuery($request);
 
+        // $query->dd();    
         $allData = $query->get();
 
         $aggregatedData= $this->getSummarizedData($allData);
@@ -189,7 +191,7 @@ class RetentionReportService extends BaseService
         $query->where('quote_type_id', $lobId->id);
 
         // Uncomment when move to stage or when we have renewel_upload data 
-        $query->where('source', LeadSourceEnum::RENEWAL_UPLOAD);
+        // $query->where('source', LeadSourceEnum::RENEWAL_UPLOAD);
         if (in_array($quoteType, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE])){
             if ($quoteType == quoteTypeCode::GroupMedical){
                 $query->where('business_type_of_insurance_id', '=', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
@@ -255,6 +257,10 @@ class RetentionReportService extends BaseService
     
             // Apply the date range filter to the query
             $query->whereBetween($this->policyExpiryColumnName, [$previousMonthStartDateFormatted, $nextMonthEndDateFormatted]);
+
+            // Apply quote batch start and end date filter
+            $query->where('quote_batches.start_date', '>=', $previousMonthStartDateFormatted)
+                ->where('quote_batches.end_date', '<=', $nextMonthEndDateFormatted);
 
             $this->applyFilterForBatch($query, $request);
         }
@@ -353,16 +359,25 @@ class RetentionReportService extends BaseService
     {
         // Select batch name, start date, and end date from the quote_batches table
         $query->selectRaw("quote_batches.name as batch, quote_batches.start_date, quote_batches.end_date")
-            ->join('quote_batches', 'renewal_batch', '=', 'quote_batches.id');
+            ->join('quote_batches', 'quote_batch_id', '=', 'quote_batches.id');
 
         // Check if 'policyExpiryDate' parameter is set in the request
         if (isset($request['policyExpiryDate'])) {
             // Parse the start and end dates from the request
             $startDate = Carbon::parse($request['policyExpiryDate'][0])->startOfDay();
             $endDate = Carbon::parse($request['policyExpiryDate'][1])->endOfDay();
+
+            $startDate = $startDate->format($this->dateFormat);
+            $endDate = $endDate->format($this->dateFormat);
             // Apply the date range filter to the query
-            $query->whereBetween($this->policyExpiryColumnName, [$startDate->format($this->dateFormat), $endDate->format($this->dateFormat)]);
+            $query->whereBetween($this->policyExpiryColumnName, [$startDate, $endDate]);
+
+            // Apply quote batch start and end date filter
+            $query->where('quote_batches.start_date', '>=', $startDate)
+                ->where('quote_batches.end_date', '<=', $endDate);
         }
+
+        $query->groupBy('quote_batches.name');
     }
 
     /**

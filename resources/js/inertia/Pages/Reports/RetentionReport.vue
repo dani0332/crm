@@ -285,8 +285,8 @@ onMounted(() => {
   filters.lob = queryParams.get('lob') || '';
   filters.displayBy = queryParams.get('displayBy') || '';
   if (filters.lob == ''){
-    filters.lob = props.productName
     filters.displayBy = RetentionReportEnum.BATCH
+    filters.lob = props.productName
   }
 
   // if (filters.lob !== ''){
@@ -728,7 +728,7 @@ function buildQuoteURL() {
     
       <template #item-volume_gross_retention="item">
         <x-tooltip placement="left">
-          <span class="underline">{{ item.volume_gross_retention }}</span>
+          <span class="underline decoration-dotted">{{ item.volume_gross_retention }}</span>
           <template #tooltip>
             <span class="whitespace-break-spaces !normal-case">
               {{ RetentionReportEnum.VOLUME_GROSS_RETENTION_COLUMN }}
@@ -739,7 +739,7 @@ function buildQuoteURL() {
 
       <template #item-volume_net_retention="item">
         <x-tooltip placement="left">
-          <span class="underline">{{ item.volume_net_retention }}</span>
+          <span class="underline decoration-dotted">{{ item.volume_net_retention }}</span>
           <template #tooltip>
             <span class="whitespace-break-spaces !normal-case">
               {{ RetentionReportEnum.VOLUME_NET_RETENTION_COLUMN }}
@@ -750,7 +750,7 @@ function buildQuoteURL() {
 
       <template #item-relative_retention="item">
         <x-tooltip placement="left">
-          <span class="underline">{{ item.relative_retention }}</span>
+          <span class="underline decoration-dotted">{{ item.relative_retention }}</span>
           <template #tooltip>
             <span class="whitespace-break-spaces !normal-case">
               {{ RetentionReportEnum.RELATIVE_RETENTION_COLUMN }}
