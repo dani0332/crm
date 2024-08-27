@@ -294,8 +294,8 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchSaveBookingDetails($data)
     {
+        $sendUpdate = $this->find($data['id']);
         try {
-            $sendUpdate = $this->find($data['id']);
             $sendUpdateLogService = app(SendUpdateLogService::class);
             $isNegative = $sendUpdateLogService->isNegativeValue($sendUpdate);
             $bookingDetails = [
@@ -323,7 +323,8 @@ class SendUpdateLogRepository extends BaseRepository
                 $bookingDetails = array_merge($bookingDetails, ['reversal_invoice' => $data['reversal_invoice']]);
             }
 
-            $payment = Payment::where('send_update_log_id', $data['id'])->firstOrFail();
+            $payment = Payment::where('send_update_log_id', $data['id'])->first();
+            $insuranceProviderId = $sendUpdate->insurance_provider_id ?? null;
             if ($payment) {
                 $sendUpdateLogService = app(SendUpdateLogService::class);
                 info('Send update - Updating Booking details and Commission Schedule in Payments - SendUpdateUUID: '.$sendUpdate->uuid);
@@ -332,11 +333,15 @@ class SendUpdateLogRepository extends BaseRepository
                 app(SplitPaymentService::class)->updateCommissionSchedule($payment);
 
                 $insuranceProviderId = $sendUpdate->insurance_provider_id ?? $payment->insurance_provider_id ?? null;
-                if ($insuranceProviderId && ($insuranceProvider = InsuranceProviderRepository::where('id', $insuranceProviderId)->first())) {
-                    $bookingDetails['broker_invoice_number'] = $sendUpdateLogService->generateBrokerInvoiceNumber($sendUpdate, $insuranceProvider);
-                } else {
-                    vAbort('Send Update Log provider code not found.');
+                if (! $insuranceProviderId) {
+                    $insuranceProviderId = $payment->insurance_provider_id ?? null;
                 }
+            }
+
+            if ($insuranceProviderId && ($insuranceProvider = InsuranceProviderRepository::where('id', $insuranceProviderId)->first())) {
+                $bookingDetails['broker_invoice_number'] = $sendUpdateLogService->generateBrokerInvoiceNumber($sendUpdate, $insuranceProvider);
+            } else {
+                vAbort('Send Update Log provider code not found.');
             }
 
             $result = $sendUpdate->update($bookingDetails);
@@ -345,7 +350,7 @@ class SendUpdateLogRepository extends BaseRepository
             $result = (object) [
                 'message' => $ex->getMessage(),
             ];
-            info($ex->getMessage());
+            info('Unable to save Booking Details - SendUpdateUUID: '.$sendUpdate->uuid.' - Error: '.$ex->getMessage());
         }
 
         return $result;
