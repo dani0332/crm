@@ -15,6 +15,7 @@ use App\Models\CustomerAdditionalInfo;
 use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
+use App\Models\QuoteStatus;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\CentralService;
@@ -29,6 +30,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use League\CommonMark\Extension\SmartPunct\Quote;
 
 if (! function_exists('generate_code')) {
     /**
@@ -1233,3 +1235,17 @@ if (! function_exists('isVatApplied')) {
         return false;
     }
 }
+
+if (! function_exists('canSendDocumentEnums')) {
+    function canSendDocumentEnums(): array
+    {
+        return [
+            QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued,
+        ];
+    }
+}
+
