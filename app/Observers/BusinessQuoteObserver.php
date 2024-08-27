@@ -12,6 +12,13 @@ class BusinessQuoteObserver
 {
     use PersonalQuoteSyncTrait;
 
+    public function updating(BusinessQuote $quote): void
+    {
+        if ($quote->isDirty('quote_status_id')) {
+            $quote->quote_status_date = now();
+        }
+    }
+
     /**
      * Handle the BusinessQuote "updated" event.
      */

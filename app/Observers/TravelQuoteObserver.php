@@ -13,6 +13,13 @@ class TravelQuoteObserver
 {
     use PersonalQuoteSyncTrait;
 
+    public function updating(TravelQuote $quote): void
+    {
+        if ($quote->isDirty('quote_status_id')) {
+            $quote->quote_status_date = now();
+        }
+    }
+
     /**
      * Handle the TravelQuote "updated" event.
      */

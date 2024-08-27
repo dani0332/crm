@@ -15,6 +15,13 @@ class HealthQuoteObserver
 {
     use PersonalQuoteSyncTrait;
 
+    public function updating(HealthQuote $quote): void
+    {
+        if ($quote->isDirty('quote_status_id')) {
+            $quote->quote_status_date = now();
+        }
+    }
+
     /**
      * Handle the HealthQuote "updated" event.
      */

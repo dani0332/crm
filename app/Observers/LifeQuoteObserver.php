@@ -12,6 +12,13 @@ class LifeQuoteObserver
 {
     use PersonalQuoteSyncTrait;
 
+    public function updating(LifeQuote $quote): void
+    {
+        if ($quote->isDirty('quote_status_id')) {
+            $quote->quote_status_date = now();
+        }
+    }
+
     /**
      * Handle the LifeQuote "updated" event.
      */
