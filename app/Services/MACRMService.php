@@ -19,14 +19,15 @@ class MACRMService
                     config('constants.MACRM_BASIC_AUTH_PASSWORD')
                 )
                 ->withHeader('Referer', trim(config('constants.APP_URL'), '/'))
-                ->beforeSending(fn() => info(self::class . " - Calling MACRM API via {$method} request..."))
+                ->beforeSending(fn () => info(self::class." - Calling MACRM API via {$method} request..."))
                 ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
                 ->retry(3, 90000, function (Exception $exception) {
-                    info(self::class . " - API failed with error: {$exception->getMessage()}");
+                    info(self::class." - API failed with error: {$exception->getMessage()}");
                     $shouldRetry = $exception->getCode() !== 422;
                     if ($shouldRetry) {
-                        info(self::class . ' - Retrying request...');
+                        info(self::class.' - Retrying request...');
                     }
+
                     return $shouldRetry;
                 });
 
@@ -37,20 +38,20 @@ class MACRMService
 
             return ['ok' => $response->successful(), 'object' => $response->json()];
         } catch (Exception $e) {
-            info(self::class . " - Exception occurred during API call: {$e->getMessage()}");
+            info(self::class." - Exception occurred during API call: {$e->getMessage()}");
+
             return ['ok' => false, 'object' => null];
         }
     }
-
-
 
     public static function syncCourierQuote($quote, $quoteTypeId)
     {
         try {
             $leadData = getCourierQuote($quote, $quoteTypeId);
 
-            if (!$leadData) {
+            if (! $leadData) {
                 info("No lead data found for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId}. Sync aborted.");
+
                 return false;
             }
 
@@ -60,39 +61,42 @@ class MACRMService
             ['ok' => $ok, 'object' => $response] = self::sendRequest('/couriers/submit-eps', $leadData, 'POST');
 
             if ($ok) {
-                info(self::class . " - Synced Courier Quote with MACRM for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: {$response['message']}");
+                info(self::class." - Synced Courier Quote with MACRM for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: {$response['message']}");
             } else {
-                info(self::class . " - Courier Quote Syncing with MACRM Failed for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: {$response['message']}");
+                info(self::class." - Courier Quote Syncing with MACRM Failed for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: {$response['message']}");
             }
 
             return $ok;
         } catch (Exception $e) {
             // Log the exception with a detailed message
-            info(self::class . " - An error occurred while syncing Courier Quote for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId}. Error: {$e->getMessage()}");
+            info(self::class." - An error occurred while syncing Courier Quote for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId}. Error: {$e->getMessage()}");
+
             return false;
         }
     }
-
 
     public static function cancelCourierQuote($quote, $quoteTypeId)
     {
         try {
             $cancelCriteria = [QuoteStatusEnum::PolicyCancelled];
 
-            if (!in_array($quote->quote_status_id, $cancelCriteria)) {
+            if (! in_array($quote->quote_status_id, $cancelCriteria)) {
                 info("Cannot cancel Courier Quote on MACRM for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} as quote status is not 'Policy Cancelled'");
+
                 return false;
             }
 
             $leadData = getCourierQuote($quote, $quoteTypeId, $cancelCriteria);
-            if (!$leadData) {
+            if (! $leadData) {
                 info("No lead data found for Courier Quote UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId}");
+
                 return false;
             }
 
             $leadData = Arr::dot($leadData);
-            if (!isset($leadData['payment.ref_id'])) {
+            if (! isset($leadData['payment.ref_id'])) {
                 info("No payment reference ID found for Courier Quote UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId}");
+
                 return false;
             }
 
@@ -104,18 +108,18 @@ class MACRMService
             ], 'POST');
 
             if ($ok) {
-                info(self::class . " - Canceled Courier Quote on MACRM for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: " . ($response['message'] ?? 'No message provided'));
+                info(self::class." - Canceled Courier Quote on MACRM for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: ".($response['message'] ?? 'No message provided'));
             } else {
-                info(self::class . " - Courier Quote Canceling on MACRM Failed for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: " . ($response['message'] ?? 'No message provided'));
+                info(self::class." - Courier Quote Canceling on MACRM Failed for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: ".($response['message'] ?? 'No message provided'));
             }
 
             return $ok;
         } catch (Exception $e) {
-            info(self::class . " - Exception occurred while canceling Courier Quote UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with error: {$e->getMessage()}");
+            info(self::class." - Exception occurred while canceling Courier Quote UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with error: {$e->getMessage()}");
+
             return false;
         }
     }
-
 
     public static function getCourierQuoteStatus($quote, $quoteTypeId)
     {
@@ -128,13 +132,13 @@ class MACRMService
 
                 info("Get Courier Quote Status on MACRM for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId}");
                 ['ok' => $ok, 'object' => $response] = self::sendRequest("/couriers/get-status/{$refId}", [], 'GET');
-                info(self::class . 'Response: ' . json_encode($response));
-                info(self::class . 'Ok' . json_encode($ok));
+                info(self::class.'Response: '.json_encode($response));
+                info(self::class.'Ok'.json_encode($ok));
 
                 if ($ok) {
-                    info(self::class . " - Get Courier Quote Status on MACRM for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: {$response->message}");
+                    info(self::class." - Get Courier Quote Status on MACRM for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: {$response->message}");
                 } else {
-                    info(self::class . " - Get Courier Quote Status on MACRM Failed for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: {$response->message}");
+                    info(self::class." - Get Courier Quote Status on MACRM Failed for UUID: {$quote->uuid} and QuoteTypeId: {$quoteTypeId} with message: {$response->message}");
                 }
 
                 return $ok;
