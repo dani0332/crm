@@ -16,7 +16,7 @@ class SICConfigurableController extends Controller
     public $sicConfigurableService;
     public function __construct(SICConfigurableService $sicConfigurableService)
     {
-        $this->middleware('permission:'.PermissionsEnum::SIC_HEALTH_CONFIG, ['only' => ['index', 'store']]);
+        // $this->middleware('permission:'.PermissionsEnum::SIC_HEALTH_CONFIG, ['only' => ['index', 'store']]);
         $this->sicConfigurableService = $sicConfigurableService;
 
     }
@@ -35,7 +35,7 @@ class SICConfigurableController extends Controller
 
     public function store(SicConfigRequest $request)
     {
-        $this->sicConfigurableService->saveEntity($request->id ?? null, request()->all());
+        $this->sicConfigurableService->saveEntity($request);
 
         return redirect()->route('admin.sic-health-config.index')->with('success', 'SIC Health Config saved successfully');
 

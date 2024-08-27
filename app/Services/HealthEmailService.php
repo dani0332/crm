@@ -19,7 +19,7 @@ class HealthEmailService extends BaseService
         if ($triggerSICWorkFlow) {
             if (! $lead->sic_flow_enabled) {
                     $advisor = User::where('id', $lead->advisor_id)->first();
-                    $emailData = $this->mappingEmailDataForMail($lead, $advisor);
+                    $emailData = $this->mapDataForFollowupEmail($lead, $advisor);
                     $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
                     if ($sicEvent) {
                         $responseCode = $this->birdService->triggerWebHookRequest($sicEvent->value,$emailData);
@@ -40,7 +40,7 @@ class HealthEmailService extends BaseService
         return $responseCode ?? null;
     }
 
-    public function mappingEmailDataForMail($lead, $advisor)
+    public function mapDataForFollowupEmail($lead, $advisor)
     {
         return (object) [
             'quoteUID' => $lead->uuid,
