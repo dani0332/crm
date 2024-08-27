@@ -98,6 +98,9 @@ const onCreateDuplicate = isValid => {
   });
 };
 
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+
 const historyLoading = ref(false);
 
 // history data
@@ -282,6 +285,12 @@ const linkEntity = () => {
       console.log(err);
     });
 };
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
@@ -309,7 +318,7 @@ const onAddUpdate = () => {
           Stale for {{ countDays }}
         </p>
       </template>
-      <template #default>
+      <template #default v-if="readOnlyMode.isDisable === true">
         <LeadNotes
           :documentType="noteDocumentType"
           :notes="quoteDocuments"
@@ -326,7 +335,12 @@ const onAddUpdate = () => {
             View Legacy policy
           </x-button>
         </Link>
-        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          @click.prevent="openDuplicate"
+          v-if="readOnlyMode.isDisable === true"
+        >
           Duplicate Lead
         </x-button>
         <Link
@@ -343,7 +357,9 @@ const onAddUpdate = () => {
             v-if="!isDisabled"
             :href="route('cycle-quotes-edit', quote.uuid)"
           >
-            <x-button size="sm" tag="div">Edit</x-button>
+            <x-button size="sm" tag="div" v-if="readOnlyMode.isDisable === true"
+              >Edit</x-button
+            >
           </Link>
           <x-button v-else :disabled="isDisabled" size="sm" tag="div"
             >Edit</x-button
@@ -602,6 +618,10 @@ const onAddUpdate = () => {
                   {{ quote?.cycle_quote?.has_good_condition ? 'YES' : 'NO' }}
                 </dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
+              </div>
             </dl>
           </div>
         </template>
@@ -849,6 +869,7 @@ const onAddUpdate = () => {
           size="sm"
           :loading="customerProfileForm.processing"
           @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
         >
           Search
         </x-button>

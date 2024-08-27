@@ -18,8 +18,16 @@ const priceFormat = (price, thousandSeparator = false) => {
 
 const tableHeader = reactive([
   {
+    text: 'Ref-ID',
+    value: 'uuid',
+  },
+  {
     text: 'Policy No.',
     value: 'policy_number',
+  },
+  {
+    text: 'Department',
+    value: 'department',
   },
   {
     text: 'Transactions',
@@ -138,7 +146,7 @@ const isIntegerColumn = key => {
   // Add logic to determine if the column contains an integer
   // For example, check if the key corresponds to an integer column
   return [
-    'transactions',
+    // 'transactions',
     'price_vat_applicable',
     'vat',
     'price_vat_not_applicable',
@@ -155,7 +163,7 @@ const isIntegerColumn = key => {
 <template>
   <DataTable
     class="mt-4"
-    table-class-name=""
+    table-class-name="table-fixed"
     :loading="loader"
     :headers="tableHeader"
     :items="props.reportData.data || []"
@@ -166,11 +174,20 @@ const isIntegerColumn = key => {
     hide-footer
     :rows-per-page="100"
   >
+    <template #item-uuid="{ uuid, routeName, code }">
+      <a
+        :href="route(routeName, uuid)"
+        class="text-primary-500 hover:underline"
+        target="_blank"
+      >
+        {{ code }}
+      </a>
+    </template>
     <template #item-policy_number="{ policy_number }">
       {{ policy_number }}
     </template>
     <template #item-transactions="{ transactions }">
-      {{ transactions ?? 0 }}
+      {{ transactions ? transactions : 'N/A' }}
     </template>
     <template #item-policy_start_date="{ policy_start_date }">
       {{ policy_start_date ?? 'N/A' }}
@@ -253,7 +270,7 @@ const isIntegerColumn = key => {
       {{ policy_issuer ?? 'N/A' }}
     </template>
     <template #body-append>
-      <tr v-if="reportData.data.length > 0" class="total-row">
+      <tr v-if="reportData.data.length > 0" class="total-row sticky bottom-0">
         <td class="direction-left">Total</td>
         <td
           v-for="header in tableHeader.slice(1, tableHeader.length)"

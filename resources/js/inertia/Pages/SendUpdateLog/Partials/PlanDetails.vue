@@ -27,7 +27,8 @@ const props = defineProps({
 const page = usePage();
 const notification = useToast();
 const vat = page.props.vatValue;
-
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const sendUpdateEnums = page.props.sendUpdateStatusEnum;
 
@@ -142,6 +143,19 @@ const onEdit = () => {
     state.isEdit = true;
   }
 };
+
+watch(
+  () => props.sendUpdateLog.insurance_provider_id,
+  (newValue, oldValue) => {
+    planDetailsForm.insurance_provider_id = newValue;
+  },
+);
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -334,7 +348,10 @@ const onEdit = () => {
             </div>
           </dl>
         </div>
-        <div class="flex justify-end gap-2">
+        <div
+          class="flex justify-end gap-2"
+          v-if="readOnlyMode.isDisable === true"
+        >
           <x-button size="sm" @click="onEdit" v-if="!state.isEdit">
             Edit
           </x-button>

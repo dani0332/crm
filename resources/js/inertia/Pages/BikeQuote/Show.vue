@@ -5,6 +5,7 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+import LazyBookingDetails from '../SendUpdateLog/Partials/BookingDetails.vue';
 
 defineProps({
   quote: Object,
@@ -227,6 +228,9 @@ const tradeLicenseEntity = reactive({
   triggeredFrom: false,
 });
 
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+
 const entityTypeChange = event => {
   if (event === 'SubEntity') {
     getParentEntityModel.value = true;
@@ -299,6 +303,12 @@ const linkEntity = () => {
 };
 const paymentStatusEnum = page.props.paymentStatusEnum;
 
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
@@ -324,7 +334,12 @@ const onAddUpdate = () => {
           :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
           preserve-scroll
         >
-          <x-button size="sm" color="#ff5e00" tag="div">
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
             View Legacy policy
           </x-button>
         </Link>
@@ -350,7 +365,9 @@ const onAddUpdate = () => {
             v-if="!isDisabled"
             :href="route('bike-quotes-edit', quote.uuid)"
           >
-            <x-button size="sm" tag="div">Edit</x-button>
+            <x-button size="sm" tag="div" v-if="readOnlyMode.isDisable === true"
+              >Edit</x-button
+            >
           </Link>
           <x-button v-else :disabled="isDisabled" size="sm" tag="div"
             >Edit</x-button
@@ -611,8 +628,8 @@ const onAddUpdate = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <div>
-                  <x-tooltip position="bottom">
+                <dt>
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -620,8 +637,60 @@ const onAddUpdate = () => {
                     </label>
                     <template #tooltip> Parent Reference ID </template>
                   </x-tooltip>
-                </div>
-                <div>{{ quote?.parent_duplicate_quote_id }}</div>
+                </dt>
+                <dd>
+                  <Link
+                    v-if="quote?.parent_duplicate_quote_id"
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.uuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ quote?.parent_duplicate_quote_id ?? '' }}
+                  </Link>
+                </dd>
+              </div>
+
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="linkedQuoteDetails.childLeadsCount == 1"
+              >
+                <dt>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      CHILD REF-ID
+                    </label>
+                    <template #tooltip>
+                      The Child Reference ID acts as an individual identifier
+                      for dependents under the main lead. It's our way of
+                      efficiently organizing and accessing each person's records
+                      within the system.
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd>
+                  <Link
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.childLeadsUuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ linkedQuoteDetails.childLeads ?? '' }}
+                  </Link>
+                </dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
             </dl>
           </div>
@@ -725,6 +794,7 @@ const onAddUpdate = () => {
                 />
               </dd>
             </div>
+
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium uppercase">UAE licence held for</dt>
               <dd>{{ quote?.bike_quote?.uae_license_held_for?.text }}</dd>
@@ -736,8 +806,8 @@ const onAddUpdate = () => {
               <dd>{{ quote?.bike_quote?.back_home_license_held_for?.text }}</dd>
             </div>
             <RiskRatingScoreDetails
-              v-if="quote?.bike_quote"
-              :quote="quote.bike_quote"
+              v-if="quote"
+              :quote="quote"
               :modelType="'Bike'"
             />
           </dl>
@@ -778,6 +848,7 @@ const onAddUpdate = () => {
                   @click.prevent="searchByTradeLicense"
                   size="xs"
                   color="primary"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Search
                 </x-button>
@@ -835,7 +906,7 @@ const onAddUpdate = () => {
               </dd>
             </div>
           </dl>
-          <div class="flex justify-end">
+          <div class="flex justify-end" v-if="readOnlyMode.isDisable === true">
             <x-button
               v-if="isProfileUpdateAllow"
               class="mt-4"
@@ -874,6 +945,7 @@ const onAddUpdate = () => {
             size="sm"
             :loading="customerProfileForm.processing"
             @click.prevent="searchByTradeLicense('SubEntity')"
+            v-if="readOnlyMode.isDisable === true"
           >
             Search
           </x-button>
@@ -924,7 +996,12 @@ const onAddUpdate = () => {
       </dl>
       <template #actions>
         <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity">
+          <x-button
+            size="sm"
+            color="orange"
+            @click.prevent="linkEntity"
+            v-if="readOnlyMode.isDisable === true"
+          >
             Link
           </x-button>
         </div>
@@ -1110,7 +1187,7 @@ const onAddUpdate = () => {
           </div>
         </div>
       </div>
-      <div class="flex justify-end">
+      <div class="flex justify-end" v-if="readOnlyMode.isDisable === true">
         <x-button
           v-if="assumptionState.isEditing"
           class="mt-4 mr-2"
@@ -1224,6 +1301,15 @@ const onAddUpdate = () => {
     />
 
     <EmailStatus :emailStatuses="emailStatuses" />
+
+    <SendUpdates
+      v-if="hasPolicyIssuedStatus"
+      :reportable="quote"
+      :quote_type_id="$page.props.quoteTypeId"
+      :options="sendUpdateOptions"
+      :data="sendUpdateLogs"
+      @onAddUpdate="onAddUpdate"
+    />
 
     <AuditLogs
       :id="$page.props.quote.id"

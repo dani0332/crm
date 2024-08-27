@@ -16,7 +16,7 @@ const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
-
+const notification = useNotifications('toast');
 const { isRequired } = useRules();
 
 const loader = reactive({
@@ -54,6 +54,12 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
+  {
+    text: 'POLICY EXPIRY DATE',
+    value: 'previous_policy_expiry_date',
+    is_active: true,
+    sortable: true,
+  },
   { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
   { text: 'SOURCE', value: 'source', is_active: true },
   { text: 'LOST REASON', value: 'lost_reason', is_active: true },
@@ -83,6 +89,8 @@ const filters = reactive({
   payment_status: [],
   is_cold: false,
   is_stale: false,
+  policy_expiry_date: '',
+  policy_expiry_date_end: '',
   payment_due_date: '',
   booking_date: '',
 });
@@ -125,6 +133,14 @@ const onDataExport = () => {
 
 function onSubmit(isValid) {
   if (isValid) {
+    if (validateDateRange()) {
+      notification.error({
+        title:
+          'The selected date range exceeds one month. Please select a range within one month.',
+        position: 'top',
+      });
+      return;
+    }
     serverOptions.value.page = 1;
 
     const filtersCleaned = cleanObj(filters);
@@ -213,6 +229,10 @@ function onAssignLead(isValid) {
   }
 }
 
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+
 onMounted(() => {
   params = getSavedQueryParams() || params;
 
@@ -236,6 +256,7 @@ onMounted(() => {
   }
 
   filtersCount.value = Object.keys(filtersCleaned).length;
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 watch(
@@ -244,6 +265,34 @@ watch(
     if (oldValue !== newValue) onSubmit(true);
   },
 );
+
+const validateDateRange = () => {
+  const { policy_expiry_date, policy_expiry_date_end } = filters;
+  if (policy_expiry_date && policy_expiry_date_end) {
+    const startDate = new Date(policy_expiry_date);
+    const endDate = new Date(policy_expiry_date_end);
+    const oneMonthLater = new Date(startDate);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    // Adjust for months with fewer than 31 days
+    if (oneMonthLater.getDate() < startDate.getDate()) {
+      oneMonthLater.setDate(0);
+    }
+    if (endDate > oneMonthLater) {
+      return true;
+    }
+  }
+  return false;
+};
+const formatDate = date => {
+  if (!date) return '';
+  // Split the date into parts: day, month, year
+  const [day, month, year] = date.split('-');
+  // Create a new Date object using the parsed parts
+  const parsedDate = new Date(`${year}-${month}-${day}`);
+  // Format the date to '31 May 2023'
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  return parsedDate.toLocaleDateString('en-GB', options);
+};
 
 const resetDateFilters = filterName => {
   const filterMappings = {
@@ -305,11 +354,25 @@ const resetDateFilters = filterName => {
         />
 
         <Link :href="route('home-cardView')">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
+          <x-button
+            size="sm"
+            color="#1d83bc"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Cards View
+          </x-button>
         </Link>
 
         <Link :href="route('home.create')">
-          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Create Lead
+          </x-button>
         </Link>
       </template>
     </StickyHeader>
@@ -412,6 +475,18 @@ const resetDateFilters = filterName => {
             name="quote_status_id"
             placeholder="Search by Lead Status"
             :options="leadStatusOptions"
+          />
+        </x-field>
+        <x-field label="Policy Expiry Start Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date"
+            name="policy_expiry_date"
+          />
+        </x-field>
+        <x-field label="Policy Expiry End Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date_end"
+            name="policy_expiry_date_end"
           />
         </x-field>
         <x-field
@@ -525,6 +600,8 @@ const resetDateFilters = filterName => {
               class="flex-1 w-full"
               :rules="[isRequired]"
               label="Assign Advisor"
+              filterable
+              v-if="readOnlyMode.isDisable === true"
             />
             <div class="mb-3 md:pt-6">
               <x-button
@@ -532,6 +609,7 @@ const resetDateFilters = filterName => {
                 size="sm"
                 type="submit"
                 :loading="assignForm.processing"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Assign
               </x-button>
@@ -560,6 +638,18 @@ const resetDateFilters = filterName => {
           <span>{{ code }}</span>
           <StaleLeadsBadge :date="stale_at" :align="`left`" />
         </Link>
+      </template>
+      <template
+        #item-previous_policy_expiry_date="{
+          previous_policy_expiry_date,
+          source,
+        }"
+      >
+        {{
+          source === 'Renewal_upload'
+            ? formatDate(previous_policy_expiry_date)
+            : ''
+        }}
       </template>
     </DataTable>
 

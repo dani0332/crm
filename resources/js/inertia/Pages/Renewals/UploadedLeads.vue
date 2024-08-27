@@ -29,6 +29,7 @@ const tableHeader = [
   { text: 'Good', value: 'good' },
   { text: 'Bad', value: 'cannot_upload' },
   { text: 'Status', value: 'status' },
+  { text: 'SIC', value: 'is_sic' },
   { text: 'Skip Plans', value: 'skip_plans' },
   { text: 'Submitted By', value: 'uploaded_by' },
   { text: 'Submitted At', value: 'created_at' },

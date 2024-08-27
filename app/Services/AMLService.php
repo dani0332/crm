@@ -27,6 +27,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\View;
 
 class AMLService
 {
@@ -244,24 +245,62 @@ class AMLService
             $fromName = config('constants.MAIL_FROM_NAME');
             $emailSubject = $emailSystem.' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteRefId;
         }
-        Mail::send(
-            ['html' => 'AmlComplianceMail'],
-            [
-                'amlUrl' => $amlQuoteUrl,
-                'resultsFound' => $amlResultCount,
-                'fullName' => $customerOrEntityName,
-                'quoteTypeName' => $quoteType,
-                'quoteCdbId' => $quoteRefId,
-            ],
-            function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser) {
-                $message->to($emailRecipients);
-                if (in_array($loginUserEmail, $emailRecipients) || ! $forComplianceSuperUser) {
-                    $message->cc($loginUserEmail);
-                }
-                $message->subject($emailSubject);
-                $message->from($fromEmail, $fromName);
+
+        self::sendAmlComplianceMail($amlQuoteUrl, $amlResultCount, $customerOrEntityName, $quoteType, $quoteRefId, $emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser);
+    }
+
+    private static function sendAmlComplianceMail($amlQuoteUrl, $amlResultCount, $customerOrEntityName, $quoteType, $quoteRefId, $emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser)
+    {
+        try {
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => config('constants.SENDINBLUE_KEY'),
+                'Content-Type' => 'application/json',
+            ];
+            $url = config('constants.SIB_URL');
+            $amlUrl = $amlQuoteUrl ? $amlQuoteUrl : 'N/A';
+            $resultsFound = $amlResultCount ? $amlResultCount : 0;
+            $fullName = $customerOrEntityName ? $customerOrEntityName : 'N/A';
+            $quoteTypeName = $quoteType;
+            $quoteCdbId = $quoteRefId;
+            $htmlContent = View::make('AmlComplianceMail', compact('amlUrl', 'resultsFound', 'fullName', 'quoteTypeName', 'quoteCdbId'))->render();
+
+            $toEmails = array_map(function ($email) {
+                return ['email' => $email];
+            }, $emailRecipients);
+
+            $ccEmail = [];
+            if (in_array($loginUserEmail, $emailRecipients) || ! $forComplianceSuperUser) {
+                $ccEmail[] = ['email' => $loginUserEmail];
             }
-        );
+
+            $bodyData = [
+                'sender' => ['name' => $fromName, 'email' => $fromEmail],
+                'to' => $toEmails,
+                'subject' => $emailSubject,
+                'htmlContent' => $htmlContent,
+            ];
+
+            if (! empty($ccEmail)) {
+                $bodyData['cc'] = $ccEmail;
+            }
+            $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
+            $client = new \GuzzleHttp\Client;
+            $clientRequest = $client->post(
+                $url,
+                [
+                    'headers' => $headers,
+                    'body' => $body,
+                    'timeout' => 10,
+                ]
+            );
+
+            $responseCode = $clientRequest->getStatusCode();
+            info('sendAmlComplianceMail ---- Received Code : '.$responseCode);
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            $responseDetail = 'sendAmlComplianceMail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+        }
     }
 
     public static function getMemberOrUBODetails($request, $quoteType, $quoteRequestId)
@@ -279,7 +318,7 @@ class AMLService
             return false;
         }
 
-        $bridgerInsightService = new BridgerInsightService();
+        $bridgerInsightService = new BridgerInsightService;
         $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
         $matchResultsForUpdate = [];

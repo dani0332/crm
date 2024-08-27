@@ -124,7 +124,7 @@ class CycleQuoteRepository extends BaseRepository
 
             $quote->cycleQuote()->updateOrCreate(
                 ['personal_quote_id' => $quote->id],
-                Arr::only($data, (new CycleQuote())->allowedColumns())
+                Arr::only($data, (new CycleQuote)->allowedColumns())
             );
 
             return $quote;
@@ -172,6 +172,7 @@ class CycleQuoteRepository extends BaseRepository
                         'paymentSplits.paymentMethod',
                         'paymentSplits.verifiedByUser',
                         'paymentSplits.documents',
+                        'paymentSplits.processJob',
                     ]);
                 },
                 'customer',
@@ -187,7 +188,7 @@ class CycleQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
-                'renewal_expiry_date',
+                'policy_expiry_date',
                 'policy_start_date',
                 'policy_issuance_date',
                 \DB::raw('IF(EXISTS (

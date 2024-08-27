@@ -4,6 +4,10 @@ const props = defineProps({
   quoteType: String,
   uuid: String,
   hasChildLead: Boolean,
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
   extraDetails: {
     type: Object,
     default: {},

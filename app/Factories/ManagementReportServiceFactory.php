@@ -10,6 +10,8 @@ use App\Models\Team;
 use App\Services\ApplicationStorageService;
 use App\Services\Reports\ActivePoliciesReportService;
 use App\Services\Reports\EndingPoliciesReportService;
+use App\Services\Reports\EndorsementReportService;
+use App\Services\Reports\InstallmentReportService;
 use App\Services\Reports\SaleDetailReportService;
 use App\Services\Reports\SaleSummaryReportService;
 use App\Services\Reports\TransactionReportService;
@@ -23,15 +25,19 @@ class ManagementReportServiceFactory
     {
         $strategy = null;
         if ($reportCategory == ManagementReportCategoriesEnum::SALE_SUMMARY) {
-            $strategy = new SaleSummaryReportService();
+            $strategy = new SaleSummaryReportService;
         } elseif ($reportCategory == ManagementReportCategoriesEnum::SALE_DETAIL) {
-            $strategy = new SaleDetailReportService();
+            $strategy = new SaleDetailReportService;
         } elseif ($reportCategory == ManagementReportCategoriesEnum::ENDING_POLICIES) {
-            $strategy = new EndingPoliciesReportService();
+            $strategy = new EndingPoliciesReportService;
         } elseif ($reportCategory == ManagementReportCategoriesEnum::TRANSACTION) {
-            $strategy = new TransactionReportService();
+            $strategy = new TransactionReportService;
         } elseif ($reportCategory == ManagementReportCategoriesEnum::ACTIVE_POLICIES) {
-            $strategy = new ActivePoliciesReportService();
+            $strategy = new ActivePoliciesReportService;
+        } elseif ($reportCategory == ManagementReportCategoriesEnum::INSTALLMENT) {
+            $strategy = new InstallmentReportService;
+        } elseif ($reportCategory == ManagementReportCategoriesEnum::ENDORSEMENT) {
+            $strategy = new EndorsementReportService;
         } else {
             info('No strategy found for report category : '.$reportCategory);
         }

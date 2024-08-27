@@ -63,6 +63,7 @@ const props = defineProps({
   emailStatuses: Array,
   quoteNotes: Object,
   paymentDocument: Array,
+  noteDocumentType: Array,
 });
 
 const isManualPlansCount = ref(0);
@@ -233,9 +234,6 @@ const memberCategoryText = memberCategoryId =>
 // });
 
 const subTeamOptions = [
-  { value: 'RM-NB', label: 'RM-NB' },
-  { value: 'RM-SPEED', label: 'RM-SPEED' },
-  { value: 'EBP', label: 'EBP' },
   { value: 'Best', label: 'Best' },
   { value: 'Good', label: 'Good' },
   { value: 'Entry-Level', label: 'Entry-Level' },
@@ -1344,7 +1342,7 @@ const policyDetails = useForm({
   premium: page.props.quote.premium,
   policy_number: page.props.quote.policy_number || '',
   policy_start_date: dateToYMD(page.props.quote.policy_start_date),
-  renewal_expiry_date: dateToYMD(page.props.quote.renewal_expiry_date) || '',
+  policy_expiry_date: dateToYMD(page.props.quote.policy_expiry_date) || '',
   policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || '',
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
@@ -1366,7 +1364,7 @@ const submitPolicyDetails = isValid => {
     .transform(data => ({
       quote_policy_number: data.policy_number,
       quote_policy_start_date: data.policy_start_date,
-      quote_policy_expiry_date: data.renewal_expiry_date,
+      quote_policy_expiry_date: data.policy_expiry_date,
       quote_policy_issuance_date: data.policy_issuance_date,
       quote_premium: data.premium,
       modelType: data.modelType,
@@ -1541,7 +1539,9 @@ const linkEntity = () => {
       console.log(err);
     });
 };
-
+const readOnlyMode = reactive({
+  isDisable: true,
+});
 onMounted(() => {
   onLoadAvailablePlansData();
   const isHealthAdvisor = page.props.advisors.find(
@@ -1549,8 +1549,8 @@ onMounted(() => {
   ) || { id: null };
   if (isHealthAdvisor) assignLead.value = isHealthAdvisor.id;
   isMounted.value = true;
-  //   console.log("testing");
-  //   console.log(membersDetailsUpdated);
+
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);
@@ -1568,6 +1568,7 @@ const selectedProviderPlan = ref({
   planName: page.props.quote.health_plan_name_text,
   providerName: page.props.quote.plan_provider_name_text,
   premium: page.props.ecomDetails.priceWithVAT,
+  planType: checkPlanType(page.props.quote.plan_type_id),
 });
 
 const handlePlanSelected = plan => {
@@ -1576,6 +1577,7 @@ const handlePlanSelected = plan => {
   selectedProviderPlan.value.planName = plan.planName;
   selectedProviderPlan.value.providerName = plan.providerName;
   selectedProviderPlan.value.premium = plan.premium;
+  selectedProviderPlan.value.planType = checkPlanType(plan.planTypeId);
   router.reload({
     preserveState: true,
     preserveScroll: true,
@@ -1781,7 +1783,7 @@ const onAddUpdate = () => {
         </p>
       </template>
 
-      <template #default>
+      <template #default v-if="readOnlyMode.isDisable === true">
         <Link
           v-if="quote?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)"
           :href="`/legacy-policy/${quote.insly_id}`"
@@ -1905,12 +1907,14 @@ const onAddUpdate = () => {
                 placeholder="Select Subteam"
                 class="w-auto flex-1"
                 hide-footer
+                filterable
               />
               <div>
                 <x-button
                   color="orange"
                   @click.prevent="onTeamAssign"
                   :loading="isDisabled"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Assign Team
                 </x-button>
@@ -1931,6 +1935,7 @@ const onAddUpdate = () => {
                   color="orange"
                   :loading="isDisabled"
                   @click.prevent="onAssignLead"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Assign
                 </x-button>
@@ -2113,6 +2118,10 @@ const onAddUpdate = () => {
                 <dt class="font-medium">ENQUIRY COUNT</dt>
                 <dd>{{ quote.enquiry_count }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ quote.transaction_approved_at }}</dd>
+              </div>
             </dl>
           </div>
         </template>
@@ -2285,6 +2294,7 @@ const onAddUpdate = () => {
                       @click.prevent="searchByTradeLicense"
                       size="xs"
                       color="primary"
+                      v-if="readOnlyMode.isDisable === true"
                     >
                       Search
                     </x-button>
@@ -2377,18 +2387,18 @@ const onAddUpdate = () => {
           </dd>
         </div>
       </dl>
-      <template #actions>
-        <div class="flex justify-end">
-          <x-button
-            color="primary"
-            size="sm"
-            :loading="customerProfileForm.processing"
-            @click.prevent="searchByTradeLicense('SubEntity')"
-          >
-            Search
-          </x-button>
-        </div>
-      </template>
+      <div class="flex justify-end">
+        <x-button
+          class="mt-4"
+          color="primary"
+          size="sm"
+          :loading="customerProfileForm.processing"
+          @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
+        >
+          Search
+        </x-button>
+      </div>
     </x-modal>
     <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
@@ -2434,7 +2444,12 @@ const onAddUpdate = () => {
       </dl>
       <template #actions>
         <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity">
+          <x-button
+            size="sm"
+            color="orange"
+            @click.prevent="linkEntity"
+            v-if="readOnlyMode.isDisable === true"
+          >
             Link
           </x-button>
         </div>
@@ -2458,6 +2473,7 @@ const onAddUpdate = () => {
               size="sm"
               color="orange"
               :disabled="isDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Add Member
             </x-button>
@@ -2483,6 +2499,7 @@ const onAddUpdate = () => {
               outlined
               @click.prevent="onEditMember(item)"
               :disabled="isDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Edit
             </x-button>
@@ -2494,6 +2511,7 @@ const onAddUpdate = () => {
               outlined
               @click.prevent="memberDelete(item.id)"
               :disabled="isDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Delete
             </x-button>
@@ -2800,6 +2818,7 @@ const onAddUpdate = () => {
                 additionalContact.reset();
                 modals.addContact = true;
               "
+              v-if="readOnlyMode.isDisable === true"
             >
               Add Additional Contacts
             </x-button>
@@ -2824,6 +2843,7 @@ const onAddUpdate = () => {
                 color="emerald"
                 outlined
                 @click.prevent="additionalContactPrimary(item)"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Make Primary
               </x-button>
@@ -2946,6 +2966,7 @@ const onAddUpdate = () => {
                   "
                   placeholder="Lead Status"
                   class="w-full"
+                  filterable
                 />
                 <x-textarea
                   v-model="leadStatusForm.notes"
@@ -2998,6 +3019,7 @@ const onAddUpdate = () => {
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
               :disabled="isDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Change Status
             </x-button>
@@ -3056,8 +3078,12 @@ const onAddUpdate = () => {
                 <dd>{{ mainPayment?.payment_status_message }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">PAID AT</dt>
+                <dt class="font-medium">AUTHORISED AT</dt>
                 <dd>{{ quote.paid_at ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAID AT</dt>
+                <dd>{{ quote.payment_paid_at ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NETWORK</dt>
@@ -3102,12 +3128,14 @@ const onAddUpdate = () => {
               <x-button
                 @click.prevent="onTogglePlans(false)"
                 :loading="toggleLoader"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Show
               </x-button>
               <x-button
                 @click.prevent="onTogglePlans(true)"
                 :loading="toggleLoader"
+                v-if="readOnlyMode.isDisable === true"
               >
                 Hide
               </x-button>
@@ -3127,6 +3155,7 @@ const onAddUpdate = () => {
               size="sm"
               color="orange"
               :disabled="doesEmailStatusExist || isOcaButtonDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Send OCA Email to Customer
             </x-button>
@@ -3631,7 +3660,12 @@ const onAddUpdate = () => {
         <template #body>
           <x-divider class="my-4" />
           <div class="mb-3 flex justify-end">
-            <x-button size="sm" color="orange" @click.prevent="addActivity">
+            <x-button
+              size="sm"
+              color="orange"
+              @click.prevent="addActivity"
+              v-if="readOnlyMode.isDisable === true"
+            >
               Add Activity
             </x-button>
           </div>
@@ -3682,6 +3716,7 @@ const onAddUpdate = () => {
                   outlined
                   :disabled="item.status === 1"
                   @click.prevent="activityEdit(item)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Edit
                 </x-button>
@@ -3691,6 +3726,7 @@ const onAddUpdate = () => {
                   :disabled="item.status === 1"
                   outlined
                   @click.prevent="activityDelete(item.id)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Delete
                 </x-button>

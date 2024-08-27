@@ -5,6 +5,7 @@ import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
+import { reactive } from 'vue';
 
 const props = defineProps({
   quote: Object,
@@ -86,6 +87,9 @@ const openDuplicate = () => {
   modals.duplicate = true;
   leadDuplicateForm.reset();
 };
+
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
 const onCreateDuplicate = isValid => {
   if (!isValid) return;
@@ -261,6 +265,12 @@ const linkEntity = () => {
       console.log(err);
     });
 };
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
@@ -288,7 +298,7 @@ const onAddUpdate = () => {
           Stale for {{ countDays }}
         </p>
       </template>
-      <template #default>
+      <template #default v-if="readOnlyMode.isDisable === true">
         <LeadNotes
           :documentType="noteDocumentType"
           :notes="quoteDocuments"
@@ -531,6 +541,10 @@ const onAddUpdate = () => {
                 <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip placement="bottom">
                     <label
@@ -698,10 +712,7 @@ const onAddUpdate = () => {
                     />
                   </dd>
                 </div>
-                <RiskRatingScoreDetails
-                  :quote="quote.pet_quote"
-                  :modelType="'Pet'"
-                />
+                <RiskRatingScoreDetails :quote="quote" :modelType="'Pet'" />
               </dl>
               <dl
                 v-if="
@@ -842,6 +853,7 @@ const onAddUpdate = () => {
           size="sm"
           :loading="customerProfileForm.processing"
           @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
         >
           Search
         </x-button>

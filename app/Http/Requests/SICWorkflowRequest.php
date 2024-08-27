@@ -23,7 +23,7 @@ class SICWorkflowRequest extends FormRequest
     {
         return [
             'quoteUuid' => 'required',
-            'quoteTypeId' => 'nullable',
+            'quoteTypeId' => 'sometimes|nullable',
         ];
     }
 

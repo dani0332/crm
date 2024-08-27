@@ -32,6 +32,7 @@ use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\MigratePaymentsRequest;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\QuoteNotesRequest;
+use App\Http\Requests\RetrySplitPaymentRequest;
 use App\Http\Requests\SendBookPolicyRequest;
 use App\Http\Requests\SplitPaymentApproveRequest;
 use App\Http\Requests\SplitPaymentUpdateRequest;
@@ -42,6 +43,7 @@ use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Http\Requests\UpdateTotalPriceRequest;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\ApplicationStorage;
+use App\Models\CcPaymentProcess;
 use App\Models\Customer;
 use App\Models\Entity;
 use App\Models\HealthQuote;
@@ -69,7 +71,7 @@ class CentralController extends Controller
 
     public function createDuplicate(DuplicateLobRequest $request)
     {
-        $response = (new CentralService())->saveDuplicateLeads($request->validated());
+        $response = (new CentralService)->saveDuplicateLeads($request->validated());
 
         if (! empty($response['errors'])) {
             return redirect()->back()->withErrors($response['errors']);
@@ -130,7 +132,7 @@ class CentralController extends Controller
 
     public function manualLeadAssign(LeadAssignRequest $leadAssignRequest)
     {
-        (new CentralService())->assignLeadToAdvisor($leadAssignRequest);
+        (new CentralService)->assignLeadToAdvisor($leadAssignRequest);
 
         return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType).' Leads has been Assigned');
     }
@@ -203,6 +205,9 @@ class CentralController extends Controller
         $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
         info('Book policy details update successfully for : '.$quote->uuid);
 
+        (new SplitPaymentService)->updateCommissionSchedule($payment);
+        info('Commission Schedule updated successfully for : '.$quote->uuid);
+
         return redirect()->back()->with('success', 'Booking details has been updated.');
     }
 
@@ -214,7 +219,7 @@ class CentralController extends Controller
         info('fn: sendBookingPolicy called for '.$quote->uuid.' policy type '.$request->send_policy_type);
 
         if ($request->send_policy_type == SendPolicyTypeEnum::CUSTOMER) {
-            dispatch(new SendBookPolicyDocumentsJob($request));
+            dispatch(new SendBookPolicyDocumentsJob($request, $quote->code));
 
             $quote->update([
                 'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
@@ -232,11 +237,14 @@ class CentralController extends Controller
             }
             $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
             $payment = Payment::where('code', $quote['code'])->mainLeadPayment()->with('paymentSplits')->first();
+            $payment->update([
+                'broker_invoice_number' => (new PaymentRepository)->generateBrokerInvoiceNumber($payment, $request->model_type),
+            ]);
             $paymentSplits = $payment->paymentSplits;
             $data['quoteTypeId'] = $quoteTypeId;
             $data['id'] = $quote->id;
 
-            $sageService = new SageApiService();
+            $sageService = new SageApiService;
             $response = $sageService->postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data);
 
             if ($response['status'] === false) {
@@ -247,8 +255,8 @@ class CentralController extends Controller
             }
 
             if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
-                // dispath job to send email
-                dispatch(new SendBookPolicyDocumentsJob($request));
+                // dispatch job to send email
+                dispatch(new SendBookPolicyDocumentsJob($request, $quote->code));
             }
 
             $quote->update([
@@ -256,7 +264,7 @@ class CentralController extends Controller
                 'policy_booking_date' => Carbon::now(),
             ]);
 
-            (new CentralService())->straightforwardPayments($payment, $paymentSplits, $quote);
+            (new CentralService)->straightforwardPayments($payment, $paymentSplits, $quote);
 
             $this->updatePaymentAllocationStatus($quote);
 
@@ -268,7 +276,7 @@ class CentralController extends Controller
 
     public function loadAvailablePlans($type, $id)
     {
-        return (new CentralService())->loadAvailablePlans($type, $id);
+        return (new CentralService)->loadAvailablePlans($type, $id);
     }
 
     /**
@@ -276,14 +284,14 @@ class CentralController extends Controller
      */
     public function savePlanDetails($quoteType, $code, PlanDetailsRequest $request)
     {
-        $response = (new CentralService())->savePlanDetails($quoteType, $code, $request->safe());
+        $response = (new CentralService)->savePlanDetails($quoteType, $code, $request->safe());
 
         return redirect()->back();
     }
 
     public function updateSelectedPlan(UpdateSelectedPlanRequest $request, $quoteType, $uuid)
     {
-        $response = (new CentralService())->updateSelectedPlan($quoteType, $uuid, $request->safe());
+        $response = (new CentralService)->updateSelectedPlan($quoteType, $uuid, $request->safe());
 
         return response()->json(['plan' => $response]);
     }
@@ -317,13 +325,24 @@ class CentralController extends Controller
 
     public function getQuoteWisePlans($quoteType, $providerId, $plandId = null): object
     {
-        return response()->json((new CentralService())->getQuoteWiseProviderPlans($quoteType, $providerId, $plandId));
+        return response()->json((new CentralService)->getQuoteWiseProviderPlans($quoteType, $providerId, $plandId));
     }
 
     // Update total price
     public function updateTotalPrice(UpdateTotalPriceRequest $request)
     {
         $successMessage = PaymentRepository::updateTotalPrice($request);
+
+        return $successMessage;
+    }
+
+    // Retry CC split payment
+    public function retrySplitPayment(RetrySplitPaymentRequest $request)
+    {
+        $paymentProcessJob = CcPaymentProcess::find($request->payment_process_job_id);
+        info('Manual CC Payments Job Started For Payment Split ID: '.$paymentProcessJob->payment_splits_id);
+
+        $successMessage = app(SplitPaymentService::class)->processSplitPaymentApprove($paymentProcessJob->quote_type, $paymentProcessJob->quoteable_id, $paymentProcessJob->payment_splits_id, $paymentProcessJob->amount_captured, true);
 
         return $successMessage;
     }
@@ -353,7 +372,7 @@ class CentralController extends Controller
     // Generate payment link for split payment
     public function generatePaymentLink(GeneratePaymentLinkRequest $request)
     {
-        return (new SplitPaymentService())->generateSplitPaymentLink($request);
+        return (new SplitPaymentService)->generateSplitPaymentLink($request);
     }
 
     public function saveQuoteNotes(QuoteNotesRequest $quoteNotesRequest)
@@ -368,7 +387,7 @@ class CentralController extends Controller
         $quote->notes()->save($notes);
 
         if ($quoteNotesRequest->hasFile('files')) {
-            $quoteDocumentService = new QuoteDocumentService();
+            $quoteDocumentService = new QuoteDocumentService;
 
             foreach ($quoteNotesRequest->file('files') as $file) {
                 $quoteDoument = $quoteDocumentService->uploadQuoteDocument($file, $quoteNotesRequest->all(), $quote);
@@ -389,7 +408,7 @@ class CentralController extends Controller
         $quote->notes()->where('id', $quoteNotesRequest->id)->update(['note' => $quoteNotesRequest->notes, 'updated_by' => auth()->id()]);
 
         if ($quoteNotesRequest->hasFile('files')) {
-            $quoteDocumentService = new QuoteDocumentService();
+            $quoteDocumentService = new QuoteDocumentService;
 
             foreach ($quoteNotesRequest->file('files') as $file) {
                 $quoteDoument = $quoteDocumentService->uploadQuoteDocument($file, $quoteNotesRequest->all(), $quote);
@@ -443,7 +462,7 @@ class CentralController extends Controller
 
             $repository->refresh();
 
-            $activity = (new CentralService())->saveAndAssignActivitesToAdvisor($repository, $dataFrom['quoteTypeId'], $previousStatusIdChanged);
+            $activity = (new CentralService)->saveAndAssignActivitesToAdvisor($repository, $dataFrom['quoteTypeId'], $previousStatusIdChanged);
 
             if ($activity) {
                 $responseMessage[] = 'Activity has been created';
@@ -527,4 +546,5 @@ class CentralController extends Controller
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
         }
     }
+
 }

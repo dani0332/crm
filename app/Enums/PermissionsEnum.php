@@ -353,9 +353,14 @@ final class PermissionsEnum extends Enum
     public const INPL_USER = 'inpl-user';
     public const INPL_APPROVER = 'inpl-approver';
     public const DOCUMENT_VERIFY = 'document-verify';
+    public const DEPARTMENT_CREATE = 'department-create';
+    public const DEPARTMENT_UPDATE = 'department-update';
+    public const DEPARTMENT_LIST = 'department-list';
     public const AUDITDOCUMENT_UPLOAD = 'auditdocument-upload';
     public const DOWNLOAD_ALL_DOCUMENTS = 'download-all-documents';
     public const TRAVEL_HAPEX = 'travel-hapex';
+    public const All_QUOTES_VIEWONLY_ACCESS = 'all-quotes-view-only-access';
+    public const CUSTOMER_RISKRRATING_OVERRIDE = 'customer-riskrrating-override';
 
     public static function getAdvisorConversionReportPermissions()
     {

@@ -50,7 +50,7 @@ class QuoteSyncService extends BaseService
             $sortOrder = $filters['sortType'] ?? 'desc';
         }
 
-        $count = $dataset->count();
+        $count = 0;
         $dataset = $dataset->orderBy($sortBy, $sortOrder)->simplePaginate()->withQueryString();
         $dataset->map(function ($item) {
             $item->quote_type = QuoteTypes::getName($item->quote_type_id)->value ?? '-';

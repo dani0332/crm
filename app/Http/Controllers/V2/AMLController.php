@@ -376,7 +376,7 @@ class AMLController extends Controller
                     return redirect()->back()->with('success', 'AML Screening Completed');
                 }
 
-                $bridgerInsightService = new BridgerInsightService();
+                $bridgerInsightService = new BridgerInsightService;
                 $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
                 // Job dispatch for all members including customer
@@ -385,7 +385,7 @@ class AMLController extends Controller
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Entity) {
                 $entityDetailsForApi = [];
-                $bridgerInsightService = new BridgerInsightService();
+                $bridgerInsightService = new BridgerInsightService;
                 $bridgerAPIToken = $bridgerInsightService->getJWTToken();
                 $fetchEntity = Entity::where(['trade_license_no' => $AMLCheckRequest->trade_license_no])->first();
                 if (! $fetchEntity) {
@@ -640,7 +640,25 @@ class AMLController extends Controller
         }
         session()->forget('amlResponseCheck');
     }
+    public function updateQuoteComment(Request $request)
+    {
+        $request->validate([
+            'compliance_comments' => 'required|string',
+            'modelType' => 'required',
+            'quote_id' => 'required',
+        ]);
 
+        $model = '\\App\\Models\\'.ucwords($request->modelType).'Quote';
+        if (checkPersonalQuotes(ucwords($request->modelType))) {
+            $model = '\\App\\Models\\PersonalQuote';
+        }
+        $quoteModel = $model::where('id', $request->quote_id)->first();
+        $quoteModel->update([
+            'compliance_comments' => $request->compliance_comments,
+        ]);
+
+        return response()->json(['message' => 'Comment added successfully', 'data' => $quoteModel]);
+    }
     public function stopHapexReminder($quote)
     {
         SIBService::createWorkflowEvent(WorkflowTypeEnum::TRAVEL_HAPEX_STOP_EMAIL_REMINDER, $quote, null, $quote);

@@ -35,6 +35,7 @@ class BusinessQuoteExport
             'BUSINESS INSURANCE TYPE',
             'GENDER',
             'RENEWAL BATCH',
+            'PREVIOUS POLICY EXPIRY DATE',
         ];
     }
 
@@ -58,6 +59,7 @@ class BusinessQuoteExport
             optional($quote->businessTypeOfInsurance)->text,
             $quote->gender,
             $quote->renewal_batch,
+            $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
         ];
     }
 }

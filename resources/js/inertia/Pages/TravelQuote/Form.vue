@@ -93,7 +93,7 @@ const {
   isRequired,
   policy_number,
   premium,
-  renewal_expiry_date,
+  policy_expiry_date,
   policy_start_date,
   isEmail,
   isMobileNo,
@@ -190,7 +190,7 @@ function addUpdatedTraveller() {
 onMounted(() => {
   addUpdatedTraveller();
   updateRegionCover();
-  quoteForm.destination_ids = mappedDestinationIds.value;
+  quoteForm.destination_ids = mappedDestinationIds.value ?? [];
 });
 
 watch(
@@ -437,7 +437,8 @@ watch(mappedDestinationIds, newVal => {
           v-if="
             quoteForm.has_arrived_destination == '0' &&
             quoteForm.direction_code == travelQuoteEnum.TRAVEL_UAE_OUTBOUND &&
-            isArrivedUAE()
+            isArrivedUAE() &&
+            quoteForm.destination_ids?.length > 0
           "
           required
         >

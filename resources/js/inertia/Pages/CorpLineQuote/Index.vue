@@ -69,6 +69,8 @@ const filters = reactive({
   is_stale: false,
   payment_due_date: '',
   booking_date: '',
+  policy_expiry_date: '',
+  policy_expiry_date_end: '',
 });
 
 watch(
@@ -133,6 +135,12 @@ const tableHeader = ref([
     is_active: true,
     sortable: true,
   },
+  {
+    text: 'POLICY EXPIRY DATE',
+    value: 'previous_policy_expiry_date',
+    is_active: true,
+    sortable: true,
+  },
   { text: 'PRICE', value: 'price_with_vat', is_active: true, sortable: true },
   {
     text: 'NUMBER OF EMPLOYEES',
@@ -173,6 +181,8 @@ const setIntialState = () => {
     payment_status: [],
     is_cold: false,
     is_stale: false,
+    policy_expiry_date: '',
+    policy_expiry_date_end: '',
   });
   filtersCount.value = 0;
 };
@@ -198,6 +208,14 @@ function resetFilters() {
 
 function onSubmit(isValid) {
   if (isValid) {
+    if (validateDateRange()) {
+      notification.error({
+        title:
+          'The selected date range exceeds one month. Please select a range within one month.',
+        position: 'top',
+      });
+      return;
+    }
     serverOptions.value.page = 1;
 
     const filtersCleaned = cleanObj(filters);
@@ -332,6 +350,14 @@ watch(
     if (oldValue !== newValue) onSubmit(true);
   },
 );
+
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
+
 const resetDateFilters = filterName => {
   const filterMappings = {
     payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
@@ -363,6 +389,28 @@ const resetDateFilters = filterName => {
     },
   );
 });
+const validateDateRange = () => {
+  const { policy_expiry_date, policy_expiry_date_end } = filters;
+  if (policy_expiry_date && policy_expiry_date_end) {
+    const startDate = new Date(policy_expiry_date);
+    const endDate = new Date(policy_expiry_date_end);
+    const oneMonthLater = new Date(startDate);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    // Adjust for months with fewer than 31 days
+    if (oneMonthLater.getDate() < startDate.getDate()) {
+      oneMonthLater.setDate(0);
+    }
+    if (endDate > oneMonthLater) {
+      return true;
+    }
+  }
+  return false;
+};
+const formatDate = date => {
+  if (!date) return '';
+  const options = { year: 'numeric', month: 'short', day: 'numeric' };
+  return new Date(date).toLocaleDateString('en-GB', options);
+};
 </script>
 
 <template>
@@ -391,10 +439,24 @@ const resetDateFilters = filterName => {
           @toggleFilters="showFilters = !showFilters"
         />
         <Link :href="route('business.cards')">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View</x-button>
+          <x-button
+            size="sm"
+            color="#1d83bc"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Cards View</x-button
+          >
         </Link>
         <Link :href="route('business.create')">
-          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead</x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Create Lead</x-button
+          >
         </Link>
       </template>
     </StickyHeader>
@@ -509,6 +571,18 @@ const resetDateFilters = filterName => {
             v-model="filters.quote_status_id"
             placeholder="Search by Lead Status"
             :options="leadStatusOptions"
+          />
+        </x-field>
+        <x-field label="Policy Expiry Start Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date"
+            name="policy_expiry_date"
+          />
+        </x-field>
+        <x-field label="Policy Expiry End Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date_end"
+            name="policy_expiry_date_end"
           />
         </x-field>
         <x-field label="BUSINESS INSURANCE TYPE">
@@ -636,6 +710,8 @@ const resetDateFilters = filterName => {
                 placeholder="Select Advisor"
                 class="flex-1 w-auto"
                 :rules="[isRequired]"
+                filterable
+                v-if="readOnlyMode.isDisable === true"
               />
               <div class="mb-3 md:pt-6">
                 <x-button
@@ -643,6 +719,7 @@ const resetDateFilters = filterName => {
                   size="sm"
                   type="submit"
                   :loading="assignForm.processing"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Assign
                 </x-button>
@@ -682,6 +759,18 @@ const resetDateFilters = filterName => {
         >
           {{ source }}
         </a>
+      </template>
+      <template
+        #item-previous_policy_expiry_date="{
+          previous_policy_expiry_date,
+          source,
+        }"
+      >
+        {{
+          source === 'Renewal_upload'
+            ? formatDate(previous_policy_expiry_date)
+            : ''
+        }}
       </template>
     </DataTable>
 

@@ -14,6 +14,7 @@ use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
+use App\Models\BusinessQuoteType;
 use App\Models\CarAddOn;
 use App\Models\CarAddOnOption;
 use App\Models\CarQuote;
@@ -61,7 +62,6 @@ class SendUpdateLogService
             'payment_status_id',
             'payment_status_date',
             'payment_gateway',
-            'previous_quote_policy_number',
             'previous_policy_expiry_date',
             'previous_quote_policy_premium',
             'price_vat_applicable',
@@ -76,7 +76,7 @@ class SendUpdateLogService
             'plan_selected_at',
             'quote_batch_id',
             'renewal_batch',
-            'renewal_expiry_date',
+            'policy_expiry_date',
             'vat',
         ];
 
@@ -350,7 +350,7 @@ class SendUpdateLogService
         $modelRelationDetails = $this->_getQuoteRelation($quoteModel, $quoteTypeCode);
         $quoteObject = $quoteModel::with(array_keys($modelRelationDetails['quoteRelations']))->find($requestData['ref_id']);
 
-        $countChildRecords = $quoteModel::where('code', 'like', '%'.$quoteObject->code.'-%')->count();
+        $countChildRecords = $quoteModel::where('parent_duplicate_quote_id', $quoteObject->code)->count();
         $childLeadDetails = [
             'childLeadsCount' => $countChildRecords,
             'parent_ref_id' => $quoteObject->code,
@@ -397,7 +397,7 @@ class SendUpdateLogService
     {
         $quoteTypeId = QuoteTypeId::getValue($quoteTypeCode);
         $quoteModel = $this->getModelObject($quoteTypeCode);
-        $childRecords = $quoteModel::where('code', 'like', '%'.$quote->code.'-%')->get();
+        $childRecords = $quoteModel::where('parent_duplicate_quote_id', $quote->code)->get();
 
         $_return = [
             'quote_type_id' => $quoteTypeId,
@@ -456,23 +456,16 @@ class SendUpdateLogService
         }
         $sendUpdateLogCategory = LookupRepository::where('id', $sendUpdateLog->category_id)->value('code');
 
-        $insuranceProviderCode = InsuranceProviderRepository::where('id', $insuranceProviderId)->value('code');
-        if (empty($sendUpdateLog->broker_invoice_number)) {
-            $insuranceProviderLeadCount = Payment::where('insurance_provider_id', $insuranceProviderId)->count();
-
-            $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
-            if (SendUpdateLog::where('broker_invoice_number', $brokerInvoiceNumber)->whereNot('uuid', $sendUpdateLog->uuid)->exists()) {
-                $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
-            }
-        } else {
-            $brokerInvoiceNumber = $sendUpdateLog->broker_invoice_number;
+        $insuranceProvider = InsuranceProviderRepository::find($insuranceProviderId);
+        if ($insuranceProvider) {
+            $brokerInvoiceNumber = $this->generateBrokerInvoiceNumber($sendUpdateLog, $insuranceProvider);
         }
 
-        if (empty($sendUpdateLog->invoice_description)) {
+        if (empty($sendUpdateLog->invoice_description) && $insuranceProvider) {
             if ($quoteType == quoteTypeCode::Business && $quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
-                $invoiceDescription = $insuranceProviderCode.'-'.quoteTypeCode::GroupMedical.'-'.$quote->policy_number;
+                $invoiceDescription = $insuranceProvider->code.'-'.quoteTypeCode::GroupMedical.'-'.$quote->policy_number;
             } else {
-                $invoiceDescription = $insuranceProviderCode.'-'.$quoteType.'-'.$quote->policy_number;
+                $invoiceDescription = $insuranceProvider->code.'-'.$quoteType.'-'.$quote->policy_number;
             }
 
             if ($sendUpdateLogCategory == SendUpdateLogStatusEnum::EF) {
@@ -489,8 +482,8 @@ class SendUpdateLogService
 
         $response = [
             'booking_date' => ! is_null($sendUpdateLog->booking_date) ? Carbon::parse($sendUpdateLog->booking_date)->format(config('constants.DATE_DISPLAY_FORMAT')) : null,
-            'broker_invoice_number' => $brokerInvoiceNumber,
-            'invoice_description' => $invoiceDescription,
+            'broker_invoice_number' => $brokerInvoiceNumber ?? '',
+            'invoice_description' => $invoiceDescription ?? '',
             'reversal_invoice_description' => $reversalInvoiceDescription ?? '',
         ];
 
@@ -622,7 +615,7 @@ class SendUpdateLogService
     {
         $payments = $sendUpdateLog->payments;
         if ($payments) {
-            $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents', 'paymentSplits.paymentMethod', 'paymentSplits.verifiedByUser']);
+            $payments->load(['paymentSplits', 'paymentStatus', 'paymentMethod', 'insuranceProvider', 'paymentStatusLog', 'paymentSplits.paymentStatus', 'paymentSplits.documents', 'paymentSplits.paymentMethod', 'paymentSplits.verifiedByUser', 'paymentSplits.processJob']);
             if ($quoteType == quoteTypeCode::Travel) {
                 $payments->load(['travelPlan']);
             }
@@ -631,7 +624,7 @@ class SendUpdateLogService
         return $payments;
     }
 
-    public function updatePaymentDetails($payment, $sendUpdateLog)
+    public function updatePaymentDetails($payment, $sendUpdateLog, $ignoreDiscount = false)
     {
         $sendUpdatePaymentDetails = [
             'policy_expiry_date' => $sendUpdateLog->expiry_date,
@@ -644,9 +637,12 @@ class SendUpdateLogService
             'commission_vat_applicable' => $sendUpdateLog->commission_vat_applicable,
             'commission' => $sendUpdateLog->total_commission,
             'insurer_invoice_date' => $sendUpdateLog->invoice_date,
-            'discount_value' => $sendUpdateLog->discount,
             'commission_vat' => $sendUpdateLog->vat_on_commission,
         ];
+
+        if (! $ignoreDiscount) {
+            $sendUpdatePaymentDetails['discount_value'] = $sendUpdateLog->discount;
+        }
 
         return $payment->update($sendUpdatePaymentDetails);
     }
@@ -666,6 +662,7 @@ class SendUpdateLogService
                     'category' => $categoryCode,
                     'option' => $sendUpdateLog->option->code,
                     'send_update_log' => $sendUpdateLog,
+                    'authDetails' => auth()->user(),
                 ]
             );
 
@@ -681,6 +678,7 @@ class SendUpdateLogService
                     'category' => $categoryCode,
                     'send_update_log' => $sendUpdateLog,
                     'reverse_invoice' => $sendUpdateRequest->reversalInvoice,
+                    'authDetails' => auth()->user(),
                 ]
             );
 
@@ -717,8 +715,8 @@ class SendUpdateLogService
 
                 // Cases for Endorsment Financial Start
                 if ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE) {
-                    info('Book Update - Updating Renewal Expiry Date for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-                    $quote->update(['renewal_expiry_date' => $sendUpdateLog->expiry_date]);
+                    info('Book Update - Updating Policy Expiry Date for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+                    $quote->update(['policy_expiry_date' => $sendUpdateLog->expiry_date]);
                 }
 
                 if ($sendUpdateRequest->quoteType == quoteTypeCode::Car && $categoryCode == SendUpdateLogStatusEnum::EF) {
@@ -757,7 +755,7 @@ class SendUpdateLogService
                         // 'quote_status_id' => QuoteStatusEnum::PolicyCancelled, // Below code overrides status, it should be PolicyCancelledReissued not PolicyCancelled
                         'quote_batch_id' => null,
                     ]);
-                    (new AllocationService())->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
+                    (new AllocationService)->deductLeadAllocationCount($quoteModel, $sendUpdateRequest->quoteUuid);
                 } elseif ($categoryCode == SendUpdateLogStatusEnum::CI || ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::MPC)) {
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
@@ -769,19 +767,12 @@ class SendUpdateLogService
                 if ($categoryCode == SendUpdateLogStatusEnum::CPD && (
                     $sendUpdateRequest->reversalInvoice == $quote->payments->value('insurer_tax_number')
                 )) {
-                    info('Book Update - Updating Policy and Booking Details for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-                    $this->updatePaymentDetails($quote->payments->first(), $sendUpdateLog);
+                    info('Book Update - Updating Policy Details for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
                     $quote->update([
                         'policy_number' => $sendUpdateLog->policy_number,
                         'policy_start_date' => $sendUpdateLog->start_date,
-                        'policy_issuance_date' => $sendUpdateLog->issuance_date,
-                        'renewal_expiry_date' => $sendUpdateLog->expiry_date,
-                        'insurer_quote_number' => $sendUpdateLog->insurer_quote_number,
-                        'policy_issuance_status_id' => $sendUpdateLog->issuance_status_id,
+                        'policy_expiry_date' => $sendUpdateLog->expiry_date,
                         'policy_booking_date' => $currentDate,
-                        'price_vat_applicable' => $sendUpdateLog->price_vat_applicable,
-                        'price_vat_not_applicable' => $sendUpdateLog->price_vat_not_applicable,
-                        'price_with_vat' => $sendUpdateLog->price_with_vat,
                     ]);
                 }
                 // Cases for Correct Policy Details End
@@ -869,16 +860,16 @@ class SendUpdateLogService
 
         $carQuote = CarQuote::where('uuid', $quoteUuid)->first();
 
-        return $carQuote->plan->carAddons->toArray();
+        return (isset($carQuote->plan->carAddons)) ? $carQuote?->plan?->carAddons->toArray() : [];
     }
 
-    public function sendUpdateToCustomerEmail($sendUpdateLog, $action): void
+    public function sendUpdateToCustomerEmailData($sendUpdateLog, $action): array
     {
         $quoteTypeId = $sendUpdateLog->quote_type_id;
         $quoteType = QuoteTypeId::getOptions()[$quoteTypeId];
         $quoteModel = $this->getModelObject($quoteType);
         $quote = $quoteModel::where('uuid', $sendUpdateLog->quote_uuid)->first();
-        $insuranceProviderText = $quote?->insuranceProvider?->text ?? $quote?->plan?->insuranceProvider?->text ?? '';
+        $insuranceProviderText = $sendUpdateLog?->insuranceProvider?->text ?? $quote?->insuranceProvider?->text ?? $quote?->plan?->insuranceProvider?->text ?? '';
         $optionCode = $sendUpdateLog->option?->code;
         $categoryCode = $sendUpdateLog->category->code;
 
@@ -889,39 +880,23 @@ class SendUpdateLogService
         }
 
         if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
-            $documentUrl = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE])->pluck('doc_url')->toArray();
+            $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
+                DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE])->toArray();
         } elseif (in_array($quoteTypeId, [QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
             if ($action == SendUpdateLogStatusEnum::ACTION_SNBU) {
-                $documentUrl = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE])->pluck('doc_url')->toArray();
+                $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
+                    DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE])->toArray();
             } elseif ($action == SendUpdateLogStatusEnum::ACTION_SUC) {
-                $documentUrl = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE])->pluck('doc_url')->toArray();
+                $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
+                    DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE])->toArray();
             } elseif ($action == SendUpdateLogStatusEnum::ACTION_SU) {
-                $documentUrl = $sendUpdateLog->documents->where('document_type_code', DocumentTypeCode::SEND_UPDATE_TAX_INVOICE)->pluck('doc_url')->toArray();
+                $documents = $sendUpdateLog->documents->where('document_type_code', DocumentTypeCode::SEND_UPDATE_TAX_INVOICE)->toArray();
             }
-        }
-
-        // need to add "Car Fleet" for PPE details.
-        // need to add "Car Fleet" for CISC_NFI details.
-        // need to add "Car Fleet" for COE_NFI details.
-
-        if ($quoteTypeId == QuoteTypeId::Business) {
-            if ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
-                $isGroupMedical = true;
-                $templateId = getAppStorageValueByKey(ApplicationStorageEnums::GROUP_MEDICAL_SEND_POLICY_TEMPLATE);
-            } elseif ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::tradeCredit)) {
-                $templateId = getAppStorageValueByKey(ApplicationStorageEnums::CORPLINE_TRADE_SEND_POLICY_TEMPLATE);
-            } else {
-                $templateId = getAppStorageValueByKey(ApplicationStorageEnums::CORPLINE_CAR_SEND_POLICY_TEMPLATE);
-            }
-        } else {
-            $templateCode = strtoupper(QuoteTypeId::getOptions()[$quoteTypeId]).'_SEND_POLICY_TEMPLATE';
-            $constantName = 'App\Enums\ApplicationStorageEnums::'.$templateCode;
-            $templateId = getAppStorageValueByKey(constant($constantName));
         }
 
         $emailData = (object) [
             'clientFullName' => $quote->first_name.' '.$quote->last_name,
-            'policyNumber' => $quote->policy_number,
+            'policyNumber' => $quote->policy_number ?? $quote?->previous_quote_policy_number ?? '',
             'carQuoteId' => $sendUpdateLog->code,
             'currentInsurer' => $insuranceProviderText,
             'policyUpdate' => $update ?? '',
@@ -933,9 +908,24 @@ class SendUpdateLogService
                 'mobileNo' => $quote->advisor->mobile_no ?? '',
             ],
             'googleMeet' => $quote->advisor->calendar_link ?? '',
-            'documentUrl' => $documentUrl,
-            'isGroupMedical' => $isGroupMedical ?? null,
+            'documents' => $documents,
         ];
+
+        if ($quoteTypeId == QuoteTypeId::Business) {
+            $emailData->lobType = BusinessQuoteType::where('id', $quote->business_type_of_insurance_id)->where('is_active', true)->first()->text;
+            if ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
+                $emailData->isGroupMedical = true;
+                $templateId = getAppStorageValueByKey(ApplicationStorageEnums::GROUP_MEDICAL_SEND_POLICY_TEMPLATE);
+            } elseif ($quote->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::tradeCredit)) {
+                $templateId = getAppStorageValueByKey(ApplicationStorageEnums::CORPLINE_TRADE_SEND_POLICY_TEMPLATE);
+            } else {
+                $templateId = getAppStorageValueByKey(ApplicationStorageEnums::CORPLINE_CAR_SEND_POLICY_TEMPLATE);
+            }
+        } else {
+            $templateCode = strtoupper(QuoteTypeId::getOptions()[$quoteTypeId]).'_SEND_POLICY_TEMPLATE';
+            $constantName = 'App\Enums\ApplicationStorageEnums::'.$templateCode;
+            $templateId = getAppStorageValueByKey(constant($constantName));
+        }
 
         if ($quoteTypeId == QuoteTypeId::Car) {
             if ($optionCode == SendUpdateLogStatusEnum::AOCOV) {
@@ -956,7 +946,7 @@ class SendUpdateLogService
             }
         }
 
-        app(SendEmailCustomerService::class)->sendUpdateToCustomerEmail($templateId, $emailData, 'send-update', $quoteTypeId);
+        return [$templateId, $emailData, 'send-update', $quoteTypeId];
     }
 
     /**
@@ -984,17 +974,22 @@ class SendUpdateLogService
 
     public function getSendUpdateDocuments($category): array
     {
-        $documentTypes = app(QuoteDocumentService::class)->getSendUpdateDocumentTypes();
+        $documentTypesByCategory = app(QuoteDocumentService::class)->getSendUpdateDocumentTypes();
 
-        return array_map(function ($documentType) use ($category) {
-            if (! in_array($category, [SendUpdateLogStatusEnum::EN, SendUpdateLogStatusEnum::CPD]) &&
-                in_array($documentType['code'], [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER])
-            ) {
-                $documentType['is_required'] = 1;
+        foreach ($documentTypesByCategory as $documentCategory => $documentTypes) {
+            foreach ($documentTypes as $key => $documentType) {
+                if (! in_array($category, [SendUpdateLogStatusEnum::EN, SendUpdateLogStatusEnum::CPD]) &&
+                    in_array($documentType['code'], [
+                        DocumentTypeCode::SEND_UPDATE_TAX_INVOICE,
+                        DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER,
+                    ])
+                ) {
+                    $documentTypesByCategory[$documentCategory][$key]['is_required'] = (int) true;
+                }
             }
+        }
 
-            return $documentType;
-        }, $documentTypes);
+        return $documentTypesByCategory;
     }
 
     public function sendUpdatePriceAndDiscount($sendUpdateLog, $payment): void
@@ -1021,5 +1016,36 @@ class SendUpdateLogService
         }
 
         return $array;
+    }
+
+    private function generateUniqueBrokerInvoiceNumber($insuranceProviderCode, $insuranceProviderLeadCount, $sendUpdateLog)
+    {
+        $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
+        $attempts = 0;
+
+        while (SendUpdateLog::where('broker_invoice_number', $brokerInvoiceNumber)
+            ->whereNot('uuid', $sendUpdateLog->uuid)
+            ->exists() && $attempts < 10) {
+            $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
+            $attempts++;
+        }
+
+        if ($attempts >= 10) {
+            vAbort('Send Update Log Broker Invoice Number generation failed.');
+        }
+
+        return $brokerInvoiceNumber;
+    }
+
+    public function generateBrokerInvoiceNumber($sendUpdateLog, $insuranceProvider): string
+    {
+        if (empty($sendUpdateLog->broker_invoice_number)) {
+            $insuranceProviderLeadCount = Payment::where('insurance_provider_id', $insuranceProvider->id)->count();
+            $brokerInvoiceNumber = $this->generateUniqueBrokerInvoiceNumber($insuranceProvider->code, $insuranceProviderLeadCount, $sendUpdateLog);
+        } else {
+            $brokerInvoiceNumber = $sendUpdateLog->broker_invoice_number;
+        }
+
+        return $brokerInvoiceNumber;
     }
 }

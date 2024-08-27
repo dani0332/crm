@@ -4,6 +4,7 @@ const props = defineProps({
   products: Array,
   teams: Array,
   subTeams: Array,
+  departments: Array,
   user: Object,
   userRole: Object,
   selectedAdditionalTeams: Array,
@@ -22,6 +23,7 @@ const notification = useToast();
 
 const { isRequired, isMobileNo, isEmail, allowEmpty } = useRules();
 const subTeams = ref([]);
+const departments = ref([]);
 const teams = ref([]);
 const managers = ref([]);
 const isError = ref(false);
@@ -36,6 +38,10 @@ const loader = reactive({
 const selectedRoles = computed(() => {
   if (props.user && props.user.roles) return props.user.roles.map(x => x.name);
   else return [];
+});
+
+const isAllowed = computed(() => {
+  return hasRole(rolesEnum.Admin);
 });
 
 const userForm = useForm({
@@ -59,6 +65,7 @@ const userForm = useForm({
   permissions: props?.userPermissions ?? null,
   calendar_link: props.user?.calendar_link ?? null,
   phone_calendar_link: props.user?.phone_calendar_link ?? null,
+  department_id: props.user?.department_id ?? null,
 });
 
 const isAdvisor = computed(() => {
@@ -86,6 +93,15 @@ const computedTeams = computed(() => {
 const computedSubTeams = computed(() => {
   if (subTeams.value.length > 0)
     return subTeams.value.map(item => ({ value: item.id, label: item.name }));
+  else return [];
+});
+
+const computedDepartments = computed(() => {
+  if (page.props.departments?.length > 0)
+    return page.props.departments?.map(item => ({
+      value: item.id,
+      label: item.name,
+    }));
   else return [];
 });
 
@@ -263,13 +279,8 @@ watch(
           class="w-full"
         />
       </x-field>
-      <x-field label="PASSWORD" required v-if="!isEdit">
-        <x-input
-          :rules="!isEdit ? [isRequired] : []"
-          v-model="userForm.password"
-          class="w-full"
-          type="password"
-        />
+      <x-field label="PASSWORD" required v-if="isAllowed">
+        <x-input v-model="userForm.password" class="w-full" type="password" />
       </x-field>
       <x-field label="ROLES" required>
         <ComboBox
@@ -319,6 +330,15 @@ watch(
           :loading="loader.subTeamLoader"
         />
       </x-field>
+      <x-field label="Department">
+        <ComboBox
+          v-model="userForm.department_id"
+          placeholder="Select Department"
+          :options="computedDepartments"
+          :single="true"
+        />
+      </x-field>
+
       <x-field label="LOB VISIBILITY">
         <ComboBox
           :multiple="true"

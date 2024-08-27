@@ -157,6 +157,12 @@ const can = permission => useCan(permission);
 const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 const [SavePlanDetailsButtonTemplate, SavePlanDetailsButtonReuseTemplate] =
   createReusableTemplate();
 
@@ -279,6 +285,7 @@ watch(
           size="sm"
           :loading="formProcessing"
           :disabled="isDisabled"
+          v-if="readOnlyMode.isDisable === true"
         >
           Save
         </x-button>

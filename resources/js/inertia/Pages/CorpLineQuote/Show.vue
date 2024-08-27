@@ -1,4 +1,10 @@
 <script setup>
+import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
+import MigratePayment from '../../Components/MigratePayment.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
+import EntityRiskRatingScoreDetails from '../../Components/EntityRiskRatingScoreDetails.vue';
+import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+
 const props = defineProps({
   quote: Object,
   genderOptions: Object,
@@ -51,6 +57,7 @@ const quoteStatusEnum = page.props.quoteStatusEnum;
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+const can = permission => useCan(permission);
 
 const countDays = useDaysSinceStale(props.quoteRequest?.stale_at);
 const compareDueDate = useCompareDueDate;
@@ -545,6 +552,12 @@ const linkEntity = () => {
       console.log(err);
     });
 };
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
@@ -581,7 +594,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
           Stale for {{ countDays }}
         </p>
       </template>
-      <template #default>
+      <template #default v-if="readOnlyMode.isDisable === true">
         <LeadNotes
           :documentType="noteDocumentType"
           :notes="quoteNotes"
@@ -816,8 +829,8 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">RENEWAL EXPIRY DATE</dt>
-                <dd>{{ quote.renewal_expiry_date }}</dd>
+                <dt class="font-medium">POLICY EXPIRY DATE</dt>
+                <dd>{{ quote.policy_expiry_date }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -860,6 +873,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">DEVICE</dt>
                 <dd>{{ quote.device }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ quote.transaction_approved_at }}</dd>
               </div>
             </dl>
           </div>
@@ -924,6 +941,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                       size="xs"
                       color="primary"
                       class="mt-1"
+                      v-if="readOnlyMode.isDisable === true"
                     >
                       Search
                     </x-button>
@@ -978,7 +996,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   </dd>
                 </div>
               </dl>
-              <div class="flex justify-end">
+              <div
+                class="flex justify-end"
+                v-if="readOnlyMode.isDisable === true"
+              >
                 <x-button
                   v-if="isProfileUpdateAllow"
                   class="mt-4"
@@ -991,6 +1012,23 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 </x-button>
               </div>
             </div>
+            <dl></dl>
+            <div class="flex justify-end">
+              <x-button
+                v-if="isProfileUpdateAllow"
+                class="mt-4"
+                color="emerald"
+                size="sm"
+                :loading="customerProfileForm.processing"
+                type="submit"
+              >
+                Update Profile
+              </x-button>
+            </div>
+            <EntityRiskRatingScoreDetails
+              :quote="quote"
+              :modelType="quoteType"
+            />
           </x-form>
         </template>
       </Collapsible>
@@ -1126,6 +1164,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 "
                 placeholder="Lead Status"
                 class="w-full"
+                filterable
               />
               <x-textarea
                 v-model="leadStatusForm.notes"
@@ -1187,6 +1226,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
             :loading="loaders.leadStatus"
             @click.prevent="onLeadStatus"
             :disabled="disableStatusSection || isDisabled"
+            v-if="readOnlyMode.isDisable === true"
           >
             Change Status
           </x-button>
@@ -1313,7 +1353,12 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
         <template #body>
           <x-divider class="my-4" />
           <div class="mb-4 flex justify-end">
-            <x-button size="sm" color="orange" @click.prevent="addActivity">
+            <x-button
+              size="sm"
+              color="orange"
+              @click.prevent="addActivity"
+              v-if="readOnlyMode.isDisable === true"
+            >
               Add Activity
             </x-button>
           </div>
@@ -1344,6 +1389,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   outlined
                   :disabled="item.status === 1"
                   @click.prevent="activityEdit(item)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Edit
                 </x-button>
@@ -1353,6 +1399,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                   :disabled="item.status === 1"
                   outlined
                   @click.prevent="activityDelete(item.id)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Delete
                 </x-button>

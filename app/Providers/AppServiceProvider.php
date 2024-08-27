@@ -15,6 +15,8 @@ use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
 use App\Models\LifeQuote;
 use App\Models\LifeQuoteRequestDetail;
+use App\Models\Payment;
+use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Models\TravelQuote;
@@ -33,6 +35,8 @@ use App\Observers\HomeQuoteDetailObserver;
 use App\Observers\HomeQuoteObserver;
 use App\Observers\LifeQuoteDetailObserver;
 use App\Observers\LifeQuoteObserver;
+use App\Observers\PaymentObserver;
+use App\Observers\PaymentSplitsObserver;
 use App\Observers\PersonalQuoteObserver;
 use App\Observers\PetQuoteObserver;
 use App\Observers\TravelQuoteDetailObserver;
@@ -53,15 +57,15 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->bind(CarAllocationService::class, function ($app) {
-            return new CarAllocationService();
+            return new CarAllocationService;
         });
 
         $this->app->bind(HealthAllocationService::class, function ($app) {
-            return new HealthAllocationService();
+            return new HealthAllocationService;
         });
 
         $this->app->singletonIf(LeadsCountService::class, function ($app) {
-            return new LeadsCountService();
+            return new LeadsCountService;
         });
     }
 
@@ -90,6 +94,8 @@ class AppServiceProvider extends ServiceProvider
         BikeQuote::observe(BikeQuoteObserver::class);
         PersonalQuote::observe(PersonalQuoteObserver::class);
         Customer::observe(CustomerObserver::class);
+        Payment::observe(PaymentObserver::class);
+        PaymentSplits::observe(PaymentSplitsObserver::class);
         // DB::listen(function($query) {
         //     info(
         //         $query->sql,

@@ -17,6 +17,14 @@ class SendUpdateLog extends Model implements AuditableContract
     protected $casts = [
         'car_addons' => 'json',
     ];
+    protected $appends = ['display_status'];
+    /*
+     * it will convert BOOK-UPDATE to Book Update.
+     */
+    public function getDisplayStatusAttribute(): string
+    {
+        return ucwords(str_replace('_', ' ', strtolower($this->status)));
+    }
 
     public function quoteType(): BelongsTo
     {
@@ -51,5 +59,10 @@ class SendUpdateLog extends Model implements AuditableContract
     public function emirates(): BelongsTo
     {
         return $this->belongsTo(Emirate::class, 'emirates_id');
+    }
+
+    public function insuranceProvider(): BelongsTo
+    {
+        return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id')->select(['id', 'text']);
     }
 }
