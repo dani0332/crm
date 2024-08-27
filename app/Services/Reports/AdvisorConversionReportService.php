@@ -105,30 +105,13 @@ class AdvisorConversionReportService extends BaseService
                     strtr('SUM(CASE WHEN car_quote_request.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as total_leads', $this->getBindings())
                 ),
                 DB::raw(
-                    strtr('SUM(CASE WHEN car_quote_request.quote_status_id = :newLead and car_quote_request.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as new_leads', $this->getBindings([':newLead' => QuoteStatusEnum::NewLead]))
+                    strtr('SUM(CASE WHEN car_quote_request.quote_status_id = :newLead and car_quote_request.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as new_leads', $this->getBindings())
                 ),
                 DB::raw(
-                    strtr('SUM(CASE WHEN car_quote_request.quote_status_id in (:notInterestedStatuses) and car_quote_request.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as not_interested', $this->getBindings([':notInterestedStatuses' => [
-                        QuoteStatusEnum::PriceTooHigh,
-                        QuoteStatusEnum::PolicyPurchasedBeforeFirstCall,
-                        QuoteStatusEnum::NotInterested,
-                        QuoteStatusEnum::NotEligibleForInsurance,
-                        QuoteStatusEnum::NotLookingForMotorInsurance,
-                        QuoteStatusEnum::NonGccSpec,
-                        QuoteStatusEnum::AMLScreeningFailed,
-                    ]]))
+                    strtr('SUM(CASE WHEN car_quote_request.quote_status_id in (:notInterestedStatuses) and car_quote_request.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as not_interested', $this->getBindings())
                 ),
                 DB::raw(
-                    strtr('SUM(CASE WHEN car_quote_request.quote_status_id in (:inProgressStatuses) and car_quote_request.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as in_progress', $this->getBindings([':inProgressStatuses' => [
-                        QuoteStatusEnum::NotContactablePe,
-                        QuoteStatusEnum::FollowupCall,
-                        QuoteStatusEnum::Interested,
-                        QuoteStatusEnum::NoAnswer,
-                        QuoteStatusEnum::Quoted,
-                        QuoteStatusEnum::PaymentPending,
-                        QuoteStatusEnum::AMLScreeningCleared,
-                        QuoteStatusEnum::PendingQuote,
-                    ]]))
+                    strtr('SUM(CASE WHEN car_quote_request.quote_status_id in (:inProgressStatuses) and car_quote_request.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as in_progress', $this->getBindings())
                 ),
                 DB::raw(
                     strtr('SUM(CASE WHEN car_quote_request.source IN (:excludedSources) THEN 1 ELSE 0 END) as manual_created', $this->getBindings())
@@ -151,9 +134,7 @@ class AdvisorConversionReportService extends BaseService
                         ) as created_sale_leads', $this->getBindings())
                 ),
                 DB::raw(
-                    strtr('SUM(CASE WHEN car_quote_request.quote_status_id = :imRenewal THEN 1 ELSE 0 END) and car_quote_request.source NOT IN (:excludedSources) as afia_renewals_count', $this->getBindings([
-                        ':imRenewal' => QuoteStatusEnum::IMRenewal,
-                    ]))
+                    strtr('SUM(CASE WHEN car_quote_request.quote_status_id = :imRenewal THEN 1 ELSE 0 END) and car_quote_request.source NOT IN (:excludedSources) as afia_renewals_count', $this->getBindings())
                 ),
                 DB::raw(
                     strtr('SUM(CASE WHEN car_quote_request.quote_status_id in (:badLeadsStatuses) and car_quote_request.source IN (:excludedSources) THEN 1 ELSE 0 END) as manual_created_bad_leads', $this->getBindings())
@@ -194,27 +175,38 @@ class AdvisorConversionReportService extends BaseService
         return $query;
     }
 
-    private function getBindings($extra = [])
+    private function getBindings()
     {
         $excludedSources = implode(',', array_map(fn ($source) => "'$source'", [LeadSourceEnum::IMCRM, LeadSourceEnum::INSLY]));
 
-        $data = [
+        return [
             ':excludedSources' => $excludedSources,
             ':policyBookingDate' => Carbon::parse('2024-09-01')->toDateTimeString(),
             ':policyBookedStatus' => QuoteStatusEnum::PolicyBooked,
             ':approvedStatuses' => implode(',', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyBooked]),
             ':badLeadsStatuses' => implode(',', [QuoteStatusEnum::Duplicate, QuoteStatusEnum::Fake]),
+            ':imRenewal' => QuoteStatusEnum::IMRenewal,
+            ':notInterestedStatuses' => implode(',', [
+                QuoteStatusEnum::PriceTooHigh,
+                QuoteStatusEnum::PolicyPurchasedBeforeFirstCall,
+                QuoteStatusEnum::NotInterested,
+                QuoteStatusEnum::NotEligibleForInsurance,
+                QuoteStatusEnum::NotLookingForMotorInsurance,
+                QuoteStatusEnum::NonGccSpec,
+                QuoteStatusEnum::AMLScreeningFailed,
+            ]),
+            ':newLead' => QuoteStatusEnum::NewLead,
+            ':inProgressStatuses' => implode(',', [
+                QuoteStatusEnum::NotContactablePe,
+                QuoteStatusEnum::FollowupCall,
+                QuoteStatusEnum::Interested,
+                QuoteStatusEnum::NoAnswer,
+                QuoteStatusEnum::Quoted,
+                QuoteStatusEnum::PaymentPending,
+                QuoteStatusEnum::AMLScreeningCleared,
+                QuoteStatusEnum::PendingQuote,
+            ]),
         ];
-
-        foreach ($extra as $key => $item) {
-            if (is_array($item)) {
-                $data[$key] = implode(',', $item);
-            } else {
-                $data[$key] = $item;
-            }
-        }
-
-        return $data;
     }
 
     private function getPersonsalQuoteQuery($lob)
@@ -234,30 +226,13 @@ class AdvisorConversionReportService extends BaseService
                     strtr('SUM(CASE WHEN personal_quotes.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as total_leads', $this->getBindings())
                 ),
                 DB::raw(
-                    strtr('SUM(CASE WHEN personal_quotes.quote_status_id = :newLead and personal_quotes.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as new_leads', $this->getBindings([':newLead' => QuoteStatusEnum::NewLead]))
+                    strtr('SUM(CASE WHEN personal_quotes.quote_status_id = :newLead and personal_quotes.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as new_leads', $this->getBindings())
                 ),
                 DB::raw(
-                    strtr('SUM(CASE WHEN personal_quotes.quote_status_id in (:notInterestedStatuses) and personal_quotes.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as not_interested', $this->getBindings([':notInterestedStatuses' => [
-                        QuoteStatusEnum::PriceTooHigh,
-                        QuoteStatusEnum::PolicyPurchasedBeforeFirstCall,
-                        QuoteStatusEnum::NotInterested,
-                        QuoteStatusEnum::NotEligibleForInsurance,
-                        QuoteStatusEnum::NotLookingForMotorInsurance,
-                        QuoteStatusEnum::NonGccSpec,
-                        QuoteStatusEnum::AMLScreeningFailed,
-                    ]]))
+                    strtr('SUM(CASE WHEN personal_quotes.quote_status_id in (:notInterestedStatuses) and personal_quotes.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as not_interested', $this->getBindings())
                 ),
                 DB::raw(
-                    strtr('SUM(CASE WHEN personal_quotes.quote_status_id in (:inProgressStatuses) and personal_quotes.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as in_progress', $this->getBindings([':inProgressStatuses' => [
-                        QuoteStatusEnum::NotContactablePe,
-                        QuoteStatusEnum::FollowupCall,
-                        QuoteStatusEnum::Interested,
-                        QuoteStatusEnum::NoAnswer,
-                        QuoteStatusEnum::Quoted,
-                        QuoteStatusEnum::PaymentPending,
-                        QuoteStatusEnum::AMLScreeningCleared,
-                        QuoteStatusEnum::PendingQuote,
-                    ]]))
+                    strtr('SUM(CASE WHEN personal_quotes.quote_status_id in (:inProgressStatuses) and personal_quotes.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as in_progress', $this->getBindings())
                 ),
                 DB::raw(
                     strtr('SUM(CASE WHEN personal_quotes.source IN (:excludedSources) THEN 1 ELSE 0 END) as manual_created', $this->getBindings())
@@ -280,9 +255,7 @@ class AdvisorConversionReportService extends BaseService
                         ) as created_sale_leads', $this->getBindings())
                 ),
                 DB::raw(
-                    strtr('SUM(CASE WHEN personal_quotes.quote_status_id = :imRenewal THEN 1 ELSE 0 END) and personal_quotes.source NOT IN (:excludedSources) as afia_renewals_count', $this->getBindings([
-                        ':imRenewal' => QuoteStatusEnum::IMRenewal,
-                    ]))
+                    strtr('SUM(CASE WHEN personal_quotes.quote_status_id = :imRenewal THEN 1 ELSE 0 END) and personal_quotes.source NOT IN (:excludedSources) as afia_renewals_count', $this->getBindings())
                 ),
                 DB::raw(
                     strtr('SUM(CASE WHEN personal_quotes.quote_status_id in (:badLeadsStatuses) and personal_quotes.source IN (:excludedSources) THEN 1 ELSE 0 END) as manual_created_bad_leads', $this->getBindings())
