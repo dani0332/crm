@@ -101,44 +101,6 @@ class AdvisorConversionReportService extends BaseService
                 'quote_batches.name as batch_name',
                 'users.name as advisor_name',
                 'quote_batches.id as quote_batch_id',
-                DB::raw(
-                    strtr('SUM(CASE WHEN car_quote_request.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as total_leads', $this->getBindings())
-                ),
-                DB::raw(
-                    strtr('SUM(CASE WHEN car_quote_request.quote_status_id = :newLead and car_quote_request.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as new_leads', $this->getBindings())
-                ),
-                DB::raw(
-                    strtr('SUM(CASE WHEN car_quote_request.quote_status_id in (:notInterestedStatuses) and car_quote_request.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as not_interested', $this->getBindings())
-                ),
-                DB::raw(
-                    strtr('SUM(CASE WHEN car_quote_request.quote_status_id in (:inProgressStatuses) and car_quote_request.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as in_progress', $this->getBindings())
-                ),
-                DB::raw(
-                    strtr('SUM(CASE WHEN car_quote_request.source IN (:excludedSources) THEN 1 ELSE 0 END) as manual_created', $this->getBindings())
-                ),
-                DB::raw(
-                    strtr('SUM(CASE WHEN car_quote_request.quote_status_id in (:badLeadsStatuses)  and car_quote_request.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as bad_leads', $this->getBindings())
-                ),
-                DB::raw(
-                    strtr('SUM(CASE WHEN (
-                                (car_quote_request.quote_status_id in (:approvedStatuses) and car_quote_request.quote_status_date < ":policyBookingDate") OR
-                                (car_quote_request.quote_status_id = :policyBookedStatus and car_quote_request.quote_status_date >= ":policyBookingDate")
-                            ) and car_quote_request.source NOT IN (:excludedSources) THEN 1 ELSE 0 END
-                        ) as sale_leads', $this->getBindings())
-                ),
-                DB::raw(
-                    strtr('SUM(CASE WHEN (
-                                (car_quote_request.quote_status_id in (:approvedStatuses) and car_quote_request.quote_status_date < ":policyBookingDate") OR
-                                (car_quote_request.quote_status_id = :policyBookedStatus and car_quote_request.quote_status_date >= ":policyBookingDate")
-                            ) and car_quote_request.source IN (:excludedSources) THEN 1 ELSE 0 END
-                        ) as created_sale_leads', $this->getBindings())
-                ),
-                DB::raw(
-                    strtr('SUM(CASE WHEN car_quote_request.quote_status_id = :imRenewal THEN 1 ELSE 0 END) and car_quote_request.source NOT IN (:excludedSources) as afia_renewals_count', $this->getBindings())
-                ),
-                DB::raw(
-                    strtr('SUM(CASE WHEN car_quote_request.quote_status_id in (:badLeadsStatuses) and car_quote_request.source IN (:excludedSources) THEN 1 ELSE 0 END) as manual_created_bad_leads', $this->getBindings())
-                ),
             )
             ->filterBySegment()
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
@@ -172,14 +134,17 @@ class AdvisorConversionReportService extends BaseService
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
 
+        $this->addSelect($query, 'car_quote_request');
+
         return $query;
     }
 
-    private function getBindings()
+    private function getBindings(string $table)
     {
         $excludedSources = implode(',', array_map(fn ($source) => "'$source'", [LeadSourceEnum::IMCRM, LeadSourceEnum::INSLY]));
 
         return [
+            ':table' => $table,
             ':excludedSources' => $excludedSources,
             ':policyBookingDate' => Carbon::parse('2024-09-01')->toDateTimeString(),
             ':policyBookedStatus' => QuoteStatusEnum::PolicyBooked,
@@ -209,6 +174,50 @@ class AdvisorConversionReportService extends BaseService
         ];
     }
 
+    private function addSelect($query, $table)
+    {
+        $query->addSelect(
+            DB::raw(
+                strtr('SUM(CASE WHEN :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as total_leads', $this->getBindings($table))
+            ),
+            DB::raw(
+                strtr('SUM(CASE WHEN :table.quote_status_id = :newLead and :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as new_leads', $this->getBindings($table))
+            ),
+            DB::raw(
+                strtr('SUM(CASE WHEN :table.quote_status_id in (:notInterestedStatuses) and :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as not_interested', $this->getBindings($table))
+            ),
+            DB::raw(
+                strtr('SUM(CASE WHEN :table.quote_status_id in (:inProgressStatuses) and :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as in_progress', $this->getBindings($table))
+            ),
+            DB::raw(
+                strtr('SUM(CASE WHEN :table.source IN (:excludedSources) THEN 1 ELSE 0 END) as manual_created', $this->getBindings($table))
+            ),
+            DB::raw(
+                strtr('SUM(CASE WHEN :table.quote_status_id in (:badLeadsStatuses)  and :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as bad_leads', $this->getBindings($table))
+            ),
+            DB::raw(
+                strtr('SUM(CASE WHEN (
+                            (:table.quote_status_id in (:approvedStatuses) and :table.quote_status_date < ":policyBookingDate") OR
+                            (:table.quote_status_id = :policyBookedStatus and :table.quote_status_date >= ":policyBookingDate")
+                        ) and :table.source NOT IN (:excludedSources) THEN 1 ELSE 0 END
+                    ) as sale_leads', $this->getBindings($table))
+            ),
+            DB::raw(
+                strtr('SUM(CASE WHEN (
+                            (:table.quote_status_id in (:approvedStatuses) and :table.quote_status_date < ":policyBookingDate") OR
+                            (:table.quote_status_id = :policyBookedStatus and :table.quote_status_date >= ":policyBookingDate")
+                        ) and :table.source IN (:excludedSources) THEN 1 ELSE 0 END
+                    ) as created_sale_leads', $this->getBindings($table))
+            ),
+            DB::raw(
+                strtr('SUM(CASE WHEN :table.quote_status_id = :imRenewal THEN 1 ELSE 0 END) and :table.source NOT IN (:excludedSources) as afia_renewals_count', $this->getBindings($table))
+            ),
+            DB::raw(
+                strtr('SUM(CASE WHEN :table.quote_status_id in (:badLeadsStatuses) and :table.source IN (:excludedSources) THEN 1 ELSE 0 END) as manual_created_bad_leads', $this->getBindings($table))
+            ),
+        );
+    }
+
     private function getPersonsalQuoteQuery($lob)
     {
         $lobFiltered = in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE]) ? quoteTypeCode::Business : $lob;
@@ -222,44 +231,6 @@ class AdvisorConversionReportService extends BaseService
                 'quote_batches.name as batch_name',
                 'quote_batches.id as quote_batch_id',
                 'users.name as advisor_name',
-                DB::raw(
-                    strtr('SUM(CASE WHEN personal_quotes.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as total_leads', $this->getBindings())
-                ),
-                DB::raw(
-                    strtr('SUM(CASE WHEN personal_quotes.quote_status_id = :newLead and personal_quotes.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as new_leads', $this->getBindings())
-                ),
-                DB::raw(
-                    strtr('SUM(CASE WHEN personal_quotes.quote_status_id in (:notInterestedStatuses) and personal_quotes.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as not_interested', $this->getBindings())
-                ),
-                DB::raw(
-                    strtr('SUM(CASE WHEN personal_quotes.quote_status_id in (:inProgressStatuses) and personal_quotes.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as in_progress', $this->getBindings())
-                ),
-                DB::raw(
-                    strtr('SUM(CASE WHEN personal_quotes.source IN (:excludedSources) THEN 1 ELSE 0 END) as manual_created', $this->getBindings())
-                ),
-                DB::raw(
-                    strtr('SUM(CASE WHEN personal_quotes.quote_status_id in (:badLeadsStatuses)  and personal_quotes.source NOT IN (:excludedSources) THEN 1 ELSE 0 END) as bad_leads', $this->getBindings())
-                ),
-                DB::raw(
-                    strtr('SUM(CASE WHEN (
-                                (personal_quotes.quote_status_id in (:approvedStatuses) and personal_quotes.quote_status_date < ":policyBookingDate") OR
-                                (personal_quotes.quote_status_id = :policyBookedStatus and personal_quotes.quote_status_date >= ":policyBookingDate")
-                            ) and personal_quotes.source NOT IN (:excludedSources) THEN 1 ELSE 0 END
-                        ) as sale_leads', $this->getBindings())
-                ),
-                DB::raw(
-                    strtr('SUM(CASE WHEN (
-                                (personal_quotes.quote_status_id in (:approvedStatuses) and personal_quotes.quote_status_date < ":policyBookingDate") OR
-                                (personal_quotes.quote_status_id = :policyBookedStatus and personal_quotes.quote_status_date >= ":policyBookingDate")
-                            ) and personal_quotes.source IN (:excludedSources) THEN 1 ELSE 0 END
-                        ) as created_sale_leads', $this->getBindings())
-                ),
-                DB::raw(
-                    strtr('SUM(CASE WHEN personal_quotes.quote_status_id = :imRenewal THEN 1 ELSE 0 END) and personal_quotes.source NOT IN (:excludedSources) as afia_renewals_count', $this->getBindings())
-                ),
-                DB::raw(
-                    strtr('SUM(CASE WHEN personal_quotes.quote_status_id in (:badLeadsStatuses) and personal_quotes.source IN (:excludedSources) THEN 1 ELSE 0 END) as manual_created_bad_leads', $this->getBindings())
-                ),
             )
             ->join('users', 'users.id', 'personal_quotes.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'personal_quotes.quote_batch_id')
@@ -296,6 +267,8 @@ class AdvisorConversionReportService extends BaseService
 
             $query = $query->whereIn('personal_quotes.advisor_id', $userIds);
         }
+
+        $this->addSelect($query, 'personal_quotes');
 
         return $query;
     }
