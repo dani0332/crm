@@ -2,6 +2,7 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
@@ -139,6 +140,13 @@ class AdvisorConversionReportService extends BaseService
         return $query;
     }
 
+    private function getAdvisorConversionQuoteStatusDate()
+    {
+        return cache()->remember('advisor_conversion_quote_status_date', now()->addHour(), function () {
+            return Carbon::parse(getAppStorageValueByKey(ApplicationStorageEnums::ADVISOR_CONVERSION_QUOTE_STATUS_DATE));
+        });
+    }
+
     private function getBindings(string $table)
     {
         $excludedSources = implode(',', array_map(fn ($source) => "'$source'", [LeadSourceEnum::IMCRM, LeadSourceEnum::INSLY]));
@@ -146,7 +154,7 @@ class AdvisorConversionReportService extends BaseService
         return [
             ':table' => $table,
             ':excludedSources' => $excludedSources,
-            ':quoteStatusDate' => Carbon::parse('2024-09-01')->toDateTimeString(),
+            ':quoteStatusDate' => $this->getAdvisorConversionQuoteStatusDate(),
             ':policyBookedStatus' => QuoteStatusEnum::PolicyBooked,
             ':approvedStatuses' => implode(',', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyBooked]),
             ':badLeadsStatuses' => implode(',', [QuoteStatusEnum::Duplicate, QuoteStatusEnum::Fake]),
