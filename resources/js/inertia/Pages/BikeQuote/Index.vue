@@ -243,11 +243,9 @@ const resetDateFilters = filterName => {
     },
   );
 });
-const formatDate = date => {
-  if (!date) return '';
-  const options = { year: 'numeric', month: 'short', day: 'numeric' };
-  return new Date(date).toLocaleDateString('en-GB', options);
-};
+
+const formatDate = dateString => useDateFormat(dateString, 'DD-MMM-YYYY').value;
+
 const validateDateRange = () => {
   const { policy_expiry_date, policy_expiry_date_end } = filters;
   if (policy_expiry_date && policy_expiry_date_end) {
@@ -500,7 +498,6 @@ const validateDateRange = () => {
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-uuid="{ code, uuid }">
         <!-- :href="`/personal-quotes/bike/${uuid}`" -->

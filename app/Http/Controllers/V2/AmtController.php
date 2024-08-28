@@ -109,20 +109,35 @@ class AmtController extends Controller
         $isManagerORDeputy = Auth::user()->isManagerORDeputy();
         $model = 'Business';
 
+        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date)) {
+            $data->whereBetween('bqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
+        }
+
         if (
             empty($request->email) && empty($request->code) && empty($request->first_name) &&
             empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no) && empty($request->renewal_batch) && empty($request->previous_quote_policy_number)
         ) {
             $data->where('bqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
         }
+
         if (isset($request->first_name) && $request->first_name != '') {
             $data->where('bqr.first_name', 'like', '%'.$request->first_name.'%');
         }
-        if (isset($request->created_at_start) && $request->created_at_start != '' && isset($request->created_at_end) && $request->created_at_end != '') {
+        if (isset($request->created_at_start) && $request->created_at_start != ''
+        && isset($request->created_at_end)
+        && $request->created_at_end != ''
+        && empty($request->email)
+        && empty($request->code)
+        && empty($request->renewal_batch)
+        && empty($request->payment_due_date)
+        && empty($request->booking_date)
+        && ! isset($request->previous_quote_policy_number)
+        ) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
             $data->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
         }
+
         if (isset($request->policy_expiry_date) && $request->policy_expiry_date != '' && isset($request->policy_expiry_date_end) && $request->policy_expiry_date_end != '') {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['policy_expiry_date']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['policy_expiry_date_end']));
