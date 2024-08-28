@@ -833,4 +833,28 @@ class CentralService
             info('fn: updateQuotePayment payment updated for quote uuid: '.$quoteUuId);
         }
     }
+
+    public function lockTransactionStatus($quoteId, $quoteTypeId, $quoteStatuses)
+    {
+        $lockedQuotesStatuses = [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued,
+        ];
+        
+        $isTransactionApproved = QuoteStatusLog::where('quote_type_id', $quoteTypeId)
+            ->where('quote_request_id', $quoteId)
+            ->where(function ($query) {
+                $query->where('current_quote_status_id', QuoteStatusEnum::TransactionApproved)
+                    ->orWhere('previous_quote_status_id', QuoteStatusEnum::TransactionApproved);
+            })
+            ->count();
+        
+            if(!$isTransactionApproved){
+            $quoteStatuses = collect($quoteStatuses)->filter(function ($value) use ($lockedQuotesStatuses) {
+                return !in_array($value['id'], $lockedQuotesStatuses);
+            })->values();
+        }
+
+        return $quoteStatuses;
+    }
 }
