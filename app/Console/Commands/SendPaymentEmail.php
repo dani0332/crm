@@ -58,7 +58,6 @@ class SendPaymentEmail extends Command
         }
         $getUsers = $this->getUsers();
         $userIds = $getUsers->pluck('id')->unique()->toArray();
-        info('Payment Notification Email Job Dispatch');
 
         foreach ($userIds as $userId) {
             $user = User::find($userId);
