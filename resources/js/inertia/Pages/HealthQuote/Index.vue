@@ -13,6 +13,7 @@ defineProps({
     type: Number,
     default: 0,
   },
+    authorizedDays : Number,
 });
 
 const page = usePage();
@@ -390,7 +391,7 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
 
   // Calculate the new date by adding 8 days to the authorized date
   const newDate = new Date(parsedDate);
-  newDate.setDate(parsedDate.getDate() + page.props.paymentAuthorizeDay);
+  newDate.setDate(parsedDate.getDate() + page.props.authorizedDays);
 
   const currentDate = new Date();
 

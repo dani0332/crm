@@ -9,6 +9,7 @@ use App\Enums\RolesEnum;
 use App\Jobs\PaymentNotificationEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\User;
+use App\Repositories\PaymentRepository;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
@@ -50,7 +51,7 @@ class SendPaymentEmail extends Command
     public function handle()
     {
         $emailEnable = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION)->first();
-        if ($emailEnable && $emailEnable->value == 1) {
+        if ($emailEnable && $emailEnable->value == 0) {
             info('Payment Email is Disable');
 
             return false;
@@ -159,18 +160,18 @@ class SendPaymentEmail extends Command
     public function getPaymentNotificationData($role, $userData, $table, $quoteTypeId = null)
     {
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
-        $totalLead = getAuthorisePaymentCount($userData->id);
+        $totalLead = app(PaymentRepository::class)->getAuthorisePaymentCount($userData->id);
         $teamName = $userData->getUserTeams($userData->id);
 
-        $query = DB::table($table)
+        $query = DB::table('payments as py')
             ->select(
                 DB::raw('COUNT(*) as total_leads'),
                 DB::raw('SUM('.$table.'.premium) as total_premium'),
                 DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $authorizedDays->value DAY), NOW()) as expiry_days")
             )
-            ->leftJoin('payments as py', 'py.code', '=', $table.'.code')
-            ->join('users', 'users.id', $table.'.advisor_id')
-            ->join('user_team', 'user_team.user_id', 'users.id')
+            ->leftJoin($table, 'py.code', '=', $table.'.code')
+            ->join('users', 'users.id', '=', $table.'.advisor_id')
+            ->join('user_team', 'user_team.user_id', '=', 'users.id')
             ->join('teams', 'teams.id', '=', 'user_team.team_id')
             ->where($table.'.payment_status_id', PaymentStatusEnum::AUTHORISED)
             ->whereIn('teams.name', $teamName)
@@ -180,12 +181,15 @@ class SendPaymentEmail extends Command
             ->groupBy('expiry_days')
             ->having('expiry_days', '=', 1)
             ->orderBy('total_leads', 'desc');
-        $user = $query->get();
-        if ($user || $userData) {
-            info("PaymentNotification Job Dispatch For {$role}");
-            info('Payment Email Send to User: '.$userData->email);
-            PaymentNotificationEmailJob::dispatch($user, $userData, $totalLead);
-        }
+
+        $query->chunk(100, function ($users) use ($role, $userData, $totalLead) {
+            foreach ($users as $user) {
+                info("PaymentNotification Job Dispatch For {$role}");
+                info('Payment Email Send to User: '.$userData->email);
+                PaymentNotificationEmailJob::dispatch($user, $userData, $totalLead);
+            }
+        });
     }
+
 
 }

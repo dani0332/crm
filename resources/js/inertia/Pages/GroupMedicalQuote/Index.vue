@@ -6,6 +6,8 @@ defineProps({
   isManagerORDeputy: Boolean,
   quotes: Object,
   isManualAllocationAllowed: Boolean,
+    authorizedDays : Number,
+
 });
 
 const canExport = ref(false);
@@ -296,7 +298,7 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
 
   // Calculate the new date by adding 8 days to the authorized date
   const newDate = new Date(parsedDate);
-  newDate.setDate(parsedDate.getDate() + page.props.paymentAuthorizeDay);
+  newDate.setDate(parsedDate.getDate() + page.props.authorizedDays.value);
 
   const currentDate = new Date();
 

@@ -1063,23 +1063,12 @@ class SendEmailCustomerService extends BaseService
                 $advisor->email = $userData->email;
                 $advisorData[] = $advisor;
             }
-            $total_premium = 0;
-            $total_leads = 0;
-            foreach ($user as $users) {
-                $total_premium += $users->total_premium;
-                $total_leads += $users->total_leads;
-            }
-            $leadData = [
-                'total_premium' => $total_premium ? sprintf('%.2f', $total_premium) : 0,
-                'date' => Carbon::now()->toDateString(),
-            ];
-
             $params = [
                 'advisor_name' => $userData->name,
                 'total_leads' => $totalLead,
-                'total_premium' => $leadData['total_premium'],
-                'leads_expire' => $total_leads ? $total_leads : 0,
-                'date' => $leadData['date'],
+                'total_premium' => $user->total_premium ? sprintf('%.2f', $user->total_premium) : 0,
+                'leads_expire' => $user->total_leads ? $user->total_leads : 0,
+                'date' => Carbon::now()->toDateString(),
                 'paymentDoc' => $url,
             ];
             if (empty($params['total_leads']) || empty($params['total_premium']) || empty($params['date'])) {

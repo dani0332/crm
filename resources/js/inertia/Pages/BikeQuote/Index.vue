@@ -9,6 +9,8 @@ defineProps({
     type: String,
     default: 'bike',
   },
+    authorizedDays : Number,
+
 });
 const notification = useNotifications('toast');
 const page = usePage();
@@ -180,7 +182,7 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
 
   // Calculate the new date by adding 8 days to the authorized date
   const newDate = new Date(parsedDate);
-  newDate.setDate(parsedDate.getDate() + page.props.paymentAuthorizeDay);
+  newDate.setDate(parsedDate.getDate() + page.props.authorizedDays);
 
   // Get the current date
   const currentDate = new Date();

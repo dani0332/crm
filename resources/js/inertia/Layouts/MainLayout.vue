@@ -24,8 +24,8 @@ const createLink = link => {
 };
 
 const user = computed(() => page.props.auth.user);
-const getAuthorisePaymentCount = computed(
-  () => page.props.getAuthorisePaymentCount,
+const authorisePaymentCount = computed(
+  () => page.props.authorisePaymentCount,
 );
 const checkAuthUserRole = computed(() => page.props.checkAuthUserRole);
 const navLinks = computed(() => page.props.sidebar);
@@ -147,7 +147,7 @@ const urls = computed(() => {
                     v-bind:href="urls"
                     style="text-decoration: underline dotted"
                   >
-                    Payment Authorised: {{ getAuthorisePaymentCount }}
+                    Payment Authorised: {{ authorisePaymentCount }}
                   </Link>
                 </div>
               </x-button>

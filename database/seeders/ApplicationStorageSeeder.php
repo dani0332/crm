@@ -21,7 +21,7 @@ class ApplicationStorageSeeder extends Seeder
         if (! $paymentNotificationEnable) {
             ApplicationStorage::insert([
                 'key_name' => ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION,
-                'value' => '0',
+                'value' => '1',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

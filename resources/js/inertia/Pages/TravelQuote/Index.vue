@@ -4,6 +4,7 @@ defineProps({
   dropdownSource: Object,
   permissions: Object,
   advisors: Object,
+    authorizedDays : Number,
 });
 
 const rules = {
@@ -256,7 +257,7 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
 
   // Calculate the new date by adding 8 days to the authorized date
   const newDate = new Date(parsedDate);
-  newDate.setDate(parsedDate.getDate() + page.props.paymentAuthorizeDay);
+  newDate.setDate(parsedDate.getDate() + page.props.authorizedDays);
 
   const currentDate = new Date();
 

@@ -4,16 +4,14 @@ namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\PaymentStatusEnum;
-use App\Enums\quoteBusinessTypeCode;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
 use App\Events\PaymentExpireNotifications;
 use App\Models\ApplicationStorage;
+use App\Models\PersonalQuote;
+use App\Models\QuoteType;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 class PaymentExpireNotification extends Command
 {
@@ -52,80 +50,51 @@ class PaymentExpireNotification extends Command
     public function handle()
     {
         $notificationEnable = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION)->first();
-        if ($notificationEnable && $notificationEnable->value == 1) {
-            info('Payment Expire Notification is Disable');
+        if ($notificationEnable && $notificationEnable->value == 0) {
+            info('Payment Expire Notification is Disabled');
 
             return false;
         }
 
-        $leadTables = [
-            ['table' => 'car_quote_request', 'type' => quoteTypeCode::Car],
-            ['table' => 'health_quote_request', 'type' => quoteTypeCode::Health],
-            ['table' => 'business_quote_request', 'type' => quoteTypeCode::Business],
-            ['table' => 'business_quote_request', 'type' => quoteTypeCode::Business, 'quoteTypeId' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical), 'customPath' => 'medical/amt'],
-            ['table' => 'personal_quotes', 'type' => quoteTypeCode::Bike, 'quoteTypeId' => QuoteTypeId::Bike, 'customPath' => 'personal-quotes/bike'],
-            ['table' => 'personal_quotes', 'type' => quoteTypeCode::Cycle, 'quoteTypeId' => QuoteTypeId::Cycle, 'customPath' => 'personal-quotes/cycle'],
-            ['table' => 'personal_quotes', 'type' => quoteTypeCode::Yacht, 'quoteTypeId' => QuoteTypeId::Yacht, 'customPath' => 'personal-quotes/yacht'],
-            ['table' => 'personal_quotes', 'type' => quoteTypeCode::Pet, 'quoteTypeId' => QuoteTypeId::Pet, 'customPath' => 'personal-quotes/pet'],
-            ['table' => 'personal_quotes', 'type' => quoteTypeCode::Jetski, 'quoteTypeId' => QuoteTypeId::Jetski, 'customPath' => 'personal-quotes/jetski'],
-            ['table' => 'personal_quotes', 'type' => quoteTypeCode::Home, 'quoteTypeId' => QuoteTypeId::Home],
-            ['table' => 'personal_quotes', 'type' => quoteTypeCode::Life, 'quoteTypeId' => QuoteTypeId::Life],
-            ['table' => 'travel_quote_request', 'type' => quoteTypeCode::Travel],
-        ];
-
-        foreach ($leadTables as $tableData) {
-            $this->processNotifications(
-                $tableData['table'],
-                $tableData['type'],
-                $tableData['quoteTypeId'] ?? null,
-                $tableData['customPath'] ?? null
-            );
-        }
-    }
-
-    private function processNotifications(
-        string $tableName,
-        string $type,
-        ?int $quoteTypeId = null,
-        ?string $customPath = null
-    ) {
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
 
-        $query = DB::table("$tableName as rq")
-            ->leftJoin('payments as py', 'py.code', '=', 'rq.code')
+        $query = DB::table('payments as py')
             ->select(
-                'rq.id',
-                'rq.code as uuid',
-                'rq.advisor_id as advisor_id',
-                'rq.payment_status_id as payment_status_id',
+                'py.id',
+                'py.code as uuid',
+                'py.payment_status_id as payment_status_id',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
                 DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $authorizedDays->value DAY), NOW()) as expiry_days")
             )
-            ->whereNotNull('advisor_id')
             ->whereNotNull('py.authorized_at')
-            ->where('rq.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
-            ->having('expiry_days', '=', 2);
+            ->where('py.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
+            ->having('expiry_days', '=', 2)
+            ->orderBy('py.id');
 
-        if ($quoteTypeId !== null && Schema::hasColumn($tableName, 'quote_type_id')) {
-            $query->where('rq.quote_type_id', '=', $quoteTypeId);
-        }
-
-        $notifications = $query->get();
-
-        if ($notifications->isEmpty()) {
-            return;
-        }
-
-        info(ucfirst($type).' Quotes Expire Notification Job Start');
-
-        foreach ($notifications as $notification) {
-            $model = $this->getModelObject(strtolower($type));
-            $model = $model::find($notification->id);
-            $path = $customPath ? "$customPath/$model->uuid" : 'quotes/'.strtolower($type)."/$model->uuid";
-            $url = url('/')."/$path";
-            $quoteUuid = $notification->uuid;
-            event(new PaymentExpireNotifications($model, $url, $quoteUuid));
-        }
+        $query->chunk(100, function ($results) {
+            foreach ($results as $notification) {
+                $path = '';
+                $model = PersonalQuote::where('code', '=', $notification->uuid)
+                    ->select('quote_type_id', 'uuid', 'advisor_id')
+                    ->whereNotNull('advisor_id')
+                    ->first();
+                if (isset($model->quote_type_id)) {
+                    $quoteType = QuoteType::select('code')->find($model->quote_type_id);
+                    $quoteTypeCode = strtolower($quoteType->code);
+                    if (checkPersonalQuotes($quoteType->code)) {
+                        $path = "personal-quotes/$quoteTypeCode/$model->uuid";
+                    } else {
+                        $path = "quotes/$quoteTypeCode/$model->uuid";
+                    }
+                }
+                $url = url('/')."/$path";
+                $quoteUuid = $notification->uuid;
+                if (isset($model->uuid) && isset($model->advisor_id)) {
+                    event(new PaymentExpireNotifications($model, $url, $quoteUuid));
+                }
+            }
+        });
+        info('Payment Expire Notifications have been sent');
     }
 
 }
