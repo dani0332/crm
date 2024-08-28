@@ -627,7 +627,6 @@ class SendUpdateLogService
     public function updatePaymentDetails($payment, $sendUpdateLog, $ignoreDiscount = false)
     {
         try {
-            DB::beginTransaction();
             $sendUpdatePaymentDetails = [
                 'policy_expiry_date' => $sendUpdateLog->expiry_date,
                 'invoice_description' => $sendUpdateLog->invoice_description,
@@ -647,12 +646,10 @@ class SendUpdateLogService
             }
 
             $payment->update($sendUpdatePaymentDetails);
-            DB::commit();
             
             info('Book Update - Payment Details Updated - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
 
         } catch (\Exception $exception) {
-            DB::rollBack();
             logger()->error('Book Update - Error while updating details in Payment - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.' - Exception: '.$exception->getMessage());
 
             return false;
