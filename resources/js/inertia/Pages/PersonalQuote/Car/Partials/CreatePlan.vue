@@ -229,7 +229,6 @@ const getAddonVat = item => {
     :items="props.availablePlans || []"
     show-index
     border-cell
-    fixed-checkbox
     hide-rows-per-page
     hide-footer
   >
