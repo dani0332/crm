@@ -210,7 +210,7 @@ class AmtController extends Controller
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManagerORDeputy;
         $quotes = $data->simplePaginate(15)->withQueryString();
 
-        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed','authorizedDays'));
+        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed', 'authorizedDays'));
     }
 
     /**

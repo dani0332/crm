@@ -758,7 +758,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         } else {
             $personalCount = $personalCount->where('pq.advisor_id', $userId)->count('payments.id');
 
-
         }
 
         return $personalCount;

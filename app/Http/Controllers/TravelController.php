@@ -89,7 +89,6 @@ class TravelController extends Controller
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManager;
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
 
-
         return inertia('TravelQuote/Index', [
             'quotes' => $quotes,
             'dropdownSource' => $dropdownSource,
