@@ -114,8 +114,8 @@ class InboundEmailsHookService extends BaseService
 
     public function handleBirdWebhook()
     {
-        info(self::class.' - handleBirdWebhook: Webhook Received');
-        info(self::class.' - handleBirdWebhook: '.json_encode(request()->all()));
+        // info(self::class.' - handleBirdWebhook: Webhook Received');
+        // info(self::class.' - handleBirdWebhook: '.json_encode(request()->all()));
 
         return apiResponse([], Response::HTTP_OK, 'Webhook Received Successfully!');
     }
