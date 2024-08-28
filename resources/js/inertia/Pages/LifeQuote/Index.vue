@@ -568,7 +568,6 @@ const validateDateRange = () => {
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-code="{ code, uuid }">
         <Link
