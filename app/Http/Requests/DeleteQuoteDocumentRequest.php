@@ -30,7 +30,7 @@ class DeleteQuoteDocumentRequest extends FormRequest
         return [
             'quote_uuid' => 'required',
             'doc_name' => 'required',
-            'doc_uuid' => 'required',
+            'doc_uuid' => 'required|exists:quote_documents,doc_uuid',
         ];
     }
 
