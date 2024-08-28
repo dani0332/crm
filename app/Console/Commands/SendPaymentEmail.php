@@ -191,5 +191,4 @@ class SendPaymentEmail extends Command
         });
     }
 
-
 }
