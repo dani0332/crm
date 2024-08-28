@@ -27,6 +27,7 @@ echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.lis
 RUN apt-get update && apt-get install -y \
     build-essential libssl-dev pkg-config \
     libpng-dev \
+    libjpeg-dev \
     libjpeg62-turbo-dev \
     libfreetype6-dev \
     locales \
@@ -43,6 +44,7 @@ RUN apt-get update && apt-get install -y \
     supervisor \
     nodejs \
     yarn
+RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg
 RUN docker-php-ext-install gd
 RUN pecl install mongodb && docker-php-ext-enable mongodb
 
