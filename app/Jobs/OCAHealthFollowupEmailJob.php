@@ -4,13 +4,13 @@ namespace App\Jobs;
 
 use App\Enums\QuoteStatusEnum;
 use App\Models\HealthQuote;
+use App\Services\BirdService;
 use App\Services\HealthEmailService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Services\BirdService;
 
 class OCAHealthFollowupEmailJob implements ShouldQueue
 {
