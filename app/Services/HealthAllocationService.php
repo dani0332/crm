@@ -72,36 +72,41 @@ class HealthAllocationService extends AllocationService
             ->exists();
     }
 
-    public function assignTeamBasedOnPrice($lead)
+    public function assignTeamBasedOnPrices($lead)
     {
-        info('Inside assignHealthTeamBasedOnStartingPrice for quote : '.$lead->uuid);
-        if ($this->isSICLead($lead->uuid)) {
-            if (! empty($lead->plan_id) && ! empty($lead->premium)) {
-                $priceStartingFrom = $lead->premium;
-                info("plan found against Ref-ID: {$lead->uuid} with plan id: {$lead->plan_id} | with premium: {$lead->premium} | Time: ".now());
-            } else {
-                $priceStartingFrom = $lead->price_starting_from;
-                info("plan not found against Ref-ID: {$lead->uuid} with plan id: {$lead->plan_id} | with premium: {$lead->premium} | Time: ".now());
-            }
-        } else {
-            $priceStartingFrom = $lead->price_starting_from;
-            info("no sic lead against Ref-ID: {$lead->uuid} with plan id: {$lead->plan_id} | with premium: {$lead->premium} | Time: ".now());
-        }
+        info("Inside assignHealthTeamBasedOnStartingPrice for quote: {$lead->uuid}");
+
+        $priceStartingFrom = $this->determinePriceStartingFrom($lead);
+
         $healthTeam = Team::where('allocation_threshold_enabled', true)
             ->where('min_price', '<=', $priceStartingFrom)
             ->where('max_price', '>=', $priceStartingFrom)
             ->first();
 
         if ($healthTeam) {
-            info('assignHealthTeamBasedOnStartingPrice filtered team is : '.$healthTeam->name);
+            info("Filtered team for {$lead->uuid} is: {$healthTeam->name}");
             $lead->health_team_type = $healthTeam->name;
-            $lead->save();
         } else {
-            info('assignHealthTeamBasedOnStartingPrice team not found against : '.$lead->uuid);
+            info("No team found for {$lead->uuid}");
             $lead->is_error_email_sent = true;
-            $lead->save();
             Mail::send(new HealthAssignmentIssueEmail($lead->code, $priceStartingFrom));
         }
+
+        $lead->save();
+    }
+
+    private function determinePriceStartingFrom($lead)
+    {
+        if ($this->isSICLead($lead->uuid)) {
+            $price = !empty($lead->plan_id) && !empty($lead->premium) ? $lead->premium : $lead->price_starting_from;
+            $planStatus = !empty($lead->plan_id) ? "found" : "not found";
+            info("Plan {$planStatus} for {$lead->uuid} with plan id: {$lead->plan_id} | premium: {$lead->premium} | Time: " . now());
+        } else {
+            $price = $lead->price_starting_from;
+            info("No SIC lead for {$lead->uuid} | plan id: {$lead->plan_id} | premium: {$lead->premium} | Time: " . now());
+        }
+
+        return $price;
     }
 
     public function fetchAvailableAdvisor($leadTeam, $isReassignmentJob)

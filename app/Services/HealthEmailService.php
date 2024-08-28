@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
+use App\Models\ApplicationStorage;
 use App\Models\User;
 
 class HealthEmailService extends BaseService
@@ -40,7 +42,7 @@ class HealthEmailService extends BaseService
         return $responseCode ?? null;
     }
 
-    public function mapDataForFollowupEmail($lead, $advisor)
+    private function mapDataForFollowupEmail($lead, $advisor)
     {
         return (object) [
             'quoteUID' => $lead->uuid,
