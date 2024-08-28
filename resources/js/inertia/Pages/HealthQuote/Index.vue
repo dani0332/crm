@@ -432,13 +432,9 @@ const validateDateRange = () => {
   }
   return false;
 };
-const formatDate = date => {
-  if (!date) return '';
-  const [day, month, year] = date.split('-');
-  const parsedDate = new Date(`${year}-${month}-${day}`);
-  const options = { year: 'numeric', month: 'long', day: 'numeric' };
-  return parsedDate.toLocaleDateString('en-GB', options);
-};
+
+const formatDate = dateString =>
+  useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY').value;
 </script>
 
 <template>
@@ -783,7 +779,6 @@ const formatDate = date => {
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-code="item">
         <Link

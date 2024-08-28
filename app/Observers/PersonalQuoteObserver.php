@@ -12,6 +12,13 @@ use Illuminate\Support\Facades\Log;
 
 class PersonalQuoteObserver
 {
+    public function updating(PersonalQuote $quote): void
+    {
+        if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
+            $quote->quote_status_date = now();
+        }
+    }
+
     public function updated(PersonalQuote $personalQuote): void
     {
         if (
