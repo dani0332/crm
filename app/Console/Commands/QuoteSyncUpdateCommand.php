@@ -64,7 +64,7 @@ class QuoteSyncUpdateCommand extends Command
 
         foreach ($entries as $entry) {
             try {
-                // info('Syncing entry: '.$entry->quote_uuid.' - '.$entry->id);
+                info('Syncing entry: '.$entry->quote_uuid.' - '.$entry->id);
                 if ($entry->updated_fields === '{"is_cold":true}') {
                     QuoteSync::where('id', $entry->id)->update(['is_synced' => true, 'status' => QuoteSyncStatus::COMPLETED, 'synced_at' => now()]);
                 } else {
