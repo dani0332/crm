@@ -606,7 +606,7 @@ onMounted(() => {
   </x-form>
   <component
     :groupBy="route().params.groupBy ?? 'advisor'"
-    :reportData="props.reportData"
+    :reportData="$page.props.reportData"
     :loader="loaders.table"
     :is="selectedReport"
   ></component>

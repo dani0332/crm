@@ -127,7 +127,7 @@ const isIntegerColumn = key => {
 <template>
   <DataTable
     class="mt-4"
-    table-class-name=""
+    table-class-name="table-fixed"
     :loading="loader"
     :headers="tableHeader"
     :items="formattedReportData || []"
@@ -140,6 +140,9 @@ const isIntegerColumn = key => {
   >
     <template #item-customer_group="{ customer_name }">
       {{ customer_name ?? '' }}
+    </template>
+    <template #item-policy_issuer="{ policy_issuer_name }">
+      {{ policy_issuer_name ?? '' }}
     </template>
     <template #item-total_policies="{ total_policies }">
       {{ total_policies ?? 0 }}
@@ -175,7 +178,7 @@ const isIntegerColumn = key => {
     </template>
 
     <template #body-append>
-      <tr v-if="reportData?.length > 0" class="total-row">
+      <tr v-if="reportData?.length > 0" class="total-row sticky bottom-0">
         <td class="direction-left">Total</td>
         <td
           v-for="header in tableHeader.slice(1, tableHeader.length)"

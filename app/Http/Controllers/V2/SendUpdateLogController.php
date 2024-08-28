@@ -278,6 +278,7 @@ class SendUpdateLogController extends Controller
                     if ($subType && $subType['slug'] === 'MPC') {
                         $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
                             'quote_status_id' => QuoteStatusEnum::CancellationPending,
+                            'quote_status_date' => now(),
                         ]);
                     }
                     break;
@@ -285,6 +286,7 @@ class SendUpdateLogController extends Controller
                 case SendUpdateLogStatusEnum::CIR:
                     $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
                         'quote_status_id' => QuoteStatusEnum::CancellationPending,
+                        'quote_status_date' => now(),
                     ]);
                     break;
             }
@@ -296,6 +298,7 @@ class SendUpdateLogController extends Controller
                     if ($data['status'] === SendUpdateLogStatusEnum::UPDATE_BOOKED) {
                         $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
                             'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
+                            'quote_status_date' => now(),
                         ]);
                     }
                     break;
@@ -303,6 +306,7 @@ class SendUpdateLogController extends Controller
                     if ($data['status'] === SendUpdateLogStatusEnum::UPDATE_BOOKED) {
                         $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
                             'quote_status_id' => QuoteStatusEnum::PolicyBooked,
+                            'quote_status_date' => now(),
                         ]);
 
                         // TODO: send it to sage, need to confirm what the sage is.
