@@ -15,8 +15,6 @@ use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
 use App\Repositories\DocumentTypeRepository;
 use App\Traits\GenericQueriesAllLobs;
-use FilippoToso\PdfWatermarker\Facades\ImageWatermarker;
-use FilippoToso\PdfWatermarker\Support\Position;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
