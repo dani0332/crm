@@ -45,7 +45,7 @@ class QuoteSyncUpdateCommand extends Command
 
         $entries = QuoteSync::where('is_synced', false)
             ->where('status', QuoteSyncStatus::WAITING)
-            ->take(800)
+            ->take(2000)
             ->get();
 
         if ($entries->isEmpty()) {
