@@ -75,7 +75,6 @@ const quoteDocumentsTable = reactive({
   ],
 });
 
-
 const confirmDeleteData = reactive({
   docs: null,
   member: null,

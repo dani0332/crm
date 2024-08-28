@@ -279,7 +279,7 @@ onMounted(() => {
         >
           <template #item-original_name="item">
             <a
-              :href="storageUrl + (item.watermarked_doc_url ?? item.doc_url) "
+              :href="storageUrl + (item.watermarked_doc_url ?? item.doc_url)"
               target="_blank"
               class="text-primary-600"
             >
@@ -379,7 +379,10 @@ onMounted(() => {
                 :key="quoteDocument.id"
               >
                 <a
-                  :href="storageUrl + (quoteDocument.watermarked_doc_url ?? quoteDocument.doc_url)"
+                  :href="
+                    storageUrl +
+                    (quoteDocument.watermarked_doc_url ?? quoteDocument.doc_url)
+                  "
                   target="_blank"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
                 >
