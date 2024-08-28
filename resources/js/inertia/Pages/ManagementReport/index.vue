@@ -35,6 +35,33 @@ const isReportCategoryEmpty = ref(false);
 
 const { isRequired } = useRules();
 
+const filters = reactive({
+  reportCategory: props.defaultFilters.reportCategory,
+  reportType: 'Booked Policies',
+  policyBookDate: props.defaultFilters.policyBookDate ?? [
+    new Date(),
+    new Date(),
+  ],
+  paymentDueDate: [
+    moment().format('YYYY-MM-DD'),
+    moment().format('YYYY-MM-DD'),
+  ],
+  policyExpiredDate: [
+    moment().format('YYYY-MM-DD'),
+    moment().format('YYYY-MM-DD'),
+  ],
+  createdAt: moment().format('YYYY-MM-DD'),
+  transactionType: props.defaultFilters.transactionType ?? [],
+  teams: [],
+  subTeams: [],
+  leadSources: [],
+  includeCancelledPolicies: 'Yes',
+  groupBy: route().params.groupBy ?? 'advisor',
+  utmGroupBy: [],
+  export: 0, //false
+  page: 1,
+});
+
 const filterkeys = () => {
   if (filters.reportCategory != 'Ending Policies')
     delete filters.policyExpiredDate;
@@ -68,33 +95,6 @@ const filterkeys = () => {
     delete filters.policyBookDate;
   }
 };
-
-let filters = reactive({
-  reportCategory: props.defaultFilters.reportCategory,
-  reportType: 'Booked Policies',
-  policyBookDate: props.defaultFilters.policyBookDate ?? [
-    new Date(),
-    new Date(),
-  ],
-  paymentDueDate: [
-    moment().format('YYYY-MM-DD'),
-    moment().format('YYYY-MM-DD'),
-  ],
-  policyExpiredDate: [
-    moment().format('YYYY-MM-DD'),
-    moment().format('YYYY-MM-DD'),
-  ],
-  createdAt: moment().format('YYYY-MM-DD'),
-  transactionType: props.defaultFilters.transactionType ?? [],
-  teams: [],
-  subTeams: [],
-  leadSources: [],
-  includeCancelledPolicies: 'Yes',
-  groupBy: route().params.groupBy ?? 'advisor',
-  utmGroupBy: [],
-  export: 0, //false
-  page: 1,
-});
 
 const loaders = reactive({
   table: false,
