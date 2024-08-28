@@ -9,7 +9,7 @@ use App\Models\User;
 class HealthEmailService extends BaseService
 {
 
-    public function sendHealthOCBIntroEmail($lead, $triggerSICWorkFlow,$birdService)
+    public function sendHealthOCBIntroEmail($lead, $triggerSICWorkFlow, $birdService)
     {
         // Retrieve plans with available ratings for the given lead
         info("sic sendHealthOCBEmail - Ref ID: {$lead->uuid}| Time: ".now());
@@ -60,5 +60,5 @@ class HealthEmailService extends BaseService
             'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
         ];
     }
-    
+
 }
