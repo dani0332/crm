@@ -81,9 +81,9 @@ class ApiController extends Controller
         return $this->apiService->handleZeroPlansEmail($request);
     }
 
+    public function birdInboundEmailsHook(Request $request)
+    {
 
-    public function birdInboundEmailsHook(Request $request){
-
-        return  $this->inboundEmailsHookService->handleBirdWebhook($request);
+        return $this->inboundEmailsHookService->handleBirdWebhook($request);
     }
 }
