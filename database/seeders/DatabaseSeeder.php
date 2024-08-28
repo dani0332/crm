@@ -15,7 +15,7 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            FixQuoteStatusDate::class,
+            // FixQuoteStatusDate::class,
             //  LookupSeeder::class,
             // LostReasonsTableSeeder::class,
             // AddGenericRolePermissionSeeder::class,

@@ -77,9 +77,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('ResetLeadAllocationCounts:cron')->timezone('Asia/Dubai')->dailyAt('23:55')->onOneServer()->withoutOverlapping();
 
         $schedule->command('QuoteSyncUpdate:cron')
-            ->everyFiveMinutes()
+            ->everyThreeMinutes()
             ->onOneServer()
-            ->withoutOverlapping(29)
+            ->withoutOverlapping(5)
             ->onSuccess(function (Stringable $output) {
                 info('----------- QuoteSyncJob Completed -----------'.$output);
             })

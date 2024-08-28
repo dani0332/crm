@@ -276,7 +276,6 @@ watch(
         border-cell
         hide-rows-per-page
         hide-footer
-        fixed-checkbox
         class="mt-5"
       >
         <template #header-note="note">
