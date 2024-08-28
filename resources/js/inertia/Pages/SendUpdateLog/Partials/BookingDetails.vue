@@ -978,7 +978,7 @@ const checkDiscount = (newPrice, oldPrice) => {
     if (newPrice < savedPriceWithVat) {
       let paymentDifference =
         paymentTotalPrice - paymentTotalAmount - savedDiscount;
-      if (paymentTotalPrice - paymentDifference == newPrice) {
+      if ((paymentTotalPrice - paymentDifference) == newPrice) {
         // don't use ===
         bookingDetailsForm.discount = savedDiscount;
       } else {
