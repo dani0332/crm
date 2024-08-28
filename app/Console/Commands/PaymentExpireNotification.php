@@ -75,25 +75,27 @@ class PaymentExpireNotification extends Command
 
         $query->chunk(500, function ($results) {
             foreach ($results as $notification) {
-                $quoteType = QuoteTypes::getNameShortCode(substr($notification->uuid, 0, strpos($notification->uuid, '-')))->name;
+                $quoteType = QuoteTypes::getNameShortCode(substr($notification->uuid, 0, strpos($notification->uuid, '-')))->value;
                 $path = '';
                 $lead = $this->getQuoteObjectBy($quoteType, $notification->paymentable_id, 'id');
-                $quoteTypeCode = strtolower($quoteType);
-                if ($quoteTypeCode == QuoteTypeCode::Business) {
-                    if ($lead->business_type_of_insurance_id == QuoteBusinessTypeCode::getId(QuoteBusinessTypeCode::groupMedical)) {
-                        $path = "medical/amt/$lead->uuid";
+                if ($lead) {
+                    $quoteTypeCode = strtolower($quoteType);
+                    if ($quoteType == QuoteTypeCode::Business) {
+                        if ($lead->business_type_of_insurance_id == QuoteBusinessTypeCode::getId(QuoteBusinessTypeCode::groupMedical)) {
+                            $path = "medical/amt/$lead->uuid";
+                        } else {
+                            $path = "quotes/business/$lead->uuid";
+                        }
+                    } elseif (checkPersonalQuotes($quoteType)) {
+                        $path = "personal-quotes/$quoteTypeCode/$lead->uuid";
                     } else {
-                        $path = "quotes/business/$lead->uuid";
+                        $path = "quotes/$quoteTypeCode/$lead->uuid";
                     }
-                } elseif (checkPersonalQuotes($quoteTypeCode)) {
-                    $path = "personal-quotes/$quoteTypeCode/$lead->uuid";
-                } else {
-                    $path = "quotes/$quoteTypeCode/$lead->uuid";
-                }
 
-                $url = url('/')."/$path";
-                if ($lead && isset($lead->uuid) && isset($lead->advisor_id)) {
-                    event(new PaymentExpireNotifications($lead, $url, $notification->uuid));
+                    $url = url('/')."/$path";
+                    if ($lead && isset($lead->uuid) && isset($lead->advisor_id)) {
+                        event(new PaymentExpireNotifications($lead, $url, $notification->uuid));
+                    }
                 }
             }
         });
