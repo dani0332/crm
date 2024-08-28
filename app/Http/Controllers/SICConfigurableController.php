@@ -3,12 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
+use App\Http\Requests\SicConfigRequest;
 use App\Models\HealthPlanType;
 use App\Repositories\NationalityRepository;
 use App\Services\LookupService;
 use App\Services\SICConfigurableService;
-use Illuminate\Http\Request;
-use App\Http\Requests\SicConfigRequest;
 
 class SICConfigurableController extends Controller
 {
@@ -24,6 +23,7 @@ class SICConfigurableController extends Controller
     public function index()
     {
         $sicConfigurable = $this->sicConfigurableService->getEntity();
+
         return inertia('Admin/SICHealth/SicHealthConfigForm', [
             'nationalities' => NationalityRepository::withActive()->get(),
             'sicConfigurable' => $sicConfigurable->data,

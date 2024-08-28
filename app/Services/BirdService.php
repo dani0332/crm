@@ -13,7 +13,7 @@ class BirdService extends BaseService
         $logContext = ['Ref-ID' => $uuid, 'URL' => $url, 'Method' => $method];
 
         try {
-            info("Bird Webhook Request initiated", $logContext);
+            info('Bird Webhook Request initiated', $logContext);
 
             // Configure the HTTP request with headers
             $request = Http::withHeaders(['Content-Type' => 'application/json']);
@@ -24,12 +24,12 @@ class BirdService extends BaseService
                 : $request->$method($url, ['query' => $data]);
 
             // Log the response details
-            info("Bird Webhook Response received", array_merge($logContext, ['Status' => $response->status(), 'Body' => $response->body(),]));
+            info('Bird Webhook Response received', array_merge($logContext, ['Status' => $response->status(), 'Body' => $response->body()]));
 
             return $response->status();
         } catch (\Exception $e) {
             // Log the error with full context and rethrow the exception
-            Log::error("Bird API request failed", array_merge($logContext, [
+            Log::error('Bird API request failed', array_merge($logContext, [
                 'Data' => $data,
                 'Error' => $e->getMessage(),
             ]));

@@ -687,7 +687,7 @@ class AdvisorConversionReportService extends BaseService
                         ->where('health_quote_request.cover_for_id', $filters->insurance_for);
                 });
             }
-            if (isset($filters->segment_filter))  {
+            if (isset($filters->segment_filter)) {
                 $segmentFilter = $filters->segment_filter;
                 $subQueryCallback = function ($subQuery) {
                     $subQuery->distinct()

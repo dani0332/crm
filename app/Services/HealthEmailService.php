@@ -8,25 +8,24 @@ use App\Models\User;
 
 class HealthEmailService extends BaseService
 {
-
     public function sendHealthOCBIntroEmail($lead, $triggerSICWorkFlow, $birdService)
     {
         // Retrieve plans with available ratings for the given lead
         info("sic sendHealthOCBEmail - Ref ID: {$lead->uuid}| Time: ".now());
         if ($triggerSICWorkFlow) {
             if (! $lead->sic_flow_enabled) {
-                    $advisor = User::where('id', $lead->advisor_id)->first();
-                    $emailData = $this->mapDataForFollowupEmail($lead, $advisor);
-                    $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
-                    if ($sicEvent) {
-                        $responseCode = $birdService->triggerWebHookRequest($sicEvent->value,$emailData);
-                        $lead->sic_flow_enabled = true;
-                        $lead->save();
-                        info("SIC Health workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
-                        info("SIC Health workflow response: {$responseCode} | Ref-ID: {$lead->uuid} |Time: ".now());
-                    } else {
-                        info("SIC Health workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
-                    }
+                $advisor = User::where('id', $lead->advisor_id)->first();
+                $emailData = $this->mapDataForFollowupEmail($lead, $advisor);
+                $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
+                if ($sicEvent) {
+                    $responseCode = $birdService->triggerWebHookRequest($sicEvent->value, $emailData);
+                    $lead->sic_flow_enabled = true;
+                    $lead->save();
+                    info("SIC Health workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
+                    info("SIC Health workflow response: {$responseCode} | Ref-ID: {$lead->uuid} |Time: ".now());
+                } else {
+                    info("SIC Health workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+                }
             } else {
                 info("SIC Health workflow already enabled for lead Ref-ID: {$lead->uuid} | Time: ".now());
             }

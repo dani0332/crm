@@ -98,12 +98,12 @@ class HealthAllocationService extends AllocationService
     private function determinePriceStartingFrom($lead)
     {
         if ($this->isSICLead($lead->uuid)) {
-            $price = !empty($lead->plan_id) && !empty($lead->premium) ? $lead->premium : $lead->price_starting_from;
-            $planStatus = !empty($lead->plan_id) ? "found" : "not found";
-            info("Plan {$planStatus} for {$lead->uuid} with plan id: {$lead->plan_id} | premium: {$lead->premium} | Time: " . now());
+            $price = ! empty($lead->plan_id) && ! empty($lead->premium) ? $lead->premium : $lead->price_starting_from;
+            $planStatus = ! empty($lead->plan_id) ? 'found' : 'not found';
+            info("Plan {$planStatus} for {$lead->uuid} with plan id: {$lead->plan_id} | premium: {$lead->premium} | Time: ".now());
         } else {
             $price = $lead->price_starting_from;
-            info("No SIC lead for {$lead->uuid} | plan id: {$lead->plan_id} | premium: {$lead->premium} | Time: " . now());
+            info("No SIC lead for {$lead->uuid} | plan id: {$lead->plan_id} | premium: {$lead->premium} | Time: ".now());
         }
 
         return $price;

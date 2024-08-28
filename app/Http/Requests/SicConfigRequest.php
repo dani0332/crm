@@ -22,14 +22,13 @@ class SicConfigRequest extends FormRequest
             'max_age' => 'nullable',
             'is_type' => 'nullable',
             'quote_type_id' => 'nullable',
-            'is_nationality'=> 'nullable',
+            'is_nationality' => 'nullable',
             'is_member_category' => 'nullable',
             'plan_types' => 'array|nullable',
             'nationalities' => 'array|nullable',
             'member_categories' => 'array |nullable',
         ];
     }
-
 
     public function failedValidation(Validator $validator)
     {

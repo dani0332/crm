@@ -3,8 +3,8 @@
 namespace App\Jobs;
 
 use App\Models\HealthQuote;
+use App\Services\BirdService;
 use App\Services\HealthEmailService;
-use App\Services\HealthQuoteService;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -12,7 +12,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use App\Services\BirdService;
 
 class SendHealthOCBIntroEmailJob implements ShouldQueue
 {
@@ -37,27 +36,29 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(HealthEmailService $healthEmailService,BirdService $birdService): void
+    public function handle(HealthEmailService $healthEmailService, BirdService $birdService): void
     {
         try {
             $lead = HealthQuote::where('uuid', $this->quoteUuid)->first();
 
             if (! $lead) {
                 info("SendHealthOCBIntroEmailJob - Lead not found for UUID: {$this->quoteUuid}");
+
                 return;
             }
 
             if ($lead->sic_flow_enabled) {
                 info("SendHealthOCBIntroEmailJob - SIC workflow is already enabled for UUID: {$this->quoteUuid}");
+
                 return;
             }
 
             info("SendHealthOCBIntroEmailJob - SIC workflow is not enabled for UUID: {$this->quoteUuid}");
-            $responseCode = $healthEmailService->sendHealthOCBIntroEmail($lead,$this->triggerSICWorkflow,$birdService);
+            $responseCode = $healthEmailService->sendHealthOCBIntroEmail($lead, $this->triggerSICWorkflow, $birdService);
 
             $logMessage = in_array($responseCode, [200, 201])
-                ? "OCB INTRO Email Sent"
-                : "OCB INTRO Email Not Sent";
+                ? 'OCB INTRO Email Sent'
+                : 'OCB INTRO Email Not Sent';
 
             info("SendHealthOCBIntroEmailJob - {$logMessage}: {$responseCode} | Email: {$lead->email} | UUID: {$this->quoteUuid}");
         } catch (Exception $e) {
