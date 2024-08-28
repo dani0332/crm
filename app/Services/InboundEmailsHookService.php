@@ -111,4 +111,10 @@ class InboundEmailsHookService extends BaseService
 
         return apiResponse([], Response::HTTP_OK, 'Lead Assigned to Advisor Successfully!');
     }
+
+    public function handleBirdWebhook(){
+        info(self::class.' - handleBirdWebhook: Webhook Received');
+        info(self::class.' - handleBirdWebhook: '.json_encode(request()->all()));
+        return apiResponse([], Response::HTTP_OK, 'Webhook Received Successfully!');
+    }
 }

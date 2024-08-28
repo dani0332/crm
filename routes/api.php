@@ -31,6 +31,7 @@ Route::post('/imcrm/zero-plans-email', [ApiController::class, 'handleZeroPlansEm
 Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuoteCallBack']);
 
 Route::post('/inbound-emails-hook', [ApiController::class, 'inboundEmailsHook']);
+Route::post('/bird-inbound-emails-hook', [ApiController::class, 'birdInboundEmailsHook']);
 
 Route::prefix('v1')->group(function () {
 
