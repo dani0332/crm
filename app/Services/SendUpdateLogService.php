@@ -626,25 +626,39 @@ class SendUpdateLogService
 
     public function updatePaymentDetails($payment, $sendUpdateLog, $ignoreDiscount = false)
     {
-        $sendUpdatePaymentDetails = [
-            'policy_expiry_date' => $sendUpdateLog->expiry_date,
-            'invoice_description' => $sendUpdateLog->invoice_description,
-            'broker_invoice_number' => $sendUpdateLog->broker_invoice_number,
-            'insurer_tax_number' => $sendUpdateLog->insurer_tax_invoice_number,
-            'insurer_commmission_invoice_number' => $sendUpdateLog->insurer_commission_invoice_number,
-            'commmission_percentage' => $sendUpdateLog->commission_percentage,
-            'commission_vat_not_applicable' => $sendUpdateLog->commission_vat_not_applicable,
-            'commission_vat_applicable' => $sendUpdateLog->commission_vat_applicable,
-            'commission' => $sendUpdateLog->total_commission,
-            'insurer_invoice_date' => $sendUpdateLog->invoice_date,
-            'commission_vat' => $sendUpdateLog->vat_on_commission,
-        ];
+        try {
+            DB::beginTransaction();
+            $sendUpdatePaymentDetails = [
+                'policy_expiry_date' => $sendUpdateLog->expiry_date,
+                'invoice_description' => $sendUpdateLog->invoice_description,
+                'broker_invoice_number' => $sendUpdateLog->broker_invoice_number,
+                'insurer_tax_number' => $sendUpdateLog->insurer_tax_invoice_number,
+                'insurer_commmission_invoice_number' => $sendUpdateLog->insurer_commission_invoice_number,
+                'commmission_percentage' => $sendUpdateLog->commission_percentage,
+                'commission_vat_not_applicable' => $sendUpdateLog->commission_vat_not_applicable,
+                'commission_vat_applicable' => $sendUpdateLog->commission_vat_applicable,
+                'commission' => $sendUpdateLog->total_commission,
+                'insurer_invoice_date' => $sendUpdateLog->invoice_date,
+                'commission_vat' => $sendUpdateLog->vat_on_commission,
+            ];
 
-        if (! $ignoreDiscount) {
-            $sendUpdatePaymentDetails['discount_value'] = $sendUpdateLog->discount;
+            if (! $ignoreDiscount) {
+                $sendUpdatePaymentDetails['discount_value'] = $sendUpdateLog->discount;
+            }
+
+            $payment->update($sendUpdatePaymentDetails);
+            DB::commit();
+            
+            info('Book Update - Payment Details Updated - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            logger()->error('Book Update - Error while updating details in Payment - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.' - Exception: '.$exception->getMessage());
+
+            return false;
         }
 
-        return $payment->update($sendUpdatePaymentDetails);
+        return true;
     }
 
     public function sendUpdateToSage($sendUpdateRequest, $sendUpdateLog)
