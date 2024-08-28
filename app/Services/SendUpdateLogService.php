@@ -648,7 +648,7 @@ class SendUpdateLogService
 
             $payment->update($sendUpdatePaymentDetails);
             DB::commit();
-            
+
             info('Book Update - Payment Details Updated - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
 
         } catch (\Exception $exception) {
