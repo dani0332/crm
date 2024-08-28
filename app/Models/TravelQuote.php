@@ -43,6 +43,15 @@ class TravelQuote extends Model implements AuditableContract
         'updated' => QuoteEmailUpdated::class,
     ];
 
+    protected static function booted()
+    {
+        static::updating(function ($model) {
+            if ($model->isDirty('policy_booking_date') && $model->getOriginal('policy_booking_date')) {
+                info($model->code.' updating the value of policy_booking_date is skipped. tried to change policy_booking_date from '.$model->getOriginal('policy_booking_date').' to '.$model->policy_booking_date);
+                unset($model->policy_booking_date); // lock the policy booking date field
+            }
+        });
+    }
     public function quoteStatus()
     {
         return $this->belongsTo(QuoteStatus::class);
