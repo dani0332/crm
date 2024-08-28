@@ -28,31 +28,27 @@ class OCAHealthFollowupEmailJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(HealthEmailService $healthEmailService)
+    public function handle(HealthEmailService $healthEmailService,BirdService $birdService): void
     {
         try {
             $healthLead = HealthQuote::where('uuid', $this->quoteUuid)->first();
-            if (empty($healthLead)) {
-                info('OCAHealthFollowupEmailJob - Health Lead Not Found - Ref ID: '.$this->quoteUuid.'| Time: '.now());
 
+            if (!$healthLead) {
+                info("OCAHealthFollowupEmailJob - Health Lead Not Found - Ref ID: {$this->quoteUuid} | Time: " . now());
                 return;
             }
-            if ($healthLead->quote_status_id == QuoteStatusEnum::Quoted) {
-                info('sending oca  health email follow ups for Ref-ID : '.$healthLead->uuid.' lead status id : '.$healthLead->quote_status_id.' : Quoted | Time: '.now());
+
+            $eligibleStatuses = [QuoteStatusEnum::Quoted, QuoteStatusEnum::ApplicationPending];
+            if (in_array($healthLead->quote_status_id, $eligibleStatuses)) {
+                info("Sending OCA health email follow-ups for Ref-ID: {$healthLead->uuid}, Lead Status ID: {$healthLead->quote_status_id} | Time: " . now());
                 // Send the Health OCA email using the HealthEmailService
-                $healthEmailService->triggerOCAFollowups($healthLead);
+                $healthEmailService->triggerOCAWorkFlow($healthLead,$birdService);
             } else {
-                info('OCAHealthFollowupEmailJob - Health Lead Not Triggered OCAFollowups with Quoted Status - Ref ID: '.$healthLead->uuid.'|Time: '.now());
-            }
-            if ($healthLead->quote_status_id == QuoteStatusEnum::ApplicationPending) {
-                info('sending oca  health email follow ups for Ref-ID : '.$healthLead->uuid.' lead status id : '.$healthLead->quote_status_id.' : ApplicationPending | Time: '.now());
-                // Send the Health OCA email using the HealthEmailService
-                $healthEmailService->triggerPendingHealthFollowupEmails($healthLead);
-            } else {
-                info('OCAHealthFollowupEmailJob - Health Lead Not Triggered OCAFollowups with Quoted Status - Ref ID: '.$healthLead->uuid.'| Time: '.now());
+                info("OCAHealthFollowupEmailJob - Health Lead did not trigger OCA WorkFlow due to ineligible status (Status ID: {$healthLead->quote_status_id}) - Ref ID: {$healthLead->uuid} | Time: " . now());
             }
         } catch (\Throwable $th) {
-            info('OCAHealthFollowupEmailJob - Exception'.$th->getMessage().' - Ref ID: '.$healthLead->uuid.'- Time: '.now());
+            info("OCAHealthFollowupEmailJob - Exception encountered: '{$th->getMessage()}' - Ref ID: {$this->quoteUuid} | Time: " . now());
+            throw $th;
         }
     }
 }

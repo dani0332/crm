@@ -123,7 +123,6 @@ final class ApplicationStorageEnums extends Enum
     public const TRAVEL_EMAIL_REPLY_TO = 'TRAVEL_EMAIL_REPLY_TO';
     public const DIS_INBOX_EMAIL_BCC = 'DIS_INBOX_EMAIL_BCC';
     public const BIRD_OCA_HEALTH_WORKFLOW = 'BIRD_OCA_HEALTH_WORKFLOW';
-    public const BIRD_APP_PENDING_HEALTH_WORKFLOW = 'BIRD_APP_PENDING_HEALTH_WORKFLOW';
 
     // Health Plan Insurer Provider For Send & Book Policy
     public const BUP_HEALTH_DOC = 'BUP_HEALTH_DOC';

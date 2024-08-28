@@ -440,15 +440,6 @@ class ApplicationStorageSeeder extends Seeder
                 'updated_at' => now(),
             ]);
         }
-        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_APP_PENDING_HEALTH_WORKFLOW)->exists()) {
-            ApplicationStorage::create([
-                'key_name' => ApplicationStorageEnums::BIRD_APP_PENDING_HEALTH_WORKFLOW,
-                'value' => 'https://capture.eu-west-1.nest.messagebird.com/webhooks/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/9395256a-01d2-45ec-b4cd-b3934a3f0e14',
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
 
         $sukoonConstants = [
             [
