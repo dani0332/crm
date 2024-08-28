@@ -3,8 +3,7 @@ defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
-    authorizedDays : Number,
-
+  authorizedDays: Number,
 });
 
 const page = usePage();

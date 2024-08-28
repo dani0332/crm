@@ -6,8 +6,7 @@ defineProps({
   isManagerORDeputy: Boolean,
   quotes: Object,
   isManualAllocationAllowed: Boolean,
-    authorizedDays : Number,
-
+  authorizedDays: Number,
 });
 
 const canExport = ref(false);

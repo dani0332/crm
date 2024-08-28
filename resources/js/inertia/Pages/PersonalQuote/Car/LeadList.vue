@@ -14,7 +14,7 @@ defineProps({
   genericRequestEnum: Array,
   isBetaUser: Boolean,
   teams: Object,
-    authorizedDays : Number,
+  authorizedDays: Number,
 });
 
 const page = usePage();

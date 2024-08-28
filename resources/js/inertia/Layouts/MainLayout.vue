@@ -24,9 +24,7 @@ const createLink = link => {
 };
 
 const user = computed(() => page.props.auth.user);
-const authorisePaymentCount = computed(
-  () => page.props.authorisePaymentCount,
-);
+const authorisePaymentCount = computed(() => page.props.authorisePaymentCount);
 const checkAuthUserRole = computed(() => page.props.checkAuthUserRole);
 const navLinks = computed(() => page.props.sidebar);
 const openSidebar = ref(false);

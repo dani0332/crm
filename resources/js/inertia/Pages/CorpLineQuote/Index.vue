@@ -8,7 +8,7 @@ defineProps({
     type: Number,
     default: 0,
   },
-    authorizedDays : Number,
+  authorizedDays: Number,
 });
 
 const page = usePage();
