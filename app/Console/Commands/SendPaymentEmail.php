@@ -56,15 +56,14 @@ class SendPaymentEmail extends Command
 
             return false;
         }
-
         $getUsers = $this->getUsers();
         $userIds = $getUsers->pluck('id')->unique()->toArray();
         info('Payment Notification Email Job Dispatch');
 
         foreach ($userIds as $userId) {
-            $userData = User::find($userId);
+            $user = User::find($userId);
 
-            if (! isset($userData)) {
+            if (! isset($user)) {
                 info('User Not Found In Session');
 
                 continue;
@@ -74,54 +73,54 @@ class SendPaymentEmail extends Command
             $table = null;
             $quoteTypeId = null;
 
-            switch ($userData) {
-                case $userData->hasRole(RolesEnum::CarManager):
+            switch ($user) {
+                case $user->hasRole(RolesEnum::CarManager):
                     $role = 'Car';
                     $table = 'car_quote_request';
                     break;
-                case $userData->hasRole(RolesEnum::BusinessManager) || $userData->hasRole(RolesEnum::CorplineManager) :
+                case $user->hasRole(RolesEnum::BusinessManager) || $user->hasRole(RolesEnum::CorplineManager) :
                     $role = 'Business';
                     $table = 'business_quote_request';
                     break;
-                case $userData->hasRole(RolesEnum::HealthManager):
+                case $user->hasRole(RolesEnum::HealthManager):
                     $role = 'Health';
                     $table = 'health_quote_request';
                     break;
-                case $userData->hasRole(RolesEnum::TravelManager):
+                case $user->hasRole(RolesEnum::TravelManager):
                     $role = 'Travel';
                     $table = 'travel_quote_request';
                     break;
-                case $userData->hasRole(RolesEnum::HomeManager):
+                case $user->hasRole(RolesEnum::HomeManager):
                     $role = 'Home';
                     $table = 'personal_quotes';
                     $quoteTypeId = QuoteTypeId::Home;
                     break;
-                case $userData->hasRole(RolesEnum::PetManager):
+                case $user->hasRole(RolesEnum::PetManager):
                     $role = 'Pet';
                     $table = 'personal_quotes';
                     $quoteTypeId = QuoteTypeId::Pet;
                     break;
-                case $userData->hasRole(RolesEnum::YachtManager):
+                case $user->hasRole(RolesEnum::YachtManager):
                     $role = 'Yacht';
                     $table = 'personal_quotes';
                     $quoteTypeId = QuoteTypeId::Yacht;
                     break;
-                case $userData->hasRole(RolesEnum::LifeManager):
+                case $user->hasRole(RolesEnum::LifeManager):
                     $role = 'Life';
                     $table = 'personal_quotes';
                     $quoteTypeId = QuoteTypeId::Life;
                     break;
-                case $userData->hasRole(RolesEnum::BikeManager):
+                case $user->hasRole(RolesEnum::BikeManager):
                     $role = 'Bike';
                     $table = 'personal_quotes';
                     $quoteTypeId = QuoteTypeId::Bike;
                     break;
-                case $userData->hasRole(RolesEnum::CycleManager):
+                case $user->hasRole(RolesEnum::CycleManager):
                     $role = 'Cycle';
                     $table = 'personal_quotes';
                     $quoteTypeId = QuoteTypeId::Cycle;
                     break;
-                case $userData->hasRole(RolesEnum::JetskiManager):
+                case $user->hasRole(RolesEnum::JetskiManager):
                     $role = 'Jetski';
                     $table = 'personal_quotes';
                     $quoteTypeId = QuoteTypeId::Jetski;
@@ -131,7 +130,7 @@ class SendPaymentEmail extends Command
                     break;
             }
 
-            $this->getPaymentNotificationData($role, $userData, $table, $quoteTypeId);
+            $this->getPaymentNotificationData($role, $user, $table, $quoteTypeId);
         }
     }
 
@@ -157,11 +156,11 @@ class SendPaymentEmail extends Command
         })->get(['id', 'email', 'name']);
     }
 
-    public function getPaymentNotificationData($role, $userData, $table, $quoteTypeId = null)
+    public function getPaymentNotificationData($role, $user, $table, $quoteTypeId = null)
     {
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
-        $totalLead = app(PaymentRepository::class)->getAuthorisePaymentCount($userData->id);
-        $teamName = $userData->getUserTeams($userData->id);
+        $totalLead = app(PaymentRepository::class)->getAuthorisePaymentCount($user->id);
+        $teamName = $user->getUserTeams($user->id);
 
         $query = DB::table('payments as py')
             ->select(
@@ -180,13 +179,12 @@ class SendPaymentEmail extends Command
             })
             ->groupBy('expiry_days')
             ->having('expiry_days', '=', 1)
-            ->orderBy('total_leads', 'desc');
+            ->orderBy('py.id');
 
-        $query->chunk(100, function ($users) use ($role, $userData, $totalLead) {
-            foreach ($users as $user) {
-                info("PaymentNotification Job Dispatch For {$role}");
-                info('Payment Email Send to User: '.$userData->email);
-                PaymentNotificationEmailJob::dispatch($user, $userData, $totalLead);
+        $query->chunk(500, function ($leads) use ($role, $user, $totalLead) {
+            foreach ($leads as $lead) {
+                info("PaymentNotification Job Dispatch For User {$role} and User Email {$user->email}");
+                PaymentNotificationEmailJob::dispatch($lead, $user, $totalLead);
             }
         });
     }

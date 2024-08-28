@@ -201,7 +201,7 @@ function showCustomDate() {
         :color="activeButton === 'thisWeek' ? 'black' : 'primary'"
         @click="setThisWeek"
         type="submit"
-        >ThisWeek</x-button
+        >This Week</x-button
       >
       <x-button
         size="sm"

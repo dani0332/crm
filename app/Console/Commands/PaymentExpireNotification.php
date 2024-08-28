@@ -4,10 +4,11 @@ namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\quoteBusinessTypeCode;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Events\PaymentExpireNotifications;
 use App\Models\ApplicationStorage;
-use App\Models\PersonalQuote;
-use App\Models\QuoteType;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Console\Command;
@@ -62,6 +63,7 @@ class PaymentExpireNotification extends Command
             ->select(
                 'py.id',
                 'py.code as uuid',
+                'py.paymentable_id as paymentable_id',
                 'py.payment_status_id as payment_status_id',
                 DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
                 DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $authorizedDays->value DAY), NOW()) as expiry_days")
@@ -71,26 +73,27 @@ class PaymentExpireNotification extends Command
             ->having('expiry_days', '=', 2)
             ->orderBy('py.id');
 
-        $query->chunk(100, function ($results) {
+        $query->chunk(500, function ($results) {
             foreach ($results as $notification) {
+                $quoteType = QuoteTypes::getNameShortCode(substr($notification->uuid, 0, strpos($notification->uuid, '-')))->name;
                 $path = '';
-                $model = PersonalQuote::where('code', '=', $notification->uuid)
-                    ->select('quote_type_id', 'uuid', 'advisor_id')
-                    ->whereNotNull('advisor_id')
-                    ->first();
-                if (isset($model->quote_type_id)) {
-                    $quoteType = QuoteType::select('code')->find($model->quote_type_id);
-                    $quoteTypeCode = strtolower($quoteType->code);
-                    if (checkPersonalQuotes($quoteType->code)) {
-                        $path = "personal-quotes/$quoteTypeCode/$model->uuid";
+                $lead = $this->getQuoteObjectBy($quoteType, $notification->paymentable_id, 'id');
+                $quoteTypeCode = strtolower($quoteType);
+                if ($quoteTypeCode == QuoteTypeCode::Business) {
+                    if ($lead->business_type_of_insurance_id == QuoteBusinessTypeCode::getId(QuoteBusinessTypeCode::groupMedical)) {
+                        $path = "medical/amt/$lead->uuid";
                     } else {
-                        $path = "quotes/$quoteTypeCode/$model->uuid";
+                        $path = "quotes/business/$lead->uuid";
                     }
+                } elseif (checkPersonalQuotes($quoteTypeCode)) {
+                    $path = "personal-quotes/$quoteTypeCode/$lead->uuid";
+                } else {
+                    $path = "quotes/$quoteTypeCode/$lead->uuid";
                 }
+
                 $url = url('/')."/$path";
-                $quoteUuid = $notification->uuid;
-                if (isset($model->uuid) && isset($model->advisor_id)) {
-                    event(new PaymentExpireNotifications($model, $url, $quoteUuid));
+                if ($lead && isset($lead->uuid) && isset($lead->advisor_id)) {
+                    event(new PaymentExpireNotifications($lead, $url, $notification->uuid));
                 }
             }
         });

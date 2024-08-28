@@ -7,6 +7,7 @@ use App\Http\Requests\APiFetchUrl;
 use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
+use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Services\ApiService;
 use App\Services\InboundEmailsHookService;
@@ -15,6 +16,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Validator;
 
 class ApiController extends Controller
 {
@@ -65,10 +67,9 @@ class ApiController extends Controller
         }
     }
 
-    public function quotePaymentStatusUpdated(Request $request)
+    public function quotePaymentStatusUpdated(PaymentNotificationRequest $request)
     {
-
-        app(NotificationService::class)->paymentStatusUpdate($request);
+        app(NotificationService::class)->paymentStatusUpdate($request->quoteType, $request->quoteId);
 
         return response()->json(['message' => 'Payment notification successfully send to advisor!'], 200);
     }

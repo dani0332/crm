@@ -17,10 +17,10 @@ class PaymentExpireNotifications implements ShouldBroadcastNow
     private string $url;
     private string $quoteUuid;
 
-    public function __construct($model, $url, $quoteUuid)
+    public function __construct($lead, $url, $quoteUuid)
     {
-        $this->uuid = $model->uuid;
-        $this->advisorId = $model->advisor_id;
+        $this->uuid = $lead->uuid;
+        $this->advisorId = $lead->advisor_id;
         $this->message = "The payment for $this->uuid will expire in 2 days";
         $this->url = $url;
         $this->quoteUuid = $quoteUuid;
