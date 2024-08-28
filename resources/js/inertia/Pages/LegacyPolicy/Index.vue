@@ -139,7 +139,6 @@ const productName = item => {
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-_id="item">
         <Link

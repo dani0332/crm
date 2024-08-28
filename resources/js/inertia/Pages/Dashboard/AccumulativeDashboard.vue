@@ -295,7 +295,6 @@ onUnmounted(() => (isActive.value = false));
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
       :items="leadReceivedSummaryBySource || []"
     >
     </DataTable>

@@ -3616,7 +3616,6 @@ const onAddUpdate = () => {
         :items="emailStatuses || []"
         show-index
         border-cell
-        fixed-checkbox
         hide-rows-per-page
         hide-footer
       >
