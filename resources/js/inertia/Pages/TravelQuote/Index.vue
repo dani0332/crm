@@ -4,7 +4,7 @@ defineProps({
   dropdownSource: Object,
   permissions: Object,
   advisors: Object,
-    authorizedDays : Number,
+  authorizedDays: Number,
 });
 
 const rules = {

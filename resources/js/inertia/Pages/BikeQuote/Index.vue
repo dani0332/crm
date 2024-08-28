@@ -9,8 +9,7 @@ defineProps({
     type: String,
     default: 'bike',
   },
-    authorizedDays : Number,
-
+  authorizedDays: Number,
 });
 const notification = useNotifications('toast');
 const page = usePage();
