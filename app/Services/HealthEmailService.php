@@ -8,9 +8,7 @@ use App\Models\User;
 
 class HealthEmailService extends BaseService
 {
-
-
-    public function triggerOCAWorkFlow($lead,$birdService)
+    public function triggerOCAWorkFlow($lead, $birdService)
     {
         info('Sending OCA Health followups email for lead: '.$lead->uuid.' | Time: '.now());
         if (! $lead->oca_flow_enabled) {
@@ -19,7 +17,7 @@ class HealthEmailService extends BaseService
             $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_OCA_HEALTH_WORKFLOW)->first();
             if ($sicEvent) {
                 $responseCode = $birdService->triggerWebHookRequest($sicEvent->value, $emailData);
-                $lead->oca_flow_enabled  = true;
+                $lead->oca_flow_enabled = true;
                 $lead->save();
                 info("OCA Health workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
                 info("OCA Health workflow response: {$responseCode} | Ref-ID: {$lead->uuid} |Time: ".now());
@@ -30,8 +28,7 @@ class HealthEmailService extends BaseService
             info("OCA Health workflow already enabled for lead Ref-ID: {$lead->uuid} | Time: ".now());
         }
 
-
-    return $responseCode ?? null;
+        return $responseCode ?? null;
     }
 
     public function mapDataForOCAFollowupEmail($lead, $advisor)
@@ -39,7 +36,7 @@ class HealthEmailService extends BaseService
         return (object) [
             'quoteUID' => $lead->code,
             'customerEmail' => $lead->email,
-            'uuid'=> $lead->uuid,
+            'uuid' => $lead->uuid,
             'refID' => $lead->uuid,
             'customerName' => $lead->first_name.' '.$lead->last_name,
             'advisorId' => $advisor->id ?? null,
