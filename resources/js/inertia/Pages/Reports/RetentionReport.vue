@@ -79,6 +79,7 @@ const getFiltersObject = () => {
     insurance_type: "",
     type: '',
     advisor_id: '',
+    quote_batch_id: ''
   }
 };
 
@@ -450,12 +451,13 @@ const totalLeads = reactive({
   ],
 });
 
-function onFetchLeadsInfo(advisor_id, type, page=1){
+function onFetchLeadsInfo(advisor_id, quote_batch_id ,type, page=1){
   totalLeads.data = [];
   totalLeads.modal = true;
   totalLeads.loader = true;
   filters.type = type;
-  filters.page = page
+  filters.page = page;
+  filters.quote_batch_id = quote_batch_id
   filters.advisor_id = advisor_id;
   let payload = cleanFilters(filters);
   payload = addMissingFilters(payload)
@@ -481,8 +483,9 @@ function onFetchLeadsInfo(advisor_id, type, page=1){
       totalLeads.loader = false;
     });
 }
+
 const setPageTable = page => {
-  onFetchLeadsInfo(filters.advisor_id, filters.type ,page);
+  onFetchLeadsInfo(filters.advisor_id, filters.quote_batch_id ,filters.type ,page);
 };
 
 const getRetentionReportHeaders = () => {
@@ -662,7 +665,7 @@ function buildQuoteURL() {
           <p v-if="item.total == 0">{{ item.total }}</p>
           <button
             v-else
-            @click="onFetchLeadsInfo(item.advisor_id, RetentionReportEnum.TOTAL)"
+            @click="onFetchLeadsInfo(item.advisor_id, item.quote_batch_id , RetentionReportEnum.TOTAL)"
             class="text-primary underline"
           >
             {{ item.total }}
@@ -679,7 +682,7 @@ function buildQuoteURL() {
           <p v-if="item.lost == 0">{{ item.lost }}</p>
           <button
             v-else
-            @click="onFetchLeadsInfo(item.advisor_id, RetentionReportEnum.LOST)"
+            @click="onFetchLeadsInfo(item.advisor_id, item.quote_batch_id , RetentionReportEnum.LOST)"
             class="text-primary underline"
           >
             {{ item.lost }}
@@ -696,7 +699,7 @@ function buildQuoteURL() {
           <p v-if="item.invalid == 0">{{ item.invalid }}</p>
           <button
             v-else
-            @click="onFetchLeadsInfo(item.advisor_id, RetentionReportEnum.INVALID)"
+            @click="onFetchLeadsInfo(item.advisor_id, item.quote_batch_id, RetentionReportEnum.INVALID)"
             class="text-primary underline"
           >
             {{ item.invalid }}
@@ -713,7 +716,7 @@ function buildQuoteURL() {
           <p v-if="item.sales == 0">{{ item.sales }}</p>
           <button
             v-else
-            @click="onFetchLeadsInfo(item.advisor_id, RetentionReportEnum.SALES)"
+            @click="onFetchLeadsInfo(item.advisor_id, item.quote_batch_id ,RetentionReportEnum.SALES)"
             class="text-primary underline"
           >
             {{ item.sales }}

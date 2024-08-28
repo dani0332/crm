@@ -30,11 +30,19 @@ class RetentionReportService extends BaseService
     private $dateFormat;
     private $policyExpiryColumnName;
     private $paginateData;
-    
-    public function __construct() {
+    private $monthColumnName;
+
+    public function __construct() { 
         $this->dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $this->policyExpiryColumnName = 'personal_quotes.policy_expiry_date';
         $this->policyExpiryColumnName = 'personal_quotes.created_at';
+
+        if (request()['displayBy'] === RetentionReportEnum::MONTHLY){
+            $this->monthColumnName = $this->policyExpiryColumnName;
+        } else {
+            $this->monthColumnName = 'quote_batches.start_date';
+        }
+
         $this->paginateData = 12;
     }
 
@@ -53,7 +61,7 @@ class RetentionReportService extends BaseService
         // Build the query based on the model object and request parameters
         $query = $this->buildQuery($request);
 
-        // $query->dd();    
+        // $query->dd();
         $allData = $query->get();
 
         $aggregatedData= $this->getSummarizedData($allData);
@@ -114,7 +122,7 @@ class RetentionReportService extends BaseService
     {
         // Initialize the query with the necessary select statements and joins
         $query = PersonalQuote::query()
-            ->selectRaw("MONTHNAME({$this->policyExpiryColumnName}) as `month`,
+            ->selectRaw("quote_batch_id, MONTHNAME({$this->monthColumnName}) as `month`,
                 users.name as `advisor_name`,
                 count(*) as total,
                 SUM(CASE WHEN quote_status_id = ".QuoteStatusEnum::Lost." THEN 1 ELSE 0 END) as lost,
@@ -125,7 +133,7 @@ class RetentionReportService extends BaseService
         // Apply general filters to the query based on the request parameters
         $this->applyFilters($query, $request);
         // Group the query results by advisor name
-        $query->groupBy('users.name');
+        $query->groupBy('users.id');
 
         // Sort the results in chronological order by month
         $months = implode("', '", MonthNameEnum::all());
@@ -138,7 +146,7 @@ class RetentionReportService extends BaseService
      *
      * @return void
      */
-    private function applyFilters($query, $request)
+    private function applyFilters($query, $request, $isDetailsFilter=false)
     {
         // Apply permission-based filters to the query
         $this->applyPermissionFilters($query, $request);
@@ -150,7 +158,7 @@ class RetentionReportService extends BaseService
         $this->applyLineOfBusinessFilters($query, $request);
 
         // Apply date range filters to the query
-        $this->applyDateFilters($query, $request);
+        $this->applyDateFilters($query, $request, $isDetailsFilter);
     
         // Apply team-related filters to the query
         $this->applyTeamFilters($query, $request);
@@ -159,7 +167,7 @@ class RetentionReportService extends BaseService
         $this->applyQuoteTypeFilters($query, $request);
 
         // Apply additional filters based on the 'displayBy' parameter in the request
-        $this->applyDisplayByFilters($query, $request);
+        $this->applyDisplayByFilters($query, $request, $isDetailsFilter);
     }
 
     /**
@@ -167,11 +175,11 @@ class RetentionReportService extends BaseService
      *
      * @return void
      */
-    private function applyDisplayByFilters($query, $request)
+    private function applyDisplayByFilters($query, $request, $isDetailsFilter)
     {
         if (isset($request['displayBy'])) {
             if ($request['displayBy'] === RetentionReportEnum::BATCH) {
-                $this->applyFilterForBatch($query, $request);
+                $this->applyFilterForBatch($query, $request, $isDetailsFilter);
             } elseif ($request['displayBy'] === RetentionReportEnum::MONTHLY) {
                 $this->applyFilterByMonth($query, $request);
             }
@@ -213,6 +221,10 @@ class RetentionReportService extends BaseService
         if (isset($filters->advisor_id)) {
             $query->where('advisor_id', $filters->advisor_id);
         }
+
+        if (($filters->displayBy == null || $filters->displayBy == RetentionReportEnum::BATCH) && $filters->quote_batch_id){
+            $query->where('quote_batch_id', $filters->quote_batch_id);
+        }
     
         // Apply type-based filters if the type is set in the filters object
         if (isset($filters->type)) {
@@ -239,7 +251,7 @@ class RetentionReportService extends BaseService
      * This method will work once there is no display by filter setup
      * @return void
      */
-    private function applyDateFilters($query, $request)
+    private function applyDateFilters($query, $request, $isDetailsFilter)
     {
         // Check if 'policyExpiryDate' or 'month' is not set in the request
         if (!isset($request['displayBy']) && !isset($request['policyExpiryDate']) && !isset($request['month'])) {
@@ -257,12 +269,11 @@ class RetentionReportService extends BaseService
     
             // Apply the date range filter to the query
             $query->whereBetween($this->policyExpiryColumnName, [$previousMonthStartDateFormatted, $nextMonthEndDateFormatted]);
-
+            
             // Apply quote batch start and end date filter
-            $query->where('quote_batches.start_date', '>=', $previousMonthStartDateFormatted)
-                ->where('quote_batches.end_date', '<=', $nextMonthEndDateFormatted);
+            $query->whereBetween("quote_batches.start_date", [$previousMonthStartDateFormatted, $nextMonthEndDateFormatted]);
 
-            $this->applyFilterForBatch($query, $request);
+            $this->applyFilterForBatch($query, $request, $isDetailsFilter);
         }
     }
 
@@ -355,10 +366,10 @@ class RetentionReportService extends BaseService
      *
      * @return void
      */
-    private function applyFilterForBatch($query, $request)
+    private function applyFilterForBatch($query, $request, $isDetailsFilter=false)
     {
         // Select batch name, start date, and end date from the quote_batches table
-        $query->selectRaw("quote_batches.name as batch, quote_batches.start_date, quote_batches.end_date")
+        $query->selectRaw("quote_batches.id, quote_batches.name as batch, quote_batches.start_date, quote_batches.end_date")
             ->join('quote_batches', 'quote_batch_id', '=', 'quote_batches.id');
 
         // Check if 'policyExpiryDate' parameter is set in the request
@@ -371,13 +382,12 @@ class RetentionReportService extends BaseService
             $endDate = $endDate->format($this->dateFormat);
             // Apply the date range filter to the query
             $query->whereBetween($this->policyExpiryColumnName, [$startDate, $endDate]);
-
-            // Apply quote batch start and end date filter
-            $query->where('quote_batches.start_date', '>=', $startDate)
-                ->where('quote_batches.end_date', '<=', $endDate);
+            $query->whereBetween("quote_batches.start_date", [$startDate, $endDate]);
         }
 
-        $query->groupBy('quote_batches.name');
+        if (!$isDetailsFilter){
+            $query->groupBy('quote_batches.id');
+        }
     }
 
     /**
@@ -485,7 +495,7 @@ class RetentionReportService extends BaseService
             ->join('quote_status', 'quote_status.id', "{$tableName}.quote_status_id");
 
         // Apply filters to the query based on the request parameters
-        $this->applyFilters($query, $request->all());
+        $this->applyFilters($query, $request->all(), true);
         $this->applyFiltersToQuery($query, $request);
 
         // Return the paginated results with query string
