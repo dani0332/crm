@@ -94,7 +94,7 @@ class PaymentExpireNotification extends Command
                 }
             }
         });
-        info('Payment Expire Notifications have been sent');
+        info('Payment Expire Notifications Job Ended');
     }
 
 }
