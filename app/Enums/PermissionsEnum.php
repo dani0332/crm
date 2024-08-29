@@ -349,6 +349,7 @@ final class PermissionsEnum extends Enum
     public const SEND_UPDATE_ADD_BOOKING = 'send-update-add-booking';
     public const PAYMENTS_DISCOUNT_EDIT = 'payments-discount-edit';
     public const EXTRACT_REPORT = 'extract-report';
+    public const SIC_HEALTH_CONFIG = 'sic-health-config';
     public const INPL_USER = 'inpl-user';
     public const INPL_APPROVER = 'inpl-approver';
     public const DOCUMENT_VERIFY = 'document-verify';

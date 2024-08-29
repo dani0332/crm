@@ -31,7 +31,7 @@ class HealthAllocation implements Allocation
                 return AllocationFactory::createResponse(0, 'Lead not found or not under fetch criteria', Response::HTTP_NOT_FOUND);
             }
 
-            $this->assignTeamBasedOnPrice($lead);
+            $this->assignTeamBasedOnPrices($lead);
 
             if (! $lead->health_team_type) {
                 info('No health team found against lead : '.$lead->uuid);
@@ -64,9 +64,9 @@ class HealthAllocation implements Allocation
         return $this->healthAllocationService->fetchLead($this->allocationId, $overrideAdvisorId);
     }
 
-    private function assignTeamBasedOnPrice($lead)
+    private function assignTeamBasedOnPrices($lead)
     {
-        $this->healthAllocationService->assignTeamBasedOnPrice($lead);
+        $this->healthAllocationService->assignTeamBasedOnPrices($lead);
     }
 
     private function fetchAvailableAdvisor($leadTeam)
