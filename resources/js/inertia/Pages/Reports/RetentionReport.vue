@@ -9,6 +9,7 @@ const props = defineProps({
   footerData: Array,
   filters: Array,
   productName: String,
+  retentionReportEnum: Array,
 });
 
 const page = usePage();
@@ -20,7 +21,7 @@ const notification = useToast();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const canExport = ref(false);
-const RetentionReportEnum = page.props.RetentionReportEnum
+const RetentionReportEnum = props.retentionReportEnum
 
 const objToUrl = obj => {
   Object.keys(obj).forEach(

@@ -513,7 +513,8 @@ class ReportsController extends Controller
             'filtersByLob' => $retentionReportService->getFiltersByLob(),
             'reportData' => $retentionReportData,
             'footerData' => $footerData,
-            'productName' => $retentionReportService->getUserPorductName()
+            'productName' => $retentionReportService->getUserPorductName(),
+            'retentionReportEnum' => RetentionReportEnum::asArray()
         ]);
     }
 
