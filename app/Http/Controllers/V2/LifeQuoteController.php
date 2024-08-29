@@ -128,7 +128,8 @@ class LifeQuoteController extends Controller
         $uboDetails = CustomerMembersRepository::getBy($quote->id, QuoteTypes::LIFE->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
-
+        
+        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote->id, QuoteTypes::LIFE->id(),$quoteStatuses);
         if (AMLService::checkAMLStatusFailed(QuoteTypes::LIFE->id(), $quote->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
