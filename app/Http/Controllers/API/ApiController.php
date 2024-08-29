@@ -13,6 +13,7 @@ use App\Services\InboundEmailsHookService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
+use App\Http\Requests\EmailEventsRequest;
 
 class ApiController extends Controller
 {
@@ -81,9 +82,14 @@ class ApiController extends Controller
         return $this->apiService->handleZeroPlansEmail($request);
     }
 
-    public function birdInboundEmailsHook(Request $request)
+    public function birdInboundEmailsHook()
     {
 
-        return $this->inboundEmailsHookService->handleBirdWebhook($request);
+        return $this->inboundEmailsHookService->handleBirdWebhook();
+    }
+
+    public function followupEmailsEvents(EmailEventsRequest $request){
+        dd($request->uuid);
+        return $this->inboundEmailsHookService->logFollowUpEvent();
     }
 }

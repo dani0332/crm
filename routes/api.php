@@ -32,6 +32,7 @@ Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuote
 
 Route::post('/inbound-emails-hook', [ApiController::class, 'inboundEmailsHook']);
 Route::post('/bird-inbound-emails-hook', [ApiController::class, 'birdInboundEmailsHook']);
+Route::post('/followups/emails/events/{quoteTypeId}/{uuid}', [ApiController::class, 'followupEmailsEvents']);
 
 Route::prefix('v1')->group(function () {
 

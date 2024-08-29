@@ -14,7 +14,7 @@ class EmailStatusService extends BaseService
             ->get();
     }
 
-    public function addEmailStatus($emailData, $messageId, $emailSubject)
+    public function addEmailStatus($emailData, $messageId, $emailSubject, $status = ProcessStatusCode::IN_PROGRESS)
     {
         $newEmailStatus = new EmailStatus;
         $newEmailStatus->quote_type_id = $emailData->quoteTypeId;
@@ -23,10 +23,10 @@ class EmailStatusService extends BaseService
         $newEmailStatus->msg_id = $messageId;
         $newEmailStatus->template_id = $emailData->templateId;
         $newEmailStatus->customer_id = $emailData->customerId;
-        $newEmailStatus->email_status = ProcessStatusCode::IN_PROGRESS;
+        $newEmailStatus->email_status =  $status ?? ProcessStatusCode::IN_PROGRESS;
         $newEmailStatus->email_subject = $emailSubject;
         $newEmailStatus->save();
-
         return $newEmailStatus->id;
     }
+
 }
