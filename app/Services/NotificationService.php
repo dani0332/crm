@@ -22,7 +22,10 @@ class NotificationService extends BaseService
             $model = $this->getQuoteObjectBy($quoteType, $quoteId, 'uuid');
         }
 
-        if ($model && $model->advisor_id === null) {
+        if (! $model) {
+            return response()->json(['message' => 'Quote Not Found'], 403);
+        }
+        if ($model->advisor_id === null) {
             return response()->json(['message' => 'No Advisor Assign to this Lead'], 403);
         }
 
