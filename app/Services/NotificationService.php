@@ -24,7 +24,7 @@ class NotificationService extends BaseService
             $model = $model::where('uuid', $quoteId)->first();
         }
 
-        if ($model->advisor_id === null) {
+        if (! $model) {
             return response()->json(['message' => 'Quote Not Found'], 403);
         }
         if ($model->advisor_id === null) {
