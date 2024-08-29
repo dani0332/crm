@@ -19,7 +19,7 @@ const loaders = reactive({
 const page = usePage();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
-const quoteSegments = page.props.quoteSegments;
+let quoteSegments = reactive(page.props.quoteSegments ?? []);
 const params = useUrlSearchParams('history');
 const dataTableRef = ref();
 const teamOptions = ref([]);
@@ -518,6 +518,12 @@ const onLobChange = (e, isOnMounted = false) => {
       quoteTypeCodeEnum.GroupMedical,
     ].includes(filters.lob)
   ) {
+    if (filters.lob == quoteTypeCodeEnum.Health) {
+      quoteSegments = quoteSegments.filter(
+        segment => segment.value !== 'sic-revival',
+      );
+    }
+
     loadTeams(e);
   } else {
     loadAdvisorsByLob(e);

@@ -121,7 +121,10 @@ class QuoteAllocation extends Command
             ->where('health_quote_request.price_starting_from', '!=', null)
             ->where('health_quote_request.is_error_email_sent', 0)
             ->where('health_quote_request.advisor_id', null)
-            ->take($chunkSize);
+            ->where('sic_flow_enabled', 0)
+            ->orWhere(function ($query) {
+                $query->where('sic_advisor_requested', 1)->where('sic_flow_enabled', 1);
+            })->take($chunkSize);
 
         foreach ($leads->get() as $lead) {
             $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
