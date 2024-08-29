@@ -1733,13 +1733,15 @@ const onAddUpdate = () => {
                 </dt>
                 <dt class="font-medium">
                   {{
-                    quote.coverage_code != null
-                      ? quote.coverage_code
-                      : quote.days_cover_for <= 92
-                        ? enums.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
-                        : enums.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
-                          '/' +
-                          enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
+                    quote.source == $page.props.leadSource.RENEWAL_UPLOAD
+                      ? enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
+                      : quote.coverage_code != null
+                        ? quote.coverage_code
+                        : quote.days_cover_for <= 92
+                          ? enums.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
+                          : enums.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
+                            '/' +
+                            enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
                   }}
                 </dt>
               </div>
