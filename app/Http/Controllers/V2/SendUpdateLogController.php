@@ -417,10 +417,12 @@ class SendUpdateLogController extends Controller
         info('Book Update Process Start - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
         $this->sendUpdateLogService = app(SendUpdateLogService::class);
 
-        $response = $this->sendUpdateLogService->updateInsurerDetails($sendUpdateRequest, $sendUpdate);
+        if (empty($sendUpdate->broker_invoice_number) && empty($sendUpdate->invoice_description)) {
+            $response = $this->sendUpdateLogService->updateInsurerDetails($sendUpdateRequest, $sendUpdate);
 
-        if (! $response) {
-            return response()->json(['message' => 'Error while saving Insurer details'], 500);
+            if (! $response) {
+                return response()->json(['message' => 'Error while saving Insurer details'], 500);
+            }
         }
 
         if ($payment) {
