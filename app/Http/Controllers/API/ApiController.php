@@ -68,9 +68,7 @@ class ApiController extends Controller
 
     public function quotePaymentStatusUpdated(PaymentNotificationRequest $request)
     {
-        app(NotificationService::class)->paymentStatusUpdate($request->quoteType, $request->quoteId);
-
-        return response()->json(['message' => 'Payment notification successfully send to advisor!'], 200);
+        return app(NotificationService::class)->paymentStatusUpdate($request->quoteType, $request->quoteId);
     }
 
     public function triggerSICWorkflow(SICWorkflowRequest $request)

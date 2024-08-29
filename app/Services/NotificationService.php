@@ -17,13 +17,21 @@ class NotificationService extends BaseService
             return response()->json(['message' => 'Quote Type Not Valid'], 403);
         }
         $model = $this->getModelObject(strtolower($quoteType));
-        $url = url('/');
 
         if (is_numeric($quoteId)) {
             $model = $model::find($quoteId);
         } else {
             $model = $model::where('uuid', $quoteId)->first();
         }
+
+        if ($model->advisor_id === null) {
+            return response()->json(['message' => 'Quote Not Found'], 403);
+        }
+        if ($model->advisor_id === null) {
+            return response()->json(['message' => 'No Advisor Assign to this Lead'], 403);
+        }
+
+        $url = url('/');
         if ($quoteType == quoteTypeCode::Business) {
             if ($model->business_type_of_insurance_id == quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)) {
                 $url .= "/medical/amt/$model->uuid";
@@ -38,12 +46,11 @@ class NotificationService extends BaseService
             $url = '/personal-quotes/'.strtolower($quoteType).'/'.$model->uuid;
 
         }
-        if ($model->advisor_id === null) {
-            return response()->json(['message' => 'No Advisor Assign to this Lead.'], 403);
-        }
 
         info('Payment Notification Event Trigger'.$model->uuid);
         $quoteType = strtoupper(substr(trim($quoteType), 0, 3));
         event(new PaymentNotifications($model, $url, $quoteType));
+
+        return response()->json(['message' => 'Payment notification successfully send to advisor!'], 200);
     }
 }
