@@ -447,7 +447,6 @@ class QuoteDocumentService extends BaseService
             $outputPath = storage_path('app/temp/'.$docName);
         }
 
-
         $pdf = new Fpdi();
         $pageCount = $pdf->setSourceFile(storage_path('app/'.$filePath));
 
