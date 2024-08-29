@@ -67,11 +67,9 @@ class DatabaseSeeder extends Seeder
             InslyPermissions::class,
             QuoteStatusMapSeeder::class,
             QuoteStatusSeeder::class,
-            ApplicationStorageSeeder::class,
             addInsuranceProvidersConfiguration::class,
             RevokeTempPaymentUpdatePermissionsSeeder::class,
             ImcrmUsersRolesCleaner::class,
-            ConfigSICHealthPermissionSeeder::class,
             AddSICHealthWorkFlowSeeder::class,
             addPermissionsForInsurerNowPayment::class,
             AddeTicketDocumentTypeSeeder::class,
@@ -81,6 +79,9 @@ class DatabaseSeeder extends Seeder
 
             // AddPaymentPermissionsSeeder::class,
             //AddSendUpdatesCategoriesInLookups::class,
+            ConfigSICHealthPermissionSeeder::class,
+            ApplicationStorageSeeder::class,
+
 
         ]);
     }
