@@ -1521,7 +1521,7 @@ class CRUDController extends Controller
         } else {
             $quoteIds = explode(',', $request->selectTmLeadId);
             foreach ($quoteIds as $ids) {
-                $leadId = (int)$ids;
+                $leadId = (int) $ids;
                 $quoteData = $this->getQuoteObject($request->modelType, $leadId);
                 if ($quoteData && $quoteData->payment_status_id === PaymentStatusEnum::AUTHORISED) {
                     $modifiedRequest = new Request([
@@ -1532,7 +1532,8 @@ class CRUDController extends Controller
                 }
             }
         }
-            return Redirect::back()->with('success', $request->modelType.' Leads has been Assigned To '.$assignedUser->name);
+
+        return Redirect::back()->with('success', $request->modelType.' Leads has been Assigned To '.$assignedUser->name);
     }
 
     public function addCarQuotePlan(Request $request)
