@@ -20,38 +20,7 @@ const notification = useToast();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const canExport = ref(false);
-
-// Remove from Enum on the Request of Ahsan
-const RetentionReportEnum = {
-  RETENTION: 'RETENTION',
-  MONTHLY: 'MONTHLY',
-  BATCH: 'BATCH',
-  LOST: 'LOST',
-  INVALID: 'INVALID',
-  SALES: 'SALES',
-  TOTAL: 'TOTAL',
-
-  MONTH_HEADING: 'The policies expiring in the selected month.',
-  BATCH_HEADING: 'This will show all the policies that are expiring in the selected batch.',
-  START_DATE_HEADING: 'This date will display the start date of the Batch. If you\'re using a "Monthly" filter, this date will represent the start of the selected month for data display.',
-  END_DATE_HEADING: 'This date will display the end date of the Batch. If you\'re using a "Monthly" filter, this date will represent the end of the selected month for data display',
-  ADVISOR_NAME_HEADING: 'This displays the policies handled by the selected advisor',
-  TOTAL_HEADING: 'The total number of leads in a specific month assigned to you within the selected time range.',
-  LOST_HEADING: 'The number of leads that have been marked as "Lost"',
-  INVALID_HEADING: 'The number of leads marked as "Fake" or "Duplicate."',
-  POLICIES_BOOKED_HEADING: 'The number of leads that you\'ve won. Great job turning these into successes!',
-  VOLUME_NET_RETENTION_HEADING: 'The ratio of won leads to the total leads, excluding invalid leads. VOLUME NET RETENTION= (SALES)/(TOTAL-INVALID)',
-  VOLUME_GROSS_RETENTION_HEADING: 'The ratio of won leads to the total leads, including all leads. VOLUME GROSS RETENTION= (SALES)/(TOTAL)',
-  RELATIVE_RETENTION_HEADING: 'The difference between the average Net Retention of the renewals and the Net Retention of an advisor.',
-
-  TOTAL_COLUMN: 'Sum of selected leads.',
-  LOST_COLUMN: 'Sum of selected leads classified as "Lost".',
-  INVALID_COLUMN: 'Sum of selected leads classified as "Invalid".',
-  SALES_COLUMN: 'Sum of selected leads that resulted in sales.',
-  VOLUME_NET_RETENTION_COLUMN: 'Total net retention volume of the selected leads. [ Formula ➝ (Total Won leads)/(Sum of Total Leads - Total Invalid leads) ]',
-  VOLUME_GROSS_RETENTION_COLUMN: 'Total gross retention volume of the selected leads. [ Formula ➝ (Total Won leads)/(Sum of Total Leads) ]',
-  RELATIVE_RETENTION_COLUMN: 'The percentage of a particular advisor relative to other advisors of a particular team.'
-};
+const RetentionReportEnum = page.props.RetentionReportEnum
 
 const objToUrl = obj => {
   Object.keys(obj).forEach(
@@ -459,9 +428,11 @@ function onFetchLeadsInfo(advisor_id, quote_batch_id ,type, page=1){
   filters.page = page;
   filters.quote_batch_id = quote_batch_id
   filters.advisor_id = advisor_id;
-  let payload = cleanFilters(filters);
-  payload = addMissingFilters(payload)
-   if (!payload.policyExpiryDate || payload.policyExpiryDate.length === 0) {
+  // Deep copy filters to payload
+  let payload = JSON.parse(JSON.stringify(filters));
+  payload = cleanFilters(payload);
+  payload = addMissingFilters(payload);
+  if (!payload.policyExpiryDate || payload.policyExpiryDate.length === 0) {
     if (!payload.month || payload.month === '') {
       delete payload.displayBy;
     }
