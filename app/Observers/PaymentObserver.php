@@ -53,7 +53,8 @@ class PaymentObserver
             $quoteId,
             $payment->send_update_log_id
         );
-        info('Payment:Observer VAT updated for '.$payment->code);
+
+        info('Payment:Observer VAT updated for '.$payment->code.' - priceWithoutVat: '.$priceWithoutVat.' - vat: '.$vat);
 
         Payment::withoutEvents(function () use ($payment, $priceWithoutVat, $vat) {
             $payment->update([

@@ -13,7 +13,6 @@ const props = defineProps({
   sendUpdateStatusEnum: Array,
   quote: Object,
   indicativePrice: Object,
-  isBookingDetailsVisible: Boolean,
   membersDetail: Array,
   memberCategories: Array,
   documentTypes: Object,
