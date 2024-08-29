@@ -9,6 +9,7 @@ defineProps({
   todayManualCount: Number,
   yesterdayAutoCount: Number,
   yesterdayManualCount: Number,
+  quoteSegments: Object,
   totalCount: {
     type: Number,
     default: 0,
@@ -22,6 +23,7 @@ const notification = useToast();
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
+const quoteSegments = page.props.quoteSegments;
 
 const loader = reactive({
   table: false,
@@ -39,7 +41,6 @@ const showFilters = ref(true);
 const filtersCount = ref(0);
 const serverOptions = ref({
   page: 1,
-  sortBy: 'created_at',
   sortType: 'desc',
 });
 
@@ -152,6 +153,7 @@ const filters = reactive({
   booking_date: '',
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  segment_filter: '',
 });
 
 const canExport = ref(false);
@@ -352,7 +354,6 @@ const permissionsEnum = page.props.permissionsEnum;
 onMounted(() => {
   params = getSavedQueryParams() || params;
   setQueryStringFilters();
-
   let filtersCleaned = cleanObj(filters);
 
   if (filtersCleaned.sortBy) {
@@ -713,6 +714,14 @@ const formatDate = dateString =>
           range
           multi-calendars
           multi-calendars-solo
+        />
+        <ComboBox
+          v-if="can(permissionsEnum.SEGMENT_FILTER)"
+          v-model="filters.segment_filter"
+          label="Segment"
+          placeholder="Select Segment"
+          :options="quoteSegments"
+          :single="true"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

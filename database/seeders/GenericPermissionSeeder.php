@@ -18,13 +18,6 @@ class GenericPermissionSeeder extends Seeder
      */
     public function run()
     {
-        //Add Permission to View Authorised Payment Summary
-        $paymentSummaryPermission = Permission::where('name', PermissionsEnum::MANAGER_AUTHORISED_PAYMENT_SUMMARY)->first();
-        if (! $paymentSummaryPermission) {
-            Permission::create([
-                'name' => PermissionsEnum::MANAGER_AUTHORISED_PAYMENT_SUMMARY,
-            ]);
-        }
 
         // ADD Permission to Read only Access LOBS
         $readOnlyAccessPermission = Permission::where('name', PermissionsEnum::All_QUOTES_VIEWONLY_ACCESS)->first();

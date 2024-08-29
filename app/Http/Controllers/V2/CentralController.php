@@ -568,5 +568,4 @@ class CentralController extends Controller
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
         }
     }
-
 }
