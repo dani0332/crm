@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\APiFetchUrl;
 use App\Http\Requests\AssignLeadRequest;
+use App\Http\Requests\EmailEventsRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\SICWorkflowRequest;
@@ -13,7 +14,6 @@ use App\Services\InboundEmailsHookService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
-use App\Http\Requests\EmailEventsRequest;
 
 class ApiController extends Controller
 {
@@ -88,8 +88,10 @@ class ApiController extends Controller
         return $this->inboundEmailsHookService->handleBirdWebhook();
     }
 
-    public function followupEmailsEvents(EmailEventsRequest $request){
+    public function followupEmailsEvents(EmailEventsRequest $request)
+    {
         dd($request->uuid);
+
         return $this->inboundEmailsHookService->logFollowUpEvent();
     }
 }
