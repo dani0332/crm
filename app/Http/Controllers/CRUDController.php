@@ -1519,19 +1519,16 @@ class CRUDController extends Controller
         } else {
             $quoteIds = explode(',', $request->selectTmLeadId);
             foreach ($quoteIds as $ids) {
-                if ($ids) {
-                    $quoteData = $this->getQuoteObject($request->modelType, $ids);
-                    if ($quoteData && $quoteData->payment_status_id === PaymentStatusEnum::AUTHORISED) {
-                        $modifiedRequest = new Request([
-                            'quoteType' => $request->modelType,
-                            'quoteId' => $ids,
-                        ]);
-                        app(NotificationService::class)->paymentStatusUpdate($modifiedRequest);
-                    }
+                $leadId = (int)$ids;
+                $quoteData = $this->getQuoteObject($request->modelType, $leadId);
+                if ($quoteData && $quoteData->payment_status_id === PaymentStatusEnum::AUTHORISED) {
+                    $modifiedRequest = new Request([
+                        'quoteType' => $request->modelType,
+                        'quoteId' => $quoteData->uuid,
+                    ]);
+                    app(NotificationService::class)->paymentStatusUpdate($modifiedRequest);
                 }
-
             }
-
             return Redirect::back()->with('success', $request->modelType.' Leads has been Assigned To '.$assignedUser->name);
         }
     }

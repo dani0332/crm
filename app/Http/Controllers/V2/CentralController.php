@@ -138,13 +138,14 @@ class CentralController extends Controller
 
         $quoteIds = explode(',', $leadAssignRequest->selectTmLeadId);
         foreach ($quoteIds as $ids) {
-            $quoteData = $this->getQuoteObject($leadAssignRequest->modelType, $ids);
+            $leadId = (int) $ids;
+            $quoteData = $this->getQuoteObject($request->modelType, $leadId);
             if ($quoteData) {
                 $authorizedPayment = Payment::where('code', '=', $quoteData->code)->first();
                 if ($authorizedPayment && $authorizedPayment->payment_status_id === PaymentStatusEnum::AUTHORISED) {
                     $modifiedRequest = new Request([
                         'quoteType' => $leadAssignRequest->modelType,
-                        'quoteId' => $ids,
+                        'quoteId' => $quoteData->uuid,
                     ]);
                     app(NotificationService::class)->paymentStatusUpdate($modifiedRequest);
                 }
