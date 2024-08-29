@@ -16,7 +16,7 @@ class CustomerAddressObserver
             // Check if any attributes have been modified
             $dirty = $customerAddress->getDirty();
 
-            if (!empty($dirty)) {
+            if (! empty($dirty)) {
                 // Fetch the associated car quote using quote_uuid
                 $carQuote = getCarQuoteByUuid($customerAddress->quote_uuid);
 
