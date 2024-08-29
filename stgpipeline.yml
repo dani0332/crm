@@ -4,7 +4,7 @@ trigger:
 pool:
   vmImage: 'Ubuntu 20.04'
 
-steps:steps:
+steps:
 - checkout: self
   fetchDepth: 1
 - publish: '$(System.DefaultWorkingDirectory)'
