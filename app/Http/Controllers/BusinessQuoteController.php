@@ -211,6 +211,7 @@ class BusinessQuoteController extends Controller
             })->values();
         }
 
+        $dropdownSource['quote_status_id'] = app(CentralService::class)->lockTransactionStatus($record->id, QuoteTypes::BUSINESS->id(),$dropdownSource['quote_status_id']);
         if (AMLService::checkAMLStatusFailed(self::TYPE_ID, $record->id)) {
             $dropdownSource['quote_status_id'] = collect($dropdownSource['quote_status_id'])->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
