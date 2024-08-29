@@ -36,6 +36,7 @@ class SendUpdateLogRepository extends BaseRepository
             $count = $this->fetchGetCount($category); // get count of send update log by category.
             $baseCode = $category.'-'.date('m').date('y').'-'; // CPD-0824- or EF-0824- etc.
             $code = $baseCode.($count + 1); // CPD-0824-48 or EF-0824-48 etc.
+            $quoteServiceFile = $insuranceProviderId = $plan_id = null;
 
             $attempts = 0;
             while (SendUpdateLog::where('code', $code)->exists() && $attempts < 10) {
@@ -63,11 +64,8 @@ class SendUpdateLogRepository extends BaseRepository
             }
 
             $data['personal_quote_id'] = $personalQuote?->id ?? null;
-
-            $category = LookupRepository::find($data['childCategory']['id'])->code;
             $option = ! empty($data['option_id']) ? LookupRepository::find($data['option_id'])->code : null;
 
-            $quoteServiceFile = null;
             $quoteType = QuoteTypes::getName($data['quote_type_id'])->value;
             if (checkPersonalQuotes($quoteType)) {
                 $realQuote = $personalQuote;
@@ -75,15 +73,22 @@ class SendUpdateLogRepository extends BaseRepository
                 $quoteServiceFile = app(getServiceObject($quoteType));
                 $realQuote = $quoteServiceFile->getEntity($data['quote_uuid']);
             }
-            $insuranceProviderId = $realQuote->insurance_provider_id ?? null;
 
             // it will check if send update type is Correction of Policy Details or Endorsement Financial with subtype Policy Period Extension, it will save
             // insurance_provider_id and plan_id.
             if ($category == SendUpdateLogStatusEnum::CPD || ($category == SendUpdateLogStatusEnum::EF && $option == SendUpdateLogStatusEnum::PPE)) {
                 if (in_array($data['quote_type_id'], [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
-                    $quoteModel = app($quoteServiceFile)->getEntityPlain($realQuote->id)->load(['plan']);
-                    $insuranceProviderId = $quoteModel->plan->provider_id ?? null;
-                    $plan_id = $quoteModel->plan->id ?? null;
+                    $quoteType = QuoteTypes::getName($data['quote_type_id'])->value;
+                    $quoteModel = app($quoteServiceFile)->getEntityPlain($realQuote->id)->load(['payments', 'plan']);
+                    $payment = $quoteModel->payments()->mainLeadPayment()->first();
+
+                    $planRelationName = strtolower($quoteType).'Plan';
+                    $payment->load($planRelationName);
+                    $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
+                    $insuranceProviderId = $insuranceProvider->id ?? null;
+                    $plan_id = $quoteModel->plan?->id ?? null;
+                } else {
+                    $insuranceProviderId = $realQuote->insurance_provider_id ?? null;
                 }
             }
 
@@ -113,8 +118,8 @@ class SendUpdateLogRepository extends BaseRepository
                 'status' => $data['status'],
                 'uuid' => $uuid,
                 'code' => $code,
-                'insurance_provider_id' => $insuranceProviderId ?? null,
-                'plan_id' => $plan_id ?? null,
+                'insurance_provider_id' => $insuranceProviderId,
+                'plan_id' => $plan_id,
                 'created_by' => auth()->user()->id,
             ]);
             if ($category == SendUpdateLogStatusEnum::CPD || ($category == SendUpdateLogStatusEnum::EF && $option == SendUpdateLogStatusEnum::PPE)) {
