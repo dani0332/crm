@@ -77,19 +77,7 @@ class SendUpdateLogRepository extends BaseRepository
             // it will check if send update type is Correction of Policy Details or Endorsement Financial with subtype Policy Period Extension, it will save
             // insurance_provider_id and plan_id.
             if ($category == SendUpdateLogStatusEnum::CPD || ($category == SendUpdateLogStatusEnum::EF && $option == SendUpdateLogStatusEnum::PPE)) {
-                if (in_array($data['quote_type_id'], [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
-                    $quoteType = QuoteTypes::getName($data['quote_type_id'])->value;
-                    $quoteModel = app($quoteServiceFile)->getEntityPlain($quote->id)->load(['payments', 'plan']);
-                    $payment = $quoteModel->payments()->mainLeadPayment()->first();
-
-                    $planRelationName = strtolower($quoteType).'Plan';
-                    $payment->load($planRelationName);
-                    $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
-                    $insuranceProviderId = $insuranceProvider->id ?? null;
-                    $plan_id = $quoteModel->plan?->id ?? null;
-                } else {
-                    $insuranceProviderId = $quote->insurance_provider_id ?? null;
-                }
+                @[$insuranceProviderId, $plan_id] = app(SendUpdateLogService::class)->getProviderDetails($quote, $data['quote_type_id']);
             }
 
             // if the send update category is 'Cancellation from Inception', 'Cancellation from Inception and reissuance' or 'Endorsement Financial' with
@@ -309,7 +297,7 @@ class SendUpdateLogRepository extends BaseRepository
             $bookingDetails = [
                 'is_booking_filled' => SendUpdateLogStatusEnum::BOOKING_FILLED,
                 // 'booking_date' => $data['booking_date'], // commented this because it will update when Sage Invoice created through Send Update
-                'invoice_description' => $data['invoice_description'],
+                // 'invoice_description' => $data['invoice_description'],
                 'transaction_payment_status' => $data['transaction_payment_status'],
                 'invoice_date' => $data['invoice_date'],
                 'insurer_tax_invoice_number' => $data['insurer_tax_invoice_number'] ?? null,
@@ -328,11 +316,11 @@ class SendUpdateLogRepository extends BaseRepository
             // it will check if send update type is CPD then it will add reversal_invoice to $data because other send update types don't have 2 kind of
             // booking details, so we don't need to add null reversal_invoice on other options details.
             if ($sendUpdate->category->code == SendUpdateLogStatusEnum::CPD) {
-                $bookingDetails = array_merge($bookingDetails, ['reversal_invoice' => $data['reversal_invoice']]);
+                $bookingDetails['reversal_invoice'] = $data['reversal_invoice'];
             }
 
             $payment = Payment::where('send_update_log_id', $data['id'])->first();
-            $insuranceProviderId = $sendUpdate->insurance_provider_id ?? null;
+            // $insuranceProviderId = $sendUpdate->insurance_provider_id ?? null;
             if ($payment) {
                 $sendUpdateLogService = app(SendUpdateLogService::class);
                 info('Send update - Updating Booking details and Commission Schedule in Payments - SendUpdateUUID: '.$sendUpdate->uuid);
@@ -340,14 +328,14 @@ class SendUpdateLogRepository extends BaseRepository
                 $sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate, true);
                 app(SplitPaymentService::class)->updateCommissionSchedule($payment);
 
-                $insuranceProviderId = $insuranceProviderId ?? $payment->insurance_provider_id ?? null;
+                // $insuranceProviderId = $insuranceProviderId ?? $payment->insurance_provider_id ?? null;
             }
 
-            if ($insuranceProviderId && ($insuranceProvider = InsuranceProviderRepository::where('id', $insuranceProviderId)->first())) {
+            /*if ($insuranceProviderId && ($insuranceProvider = InsuranceProviderRepository::where('id', $insuranceProviderId)->first())) {
                 $bookingDetails['broker_invoice_number'] = $sendUpdateLogService->generateBrokerInvoiceNumber($sendUpdate, $insuranceProvider);
             } else {
                 vAbort('Send Update Log provider code not found.');
-            }
+            }*/
 
             $result = $sendUpdate->update($bookingDetails);
 
@@ -457,5 +445,32 @@ class SendUpdateLogRepository extends BaseRepository
             ->whereNotNull('insurer_tax_invoice_number')
             ->get()
             ->pluck('insurer_tax_invoice_number');
+    }
+
+    public function fetchUpdateInsurerDetails($sendUpdate, $insurerDetails)
+    {
+        return false;
+
+        try {
+            $sendUpdate->update([
+                'broker_invoice_number' => $insurerDetails['broker_invoice_number'],
+                'invoice_description' => $insurerDetails['invoice_description'],
+                'insurance_provider_id' => $insurerDetails['insurance_provider_id'],
+                'plan_id' => $insurerDetails['plan_id'],
+            ]);
+
+            if (! $sendUpdate->payments->isEmpty()) {
+                app(SendUpdateLogService::class)->updatePaymentDetails($sendUpdate->payments->first(), $sendUpdate, false, $insurerDetails);
+            }
+
+            info('Send Update insurer details successfully updated - uuid: '.$sendUpdate->uuid);
+
+        } catch (\Exception $ex) {
+            logger()->error('Error while updating Send Update insurer details - uuid: '.$sendUpdate->uuid.' - Exception: '.$ex->getMessage());
+
+            return false;
+        }
+
+        return true;
     }
 }
