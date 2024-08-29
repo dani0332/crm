@@ -142,11 +142,7 @@ class CentralController extends Controller
             if ($quoteData) {
                 $authorizedPayment = Payment::where('code', '=', $quoteData->code)->first();
                 if ($authorizedPayment && $authorizedPayment->payment_status_id === PaymentStatusEnum::AUTHORISED) {
-                    $modifiedRequest = new Request([
-                        'quoteType' => $leadAssignRequest->modelType,
-                        'quoteId' => $ids,
-                    ]);
-                    app(NotificationService::class)->paymentStatusUpdate($modifiedRequest);
+                    app(NotificationService::class)->paymentStatusUpdate($leadAssignRequest->modelType, $ids);
                 }
             }
 
@@ -567,5 +563,4 @@ class CentralController extends Controller
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
         }
     }
-
 }
