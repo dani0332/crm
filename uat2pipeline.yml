@@ -5,7 +5,7 @@ pool:
   vmImage: 'Ubuntu 20.04'
 
 steps:
-- checkout: self
-  fetchDepth: 1
-- publish: '$(System.DefaultWorkingDirectory)'
-  artifact: imcrmuat2
+  - checkout: self
+    fetchDepth: 1
+  - publish: '$(System.DefaultWorkingDirectory)'
+    artifact: imcrmuat2
