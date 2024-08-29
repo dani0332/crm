@@ -39,10 +39,6 @@ class QuoteSyncService extends BaseService
                 $query->whereBetween('quote_sync.created_at', [$startDate, $endDate]);
             });
 
-        if (isset($filters['is_synced'])) {
-            $dataset = $dataset->where('quote_sync.is_synced', $filters['is_synced']);
-        }
-
         $sortBy = 'quote_sync.id';
         $sortOrder = 'desc';
         if (! empty($filters['sortBy']) && ! empty($filters['sortType'])) {
