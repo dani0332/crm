@@ -7,10 +7,10 @@ use App\Models\ApplicationStorage;
 use App\Models\PersonalQuote;
 use App\Models\QuoteSync;
 use App\Traits\PersonalQuoteSyncTrait;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class QuoteSyncUpdateCommand extends Command
 {
@@ -54,8 +54,8 @@ class QuoteSyncUpdateCommand extends Command
                     ->from(DB::raw('(SELECT MIN(id) as min_id, quote_uuid 
                              FROM quote_sync 
                              WHERE is_synced = false 
-                             AND status IN (' . QuoteSyncStatus::INPROGRESS . ', ' . QuoteSyncStatus::FAILED . ')
-                             AND updated_at <= "' . $beforeTime . '"
+                             AND status IN ('.QuoteSyncStatus::INPROGRESS.', '.QuoteSyncStatus::FAILED.')
+                             AND updated_at <= "'.$beforeTime.'"
                              GROUP BY quote_uuid) as subquery'))
                     ->join('quote_sync', 'quote_sync.quote_uuid', '=', 'subquery.quote_uuid')
                     ->whereRaw('quote_sync.id >= subquery.min_id')
@@ -93,7 +93,7 @@ class QuoteSyncUpdateCommand extends Command
                         $quotes[$key] = $this->processQuoteNotFound($entry);
                     }
                 }
-                info('Syncing entry complete: ' . $entry->quote_uuid . ' - ' . $entry->id);
+                info('Syncing entry complete: '.$entry->quote_uuid.' - '.$entry->id);
             } catch (Exception $e) {
                 $error = 'QuoteSyncJob Error syncing entry: '.$entry->quote_uuid.' - '.$entry->id.' - '.$e->getMessage();
                 info($error.' --- '.$e->getTraceAsString());

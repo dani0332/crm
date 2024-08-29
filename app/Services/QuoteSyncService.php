@@ -82,16 +82,16 @@ class QuoteSyncService extends BaseService
             DB::raw('(SELECT MIN(id) as min_id, quote_uuid 
                           FROM quote_sync 
                           WHERE is_synced = false 
-                          AND status = ' . $status . '
+                          AND status = '.$status.'
                           GROUP BY quote_uuid) as subquery'),
             function ($join) {
                 $join->on('quote_sync.quote_uuid', '=', 'subquery.quote_uuid')
                     ->on('quote_sync.id', '>=', 'subquery.min_id');
             }
         )
-        ->update([
-            'quote_sync.is_synced' => false,
-            'quote_sync.status' => QuoteSyncStatus::WAITING,
-        ]);
+            ->update([
+                'quote_sync.is_synced' => false,
+                'quote_sync.status' => QuoteSyncStatus::WAITING,
+            ]);
     }
 }
