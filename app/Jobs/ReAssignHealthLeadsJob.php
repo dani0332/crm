@@ -48,7 +48,7 @@ class ReAssignHealthLeadsJob implements ShouldQueue
 
         foreach ($leads as $lead) {
             info('-------- Reassignment of lead : '.$lead->uuid.' started ---------');
-            $this->assignTeamBasedOnPrice($lead);
+            $this->assignTeamBasedOnPrices($lead);
 
             if (! $lead->health_team_type) {
                 info('No health team found against lead : '.$lead->uuid);
@@ -75,9 +75,9 @@ class ReAssignHealthLeadsJob implements ShouldQueue
         return $this->healthAllocationService->fetchReAssignmentLead($this->advisorId);
     }
 
-    private function assignTeamBasedOnPrice($lead)
+    private function assignTeamBasedOnPrices($lead)
     {
-        $this->healthAllocationService->assignTeamBasedOnPrice($lead);
+        $this->healthAllocationService->assignTeamBasedOnPrices($lead);
     }
 
     private function fetchAvailableAdvisor($leadTeam)
