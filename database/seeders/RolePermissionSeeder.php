@@ -5,18 +5,18 @@ namespace Database\Seeders;
 use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
 use App\Models\Permission;
+use App\Models\Role;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Spatie\Permission\Models\Role;
 
-class ConfigSICHealthPermissionSeeder extends Seeder
+class RolePermissionSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        $roles = Role::whereIn('name', [RolesEnum::Admin, RolesEnum::Engineering])->get();
+        $roles = Role::whereIn('name', [RolesEnum::Admin])->get();
         $permission = Permission::firstOrCreate([
             'name' => PermissionsEnum::SIC_HEALTH_CONFIG ?? 'sic-health-config',
             'guard_name' => 'web',
@@ -40,6 +40,5 @@ class ConfigSICHealthPermissionSeeder extends Seeder
                 ]);
             }
         }
-
     }
 }
