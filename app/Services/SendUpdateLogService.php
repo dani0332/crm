@@ -453,7 +453,11 @@ class SendUpdateLogService
         if ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::CPD || empty($payments)) {
             $insuranceProviderId = $sendUpdateLog->insurance_provider_id;
         } else {
-            @[$insuranceProviderId, $planId] = $this->getProviderDetails($quote, QuoteTypes::getIdFromValue($quoteType));
+            if ($quote->insly_id || $quote->insly_migrated) {
+                $insuranceProviderId = empty($sendUpdateLog->insurance_provider_id) ? null : $sendUpdateLog->insurance_provider_id;
+            } else {
+                @[$insuranceProviderId, $planId] = $this->getProviderDetails($quote, QuoteTypes::getIdFromValue($quoteType), false);
+            }
         }
         $sendUpdateLogCategory = LookupRepository::where('id', $sendUpdateLog->category_id)->value('code');
 
@@ -1066,9 +1070,12 @@ class SendUpdateLogService
         return $brokerInvoiceNumber;
     }
 
-    public function getProviderDetails($quote, $quoteTypeId): array
+    public function getProviderDetails($quote, $quoteTypeId, $forSendUpdateCreation = false): array
     {
         $insuranceProviderId = $plan_id = null;
+        if ($forSendUpdateCreation && ($quote->insly_id || $quote->insly_migrated)) {
+            return [$insuranceProviderId, $plan_id];
+        }
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
             $quoteType = QuoteTypes::getName($quoteTypeId)->value;
             $quoteServiceFile = getServiceObject($quoteType);
