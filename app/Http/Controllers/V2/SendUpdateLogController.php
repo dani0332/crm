@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\quoteBusinessTypeCode;
