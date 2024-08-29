@@ -8,7 +8,7 @@ use App\Models\User;
 
 class HealthEmailService extends BaseService
 {
-    public function sendHealthOCBIntroEmail($lead, $triggerSICWorkFlow, $birdService)
+    public function sendHealthOCBIntroEmail($lead, $triggerSICWorkFlow)
     {
         // Retrieve plans with available ratings for the given lead
         info("sic sendHealthOCBEmail - Ref ID: {$lead->uuid}| Time: ".now());
@@ -18,7 +18,7 @@ class HealthEmailService extends BaseService
                 $emailData = $this->mapDataForFollowupEmail($lead, $advisor);
                 $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
                 if ($sicEvent) {
-                    $responseCode = $birdService->triggerWebHookRequest($sicEvent->value, $emailData);
+                    $responseCode = app(BirdService::class)->triggerWebHookRequest($sicEvent->value, $emailData);
                     $lead->sic_flow_enabled = true;
                     $lead->save();
                     info("SIC Health workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
@@ -59,5 +59,4 @@ class HealthEmailService extends BaseService
             'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
         ];
     }
-
 }
