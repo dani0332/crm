@@ -1520,19 +1520,15 @@ class CRUDController extends Controller
             return Redirect::back()->with('message', $msg);
         } else {
             $quoteIds = explode(',', $request->selectTmLeadId);
-            foreach ($quoteIds as $ids) {
-                $leadId = (int)$ids;
-                $quoteData = $this->getQuoteObject($request->modelType, $leadId);
+            foreach ($quoteIds as $id) {
+                $quoteData = $this->getQuoteObject($request->modelType, $id);
                 if ($quoteData && $quoteData->payment_status_id === PaymentStatusEnum::AUTHORISED) {
-                    $modifiedRequest = new Request([
-                        'quoteType' => $request->modelType,
-                        'quoteId' => $quoteData->uuid,
-                    ]);
-                    app(NotificationService::class)->paymentStatusUpdate($modifiedRequest);
+                    app(NotificationService::class)->paymentStatusUpdate($request->modelType, $id);
                 }
             }
+                return Redirect::back()->with('success', $request->modelType.' Leads has been Assigned To '.$assignedUser->name);
+
         }
-            return Redirect::back()->with('success', $request->modelType.' Leads has been Assigned To '.$assignedUser->name);
     }
 
     public function addCarQuotePlan(Request $request)

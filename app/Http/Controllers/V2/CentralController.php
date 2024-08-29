@@ -137,20 +137,11 @@ class CentralController extends Controller
         (new CentralService)->assignLeadToAdvisor($leadAssignRequest);
 
         $quoteIds = explode(',', $leadAssignRequest->selectTmLeadId);
-        foreach ($quoteIds as $ids) {
-            $leadId = (int) $ids;
-            $quoteData = $this->getQuoteObject($request->modelType, $leadId);
-            if ($quoteData) {
-                $authorizedPayment = Payment::where('code', '=', $quoteData->code)->first();
-                if ($authorizedPayment && $authorizedPayment->payment_status_id === PaymentStatusEnum::AUTHORISED) {
-                    $modifiedRequest = new Request([
-                        'quoteType' => $leadAssignRequest->modelType,
-                        'quoteId' => $quoteData->uuid,
-                    ]);
-                    app(NotificationService::class)->paymentStatusUpdate($modifiedRequest);
-                }
+        foreach ($quoteIds as $id) {
+            $quoteData = $this->getQuoteObject($request->modelType, $id);
+            if ($quoteData && $quoteData->payment_status_id === PaymentStatusEnum::AUTHORISED) {
+                app(NotificationService::class)->paymentStatusUpdate($request->modelType, $id);
             }
-
         }
 
         return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType).' Leads has been Assigned');
