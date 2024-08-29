@@ -17,7 +17,7 @@ class Payment extends Model implements Auditable
     protected $auditEvents = [
         'updated',
     ];
-    public $incrementing = false;
+    protected $table = 'payments';
     protected $keyType = 'string';
     protected $fillable = [
         'code', 'payment_status_id', 'plan_id', 'captured_amount',
