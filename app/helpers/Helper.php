@@ -2,10 +2,11 @@
 
 use Carbon\Carbon;
 use App\Models\User;
-use App\Enums\QuoteTypes;
 use Illuminate\Http\File;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Models\HealthQuote;
 use App\Models\TravelQuote;
 use Illuminate\Support\Str;
@@ -712,6 +713,21 @@ if (! function_exists('mimeContentType')) {
         }
         if (! empty($mimeType)) {
             return array_search($mimeType, $mime_types);
+        }
+    }
+}
+if (! function_exists('checkAuthUserRole')) {
+    function checkAuthUserRole()
+    {
+
+        if (! Auth::check()) {
+            return false;
+        }
+
+        if (Auth::user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::HealthManager, RolesEnum::BusinessManager, RolesEnum::HomeManager, RolesEnum::LifeManager, RolesEnum::PetManager, RolesEnum::YachtManager, RolesEnum::TravelManager, RolesEnum::BikeManager, RolesEnum::CycleManager, RolesEnum::JetskiManager])) {
+            return true;
+        } else {
+            return false;
         }
     }
 }

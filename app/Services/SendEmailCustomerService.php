@@ -1044,6 +1044,72 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
+    public function sendPaymentNotificationEmail($lead, $user, $totalLead)
+    {
+        $emailTemplateId = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_NOTIFICATION_EMAIL_TEMPLATE)->value('value');
+        try {
+            $tag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.'-';
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => $this->apiKey,
+                'Content-Type' => 'application/json',
+            ];
+            $url = url('/');
+            $url .= '/reports/payment-summary';
+            $advisorData = [];
+            if ($user) {
+                $advisor = (object) [];
+                $advisor->name = $user->name;
+                $advisor->email = $user->email;
+                $advisorData[] = $advisor;
+            }
+            $params = [
+                'advisor_name' => $user->name,
+                'total_leads' => $totalLead,
+                'total_premium' => $lead->total_premium ? sprintf('%.2f', $lead->total_premium) : 0,
+                'leads_expire' => $lead->total_leads ? $lead->total_leads : 0,
+                'date' => Carbon::now()->toDateString(),
+                'paymentDoc' => $url,
+            ];
+            if (empty($params['total_leads']) || empty($params['total_premium']) || empty($params['date'])) {
+                return;
+            }
+            if (isset($advisorData) && empty($advisorData)) {
+                info('Advisor Email or Data Not Found');
+
+                return;
+            }
+            $replyTo = [
+                'email' => $advisorData[0]->email,
+                'name' => $advisorData[0]->name,
+            ];
+
+            $body = json_encode([
+                'sender' => ['name' => $tag.' '.'IMCRM Payment Notification Alert', 'email' => 'no-reply@alert.insurancemarket.email'],
+                'to' => $advisorData,
+                'replyTo' => $replyTo,
+                //  'bcc' => array_merge($bccAdditional),  //    'bcc' => array_merge($bccAdditional, $bcc),
+                'templateId' => intval($emailTemplateId),
+                'params' => $params,
+            ], JSON_UNESCAPED_SLASHES);
+            $client = new \GuzzleHttp\Client;
+            $clientRequest = $client->post(
+                $this->url,
+                [
+                    'headers' => $headers,
+                    'body' => $body,
+                    'timeout' => 10,
+                ]
+            );
+            $responseCode = $clientRequest->getStatusCode();
+            info('sendPaymentNotificationEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            $responseDetail = 'sendPaymentNotificationEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+            Log::error($responseDetail);
+        }
+    }
+
     public function sendingAlfredFollowupEmail($customer)
     {
         $emailTemplateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::ALFRED_FOLLOWUP_TEMPLATE)->first();

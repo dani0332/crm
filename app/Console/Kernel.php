@@ -46,6 +46,15 @@ class Kernel extends ConsoleKernel
         $schedule->command('PaymentOverdueStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(5);
         $schedule->command('ProcessCCPaymentsCommand:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
+        $schedule->command('SendPaymentEmail:cron')->timezone('Asia/Dubai')->everyTenMinutes()->onOneServer()->withoutOverlapping();
+
+        $schedule->command('PaymentExpireNotification:cron')
+            ->timezone('Asia/Dubai')
+            ->everyFifteenMinutes()
+            ->between('9:00', '18:00')
+            ->onOneServer()
+            ->withoutOverlapping();
+
         /*$schedule->job(new UnconSubmissionReminder)
         ->tuesdays()
         ->fridays()
