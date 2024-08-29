@@ -763,7 +763,7 @@ class LeadAllocationService extends BaseService
 
         info('car lead allocation renewal date from : '.$dateFrom.' and date to : '.$dateTo);
 
-        $renewalQuote = CarQuote::where('source', LeadSourceEnum::RENEWAL_UPLOAD)
+        $renewalQuote = CarQuote::select('id')->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
             ->whereBetween('previous_policy_expiry_date', [$dateFrom, $dateTo])
             ->where(function ($query) use ($lead) {
                 $query->where('email', $lead->email)
