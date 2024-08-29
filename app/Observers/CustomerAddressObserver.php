@@ -12,6 +12,7 @@ class CustomerAddressObserver
 {
     public function updated(CustomerAddress $customerAddress)
     {
+        Log::info('CustomerAddressObserver@updated');
         try {
             // Check if any attributes have been modified
             $dirty = $customerAddress->getDirty();
