@@ -64,48 +64,32 @@ class SendUpdateLogRepository extends BaseRepository
 
             $data['personal_quote_id'] = $personalQuote?->id ?? null;
 
-            $sendUpdate = $this->create([
-                'personal_quote_id' => $data['personal_quote_id'],
-                'quote_uuid' => $data['quote_uuid'],
-                'quote_type_id' => $data['quote_type_id'],
-                'category_id' => $data['childCategory']['id'],
-                'option_id' => $data['option_id'],
-                'status' => $data['status'],
-                'uuid' => $uuid,
-                'code' => $code,
-                'insurance_provider_id' => $personalQuote->insurance_provider_id ?? null,
-                'created_by' => auth()->user()->id,
-            ]);
-            // it will check if send update type is Correction of Policy Details or Enorsement Financial with subtype Policy Period Extension, it will save
-            // insurance_provider_id and plan_id.
+            $category = LookupRepository::find($data['childCategory']['id'])->code;
+            $option = ! empty($data['option_id']) ? LookupRepository::find($data['option_id'])->code : null;
+
+            $quoteServiceFile = null;
             $quoteType = QuoteTypes::getName($data['quote_type_id'])->value;
-            if ($sendUpdate->category->code == SendUpdateLogStatusEnum::CPD || ($sendUpdate->category->code == SendUpdateLogStatusEnum::EF && $sendUpdate->option->code == SendUpdateLogStatusEnum::PPE)) {
+            if (checkPersonalQuotes($quoteType)) {
+                $realQuote = $personalQuote;
+            } else {
+                $quoteServiceFile = app(getServiceObject($quoteType));
+                $realQuote = $quoteServiceFile->getEntity($data['quote_uuid']);
+            }
+            $insuranceProviderId = $realQuote->insurance_provider_id ?? null;
 
-                if (checkPersonalQuotes($quoteType)) {
-                    $realQuote = $personalQuote;
-                } else {
-                    $quoteServiceFile = app(getServiceObject($quoteType));
-                    $realQuote = $quoteServiceFile->getEntity($sendUpdate->quote_uuid);
-                }
+            // it will check if send update type is Correction of Policy Details or Endorsement Financial with subtype Policy Period Extension, it will save
+            // insurance_provider_id and plan_id.
+            if ($category == SendUpdateLogStatusEnum::CPD || ($category == SendUpdateLogStatusEnum::EF && $option == SendUpdateLogStatusEnum::PPE)) {
                 if (in_array($data['quote_type_id'], [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
-                    $serviceFile = 'App\\Services\\'.$quoteType.'QuoteService';
-
-                    $quoteModel = app($serviceFile)->getEntityPlain($realQuote->id)->load(['plan']);
-                    $sendUpdate->insurance_provider_id = $quoteModel->plan->provider_id ?? null;
-                    $sendUpdate->plan_id = $quoteModel->plan->id ?? null;
-                } else {
-                    $sendUpdate->insurance_provider_id = $realQuote->insuranceProvider->id ?? $realQuote->insurance_provider_id ?? null;
+                    $quoteModel = app($quoteServiceFile)->getEntityPlain($realQuote->id)->load(['plan']);
+                    $insuranceProviderId = $quoteModel->plan->provider_id ?? null;
+                    $plan_id = $quoteModel->plan->id ?? null;
                 }
-
-                $sendUpdate->save();
-                $sendUpdate->refresh();
-                $this->checkPolicyDetailsFilled($sendUpdate, $data['quote_type_id'], $realQuote);
             }
 
             // if the send update category is 'Cancellation from Inception', 'Cancellation from Inception and reissuance' or 'Endorsement Financial' with
             // subtype 'Midterm policy cancellation, then it will update the quote status to 'Cancellation Pending'.
-            if (in_array($sendUpdate->category->code, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]) ||
-                ($sendUpdate->category->code == SendUpdateLogStatusEnum::EF && $sendUpdate->option->code == SendUpdateLogStatusEnum::MPC)) {
+            if (in_array($category, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR]) || ($category == SendUpdateLogStatusEnum::EF && $option == SendUpdateLogStatusEnum::MPC)) {
                 if (! checkPersonalQuotes($quoteType)) {
                     $model = 'App\\Models\\'.$quoteType.'Quote';
                     $personalQuote = $model::where('uuid', $data['quote_uuid'])->first();
@@ -118,6 +102,23 @@ class SendUpdateLogRepository extends BaseRepository
                 ]);
 
                 $personalQuote->save();
+            }
+
+            $sendUpdate = $this->create([
+                'personal_quote_id' => $data['personal_quote_id'],
+                'quote_uuid' => $data['quote_uuid'],
+                'quote_type_id' => $data['quote_type_id'],
+                'category_id' => $data['childCategory']['id'],
+                'option_id' => $data['option_id'],
+                'status' => $data['status'],
+                'uuid' => $uuid,
+                'code' => $code,
+                'insurance_provider_id' => $insuranceProviderId ?? null,
+                'plan_id' => $plan_id ?? null,
+                'created_by' => auth()->user()->id,
+            ]);
+            if ($category == SendUpdateLogStatusEnum::CPD || ($category == SendUpdateLogStatusEnum::EF && $option == SendUpdateLogStatusEnum::PPE)) {
+                $this->checkPolicyDetailsFilled($sendUpdate, $data['quote_type_id'], $realQuote);
             }
         } catch (\Exception $ex) {
             $sendUpdate = (object) [

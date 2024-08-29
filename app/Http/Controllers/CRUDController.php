@@ -1806,8 +1806,8 @@ class CRUDController extends Controller
         }
 
         // update status policy issued of req fulfilled
-        $this->updateQuoteStatus($request->modelType, $request->quote_id);
         $this->updatePriceAndDiscount($quoteModel);
+        $this->updateQuoteStatus($request->modelType, $request->quote_id);
 
         Log::info('Policy details update successfully for : '.$quoteModel->uuid);
 
