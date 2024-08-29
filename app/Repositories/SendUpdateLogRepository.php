@@ -320,22 +320,13 @@ class SendUpdateLogRepository extends BaseRepository
             }
 
             $payment = Payment::where('send_update_log_id', $data['id'])->first();
-            // $insuranceProviderId = $sendUpdate->insurance_provider_id ?? null;
             if ($payment) {
                 $sendUpdateLogService = app(SendUpdateLogService::class);
                 info('Send update - Updating Booking details and Commission Schedule in Payments - SendUpdateUUID: '.$sendUpdate->uuid);
                 $sendUpdateLogService->sendUpdatePriceAndDiscount($sendUpdate, $payment);
                 $sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate, true);
                 app(SplitPaymentService::class)->updateCommissionSchedule($payment);
-
-                // $insuranceProviderId = $insuranceProviderId ?? $payment->insurance_provider_id ?? null;
             }
-
-            /*if ($insuranceProviderId && ($insuranceProvider = InsuranceProviderRepository::where('id', $insuranceProviderId)->first())) {
-                $bookingDetails['broker_invoice_number'] = $sendUpdateLogService->generateBrokerInvoiceNumber($sendUpdate, $insuranceProvider);
-            } else {
-                vAbort('Send Update Log provider code not found.');
-            }*/
 
             $result = $sendUpdate->update($bookingDetails);
 
@@ -449,8 +440,6 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchUpdateInsurerDetails($sendUpdate, $insurerDetails)
     {
-        return false;
-
         try {
             $sendUpdate->update([
                 'broker_invoice_number' => $insurerDetails['broker_invoice_number'],
