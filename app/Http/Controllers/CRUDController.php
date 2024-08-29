@@ -1523,7 +1523,7 @@ class CRUDController extends Controller
             foreach ($quoteIds as $id) {
                 $quoteData = $this->getQuoteObject($request->modelType, $id);
                 if ($quoteData && $quoteData->payment_status_id === PaymentStatusEnum::AUTHORISED) {
-                    app(NotificationService::class)->paymentStatusUpdate($request->modelType, $id);
+                    app(NotificationService::class)->paymentStatusUpdate($request->modelType, $quoteData->uuid);
                 }
             }
 

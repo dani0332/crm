@@ -18,13 +18,10 @@ class NotificationService extends BaseService
         }
         $model = null;
 
-        if (isset($quoteType) && isset($quoteId) && is_numeric($quoteId)) {
-            $model = $this->getQuoteObjectBy($quoteType, $quoteId, 'id');
-        } else {
+        if (isset($quoteType) && isset($quoteId)) {
             $model = $this->getQuoteObjectBy($quoteType, $quoteId, 'uuid');
 
         }
-
         if (! $model) {
             return response()->json(['message' => 'Quote Not Found'], 403);
         }
