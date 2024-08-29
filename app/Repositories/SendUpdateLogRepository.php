@@ -70,16 +70,16 @@ class SendUpdateLogRepository extends BaseRepository
             $quoteServiceFile = null;
             $quoteType = QuoteTypes::getName($data['quote_type_id'])->value;
             if (checkPersonalQuotes($quoteType)) {
-                $realQuote = $personalQuote;
+                $quote = $personalQuote;
             } else {
                 $quoteServiceFile = getServiceObject($quoteType);
-                $realQuote = app($quoteServiceFile)->getEntity($data['quote_uuid']);
+                $quote = app($quoteServiceFile)->getEntity($data['quote_uuid']);
             }
-            $insuranceProviderId = $realQuote->insurance_provider_id ?? null;
+            $insuranceProviderId = $quote->insurance_provider_id ?? null;
 
             if (app(SendUpdateLogService::class)->isBookingDetailsVisible($category)) {
-                if (in_array($data['quote_type_id'], [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health]) && ! ($realQuote->insly_migrated || $realQuote->insly_id)) {
-                    $quoteModel = app($quoteServiceFile)->getEntityPlain($realQuote->id)->load(['payments', 'plan']);
+                if (in_array($data['quote_type_id'], [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health]) && ! ($quote->insly_migrated || $quote->insly_id)) {
+                    $quoteModel = app($quoteServiceFile)->getEntityPlain($quote->id)->load(['payments', 'plan']);
                     if ($quoteModel->payments->isEmpty()) {
                         return (object) [
                             'message' => 'Payment not found for provider selection.',
@@ -137,7 +137,7 @@ class SendUpdateLogRepository extends BaseRepository
                 'created_by' => auth()->user()->id,
             ]);
             if ($category == SendUpdateLogStatusEnum::CPD || ($category == SendUpdateLogStatusEnum::EF && $option == SendUpdateLogStatusEnum::PPE)) {
-                $this->checkPolicyDetailsFilled($sendUpdate, $data['quote_type_id'], $realQuote);
+                $this->checkPolicyDetailsFilled($sendUpdate, $data['quote_type_id'], $quote);
             }
         } catch (\Exception $ex) {
             $sendUpdate = (object) [
