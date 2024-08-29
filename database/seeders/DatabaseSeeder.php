@@ -82,7 +82,6 @@ class DatabaseSeeder extends Seeder
             ConfigSICHealthPermissionSeeder::class,
             ApplicationStorageSeeder::class,
 
-
         ]);
     }
 }
