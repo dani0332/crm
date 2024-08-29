@@ -1254,8 +1254,11 @@ if (! function_exists('isVatApplied')) {
 if (! function_exists('createTempPdfFileForWatermark')) {
     function createTempPdfFileForWatermark($pdfFile): File
     {
+        if (! file_exists(storage_path('/app/temp'))) {
+            mkdir(storage_path('/app/temp'), 0775, true);
+        }
         // Create a temporary file and write the PDF content to it
-        $tempFilePath = tempnam(storage_path('app/temp'), 'pdf_');
+        $tempFilePath = storage_path('app/temp');
         file_put_contents($tempFilePath, $pdfFile);
         // convert it to an `UploadedFile` instance to be used for watermark
         return new File($tempFilePath);
