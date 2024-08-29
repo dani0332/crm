@@ -378,7 +378,7 @@ onMounted(() => {
                 :key="quoteDocument.id"
               >
                 <a
-                  :href="storageUrl + quoteDocument.doc_url"
+                  :href="`/quote-document-download/${quoteDocument.doc_uuid}`"
                   target="_blank"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
                 >
