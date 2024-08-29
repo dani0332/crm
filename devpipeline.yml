@@ -3,8 +3,8 @@ trigger:
 
 pool:
   vmImage: 'Ubuntu 20.04'
-steps:- checkout: self
+steps:
+- checkout: self
   fetchDepth: 1
-
-  - publish: '$(System.DefaultWorkingDirectory)'
-    artifact: '$(imcrmdev)'
+- publish: '$(System.DefaultWorkingDirectory)'
+  artifact: '$(imcrmdev)'
