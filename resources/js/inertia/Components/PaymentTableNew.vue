@@ -2358,7 +2358,7 @@ const retryForm = useForm({
   payment_process_job_id: null,
 });
 
-const deleteDocument = (docName, count) => {
+const deleteDocument = (docName, count, docId) => {
   if (paymentMethodsForm.status == 'edit') {
     if (fileUploadModels.value[count]) {
       fileUploadModels.value[count] = fileUploadModels.value[count].filter(
@@ -2375,7 +2375,7 @@ const deleteDocument = (docName, count) => {
         item => item.doc_name !== docName,
       );
     }
-    trashedFilesModal.value.push(docName);
+    trashedFilesModal.value.push(docId);
   } else if (
     paymentMethodsForm.status == 'view' &&
     paymentMethodsForm.collection_type === 'insurer' &&
@@ -4048,7 +4048,7 @@ const splitPaymentTotalPrice = (
                 </span>
                 <span
                   class="delete-pointer"
-                  @click="deleteDocument(fileData.doc_name, 0)"
+                  @click="deleteDocument(fileData.doc_name, 0, fileData.id)"
                   v-if="!isFieldReadonly"
                 >
                   &#10006;
@@ -4794,7 +4794,7 @@ const splitPaymentTotalPrice = (
                       </span>
                       <span
                         class="delete-pointer"
-                        @click="deleteDocument(fileData.doc_name, count)"
+                        @click="deleteDocument(fileData.doc_name, count, fileData.id)"
                         v-if="!readOnlyPayments[count]"
                       >
                         <x-tooltip>
@@ -5045,7 +5045,7 @@ const splitPaymentTotalPrice = (
                   </span>
                   <span
                     class="delete-pointer"
-                    @click="deleteDocument(fileData.doc_name, splitPaymentNo)"
+                    @click="deleteDocument(fileData.doc_name, splitPaymentNo, fileData.id)"
                     v-if="!readOnlyPayments[splitPaymentNo]"
                   >
                     &#10006;
