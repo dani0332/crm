@@ -9,6 +9,7 @@ use App\Models\QuoteSync;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Console\Command;
+use App\Enums\EnvEnum;
 
 class QuoteSyncUpdateCommand extends Command
 {
@@ -23,6 +24,8 @@ class QuoteSyncUpdateCommand extends Command
 
     protected $description = 'Sync Quotes Data from QuoteSync table to respective quote tables';
 
+    private $startId = 0;
+
     public function __construct()
     {
         parent::__construct();
@@ -32,6 +35,10 @@ class QuoteSyncUpdateCommand extends Command
     {
         if (empty($this->schemas)) {
             $this->cacheSchemas();
+        }
+
+        if (config('constants.APP_ENV') == EnvEnum::PRODUCTION) {
+            $this->startId = 4500000;
         }
 
         info('----------- QuoteSyncJob Started -----------');
@@ -45,7 +52,7 @@ class QuoteSyncUpdateCommand extends Command
 
         $entries = QuoteSync::where('is_synced', false)
             ->where('status', QuoteSyncStatus::WAITING)
-            ->where('id', '>', 4500000)
+            ->where('id', '>', $this->startId)
             ->take(2000)
             ->get();
 
