@@ -68,10 +68,10 @@ class SendUpdateLogRepository extends BaseRepository
 
             $quoteType = QuoteTypes::getName($data['quote_type_id'])->value;
             if (checkPersonalQuotes($quoteType)) {
-                $realQuote = $personalQuote;
+                $quote = $personalQuote;
             } else {
                 $quoteServiceFile = app(getServiceObject($quoteType));
-                $realQuote = $quoteServiceFile->getEntity($data['quote_uuid']);
+                $quote = $quoteServiceFile->getEntity($data['quote_uuid']);
             }
 
             // it will check if send update type is Correction of Policy Details or Endorsement Financial with subtype Policy Period Extension, it will save
@@ -79,7 +79,7 @@ class SendUpdateLogRepository extends BaseRepository
             if ($category == SendUpdateLogStatusEnum::CPD || ($category == SendUpdateLogStatusEnum::EF && $option == SendUpdateLogStatusEnum::PPE)) {
                 if (in_array($data['quote_type_id'], [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
                     $quoteType = QuoteTypes::getName($data['quote_type_id'])->value;
-                    $quoteModel = app($quoteServiceFile)->getEntityPlain($realQuote->id)->load(['payments', 'plan']);
+                    $quoteModel = app($quoteServiceFile)->getEntityPlain($quote->id)->load(['payments', 'plan']);
                     $payment = $quoteModel->payments()->mainLeadPayment()->first();
 
                     $planRelationName = strtolower($quoteType).'Plan';
@@ -88,7 +88,7 @@ class SendUpdateLogRepository extends BaseRepository
                     $insuranceProviderId = $insuranceProvider->id ?? null;
                     $plan_id = $quoteModel->plan?->id ?? null;
                 } else {
-                    $insuranceProviderId = $realQuote->insurance_provider_id ?? null;
+                    $insuranceProviderId = $quote->insurance_provider_id ?? null;
                 }
             }
 
@@ -123,7 +123,7 @@ class SendUpdateLogRepository extends BaseRepository
                 'created_by' => auth()->user()->id,
             ]);
             if ($category == SendUpdateLogStatusEnum::CPD || ($category == SendUpdateLogStatusEnum::EF && $option == SendUpdateLogStatusEnum::PPE)) {
-                $this->checkPolicyDetailsFilled($sendUpdate, $data['quote_type_id'], $realQuote);
+                $this->checkPolicyDetailsFilled($sendUpdate, $data['quote_type_id'], $quote);
             }
         } catch (\Exception $ex) {
             $sendUpdate = (object) [
