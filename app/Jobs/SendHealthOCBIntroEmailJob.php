@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Models\HealthQuote;
-use App\Services\BirdService;
 use App\Services\HealthEmailService;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -17,13 +16,13 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $quoteUuid;
-    protected $healthQuoteService;
+    private $quoteUuid;
     private $previousAdvisor;
     private $triggerSICWorkflow;
     public $tries = 3;
     public $timeout = 60;
     public $backoff = 10;
+
     /**
      * Create a new job instance.
      */
@@ -33,10 +32,11 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
         $this->previousAdvisor = $previousAdvisor;
         $this->triggerSICWorkflow = $triggerSICWorkflow;
     }
+
     /**
      * Execute the job.
      */
-    public function handle(HealthEmailService $healthEmailService, BirdService $birdService): void
+    public function handle(HealthEmailService $healthEmailService): void
     {
         try {
             $lead = HealthQuote::where('uuid', $this->quoteUuid)->first();
@@ -54,7 +54,7 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
             }
 
             info("SendHealthOCBIntroEmailJob - SIC workflow is not enabled for UUID: {$this->quoteUuid}");
-            $responseCode = $healthEmailService->sendHealthOCBIntroEmail($lead, $this->triggerSICWorkflow, $birdService);
+            $responseCode = $healthEmailService->sendHealthOCBIntroEmail($lead, $this->triggerSICWorkflow);
 
             $logMessage = in_array($responseCode, [200, 201])
                 ? 'OCB INTRO Email Sent'
