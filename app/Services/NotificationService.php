@@ -16,18 +16,13 @@ class NotificationService extends BaseService
         if (is_numeric($quoteType)) {
             return response()->json(['message' => 'Quote Type Not Valid'], 403);
         }
-        $model = $this->getModelObject(strtolower($quoteType));
+        $model = null;
 
-        if (is_numeric($quoteId)) {
-            $model = $model::find($quoteId);
-        } else {
-            $model = $model::where('uuid', $quoteId)->first();
+        if (isset($quoteType) && isset($quoteId)) {
+            $model = $this->getQuoteObjectBy($quoteType, $quoteId, 'uuid');
         }
 
-        if ($model->advisor_id === null) {
-            return response()->json(['message' => 'Quote Not Found'], 403);
-        }
-        if ($model->advisor_id === null) {
+        if ($model && $model->advisor_id === null) {
             return response()->json(['message' => 'No Advisor Assign to this Lead'], 403);
         }
 

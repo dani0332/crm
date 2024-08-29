@@ -21,7 +21,7 @@ class PaymentNotificationRequest extends FormRequest
     {
         return [
             'quoteType' => 'required|string',
-            'quoteId' => 'required|integer',
+            'quoteId' => 'required',
         ];
     }
 
@@ -34,7 +34,6 @@ class PaymentNotificationRequest extends FormRequest
             'quoteType.required' => 'Quote Type is required',
             'quoteType.string' => 'Quote Type must be a string',
             'quoteId.required' => 'Quote ID is required',
-            'quoteId.integer' => 'Quote ID must be an integer',
         ];
     }
 }
