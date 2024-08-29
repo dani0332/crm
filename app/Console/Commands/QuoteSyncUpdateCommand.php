@@ -93,6 +93,7 @@ class QuoteSyncUpdateCommand extends Command
                         $quotes[$key] = $this->processQuoteNotFound($entry);
                     }
                 }
+                info('Syncing entry complete: ' . $entry->quote_uuid . ' - ' . $entry->id);
             } catch (Exception $e) {
                 $error = 'QuoteSyncJob Error syncing entry: '.$entry->quote_uuid.' - '.$entry->id.' - '.$e->getMessage();
                 info($error.' --- '.$e->getTraceAsString());
