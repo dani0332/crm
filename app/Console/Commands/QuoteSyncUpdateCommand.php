@@ -7,10 +7,8 @@ use App\Models\ApplicationStorage;
 use App\Models\PersonalQuote;
 use App\Models\QuoteSync;
 use App\Traits\PersonalQuoteSyncTrait;
-use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 class QuoteSyncUpdateCommand extends Command
 {
