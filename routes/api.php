@@ -53,4 +53,4 @@ Route::prefix('v1')->group(function () {
     Route::post('quotes/send-ep-certificate', [EmbeddedProductController::class, 'sendDocument'])->name('sendDocument');
 });
 
-Route::post('/imcrm/update-quote-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
+Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
