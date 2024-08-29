@@ -25,12 +25,12 @@ class AuditRepository extends BaseRepository
             ->where(function ($q) use ($auditables) {
                 $q->where('auditable_id', request()->auditable_id)->where('auditable_type', $auditables['auditable_type']);
             });
-        if ($code != '') {
+        /*if ($code != '') {
             $query->orWhere(function ($query) use ($code, $auditableTypes) {
                 $query->where('old_values', 'like', '%"code":"'.$code.'"%')
                     ->whereIn('auditable_type', $auditableTypes);
             });
-        }
+        }*/
         if (! empty($auditables['relations'])) {
             foreach ($auditables['relations'] as $relation) {
                 $model = $relation['auditable_type'];

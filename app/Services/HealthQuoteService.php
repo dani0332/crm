@@ -10,6 +10,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LeadSourceTypes;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -500,6 +501,21 @@ class HealthQuoteService extends BaseService
         if (isset($request->is_ecommerce)) {
             $isEcommerce = $request->is_ecommerce == 'Yes' ? 1 : 0;
             $this->query->where('hqr.is_ecommerce', $isEcommerce);
+        }
+        if ($request->has('segment_filter')) {
+            $segmentFilter = $request->input('segment_filter');
+            $subQueryCallback = function ($subQuery) {
+                $subQuery->distinct()
+                    ->select('quote_uuid')
+                    ->from('quote_tags')
+                    ->where('name', QuoteSegmentEnum::SIC->tag())
+                    ->where('quote_type_id', QuoteTypeId::Health);
+            };
+            $this->query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($query) use ($subQueryCallback) {
+                $query->whereIn('hqr.uuid', $subQueryCallback);
+            })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) use ($subQueryCallback) {
+                $query->whereNotIn('hqr.uuid', $subQueryCallback);
+            });
         }
 
         $this->adjustQueryByDateFilters($this->query, 'hqr');

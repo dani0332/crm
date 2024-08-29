@@ -542,9 +542,9 @@ class ApplicationStorageSeeder extends Seeder
         $this->seedTravelSICStorage();
 
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::ADVISOR_CONVERSION_QUOTE_STATUS_DATE],
+            ['key_name' => ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW],
             [
-                'value' => '2024-12-01',
+                'value' => 'https://capture.eu-west-1.nest.messagebird.com/webhooks/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/79b9011e-ff3b-4a5c-a63f-fed3d0743a7f',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
