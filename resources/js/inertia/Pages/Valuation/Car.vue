@@ -260,7 +260,6 @@ const getModelBasedOnQuote = () => {
     border-cell
     hide-rows-per-page
     hide-footer
-    fixed-checkbox
   >
   </DataTable>
 </template>

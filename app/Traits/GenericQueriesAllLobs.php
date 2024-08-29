@@ -482,17 +482,12 @@ trait GenericQueriesAllLobs
      */
     private function updateTotalAmount($payment)
     {
+        info('Updating TA for PC: '.$payment->code.' frequency: '.$payment->frequency.' payment_status_id: '.$payment->payment_status_id);
         if ($payment && $payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
-            info('Updating TA for PC: '.$payment->code);
-            $captureAmount = $payment->captured_amount;
             $totalPrice = $payment->total_price;
             $discountValue = $payment->discount_value;
-            if ($captureAmount < ($totalPrice - $discountValue)) {
-                $totalAmount = $captureAmount;
-            } else {
-                $totalAmount = $totalPrice - $discountValue;
-            }
-            info('updateTotalAmount totalAmount: '.$totalAmount);
+            $totalAmount = $totalPrice - $discountValue;
+            info('updateTotalAmount - totalPrice: '.$totalPrice.', discountValue: '.$discountValue.', totalAmount: '.$totalAmount);
             $payment->total_amount = $totalAmount;
             $payment->save();
         }
@@ -782,6 +777,7 @@ trait GenericQueriesAllLobs
         $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
         if (! $paymentSplits->isEmpty()) {
             foreach ($paymentSplits as $paymentSplit) {
+                info('Updating TA for Split Payment: '.$payment->code.' frequency: '.$payment->frequency.' payment_status_id: '.$payment->payment_status_id);
                 if ($payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
                     info('Updating PA for PC: '.$payment->code.' BTA: '.$paymentSplit->payment_amount.' WTA: '.$payment->total_amount);
                     $paymentSplit->payment_amount = $payment->total_amount;

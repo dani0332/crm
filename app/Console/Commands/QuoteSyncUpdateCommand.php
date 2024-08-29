@@ -7,8 +7,10 @@ use App\Models\ApplicationStorage;
 use App\Models\PersonalQuote;
 use App\Models\QuoteSync;
 use App\Traits\PersonalQuoteSyncTrait;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 class QuoteSyncUpdateCommand extends Command
 {
@@ -45,7 +47,21 @@ class QuoteSyncUpdateCommand extends Command
 
         $entries = QuoteSync::where('is_synced', false)
             ->where('status', QuoteSyncStatus::WAITING)
-            ->take(800)
+            ->where('id', '>', 4500000)
+            ->orWhereIn('id', function ($query) {
+                $beforeTime = Carbon::now()->setTimezone('Asia/Dubai')->subMinutes(15)->format('Y-m-d H:i:s');
+                $query->select('quote_sync.id')
+                    ->from(DB::raw('(SELECT MIN(id) as min_id, quote_uuid 
+                             FROM quote_sync 
+                             WHERE is_synced = false 
+                             AND status IN ('.QuoteSyncStatus::INPROGRESS.', '.QuoteSyncStatus::FAILED.')
+                             AND updated_at <= "'.$beforeTime.'"
+                             GROUP BY quote_uuid) as subquery'))
+                    ->join('quote_sync', 'quote_sync.quote_uuid', '=', 'subquery.quote_uuid')
+                    ->whereRaw('quote_sync.id >= subquery.min_id')
+                    ->pluck('quote_sync.id');
+            })
+            ->take(2000)
             ->get();
 
         if ($entries->isEmpty()) {
@@ -64,7 +80,7 @@ class QuoteSyncUpdateCommand extends Command
 
         foreach ($entries as $entry) {
             try {
-                // info('Syncing entry: '.$entry->quote_uuid.' - '.$entry->id);
+                info('Syncing entry: '.$entry->quote_uuid.' - '.$entry->id);
                 if ($entry->updated_fields === '{"is_cold":true}') {
                     QuoteSync::where('id', $entry->id)->update(['is_synced' => true, 'status' => QuoteSyncStatus::COMPLETED, 'synced_at' => now()]);
                 } else {
