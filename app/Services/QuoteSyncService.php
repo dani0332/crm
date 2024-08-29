@@ -6,6 +6,7 @@ use App\Enums\QuoteSyncStatus;
 use App\Enums\QuoteTypes;
 use App\Models\QuoteSync;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class QuoteSyncService extends BaseService
 {
@@ -77,18 +78,20 @@ class QuoteSyncService extends BaseService
 
     public function addEntriesForReSyncing($status)
     {
-        $entries = QuoteSync::where('is_synced', false)
-            ->where('status', $status)
-            ->groupBy('quote_uuid')
-            ->get()
-            ->pluck('quote_uuid')->toArray();
-
-        if (! empty($entries)) {
-            QuoteSync::whereIn('quote_uuid', $entries)
-                ->update([
-                    'is_synced' => false,
-                    'status' => QuoteSyncStatus::WAITING,
-                ]);
-        }
+        QuoteSync::join(
+            DB::raw('(SELECT MIN(id) as min_id, quote_uuid 
+                          FROM quote_sync 
+                          WHERE is_synced = false 
+                          AND status = '.$status.'
+                          GROUP BY quote_uuid) as subquery'),
+            function ($join) {
+                $join->on('quote_sync.quote_uuid', '=', 'subquery.quote_uuid')
+                    ->on('quote_sync.id', '>=', 'subquery.min_id');
+            }
+        )
+            ->update([
+                'quote_sync.is_synced' => false,
+                'quote_sync.status' => QuoteSyncStatus::WAITING,
+            ]);
     }
 }
