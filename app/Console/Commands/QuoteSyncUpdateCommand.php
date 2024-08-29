@@ -47,6 +47,7 @@ class QuoteSyncUpdateCommand extends Command
 
         $entries = QuoteSync::where('is_synced', false)
             ->where('status', QuoteSyncStatus::WAITING)
+            ->where('id', '>', 4500000)
             ->orWhereIn('id', function ($query) {
                 $beforeTime = Carbon::now()->setTimezone('Asia/Dubai')->subMinutes(15)->format('Y-m-d H:i:s');
                 $query->select('quote_sync.id')

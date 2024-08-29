@@ -48,6 +48,26 @@ class PersonalQuote extends Model implements AuditableContract
         'updated' => QuoteEmailUpdated::class,
     ];
 
+    protected static function booted()
+    {
+        static::updating(function ($model) {
+            $skipBookingDateUpdateForNonCPD = true;
+            if (isset(request()->sendUpdateId)) {
+                $personalQuote = new PersonalQuote;
+                $endorsmentDetails = $personalQuote->isCPDEndorsment(request()->sendUpdateId);
+                if ($endorsmentDetails['isCPDEndorsment']) {
+                    info('Book Update - Policy Booking Date update is allowed for CPD Endorsment. Old PBD ('.$model->getOriginal('policy_booking_date').') - New PBD ('.$model->policy_booking_date.'). QuoteType: '.request()->quoteType.' - QuoteUUID: '.request()->quoteUuid.' - SendUpdateUUID: '.$endorsmentDetails['sendUpdateUUID']);
+                    $skipBookingDateUpdateForNonCPD = false;
+                }
+            }
+
+            if ($model->isDirty('policy_booking_date') && $model->getOriginal('policy_booking_date') && $skipBookingDateUpdateForNonCPD) {
+                info($model->code.' updating the value of policy_booking_date is skipped. tried to change policy_booking_date from '.$model->getOriginal('policy_booking_date').' to '.$model->policy_booking_date);
+                unset($model->policy_booking_date); // lock the policy booking date field
+            }
+        });
+    }
+
     public function quoteStatus()
     {
         return $this->belongsTo(QuoteStatus::class);

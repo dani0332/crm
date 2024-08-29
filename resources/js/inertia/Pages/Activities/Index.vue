@@ -413,7 +413,6 @@ onMounted(() => {
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-title="{ title }">
         <div class="w-40 whitespace-normal">{{ title }}</div>
