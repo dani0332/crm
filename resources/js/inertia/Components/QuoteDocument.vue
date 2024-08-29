@@ -278,7 +278,7 @@ onMounted(() => {
         >
           <template #item-original_name="item">
             <a
-              :href="storageUrl + item.doc_url"
+              :href="`/quote-document-download/${item.doc_uuid}`"
               target="_blank"
               class="text-primary-600"
             >
