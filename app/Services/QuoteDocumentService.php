@@ -113,7 +113,7 @@ class QuoteDocumentService extends BaseService
      * @param  $uuid
      * @return \Illuminate\Http\JsonResponse
      */
-    public function uploadQuoteDocument($fileOrBase64, $data, $quote, $isKyc = false, $isPaymentReceipt = false)
+    public function uploadQuoteDocument($fileOrBase64, $data, $quote, $isKyc = false, $isPaymentReceipt = false, $tempKycFile = null)
     {
         if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
             return response()->json(['error' => 'Invalid document type code provided'], 500);
@@ -163,6 +163,7 @@ class QuoteDocumentService extends BaseService
                 if (! $uploaded) {
                     return false;
                 }
+                $fileOrBase64 = $tempKycFile;
             } else {
                 $originalName = sanitizeFileName($fileOrBase64->getClientOriginalName());
 
@@ -176,8 +177,8 @@ class QuoteDocumentService extends BaseService
             }
 
             // watermark only for pdf files
-            if ($fileMimeType == 'application/pdf') {
-                $watermarkData = $this->watermarkPdf($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
+            if ($fileMimeType == 'application/pdf' || $fileMimeType == '.pdf') {
+                $watermarkData = $this->watermarkPdf($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType, $isKyc);
             } elseif ($fileMimeType == 'image/jpeg' || $fileMimeType == 'image/png' || $fileMimeType == 'image/jpg') {
                 $watermarkData = $this->watermarkImage($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
             } elseif ($fileMimeType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || $fileMimeType == 'application/msword') {
@@ -431,14 +432,21 @@ class QuoteDocumentService extends BaseService
      * @param [type] $fileMimeType
      * @return void
      */
-    public function watermarkPdf($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType)
+    public function watermarkPdf($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType, $isKyc = false)
     {
         if (! file_exists(storage_path('/app/temp'))) {
             mkdir(storage_path('/app/temp'), 0775, true);
         }
 
-        $filePath = $file->storeAs('temp', $docName);
-        $outputPath = storage_path('app/temp/'.$docName);
+        if ($isKyc) {
+            $file->move(storage_path('/app/temp'), $docName);
+            $filePath = 'temp/'.$docName;
+            $outputPath = storage_path('app/temp/'.$docName);
+        } else {
+            $filePath = $file->storeAs('temp', $docName);
+            $outputPath = storage_path('app/temp/'.$docName);
+        }
+
 
         $pdf = new Fpdi();
         $pageCount = $pdf->setSourceFile(storage_path('app/'.$filePath));
