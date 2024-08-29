@@ -14,6 +14,7 @@ defineProps({
   genericRequestEnum: Array,
   isBetaUser: Boolean,
   teams: Object,
+  authorizedDays: Number,
 });
 
 const page = usePage();
@@ -35,6 +36,8 @@ const tableHeader = [
   { text: 'BATCH', value: 'quote_batch_id_text' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
+  { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
+  { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
   { text: 'DATE OF BIRTH', value: 'dob' },
   { text: 'LEAD SOURCE', value: 'source' },
   { text: 'NATIONALITY', value: 'nationality_id_text' },
@@ -210,7 +213,7 @@ const filters = reactive({
   email: '',
   mobile_no: '',
   quote_status_id: [],
-  created_at_start: page.props.createdAtStart || '',
+  created_at_start: '',
   currently_insured_with: '',
   is_ecommerce: '',
   payment_status_id: '',
@@ -223,7 +226,7 @@ const filters = reactive({
   quote_batch_id: [],
   advisor_id: [],
   advisor_assigned_date_end: '',
-  created_at_end: page.props.createdAtEnd || '',
+  created_at_end: '',
   page: 1,
   paid_at_start: '',
   paid_at_end: '',
@@ -390,6 +393,38 @@ const onConfirmCreateLead = () => {
   }
   createLead.modal = false;
 };
+
+function daysAgoFromAuthorizedDate(authorizedDate) {
+  if (!authorizedDate) {
+    return;
+  }
+  const [day, month, year] = authorizedDate.split('-').map(Number);
+  const parsedDate = new Date(year, month - 1, day);
+  if (isNaN(parsedDate.getTime())) {
+    return 'Invalid date';
+  }
+
+  // Calculate the new date by adding 8 days to the authorized date
+  const newDate = new Date(parsedDate);
+  newDate.setDate(parsedDate.getDate() + page.props.authorizedDays);
+
+  const currentDate = new Date();
+
+  // Calculate the difference in time
+  const differenceInTime = newDate.getTime() - currentDate.getTime();
+  const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+
+  // Check if the date has expired
+  if (Math.floor(differenceInDays) <= 0) {
+    return 'Expired';
+  }
+
+  if (Math.floor(differenceInDays) === 1) {
+    return Math.floor(differenceInDays) + ' day';
+  } else {
+    return Math.floor(differenceInDays) + ' days';
+  }
+}
 
 const readOnlyMode = reactive({
   isDisable: true,
@@ -905,6 +940,16 @@ const formatDate = dateString =>
 
       <template #item-premium="item">
         <p v-if="item.premium != null">{{ fixedValue(item.premium) }}</p>
+      </template>
+      <template #item-authorized_at="item">
+        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
+          {{ item.authorized_at }}
+        </p>
+      </template>
+      <template #item-expiry_date="item">
+        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
+          {{ daysAgoFromAuthorizedDate(item.authorized_at) }}
+        </p>
       </template>
     </DataTable>
 

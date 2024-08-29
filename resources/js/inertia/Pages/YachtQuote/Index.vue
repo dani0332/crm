@@ -13,6 +13,7 @@ defineProps({
     type: Number,
     default: 0,
   },
+  authorizedDays: Number,
 });
 
 const page = usePage();
@@ -80,6 +81,8 @@ const tableHeader = ref([
   { text: 'Ref-ID', value: 'uuid', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
+  { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at', is_active: true },
+  { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
   { text: 'ADVISOR', value: 'advisor', is_active: true },
   {
@@ -259,6 +262,44 @@ watch(
     if (oldValue !== newValue) onSubmit(true);
   },
 );
+function daysAgoFromAuthorizedDate(authorizedDate) {
+  // Check if authorizedDate is null or undefined
+  if (!authorizedDate) {
+    return;
+  }
+  const [datePart] = authorizedDate.split(' ');
+
+  const [day, month, year] = datePart.split('-').map(Number);
+
+  const parsedDate = new Date(year, month - 1, day);
+
+  // Check if the parsed date is valid
+  if (isNaN(parsedDate.getTime())) {
+    return 'Invalid date';
+  }
+
+  // Calculate the new date by adding 8 days to the authorized date
+  const newDate = new Date(parsedDate);
+  newDate.setDate(parsedDate.getDate() + page.props.authorizedDays);
+
+  // Get the current date
+  const currentDate = new Date();
+
+  // Calculate the difference in time
+  const differenceInTime = newDate.getTime() - currentDate.getTime();
+  const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+
+  // Check if the date has expired
+  if (Math.floor(differenceInDays) <= 0) {
+    return 'Expired';
+  }
+
+  if (Math.floor(differenceInDays) === 1) {
+    return Math.floor(differenceInDays) + ' day';
+  } else {
+    return Math.floor(differenceInDays) + ' days';
+  }
+}
 const resetDateFilters = filterName => {
   const filterMappings = {
     payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
@@ -638,6 +679,16 @@ const validateDateRange = () => {
           <StaleLeadsBadge :date="stale_at" :align="`left`" />
         </Link>
         <span v-else>{{ code }}</span>
+      </template>
+      <template #item-authorized_at="item">
+        <p v-if="item?.payment_status?.text === 'AUTHORISED'">
+          {{ item?.payments[0]?.authorized_at }}
+        </p>
+      </template>
+      <template #item-expiry_date="item">
+        <p v-if="item?.payment_status?.text === 'AUTHORISED'">
+          {{ daysAgoFromAuthorizedDate(item?.payments[0]?.authorized_at) }}
+        </p>
       </template>
 
       <template #item-advisor="{ advisor }">
