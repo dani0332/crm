@@ -72,19 +72,38 @@ class SendUpdateLogRepository extends BaseRepository
             if (checkPersonalQuotes($quoteType)) {
                 $realQuote = $personalQuote;
             } else {
-                $quoteServiceFile = app(getServiceObject($quoteType));
-                $realQuote = $quoteServiceFile->getEntity($data['quote_uuid']);
+                $quoteServiceFile = getServiceObject($quoteType);
+                $realQuote = app($quoteServiceFile)->getEntity($data['quote_uuid']);
             }
             $insuranceProviderId = $realQuote->insurance_provider_id ?? null;
 
-            // it will check if send update type is Correction of Policy Details or Endorsement Financial with subtype Policy Period Extension, it will save
-            // insurance_provider_id and plan_id.
-            if ($category == SendUpdateLogStatusEnum::CPD || ($category == SendUpdateLogStatusEnum::EF && $option == SendUpdateLogStatusEnum::PPE)) {
-                if (in_array($data['quote_type_id'], [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
-                    $quoteModel = app($quoteServiceFile)->getEntityPlain($realQuote->id)->load(['plan']);
-                    $insuranceProviderId = $quoteModel->plan->provider_id ?? null;
-                    $plan_id = $quoteModel->plan->id ?? null;
+            if (app(SendUpdateLogService::class)->isBookingDetailsVisible($category)) {
+                if (in_array($data['quote_type_id'], [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health]) && ! ($realQuote->insly_migrated || $realQuote->insly_id)) {
+                    $quoteModel = app($quoteServiceFile)->getEntityPlain($realQuote->id)->load(['payments', 'plan']);
+                    if ($quoteModel->payments->isEmpty()) {
+                        return (object) [
+                            'message' => 'Payment not found for provider selection.',
+                        ];
+                    }
+
+                    $payment = $quoteModel->payments->first();
+
+                    $modelType = QuoteTypes::getName($data['quote_type_id'])->value;
+                    $planRelationName = strtolower($modelType).'Plan';
+                    $payment->load($planRelationName);
+                    $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
+
+                    if (! $insuranceProvider) {
+                        $insuranceProvider = $payment->insuranceProvider;
+                    }
+
+                    $insuranceProviderId = $insuranceProvider->id ?? ($insuranceProviderId ?? null);
+                    $plan_id = $quoteModel->plan?->id ?? null;
                 }
+            }
+
+            if ($insuranceProviderId) {
+                info('Send Update Log - uuid: '.$uuid.' - Insurance Provider fetched - Provider id: '.$insuranceProviderId);
             }
 
             // if the send update category is 'Cancellation from Inception', 'Cancellation from Inception and reissuance' or 'Endorsement Financial' with

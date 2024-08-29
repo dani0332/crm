@@ -1059,4 +1059,14 @@ class SendUpdateLogService
 
         return $brokerInvoiceNumber;
     }
+
+    public function isBookingDetailsVisible($categoryCode): bool
+    {
+        return in_array($categoryCode, [
+            SendUpdateLogStatusEnum::EF,
+            SendUpdateLogStatusEnum::CI,
+            SendUpdateLogStatusEnum::CIR,
+            SendUpdateLogStatusEnum::CPD,
+        ]);
+    }
 }

@@ -139,7 +139,6 @@ class SendUpdateLogController extends Controller
         $optionCode = $sendUpdateLog->option?->code ?? null;
         $documentTypes = $this->sendUpdateLogService->getSendUpdateDocuments($categoryCode);
         $quoteDocuments = $sendUpdateLog->documents;
-        $isBookingDetailsVisible = $this->isBookingDetailsVisible($categoryCode, $quoteDocuments);
         $issuanceStatuses = PolicyIssuanceStatusRepository::getColumns(['id', 'text']);
         if (checkPersonalQuotes($quoteType)) {
             $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
@@ -206,7 +205,6 @@ class SendUpdateLogController extends Controller
             'quoteDocuments' => array_values($quoteDocuments->toArray()),
             'membersDetail' => CustomerMembersRepository::getBy($quote->id, strtoupper($quoteType)),
             'memberCategories' => app(LookupService::class)->getMemberCategories(),
-            'isBookingDetailsVisible' => $isBookingDetailsVisible,
             'realQuote' => $realQuote,
             'isNegativeValue' => $this->sendUpdateLogService->isNegativeValue($sendUpdateLog),
             'bookingDetails' => $bookingDetails,
@@ -392,29 +390,6 @@ class SendUpdateLogController extends Controller
         }*/
 
         return response()->json($message);
-    }
-
-    public function isBookingDetailsVisible($categoryCode, $quoteDocuments): bool
-    {
-        $_return = false;
-        $documentTypes = $quoteDocuments->pluck('document_type_code')->toArray();
-
-        if (count(array_intersect($documentTypes, [DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE])) > 0) {
-            $_return = true;
-            $categories = [
-                SendUpdateLogStatusEnum::EF,
-                SendUpdateLogStatusEnum::CI,
-                SendUpdateLogStatusEnum::CIR,
-                SendUpdateLogStatusEnum::CPU,
-            ];
-
-            if (in_array($categoryCode, $categories)) {
-                $requiredDocumentTypes = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
-                $_return = count(array_intersect($documentTypes, $requiredDocumentTypes)) == count($requiredDocumentTypes);
-            }
-        }
-
-        return $_return;
     }
 
     public function sendUpdate(SendUpdateRequest $sendUpdateRequest)
