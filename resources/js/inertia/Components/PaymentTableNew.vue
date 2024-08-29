@@ -4794,7 +4794,9 @@ const splitPaymentTotalPrice = (
                       </span>
                       <span
                         class="delete-pointer"
-                        @click="deleteDocument(fileData.doc_name, count, fileData.id)"
+                        @click="
+                          deleteDocument(fileData.doc_name, count, fileData.id)
+                        "
                         v-if="!readOnlyPayments[count]"
                       >
                         <x-tooltip>
@@ -5045,7 +5047,13 @@ const splitPaymentTotalPrice = (
                   </span>
                   <span
                     class="delete-pointer"
-                    @click="deleteDocument(fileData.doc_name, splitPaymentNo, fileData.id)"
+                    @click="
+                      deleteDocument(
+                        fileData.doc_name,
+                        splitPaymentNo,
+                        fileData.id,
+                      )
+                    "
                     v-if="!readOnlyPayments[splitPaymentNo]"
                   >
                     &#10006;
