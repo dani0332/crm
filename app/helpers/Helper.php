@@ -1258,9 +1258,16 @@ if (! function_exists('createTempPdfFileForWatermark')) {
             mkdir(storage_path('/app/temp'), 0775, true);
         }
         // Create a temporary file and write the PDF content to it
-        $tempFilePath = storage_path('app/temp');
+        $tempDir = storage_path('app/temp');
+
+        // Generate a unique filename for the temp PDF file
+        $tempFileName = 'pdf_' . uniqid() . '.pdf';
+        $tempFilePath = $tempDir . '/' . $tempFileName;
+
+        // Create the temporary file and write the PDF content to it
         file_put_contents($tempFilePath, $pdfFile);
-        // convert it to an `UploadedFile` instance to be used for watermark
+        
+        // Return a new File instance pointing to the temporary file
         return new File($tempFilePath);
     }
 }
