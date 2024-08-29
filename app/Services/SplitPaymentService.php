@@ -2,44 +2,45 @@
 
 namespace App\Services;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\CollectionTypeEnum;
-use App\Enums\DocumentTypeCode;
-use App\Enums\DocumentTypeEnum;
-use App\Enums\LookupsEnum;
-use App\Enums\PaymentFrequency;
-use App\Enums\PaymentMethodsEnum;
-use App\Enums\PaymentProcessJobEnum;
-use App\Enums\PaymentStatusEnum;
-use App\Enums\PaymentStatusTextEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
+use PDF;
+use Carbon\Carbon;
 use App\Enums\SageEnum;
-use App\Enums\SendUpdateLogStatusEnum;
-use App\Factories\SagePayloadFactory;
-use App\Models\CarQuote;
-use App\Models\CcPaymentProcess;
-use App\Models\HealthQuote;
 use App\Models\Payment;
+use App\Models\CarQuote;
+use App\Enums\QuoteTypes;
+use Illuminate\Http\File;
+use App\Enums\LookupsEnum;
+use App\Enums\QuoteTypeId;
+use App\Models\HealthQuote;
+use App\Models\TravelQuote;
+use App\Enums\quoteTypeCode;
+use App\Traits\SageLoggable;
+use Illuminate\Http\Request;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
-use App\Models\TravelQuote;
-use App\Repositories\EmbeddedProductRepository;
-use App\Repositories\LookupRepository;
-use App\Repositories\SendUpdateLogRepository;
-use App\Traits\GenericQueriesAllLobs;
-use App\Traits\HandlesDeadlockRetries;
-use App\Traits\SageLoggable;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\DocumentTypeCode;
+use App\Enums\DocumentTypeEnum;
+use App\Enums\PaymentFrequency;
+use App\Enums\PaymentStatusEnum;
+use App\Models\CcPaymentProcess;
+use App\Enums\CollectionTypeEnum;
+use App\Enums\PaymentMethodsEnum;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use PDF;
+use App\Enums\PaymentProcessJobEnum;
+use App\Enums\PaymentStatusTextEnum;
+use Illuminate\Support\Facades\Auth;
+use App\Factories\SagePayloadFactory;
+use App\Traits\GenericQueriesAllLobs;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Repositories\LookupRepository;
+use App\Traits\HandlesDeadlockRetries;
+use App\Repositories\SendUpdateLogRepository;
+use App\Repositories\EmbeddedProductRepository;
 
 class SplitPaymentService
 {
@@ -499,7 +500,11 @@ class SplitPaymentService
             $pdf = PDF::loadView('pdf.payment_receipt', compact('data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
-            $document = app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quote, false, true);
+
+            // Create a temporary file and write the PDF content to it
+            $tempFile = createTempPdfFileForWatermark($pdfFile);
+
+            $document = app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quote, false, true, $tempFile);
         } catch (\Exception $ex) {
             info('Payment Reciept - ERROR:'.$ex->getMessage());
         }

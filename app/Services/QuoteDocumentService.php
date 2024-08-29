@@ -145,6 +145,7 @@ class QuoteDocumentService extends BaseService
                 if (! $uploaded) {
                     return false;
                 }
+                $fileOrBase64 = $tempKycFile;
             } elseif ($isKyc) {
                 if (isset($data['pdf_name'])) {
                     $originalName = $data['pdf_name'];
@@ -178,7 +179,7 @@ class QuoteDocumentService extends BaseService
 
             // watermark only for pdf files
             if ($fileMimeType == 'application/pdf' || $fileMimeType == '.pdf') {
-                $watermarkData = $this->watermarkPdf($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType, $isKyc);
+                $watermarkData = $this->watermarkPdf($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType, $isKyc, $isPaymentReceipt);
             } elseif ($fileMimeType == 'image/jpeg' || $fileMimeType == 'image/png' || $fileMimeType == 'image/jpg') {
                 $watermarkData = $this->watermarkImage($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
             } elseif ($fileMimeType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || $fileMimeType == 'application/msword') {
@@ -432,13 +433,13 @@ class QuoteDocumentService extends BaseService
      * @param [type] $fileMimeType
      * @return void
      */
-    public function watermarkPdf($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType, $isKyc = false)
+    public function watermarkPdf($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType, $isKyc = false, $isPaymentReceipt = false)
     {
         if (! file_exists(storage_path('/app/temp'))) {
             mkdir(storage_path('/app/temp'), 0775, true);
         }
 
-        if ($isKyc) {
+        if ($isKyc || $isPaymentReceipt) {
             $file->move(storage_path('/app/temp'), $docName);
             $filePath = 'temp/'.$docName;
             $outputPath = storage_path('app/temp/'.$docName);
@@ -446,7 +447,6 @@ class QuoteDocumentService extends BaseService
             $filePath = $file->storeAs('temp', $docName);
             $outputPath = storage_path('app/temp/'.$docName);
         }
-
 
         $pdf = new Fpdi();
         $pageCount = $pdf->setSourceFile(storage_path('app/'.$filePath));

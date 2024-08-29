@@ -224,10 +224,8 @@ class AjaxController extends Controller
             $pdfFile = $pdf->output();
 
             // Create a temporary file and write the PDF content to it
-            $tempFilePath = tempnam(sys_get_temp_dir(), 'pdf_');
-            file_put_contents($tempFilePath, $pdfFile);
-            // convert it to an `UploadedFile` instance to be used for watermark
-            $tempFile = new File($tempFilePath);
+            $tempFile = createTempPdfFileForWatermark($pdfFile);
+
             $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true, false, $tempFile);
 
             if ($document) {
@@ -342,10 +340,8 @@ class AjaxController extends Controller
             $pdfFile = $pdf->output();
 
             // Create a temporary file and write the PDF content to it
-            $tempFilePath = tempnam(sys_get_temp_dir(), 'pdf_');
-            file_put_contents($tempFilePath, $pdfFile);
-            // convert it to an `UploadedFile` instance to be used for watermark
-            $tempFile = new File($tempFilePath);
+            $tempFile = createTempPdfFileForWatermark($pdfFile);
+
             $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true, false, $tempFile);
             $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($quoteType));
             if ($document) {
