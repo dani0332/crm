@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Models\HealthQuote;
-use App\Services\BirdService;
 use App\Services\HealthEmailService;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -37,7 +36,7 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(HealthEmailService $healthEmailService, BirdService $birdService): void
+    public function handle(HealthEmailService $healthEmailService): void
     {
         try {
             $lead = HealthQuote::where('uuid', $this->quoteUuid)->first();
