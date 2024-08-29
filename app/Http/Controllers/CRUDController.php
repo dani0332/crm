@@ -1526,7 +1526,8 @@ class CRUDController extends Controller
                     app(NotificationService::class)->paymentStatusUpdate($request->modelType, $id);
                 }
             }
-                return Redirect::back()->with('success', $request->modelType.' Leads has been Assigned To '.$assignedUser->name);
+
+            return Redirect::back()->with('success', $request->modelType.' Leads has been Assigned To '.$assignedUser->name);
 
         }
     }
