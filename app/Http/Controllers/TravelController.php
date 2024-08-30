@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
@@ -20,6 +21,7 @@ use App\Enums\TravelQuoteEnum;
 use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\TravelRenewalsUploadRequest;
 use App\Http\Requests\UpdateTravelRequest;
+use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
@@ -85,6 +87,7 @@ class TravelController extends Controller
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
         $isManager = auth()->user()->isManagerOrDeputy();
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManager;
+        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
 
         return inertia('TravelQuote/Index', [
             'quotes' => $quotes,
@@ -98,6 +101,7 @@ class TravelController extends Controller
                 'isLeadPool' => auth()->user()->isLeadPool(),
                 'isManagerORDeputy' => $isManager,
             ],
+            'authorizedDays' => intval($authorizedDays->value),
         ]);
     }
 
