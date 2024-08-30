@@ -76,7 +76,7 @@ class ReportsController extends Controller
             'isCommercial' => $request->isCommercial,
             'isEmbeddedProducts' => $request->isEmbeddedProducts,
             'lob' => $request->lob,
-            'subeams' => $request->sub_teams,
+            'subteams' => $request->sub_teams,
             'vehicle_type' => $request->vehicle_type,
             'insurance_type' => $request->insurance_type,
             'insurance_for' => $request->insurance_for,
