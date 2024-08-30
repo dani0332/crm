@@ -1315,6 +1315,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :quote="quote"
       :insly-id="quoteDetails?.insly_id"
       :expanded="sectionExpanded"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy
