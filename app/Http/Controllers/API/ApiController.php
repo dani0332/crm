@@ -8,15 +8,20 @@ use App\Http\Requests\APiFetchUrl;
 use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
+use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Services\ApiService;
 use App\Services\InboundEmailsHookService;
+use App\Services\NotificationService;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
 {
+    use GenericQueriesAllLobs;
+
     public $apiService;
     public $inboundEmailsHookService;
 
@@ -60,6 +65,11 @@ class ApiController extends Controller
 
             return apiResponse($e, Response::HTTP_BAD_REQUEST);
         }
+    }
+
+    public function quotePaymentStatusUpdated(PaymentNotificationRequest $request)
+    {
+        return app(NotificationService::class)->paymentStatusUpdate($request->quoteType, $request->quoteId);
     }
 
     public function triggerSICWorkflow(SICWorkflowRequest $request)

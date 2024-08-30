@@ -14,6 +14,7 @@ defineProps({
     type: Number,
     default: 0,
   },
+  authorizedDays: Number,
 });
 
 const page = usePage();
@@ -58,6 +59,8 @@ const tableHeader = ref([
   { text: 'Ref-ID', value: 'code', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
+  { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at', is_active: true },
+  { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status_id_text', is_active: true },
   { text: 'ADVISOR', value: 'advisor_id_text', is_active: true },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type', is_active: true },
@@ -377,6 +380,37 @@ watch(
     if (oldValue !== newValue) onSubmit(true);
   },
 );
+function daysAgoFromAuthorizedDate(authorizedDate) {
+  if (!authorizedDate) {
+    return;
+  }
+  const [day, month, year] = authorizedDate.split('-').map(Number);
+  const parsedDate = new Date(year, month - 1, day);
+  if (isNaN(parsedDate.getTime())) {
+    return 'Invalid date';
+  }
+
+  // Calculate the new date by adding 8 days to the authorized date
+  const newDate = new Date(parsedDate);
+  newDate.setDate(parsedDate.getDate() + page.props.authorizedDays);
+
+  const currentDate = new Date();
+
+  // Calculate the difference in time
+  const differenceInTime = newDate.getTime() - currentDate.getTime();
+  const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+
+  // Check if the date has expired
+  if (Math.floor(differenceInDays) <= 0) {
+    return 'Expired';
+  }
+
+  if (Math.floor(differenceInDays) === 1) {
+    return Math.floor(differenceInDays) + ' day';
+  } else {
+    return Math.floor(differenceInDays) + ' days';
+  }
+}
 
 const readOnlyMode = reactive({
   isDisable: true,
@@ -795,6 +829,16 @@ const formatDate = dateString =>
             {{ is_ecommerce ? 'Yes' : 'No' }}
           </x-tag>
         </div>
+      </template>
+      <template #item-authorized_at="item">
+        <p v-if="item.payment_status_text === 'AUTHORISED'">
+          {{ item.authorized_at }}
+        </p>
+      </template>
+      <template #item-expiry_date="item">
+        <p v-if="item.payment_status_text === 'AUTHORISED'">
+          {{ daysAgoFromAuthorizedDate(item.authorized_at) }}
+        </p>
       </template>
       <template
         #item-previous_policy_expiry_date="{
