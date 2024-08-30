@@ -9,6 +9,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -363,6 +364,7 @@ class AdvisorConversionReportService extends BaseService
             'segment_filter' => [
                 'lobs' => [
                     quoteTypeCode::Car,
+                    quoteTypeCode::Health,
                     quoteTypeCode::Travel,
                 ],
             ],
@@ -685,8 +687,22 @@ class AdvisorConversionReportService extends BaseService
                         ->where('health_quote_request.cover_for_id', $filters->insurance_for);
                 });
             }
+            if (isset($filters->segment_filter)) {
+                $segmentFilter = $filters->segment_filter;
+                $subQueryCallback = function ($subQuery) {
+                    $subQuery->distinct()
+                        ->select('quote_uuid')
+                        ->from('quote_tags')
+                        ->where('name', QuoteSegmentEnum::SIC->tag())
+                        ->where('quote_type_id', QuoteTypeId::Health);
+                };
+                $query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($q) use ($subQueryCallback) {
+                    $q->whereIn('uuid', $subQueryCallback);
+                })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($q) use ($subQueryCallback) {
+                    $q->whereNotIn('uuid', $subQueryCallback);
+                });
+            }
         }
-
         if ($lob === quoteTypeCode::Home) {
             if (! empty($filters->insurance_for) && $filters->insurance_for != '') {
                 $query->join('home_quote_request', function ($join) use ($filters) {
