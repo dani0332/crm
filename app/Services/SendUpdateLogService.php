@@ -1046,12 +1046,12 @@ class SendUpdateLogService
 
         while (SendUpdateLog::where('broker_invoice_number', $brokerInvoiceNumber)
             ->whereNot('uuid', $sendUpdateLog->uuid)
-            ->exists() && $attempts < 10) {
+            ->exists() && $attempts < 25) {
             $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
             $attempts++;
         }
 
-        if ($attempts >= 10) {
+        if ($attempts >= 25) {
             vAbort('Send Update Log Broker Invoice Number generation failed.');
         }
 
