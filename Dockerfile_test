@@ -27,7 +27,7 @@ RUN apk add --no-cache \
     openssl-dev \
     pkgconfig \
     libpng-dev \
-    libjpeg-dev \
+    libjpeg-turbo-dev \
     jpeg-dev \
     freetype-dev g++ make \
     wget
