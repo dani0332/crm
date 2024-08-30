@@ -177,8 +177,8 @@ class AdvisorConversionReportService extends BaseService
     {
         $getSaleLeadsQuery = function ($sourceCondition, $as) use ($table) {
             return strtr('SUM(CASE WHEN (
-                            (:table.quote_status_id in (:approvedStatuses) and :table.quote_status_date < ":quoteStatusDate") OR
-                            (:table.quote_status_id = :policyBookedStatus and :table.quote_status_date >= ":quoteStatusDate")
+                            (:table.quote_status_id in (:approvedStatuses) and :table.transaction_approved_at < ":quoteStatusDate") OR
+                            (:table.quote_status_id = :policyBookedStatus and :table.transaction_approved_at >= ":quoteStatusDate")
                         ) and :table.source '.$sourceCondition.' (:excludedSources) THEN 1 ELSE 0 END
                     ) as '.$as, $this->getBindings($table));
         };
@@ -234,6 +234,9 @@ class AdvisorConversionReportService extends BaseService
             ->where('users.is_active', true)
             ->when($lob === quoteTypeCode::Travel, function ($q) {
                 $q->filterBySegment(request()->segment_filter, QuoteTypeId::Travel);
+            })
+            ->when($lob === quoteTypeCode::Health, function ($q) {
+                $q->filterBySegment(request()->segment_filter, QuoteTypeId::Health);
             })
             ->groupBy(
                 'personal_quotes.advisor_id',
@@ -354,6 +357,7 @@ class AdvisorConversionReportService extends BaseService
             'segment_filter' => [
                 'lobs' => [
                     quoteTypeCode::Car,
+                    quoteTypeCode::Health,
                     quoteTypeCode::Travel,
                 ],
             ],
@@ -534,9 +538,9 @@ class AdvisorConversionReportService extends BaseService
             $subQuery->when(! empty($quoteStatuses), fn ($q) => $q->whereIn("{$table}.quote_status_id", $quoteStatuses))
                 ->when(in_array($filters->leadType, [ReportsLeadTypeEnum::MANUAL_CREATED, ReportsLeadTypeEnum::CREATED_SALE_LEAD]), function ($q) use ($table) {
                     $q->where(function ($sq) use ($table) {
-                        $sq->whereDate("{$table}.quote_status_date", '<', $this->getAdvisorConversionQuoteStatusDate())->whereIn("{$table}.quote_status_id", $this->getApprovedStatuses());
+                        $sq->whereDate("{$table}.transaction_approved_at", '<', $this->getAdvisorConversionQuoteStatusDate())->whereIn("{$table}.quote_status_id", $this->getApprovedStatuses());
                     })->orWhere(function ($sq) use ($table) {
-                        $sq->whereDate("{$table}.quote_status_date", '>=', $this->getAdvisorConversionQuoteStatusDate())->where("{$table}.quote_status_id", QuoteStatusEnum::PolicyBooked);
+                        $sq->whereDate("{$table}.transaction_approved_at", '>=', $this->getAdvisorConversionQuoteStatusDate())->where("{$table}.quote_status_id", QuoteStatusEnum::PolicyBooked);
                     });
                 })
                 ->when(in_array($filters->leadType, [ReportsLeadTypeEnum::MANUAL_CREATED, ReportsLeadTypeEnum::CREATED_SALE_LEAD]),
