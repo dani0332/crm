@@ -538,6 +538,7 @@ class ReportService extends BaseService
         $userRole = auth()->user();
         $userTeams = Auth::user()->getUserTeams(Auth::user()->id);
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+        $expiryDays = $authorizedDays->value;
 
         $leadTables = [
             RolesEnum::CarManager => ['table' => 'car_quote_request', 'quoteType' => null],
@@ -598,22 +599,22 @@ class ReportService extends BaseService
                 });
             }
             if (isset($request->expireDate)) {
-                $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL  DAY)'), '<=', $request->expireDate);
+                $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), '<=', $request->expireDate);
             }
             if (isset($request->todayDate)) {
                 $query->having('expiry_days', '=', 1)
                     ->groupBy('users.id', 'users.name', 'expiry_days');
             }
             if (isset($request->tomorrowDate)) {
-                $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL 8 DAY)'), '=', $request->tomorrowDate);
+                $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), '=', $request->tomorrowDate);
             }
             if (isset($request->thisWeek)) {
                 $startOfWeek = $request->thisWeek[0];
                 $endOfWeek = $request->thisWeek[1];
-                $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL 8 DAY)'), [$startOfWeek, $endOfWeek]);
+                $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startOfWeek, $endOfWeek]);
             }
             if (isset($request->customDate)) {
-                $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL 8 DAY)'), $request->customDate);
+                $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), $request->customDate);
             }
 
             return $query->simplePaginate(5)->withQueryString();
