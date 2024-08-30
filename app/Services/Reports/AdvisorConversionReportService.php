@@ -701,7 +701,7 @@ class AdvisorConversionReportService extends BaseService
                     });
             });
 
-        $this->applyLeadTypeFilter($query, 'personal_quotes', $filters);
+        $this->applyLeadTypeFilter($query, 'car_quote_request', $filters);
 
         return $query;
     }
