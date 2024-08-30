@@ -43,7 +43,7 @@ class CarAllocationService extends AllocationService
         $shouldIncludeDubaiNow = $this->getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
 
         // List of exempted lead sources
-        $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::INSLY, LeadSourceEnum::REVIVAL];
+        $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::INSLY, LeadSourceEnum::REVIVAL, LeadSourceEnum::Car24];
 
         // Add Dubai Now to exempted lead sources if $shouldIncludeDubaiNow is true
         if ($shouldIncludeDubaiNow) {
