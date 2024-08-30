@@ -8,9 +8,9 @@ use App\Models\ApplicationStorage;
 use App\Models\PersonalQuote;
 use App\Models\QuoteSync;
 use App\Traits\PersonalQuoteSyncTrait;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class QuoteSyncUpdateCommand extends Command
@@ -63,7 +63,7 @@ class QuoteSyncUpdateCommand extends Command
                 })->unique('quote_uuid')->pluck('quote_uuid')->toArray();
 
             if (count($quoteUuids) > 0) {
-                $quoteUuids = "'" . implode("','", $quoteUuids) . "'";
+                $quoteUuids = "'".implode("','", $quoteUuids)."'";
 
                 DB::table('quote_sync as qs')
                     ->join(DB::raw("(
@@ -72,10 +72,10 @@ class QuoteSyncUpdateCommand extends Command
                                 quote_uuid
                             FROM quote_sync
                             WHERE quote_uuid IN ({$quoteUuids})
-                            AND id > " . intval($this->startId) . "
-                            AND status IN (" . QuoteSyncStatus::INPROGRESS . ", " . QuoteSyncStatus::FAILED . ")
+                            AND id > ".intval($this->startId).'
+                            AND status IN ('.QuoteSyncStatus::INPROGRESS.', '.QuoteSyncStatus::FAILED.')
                             GROUP BY quote_uuid
-                        ) as subquery"), function ($join) {
+                        ) as subquery'), function ($join) {
                         $join->on('qs.id', '>=', 'subquery.min_id')
                             ->on('qs.quote_uuid', '=', 'subquery.quote_uuid');
                     })
@@ -86,8 +86,8 @@ class QuoteSyncUpdateCommand extends Command
             }
 
         } catch (Exception $e) {
-            $error = 'QuoteSyncJob Error re-queing failed or stuck entries: ' . $quoteUuids . ' - ' . $e->getMessage();
-            info($error . ' --- ' . $e->getTraceAsString());
+            $error = 'QuoteSyncJob Error re-queing failed or stuck entries: '.$quoteUuids.' - '.$e->getMessage();
+            info($error.' --- '.$e->getTraceAsString());
         }
 
         $entries = QuoteSync::where('is_synced', false)
