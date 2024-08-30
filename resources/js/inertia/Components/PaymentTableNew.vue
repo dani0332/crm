@@ -2774,7 +2774,8 @@ const providerId = computed(() => {
     return (
       props.sendUpdate?.insurance_provider_id ||
       props.quoteRequest?.insurance_provider_details?.id ||
-      props.quoteRequest?.plan?.provider_id
+      props.quoteRequest?.plan?.provider_id ||
+      props.quoteRequest?.insurance_provider?.id
     );
   } else if (plan && plan.insurance_provider) {
     return plan.insurance_provider.id;
