@@ -14,16 +14,21 @@ use App\Services\InboundEmailsHookService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
+use App\Services\EmailStatusService;
+use App\Models\HealthQuote;
+use App\Enums\ProcessStatusCode;
 
 class ApiController extends Controller
 {
     public $apiService;
     public $inboundEmailsHookService;
+    protected $emailStatusService;
 
-    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService)
+    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService, EmailStatusService $emailStatusService)
     {
         $this->apiService = $apiService;
         $this->inboundEmailsHookService = $inboundEmailsHookService;
+        $this->emailStatusService = $emailStatusService;
     }
 
     public function fetchSignupUrl(APiFetchUrl $request)
@@ -88,10 +93,11 @@ class ApiController extends Controller
         return $this->inboundEmailsHookService->handleBirdWebhook();
     }
 
-    public function followupEmailsEvents(EmailEventsRequest $request)
+    public function logFollowUpEvent(EmailEventsRequest $request)
     {
-        dd($request->uuid);
-
-        return $this->inboundEmailsHookService->logFollowUpEvent();
+        $quote = HealthQuote::where('uuid', $request->uuid)->first();
+        $request->quoteId = $quote->id;
+        $request->customerEmail = $request->customer_email;
+        return  $this->emailStatusService->addEmailStatus($request, $request->message_id, $request->subject, ProcessStatusCode::SENT);
     }
 }
