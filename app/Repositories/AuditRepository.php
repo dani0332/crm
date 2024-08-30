@@ -21,7 +21,7 @@ class AuditRepository extends BaseRepository
 
         $query = DB::table('audits')
             ->select('audits.*', 'users.name')
-            ->join('users', 'audits.user_id', 'users.id')
+            ->leftJoin('users', 'audits.user_id', 'users.id')
             ->where(function ($q) use ($auditables) {
                 $q->where('auditable_id', request()->auditable_id)->where('auditable_type', $auditables['auditable_type']);
             });

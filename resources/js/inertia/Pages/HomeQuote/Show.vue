@@ -1541,6 +1541,7 @@ const onAddUpdate = () => {
     <AuditLogs
       :type="'App\\Models\\HomeQuote'"
       :id="$page.props.quote.id"
+         :quoteType="'Home'"
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
     />
