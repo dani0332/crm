@@ -64,5 +64,5 @@ final class LeadSourceEnum extends Enum
     const WEB = 'web';
     const SAPJO = 'https://sap-jo.insurancemarket.ae/';
     const SAPGO = 'https://sap-go.insurancemarket.ae/';
-    const Car24 = 'https://partner.c24.insurancemarket.ae/get-quote/';
+    const CAR_24 = 'https://partnerc24.insurancemarket.ae/car-insurance/get-quote/';
 }
