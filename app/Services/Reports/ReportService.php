@@ -599,22 +599,26 @@ class ReportService extends BaseService
                 });
             }
             if (isset($request->expireDate)) {
-                $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), '<=', $request->expireDate);
+                $date = Carbon::parse($request->expireDate)->startOfDay();
+                $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), '<=', $date);
             }
             if (isset($request->todayDate)) {
                 $query->having('expiry_days', '=', 1)
                     ->groupBy('users.id', 'users.name', 'expiry_days');
             }
             if (isset($request->tomorrowDate)) {
-                $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), '=', $request->tomorrowDate);
+                $date = Carbon::parse($request->tomorrowDate)->startOfDay();
+                $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), '=', $date);
             }
             if (isset($request->thisWeek)) {
-                $startOfWeek = $request->thisWeek[0];
-                $endOfWeek = $request->thisWeek[1];
+                $startOfWeek = Carbon::parse($request->thisWeek[0])->startOfDay();
+                $endOfWeek = Carbon::parse($request->thisWeek[1])->endOfDay();
                 $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startOfWeek, $endOfWeek]);
             }
             if (isset($request->customDate)) {
-                $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), $request->customDate);
+                $startDate = Carbon::parse($request->customDate[0])->startOfDay();
+                $endDate = Carbon::parse($request->customDate[1])->endOfDay();
+                $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startDate, $endDate]);
             }
 
             return $query->simplePaginate(5)->withQueryString();
