@@ -187,8 +187,8 @@ class AdvisorConversionReportService extends BaseService
     {
         $getSaleLeadsQuery = function ($sourceCondition, $as) use ($table) {
             return strtr('SUM(CASE WHEN (
-                            (:table.quote_status_id in (:approvedStatuses) and :table.quote_status_date < ":quoteStatusDate") OR
-                            (:table.quote_status_id = :policyBookedStatus and :table.quote_status_date >= ":quoteStatusDate")
+                            (:table.quote_status_id in (:approvedStatuses) and :table.transaction_approved_at < ":quoteStatusDate") OR
+                            (:table.quote_status_id = :policyBookedStatus and :table.transaction_approved_at >= ":quoteStatusDate")
                         ) and :table.source '.$sourceCondition.' (:excludedSources) THEN 1 ELSE 0 END
                     ) as '.$as, $this->getBindings($table));
         };
