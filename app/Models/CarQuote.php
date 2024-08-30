@@ -71,7 +71,6 @@ class CarQuote extends BaseModel
         });
     }
 
-
     public function getAuditables()
     {
         return [
