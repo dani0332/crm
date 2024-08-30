@@ -19,6 +19,13 @@ class Customer extends Model implements AuditableContract
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
+
+    public function getAuditables()
+    {
+        return [
+            'auditable_type' => self::class,
+        ];
+    }
     public function detail()
     {
         return $this->hasOne(CustomerDetail::class);
@@ -101,5 +108,4 @@ class Customer extends Model implements AuditableContract
     {
         return $this->hasMany(CustomerAdditionalContact::class, 'customer_id', 'id');
     }
-
 }
