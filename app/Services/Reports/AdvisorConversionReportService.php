@@ -101,7 +101,6 @@ class AdvisorConversionReportService extends BaseService
                 'users.name as advisor_name',
                 'quote_batches.id as quote_batch_id',
             )
-            ->filterBySegment()
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
@@ -232,12 +231,6 @@ class AdvisorConversionReportService extends BaseService
             ->join('personal_quote_details', 'personal_quote_details.personal_quote_id', 'personal_quotes.id')
             ->where('personal_quotes.quote_type_id', $lobId->id)
             ->where('users.is_active', true)
-            ->when($lob === quoteTypeCode::Travel, function ($q) {
-                $q->filterBySegment(request()->segment_filter, QuoteTypeId::Travel);
-            })
-            ->when($lob === quoteTypeCode::Health, function ($q) {
-                $q->filterBySegment(request()->segment_filter, QuoteTypeId::Health);
-            })
             ->groupBy(
                 'personal_quotes.advisor_id',
                 'personal_quotes.quote_batch_id'
@@ -538,9 +531,9 @@ class AdvisorConversionReportService extends BaseService
             $subQuery->when(! empty($quoteStatuses), fn ($q) => $q->whereIn("{$table}.quote_status_id", $quoteStatuses))
                 ->when(in_array($filters->leadType, [ReportsLeadTypeEnum::SALE_LEAD, ReportsLeadTypeEnum::CREATED_SALE_LEAD]), function ($q) use ($table) {
                     $q->where(function ($sq) use ($table) {
-                        $sq->whereDate("{$table}.transaction_approved_at", '<', $this->getAdvisorConversionQuoteStatusDate())->whereIn("{$table}.quote_status_id", $this->getApprovedStatuses());
+                        $sq->where("{$table}.transaction_approved_at", '<', $this->getAdvisorConversionQuoteStatusDate())->whereIn("{$table}.quote_status_id", $this->getApprovedStatuses());
                     })->orWhere(function ($sq) use ($table) {
-                        $sq->whereDate("{$table}.transaction_approved_at", '>=', $this->getAdvisorConversionQuoteStatusDate())->where("{$table}.quote_status_id", QuoteStatusEnum::PolicyBooked);
+                        $sq->where("{$table}.transaction_approved_at", '>=', $this->getAdvisorConversionQuoteStatusDate())->where("{$table}.quote_status_id", QuoteStatusEnum::PolicyBooked);
                     });
                 })
                 ->when(in_array($filters->leadType, [ReportsLeadTypeEnum::MANUAL_CREATED, ReportsLeadTypeEnum::CREATED_SALE_LEAD]),
@@ -554,9 +547,7 @@ class AdvisorConversionReportService extends BaseService
     {
         $query->when($lob === quoteTypeCode::Car, function ($q) use ($filters) {
             $q->filterByTiers($filters?->tiersFilter)
-                ->when(isset($filters->segment_filter) && $filters->segment_filter != 'all', function ($sq) use ($filters) {
-                    $sq->filterBySegment($filters->segment_filter, QuoteTypeId::Car);
-                })->when((! empty($filters->vehicle_type) && $filters->vehicle_type != 'All') ||
+                ->when((! empty($filters->vehicle_type) && $filters->vehicle_type != 'All') ||
                 (isset($filters->isCommercial) && $filters->isCommercial != 'All'),
                     function ($sq) {
                         $sq->join('car_quote_request', 'car_quote_request.uuid', 'personal_quotes.uuid');
@@ -604,6 +595,15 @@ class AdvisorConversionReportService extends BaseService
             ->filterByBatches($filters?->batchNumberFilter)
             ->filterByTeams($filters?->teamsFilter)
             ->filterBySubTeams($filters?->subteams)
+            ->when($lob === quoteTypeCode::Travel, function ($q) {
+                $q->filterBySegment(request()->segment_filter, QuoteTypeId::Travel);
+            })
+            ->when($lob === quoteTypeCode::Health, function ($q) {
+                $q->filterBySegment(request()->segment_filter, QuoteTypeId::Health);
+            })
+            ->when($lob === quoteTypeCode::Car, function ($q) {
+                $q->filterBySegment(request()->segment_filter, QuoteTypeId::Car);
+            })
             ->when($freshLoad || isset($filters->advisorAssignedDates), function ($q) use ($startDate, $endDate) {
                 $q->whereBetween('personal_quote_details.advisor_assigned_date', [$startDate, $endDate]);
             })
@@ -671,6 +671,7 @@ class AdvisorConversionReportService extends BaseService
             ->filterByTeams($filters?->teamsFilter)
             ->filterBySubTeams($filters?->subteams)
             ->filterByTiers($filters?->tiersFilter)
+            ->filterBySegment()
             ->when($freshLoad || isset($filters->advisorAssignedDates), function ($q) use ($startDate, $endDate) {
                 $q->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
             })
@@ -680,9 +681,6 @@ class AdvisorConversionReportService extends BaseService
             ->when(isset($filters->isCommercial) && $filters->isCommercial != 'All', function ($q) use ($filters) {
                 $filters->isCommercial = $filters->isCommercial == 'true';
                 $q->where('car_model.is_commercial', $filters->isCommercial);
-            })
-            ->when(isset($filters->segment_filter) && $filters->segment_filter != 'all', function ($q) use ($filters) {
-                $q->filterBySegment($filters->segment_filter, QuoteTypeId::Car);
             })
             ->when(! empty($filters->vehicle_type) && $filters->vehicle_type != 'All', function ($q) use ($filters) {
                 $q->join('vehicle_type', function ($join) use ($filters) {
@@ -722,7 +720,7 @@ class AdvisorConversionReportService extends BaseService
 
     private function getCarQuoteAssignedLeadsQuery()
     {
-        $query = CarQuote::query()
+        return CarQuote::query()
             ->select(
                 DB::raw("CONCAT(car_quote_request.first_name, ' ', car_quote_request.last_name) as fullName"),
                 'car_quote_request.code as cdbId',
@@ -734,9 +732,8 @@ class AdvisorConversionReportService extends BaseService
             ->join('quote_status', 'quote_status.id', 'car_quote_request.quote_status_id')
             ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
             ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
-            ->orderBy('car_quote_request_detail.advisor_assigned_date', 'desc');
-
-        return $query;
+            ->orderBy('car_quote_request_detail.advisor_assigned_date', 'desc')
+            ->where('users.is_active', true);
     }
 
     private function getPersonalQuoteAssignedLeadsQuery($lob)
@@ -744,7 +741,7 @@ class AdvisorConversionReportService extends BaseService
         $lob = in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE]) ? quoteTypeCode::Business : $lob;
         $lobId = QuoteTypeRepository::where('code', $lob)->first();
 
-        $query = PersonalQuote::query()
+        return PersonalQuote::query()
             ->select(
                 DB::raw("CONCAT(personal_quotes.first_name, ' ', personal_quotes.last_name) as fullName"),
                 'personal_quotes.code as cdbId',
@@ -755,8 +752,7 @@ class AdvisorConversionReportService extends BaseService
             ->join('personal_quote_details', 'personal_quote_details.personal_quote_id', 'personal_quotes.id')
             ->join('quote_status', 'quote_status.id', 'personal_quotes.quote_status_id')
             ->where('personal_quotes.quote_type_id', $lobId->id)
+            ->where('users.is_active', true)
             ->orderBy('personal_quote_details.advisor_assigned_date', 'desc');
-
-        return $query;
     }
 }
