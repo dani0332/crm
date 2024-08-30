@@ -72,6 +72,8 @@ class CycleQuoteRepository extends BaseRepository
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
+            'paymentStatus',
+            'payments',
         ])
             ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);

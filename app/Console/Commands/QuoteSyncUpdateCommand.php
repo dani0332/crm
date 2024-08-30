@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\EnvEnum;
 use App\Enums\QuoteSyncStatus;
 use App\Models\ApplicationStorage;
 use App\Models\PersonalQuote;
@@ -9,7 +10,6 @@ use App\Models\QuoteSync;
 use App\Traits\PersonalQuoteSyncTrait;
 use Exception;
 use Illuminate\Console\Command;
-use App\Enums\EnvEnum;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -25,7 +25,6 @@ class QuoteSyncUpdateCommand extends Command
     protected $signature = 'QuoteSyncUpdate:cron';
 
     protected $description = 'Sync Quotes Data from QuoteSync table to respective quote tables';
-
     private $startId = 0;
 
     public function __construct()

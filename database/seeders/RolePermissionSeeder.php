@@ -40,5 +40,12 @@ class RolePermissionSeeder extends Seeder
                 ]);
             }
         }
+
+        $paymentSummaryPermission = Permission::where('name', PermissionsEnum::MANAGER_AUTHORISED_PAYMENT_SUMMARY)->first();
+        if (! $paymentSummaryPermission) {
+            Permission::create([
+                'name' => PermissionsEnum::MANAGER_AUTHORISED_PAYMENT_SUMMARY,
+            ]);
+        }
     }
 }
