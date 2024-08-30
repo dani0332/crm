@@ -19,7 +19,6 @@ class Customer extends Model implements AuditableContract
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
-
     public function getAuditables()
     {
         return [
