@@ -8,6 +8,7 @@ use App\Models\BusinessQuoteRequestDetail;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\Customer;
+use App\Models\CustomerAddress;
 use App\Models\CycleQuote;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
@@ -27,6 +28,7 @@ use App\Observers\BusinessQuoteDetailObserver;
 use App\Observers\BusinessQuoteObserver;
 use App\Observers\CarQuoteDetailObserver;
 use App\Observers\CarQuoteObserver;
+use App\Observers\CustomerAddressObserver;
 use App\Observers\CustomerObserver;
 use App\Observers\CycleQuoteObserver;
 use App\Observers\HealthQuoteDetailObserver;
@@ -96,6 +98,7 @@ class AppServiceProvider extends ServiceProvider
         Customer::observe(CustomerObserver::class);
         Payment::observe(PaymentObserver::class);
         PaymentSplits::observe(PaymentSplitsObserver::class);
+        CustomerAddress::observe(CustomerAddressObserver::class);
         // DB::listen(function($query) {
         //     info(
         //         $query->sql,
