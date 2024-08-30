@@ -55,11 +55,13 @@ class LifeQuoteController extends Controller
         $lifeQuotes = LifeQuoteRepository::getData();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
+        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
 
         return inertia('LifeQuote/Index', [
             'quotes' => $lifeQuotes,
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
+            'authorizedDays' => intval($authorizedDays->value),
         ]);
     }
 
