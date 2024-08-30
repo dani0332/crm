@@ -1,3 +1,4 @@
+
 <script setup>
 import { filter } from 'lodash';
 import { ref } from 'vue';
@@ -346,7 +347,7 @@ function onSubmit(isValid=true) {
     }
     if (filters.displayBy == RetentionReportEnum.BATCH && !filters.policyExpiryDate){
       notification.error({
-        title: 'Please select Policy Expiry Date',
+        title: 'Please select Previous Policy Expiry Date',
         position: 'top',
       });
       return
@@ -411,8 +412,8 @@ const totalLeads = reactive({
       value: 'quoteStatusName',
     },
     {
-      text: 'Expiry Date',
-      value: 'policy_expiry_date',
+      text: 'Previous Policy Expiry Date',
+      value: 'previous_policy_expiry_date',
     },
     {
       text: 'Price',
@@ -545,7 +546,7 @@ function buildQuoteURL() {
         />
 
         <DatePicker
-          v-if="canShow('policy_expiry_date') && filters.displayBy === RetentionReportEnum.BATCH"
+          v-if="canShow('previous_policy_expiry_date') && filters.displayBy === RetentionReportEnum.BATCH"
           v-model="filters.policyExpiryDate"
           label="Policy Expiry Date"
           placeholder="Select Start & End Date"
@@ -745,8 +746,8 @@ function buildQuoteURL() {
           <td>{{ footerData.lost }}</td>
           <td>{{ footerData.invalid }}</td>
           <td>{{ footerData.sales }}</td>
-          <td>{{ footerData.volume_net_retention }}</td>
           <td>{{ footerData.volume_gross_retention }}</td>
+          <td>{{ footerData.volume_net_retention }}</td>
           <td></td>
         </tr>
       </template>

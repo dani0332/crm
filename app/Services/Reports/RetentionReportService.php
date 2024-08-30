@@ -34,8 +34,7 @@ class RetentionReportService extends BaseService
 
     public function __construct() { 
         $this->dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
-        $this->policyExpiryColumnName = 'personal_quotes.policy_expiry_date';
-        $this->policyExpiryColumnName = 'personal_quotes.created_at';
+        $this->policyExpiryColumnName = 'personal_quotes.previous_policy_expiry_date';
 
         if (request()['displayBy'] === RetentionReportEnum::MONTHLY){
             $this->monthColumnName = $this->policyExpiryColumnName;
@@ -490,7 +489,7 @@ class RetentionReportService extends BaseService
 
         // Construct the query to retrieve retention leads data
         $query = PersonalQuote::query()
-            ->selectRaw("{$tableName}.uuid, {$tableName}.code, CONCAT({$tableName}.first_name, ' ', {$tableName}.last_name) as fullName, quote_status.text as quoteStatusName, price_with_vat as price, {$this->policyExpiryColumnName} as  policy_expiry_date ")
+            ->selectRaw("{$tableName}.uuid, {$tableName}.code, CONCAT({$tableName}.first_name, ' ', {$tableName}.last_name) as fullName, quote_status.text as quoteStatusName, price_with_vat as price, {$this->policyExpiryColumnName} as  previous_policy_expiry_date ")
             ->join('users', 'advisor_id', '=', 'users.id')
             ->join('quote_status', 'quote_status.id', "{$tableName}.quote_status_id");
 
@@ -693,7 +692,7 @@ class RetentionReportService extends BaseService
                     quoteTypeCode::CORPLINE,
                 ],
             ],
-            'policy_expiry_date' => [
+            'previous_policy_expiry_date' => [
                 'can_view' => $canView,
             ],
         ];
