@@ -271,19 +271,19 @@ watch(
 function daysAgoFromAuthorizedDate(authorizedDate) {
   let date = authorizedDate.split(' ')[0];
   if (!date) {
-      return;
+    return;
   }
   const [day, month, year] = date.split('-').map(Number);
   const parsedDate = new Date(year, month - 1, day);
 
   if (isNaN(parsedDate.getTime())) {
-      return 'Invalid date';
+    return 'Invalid date';
   }
 
-    // Reset time to 00:00:00 to consider only the date
+  // Reset time to 00:00:00 to consider only the date
   parsedDate.setHours(0, 0, 0, 0);
 
-    // Add `page.props.authorizedDays` to the parsed date
+  // Add `page.props.authorizedDays` to the parsed date
   const authorizedDays = page.props.authorizedDays || 8; // Default to 8 if not defined
   const newDate = new Date(parsedDate);
   newDate.setDate(parsedDate.getDate() + authorizedDays);
@@ -297,9 +297,11 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
   const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
   // Return appropriate message
   if (differenceInDays <= 0) {
-      return 'Expired';
+    return 'Expired';
   }
-  return differenceInDays === 1 ? `${differenceInDays} day` : `${differenceInDays} days`;
+  return differenceInDays === 1
+    ? `${differenceInDays} day`
+    : `${differenceInDays} days`;
 }
 
 const resetDateFilters = filterName => {

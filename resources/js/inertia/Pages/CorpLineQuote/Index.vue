@@ -381,14 +381,14 @@ watch(
 
 function daysAgoFromAuthorizedDate(authorizedDate) {
   if (!authorizedDate) {
-      return;
+    return;
   }
 
   const [day, month, year] = authorizedDate.split('-').map(Number);
   const parsedDate = new Date(year, month - 1, day);
 
   if (isNaN(parsedDate.getTime())) {
-      return 'Invalid date';
+    return 'Invalid date';
   }
 
   // Reset time to 00:00:00 to consider only the date
@@ -410,10 +410,12 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
 
   // Return appropriate message
   if (differenceInDays <= 0) {
-      return 'Expired';
+    return 'Expired';
   }
 
-  return differenceInDays === 1 ? `${differenceInDays} day` : `${differenceInDays} days`;
+  return differenceInDays === 1
+    ? `${differenceInDays} day`
+    : `${differenceInDays} days`;
 }
 const readOnlyMode = reactive({
   isDisable: true,

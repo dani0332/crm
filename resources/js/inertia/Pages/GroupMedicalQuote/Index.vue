@@ -287,19 +287,19 @@ const resetDateFilters = filterName => {
 });
 function daysAgoFromAuthorizedDate(authorizedDate) {
   if (!authorizedDate) {
-      return;
+    return;
   }
   const [day, month, year] = authorizedDate.split('-').map(Number);
   const parsedDate = new Date(year, month - 1, day);
 
   if (isNaN(parsedDate.getTime())) {
-      return 'Invalid date';
+    return 'Invalid date';
   }
 
-    // Reset time to 00:00:00 to consider only the date
+  // Reset time to 00:00:00 to consider only the date
   parsedDate.setHours(0, 0, 0, 0);
 
-    // Add `page.props.authorizedDays` to the parsed date
+  // Add `page.props.authorizedDays` to the parsed date
   const authorizedDays = page.props.authorizedDays || 8; // Default to 8 if not defined
   const newDate = new Date(parsedDate);
   newDate.setDate(parsedDate.getDate() + authorizedDays);
@@ -316,10 +316,12 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
 
   // Return appropriate message
   if (differenceInDays <= 0) {
-      return 'Expired';
+    return 'Expired';
   }
 
-  return differenceInDays === 1 ? `${differenceInDays} day` : `${differenceInDays} days`;
+  return differenceInDays === 1
+    ? `${differenceInDays} day`
+    : `${differenceInDays} days`;
 }
 const validateDateRange = () => {
   const { policy_expiry_date, policy_expiry_date_end } = filters;
