@@ -232,43 +232,43 @@ watch(
   { deep: true, immediate: true },
 );
 function daysAgoFromAuthorizedDate(authorizedDate) {
-    let date = authorizedDate.split(' ')[0];
+  let date = authorizedDate.split(' ')[0];
 
-    if (!date) {
-        return;
-    }
+  if (!date) {
+      return;
+  }
 
-    const [day, month, year] = date.split('-').map(Number);
-    const parsedDate = new Date(year, month - 1, day);
+  const [day, month, year] = date.split('-').map(Number);
+  const parsedDate = new Date(year, month - 1, day);
 
-    if (isNaN(parsedDate.getTime())) {
-        return 'Invalid date';
-    }
+  if (isNaN(parsedDate.getTime())) {
+      return 'Invalid date';
+  }
 
     // Reset time to 00:00:00 to consider only the date
-    parsedDate.setHours(0, 0, 0, 0);
+  parsedDate.setHours(0, 0, 0, 0);
 
     // Add `page.props.authorizedDays` to the parsed date
-    const authorizedDays = page.props.authorizedDays || 8; // Default to 8 if not defined
-    const newDate = new Date(parsedDate);
-    newDate.setDate(parsedDate.getDate() + authorizedDays);
+  const authorizedDays = page.props.authorizedDays || 8; // Default to 8 if not defined
+  const newDate = new Date(parsedDate);
+  newDate.setDate(parsedDate.getDate() + authorizedDays);
 
     // Reset time for newDate as well
-    newDate.setHours(0, 0, 0, 0);
+  newDate.setHours(0, 0, 0, 0);
 
-    const currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0); // Reset time for current date
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0); // Reset time for current date
 
     // Calculate the difference in days
-    const differenceInTime = newDate.getTime() - currentDate.getTime();
-    const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+  const differenceInTime = newDate.getTime() - currentDate.getTime();
+  const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
 
     // Return appropriate message
-    if (differenceInDays <= 0) {
-        return 'Expired';
-    }
+  if (differenceInDays <= 0) {
+      return 'Expired';
+  }
 
-    return differenceInDays === 1 ? `${differenceInDays} day` : `${differenceInDays} days`;
+  return differenceInDays === 1 ? `${differenceInDays} day` : `${differenceInDays} days`;
 }
 
 const readOnlyMode = reactive({
