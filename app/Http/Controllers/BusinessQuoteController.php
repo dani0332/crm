@@ -102,6 +102,7 @@ class BusinessQuoteController extends Controller
         $totalCount = 0;
         $paymentAuthorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $authorizedDays = intval($paymentAuthorizedDays->value);
+
         return inertia('CorpLineQuote/Index', compact('quotes', 'dropdownSource', 'isManualAllocationAllowed', 'totalCount', 'authorizedDays'));
     }
 
