@@ -289,8 +289,6 @@ function daysAgoFromAuthorizedDate(authorizedDate) {
     if (!authorizedDate) {
         return;
     }
-    console.log(authorizedDate,"=====");
-
     const [day, month, year] = authorizedDate.split('-').map(Number);
     const parsedDate = new Date(year, month - 1, day);
 
