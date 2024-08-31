@@ -100,8 +100,8 @@ class BusinessQuoteController extends Controller
         //PD Revert
         // $totalCount = count(request()->all()) > 1 || $hasOtherFilters ? $count : BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true);
         $totalCount = 0;
-        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
-
+        $paymentAuthorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+        $authorizedDays = intval($paymentAuthorizedDays->value);
         return inertia('CorpLineQuote/Index', compact('quotes', 'dropdownSource', 'isManualAllocationAllowed', 'totalCount', 'authorizedDays'));
     }
 

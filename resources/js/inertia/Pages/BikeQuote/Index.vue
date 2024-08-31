@@ -164,42 +164,42 @@ const onDataExport = () => {
   window.open(url + '?' + new URLSearchParams(data).toString());
 };
 function daysAgoFromAuthorizedDate(authorizedDate) {
-  // Check if authorizedDate is null or undefined
-  if (!authorizedDate) {
-    return;
-  }
-  const [datePart] = authorizedDate.split(' ');
+    let date = authorizedDate.split(' ')[0];
+    if (!date) {
+        return;
+    }
 
-  const [day, month, year] = datePart.split('-').map(Number);
+    const [day, month, year] = date.split('-').map(Number);
+    const parsedDate = new Date(year, month - 1, day);
 
-  const parsedDate = new Date(year, month - 1, day);
+    if (isNaN(parsedDate.getTime())) {
+        return 'Invalid date';
+    }
 
-  // Check if the parsed date is valid
-  if (isNaN(parsedDate.getTime())) {
-    return 'Invalid date';
-  }
+    // Reset time to 00:00:00 to consider only the date
+    parsedDate.setHours(0, 0, 0, 0);
 
-  // Calculate the new date by adding 8 days to the authorized date
-  const newDate = new Date(parsedDate);
-  newDate.setDate(parsedDate.getDate() + page.props.authorizedDays);
+    // Add `page.props.authorizedDays` to the parsed date
+    const authorizedDays = page.props.authorizedDays || 8; // Default to 8 if not defined
+    const newDate = new Date(parsedDate);
+    newDate.setDate(parsedDate.getDate() + authorizedDays);
 
-  // Get the current date
-  const currentDate = new Date();
+    // Reset time for newDate as well
+    newDate.setHours(0, 0, 0, 0);
 
-  // Calculate the difference in time
-  const differenceInTime = newDate.getTime() - currentDate.getTime();
-  const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0); // Reset time for current date
 
-  // Check if the date has expired
-  if (Math.floor(differenceInDays) <= 0) {
-    return 'Expired';
-  }
+    // Calculate the difference in days
+    const differenceInTime = newDate.getTime() - currentDate.getTime();
+    const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
 
-  if (Math.floor(differenceInDays) === 1) {
-    return Math.floor(differenceInDays) + ' day';
-  } else {
-    return Math.floor(differenceInDays) + ' days';
-  }
+    // Return appropriate message
+    if (differenceInDays <= 0) {
+        return 'Expired';
+    }
+
+    return differenceInDays === 1 ? `${differenceInDays} day` : `${differenceInDays} days`;
 }
 watch(
   () => filters,

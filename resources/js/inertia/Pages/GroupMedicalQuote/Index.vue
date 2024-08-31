@@ -286,35 +286,42 @@ const resetDateFilters = filterName => {
   );
 });
 function daysAgoFromAuthorizedDate(authorizedDate) {
-  if (!authorizedDate) {
-    return;
-  }
-  const [day, month, year] = authorizedDate.split('-').map(Number);
-  const parsedDate = new Date(year, month - 1, day);
-  if (isNaN(parsedDate.getTime())) {
-    return 'Invalid date';
-  }
+    if (!authorizedDate) {
+        return;
+    }
+    console.log(authorizedDate,"=====");
 
-  // Calculate the new date by adding 8 days to the authorized date
-  const newDate = new Date(parsedDate);
-  newDate.setDate(parsedDate.getDate() + page.props.authorizedDays.value);
+    const [day, month, year] = authorizedDate.split('-').map(Number);
+    const parsedDate = new Date(year, month - 1, day);
 
-  const currentDate = new Date();
+    if (isNaN(parsedDate.getTime())) {
+        return 'Invalid date';
+    }
 
-  // Calculate the difference in time
-  const differenceInTime = newDate.getTime() - currentDate.getTime();
-  const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+    // Reset time to 00:00:00 to consider only the date
+    parsedDate.setHours(0, 0, 0, 0);
 
-  // Check if the date has expired
-  if (Math.floor(differenceInDays) <= 0) {
-    return 'Expired';
-  }
+    // Add `page.props.authorizedDays` to the parsed date
+    const authorizedDays = page.props.authorizedDays || 8; // Default to 8 if not defined
+    const newDate = new Date(parsedDate);
+    newDate.setDate(parsedDate.getDate() + authorizedDays);
 
-  if (Math.floor(differenceInDays) === 1) {
-    return Math.floor(differenceInDays) + ' day';
-  } else {
-    return Math.floor(differenceInDays) + ' days';
-  }
+    // Reset time for newDate as well
+    newDate.setHours(0, 0, 0, 0);
+
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0); // Reset time for current date
+
+    // Calculate the difference in days
+    const differenceInTime = newDate.getTime() - currentDate.getTime();
+    const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+
+    // Return appropriate message
+    if (differenceInDays <= 0) {
+        return 'Expired';
+    }
+
+    return differenceInDays === 1 ? `${differenceInDays} day` : `${differenceInDays} days`;
 }
 const validateDateRange = () => {
   const { policy_expiry_date, policy_expiry_date_end } = filters;
