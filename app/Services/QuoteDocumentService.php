@@ -406,10 +406,12 @@ class QuoteDocumentService extends BaseService
         return $appDownloadLink;
     }
 
-    public function isEnableUploadDocument($quoteStatusId){
-        if (in_array($quoteStatusId, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued])){
+    public function isEnableUploadDocument($quoteStatusId)
+    {
+        if (in_array($quoteStatusId, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued])) {
             return false;
         }
+
         return true;
     }
 }
