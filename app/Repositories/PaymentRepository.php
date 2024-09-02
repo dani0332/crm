@@ -13,6 +13,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Models\CarQuote;
@@ -23,6 +24,7 @@ use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
+use App\Models\User;
 use App\Services\ApplicationStorageService;
 use App\Services\PaymentLinkService;
 use App\Services\SplitPaymentService;
@@ -731,5 +733,33 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         info('End - Temporarily adding for correcting historic data '.$quote->uuid);
         /* End - Temporarily adding for correcting historic data  */
 
+    }
+
+    public function getAuthorisePaymentCount($userId = null)
+    {
+        if (! Auth::check() && $userId == null) {
+            return 0;
+        }
+        $userId = $userId != null ? $userId : Auth::user()->id;
+        $user = User::where('id', $userId)->first();
+        $userTeams = $user->getUserTeams($userId);
+
+        $personalCount = DB::table('payments')
+            ->distinct()
+            ->Join('personal_quotes as pq', 'pq.code', '=', 'payments.code')
+            ->join('users', 'users.id', 'pq.advisor_id')
+            ->join('user_team', 'user_team.user_id', 'users.id')
+            ->join('teams', 'teams.id', '=', 'user_team.team_id')
+            ->where('payments.payment_status_id', PaymentStatusEnum::AUTHORISED);
+
+        if ($user->hasAnyRole([RolesEnum::CarManager, RolesEnum::HealthManager, RolesEnum::TravelManager, RolesEnum::LifeManager, RolesEnum::HomeManager, RolesEnum::PetManager, RolesEnum::BikeManager, RolesEnum::CycleManager, RolesEnum::YachtManager, RolesEnum::JetskiManager, RolesEnum::BusinessManager])) {
+            $personalCount = $personalCount->whereIn('teams.name', $userTeams)->count('payments.id');
+
+        } else {
+            $personalCount = $personalCount->where('pq.advisor_id', $userId)->count('payments.id');
+
+        }
+
+        return $personalCount;
     }
 }

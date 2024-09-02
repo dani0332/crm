@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Config;
 
 trait QuoteModelTrait
 {
+    use Filterable;
+
     /**
      * @return mixed|void
      */
