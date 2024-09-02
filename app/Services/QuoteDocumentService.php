@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCategory;
 use App\Enums\DocumentTypeCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
@@ -403,5 +404,14 @@ class QuoteDocumentService extends BaseService
         }
 
         return $appDownloadLink;
+    }
+
+    public function isEnableUploadDocument($quoteStatusId)
+    {
+        if (in_array($quoteStatusId, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued])) {
+            return false;
+        }
+
+        return true;
     }
 }

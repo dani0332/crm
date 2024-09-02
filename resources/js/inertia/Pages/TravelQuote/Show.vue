@@ -3040,6 +3040,7 @@ const onAddUpdate = () => {
       "
       @sendPolicyToClient="sendPolicyToClient"
       @verifyDocuments="getupdateDocumentValidate(true)"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy

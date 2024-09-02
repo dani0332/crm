@@ -1321,6 +1321,7 @@ const onAddUpdate = () => {
       :quote="quote"
       :insly-id="quote?.insly_id"
       :expanded="sectionExpanded"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy
