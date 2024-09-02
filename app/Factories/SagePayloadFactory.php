@@ -362,6 +362,10 @@ class SagePayloadFactory
             'OptionalField' => 'TOTALCOMM',
             'Value' => (string) $request->commission,
         ];
+        $optionalFields[] = [
+            'OptionalField' => 'INSURERNAME',
+            'Value' => (string) $request->insurerName,
+        ];
         $payLoad = [
             'Invoices' => [
                 [
@@ -509,6 +513,10 @@ class SagePayloadFactory
         $optionalFields[] = [
             'OptionalField' => 'TOTALCOMM',
             'Value' => (string) $request->commission,
+        ];
+        $optionalFields[] = [
+            'OptionalField' => 'INSURERNAME',
+            'Value' => (string) $request->insurerName,
         ];
         $payLoad = [
             'Invoices' => [
