@@ -53,3 +53,5 @@ Route::prefix('v1')->group(function () {
     Route::get('quotes/car/{uuid}', [CarQuoteController::class, 'show']);
     Route::post('quotes/send-ep-certificate', [EmbeddedProductController::class, 'sendDocument'])->name('sendDocument');
 });
+
+Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
