@@ -114,8 +114,58 @@ class InboundEmailsHookService extends BaseService
 
     public function handleBirdWebhook()
     {
+        try {
+        info('Bird Webhook Received Successfully!');
+        $payload = collect(request()->input('payload') ?? []);
 
+        if ($payload->isEmpty()) {
+            info('Webhook Payload is empty!');
+            return apiResponse([], Response::HTTP_BAD_REQUEST, 'Webhook Payload is empty!');
+        }
+        $identifierValue = data_get($payload->get('receiver'), 'contacts.0.identifierValue', null);
+        // Extract and filter the required fields
+        $result = $payload->only(['id', 'status', 'reason'])
+        ->merge(['identifierValue' => $identifierValue])
+        ->filter();
+
+        info('Webhook Payload: ' . json_encode($result));
+        $messageId = $result->id;
+        $status = $result->status;
+        $emailSubject = $result->reason;
+        $emailData = EmailData::where('msg_id', $messageId)->first();
+
+        if (!$emailData) {
+            $msg = 'EmailData not found for msg_id: ' . $messageId;
+            info($msg);
+            return apiResponse([], Response::HTTP_NOT_FOUND, $msg);
+        }
+
+        $isEmailStatus = EmailStatus::where('msg_id', $messageId)
+            ->where('email_status', $status)
+            ->exists();
+
+        if ($isEmailStatus) {
+            $msg = 'EmailStatus already exists for msg_id: ' . $messageId;
+            info($msg);
+            return apiResponse([], Response::HTTP_OK, $msg);
+        }
+
+        EmailStatus::create([
+            'quote_type_id' => $emailData->quote_type_id,
+            'quote_id' => $emailData->quote_id,
+            'email_address' => $result->identifierValue ?? null,
+            'msg_id' => $messageId,
+            'template_id' => null,
+            'customer_id' => null,
+            'email_status' => $status,
+            'email_subject' => $emailSubject,
+        ]);
+        
         return apiResponse([], Response::HTTP_OK, 'Webhook Received Successfully!');
+        } catch (\Throwable $th) {
+            info("Bird Webhook Error: {$th->getMessage()} on line: {$th->getLine()} in file: {$th->getFile()} | " . PHP_EOL . $th->getTraceAsString());
+            throw $th;
+        }
     }
 
 }
