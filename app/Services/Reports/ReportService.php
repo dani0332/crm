@@ -607,8 +607,8 @@ class ReportService extends BaseService
                     ->groupBy('users.id', 'users.name', 'expiry_days');
             }
             if (isset($request->tomorrowDate)) {
-                $date = Carbon::parse($request->tomorrowDate)->startOfDay();
-                $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), '=', $date);
+                $query->having('expiry_days', '=', 2)
+                    ->groupBy('users.id', 'users.name', 'expiry_days');
             }
             if (isset($request->thisWeek)) {
                 $startOfWeek = Carbon::parse($request->thisWeek[0])->startOfDay();
