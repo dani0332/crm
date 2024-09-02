@@ -11,6 +11,7 @@ use App\Models\DttRevival;
 use App\Models\TravelQuote;
 use Exception;
 use Illuminate\Http\Response;
+use App\Models\EmailStatus;
 
 //Scheduled to delete 1st April 2024
 class InboundEmailsHookService extends BaseService
@@ -128,11 +129,13 @@ class InboundEmailsHookService extends BaseService
         ->merge(['identifierValue' => $identifierValue])
         ->filter();
 
+        $result = (object) $result->all();
         info('Webhook Payload: ' . json_encode($result));
+
         $messageId = $result->id;
         $status = $result->status;
-        $emailSubject = $result->reason;
-        $emailData = EmailData::where('msg_id', $messageId)->first();
+        $emailSubject = $result->reason  ?? null;
+        $emailData = EmailStatus::where('msg_id', $messageId)->first();
 
         if (!$emailData) {
             $msg = 'EmailData not found for msg_id: ' . $messageId;
@@ -160,7 +163,7 @@ class InboundEmailsHookService extends BaseService
             'email_status' => $status,
             'email_subject' => $emailSubject,
         ]);
-        
+
         return apiResponse([], Response::HTTP_OK, 'Webhook Received Successfully!');
         } catch (\Throwable $th) {
             info("Bird Webhook Error: {$th->getMessage()} on line: {$th->getLine()} in file: {$th->getFile()} | " . PHP_EOL . $th->getTraceAsString());
