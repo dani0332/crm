@@ -11,7 +11,7 @@ use App\Models\DttRevival;
 use App\Models\TravelQuote;
 use Exception;
 use Illuminate\Http\Response;
-use App\Models\EmailStatus;
+use App\Jobs\EmailStatusEventJob;
 
 //Scheduled to delete 1st April 2024
 class InboundEmailsHookService extends BaseService
@@ -135,36 +135,22 @@ class InboundEmailsHookService extends BaseService
         $messageId = $result->id ?? null;
         $status = $result->status ?? null;
         $emailSubject = $result->reason  ?? null;
-        $emailData = EmailStatus::where('msg_id', $messageId)->first();
+        if ($messageId && $status) {
+            $emailData =(object) ['message_id'=>$messageId,
+                          'status'=>$status,
+                          'subject'=>$emailSubject,
+                          'customer_email'=>$identifierValue];
 
-        if (!$emailData) {
+            EmailStatusEventJob::dispatch($emailData);
+            info('EmailStatusEventJob dispatched successfully!');
+            return apiResponse([], Response::HTTP_OK, 'Webhook Received Successfully!');
+        }
+        else
+        {
             $msg = 'EmailData not found for msg_id: ' . $messageId;
             info($msg);
             return apiResponse([], Response::HTTP_NOT_FOUND, $msg);
         }
-
-        $isEmailStatus = EmailStatus::where('msg_id', $messageId)
-            ->where('email_status', $status)
-            ->exists();
-
-        if ($isEmailStatus) {
-            $msg = 'EmailStatus already exists for msg_id: ' . $messageId;
-            info($msg);
-            return apiResponse([], Response::HTTP_OK, $msg);
-        }
-
-        EmailStatus::create([
-            'quote_type_id' => $emailData->quote_type_id,
-            'quote_id' => $emailData->quote_id,
-            'email_address' => $result->identifierValue ?? null,
-            'msg_id' => $messageId,
-            'template_id' => null,
-            'customer_id' => null,
-            'email_status' => $status,
-            'email_subject' => $emailSubject,
-        ]);
-
-        return apiResponse([], Response::HTTP_OK, 'Webhook Received Successfully!');
         } catch (\Throwable $th) {
             info("Bird Webhook Error: {$th->getMessage()} on line: {$th->getLine()} in file: {$th->getFile()} | " . PHP_EOL . $th->getTraceAsString());
             throw $th;
