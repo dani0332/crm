@@ -12,6 +12,7 @@ use App\Models\TravelQuote;
 use Exception;
 use Illuminate\Http\Response;
 use App\Jobs\EmailStatusEventJob;
+use App\Models\EmailStatus;
 
 //Scheduled to delete 1st April 2024
 class InboundEmailsHookService extends BaseService
@@ -140,7 +141,12 @@ class InboundEmailsHookService extends BaseService
                           'status'=>$status,
                           'subject'=>$emailSubject,
                           'customer_email'=>$identifierValue];
-
+            $emailStatus = EmailStatus::where('msg_id', $messageId)->first();
+            if (!$emailStatus) {
+                $msg = 'EmailData not found for msg_id: ' . $messageId;
+                info($msg);
+                return apiResponse([], Response::HTTP_OK, 'Webhook Received Successfully!');
+            }
             EmailStatusEventJob::dispatch($emailData);
             info('EmailStatusEventJob dispatched successfully!');
             return apiResponse([], Response::HTTP_OK, 'Webhook Received Successfully!');

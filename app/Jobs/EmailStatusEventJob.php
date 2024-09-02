@@ -32,12 +32,6 @@ class EmailStatusEventJob implements ShouldQueue
     public function handle(): void
     {
         if(!empty($this->data->message_id) && !empty($this->data->status)) {
-        $emailStatus = EmailStatus::where('msg_id', $this->data->message_id)->first();
-        if (!$emailStatus) {
-            $msg = 'EmailData not found for msg_id: ' . $this->data->message_id;
-            info($msg);
-            return;
-        }
 
         $isEmailStatus = EmailStatus::where('msg_id', $this->data->message_id)
             ->where('email_status', $this->data->status)
@@ -49,10 +43,10 @@ class EmailStatusEventJob implements ShouldQueue
             return;
         }
 
-
+        $emailStatusData = EmailStatus::where('msg_id', $this->data->message_id)->first();
         $newEmailStatus = new EmailStatus;
-        $newEmailStatus->quote_type_id = $emailStatus->quoteTypeId;
-        $newEmailStatus->quote_id = $emailStatus->quoteId;
+        $newEmailStatus->quote_type_id = $emailStatusData->quoteTypeId;
+        $newEmailStatus->quote_id = $emailStatusData->quoteId;
         $newEmailStatus->email_address =  $this->data->customer_email ?? null;
         $newEmailStatus->msg_id =  $this->data->message_id;
         $newEmailStatus->email_status =  $this->data->status;
