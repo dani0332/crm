@@ -137,7 +137,9 @@ class InslyDetailRepository extends BaseRepository
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $inslyPolicyIssueDate)->addMonths(-1)->startOfDay();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $inslyPolicyIssueDate)->addMonths(1)->endOfDay();
 
-                $tableName = $model->getTable();
+                $modelClassName = app($model);
+                $tableName = $modelClassName->getTable();
+
                 $quote = $model::join('payments', $tableName . '.code', '=', 'payments.code')
                     ->where($tableName.'.email', $email)
                     ->where('payments.captured_at', '>=', $dateFrom)
