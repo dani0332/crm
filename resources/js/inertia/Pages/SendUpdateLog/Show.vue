@@ -563,6 +563,7 @@ const isLegacyPolicy = computed(() => {
     <AuditLogs
       :type="'App\\Models\\SendUpdateLog'"
       :id="$page.props.sendUpdateLog.id"
+      :quoteType="'SendUpdateLog'"
       :expanded="true"
     />
   </div>
