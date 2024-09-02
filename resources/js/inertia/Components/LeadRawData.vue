@@ -35,10 +35,7 @@ const onSubmit = () => {
   axios
     .post('/get-lob-raw-data', data)
     .then(res => {
-      let { record, members, payments, customerAdditionalContacts } = res.data;
-      customers.value = [...customerAdditionalContacts];
-      leadsMembers.value = [...members];
-      leadsPayments.value = [...payments];
+      let { record } = res.data;
       leadDetails.value = { ...record };
     })
     .catch(err => {
@@ -52,52 +49,34 @@ const onSubmit = () => {
 </script>
 
 <template>
-  <x-collapse
-    v-if="hasRole(rolesEnum.Engineering)"
-    show-icon
-    class="p-4 rounded shadow mb-6 bg-white"
-  >
-    <h3 class="font-semibold text-primary-800 text-lg">
-      Quote Data For Engineering Only
-    </h3>
-    <template #content>
-      <x-divider class="mb-4 mt-1" />
-      <div class="text-center py-3" v-if="tableData.length === 0">
-        <x-button
-          size="sm"
-          color="primary"
-          outlined
-          @click.prevent="onSubmit"
-          :loading="isloading"
-        >
-          Load Quote
-        </x-button>
-      </div>
+  <x-accordion class="p-4 rounded shadow mb-6 bg-white">
+    <x-accordion-item @change="onChange">
+      <h3 class="font-semibold text-primary-800 text-lg">
+        Quote Data For Engineering Only
+      </h3>
+      <template #content>
+        <x-divider class="mb-4 mt-1" />
+        <div class="text-center py-3" v-if="tableData.length === 0">
+          <x-button
+            size="sm"
+            color="primary"
+            outlined
+            @click.prevent="onSubmit"
+            :loading="isloading"
+          >
+            Load Quote
+          </x-button>
+        </div>
 
-      <AppModal v-model="showModal" show-header show-close>
-        <template #header>
-          <h2>Quote Raw Data</h2>
-        </template>
-        <template #default>
-          <h2 class="font-bold mb-2 text-primary-800">Lead Details:</h2>
-          <div class="flex flex-wrap">
-            <div
-              v-for="(value, key) in leadDetails"
-              :key="key"
-              class="bg-gray-300 p-2 m-1 flex rounded-md"
-            >
-              <span class="font-bold text-sm">{{ key }} </span
-              ><span class="text-sm"> : {{ value ?? 'Null' }}</span>
-            </div>
-          </div>
-
-          <h2 class="font-bold my-4 text-primary-800">
-            Customer Additional Contacts :
-          </h2>
-          <div class="flex flex-wrap">
-            <div class="flex flex-wrap" v-for="item in customers" :key="item">
+        <AppModal v-model="showModal" show-header show-close>
+          <template #header>
+            <h2>Quote Raw Data</h2>
+          </template>
+          <template #default>
+            <h2 class="font-bold mb-2 text-primary-800">Lead Details:</h2>
+            <div class="flex flex-wrap">
               <div
-                v-for="(value, key) in item"
+                v-for="(value, key) in leadDetails"
                 :key="key"
                 class="bg-gray-300 p-2 m-1 flex rounded-md"
               >
@@ -105,45 +84,61 @@ const onSubmit = () => {
                 ><span class="text-sm"> : {{ value ?? 'Null' }}</span>
               </div>
             </div>
-          </div>
 
-          <h2 class="font-bold my-4 text-primary-800">Members Details:</h2>
-          <div class="flex flex-wrap">
-            <div
-              v-for="(item, index) in leadsMembers"
-              :key="index"
-              class="flex flex-wrap"
-            >
-              <div
-                v-for="(value, key) in item"
-                :key="key"
-                class="bg-gray-300 p-2 m-1 flex rounded-md"
-              >
-                <span class="font-bold text-sm">{{ key }} </span
-                ><span class="text-sm"> : {{ value ?? 'Null' }}</span>
+            <h2 class="font-bold my-4 text-primary-800">
+              Customer Additional Contacts :
+            </h2>
+            <div class="flex flex-wrap">
+              <div class="flex flex-wrap" v-for="item in customers" :key="item">
+                <div
+                  v-for="(value, key) in item"
+                  :key="key"
+                  class="bg-gray-300 p-2 m-1 flex rounded-md"
+                >
+                  <span class="font-bold text-sm">{{ key }} </span
+                  ><span class="text-sm"> : {{ value ?? 'Null' }}</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <h2 class="font-bold my-4 text-primary-800">Payments Details:</h2>
-          <div class="flex flex-wrap">
-            <div
-              v-for="(item, index) in leadsPayments"
-              :key="index"
-              class="flex flex-wrap"
-            >
+            <h2 class="font-bold my-4 text-primary-800">Members Details:</h2>
+            <div class="flex flex-wrap">
               <div
-                v-for="(value, key) in item"
-                :key="key"
-                class="bg-gray-300 p-2 m-1 flex rounded-md"
+                v-for="(item, index) in leadsMembers"
+                :key="index"
+                class="flex flex-wrap"
               >
-                <span class="font-bold text-sm">{{ key }} </span>
-                <span class="text-sm"> : {{ value ?? 'Null' }}</span>
+                <div
+                  v-for="(value, key) in item"
+                  :key="key"
+                  class="bg-gray-300 p-2 m-1 flex rounded-md"
+                >
+                  <span class="font-bold text-sm">{{ key }} </span
+                  ><span class="text-sm"> : {{ value ?? 'Null' }}</span>
+                </div>
               </div>
             </div>
-          </div>
-        </template>
-      </AppModal>
-    </template>
-  </x-collapse>
+
+            <h2 class="font-bold my-4 text-primary-800">Payments Details:</h2>
+            <div class="flex flex-wrap">
+              <div
+                v-for="(item, index) in leadsPayments"
+                :key="index"
+                class="flex flex-wrap"
+              >
+                <div
+                  v-for="(value, key) in item"
+                  :key="key"
+                  class="bg-gray-300 p-2 m-1 flex rounded-md"
+                >
+                  <span class="font-bold text-sm">{{ key }} </span>
+                  <span class="text-sm"> : {{ value ?? 'Null' }}</span>
+                </div>
+              </div>
+            </div>
+          </template>
+        </AppModal>
+      </template>
+    </x-accordion-item>
+  </x-accordion>
 </template>

@@ -2,92 +2,42 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\QuoteTypes;
-use App\Repositories\BikeQuoteRepository;
-use App\Repositories\CustomerMembersRepository;
-use App\Repositories\CycleQuoteRepository;
-use App\Repositories\JetskiQuoteRepository;
-use App\Repositories\LifeQuoteRepository;
-use App\Repositories\PetQuoteRepository;
-use App\Repositories\YachtQuoteRepository;
-use App\Services\BusinessQuoteService;
-use App\Services\CarQuoteService;
-use App\Services\CRUDService;
-use App\Services\CustomerService;
-use App\Services\HealthQuoteService;
-use App\Services\HomeQuoteService;
-use App\Services\PetQuoteService;
-use App\Services\TravelQuoteService;
+use App\Models\CarQuote;
+use App\Models\HealthQuote;
+use App\Models\HomeQuote;
+use App\Models\LifeQuote;
 use Illuminate\Http\Request;
+use App\Models\PersonalQuote;
+use App\Models\TravelQuote;
 
 class RawQueryController extends Controller
 {
     public function executeQuery(Request $request)
     {
-        $entity = [];
-        $members = [];
-        $payments = [];
-        $customerAdditionalContacts = [];
-        if (in_array($request->modelType, [QuoteTypes::HEALTH->value, QuoteTypes::HOME->value, QuoteTypes::TRAVEL->value, QuoteTypes::CAR->value, QuoteTypes::BUSINESS->value])) {
-            $entity = app(CRUDService::class)->getEntity($request->modelType, $request->code);
-            $members = CustomerMembersRepository::getBy($entity->id, $request->modelType);
-            $serviceClass = $this->getServiceClass($request->modelType);
-            $paymentEntityModel = $serviceClass->getEntityPlain($entity->id);
-            $payments = $paymentEntityModel->payments;
-            $customerAdditionalContacts = app(CustomerService::class)->getAdditionalContacts($entity->customer_id, $entity->mobile_no);
-        } elseif ($request->modelType === QuoteTypes::PET->value) {
-            $entity = PetQuoteRepository::getBy('uuid', $request->code);
-            $members = CustomerMembersRepository::getBy($entity->id, $request->modelType);
-            $payments = $entity->payments;
-            $customerAdditionalContacts = $entity->customer->additionalContactInfo;
-        } elseif ($request->modelType === QuoteTypes::CYCLE->value) {
-            $entity = CycleQuoteRepository::getBy('uuid', $request->code);
-            $members = CustomerMembersRepository::getBy($entity->id, $request->modelType);
-            $payments = $entity->payments;
-            $customerAdditionalContacts = $entity->customer->additionalContactInfo;
-        } elseif ($request->modelType === QuoteTypes::YACHT->value) {
-            $entity = YachtQuoteRepository::getBy('uuid', $request->code);
-            $members = CustomerMembersRepository::getBy($entity->id, $request->modelType);
-            $payments = $entity->payments;
-            $customerAdditionalContacts = $entity->customer->additionalContactInfo;
-        } elseif ($request->modelType === QuoteTypes::LIFE->value) {
-            $entity = LifeQuoteRepository::getBy('uuid', $request->code);
-            $members = CustomerMembersRepository::getBy($entity->id, $request->modelType);
-            $payments = $entity->payments;
-            $customerAdditionalContacts = $entity->customer->additionalContactInfo;
-        } elseif ($request->modelType === QuoteTypes::BIKE->value) {
-            $entity = BikeQuoteRepository::getBy('uuid', $request->code);
-            $members = CustomerMembersRepository::getBy($entity->id, $request->modelType);
-            $payments = $entity->payments;
-            $customerAdditionalContacts = $entity->customer->additionalContactInfo;
-        } elseif ($request->modelType === QuoteTypes::JETSKI->value) {
-            $entity = JetskiQuoteRepository::getBy('uuid', $request->code);
-            $members = CustomerMembersRepository::getBy($entity->id, $request->modelType);
-            $payments = $entity->payments;
-            $customerAdditionalContacts = $entity->customer->additionalContactInfo;
-        }
+        $nameSpace = 'App\\Models\\';
+        $modelType = (in_array(ucwords($request->modelType), newUi()) && checkPersonalQuotes(ucwords($request->modelType)))
+         ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($request->modelType).'Quote';
 
-        return response()->json(['record' => $entity, 'members' => $members, 'payments' => $payments, 'customerAdditionalContacts' => $customerAdditionalContacts]);
+         $fieldsMap = [
+            HealthQuote::class => ['id', 'customer_id', 'quote_status_id', 'payment_status_id', 'advisor_id', 'plan_id', 'nationality_id'],
+            HomeQuote::class => ['id', 'customer_id', 'quote_status_id', 'payment_status_id', 'advisor_id', 'pa_id', 'nationality_id'],
+            TravelQuote::class => ['id', 'customer_id', 'quote_status_id', 'payment_status_id', 'advisor_id', 'plan_id', 'nationality_id'],
+            PersonalQuote::class => ['id', 'customer_id', 'quote_status_id', 'payment_status_id', 'advisor_id', 'plan_id', 'nationality_id'],
+            LifeQuote::class => ['id', 'customer_id', 'quote_status_id', 'payment_status_id', 'advisor_id', 'pa_id', 'nationality_id'],
+            CarQuote::class => ['id', 'customer_id', 'quote_status_id', 'payment_status_id', 'advisor_id', 'plan_id', 'nationality_id'],
+        ];
+        
+        if (isset($fieldsMap[$modelType])) {
+            $entity = $modelType::select($fieldsMap[$modelType])
+                ->where('uuid', $request->code)
+                ->first();
+            
+            return response()->json(['record' => $entity]);
+        }
+        
+        // Optionally handle cases where $modelType is not in the map
+        return response()->json(['error' => 'Invalid model type'], 400);
 
     }
 
-    public function getServiceClass($modelType)
-    {
-        switch ($modelType) {
-            case QuoteTypes::HEALTH->value:
-                return app(HealthQuoteService::class);
-            case QuoteTypes::CAR->value:
-                return app(CarQuoteService::class);
-            case QuoteTypes::HOME->value:
-                return app(HomeQuoteService::class);
-            case QuoteTypes::PET->value:
-                return app(PetQuoteService::class);
-            case QuoteTypes::TRAVEL->value:
-                return app(TravelQuoteService::class);
-            case QuoteTypes::BUSINESS->value:
-                return app(BusinessQuoteService::class);
-            default:
-                return null;
-        }
-    }
 }

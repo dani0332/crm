@@ -3328,6 +3328,11 @@ const onAddUpdate = () => {
       :quoteId="quote.uuid"
       :quoteType="'TRAVEL'"
     />
+
+    <lead-raw-data
+      :modelType="'Travel'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>
 <style>
