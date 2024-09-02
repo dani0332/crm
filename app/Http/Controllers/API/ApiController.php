@@ -104,7 +104,6 @@ class ApiController extends Controller
         ->where('msg_id', $request->message_id)
         ->where('quote_id', $quote->id)->exists()) {
             $request->quoteId = $quote->id;
-            $request->quoteTypeId = $quote->quote_type_id;
             $request->customerEmail = $request->customer_email;
             $this->emailStatusService->addEmailStatus($request, $request->message_id, $request->subject, ProcessStatusCode::SENT);
             return apiResponse([], Response::HTTP_OK, 'Email event logged successfully');
