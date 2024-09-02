@@ -140,7 +140,7 @@ class InslyDetailRepository extends BaseRepository
                 $modelClassName = app($model);
                 $tableName = $modelClassName->getTable();
 
-                $quote = $model::join('payments', $tableName . '.code', '=', 'payments.code')
+                $quote = $model::join('payments', $tableName.'.code', '=', 'payments.code')
                     ->where($tableName.'.email', $email)
                     ->where('payments.captured_at', '>=', $dateFrom)
                     ->where('payments.captured_at', '<=', $dateTo)
