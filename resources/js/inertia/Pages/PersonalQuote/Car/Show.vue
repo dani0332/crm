@@ -3529,6 +3529,7 @@ const onAddUpdate = () => {
       :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :isPlanDetailEnabled="isPlanDetailEnabled"
+      :expanded="sectionExpanded"
     />
 
     <PaymentTable

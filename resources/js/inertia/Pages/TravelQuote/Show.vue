@@ -2993,6 +2993,7 @@ const onAddUpdate = () => {
       "
       :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
+      :expanded="sectionExpanded"
     />
 
     <PaymentTable
