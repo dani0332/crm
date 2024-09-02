@@ -154,7 +154,6 @@ onMounted(() => {});
         border-cell
         hide-rows-per-page
         hide-footer
-        fixed-checkbox
       >
         <template #item-file_name="{ file_name }">
           <a

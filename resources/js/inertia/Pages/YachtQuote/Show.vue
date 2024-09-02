@@ -955,6 +955,7 @@ const onAddUpdate = () => {
       :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
       :insly-id="quote?.quote_detail?.insly_id"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy

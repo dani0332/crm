@@ -45,7 +45,8 @@ label {
 
 /* Table container */
 .vue3-easy-data-table__main {
-  @apply overflow-x-auto;
+  @apply overflow-x-auto flex flex-col;
+  min-height: 160px;
 }
 
 .overflow-hidden-table {
@@ -100,7 +101,7 @@ label {
   thead tr {
     position: sticky;
     top: 0;
-    z-index: 20;
+    z-index: 9;
   }
 }
 
@@ -363,7 +364,7 @@ transition duration-300 cursor-pointer;
 
 /* Table message */
 .vue3-easy-data-table__message {
-  @apply text-center py-10;
+  @apply grid place-content-center p-4 h-full w-full flex-auto;
 }
 
 /* Table default loader */

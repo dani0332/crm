@@ -1014,6 +1014,8 @@ watch(
   (newValue, oldValue) => {
     bookingDetailsForm.broker_invoice_number =
       props.bookingDetails.broker_invoice_number;
+    bookingDetailsForm.invoice_description =
+      props.bookingDetails.invoice_description;
   },
 );
 

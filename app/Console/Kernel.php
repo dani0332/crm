@@ -46,6 +46,15 @@ class Kernel extends ConsoleKernel
         $schedule->command('PaymentOverdueStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(5);
         $schedule->command('ProcessCCPaymentsCommand:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
+        $schedule->command('SendPaymentEmail:cron')->timezone('Asia/Dubai')->dailyAt('10:00')->onOneServer()->withoutOverlapping();
+
+        $schedule->command('PaymentExpireNotification:cron')
+            ->timezone('Asia/Dubai')
+            ->hourly()
+            ->between('9:00', '18:00')
+            ->onOneServer()
+            ->withoutOverlapping();
+
         /*$schedule->job(new UnconSubmissionReminder)
         ->tuesdays()
         ->fridays()
@@ -68,9 +77,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('ResetLeadAllocationCounts:cron')->timezone('Asia/Dubai')->dailyAt('23:55')->onOneServer()->withoutOverlapping();
 
         $schedule->command('QuoteSyncUpdate:cron')
-            ->everyFiveMinutes()
+            ->everyThreeMinutes()
             ->onOneServer()
-            ->withoutOverlapping(29)
+            ->withoutOverlapping(5)
             ->onSuccess(function (Stringable $output) {
                 info('----------- QuoteSyncJob Completed -----------'.$output);
             })
