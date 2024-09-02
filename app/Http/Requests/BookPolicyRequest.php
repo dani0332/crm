@@ -47,7 +47,7 @@ class BookPolicyRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $quoteModel = $this->getQuoteObject(request()->model_type, request()->quote_id);
-            if ($quoteModel && $quoteModel->quote_status_id == QuoteStatusEnum::PolicyBooked){
+            if ($quoteModel && $quoteModel->quote_status_id == QuoteStatusEnum::PolicyBooked) {
                 $validator->errors()->add('value', 'No further editing is required as the policy has been booked');
             }
 

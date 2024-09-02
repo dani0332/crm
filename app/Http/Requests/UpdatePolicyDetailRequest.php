@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteStatusId;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -63,7 +62,7 @@ class UpdatePolicyDetailRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $quoteModel = $this->getQuoteObject(request()->modelType, request()->quote_id);
-            if ($quoteModel && $quoteModel->quote_status_id == QuoteStatusEnum::PolicyBooked){
+            if ($quoteModel && $quoteModel->quote_status_id == QuoteStatusEnum::PolicyBooked) {
                 $validator->errors()->add('value', 'No further editing is required as the policy has been booked');
             }
             $pattern = '/^[\w,\/\\| -]+$/';
