@@ -132,8 +132,8 @@ class InboundEmailsHookService extends BaseService
         $result = (object) $result->all();
         info('Webhook Payload: ' . json_encode($result));
 
-        $messageId = $result->id;
-        $status = $result->status;
+        $messageId = $result->id ?? null;
+        $status = $result->status ?? null;
         $emailSubject = $result->reason  ?? null;
         $emailData = EmailStatus::where('msg_id', $messageId)->first();
 
