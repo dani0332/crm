@@ -4024,7 +4024,7 @@ const onAddUpdate = () => {
   </div>
   <AuditLogs
     :type="'App\\Models\\CarQuote'"
-    :quoteType="quoteType"
+    :quoteType="'CarQuote'"
     :id="$page.props.record.id"
     :quoteCode="$page.props.record.code"
     :expanded="sectionExpanded"
