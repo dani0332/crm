@@ -604,11 +604,11 @@ class ReportService extends BaseService
             }
             if (isset($request->todayDate)) {
                 $query->having('expiry_days', '=', 1)
-                    ->groupBy('users.id', 'users.name', 'expiry_days');
+                    ->groupBy('expiry_days');
             }
             if (isset($request->tomorrowDate)) {
                 $query->having('expiry_days', '=', 2)
-                    ->groupBy('users.id', 'users.name', 'expiry_days');
+                    ->groupBy('expiry_days');
             }
             if (isset($request->thisWeek)) {
                 $startOfWeek = Carbon::parse($request->thisWeek[0])->startOfDay();
