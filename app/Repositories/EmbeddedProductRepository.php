@@ -265,13 +265,14 @@ class EmbeddedProductRepository extends BaseRepository
             }
 
             $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
-            $item->send_document_button = $this->canSendDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
+            $item->download_document_button = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
+            $item->send_document_button = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
         });
 
         return $ep;
     }
 
-    private function canSendDocuments($productCategory, $quoteStatusId, $transaction)
+    private function canSendAndDownloadDocuments($productCategory, $quoteStatusId, $transaction)
     {
         $canSend = false;
         if ($productCategory == EpCategoryEnum::BOLT_ON) {
@@ -413,7 +414,7 @@ class EmbeddedProductRepository extends BaseRepository
             ['is_selected',  '=', true],
         ])->whereIn('product_id', $optionsIds)->get();
 
-        $canSendDocuments = $this->canSendDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
+        $canSendDocuments = $this->canSendAndDownloadDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
         if (! $canSendDocuments) {
             info('Documents cannot be sent '.json_encode(['uuid' => $quoteObject->uuid, 'ep category' => $ep->product_category, 'quote status' => $quoteObject->quote_status_id, 'transaction' => $transaction]));
 
