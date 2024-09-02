@@ -474,7 +474,7 @@ const headers = [
   { text: 'Relative Retention', value: 'relative_retention', tooltip: RetentionReportEnum.RELATIVE_RETENTION_HEADING},
 ];
 
-if (filters.displayBy === RetentionReportEnum.BATCH) {
+if (hasBatchKey.value) {
   headers.splice(1, 0, { text: 'Batch', value: 'batch', tooltip: RetentionReportEnum.BATCH_HEADING});
   headers.splice(2, 0, { text: 'Start Date', value: 'start_date', tooltip: RetentionReportEnum.START_DATE_HEADING});
   headers.splice(3, 0, { text: 'End Date', value: 'end_date', tooltip: RetentionReportEnum.END_DATE_HEADING});
@@ -513,6 +513,24 @@ function buildQuoteURL() {
   // Return the path corresponding to the quote type, or null if not found
   return quoteTypePaths[filters.lob] || null;
 }
+
+
+// Define a ref to hold the result of the check
+const hasBatchKey = ref(false);
+
+// Watch for changes to reportData
+watch(
+    () => props.reportData,
+    (newReportData) => {
+        // Check if reportData has data and if the first item has a batch key
+        if (newReportData?.data?.length > 0) {
+            hasBatchKey.value = 'batch' in newReportData.data[0];
+        } else {
+            hasBatchKey.value = false;
+        }
+    },
+    { immediate: true }
+);
 </script>
 
 <template>
@@ -548,14 +566,13 @@ function buildQuoteURL() {
         <DatePicker
           v-if="canShow('previous_policy_expiry_date') && filters.displayBy === RetentionReportEnum.BATCH"
           v-model="filters.policyExpiryDate"
-          label="Policy Expiry Date"
+          label="Previous policy Expiry Date"
           placeholder="Select Start & End Date"
           range
           size="sm"
           model-type="yyyy-MM-dd"
-          :max-range="31"
         />
-        
+
         <DatePicker
           label="Select month"
           v-if="filters.displayBy === RetentionReportEnum.MONTHLY"
@@ -592,7 +609,7 @@ function buildQuoteURL() {
           :options="advisorOptions"
           :loading="loaders.advisorOptions"
         />
-        
+
         <x-select
           v-if="canShow('insurance_type')"
           v-model="filters.insurance_type"
@@ -617,7 +634,7 @@ function buildQuoteURL() {
             </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Select LOB and select view by and select month or select expiry date   
+                Select LOB and select view by and select month or select expiry date
               </span>
             </template>
           </x-tooltip>
@@ -701,7 +718,7 @@ function buildQuoteURL() {
           </template>
         </x-tooltip>
       </template>
-    
+
       <template #item-volume_gross_retention="item">
         <x-tooltip placement="left">
           <span class="underline decoration-dotted">{{ item.volume_gross_retention }}</span>
@@ -734,13 +751,13 @@ function buildQuoteURL() {
           </template>
         </x-tooltip>
       </template>
-      
+
       <template #body-append>
         <tr v-if="reportData.length > 0 || reportData.data && reportData.data.length > 0" class="total-row">
           <td class="direction-left">Total</td>
-          <td v-if="filters.displayBy === RetentionReportEnum.BATCH"></td>
-          <td v-if="filters.displayBy === RetentionReportEnum.BATCH"></td>
-          <td v-if="filters.displayBy === RetentionReportEnum.BATCH"></td>
+          <td v-if="hasBatchKey"></td>
+          <td v-if="hasBatchKey"></td>
+          <td v-if="hasBatchKey"></td>
           <td></td>
           <td>{{ footerData.total }}</td>
           <td>{{ footerData.lost }}</td>
