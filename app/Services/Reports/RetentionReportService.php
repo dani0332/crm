@@ -29,10 +29,9 @@ class RetentionReportService extends BaseService
 
     private $dateFormat;
     private $policyExpiryColumnName;
-    private $paginateData;
     private $monthColumnName;
 
-    public function __construct() { 
+    public function __construct() {
         $this->dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $this->policyExpiryColumnName = 'personal_quotes.previous_policy_expiry_date';
 
@@ -41,8 +40,6 @@ class RetentionReportService extends BaseService
         } else {
             $this->monthColumnName = 'quote_batches.start_date';
         }
-
-        $this->paginateData = 12;
     }
 
     /**
@@ -59,15 +56,13 @@ class RetentionReportService extends BaseService
 
         // Build the query based on the model object and request parameters
         $query = $this->buildQuery($request);
-
-        // $query->dd();
         $allData = $query->get();
 
         $aggregatedData= $this->getSummarizedData($allData);
 
         if (!$isExport){
             // Paginate the query results and retain the query string
-            $reportData = $query->paginate($this->paginateData)->withQueryString();
+            $reportData = $query->paginate(12)->withQueryString();
         } else {
             $reportData = $allData;
         }
@@ -82,7 +77,7 @@ class RetentionReportService extends BaseService
     /**
      * Retrieves the quote type from the request or defaults to the user's product name.
      *
-     * @return string 
+     * @return string
      */
     private function getQuoteType($request)
     {
@@ -93,7 +88,7 @@ class RetentionReportService extends BaseService
     /**
      * Checks if the authenticated user is either a manager or an advisor with the appropriate permissions.
      *
-     * @return bool 
+     * @return bool
      */
     private function isAdvisorManager()
     {
@@ -109,13 +104,13 @@ class RetentionReportService extends BaseService
             return false;
         }
         return true;
-       
+
     }
-    
+
     /**
      * Builds the query for retrieving retention report data based on the provided model and request parameters.
      *
-     * @return \Illuminate\Database\Eloquent\Builder 
+     * @return \Illuminate\Database\Eloquent\Builder
      */
     private function buildQuery($request)
     {
@@ -128,7 +123,7 @@ class RetentionReportService extends BaseService
                 SUM(CASE WHEN quote_status_id IN (".QuoteStatusEnum::Fake.", ".QuoteStatusEnum::Duplicate.") THEN 1 ELSE 0 END) as invalid,
                 SUM(CASE WHEN quote_status_id = ".QuoteStatusEnum::PolicyBooked." THEN 1 ELSE 0 END) as sales, advisor_id")
             ->join('users', 'advisor_id', '=', 'users.id');
-    
+
         // Apply general filters to the query based on the request parameters
         $this->applyFilters($query, $request);
         // Group the query results by advisor name
@@ -158,10 +153,10 @@ class RetentionReportService extends BaseService
 
         // Apply date range filters to the query
         $this->applyDateFilters($query, $request, $isDetailsFilter);
-    
+
         // Apply team-related filters to the query
         $this->applyTeamFilters($query, $request);
-    
+
         // Apply quote type filters to the query
         $this->applyQuoteTypeFilters($query, $request);
 
@@ -197,7 +192,7 @@ class RetentionReportService extends BaseService
         $lobId = QuoteTypeRepository::where('code', $lob)->first();
         $query->where('quote_type_id', $lobId->id);
 
-        // Uncomment when move to stage or when we have renewel_upload data 
+        // Uncomment when move to stage or when we have renewel_upload data
         // $query->where('source', LeadSourceEnum::RENEWAL_UPLOAD);
         if (in_array($quoteType, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE])){
             if ($quoteType == quoteTypeCode::GroupMedical){
@@ -210,8 +205,8 @@ class RetentionReportService extends BaseService
 
     /**
      * Applies various filters to the query based on the provided filters object.
-     * This filters effect only when we get report details 
-     * 
+     * This filters effect only when we get report details
+     *
      * @return void
      */
     private function applyFiltersToQuery($query, $filters)
@@ -224,7 +219,7 @@ class RetentionReportService extends BaseService
         if (($filters->displayBy == null || $filters->displayBy == RetentionReportEnum::BATCH) && $filters->quote_batch_id){
             $query->where('quote_batch_id', $filters->quote_batch_id);
         }
-    
+
         // Apply type-based filters if the type is set in the filters object
         if (isset($filters->type)) {
             switch ($filters->type) {
@@ -255,20 +250,20 @@ class RetentionReportService extends BaseService
         // Check if 'policyExpiryDate' or 'month' is not set in the request
         if (!isset($request['displayBy']) && !isset($request['policyExpiryDate']) && !isset($request['month'])) {
             $currentDate = Carbon::now();
-    
+
             // Calculate the start date of the previous month
             $previousMonthStartDate = $currentDate->copy()->subMonth()->startOfMonth();
-    
+
             // Calculate the end date of the next month
             $nextMonthEndDate = $currentDate->copy()->addMonth()->endOfMonth();
-    
+
             // Format the dates according to the specified date format
             $previousMonthStartDateFormatted = $previousMonthStartDate->format($this->dateFormat);
             $nextMonthEndDateFormatted = $nextMonthEndDate->format($this->dateFormat);
-    
+
             // Apply the date range filter to the query
             $query->whereBetween($this->policyExpiryColumnName, [$previousMonthStartDateFormatted, $nextMonthEndDateFormatted]);
-            
+
             // Apply quote batch start and end date filter
             $query->whereBetween("quote_batches.start_date", [$previousMonthStartDateFormatted, $nextMonthEndDateFormatted]);
 
@@ -298,7 +293,7 @@ class RetentionReportService extends BaseService
             });
         }
     }
-    
+
     /**
      * Applies advisor filters to the query based on the request parameters.
      * Filters the query to include only the specified advisors.
@@ -313,7 +308,7 @@ class RetentionReportService extends BaseService
             $query->whereIn('advisor_id', $request['advisors']);
         }
     }
-    
+
     /**
      * Applies quote type filters to the query based on the request parameters.
      * Filters the query based on the line of business (LOB) and insurance type.
@@ -324,7 +319,7 @@ class RetentionReportService extends BaseService
     {
         // Get the line of business (LOB) from the request or default to the user's product name
         $lob = $this->getQuoteType($request);
-    
+
         // Apply filters based on the LOB
         if ($lob === quoteTypeCode::CORPLINE) {
             // Filter for corporate line of business
@@ -351,7 +346,7 @@ class RetentionReportService extends BaseService
         if (auth()->user()->isManagerOrDeputy() && Auth::user()->can(PermissionsEnum::MANAGER_RETENTION_REPORT_VIEW)) {
             $assigneeIds = UserManager::where('manager_id', Auth::user()->id)->get()->pluck('user_id')->toArray();
             $query->whereIn('users.id', $assigneeIds);
-        } 
+        }
         // Check if the user is an advisor and has the permission to view the advisor retention report
         elseif (auth()->user()->isAdvisor() && Auth::user()->can(PermissionsEnum::ADVISOR_RETENTION_REPORT_VIEW)) {
             // Filter the query to include only the data for the current advisor
@@ -418,7 +413,7 @@ class RetentionReportService extends BaseService
         // Create Carbon instances for the start and end dates of the month
         $startDate = Carbon::createFromDate($year, ($monthNumber + 1 ), 1);
         $endDate = $startDate->copy()->endOfMonth();
-    
+
         // Return the formatted start and end dates
         return [
             'start_date' => $startDate->format($this->dateFormat),
@@ -434,21 +429,21 @@ class RetentionReportService extends BaseService
      */
     private function formatReportData($reportData, $aggregatedData)
     {
-        $avgVolumeNetRetention = $aggregatedData['volume_net_retention']; 
+        $avgVolumeNetRetention = $aggregatedData['volume_net_retention'];
         // Iterate through each report in the report data
         foreach ($reportData as $report) {
             $totalInvalid = $report->total - $report->invalid;
-    
+
             // Calculate and format retention percentages
             $report->volume_net_retention = $this->calculateRetentionPercentage(
-                $report->sales, 
+                $report->sales,
                 $totalInvalid
             );
             $report->volume_gross_retention = $this->calculateRetentionPercentage(
-                $report->sales, 
+                $report->sales,
                 $report->total
             );
-            
+
             $report->relative_retention = $this->calculateAdvisorRetentionPercentage(
                 $avgVolumeNetRetention,
                 $report->volume_net_retention
@@ -498,14 +493,14 @@ class RetentionReportService extends BaseService
         $this->applyFiltersToQuery($query, $request);
 
         // Return the paginated results with query string
-        return $query->paginate($this->paginateData)->withQueryString();
+        return $query->paginate(12)->withQueryString();
     }
 
     /**
      * Calculates and returns the footer data for the report.
      * This method aggregates the report data, calculates the total valid entries,
      * and computes the volume net retention and volume gross retention percentages.
-     * @return array 
+     * @return array
      */
     public function getSummarizedData($reportData){
         $aggregatedData = $this->aggregateReportData($reportData);
@@ -515,12 +510,12 @@ class RetentionReportService extends BaseService
 
         // Calculate and format retention percentages
         $volumeNetRetention = $this->calculateRetentionPercentage(
-            $aggregatedData['sales'], 
+            $aggregatedData['sales'],
             $totalInvalid
         );
 
         $volumeGrossRetention = $this->calculateRetentionPercentage(
-            $aggregatedData['sales'], 
+            $aggregatedData['sales'],
             $aggregatedData['total']
         );
 
@@ -537,7 +532,7 @@ class RetentionReportService extends BaseService
     /**
      * Aggregates the report data by summing up the total, sales, invalid, and lost values.
      *
-     * @return array 
+     * @return array
      */
     private function aggregateReportData($reportData)
     {
@@ -556,30 +551,11 @@ class RetentionReportService extends BaseService
     /**
      * Calculates the retention percentage based on sales and total values.
      *
-     * @return string 
+     * @return string
      */
     private function calculateRetentionPercentage($sales, $total)
     {
         return ($total != 0) ? number_format(($sales / $total) * 100, 2) . '%' : '0.00%';
-    }
-
-    /**
-     * Determines whether the batch column should be shown in the report.
-     * This method checks the first item in the provided retention report data to see if it has a 'batch' attribute.
-     * If the 'batch' attribute is present and not null, the method returns true, indicating that the batch column should be shown.
-     *
-     * @return bool 
-     */
-    public function isShowBatchColumn($retentionReportData)
-    {
-        $isShowBatchColumn = false;
-        if (count($retentionReportData) != 0) {
-            $firstRetentionReporData = $retentionReportData->first();
-            if ($firstRetentionReporData && $firstRetentionReporData->getAttribute('batch') !== null) {
-                $isShowBatchColumn = true;
-            }
-        }
-        return $isShowBatchColumn;
     }
 
    /**
@@ -590,13 +566,13 @@ class RetentionReportService extends BaseService
     public function getFilterOptions()
     {
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
-        
+
         $advisors = [];
         $teams = [];
 
         // Get lines of business (LOB) based on user permissions
         $lobs = $this->getLobByPermissions();
-        
+
         // Create an instance of DropdownSourceService to fetch dropdown data
         $dropdownSourceService = new DropdownSourceService();
 
@@ -609,10 +585,10 @@ class RetentionReportService extends BaseService
                 return ['value' => $type['id'], 'label' => $type['text']];
             })
             ->toArray();
-        
+
         // Re-index the array to ensure it starts from 0
         $businessInsuranceType = array_values($businessInsuranceType);
-        
+
         // Define the insurance types with the filtered business insurance types
         $insuranceType = [
             quoteTypeCode::CORPLINE => $businessInsuranceType,
@@ -631,7 +607,7 @@ class RetentionReportService extends BaseService
     /**
      * Retrieves the lines of business (LOB) based on the user's permissions.
      *
-     * @return array 
+     * @return array
      */
     public function getLobByPermissions()
     {
@@ -657,7 +633,7 @@ class RetentionReportService extends BaseService
     /**
      * Retrieves the filter options based on the lines of business (LOB) and user roles.
      *
-     * @return array 
+     * @return array
      */
     public function getFiltersByLob()
     {
@@ -696,36 +672,5 @@ class RetentionReportService extends BaseService
                 'can_view' => $canView,
             ],
         ];
-    }
-
-   /**
-     * Generates a URL based on the quote type.
-     *
-     * This method constructs a URL based on the provided quote type. It handles different cases for personal quotes,
-     * group medical quotes, corporate line quotes, and other types of quotes.
-     *
-     * @return string 
-     */
-    public function buildQuoteURL($request)
-    {
-        // Get the quote type and capitalize the first letter
-        $quoteType = ucfirst($this->getQuoteType($request));
-    
-        // Define the mapping of quote types to their corresponding paths
-        $quoteTypePaths = [
-            quoteTypeCode::Car => 'car.show',
-            quoteTypeCode::Health => 'health.show',
-            quoteTypeCode::Travel => 'travel.show',
-            quoteTypeCode::Bike => 'bike-quotes-show',
-            quoteTypeCode::Pet => 'pet-quotes-show',
-            quoteTypeCode::Cycle => 'cycle-quotes-show',
-            quoteTypeCode::Yacht => 'yacht-quotes-show',
-            quoteTypeCode::Life => 'life-quotes-show',
-            quoteTypeCode::Home => 'home.show',
-            quoteTypeCode::GroupMedical => 'amt.show',
-            quoteTypeCode::CORPLINE => 'business.show',
-        ];
-    
-        return $quoteTypePaths[$quoteType] ?? null;
     }
 }

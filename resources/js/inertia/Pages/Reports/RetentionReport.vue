@@ -260,11 +260,6 @@ onMounted(() => {
     filters.displayBy = RetentionReportEnum.BATCH
     filters.lob = props.productName
   }
-
-  // if (filters.lob !== ''){
-  //   onLobChange(filters.lob, true);
-  // }
-
   if([quoteTypeCodeEnum.Health,
       quoteTypeCodeEnum.CORPLINE
   ].includes(filters.lob)) {
@@ -571,6 +566,7 @@ watch(
           range
           size="sm"
           model-type="yyyy-MM-dd"
+          :max-range="31"
         />
 
         <DatePicker
