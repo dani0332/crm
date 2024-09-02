@@ -3642,6 +3642,7 @@ const onAddUpdate = () => {
       @copyUploadURL="copyUploadURL"
       quoteType="Car"
       :paymentStatusEnum="paymentStatusEnum"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy

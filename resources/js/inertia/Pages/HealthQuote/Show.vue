@@ -3621,6 +3621,7 @@ const onAddUpdate = () => {
       quoteType="Health"
       :sendPolicy="sendPolicy"
       @sendPolicyToClient="sendPolicyToClient"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy
