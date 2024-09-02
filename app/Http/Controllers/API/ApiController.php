@@ -96,7 +96,11 @@ class ApiController extends Controller
     public function logFollowUpEvent(EmailEventsRequest $request)
     {
         $quote = HealthQuote::where('uuid', $request->uuid)->first();
+        if(! $quote) {
+            return apiResponse([], Response::HTTP_NOT_FOUND, 'Lead not found');
+        }
         $request->quoteId = $quote->id;
+        $request->quoteTypeId = $quote->quote_type_id;
         $request->customerEmail = $request->customer_email;
         return  $this->emailStatusService->addEmailStatus($request, $request->message_id, $request->subject, ProcessStatusCode::SENT);
     }

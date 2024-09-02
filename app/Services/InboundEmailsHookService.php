@@ -119,7 +119,6 @@ class InboundEmailsHookService extends BaseService
         try {
         info('Bird Webhook Received Successfully!');
         $payload = collect(request()->input('payload') ?? []);
-
         if ($payload->isEmpty()) {
             info('Webhook Payload is empty!');
             return apiResponse([], Response::HTTP_BAD_REQUEST, 'Webhook Payload is empty!');
@@ -149,14 +148,13 @@ class InboundEmailsHookService extends BaseService
             }
             EmailStatusEventJob::dispatch($emailData);
             info('EmailStatusEventJob dispatched successfully!');
-            return apiResponse([], Response::HTTP_OK, 'Webhook Received Successfully!');
         }
         else
         {
             $msg = 'EmailData not found for msg_id: ' . $messageId;
             info($msg);
-            return apiResponse([], Response::HTTP_NOT_FOUND, $msg);
         }
+        return apiResponse([], Response::HTTP_OK, 'Webhook Received Successfully!');
         } catch (\Throwable $th) {
             info("Bird Webhook Error: {$th->getMessage()} on line: {$th->getLine()} in file: {$th->getFile()} | " . PHP_EOL . $th->getTraceAsString());
             throw $th;
