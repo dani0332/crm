@@ -49,7 +49,10 @@ const onSubmit = () => {
 </script>
 
 <template>
-  <x-accordion class="p-4 rounded shadow mb-6 bg-white">
+  <x-accordion
+    v-if="hasRole(rolesEnum.Engineering)"
+    class="p-4 rounded shadow mb-6 bg-white"
+  >
     <x-accordion-item @change="onChange">
       <h3 class="font-semibold text-primary-800 text-lg">
         Quote Data For Engineering Only
