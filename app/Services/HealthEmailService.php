@@ -13,7 +13,7 @@ class HealthEmailService extends BaseService
         info('Sending OCA Health followups email for lead: '.$lead->uuid.' | Time: '.now());
         if (! $lead->oca_flow_enabled) {
             $advisor = User::where('id', $lead->advisor_id)->first();
-            $emailData = $this->mapDataForOCAFollowupEmail($lead, $advisor);
+            $emailData = $this->mapDataForFollowupEmail($lead, $advisor);
             $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_OCA_HEALTH_WORKFLOW)->first();
             if ($sicEvent) {
                 $responseCode = $birdService->triggerWebHookRequest($sicEvent->value, $emailData);
@@ -31,7 +31,7 @@ class HealthEmailService extends BaseService
         return $responseCode ?? null;
     }
 
-    public function mapDataForOCAFollowupEmail($lead, $advisor)
+    public function mapDataForFollowupEmail($lead, $advisor)
     {
         return (object) [
             'quoteUID' => $lead->code,
