@@ -88,6 +88,9 @@ const openDuplicate = () => {
   leadDuplicateForm.reset();
 };
 
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+
 const onCreateDuplicate = isValid => {
   if (!isValid) return;
   leadDuplicateForm.post(route('createDuplicate'), {
@@ -536,6 +539,10 @@ const onAddUpdate = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LOST REASON</dt>
                 <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
@@ -1034,6 +1041,7 @@ const onAddUpdate = () => {
       :insly-id="quote?.quote_detail?.insly_id"
       :expanded="sectionExpanded"
       quoteType="Pet"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy

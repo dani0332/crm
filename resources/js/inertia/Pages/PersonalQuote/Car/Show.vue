@@ -1644,16 +1644,21 @@ const onAddUpdate = () => {
                 <dd>{{ selectedProviderPlan.premium ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AUTHORISED AT</dt>
+                <dd>{{ record.paid_at ?? 'N/A' }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAID AT</dt>
-                <dd>{{ record.paid_at ?? '' }}</dd>
+                <dd>{{ record.payment_paid_at ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT STATUS</dt>
-                <dd>{{ record.payment_status_id_text ?? '' }}</dd>
+                <dd>{{ record.payment_status_id_text ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PROVIDER NAME</dt>
-                <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
+                <dd>{{ selectedProviderPlan.providerName ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT METHOD</dt>
@@ -1661,13 +1666,13 @@ const onAddUpdate = () => {
                   {{
                     record.payment_gateway === 'NGENIUS'
                       ? 'CREDIT CARD'
-                      : record.payment_gateway
+                      : (record.payment_gateway ?? 'N/A')
                   }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PLAN NAME</dt>
-                <dd>{{ selectedProviderPlan.planName }}</dd>
+                <dd>{{ selectedProviderPlan.planName ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ECOMMERCE</dt>
@@ -1675,20 +1680,20 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">QUOTE LINK</dt>
-                <dd>{{ record.quote_link ?? '' }}</dd>
+                <dd>{{ record.quote_link ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ORDER REFERENCE</dt>
-                <dd>{{ record.order_reference ?? '' }}</dd>
+                <dd>{{ record.order_reference ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT REFERENCE</dt>
-                <dd>{{ record.payment_reference ?? '' }}</dd>
+                <dd>{{ record.payment_reference ?? 'N/A' }}</dd>
               </div>
             </dl>
             <div class="grid sm:grid-cols-1 mt-3">
               <dt class="font-medium mb-3">ADDONS</dt>
-              <dd>
+              <dd v-if="carQuotePlanAddons.length > 0">
                 <table style="width: 100%">
                   <thead></thead>
                   <tbody>
@@ -1729,6 +1734,7 @@ const onAddUpdate = () => {
                   </tbody>
                 </table>
               </dd>
+              <dd v-else>N/A</dd>
             </div>
           </div>
         </template>
@@ -1956,6 +1962,10 @@ const onAddUpdate = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ENQUIRY COUNT</dt>
                 <dd>{{ record.enquiry_count }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ record.transaction_approved_at }}</dd>
               </div>
             </dl>
           </div>
@@ -3088,6 +3098,7 @@ const onAddUpdate = () => {
                 isDisabled,
                 puaPremium,
                 puaType,
+                isSystemDiscountPrice,
               }"
             >
               <p>{{ providerName }}</p>
@@ -3116,7 +3127,14 @@ const onAddUpdate = () => {
                 >
                   Hidden
                 </x-tag>
-
+                <x-tag
+                  v-if="isSystemDiscountPrice"
+                  size="xs"
+                  color="danger"
+                  class="mt-0.5 text-[10px]"
+                >
+                  SDP
+                </x-tag>
                 <x-tag
                   v-if="puaType"
                   size="xs"
@@ -3624,6 +3642,7 @@ const onAddUpdate = () => {
       @copyUploadURL="copyUploadURL"
       quoteType="Car"
       :paymentStatusEnum="paymentStatusEnum"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy
@@ -3687,7 +3706,6 @@ const onAddUpdate = () => {
             :items="emailStatuses || []"
             show-index
             border-cell
-            fixed-checkbox
             hide-rows-per-page
             hide-footer
           >
@@ -3818,7 +3836,6 @@ const onAddUpdate = () => {
             :items="activities || []"
             show-index
             border-cell
-            fixed-checkbox
             hide-rows-per-page
             hide-footer
           >

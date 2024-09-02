@@ -1,0 +1,54 @@
+<?php
+
+namespace App\Jobs;
+
+use App\Services\SendEmailCustomerService;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+
+class PaymentNotificationEmailJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    private $lead = null;
+    private $totalLead = null;
+    private $user = null;
+    public $tries = 3;
+    public $timeout = 30;
+    public $backoff = 10;
+
+    /**
+     * Create a new job instance.
+     *
+     * @return void
+     */
+    public function __construct($lead, $user, $totalLead)
+    {
+        $this->lead = $lead;
+        $this->user = $user;
+        $this->totalLead = $totalLead;
+    }
+
+    /**
+     * Execute the job.
+     *
+     * @return void
+     */
+    public function handle(SendEmailCustomerService $sendEmailCustomerService)
+    {
+        if (! $this->lead) {
+            info('PaymentNotificationEmailJob: Email data is not found');
+
+            return false;
+        }
+        if (! $this->user) {
+            info('PaymentNotificationEmailJob: User data is not found');
+
+            return false;
+        }
+        $sendEmailCustomerService->sendPaymentNotificationEmail($this->lead, $this->user, $this->totalLead);
+    }
+}

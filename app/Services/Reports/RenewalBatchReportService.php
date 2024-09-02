@@ -136,8 +136,11 @@ class RenewalBatchReportService extends BaseService
 
         $query = $this->applySuperRetentionFilters($query, $request->all());
 
-        return $query->paginate(15)
-            ->withQueryString();
+        info(self::class.' - Super Retention Query Executed', [
+            'query' => $query->toRawSql(),
+        ]);
+
+        return $query->get();
     }
 
     /**
@@ -811,7 +814,7 @@ class RenewalBatchReportService extends BaseService
                             (car_quote_request.quote_status_id IN (:transactionApproved) AND car_quote_request.quote_status_date <= ":reportDateEnd" AND car_quote_request.quote_status_date < ":m2ReleaseDate")
                         ) AND car_quote_request.advisor_id IN (:advisors)
                         THEN 1 ELSE 0 END) AS renewed',
-                    $this->getRetentionRenewedBindings($reportDateEnd, ['advisors' => $advisors])
+                    $this->getRetentionRenewedBindings($reportDateEnd, [':advisors' => $advisors])
                 )
             ),
 

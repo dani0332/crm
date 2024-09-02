@@ -9,6 +9,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessQuote;
 use App\Models\CustomerAdditionalInfo;
@@ -69,7 +70,7 @@ if (! function_exists('vAbort')) {
 if (! function_exists('generateUuid')) {
     function generateUuid()
     {
-        $client = new Hidehalo\Nanoid\Client();
+        $client = new Hidehalo\Nanoid\Client;
         $alphabets = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $nanoId = $client->formattedId($alphabets, 8);
 
@@ -711,6 +712,21 @@ if (! function_exists('mimeContentType')) {
         }
         if (! empty($mimeType)) {
             return array_search($mimeType, $mime_types);
+        }
+    }
+}
+if (! function_exists('checkAuthUserRole')) {
+    function checkAuthUserRole()
+    {
+
+        if (! Auth::check()) {
+            return false;
+        }
+
+        if (Auth::user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::HealthManager, RolesEnum::BusinessManager, RolesEnum::HomeManager, RolesEnum::LifeManager, RolesEnum::PetManager, RolesEnum::YachtManager, RolesEnum::TravelManager, RolesEnum::BikeManager, RolesEnum::CycleManager, RolesEnum::JetskiManager])) {
+            return true;
+        } else {
+            return false;
         }
     }
 }

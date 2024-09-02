@@ -85,6 +85,9 @@ const isProfileUpdateAllow = computed(() => {
   ]);
 });
 
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,
@@ -486,6 +489,10 @@ const onAddUpdate = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">OPERATOR EXPERIENCE</dt>
                 <dd>{{ quote?.yacht_quote?.operator_experience }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
             </dl>
           </div>
@@ -948,6 +955,7 @@ const onAddUpdate = () => {
       :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
       :insly-id="quote?.quote_detail?.insly_id"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy

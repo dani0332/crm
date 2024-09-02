@@ -97,7 +97,7 @@ class CarEmailService extends BaseService
 
         $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor);
         $emailData->isReAssignment = ! empty($previousAdvisor);
-        if ($carQuote->tier_id == $tierRId) {
+        if ($carQuote->source == LeadSourceEnum::RENEWAL_UPLOAD) {
             $emailData->isRenewal = true;
             $emailData->policyNumber = $carQuote->previous_quote_policy_number;
             $carbonDate = Carbon::parse($carQuote->previous_policy_expiry_date)->format('jS F Y');
@@ -131,7 +131,7 @@ class CarEmailService extends BaseService
         $emailData->totalPlans = count($insurerPlans);
         $emailData->isReAssignment = ! empty($previousAdvisor);
 
-        if ($carQuote->tier_id == $tierRId) {
+        if ($carQuote->source == LeadSourceEnum::RENEWAL_UPLOAD) {
             $emailData->isRenewal = true;
             $emailData->policyNumber = $carQuote->previous_quote_policy_number;
             $carbonDate = Carbon::parse($carQuote->previous_policy_expiry_date)->format('jS F Y');

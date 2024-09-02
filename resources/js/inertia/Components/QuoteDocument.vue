@@ -18,9 +18,14 @@ defineProps({
   },
   inslyId: String,
   sendPolicy: Boolean,
+  bookPolicyDetails: Array,
 });
 
-const emit = defineEmits(['copyUploadURL', 'sendPolicyToClient']);
+const emit = defineEmits([
+  'copyUploadURL',
+  'sendPolicyToClient',
+  'verifyDocuments',
+]);
 
 const page = usePage();
 const selectedTab = ref(0);
@@ -28,6 +33,8 @@ const uploadingStatus = ref({});
 const errorMsg = ref({});
 const successStatus = ref({});
 const can = permission => useCan(permission);
+const hasAnyRole = roles => useHasAnyRole(roles);
+const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
 const quoteDocumentsTable = reactive({
@@ -125,6 +132,10 @@ const sendPolicyToClient = () => {
   emit('sendPolicyToClient');
 };
 
+const updateDocumentValidate = () => {
+  emit('verifyDocuments', true);
+};
+
 const onDocDelete = name => {
   modals.docConfirm = true;
   confirmDeleteData.docs = name;
@@ -218,6 +229,29 @@ onMounted(() => {
           >
             Copy upload Link
           </x-button>
+          <x-tooltip placement="top">
+            <x-button
+              @click.prevent="updateDocumentValidate"
+              v-if="
+                (can(permissionEnum.DOCUMENT_VERIFY) ||
+                  hasAnyRole([
+                    rolesEnum.Admin,
+                    rolesEnum.Engineering,
+                    rolesEnum.TravelHapex,
+                  ])) &&
+                quoteType == 'Travel'
+              "
+              size="sm"
+              color="green"
+            >
+              Verify Documents
+            </x-button>
+            <template #tooltip>
+              Verify Documents: Clicking this button confirms that all submitted
+              documents are accurate and valid.</template
+            >
+          </x-tooltip>
+
           <x-button
             @click.prevent="uploadDocumentModal"
             size="sm"
@@ -257,12 +291,26 @@ onMounted(() => {
             #item-action="{ doc_name }"
           >
             <div>
+              <x-tooltip
+                placement="left"
+                v-if="bookPolicyDetails.isEnableUploadDocument === false"
+              >
+                <x-button size="xs" color="error" outlined disabled="true">
+                  Delete
+                </x-button>
+                <template #tooltip>
+                  This lead is now locked as the policy has been booked. If
+                  changes are needed, go to 'Send Update', select 'Add Update',
+                  and choose 'Correction of Policy Upload'
+                </template>
+              </x-tooltip>
+
               <x-button
                 size="xs"
                 color="error"
                 outlined
                 @click.prevent="onDocDelete(doc_name)"
-                v-if="readOnlyMode.isDisable === true"
+                v-else-if="readOnlyMode.isDisable === true"
               >
                 Delete
               </x-button>

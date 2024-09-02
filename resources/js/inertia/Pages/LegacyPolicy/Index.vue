@@ -5,7 +5,7 @@ defineProps({
   coveragePolicyMapping: Array,
 });
 
-const { isRequired } = useRules();
+const { isRequired, emptyOrNumericAndNoSpecialChar } = useRules();
 
 const page = usePage();
 const loader = reactive({
@@ -120,6 +120,7 @@ const productName = item => {
           name="mobile_no"
           label="Mobile Number"
           class="w-full"
+          :rules="[emptyOrNumericAndNoSpecialChar]"
           placeholder="Search by Mobile Number"
         />
       </div>
@@ -138,7 +139,6 @@ const productName = item => {
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-_id="item">
         <Link

@@ -61,6 +61,7 @@ defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   travelDestinations: Object,
+  isAmlClearedForQuote: Boolean,
 });
 
 const permissionEnum = page.props.permissionsEnum;
@@ -165,10 +166,30 @@ const onCreateDuplicate = isValid => {
   });
 };
 
-const genderText = gender =>
-  computed(() => {
-    return page.props.genderOptions[gender];
-  });
+const titleCase = str => {
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
+const genderText = gender => {
+  let genderText = '';
+
+  switch (gender) {
+    case 'M':
+      genderText = 'Male';
+      break;
+    case 'F':
+      genderText = 'Female';
+      break;
+    default:
+      genderText = gender || '';
+  }
+
+  return titleCase(genderText);
+};
 
 const lostReasonsOptions = computed(() => {
   return page.props.lostReasons.map(reason => ({
@@ -1751,6 +1772,10 @@ const onAddUpdate = () => {
                   </span>
                 </dt>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ quote.transaction_approved_at }}</dd>
+              </div>
             </dl>
           </div>
         </template>
@@ -1779,7 +1804,6 @@ const onAddUpdate = () => {
             </x-tag>
             <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
-
           <div
             class="grid sm:grid-cols-2"
             v-if="quoteRequest.child || quoteRequest.parent"
@@ -2207,7 +2231,7 @@ const onAddUpdate = () => {
               {{ relation?.text }}
             </template>
             <template #item-gender="{ gender }">
-              {{ gender === 'M' ? 'Male' : gender === 'F' ? 'Female' : '' }}
+              {{ genderText(gender) }}
             </template>
             <template #item-nationality="{ nationality }">
               {{ nationality?.text }}
@@ -2502,23 +2526,27 @@ const onAddUpdate = () => {
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
-                <dd>{{ selectedProviderPlan.premium }}</dd>
+                <dd>{{ selectedProviderPlan.premium ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AUTHORISED AT</dt>
+                <dd>{{ ecomDetails.paidAt ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAID AT</dt>
-                <dd>{{ ecomDetails.paidAt }}</dd>
+                <dd>{{ ecomDetails.paidAtPayment ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PAYMENT STATUS</dt>
-                <dd>{{ ecomDetails.paymentStatus }}</dd>
+                <dd>{{ ecomDetails.paymentStatus ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PROVIDER NAME</dt>
-                <dd>{{ selectedProviderPlan.providerName ?? '' }}</dd>
+                <dd>{{ selectedProviderPlan.providerName ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PLAN NAME</dt>
-                <dd>{{ selectedProviderPlan.planName ?? '' }}</dd>
+                <dd>{{ selectedProviderPlan.planName ?? 'N/A' }}</dd>
               </div>
             </dl>
           </div>
@@ -3011,6 +3039,8 @@ const onAddUpdate = () => {
         permissions.isQuoteDocumentEnabled
       "
       @sendPolicyToClient="sendPolicyToClient"
+      @verifyDocuments="getupdateDocumentValidate(true)"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy
@@ -3025,6 +3055,7 @@ const onAddUpdate = () => {
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+      :isAmlClearedForQuote="isAmlClearedForQuote"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

@@ -43,6 +43,25 @@ class TravelQuote extends Model implements AuditableContract
         'updated' => QuoteEmailUpdated::class,
     ];
 
+    protected static function booted()
+    {
+        static::updating(function ($model) {
+            $skipBookingDateUpdateForNonCPD = true;
+            if (isset(request()->sendUpdateId)) {
+                $travelQuote = new TravelQuote;
+                $endorsmentDetails = $travelQuote->isCPDEndorsment(request()->sendUpdateId);
+                if ($endorsmentDetails['isCPDEndorsment']) {
+                    info('Book Update - Policy Booking Date update is allowed for CPD Endorsment. Old PBD ('.$model->getOriginal('policy_booking_date').') - New PBD ('.$model->policy_booking_date.'). QuoteType: '.request()->quoteType.' - QuoteUUID: '.request()->quoteUuid.' - SendUpdateUUID: '.$endorsmentDetails['sendUpdateUUID']);
+                    $skipBookingDateUpdateForNonCPD = false;
+                }
+            }
+
+            if ($model->isDirty('policy_booking_date') && $model->getOriginal('policy_booking_date') && $skipBookingDateUpdateForNonCPD) {
+                info($model->code.' updating the value of policy_booking_date is skipped. tried to change policy_booking_date from '.$model->getOriginal('policy_booking_date').' to '.$model->policy_booking_date);
+                unset($model->policy_booking_date); // lock the policy booking date field
+            }
+        });
+    }
     public function quoteStatus()
     {
         return $this->belongsTo(QuoteStatus::class);
@@ -208,13 +227,14 @@ class TravelQuote extends Model implements AuditableContract
         });
     }
 
-    public function isPaymentAuthorized()
-    {
-        return $this->payments->count() > 0 && $this->payments->every(fn (Payment $payment) => $payment->isPaymentAuthorized());
-    }
-
     public function isMultiTrip()
     {
         return $this->coverage_code === TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP;
+    }
+
+    public function scopeFilterBySegment($query, $alias = 'tqr')
+    {
+        $segmentFilter = request()->input('segment_filter');
+        self::applySegmentFilter($query, $segmentFilter, $alias, QuoteTypeId::Travel);
     }
 }

@@ -18,6 +18,7 @@ class GenericPermissionSeeder extends Seeder
      */
     public function run()
     {
+
         // ADD Permission to Read only Access LOBS
         $readOnlyAccessPermission = Permission::where('name', PermissionsEnum::All_QUOTES_VIEWONLY_ACCESS)->first();
         if (! $readOnlyAccessPermission) {
@@ -259,6 +260,7 @@ class GenericPermissionSeeder extends Seeder
         // $this->advisorDistributionReportSeeds();
         // $this->addMotorHeadNewRole();
         // $this->createAndAssignManulHealthPlanPermission();
+        $this->syncMasterPermissionList();
     }
 
     /**
@@ -282,7 +284,7 @@ class GenericPermissionSeeder extends Seeder
         if (! $role->hasPermissionTo(PermissionsEnum::ADD_MANUAL_HEALTH_PLAN)) {
             $role->givePermissionTo(PermissionsEnum::ADD_MANUAL_HEALTH_PLAN);
         }
-        $this->syncMasterPermissionList();
+
     }
 
     private function generateSegmentFilterPermission()

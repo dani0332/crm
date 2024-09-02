@@ -24,15 +24,6 @@ const notes = ref(props.notes);
 const expandNotes = ref(false);
 const uploadedFiles = ref([]);
 
-const docForm = useForm({
-  quote_id: props.quote?.id || null,
-  quote_uuid: props.quote?.code || null,
-  quote_type: props.modelType,
-  quote_type_id: null,
-  document_type_code: null,
-  file: null,
-});
-
 const dateFormat = date => useDateFormat(date, 'DD-MMM-YYYY h:mm:ss a').value;
 
 const tableHeader = reactive([
@@ -252,47 +243,6 @@ watch(
     notes.value = props.notes;
   },
 );
-
-// const uploadData = () => {
-//   let url = `/quotes/${props.modelType}/documents/store`;
-//   const { files, rejectReason } = filesWithInfo;
-//   if (files.length == 0) {
-//     notification.error({
-//       title: 'File upload failed',
-//       position: 'top',
-//     });
-//     docForm.setError({ error: fileUploadErrorMessage(doc, rejectReason) });
-//     return false;
-//   }
-//   isUploading.value = true;
-//   docForm
-//     .transform(data => ({
-//       ...data,
-//       quote_type_id: doc.quote_type_id,
-//       document_type_code: doc.code,
-//       folder_path: doc.folder_path,
-//       files: files,
-//     }))
-//     .post(url, {
-//       preserveScroll: true,
-//       preserveState: true,
-
-//       onError: errors => {
-//         docForm.setError(errors.error);
-//         notification.error({
-//           title: 'File upload failed',
-//           position: 'top',
-//         });
-//       },
-//       onFinish: () => {
-//         isUploading.value = false;
-//       },
-//     });
-// };
-// const { files, open, reset, onChange } = useFileDialog({
-//   accept: 'image/*', // Set to accept only image files
-//   directory: false, // Select directories instead of files if set true
-// });
 </script>
 <template>
   <div v-if="can(permissionsEnum.SAVE_QUOTE_NOTES)">
@@ -326,7 +276,6 @@ watch(
         border-cell
         hide-rows-per-page
         hide-footer
-        fixed-checkbox
         class="mt-5"
       >
         <template #header-note="note">

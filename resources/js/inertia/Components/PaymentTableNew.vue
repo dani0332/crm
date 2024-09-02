@@ -2358,7 +2358,7 @@ const retryForm = useForm({
   payment_process_job_id: null,
 });
 
-const deleteDocument = (docName, count) => {
+const deleteDocument = (docName, count, docId) => {
   if (paymentMethodsForm.status == 'edit') {
     if (fileUploadModels.value[count]) {
       fileUploadModels.value[count] = fileUploadModels.value[count].filter(
@@ -2375,7 +2375,7 @@ const deleteDocument = (docName, count) => {
         item => item.doc_name !== docName,
       );
     }
-    trashedFilesModal.value.push(docName);
+    trashedFilesModal.value.push(docId);
   } else if (
     paymentMethodsForm.status == 'view' &&
     paymentMethodsForm.collection_type === 'insurer' &&
@@ -2774,7 +2774,8 @@ const providerId = computed(() => {
     return (
       props.sendUpdate?.insurance_provider_id ||
       props.quoteRequest?.insurance_provider_details?.id ||
-      props.quoteRequest?.plan?.provider_id
+      props.quoteRequest?.plan?.provider_id ||
+      props.quoteRequest?.insurance_provider?.id
     );
   } else if (plan && plan.insurance_provider) {
     return plan.insurance_provider.id;
@@ -3501,23 +3502,6 @@ const splitPaymentTotalPrice = (
                           outlined
                           >Copy Payment Link</x-button
                         >
-                        <x-button
-                          v-if="
-                            can(permissionEnum.ApprovePayments) &&
-                            splitPayment.process_job?.status === 'failed'
-                          "
-                          size="xs"
-                          color="red"
-                          class="ml-2"
-                          @click="
-                            retrySplitPaymentModal(
-                              splitPayment.process_job?.id,
-                              splitPayment.process_job?.message,
-                            )
-                          "
-                          outlined
-                          >Retry</x-button
-                        >
                       </div>
                     </td>
                   </tr>
@@ -4065,7 +4049,7 @@ const splitPaymentTotalPrice = (
                 </span>
                 <span
                   class="delete-pointer"
-                  @click="deleteDocument(fileData.doc_name, 0)"
+                  @click="deleteDocument(fileData.doc_name, 0, fileData.id)"
                   v-if="!isFieldReadonly"
                 >
                   &#10006;
@@ -4811,7 +4795,9 @@ const splitPaymentTotalPrice = (
                       </span>
                       <span
                         class="delete-pointer"
-                        @click="deleteDocument(fileData.doc_name, count)"
+                        @click="
+                          deleteDocument(fileData.doc_name, count, fileData.id)
+                        "
                         v-if="!readOnlyPayments[count]"
                       >
                         <x-tooltip>
@@ -5062,7 +5048,13 @@ const splitPaymentTotalPrice = (
                   </span>
                   <span
                     class="delete-pointer"
-                    @click="deleteDocument(fileData.doc_name, splitPaymentNo)"
+                    @click="
+                      deleteDocument(
+                        fileData.doc_name,
+                        splitPaymentNo,
+                        fileData.id,
+                      )
+                    "
                     v-if="!readOnlyPayments[splitPaymentNo]"
                   >
                     &#10006;

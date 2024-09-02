@@ -66,6 +66,9 @@ const genderText = gender =>
     return page.props.genderOptions[gender];
   });
 
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+
 const modals = reactive({
   duplicate: false,
   member: false,
@@ -698,6 +701,11 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 <dt class="font-medium">PRICE</dt>
                 <dd>{{ quote.premium }}</dd>
               </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
+              </div>
             </dl>
           </div>
         </template>
@@ -1112,6 +1120,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :insly-id="quoteDetails?.insly_id"
       :expanded="sectionExpanded"
       quoteType="Business"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy

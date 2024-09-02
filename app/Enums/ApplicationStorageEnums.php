@@ -100,6 +100,7 @@ final class ApplicationStorageEnums extends Enum
     public const SEND_UPDATE_EMAIL = 'SEND_UPDATE_EMAIL';
     public const SEND_POLICY_UPDATE_EMAIL = 'SEND_POLICY_UPDATE_EMAIL';
     public const ALFRED_FOLLOWUP_TEMPLATE = 'ALFRED_FOLLOWUP_TEMPLATE';
+    public const PAYMENT_NOTIFICATION_EMAIL_TEMPLATE = 'PAYMENT_NOTIFICATION_EMAIL_TEMPLATE';
     public const SIC_FOLLOWUP_TEMPLATE_ID = 'SIC_FOLLOWUP_TEMPLATE_ID';
     public const BRIDGER_PASSWORD = 'BRIDGER_PASSWORD';
     public const HEALTH_OCB_EMAIL_TEMPLATE = 'HEALTH_OCB_EMAIL_TEMPLATE';
@@ -122,6 +123,7 @@ final class ApplicationStorageEnums extends Enum
     public const SIC_TRAVEL_EMAIL_CC = 'SIC_TRAVEL_EMAIL_CC';
     public const TRAVEL_EMAIL_REPLY_TO = 'TRAVEL_EMAIL_REPLY_TO';
     public const DIS_INBOX_EMAIL_BCC = 'DIS_INBOX_EMAIL_BCC';
+    public const BIRD_SIC_HEALTH_WORKFLOW = 'BIRD_SIC_HEALTH_WORKFLOW';
 
     // Health Plan Insurer Provider For Send & Book Policy
     public const BUP_HEALTH_DOC = 'BUP_HEALTH_DOC';
@@ -137,4 +139,7 @@ final class ApplicationStorageEnums extends Enum
     public const NAS_HEALTH_DOC = 'NAS_HEALTH_DOC';
     public const E_CARE_HEALTH_DOC = 'E_CARE_HEALTH_DOC';
     public const INSLY_M2_RELEASE_DATE = 'INSLY_M2_RELEASE_DATE';
+    public const ENABLE_PAYMENT_NOTIFICATION = 'ENABLE_PAYMENT_NOTIFICATION';
+    public const PAYMENT_AUTHORISED_DAYS = 'PAYMENT_AUTHORISED_DAYS';
+    public const ADVISOR_CONVERSION_QUOTE_STATUS_DATE = 'ADVISOR_CONVERSION_QUOTE_STATUS_DATE';
 }

@@ -795,6 +795,10 @@ const onAddUpdate = () => {
                 <dt class="font-medium">DETAILS</dt>
                 <dd>{{ quote.details }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ quote.transaction_approved_at }}</dd>
+              </div>
             </dl>
           </div>
         </template>
@@ -1317,6 +1321,7 @@ const onAddUpdate = () => {
       :quote="quote"
       :insly-id="quote?.insly_id"
       :expanded="sectionExpanded"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy

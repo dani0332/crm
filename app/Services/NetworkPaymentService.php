@@ -10,7 +10,7 @@ class NetworkPaymentService
         $apiTimeout = config('constants.NETWORK_REQUEST_TIMEOUT');
         $apiMerchantToken = config('constants.NETWORK_TOKEN_MERCHANT_TOKEN');
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client;
         $networkTokenRequest = $client->post(
             $apiEndPoint,
 
@@ -28,7 +28,7 @@ class NetworkPaymentService
         $apiEndPoint = config('constants.NETWORK_INVOICE_ENDPOINT').config('constants.NETWORK_OUTLET_REFERENCE').'/invoice';
         $apiTimeout = config('constants.NETWORK_REQUEST_TIMEOUT');
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client;
         $networkCreateInvoiceRequest = $client->post(
             $apiEndPoint,
 

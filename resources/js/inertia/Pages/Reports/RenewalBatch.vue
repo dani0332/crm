@@ -252,7 +252,7 @@ let totalAllocationList = [];
 let renewedCountsList = [];
 
 const reportDataRef = reactive(page.props.reportData.data);
-const superRetentionDataRef = reactive(page.props.superRetentionData.data);
+const superRetentionDataRef = reactive(page.props.superRetentionData);
 
 function getMonthName(monthNumber) {
   const date = new Date();
@@ -652,20 +652,6 @@ watch(
         />
 
         <ComboBox
-          v-if="hasAnyRole([rolesEnum.SeniorManagement, rolesEnum.Accounts])"
-          v-model="filters.teams"
-          label="Teams"
-          placeholder="Search by Teams"
-          :options="
-            Object.keys(filterOptions.teams).map(key => ({
-              value: key,
-              label: filterOptions.teams[key],
-            }))
-          "
-          @update:model-value="onTeamChange"
-        />
-
-        <ComboBox
           v-if="
             hasAnyRole([
               rolesEnum.CarManager,
@@ -699,6 +685,22 @@ watch(
           placeholder="Search by Sub Team"
           class="w-full"
           :options="subTeamsOptions"
+        />
+
+        <ComboBox
+          v-if="
+            hasAnyRole([
+              rolesEnum.CarManager,
+              rolesEnum.RenewalsManager,
+              rolesEnum.SeniorManagement,
+              rolesEnum.Accounts,
+            ])
+          "
+          v-model="filters.advisors"
+          label="Advisors"
+          placeholder="Search by Advisors"
+          :options="advisorOptions"
+          :loading="loaders.advisorOptions"
         />
 
         <x-select

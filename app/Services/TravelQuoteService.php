@@ -44,11 +44,11 @@ class TravelQuoteService extends BaseService
     public function __construct(LeadAllocationService $leadAllocationService)
     {
         $this->leadAllocationService = $leadAllocationService;
-        $this->query = DB::table('travel_quote_request as tqr')->select(
+        $this->query = TravelQuote::as('tqr')->select(
             'tqr.id',
             'tqr.uuid',
-            DB::raw('DATE_FORMAT(tqr.created_at, "%d-%m-%y %H:%i") as created_at'),
-            DB::raw('DATE_FORMAT(tqr.updated_at, "%d-%m-%y %H:%i") as updated_at'),
+            DB::raw('DATE_FORMAT(tqr.created_at, "%d-%m-%Y %H:%i") as created_at'),
+            DB::raw('DATE_FORMAT(tqr.updated_at, "%d-%m-%Y %H:%i") as updated_at'),
             'tqr.code',
             'tqr.days_cover_for',
             'tqr.details',
@@ -133,6 +133,7 @@ class TravelQuoteService extends BaseService
             'ent.industry_type_code',
             'ent.emirate_of_registration_id',
             'et.passport_number',
+            DB::raw('DATE_FORMAT(tqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
             'tqr.price_vat_not_applicable',
             'tqr.price_vat_applicable',
             'tqr.price_with_vat',
@@ -140,9 +141,11 @@ class TravelQuoteService extends BaseService
             'tqr.insurer_quote_number',
             'tqr.policy_issuance_status_id',
             'tqr.policy_issuance_status_other',
+            DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
             'tqr.policy_booking_date',
             'tqr.insly_migrated',
         )
+            ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'tqrd.lost_reason_id')
@@ -188,7 +191,7 @@ class TravelQuoteService extends BaseService
 
             foreach ($request->members as $member) {
                 $memberDob = \Carbon\Carbon::parse($member['dob'])->format('Y-m-d');
-                $memberData = new \stdClass();
+                $memberData = new \stdClass;
                 if (isset($member['primary'])) {
                     $memberData->primary = true;
                     $travelQuote['dob'] = $memberDob;
@@ -445,6 +448,7 @@ class TravelQuoteService extends BaseService
                 }
             }
         }
+        $this->query->filterBySegment();
         $this->adjustQueryByDateFilters($this->query, 'tqr');
 
         $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
@@ -778,7 +782,7 @@ class TravelQuoteService extends BaseService
             ...$extraData,
         ];
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client;
 
         try {
             $kenRequest = $client->post(

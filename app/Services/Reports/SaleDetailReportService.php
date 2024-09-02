@@ -45,7 +45,7 @@ class SaleDetailReportService extends ManagementReport
                 'personal_quotes.uuid',
                 'personal_quotes.source',
                 'personal_quotes.code',
-                't.name as team',
+                DB::raw('IFNULL(GROUP_CONCAT(DISTINCT t.name SEPARATOR ", "), "") as team'),
                 'personal_quotes.price_vat_applicable',
                 'personal_quotes.vat',
                 'personal_quotes.price_vat_not_applicable',
@@ -63,7 +63,7 @@ class SaleDetailReportService extends ManagementReport
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'payment_status.text as transaction_payment_status',
                 'p.captured_at as date_paid',
-                'personal_quotes.premium_captured as collected_amount',
+                'p.captured_amount as collected_amount',
                 'personal_quotes.first_name',
                 'personal_quotes.last_name',
                 'cm.code as customer_type',
@@ -79,9 +79,9 @@ class SaleDetailReportService extends ManagementReport
             ->join('payment_status', 'payment_status.id', '=', 'p.payment_status_id')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
             ->join('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
-            ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
             ->leftJoin('departments as dp', 'u.department_id', '=', 'dp.id')
+            ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
             ->leftJoin('user_team as ut', 'ut.user_id', '=', 'u.id')
             ->leftJoin('teams as t', 't.id', '=', 'ut.team_id')
@@ -130,6 +130,7 @@ class SaleDetailReportService extends ManagementReport
             $item->payment_due_date = ! empty($item->payment_due_date) ? Carbon::parse($item->payment_due_date)->format('Y-m-d') : null;
             $item->due_date = ! empty($item->due_date) ? Carbon::parse($item->due_date)->format('Y-m-d') : null;
             $item->total_price = number_format($item->total_price, 2);
+            $item->collected_amount = number_format($item->collected_amount, 2);
             $item->total_commission = number_format($item->total_commission, 2);
             $item->collects = strtoupper($item->collects);
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');

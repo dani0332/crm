@@ -63,6 +63,7 @@ const props = defineProps({
   emailStatuses: Array,
   quoteNotes: Object,
   paymentDocument: Array,
+  noteDocumentType: Array,
 });
 
 const isManualPlansCount = ref(0);
@@ -233,9 +234,6 @@ const memberCategoryText = memberCategoryId =>
 // });
 
 const subTeamOptions = [
-  { value: 'RM-NB', label: 'RM-NB' },
-  { value: 'RM-SPEED', label: 'RM-SPEED' },
-  { value: 'EBP', label: 'EBP' },
   { value: 'Best', label: 'Best' },
   { value: 'Good', label: 'Good' },
   { value: 'Entry-Level', label: 'Entry-Level' },
@@ -2120,6 +2118,10 @@ const onAddUpdate = () => {
                 <dt class="font-medium">ENQUIRY COUNT</dt>
                 <dd>{{ quote.enquiry_count }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ quote.transaction_approved_at }}</dd>
+              </div>
             </dl>
           </div>
         </template>
@@ -3076,8 +3078,12 @@ const onAddUpdate = () => {
                 <dd>{{ mainPayment?.payment_status_message }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">PAID AT</dt>
+                <dt class="font-medium">AUTHORISED AT</dt>
                 <dd>{{ quote.paid_at ?? 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PAID AT</dt>
+                <dd>{{ quote.payment_paid_at ?? 'N/A' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NETWORK</dt>
@@ -3590,7 +3596,6 @@ const onAddUpdate = () => {
         :items="emailStatuses || []"
         show-index
         border-cell
-        fixed-checkbox
         hide-rows-per-page
         hide-footer
       >
@@ -3616,6 +3621,7 @@ const onAddUpdate = () => {
       quoteType="Health"
       :sendPolicy="sendPolicy"
       @sendPolicyToClient="sendPolicyToClient"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy

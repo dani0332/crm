@@ -12,14 +12,22 @@ use Illuminate\Support\Facades\Log;
 
 class PersonalQuoteObserver
 {
+    public function updating(PersonalQuote $quote): void
+    {
+        if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
+            $quote->quote_status_date = now();
+        }
+    }
+
     public function updated(PersonalQuote $personalQuote): void
     {
         if (
             $personalQuote->isDirty('quote_status_id') &&
-            $personalQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
+            $personalQuote->quote_status_id === QuoteStatusEnum::TransactionApproved &&
+            checkPersonalQuotes($personalQuote->quoteType?->code)
         ) {
             MAWelcomeJob::dispatchIf(
-                checkPersonalQuotes($personalQuote->quoteType?->code) && isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)) && $personalQuote->customer,
+                isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)) && $personalQuote->customer,
                 $personalQuote->customer?->first_name,
                 $personalQuote->customer?->last_name,
                 $personalQuote->customer?->email,

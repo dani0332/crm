@@ -13,14 +13,22 @@ class TravelQuoteObserver
 {
     use PersonalQuoteSyncTrait;
 
+    public function updating(TravelQuote $quote): void
+    {
+        if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
+            $quote->quote_status_date = now();
+        }
+    }
+
     /**
      * Handle the TravelQuote "updated" event.
      */
     public function updated(TravelQuote $travelQuote): void
     {
+        $dirty = $travelQuote->getDirty();
         $changes = [];
 
-        foreach ($travelQuote->getDirty() as $attribute => $value) {
+        foreach ($dirty as $attribute => $value) {
             if ($travelQuote->isDirty($attribute)) {
                 $changes[$attribute] = [
                     'old' => $travelQuote->getOriginal($attribute),
@@ -34,7 +42,6 @@ class TravelQuoteObserver
             TravelQuoteAdvisorUpdated::dispatch($travelQuote, $oldAdvisorId);
         }
 
-        $dirty = $travelQuote->getDirty();
         if (
             $travelQuote->isDirty('quote_status_id') &&
             $travelQuote->quote_status_id === QuoteStatusEnum::TransactionApproved

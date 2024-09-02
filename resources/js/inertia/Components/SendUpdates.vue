@@ -149,6 +149,7 @@ const getSendUpdateOptions = () => {
     })
     .finally(() => {
       optionLoader.value = false;
+      addButtonLoader.value = false;
     });
 };
 

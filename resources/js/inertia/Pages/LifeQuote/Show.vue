@@ -64,6 +64,9 @@ const advisorOptions = computed(() => {
   }));
 });
 
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+
 const emiratesOptions = computed(() => {
   return page.props.emirates.map(em => ({
     value: em.id,
@@ -736,6 +739,10 @@ const onAddUpdate = () => {
                 <dd>{{ quote.policy_expiry_date }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip placement="bottom">
                     <label
@@ -1334,6 +1341,7 @@ const onAddUpdate = () => {
       :quote="quote"
       :insly-id="quote?.life_quote_request_detail?.insly_id"
       :expanded="sectionExpanded"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy

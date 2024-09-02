@@ -20,6 +20,9 @@ const rules = {
 };
 const notification = useNotifications('toast');
 
+const getLink = (quote_uuid, quote_type_id) =>
+  buildCdbidLink(quote_uuid, quote_type_id);
+
 const activityForm = useForm({
   title: null,
   description: null,
@@ -410,7 +413,6 @@ onMounted(() => {
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-title="{ title }">
         <div class="w-40 whitespace-normal">{{ title }}</div>
@@ -421,7 +423,12 @@ onMounted(() => {
       </template>
 
       <template #item-cdbid="item">
-        <div v-html="buildCdbidLink(item.quote_uuid, item.quote_type_id)"></div>
+        <SanitizeHtml
+          v-if="(item.quote_uuid, item.quote_type_id)"
+          :html="getLink(item.quote_uuid, item.quote_type_id)"
+          class="text-primary-500 hover:underline"
+          :key="item.quote_uuid"
+        />
       </template>
 
       <template #item-due_date="item">

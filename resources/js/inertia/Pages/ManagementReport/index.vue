@@ -6,7 +6,6 @@ import SalesSummary from './Partials/SaleSummary.vue';
 import Transaction from './Partials/Transaction.vue';
 import Installment from './Partials/Installment.vue';
 import Endorsement from './Partials/Endorsement.vue';
-import moment from 'moment';
 
 const props = defineProps({
   reportData: Object,
@@ -16,6 +15,9 @@ const props = defineProps({
 });
 
 const page = usePage();
+
+const dateFormat = date =>
+  date ? useDateFormat(date, 'YYYY-MM-DD').value : null;
 
 const reportComponents = {
   'Active Policies': ActivePolicies,
@@ -35,73 +37,71 @@ const isReportCategoryEmpty = ref(false);
 
 const { isRequired } = useRules();
 
-const filterkeys = () => {
-  if (filters.reportCategory != 'Ending Policies')
-    delete filters.policyExpiredDate;
-  if (
-    filters.reportCategory != 'Sales Summary' &&
-    filters.reportCategory != 'Sales Detail' &&
-    filters.reportCategory != 'Transaction' &&
-    filters.reportCategory != 'Installment' &&
-    filters.reportCategory != 'Endorsement'
-  ) {
-    delete filters.policyBookDate;
-    delete filters.paymentDueDate;
-  }
-  if (filters.reportCategory == 'Active Policies') {
-    delete filters.policyBookDate;
-    delete filters.paymentDueDate;
-    delete filters.policyExpiredDate;
-  }
-  if (
-    (filters.reportCategory == 'Sales Summary' ||
-      filters.reportCategory == 'Sales Detail') &&
-    filters.reportType == 'Booked Policies'
-  ) {
-    delete filters.paymentDueDate;
-  }
-  if (
-    (filters.reportCategory == 'Sales Summary' ||
-      filters.reportCategory == 'Sales Detail') &&
-    filters.reportType == 'Transaction Payments'
-  ) {
-    delete filters.policyBookDate;
-  }
-};
-
-let filters = reactive({
+const filters = reactive({
   reportCategory: props.defaultFilters.reportCategory,
   reportType: 'Booked Policies',
   policyBookDate: props.defaultFilters.policyBookDate ?? [
     new Date(),
     new Date(),
   ],
-  paymentDueDate: [
-    moment().format('YYYY-MM-DD'),
-    moment().format('YYYY-MM-DD'),
-  ],
-  policyExpiredDate: [
-    moment().format('YYYY-MM-DD'),
-    moment().format('YYYY-MM-DD'),
-  ],
-  createdAt: moment().format('YYYY-MM-DD'),
+  paymentDueDate: [dateFormat(new Date()), dateFormat(new Date())],
+  policyExpiredDate: [dateFormat(new Date()), dateFormat(new Date())],
+  createdAt: dateFormat(new Date()),
   transactionType: props.defaultFilters.transactionType ?? [],
   teams: [],
   subTeams: [],
   leadSources: [],
-  includeCancelledPolicies: null,
+  includeCancelledPolicies: 'Yes',
   groupBy: route().params.groupBy ?? 'advisor',
   utmGroupBy: [],
   export: 0, //false
   page: 1,
 });
 
+const filterkeys = () => {
+  const filterConditions = {
+    policyExpiredDate: filters.reportCategory !== 'Ending Policies',
+    policyBookDate: ![
+      'Sales Summary',
+      'Sales Detail',
+      'Transaction',
+      'Installment',
+      'Endorsement',
+    ].includes(filters.reportCategory),
+    paymentDueDate: ![
+      'Sales Summary',
+      'Sales Detail',
+      'Transaction',
+      'Installment',
+      'Endorsement',
+    ].includes(filters.reportCategory),
+    activePolicies: filters.reportCategory === 'Active Policies',
+    bookedPolicies:
+      ['Sales Summary', 'Sales Detail'].includes(filters.reportCategory) &&
+      filters.reportType === 'Booked Policies',
+    transactionPayments:
+      ['Sales Summary', 'Sales Detail'].includes(filters.reportCategory) &&
+      filters.reportType === 'Transaction Payments',
+  };
+
+  if (filterConditions.policyExpiredDate) delete filters.policyExpiredDate;
+  if (filterConditions.policyBookDate) delete filters.policyBookDate;
+  if (filterConditions.paymentDueDate) delete filters.paymentDueDate;
+  if (filterConditions.activePolicies) {
+    delete filters.policyBookDate;
+    delete filters.paymentDueDate;
+    delete filters.policyExpiredDate;
+  }
+  if (filterConditions.bookedPolicies) delete filters.paymentDueDate;
+  if (filterConditions.transactionPayments) delete filters.policyBookDate;
+};
+
 const loaders = reactive({
   table: false,
   subTeams: false,
 });
 
-let selectedReport = computed(() => {
+const selectedReport = computed(() => {
   return reportComponents[props.reportName] ?? SalesSummary;
 });
 
@@ -215,21 +215,6 @@ const cleanFilters = filters => {
   return filters;
 };
 
-watch(
-  () => filters.reportCategory,
-  (newReportCategory, oldReportCategory) => {
-    // This function will only run when reportCategory changes
-    // Your logic to update reportType based on reportCategory
-    let selectedReport = reportTypes.value.find(x =>
-      x.report.includes(newReportCategory),
-    );
-
-    if (selectedReport) {
-      filters.reportType = selectedReport.value;
-    }
-  },
-);
-
 const onTeamChange = e => {
   if (e.length == 0) return;
 
@@ -301,6 +286,19 @@ function setQueryStringFilters() {
 onMounted(() => {
   setQueryStringFilters();
 });
+
+watch(
+  () => filters.reportCategory,
+  newReportCategory => {
+    const selectedReport = reportTypes.value.find(x =>
+      x.report.includes(newReportCategory),
+    );
+
+    if (selectedReport) {
+      filters.reportType = selectedReport.value;
+    }
+  },
+);
 </script>
 <template>
   <Head title="Management Reports" />
@@ -362,7 +360,7 @@ onMounted(() => {
           v-model="filters.policyBookDate"
           placeholder="Select Start & End Date"
           range
-          :max-range="92"
+          :max-range="31"
           size="sm"
           model-type="yyyy-MM-dd"
           :rules="[isRequired]"
@@ -382,7 +380,7 @@ onMounted(() => {
           v-model="filters.paymentDueDate"
           placeholder="Select Start & End Date"
           range
-          :max-range="92"
+          :max-range="31"
           size="sm"
           model-type="yyyy-MM-dd"
           :rules="[isRequired]"
@@ -402,7 +400,7 @@ onMounted(() => {
           v-model="filters.policyExpiredDate"
           placeholder="Select Start & End Date"
           range
-          :max-range="92"
+          :max-range="31"
           size="sm"
           model-type="yyyy-MM-dd"
           :rules="[isRequired]"
@@ -606,7 +604,7 @@ onMounted(() => {
   </x-form>
   <component
     :groupBy="route().params.groupBy ?? 'advisor'"
-    :reportData="props.reportData"
+    :reportData="$page.props.reportData"
     :loader="loaders.table"
     :is="selectedReport"
   ></component>

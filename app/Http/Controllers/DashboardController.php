@@ -8,6 +8,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TiersEnum;
@@ -40,7 +41,7 @@ class DashboardController extends Controller
         $comprehensiveDashboardPermissions = implode('|', PermissionsEnum::getComprehensiveDashboardPermissions());
         $this->middleware(['permission:'.$comprehensiveDashboardPermissions], ['only' => ['renderComprehensiveDashboard']]);
 
-        // $this->middleware('readonly_db');
+        $this->middleware('readonly_db');
     }
 
     /**
@@ -416,7 +417,7 @@ class DashboardController extends Controller
         }
 
         if (isset($request->segment_filter) && $request->segment_filter != 'all') {
-            $records = $records->filterBySegment($request->segment_filter, quoteTypeCode::Car);
+            $records = $records->filterBySegment($request->segment_filter, QuoteTypeId::Car);
         }
 
         $labels = [];

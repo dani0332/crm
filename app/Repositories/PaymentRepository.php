@@ -12,6 +12,8 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Interfaces\PaymentRepositoryInterface;
 use App\Models\CarQuote;
@@ -22,6 +24,7 @@ use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
+use App\Models\User;
 use App\Services\ApplicationStorageService;
 use App\Services\PaymentLinkService;
 use App\Services\SplitPaymentService;
@@ -235,7 +238,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
             //Update split payments start
             if (! empty($request->trashedFilesModal)) {
-                QuoteDocument::whereIn('doc_name', $request->trashedFilesModal)->delete();
+                QuoteDocument::whereIn('id', $request->trashedFilesModal)->delete();
             }
             $this->updatePaymentSplits($request);
 
@@ -658,20 +661,41 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return $quote->payments()->where('insurer_tax_number', $invoiceNumber)->first();
     }
 
-    public function generateBrokerInvoiceNumber($payment): string
+    public function generateBrokerInvoiceNumber($payment, $quoteType): string
     {
-        $insurance_provider_id = $payment->insurance_provider_id;
-        $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
-        //$insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
-        $latestBINByInsurer = Payment::whereNotNull('broker_invoice_number')->where('insurance_provider_id', $insurance_provider_id)->orderBy('updated_at', 'desc')->first()?->broker_invoice_number;
+        $insuranceProvider = null;
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
+        if (in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
+            $planRelationName = strtolower($quoteType).'Plan';
+            $payment->load($planRelationName);
+            $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
+        }
+
+        if (! $insuranceProvider) {
+            $insuranceProvider = $payment->insuranceProvider;
+        }
+
+        $insuranceProviderCode = $insuranceProvider->code;
+        $latestBINByInsurer = Payment::whereNotNull('broker_invoice_number')->where('insurance_provider_id', $insuranceProvider->id)->orderBy('updated_at', 'desc')->first()?->broker_invoice_number;
         $insuranceProviderLeadCount = (int) str_replace($insuranceProviderCode, '', $latestBINByInsurer) + 1;
 
         return $insuranceProviderCode.$insuranceProviderLeadCount;
     }
     public function generateInvoiceDescription($payment, $quoteType, $record): string
     {
-        $insurance_provider_id = $payment->insurance_provider_id;
-        $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
+        $insuranceProvider = null;
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
+        if (in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
+            $planRelationName = strtolower($quoteType).'Plan';
+            $payment->load($planRelationName);
+            $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
+        }
+
+        if (! $insuranceProvider) {
+            $insuranceProvider = $payment->insuranceProvider;
+        }
+
+        $insuranceProviderCode = $insuranceProvider->code;
 
         return substr($insuranceProviderCode.'-'.ucfirst($quoteType).'-'.$record->policy_number, 0, 60);
     }
@@ -709,5 +733,33 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         info('End - Temporarily adding for correcting historic data '.$quote->uuid);
         /* End - Temporarily adding for correcting historic data  */
 
+    }
+
+    public function getAuthorisePaymentCount($userId = null)
+    {
+        if (! Auth::check() && $userId == null) {
+            return 0;
+        }
+        $userId = $userId != null ? $userId : Auth::user()->id;
+        $user = User::where('id', $userId)->first();
+        $userTeams = $user->getUserTeams($userId);
+
+        $personalCount = DB::table('payments')
+            ->distinct()
+            ->Join('personal_quotes as pq', 'pq.code', '=', 'payments.code')
+            ->join('users', 'users.id', 'pq.advisor_id')
+            ->join('user_team', 'user_team.user_id', 'users.id')
+            ->join('teams', 'teams.id', '=', 'user_team.team_id')
+            ->where('payments.payment_status_id', PaymentStatusEnum::AUTHORISED);
+
+        if ($user->hasAnyRole([RolesEnum::CarManager, RolesEnum::HealthManager, RolesEnum::TravelManager, RolesEnum::LifeManager, RolesEnum::HomeManager, RolesEnum::PetManager, RolesEnum::BikeManager, RolesEnum::CycleManager, RolesEnum::YachtManager, RolesEnum::JetskiManager, RolesEnum::BusinessManager])) {
+            $personalCount = $personalCount->whereIn('teams.name', $userTeams)->count('payments.id');
+
+        } else {
+            $personalCount = $personalCount->where('pq.advisor_id', $userId)->count('payments.id');
+
+        }
+
+        return $personalCount;
     }
 }

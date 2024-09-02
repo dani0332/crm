@@ -1,7 +1,6 @@
 <script setup>
 import NProgress from 'nprogress';
 import LegacyCard from '../LegacyPolicy/Partials/LegacyCard';
-import DocumentListing from './Partials/DocumentListing.vue';
 
 const props = defineProps({
   policy: Object,
@@ -65,7 +64,7 @@ const submitLead = policy => {
     if (selectedLead.value.link != 'new') {
       window.open(selectedLead.value.link, '_blank');
     } else {
-      moveToImcrm(policy.policy?.policy_no, false);
+      moveToImcrm(policy.policy?.policy_oid, false);
       moveToImcrmModal.value = false;
     }
     // Add any additional logic for submitting the lead here
@@ -264,11 +263,11 @@ const installmentsTableHeader = [
   { text: 'Customer Payable', value: 'customer_payable' },
 ];
 /* payments ends */
-const moveToImcrm = async (policyNumber, validateAll = true) => {
+const moveToImcrm = async (policy_oid, validateAll = true) => {
   try {
     NProgress.start();
     const response = await axios.post('/legacy-policy/move-to-imcrm', {
-      policyNumber: policyNumber,
+      policy_oid: policy_oid,
       validateAll: validateAll,
       isInertia: true,
     });
@@ -341,7 +340,7 @@ const dateFormat = date => {
             size="sm"
             color="#ff5e00"
             :disabled="policy?.moved_to_imcrm"
-            @click="moveToImcrm(policy.policy?.policy_no)"
+            @click="moveToImcrm(policy.policy?.policy_oid)"
           >
             Move to IMCRM
           </x-button>
@@ -352,7 +351,7 @@ const dateFormat = date => {
           size="sm"
           color="#ff5e00"
           :disabled="policy?.moved_to_imcrm"
-          @click="moveToImcrm(policy.policy?.policy_no)"
+          @click="moveToImcrm(policy.policy?.policy_oid)"
         >
           Move to IMCRM
         </x-button>
@@ -537,7 +536,6 @@ const dateFormat = date => {
           border-cell
           hide-rows-per-page
           hide-footer
-          fixed-checkbox
         >
           <template #item-comment="{ comment }">
             {{ comment ? comment : '' }}
@@ -676,7 +674,6 @@ const dateFormat = date => {
         border-cell
         hide-rows-per-page
         hide-footer
-        fixed-checkbox
         v-if="!single"
       >
         <template #item-id="{ id, link }">
