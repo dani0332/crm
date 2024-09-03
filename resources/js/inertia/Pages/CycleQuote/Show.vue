@@ -62,6 +62,7 @@ const modals = reactive({
   duplicate: false,
 });
 const quoteStatusEnum = page.props.quoteStatusEnum;
+const modelClass = 'App\\Models\\PersonalQuote';
 
 const countDays = useDaysSinceStale(
   props.quoteRequest?.stale_at ?? props.quote?.stale_at,
@@ -1065,6 +1066,7 @@ const onAddUpdate = () => {
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+      :modelClass="modelClass"
     />
 
     <SendUpdates

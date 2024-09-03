@@ -10,6 +10,7 @@ use App\Services\BaseService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\SageApiLog;
 
 class AuditableController extends Controller
 {
@@ -99,5 +100,11 @@ class AuditableController extends Controller
         $audits = AuditRepository::getQuoteAudits();
 
         return ($request->jsonData) ? response()->json($audits) : $audits;
+    }
+
+    public function sageApiLogs(Request $request, $sectionId)
+    {
+        $sageApiLogs = SageApiLog::where(['section_type' => $request->modelClass, 'section_id' => $sectionId])->get();
+        return response()->json(['success' => true, 'sageApiLogs' => $sageApiLogs]);
     }
 }

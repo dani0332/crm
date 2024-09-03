@@ -658,6 +658,9 @@ class GenericPermissionSeeder extends Seeder
     private function syncMasterPermissionList()
     {
         $permissionList = [
+            PermissionsEnum::VIEW_SAGE_API_LOGS => [
+                RolesEnum::Admin,
+            ],
             PermissionsEnum::ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION => [
                 RolesEnum::Admin,
                 RolesEnum::ServiceExecutive,
