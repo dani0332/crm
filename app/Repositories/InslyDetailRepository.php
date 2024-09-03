@@ -140,9 +140,12 @@ class InslyDetailRepository extends BaseRepository
                 $modelClassName = app($model);
                 $tableName = $modelClassName->getTable();
 
-                $quote = $model::join('payments', $tableName.'.code', '=', 'payments.code')
+                $quote = $model::leftJoin('payments as py', function ($join) use ($modelClassName, $tableName) {
+                    $join->on('py.paymentable_id', '=', $tableName.'.id')
+                        ->where('py.paymentable_type', '=', $modelClassName::class);
+                })
                     ->where($tableName.'.email', $email)
-                    ->whereBetween('payments.captured_at', [$dateFrom, $dateTo])
+                    ->whereBetween('py.captured_at', [$dateFrom, $dateTo])
                     ->get();
 
                 // quote against email and in between two month of payment captured
