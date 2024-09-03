@@ -347,6 +347,7 @@ const handlePlanSelected = plan => {
     preserveScroll: true,
     only: ['payments', 'paymentEntityModel'],
   });
+  onLoadAvailablePlansData();
 };
 
 const readOnlyMode = reactive({
