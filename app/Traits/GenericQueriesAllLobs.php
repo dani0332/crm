@@ -626,7 +626,7 @@ trait GenericQueriesAllLobs
      */
     public function setPaymentStatusAsPerPrice($quoteModel, mixed $payment, mixed $difference): void
     {
-        if (!($payment->captured_amount == 0 || $payment->captured_amount == null)) {
+        if ($payment->payment_status_id != PaymentStatusEnum::CREDIT_APPROVED) {
             $priceWithVat = round($quoteModel->price_with_vat, 2);
             $captureAndDiscount = round(($payment->captured_amount + $payment->discount_value), 2);
             // If status is partially paid & total price is less than price with vat then set status to partially paid
