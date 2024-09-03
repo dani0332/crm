@@ -1046,12 +1046,12 @@ class SendUpdateLogService
 
         while (SendUpdateLog::where('broker_invoice_number', $brokerInvoiceNumber)
             ->whereNot('uuid', $sendUpdateLog->uuid)
-            ->exists() && $attempts < 10) {
+            ->exists() && $attempts < 25) {
             $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
             $attempts++;
         }
 
-        if ($attempts >= 10) {
+        if ($attempts >= 25) {
             vAbort('Send Update Log Broker Invoice Number generation failed.');
         }
 
@@ -1115,5 +1115,24 @@ class SendUpdateLogService
         ]);
 
         return SendUpdateLogRepository::updateInsurerDetails($sendUpdate, $bookingDetails);
+    }
+
+    public function isPolicyDetailsFilled($policyDetails, $quoteTypeId, $insuranceProviderId, $planId): bool
+    {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
+            $policyDetails['plan_id'] = $planId;
+        }
+
+        $policyDetails['insurance_provider_id'] = $insuranceProviderId;
+
+        $filledValues = array_filter($policyDetails, function ($value) {
+            return ! is_null($value) && $value !== '';
+        });
+
+        if (count($policyDetails) === count($filledValues)) {
+            return true;
+        }
+
+        return false;
     }
 }
