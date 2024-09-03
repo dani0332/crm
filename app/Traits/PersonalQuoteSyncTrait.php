@@ -32,10 +32,15 @@ use App\Repositories\PersonalQuoteRepository;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use App\Enums\EnvEnum;
+use App\Models\ApplicationStorage;
+use Exception;
 
 trait PersonalQuoteSyncTrait
 {
     public $schemas = [];
+
+    protected $startId = 0;
 
     public function cacheSchemas()
     {
@@ -381,6 +386,78 @@ trait PersonalQuoteSyncTrait
                 return Carbon::now();
             default:
                 return null;
+        }
+    }
+
+    public function init()
+    {
+        if (empty($this->schemas)) {
+            $this->cacheSchemas();
+        }
+
+        if (config('constants.APP_ENV') == EnvEnum::PRODUCTION) {
+            $this->startId = 4500000;
+        }
+    }
+
+    public function syncLeadEntries($uuid)
+    {
+        $this->init();
+
+        info('----------- QuoteSyncJob - single entry - Started -----------');
+        $isQuoteSyncEnabled = ApplicationStorage::where('key_name', 'quote_sync_enabled')->first();
+
+        if (!$isQuoteSyncEnabled || $isQuoteSyncEnabled->value == 0) {
+            info('----------- QuoteSync - single entry - is disabled -----------');
+
+            return;
+        }
+
+        $entries = QuoteSync::where('is_synced', false)
+            ->where('id', '>', $this->startId)
+            ->where('quote_uuid', $uuid)
+            ->get();
+
+        $this->processQuoteSyncEntries($entries, true);
+    }
+
+    private function processQuoteSyncEntries($entries, $isSingle = false)
+    {
+        if ($entries->isEmpty()) {
+            // info('----------- No entries found to be processed in quote sync table -----------');
+            return;
+        }
+
+        // mark entries in progress
+        QuoteSync::whereIn('id', $entries->pluck('id')->toArray())
+            ->update(['status' => QuoteSyncStatus::INPROGRESS]);
+
+        $uuids = $entries->unique('quote_uuid')->pluck('quote_uuid')->toArray();
+        $quotes = PersonalQuote::whereIn('uuid', $uuids)->get()->keyBy(function (PersonalQuote $item, int $key) {
+            return $item->uuid . '_' . $item->quote_type_id;
+        })->all();
+
+        foreach ($entries as $entry) {
+            try {
+                info('Syncing entry: ' . $entry->quote_uuid . ' - ' . $entry->id . ' - ' . $isSingle);
+                if ($entry->updated_fields === '{"is_cold":true}') {
+                    QuoteSync::where('id', $entry->id)->update(['is_synced' => true, 'status' => QuoteSyncStatus::COMPLETED, 'synced_at' => now()]);
+                } else {
+                    $key = $entry->quote_uuid . '_' . $entry->quote_type_id;
+                    if (!empty($quotes[$key])) {
+                        // Existing quote
+                        $this->processExistingQuote($quotes[$key], $entry);
+                    } else {
+                        // Quote not found
+                        $quotes[$key] = $this->processQuoteNotFound($entry);
+                    }
+                }
+                info('Syncing entry complete: ' . $entry->quote_uuid . ' - ' . $entry->id . ' - ' . $isSingle);
+            } catch (Exception $e) {
+                $error = 'QuoteSyncJob Error syncing entry: ' . $entry->quote_uuid . ' - ' . $entry->id . ' - ' . $isSingle . ' - ' . $e->getMessage();
+                info($error . ' --- ' . $e->getTraceAsString());
+                QuoteSync::where('id', $entry->id)->update(['status' => QuoteSyncStatus::FAILED, 'error' => $error]);
+            }
         }
     }
 }
