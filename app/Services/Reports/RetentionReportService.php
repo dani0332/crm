@@ -32,7 +32,7 @@ class RetentionReportService extends BaseService
     private $monthColumnName;
 
     public function __construct() {
-        $this->dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+        $this->dateFormat = config('constants.DATE_FORMAT_ONLY');
         $this->policyExpiryColumnName = 'personal_quotes.previous_policy_expiry_date';
 
         if (request()['displayBy'] === RetentionReportEnum::MONTHLY){
