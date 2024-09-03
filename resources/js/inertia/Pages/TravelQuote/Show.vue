@@ -2993,6 +2993,7 @@ const onAddUpdate = () => {
       "
       :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
+      :expanded="sectionExpanded"
     />
 
     <PaymentTable
@@ -3328,6 +3329,7 @@ const onAddUpdate = () => {
       :customerName="quote?.first_name + ' ' + quote?.last_name"
       :quoteId="quote.uuid"
       :quoteType="'TRAVEL'"
+      :expanded="sectionExpanded"
     />
   </div>
 </template>

@@ -515,6 +515,7 @@ const isLegacyPolicy = computed(() => {
       :send-update-status-enum="props.sendUpdateStatusEnum"
       :insuranceProviders="props.insuranceProviders"
       :quoteDocuments="props.quoteDocuments"
+      :expanded="sectionExpanded"
     />
 
     <LazyPolicyDetails
