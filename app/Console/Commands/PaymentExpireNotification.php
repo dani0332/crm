@@ -77,9 +77,8 @@ class PaymentExpireNotification extends Command
             foreach ($results as $notification) {
                 $shortCode = QuoteTypes::getNameShortCode(strtoupper(substr($notification->uuid, 0, strpos($notification->uuid, '-'))));
                 $quoteType = $shortCode->value ?? null;
-                if ($quoteType === null) {
+                if (! $quoteType) {
                     info('Notification not triggered for '.$notification->uuid);
-
                     return;
                 }
                 $path = '';
