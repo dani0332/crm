@@ -79,6 +79,7 @@ class PaymentExpireNotification extends Command
                 $quoteType = $shortCode->value ?? null;
                 if (! $quoteType) {
                     info('Notification not triggered for '.$notification->uuid);
+
                     return;
                 }
                 $path = '';
