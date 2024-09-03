@@ -142,8 +142,7 @@ class InslyDetailRepository extends BaseRepository
 
                 $quote = $model::join('payments', $tableName.'.code', '=', 'payments.code')
                     ->where($tableName.'.email', $email)
-                    ->where('payments.captured_at', '>=', $dateFrom)
-                    ->where('payments.captured_at', '<=', $dateTo)
+                    ->whereBetween('payments.captured_at', [$dateFrom, $dateTo])
                     ->get();
 
                 // quote against email and in between two month of payment captured
