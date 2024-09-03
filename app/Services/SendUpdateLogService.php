@@ -1116,4 +1116,23 @@ class SendUpdateLogService
 
         return SendUpdateLogRepository::updateInsurerDetails($sendUpdate, $bookingDetails);
     }
+
+    public function isPolicyDetailsFilled($policyDetails, $quoteTypeId, $insuranceProviderId, $planId): bool
+    {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
+            $policyDetails['plan_id'] = $planId;
+        }
+
+        $policyDetails['insurance_provider_id'] = $insuranceProviderId;
+
+        $filledValues = array_filter($policyDetails, function ($value) {
+            return ! is_null($value) && $value !== '';
+        });
+
+        if (count($policyDetails) === count($filledValues)) {
+            return true;
+        }
+
+        return false;
+    }
 }
