@@ -136,6 +136,11 @@ const onLoadAvailablePlansData = async () => {
     });
 };
 
+const onCreatePlan = async () => {
+  modals.createPlan = false;
+  onLoadAvailablePlansData();
+};
+
 onMounted(() => {
   onLoadAvailablePlansData();
 });
