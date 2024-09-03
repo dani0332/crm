@@ -84,7 +84,6 @@ onMounted(async () => {
 <template>
   <div>
     <div class="p-4 rounded shadow mb-6 bg-white">
-
       <Collapsible :expanded="expanded">
         <template #header>
           <div class="flex justify-between items-center">
@@ -96,25 +95,25 @@ onMounted(async () => {
         <template #body>
           <x-divider class="mb-4 mt-1"></x-divider>
           <DataTable
-          table-class-name="tablefixed compact"
-          :headers="tableHeaders"
-          :items="tableData || []"
-          border-cell
-          hide-rows-per-page
-          hide-footer
-        >
-          <template #item-action="item">
-            <x-button
-              size="xs"
-              color="primary"
-              outlined
-              @click="showChat(item)"
-              :loading="loader"
-            >
-              View
-            </x-button>
-          </template>
-        </DataTable>
+            table-class-name="tablefixed compact"
+            :headers="tableHeaders"
+            :items="tableData || []"
+            border-cell
+            hide-rows-per-page
+            hide-footer
+          >
+            <template #item-action="item">
+              <x-button
+                size="xs"
+                color="primary"
+                outlined
+                @click="showChat(item)"
+                :loading="loader"
+              >
+                View
+              </x-button>
+            </template>
+          </DataTable>
         </template>
       </Collapsible>
 

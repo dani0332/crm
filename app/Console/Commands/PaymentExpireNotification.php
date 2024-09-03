@@ -75,7 +75,7 @@ class PaymentExpireNotification extends Command
 
         $query->chunk(500, function ($results) {
             foreach ($results as $notification) {
-                $quoteType = QuoteTypes::getNameShortCode(substr($notification->uuid, 0, strpos($notification->uuid, '-')))->value;
+                $quoteType = QuoteTypes::getNameShortCode(strtoupper(substr($notification->uuid, 0, strpos($notification->uuid, '-'))))->value;
                 $path = '';
                 $lead = $this->getQuoteObjectBy($quoteType, $notification->paymentable_id, 'id');
                 if ($lead) {
