@@ -1,4 +1,8 @@
 <script setup>
+import { defineEmits } from 'vue';
+// Define the emit function
+const emit = defineEmits(['planCreated']);
+
 const notification = useNotifications('toast');
 const props = defineProps({
   quote: Object,
@@ -57,7 +61,7 @@ const insuranceProviderOptions = computed(() => {
 
 const insuranceProviderPlanOptions = ref([]);
 
-const setCarPlans = () => {
+const setBikePlans = () => {
   page.processing = true;
   const id = addPlanForm.insurance_provider_id;
   axios
@@ -92,14 +96,7 @@ const creatQuotePlan = isValid => {
     {
       preserveScroll: true,
       onSuccess: response => {
-        if (
-          response?.props?.flash?.error != 'Plan Modification is not allowed'
-        ) {
-          notification.success({
-            title: 'Bike Quote Plan created successfully',
-            position: 'top',
-          });
-        }
+        emit('success'); // Refresh the parent component AvailablePlans.vue for bike
       },
       onError: errors => {
         notification.error({
@@ -159,7 +156,7 @@ const getAddonVat = item => {
               :options="insuranceProviderOptions"
               :hasError="isEmptyField"
               placeholder="Select Insurance provider"
-              @update:modelValue="setCarPlans"
+              @update:modelValue="setBikePlans"
             />
           </x-field>
         </div>
