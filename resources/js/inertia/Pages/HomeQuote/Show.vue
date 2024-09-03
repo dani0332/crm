@@ -136,10 +136,12 @@ const advisorOptions = computed(() => {
 });
 
 const leadStatusOptions = computed(() => {
-  return page.props.leadStatuses.filter(status => status.id !== 6 && status.id !== 7).map(status => ({
-    value: status.id,
-    label: status.text,
-  }));
+  return page.props.leadStatuses
+    .filter(status => status.id !== 6 && status.id !== 7)
+    .map(status => ({
+      value: status.id,
+      label: status.text,
+    }));
 });
 
 const emiratesOptions = computed(() => {
