@@ -3873,7 +3873,6 @@ const onAddUpdate = () => {
       :quoteId="quote.uuid"
       :quoteType="'HEALTH'"
       :expanded="sectionExpanded"
-
     />
 
     <AuditLogs
