@@ -11,7 +11,7 @@ use BenSampo\Enum\Enum;
  */
 final class AMLStatusEnum extends Enum
 {
-    const AMLPending = 1;
-    const AMLScreeningCleared = 2;
-    const AMLScreeningFailed = 3;
+    public const AMLPending = 1;
+    public const AMLScreeningCleared = 2;
+    public const AMLScreeningFailed = 3;
 }
