@@ -27,8 +27,8 @@ class BookPolicyRequest extends FormRequest
     {
         return [
             'invoice_date' => 'required',
-            'insurer_tax_invoice_number' => 'required|max:22',
-            'insurer_commmission_invoice_number' => 'required|max:22|different:insurer_tax_invoice_number',
+            'insurer_tax_invoice_number' => 'required|max:50',
+            'insurer_commmission_invoice_number' => 'required|max:50|different:insurer_tax_invoice_number',
             'discount' => 'nullable',
             'transaction_payment_status' => 'nullable',
             'broker_invoice_number' => 'nullable',
