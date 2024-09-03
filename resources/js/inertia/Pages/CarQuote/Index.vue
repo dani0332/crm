@@ -58,6 +58,18 @@ function onSubmit(isValid) {
   if (isValid) {
     filters.page = 1;
 
+    const hasAnyFilterSelected = Object.values(filters).some(
+      value => value !== '' && value.length > 0
+    );
+
+    if (!hasAnyFilterSelected) {
+      notification.error({
+        title: 'Please select at least one filter before submitting',
+        position: 'top',
+      });
+      return; // Stop the form submission
+    }
+
     Object.keys(filters).forEach(
       key =>
         (filters[key] === '' || filters[key].length === 0) &&
