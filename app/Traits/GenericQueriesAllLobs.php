@@ -626,13 +626,15 @@ trait GenericQueriesAllLobs
      */
     public function setPaymentStatusAsPerPrice($quoteModel, mixed $payment, mixed $difference): void
     {
-        $priceWithVat = round($quoteModel->price_with_vat, 2);
-        $captureAndDiscount = round(($payment->captured_amount + $payment->discount_value), 2);
-        // If status is partially paid & total price is less than price with vat then set status to partially paid
-        if ($payment->payment_status_id === PaymentStatusEnum::PAID && $payment->total_price < $quoteModel->price_with_vat && ($difference > 0.99)) {
-            $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
-        } elseif ($priceWithVat <= $captureAndDiscount) {
-            $payment->payment_status_id = PaymentStatusEnum::PAID;
+        if (!($payment->captured_amount == 0 || $payment->captured_amount == null)) {
+            $priceWithVat = round($quoteModel->price_with_vat, 2);
+            $captureAndDiscount = round(($payment->captured_amount + $payment->discount_value), 2);
+            // If status is partially paid & total price is less than price with vat then set status to partially paid
+            if ($payment->payment_status_id === PaymentStatusEnum::PAID && $payment->total_price < $quoteModel->price_with_vat && ($difference > 0.99)) {
+                $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
+            } elseif ($priceWithVat <= $captureAndDiscount) {
+                $payment->payment_status_id = PaymentStatusEnum::PAID;
+            }
         }
     }
 
