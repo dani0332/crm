@@ -137,9 +137,16 @@ class InslyDetailRepository extends BaseRepository
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $inslyPolicyIssueDate)->addMonths(-1)->startOfDay();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $inslyPolicyIssueDate)->addMonths(1)->endOfDay();
 
-                $quote = $model::whereHas('payments', function ($query) use ($dateFrom, $dateTo) {
-                    return $query->whereBetween('captured_at', [$dateFrom, $dateTo]);
-                })->where('email', $email)->get();
+                $modelClassName = app($model);
+                $tableName = $modelClassName->getTable();
+
+                $quote = $model::leftJoin('payments as py', function ($join) use ($modelClassName, $tableName) {
+                    $join->on('py.paymentable_id', '=', $tableName.'.id')
+                        ->where('py.paymentable_type', '=', $modelClassName::class);
+                })
+                    ->where($tableName.'.email', $email)
+                    ->whereBetween('py.captured_at', [$dateFrom, $dateTo])
+                    ->get();
 
                 // quote against email and in between two month of payment captured
                 if (! $quote->isEmpty() && $validateAll) {
