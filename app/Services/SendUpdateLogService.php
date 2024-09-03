@@ -713,6 +713,8 @@ class SendUpdateLogService
 
     public function updatesMoveToLead($sendUpdateRequest, $sendUpdateLog)
     {
+        info('Book Update - Old Policy number: '.$sendUpdateLog->policy_number.' - Start Date: '.$sendUpdateLog->start_date.' - Expiry Date: '.$sendUpdateLog->expiry_date);
+        $endorsementDetails = $sendUpdateLog;
         $categoryCode = $sendUpdateLog->category?->code;
         $optionCode = $sendUpdateLog->option?->code;
         $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
@@ -789,12 +791,14 @@ class SendUpdateLogService
                     $sendUpdateRequest->reversalInvoice == $quote->payments->value('insurer_tax_number')
                 )) {
                     info('Book Update - Updating Policy Details for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+                    info('Book Update - before update main lead Old Policy number: '.$sendUpdateLog->policy_number.' - Start Date: '.$sendUpdateLog->start_date.' - Expiry Date: '.$sendUpdateLog->expiry_date);
                     $quote->update([
-                        'policy_number' => $sendUpdateLog->policy_number,
-                        'policy_start_date' => $sendUpdateLog->start_date,
-                        'policy_expiry_date' => $sendUpdateLog->expiry_date,
+                        'policy_number' => $endorsementDetails->policy_number,
+                        'policy_start_date' => $endorsementDetails->start_date,
+                        'policy_expiry_date' => $endorsementDetails->expiry_date,
                         'policy_booking_date' => $currentDate,
                     ]);
+                    info('Book Update - after update main lead New Policy number: '.$sendUpdateLog->policy_number.' - Start Date: '.$sendUpdateLog->start_date.' - Expiry Date: '.$sendUpdateLog->expiry_date);
                 }
                 // Cases for Correct Policy Details End
             }
@@ -809,11 +813,14 @@ class SendUpdateLogService
                 }
             }
 
+            info('Book Update - before endorsement update Old Policy number: '.$sendUpdateLog->policy_number.' - Start Date: '.$sendUpdateLog->start_date.' - Expiry Date: '.$sendUpdateLog->expiry_date);
+
             $sendUpdateLog->update([
                 'booking_date' => $currentDate,
                 'transaction_payment_status' => $status ?? '',
                 'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
             ]);
+            info('Book Update - after endorsement update New Policy number: '.$sendUpdateLog->policy_number.' - Start Date: '.$sendUpdateLog->start_date.' - Expiry Date: '.$sendUpdateLog->expiry_date);
 
             DB::commit();
 
