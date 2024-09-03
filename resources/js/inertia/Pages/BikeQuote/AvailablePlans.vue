@@ -136,6 +136,11 @@ const onLoadAvailablePlansData = async () => {
     });
 };
 
+const onCreatePlan = async () => {
+  modals.createPlan = false;
+  onLoadAvailablePlansData();
+};
+
 onMounted(() => {
   onLoadAvailablePlansData();
 });
@@ -342,6 +347,7 @@ const handlePlanSelected = plan => {
     preserveScroll: true,
     only: ['payments', 'paymentEntityModel'],
   });
+  onLoadAvailablePlansData();
 };
 
 const readOnlyMode = reactive({
