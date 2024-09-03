@@ -16,6 +16,7 @@ use App\Models\CustomerAdditionalInfo;
 use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
+use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\CentralService;
@@ -42,11 +43,11 @@ if (! function_exists('generate_code')) {
     {
         $transaction = DB::table('transactions')->count();
         $now = Carbon::now();
-        $day = $now->day < 10 ? '0'.$now->day : $now->day;
-        $month = $now->month < 10 ? '0'.$now->month : $now->month;
+        $day = $now->day < 10 ? '0' . $now->day : $now->day;
+        $month = $now->month < 10 ? '0' . $now->month : $now->month;
         $year = substr($now->year, 2);
 
-        return $prefix.$year.$month.$day;
+        return $prefix . $year . $month . $day;
     }
 }
 
@@ -86,7 +87,7 @@ if (! function_exists('storageUrl')) {
      */
     function storageUrl()
     {
-        return config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+        return config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
     }
 }
 
@@ -98,11 +99,11 @@ function get_guid()
         mt_srand((float) microtime() * 10000);
         $charid = strtoupper(md5(uniqid(rand(), true)));
         $hyphen = chr(45);
-        $uuid = substr($charid, 0, 8).$hyphen
-            .substr($charid, 8, 4).$hyphen
-            .substr($charid, 12, 4).$hyphen
-            .substr($charid, 16, 4).$hyphen
-            .substr($charid, 20, 12);
+        $uuid = substr($charid, 0, 8) . $hyphen
+            . substr($charid, 8, 4) . $hyphen
+            . substr($charid, 12, 4) . $hyphen
+            . substr($charid, 16, 4) . $hyphen
+            . substr($charid, 20, 12);
 
         return $uuid;
     }
@@ -113,10 +114,10 @@ function mapPhoneNumber($customerPhoneNo)
     $customerCorrectPhoneNo = $customerCorrectPhoneNo1 = $customerPhoneNo = str_replace(' ', '', trim($customerPhoneNo));
 
     if (strlen($customerPhoneNo) == 9) { // 563264418 9
-        $customerCorrectPhoneNo = '0'.$customerPhoneNo;
+        $customerCorrectPhoneNo = '0' . $customerPhoneNo;
     } elseif (strlen($customerPhoneNo) == 12) { // 971563264418 12
         $customerPhoneNo = substr($customerPhoneNo, 3);
-        $customerCorrectPhoneNo = '0'.$customerPhoneNo;
+        $customerCorrectPhoneNo = '0' . $customerPhoneNo;
     } elseif (strlen($customerPhoneNo) == 13) {
         $customerPhoneNo = substr($customerPhoneNo, 0, 4);
 
@@ -125,14 +126,14 @@ function mapPhoneNumber($customerPhoneNo)
         }
         if ($customerPhoneNo == '+971') { // +971563264418 13 Working
             $customerPhoneNo = substr($customerCorrectPhoneNo1, 4);
-            $customerCorrectPhoneNo = '0'.$customerPhoneNo;
+            $customerCorrectPhoneNo = '0' . $customerPhoneNo;
         }
     } elseif (strlen($customerPhoneNo) == 14) {
         $customerPhoneNo = substr($customerPhoneNo, 0, 5);
 
         if ($customerPhoneNo == '00971') { // 00971563264418 14
             $customerCorrectPhoneNo = substr($customerCorrectPhoneNo1, 5);
-            $customerCorrectPhoneNo = '0'.$customerCorrectPhoneNo;
+            $customerCorrectPhoneNo = '0' . $customerCorrectPhoneNo;
         }
         if ($customerPhoneNo == '+9710') { // +9710563264418 14
             $customerCorrectPhoneNo = substr($customerCorrectPhoneNo1, 4);
@@ -164,7 +165,7 @@ function getDataAgainstStatus($modelType, $statusId, Request $request)
 
     $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
     $nameSpace = 'App\\Models\\';
-    $modelType = (in_array(ucwords($modelType), newUi()) && checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
+    $modelType = (in_array(ucwords($modelType), newUi()) && checkPersonalQuotes(ucwords($modelType))) ? $nameSpace . 'PersonalQuote' : $nameSpace . ucwords($modelType) . 'Quote';
 
     if (! class_exists($modelType)) {
         return false;
@@ -256,7 +257,7 @@ function getDataAgainstEveryStatus($modelType, $request)
         return $result;
     }
     $nameSpace = '\\App\\Models\\';
-    $modelType = $nameSpace.$modelType.'Quote';
+    $modelType = $nameSpace . $modelType . 'Quote';
     if ($request->has('myleads')) {
         if (Auth::user()->isRenewalAdvisor()) {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
@@ -297,62 +298,62 @@ function getDataAgainstSearchTerm($modelType, $request)
         return $result;
     }
     $nameSpace = '\\App\\Models\\';
-    $modelType = $nameSpace.$modelType.'Quote';
+    $modelType = $nameSpace . $modelType . 'Quote';
     if ($modelType == 'Business') {
         if ($request->has('myleads') && $request->myleads) {
             if (Auth::user()->isRenewalAdvisor()) {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (?)', [$request->term.'*'])
+                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (?)', [$request->term . '*'])
                     ->where('advisor_id', Auth::user()->id)
                     ->whereNotNull('previous_quote_id')
                     ->get();
             } elseif (Auth::user()->isNewBusinessAdvisor()) {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (?)', [$request->term.'*'])
+                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (?)', [$request->term . '*'])
                     ->where('advisor_id', Auth::user()->id)
                     ->whereNull('previous_quote_id')
                     ->get();
             } else {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
+                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term . '*'])
                     ->where('advisor_id', Auth::user()->id)
                     ->get();
             }
         } else {
             if (Auth::user()->isRenewalAdvisor()) {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
+                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term . '*'])
                     ->whereNotNull('previous_quote_id')
                     ->where('advisor_id', Auth::user()->id)
                     ->get();
             } elseif (Auth::user()->isNewBusinessAdvisor()) {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
+                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term . '*'])
                     ->whereNull('previous_quote_id')
                     ->where('advisor_id', Auth::user()->id)
                     ->get();
             } else {
                 $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
+                    ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term . '*'])
                     ->get();
             }
         }
     } else {
         if (Auth::user()->isRenewalAdvisor()) {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
+                ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term . '*'])
                 ->whereNotNull('previous_quote_id')
                 ->where('advisor_id', Auth::user()->id)
                 ->get();
         } elseif (Auth::user()->isNewBusinessAdvisor()) {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
+                ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term . '*'])
                 ->whereNull('previous_quote_id')
                 ->where('advisor_id', Auth::user()->id)
                 ->get();
         } else {
             $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
-                ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])->get();
+                ->whereRaw('MATCH (first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term . '*'])->get();
         }
     }
 
@@ -361,7 +362,7 @@ function getDataAgainstSearchTerm($modelType, $request)
 
 function getAdditionalInfo($modelType, $quoteId)
 {
-    $result = CustomerAdditionalInfo::where(['quote_request_id' => $quoteId, 'quote_type' => $modelType.'Quote'])->get();
+    $result = CustomerAdditionalInfo::where(['quote_request_id' => $quoteId, 'quote_type' => $modelType . 'Quote'])->get();
 
     return $result;
 }
@@ -392,18 +393,18 @@ function addSearchClauses($model, $request, $query, $searchPrefix)
             $propertyMetaData = $model->properties[$searchProperty];
             switch ($propertyMetaData) {
                 case str_contains($propertyMetaData, IMCRMSearchTypesEnum::LIKE_SEARCH):
-                    $query = $query->where($searchPrefix.$searchProperty, 'like', '%'.$request->$searchProperty.'%');
+                    $query = $query->where($searchPrefix . $searchProperty, 'like', '%' . $request->$searchProperty . '%');
                     break;
                 case str_contains($propertyMetaData, IMCRMSearchTypesEnum::EQUAL_SEARCH):
-                    $query = $query->where($searchPrefix.$searchProperty, $request->$searchProperty);
+                    $query = $query->where($searchPrefix . $searchProperty, $request->$searchProperty);
                     break;
                 case str_contains($propertyMetaData, IMCRMSearchTypesEnum::DATE_RANGE):
                     $dateFrom = Carbon::createFromFormat($dateFormat, $request[$searchProperty])->startOfDay()->toDateTimeString();
-                    $dateTo = Carbon::createFromFormat($dateFormat, $request[$searchProperty.'_end'])->endOfDay()->toDateTimeString();
-                    $query = $query->whereBetween($searchPrefix.$searchProperty, [$dateFrom, $dateTo]);
+                    $dateTo = Carbon::createFromFormat($dateFormat, $request[$searchProperty . '_end'])->endOfDay()->toDateTimeString();
+                    $query = $query->whereBetween($searchPrefix . $searchProperty, [$dateFrom, $dateTo]);
                     break;
                 case str_contains($propertyMetaData, IMCRMSearchTypesEnum::MULTI_SEARCH):
-                    $query = $query->whereIn($searchPrefix.$searchProperty, $request->$searchProperty);
+                    $query = $query->whereIn($searchPrefix . $searchProperty, $request->$searchProperty);
                     break;
                 default:
                     break;
@@ -425,9 +426,9 @@ function addOrderByClauses($request, $query, $searchPrefix)
     if ($column != '' && $direction != '') {
         $columnName = $request->get('columns')[$column]['name'];
 
-        return $query->orderBy($searchPrefix.$columnName, $direction);
+        return $query->orderBy($searchPrefix . $columnName, $direction);
     } else {
-        return $query->orderBy($searchPrefix.'created_at', 'DESC');
+        return $query->orderBy($searchPrefix . 'created_at', 'DESC');
     }
 }
 
@@ -435,20 +436,20 @@ function formatAmount($value, $decimals = 2, $appendPrefix = true)
 {
     $value = number_format($value, $decimals);
 
-    return ($appendPrefix) ? 'AED '.$value : $value;
+    return ($appendPrefix) ? 'AED ' . $value : $value;
 }
 
 function generateRouteNames($prefix)
 {
     return [
-        'index' => $prefix.'-list',
-        'create' => $prefix.'-create',
-        'store' => $prefix.'-store',
-        'show' => $prefix.'-show',
-        'edit' => $prefix.'-edit',
-        'update' => $prefix.'-update',
-        'destroy' => $prefix.'-delete',
-        'search' => $prefix.'-search',
+        'index' => $prefix . '-list',
+        'create' => $prefix . '-create',
+        'store' => $prefix . '-store',
+        'show' => $prefix . '-show',
+        'edit' => $prefix . '-edit',
+        'update' => $prefix . '-update',
+        'destroy' => $prefix . '-delete',
+        'search' => $prefix . '-search',
     ];
 }
 
@@ -483,7 +484,7 @@ if (! function_exists('isCarLostStatus')) {
 if (! function_exists('createCdnUrl')) {
     function createCdnUrl($path): string
     {
-        return config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$path;
+        return config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/' . $path;
     }
 }
 
@@ -586,7 +587,7 @@ if (! function_exists('removeCountryCode')) {
         $mobile = preg_replace('/^\+971|0(?=\d{9})/', '', $mobile);
 
         if (substr($mobile, 0, 1) !== '0') {
-            return '0'.$mobile;
+            return '0' . $mobile;
         }
 
         return $mobile;
@@ -620,7 +621,7 @@ if (! function_exists('getRepositoryObject')) {
 
         $quoteType = ucfirst($quoteType);
 
-        return 'App\\Repositories\\'.$quoteType.'QuoteRepository';
+        return 'App\\Repositories\\' . $quoteType . 'QuoteRepository';
     }
 }
 
@@ -633,7 +634,7 @@ if (! function_exists('getServiceObject')) {
 
         $quoteType = ucfirst($quoteType);
 
-        return 'App\\Services\\'.$quoteType.'QuoteService';
+        return 'App\\Services\\' . $quoteType . 'QuoteService';
     }
 }
 
@@ -648,8 +649,8 @@ if (! function_exists('checkModifiedRecord')) {
 if (! function_exists('dateQueryFilter')) {
     function dateQueryFilter($firstDate, $secondDate, $clauseTypeBetween = true): array
     {
-        $firstDate = date(config('constants.DATE_FORMAT_ONLY').' 00:00:00', strtotime($firstDate));
-        $secondDate = date(config('constants.DATE_FORMAT_ONLY').' 23:59:59', strtotime($secondDate));
+        $firstDate = date(config('constants.DATE_FORMAT_ONLY') . ' 00:00:00', strtotime($firstDate));
+        $secondDate = date(config('constants.DATE_FORMAT_ONLY') . ' 23:59:59', strtotime($secondDate));
         $currentDate = Carbon::now()->format(config('constants.DB_DATE_FORMAT_MATCH'));
 
         if ($clauseTypeBetween) {
@@ -768,8 +769,8 @@ if (! function_exists('apiResponse')) {
             ])->count();
 
             return ($customerType == CustomerTypeEnum::Individual) ?
-                CustomerTypeEnum::IndividualShort.'-'.$customerEntityID.'-'.(++$quoteMemberCount) :
-                CustomerTypeEnum::EntityShort.'-'.$customerEntityID.'-'.(++$quoteMemberCount);
+                CustomerTypeEnum::IndividualShort . '-' . $customerEntityID . '-' . (++$quoteMemberCount) :
+                CustomerTypeEnum::EntityShort . '-' . $customerEntityID . '-' . (++$quoteMemberCount);
         }
     }
 }
@@ -903,7 +904,7 @@ if (! function_exists('getMyAlfredCampaign')) {
 
         return Cache::remember("MA_CAMPAIGN_{$campaignId}", now()->addHours(24), function () use ($campaignId) {
             try {
-                $response = Http::timeout(20)->retry(3, 3000)->get(config('constants.MA_V1_ENDPOINT')."/campaigns/{$campaignId}");
+                $response = Http::timeout(20)->retry(3, 3000)->get(config('constants.MA_V1_ENDPOINT') . "/campaigns/{$campaignId}");
                 if ($response->ok()) {
                     $response = $response->object();
 
@@ -912,7 +913,7 @@ if (! function_exists('getMyAlfredCampaign')) {
                     }
                 }
             } catch (Exception $e) {
-                Log::error('getMyAlfredCampaign Error: '.$e->getMessage().$e->getTraceAsString());
+                Log::error('getMyAlfredCampaign Error: ' . $e->getMessage() . $e->getTraceAsString());
             }
 
             return null;
@@ -959,9 +960,9 @@ if (! function_exists('getAlfredEligibleCustomers')) {
 
             $response = Http::timeout(20)->retry(2, 3000)
                 ->withHeaders([
-                    'Authorization' => 'Basic '.$basicAuth,
+                    'Authorization' => 'Basic ' . $basicAuth,
                 ])
-                ->post(config('constants.MA_V1_ENDPOINT').'/internal/wfs/get-remaining-scratches', ['data' => $data]);
+                ->post(config('constants.MA_V1_ENDPOINT') . '/internal/wfs/get-remaining-scratches', ['data' => $data]);
 
             if ($response->ok()) {
                 $response = $response->object();
@@ -971,7 +972,7 @@ if (! function_exists('getAlfredEligibleCustomers')) {
                 }
             }
         } catch (Exception $e) {
-            Log::error('getAlfredEligibleCustomers Error: '.$e->getMessage().$e->getTraceAsString());
+            Log::error('getAlfredEligibleCustomers Error: ' . $e->getMessage() . $e->getTraceAsString());
         }
 
         return null;
@@ -1181,7 +1182,7 @@ if (! function_exists('getQuoteUsingSubject')) {
         $words = preg_split('/\s+/', trim($input));
 
         $getTypeAndUUID = function (QuoteTypes $quoteType) use ($words) {
-            $uuid = collect($words)->first(fn ($value) => Str::startsWith($value, $quoteType->shortCode()));
+            $uuid = collect($words)->first(fn($value) => Str::startsWith($value, $quoteType->shortCode()));
 
             if ($uuid) {
                 return [$quoteType, Str::afterLast($uuid, '-')];
@@ -1226,8 +1227,8 @@ if (! function_exists('getLookupsEnum')) {
     function getLookupsEnum(): array
     {
         return array_combine(
-            array_map(fn ($case) => $case->name, LookupsEnum::cases()),
-            array_map(fn ($case) => $case->value, LookupsEnum::cases())
+            array_map(fn($case) => $case->name, LookupsEnum::cases()),
+            array_map(fn($case) => $case->value, LookupsEnum::cases())
         );
     }
 }
@@ -1247,5 +1248,23 @@ if (! function_exists('isVatApplied')) {
         }
 
         return false;
+    }
+}
+
+if (! function_exists('getTeamId')) {
+    /**
+     * Get the ID of a team by its name.
+     */
+    function getTeamId(string $teamName): int
+    {
+        try {
+            $team = Team::where('name', $teamName)->first();
+
+            return optional($team)->id ?? 0;
+        } catch (Exception $e) {
+            Log::error("Error retrieving team ID for team name: {$teamName}", ['exception' => $e]);
+
+            return 0;
+        }
     }
 }
