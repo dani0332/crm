@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\DocumentTypeCategory;
 use App\Enums\DocumentTypeCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
@@ -56,10 +58,22 @@ class QuoteDocumentService extends BaseService
 
     public function getSendUpdateDocumentTypes(): array
     {
-        return DocumentType::where(['category' => SendUpdateLogStatusEnum::SEND_UPDATE, 'is_active' => true])
+        $sendUpdateDocumentTypes = DocumentType::active()
+            ->whereIn('category', [SendUpdateLogStatusEnum::SEND_UPDATE, DocumentTypeCategory::QUOTE_AND_ENDORSEMENT])
             ->orderBy('sort_order')
-            ->get()
-            ->toArray();
+            ->get();
+
+        // Document types for send updates are grouped by category.
+        $documentTypesByCategory = $sendUpdateDocumentTypes->groupBy('category');
+        $groupedDocumentTypesByCategory = $documentTypesByCategory->map(function ($documentType) {
+            return $documentType->toArray();
+        });
+
+        foreach ($documentTypesByCategory as $category => $documentTypeByCategory) {
+            $groupedDocumentTypesByCategory->put($category, $documentTypesByCategory->get($category)->toArray());
+        }
+
+        return $groupedDocumentTypesByCategory->toArray();
     }
 
     /**
@@ -129,7 +143,11 @@ class QuoteDocumentService extends BaseService
                     return false;
                 }
             } elseif ($isKyc) {
-                $originalName = 'SystemGeneratedKycDocument.pdf';
+                if (isset($data['pdf_name'])) {
+                    $originalName = $data['pdf_name'];
+                } else {
+                    $originalName = 'SystemGeneratedKycDocument.pdf';
+                }
 
                 // Generate a unique filename
                 $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
@@ -202,7 +220,7 @@ class QuoteDocumentService extends BaseService
         }
 
         if (! isset($record->policy_number) || ! isset($record->policy_issuance_date) || ! isset($record->policy_start_date) ||
-            ! isset($record->premium) || ! isset($record->renewal_expiry_date) || ! isset($record->plan_id) ||
+            ! isset($record->premium) || ! isset($record->policy_expiry_date) || ! isset($record->plan_id) ||
             $record->advisor_id != auth()->user()->id) {
             return 0;
         }
@@ -386,5 +404,14 @@ class QuoteDocumentService extends BaseService
         }
 
         return $appDownloadLink;
+    }
+
+    public function isEnableUploadDocument($quoteStatusId)
+    {
+        if (in_array($quoteStatusId, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued])) {
+            return false;
+        }
+
+        return true;
     }
 }

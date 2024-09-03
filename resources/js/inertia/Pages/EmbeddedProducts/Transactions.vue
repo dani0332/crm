@@ -37,6 +37,8 @@ const tableHeader = [
   { text: 'EMIRATES ID NUMBER', value: 'emirates_id_number' },
   { text: 'DOB', value: 'dob' },
   { text: 'AGE', value: 'age' },
+  { text: 'PASSPORT', value: 'passport_number' },
+  { text: 'NATIONALITY', value: 'nationality' },
   { text: 'Vehicle', value: 'vehicle' },
   { text: 'Contact Number', value: 'contact_number' },
   { text: 'Email ID', value: 'email' },
@@ -253,7 +255,6 @@ watch(
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-id="{ id }">
         <Link

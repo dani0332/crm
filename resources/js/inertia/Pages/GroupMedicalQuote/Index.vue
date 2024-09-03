@@ -6,6 +6,7 @@ defineProps({
   isManagerORDeputy: Boolean,
   quotes: Object,
   isManualAllocationAllowed: Boolean,
+  authorizedDays: Number,
 });
 
 const canExport = ref(false);
@@ -40,8 +41,8 @@ const filters = reactive({
   last_name: '',
   email: '',
   mobile_no: '',
-  created_at_start: '',
-  created_at_end: '',
+  created_at_start: new Date() || '',
+  created_at_end: new Date() || '',
   leadStatus: [],
   advisor_id: '',
   page: 1,
@@ -49,6 +50,8 @@ const filters = reactive({
   renewal_batch: '',
   payment_due_date: '',
   booking_date: '',
+  policy_expiry_date: '',
+  policy_expiry_date_end: '',
 });
 
 const leadStatusOptions = computed(() => {
@@ -68,6 +71,8 @@ const tableHeader = [
   { text: 'Ref-ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
+  { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
+  { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
   { text: 'LEAD STATUS', value: 'leadStatus' },
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'PRICE', value: 'premium' },
@@ -77,6 +82,11 @@ const tableHeader = [
   { text: 'SOURCE', value: 'source' },
   { text: 'CREATED AT', value: 'created_at' },
   { text: 'Updated AT', value: 'updated_at' },
+  {
+    text: 'POLICY EXPIRY DATE',
+    value: 'previous_policy_expiry_date',
+    sortable: true,
+  },
   { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
   { text: 'Renewal Batch', value: 'renewal_batch' },
 ];
@@ -103,17 +113,25 @@ function filterQuotes(isValid) {
   if (!isValid) {
     return;
   }
+  if (validateDateRange()) {
+    notification.error({
+      title:
+        'The selected date range exceeds one month. Please select a range within one month.',
+      position: 'top',
+    });
+    return;
+  }
   for (const key in filters) {
     if (filters[key] === '') {
       delete filters[key];
     }
   }
-  if (filters.created_at_start) {
-    filters.created_at_start = filters.created_at_start.split('T')[0];
-  }
-  if (filters.created_at_end) {
-    filters.created_at_end = filters.created_at_end.split('T')[0];
-  }
+  // if (filters.created_at_start) {
+  //   filters.created_at_start = filters.created_at_start.split('T')[0];
+  // }
+  // if (filters.created_at_end) {
+  //   filters.created_at_end = filters.created_at_end.split('T')[0];
+  // }
   router.visit(route('amt.index'), {
     method: 'get',
     data: {
@@ -170,7 +188,9 @@ function displayNotification() {
 function setQueryFilters() {
   let urlParams = new URLSearchParams(window.location.search);
   for (const [key, value] of urlParams) {
-    if (key.includes('[')) {
+    if (key == 'created_at_start' || key == 'created_at_end') {
+      filters[key] = useDateFormat(urlParams[key], 'YYYY-MM-DD').value;
+    } else if (key.includes('[')) {
       let index = key.replace('[]', '');
       filters[index] = urlParams.getAll(key).map(item => parseInt(item));
     } else {
@@ -183,6 +203,29 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
 const onDataExport = () => {
+  let diff = calculateDaysDifference(
+    filters.created_at_start,
+    filters.created_at_end,
+  );
+
+  if (diff > 31) {
+    notification.error({
+      message: 'Maximum of 31 days (created date) are allowed to be exported.',
+      position: 'top',
+    });
+    return;
+  }
+
+  filters.created_at_start = useDateFormat(
+    filters.created_at_start,
+    'YYYY-MM-DD',
+  ).value;
+
+  filters.created_at_end = useDateFormat(
+    filters.created_at_end,
+    'YYYY-MM-DD',
+  ).value;
+
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'amt');
   window.open(url + '?' + new URLSearchParams(data).toString());
@@ -204,8 +247,12 @@ watch(
   { deep: true, immediate: true },
 );
 
+const readOnlyMode = reactive({
+  isDisable: true,
+});
 onMounted(() => {
   setQueryFilters();
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 const resetDateFilters = filterName => {
   const filterMappings = {
@@ -238,6 +285,63 @@ const resetDateFilters = filterName => {
     },
   );
 });
+function daysAgoFromAuthorizedDate(authorizedDate) {
+  if (!authorizedDate) {
+    return;
+  }
+  const [day, month, year] = authorizedDate.split('-').map(Number);
+  const parsedDate = new Date(year, month - 1, day);
+
+  if (isNaN(parsedDate.getTime())) {
+    return 'Invalid date';
+  }
+
+  // Reset time to 00:00:00 to consider only the date
+  parsedDate.setHours(0, 0, 0, 0);
+
+  // Add `page.props.authorizedDays` to the parsed date
+  const authorizedDays = page.props.authorizedDays || 8; // Default to 8 if not defined
+  const newDate = new Date(parsedDate);
+  newDate.setDate(parsedDate.getDate() + authorizedDays);
+
+  // Reset time for newDate as well
+  newDate.setHours(0, 0, 0, 0);
+
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0); // Reset time for current date
+
+  // Calculate the difference in days
+  const differenceInTime = newDate.getTime() - currentDate.getTime();
+  const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+
+  // Return appropriate message
+  if (differenceInDays <= 0) {
+    return 'Expired';
+  }
+
+  return differenceInDays === 1
+    ? `${differenceInDays} day`
+    : `${differenceInDays} days`;
+}
+const validateDateRange = () => {
+  const { policy_expiry_date, policy_expiry_date_end } = filters;
+  if (policy_expiry_date && policy_expiry_date_end) {
+    const startDate = new Date(policy_expiry_date);
+    const endDate = new Date(policy_expiry_date_end);
+    const oneMonthLater = new Date(startDate);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    // Adjust for months with fewer than 31 days
+    if (oneMonthLater.getDate() < startDate.getDate()) {
+      oneMonthLater.setDate(0);
+    }
+    if (endDate > oneMonthLater) {
+      return true;
+    }
+  }
+  return false;
+};
+const formatDate = dateString =>
+  useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY').value;
 </script>
 
 <template>
@@ -247,11 +351,25 @@ const resetDateFilters = filterName => {
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3">
         <Link :href="route('amt.cardsView')">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
+          <x-button
+            size="sm"
+            color="#1d83bc"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Cards View
+          </x-button>
         </Link>
 
         <Link :href="route('amt.create')">
-          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Create Lead
+          </x-button>
         </Link>
       </div>
     </div>
@@ -315,14 +433,32 @@ const resetDateFilters = filterName => {
           <DatePicker
             v-model="filters.created_at_start"
             name="created_at_start"
-            :rules="[created_at_rule]"
+            :rules="
+              filters.previous_quote_policy_number ||
+              filters.code ||
+              filters.email ||
+              filters.renewal_batch ||
+              filters.payment_due_date ||
+              filters.booking_date
+                ? []
+                : [isRequired]
+            "
           />
         </x-field>
         <x-field label="Created Date End">
           <DatePicker
             v-model="filters.created_at_end"
             name="created_at_end"
-            :rules="[created_at_end_rule]"
+            :rules="
+              filters.previous_quote_policy_number ||
+              filters.code ||
+              filters.email ||
+              filters.renewal_batch ||
+              filters.payment_due_date ||
+              filters.booking_date
+                ? []
+                : [isRequired]
+            "
           />
         </x-field>
         <x-field label="Lead Status">
@@ -330,6 +466,18 @@ const resetDateFilters = filterName => {
             v-model="filters.leadStatus"
             placeholder="Search by Lead Status"
             :options="leadStatusOptions"
+          />
+        </x-field>
+        <x-field label="Policy Expiry Start Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date"
+            name="policy_expiry_date"
+          />
+        </x-field>
+        <x-field label="Policy Expiry End Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date_end"
+            name="policy_expiry_date_end"
           />
         </x-field>
         <x-field label="Advisor">
@@ -422,6 +570,7 @@ const resetDateFilters = filterName => {
                 placeholder="Select Advisor"
                 class="flex-1 w-auto"
                 :error="assignForm.errors.assigned_to_id_new"
+                v-if="readOnlyMode.isDisable === true"
               />
               <div class="mb-3 md:pt-6">
                 <x-button
@@ -429,6 +578,7 @@ const resetDateFilters = filterName => {
                   size="sm"
                   type="submit"
                   :loading="assignForm.processing"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Assign
                 </x-button>
@@ -448,7 +598,6 @@ const resetDateFilters = filterName => {
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-code="{ code, uuid }">
         <a
@@ -458,7 +607,28 @@ const resetDateFilters = filterName => {
           {{ code }}
         </a>
       </template>
-
+      <template #item-authorized_at="item">
+        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
+          {{ item.authorized_at }}
+        </p>
+      </template>
+      <template #item-expiry_date="item">
+        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
+          {{ daysAgoFromAuthorizedDate(item.authorized_at) }}
+        </p>
+      </template>
+      <template
+        #item-previous_policy_expiry_date="{
+          previous_policy_expiry_date,
+          source,
+        }"
+      >
+        {{
+          source === 'Renewal_upload'
+            ? formatDate(previous_policy_expiry_date)
+            : ''
+        }}
+      </template>
       <template #item-source="{ source }">
         <a
           :href="source && source.includes('http') ? source : '#'"

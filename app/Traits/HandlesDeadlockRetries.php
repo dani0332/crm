@@ -39,9 +39,10 @@ trait HandlesDeadlockRetries
                     }
                     sleep(1); // Optional: wait a bit before retrying
                 } else {
+
                     Log::error('Error: '.$exception->getMessage());
 
-                    return ['status' => 'error', 'message' => $exception->getMessage()];
+                    return ['status' => 'failed', 'message' => $exception->getMessage()];
                 }
             }
         }

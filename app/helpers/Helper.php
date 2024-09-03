@@ -9,6 +9,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessQuote;
 use App\Models\CustomerAdditionalInfo;
@@ -69,7 +70,7 @@ if (! function_exists('vAbort')) {
 if (! function_exists('generateUuid')) {
     function generateUuid()
     {
-        $client = new Hidehalo\Nanoid\Client();
+        $client = new Hidehalo\Nanoid\Client;
         $alphabets = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $nanoId = $client->formattedId($alphabets, 8);
 
@@ -714,6 +715,21 @@ if (! function_exists('mimeContentType')) {
         }
     }
 }
+if (! function_exists('checkAuthUserRole')) {
+    function checkAuthUserRole()
+    {
+
+        if (! Auth::check()) {
+            return false;
+        }
+
+        if (Auth::user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::HealthManager, RolesEnum::BusinessManager, RolesEnum::HomeManager, RolesEnum::LifeManager, RolesEnum::PetManager, RolesEnum::YachtManager, RolesEnum::TravelManager, RolesEnum::BikeManager, RolesEnum::CycleManager, RolesEnum::JetskiManager])) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
 
 if (! function_exists('apiResponse')) {
     function apiResponse($data, $statusCode = 200, $message = null)
@@ -1113,6 +1129,83 @@ if (! function_exists('isValidDate')) {
             && $date != '0000-00-00';
     }
 }
+
+if (! function_exists('getAssignmentTypeText')) {
+    function getAssignmentTypeText($assignmentType)
+    {
+        $assignmentText = '';
+        switch ($assignmentType) {
+            case 1:
+                $assignmentText = 'System Assigned';
+                break;
+            case 2:
+                $assignmentText = 'System ReAssigned';
+                break;
+            case 3:
+                $assignmentText = 'Manual Assigned';
+                break;
+            case 4:
+                $assignmentText = 'Manual ReAssigned';
+                break;
+            default:
+                break;
+        }
+
+        return $assignmentText;
+    }
+}
+
+if (! function_exists('getEmailCampaignBanner')) {
+    function getEmailCampaignBanner()
+    {
+        $emailCampaignBanner = null;
+        $emailCampaignBannerRedirectUrl = null;
+
+        $campaign = getMyAlfredCampaign(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN));
+        if ($campaign) {
+            if (property_exists($campaign, 'banners') && property_exists($campaign->banners, 'buyPolicy')) {
+                $emailCampaignBanner = $campaign->banners->buyPolicy;
+            }
+            if (property_exists($campaign, 'landingPage')) {
+                $emailCampaignBannerRedirectUrl = $campaign->landingPage;
+            }
+        }
+
+        return [$emailCampaignBanner, $emailCampaignBannerRedirectUrl];
+    }
+}
+
+if (! function_exists('getQuoteUsingSubject')) {
+    function getQuoteUsingSubject(string $input)
+    {
+        $words = preg_split('/\s+/', trim($input));
+
+        $getTypeAndUUID = function (QuoteTypes $quoteType) use ($words) {
+            $uuid = collect($words)->first(fn ($value) => Str::startsWith($value, $quoteType->shortCode()));
+
+            if ($uuid) {
+                return [$quoteType, Str::afterLast($uuid, '-')];
+            }
+
+            return null;
+        };
+
+        foreach (QuoteTypes::cases() as $quoteType) {
+            if ($quoteType === QuoteTypes::PERSONAL) {
+                continue;
+            }
+
+            $data = $getTypeAndUUID($quoteType);
+
+            if ($data) {
+                return $data;
+            }
+        }
+
+        return null;
+    }
+}
+
 if (! function_exists('getManagersByUser')) {
     function getManagersByUser($userId)
     {
@@ -1136,5 +1229,23 @@ if (! function_exists('getLookupsEnum')) {
             array_map(fn ($case) => $case->name, LookupsEnum::cases()),
             array_map(fn ($case) => $case->value, LookupsEnum::cases())
         );
+    }
+}
+
+if (! function_exists('isVatApplied')) {
+    function isVatApplied($modelType): bool
+    {
+        $vatEnabledQuotes = [
+            quoteTypeCode::Health,
+            quoteTypeCode::Business,
+            quoteTypeCode::Pet,
+            quoteTypeCode::Cycle,
+            quoteTypeCode::Bike,
+        ];
+        if (in_array($modelType, $vatEnabledQuotes)) {
+            return true;
+        }
+
+        return false;
     }
 }

@@ -30,9 +30,14 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
      * Create a new job instance.
      */
     private $data = null;
-    public function __construct($payload)
+
+    private $code = null;
+
+    public function __construct($payload, $code)
     {
+        info('job: SendBookPolicyDocumentsJob constructor for: '.$code);
         $this->data = $payload;
+        $this->code = $code;
     }
 
     /**
@@ -40,11 +45,12 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
      */
     public function handle(SendEmailCustomerService $sendEmailCustomerService, QuoteDocumentService $quoteDocumentService)
     {
-        info('job: SendBookPolicyDocumentsJob started');
-
+        info('job: SendBookPolicyDocumentsJob started for: '.$this->code);
+        $insuranceType = '';
+        $planName = '';
         // In case of Group Medical & Corpline, modelType is used & for rest of the LOBs model_type is used
         // Basically we are different to identify the template which will send to customer after policy booking
-        $modelType = ! empty($this->data->modelType) ? $this->data->modelType : $this->data->model_type;
+        $modelType = ucfirst(! empty($this->data->modelType) ? $this->data->modelType : $this->data->model_type);
 
         $quote = $this->getQuoteObject($this->data->model_type, $this->data->quote_id);
         $handBookDocuments = [];
@@ -53,15 +59,21 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             // This will give handbook document from relevant policy wording table only for mentioned LOB's
             if (in_array($modelType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
                 $handBookDocuments = app(QuoteDocumentService::class)->getHandBookDocuments($quote);
-                info('Handbook documents retrieved: '.$quote->uuid.' : '.json_encode($handBookDocuments));
             }
             // First Retrieve document types marked for sending to the customer, then fetch the corresponding uploaded documents
             $documentTypeCodes = DocumentTypeRepository::quoteDocumentsSentToCustomerCode($this->data->model_type, $quote);
             $docs = app(QuoteDocumentService::class)->getQuoteDocuments($this->data->model_type, $this->data->quote_id, $documentTypeCodes);
-            info('Quote documents which need to send to customer through email retrieved: '.json_encode($docs));
         } catch (Exception $ex) {
-            Log::error('Send BookPolicy Documents Job Error '.$quote->uuid.' : '.$ex->getMessage());
+            Log::error('Send BookPolicy Documents Job Error for:  '.$quote->code.' '.$ex->getMessage());
             $docs = [];
+        }
+
+        if (strtolower($modelType) == strtolower(quoteTypeCode::CORPLINE)) {
+            $quote->load('businessTypeOfInsurance');
+            $insuranceType = $quote->businessTypeOfInsurance->text;
+        }
+        if ($modelType == quoteTypeCode::Health) {
+            $planName = $quote->plan->text;
         }
 
         $quote->load('advisor');
@@ -71,12 +83,12 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         if (! empty($templateId)) {
             // TODO:  Hard coded format and variable values should be form env file
             $roadsideAssistance = '';
-            $emailData = new \stdClass();
+            $emailData = new \stdClass;
             $emailData->code = $quote->code;
             $emailData->customerEmail = $quote->email;
             $emailData->clientFullName = $quote->first_name.' '.$quote->last_name;
             $emailData->policy_number = $quote->policy_number;
-            $emailData->renewalDueDate = date('d/m/Y', strtotime($quote['renewal_expiry_date']));
+            $emailData->renewalDueDate = date('d/m/Y', strtotime($quote['policy_expiry_date']));
             $emailData->policyStartDate = date('d/m/Y', strtotime($quote['policy_start_date']));
             $emailData->quoteDocuments = $docs;
             $emailData->advisorName = '';
@@ -84,6 +96,9 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->advisorMobileNo = '';
             $emailData->advisorLandlineNo = '';
             $emailData->googleMeet = '';
+            $emailData->insuranceType = $insuranceType;
+            $emailData->planName = $planName;
+            $emailData->currentInsurer = '';
             if (! empty($quote->advisor)) {
                 $emailData->advisorName = $quote->advisor->name;
                 $emailData->advisorEmail = $quote->advisor->email;
@@ -93,24 +108,28 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
                 $emailData->googleMeet = $quote->advisor->calendar_link;
             }
             if (in_array(ucfirst($this->data->model_type), [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel])) {
-                $emailData->currentInsurer = $quote->plan->insuranceProvider->text;
-                $roadsideAssistance = $quote->plan->insuranceProvider->roadside_phone_number;
+                if (isset($quote->plan) && isset($quote->plan->insuranceProvider)) {
+                    $emailData->currentInsurer = $quote->plan->insuranceProvider->text;
+                    $roadsideAssistance = $quote->plan->insuranceProvider->roadside_phone_number;
+                }
             } else {
-                $emailData->currentInsurer = $quote->insuranceProvider->text;
-                $roadsideAssistance = $quote->insuranceProvider->roadside_phone_number;
+                if (isset($quote->insuranceProvider)) {
+                    $emailData->currentInsurer = $quote->insuranceProvider->text;
+                    $roadsideAssistance = $quote->insuranceProvider->roadside_phone_number;
+                }
             }
 
             $emailData->emailTemplateId = $templateId;
             $emailData->handBookDocuments = $handBookDocuments;
             $emailData->roadsideAssistance = $roadsideAssistance;
             $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
-            info('Send Book Policy Documents Job Email Data '.$quote->uuid.' : '.json_encode($emailData));
             $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
-            info('Send Book Policy Documents Job Response '.$quote->uuid.' : '.json_encode($response));
+            info('Send Book Policy Documents Job Response for '.$quote->code.' '.$quote->uuid.' : '.json_encode($response));
         }
 
         $quote->update([
             'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
+            'quote_status_date' => now(),
         ]);
     }
 

@@ -162,4 +162,8 @@ final class SageEnum extends Enum
 
     // Sage Messages
     const SAGE_REQUEST_BEING_PROCESS = 'Sage Request is being process';
+
+    // Sage Batch Status
+    const SAGE_STATUS_POSTED = 'Posted';
+    const SAGE_STATUS_OPEN = 'Open';
 }

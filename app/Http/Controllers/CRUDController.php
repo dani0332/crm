@@ -21,6 +21,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\PuaEnum;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -38,7 +39,6 @@ use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Http\Requests\UpdatePolicyDetailRequest;
 use App\Jobs\CarRenewalEmailJob;
-use App\Jobs\SendOCBIntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
@@ -63,6 +63,7 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\NationalityRepository;
+use App\Repositories\PaymentRepository;
 use App\Repositories\QuoteNoteRepository;
 use App\Repositories\RenewalBatchRepository;
 use App\Repositories\SendUpdateLogRepository;
@@ -72,13 +73,13 @@ use App\Services\AllocationService;
 use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
 use App\Services\BusinessQuoteService;
-use App\Services\CarEmailService;
 use App\Services\CarQuoteService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\EmailDataService;
+use App\Services\EmailServices\CarEmailService;
 use App\Services\EmailStatusService;
 use App\Services\HealthQuoteService;
 use App\Services\HomeQuoteService;
@@ -86,6 +87,7 @@ use App\Services\LeadAllocationService;
 use App\Services\LifeQuoteService;
 use App\Services\LookupService;
 use App\Services\NotesForCustomerService;
+use App\Services\NotificationService;
 use App\Services\PetQuoteService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
@@ -157,7 +159,7 @@ class CRUDController extends Controller
         EmailDataService $emailDataService,
         AllocationService $allocationService,
     ) {
-        $this->genericModel = new GenericModel();
+        $this->genericModel = new GenericModel;
         $this->healthQuoteService = $healthService;
         $this->teamsService = $teamsService;
         $this->crudService = $crudService;
@@ -208,6 +210,7 @@ class CRUDController extends Controller
         $yesterdayAllocationData = $this->allocationService->getYesterdayCounts(auth()->user()->id);
         $yesterdayAutoCount = $yesterdayAllocationData['auto_assignment_count'];
         $yesterdayManualCount = $yesterdayAllocationData['manual_assignment_count'];
+        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
 
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $upcomingBatch = RenewalBatchRepository::getUpcomingBatch(QuoteStatusEnum::Uncontactable);
@@ -303,7 +306,9 @@ class CRUDController extends Controller
                 'todayManualCount' => $todayManualCount,
                 'yesterdayAutoCount' => $yesterdayAutoCount,
                 'yesterdayManualCount' => $yesterdayManualCount,
+                'quoteSegments' => QuoteSegmentEnum::withLabels(QuoteTypeId::Health),
                 'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : HealthQuoteRepository::getData(true, true),
+                'authorizedDays' => intval($authorizedDays->value),
             ]);
         }
 
@@ -322,6 +327,7 @@ class CRUDController extends Controller
                 'advisors' => $advisors,
                 'isManualAllocationAllowed' => $isManualAllocationAllowed,
                 'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : HomeQuoteRepository::getData(true, true),
+                'authorizedDays' => intval($authorizedDays->value),
             ]);
         }
 
@@ -351,6 +357,7 @@ class CRUDController extends Controller
                 'genericRequestEnum' => $genericRequestEnum,
                 'isBetaUser' => $isBetaUser,
                 'teams' => $teams,
+                'authorizedDays' => intval($authorizedDays->value),
             ]);
         }
 
@@ -537,6 +544,10 @@ class CRUDController extends Controller
         $paymentTooltipEnum = PaymentTooltip::asArray();
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         abort_if(! $record, 404);
+
+        /* Start - Temporarily adding for correcting historic data  */
+        (new PaymentRepository)->updatePriceVatApplicableAndVat($record, $this->genericModel->modelType);
+        /* End - Temporarily adding for correcting historic data  */
 
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($this->genericModel->modelType, $record);
         $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($record->id, $quoteType);
@@ -830,7 +841,7 @@ class CRUDController extends Controller
 
             @[$documentTypes, $paymentDocument] = $this->quoteDocumentService->getDocumentTypes(QuoteTypeId::Home);
 
-            $quoteDocument = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::HOME->value, $record->id);
+            $quoteDocument = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::HOME->value, $record->id);
             $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::HOME->value, $payments, $quoteDocument);
             $noteDocumentType = DocumentType::where('code', DocumentTypeCode::OD)->first();
             $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::HOME->name);
@@ -1508,7 +1519,16 @@ class CRUDController extends Controller
 
             return Redirect::back()->with('message', $msg);
         } else {
+            $quoteIds = explode(',', $request->selectTmLeadId);
+            foreach ($quoteIds as $id) {
+                $quoteData = $this->getQuoteObject($request->modelType, $id);
+                if ($quoteData && $quoteData->payment_status_id === PaymentStatusEnum::AUTHORISED) {
+                    app(NotificationService::class)->paymentStatusUpdate($request->modelType, $quoteData->uuid);
+                }
+            }
+
             return Redirect::back()->with('success', $request->modelType.' Leads has been Assigned To '.$assignedUser->name);
+
         }
     }
 
@@ -1577,9 +1597,9 @@ class CRUDController extends Controller
         $oldEntity = $this->crudService->getEntityByUUID($request->quote_uuid, $request->modelType);
         $result = $this->crudService->updateQuoteStatus($request);
         $entity = $result['entity'];
-        $plainEntity = $this->crudService->getLeadPlainEntityByUUID($request->modelType, $request->quote_uuid);
         if ($request->leadStatus == QuoteStatusEnum::TransactionApproved) {
-            $this->crudService->calculateScore($plainEntity);
+            $plainEntity = $this->getQuoteObject($request->modelType, $request->leadId);
+            $this->crudService->calculateScore($plainEntity, $request->modelType);
         }
 
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
@@ -1775,7 +1795,7 @@ class CRUDController extends Controller
             'policy_number' => $request->quote_policy_number ?? '',
             'policy_issuance_date' => isset($request->quote_policy_issuance_date) ? Carbon::parse($request->quote_policy_issuance_date)->format('Y-m-d') : null,
             'policy_start_date' => isset($request->quote_policy_start_date) ? Carbon::parse($request->quote_policy_start_date)->format('Y-m-d') : null,
-            'renewal_expiry_date' => isset($request->quote_policy_expiry_date) ? Carbon::parse($request->quote_policy_expiry_date)->format('Y-m-d') : null,
+            'policy_expiry_date' => isset($request->quote_policy_expiry_date) ? Carbon::parse($request->quote_policy_expiry_date)->format('Y-m-d') : null,
             'price_vat_not_applicable' => $request->price_vat_notapplicable ?? '',
             'price_vat_applicable' => $request->price_vat_applicable ?? '',
             'price_with_vat' => $request->amount_with_vat ?? '',
@@ -1793,13 +1813,15 @@ class CRUDController extends Controller
         Log::info('Updating policy_issuer_id  : '.auth()->id());
 
         // store policy issuer
-        $payment = $quoteModel->payments->first();
-        $payment->policy_issuer_id = auth()->id();
-        $payment->save();
+        $payment = $quoteModel->payments()->mainLeadPayment()->first();
+        if ($payment) {
+            $payment->policy_issuer_id = auth()->id();
+            $payment->save();
+        }
 
         // update status policy issued of req fulfilled
-        $this->updateQuoteStatus($request->modelType, $request->quote_id);
         $this->updatePriceAndDiscount($quoteModel);
+        $this->updateQuoteStatus($request->modelType, $request->quote_id);
 
         Log::info('Policy details update successfully for : '.$quoteModel->uuid);
 
@@ -1993,11 +2015,13 @@ class CRUDController extends Controller
     public function sendOCBEmailNB(Request $request, $quoteType, $quoteUuId)
     {
         if ($quoteUuId) {
-            Log::info('sendOCBEmailNB OCB email sending started for quote uuid: '.$quoteUuId);
 
-            SendOCBIntroEmailJob::dispatch($quoteUuId, null);
-
-            info('sendOCBEmailNB OCB email Job dispatched for quote uuid: '.$quoteUuId);
+            $ocbEmailJob = QuoteTypes::getName(QuoteTypes::getIdFromValue($quoteType))?->ocbEmailJob();
+            if ($ocbEmailJob) {
+                Log::info("sendOCBEmailNB OCB email sending started for quote uuid: {$quoteUuId}");
+                dispatch(new $ocbEmailJob($request->quoteUuid, null));
+                info("sendOCBEmailNB OCB email Job dispatched for quote uuid: {$quoteUuId}");
+            }
 
             return response()->json(['success' => 'OCB NB email sent to customer !']);
         } else {
@@ -2047,9 +2071,10 @@ class CRUDController extends Controller
 
     public function riskRatingDetails($quoteType, $uuid)
     {
-        $quoteModel = $this->getQuoteObject($quoteType, $uuid);
+        $quoteModel = $this->getQuoteObjectBy($quoteType, $uuid, 'uuid');
         $response = $this->crudService->scoreBreakdown($quoteModel, $quoteType);
 
         return $response;
     }
+
 }

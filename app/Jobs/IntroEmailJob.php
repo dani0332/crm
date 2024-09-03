@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Services\SendEmailCustomerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -54,7 +55,7 @@ class IntroEmailJob implements ShouldQueue
         switch ($this->quoteType) {
             case quoteTypeCode::Car:
                 info('Inside car check for sending email');
-                $sendEmailCustomerService->sendLMSIntroEmail($this->emailTemplateId, $this->emailData, 'lms-intro-email');
+                $sendEmailCustomerService->sendLMSIntroEmail($this->emailTemplateId, $this->emailData, 'lms-intro-email', QuoteTypes::CAR);
                 break;
             case quoteTypeCode::Health:
                 $sendEmailCustomerService->sendRMIntroEmail($this->emailData, $this->previousAdvisorId, $this->isReassignment);

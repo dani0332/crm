@@ -2,13 +2,16 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\EnvEnum;
 use App\Enums\QuoteSyncStatus;
 use App\Models\ApplicationStorage;
 use App\Models\PersonalQuote;
 use App\Models\QuoteSync;
 use App\Traits\PersonalQuoteSyncTrait;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 class QuoteSyncUpdateCommand extends Command
 {
@@ -22,6 +25,7 @@ class QuoteSyncUpdateCommand extends Command
     protected $signature = 'QuoteSyncUpdate:cron';
 
     protected $description = 'Sync Quotes Data from QuoteSync table to respective quote tables';
+    private $startId = 0;
 
     public function __construct()
     {
@@ -34,6 +38,10 @@ class QuoteSyncUpdateCommand extends Command
             $this->cacheSchemas();
         }
 
+        if (config('constants.APP_ENV') == EnvEnum::PRODUCTION) {
+            $this->startId = 4500000;
+        }
+
         info('----------- QuoteSyncJob Started -----------');
         $isQuoteSyncEnabled = ApplicationStorage::where('key_name', 'quote_sync_enabled')->first();
 
@@ -43,14 +51,53 @@ class QuoteSyncUpdateCommand extends Command
             return;
         }
 
+        try {
+
+            $beforeTime = Carbon::now()->setTimezone('Asia/Dubai')->subMinutes(15);
+            $quoteUuids = QuoteSync::where('is_synced', false)
+                ->whereIn('status', [QuoteSyncStatus::INPROGRESS, QuoteSyncStatus::FAILED])
+                ->where('id', '>', $this->startId)
+                ->get()
+                ->filter(function ($entry) use ($beforeTime) {
+                    return Carbon::parse($entry->updated_at)->diffInMinutes($beforeTime, false) >= 0;
+                })->unique('quote_uuid')->pluck('quote_uuid')->toArray();
+
+            if (count($quoteUuids) > 0) {
+                $quoteUuids = "'".implode("','", $quoteUuids)."'";
+
+                DB::table('quote_sync as qs')
+                    ->join(DB::raw("(
+                            SELECT 
+                                MIN(CASE WHEN is_synced = false THEN id END) AS min_id,
+                                quote_uuid
+                            FROM quote_sync
+                            WHERE quote_uuid IN ({$quoteUuids})
+                            AND id > ".intval($this->startId).'
+                            AND status IN ('.QuoteSyncStatus::INPROGRESS.', '.QuoteSyncStatus::FAILED.')
+                            GROUP BY quote_uuid
+                        ) as subquery'), function ($join) {
+                        $join->on('qs.id', '>=', 'subquery.min_id')
+                            ->on('qs.quote_uuid', '=', 'subquery.quote_uuid');
+                    })
+                    ->update([
+                        'qs.is_synced' => false,
+                        'qs.status' => QuoteSyncStatus::WAITING,
+                    ]);
+            }
+
+        } catch (Exception $e) {
+            $error = 'QuoteSyncJob Error re-queing failed or stuck entries: '.$quoteUuids.' - '.$e->getMessage();
+            info($error.' --- '.$e->getTraceAsString());
+        }
+
         $entries = QuoteSync::where('is_synced', false)
             ->where('status', QuoteSyncStatus::WAITING)
-            ->take(800)
+            ->where('id', '>', $this->startId)
+            ->take(2000)
             ->get();
 
         if ($entries->isEmpty()) {
-            info('----------- No entries found to be processed in quote sync table -----------');
-
+            // info('----------- No entries found to be processed in quote sync table -----------');
             return;
         }
 
@@ -78,6 +125,7 @@ class QuoteSyncUpdateCommand extends Command
                         $quotes[$key] = $this->processQuoteNotFound($entry);
                     }
                 }
+                info('Syncing entry complete: '.$entry->quote_uuid.' - '.$entry->id);
             } catch (Exception $e) {
                 $error = 'QuoteSyncJob Error syncing entry: '.$entry->quote_uuid.' - '.$entry->id.' - '.$e->getMessage();
                 info($error.' --- '.$e->getTraceAsString());

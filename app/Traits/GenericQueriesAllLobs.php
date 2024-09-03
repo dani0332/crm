@@ -16,9 +16,10 @@ use App\Enums\TransactionPaymentStatusEnum;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Models\PersonalQuoteDetail;
 use App\Models\SendUpdateLog;
 use App\Repositories\DocumentTypeRepository;
-use App\Repositories\InsuranceProviderRepository;
+use App\Repositories\PaymentRepository;
 use App\Services\CapiRequestService;
 use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
@@ -200,7 +201,7 @@ trait GenericQueriesAllLobs
                 'Engineering and plant insurance', 'fidelity guarantee', 'group life', 'group medical insurance', 'holiday homes',
                 'livestock insurance', 'machinery breakdown insurance', 'marine cargo (individual shipment) insurance',
                 'marine hull insurance', 'medical malpractice insurance', 'money insurance', 'motor fleet',
-                'open cover - marine cargo insurance', 'professional indemnity insurance,property insurance',
+                'open cover - marine cargo insurance', 'professional indemnity insurance', 'property insurance',
                 'public liability insurance', 'road transit (international)', 'road transit (UAE only)',
                 'sme packaged insurance', 'trade credit insurance', 'workmens compensation insurance',
             ],
@@ -226,19 +227,24 @@ trait GenericQueriesAllLobs
     {
         info('fn: bookPolicyPayload called for '.$record->uuid);
         $infoMessage = 'QC '.$record->code.' ';
-        $insuranceProviderLeadCount = $insuranceProviderCode = '';
+        $brokerInvoiceNo = $invoiceDescription = '';
         // Retrieve the first payment belongs to lead not to send update
         $payment = $payments->whereNull('send_update_log_id')->first();
         if ($payment) {
-            $insurance_provider_id = $payment->insurance_provider_id;
-            $insuranceProviderCode = InsuranceProviderRepository::where('id', $insurance_provider_id)->value('code');
-            $insuranceProviderLeadCount = Payment::where('insurance_provider_id', '=', $insurance_provider_id)->count();
+            $invoiceDescription = (new PaymentRepository)->generateInvoiceDescription($payment, $quoteType, $record);
+            $brokerInvoiceNo = (new PaymentRepository)->generateBrokerInvoiceNumber($payment, $quoteType);
+
+            $getBINFromDBForPolicyStatuses = [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued,  QuoteStatusEnum::CancellationPending];
+
+            if (in_array($record->quote_status_id, $getBINFromDBForPolicyStatuses)) {
+                $brokerInvoiceNo = $payment->broker_invoice_number;
+            }
         }
 
         $bookPolicyDetails = [];
         $bookPolicyDetails['lineOfBusiness'] = ucfirst($quoteType);
-        $bookPolicyDetails['brokerInvoiceNo'] = $insuranceProviderCode.$insuranceProviderLeadCount;
-        $bookPolicyDetails['invoiceDescription'] = substr($insuranceProviderCode.'-'.ucfirst($quoteType).'-'.$record->policy_number, 0, 60);
+        $bookPolicyDetails['brokerInvoiceNo'] = $brokerInvoiceNo;
+        $bookPolicyDetails['invoiceDescription'] = $invoiceDescription;
         $bookPolicyDetails['bookButton'] = false;
         $bookPolicyDetails['sendButton'] = false;
         $bookPolicyDetails['editButton'] = false;
@@ -257,7 +263,7 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['policyCancelled'] = false;
         $bookPolicyDetails['isPolicyCancelledOrPending'] = $this->isPolicyCancelledOrPending($record);
         $bookPolicyDetails['isPolicyCancelledOrPendingToolTtip'] = ProductionProcessTooltipEnum::POLICY_DETAILS_LOCKED_TOOL_TIP;
-
+        $bookPolicyDetails['isEnableUploadDocument'] = app(QuoteDocumentService::class)->isEnableUploadDocument($record->quote_status_id);
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($isFilledPolicyDetails) {
             if (! empty($quoteDocuments)) {
@@ -313,6 +319,29 @@ trait GenericQueriesAllLobs
         return $leadCodeArray[0];
     }
 
+    public function getQuoteDetailObject($quoteType, $id, $idType = 'quote')
+    {
+        $nameSpace = '\\App\\Models\\';
+
+        $model = $nameSpace.ucwords($quoteType).'QuoteRequestDetail';
+        if (! class_exists($model)) {
+            if (! (in_array(ucwords($quoteType), [quoteTypeCode::Cycle, quoteTypeCode::Jetski]))) {
+                return false;
+            }
+        }
+        if ($idType == 'quote') {
+            if (checkPersonalQuotes(ucwords($quoteType))) {
+                $quote = PersonalQuoteDetail::where('personal_quote_id', $id)->first();
+            } else {
+                $quote = $model::where($quoteType.'_quote_request_id', $id)->first();
+            }
+        } else {
+            $quote = $model::find($id);
+        }
+
+        return (isset($quote->id)) ? $quote : false;
+    }
+
     /**
      * Updates quote & policy issuance status, first will check if the quote's current status is not already set to 'Policy Sent to Customer'
      * We check policy issuance status is not 'Policy Issued' & if afilled policy details & required documents are uploaded
@@ -329,11 +358,11 @@ trait GenericQueriesAllLobs
 
         $quote = $this->getQuoteObject($type, $id);
         info('fn: updateQuoteStatus called for : '.$quote->uuid);
-        if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
+        if (! in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicySentToCustomer]) || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
             $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
             info('Is policy details filled for  : '.$quote->uuid.' '.$isPolicyDetailsFilled);
             if ($isPolicyDetailsFilled) {
-                $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments($type, $id);
+                $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($type, $id);
                 $isAllRequiredDocumentAreUploaded = $this->isAllRequiredDocumentAreUploaded($quoteDocuments, $type, $quote);
                 info('Is all required documens filled for  : '.$quote->uuid.' '.$isAllRequiredDocumentAreUploaded);
                 if ($isAllRequiredDocumentAreUploaded) {
@@ -453,17 +482,12 @@ trait GenericQueriesAllLobs
      */
     private function updateTotalAmount($payment)
     {
+        info('Updating TA for PC: '.$payment->code.' frequency: '.$payment->frequency.' payment_status_id: '.$payment->payment_status_id);
         if ($payment && $payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
-            info('Updating TA for PC: '.$payment->code);
-            $captureAmount = $payment->captured_amount;
             $totalPrice = $payment->total_price;
             $discountValue = $payment->discount_value;
-            if ($captureAmount < ($totalPrice - $discountValue)) {
-                $totalAmount = $captureAmount;
-            } else {
-                $totalAmount = $totalPrice - $discountValue;
-            }
-            info('updateTotalAmount totalAmount: '.$totalAmount);
+            $totalAmount = $totalPrice - $discountValue;
+            info('updateTotalAmount - totalPrice: '.$totalPrice.', discountValue: '.$discountValue.', totalAmount: '.$totalAmount);
             $payment->total_amount = $totalAmount;
             $payment->save();
         }
@@ -471,7 +495,7 @@ trait GenericQueriesAllLobs
 
     /**
      * Evaluates if all necessary policy details are filled for a given quote.
-     * such as policy number, policy issuance date, policy start date, renewal expiry date, and price with VAT are present.
+     * such as policy number, policy issuance date, policy start date, policy expiry date, and price with VAT are present.
      * Triggering from bookPolicyPayload
      *
      * @return bool
@@ -482,14 +506,14 @@ trait GenericQueriesAllLobs
             'policy_number' => $quote->policy_number,
             'policy_issuance_date' => $quote->policy_issuance_date,
             'policy_start_date' => $quote->policy_start_date,
-            'renewal_expiry_date' => $quote->renewal_expiry_date,
+            'policy_expiry_date' => $quote->policy_expiry_date,
             'insurer_quote_number' => $quote->insurer_quote_number,
         ]);
 
         $hasBasicPolicyDetails = ! empty($quote->policy_number) &&
                                 ! empty($quote->policy_issuance_date) &&
                                 ! empty($quote->policy_start_date) &&
-                                ! empty($quote->renewal_expiry_date) &&
+                                ! empty($quote->policy_expiry_date) &&
                                 $quote->price_with_vat >= 0;
 
         if (! $hasBasicPolicyDetails) {
@@ -543,6 +567,7 @@ trait GenericQueriesAllLobs
 
         return true;
     }
+
     /**
      * Checks if the payment is insufficient based on its payment status.
      * This method sets appropriate headings and descriptions based on the specific payment status
@@ -688,7 +713,7 @@ trait GenericQueriesAllLobs
     private function updatePaymentAllocationStatus($quote)
     {
 
-        $payment = Payment::where('code', '=', $quote->code)->mainLeadPayment()->first();
+        $payment = Payment::where('code', '=', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
 
         if ($payment) {
             $capturedAmount = $payment->captured_amount;
@@ -698,12 +723,18 @@ trait GenericQueriesAllLobs
             $totalAmount = round($totalAmount, 2);
             $priceWithVat = round($priceWithVat, 2);
 
-            if ($capturedAmount == 0) {
+            $paymentSplits = $payment->paymentSplits->first();
+
+            if ($paymentSplits && $paymentSplits->sage_reciept_id == null) {
                 $paymentStatus = TransactionPaymentStatusEnum::UNPAID_TEXT;
-            } elseif ($totalAmount >= $priceWithVat) {
-                $paymentStatus = TransactionPaymentStatusEnum::FULLY_PAID_TEXT;
             } else {
-                $paymentStatus = TransactionPaymentStatusEnum::PARTIALLY_PAID_TEXT;
+                if ($capturedAmount == 0) {
+                    $paymentStatus = TransactionPaymentStatusEnum::UNPAID_TEXT;
+                } elseif ($totalAmount >= $priceWithVat) {
+                    $paymentStatus = TransactionPaymentStatusEnum::FULLY_PAID_TEXT;
+                } else {
+                    $paymentStatus = TransactionPaymentStatusEnum::PARTIALLY_PAID_TEXT;
+                }
             }
 
             $payment->transaction_payment_status = $paymentStatus;
@@ -746,6 +777,7 @@ trait GenericQueriesAllLobs
         $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
         if (! $paymentSplits->isEmpty()) {
             foreach ($paymentSplits as $paymentSplit) {
+                info('Updating TA for Split Payment: '.$payment->code.' frequency: '.$payment->frequency.' payment_status_id: '.$payment->payment_status_id);
                 if ($payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
                     info('Updating PA for PC: '.$payment->code.' BTA: '.$paymentSplit->payment_amount.' WTA: '.$payment->total_amount);
                     $paymentSplit->payment_amount = $payment->total_amount;

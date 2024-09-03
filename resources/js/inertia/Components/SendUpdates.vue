@@ -50,7 +50,7 @@ const sendUpdatesTable = reactive({
     },
     {
       text: 'Status',
-      value: 'status',
+      value: 'display_status',
       tooltip:
         'The current status of the "Send Update" request, indicating whether it is pending, transaction approved, or declined, among other possible states.',
     },
@@ -149,6 +149,7 @@ const getSendUpdateOptions = () => {
     })
     .finally(() => {
       optionLoader.value = false;
+      addButtonLoader.value = false;
     });
 };
 

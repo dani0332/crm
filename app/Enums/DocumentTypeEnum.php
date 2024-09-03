@@ -8,4 +8,5 @@ class DocumentTypeEnum extends Enum
 {
     const ProformaPaymentRequest = 'Proforma Payment Request';
     const RECEIPT = 'Receipt';
+    const AUDIT_RECORD = 'Audit Record';
 }

@@ -40,7 +40,7 @@ const modals = reactive({
   cancelPayment: false,
 });
 
-const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
+const { isRequired, isEmail, isNumberOrDecimal, isMobileNo } = useRules();
 
 const cancelPaymentForm = item => {
   paymentForm.reset();
@@ -271,6 +271,12 @@ const onCopyText = () => {
     });
 };
 
+const getFirstPriceWithTransaction = prices => {
+  return prices.find(
+    price => price.transactions && price.transactions.length > 0,
+  );
+};
+
 const paymentStatus = id => {
   const enums = paymentStatusEnum || {};
   const item = Object.keys(enums).find(key => enums[key] === id);
@@ -348,6 +354,12 @@ const onActivitySubmit = isValid => {
 const hasAnyRole = roles => useHasAnyRole(roles);
 const canAny = permissions => useCanAny(permissions);
 const can = permission => useCan(permission);
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -392,36 +404,39 @@ const can = permission => useCan(permission);
 
           <template #item-prices="{ prices }">
             <div v-if="prices.length > 0" class="flex gap-3">
-              <x-tag
-                color="primary"
-                v-for="(priceItem, index) in prices"
-                :key="index"
-              >
-                <x-checkbox
-                  v-model="priceItem.transactions[0].is_selected"
-                  @change="toggleProduct(priceItem, $event)"
-                  color="primary"
-                  :disabled="
-                    priceItem.transactions[0]?.payment_status_id ==
-                      paymentStatusEnum.AUTHORISED ||
-                    priceItem.transactions[0]?.payment_status_id ==
-                      paymentStatusEnum.CAPTURED ||
-                    priceItem.transactions[0]?.payment_status_id ==
-                      paymentStatusEnum.PARTIAL_CAPTURED
-                  "
-                />
-                {{
-                  (
-                    parseFloat(priceItem.price) +
-                    (priceItem.price * 5) / 100
-                  ).toFixed(2)
-                }}
-              </x-tag>
+              <div v-for="(priceItem, index) in prices" :key="index">
+                <x-tag v-if="priceItem.transactions.length" color="primary">
+                  <x-checkbox
+                    v-model="priceItem.transactions[0].is_selected"
+                    @change="toggleProduct(priceItem, $event)"
+                    color="primary"
+                    :disabled="
+                      priceItem.transactions[0]?.payment_status_id ==
+                        paymentStatusEnum.AUTHORISED ||
+                      priceItem.transactions[0]?.payment_status_id ==
+                        paymentStatusEnum.CAPTURED ||
+                      priceItem.transactions[0]?.payment_status_id ==
+                        paymentStatusEnum.PARTIAL_CAPTURED
+                    "
+                  />
+                  {{
+                    (
+                      parseFloat(priceItem.price) +
+                      (priceItem.price * 5) / 100
+                    ).toFixed(2)
+                  }}
+                </x-tag>
+              </div>
             </div>
           </template>
 
           <template #item-payment_status="{ prices }">
-            {{ paymentStatus(prices[0]?.transactions[0]?.payment_status_id) }}
+            {{
+              paymentStatus(
+                getFirstPriceWithTransaction(prices)?.transactions[0]
+                  ?.payment_status_id,
+              )
+            }}
           </template>
 
           <template #item-updated_at="{ updated_at }">
@@ -429,7 +444,10 @@ const can = permission => useCan(permission);
           </template>
 
           <template #item-actions="item">
-            <div class="flex flex-col gap-1">
+            <div
+              class="flex flex-col gap-1"
+              v-if="readOnlyMode.isDisable === true"
+            >
               <x-button
                 size="xs"
                 color="emerald"
@@ -503,7 +521,7 @@ const can = permission => useCan(permission);
             <x-input
               v-model="paymentForm.amount"
               label="Amount"
-              :rules="[isRequired, isNumber]"
+              :rules="[isRequired, isNumberOrDecimal]"
               class="w-full"
             />
 

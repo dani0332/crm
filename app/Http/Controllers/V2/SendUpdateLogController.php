@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\quoteBusinessTypeCode;
@@ -16,6 +15,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ReversalEntriesRequest;
 use App\Http\Requests\SaveBookingDetailsRequest;
 use App\Http\Requests\SavePolicyDetailsRequest;
+use App\Http\Requests\SaveProviderDetailsRequest;
 use App\Http\Requests\SendUpdateCustomerValidationRequest;
 use App\Http\Requests\SendUpdateRequest;
 use App\Http\Requests\UpdateToCustomerRequest;
@@ -138,7 +138,6 @@ class SendUpdateLogController extends Controller
         $optionCode = $sendUpdateLog->option?->code ?? null;
         $documentTypes = $this->sendUpdateLogService->getSendUpdateDocuments($categoryCode);
         $quoteDocuments = $sendUpdateLog->documents;
-        $isBookingDetailsVisible = $this->isBookingDetailsVisible($categoryCode, $quoteDocuments);
         $issuanceStatuses = PolicyIssuanceStatusRepository::getColumns(['id', 'text']);
         if (checkPersonalQuotes($quoteType)) {
             $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
@@ -154,7 +153,7 @@ class SendUpdateLogController extends Controller
         // booking details section.
         $payments = $this->sendUpdateLogService->getPayments($realQuote->id, $realQuote->uuid, $quoteType);
 
-        if ($payments && is_countable($payments) && count($payments) > 0) {
+        if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
             // it will get all invoice_descriptions for booking details
             $paymentInvoices = collect($payments)->whereNotNull('insurer_tax_number')->pluck('insurer_tax_number');
             $sendUpdateLogInvoices = SendUpdateLogRepository::getSendUpdateLogInvoices($quoteTypeId, $realQuote->uuid);
@@ -193,6 +192,7 @@ class SendUpdateLogController extends Controller
 
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
+            'quoteLink' => QuoteTypes::getName($quoteTypeId)?->url($quote->uuid),
             'quoteType' => $quoteType,
             'sendUpdateLog' => $sendUpdateLog,
             'parentText' => $sendUpdateLog->category->parent->text,
@@ -204,7 +204,6 @@ class SendUpdateLogController extends Controller
             'quoteDocuments' => array_values($quoteDocuments->toArray()),
             'membersDetail' => CustomerMembersRepository::getBy($quote->id, strtoupper($quoteType)),
             'memberCategories' => app(LookupService::class)->getMemberCategories(),
-            'isBookingDetailsVisible' => $isBookingDetailsVisible,
             'realQuote' => $realQuote,
             'isNegativeValue' => $this->sendUpdateLogService->isNegativeValue($sendUpdateLog),
             'bookingDetails' => $bookingDetails,
@@ -276,6 +275,7 @@ class SendUpdateLogController extends Controller
                     if ($subType && $subType['slug'] === 'MPC') {
                         $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
                             'quote_status_id' => QuoteStatusEnum::CancellationPending,
+                            'quote_status_date' => now(),
                         ]);
                     }
                     break;
@@ -283,6 +283,7 @@ class SendUpdateLogController extends Controller
                 case SendUpdateLogStatusEnum::CIR:
                     $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
                         'quote_status_id' => QuoteStatusEnum::CancellationPending,
+                        'quote_status_date' => now(),
                     ]);
                     break;
             }
@@ -294,6 +295,7 @@ class SendUpdateLogController extends Controller
                     if ($data['status'] === SendUpdateLogStatusEnum::UPDATE_BOOKED) {
                         $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
                             'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
+                            'quote_status_date' => now(),
                         ]);
                     }
                     break;
@@ -301,6 +303,7 @@ class SendUpdateLogController extends Controller
                     if ($data['status'] === SendUpdateLogStatusEnum::UPDATE_BOOKED) {
                         $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
                             'quote_status_id' => QuoteStatusEnum::PolicyBooked,
+                            'quote_status_date' => now(),
                         ]);
 
                         // TODO: send it to sage, need to confirm what the sage is.
@@ -349,15 +352,16 @@ class SendUpdateLogController extends Controller
         ]);
     }
 
-    public function sendUpdateToCustomer(UpdateToCustomerRequest $request)
+    public function sendUpdateToCustomer(UpdateToCustomerRequest $updateToCustomerRequest)
     {
-        $data = $request->validated();
+        $data = $updateToCustomerRequest->validated();
         $log = SendUpdateLogRepository::sendUpdateToCustomer($data);
 
-        if (! empty($log->message)) {
-            vAbort($log->message);
+        if (! empty($log?->message)) {
+            vAbort($log?->message);
         }
 
+        /*
         $_response[] = ['message' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER, 'status' => 200];
 
         if ($log && isset($data['action']) && $data['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
@@ -373,29 +377,37 @@ class SendUpdateLogController extends Controller
         }
 
         return response()->json($_response);
-    }
+         * */
+        if ($log) {
+            $message[] = 'Update Sent to Customer.';
+        } else {
+            $message[] = 'Email Not Sent.';
+        }
 
-    public function isBookingDetailsVisible($categoryCode, $quoteDocuments): bool
-    {
-        $_return = false;
-        $documentTypes = $quoteDocuments->pluck('document_type_code')->toArray();
+        if ($log && isset($data['action']) && $data['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
+            $sendUpdateRequest = new SendUpdateRequest;
 
-        if (count(array_intersect($documentTypes, [DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE])) > 0) {
-            $_return = true;
-            $categories = [
-                SendUpdateLogStatusEnum::EF,
-                SendUpdateLogStatusEnum::CI,
-                SendUpdateLogStatusEnum::CIR,
-                SendUpdateLogStatusEnum::CPU,
-            ];
-
-            if (in_array($categoryCode, $categories)) {
-                $requiredDocumentTypes = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
-                $_return = count(array_intersect($documentTypes, $requiredDocumentTypes)) == count($requiredDocumentTypes);
+            info('calling book update via send update to customer. ');
+            $sendUpdateResponse = $this->sendUpdate($sendUpdateRequest->merge($data));
+            if ($sendUpdateResponse->status() == 200) {
+                $message[] = SendUpdateLogStatusEnum::UPDATE_BOOKED;
+            } else {
+                $message[] = json_decode($sendUpdateResponse->getContent(), true)['message'] ?? 'Book Update failed.';
             }
         }
 
-        return $_return;
+        // temporary comments.
+        /*if ($data['isEmailSent']) {
+            $message[] = SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER;
+        } else {
+            $message[] = 'Send Update to customer email scheduled.';
+        }
+
+        if (isset($data['action']) && $data['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
+            $message[] = 'Book Update scheduled.';
+        }*/
+
+        return response()->json($message);
     }
 
     public function sendUpdate(SendUpdateRequest $sendUpdateRequest)
@@ -404,9 +416,10 @@ class SendUpdateLogController extends Controller
         if (! isset($sendUpdateRequest->paymentValidated)) {
             // Add insuficient Payment Validations here
             $insufficientPaymentCheck = false;
-            if ($sendUpdateFirstPayment && in_array($sendUpdateFirstPayment?->payment_status_id, [
-                PaymentStatusEnum::PARTIALLY_PAID, 
-                PaymentStatusEnum::PENDING, 
+            //TODO: Need to verify - merge conflict
+            if ($sendUpdateFirstPayment && ! $sendUpdateRequest->inslyMigrated && in_array($sendUpdateFirstPayment?->payment_status_id, [
+                PaymentStatusEnum::PARTIALLY_PAID,
+                PaymentStatusEnum::PENDING,
                 PaymentStatusEnum::CREDIT_APPROVED
                 ])) {
                 $insufficientPaymentCheck = true;
@@ -417,7 +430,7 @@ class SendUpdateLogController extends Controller
                 'parentPaymentStatus' => $sendUpdateFirstPayment?->payment_status_id ?? null,
             ]);
         }
-        
+
         $response = app(SendUpdateLogService::class)->sendUpdateProcess($sendUpdateRequest);
 
         return response()->json(['message' => $response['message']], $response['status'] ? 200 : 500);
@@ -431,5 +444,12 @@ class SendUpdateLogController extends Controller
         return response()->json([
             'options' => $options,
         ]);
+    }
+
+    public function saveProviderDetails(SaveProviderDetailsRequest $request)
+    {
+        SendUpdateLogRepository::saveProviderDetails($request->validated());
+
+        return redirect()->back();
     }
 }

@@ -2,13 +2,16 @@
 
 namespace App\Services\Reports;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
+use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\LeadSource;
 use App\Models\PaymentStatus;
@@ -21,6 +24,7 @@ use App\Services\BaseService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class ReportService extends BaseService
@@ -529,4 +533,98 @@ class ReportService extends BaseService
         // Execute the query and return the result
         return $result;
     }
+    public function getPaymentAuthorisedSummary($request)
+    {
+        $userRole = auth()->user();
+        $userTeams = Auth::user()->getUserTeams(Auth::user()->id);
+        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+        $expiryDays = $authorizedDays->value;
+
+        $leadTables = [
+            RolesEnum::CarManager => ['table' => 'car_quote_request', 'quoteType' => null],
+            RolesEnum::HealthManager => ['table' => 'health_quote_request', 'quoteType' => null],
+            RolesEnum::BusinessManager => ['table' => 'business_quote_request', 'quoteType' => null],
+            RolesEnum::TravelManager => ['table' => 'travel_quote_request', 'quoteType' => null],
+            RolesEnum::HomeManager => ['table' => 'personal_quotes', 'quoteType' => QuoteTypeId::Home],
+            RolesEnum::PetManager => ['table' => 'personal_quotes', 'quoteType' => QuoteTypeId::Pet],
+            RolesEnum::YachtManager => ['table' => 'personal_quotes', 'quoteType' => QuoteTypeId::Yacht],
+            RolesEnum::LifeManager => ['table' => 'life_quote_request', 'quoteType' => null],
+            RolesEnum::BikeManager => ['table' => 'personal_quotes', 'quoteType' => QuoteTypeId::Bike],
+            RolesEnum::CycleManager => ['table' => 'personal_quotes', 'quoteType' => QuoteTypeId::Cycle],
+            RolesEnum::JetskiManager => ['table' => 'personal_quotes', 'quoteType' => QuoteTypeId::Jetski],
+        ];
+
+        $query = null;
+
+        foreach ($leadTables as $role => $details) {
+            if ($userRole->hasRole($role)) {
+                $query = DB::table($details['table'])
+                    ->select(
+                        'users.id as advisor_id',
+                        'users.name as advisor_name',
+                        DB::raw('COUNT(*) as total_leads'),
+                        DB::raw('SUM('.$details['table'].'.premium) as total_premium'),
+                        DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
+                        DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $authorizedDays->value DAY), NOW()) as expiry_days")
+                    )
+                    ->distinct()
+                    ->leftJoin('payments as py', 'py.code', '=', $details['table'].'.code')
+                    ->join('users', 'users.id', $details['table'].'.advisor_id')
+                    ->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                    ->where($details['table'].'.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                    ->whereIn('teams.name', $userTeams)
+                    ->groupBy('users.id', 'users.name')
+                    ->orderBy('total_leads', 'desc');
+
+                if ($details['quoteType']) {
+                    $query->where($details['table'].'.quote_type_id', $details['quoteType']);
+                }
+
+                break;
+            }
+        }
+
+        if ($query) {
+            if (isset($request->teams)) {
+                $teamIds = $request->teams;
+                $query->whereIn('users.id', function ($subQuery) use ($teamIds) {
+                    $subQuery
+                        ->select('users.id')
+                        ->distinct()
+                        ->from('users')
+                        ->join('user_team', 'users.id', '=', 'user_team.user_id')
+                        ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                        ->whereIn('teams.id', $teamIds);
+                });
+            }
+            if (isset($request->expireDate)) {
+                $date = Carbon::parse($request->expireDate)->startOfDay();
+                $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), '<=', $date);
+            }
+            if (isset($request->todayDate)) {
+                $query->having('expiry_days', '=', 1)
+                    ->groupBy('expiry_days');
+            }
+            if (isset($request->tomorrowDate)) {
+                $query->having('expiry_days', '=', 2)
+                    ->groupBy('expiry_days');
+            }
+            if (isset($request->thisWeek)) {
+                $startOfWeek = Carbon::parse($request->thisWeek[0])->startOfDay();
+                $endOfWeek = Carbon::parse($request->thisWeek[1])->endOfDay();
+                $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startOfWeek, $endOfWeek]);
+            }
+            if (isset($request->customDate)) {
+                $startDate = Carbon::parse($request->customDate[0])->startOfDay();
+                $endDate = Carbon::parse($request->customDate[1])->endOfDay();
+                $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startDate, $endDate]);
+            }
+
+            return $query->simplePaginate(5)->withQueryString();
+        }
+
+        return false;
+    }
+
 }

@@ -172,9 +172,9 @@
                             </div>
                         </div>
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="renewal_expiry_date"><b>RENEWAL EXPIRY DATE</b></label>
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="policy_expiry_date"><b>POLICY EXPIRY DATE</b></label>
                             <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{$record->renewal_expiry_date}}</p>
+                            <p class="label-align-center">{{$record->policy_expiry_date}}</p>
                             </div>
                         </div>
                     </div>

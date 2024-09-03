@@ -1,33 +1,31 @@
 <script setup>
+import PaymentNotification from '../Components/PaymentNotification.vue';
+import PaymentExpireNotifications from '../Components/PaymentExpireNotification.vue';
+import OnlineStatusToggle from '../Components/OnlineStatusToggle.vue';
 const page = usePage();
 
 const createLink = link => {
   if (link.children.length > 0) {
     return {
       label: link.title,
+      active: link.active,
       items: link.children.map(createLink),
     };
   } else {
-    const menuUrl = removeDomain(link.url);
     return {
       label: link.title,
       icon: link.attributes.icon,
       value: link.url,
-      active: page.url.startsWith(menuUrl),
-      ...(link.attributes.external
-        ? { target: '_blank', href: link.url }
-        : {
-            onClick: () => router.visit(link.url),
-          }),
+      href: link.url,
+      active: page.props.location.startsWith(link.url) || link.active,
+      ...(link.attributes.external ? { target: '_blank' } : null),
     };
   }
 };
 
-function removeDomain(url) {
-  return '/' + url.replace(/^(?:\/\/|[^/]+)*\//, '');
-}
-
 const user = computed(() => page.props.auth.user);
+const authorisePaymentCount = computed(() => page.props.authorisePaymentCount);
+const checkAuthUserRole = computed(() => page.props.checkAuthUserRole);
 const navLinks = computed(() => page.props.sidebar);
 const openSidebar = ref(false);
 const bannerInfo = computed(() => {
@@ -51,6 +49,14 @@ const onLogout = () => {
     window.location.href = '/login';
   });
 };
+
+const urls = computed(() => {
+  if (checkAuthUserRole.value) {
+    return `/reports/payment-summary`;
+  } else {
+    return `/quotes/car?page=1&segment_filter=all&payment_status_id=4`;
+  }
+});
 </script>
 
 <template>
@@ -75,11 +81,10 @@ const onLogout = () => {
             />
           </Link>
         </div>
-        <nav class="menu-wrapper dark p-1.5">
-          <x-menu
+        <nav class="p-1.5">
+          <ui-menu
             :items="$page.props.sidebar.map(createLink)"
             :collapseIcon="`chevronDown`"
-            color="zinc"
           />
         </nav>
       </aside>
@@ -130,6 +135,21 @@ const onLogout = () => {
             <div class="flex gap-3 items-center">
               <OnlineStatusToggle :user="user" />
               <!-- <UserStatus /> -->
+              <PaymentNotification />
+              <PaymentExpireNotifications />
+
+              <!--                ADD BANER HERE-->
+              <x-button class="w-full" size="sm">
+                <div class="items-center">
+                  <Link
+                    v-bind:href="urls"
+                    style="text-decoration: underline dotted"
+                  >
+                    Payment Authorised: {{ authorisePaymentCount }}
+                  </Link>
+                </div>
+              </x-button>
+
               <x-popover align="right" block>
                 <x-button size="sm" ghost>
                   <div class="flex gap-3 items-center">
@@ -189,6 +209,7 @@ const onLogout = () => {
             </div>
           </div>
         </header>
+
         <div class="flex-1 w-full p-4 mx-auto md:px-6 lg:px-8 max-w-full">
           <ToastArea />
           <div
@@ -214,14 +235,3 @@ const onLogout = () => {
     </XNotifications>
   </main>
 </template>
-
-<style>
-.menu-wrapper {
-  .x-menu-inner {
-    @apply text-white;
-  }
-  .x-menu-item {
-    @apply !text-white;
-  }
-}
-</style>

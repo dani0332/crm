@@ -3,9 +3,6 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
-use App\Enums\LeadSourceEnum;
-use App\Enums\PermissionsEnum;
-use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
@@ -40,7 +37,7 @@ class CarQuote extends BaseModel
         'vehicle_type_id' => FilterTypes::EXACT,
         'car_type_insurance_id' => FilterTypes::EXACT,
         'renewal_batch' => FilterTypes::EXACT,
-        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'policy_expiry_date' => FilterTypes::DATE_BETWEEN,
         'policy_number' => FilterTypes::NULL_CHECK,
         'source' => FilterTypes::EXACT,
         'advisor_id' => FilterTypes::IN,
@@ -53,6 +50,26 @@ class CarQuote extends BaseModel
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
     ];
+
+    protected static function booted()
+    {
+        static::updating(function ($model) {
+            $skipBookingDateUpdateForNonCPD = true;
+            if (isset(request()->sendUpdateId)) {
+                $carQuote = new CarQuote;
+                $endorsmentDetails = $carQuote->isCPDEndorsment(request()->sendUpdateId);
+                if ($endorsmentDetails['isCPDEndorsment']) {
+                    info('Book Update - Policy Booking Date update is allowed for CPD Endorsment. Old PBD ('.$model->getOriginal('policy_booking_date').') - New PBD ('.$model->policy_booking_date.'). QuoteType: '.request()->quoteType.' - QuoteUUID: '.request()->quoteUuid.' - SendUpdateUUID: '.$endorsmentDetails['sendUpdateUUID']);
+                    $skipBookingDateUpdateForNonCPD = false;
+                }
+            }
+
+            if ($model->isDirty('policy_booking_date') && $model->getOriginal('policy_booking_date') && $skipBookingDateUpdateForNonCPD) {
+                info($model->code.' updating the value of policy_booking_date is skipped. tried to change policy_booking_date from '.$model->getOriginal('policy_booking_date').' to '.$model->policy_booking_date);
+                unset($model->policy_booking_date); // lock the policy booking date field
+            }
+        });
+    }
 
     public function getFullNameAttribute()
     {
@@ -321,43 +338,7 @@ class CarQuote extends BaseModel
     public function scopeFilterBySegment($query)
     {
         $segmentFilter = request()->input('segment_filter');
-        self::applySegmentFilter($query, $segmentFilter);
-    }
-
-    public static function applySegmentFilter($query, $segmentFilter, $alias = 'car_quote_request')
-    {
-        $user = auth()->user();
-        if ($user->can(PermissionsEnum::SEGMENT_FILTER) && $segmentFilter) {
-            $query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($query) use ($alias) {
-                $query->whereIn("{$alias}.uuid", function ($query) {
-                    $query->distinct()
-                        ->select('quote_uuid')
-                        ->from('quote_tags')
-                        ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
-                        ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
-                });
-            })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) use ($alias) {
-                $query->whereNotIn("{$alias}.uuid", function ($query) {
-                    $query->distinct()
-                        ->select('quote_uuid')
-                        ->from('quote_tags')
-                        ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
-                        ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
-                });
-            })->when($segmentFilter === QuoteSegmentEnum::SIC_REVIVAL->value, function ($query) use ($alias) {
-                $query->whereNotIn("{$alias}.uuid", function ($query) {
-                    $query->distinct()
-                        ->select('quote_uuid')
-                        ->from('quote_tags')
-                        ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
-                        ->where('quote_tags.quote_type_id', QuoteTypeId::Car);
-                })->whereIn("{$alias}.source", [
-                    LeadSourceEnum::REVIVAL,
-                    LeadSourceEnum::REVIVAL_REPLIED,
-                    LeadSourceEnum::REVIVAL_PAID,
-                ]);
-            });
-        }
+        self::applySegmentFilter($query, $segmentFilter, 'car_quote_request', QuoteTypeId::Car);
     }
 
     /*****  NewRelationships so old should not effect */

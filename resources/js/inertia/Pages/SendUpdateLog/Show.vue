@@ -3,6 +3,7 @@ import LazyPlanDetails from './Partials/PlanDetails.vue';
 import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 import LazyPolicyDetails from './Partials/PolicyDetails.vue';
 import LazyBookingDetails from './Partials/BookingDetails.vue';
+import LazyProviderDetails from './Partials/ProviderDetails.vue';
 
 const props = defineProps({
   quoteType: String,
@@ -12,7 +13,6 @@ const props = defineProps({
   sendUpdateStatusEnum: Array,
   quote: Object,
   indicativePrice: Object,
-  isBookingDetailsVisible: Boolean,
   membersDetail: Array,
   memberCategories: Array,
   documentTypes: Object,
@@ -36,6 +36,7 @@ const props = defineProps({
     default: [],
   },
   isPlanDetailAvailable: Boolean,
+  quoteLink: String,
 });
 
 const page = usePage();
@@ -93,9 +94,7 @@ const sendUpdateForm = useForm({
   category_id: props.sendUpdateLog?.category_id || null,
   option_id: props.sendUpdateLog?.option_id || null,
   change_reason: props.sendUpdateLog?.change_reason || '',
-  reportable_id: props.sendUpdateLog?.reportable_id || null,
   quote_type_id: props.sendUpdateLog?.quote_type_id || null,
-  reportable_uuid: props.sendUpdateLog?.reportable_uuid || null,
   personal_quote_id: props.sendUpdateLog?.personal_quote_id || null,
   status: props.sendUpdateLog?.status || '',
   quote_uuid: props.realQuote.uuid,
@@ -204,6 +203,14 @@ const isAdditionalFieldError = ref(false);
 function handleErrorStatusUpdate(newStatus) {
   isAdditionalFieldError.value = newStatus;
 }
+
+const isLegacyPolicy = computed(() => {
+  return (
+    props.quote?.insly_migrated ||
+    props.realQuote?.insly_migrated ||
+    props.realQuote?.insly_id
+  );
+});
 </script>
 
 <template>
@@ -217,7 +224,7 @@ function handleErrorStatusUpdate(newStatus) {
           <h3 class="text-lg font-semibold text-primary-800 capitalize">
             {{ sendUpdateLog.category.text }}
           </h3>
-          <Link :href="state.redirectURL">
+          <Link :href="quoteLink">
             <x-button color="primary" size="sm" class="mr-5"
               >Go back to lead</x-button
             >
@@ -293,7 +300,7 @@ function handleErrorStatusUpdate(newStatus) {
                   </template>
                 </x-tooltip>
               </dt>
-              <dd>{{ sendUpdateLog.status }}</dd>
+              <dd>{{ sendUpdateLog.display_status }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <template
@@ -467,6 +474,12 @@ function handleErrorStatusUpdate(newStatus) {
         </div>
       </x-form>
     </div>
+
+    <LazyProviderDetails
+      v-if="isLegacyPolicy"
+      :sendUpdateLog="sendUpdateLog"
+      :insuranceProviders="props.insuranceProviders"
+    />
 
     <!-- Indicative additional price & Plan details comp -->
     <LazyPlanDetails

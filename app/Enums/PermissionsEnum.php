@@ -350,14 +350,21 @@ final class PermissionsEnum extends Enum
     public const SEND_UPDATE_ADD_BOOKING = 'send-update-add-booking';
     public const PAYMENTS_DISCOUNT_EDIT = 'payments-discount-edit';
     public const EXTRACT_REPORT = 'extract-report';
+    public const SIC_HEALTH_CONFIG = 'sic-health-config';
     public const INPL_USER = 'inpl-user';
     public const INPL_APPROVER = 'inpl-approver';
     public const DOCUMENT_VERIFY = 'document-verify';
+    public const DEPARTMENT_CREATE = 'department-create';
+    public const DEPARTMENT_UPDATE = 'department-update';
+    public const DEPARTMENT_LIST = 'department-list';
     public const AUDITDOCUMENT_UPLOAD = 'auditdocument-upload';
     public const DOWNLOAD_ALL_DOCUMENTS = 'download-all-documents';
     public const TRAVEL_HAPEX = 'travel-hapex';
     public const VIEW_BULK_POLICY_BOOKING_LIST = 'view-bulk-policy-booking-list';
     public const BOOK_BULK_POLICY_ON_SAGE = 'book-bulk-policy-on-sage';
+    public const All_QUOTES_VIEWONLY_ACCESS = 'all-quotes-view-only-access';
+    public const CUSTOMER_RISKRRATING_OVERRIDE = 'customer-riskrrating-override';
+    public const MANAGER_AUTHORISED_PAYMENT_SUMMARY = 'manager-authorised-payment-summary';
 
     public static function getAdvisorConversionReportPermissions()
     {
