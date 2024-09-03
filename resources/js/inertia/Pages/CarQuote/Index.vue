@@ -59,7 +59,7 @@ function onSubmit(isValid) {
     filters.page = 1;
 
     const hasAnyFilterSelected = Object.values(filters).some(
-      value => value !== '' && value.length > 0
+      value => value !== '' && value.length > 0,
     );
 
     if (!hasAnyFilterSelected) {
