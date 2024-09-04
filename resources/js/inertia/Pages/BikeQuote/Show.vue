@@ -323,7 +323,9 @@ const onAddUpdate = () => {
 
 const fetchUpdatedQuote = async () => {
   try {
-    const response = await axios.get(`/quotes/get-bike-quote/${page.props.quote.uuid}`);
+    const response = await axios.get(
+      `/quotes/get-bike-quote/${page.props.quote.uuid}`,
+    );
 
     page.props.quote = response.data;
 
@@ -340,7 +342,6 @@ const fetchUpdatedQuote = async () => {
     });
   }
 };
-
 </script>
 
 <template>
