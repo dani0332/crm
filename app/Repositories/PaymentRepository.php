@@ -84,8 +84,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     {
         DB::beginTransaction();
         try {
-            info('Starting payment creation process for Quote ID: ' . $request->quote_id);
             $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
+            info('Starting payment creation process for Quote: ' . $quoteModel->code);
             $masterPayment = (object) $request->payment;
             $masterPaymentStatus = PaymentStatusEnum::NEW;
             if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
@@ -188,7 +188,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
             $payment = Payment::where('code', $request->paymentCode)->first();
             if (! $payment) {
-                info('fetchUpdateNewPayment::Payment does not exist for Payment Code: '.$request->paymentCode);
+                info('Payment does not exist for Payment Code: '.$request->paymentCode);
                 return ['status' => 'error', 'message' => 'Payment record not found'];
             }
 
@@ -240,7 +240,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
             $payment->update($paymentInformation);
              // Log payment update
-            info('fetchUpdateNewPayment::Payment updated successfully for Payment Code: '.$request->paymentCode);
+            info('Payment updated successfully for Payment Code: '.$request->paymentCode);
 
             //Update split payments start
             if (! empty($request->trashedFilesModal)) {
@@ -657,9 +657,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         if ($quoteModel) {
             $quoteModel->payment_status_id = $payment->payment_status_id;
             if ( in_array($payment->paymentable_type, $ecommQuotes) && $payment->payment_status_id == PaymentStatusEnum::PAID) {
+                info('Setting payment_paid_at for Payment Code: ' . $payment->code);
                 $quoteModel->payment_paid_at = now();
             }
             $quoteModel->save();
+            // Log after successfully saving the quote model
+            info('Lead payment status updated for Code: ' . $payment->code . ' to ' . $payment->payment_status_id);
         }
     }
 
