@@ -100,6 +100,10 @@ class RenewalBatchRequest extends FormRequest
                 'required',
                 'integer',
             ],
+            'year' => [
+                'required',
+                'integer',
+            ],
             'segment_volume' => [
                 'required',
                 'array',

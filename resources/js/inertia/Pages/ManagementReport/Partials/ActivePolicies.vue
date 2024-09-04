@@ -54,7 +54,7 @@ const isIntegerColumn = key => {
 <template>
   <DataTable
     class="mt-4"
-    table-class-name=""
+    table-class-name="table-fixed"
     :loading="loader"
     :headers="tableHeader"
     :items="props.reportData.data || []"
@@ -75,13 +75,13 @@ const isIntegerColumn = key => {
       {{ active_policy_count ?? 0 }}
     </template>
     <template #item-price_with_vat="{ price_with_vat }">
-      {{ price_with_vat ? (price_with_vat) : 0 }}
+      {{ price_with_vat ? price_with_vat : 0 }}
     </template>
     <template #item-price_without_vat="{ price_without_vat }">
-      {{ price_without_vat ? (price_without_vat) : 0 }}
+      {{ price_without_vat ? price_without_vat : 0 }}
     </template>
     <template #body-append>
-      <tr v-if="reportData.data.length > 0" class="total-row">
+      <tr v-if="reportData.data.length > 0" class="total-row sticky bottom-0">
         <td class="direction-left">Total</td>
         <td
           v-for="header in tableHeader.slice(1, tableHeader.length)"
@@ -90,7 +90,10 @@ const isIntegerColumn = key => {
         >
           {{
             isIntegerColumn(header.value)
-              ? priceFormat(calculateTotalSum(reportData.data, header.value), true)
+              ? priceFormat(
+                  calculateTotalSum(reportData.data, header.value),
+                  true,
+                )
               : 'N/A'
           }}
         </td>

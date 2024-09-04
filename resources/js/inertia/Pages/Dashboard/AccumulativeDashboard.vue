@@ -23,8 +23,12 @@ const { isActive, pasue, resume } = useTimeoutPoll(fetchData, 60000);
 const totalLeadsReceived = ref(props.totalLeadsReceived);
 const totalLeadsReceivedEcommerce = ref(props.totalLeadsReceivedEcommerce);
 const totalUnAssignedLeadsReceived = ref(props.totalUnAssignedLeadsReceived);
-const totalUnAssignedOnlySICLeadsReceived = ref(props.totalUnAssignedOnlySICLeadsReceived);
-const totalUnAssignedOnlyPaidSICLeadsReceived = ref(props.totalUnAssignedOnlyPaidSICLeadsReceived);
+const totalUnAssignedOnlySICLeadsReceived = ref(
+  props.totalUnAssignedOnlySICLeadsReceived,
+);
+const totalUnAssignedOnlyPaidSICLeadsReceived = ref(
+  props.totalUnAssignedOnlyPaidSICLeadsReceived,
+);
 const totalUnAssignedLeadsReceivedEcommerce = ref(
   props.totalUnAssignedLeadsReceivedEcommerce,
 );
@@ -291,7 +295,6 @@ onUnmounted(() => (isActive.value = false));
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
       :items="leadReceivedSummaryBySource || []"
     >
     </DataTable>

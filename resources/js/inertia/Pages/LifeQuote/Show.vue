@@ -1,10 +1,4 @@
 <script setup>
-import PaymentTableNew from '../../Components/PaymentTableNew.vue';
-import MemberDetails from "../../Components/MemberDetails.vue";
-import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
-import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
-import MigratePayment from '../../Components/MigratePayment.vue';
-
 const page = usePage();
 defineProps({
   quote: Object,
@@ -42,7 +36,7 @@ defineProps({
   hasPolicyIssuedStatus: Boolean,
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
-  paymentDocument: Array
+  paymentDocument: Array,
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
@@ -69,6 +63,9 @@ const advisorOptions = computed(() => {
       : advisor.name,
   }));
 });
+
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
 const emiratesOptions = computed(() => {
   return page.props.emirates.map(em => ({
@@ -124,13 +121,13 @@ const leadDuplicateForm = useForm({
 //activities
 const activityActionEdit = ref(false);
 const activityTable = [
-    { text: 'Client Name', value: 'client_name' },
-    { text: 'Lead Status', value: 'quote_status.text' },
-    { text: 'Title', value: 'title' },
-    { text: 'Followup Date', value: 'due_date' },
-    { text: 'Assigned To', value: 'assignee' },
-    { text: 'Done', value: 'status', width: 60, align: 'center' },
-    { text: 'Action', value: 'action' },
+  { text: 'Client Name', value: 'client_name' },
+  { text: 'Lead Status', value: 'quote_status.text' },
+  { text: 'Title', value: 'title' },
+  { text: 'Followup Date', value: 'due_date' },
+  { text: 'Assigned To', value: 'assignee' },
+  { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Action', value: 'action' },
 ];
 
 const activityForm = useForm({
@@ -479,6 +476,12 @@ const linkEntity = () => {
       console.log(err);
     });
 };
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
@@ -493,14 +496,15 @@ watch(
   },
 );
 
-const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
-const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] = createReusableTemplate();
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
+  createReusableTemplate();
+const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
+  createReusableTemplate();
 
 const isAddUpdate = ref(false);
 const onAddUpdate = () => {
-  isAddUpdate.value = true; 
+  isAddUpdate.value = true;
 };
-
 </script>
 
 <template>
@@ -509,7 +513,7 @@ const onAddUpdate = () => {
 
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Life Detail</h2>
-      <div class="flex gap-2">
+      <div class="flex gap-2" v-if="readOnlyMode.isDisable === true">
         <Link
           v-if="quote.life_quote_request_detail?.insly_id"
           :href="`/legacy-policy/${quote.life_quote_request_detail.insly_id}`"
@@ -552,68 +556,96 @@ const onAddUpdate = () => {
           <x-button size="sm" color="primary" tag="div"> Life Quotes </x-button>
         </Link>
         <LeadEditBtnTemplate v-slot="{ isDisabled }">
-          <Link v-if="!isDisabled" :href="route('life-quotes-edit', quote.uuid)">
+          <Link
+            v-if="!isDisabled"
+            :href="route('life-quotes-edit', quote.uuid)"
+          >
             <x-button size="sm" tag="div">Edit</x-button>
           </Link>
-          <x-button v-else :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+          <x-button v-else :disabled="isDisabled" size="sm" tag="div"
+            >Edit</x-button
+          >
         </LeadEditBtnTemplate>
 
-        <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
-          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.LifeQuotesEdit)" :isDisabled="true"/>
-          <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+        <x-tooltip
+          v-if="lockLeadSectionsDetails.lead_details"
+          placement="bottom"
+        >
+          <LeadEditBtnReuseTemplate
+            v-if="can(permissionsEnum.LifeQuotesEdit)"
+            :isDisabled="true"
+          />
+          <template #tooltip
+            >This lead is now locked as the policy has been booked. If changes
+            are needed, go to 'Send Update', select 'Add Update', and choose
+            'Correction of Policy'</template
+          >
         </x-tooltip>
         <template v-else>
-          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.LifeQuotesEdit)"/>
+          <LeadEditBtnReuseTemplate
+            v-if="can(permissionsEnum.LifeQuotesEdit)"
+          />
         </template>
       </div>
     </div>
 
-    <x-modal v-model="modalsDuplicate" size="lg" show-close backdrop>
-      <template #header> Duplicate Lead </template>
-      <x-form @submit="onCreateDuplicate" :auto-focus="false">
-        <div class="grid gap-4">
-          <x-field label="LOBs" required>
-            <x-select
-              v-model="leadDuplicateForm.lob_team"
-              :options="
-                allowedDuplicateLOB.map((lob, index) => ({
-                  value: lob,
-                  label: lob,
-                }))
-              "
-              :rules="[isRequired]"
-              placeholder="Select LOB For Duplication"
-              class="w-full"
-              multiple
-            />
-          </x-field>
-          <x-field label="Reason" required>
-            <x-select
-              v-model="leadDuplicateForm.lob_team_sub_selection"
-              :rules="[isRequired]"
-              class="w-full"
-              :options="[
-                { value: 'new_enquiry', label: 'New enquiry' },
-                { value: 'record_only', label: 'Record purposes only' },
-              ]"
-            />
-          </x-field>
-          <x-button
-            color="orange"
-            type="submit"
-            :loading="leadDuplicateForm.processing"
-          >
-            Create Duplicate
-          </x-button>
-        </div>
-      </x-form>
+    <x-modal
+      v-model="modalsDuplicate"
+      size="md"
+      title="Duplicate Lead"
+      show-close
+      backdrop
+      is-form
+      @submit="onCreateDuplicate"
+    >
+      <div class="grid gap-4">
+        <x-field label="LOBs" required>
+          <x-select
+            v-model="leadDuplicateForm.lob_team"
+            :options="
+              allowedDuplicateLOB.map((lob, index) => ({
+                value: lob,
+                label: lob,
+              }))
+            "
+            :rules="[isRequired]"
+            placeholder="Select LOB For Duplication"
+            class="w-full"
+            multiple
+          />
+        </x-field>
+        <x-field label="Reason" required>
+          <x-select
+            v-model="leadDuplicateForm.lob_team_sub_selection"
+            :rules="[isRequired]"
+            class="w-full"
+            :options="[
+              { value: 'new_enquiry', label: 'New enquiry' },
+              { value: 'record_only', label: 'Record purposes only' },
+            ]"
+          />
+        </x-field>
+      </div>
+      <template #secondary-action>
+        <x-button ghost tabindex="-1" @click="modalsDuplicate = false"
+          >Cancel</x-button
+        >
+      </template>
+      <template #primary-action>
+        <x-button
+          color="orange"
+          type="submit"
+          :loading="leadDuplicateForm.processing"
+        >
+          Create Duplicate
+        </x-button>
+      </template>
     </x-modal>
 
     <div class="p-4 rounded shadow mb-6 mt-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div class="flex justify-between items-center flex-wrap gap-2">
-          </div>
+          <div class="flex justify-between items-center flex-wrap gap-2"></div>
         </template>
         <template #body>
           <div class="text-sm">
@@ -627,7 +659,7 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -703,12 +735,16 @@ const onAddUpdate = () => {
                 <dd>{{ quote.others_info }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">RENEWAL EXPIRY DATE</dt>
-                <dd>{{ quote.renewal_expiry_date }}</dd>
+                <dt class="font-medium">POLICY EXPIRY DATE</dt>
+                <dd>{{ quote.policy_expiry_date }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -737,7 +773,7 @@ const onAddUpdate = () => {
                 v-if="linkedQuoteDetails.childLeadsCount == 1"
               >
                 <div>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -1024,17 +1060,17 @@ const onAddUpdate = () => {
           </dd>
         </div>
       </dl>
-      <div class="flex justify-end">
+      <template #actions>
         <x-button
-          class="mt-4"
           color="primary"
           size="sm"
           :loading="customerProfileForm.processing"
           @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
         >
           Search
         </x-button>
-      </div>
+      </template>
     </x-modal>
     <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
@@ -1078,11 +1114,21 @@ const onAddUpdate = () => {
           </dd>
         </div>
         <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity">
+          <x-button
+            size="sm"
+            color="orange"
+            @click.prevent="linkEntity"
+            v-if="readOnlyMode.isDisable === true"
+          >
             Link
           </x-button>
         </div>
       </dl>
+      <template #actions>
+        <x-button size="sm" color="orange" @click.prevent="linkEntity">
+          Link
+        </x-button>
+      </template>
     </x-modal>
 
     <MemberDetails
@@ -1143,9 +1189,12 @@ const onAddUpdate = () => {
                   <x-select
                     v-model="leadStatusForm.leadStatus"
                     :options="leadStatusOptions"
-                    :disabled="allowStatusUpdate || lockLeadSectionsDetails.lead_status"
+                    :disabled="
+                      allowStatusUpdate || lockLeadSectionsDetails.lead_status
+                    "
                     placeholder="Lead Status"
                     class="w-full"
+                    filterable
                   />
                 </x-field>
                 <x-field label="Notes">
@@ -1154,7 +1203,9 @@ const onAddUpdate = () => {
                     type="text"
                     placeholder="Lead Notes"
                     class="w-full"
-                    :disabled="allowStatusUpdate || lockLeadSectionsDetails.lead_status"
+                    :disabled="
+                      allowStatusUpdate || lockLeadSectionsDetails.lead_status
+                    "
                   />
                 </x-field>
               </div>
@@ -1200,15 +1251,20 @@ const onAddUpdate = () => {
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
               :disabled="allowStatusUpdate || isDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Change Status
             </x-button>
           </StatusUpdateButtonTemplate>
           <div class="flex justify-end">
-            <x-tooltip v-if="lockLeadSectionsDetails.lead_status" position="bottom">
-              <StatusUpdateButtonReuseTemplate :isDisabled="true"/>
+            <x-tooltip
+              v-if="lockLeadSectionsDetails.lead_status"
+              placement="bottom"
+            >
+              <StatusUpdateButtonReuseTemplate :isDisabled="true" />
               <template #tooltip>
-                The lead status cannot be manually updated once it has reached 'Transaction Approved'
+                The lead status cannot be manually updated once it has reached
+                'Transaction Approved'
               </template>
             </x-tooltip>
             <StatusUpdateButtonReuseTemplate v-else />
@@ -1235,9 +1291,9 @@ const onAddUpdate = () => {
     />
 
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			:quoteType="quoteType"
-			:payments="payments"
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="payments"
       :paymentDocument="paymentDocument"
       :proformaPayment="
         payments.find(
@@ -1246,13 +1302,18 @@ const onAddUpdate = () => {
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
         )
       "
-			:quoteRequest="quote"
-			:paymentStatusEnum="page.props.paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      :quoteRequest="quote"
+      :paymentStatusEnum="page.props.paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
+      :expanded="sectionExpanded"
     />
 
     <EmbeddedProducts
@@ -1274,13 +1335,14 @@ const onAddUpdate = () => {
       :payments="payments"
     />
 
-    <QuoteDocuments
+    <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
       :insly-id="quote?.life_quote_request_detail?.insly_id"
       :expanded="sectionExpanded"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy
@@ -1319,7 +1381,12 @@ const onAddUpdate = () => {
         <template #body>
           <x-divider class="my-4" />
           <div class="my-4 flex justify-end">
-            <x-button size="sm" color="orange" @click.prevent="addActivity">
+            <x-button
+              size="sm"
+              color="orange"
+              @click.prevent="addActivity"
+              v-if="readOnlyMode.isDisable === true"
+            >
               Add Activity
             </x-button>
           </div>
@@ -1352,6 +1419,7 @@ const onAddUpdate = () => {
                   outlined
                   :disabled="item.status === 1"
                   @click.prevent="activityEdit(item)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Edit
                 </x-button>
@@ -1361,6 +1429,7 @@ const onAddUpdate = () => {
                   :disabled="item.status === 1"
                   outlined
                   @click.prevent="activityDelete(item.id)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Delete
                 </x-button>
@@ -1369,63 +1438,75 @@ const onAddUpdate = () => {
           </DataTable>
         </template>
       </Collapsible>
-      <x-modal v-model="modals.activity" size="lg" show-close backdrop>
-        <template #header>
-          {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
+      <x-modal
+        v-model="modals.activity"
+        size="lg"
+        :title="`${activityActionEdit ? 'Edit' : 'Add'} Lead Activity`"
+        show-close
+        backdrop
+        is-form
+        @submit="onActivitySubmit"
+      >
+        <div class="grid gap-4">
+          <x-field label="Title" required>
+            <x-input
+              v-model="activityForm.title"
+              :rules="[rules.isRequired]"
+              class="w-full"
+            />
+          </x-field>
+          <x-field label="Description">
+            <x-textarea
+              v-model="activityForm.description"
+              :adjust-to-text="false"
+              class="w-full"
+            />
+          </x-field>
+          <x-field label="Assignee" required>
+            <x-select
+              v-model="activityForm.assignee_id"
+              :options="advisorOptions"
+              :rules="[rules.isRequired]"
+              placeholder="Select Assignee"
+              class="w-full"
+            />
+          </x-field>
+          <x-field label="Due Date" required>
+            <DatePicker
+              v-model="activityForm.due_date"
+              withTime
+              :rules="[rules.isRequired]"
+            />
+          </x-field>
+        </div>
+
+        <template #secondary-action>
+          <x-button
+            ghost
+            size="sm"
+            tabindex="-1"
+            @click.prevent="modals.activity = false"
+          >
+            Cancel
+          </x-button>
         </template>
-
-        <x-form @submit="onActivitySubmit" :auto-focus="false">
-          <div class="grid gap-4">
-            <x-field label="Title" required>
-              <x-input
-                v-model="activityForm.title"
-                :rules="[rules.isRequired]"
-                class="w-full"
-              />
-            </x-field>
-            <x-field label="Description">
-              <x-textarea
-                v-model="activityForm.description"
-                :adjust-to-text="false"
-                class="w-full"
-              />
-            </x-field>
-            <x-field label="Assignee" required>
-              <x-select
-                v-model="activityForm.assignee_id"
-                :options="advisorOptions"
-                :rules="[rules.isRequired]"
-                placeholder="Select Assignee"
-                class="w-full"
-              />
-            </x-field>
-            <x-field label="Due Date" required>
-              <DatePicker
-                v-model="activityForm.due_date"
-                withTime
-                :rules="[rules.isRequired]"
-              />
-            </x-field>
-          </div>
-
-          <div class="text-right space-x-4 mt-12">
-            <x-button size="sm" @click.prevent="modals.activity = false">
-              Cancel
-            </x-button>
-
-            <x-button
-              size="sm"
-              color="emerald"
-              :loading="activityForm.processing"
-              type="submit"
-            >
-              {{ activityActionEdit ? 'Update' : 'Save' }}
-            </x-button>
-          </div>
-        </x-form>
+        <template #primary-action>
+          <x-button
+            size="sm"
+            color="emerald"
+            :loading="activityForm.processing"
+            type="submit"
+          >
+            {{ activityActionEdit ? 'Update' : 'Save' }}
+          </x-button>
+        </template>
       </x-modal>
-      <x-modal v-model="modals.activityConfirm" show-close backdrop>
-        <template #header> Delete Activity </template>
+      <x-modal
+        v-model="modals.activityConfirm"
+        title="Delete Activity"
+        show-close
+        backdrop
+      >
         <p>Are you sure you want to delete this activity?</p>
         <template #actions>
           <div class="text-right space-x-4">

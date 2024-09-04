@@ -9,6 +9,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessQuote;
 use App\Models\CustomerAdditionalInfo;
@@ -17,6 +18,7 @@ use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Models\User;
+use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -26,6 +28,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 if (! function_exists('generate_code')) {
@@ -67,7 +70,7 @@ if (! function_exists('vAbort')) {
 if (! function_exists('generateUuid')) {
     function generateUuid()
     {
-        $client = new Hidehalo\Nanoid\Client();
+        $client = new Hidehalo\Nanoid\Client;
         $alphabets = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $nanoId = $client->formattedId($alphabets, 8);
 
@@ -96,10 +99,10 @@ function get_guid()
         $charid = strtoupper(md5(uniqid(rand(), true)));
         $hyphen = chr(45);
         $uuid = substr($charid, 0, 8).$hyphen
-        .substr($charid, 8, 4).$hyphen
-        .substr($charid, 12, 4).$hyphen
-        .substr($charid, 16, 4).$hyphen
-        .substr($charid, 20, 12);
+            .substr($charid, 8, 4).$hyphen
+            .substr($charid, 12, 4).$hyphen
+            .substr($charid, 16, 4).$hyphen
+            .substr($charid, 20, 12);
 
         return $uuid;
     }
@@ -638,7 +641,7 @@ if (! function_exists('checkModifiedRecord')) {
     function checkModifiedRecord($firstDate, $secondDate): bool
     {
         return Carbon::parse($firstDate)->format(config('constants.datetime_format')) !==
-        Carbon::parse($secondDate)->format(config('constants.datetime_format'));
+            Carbon::parse($secondDate)->format(config('constants.datetime_format'));
     }
 }
 
@@ -709,6 +712,21 @@ if (! function_exists('mimeContentType')) {
         }
         if (! empty($mimeType)) {
             return array_search($mimeType, $mime_types);
+        }
+    }
+}
+if (! function_exists('checkAuthUserRole')) {
+    function checkAuthUserRole()
+    {
+
+        if (! Auth::check()) {
+            return false;
+        }
+
+        if (Auth::user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::HealthManager, RolesEnum::BusinessManager, RolesEnum::HomeManager, RolesEnum::LifeManager, RolesEnum::PetManager, RolesEnum::YachtManager, RolesEnum::TravelManager, RolesEnum::BikeManager, RolesEnum::CycleManager, RolesEnum::JetskiManager])) {
+            return true;
+        } else {
+            return false;
         }
     }
 }
@@ -976,6 +994,218 @@ if (! function_exists('isValidDate')) {
     }
 }
 
+if (! function_exists('isValidTeamForLOBAdvisor')) {
+    function isValidTeamForLOBAdvisor($teams, $allowed_teams)
+    {
+        $teams = collect($teams)->pluck('name');
+        $matching_teams = collect($teams)->intersect($allowed_teams);
+        if ($matching_teams->isNotEmpty()) {
+            return true;
+        }
+
+        return false;
+    }
+}
+if (! function_exists('isAllowedInDuplicateLOBList')) {
+    function isAllowedInDuplicateLOBList($quoteType, $code)
+    {
+        return app(CentralService::class)->duplicateAllowedLobsList($quoteType, $code);
+    }
+}
+
+if (! function_exists('removeSpaces')) {
+    function removeSpaces($number)
+    {
+        return str_replace(' ', '', $number);
+    }
+}
+
+if (! function_exists('hasAnyPermission')) {
+    function hasAnyPermission($_permissions)
+    {
+        $permissions = is_array($_permissions) ? $_permissions : func_get_args();
+        $permissions = implode('|', $permissions);
+
+        return "permission:{$permissions}";
+    }
+}
+
+if (! function_exists('hasAnyRole')) {
+    function hasAnyRole($_roles)
+    {
+        $roles = is_array($_roles) ? $_roles : func_get_args();
+        $roles = implode('|', $roles);
+
+        return "role:{$roles}";
+    }
+}
+
+if (! function_exists('checkForRoleOrTeam')) {
+    function checkForRoleOrTeam($user_id, $type)
+    {
+        $with = [];
+        switch ($type) {
+            case 'role':
+                $with[] = 'usersroles:id,name';
+                break;
+            case 'team':
+                $with[] = 'teams:id,name';
+                break;
+            case 'both':
+                $with[] = 'usersroles:id,name';
+                $with[] = 'teams:id,name';
+                break;
+        }
+
+        // Fetch user with conditional eager loading
+        $user = User::where('id', $user_id)->with($with)->first();
+
+        if ($type === 'role') {
+            return $user->usersroles;
+        } elseif ($type === 'team') {
+            return $user->teams;
+        } else {
+            return [
+                'roles' => $user->usersroles,
+                'teams' => $user->teams,
+            ];
+        }
+    }
+}
+
+if (! function_exists('arrayKeysToCamelCase')) {
+    /**
+     * Recursively transform array keys to camelCase.
+     *
+     * @return array
+     */
+    function arrayKeysToCamelCase(array $array)
+    {
+        $result = [];
+
+        foreach ($array as $key => $value) {
+            $newKey = Str::camel($key);
+
+            if (is_array($value)) {
+                $value = arrayKeysToCamelCase($value);
+            }
+
+            $result[$newKey] = $value;
+        }
+
+        return $result;
+    }
+}
+
+if (! function_exists('transformKeys')) {
+    /**
+     * Transform array keys based on given mappings.
+     *
+     * @return array
+     */
+    function transformKeys(array $array, array $keyMappings = [])
+    {
+        $result = [];
+
+        foreach ($array as $key => $value) {
+            if (array_key_exists($key, $keyMappings)) {
+                $newKey = $keyMappings[$key];
+            } else {
+                $newKey = $key;
+            }
+
+            $result[$newKey] = $value;
+        }
+
+        return $result;
+    }
+}
+
+if (! function_exists('isValidDate')) {
+    function isValidDate($date): bool
+    {
+        return ! empty($date)
+            && $date != '0000-00-00 00:00:00'
+            && $date != '0000-00-00';
+    }
+}
+
+if (! function_exists('getAssignmentTypeText')) {
+    function getAssignmentTypeText($assignmentType)
+    {
+        $assignmentText = '';
+        switch ($assignmentType) {
+            case 1:
+                $assignmentText = 'System Assigned';
+                break;
+            case 2:
+                $assignmentText = 'System ReAssigned';
+                break;
+            case 3:
+                $assignmentText = 'Manual Assigned';
+                break;
+            case 4:
+                $assignmentText = 'Manual ReAssigned';
+                break;
+            default:
+                break;
+        }
+
+        return $assignmentText;
+    }
+}
+
+if (! function_exists('getEmailCampaignBanner')) {
+    function getEmailCampaignBanner()
+    {
+        $emailCampaignBanner = null;
+        $emailCampaignBannerRedirectUrl = null;
+
+        $campaign = getMyAlfredCampaign(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN));
+        if ($campaign) {
+            if (property_exists($campaign, 'banners') && property_exists($campaign->banners, 'buyPolicy')) {
+                $emailCampaignBanner = $campaign->banners->buyPolicy;
+            }
+            if (property_exists($campaign, 'landingPage')) {
+                $emailCampaignBannerRedirectUrl = $campaign->landingPage;
+            }
+        }
+
+        return [$emailCampaignBanner, $emailCampaignBannerRedirectUrl];
+    }
+}
+
+if (! function_exists('getQuoteUsingSubject')) {
+    function getQuoteUsingSubject(string $input)
+    {
+        $words = preg_split('/\s+/', trim($input));
+
+        $getTypeAndUUID = function (QuoteTypes $quoteType) use ($words) {
+            $uuid = collect($words)->first(fn ($value) => Str::startsWith($value, $quoteType->shortCode()));
+
+            if ($uuid) {
+                return [$quoteType, Str::afterLast($uuid, '-')];
+            }
+
+            return null;
+        };
+
+        foreach (QuoteTypes::cases() as $quoteType) {
+            if ($quoteType === QuoteTypes::PERSONAL) {
+                continue;
+            }
+
+            $data = $getTypeAndUUID($quoteType);
+
+            if ($data) {
+                return $data;
+            }
+        }
+
+        return null;
+    }
+}
+
 if (! function_exists('getManagersByUser')) {
     function getManagersByUser($userId)
     {
@@ -999,5 +1229,23 @@ if (! function_exists('getLookupsEnum')) {
             array_map(fn ($case) => $case->name, LookupsEnum::cases()),
             array_map(fn ($case) => $case->value, LookupsEnum::cases())
         );
+    }
+}
+
+if (! function_exists('isVatApplied')) {
+    function isVatApplied($modelType): bool
+    {
+        $vatEnabledQuotes = [
+            quoteTypeCode::Health,
+            quoteTypeCode::Business,
+            quoteTypeCode::Pet,
+            quoteTypeCode::Cycle,
+            quoteTypeCode::Bike,
+        ];
+        if (in_array($modelType, $vatEnabledQuotes)) {
+            return true;
+        }
+
+        return false;
     }
 }

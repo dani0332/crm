@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\EnvEnum;
 use App\Models\ApplicationStorage;
 use Illuminate\Database\Seeder;
 
@@ -15,6 +16,39 @@ class ApplicationStorageSeeder extends Seeder
      */
     public function run()
     {
+        //Payment Expire Notification and Email Enable Disable
+        $paymentNotificationEnable = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION)->first();
+        if (! $paymentNotificationEnable) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION,
+                'value' => '1',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
+        }
+        $paymentAuthorizedDays = ApplicationStorage::where('key_name', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+        if (! $paymentAuthorizedDays) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS,
+                'value' => '8',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
+        }
+
+        $paymentNotificationEmailTemplate = ApplicationStorage::where('key_name', ApplicationStorageEnums::PAYMENT_NOTIFICATION_EMAIL_TEMPLATE)->first();
+        if (! $paymentNotificationEmailTemplate) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::PAYMENT_NOTIFICATION_EMAIL_TEMPLATE,
+                'value' => '681',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
+        }
+
         $enableCammyFollowUps = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_CAMMY_FOLLOWUP)->first();
         if (! $enableCammyFollowUps) {
             ApplicationStorage::insert([
@@ -227,6 +261,56 @@ class ApplicationStorageSeeder extends Seeder
                 'value' => 'sendpolicyupdate@insurancemarket.ae',
                 'is_active' => 1,
             ],
+            [
+                'key_name' => ApplicationStorageEnums::BUP_HEALTH_DOC,
+                'value' => 'https://membersworld.bupaglobal.com',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::OIC_HEALTH_DOC,
+                'value' => 'policy-wordings/health/My-Sukoon-App-Manual.pdf',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::AXA_HEALTH_DOC,
+                'value' => 'policy-wordings/health/MyAXA-Mobile-App.pdf',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::DIC_HEALTH_DOC,
+                'value' => 'policy-wordings/health/DUBAICARE-MOBILE-APP.pdf',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::CIG_HEALTH_DOC,
+                'value' => 'https://my.cigna.com/web/public/guest',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::ALLIANZ_HEALTH_DOC,
+                'value' => 'policy-wordings/health/Allianz-MyHealth-Digital-Services-EN-2021.pdf',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::MEDNET_HEALTH_DOC,
+                'value' => 'policy-wordings/health/HealthPass-by-Mednet---User-Guide.pdf',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::NEXTCARE_HEALTH_DOC,
+                'value' => 'policy-wordings/health/LUMI-APP-BY-NEXTCARE.pdf',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::NAS_HEALTH_DOC,
+                'value' => 'policy-wordings/health/myNAS-App---New-User-Guide.pdf',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::E_CARE_HEALTH_DOC,
+                'value' => 'policy-wordings/health/Ecare-member-login-vcard.pdf',
+                'is_active' => 1,
+            ],
         ];
 
         foreach ($applicationStorageSeeder as $applicationStorage) {
@@ -380,5 +464,164 @@ class ApplicationStorageSeeder extends Seeder
                 'updated_at' => now(),
             ]);
         }
+
+        $sukoonConstants = [
+            [
+                'key_name' => ApplicationStorageEnums::SUKOON_PAYMENT_GATEWAY,
+                'value' => 'invoice',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::SUKOON_PRODUCT_SLUG,
+                'value' => 'accident_health_afia',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::SUKOON_TEMPLATE_POLICY_CERTIFICATE,
+                'value' => (config('constants.APP_ENV') != EnvEnum::PRODUCTION) ? '9024065094027325487' : '9139600398162627641',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_CREDIT,
+                'value' => (config('constants.APP_ENV') != EnvEnum::PRODUCTION) ? '9099784511062815329' : '9139600409696963644',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_CREDIT_BUYER,
+                'value' => (config('constants.APP_ENV') != EnvEnum::PRODUCTION) ? '9099784511515800162' : '9139600411592789053',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_INVOICE,
+                'value' => (config('constants.APP_ENV') != EnvEnum::PRODUCTION) ? '9068692883229388975' : '9139600402977688634',
+                'is_active' => 1,
+            ],
+            [
+                'key_name' => ApplicationStorageEnums::SUKOON_TEMPLATE_TAX_INVOICE_BUYER,
+                'value' => (config('constants.APP_ENV') != EnvEnum::PRODUCTION) ? '9083336468679635183' : '9139600407281044539',
+                'is_active' => 1,
+            ],
+        ];
+        foreach ($sukoonConstants as $sukoon) {
+            $conditions = [
+                'key_name' => $sukoon['key_name'],
+            ];
+            ApplicationStorage::firstOrCreate($conditions, $sukoon);
+        }
+
+        $ecomSourceValue = 'insurancemarket.ae';
+        if (config('constants.APP_ENV') == EnvEnum::STAGING) {
+            $ecomSourceValue = 'staging.alfred.ae';
+        } elseif (config('constants.APP_ENV') == EnvEnum::UAT) {
+            $ecomSourceValue = 'ecom.alfred.ae';
+        } elseif (config('constants.APP_ENV') == EnvEnum::DEVELOPMENT) {
+            $ecomSourceValue = 'dev.alfred.ae';
+        } elseif (config('constants.APP_ENV') == EnvEnum::TEST) {
+            $ecomSourceValue = 'testing.alfred.ae';
+        }
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::LEAD_SOURCE_ECOMMERCE],
+            [
+                'value' => $ecomSourceValue,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::INSLY_M2_RELEASE_DATE],
+            [
+                'value' => '2024-08-10',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        $this->seedTravelSICStorage();
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW],
+            [
+                'value' => 'https://capture.eu-west-1.nest.messagebird.com/webhooks/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/79b9011e-ff3b-4a5c-a63f-fed3d0743a7f',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ADVISOR_CONVERSION_QUOTE_STATUS_DATE],
+            [
+                'value' => '2024-12-01',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedTravelSICStorage()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SIC_TRAVEL_WORKFLOW_ENABLE],
+            [
+                'value' => 'travel_sic_workflow_enable',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SIC_TRAVEL_WORKFLOW_DISABLE],
+            [
+                'value' => 'travel_sic_workflow_disable',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::TRAVEL_EMAIL_TEMPLATE],
+            [
+                'value' => 697,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SIC_TRAVEL_FOLLOWUP_TEMPLATE_ID],
+            [
+                'value' => 698,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::SIC_TRAVEL_EMAIL_CC],
+            [
+                'value' => 'travel.enquiries@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::TRAVEL_EMAIL_REPLY_TO],
+            [
+                'value' => 'travel@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 }

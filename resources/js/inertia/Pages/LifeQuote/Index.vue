@@ -3,6 +3,7 @@ defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
+  authorizedDays: Number,
 });
 
 const page = usePage();
@@ -51,8 +52,10 @@ const filters = reactive({
   payment_status_id: '',
   previous_quote_policy_number_text: '',
   page: 1,
-  payment_due_date:"",
-  booking_date: ""
+  payment_due_date: '',
+  booking_date: '',
+  policy_expiry_date: '',
+  policy_expiry_date_end: '',
 });
 
 const loader = reactive({
@@ -64,6 +67,8 @@ const tableHeader = reactive([
   { text: 'Ref-ID', value: 'code', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
+  { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at', is_active: true },
+  { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
   { text: 'ADVISOR', value: 'advisor', is_active: true },
   { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
@@ -73,6 +78,12 @@ const tableHeader = reactive([
     is_active: true,
   },
   { text: 'LAST MODIFIED DATE', value: 'updated_at', is_active: true },
+  {
+    text: 'POLICY EXPIRY DATE',
+    value: 'previous_policy_expiry_date',
+    sortable: true,
+    is_active: true,
+  },
   { text: 'NATIONALITY', value: 'nationality', is_active: true },
   { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
   { text: 'SOURCE', value: 'source', is_active: true },
@@ -81,6 +92,11 @@ const tableHeader = reactive([
   {
     text: 'Previous Policy Number',
     value: 'previous_quote_policy_number',
+    is_active: true,
+  },
+  {
+    text: 'Renewal Batch',
+    value: 'renewal_batch',
     is_active: true,
   },
 ]);
@@ -95,6 +111,14 @@ const advisorOptions = computed(() => {
 });
 function filterQuotes(isValid) {
   if (!isValid) {
+    return;
+  }
+  if (validateDateRange()) {
+    notification.error({
+      title:
+        'The selected date range exceeds one month. Please select a range within one month.',
+      position: 'top',
+    });
     return;
   }
   for (const key in filters) {
@@ -195,7 +219,10 @@ watch(
   () => filters,
   () => {
     if (
-      can(permissionsEnum.DATA_EXTRACTION) && ((filters.created_at_start && filters.created_at_end) || (filters.payment_due_date) || (filters.booking_date))
+      can(permissionsEnum.DATA_EXTRACTION) &&
+      ((filters.created_at_start && filters.created_at_end) ||
+        filters.payment_due_date ||
+        filters.booking_date)
     ) {
       canExport.value = true;
     } else {
@@ -204,9 +231,54 @@ watch(
   },
   { deep: true, immediate: true },
 );
+function daysAgoFromAuthorizedDate(authorizedDate) {
+  let date = authorizedDate.split(' ')[0];
 
+  if (!date) {
+    return;
+  }
+
+  const [day, month, year] = date.split('-').map(Number);
+  const parsedDate = new Date(year, month - 1, day);
+
+  if (isNaN(parsedDate.getTime())) {
+    return 'Invalid date';
+  }
+
+  // Reset time to 00:00:00 to consider only the date
+  parsedDate.setHours(0, 0, 0, 0);
+
+  // Add `page.props.authorizedDays` to the parsed date
+  const authorizedDays = page.props.authorizedDays || 8; // Default to 8 if not defined
+  const newDate = new Date(parsedDate);
+  newDate.setDate(parsedDate.getDate() + authorizedDays);
+
+  // Reset time for newDate as well
+  newDate.setHours(0, 0, 0, 0);
+
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0); // Reset time for current date
+
+  // Calculate the difference in days
+  const differenceInTime = newDate.getTime() - currentDate.getTime();
+  const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+
+  // Return appropriate message
+  if (differenceInDays <= 0) {
+    return 'Expired';
+  }
+
+  return differenceInDays === 1
+    ? `${differenceInDays} day`
+    : `${differenceInDays} days`;
+}
+
+const readOnlyMode = reactive({
+  isDisable: true,
+});
 onMounted(() => {
   setQueryFilters();
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 const resetDateFilters = filterName => {
@@ -240,6 +312,26 @@ const resetDateFilters = filterName => {
     },
   );
 });
+const formatDate = dateString =>
+  useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY').value;
+
+const validateDateRange = () => {
+  const { policy_expiry_date, policy_expiry_date_end } = filters;
+  if (policy_expiry_date && policy_expiry_date_end) {
+    const startDate = new Date(policy_expiry_date);
+    const endDate = new Date(policy_expiry_date_end);
+    const oneMonthLater = new Date(startDate);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    // Adjust for months with fewer than 31 days
+    if (oneMonthLater.getDate() < startDate.getDate()) {
+      oneMonthLater.setDate(0);
+    }
+    if (endDate > oneMonthLater) {
+      return true;
+    }
+  }
+  return false;
+};
 </script>
 
 <template>
@@ -249,10 +341,24 @@ const resetDateFilters = filterName => {
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3 flex">
         <Link href="/quotes/life/cards">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
+          <x-button
+            size="sm"
+            color="#1d83bc"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Cards View
+          </x-button>
         </Link>
         <Link :href="route('life-quotes-create')">
-          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Create Lead
+          </x-button>
         </Link>
       </div>
     </div>
@@ -260,7 +366,7 @@ const resetDateFilters = filterName => {
     <x-form @submit="filterQuotes" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -334,6 +440,18 @@ const resetDateFilters = filterName => {
             "
           />
         </x-field>
+        <x-field label="Policy Expiry Start Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date"
+            name="policy_expiry_date"
+          />
+        </x-field>
+        <x-field label="Policy Expiry End Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date_end"
+            name="policy_expiry_date_end"
+          />
+        </x-field>
         <x-field label="Advisor">
           <ComboBox
             v-if="!hasRole(rolesEnum.TravelAdvisor)"
@@ -390,11 +508,12 @@ const resetDateFilters = filterName => {
           >
             Export
           </x-button>
-          <x-tooltip v-else position="right">
+          <x-tooltip v-else placement="right">
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date are required to export data.
+                Created dates or payment due date or booking date are required
+                to export data.
               </span>
             </template>
           </x-tooltip>
@@ -424,6 +543,8 @@ const resetDateFilters = filterName => {
                 placeholder="Select Advisor"
                 class="flex-1 w-auto"
                 :rules="[rules.isRequired]"
+                filterable
+                v-if="readOnlyMode.isDisable === true"
               />
               <div class="mb-3 md:pt-6">
                 <x-button
@@ -431,6 +552,7 @@ const resetDateFilters = filterName => {
                   size="sm"
                   type="submit"
                   :loading="assignForm.processing"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Assign
                 </x-button>
@@ -450,7 +572,6 @@ const resetDateFilters = filterName => {
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-code="{ code, uuid }">
         <Link
@@ -459,6 +580,28 @@ const resetDateFilters = filterName => {
         >
           <span>{{ code }}</span>
         </Link>
+      </template>
+      <template #item-authorized_at="item">
+        <p v-if="item?.payment_status?.text === 'AUTHORISED'">
+          {{ item?.payments[0]?.authorized_at }}
+        </p>
+      </template>
+      <template #item-expiry_date="item">
+        <p v-if="item?.payment_status?.text === 'AUTHORISED'">
+          {{ daysAgoFromAuthorizedDate(item?.payments[0]?.authorized_at) }}
+        </p>
+      </template>
+      <template
+        #item-previous_policy_expiry_date="{
+          previous_policy_expiry_date,
+          source,
+        }"
+      >
+        {{
+          source === 'Renewal_upload'
+            ? formatDate(previous_policy_expiry_date)
+            : ''
+        }}
       </template>
       <template #item-advisor="{ advisor }">
         {{ advisor?.name }}

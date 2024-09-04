@@ -33,23 +33,19 @@ function onSubmit(isValid) {
       },
     };
 
-    form
-      .submit(method, url, options);
+    form.submit(method, url, options);
   }
 }
 </script>
 
 <template>
   <div>
-
     <Head title="Quote Sync" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Quote Sync</h2>
       <div>
         <Link :href="route('admin.quotesync')">
-        <x-button size="sm" color="primary">
-          Quote sync list
-        </x-button>
+          <x-button size="sm" color="primary"> Quote sync list </x-button>
         </Link>
       </div>
     </div>
@@ -65,13 +61,21 @@ function onSubmit(isValid) {
         </x-field>
 
         <x-field label="Status" required>
-          <x-select v-model="form.status" placeholder="Select Status" :options="quoteSyncStatusOptions"
-            class="w-full" />
+          <x-select
+            v-model="form.status"
+            placeholder="Select Status"
+            :options="quoteSyncStatusOptions"
+            class="w-full"
+          />
         </x-field>
 
         <x-field label="Fields" required>
-          <x-input v-model="form.updated_fields" :rules="[isRequired]" class="w-full"
-            :error="form.errors.updated_fields" />
+          <x-input
+            v-model="form.updated_fields"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="form.errors.updated_fields"
+          />
         </x-field>
       </div>
 
@@ -87,7 +91,13 @@ function onSubmit(isValid) {
       </x-field>
 
       <div class="flex justify-end gap-3 my-4">
-        <x-button size="md" color="emerald" type="submit" class="px-6" :loading="form.processing">
+        <x-button
+          size="md"
+          color="emerald"
+          type="submit"
+          class="px-6"
+          :loading="form.processing"
+        >
           Update
         </x-button>
       </div>

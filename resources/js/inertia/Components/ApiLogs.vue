@@ -15,8 +15,8 @@ const props = defineProps({
   expanded: {
     required: false,
     type: Boolean,
-    default: true
-  }
+    default: true,
+  },
 });
 
 const insuranceProviderId = ref(null);
@@ -114,24 +114,24 @@ const onLoadAuditLogData = async () => {
                 "
               />
             </x-field>
-        <x-button
-          size="sm"
-          color="primary"
-          @click="insuranceProviderId = null"
-          class="h-10 mt-3"
-        >
+            <x-button
+              size="sm"
+              color="primary"
+              @click="insuranceProviderId = null"
+              class="h-10 mt-3"
+            >
               Reset
             </x-button>
           </div>
-      <DataTable
-        table-class-name="compact tablefixed"
-        :headers="apiLogs.table"
-        :items="filteredLogs || []"
-        border-cell
-        hide-rows-per-page
-        :rows-per-page="15"
-        :hide-footer="apiLogs.data?.length < 15"
-      >
+          <DataTable
+            table-class-name="compact tablefixed"
+            :headers="apiLogs.table"
+            :items="filteredLogs || []"
+            border-cell
+            hide-rows-per-page
+            :rows-per-page="15"
+            :hide-footer="apiLogs.data?.length < 15"
+          >
             <template #item-status="{ status }">
               <x-tag
                 v-if="status"
@@ -161,11 +161,13 @@ const onLoadAuditLogData = async () => {
     </Collapsible>
   </div>
 
-  <x-modal v-model="modals.apiLog" size="lg" show-close backdrop>
-    <template #header>
-      Insurance Request Response Details: {{ selectedLog.id }}
-    </template>
-
+  <x-modal
+    v-model="modals.apiLog"
+    size="lg"
+    :title="`Insurance Request Response Details:  ${selectedLog?.id}`"
+    show-close
+    backdrop
+  >
     <div>
       <dl class="grid md:grid-cols-2 gap-x-1 gap-y-5">
         <div class="grid sm:grid-cols-2">
@@ -222,10 +224,17 @@ const onLoadAuditLogData = async () => {
         </div>
       </dl>
     </div>
-    <div class="text-right space-x-4 mt-12">
-      <x-button size="sm" @click.prevent="modals.apiLog = false">
-        Close
-      </x-button>
-    </div>
+    <template #actions>
+      <div class="text-right space-x-4">
+        <x-button
+          size="sm"
+          ghost
+          tabindex="-1"
+          @click.prevent="modals.apiLog = false"
+        >
+          Close
+        </x-button>
+      </div>
+    </template>
   </x-modal>
 </template>

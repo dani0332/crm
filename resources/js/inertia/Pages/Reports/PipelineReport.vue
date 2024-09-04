@@ -353,7 +353,7 @@ watch(
         />
       </x-field>
       <x-field label="Teams">
-         <ComboBox
+        <ComboBox
           v-model="filters.team"
           placeholder="Select Team"
           :options="teamOptions"

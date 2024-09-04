@@ -28,7 +28,7 @@ class HealthQuote extends Model implements AuditableContract
         'code' => FilterTypes::EXACT,
         'email' => FilterTypes::EXACT,
         'source' => FilterTypes::EXACT,
-        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'policy_expiry_date' => FilterTypes::DATE_BETWEEN,
         'mobile_no' => FilterTypes::EXACT,
         'created_at' => FilterTypes::DATE_BETWEEN,
     ];
@@ -37,6 +37,25 @@ class HealthQuote extends Model implements AuditableContract
         'updated' => QuoteEmailUpdated::class,
     ];
 
+    protected static function booted()
+    {
+        static::updating(function ($model) {
+            $skipBookingDateUpdateForNonCPD = true;
+            if (isset(request()->sendUpdateId)) {
+                $healthQuote = new HealthQuote;
+                $endorsmentDetails = $healthQuote->isCPDEndorsment(request()->sendUpdateId);
+                if ($endorsmentDetails['isCPDEndorsment']) {
+                    info('Book Update - Policy Booking Date update is allowed for CPD Endorsment. Old PBD ('.$model->getOriginal('policy_booking_date').') - New PBD ('.$model->policy_booking_date.'). QuoteType: '.request()->quoteType.' - QuoteUUID: '.request()->quoteUuid.' - SendUpdateUUID: '.$endorsmentDetails['sendUpdateUUID']);
+                    $skipBookingDateUpdateForNonCPD = false;
+                }
+            }
+
+            if ($model->isDirty('policy_booking_date') && $model->getOriginal('policy_booking_date') && $skipBookingDateUpdateForNonCPD) {
+                info($model->code.' updating the value of policy_booking_date is skipped. tried to change policy_booking_date from '.$model->getOriginal('policy_booking_date').' to '.$model->policy_booking_date);
+                unset($model->policy_booking_date); // lock the policy booking date field
+            }
+        });
+    }
     public function emirate()
     {
         return $this->belongsTo(Emirate::class, 'emirate_of_your_visa_id');

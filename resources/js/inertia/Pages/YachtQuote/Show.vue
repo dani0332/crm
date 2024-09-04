@@ -1,15 +1,10 @@
 <script setup>
-import MigratePayment from '../../Components/MigratePayment.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue';
-import PlanDetails from '../../Components/PlanDetails.vue';
-import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
-import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';;
 
 const props = defineProps({
   quote: Object,
@@ -52,7 +47,7 @@ const props = defineProps({
   bookPolicyDetails: Array,
   payments: Array,
   lockLeadSectionsDetails: Object,
-  paymentDocument: Array
+  paymentDocument: Array,
 });
 
 const page = usePage();
@@ -89,6 +84,9 @@ const isProfileUpdateAllow = computed(() => {
     page.props.rolesEnum.NRA,
   ]);
 });
+
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
 const customerProfileForm = useForm({
   customer_id: page.props.quote.customer_id,
@@ -226,18 +224,24 @@ const linkEntity = () => {
       console.log(err);
     });
 };
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
   useGetShowPageRoute(uuid, quote_type_id, null);
 
-const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] = createReusableTemplate();
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
+  createReusableTemplate();
 
 const isAddUpdate = ref(false);
 const onAddUpdate = () => {
-  isAddUpdate.value = true; 
+  isAddUpdate.value = true;
 };
-
 </script>
 
 <template>
@@ -253,7 +257,7 @@ const onAddUpdate = () => {
           Stale for {{ countDays }}
         </p>
       </template>
-      <template #default>
+      <template #default v-if="readOnlyMode.isDisable === true">
         <LeadNotes
           :documentType="noteDocumentType"
           :notes="quoteDocuments"
@@ -261,20 +265,37 @@ const onAddUpdate = () => {
           :quote="quote"
           :cdn="cdnPath"
         />
-        
+
         <LeadEditBtnTemplate v-slot="{ isDisabled }">
-          <Link v-if="!isDisabled" :href="route('yacht-quotes-edit', quote.uuid)">
+          <Link
+            v-if="!isDisabled"
+            :href="route('yacht-quotes-edit', quote.uuid)"
+          >
             <x-button size="sm" tag="div">Edit</x-button>
           </Link>
-          <x-button v-else :disabled="isDisabled" size="sm" tag="div">Edit</x-button>
+          <x-button v-else :disabled="isDisabled" size="sm" tag="div"
+            >Edit</x-button
+          >
         </LeadEditBtnTemplate>
 
-        <x-tooltip v-if="lockLeadSectionsDetails.lead_details" position="bottom">
-          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.YachtQuotesEdit)" :isDisabled="true"/>
-          <template #tooltip>This lead is now locked as the policy has been booked. If changes are needed, go to 'Send Update', select 'Add Update', and choose 'Correction of Policy'</template>
+        <x-tooltip
+          v-if="lockLeadSectionsDetails.lead_details"
+          placement="bottom"
+        >
+          <LeadEditBtnReuseTemplate
+            v-if="can(permissionsEnum.YachtQuotesEdit)"
+            :isDisabled="true"
+          />
+          <template #tooltip
+            >This lead is now locked as the policy has been booked. If changes
+            are needed, go to 'Send Update', select 'Add Update', and choose
+            'Correction of Policy'</template
+          >
         </x-tooltip>
         <template v-else>
-          <LeadEditBtnReuseTemplate v-if="can(permissionsEnum.YachtQuotesEdit)"/>
+          <LeadEditBtnReuseTemplate
+            v-if="can(permissionsEnum.YachtQuotesEdit)"
+          />
         </template>
 
         <Link
@@ -288,23 +309,25 @@ const onAddUpdate = () => {
         </Link>
       </template>
     </StickyHeader>
-   
+
     <div class="p-4 rounded shadow mt-6 mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div class="flex justify-between items-center flex-wrap gap-2">
-          </div>
+          <div class="flex justify-between items-center flex-wrap gap-2"></div>
         </template>
         <template #body>
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
-             <div class="grid sm:grid-cols-2" v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])">
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+              >
                 <dt class="font-medium">ID</dt>
                 <dd>{{ quote.id }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -361,7 +384,7 @@ const onAddUpdate = () => {
 
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -390,7 +413,7 @@ const onAddUpdate = () => {
                 v-if="linkedQuoteDetails.childLeadsCount == 1"
               >
                 <div>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -466,6 +489,10 @@ const onAddUpdate = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">OPERATOR EXPERIENCE</dt>
                 <dd>{{ quote?.yacht_quote?.operator_experience }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
             </dl>
           </div>
@@ -576,10 +603,45 @@ const onAddUpdate = () => {
                   </dd>
                 </div>
 
-                <RiskRatingScoreDetails
-                  :quote="quote.yacht_quote"
-                  :modelType="quoteType"
-                />
+                <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
+              </dl>
+              <dl
+                v-if="
+                  quote.customer_type === page.props.customerTypeEnum.Entity
+                "
+                class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words"
+              >
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">FIRST NAME</dt>
+                  <dd>{{ quote.first_name }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">LAST NAME</dt>
+                  <dd>{{ quote.last_name }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">MOBILE NUMBER</dt>
+                  <dd>{{ quote.mobile_no }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">EMAIL</dt>
+                  <dd>{{ quote.email }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">COMPANY NAME</dt>
+                  <dd>{{ customerProfileForm.company_name }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">TRADE LICENSE NO</dt>
+                  <dd>
+                    <x-input
+                      v-model="customerProfileForm.trade_license_no"
+                      placeholder="TRADE LICENSE NO"
+                      type="text"
+                      class="w-full"
+                    />
+                  </dd>
+                </div>
               </dl>
               <dl
                 v-if="
@@ -712,9 +774,8 @@ const onAddUpdate = () => {
           </dd>
         </div>
       </dl>
-      <div class="flex justify-end">
+      <template #actions>
         <x-button
-          class="mt-4"
           color="primary"
           size="sm"
           :loading="customerProfileForm.processing"
@@ -722,7 +783,7 @@ const onAddUpdate = () => {
         >
           Search
         </x-button>
-      </div>
+      </template>
     </x-modal>
 
     <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
@@ -766,12 +827,12 @@ const onAddUpdate = () => {
             />
           </dd>
         </div>
-        <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity">
-            Link
-          </x-button>
-        </div>
       </dl>
+      <template #actions>
+        <x-button size="sm" color="orange" @click.prevent="linkEntity">
+          Link
+        </x-button>
+      </template>
     </x-modal>
 
     <MemberDetails
@@ -834,9 +895,9 @@ const onAddUpdate = () => {
       :payments="quote.payments"
     />
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			:quoteType="quoteType"
-			:payments="quote.payments"
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="quote.payments"
       :paymentDocument="paymentDocument"
       :proformaPayment="
         quote.payments.find(
@@ -846,12 +907,17 @@ const onAddUpdate = () => {
         )
       "
       :quoteRequest="quote"
-			:paymentStatusEnum="page.props.paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      :paymentStatusEnum="page.props.paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
+      :expanded="sectionExpanded"
     />
 
     <QuotePayments
@@ -881,7 +947,7 @@ const onAddUpdate = () => {
       :expanded="sectionExpanded"
     />
 
-    <QuoteDocuments
+    <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
@@ -890,6 +956,7 @@ const onAddUpdate = () => {
       :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
       :insly-id="quote?.quote_detail?.insly_id"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy

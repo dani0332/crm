@@ -80,7 +80,7 @@ class PetQuoteRepository extends BaseRepository
 
             $quote->petQuote()->updateOrCreate(
                 ['personal_quote_id' => $quote->id],
-                Arr::only($data, (new PetQuote())->allowedColumns())
+                Arr::only($data, (new PetQuote)->allowedColumns())
             );
 
             return $quote;
@@ -99,6 +99,8 @@ class PetQuoteRepository extends BaseRepository
             'currentlyInsuredWith',
             'advisor',
             'petQuote.petQuoteRequestDetail.lostReason:id,text',
+            'paymentStatus',
+            'payments',
         ])
             ->when(\auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
@@ -153,7 +155,9 @@ class PetQuoteRepository extends BaseRepository
                         'paymentSplits.paymentStatus',
                         'paymentSplits.paymentMethod',
                         'paymentSplits.documents',
-                        'paymentSplits.verifiedByUser']);
+                        'paymentSplits.verifiedByUser',
+                        'paymentSplits.processJob',
+                    ]);
                 },
                 'createdBy',
                 'updatedBy',
@@ -169,7 +173,7 @@ class PetQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
-                'renewal_expiry_date',
+                'policy_expiry_date',
                 'policy_start_date',
                 'policy_issuance_date',
                 \DB::raw('IF(EXISTS (

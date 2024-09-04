@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
+use App\Events\TravelQuoteAdvisorUpdated;
 use App\Jobs\MAWelcomeJob;
 use App\Models\TravelQuote;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -12,12 +13,35 @@ class TravelQuoteObserver
 {
     use PersonalQuoteSyncTrait;
 
+    public function updating(TravelQuote $quote): void
+    {
+        if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
+            $quote->quote_status_date = now();
+        }
+    }
+
     /**
      * Handle the TravelQuote "updated" event.
      */
     public function updated(TravelQuote $travelQuote): void
     {
         $dirty = $travelQuote->getDirty();
+        $changes = [];
+
+        foreach ($dirty as $attribute => $value) {
+            if ($travelQuote->isDirty($attribute)) {
+                $changes[$attribute] = [
+                    'old' => $travelQuote->getOriginal($attribute),
+                    'new' => $value,
+                ];
+            }
+        }
+
+        if ($travelQuote->isDirty('advisor_id')) {
+            $oldAdvisorId = $changes['advisor_id']['old'];
+            TravelQuoteAdvisorUpdated::dispatch($travelQuote, $oldAdvisorId);
+        }
+
         if (
             $travelQuote->isDirty('quote_status_id') &&
             $travelQuote->quote_status_id === QuoteStatusEnum::TransactionApproved

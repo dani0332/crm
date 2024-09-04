@@ -30,6 +30,7 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
+use App\Repositories\PaymentRepository;
 use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteNoteRepository;
 use App\Repositories\QuoteStatusRepository;
@@ -45,7 +46,6 @@ use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class YachtQuoteController extends Controller
@@ -68,12 +68,14 @@ class YachtQuoteController extends Controller
 
         $count = 0;
         $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
+        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
 
         return inertia('YachtQuote/Index', [
             'quotes' => $personalQuotes->simplePaginate(10)->withQueryString(),
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : YachtQuoteRepository::getData(true, true),
+            'authorizedDays' => intval($authorizedDays->value),
         ]);
     }
 
@@ -118,6 +120,13 @@ class YachtQuoteController extends Controller
      */
     public function show($uuid)
     {
+
+        /* Start - Temporarily adding for correcting historic data  */
+        $quote = YachtQuoteRepository::where('uuid', $uuid)->first();
+        abort_if(! $quote, 404);
+        (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::YACHT->value);
+        /* End - Temporarily adding for correcting historic data  */
+
         $quote = YachtQuoteRepository::getBy('uuid', $uuid);
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::YACHT->value, $quote);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
@@ -168,12 +177,9 @@ class YachtQuoteController extends Controller
         }
 
         $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::YACHT->value);
-        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::YACHT->value, $quote->id);
+        $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::YACHT->value, $quote->id);
         $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::YACHT->value, $quote->payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
-        $sortedPayments = collect($quote?->payments)->sortByDesc(function ($column) {
-            return Carbon::parse($column->created_at)->timestamp;
-        })->values()->toArray();
 
         return inertia('YachtQuote/Show', [
             'quoteType' => QuoteTypes::YACHT,
@@ -214,7 +220,7 @@ class YachtQuoteController extends Controller
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],
             'bookPolicyDetails' => $bookPolicyDetails,
-            'payments' => $sortedPayments,
+            'payments' => $quote?->payments,
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocument,
         ]);
