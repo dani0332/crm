@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\EnvEnum;
 use App\Enums\QuoteSyncStatus;
 use App\Models\ApplicationStorage;
 use App\Models\QuoteSync;
@@ -68,7 +67,7 @@ class QuoteSyncUpdateCommand extends Command
                 })->unique('quote_uuid')->pluck('quote_uuid')->toArray();
 
             if (count($quoteUuids) > 0) {
-                $quoteUuids = "'" . implode("','", $quoteUuids) . "'";
+                $quoteUuids = "'".implode("','", $quoteUuids)."'";
 
                 DB::table('quote_sync as qs')
                     ->join(DB::raw("(
@@ -77,8 +76,8 @@ class QuoteSyncUpdateCommand extends Command
                                 quote_uuid
                             FROM quote_sync
                             WHERE quote_uuid IN ({$quoteUuids})
-                            AND id > " . intval($this->startId) . '
-                            AND status IN (' . QuoteSyncStatus::INPROGRESS . ', ' . QuoteSyncStatus::FAILED . ')
+                            AND id > ".intval($this->startId).'
+                            AND status IN ('.QuoteSyncStatus::INPROGRESS.', '.QuoteSyncStatus::FAILED.')
                             GROUP BY quote_uuid
                         ) as subquery'), function ($join) {
                         $join->on('qs.id', '>=', 'subquery.min_id')
@@ -91,8 +90,8 @@ class QuoteSyncUpdateCommand extends Command
             }
 
         } catch (Exception $e) {
-            $error = 'QuoteSyncJob Error re-queing failed or stuck entries: ' . $quoteUuids . ' - ' . $e->getMessage();
-            info($error . ' --- ' . $e->getTraceAsString());
+            $error = 'QuoteSyncJob Error re-queing failed or stuck entries: '.$quoteUuids.' - '.$e->getMessage();
+            info($error.' --- '.$e->getTraceAsString());
         }
     }
 }
