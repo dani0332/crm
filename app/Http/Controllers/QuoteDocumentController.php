@@ -390,11 +390,12 @@ class QuoteDocumentController extends Controller
 
     public function previewQuoteDocument($doc_uuid)
     {
-        $quoteDocument = QuoteDocument::where( 'doc_uuid' , $doc_uuid)->first();
+        $quoteDocument = QuoteDocument::where('doc_uuid', $doc_uuid)->first();
         if ($quoteDocument) {
             $disk = Storage::disk('azureIM');
             if ($disk->exists($quoteDocument->doc_url)) {
                 $contents = $disk->get($quoteDocument->doc_url);
+
                 return response($contents)->header('content-type', $quoteDocument->doc_mime_type);
             }
         }
