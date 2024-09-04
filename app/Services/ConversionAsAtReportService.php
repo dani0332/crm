@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\DisplayByEnum;
 use App\Enums\LeadSourceEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
@@ -42,11 +41,7 @@ class ConversionAsAtReportService extends BaseService
                     DB::raw(
                         'SUM(
                             CASE WHEN (
-                                ( personal_quotes.payment_status_id = "'.PaymentStatusEnum::CAPTURED.'"
-                                and personal_quotes.payment_status_date <= "'.Carbon::parse($request->asAtDate)->endOfDay()->format($dateFormat).'"
-                                )
-                                OR
-                                ( personal_quotes.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.')
+                                ( personal_quotes.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.','.QuoteStatusEnum::PolicyBooked.','.QuoteStatusEnum::PolicySentToCustomer.')
                                 and personal_quotes.transaction_approved_at <= "'.Carbon::parse($request->asAtDate)->endOfDay()->format($dateFormat).'"
                                 )
                             )
