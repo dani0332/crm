@@ -29,22 +29,19 @@ const sageAPILogs = reactive({
   data: [],
   loader: false,
   table: [
-    { text: 'Id', value: 'id' },
-    { text: 'Request Type', value: 'section_type' },
-    { text: 'Quote ID', value: 'section_id' },
+    { text: 'user', value: 'user' },
     { text: 'Request Type', value: 'sage_request_type' },
     { text: 'API End Point', value: 'sage_end_point' },
     { text: 'Request Payload', value: 'sage_payload' },
     { text: 'Request Response', value: 'response' },
     { text: 'Request Status', value: 'status' },
     { text: 'Logged At', value: 'created_at' },
+    { text: 'Updated At', value: 'updated_at' },
   ],
 });
 
 const isSageLogButtonEnable = computed(() => {
-  return (
-    can(props.permissionsEnum.VIEW_SAGE_API_LOGS) && sageAPILogs.data.length > 0
-  );
+  return can(props.permissionsEnum.VIEW_SAGE_API_LOGS);
 });
 
 const fetchSageAPILogs = async () => {
@@ -101,9 +98,9 @@ const copyToClipboard = item => {
     });
 };
 
-onBeforeMount(() => {
+/*onBeforeMount(() => {
   fetchSageAPILogs();
-});
+});*/
 </script>
 
 <template>
@@ -153,6 +150,9 @@ onBeforeMount(() => {
         :rows-per-page="15"
         :hide-footer="sageAPILogs.data?.length < 15"
       >
+        <template #item-user="{ user }">
+          {{ user.name }}
+        </template>
         <template #item-sage_request_type="{ sage_request_type }">
           {{ sage_request_type.substr(0, 10) }}
           <x-icon
@@ -193,6 +193,9 @@ onBeforeMount(() => {
         </template>
         <template #item-created_at="{ created_at }">
           {{ dateFormat(created_at).value }}
+        </template>
+        <template #item-updated_at="{ updated_at }">
+          {{ dateFormat(updated_at).value }}
         </template>
       </DataTable>
     </x-modal>
