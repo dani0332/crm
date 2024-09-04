@@ -23,7 +23,7 @@ class BusinessQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
             if ($quoteStatusId) {
                 $data = [
                     'previous_quote_policy_number' => $row['deal_policy_number_renewal'] ?? null,
-                    'premium' => str_replace(' AED', '', $row['deal_value']),
+                    'premium' => $row['deal_value'],
                     'quote_status_id' => $quoteStatusId,
                     'business_type_of_insurance_id' => $this->getBusinessInsurance($row['deal_types_of_insurance']),
                 ];
