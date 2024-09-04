@@ -36,7 +36,8 @@ class ProcessCCPaymentJob implements ShouldQueue
      */
     public function handle()
     {
-        info("CC Payments Job Started For Payment {$this->paymentRecord->code} Split ID: {$this->paymentRecord->payment_splits_id}");
+        $quoteInfo = $this->paymentRecord->quote_type.'-'.$this->paymentRecord->quoteable_id;
+        info("CC Payments Job Started For Payment {$quoteInfo} Split ID: {$this->paymentRecord->payment_splits_id}");
         try {
             $this->paymentRecord->update(['status' => PaymentProcessJobEnum::INPROCESS]);
             app(SplitPaymentService::class)->processSplitPaymentApprove(
@@ -46,10 +47,10 @@ class ProcessCCPaymentJob implements ShouldQueue
                 $this->paymentRecord->amount_captured,
                 true
             );
-            info("CC Payments Job Ended For Payment {$this->paymentRecord->code} Split ID: {$this->paymentRecord->payment_splits_id}");
+            info("CC Payments Job Ended For Payment {$quoteInfo} Split ID: {$this->paymentRecord->payment_splits_id}");
         } catch (\Exception $exception) {
             // Handle the exception here
-            info("CC Payments Job Failed for Payment {$this->paymentRecord->code} Split ID: {$this->paymentRecord->payment_splits_id} - Error: ".$exception->getMessage());
+            info("CC Payments Job Failed for Payment {$quoteInfo} Split ID: {$this->paymentRecord->payment_splits_id} - Error: ".$exception->getMessage());
         }
     }
 }
