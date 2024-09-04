@@ -45,6 +45,8 @@ class OCAHealthFollowupEmailJob implements ShouldQueue
                 info("Sending OCA health email follow-ups for Ref-ID: {$healthLead->uuid}, Lead Status ID: {$healthLead->quote_status_id} | Time: ".now());
                 // Send the Health OCA email using the HealthEmailService
                 $healthEmailService->triggerOCAWorkFlow($healthLead, $birdService);
+                $healthLead->quote_status_id = QuoteStatusEnum::FollowedUp;
+                $healthLead->save();
             } else {
                 info("OCAHealthFollowupEmailJob - Health Lead did not trigger OCA WorkFlow due to ineligible status (Status ID: {$healthLead->quote_status_id}) - Ref ID: {$healthLead->uuid} | Time: ".now());
             }
