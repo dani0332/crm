@@ -3529,6 +3529,7 @@ const onAddUpdate = () => {
       :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :isPlanDetailEnabled="isPlanDetailEnabled"
+      :expanded="sectionExpanded"
     />
 
     <PaymentTable
@@ -4020,6 +4021,7 @@ const onAddUpdate = () => {
       :customerName="record?.first_name + ' ' + record?.last_name"
       :quoteId="quote.uuid"
       :quoteType="'CAR'"
+      :expanded="sectionExpanded"
     />
   </div>
   <AuditLogs
