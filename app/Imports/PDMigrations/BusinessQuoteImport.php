@@ -8,8 +8,7 @@ use App\Enums\PDMigrations\PDDealStatus;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Models\BusinessQuote;
-use App\Models\PersonalQuote;
-use App\Models\User;
+use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -43,11 +42,12 @@ class BusinessQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                     $searchCriteria['previous_quote_policy_number'] = $row['deal_policy_number_renewal'];
                 }
 
-                // $businessLead = BusinessQuote::where($searchCriteria)->first();
+                $businessLead = BusinessQuote::where($searchCriteria)->first();
                 // For a testing purpose on UAT
-                $businessLead = PersonalQuote::where($searchCriteria)->first();
+                // $businessLead = PersonalQuote::where($searchCriteria)->first();
 
-                if ($businessLead && $businessLead->quote_status_id != QuoteStatusEnum::TransactionApproved) {
+                if ($businessLead && $businessLead->quote_status_id != QuoteStatusEnum::TransactionApproved
+                 && Carbon::parse($businessLead->updated_at)->lessThan(Carbon::parse('2024-05-23'))) {
                     $businessLead->update($data);
                     info('BusinessQuoteImport - Quote found: '.$businessLead->uuid.' - Quote updated');
                 }
