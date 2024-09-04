@@ -115,7 +115,8 @@ class ManagementReport
         }
 
         if (! empty($request['department_id'])) {
-            $query->whereIn('u.department_id', $request['department_id']);
+            $department = is_array($request['department_id']) ? $request['department_id'] : [$request['department_id']];
+            $query->whereIn('u.department_id', $department);
         }
 
         if (isset($request['includeCancelledPolicies']) && ! empty($request['includeCancelledPolicies']) && $request['includeCancelledPolicies'] == 'No') {
