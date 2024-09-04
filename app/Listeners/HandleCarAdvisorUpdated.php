@@ -55,7 +55,7 @@ class HandleCarAdvisorUpdated
                 $isPaymentAuthorized = $lead->payment_status_id === PaymentStatusEnum::AUTHORISED;
 
                 if ($isPaymentAuthorized) {
-                    info(self::class . " - Payment authorized for UUID: {$lead->uuid}, proceeding to send FTC email.");
+                    info(self::class." - Payment authorized for UUID: {$lead->uuid}, proceeding to send FTC email.");
 
                     $isSic = isLeadSic($lead->uuid);
                     $data = [
@@ -66,18 +66,18 @@ class HandleCarAdvisorUpdated
 
                     Marshall::request('/payment/send-payment-auth-email', 'post', $data);
 
-                    info(self::class . " - FTC email sent successfully for UUID: {$lead->uuid}");
+                    info(self::class." - FTC email sent successfully for UUID: {$lead->uuid}");
                 } else {
-                    info(self::class . " - Payment not authorized for UUID: {$lead->uuid}. No action taken.");
+                    info(self::class." - Payment not authorized for UUID: {$lead->uuid}. No action taken.");
                 }
             } catch (\Exception $e) {
-                info(self::class . " - Exception occurred for UUID: {$lead->uuid}: {$e->getMessage()}");
+                info(self::class." - Exception occurred for UUID: {$lead->uuid}: {$e->getMessage()}");
             }
         }
 
         $skippableSources = [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY];
         if (in_array($lead->source, $skippableSources)) {
-            info('lead is source is ' . $lead->source . ' upload. Skipping intro email job');
+            info('lead is source is '.$lead->source.' upload. Skipping intro email job');
 
             return;
         }
@@ -86,29 +86,29 @@ class HandleCarAdvisorUpdated
 
         $previousAdvisor = User::where('id', $oldAdvisorId)->first();
 
-        info('about to trigger intro email job for lead uuid : ' . $lead->uuid . ' and previous advisor id : ' . $oldAdvisorId);
+        info('about to trigger intro email job for lead uuid : '.$lead->uuid.' and previous advisor id : '.$oldAdvisorId);
 
         if ($lead->sic_flow_enabled) {
 
-            info('Lead is SIC enabled so send SIC notification to advisor against: ' . $lead->uuid);
+            info('Lead is SIC enabled so send SIC notification to advisor against: '.$lead->uuid);
             $user = (new UserService)->getUserById($lead->advisor_id);
             $responseCode = $this->carEmailService->sendSICNotificationToAdvisor($lead, $user);
 
             if (in_array($responseCode, [200, 201])) {
-                info('SIC Notification to Advisor: ' . $user->email . ' Sent Successfully against Quote UuId: ' . $lead->uuid);
+                info('SIC Notification to Advisor: '.$user->email.' Sent Successfully against Quote UuId: '.$lead->uuid);
             } else {
-                Log::error('SIC Notification to Advisor Not Sent: ' . $responseCode . ' Advisor EmailAddress: ' . $user->email . ' Quote UuId: ' . $lead->uuid);
+                Log::error('SIC Notification to Advisor Not Sent: '.$responseCode.' Advisor EmailAddress: '.$user->email.' Quote UuId: '.$lead->uuid);
             }
 
             $lead->sic_flow_enabled = 0;
             $lead->save();
-            info('SIC flow is disabled for lead uuid : ' . $lead->uuid);
+            info('SIC flow is disabled for lead uuid : '.$lead->uuid);
 
             // We need to trigger stop workflow event for SIC if the lead is in SIC workflow
             $sicEventName = ApplicationStorage::where('key_name', 'SIC_END_WORKFLOW_NAME')->first();
             if ($sicEventName) {
                 SIBService::createWorkflowEvent($sicEventName->value, $lead);
-                info('SIC workflow stopped for lead uuid : ' . $lead->uuid);
+                info('SIC workflow stopped for lead uuid : '.$lead->uuid);
             } else {
                 info('SIC workflow key not found');
             }
