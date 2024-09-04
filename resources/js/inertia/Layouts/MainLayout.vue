@@ -1,5 +1,10 @@
 <script setup>
 const page = usePage();
+import InstantAlfredCallbackNotification from '../Components/InstantAlfredCallbackNotification.vue';
+import InstantAlfredWhatsappNotification from '../Components/InstantAlfredWhatsappNotification.vue';
+import InstantAlfredCallbackReminderNotification from '../Components/InstantAlfredCallbackReminderNotification.vue';
+import InstantAlfredWhatsappReminderNotification from '../Components/InstantAlfredWhatsappReminderNotification.vue';
+
 
 const createLink = link => {
   if (link.children.length > 0) {
@@ -122,6 +127,10 @@ const onLogout = () => {
             <div class="flex gap-3 items-center">
               <OnlineStatusToggle :user="user" />
               <!-- <UserStatus /> -->
+                <InstantAlfredCallbackNotification/>
+                <InstantAlfredWhatsappNotification/>
+                <InstantAlfredCallbackReminderNotification/>
+                <InstantAlfredWhatsappReminderNotification/>
               <x-popover align="right" block>
                 <x-button size="sm" ghost>
                   <div class="flex gap-3 items-center">
