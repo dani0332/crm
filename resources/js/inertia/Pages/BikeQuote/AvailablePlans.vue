@@ -1,4 +1,7 @@
 <script setup>
+import { defineEmits } from 'vue';
+// Define the emit function
+const emit = defineEmits(['plan-selected']);
 import LazyCreatePlan from '@/inertia/Pages/BikeQuote/CreatePlan.vue';
 import UpdateShowPlan from '@/inertia/Pages/BikeQuote/UpdateShowPlans.vue';
 
@@ -347,6 +350,7 @@ const handlePlanSelected = plan => {
     preserveScroll: true,
     only: ['payments', 'paymentEntityModel'],
   });
+  emit('plan-selected', plan);
   onLoadAvailablePlansData();
 };
 
