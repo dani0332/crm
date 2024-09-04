@@ -1103,6 +1103,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       quoteSubType="Group Medical"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
+      :expanded="sectionExpanded"
     />
 
     <PolicyDetail
