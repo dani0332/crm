@@ -754,7 +754,7 @@ const formatDate = dateString =>
           :options="quoteSegments"
           :single="true"
         />
-         <x-select
+        <x-select
           v-model="filters.sic_advisor_requested"
           label="Advisor Requested"
           placeholder="Select any option"
