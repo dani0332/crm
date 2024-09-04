@@ -1,5 +1,6 @@
 <script setup>
 import NProgress from 'nprogress';
+const { copy, copied } = useClipboard();
 const props = defineProps({
   quoteType: {
     required: true,
@@ -29,6 +30,8 @@ const sageAPILogs = reactive({
   loader: false,
   table: [
     { text: 'Id', value: 'id' },
+    { text: 'Request Type', value: 'section_type' },
+    { text: 'Quote ID', value: 'section_id' },
     { text: 'Request Type', value: 'sage_request_type' },
     { text: 'API End Point', value: 'sage_end_point' },
     { text: 'Request Payload', value: 'sage_payload' },
@@ -87,6 +90,17 @@ const showSageAPILogs = async () => {
   }
 };
 
+const copyToClipboard = item => {
+  delete item.response.endpoint;
+  delete item.response.payload;
+  copy(item);
+  if (copied)
+    notification.success({
+      title: 'Copied to clipboard!',
+      position: 'top',
+    });
+};
+
 onBeforeMount(() => {
   fetchSageAPILogs();
 });
@@ -139,6 +153,44 @@ onBeforeMount(() => {
         :rows-per-page="15"
         :hide-footer="sageAPILogs.data?.length < 15"
       >
+        <template #item-sage_request_type="{ sage_request_type }">
+          {{ sage_request_type.substr(0, 10) }}
+          <x-icon
+            v-if="sage_request_type"
+            @click.prevent="copyToClipboard(sage_request_type)"
+            icon="copy"
+            class="text-primary"
+            size="md"
+          />
+        </template>
+        <template #item-sage_end_point="{ sage_end_point }">
+          {{ sage_end_point.substr(0, 10) }}
+          <x-icon
+            v-if="sage_end_point"
+            @click.prevent="copyToClipboard(sage_end_point)"
+            icon="copy"
+            class="text-primary"
+            size="md"
+          />
+        </template>
+        <template #item-sage_payload="{ sage_payload }">
+          {{ sage_payload.substr(0, 20) }}
+          <x-icon
+            @click.prevent="copyToClipboard(sage_payload)"
+            icon="copy"
+            class="text-primary"
+            size="md"
+          />
+        </template>
+        <template #item-response="{ response }">
+          {{ response.substr(0, 20) }}
+          <x-icon
+            @click.prevent="copyToClipboard(response)"
+            icon="copy"
+            class="text-primary"
+            size="md"
+          />
+        </template>
         <template #item-created_at="{ created_at }">
           {{ dateFormat(created_at).value }}
         </template>
