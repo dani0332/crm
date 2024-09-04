@@ -24,19 +24,24 @@ const permissionsEnum = page.props.permissionsEnum;
 const canExport = ref(false);
 const RetentionReportEnum = props.retentionReportEnum
 
+
 const objToUrl = obj => {
-  Object.keys(obj).forEach(
-    key => (obj[key] === '' || obj[key]?.length === 0) && delete obj[key],
-  );
-  return Object.keys(obj)
-    .map(key => {
-      if (Array.isArray(obj[key])) {
-        return obj[key].map(value => `${key}[]=${value}`).join('&');
-      }
-      return `${key}=${obj[key]}`;
-    })
-    .join('&');
+    // Helper function to convert nested objects to query string format
+    const toQueryString = (prefix, value) => {
+        if (typeof value === 'object' && value !== null) {
+            return Object.keys(value)
+                .map(key => toQueryString(`${prefix}[${key}]`, value[key]))
+                .join('&');
+        }
+        return `${prefix}=${encodeURIComponent(value)}`;
+    };
+
+    return Object.keys(obj)
+        .filter(key => obj[key] !== '' && (Array.isArray(obj[key]) ? obj[key].length > 0 : obj[key] !== null))
+        .map(key => toQueryString(key, obj[key]))
+        .join('&');
 };
+
 
 const getFiltersObject = () => {
   return {

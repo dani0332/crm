@@ -673,4 +673,22 @@ class RetentionReportService extends BaseService
             ],
         ];
     }
+    /**
+     * Determines whether the batch column should be shown in the report.
+     * This method checks the first item in the provided retention report data to see if it has a 'batch' attribute.
+     * If the 'batch' attribute is present and not null, the method returns true, indicating that the batch column should be shown.
+     *
+     * @return bool
+     */
+    public function isShowBatchColumn($retentionReportData)
+    {
+        $isShowBatchColumn = false;
+        if (count($retentionReportData) != 0) {
+            $firstRetentionReportData = $retentionReportData->first();
+            if ($firstRetentionReportData && $firstRetentionReportData->getAttribute('batch') !== null) {
+                $isShowBatchColumn = true;
+            }
+        }
+        return $isShowBatchColumn;
+    }
 }
