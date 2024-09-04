@@ -18,6 +18,7 @@ defineProps({
   },
   inslyId: String,
   sendPolicy: Boolean,
+  bookPolicyDetails: Array,
 });
 
 const emit = defineEmits([
@@ -290,12 +291,26 @@ onMounted(() => {
             #item-action="{ doc_name }"
           >
             <div>
+              <x-tooltip
+                placement="left"
+                v-if="bookPolicyDetails.isEnableUploadDocument === false"
+              >
+                <x-button size="xs" color="error" outlined disabled="true">
+                  Delete
+                </x-button>
+                <template #tooltip>
+                  This lead is now locked as the policy has been booked. If
+                  changes are needed, go to 'Send Update', select 'Add Update',
+                  and choose 'Correction of Policy Upload'
+                </template>
+              </x-tooltip>
+
               <x-button
                 size="xs"
                 color="error"
                 outlined
                 @click.prevent="onDocDelete(doc_name)"
-                v-if="readOnlyMode.isDisable === true"
+                v-else-if="readOnlyMode.isDisable === true"
               >
                 Delete
               </x-button>

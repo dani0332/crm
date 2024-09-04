@@ -142,12 +142,13 @@ const totalLeads = reactive({
 
 function calculateGrossConversion(item) {
   if (item) {
-    const totalLeadsCount = item.total_leads - item.bad_leads;
+    const totalLeadsCount = item.total_leads;
     const manualCreated = item.manual_created;
     const saleLeads = item.sale_leads;
     const createdSaleLeads = item.created_sale_leads;
     const numerator = saleLeads;
     const denominator = totalLeadsCount;
+
     if (denominator > 0) {
       return parseFloat((numerator / denominator) * 100).toFixed(2) + ' %';
     } else {
@@ -166,7 +167,7 @@ function calculateTotalNetConversion(data) {
   let saleLeads = 0;
   let createdSaleLeads = 0;
   data.forEach(row => {
-    totalLeads += Number(row.total_leads) - Number(row.bad_leads);
+    totalLeads += Number(row.total_leads);
     manualCreated += Number(row.manual_created);
     saleLeads += Number(row.sale_leads);
     createdSaleLeads += Number(row.created_sale_leads);
@@ -175,6 +176,7 @@ function calculateTotalNetConversion(data) {
   });
   const numerator = saleLeads;
   const denominator = totalLeads - badLeads;
+
   return denominator > 0
     ? ((numerator / denominator) * 100).toFixed(2) + ' %'
     : 'NaN';
@@ -186,7 +188,7 @@ function calculateTotalGrossConversion(data) {
   let saleLeads = 0;
   let createdSaleLeads = 0;
   data.forEach(row => {
-    totalLeads += Number(row.total_leads) - Number(row.bad_leads);
+    totalLeads += Number(row.total_leads);
     manualCreated += Number(row.manual_created);
     saleLeads += Number(row.sale_leads);
     createdSaleLeads += Number(row.created_sale_leads);
