@@ -78,10 +78,10 @@ class SendUpdateLogRepository extends BaseRepository
 
             // it will check if send update type is Correction of Policy Details or Endorsement Financial with subtype Policy Period Extension, it will save
             // insurance_provider_id and plan_id.
-            $policyDetailsArray = [];
+            $policyDetails = [];
             if ($category == SendUpdateLogStatusEnum::CPD || ($category == SendUpdateLogStatusEnum::EF && $option == SendUpdateLogStatusEnum::PPE)) {
                 @[$insuranceProviderId, $plan_id] = app(SendUpdateLogService::class)->getProviderDetails($quote, $data['quote_type_id'], true);
-                $policyDetailsArray = $this->autoFillPolicyDetails($quote, $data['quote_type_id'], $insuranceProviderId, $plan_id);
+                $policyDetails = $this->autoFillPolicyDetails($quote, $data['quote_type_id'], $insuranceProviderId, $plan_id);
             }
 
             // if the send update category is 'Cancellation from Inception', 'Cancellation from Inception and reissuance' or 'Endorsement Financial' with
@@ -113,7 +113,7 @@ class SendUpdateLogRepository extends BaseRepository
                 'insurance_provider_id' => $insuranceProviderId,
                 'plan_id' => $plan_id,
                 'created_by' => auth()->user()->id,
-            ], $policyDetailsArray));
+            ], $policyDetails));
 
             info('Send Update Log created successfully - uuid: '.$sendUpdate->uuid.' quote_uuid: '.$sendUpdate->quote_uuid);
         } catch (\Exception $ex) {
