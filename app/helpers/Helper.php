@@ -1,37 +1,37 @@
 <?php
 
-use Carbon\Carbon;
-use App\Models\User;
-use Illuminate\Http\File;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\CustomerTypeEnum;
+use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Models\ApplicationStorage;
+use App\Models\BusinessQuote;
+use App\Models\CustomerAdditionalInfo;
+use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
+use App\Models\PersonalQuote;
 use App\Models\QuoteTag;
 use App\Models\Team;
 use App\Models\TravelQuote;
-use Illuminate\Support\Str;
-use App\Enums\quoteTypeCode;
-use Illuminate\Http\Request;
-use App\Models\BusinessQuote;
-use App\Models\PersonalQuote;
-use App\Enums\PermissionsEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\CustomerTypeEnum;
-use App\Models\CustomerMembers;
+use App\Models\User;
 use App\Services\CentralService;
-use App\Models\ApplicationStorage;
-use Illuminate\Support\Facades\DB;
-use App\Enums\IMCRMSearchTypesEnum;
-use Illuminate\Support\Facades\Log;
 use App\Services\HealthQuoteService;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Cache;
-use App\Enums\ApplicationStorageEnums;
-use App\Models\CustomerAdditionalInfo;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\File;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 if (! function_exists('generate_code')) {
@@ -1263,8 +1263,8 @@ if (! function_exists('createTempPdfFileForWatermark')) {
         $tempDir = storage_path('app/temp');
 
         // Generate a unique filename for the temp PDF file
-        $tempFileName = 'pdf_' . uniqid() . '.pdf';
-        $tempFilePath = $tempDir . '/' . $tempFileName;
+        $tempFileName = 'pdf_'.uniqid().'.pdf';
+        $tempFilePath = $tempDir.'/'.$tempFileName;
 
         // Create the temporary file and write the PDF content to it
         file_put_contents($tempFilePath, $pdfFile);
