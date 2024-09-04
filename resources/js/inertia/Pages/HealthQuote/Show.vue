@@ -3641,6 +3641,7 @@ const onAddUpdate = () => {
       quoteType="Health"
       :sendPolicy="sendPolicy"
       @sendPolicyToClient="sendPolicyToClient"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy
@@ -3891,6 +3892,7 @@ const onAddUpdate = () => {
       :customerName="quote?.first_name + ' ' + quote?.last_name"
       :quoteId="quote.uuid"
       :quoteType="'HEALTH'"
+      :expanded="sectionExpanded"
     />
 
     <AuditLogs

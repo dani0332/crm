@@ -538,6 +538,7 @@ class ReportService extends BaseService
         $userRole = auth()->user();
         $userTeams = Auth::user()->getUserTeams(Auth::user()->id);
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+        $expiryDays = $authorizedDays->value;
 
         $leadTables = [
             RolesEnum::CarManager => ['table' => 'car_quote_request', 'quoteType' => null],
@@ -598,22 +599,26 @@ class ReportService extends BaseService
                 });
             }
             if (isset($request->expireDate)) {
-                $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL  DAY)'), '<=', $request->expireDate);
+                $date = Carbon::parse($request->expireDate)->startOfDay();
+                $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), '<=', $date);
             }
             if (isset($request->todayDate)) {
                 $query->having('expiry_days', '=', 1)
-                    ->groupBy('users.id', 'users.name', 'expiry_days');
+                    ->groupBy('expiry_days');
             }
             if (isset($request->tomorrowDate)) {
-                $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL 8 DAY)'), '=', $request->tomorrowDate);
+                $query->having('expiry_days', '=', 2)
+                    ->groupBy('expiry_days');
             }
             if (isset($request->thisWeek)) {
-                $startOfWeek = $request->thisWeek[0];
-                $endOfWeek = $request->thisWeek[1];
-                $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL 8 DAY)'), [$startOfWeek, $endOfWeek]);
+                $startOfWeek = Carbon::parse($request->thisWeek[0])->startOfDay();
+                $endOfWeek = Carbon::parse($request->thisWeek[1])->endOfDay();
+                $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startOfWeek, $endOfWeek]);
             }
             if (isset($request->customDate)) {
-                $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL 8 DAY)'), $request->customDate);
+                $startDate = Carbon::parse($request->customDate[0])->startOfDay();
+                $endDate = Carbon::parse($request->customDate[1])->endOfDay();
+                $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startDate, $endDate]);
             }
 
             return $query->simplePaginate(5)->withQueryString();

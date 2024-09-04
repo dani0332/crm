@@ -8,6 +8,8 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\HealthQuote;
+use App\Models\QuoteTag;
+use App\Models\Team;
 use App\Models\TravelQuote;
 use Illuminate\Support\Str;
 use App\Enums\quoteTypeCode;
@@ -1266,8 +1268,41 @@ if (! function_exists('createTempPdfFileForWatermark')) {
 
         // Create the temporary file and write the PDF content to it
         file_put_contents($tempFilePath, $pdfFile);
-        
+
         // Return a new File instance pointing to the temporary file
         return new File($tempFilePath);
+    }
+}
+
+if (! function_exists('getTeamId')) {
+    /**
+     * Get the ID of a team by its name.
+     */
+    function getTeamId(string $teamName): int
+    {
+        try {
+            $team = Team::where('name', $teamName)->first();
+
+            return optional($team)->id ?? 0;
+        } catch (Exception $e) {
+            Log::error("Error retrieving team ID for team name: {$teamName}", ['exception' => $e]);
+
+            return 0;
+        }
+    }
+}
+
+if (! function_exists('isLeadSic')) {
+    function isLeadSic(string $uuid): bool
+    {
+        try {
+            $isSic = QuoteTag::where('quote_uuid', $uuid)->where('name', 'SIC')->exists();
+
+            return $isSic;
+        } catch (Exception $e) {
+            Log::error("Failed to check SIC status for quote_uuid: {$uuid}. Error: ".$e->getMessage());
+
+            return false;
+        }
     }
 }
