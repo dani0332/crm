@@ -88,8 +88,9 @@ const showSageAPILogs = async () => {
 };
 
 const copyToClipboard = item => {
-  delete item.response.endpoint;
-  delete item.response.payload;
+  if (item.endpoint) delete item.endpoint;
+  if (item.payload) delete item.payload;
+  console.log(item);
   copy(item);
   if (copied)
     notification.success({
