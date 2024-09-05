@@ -865,14 +865,11 @@ class RenewalsUploadService
             }
             if ($quoteType->code == quoteTypeCode::Car) {
 
-                $quoteDetail = QuoteAdditionalDetail::query();
-
-                $quoteDetail->where('quote_uuid', '=', $quote->uuid);
-                $quoteDetail->where('quote_type_id', '=', QuoteTypeId::Car);
-
-                $obj = new \stdClass;
-                $obj->whatsapp_consent = true;
-                $quoteDetail->update(['flags' => $obj]);
+                $quoteDetail =  new QuoteAdditionalDetail();
+                $quoteDetail->quote_uuid = $quote->uuid;
+                $quoteDetail->quote_type_id = QuoteTypeId::Car;
+                $quoteDetail->flags = (object)['whatsapp_consent' => true];
+                $quoteDetail->save();
             }
 
             //update advisor assign date/time
