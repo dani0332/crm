@@ -21,6 +21,7 @@ use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatusLog;
+use App\Models\QuoteTag;
 use App\Models\SageApiLog;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
@@ -157,6 +158,7 @@ class SageApiService
         $sageRequest->insurerGlLiaiblityAccount = $insuranceProvider?->gl_liaiblity_account;
         $sageRequest->sageVenderId = $insuranceProvider?->sage_vendor_id;
         $sageRequest->sageInsurerCustomerId = $insuranceProvider?->sage_insurer_customer_id;
+        $sageRequest->insurerID = $insuranceProvider?->id;
 
         return $sageRequest;
     }
@@ -1293,6 +1295,9 @@ class SageApiService
             return $applyPaymentInvoices;
         }
 
+        $quoteTypeId = $sageRequest->quoteTypeId;
+        $userId = $quote->userId;
+
         info('################################## Sage Policy Booked for : '.$quote->code.'##################################');
 
         if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
@@ -1302,8 +1307,6 @@ class SageApiService
         }
 
         info('################################## mark status as policy booked for : '.$quote->code.'##################################');
-        $quoteTypeId = $sageRequest->quoteTypeId;
-        $userId = $quote->userId;
         $latestQuoteStatusLog = QuoteStatusLog::where([
             'quote_type_id' => $quoteTypeId,
             'quote_request_id' => $quote->id,
@@ -1312,8 +1315,9 @@ class SageApiService
         unset($quote->userId);
 
         $previousQuoteStatusId = $quote->quote_status_id;
+        $newQuoteStatusId = QuoteStatusEnum::PolicyBooked;
         $quote->update([
-            'quote_status_id' => QuoteStatusEnum::PolicyBooked,
+            'quote_status_id' => $newQuoteStatusId,
             'policy_booking_date' => Carbon::now(),
             'quote_status_date' => now(),
         ]);
@@ -1321,7 +1325,7 @@ class SageApiService
         $quoteLogData = [
             'quote_type_id' => $quoteTypeId,
             'quote_request_id' => $quote->id,
-            'current_quote_status_id' => QuoteStatusEnum::PolicyBooked,
+            'current_quote_status_id' => $newQuoteStatusId,
             'previous_quote_status_id' => $previousQuoteStatusId,
             'notes' => 'Policy Booked',
             'created_by' => $userId,

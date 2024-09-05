@@ -5,7 +5,9 @@ namespace App\Jobs;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\ApplicationStorage;
+use App\Models\QuoteTag;
 use App\Repositories\DocumentTypeRepository;
+use App\Services\ActivitiesService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\GenericQueriesAllLobs;
@@ -51,8 +53,20 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         // In case of Group Medical & Corpline, modelType is used & for rest of the LOBs model_type is used
         // Basically we are different to identify the template which will send to customer after policy booking
         $modelType = ucfirst(! empty($this->data->modelType) ? $this->data->modelType : $this->data->model_type);
+        $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($modelType));
 
         $quote = $this->getQuoteObject($this->data->model_type, $this->data->quote_id);
+
+        $isDocumentEmailSentToCustomer = QuoteTag::where([
+            'quote_type_id' => $quoteTypeId,
+            'quote_uuid' => $quote->uuid,
+            'name' => QuoteStatusEnum::PolicySentToCustomer,
+        ])->count();
+
+        if ($isDocumentEmailSentToCustomer == 0) {
+            info('job: SendBookPolicyDocumentsJob skipped for: '.$this->code.' as email already sent');
+        }
+
         $handBookDocuments = [];
 
         try {
@@ -130,6 +144,13 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $quote->update([
             'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
             'quote_status_date' => now(),
+        ]);
+
+        QuoteTag::create([
+            'quote_type_id' => $quoteTypeId,
+            'quote_uuid' => $quote->uuid,
+            'name' => QuoteStatusEnum::PolicySentToCustomer,
+            'value' => QuoteStatusEnum::PolicySentToCustomer,
         ]);
     }
 

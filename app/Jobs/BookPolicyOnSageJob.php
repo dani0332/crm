@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Enums\QuoteStatusEnum;
+use App\Models\QuoteStatusLog;
 use App\Services\SageApiService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -9,13 +11,14 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Throwable;
 
 class BookPolicyOnSageJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 1;
-    public $releaseLockAfter = 10 * 60; // 10 minutes in seconds
+    public $releaseAfter = 30; // 30 seconds
     public $timeout = 30;
     private $sageRequest;
     private $quote;
@@ -41,13 +44,62 @@ class BookPolicyOnSageJob implements ShouldQueue
     public function handle()
     {
         info('BookPolicyOnSageJob - '.$this->quote->code.' - Started');
+        $this->updateAndLogQuoteStatus(QuoteStatusEnum::POLICY_BOOKING_QUEUED);
         $response = (new SageApiService())->bookPolicyOnSage([$this->sageRequest, $this->quote, $this->payment, $this->sageLogArray, $this->request]);
-        info('BookPolicyOnSageJob - '.$this->quote->code.' - Response: '.json_encode($response));
+        if (! $response['status']) {
+            $this->updateAndLogQuoteStatus(QuoteStatusEnum::POLICY_BOOKING_FAILED);
+        }
+        info('BookPolicyOnSageJob - '.$this->quote->code.' - Response : '.json_encode($response));
+        info('BookPolicyOnSageJob - '.$this->quote->code.' - Finished');
+    }
+
+    public function failed(Throwable $exception)
+    {
+        $this->updateAndLogQuoteStatus(QuoteStatusEnum::POLICY_BOOKING_FAILED);
+        info('BookPolicyOnSageJob : '.$this->quote->code.' Error : '.$exception->getMessage());
     }
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->quote->uuid))->dontRelease()->expireAfter($this->releaseLockAfter)];
+        return [(new WithoutOverlapping($this->quote->uuid))->releaseAfter($this->releaseAfter)];
+    }
+
+    private function updateAndLogQuoteStatus($quoteStatusId)
+    {
+        $quoteTypeId = $this->sageRequest->quoteTypeId;
+        $userId = $this->quote->userId;
+
+        $latestQuoteStatusLog = QuoteStatusLog::where([
+            'quote_type_id' => $quoteTypeId,
+            'quote_request_id' => $this->quote->id,
+        ])->latest()->first();
+
+        unset($this->quote->userId);
+
+        $previousQuoteStatusId = $this->quote->quote_status_id;
+        $newQuoteStatusId = $quoteStatusId;
+
+        $this->quote->update([
+            'quote_status_id' => $newQuoteStatusId,
+            'quote_status_date' => now(),
+        ]);
+
+        $quoteLogData = [
+            'quote_type_id' => $quoteTypeId,
+            'quote_request_id' => $this->quote->id,
+            'current_quote_status_id' => $newQuoteStatusId,
+            'previous_quote_status_id' => $previousQuoteStatusId,
+            'notes' => 'Policy Booked',
+            'created_by' => $userId,
+        ];
+
+        $isQuoteLogSameAsBefore = $latestQuoteStatusLog->current_quote_status_id == QuoteStatusEnum::PolicyBooked && $latestQuoteStatusLog->previous_quote_status_id = $previousQuoteStatusId;
+        //check if the last quote log status is same as new status then update the same log
+        if ($latestQuoteStatusLog && $isQuoteLogSameAsBefore) {
+            $latestQuoteStatusLog->update($quoteLogData);
+        } else {
+            QuoteStatusLog::create($quoteLogData);
+        }
     }
 
 }
