@@ -7,11 +7,9 @@ defineProps({
 
 const { isRequired, emptyOrNumericAndNoSpecialChar } = useRules();
 
-
 const poidForm = useForm({
-    poid: '',
+  poid: '',
 });
-
 
 const page = usePage();
 const permissionsEnum = page.props.permissionsEnum;
@@ -52,20 +50,19 @@ function onSubmit(isValid) {
   }
 }
 
-
 function onSubmitMigrate(isValid) {
-    if (!isValid) return;
-    router.visit(route('migrate-legacy-policy', poidForm.poid), {
-        method: 'post',
-        preserveState: true,
-        preserveScroll: true,
-        onFinish: (response) => {
-            loader.poid = false;
-        },
-        onBefore: () => {
-            loader.poid = true;
-        },
-    });
+  if (!isValid) return;
+  router.visit(route('migrate-legacy-policy', poidForm.poid), {
+    method: 'post',
+    preserveState: true,
+    preserveScroll: true,
+    onFinish: response => {
+      loader.poid = false;
+    },
+    onBefore: () => {
+      loader.poid = true;
+    },
+  });
 }
 let availableFilters = {
   policy_number: '',
@@ -152,12 +149,16 @@ const productName = item => {
       <div class="flex justify-end gap-3 mb-4">
         <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
         <x-button size="sm" color="primary" @click.prevent="onReset">
-            Reset
+          Reset
         </x-button>
       </div>
     </x-form>
 
-    <x-form v-if="can(permissionsEnum.MIGRATE_INSLY_LEAD)" @submit="onSubmitMigrate" :auto-focus="false">
+    <x-form
+      v-if="can(permissionsEnum.MIGRATE_INSLY_LEAD)"
+      @submit="onSubmitMigrate"
+      :auto-focus="false"
+    >
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <x-input
           v-model="poidForm.poid"
@@ -169,12 +170,17 @@ const productName = item => {
           :rules="[isRequired]"
         />
         <div class="flex items-center">
-          <x-button :loading="loader.poid" size="sm" color="#ff5e00" type="submit" class="w-full sm:w-auto">
-              Migrate
+          <x-button
+            :loading="loader.poid"
+            size="sm"
+            color="#ff5e00"
+            type="submit"
+            class="w-full sm:w-auto"
+          >
+            Migrate
           </x-button>
         </div>
       </div>
-
     </x-form>
 
     <DataTable
