@@ -160,7 +160,7 @@ class SageApiService
         return $sageRequest;
     }
 
-    public function verifySageCustomer($customerId, $data = null, $logModal = null, $totalSteps = 4, $authUserId = null) 
+    public function verifySageCustomer($customerId, $data = null, $logModal = null, $totalSteps = 4, $authUserId = null)
     {
         info('Sage Customer verification - process start - Quote Type: '.$data['quoteTypeId'].' - Ref ID: '.$data['id']);
         $customer = Customer::find($customerId);
@@ -170,18 +170,18 @@ class SageApiService
         $sageCustomerFromDB = ($quoteEntity) ? $quoteEntity?->sage_customer_number : $customer?->sage_customer_number;
         $sageCustomerNumber = false;
         $customerNumber = $sageCustomerFromDB ?? $payLoadOptions['customerNumber'];
-        info('Sage Customer verification - Quote binding find with '.($quoteEntity ? "Entity" : "Customer").' - sage customer code ('.$customerNumber.') '.($sageCustomerFromDB ? "found in CRM" : "get from payload"));
+        info('Sage Customer verification - Quote binding find with '.($quoteEntity ? 'Entity' : 'Customer').' - sage customer code ('.$customerNumber.') '.($sageCustomerFromDB ? 'found in CRM' : 'get from payload'));
 
         $urlGetCustomer = SageEnum::END_POINT_AR_CUSTOMER."('".$customerNumber."')";
         $customerResponse = json_decode($this->postToSage300($urlGetCustomer, [], 'GET'), true);
         if ($customerResponse && isset($customerResponse['CustomerNumber'])) {
-            info('Sage Customer verification - customer already created on Sage - sage customer code:'. $customerNumber);
+            info('Sage Customer verification - customer already created on Sage - sage customer code:'.$customerNumber);
             $sageCustomerNumber = $sageCustomerFromDB;
             $this->logSageApiCall([
                 'endPoint' => SageEnum::END_POINT_AR_CUSTOMER,
-                'payload' => $sageCustomerFromDB ? [] : $payLoadOptions
+                'payload' => $sageCustomerFromDB ? [] : $payLoadOptions,
             ], '', $logModal, 1, $totalSteps, SageEnum::STATUS_SUCCESS, $authUserId);
-        } 
+        }
 
         $responseError = isset($customerResponse['error']['code']) ? $customerResponse['error']['code'] : false;
         if ($responseError && $responseError == SageEnum::ERROR_RECORD_NOT_FOUND) {
@@ -198,7 +198,7 @@ class SageApiService
             }
         }
 
-        if(!$sageCustomerFromDB){
+        if (! $sageCustomerFromDB) {
             if ($quoteEntity) {
                 $quoteEntity->sage_customer_number = $sageCustomerNumber;
                 $quoteEntity->save();
@@ -310,9 +310,9 @@ class SageApiService
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->quoteType));
         $quoteModel = $this->getModelObject($request->quoteType);
         $sageCustomerNumber = $this->verifySageCustomer(
-            $quote->customer_id, 
-            ['quoteTypeId' => $quoteTypeId, 'id' => $quote->id], 
-            $quote, 
+            $quote->customer_id,
+            ['quoteTypeId' => $quoteTypeId, 'id' => $quote->id],
+            $quote,
             $customerTotalSteps
         );
         $quote->quoteTypeObject = $quoteModel;
