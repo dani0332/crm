@@ -393,4 +393,11 @@ class BikeQuoteController extends Controller
 
         return response()->json($response);
     }
+
+    public function getBikeQuote($uuid)
+    {
+        $quote = BikeQuoteRepository::getBy('uuid', $uuid);
+
+        return response()->json($quote);
+    }
 }
