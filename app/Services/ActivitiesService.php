@@ -205,8 +205,6 @@ class ActivitiesService extends BaseService
         $activity->assignee_id = isset($record->advisor_id) ? $record->advisor_id : null;
         $activity->description = isset($request->description) ? $request->description : $request->notes;
         $activity->title = $request->title;
-        $activity->created_at = Carbon::now();
-        $activity->updated_at = Carbon::now();
         $activity->quote_status_id = $record?->quote_status_id ?? null;
         $activity->source = LeadSourceEnum::INSTANT_ALFRED;
         $activity->save();

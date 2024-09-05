@@ -259,9 +259,12 @@ class ApiService
 
     public function createActivity($request)
     {
-        $rules = ActivityApiRequest::rules();
-        $messages = ActivityApiRequest::messages();
-        $validator = Validator::make($request->all(), $rules, $messages);
+        $validator = Validator::make(
+            $request->all(),
+            ActivityApiRequest::rules(),
+            ActivityApiRequest::messages()
+        );
+
         if ($validator->fails()) {
             return response()->json(['message' => $validator->errors()->first()], 422);
         }
@@ -272,17 +275,16 @@ class ApiService
         if ($existingActivity) {
             return response()->json(['message' => 'An existing activity was found. Please Mark Done the current activity before creating a new one.'], 409);
         }
-        $modelType = '';
-        if (isset($request->quoteTypeId)) {
-            $modelType = QuoteType::select('code')->find($request->quoteTypeId);
-        }
+        $modelType = $request->quoteTypeId
+            ? QuoteType::select('code')->find($request->quoteTypeId)
+            : null;
         $record = '';
-        if (isset($request->entityUId) && ! checkPersonalQuotes($modelType->code)) {
+        if (isset($request->entityUId) && $modelType && ! checkPersonalQuotes($modelType->code)) {
             $record = app(CRUDService::class)->getEntity($modelType->code, $request->entityUId);
         } else {
             $record = PersonalQuote::where('uuid', $request->entityUId)->first();
         }
-        if (is_null($record->advisor_id)) {
+        if (is_null($record) || is_null($record->advisor_id)) {
             return response()->json(['message' => 'No advisor has been assigned to this lead.'], 404);
         }
         app(ActivitiesService::class)->createApiActivity($request, $record, $modelType);
