@@ -1090,7 +1090,7 @@ class SendUpdateLogService
             $payment = $quoteModel->payments()->mainLeadPayment()->first();
 
             $planRelationName = strtolower($quoteType).'Plan';
-            $payment->load($planRelationName);
+            $payment?->load($planRelationName);
             $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
             $insuranceProviderId = $insuranceProvider->id ?? null;
             $plan_id = $quoteModel->plan?->id ?? null;
