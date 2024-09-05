@@ -352,7 +352,7 @@ const sendUpdatePermissionCheck = computed(() => {
         >
           <template #item-original_name="item">
             <a
-              :href="`documents/${item.doc_uuid}/download`"
+              :href="`/documents/${item.doc_uuid}/download`"
               target="_blank"
               class="text-primary-600"
             >
@@ -454,7 +454,7 @@ const sendUpdatePermissionCheck = computed(() => {
                     d => d.document_type_text == documentType.text,
                   )"
                   :key="quoteDocument.id"
-                  :href="`documents/${quoteDocument.doc_uuid}/download`"
+                  :href="`/documents/${quoteDocument.doc_uuid}/download`"
                   target="_blank"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
                 >
@@ -467,7 +467,7 @@ const sendUpdatePermissionCheck = computed(() => {
                     d => d.document_type_code == documentType.code,
                   )"
                   :key="quoteDocument.id"
-                  :href="`documents/${quoteDocument.doc_uuid}/download`"
+                  :href="`/documents/${quoteDocument.doc_uuid}/download`"
                   target="_blank"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
                 >
