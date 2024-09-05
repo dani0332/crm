@@ -1009,6 +1009,7 @@ const onAddUpdate = () => {
       :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
+      :expanded="sectionExpanded"
     />
 
     <QuotePayments
@@ -1049,6 +1050,7 @@ const onAddUpdate = () => {
       :insly-id="quote?.quote_detail?.insly_id"
       :expanded="sectionExpanded"
       quoteType="Cycle"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy

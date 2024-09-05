@@ -2995,6 +2995,7 @@ const onAddUpdate = () => {
       "
       :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
+      :expanded="sectionExpanded"
     />
 
     <PaymentTable
@@ -3042,6 +3043,7 @@ const onAddUpdate = () => {
       "
       @sendPolicyToClient="sendPolicyToClient"
       @verifyDocuments="getupdateDocumentValidate(true)"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy
@@ -3329,6 +3331,7 @@ const onAddUpdate = () => {
       :customerName="quote?.first_name + ' ' + quote?.last_name"
       :quoteId="quote.uuid"
       :quoteType="'TRAVEL'"
+      :expanded="sectionExpanded"
     />
   </div>
 </template>

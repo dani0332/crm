@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -55,6 +56,7 @@ use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
+use App\Services\NotificationService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
 use App\Services\SendEmailCustomerService;
@@ -133,6 +135,14 @@ class CentralController extends Controller
     public function manualLeadAssign(LeadAssignRequest $leadAssignRequest)
     {
         (new CentralService)->assignLeadToAdvisor($leadAssignRequest);
+
+        $quoteIds = explode(',', $leadAssignRequest->selectTmLeadId);
+        foreach ($quoteIds as $id) {
+            $quoteData = $this->getQuoteObject($leadAssignRequest->modelType, $id);
+            if ($quoteData && $quoteData->payment_status_id === PaymentStatusEnum::AUTHORISED) {
+                app(NotificationService::class)->paymentStatusUpdate($leadAssignRequest->modelType, $quoteData->uuid);
+            }
+        }
 
         return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType).' Leads has been Assigned');
     }
@@ -549,5 +559,4 @@ class CentralController extends Controller
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
         }
     }
-
 }
