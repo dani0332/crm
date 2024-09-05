@@ -1307,7 +1307,7 @@ class RenewalsUploadService
                 info('Renewals OCB Email sending email to email: '.$carQuote->email);
                 info('fn: renewalBatchEmailProcess Renewals OCB Email email template id: '.$emailTemplateId);
                 info('Renewals OCB Email check email data: '.json_encode($emailData));
-                if(isset($carQuote->advisor_id)) {
+                if (isset($carQuote->advisor_id)) {
                     $responseCode = $this->sendEmailCustomerService->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
                 } else {
                     info('Renewals OCB Email sending without advisor');
@@ -1317,10 +1317,10 @@ class RenewalsUploadService
                         'quotePlanLink' => $emailData->quoteLink,
                         'instantAlfredLink' => $emailData->customerName, // Todo:: required this information
                         'refID' => $emailData->carQuoteId,
-                        'requestForAdvisor' => $emailData->requestAdvisorLink
+                        'requestForAdvisor' => $emailData->requestAdvisorLink,
                     ];
                     $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_MOTOR_RENEWAL_WORKFLOW)->first();
-                    info('Renewals OCB Email No advisor: workflow trigger on BIRD, BIRD_SIC_MOTOR_RENEWAL_WORKFLOW value: '. $sicEvent->value);
+                    info('Renewals OCB Email No advisor: workflow trigger on BIRD, BIRD_SIC_MOTOR_RENEWAL_WORKFLOW value: '.$sicEvent->value);
                     if ($sicEvent) {
                         $responseCode = app(BirdService::class)->triggerWebHookRequest($sicEvent->value, $birdEmailData);
                     }
