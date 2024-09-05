@@ -109,7 +109,7 @@ class LegacyPolicyController extends Controller
 
             // Check the response message and redirect accordingly
             if ($responseMessage == 'Failed!') {
-                return redirect()->back()->with('error', 'Invalid policy ID: '.$policyId);
+                return redirect()->back()->with('error', 'Migration failed for Policy ID: '.$policyId);
             }
 
             return redirect()->back()->with('success', $responseMessage);
