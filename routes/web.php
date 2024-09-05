@@ -235,6 +235,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('legacy-policy/move-to-imcrm', [LegacyPolicyController::class, 'moveToImcrm']);
     Route::get('legacy-policy/{policyNumber}/policy', [LegacyPolicyController::class, 'getPolicyByPolicyNumber'])->name('view-legacy-policy.renewal-uploads');
     Route::post('legacy-policy/get-s3-temp-url', [LegacyPolicyController::class, 'getS3TempUrl']);
+    Route::post('migrate-legacy-policy/{poid}', [LegacyPolicyController::class, 'migratePolicy'])->name('migrate-legacy-policy');
 
     Route::post('embedded-products/upload-document', [EmbeddedProductController::class, 'uploadDocument'])->name('embedded-products.upload-document');
     Route::post('embedded-products/send-document', [EmbeddedProductController::class, 'sendDocument'])->name('embedded-products.send-document');
@@ -320,6 +321,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/lead-allocation/toggle-renewal-car-lead-allocation-status', [LeadAllocationController::class, 'toggleRenewalCarLeadAllocationStatus']);
     Route::post('/lead-allocation/toggle-car-lead-fetch-sequence', [LeadAllocationController::class, 'toggleCarLeadFetchSequence']);
 
+    Route::get('documents/{uuid}/download', [QuoteDocumentController::class, 'previewQuoteDocument']);
     Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'list']);
     Route::post('quotes/{quoteType}/{quoteUuId}/update-validate-documents', [QuoteDocumentController::class, 'validateDocumentsUpdate']);
     Route::post('quotes/{quoteType}/documents/store', [QuoteDocumentController::class, 'store']);
