@@ -58,9 +58,11 @@ class SendUpdateLogRepository extends BaseRepository
             ])->first();
 
             if (! $personalQuote) {
-                return (object) [
-                    'message' => 'Quote sync pending, please try again later. ',
-                ];
+                $this->syncLeadEntries($data['quote_uuid']);
+                $personalQuote = PersonalQuoteRepository::where([
+                    'quote_type_id' => $data['quote_type_id'],
+                    'uuid' => $data['quote_uuid'],
+                ])->first();
             }
 
             $data['personal_quote_id'] = $personalQuote?->id ?? null;
