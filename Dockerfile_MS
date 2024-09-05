@@ -56,6 +56,7 @@ RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg
 RUN docker-php-ext-install -j$(nproc) gd
 RUN pecl install mongodb && docker-php-ext-enable mongodb
 
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 COPY --chown=www:www-data . /var/www
 COPY composer.json composer.json
 COPY composer.lock composer.lock
