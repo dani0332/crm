@@ -176,7 +176,7 @@ class SageApiService
         $customerResponse = json_decode($this->postToSage300($urlGetCustomer, [], 'GET'), true);
         if ($customerResponse && isset($customerResponse['CustomerNumber'])) {
             info('Sage Customer verification - customer already created on Sage - sage customer code:'.$customerNumber);
-            $sageCustomerNumber = $sageCustomerFromDB;
+            $sageCustomerNumber = $customerResponse['CustomerNumber'];
             $this->logSageApiCall([
                 'endPoint' => SageEnum::END_POINT_AR_CUSTOMER,
                 'payload' => $sageCustomerFromDB ? [] : $payLoadOptions,
@@ -193,7 +193,7 @@ class SageApiService
                 $sageCustomerNumber = $customerResponse['CustomerNumber'];
                 $this->logSageApiCall($payLoadOptions, $customerResponse, $logModal, 1, $totalSteps, SageEnum::STATUS_SUCCESS, $authUserId);
             } else {
-                logger()->error('Sage Customer verification - Error while creating customer on Sage - Response: '.(json_encode($customerResponse)));
+                logger()->error('Sage Customer verification - Error while creating customer on Sage - Payload: '.json_encode($payLoadOptions['payload']).' - Response: '.(json_encode($customerResponse)));
                 $this->logSageApiCall($payLoadOptions, $customerResponse, $logModal, 1, $totalSteps, SageEnum::STATUS_FAIL, $authUserId);
             }
         }
