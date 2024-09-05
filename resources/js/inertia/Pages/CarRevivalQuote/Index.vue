@@ -57,7 +57,7 @@ const tableHeader = [
   { text: 'ADDITIONAL NOTES', value: 'additional_notes' },
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
-  { text: 'RENEWAL EXPIRY DATE', value: 'renewal_expiry_date' },
+  { text: 'POLICY EXPIRY DATE', value: 'policy_expiry_date' },
   { text: 'IS GCC STANDARD', value: 'is_gcc_standard' },
   { text: 'PREMIUM', value: 'premium' },
   { text: 'LOST REASON', value: 'lost_reason' },
@@ -94,7 +94,6 @@ const advisorOptions = computed(() => {
     border-cell
     hide-rows-per-page
     hide-footer
-    fixed-checkbox
   >
     <template #item-code="{ code, uuid }">
       <Link

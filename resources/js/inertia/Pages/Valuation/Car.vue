@@ -1,6 +1,9 @@
 <script setup>
+import { computed } from 'vue';
+
 const props = defineProps({
   carMakes: Array,
+  dropdownSource: Object,
 });
 
 const notification = useToast();
@@ -12,14 +15,30 @@ const tableData = ref([]);
 
 const loader = reactive({ table: false, carModel: false, trimloading: false });
 
-const tableHeader = ref([
+const CarHeader = ref([
   { text: 'Provider', value: 'providerName' },
   { text: 'Car Value', value: 'carValue' },
   { text: 'Car Value Upper Limit', value: 'carValueUpperLimit' },
   { text: 'Car Value Lower Limit', value: 'carValueLowerLimit' },
 ]);
 
+const bikeHeader = ref([
+  { text: 'Provider', value: 'providerName' },
+  { text: 'Bike Value', value: 'bikeValue' },
+  { text: 'Bike Value Upper Limit', value: 'bikeValueUpperLimit' },
+  { text: 'Bike Value Lower Limit', value: 'bikeValueLowerLimit' },
+]);
+
+const computedHeader = computed(() => {
+  if (valuationForm.quoteType === 'CAR') {
+    return CarHeader.value;
+  } else {
+    return bikeHeader.value;
+  }
+});
+
 const valuationForm = useForm({
+  quoteType: 'CAR',
   make_code: null,
   modelId: null,
   carTrim: null,
@@ -27,6 +46,24 @@ const valuationForm = useForm({
 });
 
 const error = ref(false);
+
+const getMake = computed(() => {
+  if (valuationForm.quoteType === 'CAR') {
+    return props.carMakes.map(item => ({
+      value: item.code,
+      label: item.text,
+    }));
+  } else {
+    return props.dropdownSource.bike_make_id.map(item => ({
+      value: item.id,
+      label: item.text,
+    }));
+  }
+});
+
+const computedModels = computed(() => {
+  return carModels.value.map(item => ({ value: item.id, label: item.text }));
+});
 
 const makeCodeError = computed(() => {
   return (valuationForm.make_code == null && error.value) ?? false;
@@ -38,6 +75,13 @@ const carIdError = computed(() => {
 
 const carTrimError = computed(() => {
   return (valuationForm.carTrim == null && error.value) ?? false;
+});
+
+const bikeMakeOptions = computed(() => {
+  return props.dropdownSource.bike_make_id.map(item => ({
+    value: item.id,
+    label: item.text,
+  }));
 });
 
 function onSubmit(isValid) {
@@ -109,49 +153,70 @@ const onReset = () => {
   valuationForm.carTrim = null;
   valuationForm.yearOfManufacture = new Date().getFullYear();
 };
+
+const getBikeModel = (initial = false) => {
+  axios
+    .get(`/bike-model-by-id?id=${valuationForm.make_code}`)
+    .then(({ data }) => {
+      carModels.value = [...data];
+    });
+};
+
+const getModelBasedOnQuote = () => {
+  if (valuationForm.quoteType === 'CAR') {
+    getCarModel();
+  } else {
+    getBikeModel();
+  }
+};
 </script>
 <template>
-  <Head title="Car Valuation" />
+  <Head title="Calculate Vehicle Valuation (Car & Bike)" />
   <div class="flex justify-between items-center">
-    <h2 class="text-xl font-semibold">Calculate Vehicle Valuation</h2>
+    <h2 class="text-xl font-semibold">
+      Calculate Vehicle Valuation (Car & Bike)
+    </h2>
   </div>
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid grid-cols-2 gap-4">
-      <x-field label="Car Make" required>
+      <x-field label="Quote Type" required>
         <ComboBox
           :single="true"
-          v-model="valuationForm.make_code"
-          placeholder="Search by Car Make"
-          :options="
-            props.carMakes.map(item => ({
-              value: item.code,
-              label: item.text,
-            }))
-          "
+          v-model="valuationForm.quoteType"
+          placeholder="Search by Quote Type"
+          :options="[
+            { value: 'CAR', label: 'Car' },
+            { value: 'BIKE', label: 'Bike' },
+          ]"
           :rules="[isRequired]"
-          @update:modelValue="getCarModel($event)"
           :hasError="makeCodeError"
         />
       </x-field>
-      <x-field label="Car Model" required>
+      <x-field label="Make" required>
+        <ComboBox
+          :single="true"
+          v-model="valuationForm.make_code"
+          placeholder="Search by Make"
+          :options="getMake"
+          :rules="[isRequired]"
+          @update:modelValue="getModelBasedOnQuote($event)"
+          :hasError="makeCodeError"
+        />
+      </x-field>
+      <x-field label="Model" required>
         <ComboBox
           :single="true"
           v-model="valuationForm.modelId"
           :rules="[isRequired]"
-          :options="
-            carModels.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
+          :options="computedModels"
           class="w-full"
           @update:modelValue="getCarTrim($event)"
           :loading="loader.carModel"
           :hasError="carIdError"
         />
       </x-field>
-      <x-field label="Car Trim" required>
+      <x-field label="Trim" required>
         <ComboBox
           v-model="valuationForm.carTrim"
           :rules="[isRequired]"
@@ -190,12 +255,11 @@ const onReset = () => {
   <DataTable
     table-class-name="tablefixed"
     :loading="loader.table"
-    :headers="tableHeader"
+    :headers="computedHeader"
     :items="tableData"
     border-cell
     hide-rows-per-page
     hide-footer
-    fixed-checkbox
   >
   </DataTable>
 </template>

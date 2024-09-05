@@ -6,6 +6,7 @@ use App\Enums\QuoteSyncStatus;
 use App\Enums\QuoteTypes;
 use App\Models\QuoteSync;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class QuoteSyncService extends BaseService
 {
@@ -39,10 +40,6 @@ class QuoteSyncService extends BaseService
                 $query->whereBetween('quote_sync.created_at', [$startDate, $endDate]);
             });
 
-        if (isset($filters['is_synced'])) {
-            $dataset = $dataset->where('quote_sync.is_synced', $filters['is_synced']);
-        }
-
         $sortBy = 'quote_sync.id';
         $sortOrder = 'desc';
         if (! empty($filters['sortBy']) && ! empty($filters['sortType'])) {
@@ -50,7 +47,7 @@ class QuoteSyncService extends BaseService
             $sortOrder = $filters['sortType'] ?? 'desc';
         }
 
-        $count = $dataset->count();
+        $count = 0;
         $dataset = $dataset->orderBy($sortBy, $sortOrder)->simplePaginate()->withQueryString();
         $dataset->map(function ($item) {
             $item->quote_type = QuoteTypes::getName($item->quote_type_id)->value ?? '-';
@@ -75,20 +72,22 @@ class QuoteSyncService extends BaseService
             ]);
     }
 
-    public function addStuckEntriesForSyncing()
+    public function addEntriesForReSyncing($status)
     {
-        $entries = QuoteSync::where('is_synced', false)
-            ->where('status', QuoteSyncStatus::INPROGRESS)
-            ->groupBy('quote_uuid')
-            ->get()
-            ->pluck('quote_uuid')->toArray();
-
-        if (! empty($entries)) {
-            QuoteSync::whereIn('quote_uuid', $entries)
-                ->update([
-                    'is_synced' => false,
-                    'status' => QuoteSyncStatus::WAITING,
-                ]);
-        }
+        QuoteSync::join(
+            DB::raw('(SELECT MIN(id) as min_id, quote_uuid 
+                          FROM quote_sync 
+                          WHERE is_synced = false 
+                          AND status = '.$status.'
+                          GROUP BY quote_uuid) as subquery'),
+            function ($join) {
+                $join->on('quote_sync.quote_uuid', '=', 'subquery.quote_uuid')
+                    ->on('quote_sync.id', '>=', 'subquery.min_id');
+            }
+        )
+            ->update([
+                'quote_sync.is_synced' => false,
+                'quote_sync.status' => QuoteSyncStatus::WAITING,
+            ]);
     }
 }

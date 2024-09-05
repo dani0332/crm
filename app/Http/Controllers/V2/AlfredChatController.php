@@ -105,15 +105,12 @@ class AlfredChatController extends Controller
         $chatPipeline[] = ['$skip' => $skip];
         $chatPipeline[] = ['$limit' => $perPage];
 
-        // Execute the aggregation pipeline to fetch paginated chat records
-        $chat = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline));
+        $chat = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline))->toArray();
 
-        // Calculate pagination indices
-        $startIndex = ($page - 1) * $perPage;
-        $endIndex = max($startIndex + $perPage, $totalDocumentsCount);
+        $startIndex = ($page - 1) * $perPage + 1;
+        $endIndex = $startIndex + count($chat) - 1;
         $prevPage = $page > 1 ? $page - 1 : null;
-        $nextPage = $endIndex <= $totalDocumentsCount ? $page + 1 : null;
-
+        $nextPage = count($chat) === $perPage ? $page + 1 : null;
         // Create pagination object
         $pagination = [
             'data' => $chat,
@@ -133,7 +130,7 @@ class AlfredChatController extends Controller
             ($request->quoteId ? '&quoteId='.$request->quoteId : '')
             : null,
 
-            'from' => $startIndex + 1,
+            'from' => $startIndex,
             'to' => $endIndex,
         ];
 

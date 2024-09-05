@@ -20,9 +20,9 @@ const quotes = ref(props.quotes);
 const quote = ref(props.quote);
 const page = usePage();
 const quoteType = inject('quoteType');
+const filters = inject('filters');
 
 const computedLeads = computed(() => {
-  console.log();
   return quote.value.data.leads_list.data;
 });
 
@@ -49,6 +49,7 @@ const onLoadMore = id => {
         page: quotes.value.pages[id],
         modelType: props.quoteType,
         status: id,
+        ...filters,
       }),
     )
     .then(({ data }) => {
@@ -196,7 +197,7 @@ watch(
         <span>{{ quote.data.total_leads }} </span>
       </div>
       <div class="flex justify-between gap-1" v-show="quoteType == 'Health'">
-        <x-tooltip align="left">
+        <x-tooltip placement="left">
           <span>Total Opportunity</span>
           <template #tooltip>
             <div class="max-w-[194px] text-xs">
@@ -246,7 +247,6 @@ watch(
         <x-icon icon="box" class="text-secondary-600 mb-2" />
         <p>No Leads Found</p>
       </div>
-      <!--        quote.title.split(' ').join('')-->
       <leads-card-item
         :title="
           quote.title

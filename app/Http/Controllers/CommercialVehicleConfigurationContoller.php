@@ -4,10 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Enums\PermissionsEnum;
 use App\Http\Requests\CommercialVehicleConfigurationRequest;
-use App\Models\CarMake;
 use App\Services\CommercialVehicleConfigurationService;
 use Illuminate\Http\Request;
-use Yajra\DataTables\DataTables;
 
 class CommercialVehicleConfigurationContoller extends Controller
 {
@@ -36,26 +34,18 @@ class CommercialVehicleConfigurationContoller extends Controller
     {
         $gridData = $this->commercialVehicleConfigurationService->getGridData();
 
-        if ($request->ajax()) {
-            if (isset($request->text) && ! empty($request->text)) {
-                $text = $request->text;
-                $gridData = $gridData->where(function ($query) use ($text) {
-                    $query->whereRaw('LOWER(text) LIKE ?', [strtolower("%{$text}%")]);
-                });
-            }
-
-            return DataTables::of($gridData->get()->sortBy('text'))
-                ->addIndexColumn()
-                ->addColumn('car_models', function (CarMake $carMake) {
-                    if (! empty($carMake->carModels)) {
-                        return implode(', ', $carMake->carModels->pluck('text')->toArray());
-                    }
-                })
-                ->rawColumns(['car_models'])
-                ->make(true);
+        if (isset($request->text) && ! empty($request->text)) {
+            $text = $request->text;
+            $gridData = $gridData->where(function ($query) use ($text) {
+                $query->whereRaw('LOWER(text) LIKE ?', [strtolower("%{$text}%")]);
+            });
         }
 
-        return view('commercialcarmakemodel.index');
+        $gridData = $gridData->orderBy('text')->paginate();
+
+        return inertia('Admin/AllocationConfig/CommericalVehicles/Index', [
+            'data' => $gridData,
+        ]);
     }
 
     /**
@@ -67,7 +57,10 @@ class CommercialVehicleConfigurationContoller extends Controller
     {
         $carsMake = $this->commercialVehicleConfigurationService->getActiveCarMakes();
 
-        return view('commercialcarmakemodel.add', compact('carsMake'));
+        return inertia('Admin/AllocationConfig/CommericalVehicles/Form', [
+            'carMakes' => $carsMake,
+            'commercialModels' => null,
+        ]);
     }
 
     /**
@@ -92,7 +85,9 @@ class CommercialVehicleConfigurationContoller extends Controller
     {
         $carMake = $this->commercialVehicleConfigurationService->getDetails($id);
 
-        return view('commercialcarmakemodel.show', compact('carMake'));
+        return inertia('Admin/AllocationConfig/CommericalVehicles/Show', [
+            'carMake' => $carMake,
+        ]);
     }
 
     /**
@@ -108,7 +103,10 @@ class CommercialVehicleConfigurationContoller extends Controller
         $carMake = $data['car_make'];
         $commercialModels = $data['commercial_models'];
 
-        return view('commercialcarmakemodel.edit', compact('carMake', 'commercialModels'));
+        return inertia('Admin/AllocationConfig/CommericalVehicles/Form', [
+            'carMakes' => $carMake,
+            'commercialModels' => $commercialModels,
+        ]);
     }
 
     /**

@@ -1,5 +1,4 @@
 <script setup>
-import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
 import dayjs from 'dayjs/esm/index.js';
 
 defineProps({
@@ -17,10 +16,10 @@ const loader = reactive({
 const { isRequired } = useRules();
 
 const tableHeader = [
-    { text: 'Quote Type', value: 'quote_type_text' },
-    { text: 'Ref-ID', value: 'cdb_id' },
-    { text: 'Created At', value: 'created_at' },
-    { text: 'Updated At', value: 'updated_at' },
+  { text: 'Quote Type', value: 'quote_type_text' },
+  { text: 'Ref-ID', value: 'cdb_id' },
+  { text: 'Created At', value: 'created_at' },
+  { text: 'Updated At', value: 'updated_at' },
 ];
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss');
@@ -58,41 +57,46 @@ function onReset() {
 }
 
 function checkDateValidation() {
-    isDateMandatory.value = filtersForm.searchType === '';
-    isSearchValueRequired.value = filtersForm.searchType !== '';
+  isDateMandatory.value = filtersForm.searchType === '';
+  isSearchValueRequired.value = filtersForm.searchType !== '';
 }
 
 function onSubmit(isValid) {
-    isQuoteTypeEmpty.value = !filtersForm.quoteType;
-    if (!isValid || !filtersForm.quoteType) return;
+  isQuoteTypeEmpty.value = !filtersForm.quoteType;
+  if (!isValid || !filtersForm.quoteType) return;
 
-    //remove empty fields
-    Object.keys(filtersForm).forEach(
-      key => filtersForm[key] === '' && delete filtersForm[key],
-    );
-    filtersForm.get(`/kyc/aml`, {
-      preserveScroll: true,
-      onBefore: () => {
-        if (dayjs(filtersForm.amlCreatedEndDate).diff(dayjs(filtersForm.amlCreatedStartDate), 'day') > 30) {
-          filtersForm.setError(
-            'amlCreatedStartDate',
-            'Allowed no. of days between start & end dates are 30 days.',
-          );
-          return false;
-        }
-        loader.table = true;
-      },
-      onSuccess: () => (loader.table = false),
-        onError: (errors) => {
-            Object.keys(errors).forEach(function(key) {
-                notification.error({
-                    title: errors[key],
-                    position: 'top',
-                });
-            });
-            return false;
-        }
-    });
+  //remove empty fields
+  Object.keys(filtersForm).forEach(
+    key => filtersForm[key] === '' && delete filtersForm[key],
+  );
+  filtersForm.get(`/kyc/aml`, {
+    preserveScroll: true,
+    onBefore: () => {
+      if (
+        dayjs(filtersForm.amlCreatedEndDate).diff(
+          dayjs(filtersForm.amlCreatedStartDate),
+          'day',
+        ) > 30
+      ) {
+        filtersForm.setError(
+          'amlCreatedStartDate',
+          'Allowed no. of days between start & end dates are 30 days.',
+        );
+        return false;
+      }
+      loader.table = true;
+    },
+    onSuccess: () => (loader.table = false),
+    onError: errors => {
+      Object.keys(errors).forEach(function (key) {
+        notification.error({
+          title: errors[key],
+          position: 'top',
+        });
+      });
+      return false;
+    },
+  });
 }
 
 function setQueryStringFilters() {
@@ -106,27 +110,33 @@ function setQueryStringFilters() {
   }
 }
 
-watch(() => filtersForm, () => {
+watch(
+  () => filtersForm,
+  () => {
     let queryString = window.location.search;
     let urlParams = new URLSearchParams(queryString);
 
-    isDateMandatory.value = !((urlParams.get('searchType') !== null && urlParams.get('searchField') !== null) ||
-        filtersForm.searchType !== '' && filtersForm.searchField !== '');
-}, { deep: true, immediate: true });
+    isDateMandatory.value = !(
+      (urlParams.get('searchType') !== null &&
+        urlParams.get('searchField') !== null) ||
+      (filtersForm.searchType !== '' && filtersForm.searchField !== '')
+    );
+  },
+  { deep: true, immediate: true },
+);
 
 const quoteTypeOptions = computed(() =>
   ref(
     page.props.quoteTypes.map(item => ({
-        value: item.code,
-        label: item.text,
-    }))
+      value: item.code,
+      label: item.text,
+    })),
   ),
 );
 
 onMounted(() => {
   setQueryStringFilters();
 });
-
 </script>
 
 <template>
@@ -138,12 +148,12 @@ onMounted(() => {
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
         <ComboBox
-            v-model="filtersForm.quoteType"
-            label="Quote Type"
-            placeholder="Search by Quote Type"
-            :options="quoteTypeOptions.value"
-            :single="true"
-            :hasError="isQuoteTypeEmpty"
+          v-model="filtersForm.quoteType"
+          label="Quote Type"
+          placeholder="Search by Quote Type"
+          :options="quoteTypeOptions.value"
+          :single="true"
+          :hasError="isQuoteTypeEmpty"
         />
 
         <x-select
@@ -199,7 +209,6 @@ onMounted(() => {
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-id="{ code, id }">
         <Link :href="`/kyc/aml/${id}`" class="text-primary-500 hover:underline">

@@ -1,10 +1,12 @@
 trigger:
-- none
+  - none
 
 pool:
   vmImage: 'Ubuntu 20.04'
-  
-steps:
 
-- publish: '$(System.DefaultWorkingDirectory)'
-  artifact: imcrmuat2
+steps:
+  - checkout: self
+    fetchDepth: 1
+    fetchTags: false
+  - publish: '$(System.DefaultWorkingDirectory)'
+    artifact: imcrmuat2

@@ -3,8 +3,6 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
-use App\Enums\PermissionsEnum;
-use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
@@ -37,9 +35,10 @@ class PersonalQuote extends Model implements AuditableContract
         'advisor_id' => FilterTypes::IN,
         'policy_number' => FilterTypes::EXACT,
         'source' => FilterTypes::EXACT,
-        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'policy_expiry_date' => FilterTypes::DATE_BETWEEN,
         'is_cold' => FilterTypes::EXACT,
         'stale_at' => FilterTypes::NULL_CHECK,
+        'previous_policy_expiry_date' => FilterTypes::DATE_BETWEEN,
     ];
 
     /**
@@ -48,6 +47,27 @@ class PersonalQuote extends Model implements AuditableContract
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,
     ];
+
+    protected static function booted()
+    {
+        static::updating(function ($model) {
+            $skipBookingDateUpdateForNonCPD = true;
+            if (isset(request()->sendUpdateId)) {
+                $personalQuote = new PersonalQuote;
+                $endorsmentDetails = $personalQuote->isCPDEndorsment(request()->sendUpdateId);
+                if ($endorsmentDetails['isCPDEndorsment']) {
+                    info('Book Update - Policy Booking Date update is allowed for CPD Endorsment. Old PBD ('.$model->getOriginal('policy_booking_date').') - New PBD ('.$model->policy_booking_date.'). QuoteType: '.request()->quoteType.' - QuoteUUID: '.request()->quoteUuid.' - SendUpdateUUID: '.$endorsmentDetails['sendUpdateUUID']);
+                    $skipBookingDateUpdateForNonCPD = false;
+                }
+            }
+
+            if ($model->isDirty('policy_booking_date') && $model->getOriginal('policy_booking_date') && $skipBookingDateUpdateForNonCPD) {
+                info($model->code.' updating the value of policy_booking_date is skipped. tried to change policy_booking_date from '.$model->getOriginal('policy_booking_date').' to '.$model->policy_booking_date);
+                unset($model->policy_booking_date); // lock the policy booking date field
+            }
+        });
+    }
+
     public function quoteStatus()
     {
         return $this->belongsTo(QuoteStatus::class);
@@ -74,7 +94,7 @@ class PersonalQuote extends Model implements AuditableContract
      */
     public function advisor()
     {
-        return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name']);
+        return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no', 'profile_photo_path', 'calendar_link']);
     }
 
     /**
@@ -247,6 +267,7 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->hasMany(QuoteStatusLog::class, 'quote_request_id');
     }
+
     public function transactionType()
     {
         return $this->belongsTo(Lookup::class, 'transaction_type_id', 'id');
@@ -274,34 +295,33 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
 
-    public function scopeFilterBySegment($query, $segmentFilter, $quoteTypeCode)
+    public function sageApiLogs()
     {
-        self::applySegmentFilter($query, $segmentFilter, $quoteTypeCode);
+        return $this->morphMany(SageApiLog::class, 'section');
     }
 
-    public static function applySegmentFilter($query, $segmentFilter, $quoteTypeCode)
+    public function scopeFilterBySegment($query, $segmentFilter, $quoteTypeId)
     {
-        $user = auth()->user();
-        if ($user->can(PermissionsEnum::SEGMENT_FILTER) && $segmentFilter) {
-            $query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($query) use ($quoteTypeCode) {
-                $query->whereIn('personal_quotes.uuid', function ($query) use ($quoteTypeCode) {
-                    $query->distinct()
-                        ->select('quote_uuid')
-                        ->from('quote_tags')
-                        ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
-                        ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
-                        ->where('quote_type.code', $quoteTypeCode);
-                });
-            })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) use ($quoteTypeCode) {
-                $query->whereNotIn('personal_quotes.uuid', function ($query) use ($quoteTypeCode) {
-                    $query->distinct()
-                        ->select('quote_uuid')
-                        ->from('quote_tags')
-                        ->join('quote_type', 'quote_type.id', 'quote_tags.quote_type_id')
-                        ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
-                        ->where('quote_type.code', $quoteTypeCode);
-                });
-            });
-        }
+        self::applySegmentFilter($query, $segmentFilter, 'personal_quotes', $quoteTypeId);
+    }
+
+    public function carPlan()
+    {
+        return $this->belongsTo(CarPlan::class, 'plan_id');
+    }
+
+    public function emirates()
+    {
+        return $this->belongsTo(Emirate::class, 'emirate_of_registration_id');
+    }
+
+    public function claimHistory()
+    {
+        return $this->belongsTo(ClaimHistory::class, 'claim_history_id');
+    }
+
+    public function customerMembers()
+    {
+        return $this->morphMany(CustomerMembers::class, 'quote');
     }
 }

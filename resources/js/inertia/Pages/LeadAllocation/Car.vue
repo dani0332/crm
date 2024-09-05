@@ -234,7 +234,11 @@ const onStatusSubmit = async () => {
 const onToggleResetCap = async (active, userId, leadId) => {
   loaders.table = true;
   await axios
-    .post('/lead-allocation/toggle-reset-cap', { leadId, userId, resetCap: active })
+    .post('/lead-allocation/toggle-reset-cap', {
+      leadId,
+      userId,
+      resetCap: active,
+    })
     .finally(() => {
       loaders.table = false;
     });
@@ -427,7 +431,7 @@ onMounted(() => {
     >
       <template #item-tiers="{ tiers }">
         <div class="relative">
-          <x-tooltip position="top" class="arrow-l-dark">
+          <x-tooltip placement="top">
             <p
               class="truncate w-60 underline decoration-dotted decoration-primary-600"
             >
@@ -501,11 +505,11 @@ onMounted(() => {
 
     <x-modal
       v-model="statusModal.show"
+      title="Select Reason of Unavailability"
       show-close
       backdrop
       @update:model-value="onStatusModalClose($event)"
     >
-      <template #header> Select Reason of Unavailability </template>
       <x-select
         v-model="statusModal.data.reason"
         placeholder="Select Reason"
@@ -537,11 +541,11 @@ onMounted(() => {
 
     <x-modal
       v-model="confirmModal.show"
+      title="Status Change"
       show-close
       backdrop
       @update:model-value="onConfirmClose($event)"
     >
-      <template #header> Status Change </template>
       <p>
         Are you sure you want to change
         <strong>{{ confirmModal.title }}</strong> status?

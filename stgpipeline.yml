@@ -1,23 +1,12 @@
 trigger:
-- develop
+  - develop
 
 pool:
   vmImage: 'Ubuntu 20.04'
 
 steps:
-#- task: DownloadSecureFile@1
-#  name: fullchain
-#  displayName: 'Download cert file'
-#  inputs:
-#    secureFile: 'stgcrm_fullchain.pem'
-#- task: DownloadSecureFile@1
-#  name: privkey
-#  displayName: 'Download cert file'
-#  inputs:
-#    secureFile: 'stgcrm_privkey.pem'    
-#- script: |
-#    cp $(fullchain.secureFilePath) $(System.DefaultWorkingDirectory)/docker/
-#    cp $(privkey.secureFilePath) $(System.DefaultWorkingDirectory)/docker/
-    
-- publish: '$(System.DefaultWorkingDirectory)'
-  artifact: imcrmstg
+  - checkout: self
+    fetchDepth: 1
+    fetchTags: false
+  - publish: '$(System.DefaultWorkingDirectory)'
+    artifact: imcrmstg

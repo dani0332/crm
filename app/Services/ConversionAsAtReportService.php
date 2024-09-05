@@ -4,8 +4,8 @@ namespace App\Services;
 
 use App\Enums\DisplayByEnum;
 use App\Enums\LeadSourceEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteBusinessTypeCode;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
@@ -41,11 +41,7 @@ class ConversionAsAtReportService extends BaseService
                     DB::raw(
                         'SUM(
                             CASE WHEN (
-                                ( personal_quotes.payment_status_id = "'.PaymentStatusEnum::CAPTURED.'"
-                                and personal_quotes.payment_status_date <= "'.Carbon::parse($request->asAtDate)->endOfDay()->format($dateFormat).'"
-                                )
-                                OR
-                                ( personal_quotes.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.')
+                                ( personal_quotes.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.','.QuoteStatusEnum::PolicyBooked.','.QuoteStatusEnum::PolicySentToCustomer.')
                                 and personal_quotes.transaction_approved_at <= "'.Carbon::parse($request->asAtDate)->endOfDay()->format($dateFormat).'"
                                 )
                             )
@@ -60,6 +56,7 @@ class ConversionAsAtReportService extends BaseService
                 'startEndDate' => $request->startEndDate,
                 'lob' => $request->lob,
                 'displayBy' => $request->displayBy,
+                'tag' => $request->tag,
                 'page' => $request->page,
             ];
 
@@ -139,7 +136,16 @@ class ConversionAsAtReportService extends BaseService
                 $query->where('personal_quotes.quote_type_id', $filters->lob);
             }
         }
+        if (isset($filters->tag)) {
 
+            $query->join('quote_tags', 'quote_tags.quote_uuid', 'personal_quotes.uuid');
+            if ($filters->tag == QuoteSegmentEnum::SIC->value) {
+                $query->where('quote_tags.name', ucwords(QuoteSegmentEnum::SIC->value));
+            } else {
+
+                $query->whereIn('quote_tags.name', ['APUA', 'SPUA']);
+            }
+        }
         if (isset($filters->displayBy)) {
             switch ($filters->displayBy) {
                 case DisplayByEnum::ADVISOR_NAME:
@@ -373,5 +379,4 @@ class ConversionAsAtReportService extends BaseService
             ? round(($numerator / $denominator) * 100, 2)
             : 'NaN';
     }
-
 }

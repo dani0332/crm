@@ -25,16 +25,16 @@ const tableHeaders = ref([
 ]);
 </script>
 <template>
-  <Head title="Vehical Depreciation" />
+  <Head title="Vehicle Depreciation" />
   <div class="flex justify-between items-center">
-    <h2 class="text-xl font-semibold">Vehical Depreciation</h2>
+    <h2 class="text-xl font-semibold">Vehicle Depreciation</h2>
     <div class="space-x-3">
       <Link
         v-if="can(permissionsEnum.VehicleDepreciationCreate)"
         :href="route('vehicledepreciation.create')"
       >
         <x-button size="sm" color="#ff5e00" tag="div">
-          Create Vehical Depreciation
+          Create Vehicle Depreciation
         </x-button>
       </Link>
     </div>
@@ -48,7 +48,6 @@ const tableHeaders = ref([
     border-cell
     hide-rows-per-page
     hide-footer
-    fixed-checkbox
   >
     <template #item-id="{ id }">
       <Link
