@@ -690,7 +690,7 @@ class SplitPaymentService
                 $paymentSplit->collection_amount = $amountCollected;
                 $paymentSplit->save();
                 $parentPayment = $paymentSplit->payment;
-                info('Payment Split verified and collection amount updated for Payment Split ID: '.$splitPaymentId.' and Code: '.$paymentSplit->code);
+                info('Payment Split verified and collection amount updated for Payment Split ID: '.$paymentSplit->id.' and Code: '.$paymentSplit->code);
 
                 /* Create payment receipt for broker */
                 if ($parentPayment->collection_type == CollectionTypeEnum::BROKER &&
@@ -701,7 +701,7 @@ class SplitPaymentService
                 }
                 $parentPayment->captured_amount = ($parentPayment->captured_amount + $amountCollected);
                 $parentPayment->save();
-                info('Parent payment captured amount updated for Payment Split ID: '.$splitPaymentId.' and Code: '.$paymentSplit->code);
+                info('Parent payment captured amount updated for Payment Split ID: '.$paymentSplit->id.' and Code: '.$paymentSplit->code);
 
                 if ($parentPayment->send_update_log_id) {
                     SendUpdateLog::where('id', $parentPayment->send_update_log_id)->update([
