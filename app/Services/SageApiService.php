@@ -188,7 +188,7 @@ class SageApiService
             info('Sage Customer verification - customer not found in Sage - Calling Sage customer creation API');
             $customerResponse = json_decode($this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']), true);
 
-            if ($customerResponse && isset($customerResponse['CustomerNumber']) && false) {
+            if ($customerResponse && isset($customerResponse['CustomerNumber'])) {
                 info('Sage Customer verification - customer successfully created on Sage - customer code: '.$customerResponse['CustomerNumber']);
                 $sageCustomerNumber = $customerResponse['CustomerNumber'];
                 $this->logSageApiCall($payLoadOptions, $customerResponse, $logModal, 1, $totalSteps, SageEnum::STATUS_SUCCESS, $authUserId);
@@ -198,7 +198,7 @@ class SageApiService
             }
         }
 
-        if (! $sageCustomerFromDB) {
+        if (! $sageCustomerFromDB && ($customerResponse && isset($customerResponse['CustomerNumber']))) {
             if ($quoteEntity) {
                 $quoteEntity->sage_customer_number = $sageCustomerNumber;
                 $quoteEntity->save();
