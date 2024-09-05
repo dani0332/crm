@@ -155,6 +155,7 @@ class SageApiService
         $sageRequest->insurerGlLiaiblityAccount = $insuranceProvider?->gl_liaiblity_account;
         $sageRequest->sageVenderId = $insuranceProvider?->sage_vendor_id;
         $sageRequest->sageInsurerCustomerId = $insuranceProvider?->sage_insurer_customer_id;
+        $sageRequest->insurerName = $insuranceProvider?->text;
 
         return $sageRequest;
     }
