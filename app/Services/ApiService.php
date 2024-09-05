@@ -3,9 +3,13 @@
 namespace App\Services;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Events\InstantAlfredCallbackNotification;
+use App\Events\InstantAlfredWhatsappNotification;
 use App\Factories\AllocationFactory;
 use App\Http\Requests\ActivityApiRequest;
 use App\Http\Requests\AssignLeadRequest;
@@ -288,6 +292,31 @@ class ApiService
             return response()->json(['message' => 'No advisor has been assigned to this lead.'], 404);
         }
         app(ActivitiesService::class)->createApiActivity($request, $record, $modelType);
+        $request->avtivity_type = 'CallBack';
+        $quoteTypeCode = strtolower($modelType->code);
+        if ($modelType->code == QuoteTypeCode::Business) {
+            if ($record->business_type_of_insurance_id == QuoteBusinessTypeCode::getId(QuoteBusinessTypeCode::groupMedical)) {
+                $path = "medical/amt/$record->uuid";
+            } else {
+                $path = "quotes/business/$record->uuid";
+            }
+        } elseif (checkPersonalQuotes($modelType->code)) {
+            $path = "personal-quotes/$quoteTypeCode/$record->uuid";
+        } else {
+            $path = "quotes/$quoteTypeCode/$record->uuid";
+        }
+
+        $url = url('/')."/$path";
+
+        if ($request->avtivity_type === 'CallBack') {
+            info('InstantAlfred CallBack Notification Send to Advisor '.$record->advisor_id.' And Lead Quote Id is '.$record->code);
+            event(new InstantAlfredCallbackNotification($record->uuid, $record->advisor_id, $url, $record->code));
+
+        } else {
+            info('InstantAlfred Whatsapp Notification Send to Advisor '.$record->advisor_id.' And Lead Quote Code is '.$record->code);
+            event(new InstantAlfredWhatsappNotification($record->uuid, $record->advisor_id, $url, $record->code));
+
+        }
 
         return response()->json(['message' => 'Activity has been Created'], 200);
 

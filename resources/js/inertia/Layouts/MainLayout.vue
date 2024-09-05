@@ -1,10 +1,5 @@
 <script setup>
 const page = usePage();
-import InstantAlfredCallbackNotification from '../Components/InstantAlfredCallbackNotification.vue';
-import InstantAlfredWhatsappNotification from '../Components/InstantAlfredWhatsappNotification.vue';
-import InstantAlfredCallbackReminderNotification from '../Components/InstantAlfredCallbackReminderNotification.vue';
-import InstantAlfredWhatsappReminderNotification from '../Components/InstantAlfredWhatsappReminderNotification.vue';
-
 
 const createLink = link => {
   if (link.children.length > 0) {
