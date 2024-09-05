@@ -1307,7 +1307,17 @@ class RenewalsUploadService
                 info('Renewals OCB Email sending email to email: '.$carQuote->email);
                 info('fn: renewalBatchEmailProcess Renewals OCB Email email template id: '.$emailTemplateId);
                 info('Renewals OCB Email check email data: '.json_encode($emailData));
-                $responseCode = isset($carQuote->advisor_id) ? $this->sendEmailCustomerService->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch') : $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'car-quote-one-click-buy-batch', $emailTemplateId);
+                if(isset($carQuote->advisor_id)) {
+                    $responseCode = $this->sendEmailCustomerService->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
+                } else {
+                    info('Renewals OCB Email sending without advisor');
+                    $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'car-quote-one-click-buy-batch', $emailTemplateId);
+                    $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_MOTOR_RENEWAL_WORKFLOW)->first();
+                    info('Renewals OCB Email No advisor: workflow trigger on BIRD, BIRD_SIC_MOTOR_RENEWAL_WORKFLOW value: '. $sicEvent->value);
+                    if ($sicEvent) {
+                        $responseCode = app(BirdService::class)->triggerWebHookRequest($sicEvent->value, $emailData);
+                    }
+                }
                 info('Renewals OCB Email response: '.$responseCode);
 
                 if ($responseCode == 201) {
