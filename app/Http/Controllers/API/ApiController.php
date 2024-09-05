@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ActivityApiRequest;
 use App\Http\Requests\APiFetchUrl;
 use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\EvaluateTierRequest;
@@ -12,6 +13,7 @@ use App\Services\ApiService;
 use App\Services\InboundEmailsHookService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
@@ -73,6 +75,15 @@ class ApiController extends Controller
 
     public function createActivity(Request $request)
     {
+        $validator = Validator::make(
+            $request->all(),
+            ActivityApiRequest::rules(),
+            ActivityApiRequest::messages()
+        );
+
+        if ($validator->fails()) {
+            return response()->json(['message' => $validator->errors()], 422);
+        }
         return $this->apiService->createActivity($request);
     }
     public function getActivity(Request $request)

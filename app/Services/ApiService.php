@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ActivityTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
@@ -11,7 +12,6 @@ use App\Enums\QuoteTypes;
 use App\Events\InstantAlfredCallbackNotification;
 use App\Events\InstantAlfredWhatsappNotification;
 use App\Factories\AllocationFactory;
-use App\Http\Requests\ActivityApiRequest;
 use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
@@ -26,7 +26,6 @@ use App\Models\TravelQuote;
 use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
 use InvalidArgumentException;
 
 class ApiService
@@ -263,15 +262,6 @@ class ApiService
 
     public function createActivity($request)
     {
-        $validator = Validator::make(
-            $request->all(),
-            ActivityApiRequest::rules(),
-            ActivityApiRequest::messages()
-        );
-
-        if ($validator->fails()) {
-            return response()->json(['message' => $validator->errors()->first()], 422);
-        }
         $existingActivity = Activities::where('quote_uuid', $request->entityUId)
             ->Where('status', 0)
             ->Where('source', LeadSourceEnum::INSTANT_ALFRED)
@@ -292,14 +282,10 @@ class ApiService
             return response()->json(['message' => 'No advisor has been assigned to this lead.'], 404);
         }
         app(ActivitiesService::class)->createApiActivity($request, $record, $modelType);
-        $request->avtivity_type = 'CallBack';
+        $request->avtivity_type = 'WHATS_APP'; //FOR CHANGE IN API
         $quoteTypeCode = strtolower($modelType->code);
         if ($modelType->code == QuoteTypeCode::Business) {
-            if ($record->business_type_of_insurance_id == QuoteBusinessTypeCode::getId(QuoteBusinessTypeCode::groupMedical)) {
-                $path = "medical/amt/$record->uuid";
-            } else {
-                $path = "quotes/business/$record->uuid";
-            }
+            $path = "quotes/business/$record->uuid";
         } elseif (checkPersonalQuotes($modelType->code)) {
             $path = "personal-quotes/$quoteTypeCode/$record->uuid";
         } else {
@@ -308,12 +294,12 @@ class ApiService
 
         $url = url('/')."/$path";
 
-        if ($request->avtivity_type === 'CallBack') {
-            info('InstantAlfred CallBack Notification Send to Advisor '.$record->advisor_id.' And Lead Quote Id is '.$record->code);
+        if ($request->avtivity_type === ActivityTypeEnum::CALL_BACK) {
+            info('InstantAlfred CallBack Notification Send to Advisor '.$record->advisor_id.' And Lead Code is '.$record->code);
             event(new InstantAlfredCallbackNotification($record->uuid, $record->advisor_id, $url, $record->code));
 
         } else {
-            info('InstantAlfred Whatsapp Notification Send to Advisor '.$record->advisor_id.' And Lead Quote Code is '.$record->code);
+            info('InstantAlfred Whatsapp Notification Send to Advisor '.$record->advisor_id.' And Lead Code is '.$record->code);
             event(new InstantAlfredWhatsappNotification($record->uuid, $record->advisor_id, $url, $record->code));
 
         }
