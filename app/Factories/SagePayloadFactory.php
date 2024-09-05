@@ -505,18 +505,18 @@ class SagePayloadFactory
         $commissionDescription = 'C.'.$request->invoiceDescription;
         $invoicePaymentSchedulesDueDate = self::calculateDueDate($request->paymentDueDate, $request->insurerInvoiceDate);
         $optionalFields = self::createOptionalFields($request);
-       /* $optionalFields[] = [
-            'OptionalField' => 'COMAMOUNT',
-            'Value' => $request->commissionIncludingVat > 0 ? (string) roundNumber($request->commissionIncludingVat) : (string) roundNumber($request->commissionWithOutVat), // commissionIncludingVat means commission_vat_applicable,
-        ];
-        $optionalFields[] = [
-            'OptionalField' => 'TOTALCOMM',
-            'Value' => (string) $request->commission,
-        ];
-        $optionalFields[] = [
-            'OptionalField' => 'INSURER',
-            'Value' => (string) $request->insurerName,
-        ];*/
+        /* $optionalFields[] = [
+             'OptionalField' => 'COMAMOUNT',
+             'Value' => $request->commissionIncludingVat > 0 ? (string) roundNumber($request->commissionIncludingVat) : (string) roundNumber($request->commissionWithOutVat), // commissionIncludingVat means commission_vat_applicable,
+         ];
+         $optionalFields[] = [
+             'OptionalField' => 'TOTALCOMM',
+             'Value' => (string) $request->commission,
+         ];
+         $optionalFields[] = [
+             'OptionalField' => 'INSURER',
+             'Value' => (string) $request->insurerName,
+         ];*/
         $payLoad = [
             'Invoices' => [
                 [
