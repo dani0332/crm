@@ -76,8 +76,10 @@ class SendUpdateLogRepository extends BaseRepository
 
             // it will check if send update type is Correction of Policy Details or Endorsement Financial with subtype Policy Period Extension, it will save
             // insurance_provider_id and plan_id.
+            $policyDetails = [];
             if ($category == SendUpdateLogStatusEnum::CPD || ($category == SendUpdateLogStatusEnum::EF && $option == SendUpdateLogStatusEnum::PPE)) {
                 @[$insuranceProviderId, $plan_id] = app(SendUpdateLogService::class)->getProviderDetails($quote, $data['quote_type_id'], true);
+                $policyDetails = $this->autoFillPolicyDetails($quote, $data['quote_type_id'], $insuranceProviderId, $plan_id);
             }
 
             // if the send update category is 'Cancellation from Inception', 'Cancellation from Inception and reissuance' or 'Endorsement Financial' with
@@ -97,7 +99,7 @@ class SendUpdateLogRepository extends BaseRepository
                 $personalQuote->save();
             }
 
-            $sendUpdate = $this->create([
+            $sendUpdate = $this->create(array_merge([
                 'personal_quote_id' => $data['personal_quote_id'],
                 'quote_uuid' => $data['quote_uuid'],
                 'quote_type_id' => $data['quote_type_id'],
@@ -109,10 +111,9 @@ class SendUpdateLogRepository extends BaseRepository
                 'insurance_provider_id' => $insuranceProviderId,
                 'plan_id' => $plan_id,
                 'created_by' => auth()->user()->id,
-            ]);
-            if ($category == SendUpdateLogStatusEnum::CPD || ($category == SendUpdateLogStatusEnum::EF && $option == SendUpdateLogStatusEnum::PPE)) {
-                $this->checkPolicyDetailsFilled($sendUpdate, $data['quote_type_id'], $quote);
-            }
+            ], $policyDetails));
+
+            info('Send Update Log created successfully - uuid: '.$sendUpdate->uuid.' quote_uuid: '.$sendUpdate->quote_uuid);
         } catch (\Exception $ex) {
             $sendUpdate = (object) [
                 'message' => $ex->getMessage(),
@@ -347,35 +348,26 @@ class SendUpdateLogRepository extends BaseRepository
         })->orderBy('id', 'desc')->get();
     }
 
-    public function checkPolicyDetailsFilled($sendUpdate, $quoteTypeId, $quote)
+    public function autoFillPolicyDetails($quote, $quoteTypeId, $insuranceProviderId, $planId = null): array
     {
-        $insuranceProviderId = ($sendUpdate->insurance_provider_id ?? $quote->insurance_provider_id) ?? null;
-        if ($quoteTypeId == QuoteTypeId::Car && is_null($insuranceProviderId)) {
-            $insuranceProviderId = $quote->car_plan_provider_id ?? null;
-        }
-
-        $sendUpdatePolicyDetails = [
-            'first_name' => ($sendUpdate->first_name ?? $quote->first_name) ?? null,
-            'last_name' => ($sendUpdate->last_name ?? $quote->last_name) ?? null,
-            'insurance_provider_id' => $insuranceProviderId,
-            'policy_number' => ($sendUpdate->policy_number ?? $quote->policy_number) ?? null,
-            'issuance_date' => ($sendUpdate->issuance_date ?? $quote->policy_issuance_date) ?? null,
-            'start_date' => ($sendUpdate->start_date ?? $quote->policy_start_date) ?? null,
-            'expiry_date' => ($sendUpdate->expiry_date ?? $quote->policy_expiry_date) ?? null,
+        $policyDetails = [
+            'first_name' => $quote->first_name ?? null,
+            'last_name' => $quote->last_name ?? null,
+            'policy_number' => $quote->policy_number ?? null,
+            'issuance_date' => $quote->policy_issuance_date ?? null,
+            'start_date' => $quote->policy_start_date ?? null,
+            'expiry_date' => $quote->policy_expiry_date ?? null,
         ];
 
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
-            $sendUpdatePolicyDetails['plan_id'] = ($sendUpdate->plan_id ?? $quote->plan_id) ?? null;
+        $isPolicyFilled = app(SendUpdateLogService::class)->isPolicyDetailsFilled($policyDetails, $quoteTypeId, $insuranceProviderId, $planId);
+
+        if ($isPolicyFilled) {
+            $policyDetails = array_merge($policyDetails, [
+                'is_policy_filled' => true,
+            ]);
         }
 
-        $filledValues = array_filter($sendUpdatePolicyDetails, function ($value) {
-            return ! is_null($value) && $value !== '';
-        });
-
-        if (count($sendUpdatePolicyDetails) === count($filledValues)) {
-            $sendUpdate->is_policy_filled = SendUpdateLogStatusEnum::POLICY_FILLED;
-            $sendUpdate->save();
-        }
+        return $policyDetails;
     }
 
     public function fetchSendUpdateOptions($quoteTypeId, $parentId, $status, $businessInsuranceTypeId = null)

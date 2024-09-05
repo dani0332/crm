@@ -81,7 +81,7 @@ function setExpireDate() {
   isCustomDate.value = false;
   activeButton.value = 'expire';
   const currentDate = new Date();
-  const expireDate = new Date(currentDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const expireDate = new Date(currentDate.getTime());
   const formattedExpireDate = expireDate.toISOString();
   filters.expireDate = formattedExpireDate;
   filters.todayDate = [];

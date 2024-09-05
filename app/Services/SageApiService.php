@@ -197,15 +197,16 @@ class SageApiService
             } else {
                 $isLiveApiCallStep1 = true;
                 $sageSecondLog = isset($sageLogArray[1]) ? $sageLogArray[1] : false;
+                $customerPayload = SagePayloadFactory::createCustomerPayload($customer);
 
                 if ($sageSecondLog && $sageSecondLog['status'] == SageEnum::STATUS_SUCCESS) {
                     $isLiveApiCallStep1 = false;
                     $response = json_decode($sageSecondLog['response'], true);
                 } else {
-                    $customerPayload = SagePayloadFactory::createCustomerPayload($customer);
                     $curlResponse = $this->postToSage300($customerPayload['endPoint'], $customerPayload['payload']);
                     $response = json_decode($curlResponse, true);
                 }
+
                 $responseError = isset($response['error']['code']) ? $response['error']['code'] : false;
                 if ($responseError && $responseError == SageEnum::ERROR_RECORD_DUPLICATE) {
                     $sageCustomerNumber = $customerPayload['customerNumber'];
@@ -270,11 +271,12 @@ class SageApiService
                 return $customer->sage_customer_number;
             } else {
                 $isLiveApiCallStep1 = true;
+                $payLoadOptions = SagePayloadFactory::createCustomerPayload($customer);
+
                 if (isset($sageLogArray[1]) && $sageLogArray[1]['status'] == config('constants.SAGE_LOG_SUCCESS_STATUS')) {
                     $isLiveApiCallStep1 = false;
                     $response = json_decode($sageLogArray[1]['response'], true);
                 } else {
-                    $payLoadOptions = SagePayloadFactory::createCustomerPayload($customer);
                     $jsonResponse = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
                     $response = json_decode($jsonResponse, true);
                 }
