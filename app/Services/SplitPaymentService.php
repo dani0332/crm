@@ -155,6 +155,7 @@ class SplitPaymentService
                         $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
                         $isAlreadyPosted = true;
                     } else {
+                        info('SAGE API Payments Error: Failed to post AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].' for Payment Code: '.$splitPayment->code);
                         $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, SageEnum::STATUS_FAIL, $request->advisor_id);
                         $returnMessage['response'] = 'Error while making ready to post to sage';
                         return $returnMessage;
