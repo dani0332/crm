@@ -352,7 +352,7 @@ class SagePayloadFactory
         $commissionDescription = 'C.'.$request->invoiceDescription;
         $invoicePaymentSchedulesDueDate = self::calculateDueDate($request->paymentDueDate, $request->insurerInvoiceDate);
         $optionalFields = self::createOptionalFields($request);
-        $optionalFields[] = [
+        /*$optionalFields[] = [
             'OptionalField' => 'COMAMOUNT',
             'Value' => $request->commissionIncludingVat > 0 ? (string) roundNumber($request->commissionIncludingVat) : (string) roundNumber($request->commissionWithOutVat), // commissionIncludingVat means commission_vat_applicable,
         ];
@@ -363,7 +363,7 @@ class SagePayloadFactory
         $optionalFields[] = [
             'OptionalField' => 'INSURER',
             'Value' => (string) $request->insurerName,
-        ];
+        ];*/
         $payLoad = [
             'Invoices' => [
                 [
@@ -504,18 +504,18 @@ class SagePayloadFactory
         $commissionDescription = 'C.'.$request->invoiceDescription;
         $invoicePaymentSchedulesDueDate = self::calculateDueDate($request->paymentDueDate, $request->insurerInvoiceDate);
         $optionalFields = self::createOptionalFields($request);
-        $optionalFields[] = [
-            'OptionalField' => 'COMAMOUNT',
-            'Value' => $request->commissionIncludingVat > 0 ? (string) roundNumber($request->commissionIncludingVat) : (string) roundNumber($request->commissionWithOutVat), // commissionIncludingVat means commission_vat_applicable,
-        ];
-        $optionalFields[] = [
-            'OptionalField' => 'TOTALCOMM',
-            'Value' => (string) $request->commission,
-        ];
-        $optionalFields[] = [
-            'OptionalField' => 'INSURER',
-            'Value' => (string) $request->insurerName,
-        ];
+        /* $optionalFields[] = [
+             'OptionalField' => 'COMAMOUNT',
+             'Value' => $request->commissionIncludingVat > 0 ? (string) roundNumber($request->commissionIncludingVat) : (string) roundNumber($request->commissionWithOutVat), // commissionIncludingVat means commission_vat_applicable,
+         ];
+         $optionalFields[] = [
+             'OptionalField' => 'TOTALCOMM',
+             'Value' => (string) $request->commission,
+         ];
+         $optionalFields[] = [
+             'OptionalField' => 'INSURER',
+             'Value' => (string) $request->insurerName,
+         ];*/
         $payLoad = [
             'Invoices' => [
                 [
@@ -1166,12 +1166,14 @@ class SagePayloadFactory
             $insurerGlLiaiblityAccount = $insuranceProviderDetails?->gl_liaiblity_account;
             $sageVenderId = $insuranceProviderDetails?->sage_vendor_id;
             $sageInsurerCustomerId = $insuranceProviderDetails?->sage_insurer_customer_id;
+            $insurerName = $payment->insuranceProvider?->text;
             $premiumCollectedBy = ucfirst(CollectionTypeEnum::BROKER);
             $policyIssuer = $quoteDetails['booking_filled_by'];
 
         } else {
             $insurerGlLiaiblityAccount = $payment->insuranceProvider?->gl_liaiblity_account;
             $sageVenderId = $payment->insuranceProvider?->sage_vendor_id;
+            $insurerName = $payment->insuranceProvider?->text;
             $sageInsurerCustomerId = $payment->insuranceProvider?->sage_insurer_customer_id;
             $premiumCollectedBy = ucfirst($payment->collection_type);
             $policyIssuer = $payment->policyIssuer?->name ?? '';
@@ -1217,6 +1219,7 @@ class SagePayloadFactory
             'insurerGlLiaiblityAccount' => $insurerGlLiaiblityAccount,
             'sageVenderId' => $sageVenderId,
             'sageInsurerCustomerId' => $sageInsurerCustomerId,
+            'insurerName' => $insurerName,
         ];
 
         if (! empty($splitPayments)) {
