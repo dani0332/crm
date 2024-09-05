@@ -4,9 +4,11 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\LegacyPolicyEnum;
 use App\Enums\PermissionsEnum;
+use App\Facades\Capi;
 use App\Http\Controllers\Controller;
 use App\Repositories\InslyDetailRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class LegacyPolicyController extends Controller
@@ -73,5 +75,49 @@ class LegacyPolicyController extends Controller
         $policy = InslyDetailRepository::getBy('policy_no', $policyNumber);
 
         return redirect()->route('legacy-policy.show', ['legacy_policy' => $policy->_id]);
+    }
+
+    /**
+     * This function initiates the migration of a policy identified by the given policy ID.
+     * It sends a POST request to the '/api/migrate-policy' endpoint with the policy ID.
+     *
+     * @param  int  $policyId  The ID of the policy to be migrated.
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function migratePolicy(Request $request, $policyId)
+    {
+        info('Function: migratePolicy initiated for policy ID: '.$policyId);
+
+        // Prepare the data array with 'policyIds' key containing the single policy ID inside an array
+        $requestData = [
+            'policyIds' => [
+                $policyId,
+            ],
+        ];
+
+        try {
+            // Send the POST request with the requestData array
+            $response = Capi::request('/api/migrate-policy', 'post', $requestData);
+
+            // Ensure the response has the result array and it's not empty
+            if (! isset($response->result) || ! is_array($response->result) || empty($response->result)) {
+                throw new \Exception('Unexpected response structure from API.');
+            }
+
+            // Extract the response message
+            $responseMessage = $response->result[0]['msg'] ?? 'Failed!';
+
+            // Check the response message and redirect accordingly
+            if ($responseMessage == 'Failed!') {
+                return redirect()->back()->with('error', 'Invalid policy ID: '.$policyId);
+            }
+
+            return redirect()->back()->with('success', $responseMessage);
+        } catch (\Exception $e) {
+            // Log the exception and redirect with an error message
+            Log::error('Policy migration failed for policy ID: '.$policyId.'. Error: '.$e->getMessage());
+
+            return redirect()->back()->with('error', 'An error occurred during policy migration. Please try again later.');
+        }
     }
 }
