@@ -170,7 +170,7 @@ class SageApiService
         $sageCustomerFromDB = ($quoteEntity) ? $quoteEntity?->sage_customer_number : $customer?->sage_customer_number;
         $sageCustomerNumber = false;
         $customerNumber = $sageCustomerFromDB ?? $payLoadOptions['customerNumber'];
-        info('Sage Customer verification - Quote binding find with '.($quoteEntity ? 'Entity' : 'Customer').' - sage customer code ('.$customerNumber.') '.($sageCustomerFromDB ? 'found in CRM' : 'get from payload'));
+        info('Sage Customer verification - Quote binding find with '.($quoteEntity ? 'Entity' : 'Customer').' - sage customer code ('.($sageCustomerFromDB ?? $payLoadOptions['customerNumber']).') '.($sageCustomerFromDB ? 'found in CRM' : 'get from payload'));
 
         $urlGetCustomer = SageEnum::END_POINT_AR_CUSTOMER."('".$customerNumber."')";
         $customerResponse = json_decode($this->postToSage300($urlGetCustomer, [], 'GET'), true);
