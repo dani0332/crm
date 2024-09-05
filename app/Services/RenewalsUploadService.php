@@ -870,6 +870,8 @@ class RenewalsUploadService
                 $quoteDetail->quote_type_id = QuoteTypeId::Car;
                 $quoteDetail->flags = (object)['whatsapp_consent' => true];
                 $quoteDetail->save();
+
+                info($logPrefix . '-insertion in mongo db for : UUID: ' . $quote->uuid);
             }
 
             //update advisor assign date/time
