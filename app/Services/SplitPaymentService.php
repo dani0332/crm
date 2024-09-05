@@ -104,7 +104,7 @@ class SplitPaymentService
         $sageLogArray = $splitPayment->sageApiLogs->keyBy('step')->toArray();
 
         $sageApiService = new SageApiService;
-        $sageCustomerNumber = $sageApiService->verifySageCustomer($request->customer_id, $customerData, $splitPayment, $sageLogArray, 4, $request->advisor_id);
+        $sageCustomerNumber = $sageApiService->verifySageCustomer($request->customer_id, $customerData, $splitPayment, 4, $request->advisor_id);
         if ($sageCustomerNumber == '') {
             $returnMessage['response'] = 'Customer not found in sage';
 
