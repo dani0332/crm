@@ -50,7 +50,7 @@ const getFiltersObject = () => {
     policyExpiryDate: [],
     teams: [],
     advisors: [],
-    month: '',
+    month: [],
     page: 1,
     insurance_type: "",
     type: '',
@@ -345,14 +345,14 @@ function onSubmit(isValid=true) {
       });
       return
     }
-    if (filters.displayBy == RetentionReportEnum.BATCH && !filters.policyExpiryDate){
+    if (filters.displayBy == RetentionReportEnum.BATCH && filters.policyExpiryDate.length == 0){
       notification.error({
         title: 'Please select Previous Policy Expiry Date',
         position: 'top',
       });
       return
     }
-    if (filters.displayBy == RetentionReportEnum.MONTHLY && !filters.month){
+    if (filters.displayBy == RetentionReportEnum.MONTHLY && filters.month.length == 0){
       notification.error({
         title: 'Please select Month',
         position: 'top',
