@@ -1388,13 +1388,12 @@ class RenewalsUploadService
      */
     private function triggerBirdWorkflow($emailData)
     {
-        $whatsappNo = ApplicationStorage::where('key_name', ApplicationStorageEnums::INSTANT_ALFRED_WHATSAPP_NUMBER)->first();
         $birdEmailData = [
             'SendNewProcessRenewalEmail' => true,
             'customerEmail' => $emailData->customerEmail,
             'customerName' => $emailData->customerName,
             'quotePlanLink' => $emailData->quoteLink,
-            'instantAlfredLink' => "https://wa.me/{$whatsappNo->value}?text=I%27m%20interested%20in%20this%20renewal%20plan",
+            'instantAlfredLink' => $emailData->quoteLink.'?IA=true',
             'refID' => $emailData->carQuoteId,
             'requestForAdvisor' => $emailData->requestAdvisorLink,
         ];
