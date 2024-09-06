@@ -26,6 +26,12 @@ class GenericPermissionSeeder extends Seeder
             ]);
         }
 
+        $role = Role::where('name', RolesEnum::Engineering)->first();
+
+        if (! $role->hasPermissionTo($quoteRawData)) {
+            $role->givePermissionTo($quoteRawData);
+        }
+
         // ADD Permission to Read only Access LOBS
         $readOnlyAccessPermission = Permission::where('name', PermissionsEnum::All_QUOTES_VIEWONLY_ACCESS)->first();
         if (! $readOnlyAccessPermission) {
