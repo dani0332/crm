@@ -26,6 +26,7 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
+use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
 use App\Repositories\EmbeddedProductRepository;
@@ -736,6 +737,7 @@ class SplitPaymentService
                 $quoteModel = SendUpdateLogRepository::getLogById($sendUpdateId);
             } else {
                 $quoteModel = $this->getQuoteObject($modelType, $quoteId);
+                $oldQuoteStatus = $quoteModel->quote_status_id;
             }
 
             info('Processing master payment approval for Quote Code: '.$quoteModel->code);
@@ -783,6 +785,17 @@ class SplitPaymentService
                     info('Transaction Score Calculated: '.$quoteModel->code);
                 }
                 $quoteModel->save();
+                if (! $sendUpdateId) {
+                    QuoteStatusLog::create([
+                        'quote_type_id' => $quoteTypeId,
+                        'quote_request_id' => $quoteModel->id,
+                        'current_quote_status_id' => QuoteStatusEnum::TransactionApproved,
+                        'previous_quote_status_id' => $oldQuoteStatus,
+                        'created_at' => Carbon::now(),
+                        'updated_at' => Carbon::now(),
+                    ]);
+                }
+
                 $canCaptureEp = true;
 
                 // Log for Berlin Service - Extend Customer Subscription
