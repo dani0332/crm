@@ -1276,6 +1276,13 @@ class RenewalsUploadService
         }
     }
 
+    /**
+     * This function use to retrieve template id for emails
+     *
+     * @param CarQuote $carQuote
+     * @param int $quotePlansCount
+     * @return int
+     */
     private function getEmailTemplateId($carQuote, $quotePlansCount)
     {
         $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($quotePlansCount);
@@ -1292,6 +1299,12 @@ class RenewalsUploadService
         return $emailTemplateId;
     }
 
+    /**
+     * This function use to get key for no advisor email template
+     *
+     * @param int $quotePlansCount
+     * @return string
+     */
     private function getNoAdvisorKey($quotePlansCount)
     {
         if ($quotePlansCount == 0) {
@@ -1303,6 +1316,12 @@ class RenewalsUploadService
         }
     }
 
+    /**
+     * This function use to get previous advisor
+     *
+     * @param CarQuote $carQuote
+     * @return mixed
+     */
     private function getPreviousAdvisor($carQuote)
     {
         if (!empty($carQuote->previous_advisor_id)) {
@@ -1311,6 +1330,13 @@ class RenewalsUploadService
         return null;
     }
 
+    /**
+     * This function use to attach pdf if needed
+     *
+     * @param CarQuote $carQuote
+     * @param array $listQuotePlans
+     * @param object $emailData
+     */
     private function attachPdfIfNeeded($carQuote, $listQuotePlans, &$emailData)
     {
         if (count($listQuotePlans) > 0) {
@@ -1329,6 +1355,14 @@ class RenewalsUploadService
         }
     }
 
+    /**
+     * This function use to send email
+     *
+     * @param CarQuote $carQuote
+     * @param int $emailTemplateId
+     * @param object $emailData
+     * @return int
+     */
     private function sendEmail($carQuote, $emailTemplateId, $emailData)
     {
         info('Renewals OCB Email sending email to email: ' . $carQuote->email);
@@ -1345,6 +1379,11 @@ class RenewalsUploadService
         }
     }
 
+    /**
+     * This function use to trigger bird workflow
+     *
+     * @param object $emailData
+     */
     private function triggerBirdWorkflow($emailData)
     {
         $whatsappNo = ApplicationStorage::where('key_name', ApplicationStorageEnums::INSTANT_ALFRED_WHATSAPP_NUMBER)->first();
@@ -1366,6 +1405,14 @@ class RenewalsUploadService
         }
     }
 
+    /**
+     * This function use to handle response
+     *
+     * @param int $responseCode
+     * @param CarQuote $carQuote
+     * @param RenewalsBatchEmails $renewalsBatchEmail
+     * @param RenewalQuoteProcess $renewalQuoteProcess
+     */
     private function handleResponse($responseCode, $carQuote, $renewalsBatchEmail, $renewalQuoteProcess)
     {
         info('Renewals OCB Email response: ' . $responseCode);
@@ -1382,12 +1429,22 @@ class RenewalsUploadService
         }
     }
 
+    /**
+     * This function use to update quote status
+     *
+     * @param CarQuote $carQuote
+     */
     private function updateQuoteStatus($carQuote)
     {
         $notes = 'Change quote status to Quoted as OCB sent';
         app(QuoteStatusService::class)->updateQuoteStatus(QuoteTypes::CAR->id(), $carQuote->uuid, quoteStatusCode::QUOTED, [], $notes);
     }
 
+    /**
+     * This function use to record OCB sent date
+     *
+     * @param CarQuote $carQuote
+     */
     private function recordOcbSentDate($carQuote)
     {
         $carQuote->carQuoteRequestDetail->updateOrCreate(
