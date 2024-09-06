@@ -1284,3 +1284,19 @@ if (! function_exists('isLeadSic')) {
         }
     }
 }
+if (! function_exists('getWhatsappConsent')) {
+    function getWhatsappConsent(QuoteTypes $quoteType, string $uuid): bool
+    {
+        $whatsappConsent = false;
+        $quoteAdditionalDetail = QuoteAdditionalDetail::where('quote_uuid', $uuid)->where(function ($q) use ($quoteType) {
+            $q->where('quote_type_id', (int) $quoteType?->id());
+            $q->orWhere('quote_type_id', $quoteType?->id());
+        })->first();
+
+        if ($quoteAdditionalDetail) {
+            $whatsappConsent = isset($quoteAdditionalDetail->flags['whatsapp_consent']) ? $quoteAdditionalDetail->flags['whatsapp_consent'] : false;
+        }
+
+        return $whatsappConsent;
+    }
+}

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
 use App\Models\User;
+use App\Enums\WorkflowTypeEnum;
 
 class HealthEmailService extends BaseService
 {
@@ -57,6 +58,10 @@ class HealthEmailService extends BaseService
             'mobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
             'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
             'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
+            'workflow_type' => WorkflowTypeEnum::HEALTH_SIC_FOLLOWUPS,
+            'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
+            'whatsappConsent' => getWhatsappConsent($quoteType, $lead->uuid),
+            'instantAlfredLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
         ];
     }
 }
