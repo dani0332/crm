@@ -12,6 +12,9 @@ const page = usePage();
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 
+const can = permission => useCan(permission);
+const permissionEnum = page.props.permissionsEnum;
+
 const id = ref(props.code);
 const showModal = ref(false);
 const isloading = ref(false);
@@ -50,7 +53,7 @@ const onSubmit = () => {
 
 <template>
   <x-accordion
-    v-if="hasRole(rolesEnum.Engineering)"
+    v-if="can(permissionEnum.QUOTE_RAW_DATA)"
     class="p-4 rounded shadow mb-6 bg-white"
   >
     <x-accordion-item @change="onChange">
