@@ -40,7 +40,7 @@ class EmbeddedProductRequest extends FormRequest
             'product_name' => 'required',
             'display_name' => 'required',
             'product_type' => 'required',
-            'short_code' => $this->isMethod('put') ? 'nullable|unique:embedded_products,short_code,' . $id : 'required|unique:embedded_products',
+            'short_code' => $this->isMethod('put') ? 'nullable|unique:embedded_products,short_code,'.$id : 'required|unique:embedded_products',
             'product_category' => 'required',
             'product_validity' => 'nullable',
             'description' => 'nullable',
