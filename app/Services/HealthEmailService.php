@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
 use App\Models\User;
 use App\Enums\WorkflowTypeEnum;
+use App\Enums\QuoteTypes;
 
 class HealthEmailService extends BaseService
 {
