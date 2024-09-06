@@ -389,17 +389,14 @@ class QuoteDocumentController extends Controller
         return response()->download($zipFilePath)->deleteFileAfterSend(true);
     }
 
-    public function previewQuoteDocument($doc_uuid)
+    public function previewQuoteDocument($uuid)
     {
-        $quoteDocument = QuoteDocument::where('doc_uuid', $doc_uuid)->first();
+        $quoteDocument = QuoteDocument::where('doc_uuid', $uuid)->first();
         if ($quoteDocument) {
             $disk = Storage::disk('azureIM');
             if ($disk->exists($quoteDocument->doc_url)) {
                 $contents = $disk->get($quoteDocument->doc_url);
                 $mimeType = $quoteDocument->doc_mime_type;
-                if ($mimeType == 'application/pdf'){
-                    abort(404);
-                }
                 return Response::make($contents, 200)->header('Content-Type', $mimeType);
             }
         }

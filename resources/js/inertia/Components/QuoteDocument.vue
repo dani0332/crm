@@ -279,7 +279,7 @@ onMounted(() => {
         >
           <template #item-original_name="item">
             <a
-              :href="`/quote-document-download/${item.doc_uuid}`"
+              :href="`/document/${item.doc_uuid}/download`"
               target="_blank"
               class="text-primary-600"
             >
@@ -393,7 +393,7 @@ onMounted(() => {
                 :key="quoteDocument.id"
               >
                 <a
-                  :href="`/quote-document-download/${quoteDocument.doc_uuid}`"
+                  :href="`/document/${quoteDocument.doc_uuid}/download`"
                   target="_blank"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
                 >
