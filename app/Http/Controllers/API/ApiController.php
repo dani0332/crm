@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\QuoteUpdatedRequest;
 use App\Http\Requests\APiFetchUrl;
@@ -10,6 +11,7 @@ use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\SICWorkflowRequest;
+use App\Jobs\FixQuoteStatusDate;
 use App\Services\ApiService;
 use App\Services\InboundEmailsHookService;
 use App\Services\NotificationService;
@@ -48,7 +50,7 @@ class ApiController extends Controller
         try {
 
             // Log the incoming request parameters
-            info(self::class.'assignLeads: request params as : '.json_encode($request->all()));
+            info(self::class . 'assignLeads: request params as : ' . json_encode($request->all()));
 
             // Check if lead allocation endpoint is disabled
             if ($this->apiService->isLeadAllocationEndpointDisabled()) {
@@ -90,6 +92,26 @@ class ApiController extends Controller
     public function handleZeroPlansEmail(HandleZeroPlansRequest $request)
     {
         return $this->apiService->handleZeroPlansEmail($request);
+    }
+
+    // Temporary Endpoint - Will be Removed after fixing Quote Status Dates for all LOBs
+    public function fixQuoteStatusDate()
+    {
+        $quoteType = QuoteTypes::getName(request()->quoteTypeId);
+
+        if ($quoteType) {
+            if (request('process')) {
+                FixQuoteStatusDate::dispatch($quoteType, request('statuses'), request('chunkSize', 200));
+
+                return apiResponse(null, Response::HTTP_OK, 'Fix Quote Status Date Job dispatched');
+            } else {
+                $records = $quoteType->model()->whereIn('quote_status_id', request('statuses'))->count();
+
+                return apiResponse(null, Response::HTTP_OK, "Total Records are: {$records}");
+            }
+        }
+
+        return apiResponse(null, Response::HTTP_OK, 'Invalid Quote Type');
     }
 
     public function quoteUpdated(QuoteUpdatedRequest $request)

@@ -597,6 +597,7 @@ class CRUDController extends Controller
         }
         $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', $quoteTypeId);
 
+        $leadStatuses = app(CentralService::class)->lockTransactionStatus($record->id, $quoteTypeId, $leadStatuses);
         if (AMLService::checkAMLStatusFailed($quoteTypeId, $record->id)) {
             $leadStatuses = collect($leadStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
