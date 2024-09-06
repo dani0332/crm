@@ -61,12 +61,13 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $isDocumentEmailSentToCustomer = QuoteTag::where([
             'quote_type_id' => $quoteTypeId,
             'quote_uuid' => $quote->uuid,
-            'name' => QuoteTagEnums::DOCUMENTS_EMAIL_SENT_TO_CUSTOMER,
+            'name' => QuoteTagEnums::POLICY_SENT_TO_CUSTOMER,
             'value' => 1,
         ])->count();
 
         if ($isDocumentEmailSentToCustomer > 0) {
             info('job: SendBookPolicyDocumentsJob skipped for: '.$this->code.' as email already sent');
+            return;
         }
 
         $handBookDocuments = [];
@@ -151,7 +152,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         QuoteTag::create([
             'quote_type_id' => $quoteTypeId,
             'quote_uuid' => $quote->uuid,
-            'name' => QuoteTagEnums::DOCUMENTS_EMAIL_SENT_TO_CUSTOMER,
+            'name' => QuoteTagEnums::POLICY_SENT_TO_CUSTOMER,
             'value' => 1,
         ]);
     }
