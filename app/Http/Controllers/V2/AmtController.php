@@ -205,8 +205,8 @@ class AmtController extends Controller
         } else {
             $data->orderBy('bqr.created_at', 'DESC')->orderBy('bqr.advisor_id');
         }
-        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
-
+        $paymentAuthorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+        $authorizedDays = intval($paymentAuthorizedDays->value);
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManagerORDeputy;
         $quotes = $data->simplePaginate(15)->withQueryString();
 
