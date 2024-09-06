@@ -26,6 +26,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
+use Illuminate\Support\Facades\Response;
 
 class QuoteDocumentController extends Controller
 {
@@ -395,8 +396,11 @@ class QuoteDocumentController extends Controller
             $disk = Storage::disk('azureIM');
             if ($disk->exists($quoteDocument->doc_url)) {
                 $contents = $disk->get($quoteDocument->doc_url);
-
-                return response($contents)->header('content-type', $quoteDocument->doc_mime_type);
+                $mimeType = $quoteDocument->doc_mime_type;
+                if ($mimeType == 'application/pdf'){
+                    abort(404);
+                }
+                return Response::make($contents, 200)->header('Content-Type', $mimeType);
             }
         }
         abort(404);
