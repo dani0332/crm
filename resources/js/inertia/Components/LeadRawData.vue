@@ -87,58 +87,6 @@ const onSubmit = () => {
                 ><span class="text-sm"> : {{ value ?? 'Null' }}</span>
               </div>
             </div>
-
-            <h2 class="font-bold my-4 text-primary-800">
-              Customer Additional Contacts :
-            </h2>
-            <div class="flex flex-wrap">
-              <div class="flex flex-wrap" v-for="item in customers" :key="item">
-                <div
-                  v-for="(value, key) in item"
-                  :key="key"
-                  class="bg-gray-300 p-2 m-1 flex rounded-md"
-                >
-                  <span class="font-bold text-sm">{{ key }} </span
-                  ><span class="text-sm"> : {{ value ?? 'Null' }}</span>
-                </div>
-              </div>
-            </div>
-
-            <h2 class="font-bold my-4 text-primary-800">Members Details:</h2>
-            <div class="flex flex-wrap">
-              <div
-                v-for="(item, index) in leadsMembers"
-                :key="index"
-                class="flex flex-wrap"
-              >
-                <div
-                  v-for="(value, key) in item"
-                  :key="key"
-                  class="bg-gray-300 p-2 m-1 flex rounded-md"
-                >
-                  <span class="font-bold text-sm">{{ key }} </span
-                  ><span class="text-sm"> : {{ value ?? 'Null' }}</span>
-                </div>
-              </div>
-            </div>
-
-            <h2 class="font-bold my-4 text-primary-800">Payments Details:</h2>
-            <div class="flex flex-wrap">
-              <div
-                v-for="(item, index) in leadsPayments"
-                :key="index"
-                class="flex flex-wrap"
-              >
-                <div
-                  v-for="(value, key) in item"
-                  :key="key"
-                  class="bg-gray-300 p-2 m-1 flex rounded-md"
-                >
-                  <span class="font-bold text-sm">{{ key }} </span>
-                  <span class="text-sm"> : {{ value ?? 'Null' }}</span>
-                </div>
-              </div>
-            </div>
           </template>
         </AppModal>
       </template>

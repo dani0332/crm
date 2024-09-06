@@ -1184,5 +1184,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :id="$page.props.quote.id"
       :expanded="sectionExpanded"
     />
+
+    <lead-raw-data
+      :modelType="'Business'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

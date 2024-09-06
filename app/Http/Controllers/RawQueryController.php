@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
@@ -25,6 +26,7 @@ class RawQueryController extends Controller
             PersonalQuote::class => ['id', 'customer_id', 'quote_status_id', 'payment_status_id', 'advisor_id', 'plan_id', 'nationality_id'],
             LifeQuote::class => ['id', 'customer_id', 'quote_status_id', 'payment_status_id', 'advisor_id', 'pa_id', 'nationality_id'],
             CarQuote::class => ['id', 'customer_id', 'quote_status_id', 'payment_status_id', 'advisor_id', 'plan_id', 'nationality_id'],
+            BusinessQuote::class => ['id', 'customer_id', 'quote_status_id', 'payment_status_id', 'advisor_id', 'pa_id', 'nationality_id'],
         ];
         
         if (isset($fieldsMap[$modelType])) {
