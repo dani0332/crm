@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
 use App\Models\User;
+use App\Enums\WorkflowTypeEnum;
 
 class HealthEmailService extends BaseService
 {
@@ -14,7 +15,7 @@ class HealthEmailService extends BaseService
         if (! $lead->oca_flow_enabled) {
             $advisor = User::where('id', $lead->advisor_id)->first();
             $emailData = $this->mapDataForFollowupEmail($lead, $advisor);
-            $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_OCA_HEALTH_WORKFLOW)->first();
+            $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
             if ($sicEvent) {
                 $responseCode = $birdService->triggerWebHookRequest($sicEvent->value, $emailData);
                 $lead->oca_flow_enabled = true;
@@ -52,6 +53,10 @@ class HealthEmailService extends BaseService
             'mobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
             'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
             'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
+            'workflow_type' => WorkflowTypeEnum::HEALTH_AUTOMATED_FOLLOWUPS,
+            'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
+            'instantAlfredLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
+
         ];
     }
 
