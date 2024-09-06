@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Exports\InstantChatConsolidatedExport;
 use App\Exports\InstantChatDetailedExport;
+use App\Models\CarQuote;
 use League\CommonMark\Extension\SmartPunct\Quote;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -87,6 +88,17 @@ class AlfredChatController extends Controller
     public function logs(Request $request)
     {
 
+        $modelType = $request->quoteType ?? 'Car';
+        $nameSpace = 'App\\Models\\';
+        $modelType = (in_array(ucwords($modelType), newUi()) && checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
+        
+        if($modelType == CarQuote::class){
+                   $car = CarQuote::with('carQuoteRequestDetail')
+                            ->whereHas('carQuoteRequestDetail', function ($query) {
+                                    $query->whereNotNull('chat_initiated_at');
+                            })
+                            ->get();
+        }
         $totalPipeline = $this->createPipeline($request, 'total');
 
         // Execute the aggregation pipeline to get the total count

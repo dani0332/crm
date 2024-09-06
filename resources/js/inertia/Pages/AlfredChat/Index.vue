@@ -13,7 +13,8 @@ const objToUrl = obj => useObjToUrl(obj);
 const cleanObj = obj => useCleanObj(obj);
 
 const filters = reactive({
-  quoteId: null,
+  quoteId: '7Q54ETDX',
+  quoteType: 'Car',
   start_date: null,
   end_date: null,
   page: 1,
