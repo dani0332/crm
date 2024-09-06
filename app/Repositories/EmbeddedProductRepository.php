@@ -255,7 +255,7 @@ class EmbeddedProductRepository extends BaseRepository
             $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($item->short_code);
             if ($isAlfredProtect) {
                 $isDocPresent = count($transaction) > 0 ? $transaction[0]->documents()->count() > 0 : false;
-                $item->download_document_button = $isDocPresent;
+                $item->download_document_button = $isDocPresent && $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
 
                 if (auth()->user()->hasRole(RolesEnum::Engineering)) {
                     $documentCount = ($isDocPresent == true) ? $transaction[0]->documents()->count() : 0;
@@ -265,7 +265,6 @@ class EmbeddedProductRepository extends BaseRepository
             }
 
             $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
-            $item->download_document_button = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
             $item->send_document_button = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
         });
 
