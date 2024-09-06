@@ -324,6 +324,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/lead-allocation/toggle-renewal-car-lead-allocation-status', [LeadAllocationController::class, 'toggleRenewalCarLeadAllocationStatus']);
     Route::post('/lead-allocation/toggle-car-lead-fetch-sequence', [LeadAllocationController::class, 'toggleCarLeadFetchSequence']);
 
+    Route::get('documents/{uuid}/download', [QuoteDocumentController::class, 'previewQuoteDocument']);
     Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'list']);
     Route::post('quotes/{quoteType}/{quoteUuId}/update-validate-documents', [QuoteDocumentController::class, 'validateDocumentsUpdate']);
     Route::post('quotes/{quoteType}/documents/store', [QuoteDocumentController::class, 'store']);
