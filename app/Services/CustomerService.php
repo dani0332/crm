@@ -175,17 +175,20 @@ class CustomerService extends BaseService
                 ];
                 $customer = Customer::create($customerArray);
                 $customer->update(['code' => 'IND-'.$customer->id]);
-                $getCustomerAdditionalContact = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
-                    ->get();
-                foreach ($getCustomerAdditionalContact as $contact) {
-                    CustomerAdditionalContact::create([
-                        'customer_id' => $customer->id,
-                        'key' => $contact->key,
-                        'value' => $contact->value,
-                    ]);
-                }
                 $email = trim($lead->email);
 
+                if (! str_ends_with($email, '@insurancemarket.ae') && ! str_ends_with($email, '@afia.ae')) {
+
+                    $getCustomerAdditionalContact = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
+                        ->get();
+                    foreach ($getCustomerAdditionalContact as $contact) {
+                        CustomerAdditionalContact::create([
+                            'customer_id' => $customer->id,
+                            'key' => $contact->key,
+                            'value' => $contact->value,
+                        ]);
+                    }
+                }
                 // Check if the email ends with the specified domains
                 if (! str_ends_with($email, '@insurancemarket.ae') && ! str_ends_with($email, '@afia.ae')) {
                     $isExist = CustomerAdditionalContact::where('key', 'email')
@@ -200,6 +203,10 @@ class CustomerService extends BaseService
                             'value' => $email,
                         ]);
                     }
+                }
+                $removeOldEmail = CustomerAdditionalContact::where('customer_id', $lead->customer_id)->get();
+                foreach ($removeOldEmail as $removeEmail) {
+                    $removeEmail->delete();
                 }
                 $lead->update(['customer_id' => $customer->id, 'email' => $value]);
 
@@ -249,6 +256,17 @@ class CustomerService extends BaseService
                     ]);
                 }
                 $lead->update(['customer_id' => $customer->id, 'email' => $value]);
+                //Remove @insurancemarket.ae and @afia.ae Domain Email From Additional Contact
+                $removeAdvisorEmail = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
+                    ->where('key', 'email')
+                    ->where(function ($query) {
+                        $query->where('value', 'like', '%@insurancemarket.ae')
+                            ->orWhere('value', 'like', '%@afia.ae');
+                    })
+                    ->first();
+                if (isset($removeAdvisorEmail->id)) {
+                    $removeAdvisorEmail->delete();
+                }
             }
         } elseif ($key == GenericRequestEnum::MOBILE_NO) {
             // REMOVE Mobile Number TO MAKE PRIMARY IN ADDITIONAL CONTACT
