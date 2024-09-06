@@ -60,7 +60,7 @@ class HealthEmailService extends BaseService
             'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
             'workflow_type' => WorkflowTypeEnum::HEALTH_SIC_FOLLOWUPS,
             'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
-            'whatsappConsent' => getWhatsappConsent($quoteType, $lead->uuid),
+            'whatsappConsent' => getWhatsappConsent(QuoteTypes::HEALTH, $lead->uuid),
             'instantAlfredLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
         ];
     }
