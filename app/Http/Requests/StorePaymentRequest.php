@@ -77,14 +77,14 @@ class StorePaymentRequest extends FormRequest
                     if (! empty(request()->send_update_id)) {
                         $paymentAlreadyExistsForSU = Payment::where('send_update_log_id', request()->send_update_id)->count();
                         if ($paymentAlreadyExistsForSU > 0) {
-                            $validator->errors()->add('value', 'Payment Already Added');
+                            $validator->errors()->add('payment', 'Payment Already Added');
                         }
                     }
 
                     if (! empty($quoteModel->parent_duplicate_quote_id)) {
                         $paymentAlreadyExistsForCIR = $quoteModel->payments->count();
                         if ($paymentAlreadyExistsForCIR > 0) {
-                            $validator->errors()->add('value', 'Payment Already Added');
+                            $validator->errors()->add('payment', 'Payment Already Added');
                         }
                     }
 
@@ -95,7 +95,7 @@ class StorePaymentRequest extends FormRequest
 
                 $paymentAlreadyExistsCount = Payment::where('code', $expectedPaymentCode)->count();
                 if ($paymentAlreadyExistsCount > 0) {
-                    $validator->errors()->add('value', 'Payment Already Added');
+                    $validator->errors()->add('payment', 'Payment Already Added');
                 }
             }
             // check if the user is authorized to apply discount
