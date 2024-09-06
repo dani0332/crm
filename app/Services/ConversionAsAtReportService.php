@@ -52,6 +52,8 @@ class ConversionAsAtReportService extends BaseService
                     LeadSourceEnum::IMCRM,
                     LeadSourceEnum::RENEWAL_UPLOAD,
                     LeadSourceEnum::INSLY,
+                    LeadSourceEnum::SAPGO,
+                    LeadSourceEnum::SAPJO,
                 ]);
 
             $filters = [
