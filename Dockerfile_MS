@@ -70,7 +70,11 @@ curl \
 wget \
 libfreetype6 \
 libjpeg62-turbo \
-libpng16-16
+libpng16-16 \
+libzip4 \
+zlib1g \
+libicu67 \
+libmemcached11 
 
 # Set working directory
 WORKDIR /var/www
