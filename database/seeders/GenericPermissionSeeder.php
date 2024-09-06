@@ -18,13 +18,13 @@ class GenericPermissionSeeder extends Seeder
      */
     public function run()
     {
-         // ADD Permission to Access raw query data
-         $quoteRawData = Permission::where('name', PermissionsEnum::QUOTE_RAW_DATA)->first();
-         if (! $quoteRawData) {
-             Permission::create([
-                 'name' => PermissionsEnum::QUOTE_RAW_DATA,
-             ]);
-         }
+        // ADD Permission to Access raw query data
+        $quoteRawData = Permission::where('name', PermissionsEnum::QUOTE_RAW_DATA)->first();
+        if (! $quoteRawData) {
+            Permission::create([
+                'name' => PermissionsEnum::QUOTE_RAW_DATA,
+            ]);
+        }
 
         // ADD Permission to Read only Access LOBS
         $readOnlyAccessPermission = Permission::where('name', PermissionsEnum::All_QUOTES_VIEWONLY_ACCESS)->first();
