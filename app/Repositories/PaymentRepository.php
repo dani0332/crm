@@ -21,7 +21,6 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
-use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\ApplicationStorageService;
@@ -120,9 +119,9 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if ($request->send_update_id || ! empty($quoteModel->parent_duplicate_quote_id)) {
                 // Payment follow-up count is now iterative (uuid-(nth+1)) and not dependent on the count of payments in the quote
                 // Count will be iterative for each payment added through the send update or Child lead
-                 $mainLeadCode = implode('-', array_slice(explode('-', $quoteModel->code), 0, 2));
-                 $paymentCount = $this->getPaymentsCountByLeadCode($mainLeadCode);
-                 $paymentInformation['code'] = ($paymentCount > 0) ? $mainLeadCode.'-'.$paymentCount : $mainLeadCode;
+                $mainLeadCode = implode('-', array_slice(explode('-', $quoteModel->code), 0, 2));
+                $paymentCount = $this->getPaymentsCountByLeadCode($mainLeadCode);
+                $paymentInformation['code'] = ($paymentCount > 0) ? $mainLeadCode.'-'.$paymentCount : $mainLeadCode;
 
                 if (! empty(request()->send_update_id)) {
                     $paymentInformation['send_update_log_id'] = $request->send_update_id;
