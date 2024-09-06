@@ -13,5 +13,4 @@ final class InstantChatReportsEnum extends Enum
 {
     public const DETAILED_REPORT = 'Detailed Report';
     public const CONSOLIDATED_REPORT = 'Consolidated Report';
-    
 }

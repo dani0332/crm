@@ -6,6 +6,8 @@ use App\Enums\InstantChatReportsEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Exports\InstantChatConsolidatedExport;
+use App\Exports\InstantChatDetailedExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredChatRequest;
 use App\Models\AlfredChat;
@@ -13,10 +15,7 @@ use App\Models\QuoteBatches;
 use App\Models\QuoteStatus;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Exports\InstantChatConsolidatedExport;
-use App\Exports\InstantChatDetailedExport;
 use App\Models\CarQuote;
-use League\CommonMark\Extension\SmartPunct\Quote;
 use Maatwebsite\Excel\Facades\Excel;
 
 class AlfredChatController extends Controller
@@ -155,16 +154,15 @@ class AlfredChatController extends Controller
         $chatPipeline = $this->createPipeline($request, null);
 
         $chatPipeline[] = ['$sort' => ['created_at' => -1]];
-        
+
         $chat = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline));
 
         $fileName = 'alfred_chat_logs_'.Carbon::now()->format('Y-m-d_H-i-s');
 
-
-        if($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
+        if ($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
             return Excel::download(new InstantChatConsolidatedExport($chat), $fileName.'.xlsx');
         }
-        if($request->report == InstantChatReportsEnum::DETAILED_REPORT) {
+        if ($request->report == InstantChatReportsEnum::DETAILED_REPORT) {
             return Excel::download(new InstantChatDetailedExport($chat), $fileName.'.xlsx');
         }
     }
@@ -196,7 +194,7 @@ class AlfredChatController extends Controller
             $pipeline[] = ['$match' => ['quote_id' => $quoteId]];
         }
 
-        if ($request->has('start_date') && $request->start_date != null && $request->has('end_date')  && $request->end_date != null) {
+        if ($request->has('start_date') && $request->start_date != null && $request->has('end_date') && $request->end_date != null) {
             $start_date = Carbon::createFromFormat('Y-m-d', Carbon::parse($request->start_date)->format('Y-m-d'))->startOfDay()->toIso8601String();
             $end_date = Carbon::createFromFormat('Y-m-d', Carbon::parse($request->end_date)->format('Y-m-d'))->endOfDay()->toIso8601String();
             $pipeline[] = ['$match' => ['created_at' => ['$gte' => $start_date, '$lte' => $end_date]]];
@@ -207,7 +205,7 @@ class AlfredChatController extends Controller
             $pipeline[] = ['$match' => ['ken_response.quotes.transaction_type' => ['$in' => $request->transaction_type]]];
         }
 
-        // missing in mongodb 
+        // missing in mongodb
         if (isset($request->batch) && $request->batch != null) {
             $pipeline[] = ['$match' => ['ken_response.quotes.batch' => ['$in' => $request->batch]]];
         }
@@ -222,7 +220,7 @@ class AlfredChatController extends Controller
                 QuoteStatusEnum::TransactionApproved,
                 QuoteStatusEnum::PolicyIssued,
                 QuoteStatusEnum::PolicySentToCustomer,
-                QuoteStatusEnum::PolicyBooked
+                QuoteStatusEnum::PolicyBooked,
             ];
 
             $pipeline[] = ['$match' => ['ken_response.quotes.quoteStatusId' => ['$in' => $approvedStatuses]]];
@@ -232,9 +230,9 @@ class AlfredChatController extends Controller
                 '$match' => [
                     '$or' => [
                         ['ken_response.quotes.advisor' => ['$exists' => true, '$ne' => null]], // Check if advisor contact is shared
-                        ['fallback' => ['$exists' => true, '$eq' => true]]    // Check if HAPEX contact is shared
-                    ]
-                ]
+                        ['fallback' => ['$exists' => true, '$eq' => true]],    // Check if HAPEX contact is shared
+                    ],
+                ],
             ];
         }
         if (isset($request->message_channel) && $request->message_channel != null) {
@@ -280,7 +278,7 @@ class AlfredChatController extends Controller
                 ],
             ];
             $pipeline[] = ['$count' => 'total'];
-        }elseif($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
+        } elseif ($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
             $pipeline[] = [
                 '$project' => [
                     'created_at' => 1,
@@ -298,7 +296,7 @@ class AlfredChatController extends Controller
                     'total_tokens' => '$response.usage.total_tokens',
                 ],
             ];
-        }elseif($request->report == InstantChatReportsEnum::DETAILED_REPORT) {
+        } elseif ($request->report == InstantChatReportsEnum::DETAILED_REPORT) {
             $pipeline[] = [
                 '$group' => [
                     '_id' => '$quote_id',
@@ -310,72 +308,72 @@ class AlfredChatController extends Controller
                             '$cond' => [
                                 ['$$ROOT.role', 'USER'],
                                 ['$last' => '$ken_reponse.quotes.batch'],
-                                null
-                            ]
-                        ]
+                                null,
+                            ],
+                        ],
                     ],
                     'transaction' => [
                         '$last' => [
                             '$cond' => [
                                 ['$$ROOT.role', 'USER'],
                                 ['$last' => '$ken_reponse.quotes.transaction_type'],
-                                null
-                            ]
-                        ]
+                                null,
+                            ],
+                        ],
                     ],
                     'segment' => [
                         '$last' => [
                             '$cond' => [
                                 ['$$ROOT.role', 'USER'],
                                 ['$last' => '$ken_reponse.quotes.segment'],
-                                null
-                            ]
-                        ]
+                                null,
+                            ],
+                        ],
                     ],
                     'payment_status' => [
                         '$last' => [
                             '$cond' => [
                                 ['$$ROOT.role', 'USER'],
                                 ['$first' => '$ken_reponse.quotes.paymentStatus'],
-                                null
-                            ]
-                        ]
+                                null,
+                            ],
+                        ],
                     ],
                     'provider_name' => [
                         '$last' => [
                             '$cond' => [
                                 ['$$ROOT.role', 'USER'],
                                 ['$last' => '$ken_reponse.quotes.providerName'],
-                                null
-                            ]
-                        ]
+                                null,
+                            ],
+                        ],
                     ],
                     'customer_interactions' => [
                         '$sum' => [
                             '$cond' => [
                                 ['$eq' => ['$role', 'USER']],
                                 1,
-                                0
-                            ]
-                        ]
+                                0,
+                            ],
+                        ],
                     ],
                     'ai_interactions' => [
                         '$sum' => [
                             '$cond' => [
                                 ['$eq' => ['$role', 'AI']],
                                 1,
-                                0
-                            ]
-                        ]
+                                0,
+                            ],
+                        ],
                     ],
                     'total_ai_interactions' => [
                         '$sum' => [
                             '$cond' => [
                                 ['$in' => ['$role', ['AI', 'USER']]],
                                 1,
-                                0
-                            ]
-                        ]
+                                0,
+                            ],
+                        ],
                     ],
                     'fallbacks' => ['$sum' => ['$cond' => [['fallback', true], 1, 0]]],
                     'payment_status' => ['$last' => '$ken_reponse.quotes.paymentStatus'],
@@ -391,64 +389,64 @@ class AlfredChatController extends Controller
                                                 QuoteStatusEnum::TransactionApproved,
                                                 QuoteStatusEnum::PolicyIssued,
                                                 QuoteStatusEnum::PolicySentToCustomer,
-                                                QuoteStatusEnum::PolicyBooked
-                                            ]
-                                        ]]
-                                    ]
+                                                QuoteStatusEnum::PolicyBooked,
+                                            ],
+                                        ]],
+                                    ],
                                 ],
                                 'Yes',
-                                'No'
-                            ]
-                        ]
+                                'No',
+                            ],
+                        ],
                     ],
                     'plan_type' => [
                         '$last' => [
                             '$cond' => [
                                 ['$$ROOT.role', 'USER'],
                                 ['$last' => '$ken_reponse.quotes.plan_type'],
-                                null
-                            ]
-                        ]
+                                null,
+                            ],
+                        ],
                     ],
                     'plan_name' => [
                         '$last' => [
                             '$cond' => [
                                 ['$$ROOT.role', 'USER'],
                                 ['$last' => '$ken_reponse.quotes.plan_name'],
-                                null
-                            ]
-                        ]
+                                null,
+                            ],
+                        ],
                     ],
                     'price' => [
                         '$last' => [
                             '$cond' => [
                                 ['$$ROOT.role', 'USER'],
                                 ['$last' => '$ken_reponse.quotes.price'],
-                                null
-                            ]
-                        ]
+                                null,
+                            ],
+                        ],
                     ],
                     'payment_date' => [
                         '$last' => [
                             '$cond' => [
                                 ['$$ROOT.role', 'USER'],
                                 ['$last' => '$ken_reponse.quotes.payment_date'],
-                                null
-                            ]
-                        ]
+                                null,
+                            ],
+                        ],
                     ],
                     'ep_purchased' => [
                         '$last' => [
                             '$cond' => [
                                 ['$$ROOT.role', 'USER'],
                                 ['$last' => '$ken_reponse.quotes.ep_purchased'],
-                                null
-                            ]
-                        ]
+                                null,
+                            ],
+                        ],
                     ],
                 ],
             ];
-            
+
             // $pipeline[] = [
             //     '$project' => [
             //         'quote_type' => 1,

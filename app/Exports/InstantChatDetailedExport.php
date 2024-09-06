@@ -3,12 +3,11 @@
 namespace App\Exports;
 
 use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class InstantChatDetailedExport implements  WithMapping, WithHeadings, FromCollection
+class InstantChatDetailedExport implements FromCollection, WithHeadings, WithMapping
 {
     use Exportable;
 
