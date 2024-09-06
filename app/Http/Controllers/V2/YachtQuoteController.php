@@ -149,9 +149,8 @@ class YachtQuoteController extends Controller
             'quote_type_id' => QuoteTypes::YACHT->id(),
             'quote_request_id' => $quote->id,
         ])->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
-        
 
-        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote->id, QuoteTypes::YACHT->id(),$quoteStatuses);
+        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote->id, QuoteTypes::YACHT->id(), $quoteStatuses);
         if (AMLService::checkAMLStatusFailed(QuoteTypes::YACHT->id(), $quote->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;

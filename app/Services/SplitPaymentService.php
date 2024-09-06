@@ -26,9 +26,9 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
+use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
-use App\Models\QuoteStatusLog;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
@@ -785,7 +785,7 @@ class SplitPaymentService
                     info('Transaction Score Calculated: '.$quoteModel->code);
                 }
                 $quoteModel->save();
-                if (!$sendUpdateId) {
+                if (! $sendUpdateId) {
                     QuoteStatusLog::create([
                         'quote_type_id' => $quoteTypeId,
                         'quote_request_id' => $quoteModel->id,
@@ -794,7 +794,7 @@ class SplitPaymentService
                         'created_at' => Carbon::now(),
                         'updated_at' => Carbon::now(),
                     ]);
-                }                
+                }
 
                 $canCaptureEp = true;
 

@@ -840,7 +840,7 @@ class CentralService
             QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked,
             QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued,
         ];
-        
+
         $isTransactionApproved = QuoteStatusLog::where('quote_type_id', $quoteTypeId)
             ->where('quote_request_id', $quoteId)
             ->where(function ($query) {
@@ -848,10 +848,10 @@ class CentralService
                     ->orWhere('previous_quote_status_id', QuoteStatusEnum::TransactionApproved);
             })
             ->count();
-        
-        if(!$isTransactionApproved){
+
+        if (! $isTransactionApproved) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) use ($lockedQuotesStatuses) {
-                return !in_array($value['id'], $lockedQuotesStatuses);
+                return ! in_array($value['id'], $lockedQuotesStatuses);
             })->values();
         }
 
