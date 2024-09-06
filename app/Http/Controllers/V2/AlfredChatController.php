@@ -11,11 +11,11 @@ use App\Exports\InstantChatDetailedExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredChatRequest;
 use App\Models\AlfredChat;
+use App\Models\CarQuote;
 use App\Models\QuoteBatches;
 use App\Models\QuoteStatus;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Models\CarQuote;
 use Maatwebsite\Excel\Facades\Excel;
 
 class AlfredChatController extends Controller
@@ -90,13 +90,13 @@ class AlfredChatController extends Controller
         $modelType = $request->quoteType ?? 'Car';
         $nameSpace = 'App\\Models\\';
         $modelType = (in_array(ucwords($modelType), newUi()) && checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
-        
-        if($modelType == CarQuote::class){
-                   $car = CarQuote::with('carQuoteRequestDetail')
-                            ->whereHas('carQuoteRequestDetail', function ($query) {
-                                    $query->whereNotNull('chat_initiated_at');
-                            })
-                            ->get();
+
+        if ($modelType == CarQuote::class) {
+            $car = CarQuote::with('carQuoteRequestDetail')
+                ->whereHas('carQuoteRequestDetail', function ($query) {
+                    $query->whereNotNull('chat_initiated_at');
+                })
+                ->get();
         }
         $totalPipeline = $this->createPipeline($request, 'total');
 
