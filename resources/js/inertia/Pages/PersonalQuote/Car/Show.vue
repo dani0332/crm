@@ -3529,6 +3529,7 @@ const onAddUpdate = () => {
       :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :isPlanDetailEnabled="isPlanDetailEnabled"
+      :expanded="sectionExpanded"
     />
 
     <PaymentTable
@@ -3642,6 +3643,7 @@ const onAddUpdate = () => {
       @copyUploadURL="copyUploadURL"
       quoteType="Car"
       :paymentStatusEnum="paymentStatusEnum"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy
@@ -4019,6 +4021,7 @@ const onAddUpdate = () => {
       :customerName="record?.first_name + ' ' + record?.last_name"
       :quoteId="quote.uuid"
       :quoteType="'CAR'"
+      :expanded="sectionExpanded"
     />
   </div>
   <AuditLogs

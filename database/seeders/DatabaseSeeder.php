@@ -57,28 +57,18 @@ class DatabaseSeeder extends Seeder
             // AddeTicketDocumentTypeSeeder::class,
             // DocumentVerifyPermissionSeeder::class,
 
-            /* AddLOBsClaimHistoryOptionsSeeder::class,
-            AddRenewalTemplateStorageSeeder::class,
-            CarMakeSeeder::class,
-            AddPaymentPermissions::class,
-            AddCreateSendUpdatePermissionToAllRoles::class,
+            //AddLOBsClaimHistoryOptionsSeeder::class,
+            // AddRenewalTemplateStorageSeeder::class,
+            // CarMakeSeeder::class,
+            // AddPaymentPermissions::class,
+            // AddCreateSendUpdatePermissionToAllRoles::class,
 
-            InslyRoles::class,
-            InslyPermissions::class,
-            QuoteStatusMapSeeder::class,
-            QuoteStatusSeeder::class,
-            ApplicationStorageSeeder::class,
-            addInsuranceProvidersConfiguration::class,
-            RevokeTempPaymentUpdatePermissionsSeeder::class,
-            addPermissionsForInsurerNowPayment::class,
-            AddeTicketDocumentTypeSeeder::class,
-            DocumentVerifyPermissionSeeder::class,
-            DepartmentPermissionSeeder::class,
-            DocumentTypeAuditRecordSU::class, // Add new Document type for send update - Audit Records*/
-
-            // AddPaymentPermissionsSeeder::class,
-            //AddSendUpdatesCategoriesInLookups::class,
-
+            // InslyRoles::class,
+            // InslyPermissions::class,
+            // QuoteStatusMapSeeder::class,
+            // QuoteStatusSeeder::class,
+            // ApplicationStorageSeeder::class,
+            // RolePermissionSeeder::class,
         ]);
     }
 }

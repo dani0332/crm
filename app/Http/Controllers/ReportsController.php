@@ -76,7 +76,7 @@ class ReportsController extends Controller
             'isCommercial' => $request->isCommercial,
             'isEmbeddedProducts' => $request->isEmbeddedProducts,
             'lob' => $request->lob,
-            'subeams' => $request->sub_teams,
+            'subteams' => $request->sub_teams,
             'vehicle_type' => $request->vehicle_type,
             'insurance_type' => $request->insurance_type,
             'insurance_for' => $request->insurance_for,
@@ -379,6 +379,13 @@ class ReportsController extends Controller
         ]);
     }
 
+    public function renderPaymentSummary(Request $request, ReportService $reportService)
+    {
+        return inertia('Reports/AuthorisedPaymentSummary', [
+            'reportData' => $reportService->getPaymentAuthorisedSummary($request),
+            'defaultFilters' => $reportService->getDefaultFiltersForLeadsList(),
+        ]);
+    }
     public function renderConversionAsAtReport(Request $request, ConversionAsAtReportService $conversionAsAtReportService)
     {
 
@@ -504,6 +511,7 @@ class ReportsController extends Controller
         return inertia('Reports/TotalPremiumLeadsSale', [
             'reportData' => $resp ?? null,
             'filterOptions' => $reportService->getDefaultFiltersForTotalPremium(),
+
         ]);
     }
 }

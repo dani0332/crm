@@ -16,6 +16,39 @@ class ApplicationStorageSeeder extends Seeder
      */
     public function run()
     {
+        //Payment Expire Notification and Email Enable Disable
+        $paymentNotificationEnable = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION)->first();
+        if (! $paymentNotificationEnable) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION,
+                'value' => '1',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
+        }
+        $paymentAuthorizedDays = ApplicationStorage::where('key_name', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+        if (! $paymentAuthorizedDays) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS,
+                'value' => '8',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
+        }
+
+        $paymentNotificationEmailTemplate = ApplicationStorage::where('key_name', ApplicationStorageEnums::PAYMENT_NOTIFICATION_EMAIL_TEMPLATE)->first();
+        if (! $paymentNotificationEmailTemplate) {
+            ApplicationStorage::insert([
+                'key_name' => ApplicationStorageEnums::PAYMENT_NOTIFICATION_EMAIL_TEMPLATE,
+                'value' => '681',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ]);
+        }
+
         $enableCammyFollowUps = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_CAMMY_FOLLOWUP)->first();
         if (! $enableCammyFollowUps) {
             ApplicationStorage::insert([
@@ -507,6 +540,16 @@ class ApplicationStorageSeeder extends Seeder
         );
 
         $this->seedTravelSICStorage();
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW],
+            [
+                'value' => 'https://capture.eu-west-1.nest.messagebird.com/webhooks/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/79b9011e-ff3b-4a5c-a63f-fed3d0743a7f',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
 
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::ADVISOR_CONVERSION_QUOTE_STATUS_DATE],

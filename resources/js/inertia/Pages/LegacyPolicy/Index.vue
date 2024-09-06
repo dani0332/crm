@@ -7,7 +7,13 @@ defineProps({
 
 const { isRequired, emptyOrNumericAndNoSpecialChar } = useRules();
 
+const poidForm = useForm({
+  poid: '',
+});
+
 const page = usePage();
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 const loader = reactive({
   table: false,
   export: false,
@@ -43,11 +49,27 @@ function onSubmit(isValid) {
     console.log('Invalid');
   }
 }
+
+function onSubmitMigrate(isValid) {
+  if (!isValid) return;
+  router.visit(route('migrate-legacy-policy', poidForm.poid), {
+    method: 'post',
+    preserveState: true,
+    preserveScroll: true,
+    onFinish: response => {
+      loader.poid = false;
+    },
+    onBefore: () => {
+      loader.poid = true;
+    },
+  });
+}
 let availableFilters = {
   policy_number: '',
   email: '',
   mobile_no: '',
   page: 1,
+  poid: '',
 };
 const filters = reactive(availableFilters);
 const tableHeader = [
@@ -129,6 +151,35 @@ const productName = item => {
         <x-button size="sm" color="primary" @click.prevent="onReset">
           Reset
         </x-button>
+      </div>
+    </x-form>
+
+    <x-form
+      v-if="can(permissionsEnum.MIGRATE_INSLY_LEAD)"
+      @submit="onSubmitMigrate"
+      :auto-focus="false"
+    >
+      <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <x-input
+          v-model="poidForm.poid"
+          type="text"
+          name="policy_number"
+          label="POID"
+          class="w-full"
+          placeholder="Enter POID"
+          :rules="[isRequired]"
+        />
+        <div class="flex items-center">
+          <x-button
+            :loading="loader.poid"
+            size="sm"
+            color="#ff5e00"
+            type="submit"
+            class="w-full sm:w-auto"
+          >
+            Migrate
+          </x-button>
+        </div>
       </div>
     </x-form>
 
