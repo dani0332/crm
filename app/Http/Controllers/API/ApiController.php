@@ -50,7 +50,7 @@ class ApiController extends Controller
         try {
 
             // Log the incoming request parameters
-            info(self::class . 'assignLeads: request params as : ' . json_encode($request->all()));
+            info(self::class.'assignLeads: request params as : '.json_encode($request->all()));
 
             // Check if lead allocation endpoint is disabled
             if ($this->apiService->isLeadAllocationEndpointDisabled()) {
