@@ -3302,7 +3302,7 @@ const onAddUpdate = () => {
       :type="'App\\Models\\TravelQuote'"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
-      :quoteType="'TRAVEL'"
+      :quoteType="$page.props.modelType"
       :expanded="sectionExpanded"
     />
 

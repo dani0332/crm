@@ -3877,7 +3877,7 @@ const onAddUpdate = () => {
 
     <AuditLogs
       :type="'App\\Models\\HealthQuote'"
-      :quoteType="'HEALTH'"
+      :quoteType="$page.props.modelType"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
     />

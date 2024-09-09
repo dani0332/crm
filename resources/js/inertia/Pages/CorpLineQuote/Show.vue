@@ -1567,7 +1567,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
 
     <AuditLogs
       :type="'App\\Models\\BusinessQuote'"
-      :quoteType="'Business'"
+      :quoteType="$page.props.modelType"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
