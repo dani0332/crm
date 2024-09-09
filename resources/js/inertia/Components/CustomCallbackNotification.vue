@@ -4,20 +4,19 @@
       <span class="close-icon closeTag" @click="closeNotification"
         >&times;</span
       >
-            <img
-                :src="imageUrl"
-                alt="Notification Image"
-                class="notification-image"
-            />
-            <div>
-                <h2 class="notification-title">{{title}}</h2>
-                <p class="notification-message">
-                    {{ message }}
-                    <a class="notification-button" @click="openUrl">{{ quoteUuid }}</a>
-                    will expire in 1 hour.
-                </p>
-            </div>
-        </div>
+      <img
+        :src="imageUrl"
+        alt="Notification Image"
+        class="notification-image"
+      />
+      <div>
+        <h2 class="notification-title">InstantAlfred Callback Request</h2>
+        <p class="notification-message">
+          Urgent callback request for
+          <a class="notification-button" @click="openUrl">{{ quoteUuid }}</a>
+          will expire in 1 hour.
+        </p>
+      </div>
     </div>
   </div>
 </template>
@@ -25,13 +24,11 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 const props = defineProps({
-    imageUrl: String,
-    url: String,
-    timeout: Number,
-    callHideFunction: Function,
-    quoteUuid: String,
-    title: String,
-    message: String,
+  imageUrl: String,
+  url: String,
+  timeout: Number,
+  callHideFunction: Function,
+  quoteUuid: String,
 });
 const visible = ref(false);
 const closeNotification = () => {

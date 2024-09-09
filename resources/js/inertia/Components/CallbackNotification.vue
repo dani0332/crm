@@ -5,12 +5,12 @@ import CallbackNotification from './CallBackNotification.vue';
 const showNotification = ref(false);
 const notificationData = ref({});
 const options = {
-    cluster: 'ap1',
-    forceTLS: false,
+  cluster: 'ap1',
+  forceTLS: false,
 };
 const pusher = new Pusher(page.props.pusherKey, options);
 const channel = pusher.subscribe(
-    'public.' + page.props.appEnv + '.activity.user',
+  'public.' + page.props.appEnv + '.activity.user',
 );
 const listen = () => {
     channel.bind('callback.notification', function (e) {
@@ -28,14 +28,14 @@ const listen = () => {
     });
 };
 const hideNotification = () => {
-    showNotification.value = false;
+  showNotification.value = false;
 };
 onMounted(() => {
-    listen();
+  listen();
 });
 onUnmounted(() => {
-    channel.unbind('callback.notification');
-    channel.unsubscribe('public.' + page.props.appEnv + '.activity.user');
+  channel.unbind('callback.notification');
+  channel.unsubscribe('public.' + page.props.appEnv + '.activity.user');
 });
 </script>
 
