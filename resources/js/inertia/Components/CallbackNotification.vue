@@ -1,7 +1,7 @@
 <script setup>
 import Pusher from 'pusher-js';
 const page = usePage();
-import CallbackNotification from './CallBackNotification.vue';
+import CallBackNotificationTemplate from './CallBackNotificationTemplate.vue';
 const showNotification = ref(false);
 const notificationData = ref({});
 const options = {
@@ -41,7 +41,7 @@ onUnmounted(() => {
 
 <template>
     <div>
-        <CallbackNotification
+        <CallBackNotificationTemplate
             v-if="showNotification"
             :imageUrl="notificationData.imageUrl"
             :url="notificationData.url"
