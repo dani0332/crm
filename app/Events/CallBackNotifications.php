@@ -2,7 +2,6 @@
 
 namespace App\Events;
 
-use App\Enums\ActivityTypeEnum;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
