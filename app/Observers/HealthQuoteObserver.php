@@ -53,5 +53,9 @@ class HealthQuoteObserver
         }
 
         $this->syncQuote($healthQuote, $dirty);
+
+        if (isset($dirty['quote_status_id']) && $healthQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
+            $this->syncLeadEntries($healthQuote->uuid);
+        }
     }
 }
