@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Models\Payment;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
@@ -45,6 +47,11 @@ class BookPolicyRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
+
+            $quote = $this->getQuoteObject(request()->model_type, request()->quote_id);
+            if($quote && $quote->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && !auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
+                $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
+            }
 
             $iTIN = Payment::where('insurer_tax_number', request()->insurer_tax_invoice_number)->get();
 
