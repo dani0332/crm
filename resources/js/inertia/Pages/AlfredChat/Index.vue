@@ -18,15 +18,15 @@ const filters = reactive({
   start_date: null,
   end_date: null,
   page: 1,
-  transaction_type: [],
-  batch: [],
-  lead_status: [],
+  transaction_type_id: [],
+  quote_batch_id: [],
+  quote_status_id: [],
   payment_status_id: [],
   sale_leads: null,
   fallback: null,
   message_channel: null,
   segment: null,
-  mobile_number: null,
+  mobile_no: null,
   report: null,
 });
 
@@ -72,10 +72,12 @@ const leadBatches = computed(() => {
 });
 
 const paymentStatus = computed(() => {
-  return [...Object.keys(page.props.paymentStatusEnum)].map(status => ({
-    value: status,
-    label: status,
-  }));
+  return [...Object.keys(page.props.paymentStatusEnum)].map(
+    (status, index) => ({
+      value: page.props.paymentStatusEnum[status],
+      label: status,
+    }),
+  );
 });
 
 const quoteSegments = page.props.quoteSegments;
@@ -239,11 +241,11 @@ const downloadReport = () => {
       </x-field>
       <x-field label="Transaction Type">
         <combo-box
-          v-model="filters.transaction_type"
+          v-model="filters.transaction_type_id"
           :options="[
-            { label: 'New Business', value: 'Car' },
-            { label: 'Existing Customer\'s Renewal', value: 'Health' },
-            { label: 'Existing Customer\'s New Business', value: 'Travel' },
+            { label: 'New Business', value: 132 },
+            { label: 'Existing Customer\'s Renewal', value: 133 },
+            { label: 'Existing Customer\'s New Business', value: 134 },
           ]"
           placeholder="Search by Transaction type"
           class="w-full"
@@ -252,7 +254,7 @@ const downloadReport = () => {
       </x-field>
       <x-field label="Batch">
         <combo-box
-          v-model="filters.batch"
+          v-model="filters.quote_batch_id"
           :options="leadBatches"
           placeholder="Search by Batch"
           class="w-full"
@@ -261,7 +263,7 @@ const downloadReport = () => {
       </x-field>
       <x-field label="Lead Status">
         <combo-box
-          v-model="filters.lead_status"
+          v-model="filters.quote_status_id"
           :options="leadStatus"
           placeholder="Select the Lead status"
           class="w-full"
@@ -281,8 +283,8 @@ const downloadReport = () => {
           v-model="filters.sale_leads"
           :options="[
             { value: null, label: 'All' },
-            { value: 'yes', label: 'Yes' },
-            { value: 'no', label: 'No' },
+            { value: 'Yes', label: 'Yes' },
+            { value: 'No', label: 'No' },
           ]"
           placeholder="Search by Sale leads"
           class="w-full"
@@ -330,7 +332,7 @@ const downloadReport = () => {
       </x-field>
       <x-field label="Mobile Number">
         <x-input
-          v-model="filters.mobile_number"
+          v-model="filters.mobile_no"
           placeholder="Search by Mobile number"
           class="w-full"
         />
