@@ -282,7 +282,6 @@ class ApiService
             return response()->json(['message' => 'No advisor has been assigned to this lead.'], 404);
         }
         app(ActivitiesService::class)->createApiActivity($request, $record, $modelType);
-        $request->avtivity_type = 'WHATS_APP'; //FOR CHANGE IN API
         $quoteTypeCode = strtolower($modelType->code);
         if ($modelType->code == QuoteTypeCode::Business) {
             $path = "quotes/business/$record->uuid";
@@ -294,12 +293,12 @@ class ApiService
 
         $url = url('/')."/$path";
 
-        if ($request->avtivity_type === ActivityTypeEnum::CALL_BACK) {
-            info('InstantAlfred CallBack Notification Send to Advisor '.$record->advisor_id.' And Lead Code is '.$record->code);
+        if ($request->activityType === ActivityTypeEnum::CALL_BACK) {
+            info('InstantAlfred CallBack Notification Trigger to Advisor '.$record->advisor_id.' And Lead Code is '.$record->code);
             event(new InstantAlfredCallbackNotification($record->uuid, $record->advisor_id, $url, $record->code));
 
         } else {
-            info('InstantAlfred Whatsapp Notification Send to Advisor '.$record->advisor_id.' And Lead Code is '.$record->code);
+            info('InstantAlfred Whatsapp Notification Trigger to Advisor '.$record->advisor_id.' And Lead Code is '.$record->code);
             event(new InstantAlfredWhatsappNotification($record->uuid, $record->advisor_id, $url, $record->code));
 
         }

@@ -36,6 +36,7 @@ class InstantAlfredCallbackNotification implements ShouldBroadcastNow
 
     public function broadcastWith()
     {
+        info("InstantAlfred Callback Notification Send to {$this->advisorId} and Quote Code is {$this->quoteUuid}");
         return [
             'uuid' => $this->uuid,
             'advisorId' => $this->advisorId,

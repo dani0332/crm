@@ -27,6 +27,7 @@ class ActivityApiRequest
             'due_date' => 'required|date',
             'entityUId' => 'required|string',
             'quoteTypeId' => 'required|int',
+            'activityType' => 'required|string',
         ];
     }
 
@@ -40,6 +41,8 @@ class ActivityApiRequest
             'entityUId.required' => 'Entity UUID Required',
             'quoteTypeId.integer' => 'Quote Type ID  must be an integer',
             'quoteTypeId.required' => 'Quote Type ID Required',
+            'activityType.required' => 'Activity Type Required',
+            'activityType.string' => 'Activity Type must be a string',
         ];
     }
 }

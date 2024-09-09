@@ -2,15 +2,18 @@
 
 namespace App\Services;
 
+use App\Enums\ActivityTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\Activities;
+use App\Models\ActivityNotificationLogs;
 use App\Models\QuoteStatus;
 use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ActivitiesService extends BaseService
 {
@@ -207,8 +210,42 @@ class ActivitiesService extends BaseService
         $activity->title = $request->title;
         $activity->quote_status_id = $record?->quote_status_id ?? null;
         $activity->source = LeadSourceEnum::INSTANT_ALFRED;
-        $activity->save();
+        $activity->activity_type = $request->activityType;
+        if ($activity->save()) {
+            ActivityNotificationLogs::create([
+                'activity_id' => $activity->id,
+                'advisor_id' => $activity->assignee_id,
+                'notification_type' => $activity->activity_type,
+            ]);
+        }
 
         return $activity;
     }
+    public function getPendingActivityCount()
+    {
+        if (! Auth::check()) {
+            return [
+                'pendingCallback' => 0,
+                'pendingWhatsapp' => 0,
+            ];
+        }
+
+        $userId = auth()->user()->id;
+
+        $query = DB::table('activity_notification_logs')
+            ->join('activities', 'activities.id', '=', 'activity_notification_logs.activity_id')
+            ->selectRaw('
+            SUM(CASE WHEN notification_type = ? THEN 1 ELSE 0 END) as pendingCallback,
+            SUM(CASE WHEN notification_type = ? THEN 1 ELSE 0 END) as pendingWhatsapp
+        ', [ActivityTypeEnum::CALL_BACK, ActivityTypeEnum::WHATS_APP])
+            ->where('activities.status', 0)
+            ->where('activity_notification_logs.advisor_id', $userId)
+            ->first();
+
+        return [
+            'pendingCallback' => $query->pendingCallback ?? 0,
+            'pendingWhatsapp' => $query->pendingWhatsapp ?? 0,
+        ];
+    }
+
 }

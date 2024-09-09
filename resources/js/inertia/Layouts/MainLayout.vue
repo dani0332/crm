@@ -21,6 +21,7 @@ const createLink = link => {
 };
 
 const user = computed(() => page.props.auth.user);
+const pendingActivityCount = computed(()=>page.props.pendingActivityCount);
 const navLinks = computed(() => page.props.sidebar);
 const openSidebar = ref(false);
 const bannerInfo = computed(() => {
@@ -117,6 +118,14 @@ const onLogout = () => {
               </button>
 
               <div id="headerportal"></div>
+                <div class="flex gap-3">
+                <div class="items-center" style="border: 1px solid #EBEBEB; padding: 5px 5px;">
+                    Pending Callbacks: {{pendingActivityCount.pendingCallback}}
+                </div>
+                <div class="items-center" style="border: 1px solid #EBEBEB; padding: 5px 5px;">
+                    Pending Whatsapp: {{pendingActivityCount.pendingWhatsapp}}
+                </div>
+                </div>
             </div>
 
             <div class="flex gap-3 items-center">
@@ -126,6 +135,8 @@ const onLogout = () => {
                 <InstantAlfredWhatsappNotification/>
                 <InstantAlfredCallbackReminderNotification/>
                 <InstantAlfredWhatsappReminderNotification/>
+
+
               <x-popover align="right" block>
                 <x-button size="sm" ghost>
                   <div class="flex gap-3 items-center">
