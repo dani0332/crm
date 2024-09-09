@@ -397,6 +397,9 @@ class QuoteDocumentController extends Controller
             if ($disk->exists($quoteDocument->doc_url)) {
                 $contents = $disk->get($quoteDocument->doc_url);
                 $mimeType = $quoteDocument->doc_mime_type;
+                if ($mimeType === '.pdf'){
+                    $mimeType = 'application/pdf';
+                }
                 return Response::make($contents, 200)->header('Content-Type', $mimeType);
             }
         }
