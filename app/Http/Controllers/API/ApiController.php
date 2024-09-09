@@ -4,7 +4,6 @@ namespace App\Http\Controllers\API;
 
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\ActivityApiRequest;
 use App\Http\Requests\APiFetchUrl;
 use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\EvaluateTierRequest;
@@ -18,7 +17,6 @@ use App\Services\NotificationService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller

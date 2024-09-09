@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\ActivityTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -13,7 +12,6 @@ use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class ActivitiesService extends BaseService
 {
