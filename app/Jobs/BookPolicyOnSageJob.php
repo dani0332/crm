@@ -89,7 +89,6 @@ class BookPolicyOnSageJob implements ShouldQueue
             'quote_request_id' => $this->quote->id,
             'current_quote_status_id' => $newQuoteStatusId,
             'previous_quote_status_id' => $previousQuoteStatusId,
-            'notes' => 'Policy Booked',
             'created_by' => $userId,
         ];
 

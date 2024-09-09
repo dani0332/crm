@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             ApplicationStorageSeeder::class,
             RolePermissionSeeder::class,
+            QuoteStatusSeeder::class,
         ]);
     }
 }

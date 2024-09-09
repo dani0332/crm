@@ -52,7 +52,6 @@ use App\Models\HealthQuoteRequestDetail;
 use App\Models\Payment;
 use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
-use App\Models\QuoteStatusLog;
 use App\Repositories\PaymentRepository;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
@@ -232,7 +231,6 @@ class CentralController extends Controller
 
             info('Policy send to customer for '.$quote->uuid);
 
-            //TODO : Flags should be introduced regarding Document send email
             return response()->json(['message' => 'Documents are being sent to the customer. The status will be updated once the documents are sent.'], 200);
         }
         if ($request->send_policy_type == SendPolicyTypeEnum::SAGE) {
