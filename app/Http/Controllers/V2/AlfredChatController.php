@@ -12,6 +12,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredChatRequest;
 use App\Models\AlfredChat;
 use App\Models\CarQuote;
+use App\Models\HealthQuote;
 use App\Models\QuoteBatches;
 use App\Models\QuoteStatus;
 use Carbon\Carbon;
@@ -69,12 +70,11 @@ class AlfredChatController extends Controller
 
     public function getChatByDate(AlfredChatRequest $request)
     {
-        $dateFrom = Carbon::createFromFormat('Y-m-d', $request->created_at)->startOfDay()->toIso8601String();
-        $dateTo = Carbon::createFromFormat('Y-m-d', $request->created_at)->endOfDay()->toIso8601String();
+        // $dateFrom = Carbon::createFromFormat('Y-m-d', $request->created_at)->startOfDay()->toIso8601String();
+        // $dateTo = Carbon::createFromFormat('Y-m-d', $request->created_at)->endOfDay()->toIso8601String();
 
         $chat = AlfredChat::where('quote_id', $request->quoteId)
             ->where('quote_type', $request->quoteType)
-            ->whereBetween('created_at', [$dateFrom, $dateTo])
             ->get();
 
         if ($chat->isEmpty()) {
@@ -91,62 +91,83 @@ class AlfredChatController extends Controller
         $nameSpace = 'App\\Models\\';
         $modelType = (in_array(ucwords($modelType), newUi()) && checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
 
+        $data = [];
         if ($modelType == CarQuote::class) {
-            $car = CarQuote::with('carQuoteRequestDetail')
-                ->whereHas('carQuoteRequestDetail', function ($query) {
-                    $query->whereNotNull('chat_initiated_at');
-                })
-                ->get();
+            $data = CarQuote::with(['carQuoteRequestDetail' => function ($query) {
+                $query->select('id', 'car_quote_request_id', 'chat_initiated_at'); // specify keys from carQuoteRequestDetail
+            }])
+            ->select('id', 'uuid', 'code') // specify keys from CarQuote
+            ->whereHas('carQuoteRequestDetail', function ($query) {
+                $query->whereNotNull('chat_initiated_at');
+            })
+            ->where(function ($query) use ($request, $modelType) {
+                $this->processChatFilters($request, $query,  $modelType);
+            })->simplePaginate(15);
+        }elseif($modelType == HealthQuote::class) {
+            $data = HealthQuote::with(['healthQuoteRequestDetail' => function ($query) {
+                $query->select('id', 'health_quote_request_id', 'chat_initiated_at'); // specify keys from healthQuoteRequestDetail
+            }])
+            ->select('id', 'uuid', 'code') // specify keys from HealthQuote
+            ->whereHas('healthQuoteRequestDetail', function ($query) {
+                $query->whereNotNull('chat_initiated_at');
+            })
+            ->simplePaginate(15);
         }
-        $totalPipeline = $this->createPipeline($request, 'total');
-
-        // Execute the aggregation pipeline to get the total count
-        $totalDocuments = AlfredChat::raw(fn ($collection) => $collection->aggregate($totalPipeline))->toArray();
-
-        $totalDocumentsCount = empty($totalDocuments) ? 0 : $totalDocuments[0]['total'];
-
-        // Define pagination parameters
-        $perPage = 15; // Or any number of documents per page
-        $page = $request->has('page') ? max(1, (int) $request->page) : 1;
-        $skip = ($page - 1) * $perPage;
-
-        $chatPipeline = $this->createPipeline($request, 'chat');
-
-        $chatPipeline[] = ['$sort' => ['created_at' => -1]];
-        $chatPipeline[] = ['$skip' => $skip];
-        $chatPipeline[] = ['$limit' => $perPage];
-
-        $chat = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline))->toArray();
-
-        $startIndex = ($page - 1) * $perPage + 1;
-        $endIndex = $startIndex + count($chat) - 1;
-        $prevPage = $page > 1 ? $page - 1 : null;
-        $nextPage = count($chat) === $perPage ? $page + 1 : null;
-        // Create pagination object
-        $pagination = [
-            'data' => $chat,
-            'current_page' => $page,
-
-            'prev_page_url' => $prevPage ? $request->url().'?page='.$prevPage.
-            ($request->start_date ? '&start_date='.$request->start_date : '').
-            ($request->end_date ? '&end_date='.$request->end_date : '').
-            ($request->quoteType ? '&quoteType='.$request->quoteType : '').
-            ($request->quoteId ? '&quoteId='.$request->quoteId : '')
-            : null,
-
-            'next_page_url' => $nextPage ? $request->url().'?page='.$nextPage.
-            ($request->start_date ? '&start_date='.$request->start_date : '').
-            ($request->end_date ? '&end_date='.$request->end_date : '').
-            ($request->quoteType ? '&quoteType='.$request->quoteType : '').
-            ($request->quoteId ? '&quoteId='.$request->quoteId : '')
-            : null,
-
-            'from' => $startIndex,
-            'to' => $endIndex,
-        ];
-
+        
         // Now you can pass these variables to your pagination component
-        return inertia('AlfredChat/Index', ['logs' => $pagination, 'leadStatuses' => QuoteStatus::all(), 'batches' => QuoteBatches::all()]);
+        return inertia('AlfredChat/Index', ['logs' => $data, 'leadStatuses' => QuoteStatus::all(), 'batches' => QuoteBatches::all()]);
+    }
+
+    public function processChatFilters(Request $request, $partialQuery, $modelType){
+
+        if (in_array($modelType, [HealthQuote::class, CarQuote::class]) && ! empty($request->start_date) && ! empty($request->end_date)) {
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['start_date']));
+            $dateTo = date('Y-m-d 23:59:59', strtotime($request['end_date']));
+        
+            // Determine the correct relationship based on the model type
+            $relation = $modelType == HealthQuote::class ? 'healthQuoteRequestDetail' : 'carQuoteRequestDetail';
+        
+            // Apply the whereHas for the determined relation
+            $partialQuery->whereHas($relation, function ($query) use ($dateFrom, $dateTo) {
+                $query->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
+            });
+        }
+
+        if($modelType == CarQuote::class){
+            $partialQuery->where('quote_batch_id', $request->batch);
+            $partialQuery->where('assignment_type', $request->assigment_type);
+        }
+
+        if(isset($request->payment_status_id) && $request->payment_status_id != ''){
+            if ($request->sale_leads == quoteTypeCode::yesText) {
+                $partialQuery->whereIn('quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked]);
+            }
+            // if ($request->sale_leads == quoteTypeCode::noText) {
+            //     $partialQuery->whereIn('previous_quote_policy_number');
+            // }
+        }
+        if (isset($request->payment_status_id) && $request->payment_status_id != '') {
+            $partialQuery->where('payment_status_id', $request->payment_status_id);
+        }
+
+        if (isset($request->transaction_type) && $request->transaction_type != '') {
+            $partialQuery->where('transaction_type_id', $request->transaction_type);
+        }
+
+        if (isset($request->email) && $request->email != '') {
+            $partialQuery->where('email', $request->email);
+        }
+
+        if (isset($request->mobile_no) && $request->mobile_no != '') {
+            $partialQuery->where('mobile_no', $request->mobile_no);
+        }
+
+        if (isset($request->quote_status) && is_array($request->quote_status) && count($request->quote_status) > 0) {
+            $partialQuery->whereIn('quote_status_id', $request->quote_status);
+        }
+
+       
+
     }
 
     public function exportChat(Request $request)

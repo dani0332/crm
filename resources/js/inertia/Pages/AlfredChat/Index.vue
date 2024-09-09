@@ -13,7 +13,7 @@ const objToUrl = obj => useObjToUrl(obj);
 const cleanObj = obj => useCleanObj(obj);
 
 const filters = reactive({
-  quoteId: '7Q54ETDX',
+  quoteId: null,
   quoteType: 'Car',
   start_date: null,
   end_date: null,
@@ -21,7 +21,7 @@ const filters = reactive({
   transaction_type: [],
   batch: [],
   lead_status: [],
-  payment_status: [],
+  payment_status_id: [],
   sale_leads: null,
   fallback: null,
   message_channel: null,
@@ -97,7 +97,7 @@ const chatMessages = ref({
 });
 
 const tableHeader = reactive([
-  { text: 'Ref-ID', value: 'quote_id' },
+  { text: 'Ref-ID', value: 'code' },
   { text: 'Created At', value: 'created_at' },
   { text: 'Actions', value: 'action' },
 ]);
@@ -154,21 +154,30 @@ function setQueryStringFilters() {
   }
 }
 
+const createQueryParams = item => {
+  return {
+    quoteId: item.code.split('-')[1],
+    quoteType: filters.quoteType.toUpperCase(),
+    created_at: useDateFormat(
+      item.code.includes('CAR')
+        ? item.car_quote_request_detail.chat_initiated_at.split(' ')[0]
+        : item.health_quote_request_detail.chat_initiated_at.split(' ')[0],
+      'YYYY-MM-DD',
+    ).value,
+  };
+};
+
 const showChat = item => {
   loader.view = true;
   axios
-    .post('/get-alfred-chat-by-date', {
-      quoteId: item.quote_id,
-      quoteType: item.quote_type,
-      created_at: useDateFormat(item.created_at.split(' ')[0], 'YYYY-MM-DD')
-        .value,
-    })
+    .post('/get-alfred-chat-by-date', { ...createQueryParams(item) })
     .then(response => {
       let { data } = { ...response.data };
       loader.view = false;
-      chatMessages.value.created_at = item.created_at;
-      chatMessages.value.data = data;
-      chatMessages.value.id = item.quote_type + '-' + item.quote_id;
+      // chatMessages.value.created_at = item.created_at;
+      // chatMessages.value.created_at = '2024-09-02';
+      chatMessages.value.data = data.length > 0 ? data : [];
+      chatMessages.value.id = item.code;
       showChatLogs.value = true;
     })
     .catch(error => {
@@ -261,7 +270,7 @@ const downloadReport = () => {
       </x-field>
       <x-field label="Payment Status">
         <combo-box
-          v-model="filters.payment_status"
+          v-model="filters.payment_status_id"
           :options="paymentStatus"
           placeholder="Search by Payment status"
           class="w-full"
@@ -389,7 +398,7 @@ const downloadReport = () => {
     hide-rows-per-page
     hide-footer
   >
-    <template #item-quote_id="{ quote_id, quote_type }">
+    <!-- <template #item-quote_id="{ quote_id, quote_type }">
       <span v-if="quote_type.toLowerCase().includes('hea')">
         {{ 'HEA' + '-' + quote_id }}
       </span>
@@ -399,9 +408,23 @@ const downloadReport = () => {
       <span v-else>
         {{ quote_type + '-' + quote_id }}
       </span>
-    </template>
-    <template #item-created_at="{ created_at }">
-      {{ dateFormat(created_at.split(' ')[0]) }}
+    </template> -->
+    <template #item-created_at="item">
+      <span v-if="item.code.includes('CAR')">
+        {{
+          dateFormat(
+            item.car_quote_request_detail.chat_initiated_at.split(' ')[0],
+          )
+        }}
+      </span>
+
+      <span v-if="item.code.includes('HEA')">
+        {{
+          dateFormat(
+            item.health_quote_request_detail.chat_initiated_at.split(' ')[0],
+          )
+        }}
+      </span>
     </template>
     <template #item-action="item">
       <x-button
