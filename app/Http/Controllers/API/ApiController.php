@@ -96,6 +96,7 @@ class ApiController extends Controller
         if ($validator->fails()) {
             return response()->json(['message' => $validator->errors()], 422);
         }
+
         return $this->apiService->createActivity($request);
     }
     public function getActivity(Request $request)

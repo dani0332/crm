@@ -37,6 +37,7 @@ class InstantAlfredCallbackReminderNotification implements ShouldBroadcastNow
     public function broadcastWith()
     {
         info("InstantAlfred CallBack Reminder Notification Event Trigger to Advisor {$this->advisorId} and Code is {$this->uuid}");
+
         return [
             'uuid' => $this->uuid,
             'advisorId' => $this->advisorId,
