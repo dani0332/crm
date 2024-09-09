@@ -94,7 +94,7 @@ class EndorsementReportService extends ManagementReport
                     IFNULL( IFNULL(ps.price_vat, send_update_logs.total_vat_amount) , 0 )) - IFNULL( IFNULL(ps.discount_value, send_update_logs.discount) , 0 )) -
                     IFNULL( IFNULL(ps.collection_amount, send_update_logs.price_with_vat), 0) as pending_balance'),
                 'pq.collection_type as collects',
-                'ip.text as insurer',
+                DB::raw('CASE WHEN l.code="CII" OR ip.text is null THEN ip2.text ELSE ip.text END as insurer'),
                 'quote_type.text as line_of_business',
                 'personal_quotes.first_name',
                 'personal_quotes.last_name',
@@ -121,6 +121,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
+            ->leftJoin('insurance_provider as ip2', 'ip2.id', '=', 'send_update_logs.insurance_provider_id')
             ->leftJoin('payment_methods as pm', 'pm.code', '=', 'ps.payment_method')
             ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'ps.payment_gateway_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
@@ -128,6 +129,7 @@ class EndorsementReportService extends ManagementReport
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
         $this->getUtmGroup($request, $query);
+        $this->applyFilters($query, $request);
 
         $reversalQuery = SendUpdateLog::query()
             ->select(
@@ -166,7 +168,7 @@ class EndorsementReportService extends ManagementReport
                 DB::raw("'N/A' as payment_date"),
                 DB::raw("'0.00' as pending_balance"),
                 'pq.collection_type as collects',
-                'ip.text as insurer',
+                DB::raw('CASE WHEN l.code="CII" OR ip.text is null THEN ip2.text ELSE ip.text END as insurer'),
                 'quote_type.text as line_of_business',
                 'personal_quotes.first_name',
                 'personal_quotes.last_name',
@@ -193,17 +195,17 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
+            ->leftJoin('insurance_provider as ip2', 'ip2.id', '=', 'send_update_logs.insurance_provider_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
             ->whereNotNull('send_update_logs.reversal_invoice')
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
         $this->getUtmGroup($request, $reversalQuery);
+        $this->applyFilters($reversalQuery, $request);
 
-        $query = $query->union($reversalQuery);
+        $query = $query->unionAll($reversalQuery);
         $query = $query->orderBy('id', 'desc');
-
-        $this->applyFilters($query, $request);
 
         if ($request->export == 1) {
             $data = $query->get();

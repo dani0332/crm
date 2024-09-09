@@ -213,7 +213,7 @@ watch(
             placeholder="Type here"
           />
         </x-field>
-        <x-field label="Date of purchase">
+        <x-field label="Date of issuance">
           <DatePicker
             v-model="filters.date_of_purchase"
             name="date_of_purchase"
@@ -255,7 +255,6 @@ watch(
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-id="{ id }">
         <Link

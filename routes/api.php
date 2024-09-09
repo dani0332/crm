@@ -25,6 +25,7 @@ Route::middleware(['basicAuth'])->group(function () {
 Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('/imcrm/evaluate-tier', [ApiController::class, 'evaluateTier'])->name('evaluateTier');
     Route::post('/imcrm/trigger-sic-workflow', [ApiController::class, 'triggerSICWorkflow'])->name('triggerSICWorkflow');
+    // Route::post('/imcrm/fix-quote-status-date', [ApiController::class, 'fixQuoteStatusDate']);
 });
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
 Route::post('/imcrm/zero-plans-email', [ApiController::class, 'handleZeroPlansEmail']);
@@ -55,3 +56,4 @@ Route::prefix('v1')->group(function () {
 
 Route::post('/imcrm/create-activity', [ApiController::class, 'createActivity'])->name('createActivity');
 Route::get('/imcrm/get-activity', [ApiController::class, 'getActivity'])->name('getActivity');
+Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);

@@ -5,6 +5,7 @@ namespace App\Traits;
 use App\Enums\DiscountTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentFrequency;
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\ProductionProcessTooltipEnum;
@@ -232,7 +233,7 @@ trait GenericQueriesAllLobs
         $payment = $payments->whereNull('send_update_log_id')->first();
         if ($payment) {
             $invoiceDescription = (new PaymentRepository)->generateInvoiceDescription($payment, $quoteType, $record);
-            $brokerInvoiceNo = (new PaymentRepository)->generateBrokerInvoiceNumber($payment);
+            $brokerInvoiceNo = (new PaymentRepository)->generateBrokerInvoiceNumber($payment, $quoteType);
 
             $getBINFromDBForPolicyStatuses = [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued,  QuoteStatusEnum::CancellationPending];
 
@@ -263,7 +264,7 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['policyCancelled'] = false;
         $bookPolicyDetails['isPolicyCancelledOrPending'] = $this->isPolicyCancelledOrPending($record);
         $bookPolicyDetails['isPolicyCancelledOrPendingToolTtip'] = ProductionProcessTooltipEnum::POLICY_DETAILS_LOCKED_TOOL_TIP;
-
+        $bookPolicyDetails['isEnableUploadDocument'] = app(QuoteDocumentService::class)->isEnableUploadDocument($record->quote_status_id);
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($isFilledPolicyDetails) {
             if (! empty($quoteDocuments)) {
@@ -358,7 +359,7 @@ trait GenericQueriesAllLobs
 
         $quote = $this->getQuoteObject($type, $id);
         info('fn: updateQuoteStatus called for : '.$quote->uuid);
-        if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
+        if (! in_array($quote->quote_status_id, [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicySentToCustomer]) || $quote->policy_issuance_status_id != PolicyIssuanceStatusEnum::PolicyIssued) {
             $isPolicyDetailsFilled = $this->isFilledPolicyDetails($type, $quote);
             info('Is policy details filled for  : '.$quote->uuid.' '.$isPolicyDetailsFilled);
             if ($isPolicyDetailsFilled) {
@@ -482,17 +483,12 @@ trait GenericQueriesAllLobs
      */
     private function updateTotalAmount($payment)
     {
+        info('Updating TA for PC: '.$payment->code.' frequency: '.$payment->frequency.' payment_status_id: '.$payment->payment_status_id);
         if ($payment && $payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
-            info('Updating TA for PC: '.$payment->code);
-            $captureAmount = $payment->captured_amount;
             $totalPrice = $payment->total_price;
             $discountValue = $payment->discount_value;
-            if ($captureAmount < ($totalPrice - $discountValue)) {
-                $totalAmount = $captureAmount;
-            } else {
-                $totalAmount = $totalPrice - $discountValue;
-            }
-            info('updateTotalAmount totalAmount: '.$totalAmount);
+            $totalAmount = $totalPrice - $discountValue;
+            info('updateTotalAmount - totalPrice: '.$totalPrice.', discountValue: '.$discountValue.', totalAmount: '.$totalAmount);
             $payment->total_amount = $totalAmount;
             $payment->save();
         }
@@ -631,13 +627,15 @@ trait GenericQueriesAllLobs
      */
     public function setPaymentStatusAsPerPrice($quoteModel, mixed $payment, mixed $difference): void
     {
-        $priceWithVat = round($quoteModel->price_with_vat, 2);
-        $captureAndDiscount = round(($payment->captured_amount + $payment->discount_value), 2);
-        // If status is partially paid & total price is less than price with vat then set status to partially paid
-        if ($payment->payment_status_id === PaymentStatusEnum::PAID && $payment->total_price < $quoteModel->price_with_vat && ($difference > 0.99)) {
-            $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
-        } elseif ($priceWithVat <= $captureAndDiscount) {
-            $payment->payment_status_id = PaymentStatusEnum::PAID;
+        if ($payment->payment_methods_code != PaymentMethodsEnum::CreditApproval) {
+            $priceWithVat = round($quoteModel->price_with_vat, 2);
+            $captureAndDiscount = round(($payment->captured_amount + $payment->discount_value), 2);
+            // If status is partially paid & total price is less than price with vat then set status to partially paid
+            if ($payment->payment_status_id === PaymentStatusEnum::PAID && $payment->total_price < $quoteModel->price_with_vat && ($difference > 0.99)) {
+                $payment->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
+            } elseif ($priceWithVat <= $captureAndDiscount) {
+                $payment->payment_status_id = PaymentStatusEnum::PAID;
+            }
         }
     }
 
@@ -782,6 +780,7 @@ trait GenericQueriesAllLobs
         $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
         if (! $paymentSplits->isEmpty()) {
             foreach ($paymentSplits as $paymentSplit) {
+                info('Updating TA for Split Payment: '.$payment->code.' frequency: '.$payment->frequency.' payment_status_id: '.$payment->payment_status_id);
                 if ($payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
                     info('Updating PA for PC: '.$payment->code.' BTA: '.$paymentSplit->payment_amount.' WTA: '.$payment->total_amount);
                     $paymentSplit->payment_amount = $payment->total_amount;

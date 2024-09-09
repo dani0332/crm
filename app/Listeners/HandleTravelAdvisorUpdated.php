@@ -48,9 +48,9 @@ class HandleTravelAdvisorUpdated
         if ($lead) {
             SendFTCEmailJob::dispatch($lead->uuid, QuoteTypes::TRAVEL)->delay(now()->addSeconds(5));
         }
-
-        if ($lead->source == LeadSourceEnum::RENEWAL_UPLOAD) {
-            info(self::class.' - lead is source is renewal upload. Skipping intro email job');
+        $skippableSources = [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY];
+        if (in_array($lead->source, $skippableSources)) {
+            info(self::class.' - lead is source is '.$lead->source.' upload. Skipping intro email job');
 
             return;
         }

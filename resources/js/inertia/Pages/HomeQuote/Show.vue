@@ -1285,6 +1285,7 @@ const onAddUpdate = () => {
       :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
+      :expanded="sectionExpanded"
     />
     <PaymentTable
       v-else
@@ -1321,6 +1322,7 @@ const onAddUpdate = () => {
       :quote="quote"
       :insly-id="quote?.insly_id"
       :expanded="sectionExpanded"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy

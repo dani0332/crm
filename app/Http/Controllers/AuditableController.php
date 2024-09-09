@@ -54,12 +54,12 @@ class AuditableController extends Controller
             ->where('auditable_id', $request->auditableId)
             ->where('auditable_type', $request->auditableType);
 
-        if ($code != '') {
-            $query->orWhere(function ($query) use ($code, $auditableTypes) {
-                $query->where('old_values', 'like', '%"code":"'.$code.'"%')
-                    ->whereIn('auditable_type', $auditableTypes);
-            });
-        }
+        // if ($code != '') {
+        //     $query->orWhere(function ($query) use ($code, $auditableTypes) {
+        //         $query->where('old_values', 'like', '%"code":"'.$code.'"%')
+        //             ->whereIn('auditable_type', $auditableTypes);
+        //     });
+        // }
 
         if (! empty($documentIds)) {
             $query->orWhere(function ($query) use ($documentIds) {

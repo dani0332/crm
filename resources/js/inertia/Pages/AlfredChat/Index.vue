@@ -173,7 +173,6 @@ onMounted(() => {
     border-cell
     hide-rows-per-page
     hide-footer
-    fixed-checkbox
   >
     <template #item-quote_id="{ quote_id, quote_type }">
       <span v-if="quote_type.toLowerCase().includes('hea')">

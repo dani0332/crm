@@ -43,7 +43,7 @@ class CarSoldResubmissions implements ShouldQueue
     {
         $quotes = CarQuote::whereHas('carLostQuoteLog', function ($q) {
             $q->where('quote_status_id', QuoteStatusEnum::CarSold)
-                ->whereDate('created_at', Carbon::yesterday())
+                ->whereBetween('created_at', [Carbon::yesterday()->startOfDay(), Carbon::yesterday()->endOfDay()])
                 ->where('status', GenericRequestEnum::PENDING);
         })->with(['carLostQuoteLog', 'advisor.managers', 'carLostQuoteLogs'])
             ->withCount('carLostQuoteLogs')

@@ -347,6 +347,8 @@ export function getQuoteType(id, returnType = 'code') {
     6: { code: 'BIK', id: 'bike', link: '/personal-quotes' },
     7: { code: 'YAC', id: 'yacht', link: '/personal-quotes' },
     8: { code: 'TRA', id: 'travel', link: '/quotes' },
+    9: { code: 'PET', id: 'pet', link: '/personal-quotes' },
+    10: { code: 'CYC', id: 'cycle', link: '/personal-quotes' },
   };
   return types[id] ? types[id][returnType] : '';
 }
@@ -363,4 +365,15 @@ export function buildCdbidLink(quote_uuid, quote_type_id) {
 
 export const userHasRequiredTeams = (givenTeams, userTeams) => {
   return givenTeams.every(team => userTeams.includes(team));
+};
+
+export const calculateDaysDifference = (start_date, end_date) => {
+  if (start_date && end_date) {
+    const start = new Date(start_date);
+    const end = new Date(end_date);
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  }
+  return 0;
 };

@@ -154,6 +154,39 @@ const handleConfirmation = result => {
 };
 
 const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
+const formatDate = date => {
+  if (!date) return '';
+  let parsedDate;
+  const dateTimeRegex = /(\d{2})-(\w{3})-(\d{4}) (\d{2}):(\d{2})(am|pm)/i;
+  if (dateTimeRegex.test(date)) {
+    const [, day, month, year, hours, minutes, period] =
+      date.match(dateTimeRegex);
+    const monthNames = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    const monthIndex = monthNames.indexOf(month);
+    let hour = parseInt(hours, 10);
+    if (period.toLowerCase() === 'pm' && hour !== 12) hour += 12;
+    if (period.toLowerCase() === 'am' && hour === 12) hour = 0;
+    parsedDate = new Date(year, monthIndex, day, hour, minutes);
+  } else {
+    // Assume it's in the format "YYYY-MM-DD"
+    parsedDate = new Date(date);
+  }
+  const options = { year: 'numeric', month: 'short', day: 'numeric' };
+  return useDateFormat(date, 'DD-MMM-YYYY').value;
+};
 </script>
 <template>
   <div
@@ -176,10 +209,12 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
         health_cover_for,
         business_type_of_insurance,
         stale_at,
+        previous_policy_expiry_date,
       } in leads"
       :key="id"
       :href="getUrl(uuid, quoteTypeId)"
       target="_blank"
+      rel="noopener"
       :id="id"
       class="block p-3 mt-2 border space-y-2 hover:transition hover:border-primary-500 rounded"
       :class="[
@@ -264,6 +299,32 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
           </template>
         </x-tooltip>
         <p class="text-xs">{{ updated_at }}</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="1em"
+          height="1em"
+          viewBox="0 0 24 24"
+        >
+          <g
+            fill="none"
+            stroke="#5594c4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+          >
+            <path d="M20.986 12.502a9 9 0 1 0-5.973 7.98" />
+            <path d="M12 7v5l3 3m4 1v3m0 3v.01" />
+          </g>
+        </svg>
+        <p class="text-xs">
+          {{
+            previous_policy_expiry_date
+              ? formatDate(previous_policy_expiry_date)
+              : 'N/A'
+          }}
+        </p>
       </div>
     </a>
   </div>

@@ -320,6 +320,28 @@ const isAddUpdate = ref(false);
 const onAddUpdate = () => {
   isAddUpdate.value = true;
 };
+
+const fetchUpdatedQuote = async () => {
+  try {
+    const response = await axios.get(
+      `/quotes/get-bike-quote/${page.props.quote.uuid}`,
+    );
+
+    page.props.quote = response.data;
+
+    notification.success({
+      title: 'Quote details updated successfully',
+      position: 'top',
+    });
+  } catch (error) {
+    console.error('Error fetching updated quote:', error);
+
+    notification.error({
+      title: 'Something went wrong while updating the quote details',
+      position: 'top',
+    });
+  }
+};
 </script>
 
 <template>
@@ -628,8 +650,8 @@ const onAddUpdate = () => {
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <div>
-                  <x-tooltip position="bottom">
+                <dt>
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -637,8 +659,55 @@ const onAddUpdate = () => {
                     </label>
                     <template #tooltip> Parent Reference ID </template>
                   </x-tooltip>
-                </div>
-                <div>{{ quote?.parent_duplicate_quote_id }}</div>
+                </dt>
+                <dd>
+                  <Link
+                    v-if="quote?.parent_duplicate_quote_id"
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.uuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ quote?.parent_duplicate_quote_id ?? '' }}
+                  </Link>
+                </dd>
+              </div>
+
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="linkedQuoteDetails.childLeadsCount == 1"
+              >
+                <dt>
+                  <x-tooltip placement="bottom">
+                    <label
+                      class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                    >
+                      CHILD REF-ID
+                    </label>
+                    <template #tooltip>
+                      The Child Reference ID acts as an individual identifier
+                      for dependents under the main lead. It's our way of
+                      efficiently organizing and accessing each person's records
+                      within the system.
+                    </template>
+                  </x-tooltip>
+                </dt>
+                <dd>
+                  <Link
+                    :href="
+                      getDetailPageRoute(
+                        linkedQuoteDetails.childLeadsUuid,
+                        linkedQuoteDetails.quote_type_id,
+                      )
+                    "
+                    class="text-primary-500 hover:underline"
+                  >
+                    {{ linkedQuoteDetails.childLeads ?? '' }}
+                  </Link>
+                </dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -1183,6 +1252,7 @@ const onAddUpdate = () => {
       :carPlanFeaturesCodeEnum="carPlanFeaturesCodeEnum"
       :websiteURL="websiteURL"
       :linkedQuoteDetails="linkedQuoteDetails"
+      @plan-selected="fetchUpdatedQuote"
     />
 
     <PaymentTableNew
@@ -1237,6 +1307,7 @@ const onAddUpdate = () => {
       :insly-id="quote?.quote_detail?.insly_id"
       :expanded="sectionExpanded"
       quote-type="Bike"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy

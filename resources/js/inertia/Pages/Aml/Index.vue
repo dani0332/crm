@@ -1,5 +1,4 @@
 <script setup>
-import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
 import dayjs from 'dayjs/esm/index.js';
 
 defineProps({
@@ -210,7 +209,6 @@ onMounted(() => {
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-id="{ code, id }">
         <Link :href="`/kyc/aml/${id}`" class="text-primary-500 hover:underline">

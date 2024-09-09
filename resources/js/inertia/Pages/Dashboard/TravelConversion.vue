@@ -167,7 +167,6 @@ onMounted(() => {
       :headers="travelHeaders"
       border-cell
       hide-footer
-      fixed-checkbox
       :items="stats[key]"
       :rows-per-page="500"
     >
