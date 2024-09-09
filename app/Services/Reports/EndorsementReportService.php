@@ -207,7 +207,7 @@ class EndorsementReportService extends ManagementReport
             $distinctPaymentSplits = DB::table('payment_splits as dps')
                 ->select('dps.code', 'due_date')
                 ->groupBy('dps.code');
-            $reversalQuery->joinSub($distinctPaymentSplits, 'ps', function ($join) {
+            $reversalQuery->leftJoinSub($distinctPaymentSplits, 'ps', function ($join) {
                 $join->on('p.code', '=', 'ps.code');
             });
         }
