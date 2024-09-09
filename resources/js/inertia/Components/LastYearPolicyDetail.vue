@@ -108,6 +108,7 @@ onMounted(() => {
           <Link
             v-else-if="
               quote.source == leadSource.RENEWAL_UPLOAD &&
+              quote.previous_quote_policy_number != null &&
               can(permissionsEnum.VIEW_LEGACY_DETAILS)
             "
             :href="

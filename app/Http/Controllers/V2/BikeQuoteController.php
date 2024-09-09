@@ -166,6 +166,7 @@ class BikeQuoteController extends Controller
 
         $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($quote->id, QuoteTypes::BIKE->name);
 
+        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote->id, QuoteTypes::BIKE->id(), $quoteStatuses);
         if (AMLService::checkAMLStatusFailed(QuoteTypes::BIKE->id(), $quote->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
@@ -360,9 +361,9 @@ class BikeQuoteController extends Controller
         $response = $this->bikeQuoteService->bikePlanModify($request);
 
         if ($response == 200 || $response == 201) {
-            return redirect()->back()->with('success', $response);
+            return redirect()->back()->with('success', 'Bike Quote Plan created successfully');
         } else {
-            return redirect()->back()->with('error', $response);
+            return redirect()->back()->with('error', 'Plan Modification is not allowed');
         }
     }
 
@@ -392,5 +393,12 @@ class BikeQuoteController extends Controller
         $response = BikeQuoteRepository::changeInsurer($request->validated());
 
         return response()->json($response);
+    }
+
+    public function getBikeQuote($uuid)
+    {
+        $quote = BikeQuoteRepository::getBy('uuid', $uuid);
+
+        return response()->json($quote);
     }
 }
