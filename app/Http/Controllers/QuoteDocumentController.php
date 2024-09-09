@@ -24,9 +24,9 @@ use App\Services\SIBService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
-use Illuminate\Support\Facades\Response;
 
 class QuoteDocumentController extends Controller
 {
@@ -397,9 +397,10 @@ class QuoteDocumentController extends Controller
             if ($disk->exists($quoteDocument->doc_url)) {
                 $contents = $disk->get($quoteDocument->doc_url);
                 $mimeType = $quoteDocument->doc_mime_type;
-                if ($mimeType === '.pdf'){
+                if ($mimeType === '.pdf') {
                     $mimeType = 'application/pdf';
                 }
+
                 return Response::make($contents, 200)->header('Content-Type', $mimeType);
             }
         }
