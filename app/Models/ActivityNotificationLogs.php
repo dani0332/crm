@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
@@ -18,5 +17,4 @@ class ActivityNotificationLogs extends Model implements AuditableContract
         'advisor_id',
         'notification_type',
     ];
-
 }

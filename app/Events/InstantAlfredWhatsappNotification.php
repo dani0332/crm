@@ -37,6 +37,7 @@ class InstantAlfredWhatsappNotification implements ShouldBroadcastNow
     public function broadcastWith()
     {
         info("InstantAlfred Whatsapp Notification Send to {$this->advisorId} and Quote Code is {$this->quoteUuid}");
+
         return [
             'uuid' => $this->uuid,
             'advisorId' => $this->advisorId,
