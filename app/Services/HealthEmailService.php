@@ -3,13 +3,16 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\QuoteTypeId;
 use App\Models\ApplicationStorage;
 use App\Models\User;
 use App\Enums\WorkflowTypeEnum;
+use App\Services\BirdService;
+use App\Models\QuoteFlowDetails;
 
 class HealthEmailService extends BaseService
 {
-    public function triggerOCAWorkFlow($lead, $birdService)
+    public function triggerOCAWorkFlow($lead)
     {
         info('Sending OCA Health followups email for lead: '.$lead->uuid.' | Time: '.now());
         if (! $lead->oca_flow_enabled) {
@@ -17,11 +20,19 @@ class HealthEmailService extends BaseService
             $emailData = $this->mapDataForFollowupEmail($lead, $advisor);
             $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
             if ($sicEvent) {
-                $responseCode = $birdService->triggerWebHookRequest($sicEvent->value, $emailData);
+                $response =app(BirdService::class)->triggerWebHookRequest($sicEvent->value, $emailData);
                 $lead->oca_flow_enabled = true;
                 $lead->save();
+                if(!empty($response['Run-Id'])) {
+                    QuoteFlowDetails::create([
+                        'quote_uuid' => $lead->uuid,
+                        'quote_type_id' => QuoteTypeId::Health,
+                        'flow_type' => WorkflowTypeEnum::HEALTH_AUTOMATED_FOLLOWUPS,
+                        'flow_id' => $response['Run-Id'] ?? null,
+                    ]);
+                }
                 info("OCA Health workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
-                info("OCA Health workflow response: {$responseCode} | Ref-ID: {$lead->uuid} |Time: ".now());
+                info("OCA Health workflow response: {$response} | Ref-ID: {$lead->uuid} |Time: ".now());
             } else {
                 info("OCA Health workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
             }

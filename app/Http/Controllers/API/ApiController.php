@@ -18,6 +18,8 @@ use App\Services\EmailStatusService;
 use App\Models\HealthQuote;
 use App\Enums\ProcessStatusCode;
 use App\Models\EmailStatus;
+use App\Services\BirdService;
+use App\Models\QuoteFlowDetails;
 
 class ApiController extends Controller
 {
@@ -96,8 +98,10 @@ class ApiController extends Controller
 
     public function logFollowUpEvent(EmailEventsRequest $request)
     {
+
         $quote = HealthQuote::where('uuid', $request->uuid)->first();
         if(! $quote) {
+            info("lead not found for uuid: {$request->uuid} time: ".now());
             return apiResponse([], Response::HTTP_NOT_FOUND, 'Lead not found');
         }
         if(!EmailStatus::where('email_status', ProcessStatusCode::SENT)
@@ -112,5 +116,17 @@ class ApiController extends Controller
             return apiResponse([], Response::HTTP_OK, 'Email event already logged');
         }
 
+    }
+
+    public function stopFollowUpEvent(){
+        info("getting request to stopFollowUpEvent: ".request('uuid') ." Time:" .now());
+
+        $workflow = QuoteFlowDetails::where('quote_uuid', request('uuid'))->first();
+        if(! $workflow) {
+            info("lead not found for uuid: ".request('uuid') ." Time:" .now());
+            return apiResponse([], Response::HTTP_NOT_FOUND, 'Lead not found');
+        }
+        $response =app(BirdService::class)->stopWorkFlow($workflow);
+        return apiResponse([$response], Response::HTTP_OK, 'Email event stopped successfully');
     }
 }

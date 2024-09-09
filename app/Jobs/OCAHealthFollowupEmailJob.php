@@ -4,7 +4,6 @@ namespace App\Jobs;
 
 use App\Enums\QuoteStatusEnum;
 use App\Models\HealthQuote;
-use App\Services\BirdService;
 use App\Services\HealthEmailService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -29,7 +28,7 @@ class OCAHealthFollowupEmailJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(HealthEmailService $healthEmailService, BirdService $birdService): void
+    public function handle(HealthEmailService $healthEmailService): void
     {
         try {
             $healthLead = HealthQuote::where('uuid', $this->quoteUuid)->first();
@@ -44,7 +43,7 @@ class OCAHealthFollowupEmailJob implements ShouldQueue
             if (in_array($healthLead->quote_status_id, $eligibleStatuses)) {
                 info("Sending OCA health email follow-ups for Ref-ID: {$healthLead->uuid}, Lead Status ID: {$healthLead->quote_status_id} | Time: ".now());
                 // Send the Health OCA email using the HealthEmailService
-                $healthEmailService->triggerOCAWorkFlow($healthLead, $birdService);
+                $healthEmailService->triggerOCAWorkFlow($healthLead);
                 $healthLead->quote_status_id = QuoteStatusEnum::FollowedUp;
                 $healthLead->save();
             } else {
