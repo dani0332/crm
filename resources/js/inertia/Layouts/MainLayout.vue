@@ -2,8 +2,6 @@
 import PaymentNotification from '../Components/PaymentNotification.vue';
 import PaymentExpireNotifications from '../Components/PaymentExpireNotification.vue';
 import OnlineStatusToggle from '../Components/OnlineStatusToggle.vue';
-import CallBackNotification from "../Components/CallBackNotification.vue";
-import CallbackNotification from "../Components/CallbackNotification.vue";
 const page = usePage();
 
 const createLink = link => {
