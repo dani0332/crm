@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Enums\WorkflowTypeEnum;
 use App\Services\BirdService;
 use App\Models\QuoteFlowDetails;
+use App\Enums\QuoteFlowType;
 
 class HealthEmailService extends BaseService
 {
@@ -27,7 +28,7 @@ class HealthEmailService extends BaseService
                     QuoteFlowDetails::create([
                         'quote_uuid' => $lead->uuid,
                         'quote_type_id' => QuoteTypeId::Health,
-                        'flow_type' => WorkflowTypeEnum::HEALTH_AUTOMATED_FOLLOWUPS,
+                        'flow_type' => QuoteFlowType::HEALTH_AUTOMATED_FOLLOWUPS->value,
                         'flow_id' => $response['Run-Id'] ?? null,
                     ]);
                 }
