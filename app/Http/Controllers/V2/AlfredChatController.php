@@ -132,7 +132,8 @@ class AlfredChatController extends Controller
             return inertia('AlfredChat/Index', ['logs' => $data->simplePaginate(15), 'leadStatuses' => QuoteStatus::all(), 'batches' => QuoteBatches::all()]);
     }
 
-    public function processChatFilters(Request $request, $partialQuery, $modelType){
+    public function processChatFilters(Request $request, $partialQuery, $modelType)
+    {
 
         if (isset($request->quoteId) && $request->quoteId != '') {
             $partialQuery->where('uuid', $request->quoteId);
