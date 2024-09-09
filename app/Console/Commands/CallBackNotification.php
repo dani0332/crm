@@ -5,8 +5,7 @@ namespace App\Console\Commands;
 use App\Enums\ActivityTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
-use App\Events\InstantAlfredCallbackReminderNotification;
-use App\Events\InstantAlfredWhatsappReminderNotification;
+use App\Events\CallBackNotifications;
 use App\Models\Activities;
 use App\Models\ActivityNotificationLogs;
 use App\Models\QuoteType;
@@ -16,7 +15,7 @@ use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
-class InstantAlfredNotification extends Command
+class CallBackNotification extends Command
 {
     use GenericQueriesAllLobs;
     use TeamHierarchyTrait;
@@ -83,18 +82,22 @@ class InstantAlfredNotification extends Command
                                 ? ActivityTypeEnum::CALL_BACK
                                 : ActivityTypeEnum::WHATS_APP;
 
-                            $eventClass = $activity->activity_type === ActivityTypeEnum::CALL_BACK
-                                ? InstantAlfredCallbackReminderNotification::class
-                                : InstantAlfredWhatsappReminderNotification::class;
-
-                            if ($eventClass) {
+                            if ($notificationType) {
                                 ActivityNotificationLogs::create([
                                     'activity_id' => $activity->id,
                                     'advisor_id' => $activity->assignee_id,
                                     'notification_type' => $notificationType,
                                 ]);
+                                if ($notificationType === ActivityTypeEnum::CALL_BACK) {
+                                    $title = 'InstantAlfred CallBack Reminder';
+                                    $message = 'Urgent reminder callback request for ';
+                                } else {
+                                    $title = 'InstantAlfred Whatsapp Reminder';
+                                    $message = 'Urgent reminder Whatsapp request for ';
+                                }
+
                                 info("InstantAlfred {$notificationType} Reminder Notification Send to Advisor {$record->advisor_id} And Quote Code is {$record->code}");
-                                event(new $eventClass($record->uuid, $record->advisor_id, $url, $record->code));
+                                event(new CallBackNotifications($record->uuid, $record->advisor_id, $url, $record->code, $title, $message));
                             }
                         }
                     }

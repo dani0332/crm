@@ -2,6 +2,8 @@
 import PaymentNotification from '../Components/PaymentNotification.vue';
 import PaymentExpireNotifications from '../Components/PaymentExpireNotification.vue';
 import OnlineStatusToggle from '../Components/OnlineStatusToggle.vue';
+import CallBackNotification from "../Components/CallBackNotification.vue";
+import CallbackNotification from "../Components/CallbackNotification.vue";
 const page = usePage();
 
 const createLink = link => {
@@ -144,10 +146,7 @@ const urls = computed(() => {
             <div class="flex gap-3 items-center">
               <OnlineStatusToggle :user="user" />
               <!-- <UserStatus /> -->
-                <InstantAlfredCallbackNotification/>
-                <InstantAlfredWhatsappNotification/>
-                <InstantAlfredCallbackReminderNotification/>
-                <InstantAlfredWhatsappReminderNotification/>
+                <CallbackNotification/>
               <PaymentNotification />
               <PaymentExpireNotifications />
 

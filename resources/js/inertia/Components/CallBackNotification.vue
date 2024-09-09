@@ -10,9 +10,9 @@
                 class="notification-image"
             />
             <div>
-                <h2 class="notification-title">InstantAlfred WhatsApp Request</h2>
+                <h2 class="notification-title">{{title}}</h2>
                 <p class="notification-message">
-                    Urgent WhatsApp request for
+                    {{ message }}
                     <a class="notification-button" @click="openUrl">{{ quoteUuid }}</a>
                     will expire in 1 hour.
                 </p>
@@ -25,12 +25,12 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 const props = defineProps({
     imageUrl: String,
-    title: String,
-    message: String,
     url: String,
     timeout: Number,
     callHideFunction: Function,
     quoteUuid: String,
+    title: String,
+    message: String,
 });
 const visible = ref(false);
 const closeNotification = () => {
