@@ -290,13 +290,13 @@ const sendUpdatePermissionCheck = computed(() => {
   return true;
 });
 
-const sanitize = (value) => {
-    return encodeURIComponent(value)
-}
+const sanitize = value => {
+  return encodeURIComponent(value);
+};
 
-const getDownloadUrl = (docUuid) => {
-    return `/documents/${sanitize(docUuid)}/download`
-}
+const getDownloadUrl = docUuid => {
+  return `/documents/${sanitize(docUuid)}/download`;
+};
 </script>
 
 <template>

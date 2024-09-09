@@ -181,13 +181,13 @@ const readOnlyMode = reactive({
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
-const sanitize = (value) => {
-    return encodeURIComponent(value)
-}
+const sanitize = value => {
+  return encodeURIComponent(value);
+};
 
-const getDownloadUrl = (docUuid) => {
-    return `/documents/${sanitize(docUuid)}/download`
-}
+const getDownloadUrl = docUuid => {
+  return `/documents/${sanitize(docUuid)}/download`;
+};
 </script>
 
 <template>
