@@ -1611,7 +1611,7 @@ const sendPolicyToClient = () => {
 
     <AuditLogs
       :type="'App\\Models\\CarQuote'"
-      :quoteType="$page.props.modelType"
+      :quoteType="$page.props.quoteType"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
     />
