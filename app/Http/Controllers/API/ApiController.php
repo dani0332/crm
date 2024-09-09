@@ -84,26 +84,6 @@ class ApiController extends Controller
     {
         return $this->apiService->evaluateTier($request);
     }
-
-    public function createActivity(Request $request)
-    {
-        $validator = Validator::make(
-            $request->all(),
-            ActivityApiRequest::rules(),
-            ActivityApiRequest::messages()
-        );
-
-        if ($validator->fails()) {
-            return response()->json(['message' => $validator->errors()], 422);
-        }
-
-        return $this->apiService->createActivity($request);
-    }
-    public function getActivity(Request $request)
-    {
-        return $this->apiService->getActivity($request);
-    }
-
     public function inboundEmailsHook()
     {
         return $this->inboundEmailsHookService->process();

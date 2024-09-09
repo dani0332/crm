@@ -1,4 +1,4 @@
-<template>
+<template xmlns="http://www.w3.org/1999/html">
   <div v-if="visible" class="custom-notification" ref="customNotification">
     <div class="notification-content">
       <span class="close-icon closeTag" @click="closeNotification"
@@ -19,7 +19,6 @@
             </div>
         </div>
     </div>
-  </div>
 </template>
 
 <script setup>

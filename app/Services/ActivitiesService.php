@@ -221,31 +221,4 @@ class ActivitiesService extends BaseService
 
         return $activity;
     }
-    public function getPendingActivityCount()
-    {
-        if (! Auth::check()) {
-            return [
-                'pendingCallback' => 0,
-                'pendingWhatsapp' => 0,
-            ];
-        }
-
-        $userId = auth()->user()->id;
-
-        $query = DB::table('activity_notification_logs')
-            ->join('activities', 'activities.id', '=', 'activity_notification_logs.activity_id')
-            ->selectRaw('
-            SUM(CASE WHEN notification_type = ? THEN 1 ELSE 0 END) as pendingCallback,
-            SUM(CASE WHEN notification_type = ? THEN 1 ELSE 0 END) as pendingWhatsapp
-        ', [ActivityTypeEnum::CALL_BACK, ActivityTypeEnum::WHATS_APP])
-            ->where('activities.status', 0)
-            ->where('activity_notification_logs.advisor_id', $userId)
-            ->first();
-
-        return [
-            'pendingCallback' => $query->pendingCallback ?? 0,
-            'pendingWhatsapp' => $query->pendingWhatsapp ?? 0,
-        ];
-    }
-
 }

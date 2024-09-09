@@ -5,6 +5,7 @@ use App\Http\Controllers\API\V1\CarQuoteController;
 use App\Http\Controllers\API\V1\EmbeddedProductController;
 use App\Http\Controllers\API\V1\GenericLobController;
 use App\Http\Controllers\API\V1\QuoteDocumentController;
+use App\Http\Controllers\API\ActivityController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -52,8 +53,7 @@ Route::prefix('v1')->group(function () {
 
     Route::get('quotes/car/{uuid}', [CarQuoteController::class, 'show']);
     Route::post('quotes/send-ep-certificate', [EmbeddedProductController::class, 'sendDocument'])->name('sendDocument');
+    Route::post('activities/create', [ActivityController::class, 'createActivity'])->name('createActivity');
+    Route::get('activities', [ActivityController::class, 'getActivity'])->name('getActivity');
 });
-
-Route::post('/imcrm/create-activity', [ApiController::class, 'createActivity'])->name('createActivity');
-Route::get('/imcrm/get-activity', [ApiController::class, 'getActivity'])->name('getActivity');
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
