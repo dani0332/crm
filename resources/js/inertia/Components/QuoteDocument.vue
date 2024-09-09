@@ -181,6 +181,13 @@ const readOnlyMode = reactive({
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
+const sanitize = (value) => {
+    return encodeURIComponent(value)
+}
+
+const getDownloadUrl = (docUuid) => {
+    return `/documents/${sanitize(docUuid)}/download`
+}
 </script>
 
 <template>
@@ -279,7 +286,7 @@ onMounted(() => {
         >
           <template #item-original_name="item">
             <a
-              :href="`/documents/${item.doc_uuid}/download`"
+              :href="getDownloadUrl(item.doc_uuid)"
               target="_blank"
               class="text-primary-600"
             >
@@ -393,7 +400,7 @@ onMounted(() => {
                 :key="quoteDocument.id"
               >
                 <a
-                  :href="`/documents/${quoteDocument.doc_uuid}/download`"
+                  :href="getDownloadUrl(quoteDocument.doc_uuid)"
                   target="_blank"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
                 >
