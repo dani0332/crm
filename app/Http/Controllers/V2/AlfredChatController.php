@@ -96,49 +96,50 @@ class AlfredChatController extends Controller
             $data = CarQuote::with(['carQuoteRequestDetail' => function ($query) {
                 $query->select('id', 'car_quote_request_id', 'chat_initiated_at'); // specify keys from carQuoteRequestDetail
             }])
-            ->select('id', 'uuid', 'code') // specify keys from CarQuote
-            ->whereHas('carQuoteRequestDetail', function ($query) {
-                $query->whereNotNull('chat_initiated_at');
-            })
-            ->where(function ($query) use ($request, $modelType) {
-                $this->processChatFilters($request, $query,  $modelType);
-            })->simplePaginate(15);
-        }elseif($modelType == HealthQuote::class) {
+                ->select('id', 'uuid', 'code') // specify keys from CarQuote
+                ->whereHas('carQuoteRequestDetail', function ($query) {
+                    $query->whereNotNull('chat_initiated_at');
+                })
+                ->where(function ($query) use ($request, $modelType) {
+                    $this->processChatFilters($request, $query, $modelType);
+                })->simplePaginate(15);
+        } elseif ($modelType == HealthQuote::class) {
             $data = HealthQuote::with(['healthQuoteRequestDetail' => function ($query) {
                 $query->select('id', 'health_quote_request_id', 'chat_initiated_at'); // specify keys from healthQuoteRequestDetail
             }])
-            ->select('id', 'uuid', 'code') // specify keys from HealthQuote
-            ->whereHas('healthQuoteRequestDetail', function ($query) {
-                $query->whereNotNull('chat_initiated_at');
-            })
-            ->simplePaginate(15);
+                ->select('id', 'uuid', 'code') // specify keys from HealthQuote
+                ->whereHas('healthQuoteRequestDetail', function ($query) {
+                    $query->whereNotNull('chat_initiated_at');
+                })
+                ->simplePaginate(15);
         }
-        
+
         // Now you can pass these variables to your pagination component
         return inertia('AlfredChat/Index', ['logs' => $data, 'leadStatuses' => QuoteStatus::all(), 'batches' => QuoteBatches::all()]);
     }
 
-    public function processChatFilters(Request $request, $partialQuery, $modelType){
+    public function processChatFilters(Request $request, $partialQuery, $modelType)
+    {
 
         if (in_array($modelType, [HealthQuote::class, CarQuote::class]) && ! empty($request->start_date) && ! empty($request->end_date)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['start_date']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['end_date']));
-        
+
             // Determine the correct relationship based on the model type
             $relation = $modelType == HealthQuote::class ? 'healthQuoteRequestDetail' : 'carQuoteRequestDetail';
-        
+
             // Apply the whereHas for the determined relation
             $partialQuery->whereHas($relation, function ($query) use ($dateFrom, $dateTo) {
                 $query->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
             });
         }
 
-        if($modelType == CarQuote::class){
+        if ($modelType == CarQuote::class) {
             $partialQuery->where('quote_batch_id', $request->batch);
             $partialQuery->where('assignment_type', $request->assigment_type);
         }
 
-        if(isset($request->payment_status_id) && $request->payment_status_id != ''){
+        if (isset($request->payment_status_id) && $request->payment_status_id != '') {
             if ($request->sale_leads == quoteTypeCode::yesText) {
                 $partialQuery->whereIn('quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked]);
             }
@@ -165,8 +166,6 @@ class AlfredChatController extends Controller
         if (isset($request->quote_status) && is_array($request->quote_status) && count($request->quote_status) > 0) {
             $partialQuery->whereIn('quote_status_id', $request->quote_status);
         }
-
-       
 
     }
 
