@@ -95,7 +95,6 @@ defineProps({
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
   customerAddressData: Object,
-  quoteCourierStatus: String,
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -1564,8 +1563,6 @@ const onAddUpdate = () => {
   isAddUpdate.value = true;
 };
 
-console.log('quoteCourierStatus', page.props.quoteCourierStatus);
-
 const fullAddress = computed(() => {
   const address = page.props?.customerAddressData;
 
@@ -2189,17 +2186,11 @@ const fullAddress = computed(() => {
                   <dt class="font-medium">EMAIL</dt>
                   <dd>{{ record.email }}</dd>
                 </div>
-                <div
-                  class="grid sm:grid-cols-2"
-                  v-if="quoteCourierStatus == 'Pending'"
-                >
+                <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">ADDRESS TYPE</dt>
                   <dd>{{ customerAddressData?.type }}</dd>
                 </div>
-                <div
-                  class="grid sm:grid-cols-2"
-                  v-if="quoteCourierStatus == 'Pending'"
-                >
+                <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">
                     {{
                       !customerAddressData?.type ||
