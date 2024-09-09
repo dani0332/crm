@@ -95,41 +95,42 @@ class AlfredChatController extends Controller
 
         $data = [];
         if ($modelType == CarQuote::class) {
-            $data = CarQuote::with(['batch' => function ($query){
+            $data = CarQuote::with(['batch' => function ($query) {
                 $query->select('id', 'name');
-            },'carQuoteRequestDetail' => function ($query) {
+            }, 'carQuoteRequestDetail' => function ($query) {
                 $query->select('id', 'car_quote_request_id', 'chat_initiated_at'); // specify keys from carQuoteRequestDetail
             }, 'paymentStatus'])
-            ->select('id', 'uuid', 'code', 'quote_batch_id', 'payment_status_id') // specify keys from CarQuote
-            ->whereHas('carQuoteRequestDetail', function ($query) {
-                $query->whereNotNull('chat_initiated_at');
-            })
-            ->where(function ($query) use ($request, $modelType) {
-                $this->processChatFilters($request, $query,  $modelType);
-            });
-        }elseif($modelType == HealthQuote::class) {
+                ->select('id', 'uuid', 'code', 'quote_batch_id', 'payment_status_id') // specify keys from CarQuote
+                ->whereHas('carQuoteRequestDetail', function ($query) {
+                    $query->whereNotNull('chat_initiated_at');
+                })
+                ->where(function ($query) use ($request, $modelType) {
+                    $this->processChatFilters($request, $query, $modelType);
+                });
+        } elseif ($modelType == HealthQuote::class) {
             $data = HealthQuote::with(['healthQuoteRequestDetail' => function ($query) {
                 $query->select('id', 'health_quote_request_id', 'chat_initiated_at'); // specify keys from healthQuoteRequestDetail
             }])
-            ->select('id', 'uuid', 'code') // specify keys from HealthQuote
-            ->whereHas('healthQuoteRequestDetail', function ($query) {
-                $query->whereNotNull('chat_initiated_at');
-            });
-            
-        }elseif($modelType == TravelQuote::class){
+                ->select('id', 'uuid', 'code') // specify keys from HealthQuote
+                ->whereHas('healthQuoteRequestDetail', function ($query) {
+                    $query->whereNotNull('chat_initiated_at');
+                });
+
+        } elseif ($modelType == TravelQuote::class) {
             $data = TravelQuote::with(['travelQuoteRequestDetail' => function ($query) {
                 $query->select('id', 'travel_quote_request_id', 'chat_initiated_at'); // specify keys from travelQuoteRequestDetail
             }])
-            ->select('id', 'uuid', 'code') // specify keys from TravelQuote
-            ->whereHas('travelQuoteRequestDetail', function ($query) {
-                $query->whereNotNull('chat_initiated_at');
-            });
+                ->select('id', 'uuid', 'code') // specify keys from TravelQuote
+                ->whereHas('travelQuoteRequestDetail', function ($query) {
+                    $query->whereNotNull('chat_initiated_at');
+                });
         }
-        
-        if($exportChat)
+
+        if ($exportChat) {
             return $data->get();
-        else
+        } else {
             return inertia('AlfredChat/Index', ['logs' => $data->simplePaginate(15), 'leadStatuses' => QuoteStatus::all(), 'batches' => QuoteBatches::all()]);
+        }
     }
 
     public function processChatFilters(Request $request, $partialQuery, $modelType)
@@ -150,10 +151,10 @@ class AlfredChatController extends Controller
         if (! empty($request->start_date) && ! empty($request->end_date)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['start_date']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['end_date']));
-        
+
             // Determine the correct relationship based on the model type
-            $relation = $modelType == HealthQuote::class ? 'healthQuoteRequestDetail' :  ($modelType == CarQuote::class ? 'carQuoteRequestDetail' : 'travelQuoteRequestDetail');
-        
+            $relation = $modelType == HealthQuote::class ? 'healthQuoteRequestDetail' : ($modelType == CarQuote::class ? 'carQuoteRequestDetail' : 'travelQuoteRequestDetail');
+
             // Apply the whereHas for the determined relation
             $partialQuery->whereHas($relation, function ($query) use ($dateFrom, $dateTo) {
                 $query->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
@@ -164,7 +165,7 @@ class AlfredChatController extends Controller
             $partialQuery->where('transaction_type_id', $request->transaction_type_id);
         }
 
-        if(isset($request->quote_batch_id) && ! empty($request->quote_batch_id)){
+        if (isset($request->quote_batch_id) && ! empty($request->quote_batch_id)) {
             $partialQuery->whereIn('quote_batch_id', $request->quote_batch_id);
         }
 
@@ -175,12 +176,12 @@ class AlfredChatController extends Controller
         if (isset($request->payment_status_id) && $request->payment_status_id != '') {
             $partialQuery->where('payment_status_id', $request->payment_status_id);
         }
-        
-        if(in_array($modelType, [HealthQuote::class, CarQuote::class]) && isset($request->assigment_type) && $request->assigment_type != ''){
+
+        if (in_array($modelType, [HealthQuote::class, CarQuote::class]) && isset($request->assigment_type) && $request->assigment_type != '') {
             $partialQuery->where('assignment_type', $request->assigment_type);
         }
 
-        if(isset($request->sale_leads) && $request->sale_leads != ''){
+        if (isset($request->sale_leads) && $request->sale_leads != '') {
             if ($request->sale_leads == quoteTypeCode::yesText) {
                 $partialQuery->whereIn('quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked]);
             }
@@ -188,15 +189,13 @@ class AlfredChatController extends Controller
                 $partialQuery->whereNotNull('quote_status_id');
             }
         }
-      
+
         if (isset($request->segment_filter) && $request->segment_filter != '') {
             $query = $modelType == HealthQuote::class ? 'hqr' : ($modelType == CarQuote::class ? 'cqr' : 'tqr');
             $quoteTypeId = $modelType == HealthQuote::class ? QuoteTypeId::Health : ($modelType == CarQuote::class ? QuoteTypeId::Car : QuoteTypeId::Travel);
 
             $modelType::applySegmentFilter($partialQuery, $request->segment_filter, $query, $quoteTypeId);
         }
-
-       
 
         // mongoDB filters which are missing fallback / message channel
     }
