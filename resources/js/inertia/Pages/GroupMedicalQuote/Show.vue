@@ -25,7 +25,7 @@ defineProps({
   paymentTooltipEnum: Object,
   paymentMethods: Array,
   isNewPaymentStructure: Boolean,
-  isAmlClearedForPayment: Boolean,
+  
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -1104,7 +1104,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       "
       :storageUrl="storageUrl"
       quoteSubType="Group Medical"
-      :isAmlClearedForPayment="isAmlClearedForPayment"
+      
       :bookPolicyDetails="bookPolicyDetails"
     />
 

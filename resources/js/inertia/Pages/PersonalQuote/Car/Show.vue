@@ -85,7 +85,7 @@ defineProps({
   isNewPaymentStructure: Boolean,
   vatPercentage: Number,
   commercialRules: Boolean,
-  isAmlClearedForPayment: Boolean,
+  
   clientInquiryLogs: Array,
   puaTypeEnum: Object,
   sendUpdateOptions: Array,
@@ -3533,7 +3533,6 @@ const onAddUpdate = () => {
         })
       "
       :storageUrl="storageUrl"
-      :isAmlClearedForPayment="isAmlClearedForPayment"
       :isPlanDetailEnabled="isPlanDetailEnabled"
     />
 

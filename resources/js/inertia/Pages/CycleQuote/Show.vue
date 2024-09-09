@@ -38,7 +38,7 @@ const props = defineProps({
   vatPercentage: Number,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
-  isAmlClearedForPayment: Boolean,
+  
   permissions: Object,
   enums: Object,
   bookPolicyDetails: Array,
@@ -1008,7 +1008,7 @@ const onAddUpdate = () => {
         })
       "
       :storageUrl="storageUrl"
-      :isAmlClearedForPayment="isAmlClearedForPayment"
+      
       :bookPolicyDetails="bookPolicyDetails"
     />
 

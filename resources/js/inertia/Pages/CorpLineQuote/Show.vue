@@ -35,8 +35,7 @@ const props = defineProps({
   cdnPath: String,
   vatPercentage: Number,
   paymentTooltipEnum: Object,
-  isNewPaymentStructure: Boolean,
-  isAmlClearedForPayment: Boolean,
+  isNewPaymentStructure: Boolean,  
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -1288,7 +1287,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       "
       :storageUrl="storageUrl"
       :quoteSubType="quoteTypeCodeEnum.CORPLINE"
-      :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
     />
 

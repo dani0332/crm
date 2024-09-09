@@ -47,7 +47,7 @@ defineProps({
   websiteURL: String,
   linkedQuoteDetails: Object,
   vatPercentage: Number,
-  isAmlClearedForPayment: Boolean,
+  
   permissions: Object,
   enums: Object,
   payments: Array,
@@ -61,7 +61,7 @@ defineProps({
 
 const assumptionState = reactive({
   isEditing: false,
-  isAmlClearedForPayment: Boolean,
+  
 });
 
 const page = usePage();
@@ -1257,8 +1257,7 @@ const onAddUpdate = () => {
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="storageUrl"
-      :isAmlClearedForPayment="isAmlClearedForPayment"
+      :storageUrl="storageUrl"      
       :bookPolicyDetails="bookPolicyDetails"
     />
 
