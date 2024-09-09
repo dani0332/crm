@@ -674,10 +674,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
 
         if (! $insuranceProvider) {
-            $insuranceProvider = $payment->insuranceProvider;
+            $insuranceProvider = $payment?->insuranceProvider;
         }
 
-        $insuranceProviderCode = $insuranceProvider->code;
+        $insuranceProviderCode = $insuranceProvider?->code;
         $latestBINByInsurer = Payment::whereNotNull('broker_invoice_number')->where('insurance_provider_id', $insuranceProvider->id)->orderBy('updated_at', 'desc')->first()?->broker_invoice_number;
         $insuranceProviderLeadCount = (int) str_replace($insuranceProviderCode, '', $latestBINByInsurer) + 1;
 
@@ -694,10 +694,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
 
         if (! $insuranceProvider) {
-            $insuranceProvider = $payment->insuranceProvider;
+            $insuranceProvider = $payment?->insuranceProvider;
         }
 
-        $insuranceProviderCode = $insuranceProvider->code;
+        $insuranceProviderCode = $insuranceProvider?->code;
 
         return substr($insuranceProviderCode.'-'.ucfirst($quoteType).'-'.$record->policy_number, 0, 60);
     }
