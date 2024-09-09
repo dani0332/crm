@@ -19,6 +19,7 @@ use App\Models\SendUpdateLog;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\PersonalQuoteSyncTrait;
+use Carbon\Carbon;
 use Illuminate\Support\Str;
 
 class SendUpdateLogRepository extends BaseRepository
@@ -352,6 +353,11 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function autoFillPolicyDetails($quote, $quoteTypeId, $insuranceProviderId, $planId = null): array
     {
+
+        if ($quoteTypeId == QuoteTypeId::Travel) { // policy_expiry_date format is different in TravelQuoteService file.
+            $quote->policy_expiry_date = Carbon::createFromFormat('d-m-Y', $quote->policy_expiry_date)->format('Y-m-d');
+        }
+
         $policyDetails = [
             'first_name' => $quote->first_name ?? null,
             'last_name' => $quote->last_name ?? null,
