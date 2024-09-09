@@ -24,7 +24,7 @@ class ActivityApiRequest
         return [
             'title' => 'required|string',
             'description' => 'required|string',
-            'due_date' => 'required|date',
+            'dueDate' => 'required|date',
             'entityUId' => 'required|string',
             'quoteTypeId' => 'required|int',
             'activityType' => 'required|string',
@@ -36,8 +36,8 @@ class ActivityApiRequest
         return [
             'title.required' => 'Activity Title Required',
             'description.required' => 'Activity Description Required',
-            'due_date.required' => 'Activity Due Date Required',
-            'due_date.date' => 'Activity Due Date must be a valid date',
+            'dueDate.required' => 'Activity Due Date Required',
+            'dueDate.date' => 'Activity Due Date must be a valid date',
             'entityUId.required' => 'Entity UUID Required',
             'quoteTypeId.integer' => 'Quote Type ID  must be an integer',
             'quoteTypeId.required' => 'Quote Type ID Required',

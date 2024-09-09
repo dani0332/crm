@@ -203,8 +203,8 @@ class ActivitiesService extends BaseService
             $request->title = $quoteStatus->text;
         }
         $nextFollowupDate = isset($request->next_followup_date) ? Carbon::parse($request->next_followup_date)->format('Y-m-d H:i:s') : null;
-        $dueDate = isset($request->due_date) ? Carbon::parse($request->due_date)->format('Y-m-d H:i:s') : null;
-        $activity->due_date = isset($request->due_date) ? $dueDate : $nextFollowupDate;
+        $dueDate = isset($request->dueDate) ? Carbon::parse($request->dueDate)->format('Y-m-d H:i:s') : null;
+        $activity->due_date = isset($request->dueDate) ? $dueDate : $nextFollowupDate;
         $activity->assignee_id = isset($record->advisor_id) ? $record->advisor_id : null;
         $activity->description = isset($request->description) ? $request->description : $request->notes;
         $activity->title = $request->title;
