@@ -24,7 +24,7 @@ const createLink = link => {
 };
 
 const user = computed(() => page.props.auth.user);
-const pendingActivityCount = computed(()=>page.props.pendingActivityCount);
+const pendingActivityCount = computed(() => page.props.pendingActivityCount);
 const authorisePaymentCount = computed(() => page.props.authorisePaymentCount);
 const checkAuthUserRole = computed(() => page.props.checkAuthUserRole);
 const navLinks = computed(() => page.props.sidebar);
@@ -131,23 +131,29 @@ const urls = computed(() => {
               </button>
 
               <div id="headerportal"></div>
-                <div class="flex gap-3">
-                <div class="items-center" style="border: 1px solid #EBEBEB; padding: 5px 5px;">
-                    Pending Callbacks: {{pendingActivityCount.pendingCallback}}
+              <div class="flex gap-3">
+                <div
+                  class="items-center"
+                  style="border: 1px solid #ebebeb; padding: 5px 5px"
+                >
+                  Pending Callbacks: {{ pendingActivityCount.pendingCallback }}
                 </div>
-                <div class="items-center" style="border: 1px solid #EBEBEB; padding: 5px 5px;">
-                    Pending Whatsapp: {{pendingActivityCount.pendingWhatsapp}}
+                <div
+                  class="items-center"
+                  style="border: 1px solid #ebebeb; padding: 5px 5px"
+                >
+                  Pending Whatsapp: {{ pendingActivityCount.pendingWhatsapp }}
                 </div>
-                </div>
+              </div>
             </div>
 
             <div class="flex gap-3 items-center">
               <OnlineStatusToggle :user="user" />
               <!-- <UserStatus /> -->
-                <InstantAlfredCallbackNotification/>
-                <InstantAlfredWhatsappNotification/>
-                <InstantAlfredCallbackReminderNotification/>
-                <InstantAlfredWhatsappReminderNotification/>
+              <InstantAlfredCallbackNotification />
+              <InstantAlfredWhatsappNotification />
+              <InstantAlfredCallbackReminderNotification />
+              <InstantAlfredWhatsappReminderNotification />
               <PaymentNotification />
               <PaymentExpireNotifications />
 

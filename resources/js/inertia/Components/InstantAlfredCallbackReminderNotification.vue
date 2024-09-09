@@ -5,48 +5,48 @@ import CustomCallbackReminderNotification from './CustomCallbackReminderNotifica
 const showNotification = ref(false);
 const notificationData = ref({});
 const options = {
-    cluster: 'ap1',
-    forceTLS: false,
+  cluster: 'ap1',
+  forceTLS: false,
 };
 const pusher = new Pusher(page.props.pusherKey, options);
 const channel = pusher.subscribe(
-    'public.' + page.props.appEnv + '.activity.user',
+  'public.' + page.props.appEnv + '.activity.user',
 );
 const listen = () => {
-    channel.bind('callback.reminder.notification', function (e) {
-        if (e.advisorId === page.props.auth.user.id) {
-            notificationData.value = {
-                imageUrl: '/image/alfred-theme.png',
-                url: e.url,
-                quoteUuid: e.quoteUuid,
-                timeout: 30000,
-            };
-            showNotification.value = true;
-        }
-    });
+  channel.bind('callback.reminder.notification', function (e) {
+    if (e.advisorId === page.props.auth.user.id) {
+      notificationData.value = {
+        imageUrl: '/image/alfred-theme.png',
+        url: e.url,
+        quoteUuid: e.quoteUuid,
+        timeout: 30000,
+      };
+      showNotification.value = true;
+    }
+  });
 };
 const hideNotification = () => {
-    showNotification.value = false;
+  showNotification.value = false;
 };
 onMounted(() => {
-    listen();
+  listen();
 });
 onUnmounted(() => {
-    channel.unbind('callback.reminder.notification');
-    channel.unsubscribe('public.' + page.props.appEnv + '.activity.user');
+  channel.unbind('callback.reminder.notification');
+  channel.unsubscribe('public.' + page.props.appEnv + '.activity.user');
 });
 </script>
 
 <template>
-    <div>
-        <CustomCallbackReminderNotification
-            v-if="showNotification"
-            :imageUrl="notificationData.imageUrl"
-            :url="notificationData.url"
-            :quoteUuid="notificationData.quoteUuid"
-            :timeout="notificationData.timeout"
-            :callHideFunction="hideNotification"
-            @close="showNotification = false"
-        />
-    </div>
+  <div>
+    <CustomCallbackReminderNotification
+      v-if="showNotification"
+      :imageUrl="notificationData.imageUrl"
+      :url="notificationData.url"
+      :quoteUuid="notificationData.quoteUuid"
+      :timeout="notificationData.timeout"
+      :callHideFunction="hideNotification"
+      @close="showNotification = false"
+    />
+  </div>
 </template>
