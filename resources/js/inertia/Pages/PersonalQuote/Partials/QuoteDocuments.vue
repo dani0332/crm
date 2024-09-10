@@ -291,29 +291,28 @@ const sendUpdatePermissionCheck = computed(() => {
 });
 
 const getS3TempUrl = async docURL => {
-    try {
-        const response = await axios.post('/quotes/documents/get-s3-temp-url', {
-            docURL
-        });
-        // Check if the request was successful and the response contains the URL
-        if (response.status === 200 && response.data.url) {
-            // Open the URL in a new tab
-            window.open(response.data.url, '_blank');
-        } else {
-            notification.error({
-                title: response.data.error,
-                position: 'top',
-            });
-        }
-    } catch (error) {
-        notification.error({
-            title: error,
-            position: 'top',
-        });
-        console.error('An error occurred:', error);
+  try {
+    const response = await axios.post('/quotes/documents/get-s3-temp-url', {
+      docURL,
+    });
+    // Check if the request was successful and the response contains the URL
+    if (response.status === 200 && response.data.url) {
+      // Open the URL in a new tab
+      window.open(response.data.url, '_blank');
+    } else {
+      notification.error({
+        title: response.data.error,
+        position: 'top',
+      });
     }
+  } catch (error) {
+    notification.error({
+      title: error,
+      position: 'top',
+    });
+    console.error('An error occurred:', error);
+  }
 };
-
 </script>
 
 <template>
@@ -376,8 +375,8 @@ const getS3TempUrl = async docURL => {
           :hide-footer="quoteDocuments.length < 15"
         >
           <template #item-original_name="item">
-
-            <a @click.prevent="getS3TempUrl(item.doc_url)"
+            <a
+              @click.prevent="getS3TempUrl(item.doc_url)"
               class="text-primary-600 cursor-pointer"
             >
               {{ item.original_name }}
