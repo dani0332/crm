@@ -418,9 +418,9 @@ class QuoteDocumentService extends BaseService
     /**
      * Generate a temporary URL for a document stored in a specified storage disk.
      *
-     * @param string $fileName The name of the file for which to generate the temporary URL.
-     * @param string $storageDisk The storage disk where the file is located. Default is 'azureIM'.
-     * @param int $expiryTimeInMinutes The expiry time for the temporary URL in minutes. Default is 20 minutes.
+     * @param  string  $fileName  The name of the file for which to generate the temporary URL.
+     * @param  string  $storageDisk  The storage disk where the file is located. Default is 'azureIM'.
+     * @param  int  $expiryTimeInMinutes  The expiry time for the temporary URL in minutes. Default is 20 minutes.
      * @return \Illuminate\Http\JsonResponse JSON response containing the temporary URL or an error message.
      */
     public function getDocumentTempURL($fileName, $storageDisk = 'azureIM', $expiryTimeInMinutes = 20)
