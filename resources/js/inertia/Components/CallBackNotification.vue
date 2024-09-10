@@ -21,18 +21,17 @@ const listen = () => {
                 quoteUuid: e.quoteUuid,
                 title: e.title,
                 message:e.message,
-                timeout: 30000,
+                timeout: 1000,
             };
         }
     });
 };
+
+const url =()=>{
+    window.location.href = notificationData.value.url;
+}
 const hideNotification = () => {
   showNotification.value = false;
-};
-const hideNotificationTimeOut = () => {
-        setTimeout(() => {
-            showNotification.value = false;
-        }, 30000);
 };
 onMounted(() => {
   listen();
@@ -40,7 +39,9 @@ onMounted(() => {
 onUnmounted(() => {
   channel.unbind('callback.notification');
   channel.unsubscribe('public.' + page.props.appEnv + '.activity.user');
-    hideNotificationTimeOut();
+    setTimeout(() => {
+        showNotification.value = false;
+    }, notificationData.value.timeout)
 });
 </script>
 <template xmlns="http://www.w3.org/1999/html">
@@ -58,7 +59,7 @@ onUnmounted(() => {
                 <h2 class="notification-title">{{notificationData.title}}</h2>
                 <p class="notification-message">
                     {{ notificationData.message }}
-                    <a class="notification-button" @click="openUrl">{{ notificationData.quoteUuid }}</a>
+                    <a class="notification-button" @click="url">{{ notificationData.quoteUuid }}</a>
                     will expire in 1 hour.
                 </p>
             </div>
