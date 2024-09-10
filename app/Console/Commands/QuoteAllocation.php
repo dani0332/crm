@@ -125,7 +125,7 @@ class QuoteAllocation extends Command
             ->orWhere(function ($query) {
                 $query->where('sic_advisor_requested', 1)->where('sic_flow_enabled', 1);
             })->take($chunkSize);
-
+        info('Health leads fetch query is : '. $leads->toRawSql());
         foreach ($leads->get() as $lead) {
             $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
             $allocationStrategy->executeSteps();
