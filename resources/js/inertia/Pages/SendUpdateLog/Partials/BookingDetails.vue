@@ -694,7 +694,7 @@ const isLackingPayment = computed(() => {
 const sendUpdateValidationURL = computed(() => {
   return props.updateBtn === sendUpdateStatusEnum.SU ||
     props.sendUpdateLog.status === sendUpdateStatusEnum.UPDATE_SENT_TO_CUSTOMER
-    ? 'book-update'
+    ? 'book-update-validation'
     : 'send-update-customer-validation';
 });
 const paymentConfirmationMessage = reactive({ status: '', message: '' });
@@ -711,6 +711,7 @@ const actionButton = computed(() => {
   return '';
 });
 
+const isSendUpdateWithEmail = ref(false);
 const sendUpdateValidation = () => {
   loader.sendUpdateSectionBtn = true;
   axios
@@ -720,15 +721,24 @@ const sendUpdateValidation = () => {
       sendUpdateId: props.sendUpdateLog.id,
       quoteRefId: props.realQuote.id,
       action: actionButton.value,
+      inslyMigrated: props.realQuote.insly_migrated,
     })
     .then(response => {
       if (response.status == 200) {
-        if (props.updateBtn === sendUpdateStatusEnum.SU) {
-          if (response.data.insufficientPaymentCheck == true) {
-            insuficientPaymentConfirmation(response);
-          } else if (response.data.insufficientPaymentCheck == false) {
-            attestRecord();
-          }
+        if (response.data.action === sendUpdateStatusEnum.ACTION_SNBU && sendUpdateValidationURL.value === 'send-update-customer-validation') {
+            isSendUpdateWithEmail.value = true;
+        }
+        if (props.updateBtn === sendUpdateStatusEnum.SU || response.data.action === sendUpdateStatusEnum.ACTION_SNBU) {
+            if (response.data.insufficientPaymentCheck == true) {
+                insuficientPaymentConfirmation(response);
+            } else if (response.data.insufficientPaymentCheck == false) {
+                if (response.data.action === sendUpdateStatusEnum.ACTION_SNBU && sendUpdateValidationURL.value === 'send-update-customer-validation') {
+                    modals.sendConfirm = true;
+                    isStating.value = response.data?.message;
+                } else {
+                    attestRecord();
+                }
+            }
         } else {
           modals.sendConfirm = true;
           isStating.value = response.data?.message;
@@ -861,8 +871,8 @@ const isLoading = ref(false);
 const isNotConfirmed = ref(false);
 
 // Need to update this code after Mirza's Implementation
-const submitToCustomer = () => {
-  if (!modals.isConfirmed) {
+const submitToCustomer = (withPartialPaymentCheck = true) => {
+  if (!modals.isConfirmed && withPartialPaymentCheck) {
     isNotConfirmed.value = true;
     return;
   }
@@ -2248,8 +2258,8 @@ watch(
           <x-button
             size="sm"
             color="error"
-            :loading="loader.sendUpdate"
-            @click.prevent="sendUpdate(false)"
+            :loading="isSendUpdateWithEmail ? isLoading : loader.sendUpdate"
+            @click.prevent="isSendUpdateWithEmail ? submitToCustomer(false) : sendUpdate(false)"
           >
             Continue
           </x-button>

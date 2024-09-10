@@ -32,6 +32,8 @@ class SendUpdateCustomerValidationRequest extends FormRequest
         return [
             'sendUpdateId' => 'required|exists:send_update_logs,id',
             'action' => 'required|string',
+            'inslyMigrated' => 'boolean',
+            'paymentValidated' => 'boolean',
         ];
     }
 

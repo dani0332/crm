@@ -248,44 +248,43 @@ class SendUpdateLogRepository extends BaseRepository
         return $result;
     }
 
-    public function fetchSendUpdateToCustomer($data)
+    public function fetchSendUpdateToCustomer($request)
     {
-        $sendUpdateLog = $this->find($data['sendUpdateId']);
+        $response = ['status' => 200, 'message' => []];
+        $sendUpdateLog = $this->find($request['sendUpdateId']);
+        info('Send Update to Customer - Process Start - Send Update UUID: '.$sendUpdateLog->uuid);
+
         try {
-            if ($data['quoteType'] == quoteTypeCode::Car && $sendUpdateLog->category->code == SendUpdateLogStatusEnum::EN) {
+            if ($request['quoteType'] == quoteTypeCode::Car && $sendUpdateLog->category->code == SendUpdateLogStatusEnum::EN) {
                 $quote = CarQuote::where('uuid', $sendUpdateLog->quote_uuid)->first();
-                if (! empty($sendUpdateLog->emirates_id)) { // will work on Change of Emirates (with no financial impact).
-                    $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_id]);
-                } elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0) { // will work on Change in seating capacity (with no financial impact).
-                    $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
+                if (! empty($sendUpdateLog->emirates_id)) {
+                    info('Send Update to Customer - Updating Emirates ID - Send Update UUID: '.$sendUpdateLog->uuid.' - Emirates ID: '.$sendUpdateLog->emirates_id);
+                    //                    $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_id]);
+                } elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0) {
+                    info('Send Update to Customer - Updating Seating Capacity - Send Update UUID: '.$sendUpdateLog->uuid.' - Seating Capacity: '.$sendUpdateLog->seating_capacity);
+                    //                    $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
                 }
             }
 
-            dispatch(new SendUpdateToCustomerJob($sendUpdateLog, $data));
-
-            /*$sendUpdateLog->update([
-                'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
-            ]);*/
-
-            // temporary comments.
-            /*if (! $sendUpdateLog->is_email_sent) {
-                dispatch(new SendUpdateToCustomerJob($sendUpdateLog, $data));
+            if ($sendUpdateLog->is_email_sent) {
+                $response['message'][] = 'Email already sent to customer';
             } else {
-                $sendUpdateLog->update([
-                    'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
-                ]);
-            }*/
-            info('Send update to Customer - Send Update Code: '.$sendUpdateLog->code.' - Status update to: '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
-            $result = true;
-        } catch (\Exception $ex) {
-            logger()->error('Send Update to Customer - Failed - Send Update Code: '.$sendUpdateLog->code.' - Error : '.$ex->getMessage());
+                $response['message'][] = 'Send Update to customer email scheduled successfully';
+            }
 
-            $result = (object) [
-                'message' => $ex->getMessage(),
-            ];
+            if (isset($request['action']) && $request['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
+                $response['message'][] = 'Send update booking process is being scheduled';
+            }
+
+            dispatch(new SendUpdateToCustomerJob($sendUpdateLog, $request))->onQueue('send_update_to_customer');
+            info('Send Update to Customer - Process End - Send Update UUID: '.$sendUpdateLog->uuid.' - Status updated to '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
+        } catch (\Exception $ex) {
+            logger()->error('Send Update to Customer - Failed - Send Update UUID: '.$sendUpdateLog->uuid.' - Error : '.$ex->getMessage());
+            $response['status'] = 500;
+            $response['message'] = [$ex->getMessage()];
         }
 
-        return $result;
+        return $response;
     }
 
     public function fetchSaveBookingDetails($data)

@@ -9,7 +9,6 @@ use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
-use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ReversalEntriesRequest;
@@ -18,6 +17,7 @@ use App\Http\Requests\SavePolicyDetailsRequest;
 use App\Http\Requests\SaveProviderDetailsRequest;
 use App\Http\Requests\SendUpdateCustomerValidationRequest;
 use App\Http\Requests\SendUpdateRequest;
+use App\Http\Requests\SendUpdateValidationRequest;
 use App\Http\Requests\UpdateToCustomerRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Lookup;
@@ -343,85 +343,43 @@ class SendUpdateLogController extends Controller
         return response()->json($reversalEntries);
     }
 
-    public function sendUpdateCustomerValidation(SendUpdateCustomerValidationRequest $request)
+    public function sendUpdateCustomerValidation(SendUpdateCustomerValidationRequest $sendUpdateCustomerValidationRequest)
     {
-        $message = app(SendUpdateLogService::class)->getSendToCustomerValidation($request->validated());
+        $sendUpdateCustomerValidatedRequest = $sendUpdateCustomerValidationRequest->validated();
+        $message = app(SendUpdateLogService::class)->getSendToCustomerValidation($sendUpdateCustomerValidatedRequest);
+        $response = ['message' => $message];
 
-        return response()->json([
-            'message' => $message,
-        ]);
+        if (isset($sendUpdateCustomerValidationRequest->action) && $sendUpdateCustomerValidationRequest->action == SendUpdateLogStatusEnum::ACTION_SNBU) {
+            $sendUpdateValidation = $this->sendUpdateValidation(new SendUpdateValidationRequest($sendUpdateCustomerValidatedRequest));
+
+            $sendUpdateValidationResponse = array_merge(['action' => SendUpdateLogStatusEnum::ACTION_SNBU], json_decode($sendUpdateValidation->getContent(), true) ?? []);
+            $response = array_merge($response, $sendUpdateValidationResponse);
+        }
+
+        return response()->json($response);
     }
 
     public function sendUpdateToCustomer(UpdateToCustomerRequest $updateToCustomerRequest)
     {
-        $data = $updateToCustomerRequest->validated();
-        $log = SendUpdateLogRepository::sendUpdateToCustomer($data);
+        $suEmailProcess = SendUpdateLogRepository::sendUpdateToCustomer($updateToCustomerRequest->validated());
 
-        if (! empty($log?->message)) {
-            vAbort($log?->message);
+        if ($suEmailProcess['status'] == 500) {
+            vAbort('Send Update to customer email failed');
         }
 
-        /*
-        $_response[] = ['message' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER, 'status' => 200];
-
-        if ($log && isset($data['action']) && $data['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
-            $sendUpdateRequest = new SendUpdateRequest();
-
-            // TODO: Thiss need to be updated, it should be move in Service.
-            $isSendUpdateSuccess = $this->sendUpdate($sendUpdateRequest->merge($data));
-            if ($isSendUpdateSuccess->status() == 200) {
-                $_response[] = ['message' => SageEnum::SAGE_REQUEST_BEING_PROCESS, 'status' => 200];
-            } else {
-                $_response[] = ['message' => $isSendUpdateSuccess->original['message'], 'status' => 500];
-            }
-        }
-
-        return response()->json($_response);
-         * */
-        if ($log) {
-            $message[] = 'Update Sent to Customer.';
-        } else {
-            $message[] = 'Email Not Sent.';
-        }
-
-        if ($log && isset($data['action']) && $data['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
-            $sendUpdateRequest = new SendUpdateRequest;
-
-            info('calling book update via send update to customer. ');
-            $sendUpdateResponse = $this->sendUpdate($sendUpdateRequest->merge($data));
-            if ($sendUpdateResponse->status() == 200) {
-                $message[] = SendUpdateLogStatusEnum::UPDATE_BOOKED;
-            } else {
-                $message[] = json_decode($sendUpdateResponse->getContent(), true)['message'] ?? 'Book Update failed.';
-            }
-        }
-
-        // temporary comments.
-        /*if ($data['isEmailSent']) {
-            $message[] = SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER;
-        } else {
-            $message[] = 'Send Update to customer email scheduled.';
-        }
-
-        if (isset($data['action']) && $data['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
-            $message[] = 'Book Update scheduled.';
-        }*/
-
-        return response()->json($message);
+        return response()->json($suEmailProcess['message']);
     }
 
-    public function sendUpdate(SendUpdateRequest $sendUpdateRequest)
+    public function sendUpdateValidation(SendUpdateValidationRequest $sendUpdateValidationRequest)
     {
-        $sendUpdateFirstPayment = Payment::where('send_update_log_id', $sendUpdateRequest->sendUpdateId)->first();
-        if (! isset($sendUpdateRequest->paymentValidated)) {
-            // Add insuficient Payment Validations here
+        $sendUpdateFirstPayment = Payment::where('send_update_log_id', $sendUpdateValidationRequest->sendUpdateId)->first();
+        if (! isset($sendUpdateValidationRequest->paymentValidated)) {
             $insufficientPaymentCheck = false;
-            //TODO: Need to verify - merge conflict
-            if ($sendUpdateFirstPayment && ! $sendUpdateRequest->inslyMigrated && in_array($sendUpdateFirstPayment?->payment_status_id, [
+            if ($sendUpdateFirstPayment && ! $sendUpdateValidationRequest->inslyMigrated && in_array($sendUpdateFirstPayment?->payment_status_id, [
                 PaymentStatusEnum::PARTIALLY_PAID,
                 PaymentStatusEnum::PENDING,
-                PaymentStatusEnum::CREDIT_APPROVED
-                ])) {
+                PaymentStatusEnum::CREDIT_APPROVED,
+            ])) {
                 $insufficientPaymentCheck = true;
             }
 
@@ -430,11 +388,13 @@ class SendUpdateLogController extends Controller
                 'parentPaymentStatus' => $sendUpdateFirstPayment?->payment_status_id ?? null,
             ]);
         }
+    }
 
+    public function sendUpdate(SendUpdateRequest $sendUpdateRequest)
+    {
         $response = app(SendUpdateLogService::class)->sendUpdateProcess($sendUpdateRequest);
 
         return response()->json(['message' => $response['message']], $response['status'] ? 200 : 500);
-
     }
 
     public function getOptions(Request $request)
