@@ -2,27 +2,20 @@
 
 namespace App\Services;
 
-use App\Enums\ActivityTypeEnum;
-use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\TeamNameEnum;
-use App\Events\CallBackNotifications;
 use App\Factories\AllocationFactory;
 use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Jobs\SendHealthOCBIntroEmailJob;
-use App\Models\Activities;
 use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
-use App\Models\PersonalQuote;
-use App\Models\QuoteType;
 use App\Models\TravelQuote;
 use Exception;
 use Illuminate\Http\Response;
