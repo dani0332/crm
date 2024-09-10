@@ -13,8 +13,8 @@ const channel = pusher.subscribe(
 );
 const listen = () => {
     channel.bind('callback.notification', function (e) {
-        showNotification.value = true;
         if (e.advisorId === page.props.auth.user.id) {
+            showNotification.value = true;
             notificationData.value = {
                 imageUrl: '/image/alfred-theme.png',
                 url: e.url,
