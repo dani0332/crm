@@ -99,7 +99,7 @@ class AlfredChatController extends Controller
                 $query->select('id', 'name');
             }, 'carQuoteRequestDetail' => function ($query) {
                 $query->select('id', 'car_quote_request_id', 'chat_initiated_at'); // specify keys from carQuoteRequestDetail
-            }, 'paymentStatus'])
+            }, 'paymentStatus', 'plan_id'])
                 ->select('id', 'uuid', 'code', 'quote_batch_id', 'payment_status_id') // specify keys from CarQuote
                 ->whereHas('carQuoteRequestDetail', function ($query) {
                     $query->whereNotNull('chat_initiated_at');
@@ -198,6 +198,14 @@ class AlfredChatController extends Controller
         }
 
         // mongoDB filters which are missing fallback / message channel
+
+        if(isset($request->channel) && $request->channel != '') {
+            $partialQuery->where('channel', $request->channel);
+        }
+
+        if(isset($request->fallback) && $request->fallback != '') {
+            $partialQuery->where('fallback', $request->fallback);
+        }
     }
 
     public function exportChat(Request $request)
