@@ -53,6 +53,7 @@ class ConversionAsAtReportService extends BaseService
                     LeadSourceEnum::INSLY,
                     LeadSourceEnum::SAPGO,
                     LeadSourceEnum::SAPJO,
+                    LeadSourceEnum::CAR_24,
                 ]);
 
             $filters = [
@@ -207,12 +208,14 @@ class ConversionAsAtReportService extends BaseService
     {
         return $query
             ->addSelect(
-                'users.id as advisorId',
-                'users.name as advisor_name'
+                'personal_quotes.advisor_id as advisorId',
+                DB::raw('COALESCE(users.name, "Unassigned Leads") as advisor_name')
             )
-            ->join('users', 'users.id', 'personal_quotes.advisor_id')
-            ->where('users.is_active', true)
-            ->whereNotNull('personal_quotes.advisor_id')
+            ->leftJoin('users', function($join) {
+                $join->on('users.id', '=', 'personal_quotes.advisor_id')
+                    ->on('users.is_active', '=', DB::raw('1'));
+            })
+            ->orderByRaw('CASE WHEN advisor_name = "Unassigned Leads" THEN 1 ELSE 0 END')
             ->orderBy('advisor_name', 'asc')
             ->groupBy('advisorId');
     }
@@ -230,10 +233,9 @@ class ConversionAsAtReportService extends BaseService
                 'teams.id as sub_team_id',
                 'teams.name as sub_team'
             )
-            ->join('users', 'users.id', 'personal_quotes.advisor_id')
-            ->join('teams', 'users.sub_team_id', '=', 'teams.id')
+            ->leftJoin('users', 'users.id', 'personal_quotes.advisor_id')
+            ->leftJoin('teams', 'users.sub_team_id', '=', 'teams.id')
             ->where('teams.type', TeamTypeEnum::SUB_TEAM)
-            ->whereNotNull('personal_quotes.advisor_id')
             ->orderBy('sub_team', 'asc')
             ->groupBy('sub_team_id');
     }
@@ -250,7 +252,6 @@ class ConversionAsAtReportService extends BaseService
             ->addSelect(
                 'personal_quotes.source as lead_source'
             )
-            ->whereNotNull('personal_quotes.source')
             ->orderBy('lead_source', 'asc')
             ->groupBy('lead_source');
     }
@@ -268,7 +269,6 @@ class ConversionAsAtReportService extends BaseService
                 'personal_quote_details.utm_source as external_lead_source'
             )
             ->join('personal_quote_details', 'personal_quotes.id', 'personal_quote_details.personal_quote_id')
-            ->whereNotNull('personal_quote_details.utm_source')
             ->orderBy('external_lead_source', 'asc')
             ->groupBy('external_lead_source');
     }
@@ -285,8 +285,7 @@ class ConversionAsAtReportService extends BaseService
             ->addSelect(
                 't.name as tiers'
             )
-            ->join('tiers as t', 'personal_quotes.tier_id', 't.id')
-            ->whereNotNull('personal_quotes.tier_id')
+            ->leftJoin('tiers as t', 'personal_quotes.tier_id', 't.id')
             ->orderBy('tiers', 'asc')
             ->groupBy('tiers');
     }
@@ -303,8 +302,7 @@ class ConversionAsAtReportService extends BaseService
             ->addSelect(
                 'n.text as nationality'
             )
-            ->join('nationality as n', 'personal_quotes.nationality_id', 'n.id')
-            ->whereNotNull('personal_quotes.nationality_id')
+            ->leftJoin('nationality as n', 'personal_quotes.nationality_id', 'n.id')
             ->orderBy('nationality', 'asc')
             ->groupBy('nationality');
     }
@@ -323,12 +321,11 @@ class ConversionAsAtReportService extends BaseService
                 'teams.id as team_id',
                 'teams.name as team'
             )
-            ->join('user_team', 'user_team.user_id', 'personal_quotes.advisor_id')
-            ->join('teams', 'teams.id', '=', 'user_team.team_id')
+            ->leftJoin('user_team', 'user_team.user_id', 'personal_quotes.advisor_id')
+            ->leftJoin('teams', 'teams.id', '=', 'user_team.team_id')
             ->where('teams.type', TeamTypeEnum::TEAM)
             ->where('teams.parent_team_id', $teamType)
             ->where('is_active', 1)
-            ->whereNotNull('personal_quotes.advisor_id')
             ->orderBy('team', 'asc')
             ->groupBy('team_id');
     }
