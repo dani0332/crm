@@ -431,10 +431,11 @@ class QuoteDocumentService extends BaseService
         // Check if the file exists in the specified storage disk
         if (Storage::disk($storageDisk)->exists($fileName)) {
             // Generate the temporary URL
-            $tempUrl = Storage::disk($storageDisk)->temporaryUrl($fileName, $expiryTime);
+            $encodedFileName = urlencode($fileName);
+            $temporaryUrl = Storage::disk($storageDisk)->temporaryUrl($encodedFileName, $expiryTime);
 
             // Return the temporary URL if generated
-            return response()->json(['url' => $tempUrl]);
+            return response()->json(['url' => $temporaryUrl]);
         } else {
             // Return an error message if the file does not exist
             return response()->json(['error' => 'File does not exist on server']);
