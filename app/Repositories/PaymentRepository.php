@@ -21,7 +21,6 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
-use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\ApplicationStorageService;
@@ -114,34 +113,20 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'updated_by' => $request->user()->id,
             ];
 
-            $inslyMigrated = false;
+            $count = $quoteModel->payments->count();
+            $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
 
-            if ($quoteModel->parent_duplicate_quote_id) {
-                $parentModel = $this->getQuoteObjectBy($request->modelType, $quoteModel->parent_duplicate_quote_id, 'code');
+            if ($request->send_update_id || ! empty($quoteModel->parent_duplicate_quote_id)) {
+                // Payment follow-up count is now iterative (uuid-(nth+1)) and not dependent on the count of payments in the quote
+                // Count will be iterative for each payment added through the send update or Child lead
+                $mainLeadCode = implode('-', array_slice(explode('-', $quoteModel->code), 0, 2));
+                $paymentCount = $this->getPaymentsCountByLeadCode($mainLeadCode);
+                $paymentInformation['code'] = ($paymentCount > 0) ? $mainLeadCode.'-'.$paymentCount : $mainLeadCode;
 
-                $detail = null;
-                if ($parentModel) {
-                    $model = '\\App\\Models\\'.$request->modelType.'QuoteRequestDetail';
-                    $column = strtolower($request->modelType).'_quote_request_id';
-
-                    $detail = $model::where($column, $parentModel->id)->first();
+                if (! empty(request()->send_update_id)) {
+                    $paymentInformation['send_update_log_id'] = $request->send_update_id;
+                    $quoteModel = SendUpdateLogRepository::getLogById($request->send_update_id);
                 }
-
-                if ($detail?->insly_id || $parentModel->insly_migrated) {
-                    $inslyMigrated = true;
-                }
-            }
-
-            // Payment follow up count is now iterative (- nth+1) and not dependent on the count of payments in the quote
-            // Count will be iterative for each payment added through the send update or Child lead
-            $mainLeadCode = $inslyMigrated ? $quoteModel->code : implode('-', array_slice(explode('-', $quoteModel->code), 0, 2));
-            $paymentCount = $this->getPaymentsCountByLeadCode($mainLeadCode);
-            $paymentInformation['code'] = ($paymentCount > 0) ? $mainLeadCode.'-'.$paymentCount : $mainLeadCode;
-
-            if ($request->send_update_id) {
-                // it will make $quoteModel as SendUpdateLog model.
-                $paymentInformation['send_update_log_id'] = $request->send_update_id;
-                $quoteModel = SendUpdateLogRepository::getLogById($request->send_update_id);
             }
 
             if ($masterPayment->reference) {
@@ -689,10 +674,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
 
         if (! $insuranceProvider) {
-            $insuranceProvider = $payment->insuranceProvider;
+            $insuranceProvider = $payment?->insuranceProvider;
         }
 
-        $insuranceProviderCode = $insuranceProvider->code;
+        $insuranceProviderCode = $insuranceProvider?->code;
         $latestBINByInsurer = Payment::whereNotNull('broker_invoice_number')->where('insurance_provider_id', $insuranceProvider->id)->orderBy('updated_at', 'desc')->first()?->broker_invoice_number;
         $insuranceProviderLeadCount = (int) str_replace($insuranceProviderCode, '', $latestBINByInsurer) + 1;
 
@@ -709,10 +694,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
 
         if (! $insuranceProvider) {
-            $insuranceProvider = $payment->insuranceProvider;
+            $insuranceProvider = $payment?->insuranceProvider;
         }
 
-        $insuranceProviderCode = $insuranceProvider->code;
+        $insuranceProviderCode = $insuranceProvider?->code;
 
         return substr($insuranceProviderCode.'-'.ucfirst($quoteType).'-'.$record->policy_number, 0, 60);
     }
