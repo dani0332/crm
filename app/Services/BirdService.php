@@ -30,9 +30,9 @@ class BirdService extends BaseService
                 : $request->$method($url, ['query' => $data]);
 
             // Log the response details
-            info('Bird Webhook Response received', array_merge($logContext, ['Header'=>$response->headers() ?? '','Status' => $response->status(), 'Body' => $response->body()]));
+            info('Bird Webhook Response received', array_merge($logContext, ['Headers'=>$response->headers() ?? '','Status' => $response->status(), 'Body' => $response->body()]));
 
-            return (object)['header'=>$response->headers() ?? '','body'=>$response->body(),'status_code'=>$response->status()];
+            return (object)['headers'=>$response->headers() ?? '','body'=>$response->body(),'status_code'=>$response->status()];
         } catch (\Exception $e) {
             // Log the error with full context and rethrow the exception
             Log::error('Bird API request failed', array_merge($logContext, [
