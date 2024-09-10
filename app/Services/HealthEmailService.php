@@ -13,6 +13,7 @@ use App\Enums\QuoteFlowType;
 
 class HealthEmailService extends BaseService
 {
+
     public function triggerOCAWorkFlow($lead)
     {
         info('Sending OCA Health followups email for lead: '.$lead->uuid.' | Time: '.now());
@@ -24,16 +25,16 @@ class HealthEmailService extends BaseService
                 $response =app(BirdService::class)->triggerWebHookRequest($sicEvent->value, $emailData);
                 $lead->oca_flow_enabled = true;
                 $lead->save();
-                if(!empty($response['Run-Id'])) {
+                info("OCA Health workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
+                info("OCA Health workflow response: {$response->status_code} | Ref-ID: {$lead->uuid} |Time: ".now());
+                if(!empty($response->header['Run-Id'])) {
                     QuoteFlowDetails::create([
                         'quote_uuid' => $lead->uuid,
                         'quote_type_id' => QuoteTypeId::Health,
                         'flow_type' => QuoteFlowType::HEALTH_AUTOMATED_FOLLOWUPS->value,
-                        'flow_id' => $response['Run-Id'] ?? null,
+                        'flow_id' => $response->header['Run-Id'] ?? null,
                     ]);
                 }
-                info("OCA Health workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
-                info("OCA Health workflow response: {$response} | Ref-ID: {$lead->uuid} |Time: ".now());
             } else {
                 info("OCA Health workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
             }
