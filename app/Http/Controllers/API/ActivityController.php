@@ -7,9 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ActivityApiRequest;
 use App\Http\Requests\ActivityGetApiRequest;
 use App\Services\ActivitiesService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 
 class ActivityController extends Controller
 {
