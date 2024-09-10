@@ -2,12 +2,16 @@
 
 namespace App\Services;
 
+use App\Enums\ActivityTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Events\CallBackNotifications;
 use App\Models\Activities;
 use App\Models\ActivityNotificationLogs;
+use App\Models\PersonalQuote;
 use App\Models\QuoteStatus;
+use App\Models\QuoteType;
 use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -185,30 +189,96 @@ class ActivitiesService extends BaseService
 
         return $activities;
     }
+    public function createActivityApi($entityUId, $quoteTypeId, $activityType, $title, $description, $dueDate)
+    {
+        $existingActivity = Activities::where('quote_uuid', $entityUId)
+            ->Where('status', 0)
+            ->Where('source', LeadSourceEnum::INSTANT_ALFRED)
+            ->first();
+        if ($existingActivity) {
+            return response()->json(['message' => 'An existing activity was found. Please Mark Done the current activity before creating a new one.'], 409);
+        }
+        $modelType = $quoteTypeId
+            ? QuoteType::select('code')->find($quoteTypeId)
+            : null;
+        $record = '';
+        if (isset($entityUId) && $modelType && ! checkPersonalQuotes($modelType->code)) {
+            $record = app(CRUDService::class)->getEntity($modelType->code, $entityUId);
+        } else {
+            $record = PersonalQuote::where('uuid', $entityUId)->first();
+        }
+        if (is_null($record) || is_null($record->advisor_id)) {
+            return response()->json(['message' => 'No advisor has been assigned to this lead.'], 404);
+        }
 
-    public function createApiActivity(Request $request, $record, $modelType)
+        $this->createApiActivity($entityUId, $activityType, $title, $description, $dueDate, $record, $modelType);
+        $quoteTypeCode = strtolower($modelType->code);
+        if ($modelType->code == QuoteTypeCode::Business) {
+            $path = "quotes/business/$record->uuid";
+        } elseif (checkPersonalQuotes($modelType->code)) {
+            $path = "personal-quotes/$quoteTypeCode/$record->uuid";
+        } else {
+            $path = "quotes/$quoteTypeCode/$record->uuid";
+        }
+
+        $url = url('/')."/$path";
+
+        if ($activityType === ActivityTypeEnum::CALL_BACK) {
+            info('InstantAlfred CallBack Notification Trigger to Advisor '.$record->advisor_id.' And Lead Code is '.$record->code);
+            $title = 'InstantAlfred Callback Request';
+            $message = 'Urgent callback request for ';
+            event(new CallBackNotifications($record->uuid, $record->advisor_id, $url, $record->code, $title, $message));
+
+        } else {
+            info('InstantAlfred Whatsapp Notification Trigger to Advisor '.$record->advisor_id.' And Lead Code is '.$record->code);
+            $title = 'InstantAlfred WhatsApp Request';
+            $message = 'Urgent Whatsapp request for ';
+            event(new CallBackNotifications($record->uuid, $record->advisor_id, $url, $record->code, $title, $message));
+
+        }
+
+        return response()->json(['message' => 'Activity has been Created'], 200);
+
+    }
+
+    public function getActivity($entityUId)
+    {
+        if (empty($entityUId)) {
+            return response()->json(['message' => 'Entity UUID Not Found'], 404);
+        }
+
+        $activity = Activities::where('quote_uuid', $entityUId)
+            ->Where('source', LeadSourceEnum::INSTANT_ALFRED)
+            ->latest()->first();
+
+        if (! $activity) {
+            return response()->json(['message' => 'Activity Not Found'], 404);
+        }
+
+        return response()->json([
+            'message' => 'Activity Found',
+            'activity' => $activity,
+        ], 200);
+    }
+
+    public function createApiActivity($entityUId, $activityType, $title, $description, $dueDate, $record, $modelType)
     {
         $activity = new Activities;
         $activity->uuid = $this->helperService->generateUUID();
         if (isset($record) && $record != '') {
             $activity->client_name = $record->first_name.' '.$record->last_name;
-            $activity->quote_request_id = isset($record->id) ? $record->id : $request->leadId;
+            $activity->quote_request_id = isset($record->id) ? $record->id : null;
             $activity->quote_type_id = $this->getQuoteTypeId(strtolower($modelType->code));
-            $activity->quote_uuid = isset($request->entityUId) ? $request->entityUId : $request->quote_uuid;
+            $activity->quote_uuid = isset($entityUId) ? $entityUId : $record->uuid;
         }
-        if (isset($request->leadStatus)) {
-            $quoteStatus = QuoteStatus::select('text')->where('id', $request->leadStatus)->first();
-            $request->title = $quoteStatus->text;
-        }
-        $nextFollowupDate = isset($request->next_followup_date) ? Carbon::parse($request->next_followup_date)->format('Y-m-d H:i:s') : null;
-        $dueDate = isset($request->dueDate) ? Carbon::parse($request->dueDate)->format('Y-m-d H:i:s') : null;
-        $activity->due_date = isset($request->dueDate) ? $dueDate : $nextFollowupDate;
+        $dueDate = isset($dueDate) ? Carbon::parse($dueDate)->format('Y-m-d H:i:s') : null;
+        $activity->due_date = isset($dueDate) ? $dueDate : Carbon::now();
         $activity->assignee_id = isset($record->advisor_id) ? $record->advisor_id : null;
-        $activity->description = isset($request->description) ? $request->description : $request->notes;
-        $activity->title = $request->title;
+        $activity->description = isset($description) ? $description : null;
+        $activity->title = $title;
         $activity->quote_status_id = $record?->quote_status_id ?? null;
         $activity->source = LeadSourceEnum::INSTANT_ALFRED;
-        $activity->activity_type = $request->activityType;
+        $activity->activity_type = $activityType ? $activityType : null;
         if ($activity->save()) {
             ActivityNotificationLogs::create([
                 'activity_id' => $activity->id,

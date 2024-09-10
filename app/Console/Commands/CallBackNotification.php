@@ -55,8 +55,10 @@ class CallBackNotification extends Command
         info("Notification Reminder Job Started {$currentTime}");
         Activities::where('source', LeadSourceEnum::INSTANT_ALFRED)
             ->where('status', 0)
-            ->where(DB::raw("TIMESTAMPDIFF(HOUR, created_at, '$currentTime')"), '>=', 1)
-            ->where(DB::raw("TIMESTAMPDIFF(HOUR, created_at, '$currentTime')"), '<=', 3)
+            ->where(function ($query) use ($currentTime) {
+                $query->where(DB::raw("TIMESTAMPDIFF(MINUTE, created_at, '$currentTime')"), '=', 60)
+                    ->orWhere(DB::raw("TIMESTAMPDIFF(MINUTE, created_at, '$currentTime')"), '=', 120);
+            })
             ->chunk(500, function ($activities) {
                 foreach ($activities as $activity) {
                     $modelType = $activity->quote_type_id

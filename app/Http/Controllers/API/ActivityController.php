@@ -5,41 +5,25 @@ namespace App\Http\Controllers\API;
 use App\Enums\ActivityTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ActivityApiRequest;
-use App\Services\ApiService;
+use App\Http\Requests\ActivityGetApiRequest;
+use App\Services\ActivitiesService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class ActivityController extends Controller
 {
-    public $apiService;
-
-    public function __construct(ApiService $apiService)
+    public function createActivity(ActivityApiRequest $request)
     {
-        $this->apiService = $apiService;
+        return app(ActivitiesService::class)->createActivityApi($request->entityUId, $request->quoteTypeId, $request->activityType, $request->title, $request->description, $request->dueDate);
     }
-    public function createActivity(Request $request)
+    public function getActivity(ActivityGetApiRequest $request)
     {
-        $validator = Validator::make(
-            $request->all(),
-            ActivityApiRequest::rules(),
-            ActivityApiRequest::messages()
-        );
-
-        if ($validator->fails()) {
-            return response()->json(['message' => $validator->errors()], 422);
-        }
-
-        return $this->apiService->createActivity($request);
-    }
-    public function getActivity(Request $request)
-    {
-        return $this->apiService->getActivity($request);
+        return app(ActivitiesService::class)->getActivity($request->entityUId);
     }
     public function getPendingActivityCount()
     {
-        if (! Auth::check()) {
+        if (! auth()->check()) {
             return [
                 'pendingCallback' => 0,
                 'pendingWhatsapp' => 0,

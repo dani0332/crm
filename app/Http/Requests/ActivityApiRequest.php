@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
-class ActivityApiRequest
+use Illuminate\Foundation\Http\FormRequest;
+
+class ActivityApiRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -19,7 +21,7 @@ class ActivityApiRequest
      *
      * @return array
      */
-    public static function rules()
+    public function rules(): array
     {
         return [
             'title' => 'required|string',
@@ -31,7 +33,7 @@ class ActivityApiRequest
         ];
     }
 
-    public static function messages()
+    public function messages(): array
     {
         return [
             'title.required' => 'Activity Title Required',
