@@ -44,7 +44,8 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const leadSource = page.props.leadSource;
 const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
-
+const hasAnyRole = roles => useHasAnyRole(roles);
+const rolesEnum = page.props.rolesEnum;
 const quoteDocumentsTable = reactive({
   isLoading: false,
   columns: [
@@ -375,12 +376,19 @@ const getS3TempUrl = async docURL => {
           :hide-footer="quoteDocuments.length < 15"
         >
           <template #item-original_name="item">
-            <a
+            <a v-if="hasAnyRole([rolesEnum.BetaUser])"
               @click.prevent="getS3TempUrl(item.doc_url)"
               class="text-primary-600 cursor-pointer"
             >
               {{ item.original_name }}
             </a>
+            <a v-else
+              :href="storageUrl + item.doc_url"
+              target="_blank"
+              class="text-primary-600"
+              >
+                {{ item.original_name }}
+              </a>
           </template>
           <template
             #item-action="{ doc_name }"
@@ -472,25 +480,47 @@ const getS3TempUrl = async docURL => {
                 "
               />
               <div v-if="isSendUpdatePage">
-                <a
+                <a v-if="hasAnyRole([rolesEnum.BetaUser])"
                   v-for="quoteDocument in quoteDocuments.filter(
                     d => d.document_type_text == documentType.text,
                   )"
                   :key="quoteDocument.id"
-                  :href="getS3TempUrl(quoteDocument.doc_url)"
+                  @click.prevent="getS3TempUrl(quoteDocument.doc_url)"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}
                 </a>
+                <a v-else
+                    v-for="quoteDocument in quoteDocuments.filter(
+                        d => d.document_type_text == documentType.text,
+                    )"
+                    :key="quoteDocument.id"
+                    :href="storageUrl + quoteDocument.doc_url"
+                    target="_blank"
+                    class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
+                  >
+                      {{ quoteDocument.original_name || quoteDocument.doc_name }}
+                  </a>
               </div>
               <div v-else>
-                <a
+                <a v-if="hasAnyRole([rolesEnum.BetaUser])"
                   v-for="quoteDocument in quoteDocuments.filter(
                     d => d.document_type_code == documentType.code,
                   )"
                   :key="quoteDocument.id"
-                  :href="getS3TempUrl(quoteDocument.doc_url)"
+                  @click.prevent="getS3TempUrl(quoteDocument.doc_url)"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
+                >
+                  {{ quoteDocument.original_name || quoteDocument.doc_name }}
+                </a>
+                <a v-else
+                  v-for="quoteDocument in quoteDocuments.filter(
+                    d => d.document_type_code == documentType.code,
+                  )"
+                   :key="quoteDocument.id"
+                   :href="storageUrl + quoteDocument.doc_url"
+                    target="_blank"
+                    class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}
                 </a>

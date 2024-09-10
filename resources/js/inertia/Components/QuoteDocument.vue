@@ -37,6 +37,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
+
 const quoteDocumentsTable = reactive({
   isLoading: false,
   columns: [
@@ -302,12 +303,21 @@ const getS3TempUrl = async docURL => {
           :hide-footer="quoteDocuments.length < 15"
         >
           <template #item-original_name="item">
-            <a
+            <a v-if="hasAnyRole([rolesEnum.BetaUser])"
               @click.prevent="getS3TempUrl(item.doc_url)"
               class="text-primary-600 cursor-pointer"
             >
               {{ item.original_name }}
             </a>
+
+            <a v-else
+              :href="storageUrl + item.doc_url"
+              target="_blank"
+              class="text-primary-600"
+              >
+                {{ item.original_name }}
+            </a>
+
           </template>
           <template
             v-if="can(permissionEnum.DOCUMENT_DELETE)"
@@ -415,11 +425,18 @@ const getS3TempUrl = async docURL => {
                 )"
                 :key="quoteDocument.id"
               >
-                <a
-                  @click.prevent="getS3TempUrl(quoteDocument.doc_url)"
-                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
+                <a v-if="hasAnyRole([rolesEnum.BetaUser])"
+                   @click.prevent="getS3TempUrl(quoteDocument.doc_url)"
+                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}
+                </a>
+                <a v-else
+                  :href="storageUrl + quoteDocument.doc_url"
+                  target="_blank"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                  >
+                    {{ quoteDocument.original_name || quoteDocument.doc_name }}
                 </a>
               </template>
             </div>
