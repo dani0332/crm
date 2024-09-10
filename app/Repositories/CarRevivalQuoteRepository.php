@@ -166,7 +166,7 @@ class CarRevivalQuoteRepository extends BaseRepository
     {
         $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
         DttRevival::where('uuid', $lead->uuid)->update(['reply_received' => 1]);
-        info('UpdateLeadSource  - UUID - ' . $lead->uuid . ' - source updated to Revival');
+        info('UpdateLeadSource  - UUID - '.$lead->uuid.' - source updated to Revival');
     }
 
     public function fetchGetReportsData($request)
@@ -179,10 +179,10 @@ class CarRevivalQuoteRepository extends BaseRepository
         $query = $this
             ->select(
                 'dtt_revivals.revival_quote_batch_id as quote_batch_id',
-                DB::raw('COUNT(CASE  WHEN payment_status_id = ' . PaymentStatusEnum::CAPTURED . ' THEN 1 ELSE NULL END) as conversion_captured'),
-                DB::raw('COUNT(CASE  WHEN source = "' . LeadSourceEnum::REVIVAL . '" THEN 1 ELSE NULL END) as total_revived'),
-                DB::raw('COUNT(CASE  WHEN payment_status_id = ' . PaymentStatusEnum::CAPTURED . ' and  quote_status_id = ' . QuoteStatusEnum::TransactionApproved . ' THEN 1 ELSE NULL END) as captured'),
-                DB::raw('COUNT(CASE  WHEN payment_status_id = ' . PaymentStatusEnum::AUTHORISED . ' and  quote_status_id = ' . QuoteStatusEnum::PaymentPending . ' THEN 1 ELSE NULL END) as authorized'),
+                DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN 1 ELSE NULL END) as conversion_captured'),
+                DB::raw('COUNT(CASE  WHEN source = "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE NULL END) as total_revived'),
+                DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' and  quote_status_id = '.QuoteStatusEnum::TransactionApproved.' THEN 1 ELSE NULL END) as captured'),
+                DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::AUTHORISED.' and  quote_status_id = '.QuoteStatusEnum::PaymentPending.' THEN 1 ELSE NULL END) as authorized'),
                 DB::raw('COUNT(CASE  WHEN email_sent = 1 THEN 1 ELSE NULL END) as email_sent_count'),
                 DB::raw('COUNT(CASE  WHEN reply_received = 1 THEN 1 ELSE NULL END) as reply_received_count'),
             )
@@ -206,26 +206,25 @@ class CarRevivalQuoteRepository extends BaseRepository
             $c['quote_batch_id'] = $batch;
             $c['conversion_captured'] = $item['conversion_captured'];
             $c['total_revived'] = $item['email_sent_count'];
-            $c['ratio'] = $item['conversion_captured'] > 0 ? round(($item['conversion_captured'] / $item['email_sent_count']) * 100, 2) . '%' : null;
+            $c['ratio'] = $item['conversion_captured'] > 0 ? round(($item['conversion_captured'] / $item['email_sent_count']) * 100, 2).'%' : null;
             $data['conversionRate'][] = $c;
 
             $ac['quote_batch_id'] = $batch;
             $ac['authorized'] = $item['authorized'];
             $ac['captured'] = $item['captured'];
-            $ac['ratio'] = $item['authorized'] > 0 ? round(($item['captured'] / $item['authorized']) * 100, 2) . '%' : null;
+            $ac['ratio'] = $item['authorized'] > 0 ? round(($item['captured'] / $item['authorized']) * 100, 2).'%' : null;
             $data['leadConversionReport'][] = $ac;
 
             $rs['quote_batch_id'] = $batch;
             $rs['email_sent_count'] = $item['email_sent_count'];
             $rs['reply_received_count'] = $item['reply_received_count'];
 
-            $rs['ratio'] = $item['email_sent_count'] > 0 ? round(($item['reply_received_count'] / $item['email_sent_count']) * 100, 2) . '%' : null;
+            $rs['ratio'] = $item['email_sent_count'] > 0 ? round(($item['reply_received_count'] / $item['email_sent_count']) * 100, 2).'%' : null;
             $data['emailConversionReport'][] = $rs;
         }
 
         return $data;
     }
-
 
     public function fetchUpdate($uuid, $data)
     {
@@ -251,7 +250,7 @@ class CarRevivalQuoteRepository extends BaseRepository
             'car_type_insurance_id',
             'currently_insured_with',
             'claim_history_id',
-            'additional_notes'
+            'additional_notes',
         ]));
 
         return $lead;

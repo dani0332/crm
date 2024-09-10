@@ -97,7 +97,7 @@ class CarRevivalQuoteController extends Controller
 
         $displaySendPolicyButton = (bool) app(QuoteDocumentService::class)->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
 
-        $cdnPath = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
+        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
 
         $activitiesData = app(ActivitiesService::class)->getActivityByLeadId($record->id, strtolower($quoteType));
