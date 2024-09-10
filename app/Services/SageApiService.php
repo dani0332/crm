@@ -17,12 +17,14 @@ use App\Jobs\SendUpdateSageJob;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessInsuranceType;
 use App\Models\Customer;
+use App\Models\CustomScheduler;
 use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteTag;
 use App\Models\SageApiLog;
+use App\Models\SageProcess;
 use App\Models\User;
 use App\Repositories\PaymentRepository;
 use App\Repositories\SageApiLogRepository;
@@ -1217,11 +1219,14 @@ class SageApiService
             return ['status' => false, 'message' => 'Please check the payment as total price is set to zero while Payment Method is '.PaymentMethodsEnum::CreditApproval.' and Frequency is '.$payment->frequency.'. Please Select Credit Approval as your payment method and Upfront as Payment Frequency to Proceed!'];
         }
 
+        $sageLogArray = $quote->sageApiLogs->keyBy('step')->toArray();
+
         // payload
         $sageRequest = $this->sagePayLoad($request->model_type, $payment, $quote, $paymentSplits);
         $sageRequest->quoteTypeId = $quoteTypeId;
+        $sageRequest->sageProcessRequestType = SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST;
 
-        $sageLogArray = $quote->sageApiLogs->keyBy('step')->toArray();
+
         // sage customer number generation
         $sageRequest->customerId = $this->verifySageCustomer($quote->customer_id, $data, $quote, $sageLogArray, 13);
 
@@ -1231,7 +1236,19 @@ class SageApiService
             return $checkRequiredSageIds;
         }
 
-        BookPolicyOnSageJob::dispatch($sageRequest, $quote, $payment, $sageLogArray, $request)->onQueue('sage-book-policy');
+        SageProcess::firstOrCreate([
+            'user_id' => auth()->id(),
+            'insurance_provider_id' => $sageRequest->insurerID,
+            'model_type' => $quote::class,
+            'model_id' => $quote->id,
+            'request' => json_encode([
+                'sagePayload' => $sageRequest,
+                'requestPayload' => $request,
+            ]),
+            'status' => SageEnum::SAGE_PROCESS_PENDING_STATUS,
+        ]);
+
+        //BookPolicyOnSageJob::dispatch($sageRequest, $quote, $payment, $sageLogArray, $request)->onQueue('sage-book-policy');
 
         return ['status' => true, 'message' => 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!'];
     }
@@ -1264,7 +1281,9 @@ class SageApiService
 
     public function bookPolicyOnSage($sageRequestDataArray)
     {
-        [$sageRequest, $quote, $payment, $sageLogArray, $request] = $sageRequestDataArray;
+        [$sageRequest, $quote,  $request] = $sageRequestDataArray;
+        $sageLogArray = $quote->sageApiLogs->keyBy('step')->toArray();
+        $payment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
         $paymentSplits = $payment->paymentSplits;
         $quote->userId = $sageRequest->userId;
 
