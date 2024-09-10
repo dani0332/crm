@@ -150,7 +150,7 @@ const urls = computed(() => {
             <div class="flex gap-3 items-center">
               <OnlineStatusToggle :user="user" />
               <!-- <UserStatus /> -->
-                <CallbackNotification/>
+              <CallbackNotification />
               <PaymentNotification />
               <PaymentExpireNotifications />
 
