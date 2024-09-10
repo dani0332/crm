@@ -1790,7 +1790,7 @@ class CRUDController extends Controller
         if (! $quoteModel) {
             return redirect()->back()->with('success', 'Error Updating Policy Details.');
         }
-        info('Quote Code: '.$quoteModel->code. ' fn: updateQuotePolicy called');
+        info('Quote Code: '.$quoteModel->code.' fn: updateQuotePolicy called');
         $quoteModel->update([
             'policy_number' => $request->quote_policy_number ?? '',
             'policy_issuance_date' => isset($request->quote_policy_issuance_date) ? Carbon::parse($request->quote_policy_issuance_date)->format('Y-m-d') : null,
@@ -1822,7 +1822,7 @@ class CRUDController extends Controller
         $this->updatePriceAndDiscount($quoteModel);
         $this->updateQuoteStatus($request->modelType, $request->quote_id);
 
-        info('Quote Code: '.$quoteModel->code. ' Policy detail updated successfully');
+        info('Quote Code: '.$quoteModel->code.' Policy detail updated successfully');
 
         return redirect()->back()->with([
             'success' => 'Policy details has been updated.',
