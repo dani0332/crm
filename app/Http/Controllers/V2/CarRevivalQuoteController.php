@@ -97,7 +97,7 @@ class CarRevivalQuoteController extends Controller
 
         $displaySendPolicyButton = (bool) app(QuoteDocumentService::class)->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
 
-        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+        $cdnPath = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
         $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
 
         $activitiesData = app(ActivitiesService::class)->getActivityByLeadId($record->id, strtolower($quoteType));
@@ -171,8 +171,8 @@ class CarRevivalQuoteController extends Controller
      */
     public function update($uuid, CarRevivalQuoteRequest $carRevivalQuoteRequest)
     {
-        CarRevivalQuoteRepository::where(['uuid' => $uuid])->update($carRevivalQuoteRequest->validated());
+        CarRevivalQuoteRepository::update($uuid, $carRevivalQuoteRequest->validated());
 
-        return back()->with('message', 'Quote updated successfully');
+        return redirect('quotes/revival/'.$uuid)->with('success', 'Quote updated successfully');
     }
 }
