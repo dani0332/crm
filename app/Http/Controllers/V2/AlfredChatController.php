@@ -199,11 +199,11 @@ class AlfredChatController extends Controller
 
         // mongoDB filters which are missing fallback / message channel
 
-        if(isset($request->channel) && $request->channel != '') {
+        if (isset($request->channel) && $request->channel != '') {
             $partialQuery->where('channel', $request->channel);
         }
 
-        if(isset($request->fallback) && $request->fallback != '') {
+        if (isset($request->fallback) && $request->fallback != '') {
             $partialQuery->where('fallback', $request->fallback);
         }
     }
