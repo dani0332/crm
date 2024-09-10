@@ -12,24 +12,24 @@ const channel = pusher.subscribe(
   'public.' + page.props.appEnv + '.activity.user',
 );
 const listen = () => {
-    channel.bind('callback.notification', function (e) {
-        if (e.advisorId === page.props.auth.user.id) {
-            showNotification.value = true;
-            notificationData.value = {
-                imageUrl: '/image/alfred-theme.png',
-                url: e.url,
-                quoteUuid: e.quoteUuid,
-                title: e.title,
-                message:e.message,
-                timeout: 3000,
-            };
-        }
-    });
+  channel.bind('callback.notification', function (e) {
+    if (e.advisorId === page.props.auth.user.id) {
+      showNotification.value = true;
+      notificationData.value = {
+        imageUrl: '/image/alfred-theme.png',
+        url: e.url,
+        quoteUuid: e.quoteUuid,
+        title: e.title,
+        message: e.message,
+        timeout: 3000,
+      };
+    }
+  });
 };
 
-const url =()=>{
-    window.location.href = notificationData.value.url;
-}
+const url = () => {
+  window.location.href = notificationData.value.url;
+};
 const hideNotification = () => {
   showNotification.value = false;
 };
@@ -40,31 +40,35 @@ onMounted(() => {
 onUnmounted(() => {
   channel.unbind('callback.notification');
   channel.unsubscribe('public.' + page.props.appEnv + '.activity.user');
-    setTimeout(() => {
-        showNotification.value = false;
-    }, notificationData.value.timeout)
+  setTimeout(() => {
+    showNotification.value = false;
+  }, notificationData.value.timeout);
 });
 </script>
 <template xmlns="http://www.w3.org/1999/html">
-    <div v-if="showNotification" class="custom-notification" ref="customNotification">
-        <div class="notification-content">
-      <span class="close-icon closeTag" @click="hideNotification"
-      >&times;</span
-      >
-            <img
-                :src="notificationData.imageUrl"
-                alt="Notification Image"
-                class="notification-image"
-            />
-            <div>
-                <h2 class="notification-title">{{notificationData.title}}</h2>
-                <p class="notification-message">
-                    {{ notificationData.message }}
-                    <a class="notification-button" @click="url">{{ notificationData.quoteUuid }}</a>
-                    will expire in 1 hour.
-                </p>
-            </div>
-        </div>
+  <div
+    v-if="showNotification"
+    class="custom-notification"
+    ref="customNotification"
+  >
+    <div class="notification-content">
+      <span class="close-icon closeTag" @click="hideNotification">&times;</span>
+      <img
+        :src="notificationData.imageUrl"
+        alt="Notification Image"
+        class="notification-image"
+      />
+      <div>
+        <h2 class="notification-title">{{ notificationData.title }}</h2>
+        <p class="notification-message">
+          {{ notificationData.message }}
+          <a class="notification-button" @click="url">{{
+            notificationData.quoteUuid
+          }}</a>
+          will expire in 1 hour.
+        </p>
+      </div>
+    </div>
   </div>
 </template>
 <style scoped>
