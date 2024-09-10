@@ -849,11 +849,11 @@ class CentralService
             })
             ->count();
 
-        if (! $isTransactionApproved) {
+        /*if (! $isTransactionApproved) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) use ($lockedQuotesStatuses) {
                 return ! in_array($value['id'], $lockedQuotesStatuses);
             })->values();
-        }
+        }*/
 
         return $quoteStatuses;
     }
