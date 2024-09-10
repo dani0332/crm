@@ -579,5 +579,23 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_WORKSPACE_ID],
+            [
+                'value' => 'a1b37cbd-b29d-4371-a81a-c1cd939b73a2',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_CHANNEL_ID],
+            [
+                'value' => '5f5c6b3c-cb98-4d8e-ba14-b6e19884bd2a',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 }
