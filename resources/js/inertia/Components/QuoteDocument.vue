@@ -181,13 +181,31 @@ const readOnlyMode = reactive({
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
-const sanitize = value => {
-  return encodeURIComponent(value);
+
+const getS3TempUrl = async docURL => {
+    try {
+        const response = await axios.post('/quotes/documents/get-s3-temp-url', {
+            docURL
+        });
+        // Check if the request was successful and the response contains the URL
+        if (response.status === 200 && response.data.url) {
+            // Open the URL in a new tab
+            window.open(response.data.url, '_blank');
+        } else {
+            notification.error({
+                title: response.data.error,
+                position: 'top',
+            });
+        }
+    } catch (error) {
+        notification.error({
+            title: error,
+            position: 'top',
+        });
+        console.error('An error occurred:', error);
+    }
 };
 
-const getDownloadUrl = docUuid => {
-  return `/documents/${sanitize(docUuid)}/download`;
-};
 </script>
 
 <template>
@@ -285,10 +303,8 @@ const getDownloadUrl = docUuid => {
           :hide-footer="quoteDocuments.length < 15"
         >
           <template #item-original_name="item">
-            <a
-              :href="getDownloadUrl(item.doc_uuid)"
-              target="_blank"
-              class="text-primary-600"
+            <a @click.prevent="getS3TempUrl(item.doc_url)"
+              class="text-primary-600 cursor-pointer"
             >
               {{ item.original_name }}
             </a>
@@ -400,9 +416,8 @@ const getDownloadUrl = docUuid => {
                 :key="quoteDocument.id"
               >
                 <a
-                  :href="getDownloadUrl(quoteDocument.doc_uuid)"
-                  target="_blank"
-                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                  @click.prevent="getS3TempUrl(quoteDocument.doc_url)"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}
                 </a>
