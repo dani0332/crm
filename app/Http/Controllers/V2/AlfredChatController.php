@@ -414,7 +414,7 @@ class AlfredChatController extends Controller
                     'date_of_first_interaction' => ['$min' => '$created_at'],
                     'communication_channels' => ['$addToSet' => [
                         '$cond' => [
-                            ['$ifNull' => ['$channel', false]],  // Check if 'communication_channel' exists
+                            ['$ifNull' => ['$channel', false]],
                             '$channel',
                             '$$REMOVE'  
                         ]
@@ -452,28 +452,6 @@ class AlfredChatController extends Controller
     ],
                 ],
             ];
-
-            // $pipeline[] = [
-            //     '$project' => [
-            //         'quote_type' => 1,
-            //         'quote_id' => 1,
-            //         'created_at' => 1,
-            //         'communication_channel' => '$channel',
-            //         'batch' =>   ['$arrayElemAt' => ['$ken_response.quotes.batch', 0]],// missing
-            //         'transaction' =>   ['$arrayElemAt' => ['$ken_response.quotes.transaction', 0]],
-            //         'segment' =>   ['$arrayElemAt' => ['$ken_response.quotes.segment', 0]],
-            //         'ai_interactions' =>   ['$arrayElemAt' => ['$ken_response.quotes.ai_interactions', 0]],
-            //         'fallbacks' =>   ['$arrayElemAt' => ['$ken_response.quotes.fallback_counts', 0]],
-            //         'payment_status' =>   ['$arrayElemAt' => ['$ken_response.quotes.paymentStatus', 0]],
-            //         'sale_leads' =>   ['$arrayElemAt' => ['$ken_response.quotes.sale_leads', 0]],
-            //         'provider_name' =>   ['$arrayElemAt' => ['$ken_response.quotes.currentlyInsuredWith', 0]],
-            //         'plan_type' =>   ['$arrayElemAt' => ['$ken_response.quotes.plan_type', 0]],
-            //         'plan_name' =>   ['$arrayElemAt' => ['$ken_response.quotes.plan_name', 0]],
-            //         'price' =>   ['$arrayElemAt' => ['$ken_response.quotes.price', 0]],
-            //         'payment_date' =>   ['$arrayElemAt' => ['$ken_response.quotes.payment_date', 0]], // missing
-            //         'ep_purchased' =>   ['$arrayElemAt' => ['$ken_response.quotes.ep_purchased', 0]], // missing
-            //     ],
-            // ];
         }
 
         return $pipeline;
