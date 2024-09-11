@@ -8,7 +8,7 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class  InstantChatConsolidatedExport implements FromCollection, WithHeadings, WithMapping
+class InstantChatConsolidatedExport implements FromCollection, WithHeadings, WithMapping
 {
     use Exportable;
 
@@ -63,8 +63,8 @@ class  InstantChatConsolidatedExport implements FromCollection, WithHeadings, Wi
             $data->payment_status_id_text,
             in_array(
                 $data->quote_status_id,
-                [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, 
-                QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked], 
+                [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued,
+                    QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked],
             ) ? 'Yes' : 'No',
             $data->car_plan_provider_id_text,
             // $data->plan_type,

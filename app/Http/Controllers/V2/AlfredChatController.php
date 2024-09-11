@@ -7,7 +7,6 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
-use App\Exports\InstantChatConsolidatedExport;
 use App\Exports\InstantChatDetailedExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredChatRequest;
@@ -30,40 +29,40 @@ class AlfredChatController extends Controller
     {
         $this->middleware('permission:'.PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS, ['only' => ['logs']]);
         $this->query = DB::table('car_quote_request as cqr')
-        ->select(
-            'cqr.uuid',
-            'cqr.id',
-            'cqr.email',
-            'cqr.code',
-            'cqr.payment_status_id',
-            'ps.text AS payment_status_id_text',
-            'ps.created_at AS payment_status_id_created_at',
-            'cqr.plan_id',
-            'cp.text AS plan_id_text',
-            'cp.provider_id AS car_plan_provider_id',
-            'cpip.text AS car_plan_provider_id_text',
-            'cqr.quote_status_id',
-            'qs.text AS quote_status_id_text',
-            'cqr.quote_batch_id',
-            'lu.text as transaction_type_text',
-            'qb.name as quote_batch_id_text',
-            'cpip.code as plan_provider_code',
-            'cpip.code as plan_provider_code',
-            'cqr.insurance_provider_id',
-            'cqrd.chat_initiated_at'
-        )
-        ->leftJoin('payments as py', function ($join) {
-            $join->on('py.paymentable_id', '=', 'cqr.id')
-                ->where('py.paymentable_type', '=', CarQuote::class);
-        })
-        ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
-        ->leftJoin('lookups as lu', 'lu.id', '=', 'cqr.transaction_type_id')
-        ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
-        ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
-        ->leftJoin('insurance_provider as cpdip', 'cpdip.id', '=', 'cqr.insurance_provider_id')
-        ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
-        ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
-        ->leftJoin('quote_batches as qb', 'qb.id', '=', 'cqr.quote_batch_id');
+            ->select(
+                'cqr.uuid',
+                'cqr.id',
+                'cqr.email',
+                'cqr.code',
+                'cqr.payment_status_id',
+                'ps.text AS payment_status_id_text',
+                'ps.created_at AS payment_status_id_created_at',
+                'cqr.plan_id',
+                'cp.text AS plan_id_text',
+                'cp.provider_id AS car_plan_provider_id',
+                'cpip.text AS car_plan_provider_id_text',
+                'cqr.quote_status_id',
+                'qs.text AS quote_status_id_text',
+                'cqr.quote_batch_id',
+                'lu.text as transaction_type_text',
+                'qb.name as quote_batch_id_text',
+                'cpip.code as plan_provider_code',
+                'cpip.code as plan_provider_code',
+                'cqr.insurance_provider_id',
+                'cqrd.chat_initiated_at'
+            )
+            ->leftJoin('payments as py', function ($join) {
+                $join->on('py.paymentable_id', '=', 'cqr.id')
+                    ->where('py.paymentable_type', '=', CarQuote::class);
+            })
+            ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
+            ->leftJoin('lookups as lu', 'lu.id', '=', 'cqr.transaction_type_id')
+            ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
+            ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
+            ->leftJoin('insurance_provider as cpdip', 'cpdip.id', '=', 'cqr.insurance_provider_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
+            ->leftJoin('quote_batches as qb', 'qb.id', '=', 'cqr.quote_batch_id');
     }
 
     /**
@@ -132,7 +131,7 @@ class AlfredChatController extends Controller
 
         $data = [];
         if ($modelType == CarQuote::class) {
-            $data =  $this->query->where(function ($query) use ($request, $modelType) {
+            $data = $this->query->where(function ($query) use ($request, $modelType) {
                 $this->processChatFilters($request, $query, $modelType);
             })->get();
         } elseif ($modelType == HealthQuote::class) {
@@ -304,11 +303,10 @@ class AlfredChatController extends Controller
     }
 
     public function exportChat(Request $request)
-    {      
+    {
         $result = $this->processChatFilters($request, $this->query, CarQuote::class);
         $data = $result->get();
-        
-     
+
         $itemIds = array_column($data->toArray(), 'uuid');
 
         $chatPipeline = $this->createPipeline($request, $itemIds, $request->report);
@@ -321,40 +319,40 @@ class AlfredChatController extends Controller
             $groupedChatData = [];
             foreach ($mongoResults as $chatDocument) {
                 $quoteId = $chatDocument['quote_id'];
-                if (!isset($groupedChatData[$quoteId])) {
+                if (! isset($groupedChatData[$quoteId])) {
                     $groupedChatData[$quoteId] = [
                         'communication_channel' => '',
                         'fallback_count' => 0,
                         'user_count' => 0,
-                        'ai_count' => 0
+                        'ai_count' => 0,
                     ];
                 }
-    
+
                 if (isset($chatDocument) && is_array($chatDocument)) {
                     if (isset($chatDocument['communication_channel'])) {
-                            $channel = $chatDocument['communication_channel'];
-    
-                            if ($channel instanceof \MongoDB\Model\BSONDocument) {
-                                $channel = $channel->getArrayCopy();
-                            }
-                            if (is_array($channel)) {
-                                $channelString = implode(', ', $channel);
-                            } else {
-                                $channelString = (string)$channel;
-                            }
-    
-                            $groupedChatData[$quoteId]['communication_channel'] = $channelString;
+                        $channel = $chatDocument['communication_channel'];
+
+                        if ($channel instanceof \MongoDB\Model\BSONDocument) {
+                            $channel = $channel->getArrayCopy();
+                        }
+                        if (is_array($channel)) {
+                            $channelString = implode(', ', $channel);
+                        } else {
+                            $channelString = (string) $channel;
+                        }
+
+                        $groupedChatData[$quoteId]['communication_channel'] = $channelString;
                     } else {
                         $groupedChatData[$quoteId]['communication_channel'] = ''; // Default to empty string if not set
                     }
-    
+
                     if (isset($chatDocument['fallback']) && is_bool($chatDocument['fallback'])) {
                         // Increment the fallback count based on the boolean value
                         if ($chatDocument['fallback']) {
                             $groupedChatData[$quoteId]['fallback_count']++;
                         }
                     }
-    
+
                     if ($chatDocument['role'] === 'USER') {
                         $groupedChatData[$quoteId]['user_count']++;
                     } elseif ($chatDocument['role'] === 'AI') {
@@ -362,12 +360,12 @@ class AlfredChatController extends Controller
                     }
                 }
             }
-    
+
             // Step 5: Map the grouped chat data back to the corresponding items in $data
             foreach ($data as $item) {
                 $item->chat = $groupedChatData[$item->uuid] ?? []; // Assign chat data or empty array
             }
-            
+
             return Excel::download(new InstantChatDetailedExport($data), $fileName.'.xlsx');
         }
 
