@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
 class AlfredChatController extends Controller
-{   
+{
     protected $query;
 
     public function __construct()
@@ -153,7 +153,6 @@ class AlfredChatController extends Controller
                     $query->whereNotNull('chat_initiated_at');
                 });
         }
-
 
         // if (isset($request->channel) && $request->channel != '') {
 
@@ -397,10 +396,10 @@ class AlfredChatController extends Controller
         }
 
         $pipeline[] = [
-                '$match' => [
-                    'quote_id' => ['$in' => $itemIds], // assuming 'quote_id' corresponds to the item's identifier
-                ]
-                ];
+            '$match' => [
+                'quote_id' => ['$in' => $itemIds], // assuming 'quote_id' corresponds to the item's identifier
+            ],
+        ];
 
         if (isset($quoteType) && $quoteType != null) {
             $pipeline[] = ['$match' => ['quote_type' => $quoteType]];
