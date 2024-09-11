@@ -43,7 +43,7 @@ class InstantChatDetailedExport implements FromArray, WithHeadings, WithMapping
     }
 
     public function map($chat): array
-    {   
+    {
         return [
             $chat['quote_type'],
             $chat['quote_id'],

@@ -315,9 +315,9 @@ class AlfredChatController extends Controller
 
         $fileName = 'alfred_chat_logs_'.Carbon::now()->format('Y-m-d_H-i-s');
 
-       
         if ($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
-            $mergedData = array_merge((array) $data->first(), (array)$mongoResults[0]);
+            $mergedData = array_merge((array) $data->first(), (array) $mongoResults[0]);
+
             return Excel::download(new InstantChatConsolidatedExport($mergedData), $fileName.'.xlsx');
         }
 
@@ -416,8 +416,8 @@ class AlfredChatController extends Controller
                         '$cond' => [
                             ['$ifNull' => ['$channel', false]],  // Check if 'communication_channel' exists
                             '$channel',
-                            '$$REMOVE'  
-                        ]
+                            '$$REMOVE',
+                        ],
                     ]],
                     'customer_interactions' => [
                         '$sum' => [
@@ -446,10 +446,10 @@ class AlfredChatController extends Controller
                             ],
                         ],
                     ],
-                    'fallbacks' => ['$sum' => ['$cond' => [['$ifNull' => ['$fallback', false]], 1,0
-        ]
-     ]
-    ],
+                    'fallbacks' => ['$sum' => ['$cond' => [['$ifNull' => ['$fallback', false]], 1, 0,
+                    ],
+                    ],
+                    ],
                 ],
             ];
 
