@@ -317,6 +317,7 @@ class AlfredChatController extends Controller
 
         $fileName = 'alfred_chat_logs_'.Carbon::now()->format('Y-m-d_H-i-s');
 
+        dd($mongoResults);
         if ($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
             $groupedChatData = [];
             foreach ($mongoResults as $chatDocument) {
@@ -460,6 +461,10 @@ class AlfredChatController extends Controller
             $pipeline[] = [
                 '$group' => [
                     '_id' => '$quote_id',
+                    'created_at' => 1,
+                    'role' => 1,
+                    'msg' => 1,
+                    'quote_id' => 1,
                     'quote_type' => ['$last' => '$quote_type'],
                     'date_of_first_interaction' => ['$min' => '$created_at'],
                     'communication_channels' => ['$addToSet' => '$channel'],
