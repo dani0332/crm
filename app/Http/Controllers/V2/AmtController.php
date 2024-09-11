@@ -292,7 +292,6 @@ class AmtController extends Controller
         $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
-
         $quoteStatuses = app(CentralService::class)->lockTransactionStatus($record->id, QuoteTypes::BUSINESS->id(), $quoteStatuses);
         if (AMLService::checkAMLStatusFailed(QuoteTypes::BUSINESS->id(), $record->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
@@ -349,7 +348,6 @@ class AmtController extends Controller
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
         $amlStatusName = AMLStatusCode::getName($record->aml_status);
 
-
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
             'storageUrl' => storageUrl(),
@@ -362,7 +360,7 @@ class AmtController extends Controller
             'issuanceAuthorities' => $issuanceAuthorities,
             'quoteType' => quoteTypeCode::Business,
             'quote' => $record,
-            'amlStatusName'=>$amlStatusName,
+            'amlStatusName' => $amlStatusName,
             'quoteDetails' => $quoteDetails,
             'quoteTypeId' => QuoteTypeId::Business,
             'allowedDuplicateLOB' => $allowedDuplicateLOB,

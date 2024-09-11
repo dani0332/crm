@@ -142,7 +142,6 @@ class PetQuoteController extends Controller
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
-
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::PET->id(),
             'quote_request_id' => $quote->id,
@@ -180,11 +179,10 @@ class PetQuoteController extends Controller
         $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Pet);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
-
         return inertia('PetQuote/Show', [
             'quoteType' => QuoteTypes::PET,
             'quote' => $quote,
-            'amlStatusName'=> $amlStatusName,
+            'amlStatusName' => $amlStatusName,
             'activities' => $activities,
             'lostReasons' => $lostReasons,
             'advisors' => $advisors,

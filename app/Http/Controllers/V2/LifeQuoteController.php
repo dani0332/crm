@@ -186,7 +186,7 @@ class LifeQuoteController extends Controller
             'quoteTypeId' => QuoteTypeId::Life,
             'quoteStatuses' => $quoteStatuses,
             'quote' => $quote,
-            'amlStatusName'=> $amlStatusName,
+            'amlStatusName' => $amlStatusName,
             'record' => $quote,
             'activities' => $activitiesData,
             'advisors' => $advisors,

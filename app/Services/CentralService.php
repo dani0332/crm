@@ -354,7 +354,6 @@ class CentralService
         return $response;
     }
 
-    
     public function getQuoteWiseProviderPlans($quoteType, $providerId, $plandId = null): object
     {
         $planModel = 'App\\Models\\'.ucfirst($quoteType).'Plan';
