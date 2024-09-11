@@ -219,6 +219,7 @@ class AlfredChatController extends Controller
             if (isset($entry['communication_channels']) && $entry['communication_channels'] instanceof \MongoDB\Model\BSONArray) {
                 $entry['communication_channels'] = $entry['communication_channels']->getArrayCopy();
             }
+
             return $entry;
         }, $mongoResults);
 
@@ -240,6 +241,7 @@ class AlfredChatController extends Controller
                 // Merge with refactored data
                 return array_merge($item, $refactoredById[$uuid]);
             }
+
             return $item;
         }, $dataById);
 
@@ -247,11 +249,11 @@ class AlfredChatController extends Controller
         $mergedData = array_values($mergedData);
 
         $fallbackFilter = $request->fallback;
-        
+
         $filteredData = collect($mergedData)->map(function ($item) use ($fallbackFilter) {
             dd($item['fallback']);
-            if ($fallbackFilter === quoteTypeCode::yesText ) {
-                if (!is_null($item['fallback'])) {
+            if ($fallbackFilter === quoteTypeCode::yesText) {
+                if (! is_null($item['fallback'])) {
                     return null;
                 }
             } elseif ($fallbackFilter === quoteTypeCode::noText) {
