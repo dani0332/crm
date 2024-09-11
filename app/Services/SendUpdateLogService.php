@@ -713,6 +713,7 @@ class SendUpdateLogService
 
     public function updatesMoveToLead($sendUpdateRequest, $sendUpdateLog)
     {
+        $endorsementDetails = $sendUpdateLog;
         $categoryCode = $sendUpdateLog->category?->code;
         $optionCode = $sendUpdateLog->option?->code;
         $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
@@ -789,12 +790,14 @@ class SendUpdateLogService
                     $sendUpdateRequest->reversalInvoice == $quote->payments->value('insurer_tax_number')
                 )) {
                     info('Book Update - Updating Policy Details for Main Lead - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+                    info('Book Update - Before Policy Details update on Main Lead - PolicyNumber: '.$quote->policy_number.' - PolicyStartDate: '.$quote->policy_start_date.' - PolicyExpiryDate: '.$quote->policy_expiry_date.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
                     $quote->update([
-                        'policy_number' => $sendUpdateLog->policy_number,
-                        'policy_start_date' => $sendUpdateLog->start_date,
-                        'policy_expiry_date' => $sendUpdateLog->expiry_date,
+                        'policy_number' => $endorsementDetails->policy_number,
+                        'policy_start_date' => $endorsementDetails->start_date,
+                        'policy_expiry_date' => $endorsementDetails->expiry_date,
                         'policy_booking_date' => $currentDate,
                     ]);
+                    info('Book Update - After Policy Details updated on Main Lead - PolicyNumber: '.$sendUpdateLog->policy_number.' - PolicyStartDate: '.$sendUpdateLog->start_date.' - PolicyExpiryDate: '.$sendUpdateLog->expiry_date.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
                 }
                 // Cases for Correct Policy Details End
             }
@@ -809,11 +812,15 @@ class SendUpdateLogService
                 }
             }
 
+            // Temp Log just for Debugging
+            info('Book Update - Before Endorsement update - PolicyNumber: '.$sendUpdateLog->policy_number.' - PolicyStartDate: '.$sendUpdateLog->start_date.' - PolicyExpiryDate: '.$sendUpdateLog->expiry_date.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+
             $sendUpdateLog->update([
                 'booking_date' => $currentDate,
                 'transaction_payment_status' => $status ?? '',
                 'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
             ]);
+            info('Book Update - After Endorsement updated - PolicyNumber: '.$sendUpdateLog->policy_number.' - PolicyStartDate: '.$sendUpdateLog->start_date.' - PolicyExpiryDate: '.$sendUpdateLog->expiry_date.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
 
             DB::commit();
 
@@ -1115,5 +1122,24 @@ class SendUpdateLogService
         ]);
 
         return SendUpdateLogRepository::updateInsurerDetails($sendUpdate, $bookingDetails);
+    }
+
+    public function isPolicyDetailsFilled($policyDetails, $quoteTypeId, $insuranceProviderId, $planId): bool
+    {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
+            $policyDetails['plan_id'] = $planId;
+        }
+
+        $policyDetails['insurance_provider_id'] = $insuranceProviderId;
+
+        $filledValues = array_filter($policyDetails, function ($value) {
+            return ! is_null($value) && $value !== '';
+        });
+
+        if (count($policyDetails) === count($filledValues)) {
+            return true;
+        }
+
+        return false;
     }
 }

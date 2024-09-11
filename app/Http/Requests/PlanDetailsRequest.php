@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -41,5 +42,15 @@ class PlanDetailsRequest extends FormRequest
         }
 
         return $rules;
+    }
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $repository = getRepositoryObject(request()->quoteType);
+            $quoteModel = $repository::where('code', request()->code)->firstOrFail();
+            if ($quoteModel && $quoteModel->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+                $validator->errors()->add('value', 'No further editing is required as the policy has been booked');
+            }
+        });
     }
 }

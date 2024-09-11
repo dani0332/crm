@@ -431,7 +431,7 @@ class HealthQuoteService extends BaseService
 
         // advisors filter
         if (isset($request->advisors) && is_array($request->advisors) && count($request->advisors) > 0 && ! in_array(DefaultAdvisorEnum::UNASSIGNED, $request->advisors)) {
-            $this->query->whereIn('advisor_id', $request->advisors)->orWhereIn('wcu_id', $request->advisors);
+            $this->query->whereIn('advisor_id', $request->advisors);
         }
         // is_renewal filter
         if (isset($request->is_renewal) && $request->is_renewal != '') {
@@ -528,7 +528,7 @@ class HealthQuoteService extends BaseService
                     if ($request[$item][0] == 'null') {
                         $this->query->whereNull('advisor_id');
                     } else {
-                        $this->query->whereIn('advisor_id', $request[$item])->orWhereIn('wcu_id', $request[$item]);
+                        $this->query->whereIn('advisor_id', $request[$item]);
                     }
                 } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('quote_status_id', $request[$item]);
