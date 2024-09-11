@@ -311,7 +311,11 @@ const isIntegerColumn = key => {
     <template #item-endorsement_sub_type="{ endorsement_sub_type }">
       {{ endorsement_sub_type ?? 'N/A' }}
     </template>
-    <template #item-insurer_commmission_invoice_number="{ insurer_commmission_invoice_number }">
+    <template
+      #item-insurer_commmission_invoice_number="{
+        insurer_commmission_invoice_number,
+      }"
+    >
       {{ insurer_commmission_invoice_number ?? 'N/A' }}
     </template>
     <template #body-append>
