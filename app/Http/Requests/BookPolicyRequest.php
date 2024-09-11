@@ -28,8 +28,8 @@ class BookPolicyRequest extends FormRequest
     {
         return [
             'invoice_date' => 'required',
-            'insurer_tax_invoice_number' => 'required|max:22',
-            'insurer_commmission_invoice_number' => 'required|max:22|different:insurer_tax_invoice_number',
+            'insurer_tax_invoice_number' => 'required|max:50',
+            'insurer_commmission_invoice_number' => 'required|max:50|different:insurer_tax_invoice_number',
             'discount' => 'nullable',
             'transaction_payment_status' => 'nullable',
             'broker_invoice_number' => 'nullable',
@@ -47,6 +47,10 @@ class BookPolicyRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
+            $quoteModel = $this->getQuoteObject(request()->model_type, request()->quote_id);
+            if ($quoteModel && $quoteModel->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+                $validator->errors()->add('value', 'No further editing is required as the policy has been booked');
+            }
 
             $quote = $this->getQuoteObject(request()->model_type, request()->quote_id);
             if($quote && $quote->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && !auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {

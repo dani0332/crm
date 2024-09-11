@@ -136,9 +136,9 @@ class CentralController extends Controller
 
         $quoteIds = explode(',', $leadAssignRequest->selectTmLeadId);
         foreach ($quoteIds as $id) {
-            $quoteData = $this->getQuoteObject($request->modelType, $id);
+            $quoteData = $this->getQuoteObject($leadAssignRequest->modelType, $id);
             if ($quoteData && $quoteData->payment_status_id === PaymentStatusEnum::AUTHORISED) {
-                app(NotificationService::class)->paymentStatusUpdate($request->modelType, $quoteData->uuid);
+                app(NotificationService::class)->paymentStatusUpdate($leadAssignRequest->modelType, $quoteData->uuid);
             }
         }
 

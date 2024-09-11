@@ -44,13 +44,16 @@ class PlanDetailsRequest extends FormRequest
 
         return $rules;
     }
-
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
             $repository = getRepositoryObject(request()->quoteType);
-            $quote = $repository::where('code', request()->code)->firstOrFail();
-            if($quote && $quote->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && !auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
+            $quoteModel = $repository::where('code', request()->code)->firstOrFail();
+            if ($quoteModel && $quoteModel->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+                $validator->errors()->add('value', 'No further editing is required as the policy has been booked');
+            }
+
+            if($quoteModel && $quoteModel->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && !auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
                 $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
             }
         });

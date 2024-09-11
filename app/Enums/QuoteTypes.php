@@ -160,7 +160,7 @@ enum QuoteTypes: string
 
     public static function getNameShortCode(string $code)
     {
-        return match ($code) {
+        $codes = [
             'CAR' => self::CAR,
             'HOM' => self::HOME,
             'HEA' => self::HEALTH,
@@ -172,7 +172,9 @@ enum QuoteTypes: string
             'PET' => self::PET,
             'CYC' => self::CYCLE,
             'JSK' => self::JETSKI,
-        };
+        ];
+
+        return $codes[$code] ?? null;
     }
 
     public function url(string $uuid): string
