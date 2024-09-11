@@ -97,9 +97,9 @@ class AlfredChatController extends Controller
             $data = CarQuote::with(['carQuoteRequestDetail' => function ($query) {
                 $query->select('id', 'car_quote_request_id', 'chat_initiated_at'); // specify keys from carQuoteRequestDetail
             }])
-                ->select('id', 'uuid', 'code','quote_batch_id', 
-                'payment_status_id', 'email', 'mobile_no', 'transaction_type_id',
-                 'quote_batch_id', 'quote_status_id', 'assignment_type', 'quote_status_id') // specify keys from CarQuote
+                ->select('id', 'uuid', 'code', 'quote_batch_id',
+                    'payment_status_id', 'email', 'mobile_no', 'transaction_type_id',
+                    'quote_batch_id', 'quote_status_id', 'assignment_type', 'quote_status_id') // specify keys from CarQuote
                 ->whereHas('carQuoteRequestDetail', function ($query) {
                     $query->whereNotNull('chat_initiated_at');
                 })->when($request->export_chat, function ($query) {
@@ -139,66 +139,68 @@ class AlfredChatController extends Controller
             $data = $this->processMongoDBChatFilters($request, $data);
         }
 
-          // Set up pagination parameters
-            $perPage = $request->input('per_page', 15);  // Default to 15 items per page
-            $currentPage = $request->input('page', 1);   // Current page from the request
-            $total = count($data);                       // Total items in the dataset
-            $lastPage = ceil($total / $perPage);
+        // Set up pagination parameters
+        $perPage = $request->input('per_page', 15);  // Default to 15 items per page
+        $currentPage = $request->input('page', 1);   // Current page from the request
+        $total = count($data);                       // Total items in the dataset
+        $lastPage = ceil($total / $perPage);
 
-            // Slice the data array based on current page and per page count
-            $paginatedData = array_slice($data->toArray(), ($currentPage - 1) * $perPage, $perPage);
+        // Slice the data array based on current page and per page count
+        $paginatedData = array_slice($data->toArray(), ($currentPage - 1) * $perPage, $perPage);
 
-            $path = $request->url();  // Get the current URL
+        $path = $request->url();  // Get the current URL
 
-            $nextPageUrl = $currentPage < $lastPage 
-                ? $path . '?page=' . ($currentPage + 1) . '&per_page=' . $perPage 
-                : null;
-        
-            $prevPageUrl = $currentPage > 1 
-                ? $path . '?page=' . ($currentPage - 1) . '&per_page=' . $perPage 
-                : null;
+        $nextPageUrl = $currentPage < $lastPage
+            ? $path.'?page='.($currentPage + 1).'&per_page='.$perPage
+            : null;
 
-            // Prepare pagination meta information
-            $pagination = [
-                'current_page' => $currentPage,
-                'per_page' => $perPage,
-                'total' => $total,
-                'last_page' => ceil($total / $perPage),
-                'from' => ($currentPage - 1) * $perPage + 1,
-                'to' => min($currentPage * $perPage, $total),
-                'next_page_url' => $nextPageUrl,
-                'prev_page_url' => $prevPageUrl,
-            ];
+        $prevPageUrl = $currentPage > 1
+            ? $path.'?page='.($currentPage - 1).'&per_page='.$perPage
+            : null;
+
+        // Prepare pagination meta information
+        $pagination = [
+            'current_page' => $currentPage,
+            'per_page' => $perPage,
+            'total' => $total,
+            'last_page' => ceil($total / $perPage),
+            'from' => ($currentPage - 1) * $perPage + 1,
+            'to' => min($currentPage * $perPage, $total),
+            'next_page_url' => $nextPageUrl,
+            'prev_page_url' => $prevPageUrl,
+        ];
 
         if ($exportChat) {
             return $data;
         } else {
-            return inertia('AlfredChat/Index', [ 'logs' => $paginatedData, 'pagination' => $pagination,   'leadStatuses' => QuoteStatus::all(), 'batches' => QuoteBatches::all()]);
+            return inertia('AlfredChat/Index', ['logs' => $paginatedData, 'pagination' => $pagination,   'leadStatuses' => QuoteStatus::all(), 'batches' => QuoteBatches::all()]);
         }
     }
 
-    public function processMongoDBChatFilters(Request $request, $data){
+    public function processMongoDBChatFilters(Request $request, $data)
+    {
         foreach ($data as $item) {
             $chatPipeline = $this->createPipeline($request, $item, 'chat');
             $mongoResult = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline))->toArray();
-            
-            if(empty($mongoResult)) {
+
+            if (empty($mongoResult)) {
                 $item->chat = [];
             } else {
                 $item->chat = $mongoResult;
             }
         }
 
-        $fallbackFilter = $request->fallback; 
+        $fallbackFilter = $request->fallback;
 
         $filteredData = collect($data)->map(function ($item) use ($fallbackFilter) {
-                // Filter the 'chat' array based on fallback value
+            // Filter the 'chat' array based on fallback value
             $item->chat = collect($item->chat)->filter(function ($chat) use ($fallbackFilter) {
                 if ($fallbackFilter === quoteTypeCode::yesText) {
-                    return !is_null($chat['fallback']);  // Keep entries with a non-null fallback
+                    return ! is_null($chat['fallback']);  // Keep entries with a non-null fallback
                 } elseif ($fallbackFilter === quoteTypeCode::noText) {
                     return is_null($chat['fallback']);   // Keep entries with a null fallback
                 }
+
                 return true;  // If no valid filter, return all chats
             })->values()->toArray(); // Re-index the array
 
@@ -207,6 +209,7 @@ class AlfredChatController extends Controller
             // Optionally, remove the entire item if there are no valid chats left
             return empty($item->chat);
         })->values(); // Re-index the collection
+
         return $filteredData;
     }
 
@@ -236,8 +239,8 @@ class AlfredChatController extends Controller
             $partialQuery->whereHas($relation, function ($query) use ($dateFrom, $dateTo) {
                 $query->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
             });
-        }else {
-             // Default to last 30 days if no dates are provided
+        } else {
+            // Default to last 30 days if no dates are provided
             $dateFrom = now()->subDays(30)->startOfDay();
             $dateTo = now()->endOfDay();
 
@@ -302,7 +305,7 @@ class AlfredChatController extends Controller
         }
     }
 
-    public function createPipeline(Request $request , $item, $type)
+    public function createPipeline(Request $request, $item, $type)
     {
         $quoteId = $item->uuid ?? null;
         $quoteType = $request->quoteType ?? 'CAR';
