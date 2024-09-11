@@ -363,11 +363,11 @@ class SendUpdateLogController extends Controller
     {
         $suEmailProcess = SendUpdateLogRepository::sendUpdateToCustomer($updateToCustomerRequest->validated());
 
-        if ($suEmailProcess['status'] == 500) {
+        if (isset($suEmailProcess['status']) && $suEmailProcess['status'] == 500) {
             vAbort('Send Update to customer email failed');
         }
 
-        return response()->json($suEmailProcess['message']);
+        return response()->json($suEmailProcess);
     }
 
     public function sendUpdateValidation(SendUpdateValidationRequest $sendUpdateValidationRequest)
@@ -392,7 +392,9 @@ class SendUpdateLogController extends Controller
 
     public function sendUpdate(SendUpdateRequest $sendUpdateRequest)
     {
-        $response = app(SendUpdateLogService::class)->sendUpdateProcess($sendUpdateRequest);
+        //        $response = app(SendUpdateLogService::class)->sendUpdateProcess($sendUpdateRequest);
+        $response = app(SendUpdateLogService::class)->preparedDataForEndorsement($sendUpdateRequest);
+        dd('Send Update Controller');
 
         return response()->json(['message' => $response['message']], $response['status'] ? 200 : 500);
     }

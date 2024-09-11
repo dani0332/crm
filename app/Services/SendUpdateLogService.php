@@ -30,13 +30,11 @@ use App\Models\LifeQuote;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
-use App\Models\SageApiLog;
 use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
-use App\Repositories\PaymentRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -755,6 +753,17 @@ class SendUpdateLogService
         ];
     }
 
+    public function preparedDataForEndorsements($sendUpdateRequest)
+    {
+        $sendUpdateLog = SendUpdateLog::with('category')->find($sendUpdateRequest->sendUpdateId);
+        $skipCategories = [SendUpdateLogStatusEnum::EN];
+        if (in_array($sendUpdateLog?->category?->code, $skipCategories)) {
+            info('fn:preparedDataForEndorsements - Skipping Sage APIs for Book Update - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+
+            return ['status' => true];
+        }
+    }
+
     public function sendUpdateProcess($sendUpdateRequest)
     {
         $sendUpdateLog = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
@@ -793,7 +802,7 @@ class SendUpdateLogService
             $sageResponse = app(SageApiService::class)->documentsPushedToERP($sendUpdateRequest, $prepareDataForERP);
         }
 
-        if (!$sageResponse['status']) {
+        if (! $sageResponse['status']) {
             logger()->error('Book Update - Something went wrong - Response: '.$sageResponse['message'].' - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
 
             return $sageResponse;

@@ -26,6 +26,7 @@ class SendUpdateRequest extends FormRequest
             'quoteRefId' => 'required',
             'quoteUuid' => 'required',
             'sendUpdateId' => 'required|exists:send_update_logs,id',
+            'inslyMigrated' => 'boolean',
         ];
     }
 

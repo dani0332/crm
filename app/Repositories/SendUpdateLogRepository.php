@@ -10,6 +10,8 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Http\Controllers\V2\SendUpdateLogController;
+use App\Http\Requests\SendUpdateRequest;
 use App\Jobs\SendUpdateToCustomerJob;
 use App\Models\CarQuote;
 use App\Models\Lookup;
@@ -250,7 +252,6 @@ class SendUpdateLogRepository extends BaseRepository
 
     public function fetchSendUpdateToCustomer($request)
     {
-        $response = ['status' => 200, 'message' => []];
         $sendUpdateLog = $this->find($request['sendUpdateId']);
         info('Send Update to Customer - Process Start - Send Update UUID: '.$sendUpdateLog->uuid);
 
@@ -259,29 +260,32 @@ class SendUpdateLogRepository extends BaseRepository
                 $quote = CarQuote::where('uuid', $sendUpdateLog->quote_uuid)->first();
                 if (! empty($sendUpdateLog->emirates_id)) {
                     info('Send Update to Customer - Updating Emirates ID - Send Update UUID: '.$sendUpdateLog->uuid.' - Emirates ID: '.$sendUpdateLog->emirates_id);
-                    //                    $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_id]);
+                    $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_id]);
                 } elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0) {
                     info('Send Update to Customer - Updating Seating Capacity - Send Update UUID: '.$sendUpdateLog->uuid.' - Seating Capacity: '.$sendUpdateLog->seating_capacity);
-                    //                    $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
+                    $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
                 }
             }
 
             if ($sendUpdateLog->is_email_sent) {
-                $response['message'][] = 'Email already sent to customer';
+                $response[] = ['status' => 200, 'message' => 'Email already sent to customer'];
             } else {
-                $response['message'][] = 'Send Update to customer email scheduled successfully';
+                $response[] = ['status' => 200, 'message' => 'Send Update to customer email is being scheduled'];
             }
 
             if (isset($request['action']) && $request['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
-                $response['message'][] = 'Send update booking process is being scheduled';
+                $response[] = ['status' => 200, 'message' => 'Send update booking process is being scheduled'];
             }
 
-            dispatch(new SendUpdateToCustomerJob($sendUpdateLog, $request))->onQueue('send_update_to_customer');
+            //            TODO:: Need to remove send update calling
+            app(SendUpdateLogController::class)->sendUpdate(new SendUpdateRequest($request));
+
+            //            TODO:: Need to set this job to default queue
+            //            dispatch(new SendUpdateToCustomerJob($sendUpdateLog, $request))->onQueue('send_update_to_customer');
             info('Send Update to Customer - Process End - Send Update UUID: '.$sendUpdateLog->uuid.' - Status updated to '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
         } catch (\Exception $ex) {
-            logger()->error('Send Update to Customer - Failed - Send Update UUID: '.$sendUpdateLog->uuid.' - Error : '.$ex->getMessage());
-            $response['status'] = 500;
-            $response['message'] = [$ex->getMessage()];
+            logger()->error('Send Update to Customer - Failed - Send Update UUID: '.$sendUpdateLog->uuid.' - Error : '.json_encode($ex->getMessage()));
+            $response = ['status' => 500, 'message' => 'Something went wrong, please try again later'];
         }
 
         return $response;
