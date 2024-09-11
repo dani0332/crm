@@ -1122,8 +1122,6 @@ class SageApiService
             return ['status' => false, 'message' => 'Please check the payment as total price is set to zero while Payment Method is '.PaymentMethodsEnum::CreditApproval.' and Frequency is '.$payment->frequency.'. Please Select Credit Approval as your payment method and Upfront as Payment Frequency to Proceed!'];
         }
 
-        $sageLogArray = $quote->sageApiLogs->keyBy('step')->toArray();
-
         // payload
         $sageRequest = $this->sagePayLoad($request->model_type, $payment, $quote, $paymentSplits);
         $sageRequest->quoteTypeId = $quoteTypeId;
