@@ -373,7 +373,7 @@ trait GenericQueriesAllLobs
                         'policy_issuance_status_other' => '',
                     ]);
                 }
-                info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id for  : '.$quote->uuid);
+                info('Quote Code: '.$quote->code.' update Quote Status complete for quote_status_id && policy_issuance_status_id');
             }
         }
     }
@@ -449,7 +449,7 @@ trait GenericQueriesAllLobs
      */
     public function updatePriceAndDiscount($quoteModel, $sendUpdatePayment = null): bool
     {
-        info('Quote Code: '.$quoteModel->code.' fn: updatePriceAndDiscount called for : '.$quoteModel->uuid);
+        info('Quote Code: '.$quoteModel->code.' fn: updatePriceAndDiscount called');
 
         // it will check for send update payments.
         if (! $sendUpdatePayment) {
@@ -483,7 +483,7 @@ trait GenericQueriesAllLobs
      */
     private function updateTotalAmount($payment)
     {
-        info('Quote Code: '.$payment->code.' Updating TA for PC: '.$payment->code.' frequency: '.$payment->frequency.' payment_status_id: '.$payment->payment_status_id);
+        info('Quote Code: '.$payment->code.' Updating TA frequency is : '.$payment->frequency.' and payment_status_id: '.$payment->payment_status_id);
         if ($payment && $payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
             $totalPrice = $payment->total_price;
             $discountValue = $payment->discount_value;
@@ -561,7 +561,7 @@ trait GenericQueriesAllLobs
         if ($payment) {
             $paymentTotalPrice = round($payment->total_price, 2);
             $sumOfSplitPayment = round(($payment->paymentSplits()->sum('payment_amount') + $payment->discount_value), 2);
-            info('Quote Code: '.$payment->code.' Checking Lacking Payment for payment : '.$payment->code.' paymentTotalPrice '.$paymentTotalPrice.' sum of Split payment '.$sumOfSplitPayment);
+            info('Quote Code: '.$payment->code.' Checking Lacking Payment paymentTotalPrice '.$paymentTotalPrice.' sum of Split payment '.$sumOfSplitPayment);
 
             return ! ($sumOfSplitPayment >= $paymentTotalPrice);
         }
@@ -780,9 +780,9 @@ trait GenericQueriesAllLobs
         $paymentSplits = PaymentSplits::where('code', $payment->code)->get();
         if (! $paymentSplits->isEmpty()) {
             foreach ($paymentSplits as $paymentSplit) {
-                info('Quote Code: '.$payment->code.' Updating TA for Split Payment: '.$payment->code.' frequency: '.$payment->frequency.' payment_status_id: '.$payment->payment_status_id);
+                info('Quote Code: '.$payment->code.' Updating TA for Split Payment frequency is : '.$payment->frequency.' and payment_status_id: '.$payment->payment_status_id);
                 if ($payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
-                    info('Quote Code: '.$payment->code.' Updating PA for PC: '.$payment->code.' BTA: '.$paymentSplit->payment_amount.' WTA: '.$payment->total_amount);
+                    info('Quote Code: '.$payment->code.' Updating PA BTA: '.$paymentSplit->payment_amount.' WTA: '.$payment->total_amount);
                     $paymentSplit->payment_amount = $payment->total_amount;
                 }
                 if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {
