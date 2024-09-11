@@ -316,59 +316,10 @@ class AlfredChatController extends Controller
 
         $fileName = 'alfred_chat_logs_'.Carbon::now()->format('Y-m-d_H-i-s');
 
-        dd($mongoResults);
+       
         if ($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
-            $groupedChatData = [];
-            foreach ($mongoResults as $chatDocument) {
-                $quoteId = $chatDocument['quote_id'];
-                if (!isset($groupedChatData[$quoteId])) {
-                    $groupedChatData[$quoteId] = [
-                        'communication_channel' => '',
-                        'fallback_count' => 0,
-                        'user_count' => 0,
-                        'ai_count' => 0
-                    ];
-                }
-    
-                if (isset($chatDocument) && is_array($chatDocument)) {
-                    if (isset($chatDocument['communication_channel'])) {
-                            $channel = $chatDocument['communication_channel'];
-    
-                            if ($channel instanceof \MongoDB\Model\BSONDocument) {
-                                $channel = $channel->getArrayCopy();
-                            }
-                            if (is_array($channel)) {
-                                $channelString = implode(', ', $channel);
-                            } else {
-                                $channelString = (string)$channel;
-                            }
-    
-                            $groupedChatData[$quoteId]['communication_channel'] = $channelString;
-                    } else {
-                        $groupedChatData[$quoteId]['communication_channel'] = ''; // Default to empty string if not set
-                    }
-    
-                    if (isset($chatDocument['fallback']) && is_bool($chatDocument['fallback'])) {
-                        // Increment the fallback count based on the boolean value
-                        if ($chatDocument['fallback']) {
-                            $groupedChatData[$quoteId]['fallback_count']++;
-                        }
-                    }
-    
-                    if ($chatDocument['role'] === 'USER') {
-                        $groupedChatData[$quoteId]['user_count']++;
-                    } elseif ($chatDocument['role'] === 'AI') {
-                        $groupedChatData[$quoteId]['ai_count']++;
-                    }
-                }
-            }
-    
-            // Step 5: Map the grouped chat data back to the corresponding items in $data
-            foreach ($data as $item) {
-                $item->chat = $groupedChatData[$item->uuid] ?? []; // Assign chat data or empty array
-            }
-            
-            return Excel::download(new InstantChatDetailedExport($data), $fileName.'.xlsx');
+            $mergedData = array_merge((array) $data->first(), (array)$mongoResults[0]);
+            return Excel::download(new InstantChatConsolidatedExport($mergedData), $fileName.'.xlsx');
         }
 
         if ($request->report == InstantChatReportsEnum::DETAILED_REPORT) {
@@ -460,13 +411,15 @@ class AlfredChatController extends Controller
             $pipeline[] = [
                 '$group' => [
                     '_id' => '$quote_id',
-                    'created_at' => 1,
-                    'role' => 1,
-                    'msg' => 1,
-                    'quote_id' => 1,
                     'quote_type' => ['$last' => '$quote_type'],
                     'date_of_first_interaction' => ['$min' => '$created_at'],
-                    'communication_channels' => ['$addToSet' => '$channel'],
+                    'communication_channels' => ['$addToSet' => [
+                        '$cond' => [
+                            ['$ifNull' => ['$channel', false]],  // Check if 'communication_channel' exists
+                            '$channel',
+                            '$$REMOVE'  
+                        ]
+                    ]],
                     'customer_interactions' => [
                         '$sum' => [
                             '$cond' => [
@@ -494,7 +447,10 @@ class AlfredChatController extends Controller
                             ],
                         ],
                     ],
-                    'fallbacks' => ['$sum' => ['$cond' => [['fallback', true], 1, 0]]],
+                    'fallbacks' => ['$sum' => ['$cond' => [['$ifNull' => ['$fallback', false]], 1,0
+        ]
+     ]
+    ],
                 ],
             ];
 

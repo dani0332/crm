@@ -13,15 +13,6 @@ class InstantChatDetailedExport implements FromArray, WithHeadings, WithMapping
     use Exportable;
 
     protected $chat;
-    // public function __construct($chat)
-    // {
-    //     $this->chat = $chat;
-    // }
-
-    // public function collection()
-    // {
-    //     return $this->chat;
-    // }
 
     public function __construct(array $data)
     {
@@ -53,7 +44,7 @@ class InstantChatDetailedExport implements FromArray, WithHeadings, WithMapping
     }
 
     public function map($chat): array
-    {
+    {   
         return [
             $chat['quote_type'],
             $chat['quote_id'],
