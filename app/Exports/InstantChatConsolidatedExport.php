@@ -52,6 +52,7 @@ class InstantChatConsolidatedExport implements FromArray, WithHeadings, WithMapp
     public function map($chat): array
     {
 
+        // dd($chat);
         return [
             $chat['quote_type'] ?? 'N/A', // 'QUOTE TYPE'
             $chat['code'] ?? 'N/A', // 'REF ID'
@@ -63,7 +64,7 @@ class InstantChatConsolidatedExport implements FromArray, WithHeadings, WithMapp
             $chat['customer_interactions'] ?? 0, // 'NO. OF MESSAGES SENT BY CUSTOMER TO AI'
             $chat['ai_interactions'] ?? 0, // 'NO. OF RESPONSES SENT BY AI TO CUSTOMER'
             $chat['total_ai_interactions'] ?? 0, // 'TOTAL NO OF INTERACTIONS'
-            $chat['fallbacks'] ?? 0, // 'COUNT OF FALLBACKS'
+            $chat['fallbacks'] === 0 ? 'N/A' : $chat['fallbacks'], // 'COUNT OF FALLBACKS'
             $chat['payment_status_id_text'] ?? 'N/A', // 'PAYMENT STATUS'
             in_array(
                 $chat['quote_status_id'] ?? null,
