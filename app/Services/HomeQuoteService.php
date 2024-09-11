@@ -111,8 +111,6 @@ class HomeQuoteService extends BaseService
             'qrem.entity_type_code',
             'ent.industry_type_code',
             'ent.emirate_of_registration_id',
-            'hqr.aml_status_id',
-            'amlStatus.text as aml_status_text',
             DB::raw('DATE_FORMAT(hqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
             'hqr.price_vat_applicable',
             'hqr.vat',
@@ -123,8 +121,8 @@ class HomeQuoteService extends BaseService
             'hqr.policy_issuance_date',
             'hqr.policy_booking_date',
             'hqr.insly_migrated',
+            'hqr.aml_status',
         )
-            ->leftJoin('aml_status as amlStatus', 'amlStatus.id', '=', 'hqr.aml_status_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')

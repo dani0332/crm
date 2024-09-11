@@ -110,7 +110,7 @@ class LifeQuoteController extends Controller
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Life);
         $duplicateAllowedLobs = (new CentralService)->duplicateAllowedLobsList(QuoteTypes::LIFE->value, $quote->code);
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::LIFE->value, $quote);
-        
+
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $membersDetails = CustomerMembersRepository::getBy($quote->id, QuoteTypes::LIFE->name);

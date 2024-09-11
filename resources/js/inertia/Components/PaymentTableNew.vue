@@ -2550,7 +2550,7 @@ const getCaptureValidation = computed(() => {
     if (
       props.payments.length > 0 &&
       totalPriceRounded === calculatedTotal &&
-      (((props.quoteRequest.aml_status_id ===
+      (((props.quoteRequest.aml_status ===
           page.props.amlStatusEnum.AMLScreeningCleared ||
         props.quoteRequest.quote_status_id ===
           page.props.quoteStatusEnum.TransactionDeclined ||

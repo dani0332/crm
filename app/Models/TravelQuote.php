@@ -47,11 +47,6 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(QuoteStatus::class);
     }
-    public function amlStatus()
-    {
-        return $this->belongsTo(AmlStatus::class, 'aml_status_id');
-    }
-
     public function travelQuoteRequestDetail()
     {
         return $this->hasOne(TravelQuoteRequestDetail::class, 'travel_quote_request_id', 'id');

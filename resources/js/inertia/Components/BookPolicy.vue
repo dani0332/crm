@@ -8,10 +8,6 @@ const props = defineProps({
     type: Object,
     default: {},
   },
-  isAmlClearedForQuote: {
-    type: Boolean,
-    default: false,
-  },
   quoteType: {
     type: String,
     default: '',
@@ -411,11 +407,8 @@ const isTravelQuoteAndAMLNotCleared = () => {
   const isSendPolicyToCustomerButton =
     bookPolicyButtonLabel === sendPolicyTypeEnum.CUSTOMER_BUTTON_TEXT;
   const isQuoteTypeTravel = page.props.quoteType == quoteTypeCodeEnum.Travel;
-  const isPolicyAMLScreeningCleared = props.isAmlClearedForQuote;
-  console.log('isPolicyAMLScreeningCleared', isPolicyAMLScreeningCleared);
   if (
     isQuoteTypeTravel &&
-    !isPolicyAMLScreeningCleared &&
     !isSendPolicyToCustomerButton
   ) {
     let allowedQuoteStatuesForAMLAlert = [

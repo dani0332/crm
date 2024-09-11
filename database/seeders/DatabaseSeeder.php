@@ -77,7 +77,6 @@ class DatabaseSeeder extends Seeder
 
             // AddPaymentPermissionsSeeder::class,
             //AddSendUpdatesCategoriesInLookups::class,
-            AMLStatusTableSeeder::class,
 
         ]);
     }

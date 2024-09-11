@@ -2,7 +2,6 @@
 import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
-import EntityRiskRatingScoreDetails from '../../Components/EntityRiskRatingScoreDetails.vue';
 
 const props = defineProps({
   quote: Object,
@@ -35,7 +34,7 @@ const props = defineProps({
   cdnPath: String,
   vatPercentage: Number,
   paymentTooltipEnum: Object,
-  isNewPaymentStructure: Boolean,  
+  isNewPaymentStructure: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -43,6 +42,7 @@ const props = defineProps({
   bookPolicyDetails: Array,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
+    amlStatusName: String,
 });
 
 const page = usePage();
@@ -772,7 +772,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">AML STATUS</dt>
-                <dd>{{ quote?.aml_status_text ?? '' }}</dd>
+                <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">NEXT FOLLOWUP DATE</dt>

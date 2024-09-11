@@ -47,7 +47,7 @@ defineProps({
   websiteURL: String,
   linkedQuoteDetails: Object,
   vatPercentage: Number,
-  
+
   permissions: Object,
   enums: Object,
   payments: Array,
@@ -57,11 +57,12 @@ defineProps({
   hasPolicyIssuedStatus: Boolean,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
+    amlStatusName: String,
 });
 
 const assumptionState = reactive({
   isEditing: false,
-  
+
 });
 
 const page = usePage();
@@ -422,7 +423,7 @@ const onAddUpdate = () => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">AML STATUS</dt>
-            <dd>{{ quote?.aml_status?.text ?? '' }}</dd>
+            <dd>{{ amlStatusName ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>
@@ -1257,7 +1258,7 @@ const onAddUpdate = () => {
           return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
         })
       "
-      :storageUrl="storageUrl"      
+      :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
     />
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
@@ -196,11 +197,14 @@ class BikeQuoteController extends Controller
         $planURL = $ecomBikeInsuranceQuoteUrl.$quote->uuid;
         $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
+        $amlStatusName = AMLStatusCode::getName($quote->aml_status);
+
 
         return inertia('BikeQuote/Show', [
             'quoteType' => QuoteTypes::BIKE,
             'quote' => $quote,
             'record' => $quote,
+            'amlStatusName'=>$amlStatusName,
             'activities' => $activities,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::BIKE->id(),

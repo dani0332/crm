@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
@@ -139,7 +140,7 @@ class PetQuoteController extends Controller
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
-        
+
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::PET->id(),
             'quote_request_id' => $quote->id,
@@ -173,10 +174,13 @@ class PetQuoteController extends Controller
 
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Pet);
+        $amlStatusName = AMLStatusCode::getName($quote->aml_status);
+
 
         return inertia('PetQuote/Show', [
             'quoteType' => QuoteTypes::PET,
             'quote' => $quote,
+            'amlStatusName'=> $amlStatusName,
             'activities' => $activities,
             'lostReasons' => $lostReasons,
             'advisors' => $advisors,

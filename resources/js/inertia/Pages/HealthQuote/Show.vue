@@ -52,7 +52,7 @@ const props = defineProps({
   storageUrl: String,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
-  
+    amlStatusName : String,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -257,7 +257,6 @@ const genderSelect = computed(() => {
 
 const leadStatusOptions = computed(() => {
   return page.props.leadStatuses
-    .filter(status => status.id !== 6 && status.id !== 7)
     .map(status => ({
       value: status.id,
       label: status.text,
@@ -1987,7 +1986,7 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">AML STATUS</dt>
-                <dd>{{ quote?.aml_status_text ?? '' }}</dd>
+                <dd>{{amlStatusName ?? ''}}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>

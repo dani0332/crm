@@ -37,7 +37,7 @@ const props = defineProps({
   vatPercentage: Number,
   paymentTooltipEnum: Object,
   isNewPaymentStructure: Boolean,
-  
+
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -48,6 +48,7 @@ const props = defineProps({
   payments: Array,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
+    amlStatusName: String,
 });
 
 const page = usePage();
@@ -344,7 +345,7 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">AML STATUS</dt>
-                <dd>{{ quote?.aml_status?.text ?? '' }}</dd>
+                <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>

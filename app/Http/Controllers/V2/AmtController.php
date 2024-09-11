@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
@@ -271,7 +272,7 @@ class AmtController extends Controller
         $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
-        
+
         if (AMLService::checkAMLStatusFailed(QuoteTypes::BUSINESS->id(), $record->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
@@ -325,6 +326,8 @@ class AmtController extends Controller
         $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::BUSINESS->value, $record->id);
         $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::GROUP_MEDICAL->value, $record->payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
+        $amlStatusName = AMLStatusCode::getName($record->aml_status);
+
 
         return inertia('GroupMedicalQuote/Show', [
             'documentTypes' => $documentTypes,
@@ -338,6 +341,7 @@ class AmtController extends Controller
             'issuanceAuthorities' => $issuanceAuthorities,
             'quoteType' => quoteTypeCode::Business,
             'quote' => $record,
+            'amlStatusName'=>$amlStatusName,
             'quoteDetails' => $quoteDetails,
             'quoteTypeId' => QuoteTypeId::Business,
             'allowedDuplicateLOB' => $allowedDuplicateLOB,

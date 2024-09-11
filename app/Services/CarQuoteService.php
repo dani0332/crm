@@ -192,8 +192,6 @@ class CarQuoteService extends BaseService
                 //'cqr.prefill_plan_selected_at',
                 //'cqr.plan_selected_at'
                 'cqr.enquiry_count',
-                'cqr.aml_status_id',
-                'amlStatus.text as aml_status_text',
                 'cqr.insurance_provider_id',
                 'cqr.insurer_quote_number',
                 'cqr.price_vat_applicable',
@@ -201,12 +199,11 @@ class CarQuoteService extends BaseService
                 'cqr.price_with_vat',
                 'cpdip.text as insurer_name',
                 'cqr.policy_booking_date',
-                //'cqr.aml_status_id',
                 DB::raw('GROUP_CONCAT(team.name) as team_name'),
                 DB::raw('DATE_FORMAT(cqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
                 'cqr.insly_migrated',
+                'cqr.aml_status',
             )
-            ->leftJoin('aml_status as amlStatus', 'amlStatus.id', '=', 'cqr.aml_status_id')
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'cqrd.lost_reason_id')

@@ -37,11 +37,6 @@ class HealthQuote extends Model implements AuditableContract
         'updated' => QuoteEmailUpdated::class,
     ];
 
-    public function amlStatus()
-    {
-        return $this->belongsTo(AmlStatus::class, 'aml_status_id');
-    }
-
     public function emirate()
     {
         return $this->belongsTo(Emirate::class, 'emirate_of_your_visa_id');

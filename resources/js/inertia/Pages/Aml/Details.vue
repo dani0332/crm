@@ -22,6 +22,7 @@ const props = defineProps({
   amlDecisionStatusEnum: Object,
   lookups: Object,
   cardHolderName: Object,
+    amlStatusName: String,
 });
 
 const page = usePage();
@@ -163,7 +164,7 @@ onMounted(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">AML STATUS</dt>
-            <dd>{{ quoteRequest?.aml_status?.text ?? '' }}</dd>
+            <dd>{{ amlStatusName ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PHONE NUMBER</dt>

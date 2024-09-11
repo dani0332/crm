@@ -142,7 +142,6 @@ class PetQuoteRepository extends BaseRepository
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
                 'transactionType',
-                'amlStatus',
                 'payments' => function ($q) {
                     $q->with([
                         'paymentStatus',

@@ -30,7 +30,7 @@ defineProps({
   permissions: Object,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
-  
+
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -677,7 +677,7 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">AML STATUS</dt>
-                <dd>{{ quote?.aml_status?.text ?? '' }}</dd>
+                <dd>{{ quote?.aml_status ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>

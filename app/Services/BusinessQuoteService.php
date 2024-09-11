@@ -96,8 +96,6 @@ class BusinessQuoteService extends BaseService
                 'bqr.price_vat_not_applicable',
                 'bqr.price_with_vat',
                 'bqr.company_name as business_company_name',
-                'bqr.aml_status_id',
-                'amlStatus.text as aml_status_text',
                 DB::raw('DATE_FORMAT(bqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
                 'ent.emirate_of_registration_id',
                 'bqr.price_vat_applicable',
@@ -109,8 +107,8 @@ class BusinessQuoteService extends BaseService
                 'policy_start_date',
                 'policy_issuance_date',
                 'bqr.insly_migrated',
+                'bqr.aml_status',
             )
-            ->leftJoin('aml_status as amlStatus', 'amlStatus.id', '=', 'bqr.aml_status_id')
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')

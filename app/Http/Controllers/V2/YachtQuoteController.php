@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
@@ -141,7 +142,7 @@ class YachtQuoteController extends Controller
         $personalPlans = PersonalPlanRepository::get();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::YACHT->value);
 
-        
+
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::YACHT->id(),
             'quote_request_id' => $quote->id,
@@ -177,10 +178,13 @@ class YachtQuoteController extends Controller
         $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::YACHT->value, $quote->id);
         $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::YACHT->value, $quote->payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
+        $amlStatusName = AMLStatusCode::getName($quote->aml_status);
+
 
         return inertia('YachtQuote/Show', [
             'quoteType' => QuoteTypes::YACHT,
             'quote' => fn () => $quote,
+            'amlStatusName'=> $amlStatusName,
             'activities' => $activities,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::YACHT->id(),

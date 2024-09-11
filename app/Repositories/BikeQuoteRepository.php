@@ -138,7 +138,6 @@ class BikeQuoteRepository extends BaseRepository
                 'currentlyInsuredWith',
                 'transactionType',
                 'insuranceProvider',
-                'amlStatus',
                 'payments' => function ($q) {
                     $q->with([
                         'paymentStatus',

@@ -168,8 +168,6 @@ class HealthQuoteService extends BaseService
             'hp.text as health_plan_name_text',
             'hp.plan_type_id as plan_type_id',
             'ihp.text as plan_provider_name_text',
-            'hqr.aml_status_id',
-            'amlStatus.text as aml_status_text',
             'hqr.health_plan_type_id',
             'hqr.price_vat_not_applicable',
             'hqr.price_vat_applicable',
@@ -181,8 +179,8 @@ class HealthQuoteService extends BaseService
             'hqr.stale_at',
             DB::raw('DATE_FORMAT(hqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
             'hqr.insly_migrated',
+            'hqr.aml_status',
         )
-            ->leftJoin('aml_status as amlStatus', 'amlStatus.id', '=', 'hqr.aml_status_id')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')

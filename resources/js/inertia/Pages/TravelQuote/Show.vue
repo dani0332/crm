@@ -61,7 +61,7 @@ defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   travelDestinations: Object,
-  isAmlClearedForQuote: Boolean,
+    amlStatusName: String,
 });
 
 const permissionEnum = page.props.permissionsEnum;
@@ -3056,7 +3056,6 @@ const onAddUpdate = () => {
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
-      :isAmlClearedForQuote="isAmlClearedForQuote"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

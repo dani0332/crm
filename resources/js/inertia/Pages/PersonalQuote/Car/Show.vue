@@ -85,7 +85,7 @@ defineProps({
   isNewPaymentStructure: Boolean,
   vatPercentage: Number,
   commercialRules: Boolean,
-  
+
   clientInquiryLogs: Array,
   puaTypeEnum: Object,
   sendUpdateOptions: Array,
@@ -94,6 +94,7 @@ defineProps({
   paymentDocument: Array,
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
+    amlStatusName : String,
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -1773,7 +1774,7 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">AML STATUS</dt>
-                <dd>{{ quote?.aml_status_text ?? '' }}</dd>
+                <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">BATCH</dt>

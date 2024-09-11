@@ -83,7 +83,6 @@ class BusinessQuoteRepository extends BaseRepository
                 'customer',
                 'transactionType',
                 'insuranceProviderDetails',
-                'amlStatus',
                 'payments' => function ($q) {
                     $q->with(['paymentStatus', 'personalPlan', 'paymentMethod',
                         'paymentSplits.paymentStatus',

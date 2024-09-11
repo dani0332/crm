@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
@@ -164,7 +165,7 @@ class CycleQuoteController extends Controller
             'quote_request_id' => $quote->id,
         ])->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
 
-        
+
         if (AMLService::checkAMLStatusFailed(QuoteTypes::CYCLE->id(), $quote->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
@@ -195,10 +196,13 @@ class CycleQuoteController extends Controller
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
+        $amlStatusName = AMLStatusCode::getName($quote->aml_status);
+
 
         return inertia('CycleQuote/Show', [
             'quoteType' => QuoteTypes::CYCLE,
             'quote' => fn () => $quote,
+            'amlStatusName'=>$amlStatusName,
             'activities' => $activities,
             'lostReasons' => $lostReasons,
             'advisors' => $advisors,

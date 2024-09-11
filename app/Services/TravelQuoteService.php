@@ -132,8 +132,6 @@ class TravelQuoteService extends BaseService
             'qrem.entity_type_code',
             'ent.industry_type_code',
             'ent.emirate_of_registration_id',
-            'tqr.aml_status_id',
-            'amlStatus.text as aml_status_text',
             'et.passport_number',
             DB::raw('DATE_FORMAT(tqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
             'tqr.price_vat_not_applicable',
@@ -145,8 +143,8 @@ class TravelQuoteService extends BaseService
             'tqr.policy_issuance_status_other',
             'tqr.policy_booking_date',
             'tqr.insly_migrated',
+            'tqr.aml_status',
         )
-            ->leftJoin('aml_status as amlStatus', 'amlStatus.id', '=', 'tqr.aml_status_id')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'tqrd.lost_reason_id')
@@ -640,7 +638,7 @@ class TravelQuoteService extends BaseService
             'policy_start_date' => 'input|date',
             'members' => 'input|array|required',
             'direction_code' => 'input|text|required',
-            'aml_status_text' => 'input|text|title',
+            'aml_status' => 'input|text|title',
 
         ];
     }
@@ -724,7 +722,7 @@ class TravelQuoteService extends BaseService
             case 'customer_type':
                 $title = 'Customer Type';
                 break;
-            case 'aml_status_text':
+            case 'aml_status':
                 $title = 'AML STATUS';
                 break;
 

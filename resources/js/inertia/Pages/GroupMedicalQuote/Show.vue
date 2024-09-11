@@ -25,7 +25,6 @@ defineProps({
   paymentTooltipEnum: Object,
   paymentMethods: Array,
   isNewPaymentStructure: Boolean,
-  
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -36,6 +35,7 @@ defineProps({
   payments: Array,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
+    amlStatusName: String,
 });
 
 const page = usePage();
@@ -541,9 +541,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 <dt class="font-medium">CUSTOMER TYPE</dt>
                 <dd>{{ quote.customer_type }}</dd>
               </div>
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">AML STATUS</dt>
-                <dd>{{ quote?.aml_status?.text ?? '' }}</dd>
+                <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">FIRST NAME</dt>
@@ -1104,7 +1105,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       "
       :storageUrl="storageUrl"
       quoteSubType="Group Medical"
-      
+
       :bookPolicyDetails="bookPolicyDetails"
     />
 
