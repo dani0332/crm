@@ -1398,7 +1398,7 @@ class RenewalsUploadService
             'instantAlfredLink' => $emailData->quoteLink.'?IA=true',
             'refID' => $emailData->carQuoteId,
             'requestForAdvisor' => $emailData->requestAdvisorLink,
-            'tag' => $tag
+            'tag' => $tag,
         ];
 
         $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_MOTOR_RENEWAL_WORKFLOW)->first();
