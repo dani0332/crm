@@ -39,7 +39,6 @@ class SendUpdateSageJob implements ShouldQueue
     /**
      * Execute the job.
      */
-
     public function handle(SageApiService $sageApiService, SendUpdateLogService $sendUpdateLogService): void
     {
         info('------------------ Book Update - Sage Job Execution Start - QuoteType: '.$this->preparedData['quoteType'].' - QuoteUUID: '.$this->preparedData['quoteDetails']['uuid'].' - SendUpdateUUID: '.$this->preparedData['sendUpdateLog']['uuid'].' ------------------');

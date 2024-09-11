@@ -240,7 +240,7 @@ class CentralController extends Controller
                 ]], 403);
             }
 
-            $response = (new SageApiService())->postBookPolicyToSage($request, $quote);
+            $response = (new SageApiService)->postBookPolicyToSage($request, $quote);
 
             return response()->json(['message' => $response['message']], 200);
         }

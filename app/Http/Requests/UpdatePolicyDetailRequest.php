@@ -72,7 +72,7 @@ class UpdatePolicyDetailRequest extends FormRequest
                 $validator->errors()->add('value', 'Invalid format for policy number');
             }
             $quote = $this->getQuoteObject(request()->modelType, request()->quote_id);
-            if($quote && $quote->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && !auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
+            if ($quote && $quote->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
                 $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
             }
         });

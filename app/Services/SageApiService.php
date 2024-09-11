@@ -1274,7 +1274,7 @@ class SageApiService
         }
 
         info('################################## straightforwardPayments for : '.$quote->code.'##################################');
-        (new CentralService())->straightforwardPayments($payment, $paymentSplits, $quote);
+        (new CentralService)->straightforwardPayments($payment, $paymentSplits, $quote);
 
         info('################################## updatePaymentAllocationStatus for : '.$quote->code.'##################################');
         $this->updatePaymentAllocationStatus($quote);

@@ -21,7 +21,6 @@ final class SageEnum extends Enum
     const SAGE_PROCESS_BOOK_POLICY_REQUEST = 'book_policy';
     const SAGE_PROCESS_SEND_UPDATE_REQUEST = 'send_update';
 
-
     // Sage Custom API Enums
     const SAGE_CUSTOM_API_INVALID_TOKEN_MESSAGE = 'Invalid token';
     const SAGE_CUSTOM_API_AUTH_TOKEN_CACHE_KEY = 'sage-customer-api-token';

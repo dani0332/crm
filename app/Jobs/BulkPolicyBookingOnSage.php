@@ -12,6 +12,7 @@ use Illuminate\Queue\SerializesModels;
 class BulkPolicyBookingOnSage implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
     private $request;
 
     /**
@@ -34,9 +35,9 @@ class BulkPolicyBookingOnSage implements ShouldQueue
         foreach ($quoteIDs as $quoteID) {
             $quote = $this->getQuoteObject($quoteType, $quoteID);
             if ($quote) {
-                $response = (new SageApiService())->postBookPolicyToSage($this->request, $quote);
+                $response = (new SageApiService)->postBookPolicyToSage($this->request, $quote);
                 if (! $response['status']) {
-                    /* Log error in globel table for this lead */;
+                    /* Log error in globel table for this lead */
                 }
 
             }

@@ -53,7 +53,7 @@ class BookPolicyRequest extends FormRequest
             }
 
             $quote = $this->getQuoteObject(request()->model_type, request()->quote_id);
-            if($quote && $quote->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && !auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
+            if ($quote && $quote->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
                 $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
             }
 

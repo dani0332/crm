@@ -420,8 +420,8 @@ class SendUpdateLogController extends Controller
             if ($sendUpdateFirstPayment && ! $sendUpdateRequest->inslyMigrated && in_array($sendUpdateFirstPayment?->payment_status_id, [
                 PaymentStatusEnum::PARTIALLY_PAID,
                 PaymentStatusEnum::PENDING,
-                PaymentStatusEnum::CREDIT_APPROVED
-                ])) {
+                PaymentStatusEnum::CREDIT_APPROVED,
+            ])) {
                 $insufficientPaymentCheck = true;
             }
 

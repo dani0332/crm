@@ -48,7 +48,7 @@ class BookPolicyOnSageJob implements ShouldQueue
 
         $this->updateAndLogQuoteStatus(QuoteStatusEnum::POLICY_BOOKING_QUEUED);
 
-        $response = (new SageApiService())->bookPolicyOnSage([$this->sageRequest, $this->quote,  $this->request]);
+        $response = (new SageApiService)->bookPolicyOnSage([$this->sageRequest, $this->quote,  $this->request]);
 
         if (! $response['status']) {
             $this->updateSageProcessStatus(SageEnum::SAGE_PROCESS_FAILED_STATUS);
