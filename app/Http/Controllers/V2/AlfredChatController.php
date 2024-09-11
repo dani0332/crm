@@ -202,35 +202,68 @@ class AlfredChatController extends Controller
 
     public function processMongoDBChatFilters(Request $request, $data)
     {
-        foreach ($data as $item) {
-            $chatPipeline = $this->createPipeline($request, $item, 'chat');
-            $mongoResult = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline))->toArray();
+        // Check the structure of $data
+        $dataArray = json_decode(json_encode($data), true); // Convert stdClass to array
 
-            if (empty($mongoResult)) {
-                $item->chat = [];
-            } else {
-                $item->chat = $mongoResult;
+        // Extract UUIDs from the original data, adjust if 'items' key does not exist
+        $itemIds = array_column($dataArray, 'uuid'); // Change 'items' to match actual structure
+
+        // Create the aggregation pipeline
+        $chatPipeline = $this->createPipeline($request, $itemIds, 'chat');
+
+        // Execute the aggregation and get the results
+        $mongoResults = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline))->toArray();
+
+        // Refactor MongoDB results to handle BSONArray
+        $refactoredData = array_map(function ($entry) {
+            if (isset($entry['communication_channels']) && $entry['communication_channels'] instanceof \MongoDB\Model\BSONArray) {
+                $entry['communication_channels'] = $entry['communication_channels']->getArrayCopy();
             }
+            return $entry;
+        }, $mongoResults);
+
+        // Create lookup arrays for easy merging
+        $dataById = [];
+        foreach ($dataArray as $item) {
+            $dataById[$item['uuid']] = $item;
         }
 
+        $refactoredById = [];
+        foreach ($refactoredData as $entry) {
+            $refactoredById[$entry['_id']] = $entry;
+        }
+
+        // Merge the data based on UUID
+        $mergedData = array_map(function ($item) use ($refactoredById) {
+            $uuid = $item['uuid']; // Assuming uuid is used as the key for $refactoredData
+            if (isset($refactoredById[$uuid])) {
+                // Merge with refactored data
+                return array_merge($item, $refactoredById[$uuid]);
+            }
+            return $item;
+        }, $dataById);
+
+        // Convert back to a simple array
+        $mergedData = array_values($mergedData);
+
         $fallbackFilter = $request->fallback;
-
-        $filteredData = collect($data)->map(function ($item) use ($fallbackFilter) {
-            // Filter the 'chat' array based on fallback value
-            $item->chat = collect($item->chat)->filter(function ($chat) use ($fallbackFilter) {
-                if ($fallbackFilter === quoteTypeCode::yesText) {
-                    return ! is_null($chat['fallback']);  // Keep entries with a non-null fallback
-                } elseif ($fallbackFilter === quoteTypeCode::noText) {
-                    return is_null($chat['fallback']);   // Keep entries with a null fallback
+        
+        $filteredData = collect($mergedData)->map(function ($item) use ($fallbackFilter) {
+            dd($item['fallback']);
+            if ($fallbackFilter === quoteTypeCode::yesText ) {
+                if (!is_null($item['fallback'])) {
+                    return null;
                 }
-
-                return true;  // If no valid filter, return all chats
-            })->values()->toArray(); // Re-index the array
+            } elseif ($fallbackFilter === quoteTypeCode::noText) {
+                if (is_null($item['fallback'])) {
+                    return null;
+                }
+            }
 
             return $item;
         })->reject(function ($item) {
-            // Optionally, remove the entire item if there are no valid chats left
-            return empty($item->chat);
+            // Optionally, remove the entire item if it was excluded
+            return is_null($item);
         })->values(); // Re-index the collection
 
         return $filteredData;
@@ -368,14 +401,15 @@ class AlfredChatController extends Controller
         if ($type === 'chat') {
             $pipeline[] = [
                 '$group' => [
-                    '_id' => ['quote_id' => '$quote_id', ['$dateToString' => ['timezone' => '+04:00', 'format' => '%Y-%m-%d', 'date' => ['$toDate' => '$created_at']]]],
+                    '_id' => '$quote_id',
                     'created_at' => ['$first' => '$created_at'],
-                    'role' => ['$first' => '$role'],
-                    'msg' => ['$first' => '$msg'],
-                    'quote_id' => ['$first' => '$quote_id'],
-                    'quote_type' => ['$first' => '$quote_type'],
-                    'email' => ['$first' => '$who_chatted.email'],
-                    'communication_channel' => ['$first' => '$channel'],
+                    'communication_channels' => ['$addToSet' => [
+                        '$cond' => [
+                            ['$ifNull' => ['$channel', false]],
+                            '$channel',
+                            '$$REMOVE',
+                        ],
+                    ]],
                     'fallback' => ['$first' => '$fallback'],
                 ],
             ];
