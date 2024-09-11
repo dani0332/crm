@@ -420,20 +420,8 @@ const downloadReport = () => {
       </span>
     </template> -->
     <template #item-created_at="item">
-      <span v-if="item.code.includes('CAR')">
-        {{
-          dateFormat(
-            item.car_quote_request_detail.chat_initiated_at.split(' ')[0],
-          )
-        }}
-      </span>
-
-      <span v-if="item.code.includes('HEA')">
-        {{
-          dateFormat(
-            item.health_quote_request_detail.chat_initiated_at.split(' ')[0],
-          )
-        }}
+      <span>
+        {{ dateFormat(item.chat_initiated_at.split(' ')[0]) }}
       </span>
     </template>
     <template #item-action="item">

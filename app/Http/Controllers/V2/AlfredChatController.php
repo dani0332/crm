@@ -19,13 +19,50 @@ use App\Models\QuoteStatus;
 use App\Models\TravelQuote;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
 class AlfredChatController extends Controller
-{
+{   
+    protected $query;
+
     public function __construct()
     {
         $this->middleware('permission:'.PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS, ['only' => ['logs']]);
+        $this->query = DB::table('car_quote_request as cqr')
+        ->select(
+            'cqr.uuid',
+            'cqr.id',
+            'cqr.email',
+            'cqr.code',
+            'cqr.payment_status_id',
+            'ps.text AS payment_status_id_text',
+            'cqr.plan_id',
+            'cp.text AS plan_id_text',
+            'cp.provider_id AS car_plan_provider_id',
+            'cpip.text AS car_plan_provider_id_text',
+            'cqr.quote_status_id',
+            'qs.text AS quote_status_id_text',
+            'cqr.quote_batch_id',
+            'lu.text as transaction_type_text',
+            'qb.name as quote_batch_id_text',
+            'cpip.code as plan_provider_code',
+            'cpip.code as plan_provider_code',
+            'cqr.insurance_provider_id',
+            'cqrd.chat_initiated_at'
+        )
+        ->leftJoin('payments as py', function ($join) {
+            $join->on('py.paymentable_id', '=', 'cqr.id')
+                ->where('py.paymentable_type', '=', CarQuote::class);
+        })
+        ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
+        ->leftJoin('lookups as lu', 'lu.id', '=', 'cqr.transaction_type_id')
+        ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
+        ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
+        ->leftJoin('insurance_provider as cpdip', 'cpdip.id', '=', 'cqr.insurance_provider_id')
+        ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
+        ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
+        ->leftJoin('quote_batches as qb', 'qb.id', '=', 'cqr.quote_batch_id');
     }
 
     /**
@@ -94,23 +131,20 @@ class AlfredChatController extends Controller
 
         $data = [];
         if ($modelType == CarQuote::class) {
-            $data = CarQuote::with(['carQuoteRequestDetail' => function ($query) {
-                $query->select('id', 'car_quote_request_id', 'chat_initiated_at'); // specify keys from carQuoteRequestDetail
-            }])
-                ->select('id', 'uuid', 'code', 'quote_batch_id',
-                    'payment_status_id', 'email', 'mobile_no', 'transaction_type_id',
-                    'quote_batch_id', 'quote_status_id', 'assignment_type', 'quote_status_id') // specify keys from CarQuote
-                ->whereHas('carQuoteRequestDetail', function ($query) {
-                    $query->whereNotNull('chat_initiated_at');
-                })->when($request->export_chat, function ($query) {
-                    dd('added');
-                    $query->with(['batch' => function ($query) {
-                        $query->select('id', 'name');
-                    }]);
-                })
-                ->where(function ($query) use ($request, $modelType) {
-                    $this->processChatFilters($request, $query, $modelType);
-                });
+           
+            $data =  $this->query->where(function ($query) use ($request, $modelType) {
+                $this->processChatFilters($request, $query, $modelType);
+            })->get();
+            // CarQuote::with(['carQuoteRequestDetail' => function ($query) {
+            //     $query->select('id', 'car_quote_request_id', 'chat_initiated_at'); // specify keys from carQuoteRequestDetail
+            // }])
+            //     ->select('id', 'uuid', 'code', 'quote_batch_id',
+            //         'payment_status_id', 'email', 'mobile_no', 'transaction_type_id',
+            //         'quote_batch_id', 'quote_status_id', 'assignment_type', 'quote_status_id', 'plan_id') // specify keys from CarQuote
+            //     ->whereHas('carQuoteRequestDetail', function ($query) {
+            //         $query->whereNotNull('chat_initiated_at');
+            //     })
+               
         } elseif ($modelType == HealthQuote::class) {
             $data = HealthQuote::with(['healthQuoteRequestDetail' => function ($query) {
                 $query->select('id', 'health_quote_request_id', 'chat_initiated_at'); // specify keys from healthQuoteRequestDetail
@@ -130,7 +164,7 @@ class AlfredChatController extends Controller
                 });
         }
 
-        $data = $data->get();
+
         // if (isset($request->channel) && $request->channel != '') {
 
         // }
@@ -235,21 +269,22 @@ class AlfredChatController extends Controller
             // Determine the correct relationship based on the model type
             $relation = $modelType == HealthQuote::class ? 'healthQuoteRequestDetail' : ($modelType == CarQuote::class ? 'carQuoteRequestDetail' : 'travelQuoteRequestDetail');
 
+            $partialQuery->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
             // Apply the whereHas for the determined relation
-            $partialQuery->whereHas($relation, function ($query) use ($dateFrom, $dateTo) {
-                $query->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
-            });
+            // $partialQuery->whereHas($relation, function ($query) use ($dateFrom, $dateTo) {
+            //     $query->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
+            // });
         } else {
             // Default to last 30 days if no dates are provided
             $dateFrom = now()->subDays(30)->startOfDay();
             $dateTo = now()->endOfDay();
 
-            // Apply the same relationship and date filter with default dates
-            $relation = $modelType == HealthQuote::class ? 'healthQuoteRequestDetail' : ($modelType == CarQuote::class ? 'carQuoteRequestDetail' : 'travelQuoteRequestDetail');
+            $partialQuery->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
+            // // Apply the same relationship and date filter with default dates
+            // $relation = $modelType == HealthQuote::class ? 'healthQuoteRequestDetail' : ($modelType == CarQuote::class ? 'carQuoteRequestDetail' : 'travelQuoteRequestDetail');
 
-            $partialQuery->whereHas($relation, function ($query) use ($dateFrom, $dateTo) {
-                $query->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
-            });
+            // $partialQuery->whereHas($relation, function ($query) use ($dateFrom, $dateTo) {
+            // });
         }
 
         if (isset($request->transaction_type_id) && $request->transaction_type_id != '') {
@@ -288,15 +323,56 @@ class AlfredChatController extends Controller
             $modelType::applySegmentFilter($partialQuery, $request->segment_filter, $query, $quoteTypeId);
         }
 
+        return $partialQuery;
     }
 
     public function exportChat(Request $request)
-    {
+    {       
+        $result = $this->processChatFilters($request, $this->query, CarQuote::class);
+        $data = $result->get();
+
+        $itemIds = array_column($data->toArray(), 'uuid');
+
+        $chatPipeline = $this->createPipeline($request, $itemIds, 'chat');
+        $mongoResults = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline))->toArray();
+
+        $groupedChatData = [];
+        foreach ($mongoResults as $chatDocument) {
+            $quoteId = $chatDocument['quote_id'];
+            if (!isset($groupedChatData[$quoteId])) {
+                $groupedChatData[$quoteId] = [];
+            }
+
+            if (isset($chatDocument) && is_array($chatDocument)) {
+                if (isset($chatDocument['communication_channel'])) {
+                        $channel = $chatDocument['communication_channel'];
+
+                        if ($channel instanceof \MongoDB\Model\BSONDocument) {
+                            $channel = $channel->getArrayCopy();
+                        }
+                        if (is_array($channel)) {
+                            $channelString = implode(', ', $channel);
+                        } else {
+                            $channelString = (string)$channel;
+                        }
+
+                        $groupedChatData[$quoteId]['communication_channel'] = $channelString;
+                } else {
+                    $groupedChatData[$quoteId]['communication_channel'] = ''; // Default to empty string if not set
+                }
+            }
+        }
+
+        // Step 5: Map the grouped chat data back to the corresponding items in $data
+        foreach ($data as $item) {
+            $item->chat = $groupedChatData[$item->uuid] ?? []; // Assign chat data or empty array
+        }
+        dd($data->toArray());
+
         $chat = $this->logs($request, true);
 
         $fileName = 'alfred_chat_logs_'.Carbon::now()->format('Y-m-d_H-i-s');
 
-        dd($chat->toArray());
         if ($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
             return Excel::download(new InstantChatConsolidatedExport($chat), $fileName.'.xlsx');
         }
@@ -305,7 +381,7 @@ class AlfredChatController extends Controller
         }
     }
 
-    public function createPipeline(Request $request, $item, $type)
+    public function createPipeline(Request $request, $itemIds, $type)
     {
         $quoteId = $item->uuid ?? null;
         $quoteType = $request->quoteType ?? 'CAR';
@@ -323,6 +399,12 @@ class AlfredChatController extends Controller
         if ($request->get('quoteType')) {
             $quoteType = strtoupper($request->quoteType);
         }
+
+        $pipeline[] = [
+                '$match' => [
+                    'quote_id' => ['$in' => $itemIds], // assuming 'quote_id' corresponds to the item's identifier
+                ]
+                ];
 
         if (isset($quoteType) && $quoteType != null) {
             $pipeline[] = ['$match' => ['quote_type' => $quoteType]];
