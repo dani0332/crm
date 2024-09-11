@@ -273,7 +273,11 @@ const isIntegerColumn = key => {
     <template #item-policy_issuer="{ policy_issuer }">
       {{ policy_issuer ?? 'N/A' }}
     </template>
-    <template #item-insurer_commmission_invoice_number="{ insurer_commmission_invoice_number }">
+    <template
+      #item-insurer_commmission_invoice_number="{
+        insurer_commmission_invoice_number,
+      }"
+    >
       {{ insurer_commmission_invoice_number ?? 'N/A' }}
     </template>
     <template #body-append>
