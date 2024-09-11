@@ -52,7 +52,7 @@ const props = defineProps({
   storageUrl: String,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
-    amlStatusName : String,
+  amlStatusName: String,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -256,11 +256,10 @@ const genderSelect = computed(() => {
 });
 
 const leadStatusOptions = computed(() => {
-  return page.props.leadStatuses
-    .map(status => ({
-      value: status.id,
-      label: status.text,
-    }));
+  return page.props.leadStatuses.map(status => ({
+    value: status.id,
+    label: status.text,
+  }));
 });
 
 const nationalityOptions = computed(() => {
@@ -1986,7 +1985,7 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">AML STATUS</dt>
-                <dd>{{amlStatusName ?? ''}}</dd>
+                <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>

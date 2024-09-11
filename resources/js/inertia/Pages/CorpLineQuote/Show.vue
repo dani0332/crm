@@ -42,7 +42,7 @@ const props = defineProps({
   bookPolicyDetails: Array,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
-    amlStatusName: String,
+  amlStatusName: String,
 });
 
 const page = usePage();

@@ -94,7 +94,7 @@ defineProps({
   paymentDocument: Array,
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
-    amlStatusName : String,
+  amlStatusName: String,
 });
 const page = usePage();
 const notification = useNotifications('toast');

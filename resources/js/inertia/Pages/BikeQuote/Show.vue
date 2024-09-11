@@ -57,12 +57,11 @@ defineProps({
   hasPolicyIssuedStatus: Boolean,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
-    amlStatusName: String,
+  amlStatusName: String,
 });
 
 const assumptionState = reactive({
   isEditing: false,
-
 });
 
 const page = usePage();

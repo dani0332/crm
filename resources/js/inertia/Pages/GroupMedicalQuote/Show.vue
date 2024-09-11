@@ -35,7 +35,7 @@ defineProps({
   payments: Array,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
-    amlStatusName: String,
+  amlStatusName: String,
 });
 
 const page = usePage();
@@ -1106,7 +1106,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       "
       :storageUrl="storageUrl"
       quoteSubType="Group Medical"
-
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
     />

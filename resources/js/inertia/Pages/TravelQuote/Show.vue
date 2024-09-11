@@ -61,7 +61,7 @@ defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   travelDestinations: Object,
-    amlStatusName: String,
+  amlStatusName: String,
 });
 
 const permissionEnum = page.props.permissionsEnum;

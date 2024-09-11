@@ -44,7 +44,7 @@ const props = defineProps({
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
-    amlStatusName: String,
+  amlStatusName: String,
 });
 
 const page = usePage();
@@ -137,11 +137,10 @@ const advisorOptions = computed(() => {
 });
 
 const leadStatusOptions = computed(() => {
-  return page.props.leadStatuses
-    .map(status => ({
-      value: status.id,
-      label: status.text,
-    }));
+  return page.props.leadStatuses.map(status => ({
+    value: status.id,
+    label: status.text,
+  }));
 });
 
 const emiratesOptions = computed(() => {

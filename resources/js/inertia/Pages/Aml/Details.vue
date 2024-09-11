@@ -22,7 +22,7 @@ const props = defineProps({
   amlDecisionStatusEnum: Object,
   lookups: Object,
   cardHolderName: Object,
-    amlStatusName: String,
+  amlStatusName: String,
 });
 
 const page = usePage();

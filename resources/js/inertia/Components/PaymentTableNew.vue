@@ -2551,7 +2551,7 @@ const getCaptureValidation = computed(() => {
       props.payments.length > 0 &&
       totalPriceRounded === calculatedTotal &&
       (((props.quoteRequest.aml_status ===
-          page.props.amlStatusEnum.AMLScreeningCleared ||
+        page.props.amlStatusEnum.AMLScreeningCleared ||
         props.quoteRequest.quote_status_id ===
           page.props.quoteStatusEnum.TransactionDeclined ||
         props.quoteRequest.quote_status_id ===

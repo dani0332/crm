@@ -407,10 +407,7 @@ const isTravelQuoteAndAMLNotCleared = () => {
   const isSendPolicyToCustomerButton =
     bookPolicyButtonLabel === sendPolicyTypeEnum.CUSTOMER_BUTTON_TEXT;
   const isQuoteTypeTravel = page.props.quoteType == quoteTypeCodeEnum.Travel;
-  if (
-    isQuoteTypeTravel &&
-    !isSendPolicyToCustomerButton
-  ) {
+  if (isQuoteTypeTravel && !isSendPolicyToCustomerButton) {
     let allowedQuoteStatuesForAMLAlert = [
       page.props.quoteStatusEnum.TransactionApproved,
       page.props.quoteStatusEnum.PolicyIssued,

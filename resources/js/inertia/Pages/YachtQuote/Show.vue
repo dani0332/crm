@@ -48,7 +48,7 @@ const props = defineProps({
   payments: Array,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
-    amlStatusName: String,
+  amlStatusName: String,
 });
 
 const page = usePage();
