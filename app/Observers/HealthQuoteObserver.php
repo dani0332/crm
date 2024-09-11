@@ -15,6 +15,13 @@ class HealthQuoteObserver
 {
     use PersonalQuoteSyncTrait;
 
+    public function updating(HealthQuote $quote): void
+    {
+        if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
+            $quote->quote_status_date = now();
+        }
+    }
+
     /**
      * Handle the HealthQuote "updated" event.
      */
@@ -46,5 +53,9 @@ class HealthQuoteObserver
         }
 
         $this->syncQuote($healthQuote, $dirty);
+
+        if (isset($dirty['quote_status_id']) && $healthQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
+            $this->syncLeadEntries($healthQuote->uuid);
+        }
     }
 }

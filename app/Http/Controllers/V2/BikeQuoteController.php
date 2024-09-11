@@ -76,11 +76,13 @@ class BikeQuoteController extends Controller
         $personalQuotes = BikeQuoteRepository::getData();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::BIKE->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
+        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
 
         return inertia('BikeQuote/Index', [
             'quotes' => $personalQuotes,
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
+            'authorizedDays' => intval($authorizedDays->value),
         ]);
     }
 
@@ -162,7 +164,7 @@ class BikeQuoteController extends Controller
         $uboDetails = CustomerMembersRepository::getBy($quote->id, QuoteTypes::BIKE->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
-
+        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote->id, QuoteTypes::BIKE->id(), $quoteStatuses);
         if (AMLService::checkAMLStatusFailed(QuoteTypes::BIKE->id(), $quote->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
@@ -359,9 +361,9 @@ class BikeQuoteController extends Controller
         $response = $this->bikeQuoteService->bikePlanModify($request);
 
         if ($response == 200 || $response == 201) {
-            return redirect()->back()->with('success', $response);
+            return redirect()->back()->with('success', 'Bike Quote Plan created successfully');
         } else {
-            return redirect()->back()->with('error', $response);
+            return redirect()->back()->with('error', 'Plan Modification is not allowed');
         }
     }
 
@@ -391,5 +393,12 @@ class BikeQuoteController extends Controller
         $response = BikeQuoteRepository::changeInsurer($request->validated());
 
         return response()->json($response);
+    }
+
+    public function getBikeQuote($uuid)
+    {
+        $quote = BikeQuoteRepository::getBy('uuid', $uuid);
+
+        return response()->json($quote);
     }
 }

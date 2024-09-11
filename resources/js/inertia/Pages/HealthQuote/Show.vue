@@ -3600,7 +3600,6 @@ const onAddUpdate = () => {
         :items="emailStatuses || []"
         show-index
         border-cell
-        fixed-checkbox
         hide-rows-per-page
         hide-footer
       >
@@ -3626,6 +3625,7 @@ const onAddUpdate = () => {
       quoteType="Health"
       :sendPolicy="sendPolicy"
       @sendPolicyToClient="sendPolicyToClient"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy
@@ -3876,6 +3876,7 @@ const onAddUpdate = () => {
       :customerName="quote?.first_name + ' ' + quote?.last_name"
       :quoteId="quote.uuid"
       :quoteType="'HEALTH'"
+      :expanded="sectionExpanded"
     />
 
     <AuditLogs

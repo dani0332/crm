@@ -13,7 +13,6 @@ const props = defineProps({
   sendUpdateStatusEnum: Array,
   quote: Object,
   indicativePrice: Object,
-  isBookingDetailsVisible: Boolean,
   membersDetail: Array,
   memberCategories: Array,
   documentTypes: Object,
@@ -516,6 +515,7 @@ const isLegacyPolicy = computed(() => {
       :send-update-status-enum="props.sendUpdateStatusEnum"
       :insuranceProviders="props.insuranceProviders"
       :quoteDocuments="props.quoteDocuments"
+      :expanded="sectionExpanded"
     />
 
     <LazyPolicyDetails

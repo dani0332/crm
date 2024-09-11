@@ -321,6 +321,28 @@ const isAddUpdate = ref(false);
 const onAddUpdate = () => {
   isAddUpdate.value = true;
 };
+
+const fetchUpdatedQuote = async () => {
+  try {
+    const response = await axios.get(
+      `/quotes/get-bike-quote/${page.props.quote.uuid}`,
+    );
+
+    page.props.quote = response.data;
+
+    notification.success({
+      title: 'Quote details updated successfully',
+      position: 'top',
+    });
+  } catch (error) {
+    console.error('Error fetching updated quote:', error);
+
+    notification.error({
+      title: 'Something went wrong while updating the quote details',
+      position: 'top',
+    });
+  }
+};
 </script>
 
 <template>
@@ -1236,6 +1258,7 @@ const onAddUpdate = () => {
       :carPlanFeaturesCodeEnum="carPlanFeaturesCodeEnum"
       :websiteURL="websiteURL"
       :linkedQuoteDetails="linkedQuoteDetails"
+      @plan-selected="fetchUpdatedQuote"
     />
 
     <PaymentTableNew
@@ -1289,6 +1312,7 @@ const onAddUpdate = () => {
       :insly-id="quote?.quote_detail?.insly_id"
       :expanded="sectionExpanded"
       quote-type="Bike"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy

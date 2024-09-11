@@ -22,6 +22,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\PuaEnum;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -87,6 +88,7 @@ use App\Services\LeadAllocationService;
 use App\Services\LifeQuoteService;
 use App\Services\LookupService;
 use App\Services\NotesForCustomerService;
+use App\Services\NotificationService;
 use App\Services\PetQuoteService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
@@ -209,6 +211,7 @@ class CRUDController extends Controller
         $yesterdayAllocationData = $this->allocationService->getYesterdayCounts(auth()->user()->id);
         $yesterdayAutoCount = $yesterdayAllocationData['auto_assignment_count'];
         $yesterdayManualCount = $yesterdayAllocationData['manual_assignment_count'];
+        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
 
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $upcomingBatch = RenewalBatchRepository::getUpcomingBatch(QuoteStatusEnum::Uncontactable);
@@ -304,7 +307,9 @@ class CRUDController extends Controller
                 'todayManualCount' => $todayManualCount,
                 'yesterdayAutoCount' => $yesterdayAutoCount,
                 'yesterdayManualCount' => $yesterdayManualCount,
+                'quoteSegments' => QuoteSegmentEnum::withLabels(QuoteTypeId::Health),
                 'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : HealthQuoteRepository::getData(true, true),
+                'authorizedDays' => intval($authorizedDays->value),
             ]);
         }
 
@@ -323,6 +328,7 @@ class CRUDController extends Controller
                 'advisors' => $advisors,
                 'isManualAllocationAllowed' => $isManualAllocationAllowed,
                 'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : HomeQuoteRepository::getData(true, true),
+                'authorizedDays' => intval($authorizedDays->value),
             ]);
         }
 
@@ -352,6 +358,7 @@ class CRUDController extends Controller
                 'genericRequestEnum' => $genericRequestEnum,
                 'isBetaUser' => $isBetaUser,
                 'teams' => $teams,
+                'authorizedDays' => intval($authorizedDays->value),
             ]);
         }
 
@@ -591,6 +598,7 @@ class CRUDController extends Controller
             return $value['id'] != QuoteStatusEnum::AMLScreeningCleared && $value['id'] != QuoteStatusEnum::AMLScreeningFailed;
         })->values();
 
+        $leadStatuses = app(CentralService::class)->lockTransactionStatus($record->id, $quoteTypeId, $leadStatuses);
         if (AMLService::checkAMLStatusFailed($quoteTypeId, $record->id)) {
             $leadStatuses = collect($leadStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
@@ -1519,7 +1527,16 @@ class CRUDController extends Controller
 
             return Redirect::back()->with('message', $msg);
         } else {
+            $quoteIds = explode(',', $request->selectTmLeadId);
+            foreach ($quoteIds as $id) {
+                $quoteData = $this->getQuoteObject($request->modelType, $id);
+                if ($quoteData && $quoteData->payment_status_id === PaymentStatusEnum::AUTHORISED) {
+                    app(NotificationService::class)->paymentStatusUpdate($request->modelType, $quoteData->uuid);
+                }
+            }
+
             return Redirect::back()->with('success', $request->modelType.' Leads has been Assigned To '.$assignedUser->name);
+
         }
     }
 
@@ -1811,8 +1828,8 @@ class CRUDController extends Controller
         }
 
         // update status policy issued of req fulfilled
-        $this->updateQuoteStatus($request->modelType, $request->quote_id);
         $this->updatePriceAndDiscount($quoteModel);
+        $this->updateQuoteStatus($request->modelType, $request->quote_id);
 
         Log::info('Policy details update successfully for : '.$quoteModel->uuid);
 
@@ -2069,4 +2086,5 @@ class CRUDController extends Controller
 
         return $response;
     }
+
 }

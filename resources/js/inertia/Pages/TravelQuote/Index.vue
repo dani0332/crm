@@ -4,6 +4,7 @@ defineProps({
   dropdownSource: Object,
   permissions: Object,
   advisors: Object,
+  authorizedDays: Number,
 });
 
 const rules = {
@@ -71,6 +72,8 @@ const tableHeader = [
   { text: 'Ref-ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
+  { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
+  { text: 'PAYMENT EXPIRY', value: 'expiry_dates' },
   { text: 'Travel Type', value: 'direction_code' },
   { text: 'Travel Coverage', value: 'coverage_code' },
   { text: 'LEAD STATUS', value: 'quote_status_id_text' },
@@ -242,6 +245,45 @@ const onDataExport = () => {
   window.open(url + '?' + new URLSearchParams(data).toString());
 };
 
+function daysAgoFromAuthorizedDate(authorizedDate) {
+  if (!authorizedDate) {
+    return;
+  }
+  const [day, month, year] = authorizedDate.split('-').map(Number);
+  const parsedDate = new Date(year, month - 1, day);
+
+  if (isNaN(parsedDate.getTime())) {
+    return 'Invalid date';
+  }
+
+  // Reset time to 00:00:00 to consider only the date
+  parsedDate.setHours(0, 0, 0, 0);
+
+  // Add `page.props.authorizedDays` to the parsed date
+  const authorizedDays = page.props.authorizedDays || 8; // Default to 8 if not defined
+  const newDate = new Date(parsedDate);
+  newDate.setDate(parsedDate.getDate() + authorizedDays);
+
+  // Reset time for newDate as well
+  newDate.setHours(0, 0, 0, 0);
+
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0); // Reset time for current date
+
+  // Calculate the difference in days
+  const differenceInTime = newDate.getTime() - currentDate.getTime();
+  const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+
+  // Return appropriate message
+  if (differenceInDays <= 0) {
+    return 'Expired';
+  }
+
+  return differenceInDays === 1
+    ? `${differenceInDays} day`
+    : `${differenceInDays} days`;
+}
+
 watch(
   () => filters,
   () => {
@@ -313,13 +355,13 @@ const validateDateRange = () => {
   }
   return false;
 };
+
 const formatDate = date => {
   if (!date) return '';
   const [datePart] = date.split(' ');
   const [day, month, year] = datePart.split('-');
   const parsedDate = new Date(`${year}-${month}-${day}`);
-  const options = { year: 'numeric', month: 'short', day: 'numeric' };
-  return parsedDate.toLocaleDateString('en-GB', options).replace(',', '');
+  return useDateFormat(parsedDate, 'DD-MMM-YYYY').value;
 };
 </script>
 
@@ -617,7 +659,6 @@ const formatDate = date => {
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-code="{ code, uuid }">
         <a
@@ -626,6 +667,16 @@ const formatDate = date => {
         >
           {{ code }}
         </a>
+      </template>
+      <template #item-authorized_at="item">
+        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
+          {{ item.authorized_at }}
+        </p>
+      </template>
+      <template #item-expiry_dates="item">
+        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
+          {{ daysAgoFromAuthorizedDate(item.authorized_at) }}
+        </p>
       </template>
       <template #item-dob="{ dob }">
         <div class="text-center">
@@ -652,16 +703,18 @@ const formatDate = date => {
           </x-tag>
         </div>
       </template>
-      <template #item-coverage_code="{ coverage_code, days_cover_for }">
+      <template #item-coverage_code="{ coverage_code, days_cover_for, source }">
         <div class="text-center">
           {{
-            coverage_code != null
-              ? coverage_code
-              : days_cover_for <= 92
-                ? travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
-                : travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
-                  '/' +
-                  travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
+            source == $page.props.leadSource.RENEWAL_UPLOAD
+              ? travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
+              : coverage_code != null
+                ? coverage_code
+                : days_cover_for <= 92
+                  ? travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
+                  : travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
+                    '/' +
+                    travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
           }}
         </div>
       </template>

@@ -10,6 +10,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LeadSourceTypes;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -177,10 +178,12 @@ class HealthQuoteService extends BaseService
             'hqr.policy_issuance_status_id',
             'hqr.policy_issuance_status_other',
             'hqr.stale_at',
+            DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
             DB::raw('DATE_FORMAT(hqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
             'hqr.insly_migrated',
             'hqr.aml_status',
         )
+            ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')
@@ -429,7 +432,7 @@ class HealthQuoteService extends BaseService
 
         // advisors filter
         if (isset($request->advisors) && is_array($request->advisors) && count($request->advisors) > 0 && ! in_array(DefaultAdvisorEnum::UNASSIGNED, $request->advisors)) {
-            $this->query->whereIn('advisor_id', $request->advisors)->orWhereIn('wcu_id', $request->advisors);
+            $this->query->whereIn('advisor_id', $request->advisors);
         }
         // is_renewal filter
         if (isset($request->is_renewal) && $request->is_renewal != '') {
@@ -500,6 +503,21 @@ class HealthQuoteService extends BaseService
             $isEcommerce = $request->is_ecommerce == 'Yes' ? 1 : 0;
             $this->query->where('hqr.is_ecommerce', $isEcommerce);
         }
+        if ($request->has('segment_filter')) {
+            $segmentFilter = $request->input('segment_filter');
+            $subQueryCallback = function ($subQuery) {
+                $subQuery->distinct()
+                    ->select('quote_uuid')
+                    ->from('quote_tags')
+                    ->where('name', QuoteSegmentEnum::SIC->tag())
+                    ->where('quote_type_id', QuoteTypeId::Health);
+            };
+            $this->query->when($segmentFilter === QuoteSegmentEnum::SIC->value, function ($query) use ($subQueryCallback) {
+                $query->whereIn('hqr.uuid', $subQueryCallback);
+            })->when($segmentFilter === QuoteSegmentEnum::NON_SIC->value, function ($query) use ($subQueryCallback) {
+                $query->whereNotIn('hqr.uuid', $subQueryCallback);
+            });
+        }
 
         $this->adjustQueryByDateFilters($this->query, 'hqr');
 
@@ -511,7 +529,7 @@ class HealthQuoteService extends BaseService
                     if ($request[$item][0] == 'null') {
                         $this->query->whereNull('advisor_id');
                     } else {
-                        $this->query->whereIn('advisor_id', $request[$item])->orWhereIn('wcu_id', $request[$item]);
+                        $this->query->whereIn('advisor_id', $request[$item]);
                     }
                 } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('quote_status_id', $request[$item]);

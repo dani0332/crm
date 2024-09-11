@@ -24,6 +24,7 @@ use App\Services\SIBService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
 
@@ -386,5 +387,10 @@ class QuoteDocumentController extends Controller
         }
 
         return response()->download($zipFilePath)->deleteFileAfterSend(true);
+    }
+
+    public function getS3TempUrl(Request $request)
+    {
+        return $this->quoteDocumentService->getDocumentTempURL($request->docURL);
     }
 }

@@ -8,65 +8,64 @@ use App\Enums\PDMigrations\PDDealStatus;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Models\BusinessQuote;
-use App\Traits\PersonalQuoteSyncTrait;
+use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class BusinessQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 {
-    use PersonalQuoteSyncTrait;
-
     public function model(array $row)
     {
-        $fullName = $row['person_name']; // Adjust the key based on your column name
-        [$firstName, $lastName] = $this->splitName($fullName);
-        if (isset($row['deal_cdb_id'])) {
-            [, $value] = explode('-', $row['deal_cdb_id']);
+        if ((isset($row['deal_cdb_id']) || isset($row['deal_policy_number_renewal']))) {
+            $quoteStatusId = $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']);
+            if ($quoteStatusId) {
+                $data = [
+                    'previous_quote_policy_number' => $row['deal_policy_number_renewal'] ?? null,
+                    'premium' => $row['deal_value'],
+                    'quote_status_id' => $quoteStatusId,
+                    'business_type_of_insurance_id' => $this->getBusinessInsurance($row['deal_types_of_insurance']),
+                ];
 
-            $data = [
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'previous_quote_policy_number' => $row['deal_policy_number_renewal'],
-                'mobile_no' => $row['person_phone_work'],
-                'email' => $row['person_email_work'],
-                'code' => $row['deal_cdb_id'],
-                'uuid' => $value,
-                'premium' => str_replace(' AED', '', $row['deal_value']),
-                'quote_status_id' => $this->getQuoteStatusId($row['deal_status'], $row['deal_stage']),
-                'business_type_of_insurance_id' => $this->getBusinessInsurance($row['deal_types_of_insurance']),
-            ];
+                $searchCriteria = [];
 
-            $business = BusinessQuote::updateOrCreate(['uuid' => $data['uuid']], $data);
-            info('----------- Business Lead Imported  -----------'.$data['code']);
-            $this->syncQuote($business, $business->toArray());
+                if ($row['deal_batch']) {
+                    $dealBatch = Date::excelToDateTimeObject($row['deal_batch'])->format('MY');
+                    $searchCriteria['renewal_batch'] = strtoupper($dealBatch);
+                }
+                // Only add 'code' if 'deal_cdb_id' is set
+                if (isset($row['deal_cdb_id'])) {
+                    [, $value] = explode('-', $row['deal_cdb_id']);
+                    $searchCriteria['uuid'] = $value;
+                } elseif (isset($row['deal_policy_number_renewal'])) {
+                    $searchCriteria['previous_quote_policy_number'] = $row['deal_policy_number_renewal'];
+                }
+
+                $businessLead = BusinessQuote::where($searchCriteria)->first();
+                // For a testing purpose on UAT
+                // $businessLead = PersonalQuote::where($searchCriteria)->first();
+
+                if ($businessLead && $businessLead->quote_status_id != QuoteStatusEnum::TransactionApproved
+                 && Carbon::parse($businessLead->updated_at)->lessThan(Carbon::parse('2024-05-23'))) {
+                    $businessLead->update($data);
+                    info('BusinessQuoteImport - Quote found: '.$businessLead->uuid.' - Quote updated');
+                }
+            }
+            info('BusinessQuoteImport - Quote status not defined');
+
         }
     }
 
     public function chunkSize(): int
     {
-        return 5000;
-    }
-
-    /**
-     * Split the full name into first and last names.
-     *
-     * @param  string  $fullName
-     * @return array
-     */
-    private function splitName($fullName)
-    {
-        $nameParts = explode(' ', $fullName);
-        $firstName = $nameParts[0];
-        $lastName = end($nameParts);
-
-        return [$firstName, $lastName];
+        return 1000;
     }
 
     private function getQuoteStatusId($dealStatus, $dealStage)
     {
 
-        if ($dealStatus === PDDealStatus::LOST && $dealStage === DealStageEnum::FOLLOW_UP) {
+        if ($dealStatus === PDDealStatus::LOST) {
             return QuoteStatusEnum::Lost;
         }
 
@@ -117,6 +116,7 @@ class BusinessQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                 DealStageEnum::LOST => QuoteStatusEnum::Lost,
                 DealStageEnum::FEB => QuoteStatusEnum::Lost,
                 DealStageEnum::MARCH => QuoteStatusEnum::Lost,
+                DealStageEnum::MAR => QuoteStatusEnum::Lost,
                 DealStageEnum::APR => QuoteStatusEnum::Lost,
                 DealStageEnum::MAY => QuoteStatusEnum::Lost,
                 DealStageEnum::JULY => QuoteStatusEnum::Lost,
@@ -130,13 +130,16 @@ class BusinessQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                 DealStageEnum::PROPOSAL_SENT => QuoteStatusEnum::ProposalFormRequested,
                 DealStageEnum::PROPOSAL_FROM_RECIVIED => QuoteStatusEnum::ProposalFormReceived,
                 DealStageEnum::ADDITIONAL_INFORMATION_REQUESTED => QuoteStatusEnum::AdditionalInformationRequested,
+                DealStageEnum::ADDITONAL_INFORMATION_REQUESTED => QuoteStatusEnum::AdditionalInformationRequested,
                 DealStageEnum::QUOTES_RENEWAL_TERMS_REQ => QuoteStatusEnum::QuoteRequested,
                 DealStageEnum::QUOTES_REQUEST_UW => QuoteStatusEnum::QuoteRequested,
                 DealStageEnum::LEAD_ALLOCATED => QuoteStatusEnum::Allocated,
+                DealStageEnum::ALLOCATED => QuoteStatusEnum::Allocated,
                 DealStageEnum::REMINDER_SENT => QuoteStatusEnum::FollowedUp,
                 DealStageEnum::AWAITING_DOCUMENTS => QuoteStatusEnum::MissingDocumentsRequested,
                 DealStageEnum::FINALIZING_TERMS_CONDITIONS => QuoteStatusEnum::FinalizingTerms,
                 DealStageEnum::PENDING_POLICY_DOCUMENTS => QuoteStatusEnum::PolicyDocumentsPending,
+                DealStageEnum::SALES_OPPORTUNITY => QuoteStatusEnum::Qualified,
 
             ];
 
@@ -189,6 +192,11 @@ class BusinessQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
             DealStageInsuranceTypes::HOLIDAY_HOMES => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::holidayHomes),
             DealStageInsuranceTypes::GROUP_LIFE => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupLife),
             DealStageInsuranceTypes::I_NEED_SEVERAL_INSURANCES_FOR_MY_BUSINESS => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::several),
+            DealStageInsuranceTypes::GROUP_TRAVEL => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupTravel),
+            DealStageInsuranceTypes::PERSONAL_ACCIDENT => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::several),
+            DealStageInsuranceTypes::EMPLOYERS_LIABILITY => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::workmens),
+            DealStageInsuranceTypes::TRAVEL_ISURANCE => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::several),
+            DealStageInsuranceTypes::MEDICAL_INSURANCE => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::medicalMalpractices),
         ];
 
         return $mapping[$insuranceType];

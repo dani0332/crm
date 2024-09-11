@@ -12,6 +12,13 @@ class HomeQuoteObserver
 {
     use PersonalQuoteSyncTrait;
 
+    public function updating(HomeQuote $quote): void
+    {
+        if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
+            $quote->quote_status_date = now();
+        }
+    }
+
     /**
      * Handle the HomeQuote "updated" event.
      */
@@ -39,5 +46,9 @@ class HomeQuoteObserver
         }
 
         $this->syncQuote($homeQuote, $dirty);
+
+        if (isset($dirty['quote_status_id']) && $homeQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
+            $this->syncLeadEntries($homeQuote->uuid);
+        }
     }
 }

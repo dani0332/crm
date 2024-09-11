@@ -106,9 +106,14 @@ class BusinessQuoteService extends BaseService
                 'bqr.policy_booking_date',
                 'policy_start_date',
                 'policy_issuance_date',
+                DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
+                'ps.text AS payment_status_id_text',
+                'bqr.payment_status_id',
                 'bqr.insly_migrated',
                 'bqr.aml_status',
             )
+            ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'bqr.payment_status_id')
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
@@ -259,6 +264,10 @@ class BusinessQuoteService extends BaseService
         } else {
             $searchProperties = $model->searchProperties;
         }
+
+        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date)) {
+            $this->query->whereBetween('bqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
+        }
         // if ($request->ajax()) {
         if (
             empty($request->email) && empty($request->code) && empty($request->first_name) &&
@@ -276,16 +285,20 @@ class BusinessQuoteService extends BaseService
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
             $this->query->whereBetween('bqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
-        if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
-            $dateFrom = $request['created_at'];
-            $dateTo = $request['created_at_end'];
-            $this->query->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
-        }
 
-        if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
-            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
-            $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
-
+        if (
+            in_array('created_at', $searchProperties)
+            && isset($request->created_at_start) && $request->created_at_start != ''
+            && empty($request->email)
+            && empty($request->code)
+            && empty($request->renewal_batch)
+            && empty($request->quote_batch_id)
+            && empty($request->payment_due_date)
+            && empty($request->booking_date)
+            && ! isset($request->previous_quote_policy_number)
+        ) {
+            $dateFrom = Carbon::parse($request['created_at_start'])->startOfDay()->toDateTimeString();
+            $dateTo = Carbon::parse($request['created_at_end'])->endOfDay()->toDateTimeString();
             $this->query->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
         }
         if (isset($request->policy_expiry_date) && $request->policy_expiry_date != '' && isset($request->policy_expiry_date_end) && $request->policy_expiry_date_end != '') {

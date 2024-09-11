@@ -556,7 +556,9 @@ const assumptionsForm = useForm({
   vehicle_type_id: page.props.record.vehicle_type_id || null,
   is_modified: page.props.record.is_modified || 0,
   is_bank_financed: page.props.record.is_bank_financed || 0,
-  is_gcc_standard: page.props.record.is_gcc_standard || null,
+  is_gcc_standard: [0, 1].includes(page.props.record.is_gcc_standard)
+    ? page.props.record.is_gcc_standard
+    : null,
   current_insurance_status: page.props.record.current_insurance_status || null,
   year_of_first_registration:
     page.props.record.year_of_first_registration || null,
@@ -3535,6 +3537,7 @@ const onAddUpdate = () => {
       "
       :storageUrl="storageUrl"
       :isPlanDetailEnabled="isPlanDetailEnabled"
+      :expanded="sectionExpanded"
     />
 
     <PaymentTable
@@ -3648,6 +3651,7 @@ const onAddUpdate = () => {
       @copyUploadURL="copyUploadURL"
       quoteType="Car"
       :paymentStatusEnum="paymentStatusEnum"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy
@@ -3711,7 +3715,6 @@ const onAddUpdate = () => {
             :items="emailStatuses || []"
             show-index
             border-cell
-            fixed-checkbox
             hide-rows-per-page
             hide-footer
           >
@@ -3842,7 +3845,6 @@ const onAddUpdate = () => {
             :items="activities || []"
             show-index
             border-cell
-            fixed-checkbox
             hide-rows-per-page
             hide-footer
           >
@@ -4027,6 +4029,7 @@ const onAddUpdate = () => {
       :customerName="record?.first_name + ' ' + record?.last_name"
       :quoteId="quote.uuid"
       :quoteType="'CAR'"
+      :expanded="sectionExpanded"
     />
   </div>
   <AuditLogs

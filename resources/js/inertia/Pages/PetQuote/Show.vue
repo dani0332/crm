@@ -1003,6 +1003,7 @@ const onAddUpdate = () => {
       "
       :storageUrl="storageUrl"
       :bookPolicyDetails="bookPolicyDetails"
+      :expanded="sectionExpanded"
     />
 
     <QuotePayments
@@ -1043,6 +1044,7 @@ const onAddUpdate = () => {
       :insly-id="quote?.quote_detail?.insly_id"
       :expanded="sectionExpanded"
       quoteType="Pet"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy

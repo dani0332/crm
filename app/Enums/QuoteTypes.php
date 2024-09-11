@@ -158,6 +158,25 @@ enum QuoteTypes: string
         };
     }
 
+    public static function getNameShortCode(string $code)
+    {
+        $codes = [
+            'CAR' => self::CAR,
+            'HOM' => self::HOME,
+            'HEA' => self::HEALTH,
+            'LIF' => self::LIFE,
+            'BUS' => self::BUSINESS,
+            'BIK' => self::BIKE,
+            'YAC' => self::YACHT,
+            'TRA' => self::TRAVEL,
+            'PET' => self::PET,
+            'CYC' => self::CYCLE,
+            'JSK' => self::JETSKI,
+        ];
+
+        return $codes[$code] ?? null;
+    }
+
     public function url(string $uuid): string
     {
         return match ($this) {
