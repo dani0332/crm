@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
@@ -176,6 +177,7 @@ class LifeQuoteController extends Controller
         $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::LIFE->value, $quote->id);
         $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::LIFE->value, $payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
+        $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
         return inertia('LifeQuote/Show', [
             'documentTypes' => $documentTypes,
@@ -184,6 +186,7 @@ class LifeQuoteController extends Controller
             'quoteTypeId' => QuoteTypeId::Life,
             'quoteStatuses' => $quoteStatuses,
             'quote' => $quote,
+            'amlStatusName'=> $amlStatusName,
             'record' => $quote,
             'activities' => $activitiesData,
             'advisors' => $advisors,

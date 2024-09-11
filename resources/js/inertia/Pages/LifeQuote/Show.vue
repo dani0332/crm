@@ -37,6 +37,7 @@ defineProps({
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
+    amlStatusName: String,
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
@@ -677,7 +678,7 @@ const onAddUpdate = () => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">AML STATUS</dt>
-                <dd>{{ quote?.aml_status ?? '' }}</dd>
+                <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>

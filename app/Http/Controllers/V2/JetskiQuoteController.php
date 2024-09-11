@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteTypes;
@@ -137,10 +138,12 @@ class JetskiQuoteController extends Controller
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
+        $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
         return inertia('JetskiQuote/Show', [
             'quoteType' => QuoteTypes::JETSKI,
             'quote' => $quote,
+            'amlStatusName' => $amlStatusName,
             'activities' => $activities,
             'lostReasons' => $lostReasons,
             'advisors' => $advisors,

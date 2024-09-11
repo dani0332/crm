@@ -229,12 +229,13 @@ class TravelController extends Controller
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
+        $isAmlClearedForQuote = app(CentralService::class)->amlClearedFromLog($record->id, QuoteTypes::TRAVEL->value);
         $amlStatusName = AMLStatusCode::getName($record->aml_status);
-
 
         return inertia('TravelQuote/Show', [
             'quote' => $record,
-            'amlStatusName'=> $amlStatusName,
+            'isAmlClearedForQuote' => $isAmlClearedForQuote,
+            'amlStatusName' => $amlStatusName,
             'fieldsToDisplay' => $fields,
             'modelType' => $this->genericModel->modelType,
             'quoteTypeId' => QuoteTypeId::Travel,
