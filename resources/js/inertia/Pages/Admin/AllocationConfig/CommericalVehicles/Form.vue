@@ -26,7 +26,7 @@ const getCarModel = () => {
     x => x.id == commercialForm.car_make_id,
   ).code;
   axios.get(`/car-model?make_code=${carCode}`).then(response => {
-    commercialForm.car_model_id = null;
+    commercialForm.car_model_id = [];
     carModels.value = response.data;
     buttonLoader.value = false;
   });
