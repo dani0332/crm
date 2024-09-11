@@ -554,7 +554,9 @@ const assumptionsForm = useForm({
   vehicle_type_id: page.props.record.vehicle_type_id || null,
   is_modified: page.props.record.is_modified || 0,
   is_bank_financed: page.props.record.is_bank_financed || 0,
-  is_gcc_standard: page.props.record.is_gcc_standard || null,
+  is_gcc_standard: [0, 1].includes(page.props.record.is_gcc_standard)
+    ? page.props.record.is_gcc_standard
+    : null,
   current_insurance_status: page.props.record.current_insurance_status || null,
   year_of_first_registration:
     page.props.record.year_of_first_registration || null,

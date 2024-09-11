@@ -47,5 +47,12 @@ class RolePermissionSeeder extends Seeder
                 'name' => PermissionsEnum::MANAGER_AUTHORISED_PAYMENT_SUMMARY,
             ]);
         }
+
+        $migrateInslyLead = Permission::where('name', PermissionsEnum::MIGRATE_INSLY_LEAD)->first();
+        if (! $migrateInslyLead) {
+            Permission::create([
+                'name' => PermissionsEnum::MIGRATE_INSLY_LEAD,
+            ]);
+        }
     }
 }
