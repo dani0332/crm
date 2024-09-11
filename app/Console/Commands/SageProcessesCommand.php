@@ -37,22 +37,26 @@ class SageProcessesCommand extends Command
             ->distinct()
             ->pluck('insurance_provider_id')->toArray();
 
-        foreach ($insuranceProviders as $insuranceProvider) {
-            $sageProcess = SageProcess::where('insurance_provider_id', $insuranceProvider)
-                ->where('status', SageEnum::SAGE_PROCESS_PENDING_STATUS)
-                ->orderBy('created_at')
-                ->first();
+        if (count($insuranceProviders) > 0) {
+            foreach ($insuranceProviders as $insuranceProvider) {
+                $sageProcess = SageProcess::where('insurance_provider_id', $insuranceProvider)
+                    ->where('status', SageEnum::SAGE_PROCESS_PENDING_STATUS)
+                    ->orderBy('created_at')
+                    ->first();
+                $this->info('Processing Sage Process ID: '.$sageProcess->id.' for Insurance Provider ID: '.$insuranceProvider);
+                $sageProcessRequest = json_decode($sageProcess->request);
+                $sageRequest = $sageProcessRequest->sagePayload;
+                $request = $sageProcessRequest->requestPayload;
 
-            $sageProcessRequest = json_decode($sageProcess->request);
-            $sageRequest = $sageProcessRequest->sagePayload;
-            $request = $sageProcessRequest->requestPayload;
-
-            if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST) {
-                $quote = $sageProcess->model;
-                BookPolicyOnSageJob::dispatch($sageRequest, $quote, $request, $sageProcess)->onQueue('sage-book-policy');
+                if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST) {
+                    $quote = $sageProcess->model;
+                    BookPolicyOnSageJob::dispatch($sageRequest, $quote, $request, $sageProcess)->onQueue('sage-book-policy');
+                }
             }
-
+        } else {
+            $this->info('No Sage Process meet the selection criteria / already sage processes are being processed against all insurance providers');
         }
+
         $this->info('Sage Policy Booking Command Ended');
     }
 }

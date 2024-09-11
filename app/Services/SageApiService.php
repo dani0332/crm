@@ -11,18 +11,15 @@ use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Factories\SagePayloadFactory;
-use App\Jobs\BookPolicyOnSageJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Jobs\SendUpdateSageJob;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessInsuranceType;
 use App\Models\Customer;
-use App\Models\CustomScheduler;
 use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatusLog;
-use App\Models\QuoteTag;
 use App\Models\SageApiLog;
 use App\Models\SageProcess;
 use App\Models\User;
@@ -33,8 +30,10 @@ use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use stdClass;
 
 class SageApiService
 {
@@ -76,7 +75,7 @@ class SageApiService
             $businessTypeOfInsuranceCode = $businessTypeOfInsurance->code;
         }
 
-        $sageRequest = new \stdClass;
+        $sageRequest = new stdClass;
 
         $sageRequest->userId = auth()->id();
         $sageRequest->discount = floatval($payment->discount_value);
@@ -334,7 +333,7 @@ class SageApiService
             };
 
             return is_array($response->json()) ? json_encode($response->json()) : $response->body();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return json_encode(['error' => ['message' => ['value' => $e->getMessage()]], 'code' => 500]);
         }
     }
@@ -1208,7 +1207,6 @@ class SageApiService
         ]);
         $paymentSplits = $payment->paymentSplits;
 
-
         $data = ['id' => $quote->id, 'quoteTypeId' => $quoteTypeId];
 
         //Booking of Policies with zero price is only allowed for the policies having Credit Approval as Payment Method.
@@ -1226,7 +1224,6 @@ class SageApiService
         $sageRequest->quoteTypeId = $quoteTypeId;
         $sageRequest->sageProcessRequestType = SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST;
 
-
         // sage customer number generation
         $sageRequest->customerId = $this->verifySageCustomer($quote->customer_id, $data, $quote, $sageLogArray, 13);
 
@@ -1236,19 +1233,34 @@ class SageApiService
             return $checkRequiredSageIds;
         }
 
-        SageProcess::firstOrCreate([
+        if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+            return ['status' => true, 'message' => 'Policy has been already booked!'];
+        }
+
+        $sageProcessData = [
             'user_id' => auth()->id(),
             'insurance_provider_id' => $sageRequest->insurerID,
-            'model_type' => $quote::class,
-            'model_id' => $quote->id,
             'request' => json_encode([
                 'sagePayload' => $sageRequest,
                 'requestPayload' => $request,
             ]),
             'status' => SageEnum::SAGE_PROCESS_PENDING_STATUS,
-        ]);
+        ];
 
-        //BookPolicyOnSageJob::dispatch($sageRequest, $quote, $payment, $sageLogArray, $request)->onQueue('sage-book-policy');
+        $sageProcess = SageProcess::where([
+            'model_type' => $quote::class,
+            'model_id' => $quote->id,
+        ])->first();
+
+        if ($sageProcess) {
+            if ($sageProcess->status == SageEnum::SAGE_PROCESS_FAILED_STATUS) {
+                $sageProcess->update($sageProcessData);
+            }
+        } else {
+            $sageProcessData['model_type'] = $quote::class;
+            $sageProcessData['model_id'] = $quote->id;
+            SageProcess::create($sageProcessData);
+        }
 
         return ['status' => true, 'message' => 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!'];
     }
