@@ -3,21 +3,32 @@
 namespace App\Exports;
 
 use Maatwebsite\Excel\Concerns\Exportable;
+use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class InstantChatDetailedExport implements FromCollection, WithHeadings, WithMapping
+class InstantChatDetailedExport implements FromArray, WithHeadings, WithMapping
 {
     use Exportable;
 
     protected $chat;
-    public function __construct($chat)
+    // public function __construct($chat)
+    // {
+    //     $this->chat = $chat;
+    // }
+
+    // public function collection()
+    // {
+    //     return $this->chat;
+    // }
+
+    public function __construct(array $data)
     {
-        $this->chat = $chat;
+        $this->chat = $data;
     }
 
-    public function collection()
+    public function array(): array
     {
         return $this->chat;
     }
@@ -27,48 +38,47 @@ class InstantChatDetailedExport implements FromCollection, WithHeadings, WithMap
         return [
             'QUOTE TYPE',
             'REF ID',
-            'DATE OF FIRST INTERACTION',
+            'CREATED AT',
+            'MESSAGE',
+            'ROLE',
+            'EMPLOYEE FLAG',
+            'EMAIL ID',
+            'USER SYSTEM',
+            'USER IP ADDRESS',
             'COMMUNICATION CHANNEL',
-            'BATCH',
-            'TRANSACTION TYPE',
-            'SEGMENT',
-            'NO. OF MESSAGES SENT BY CUSTOMER TO AI',
-            'NO. OF RESPONSES SENT BY AI TO CUSTOMER',
-            'TOTAL NO OF INTERACTIONS',
-            'COUNT OF FALLBACKS',
-            'PAYMENT STATUS',
-            'SALE LEADS',
-            'PROVIDER NAME',
-            'PLAN TYPE',
-            'PLAN NAME',
-            'PRICE',
-            'PAYMENT DATE',
-            'EP PURCHASED',
+            'INPUT TOKENS USAGE',
+            'OUTPUT TOKENS USAGE',
+            'TOTAL TOKENS USED',
         ];
     }
 
-    public function map($data): array
+    public function map($chat): array
     {
         return [
-            $data->quote_type,
-            $data->quote_id,
-            $data->created_at,
-            $data->communication_channel,
-            $data->batch,
-            $data->transaction_type,
-            $data->segment,
-            $data->customer_interactions,
-            $data->ai_interactions,
-            $data->total_ai_interactions,
-            $data->fallback,
-            $data->payment_status,
-            $data->sale_leads,
-            $data->provider_name,
-            $data->plan_type,
-            $data->plan_name,
-            $data->price,
-            $data->payment_date,
-            $data->ep_purchased,
+            $chat['quote_type'],
+            $chat['quote_id'],
+            $chat['created_at'],
+            $chat['msg'],
+            $chat['role'],
+            isset($chat['employee_flag']) ? $chat['employee_flag'] :'N/A',
+            isset($chat['email']) ? $chat['email'] :'N/A',
+            isset($chat['user_system']) ? $chat['user_system'] :'N/A',
+            isset($chat['user_ip_address']) ? $chat['user_ip_address'] :'N/A',
+            $this->formatCommunicationChannel($chat['communication_channel']),
+            isset($chat['input_tokens_usage']) ? $chat['input_tokens_usage'] :'N/A',
+            isset($chat['completion_tokens']) ? $chat['completion_tokens'] :'N/A',
+            isset($chat['total_tokens']) ? $chat['total_tokens'] :'N/A',
         ];
     }
+
+    private function formatCommunicationChannel($channel)
+{
+    // Check if the communication_channel is a BSONDocument
+    if ($channel instanceof \MongoDB\Model\BSONDocument) {
+        // Convert the BSONDocument to an array and return a formatted string
+        return json_encode($channel->getArrayCopy());
+    }
+    // If it's not a BSONDocument, return it as-is (assuming it's already a string or null)
+    return $channel ?? 'N/A';
+}
 }

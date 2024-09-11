@@ -37,6 +37,7 @@ class AlfredChatController extends Controller
             'cqr.code',
             'cqr.payment_status_id',
             'ps.text AS payment_status_id_text',
+            'ps.created_at AS payment_status_id_created_at',
             'cqr.plan_id',
             'cp.text AS plan_id_text',
             'cp.provider_id AS car_plan_provider_id',
@@ -131,20 +132,9 @@ class AlfredChatController extends Controller
 
         $data = [];
         if ($modelType == CarQuote::class) {
-           
             $data =  $this->query->where(function ($query) use ($request, $modelType) {
                 $this->processChatFilters($request, $query, $modelType);
             })->get();
-            // CarQuote::with(['carQuoteRequestDetail' => function ($query) {
-            //     $query->select('id', 'car_quote_request_id', 'chat_initiated_at'); // specify keys from carQuoteRequestDetail
-            // }])
-            //     ->select('id', 'uuid', 'code', 'quote_batch_id',
-            //         'payment_status_id', 'email', 'mobile_no', 'transaction_type_id',
-            //         'quote_batch_id', 'quote_status_id', 'assignment_type', 'quote_status_id', 'plan_id') // specify keys from CarQuote
-            //     ->whereHas('carQuoteRequestDetail', function ($query) {
-            //         $query->whereNotNull('chat_initiated_at');
-            //     })
-               
         } elseif ($modelType == HealthQuote::class) {
             $data = HealthQuote::with(['healthQuoteRequestDetail' => function ($query) {
                 $query->select('id', 'health_quote_request_id', 'chat_initiated_at'); // specify keys from healthQuoteRequestDetail
@@ -251,7 +241,7 @@ class AlfredChatController extends Controller
     {
 
         if (isset($request->quoteId) && $request->quoteId != '') {
-            $partialQuery->where('uuid', $request->quoteId);
+            $partialQuery->where('cqr.uuid', $request->quoteId);
         }
 
         if (isset($request->email) && $request->email != '') {
@@ -266,25 +256,13 @@ class AlfredChatController extends Controller
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['start_date']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['end_date']));
 
-            // Determine the correct relationship based on the model type
-            $relation = $modelType == HealthQuote::class ? 'healthQuoteRequestDetail' : ($modelType == CarQuote::class ? 'carQuoteRequestDetail' : 'travelQuoteRequestDetail');
-
             $partialQuery->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
-            // Apply the whereHas for the determined relation
-            // $partialQuery->whereHas($relation, function ($query) use ($dateFrom, $dateTo) {
-            //     $query->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
-            // });
         } else {
             // Default to last 30 days if no dates are provided
             $dateFrom = now()->subDays(30)->startOfDay();
             $dateTo = now()->endOfDay();
 
             $partialQuery->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
-            // // Apply the same relationship and date filter with default dates
-            // $relation = $modelType == HealthQuote::class ? 'healthQuoteRequestDetail' : ($modelType == CarQuote::class ? 'carQuoteRequestDetail' : 'travelQuoteRequestDetail');
-
-            // $partialQuery->whereHas($relation, function ($query) use ($dateFrom, $dateTo) {
-            // });
         }
 
         if (isset($request->transaction_type_id) && $request->transaction_type_id != '') {
@@ -327,57 +305,74 @@ class AlfredChatController extends Controller
     }
 
     public function exportChat(Request $request)
-    {       
+    {      
         $result = $this->processChatFilters($request, $this->query, CarQuote::class);
         $data = $result->get();
-
+        
+     
         $itemIds = array_column($data->toArray(), 'uuid');
 
-        $chatPipeline = $this->createPipeline($request, $itemIds, 'chat');
+        $chatPipeline = $this->createPipeline($request, $itemIds, $request->report);
         $mongoResults = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline))->toArray();
-
-        $groupedChatData = [];
-        foreach ($mongoResults as $chatDocument) {
-            $quoteId = $chatDocument['quote_id'];
-            if (!isset($groupedChatData[$quoteId])) {
-                $groupedChatData[$quoteId] = [];
-            }
-
-            if (isset($chatDocument) && is_array($chatDocument)) {
-                if (isset($chatDocument['communication_channel'])) {
-                        $channel = $chatDocument['communication_channel'];
-
-                        if ($channel instanceof \MongoDB\Model\BSONDocument) {
-                            $channel = $channel->getArrayCopy();
-                        }
-                        if (is_array($channel)) {
-                            $channelString = implode(', ', $channel);
-                        } else {
-                            $channelString = (string)$channel;
-                        }
-
-                        $groupedChatData[$quoteId]['communication_channel'] = $channelString;
-                } else {
-                    $groupedChatData[$quoteId]['communication_channel'] = ''; // Default to empty string if not set
-                }
-            }
-        }
-
-        // Step 5: Map the grouped chat data back to the corresponding items in $data
-        foreach ($data as $item) {
-            $item->chat = $groupedChatData[$item->uuid] ?? []; // Assign chat data or empty array
-        }
-        dd($data->toArray());
-
-        $chat = $this->logs($request, true);
 
         $fileName = 'alfred_chat_logs_'.Carbon::now()->format('Y-m-d_H-i-s');
 
         if ($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
-            return Excel::download(new InstantChatConsolidatedExport($chat), $fileName.'.xlsx');
+            $groupedChatData = [];
+            foreach ($mongoResults as $chatDocument) {
+                $quoteId = $chatDocument['quote_id'];
+                if (!isset($groupedChatData[$quoteId])) {
+                    $groupedChatData[$quoteId] = [
+                        'communication_channel' => '',
+                        'fallback_count' => 0,
+                        'user_count' => 0,
+                        'ai_count' => 0
+                    ];
+                }
+    
+                if (isset($chatDocument) && is_array($chatDocument)) {
+                    if (isset($chatDocument['communication_channel'])) {
+                            $channel = $chatDocument['communication_channel'];
+    
+                            if ($channel instanceof \MongoDB\Model\BSONDocument) {
+                                $channel = $channel->getArrayCopy();
+                            }
+                            if (is_array($channel)) {
+                                $channelString = implode(', ', $channel);
+                            } else {
+                                $channelString = (string)$channel;
+                            }
+    
+                            $groupedChatData[$quoteId]['communication_channel'] = $channelString;
+                    } else {
+                        $groupedChatData[$quoteId]['communication_channel'] = ''; // Default to empty string if not set
+                    }
+    
+                    if (isset($chatDocument['fallback']) && is_bool($chatDocument['fallback'])) {
+                        // Increment the fallback count based on the boolean value
+                        if ($chatDocument['fallback']) {
+                            $groupedChatData[$quoteId]['fallback_count']++;
+                        }
+                    }
+    
+                    if ($chatDocument['role'] === 'USER') {
+                        $groupedChatData[$quoteId]['user_count']++;
+                    } elseif ($chatDocument['role'] === 'AI') {
+                        $groupedChatData[$quoteId]['ai_count']++;
+                    }
+                }
+            }
+    
+            // Step 5: Map the grouped chat data back to the corresponding items in $data
+            foreach ($data as $item) {
+                $item->chat = $groupedChatData[$item->uuid] ?? []; // Assign chat data or empty array
+            }
+            
+            return Excel::download(new InstantChatDetailedExport($data), $fileName.'.xlsx');
         }
+
         if ($request->report == InstantChatReportsEnum::DETAILED_REPORT) {
-            return Excel::download(new InstantChatDetailedExport($chat), $fileName.'.xlsx');
+            return Excel::download(new InstantChatDetailedExport($mongoResults), $fileName.'.xlsx');
         }
     }
 
@@ -420,55 +415,6 @@ class AlfredChatController extends Controller
             $pipeline[] = ['$match' => ['created_at' => ['$gte' => $start_date, '$lte' => $end_date]]];
         }
 
-        //missing in mongodb
-        // if (isset($request->transaction_type) && $request->transaction_type != null) {
-        //     $pipeline[] = ['$match' => ['ken_response.quotes.transaction_type' => ['$in' => $request->transaction_type]]];
-        // }
-
-        // missing in mongodb
-        // if (isset($request->batch) && $request->batch != null) {
-        //     $pipeline[] = ['$match' => ['ken_response.quotes.batch' => ['$in' => $request->batch]]];
-        // }
-        // if (isset($request->lead_status) && $request->lead_status != null) {
-        //     $pipeline[] = ['$match' => ['ken_response.quotes.quoteStatusId' => ['$in' => $request->lead_status]]];
-        // }
-        // if (isset($request->payment_status) && $request->payment_status != null) {
-        //     $pipeline[] = ['$match' => ['payment_status' => ['$in' => $request->payment_status]]];
-        // }
-        // if (isset($request->sale_leads) && $request->sale_leads === quoteTypeCode::yesText) {
-        //     $approvedStatuses = [
-        //         QuoteStatusEnum::TransactionApproved,
-        //         QuoteStatusEnum::PolicyIssued,
-        //         QuoteStatusEnum::PolicySentToCustomer,
-        //         QuoteStatusEnum::PolicyBooked,
-        //     ];
-
-        //     $pipeline[] = ['$match' => ['ken_response.quotes.quoteStatusId' => ['$in' => $approvedStatuses]]];
-        // }
-        // if (isset($request->fallback) && $request->fallback === quoteTypeCode::yesText) {
-        //     $pipeline[] = [
-        //         '$match' => [
-        //             '$or' => [
-        //                 ['ken_response.quotes.advisor' => ['$exists' => true, '$ne' => null]], // Check if advisor contact is shared
-        //                 ['fallback' => ['$exists' => true, '$eq' => true]],    // Check if HAPEX contact is shared
-        //             ],
-        //         ],
-        //     ];
-        // }
-        // if (isset($request->message_channel) && $request->message_channel != null) {
-        //     $pipeline[] = ['$match' => ['channel' => $request->message_channel]];
-        // }
-        // // missing in mongodb
-        // if (isset($request->segment) && $request->segment != null) {
-        //     $pipeline[] = ['$match' => ['ken_response.quotes.isSIC' => $request->segment]];
-        // }
-        // if (isset($request->mobile_number) && $request->mobile_number != null) {
-        //     $pipeline[] = ['$match' => ['ken_response.quotes.mobile' => $request->mobile_number]];
-        // }
-        // if (isset($request->email) && $request->email != null) {
-        //     $pipeline[] = ['$match' => ['ken_response.quotes.email' => $request->email]];
-        // }
-
         if ($type === 'chat') {
             $pipeline[] = [
                 '$group' => [
@@ -492,7 +438,7 @@ class AlfredChatController extends Controller
                 ],
             ];
             $pipeline[] = ['$count' => 'total'];
-        } elseif ($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
+        } elseif ($request->report == InstantChatReportsEnum::DETAILED_REPORT) {
             $pipeline[] = [
                 '$project' => [
                     'created_at' => 1,
@@ -510,58 +456,13 @@ class AlfredChatController extends Controller
                     'total_tokens' => '$response.usage.total_tokens',
                 ],
             ];
-        } elseif ($request->report == InstantChatReportsEnum::DETAILED_REPORT) {
+        } elseif ($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
             $pipeline[] = [
                 '$group' => [
                     '_id' => '$quote_id',
                     'quote_type' => ['$last' => '$quote_type'],
                     'date_of_first_interaction' => ['$min' => '$created_at'],
                     'communication_channels' => ['$addToSet' => '$channel'],
-                    'batch' => [
-                        '$last' => [
-                            '$cond' => [
-                                ['$$ROOT.role', 'USER'],
-                                ['$last' => '$ken_reponse.quotes.batch'],
-                                null,
-                            ],
-                        ],
-                    ],
-                    'transaction' => [
-                        '$last' => [
-                            '$cond' => [
-                                ['$$ROOT.role', 'USER'],
-                                ['$last' => '$ken_reponse.quotes.transaction_type'],
-                                null,
-                            ],
-                        ],
-                    ],
-                    'segment' => [
-                        '$last' => [
-                            '$cond' => [
-                                ['$$ROOT.role', 'USER'],
-                                ['$last' => '$ken_reponse.quotes.segment'],
-                                null,
-                            ],
-                        ],
-                    ],
-                    'payment_status' => [
-                        '$last' => [
-                            '$cond' => [
-                                ['$$ROOT.role', 'USER'],
-                                ['$first' => '$ken_reponse.quotes.paymentStatus'],
-                                null,
-                            ],
-                        ],
-                    ],
-                    'provider_name' => [
-                        '$last' => [
-                            '$cond' => [
-                                ['$$ROOT.role', 'USER'],
-                                ['$last' => '$ken_reponse.quotes.providerName'],
-                                null,
-                            ],
-                        ],
-                    ],
                     'customer_interactions' => [
                         '$sum' => [
                             '$cond' => [
@@ -590,74 +491,6 @@ class AlfredChatController extends Controller
                         ],
                     ],
                     'fallbacks' => ['$sum' => ['$cond' => [['fallback', true], 1, 0]]],
-                    'payment_status' => ['$last' => '$ken_reponse.quotes.paymentStatus'],
-                    'sale_leads' => [
-                        '$max' => [
-                            '$cond' => [
-                                [
-                                    '$and' => [
-                                        ['$eq' => ['$role', 'USER']],
-                                        ['$in' => [
-                                            '$ken_reponse.quotes.quoteStatusId',
-                                            [
-                                                QuoteStatusEnum::TransactionApproved,
-                                                QuoteStatusEnum::PolicyIssued,
-                                                QuoteStatusEnum::PolicySentToCustomer,
-                                                QuoteStatusEnum::PolicyBooked,
-                                            ],
-                                        ]],
-                                    ],
-                                ],
-                                'Yes',
-                                'No',
-                            ],
-                        ],
-                    ],
-                    'plan_type' => [
-                        '$last' => [
-                            '$cond' => [
-                                ['$$ROOT.role', 'USER'],
-                                ['$last' => '$ken_reponse.quotes.plan_type'],
-                                null,
-                            ],
-                        ],
-                    ],
-                    'plan_name' => [
-                        '$last' => [
-                            '$cond' => [
-                                ['$$ROOT.role', 'USER'],
-                                ['$last' => '$ken_reponse.quotes.plan_name'],
-                                null,
-                            ],
-                        ],
-                    ],
-                    'price' => [
-                        '$last' => [
-                            '$cond' => [
-                                ['$$ROOT.role', 'USER'],
-                                ['$last' => '$ken_reponse.quotes.price'],
-                                null,
-                            ],
-                        ],
-                    ],
-                    'payment_date' => [
-                        '$last' => [
-                            '$cond' => [
-                                ['$$ROOT.role', 'USER'],
-                                ['$last' => '$ken_reponse.quotes.payment_date'],
-                                null,
-                            ],
-                        ],
-                    ],
-                    'ep_purchased' => [
-                        '$last' => [
-                            '$cond' => [
-                                ['$$ROOT.role', 'USER'],
-                                ['$last' => '$ken_reponse.quotes.ep_purchased'],
-                                null,
-                            ],
-                        ],
-                    ],
                 ],
             ];
 

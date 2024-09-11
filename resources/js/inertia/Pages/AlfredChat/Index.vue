@@ -375,7 +375,6 @@ const downloadReport = () => {
         </template>
       </x-tooltip>
 
-      <!-- @click.prevent="downloadReport" -->
       <x-button
         v-else
         :disabled="reportButtonCon.disable"
@@ -408,17 +407,6 @@ const downloadReport = () => {
     hide-rows-per-page
     hide-footer
   >
-    <!-- <template #item-quote_id="{ quote_id, quote_type }">
-      <span v-if="quote_type.toLowerCase().includes('hea')">
-        {{ 'HEA' + '-' + quote_id }}
-      </span>
-      <span v-else-if="quote_type.toLowerCase().includes('travel')">
-        {{ 'TRA' + '-' + quote_id }}
-      </span>
-      <span v-else>
-        {{ quote_type + '-' + quote_id }}
-      </span>
-    </template> -->
     <template #item-created_at="item">
       <span>
         {{ dateFormat(item.chat_initiated_at.split(' ')[0]) }}

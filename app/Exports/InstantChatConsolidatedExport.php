@@ -2,12 +2,13 @@
 
 namespace App\Exports;
 
+use App\Enums\QuoteStatusEnum;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class InstantChatConsolidatedExport implements FromCollection, WithHeadings, WithMapping
+class  InstantChatConsolidatedExport implements FromCollection, WithHeadings, WithMapping
 {
     use Exportable;
 
@@ -25,38 +26,52 @@ class InstantChatConsolidatedExport implements FromCollection, WithHeadings, Wit
     public function headings(): array
     {
         return [
-            'QUOTE TYPE',
             'REF ID',
-            'CREATED AT',
-            'MESSAGE',
-            'ROLE',
-            'EMPLOYEE FLAG',
-            'EMAIL ID',
-            'USER SYSTEM',
-            'USER IP ADDRESS',
+            'DATE OF FIRST INTERACTION',
             'COMMUNICATION CHANNEL',
-            'INPUT TOKENS USAGE',
-            'OUTPUT TOKENS USAGE',
-            'TOTAL TOKENS USED',
+            'BATCH',
+            'TRANSACTION TYPE',
+            'SEGMENT',
+            'NO. OF MESSAGES SENT BY CUSTOMER TO AI',
+            'NO. OF RESPONSES SENT BY AI TO CUSTOMER',
+            'TOTAL NO OF INTERACTIONS',
+            'COUNT OF FALLBACKS',
+            'PAYMENT STATUS',
+            'SALE LEADS',
+            'PROVIDER NAME',
+            'PLAN TYPE',
+            'PLAN NAME',
+            'PRICE',
+            'PAYMENT DATE',
+            'EP PURCHASED',
         ];
     }
 
-    public function map($chat): array
+    public function map($data): array
     {
         return [
-            $chat->quote_type,
-            $chat->quote_id,
-            $chat->created_at,
-            $chat->msg,
-            $chat->role,
-            $chat->employee_flag,
-            $chat->email,
-            $chat->user_system,
-            $chat->user_ip_address,
-            $chat->communication_channel,
-            $chat->input_tokens_usage,
-            $chat->completion_tokens,
-            $chat->total_tokens,
+            $data->code,
+            $data->chat_initiated_at,
+            $data->chat['communication_channel'],
+            $data->quote_batch_id_text,
+            $data->transaction_type_text,
+            // $data->segment,
+            $data->chat['user_count'],
+            $data->chat['ai_count'],
+            $data->chat['user_count'] + $data->chat['ai_count'],
+            $data->chat['fallback_count'],
+            $data->payment_status_id_text,
+            in_array(
+                $data->quote_status_id,
+                [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, 
+                QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked], 
+            ) ? 'Yes' : 'No',
+            $data->car_plan_provider_id_text,
+            // $data->plan_type,
+            $data->plan_id_text,
+            // $data->price,
+            $data->payment_status_id_created_at,
+            // $data->ep_purchased,
         ];
     }
 }
