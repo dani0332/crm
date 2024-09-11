@@ -1388,6 +1388,7 @@ class RenewalsUploadService
      */
     private function triggerBirdWorkflow($emailData, $mobile = null)
     {
+        $tag = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_MOTOR_RENEWAL_TAG)->first()->value ?? null;
         $birdEmailData = [
             'SendNewProcessRenewalEmail' => true,
             'customerEmail' => $emailData->customerEmail,
@@ -1397,6 +1398,7 @@ class RenewalsUploadService
             'instantAlfredLink' => $emailData->quoteLink.'?IA=true',
             'refID' => $emailData->carQuoteId,
             'requestForAdvisor' => $emailData->requestAdvisorLink,
+            'tag' => $tag
         ];
 
         $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_MOTOR_RENEWAL_WORKFLOW)->first();
