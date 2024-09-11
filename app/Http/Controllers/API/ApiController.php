@@ -119,11 +119,15 @@ class ApiController extends Controller
     }
 
     public function stopFollowUpEvent(){
-        info("getting request to stopFollowUpEvent: ".request('uuid') ." Time:" .now());
+        $flowType = request('flowType');
+        $quoteUID = request('uuid');
 
-        $workflow = QuoteFlowDetails::where('quote_uuid', request('uuid'))->first();
+        info("getting request to stopFollowUpEvent Ref-ID: {$quoteUID} | FlowType: {$flowType} Time:" .now());
+        $workflow = QuoteFlowDetails::where('quote_uuid', $quoteUID)
+                                      ->where('flow_type', $flowType)
+                                      ->first();
         if(! $workflow) {
-            info("lead not found for uuid: ".request('uuid') ." Time:" .now());
+            info("lead not found for uuid: {$quoteUID} | FlowType: {$flowType} | Time: ".now());
             return apiResponse([], Response::HTTP_NOT_FOUND, 'Lead not found');
         }
         $response =app(BirdService::class)->stopWorkFlow($workflow);
