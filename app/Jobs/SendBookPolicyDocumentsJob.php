@@ -67,6 +67,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
         if ($isDocumentEmailSentToCustomer > 0) {
             info('job: SendBookPolicyDocumentsJob skipped for: '.$this->code.' as email already sent');
+
             return;
         }
 

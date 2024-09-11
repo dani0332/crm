@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -41,5 +43,19 @@ class PlanDetailsRequest extends FormRequest
         }
 
         return $rules;
+    }
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $repository = getRepositoryObject(request()->quoteType);
+            $quoteModel = $repository::where('code', request()->code)->firstOrFail();
+            if ($quoteModel && $quoteModel->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+                $validator->errors()->add('value', 'No further editing is required as the policy has been booked');
+            }
+
+            if ($quoteModel && $quoteModel->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
+                $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
+            }
+        });
     }
 }

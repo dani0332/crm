@@ -336,6 +336,20 @@ const setQuotePlanInsurerNumber = () => {
       ?.insurerQuoteNo ||
     '';
 };
+const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
+  let isPolicyBookingFailed =
+    page.props.quote.quote_status_id == quoteStatusEnum.POLICY_BOOKING_FAILED;
+  if (isPolicyBookingFailed) {
+    let hasBookingFailedEditPermission = can(
+      permissionsEnum.BOOKING_FAILED_EDIT,
+    );
+    if (!hasBookingFailedEditPermission) {
+      return true;
+    }
+    return false;
+  }
+  return false;
+});
 
 watch(
   () => props.availablePlans,
@@ -663,7 +677,9 @@ onMounted(() => {
                     quoteStatusEnum.TransactionApproved ||
                   quote.quote_status_id == quoteStatusEnum.PolicyPending ||
                   quote.quote_status_id == quoteStatusEnum.PolicyIssued ||
-                  quote.quote_status_id == quoteStatusEnum.PolicySentToCustomer
+                  quote.quote_status_id ==
+                    quoteStatusEnum.PolicySentToCustomer ||
+                  quote.quote_status_id == quoteStatusEnum.POLICY_BOOKING_FAILED
                 "
               >
                 <x-button
@@ -724,6 +740,9 @@ onMounted(() => {
                     v-if="
                       !policyDetailsState.isEditing &&
                       can(permissionsEnum.POLICY_DETAILS_ADD)
+                    "
+                    :isDisabled="
+                      disableIfPolicyFailedAndNoBookingFailedEditPermission
                     "
                   />
                 </template>

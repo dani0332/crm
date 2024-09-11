@@ -11,6 +11,16 @@ use BenSampo\Enum\Enum;
  */
 final class SageEnum extends Enum
 {
+    /* Sage Processes Status Enums*/
+    const SAGE_PROCESS_PENDING_STATUS = 'pending';
+    const SAGE_PROCESS_PROCESSING_STATUS = 'processing';
+    const SAGE_PROCESS_FAILED_STATUS = 'failed';
+    const SAGE_PROCESS_COMPLETED_STATUS = 'completed';
+
+    /* Sage Process Request Type */
+    const SAGE_PROCESS_BOOK_POLICY_REQUEST = 'book_policy';
+    const SAGE_PROCESS_SEND_UPDATE_REQUEST = 'send_update';
+
     // Sage Custom API Enums
     const SAGE_CUSTOM_API_INVALID_TOKEN_MESSAGE = 'Invalid token';
     const SAGE_CUSTOM_API_AUTH_TOKEN_CACHE_KEY = 'sage-customer-api-token';
@@ -22,7 +32,8 @@ final class SageEnum extends Enum
     const END_POINT_AR_CUSTOMER = 'AR/ARCustomers';
 
     // Error Codes
-    const ERROR_RECORD_DUPLICATE = 'RecordDuplicate';
+    // const ERROR_RECORD_DUPLICATE = 'RecordDuplicate';
+    const ERROR_RECORD_NOT_FOUND = 'RecordNotFound';
 
     // Status
     const STATUS_SUCCESS = 'success';

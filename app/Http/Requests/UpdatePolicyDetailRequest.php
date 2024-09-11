@@ -2,10 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdatePolicyDetailRequest extends FormRequest
 {
+    use GenericQueriesAllLobs;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -57,11 +62,18 @@ class UpdatePolicyDetailRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
+            $quoteModel = $this->getQuoteObject(request()->modelType, request()->quote_id);
+            if ($quoteModel && $quoteModel->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+                $validator->errors()->add('value', 'No further editing is required as the policy has been booked');
+            }
             $pattern = '/^[\w,\/\\| -]+$/';
             $quote_policy_number = request()->quote_policy_number;
             if (! preg_match($pattern, $quote_policy_number)) {
-
                 $validator->errors()->add('value', 'Invalid format for policy number');
+            }
+            $quote = $this->getQuoteObject(request()->modelType, request()->quote_id);
+            if ($quote && $quote->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
+                $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
             }
         });
     }

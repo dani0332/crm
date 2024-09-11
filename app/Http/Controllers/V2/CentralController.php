@@ -52,7 +52,6 @@ use App\Models\HealthQuoteRequestDetail;
 use App\Models\Payment;
 use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
-use App\Models\QuoteStatusLog;
 use App\Repositories\PaymentRepository;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
@@ -137,9 +136,9 @@ class CentralController extends Controller
 
         $quoteIds = explode(',', $leadAssignRequest->selectTmLeadId);
         foreach ($quoteIds as $id) {
-            $quoteData = $this->getQuoteObject($request->modelType, $id);
+            $quoteData = $this->getQuoteObject($leadAssignRequest->modelType, $id);
             if ($quoteData && $quoteData->payment_status_id === PaymentStatusEnum::AUTHORISED) {
-                app(NotificationService::class)->paymentStatusUpdate($request->modelType, $quoteData->uuid);
+                app(NotificationService::class)->paymentStatusUpdate($leadAssignRequest->modelType, $quoteData->uuid);
             }
         }
 
@@ -232,7 +231,6 @@ class CentralController extends Controller
 
             info('Policy send to customer for '.$quote->uuid);
 
-            //TODO : Flags should be introduced regarding Document send email
             return response()->json(['message' => 'Documents are being sent to the customer. The status will be updated once the documents are sent.'], 200);
         }
         if ($request->send_policy_type == SendPolicyTypeEnum::SAGE) {
@@ -242,7 +240,7 @@ class CentralController extends Controller
                 ]], 403);
             }
 
-            $response = (new SageApiService())->postBookPolicyToSage($request, $quote);
+            $response = (new SageApiService)->postBookPolicyToSage($request, $quote);
 
             return response()->json(['message' => $response['message']], 200);
         }
