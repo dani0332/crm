@@ -138,6 +138,10 @@ const tableHeader = reactive([
     text: 'Policy Issuer ',
     value: 'policy_issuer',
   },
+  {
+    text: 'Commission Tax Invoice Number',
+    value: 'insurer_commmission_invoice_number',
+  },
 ]);
 
 const calculateTotalSum = useCalculateTotalSum;
@@ -268,6 +272,9 @@ const isIntegerColumn = key => {
     </template>
     <template #item-policy_issuer="{ policy_issuer }">
       {{ policy_issuer ?? 'N/A' }}
+    </template>
+    <template #item-insurer_commmission_invoice_number="{ insurer_commmission_invoice_number }">
+      {{ insurer_commmission_invoice_number ?? 'N/A' }}
     </template>
     <template #body-append>
       <tr v-if="reportData.data.length > 0" class="total-row sticky bottom-0">
