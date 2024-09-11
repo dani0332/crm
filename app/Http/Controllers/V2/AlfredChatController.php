@@ -23,46 +23,46 @@ use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
 class AlfredChatController extends Controller
-{   
+{
     protected $query;
 
     public function __construct()
     {
         $this->middleware('permission:'.PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS, ['only' => ['logs']]);
         $this->query = DB::table('car_quote_request as cqr')
-        ->select(
-            'cqr.uuid',
-            'cqr.id',
-            'cqr.email',
-            'cqr.code',
-            'cqr.payment_status_id',
-            'ps.text AS payment_status_id_text',
-            'cqr.plan_id',
-            'cp.text AS plan_id_text',
-            'cp.provider_id AS car_plan_provider_id',
-            'cpip.text AS car_plan_provider_id_text',
-            'cqr.quote_status_id',
-            'qs.text AS quote_status_id_text',
-            'cqr.quote_batch_id',
-            'lu.text as transaction_type_text',
-            'qb.name as quote_batch_id_text',
-            'cpip.code as plan_provider_code',
-            'cpip.code as plan_provider_code',
-            'cqr.insurance_provider_id',
-            'cqrd.chat_initiated_at'
-        )
-        ->leftJoin('payments as py', function ($join) {
-            $join->on('py.paymentable_id', '=', 'cqr.id')
-                ->where('py.paymentable_type', '=', CarQuote::class);
-        })
-        ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
-        ->leftJoin('lookups as lu', 'lu.id', '=', 'cqr.transaction_type_id')
-        ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
-        ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
-        ->leftJoin('insurance_provider as cpdip', 'cpdip.id', '=', 'cqr.insurance_provider_id')
-        ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
-        ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
-        ->leftJoin('quote_batches as qb', 'qb.id', '=', 'cqr.quote_batch_id');
+            ->select(
+                'cqr.uuid',
+                'cqr.id',
+                'cqr.email',
+                'cqr.code',
+                'cqr.payment_status_id',
+                'ps.text AS payment_status_id_text',
+                'cqr.plan_id',
+                'cp.text AS plan_id_text',
+                'cp.provider_id AS car_plan_provider_id',
+                'cpip.text AS car_plan_provider_id_text',
+                'cqr.quote_status_id',
+                'qs.text AS quote_status_id_text',
+                'cqr.quote_batch_id',
+                'lu.text as transaction_type_text',
+                'qb.name as quote_batch_id_text',
+                'cpip.code as plan_provider_code',
+                'cpip.code as plan_provider_code',
+                'cqr.insurance_provider_id',
+                'cqrd.chat_initiated_at'
+            )
+            ->leftJoin('payments as py', function ($join) {
+                $join->on('py.paymentable_id', '=', 'cqr.id')
+                    ->where('py.paymentable_type', '=', CarQuote::class);
+            })
+            ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
+            ->leftJoin('lookups as lu', 'lu.id', '=', 'cqr.transaction_type_id')
+            ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
+            ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
+            ->leftJoin('insurance_provider as cpdip', 'cpdip.id', '=', 'cqr.insurance_provider_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
+            ->leftJoin('quote_batches as qb', 'qb.id', '=', 'cqr.quote_batch_id');
     }
 
     /**
@@ -131,8 +131,8 @@ class AlfredChatController extends Controller
 
         $data = [];
         if ($modelType == CarQuote::class) {
-           
-            $data =  $this->query->where(function ($query) use ($request, $modelType) {
+
+            $data = $this->query->where(function ($query) use ($request, $modelType) {
                 $this->processChatFilters($request, $query, $modelType);
             })->get();
             // CarQuote::with(['carQuoteRequestDetail' => function ($query) {
@@ -144,7 +144,7 @@ class AlfredChatController extends Controller
             //     ->whereHas('carQuoteRequestDetail', function ($query) {
             //         $query->whereNotNull('chat_initiated_at');
             //     })
-               
+
         } elseif ($modelType == HealthQuote::class) {
             $data = HealthQuote::with(['healthQuoteRequestDetail' => function ($query) {
                 $query->select('id', 'health_quote_request_id', 'chat_initiated_at'); // specify keys from healthQuoteRequestDetail
@@ -163,7 +163,6 @@ class AlfredChatController extends Controller
                     $query->whereNotNull('chat_initiated_at');
                 });
         }
-
 
         // if (isset($request->channel) && $request->channel != '') {
 
@@ -327,7 +326,7 @@ class AlfredChatController extends Controller
     }
 
     public function exportChat(Request $request)
-    {       
+    {
         $result = $this->processChatFilters($request, $this->query, CarQuote::class);
         $data = $result->get();
 
@@ -339,24 +338,24 @@ class AlfredChatController extends Controller
         $groupedChatData = [];
         foreach ($mongoResults as $chatDocument) {
             $quoteId = $chatDocument['quote_id'];
-            if (!isset($groupedChatData[$quoteId])) {
+            if (! isset($groupedChatData[$quoteId])) {
                 $groupedChatData[$quoteId] = [];
             }
 
             if (isset($chatDocument) && is_array($chatDocument)) {
                 if (isset($chatDocument['communication_channel'])) {
-                        $channel = $chatDocument['communication_channel'];
+                    $channel = $chatDocument['communication_channel'];
 
-                        if ($channel instanceof \MongoDB\Model\BSONDocument) {
-                            $channel = $channel->getArrayCopy();
-                        }
-                        if (is_array($channel)) {
-                            $channelString = implode(', ', $channel);
-                        } else {
-                            $channelString = (string)$channel;
-                        }
+                    if ($channel instanceof \MongoDB\Model\BSONDocument) {
+                        $channel = $channel->getArrayCopy();
+                    }
+                    if (is_array($channel)) {
+                        $channelString = implode(', ', $channel);
+                    } else {
+                        $channelString = (string) $channel;
+                    }
 
-                        $groupedChatData[$quoteId]['communication_channel'] = $channelString;
+                    $groupedChatData[$quoteId]['communication_channel'] = $channelString;
                 } else {
                     $groupedChatData[$quoteId]['communication_channel'] = ''; // Default to empty string if not set
                 }
@@ -401,10 +400,10 @@ class AlfredChatController extends Controller
         }
 
         $pipeline[] = [
-                '$match' => [
-                    'quote_id' => ['$in' => $itemIds], // assuming 'quote_id' corresponds to the item's identifier
-                ]
-                ];
+            '$match' => [
+                'quote_id' => ['$in' => $itemIds], // assuming 'quote_id' corresponds to the item's identifier
+            ],
+        ];
 
         if (isset($quoteType) && $quoteType != null) {
             $pipeline[] = ['$match' => ['quote_type' => $quoteType]];
