@@ -1,13 +1,14 @@
 <script setup>
-import { computed } from 'vue';
-
 const props = defineProps({
   logs: Object,
   leadStatuses: Array,
   batches: Array,
+  pagination: Object,
 });
 
 const page = usePage();
+
+const { isRequired } = useRules();
 
 const objToUrl = obj => useObjToUrl(obj);
 const cleanObj = obj => useCleanObj(obj);
@@ -15,8 +16,8 @@ const cleanObj = obj => useCleanObj(obj);
 const filters = reactive({
   quoteId: null,
   quoteType: 'Car',
-  start_date: null,
-  end_date: null,
+  start_date: useDateFormat(getPreviousDate(), 'YYYY-MM-DD').value,
+  end_date: useDateFormat(useNow(), 'YYYY-MM-DD').value,
   page: 1,
   transaction_type_id: [],
   quote_batch_id: [],
@@ -84,7 +85,6 @@ const quoteSegments = page.props.quoteSegments;
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 
-const { isRequired } = useRules();
 const isError = ref(false);
 
 const loader = reactive({
@@ -234,10 +234,18 @@ const downloadReport = () => {
         </combo-box>
       </x-field>
       <x-field label="Start Date">
-        <DatePicker v-model="filters.start_date" class="w-full" />
+        <DatePicker
+          :rules="[isRequired]"
+          v-model="filters.start_date"
+          class="w-full"
+        />
       </x-field>
       <x-field label="End Date">
-        <DatePicker v-model="filters.end_date" class="w-full" />
+        <DatePicker
+          :rules="[isRequired]"
+          v-model="filters.end_date"
+          class="w-full"
+        />
       </x-field>
       <x-field label="Transaction Type">
         <combo-box
@@ -295,8 +303,8 @@ const downloadReport = () => {
           v-model="filters.fallback"
           :options="[
             { value: null, label: 'All' },
-            { value: 'yes', label: 'Yes' },
-            { value: 'no', label: 'No' },
+            { value: 'Yes', label: 'Yes' },
+            { value: 'No', label: 'No' },
           ]"
           placeholder="Search by Fallback"
           class="w-full"
@@ -395,7 +403,7 @@ const downloadReport = () => {
     table-class-name="tablefixed mt-3"
     :loading="loader.table"
     :headers="tableHeader"
-    :items="logs.data || []"
+    :items="logs || []"
     border-cell
     hide-rows-per-page
     hide-footer
@@ -443,11 +451,11 @@ const downloadReport = () => {
 
   <Pagination
     :links="{
-      next: logs.next_page_url,
-      prev: logs.prev_page_url,
-      current: logs.current_page,
-      from: logs.from,
-      to: logs.to,
+      next: pagination.next_page_url,
+      prev: pagination.prev_page_url,
+      current: Number(pagination.current_page),
+      from: pagination.from,
+      to: pagination.to,
     }"
   />
 </template>

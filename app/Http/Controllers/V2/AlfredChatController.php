@@ -88,21 +88,25 @@ class AlfredChatController extends Controller
 
     public function logs(Request $request, $exportChat = false)
     {
-
         $modelType = $request->quoteType ?? 'Car';
         $nameSpace = 'App\\Models\\';
         $modelType = (in_array(ucwords($modelType), newUi()) && checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
 
         $data = [];
         if ($modelType == CarQuote::class) {
-            $data = CarQuote::with(['batch' => function ($query) {
-                $query->select('id', 'name');
-            }, 'carQuoteRequestDetail' => function ($query) {
+            $data = CarQuote::with(['carQuoteRequestDetail' => function ($query) {
                 $query->select('id', 'car_quote_request_id', 'chat_initiated_at'); // specify keys from carQuoteRequestDetail
-            }, 'paymentStatus', 'plan_id'])
-                ->select('id', 'uuid', 'code', 'quote_batch_id', 'payment_status_id') // specify keys from CarQuote
+            }])
+                ->select('id', 'uuid', 'code','quote_batch_id', 
+                'payment_status_id', 'email', 'mobile_no', 'transaction_type_id',
+                 'quote_batch_id', 'quote_status_id', 'assignment_type', 'quote_status_id') // specify keys from CarQuote
                 ->whereHas('carQuoteRequestDetail', function ($query) {
                     $query->whereNotNull('chat_initiated_at');
+                })->when($request->export_chat, function ($query) {
+                    dd('added');
+                    $query->with(['batch' => function ($query) {
+                        $query->select('id', 'name');
+                    }]);
                 })
                 ->where(function ($query) use ($request, $modelType) {
                     $this->processChatFilters($request, $query, $modelType);
@@ -126,11 +130,84 @@ class AlfredChatController extends Controller
                 });
         }
 
-        if ($exportChat) {
-            return $data->get();
-        } else {
-            return inertia('AlfredChat/Index', ['logs' => $data->simplePaginate(15), 'leadStatuses' => QuoteStatus::all(), 'batches' => QuoteBatches::all()]);
+        $data = $data->get();
+        // if (isset($request->channel) && $request->channel != '') {
+
+        // }
+
+        if (isset($request->fallback) && $request->fallback != '') {
+            $data = $this->processMongoDBChatFilters($request, $data);
         }
+
+          // Set up pagination parameters
+            $perPage = $request->input('per_page', 15);  // Default to 15 items per page
+            $currentPage = $request->input('page', 1);   // Current page from the request
+            $total = count($data);                       // Total items in the dataset
+            $lastPage = ceil($total / $perPage);
+
+            // Slice the data array based on current page and per page count
+            $paginatedData = array_slice($data->toArray(), ($currentPage - 1) * $perPage, $perPage);
+
+            $path = $request->url();  // Get the current URL
+
+            $nextPageUrl = $currentPage < $lastPage 
+                ? $path . '?page=' . ($currentPage + 1) . '&per_page=' . $perPage 
+                : null;
+        
+            $prevPageUrl = $currentPage > 1 
+                ? $path . '?page=' . ($currentPage - 1) . '&per_page=' . $perPage 
+                : null;
+
+            // Prepare pagination meta information
+            $pagination = [
+                'current_page' => $currentPage,
+                'per_page' => $perPage,
+                'total' => $total,
+                'last_page' => ceil($total / $perPage),
+                'from' => ($currentPage - 1) * $perPage + 1,
+                'to' => min($currentPage * $perPage, $total),
+                'next_page_url' => $nextPageUrl,
+                'prev_page_url' => $prevPageUrl,
+            ];
+
+        if ($exportChat) {
+            return $data;
+        } else {
+            return inertia('AlfredChat/Index', [ 'logs' => $paginatedData, 'pagination' => $pagination,   'leadStatuses' => QuoteStatus::all(), 'batches' => QuoteBatches::all()]);
+        }
+    }
+
+    public function processMongoDBChatFilters(Request $request, $data){
+        foreach ($data as $item) {
+            $chatPipeline = $this->createPipeline($request, $item, 'chat');
+            $mongoResult = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline))->toArray();
+            
+            if(empty($mongoResult)) {
+                $item->chat = [];
+            } else {
+                $item->chat = $mongoResult;
+            }
+        }
+
+        $fallbackFilter = $request->fallback; 
+
+        $filteredData = collect($data)->map(function ($item) use ($fallbackFilter) {
+                // Filter the 'chat' array based on fallback value
+            $item->chat = collect($item->chat)->filter(function ($chat) use ($fallbackFilter) {
+                if ($fallbackFilter === quoteTypeCode::yesText) {
+                    return !is_null($chat['fallback']);  // Keep entries with a non-null fallback
+                } elseif ($fallbackFilter === quoteTypeCode::noText) {
+                    return is_null($chat['fallback']);   // Keep entries with a null fallback
+                }
+                return true;  // If no valid filter, return all chats
+            })->values()->toArray(); // Re-index the array
+
+            return $item;
+        })->reject(function ($item) {
+            // Optionally, remove the entire item if there are no valid chats left
+            return empty($item->chat);
+        })->values(); // Re-index the collection
+        return $filteredData;
     }
 
     public function processChatFilters(Request $request, $partialQuery, $modelType)
@@ -156,6 +233,17 @@ class AlfredChatController extends Controller
             $relation = $modelType == HealthQuote::class ? 'healthQuoteRequestDetail' : ($modelType == CarQuote::class ? 'carQuoteRequestDetail' : 'travelQuoteRequestDetail');
 
             // Apply the whereHas for the determined relation
+            $partialQuery->whereHas($relation, function ($query) use ($dateFrom, $dateTo) {
+                $query->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
+            });
+        }else {
+             // Default to last 30 days if no dates are provided
+            $dateFrom = now()->subDays(30)->startOfDay();
+            $dateTo = now()->endOfDay();
+
+            // Apply the same relationship and date filter with default dates
+            $relation = $modelType == HealthQuote::class ? 'healthQuoteRequestDetail' : ($modelType == CarQuote::class ? 'carQuoteRequestDetail' : 'travelQuoteRequestDetail');
+
             $partialQuery->whereHas($relation, function ($query) use ($dateFrom, $dateTo) {
                 $query->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
             });
@@ -197,15 +285,6 @@ class AlfredChatController extends Controller
             $modelType::applySegmentFilter($partialQuery, $request->segment_filter, $query, $quoteTypeId);
         }
 
-        // mongoDB filters which are missing fallback / message channel
-
-        if (isset($request->channel) && $request->channel != '') {
-            $partialQuery->where('channel', $request->channel);
-        }
-
-        if (isset($request->fallback) && $request->fallback != '') {
-            $partialQuery->where('fallback', $request->fallback);
-        }
     }
 
     public function exportChat(Request $request)
@@ -223,10 +302,10 @@ class AlfredChatController extends Controller
         }
     }
 
-    public function createPipeline(Request $request, $type)
+    public function createPipeline(Request $request , $item, $type)
     {
-        $quoteId = null;
-        $quoteType = null;
+        $quoteId = $item->uuid ?? null;
+        $quoteType = $request->quoteType ?? 'CAR';
         $pipeline = [];
 
         if ($request->has('quoteId') && $request->quoteId != null) {
@@ -257,53 +336,53 @@ class AlfredChatController extends Controller
         }
 
         //missing in mongodb
-        if (isset($request->transaction_type) && $request->transaction_type != null) {
-            $pipeline[] = ['$match' => ['ken_response.quotes.transaction_type' => ['$in' => $request->transaction_type]]];
-        }
+        // if (isset($request->transaction_type) && $request->transaction_type != null) {
+        //     $pipeline[] = ['$match' => ['ken_response.quotes.transaction_type' => ['$in' => $request->transaction_type]]];
+        // }
 
         // missing in mongodb
-        if (isset($request->batch) && $request->batch != null) {
-            $pipeline[] = ['$match' => ['ken_response.quotes.batch' => ['$in' => $request->batch]]];
-        }
-        if (isset($request->lead_status) && $request->lead_status != null) {
-            $pipeline[] = ['$match' => ['ken_response.quotes.quoteStatusId' => ['$in' => $request->lead_status]]];
-        }
-        if (isset($request->payment_status) && $request->payment_status != null) {
-            $pipeline[] = ['$match' => ['payment_status' => ['$in' => $request->payment_status]]];
-        }
-        if (isset($request->sale_leads) && $request->sale_leads === quoteTypeCode::yesText) {
-            $approvedStatuses = [
-                QuoteStatusEnum::TransactionApproved,
-                QuoteStatusEnum::PolicyIssued,
-                QuoteStatusEnum::PolicySentToCustomer,
-                QuoteStatusEnum::PolicyBooked,
-            ];
+        // if (isset($request->batch) && $request->batch != null) {
+        //     $pipeline[] = ['$match' => ['ken_response.quotes.batch' => ['$in' => $request->batch]]];
+        // }
+        // if (isset($request->lead_status) && $request->lead_status != null) {
+        //     $pipeline[] = ['$match' => ['ken_response.quotes.quoteStatusId' => ['$in' => $request->lead_status]]];
+        // }
+        // if (isset($request->payment_status) && $request->payment_status != null) {
+        //     $pipeline[] = ['$match' => ['payment_status' => ['$in' => $request->payment_status]]];
+        // }
+        // if (isset($request->sale_leads) && $request->sale_leads === quoteTypeCode::yesText) {
+        //     $approvedStatuses = [
+        //         QuoteStatusEnum::TransactionApproved,
+        //         QuoteStatusEnum::PolicyIssued,
+        //         QuoteStatusEnum::PolicySentToCustomer,
+        //         QuoteStatusEnum::PolicyBooked,
+        //     ];
 
-            $pipeline[] = ['$match' => ['ken_response.quotes.quoteStatusId' => ['$in' => $approvedStatuses]]];
-        }
-        if (isset($request->fallback) && $request->fallback === quoteTypeCode::yesText) {
-            $pipeline[] = [
-                '$match' => [
-                    '$or' => [
-                        ['ken_response.quotes.advisor' => ['$exists' => true, '$ne' => null]], // Check if advisor contact is shared
-                        ['fallback' => ['$exists' => true, '$eq' => true]],    // Check if HAPEX contact is shared
-                    ],
-                ],
-            ];
-        }
-        if (isset($request->message_channel) && $request->message_channel != null) {
-            $pipeline[] = ['$match' => ['channel' => $request->message_channel]];
-        }
-        // missing in mongodb
-        if (isset($request->segment) && $request->segment != null) {
-            $pipeline[] = ['$match' => ['ken_response.quotes.isSIC' => $request->segment]];
-        }
-        if (isset($request->mobile_number) && $request->mobile_number != null) {
-            $pipeline[] = ['$match' => ['ken_response.quotes.mobile' => $request->mobile_number]];
-        }
-        if (isset($request->email) && $request->email != null) {
-            $pipeline[] = ['$match' => ['ken_response.quotes.email' => $request->email]];
-        }
+        //     $pipeline[] = ['$match' => ['ken_response.quotes.quoteStatusId' => ['$in' => $approvedStatuses]]];
+        // }
+        // if (isset($request->fallback) && $request->fallback === quoteTypeCode::yesText) {
+        //     $pipeline[] = [
+        //         '$match' => [
+        //             '$or' => [
+        //                 ['ken_response.quotes.advisor' => ['$exists' => true, '$ne' => null]], // Check if advisor contact is shared
+        //                 ['fallback' => ['$exists' => true, '$eq' => true]],    // Check if HAPEX contact is shared
+        //             ],
+        //         ],
+        //     ];
+        // }
+        // if (isset($request->message_channel) && $request->message_channel != null) {
+        //     $pipeline[] = ['$match' => ['channel' => $request->message_channel]];
+        // }
+        // // missing in mongodb
+        // if (isset($request->segment) && $request->segment != null) {
+        //     $pipeline[] = ['$match' => ['ken_response.quotes.isSIC' => $request->segment]];
+        // }
+        // if (isset($request->mobile_number) && $request->mobile_number != null) {
+        //     $pipeline[] = ['$match' => ['ken_response.quotes.mobile' => $request->mobile_number]];
+        // }
+        // if (isset($request->email) && $request->email != null) {
+        //     $pipeline[] = ['$match' => ['ken_response.quotes.email' => $request->email]];
+        // }
 
         if ($type === 'chat') {
             $pipeline[] = [
@@ -314,15 +393,9 @@ class AlfredChatController extends Controller
                     'msg' => ['$first' => '$msg'],
                     'quote_id' => ['$first' => '$quote_id'],
                     'quote_type' => ['$first' => '$quote_type'],
-                    'employee_flag' => ['$first' => '$who_chatted.is_employee'],
                     'email' => ['$first' => '$who_chatted.email'],
-                    'user_system' => ['$first' => '$who_chatted.user_agent'],
-                    'user_ip_address' => ['$first' => '$who_chatted.ip'],
                     'communication_channel' => ['$first' => '$channel'],
-                    'input_tokens_usage' => ['$first' => '$response.usage.prompt_tokens'],
-                    'completion_tokens' => ['$first' => '$response.usage.completion_tokens'],
-                    'total_tokens' => ['$first' => '$response.usage.total_tokens'],
-                    'count' => ['$sum' => 1],
+                    'fallback' => ['$first' => '$fallback'],
                 ],
             ];
         } elseif ($type === 'total') {
