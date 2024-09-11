@@ -1375,7 +1375,7 @@ class RenewalsUploadService
         } else {
             info('Renewals OCB Email sending without advisor');
             $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'car-quote-one-click-buy-batch', $emailTemplateId);
-            $this->triggerBirdWorkflow($emailData);
+            $this->triggerBirdWorkflow($emailData, $carQuote->mobile_no);
 
             return $responseCode;
         }
@@ -1386,11 +1386,12 @@ class RenewalsUploadService
      *
      * @param  object  $emailData
      */
-    private function triggerBirdWorkflow($emailData)
+    private function triggerBirdWorkflow($emailData, $mobile = null)
     {
         $birdEmailData = [
             'SendNewProcessRenewalEmail' => true,
             'customerEmail' => $emailData->customerEmail,
+            'phone' => $mobile,
             'customerName' => $emailData->customerName,
             'quotePlanLink' => $emailData->quoteLink,
             'instantAlfredLink' => $emailData->quoteLink.'?IA=true',
