@@ -24,12 +24,13 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class AlfredChatController extends Controller
 {
-    protected $query;
+    protected $carQuery;
+    protected $healthQuery;
 
     public function __construct()
     {
         $this->middleware('permission:'.PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS, ['only' => ['logs']]);
-        $this->query = DB::table('car_quote_request as cqr')
+        $this->carQuery = DB::table('car_quote_request as cqr')
             ->select(
                 'cqr.uuid',
                 'cqr.id',
@@ -64,6 +65,40 @@ class AlfredChatController extends Controller
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('quote_batches as qb', 'qb.id', '=', 'cqr.quote_batch_id');
+
+            $this->healthQuery = DB::table('health_quote_request as hqr')->select(
+                'hqr.id',
+                'hqr.uuid',
+                'hqr.code',
+                DB::raw('DATE_FORMAT(hqr.payment_paid_at, "%d-%m-%Y %H:%i:%s") as payment_paid_at'),
+                DB::raw('DATE_FORMAT(hqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
+                'hqr.last_name',
+                'hqr.payment_status_id',
+                'hqr.email',
+                'hqr.mobile_no',
+                'hqr.quote_status_id',
+                'qs.text as quote_status_id_text',
+                'hqr.plan_id',
+                'hqr.currently_insured_with_id',
+                'ins_provider.TEXT as currently_insured_with_id_text',
+                'payment_status.text as payment_status_text',
+                'lu.text as transaction_type_text',
+                'c.insured_first_name',
+                'c.insured_last_name',
+                'hp.text as health_plan_name_text',
+                'hp.plan_type_id as plan_type_id',
+                'ihp.text as plan_provider_name_text',
+                'hqr.health_plan_type_id',
+
+            )
+                ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
+                ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
+                ->leftJoin('lookups as lu', 'lu.id', '=', 'hqr.transaction_type_id')
+                ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
+                ->leftJoin('health_plan as hp', 'hp.id', '=', 'hqr.plan_id')
+                ->leftJoin('insurance_provider as ihp', 'ihp.id', '=', 'hp.provider_id')
+                ->leftJoin('insurance_provider as ins_provider', 'ins_provider.id', '=', 'hqr.currently_insured_with_id')
+                ->leftjoin('payment_status', 'hqr.payment_status_id', 'payment_status.id');
     }
 
     /**
@@ -124,54 +159,24 @@ class AlfredChatController extends Controller
         return response()->json(['data' => $chat]);
     }
 
-    public function logs(Request $request, $exportChat = false)
+    public function logs(Request $request)
     {
         $modelType = $request->quoteType ?? 'Car';
         $nameSpace = 'App\\Models\\';
         $modelType = (in_array(ucwords($modelType), newUi()) && checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
 
-        $data = [];
-        if ($modelType == CarQuote::class) {
-            $data = $this->query->where(function ($query) use ($request, $modelType) {
-                $this->processChatFilters($request, $query, $modelType);
-            })->get();
-        } elseif ($modelType == HealthQuote::class) {
-            $data = HealthQuote::with(['healthQuoteRequestDetail' => function ($query) {
-                $query->select('id', 'health_quote_request_id', 'chat_initiated_at'); // specify keys from healthQuoteRequestDetail
-            }])
-                ->select('id', 'uuid', 'code') // specify keys from HealthQuote
-                ->whereHas('healthQuoteRequestDetail', function ($query) {
-                    $query->whereNotNull('chat_initiated_at');
-                });
+        $data = $this->processSqlChatFilters($request, $modelType);
+        
+        $result = $this->processMongoDBChatFilters($request, $data);
 
-        } elseif ($modelType == TravelQuote::class) {
-            $data = TravelQuote::with(['travelQuoteRequestDetail' => function ($query) {
-                $query->select('id', 'travel_quote_request_id', 'chat_initiated_at'); // specify keys from travelQuoteRequestDetail
-            }])
-                ->select('id', 'uuid', 'code') // specify keys from TravelQuote
-                ->whereHas('travelQuoteRequestDetail', function ($query) {
-                    $query->whereNotNull('chat_initiated_at');
-                });
-        }
-
-        // if (isset($request->channel) && $request->channel != '') {
-
-        // }
-
-        if (isset($request->fallback) && $request->fallback != '') {
-            $data = $this->processMongoDBChatFilters($request, $data);
-        }
-
-        // Set up pagination parameters
-        $perPage = $request->input('per_page', 15);  // Default to 15 items per page
-        $currentPage = $request->input('page', 1);   // Current page from the request
-        $total = count($data);                       // Total items in the dataset
+        $perPage = $request->input('per_page', 15);  
+        $currentPage = $request->input('page', 1);
+        $total = count($data);
         $lastPage = ceil($total / $perPage);
 
-        // Slice the data array based on current page and per page count
-        $paginatedData = array_slice($data->toArray(), ($currentPage - 1) * $perPage, $perPage);
+        $paginatedData = array_slice($result === false ? $data->toArray() : $data, ($currentPage - 1) * $perPage, $perPage);
 
-        $path = $request->url();  // Get the current URL
+        $path = $request->url(); 
 
         $nextPageUrl = $currentPage < $lastPage
             ? $path.'?page='.($currentPage + 1).'&per_page='.$perPage
@@ -181,7 +186,6 @@ class AlfredChatController extends Controller
             ? $path.'?page='.($currentPage - 1).'&per_page='.$perPage
             : null;
 
-        // Prepare pagination meta information
         $pagination = [
             'current_page' => $currentPage,
             'per_page' => $perPage,
@@ -193,87 +197,101 @@ class AlfredChatController extends Controller
             'prev_page_url' => $prevPageUrl,
         ];
 
-        if ($exportChat) {
-            return $data;
-        } else {
-            return inertia('AlfredChat/Index', ['logs' => $paginatedData, 'pagination' => $pagination,   'leadStatuses' => QuoteStatus::all(), 'batches' => QuoteBatches::all()]);
-        }
+         return inertia('AlfredChat/Index', ['logs' => $paginatedData, 'pagination' => $pagination,   'leadStatuses' => QuoteStatus::all(), 'batches' => QuoteBatches::all()]);
+        
     }
 
     public function processMongoDBChatFilters(Request $request, $data)
     {
-        // Check the structure of $data
-        $dataArray = json_decode(json_encode($data), true); // Convert stdClass to array
-
-        // Extract UUIDs from the original data, adjust if 'items' key does not exist
-        $itemIds = array_column($dataArray, 'uuid'); // Change 'items' to match actual structure
-
-        // Create the aggregation pipeline
-        $chatPipeline = $this->createPipeline($request, $itemIds, 'chat');
-
-        // Execute the aggregation and get the results
-        $mongoResults = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline))->toArray();
-
-        // Refactor MongoDB results to handle BSONArray
-        $refactoredData = array_map(function ($entry) {
-            if (isset($entry['communication_channels']) && $entry['communication_channels'] instanceof \MongoDB\Model\BSONArray) {
-                $entry['communication_channels'] = $entry['communication_channels']->getArrayCopy();
-            }
-            return $entry;
-        }, $mongoResults);
-
-        // Create lookup arrays for easy merging
-        $dataById = [];
-        foreach ($dataArray as $item) {
-            $dataById[$item['uuid']] = $item;
-        }
-
-        $refactoredById = [];
-        foreach ($refactoredData as $entry) {
-            $refactoredById[$entry['_id']] = $entry;
-        }
-
-        // Merge the data based on UUID
-        $mergedData = array_map(function ($item) use ($refactoredById) {
-            $uuid = $item['uuid']; // Assuming uuid is used as the key for $refactoredData
-            if (isset($refactoredById[$uuid])) {
-                // Merge with refactored data
-                return array_merge($item, $refactoredById[$uuid]);
-            }
-            return $item;
-        }, $dataById);
-
-        // Convert back to a simple array
-        $mergedData = array_values($mergedData);
-
-        $fallbackFilter = $request->fallback;
         
-        $filteredData = collect($mergedData)->map(function ($item) use ($fallbackFilter) {
-            dd($item['fallback']);
-            if ($fallbackFilter === quoteTypeCode::yesText ) {
-                if (!is_null($item['fallback'])) {
-                    return null;
+        if (isset($request->fallback) && $request->fallback != '' || isset($request->channel) && $request->channel != '') {
+            
+            $dataArray = json_decode(json_encode($data), true);
+
+            $itemIds = array_column($dataArray, 'uuid'); 
+
+            $chatPipeline = $this->createPipeline($request, $itemIds, 'chat');
+
+            $mongoResults = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline))->toArray();
+
+            $refactoredData = array_map(function ($entry) {
+                if (isset($entry['communication_channels']) && $entry['communication_channels'] instanceof \MongoDB\Model\BSONArray) {
+                    $entry['communication_channels'] = $entry['communication_channels']->getArrayCopy();
                 }
-            } elseif ($fallbackFilter === quoteTypeCode::noText) {
-                if (is_null($item['fallback'])) {
-                    return null;
-                }
+                return $entry;
+            }, $mongoResults);
+
+            $dataById = [];
+            foreach ($dataArray as $item) {
+                $dataById[$item['uuid']] = $item;
             }
 
-            return $item;
-        })->reject(function ($item) {
-            // Optionally, remove the entire item if it was excluded
-            return is_null($item);
-        })->values(); // Re-index the collection
+            $refactoredById = [];
+            foreach ($refactoredData as $entry) {
+                $refactoredById[$entry['_id']] = $entry;
+            }
 
-        return $filteredData;
+            $mergedData = array_map(function ($item) use ($refactoredById) {
+                $uuid = $item['uuid']; 
+                if (isset($refactoredById[$uuid])) {
+                    return array_merge($item, $refactoredById[$uuid]);
+                }
+                return $item;
+            }, $dataById);
+
+            $mergedData = array_values($mergedData);
+
+            $fallbackFilter = $request->fallback;
+            $channelFilter = $request->channel;
+            $filteredData = [];
+    
+            $filteredData = array_filter($mergedData, function ($item) use ($fallbackFilter, $channelFilter) {
+                if($fallbackFilter){
+                    $hasFallback = isset($item['fallback']) ? $item['fallback'] : null;
+                    if ($fallbackFilter === quoteTypeCode::yesText && $hasFallback) {
+                        return $item;
+                    } elseif ($fallbackFilter === quoteTypeCode::noText && $hasFallback === null) {
+                        return $item;
+                    }
+                }
+                if($channelFilter){
+                    if(in_array($channelFilter, ['whatsapp', 'website'])){
+                        return $item;
+                    }
+                }
+
+            });
+    
+            return $filteredData;
+        }else {
+            return false;
+        }
     }
 
-    public function processChatFilters(Request $request, $partialQuery, $modelType)
+    public function processSqlChatFilters(Request $request ,$modelType)
     {
+        $modelType = $request->quoteType ?? 'Car';
+        $nameSpace = 'App\\Models\\';
+        $modelType = (in_array(ucwords($modelType), newUi()) && 
+        checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
 
-        if (isset($request->quoteId) && $request->quoteId != '') {
-            $partialQuery->where('cqr.uuid', $request->quoteId);
+        $partialQuery = null;
+        if ($modelType == CarQuote::class) {
+            $partialQuery = $this->carQuery->when(isset($request->quoteId) && $request->quoteId != '', function ($query) use ($request) {
+                $query->where('cqr.uuid', $request->quoteId);
+            });
+        } elseif ($modelType == HealthQuote::class) {
+            $partialQuery = $this->healthQuery->when(isset($request->quoteId) && $request->quoteId != '', function ($query) use ($request) {
+                $query->where('hqr.uuid', $request->quoteId);
+            });
+        } elseif ($modelType == TravelQuote::class) {
+            $partialQuery = TravelQuote::with(['travelQuoteRequestDetail' => function ($query) {
+                $query->select('id', 'travel_quote_request_id', 'chat_initiated_at'); 
+            }])
+                ->select('id', 'uuid', 'code') 
+                ->whereHas('travelQuoteRequestDetail', function ($query) {
+                    $query->whereNotNull('chat_initiated_at');
+                });
         }
 
         if (isset($request->email) && $request->email != '') {
@@ -333,13 +351,12 @@ class AlfredChatController extends Controller
             $modelType::applySegmentFilter($partialQuery, $request->segment_filter, $query, $quoteTypeId);
         }
 
-        return $partialQuery;
+        return $partialQuery->get();
     }
 
     public function exportChat(Request $request)
-    {
-        $result = $this->processChatFilters($request, $this->query, CarQuote::class);
-        $data = $result->get();
+    {   
+        $data = $this->processSqlChatFilters($request, CarQuote::class);
 
         $itemIds = array_column($data->toArray(), 'uuid');
 
@@ -380,7 +397,7 @@ class AlfredChatController extends Controller
 
         $pipeline[] = [
             '$match' => [
-                'quote_id' => ['$in' => $itemIds], // assuming 'quote_id' corresponds to the item's identifier
+                'quote_id' => ['$in' => $itemIds],
             ],
         ];
 
@@ -413,15 +430,6 @@ class AlfredChatController extends Controller
                     'fallback' => ['$first' => '$fallback'],
                 ],
             ];
-        } elseif ($type === 'total') {
-            $pipeline[] = [
-                '$group' => [
-                    '_id' => ['quote_id' => '$quote_id', ['$dateToString' => ['timezone' => '+04:00', 'format' => '%Y-%m-%d', 'date' => ['$toDate' => '$created_at']]]],
-                    'quote_type' => ['$first' => '$quote_type'],
-                    'quote_id' => ['$first' => '$quote_id'],
-                ],
-            ];
-            $pipeline[] = ['$count' => 'total'];
         } elseif ($request->report == InstantChatReportsEnum::DETAILED_REPORT) {
             $pipeline[] = [
                 '$project' => [

@@ -162,8 +162,8 @@ const createQueryParams = item => {
     quoteType: filters.quoteType.toUpperCase(),
     created_at: useDateFormat(
       item.code.includes('CAR')
-        ? item.car_quote_request_detail.chat_initiated_at.split(' ')[0]
-        : item.health_quote_request_detail.chat_initiated_at.split(' ')[0],
+        ? item.chat_initiated_at.split(' ')[0]
+        : item.chat_initiated_at.split(' ')[0],
       'YYYY-MM-DD',
     ).value,
   };
