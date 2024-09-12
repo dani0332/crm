@@ -24,6 +24,7 @@ use App\Services\SIBService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
 
@@ -388,17 +389,8 @@ class QuoteDocumentController extends Controller
         return response()->download($zipFilePath)->deleteFileAfterSend(true);
     }
 
-    public function previewQuoteDocument($doc_uuid)
+    public function getS3TempUrl(Request $request)
     {
-        $quoteDocument = QuoteDocument::where('doc_uuid', $doc_uuid)->first();
-        if ($quoteDocument) {
-            $disk = Storage::disk('azureIM');
-            if ($disk->exists($quoteDocument->doc_url)) {
-                $contents = $disk->get($quoteDocument->doc_url);
-
-                return response($contents)->header('content-type', $quoteDocument->doc_mime_type);
-            }
-        }
-        abort(404);
+        return $this->quoteDocumentService->getDocumentTempURL($request->docURL);
     }
 }
