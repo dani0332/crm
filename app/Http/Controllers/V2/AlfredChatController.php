@@ -330,7 +330,6 @@ class AlfredChatController extends Controller
             });
         }
 
-       
         if (isset($request->email) && $request->email != '') {
             $partialQuery->where('email', $request->email);
         }
