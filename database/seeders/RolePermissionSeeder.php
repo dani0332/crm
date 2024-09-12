@@ -16,6 +16,19 @@ class RolePermissionSeeder extends Seeder
      */
     public function run(): void
     {
+        $quoteRawData = Permission::where('name', PermissionsEnum::QUOTE_RAW_DATA)->first();
+        if (! $quoteRawData) {
+            Permission::create([
+                'name' => PermissionsEnum::QUOTE_RAW_DATA,
+            ]);
+        }
+
+        $role = Role::where('name', RolesEnum::Engineering)->first();
+
+        if (! $role->hasPermissionTo($quoteRawData)) {
+            $role->givePermissionTo($quoteRawData);
+        }
+
         $roles = Role::whereIn('name', [RolesEnum::Admin])->get();
         $permission = Permission::firstOrCreate([
             'name' => PermissionsEnum::SIC_HEALTH_CONFIG ?? 'sic-health-config',

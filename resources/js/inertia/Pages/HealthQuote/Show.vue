@@ -3885,5 +3885,10 @@ const onAddUpdate = () => {
       v-if="clientInquiryLogs?.length > 0"
       :logs="clientInquiryLogs"
     />
+
+    <lead-raw-data
+      :modelType="'Health'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>
