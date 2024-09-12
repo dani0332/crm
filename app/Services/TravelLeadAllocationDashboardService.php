@@ -2,19 +2,11 @@
 
 namespace App\Services;
 
-use App\Enums\LeadSourceEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
-use App\Enums\TiersEnum;
-use App\Models\CarQuote;
 use App\Models\User;
 use App\Traits\TeamHierarchyTrait;
-use Carbon\Carbon;
-use DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Request;
 
 class TravelLeadAllocationDashboardService extends BaseService
 {
@@ -40,7 +32,7 @@ class TravelLeadAllocationDashboardService extends BaseService
                     'users.name as userName',
                     'la.is_hardstop as isHardStop',
                 )
-                ->distinct('users.id');;
+                ->distinct('users.id');
 
             // Restrict by user roles if necessary
             if (! auth()->user()->hasRole(RolesEnum::Admin)) {
@@ -58,7 +50,7 @@ class TravelLeadAllocationDashboardService extends BaseService
             Log::error('Failed to retrieve SIC 2.0 Unassisted users', [
                 'message' => $e->getMessage(),
                 'user_id' => auth()->user()->id,
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
         }
     }

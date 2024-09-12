@@ -7,7 +7,6 @@ use App\Models\LeadAllocation;
 use App\Services\ApplicationStorageService;
 use App\Services\CacheService;
 use App\Services\TravelLeadAllocationDashboardService;
-use DataTables;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
