@@ -21,8 +21,9 @@ const listen = () => {
         quoteUuid: e.quoteUuid,
         title: e.title,
         message: e.message,
-        timeout: 3000,
+        timeout: 3500,
       };
+        hideNotificationTimeOut();
     }
   });
 };
@@ -34,15 +35,20 @@ const hideNotification = () => {
   showNotification.value = false;
 };
 
+const hideNotificationTimeOut = () => {
+    if (notificationData.value.timeout) {
+        setTimeout(() => {
+            showNotification.value = false;
+        }, notificationData.value.timeout);
+    }
+};
+
 onMounted(() => {
   listen();
 });
 onUnmounted(() => {
   channel.unbind('callback.notification');
   channel.unsubscribe('public.' + page.props.appEnv + '.activity.user');
-  setTimeout(() => {
-    showNotification.value = false;
-  }, notificationData.value.timeout);
 });
 </script>
 <template xmlns="http://www.w3.org/1999/html">
