@@ -255,7 +255,7 @@ class AlfredChatController extends Controller
                     }
                 }
                 if($channelFilter){
-                    if(in_array($channelFilter, ['whatsapp', 'website'])){
+                    if(in_array($channelFilter, ['whatsapp', 'website', 'e-commerce'])){
                         return $item;
                     }
                 }
