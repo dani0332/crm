@@ -127,6 +127,7 @@ final class ApplicationStorageEnums extends Enum
 
     // MOTOR RENEWAL SIC 3.0
     public const BIRD_SIC_MOTOR_RENEWAL_WORKFLOW = 'BIRD_SIC_MOTOR_RENEWAL_WORKFLOW';
+    public const BIRD_SIC_MOTOR_RENEWAL_TAG = 'BIRD_SIC_MOTOR_RENEWAL_TAG';
 
     // whatsapp number for instant alfred
     public const INSTANT_ALFRED_WHATSAPP_NUMBER = 'INSTANT_ALFRED_WHATSAPP_NUMBER';
