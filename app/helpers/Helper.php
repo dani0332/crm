@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use App\Models\QuoteTag;
 
 if (! function_exists('generate_code')) {
     /**
@@ -1231,5 +1232,20 @@ if (! function_exists('isVatApplied')) {
         }
 
         return false;
+    }
+}
+
+if (! function_exists('isLeadSic')) {
+    function isLeadSic(string $uuid): bool
+    {
+        try {
+            $isSic = QuoteTag::where('quote_uuid', $uuid)->where('name', 'SIC')->exists();
+
+            return $isSic;
+        } catch (Exception $e) {
+            Log::error("Failed to check SIC status for quote_uuid: {$uuid}. Error: ".$e->getMessage());
+
+            return false;
+        }
     }
 }
