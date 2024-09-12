@@ -144,7 +144,6 @@ class YachtQuoteController extends Controller
         $personalPlans = PersonalPlanRepository::get();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::YACHT->value);
 
-
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::YACHT->id(),
             'quote_request_id' => $quote->id,
@@ -183,11 +182,10 @@ class YachtQuoteController extends Controller
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
-
         return inertia('YachtQuote/Show', [
             'quoteType' => QuoteTypes::YACHT,
             'quote' => fn () => $quote,
-            'amlStatusName'=> $amlStatusName,
+            'amlStatusName' => $amlStatusName,
             'activities' => $activities,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::YACHT->id(),

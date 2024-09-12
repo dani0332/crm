@@ -767,7 +767,7 @@ class CRUDController extends Controller
             $amlStatusName = AMLStatusCode::getName($record->aml_status);
 
             return inertia('PersonalQuote/Car/Show', compact([
-                'record', 'amlStatusName','sendUpdateOptions', 'sendUpdateLogs', 'quote', 'model', 'customTitles', 'customTableList', 'leadSourceEnum', 'isBetaUser', 'sendUpdateEnum',
+                'record', 'amlStatusName', 'sendUpdateOptions', 'sendUpdateLogs', 'quote', 'model', 'customTitles', 'customTableList', 'leadSourceEnum', 'isBetaUser', 'sendUpdateEnum',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'docUploadURL', 'isPlanUpdateActive', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'websiteURL', 'insuranceProviders', 'leadDocsStoragePath',
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses', 'carPlanAddonsCodeEnum', 'tiersExceptTierR', 'isTierRAssigned',
@@ -851,7 +851,6 @@ class CRUDController extends Controller
             $noteDocumentType = DocumentType::where('code', DocumentTypeCode::OD)->first();
             $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::HOME->name);
             $amlStatusName = AMLStatusCode::getName($record->aml_status);
-
 
             return inertia('HomeQuote/Show', [
                 'storageUrl' => storageUrl(),
@@ -993,7 +992,7 @@ class CRUDController extends Controller
                 'paymentLink' => $paymentLink,
                 'emailStatuses' => $emailStatuses,
                 'quote' => $record,
-                'amlStatusName'=> $amlStatusName,
+                'amlStatusName' => $amlStatusName,
                 'sendUpdateOptions' => $sendUpdateOptions,
                 'sendUpdateLogs' => $sendUpdateLogs,
                 'genderOptions' => $this->crudService->getGenderOptions(),
@@ -2070,8 +2069,6 @@ class CRUDController extends Controller
      * @param  \App\Models\ClaimsStatus  $claimsStatus
      * @return \Illuminate\Http\Response
      */
-
-
     private function getCarMakeDropdown()
     {
         return CarMake::select('id', 'text', 'code')->where('is_active', true)->get();

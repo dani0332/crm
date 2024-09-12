@@ -300,7 +300,6 @@ class BusinessQuoteController extends Controller
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
         $amlStatusName = AMLStatusCode::getName($record->aml_status);
 
-
         return inertia('CorpLineQuote/Show', [
             'storageUrl' => storageUrl(),
             'amlQuoteStatus' => $amlQuoteStatus,
@@ -312,7 +311,7 @@ class BusinessQuoteController extends Controller
             'issuanceAuthorities' => $issuanceAuthorities,
             'quoteType' => quoteTypeCode::Business,
             'quote' => $record,
-            'amlStatusName'=>$amlStatusName,
+            'amlStatusName' => $amlStatusName,
             'quoteDetails' => $quoteDetails,
             'modelType' => $this->genericModel->modelType,
             'quoteTypeId' => QuoteTypeId::Business,
