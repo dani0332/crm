@@ -79,6 +79,7 @@ final class DealStageEnum extends Enum
     const SEPT = 'Sept';
     const FEB = 'Feb';
     const MARCH = 'March';
+    const MAR = 'Mar';
     const JULY = 'July';
     const JAN = 'Jan';
     const AUG = 'Aug';
@@ -96,6 +97,7 @@ final class DealStageEnum extends Enum
     const AWAITING_DOCUMENTS = 'Awaiting Documents';
     const FINALIZING_TERMS_CONDITIONS = 'Finalizing Terms and Conditions';
     const FIRST_FOLLOWUP = 'first followup';
+    const ADDITONAL_INFORMATION_REQUESTED = 'Additonal Information Requested';
 
     public function getToLowerCase(): string
     {

@@ -67,6 +67,7 @@ class InstallmentReportService extends ManagementReport
                 'p.broker_invoice_number',
                 'btoi.text as sub_type_line_of_business',
                 'q.text as lead_status',
+                'p.insurer_commmission_invoice_number',
             )
             ->join('payments as p', function ($join) {
                 $join->on('personal_quotes.code', '=', 'p.code')
@@ -188,6 +189,7 @@ class InstallmentReportService extends ManagementReport
             'Insurer Invoice Date',
             'Broker Invoice No',
             'Lead Status',
+            'Commission Tax Invoice Number',
         ];
     }
 
@@ -225,6 +227,7 @@ class InstallmentReportService extends ManagementReport
             $quote->insurer_tax_invoice_date ?? 'N/A',
             $quote->broker_invoice_number ?? 'N/A',
             $quote->lead_status ?? 'N/A',
+            $quote->insurer_commmission_invoice_number ?? 'N/A',
         ];
     }
 }
