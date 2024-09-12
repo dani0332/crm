@@ -377,5 +377,10 @@ const dateFormat = date =>
     />
 
     <LeadHistory :quote="$page.props.quote" :expanded="sectionExpanded" />
+
+    <lead-raw-data
+      :modelType="'Jetski'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>
