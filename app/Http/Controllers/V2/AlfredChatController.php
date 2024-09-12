@@ -66,39 +66,39 @@ class AlfredChatController extends Controller
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
             ->leftJoin('quote_batches as qb', 'qb.id', '=', 'cqr.quote_batch_id');
 
-            $this->healthQuery = DB::table('health_quote_request as hqr')->select(
-                'hqr.id',
-                'hqr.uuid',
-                'hqr.code',
-                DB::raw('DATE_FORMAT(hqr.payment_paid_at, "%d-%m-%Y %H:%i:%s") as payment_paid_at'),
-                DB::raw('DATE_FORMAT(hqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
-                'hqr.last_name',
-                'hqr.payment_status_id',
-                'hqr.email',
-                'hqr.mobile_no',
-                'hqr.quote_status_id',
-                'qs.text as quote_status_id_text',
-                'hqr.plan_id',
-                'hqr.currently_insured_with_id',
-                'ins_provider.TEXT as currently_insured_with_id_text',
-                'payment_status.text as payment_status_text',
-                'lu.text as transaction_type_text',
-                'c.insured_first_name',
-                'c.insured_last_name',
-                'hp.text as health_plan_name_text',
-                'hp.plan_type_id as plan_type_id',
-                'ihp.text as plan_provider_name_text',
-                'hqr.health_plan_type_id',
+        $this->healthQuery = DB::table('health_quote_request as hqr')->select(
+            'hqr.id',
+            'hqr.uuid',
+            'hqr.code',
+            DB::raw('DATE_FORMAT(hqr.payment_paid_at, "%d-%m-%Y %H:%i:%s") as payment_paid_at'),
+            DB::raw('DATE_FORMAT(hqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
+            'hqr.last_name',
+            'hqr.payment_status_id',
+            'hqr.email',
+            'hqr.mobile_no',
+            'hqr.quote_status_id',
+            'qs.text as quote_status_id_text',
+            'hqr.plan_id',
+            'hqr.currently_insured_with_id',
+            'ins_provider.TEXT as currently_insured_with_id_text',
+            'payment_status.text as payment_status_text',
+            'lu.text as transaction_type_text',
+            'c.insured_first_name',
+            'c.insured_last_name',
+            'hp.text as health_plan_name_text',
+            'hp.plan_type_id as plan_type_id',
+            'ihp.text as plan_provider_name_text',
+            'hqr.health_plan_type_id',
 
-            )
-                ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
-                ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
-                ->leftJoin('lookups as lu', 'lu.id', '=', 'hqr.transaction_type_id')
-                ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
-                ->leftJoin('health_plan as hp', 'hp.id', '=', 'hqr.plan_id')
-                ->leftJoin('insurance_provider as ihp', 'ihp.id', '=', 'hp.provider_id')
-                ->leftJoin('insurance_provider as ins_provider', 'ins_provider.id', '=', 'hqr.currently_insured_with_id')
-                ->leftjoin('payment_status', 'hqr.payment_status_id', 'payment_status.id');
+        )
+            ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
+            ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
+            ->leftJoin('lookups as lu', 'lu.id', '=', 'hqr.transaction_type_id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
+            ->leftJoin('health_plan as hp', 'hp.id', '=', 'hqr.plan_id')
+            ->leftJoin('insurance_provider as ihp', 'ihp.id', '=', 'hp.provider_id')
+            ->leftJoin('insurance_provider as ins_provider', 'ins_provider.id', '=', 'hqr.currently_insured_with_id')
+            ->leftjoin('payment_status', 'hqr.payment_status_id', 'payment_status.id');
     }
 
     /**
@@ -166,17 +166,17 @@ class AlfredChatController extends Controller
         $modelType = (in_array(ucwords($modelType), newUi()) && checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
 
         $data = $this->processSqlChatFilters($request, $modelType);
-        
+
         $result = $this->processMongoDBChatFilters($request, $data);
 
-        $perPage = $request->input('per_page', 15);  
+        $perPage = $request->input('per_page', 15);
         $currentPage = $request->input('page', 1);
         $total = count($data);
         $lastPage = ceil($total / $perPage);
 
         $paginatedData = array_slice($result === false ? $data->toArray() : $data, ($currentPage - 1) * $perPage, $perPage);
 
-        $path = $request->url(); 
+        $path = $request->url();
 
         $nextPageUrl = $currentPage < $lastPage
             ? $path.'?page='.($currentPage + 1).'&per_page='.$perPage
@@ -197,18 +197,18 @@ class AlfredChatController extends Controller
             'prev_page_url' => $prevPageUrl,
         ];
 
-         return inertia('AlfredChat/Index', ['logs' => $paginatedData, 'pagination' => $pagination,   'leadStatuses' => QuoteStatus::all(), 'batches' => QuoteBatches::all()]);
-        
+        return inertia('AlfredChat/Index', ['logs' => $paginatedData, 'pagination' => $pagination,   'leadStatuses' => QuoteStatus::all(), 'batches' => QuoteBatches::all()]);
+
     }
 
     public function processMongoDBChatFilters(Request $request, $data)
     {
-        
+
         if (isset($request->fallback) && $request->fallback != '' || isset($request->channel) && $request->channel != '') {
-            
+
             $dataArray = json_decode(json_encode($data), true);
 
-            $itemIds = array_column($dataArray, 'uuid'); 
+            $itemIds = array_column($dataArray, 'uuid');
 
             $chatPipeline = $this->createPipeline($request, $itemIds, 'chat');
 
@@ -218,6 +218,7 @@ class AlfredChatController extends Controller
                 if (isset($entry['communication_channels']) && $entry['communication_channels'] instanceof \MongoDB\Model\BSONArray) {
                     $entry['communication_channels'] = $entry['communication_channels']->getArrayCopy();
                 }
+
                 return $entry;
             }, $mongoResults);
 
@@ -232,10 +233,11 @@ class AlfredChatController extends Controller
             }
 
             $mergedData = array_map(function ($item) use ($refactoredById) {
-                $uuid = $item['uuid']; 
+                $uuid = $item['uuid'];
                 if (isset($refactoredById[$uuid])) {
                     return array_merge($item, $refactoredById[$uuid]);
                 }
+
                 return $item;
             }, $dataById);
 
@@ -244,9 +246,9 @@ class AlfredChatController extends Controller
             $fallbackFilter = $request->fallback;
             $channelFilter = $request->channel;
             $filteredData = [];
-    
+
             $filteredData = array_filter($mergedData, function ($item) use ($fallbackFilter, $channelFilter) {
-                if($fallbackFilter){
+                if ($fallbackFilter) {
                     $hasFallback = isset($item['fallback']) ? $item['fallback'] : null;
                     if ($fallbackFilter === quoteTypeCode::yesText && $hasFallback) {
                         return $item;
@@ -261,18 +263,18 @@ class AlfredChatController extends Controller
                 }
 
             });
-    
+
             return $filteredData;
-        }else {
+        } else {
             return false;
         }
     }
 
-    public function processSqlChatFilters(Request $request ,$modelType)
+    public function processSqlChatFilters(Request $request, $modelType)
     {
         $modelType = $request->quoteType ?? 'Car';
         $nameSpace = 'App\\Models\\';
-        $modelType = (in_array(ucwords($modelType), newUi()) && 
+        $modelType = (in_array(ucwords($modelType), newUi()) &&
         checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
 
         $partialQuery = null;
@@ -286,9 +288,9 @@ class AlfredChatController extends Controller
             });
         } elseif ($modelType == TravelQuote::class) {
             $partialQuery = TravelQuote::with(['travelQuoteRequestDetail' => function ($query) {
-                $query->select('id', 'travel_quote_request_id', 'chat_initiated_at'); 
+                $query->select('id', 'travel_quote_request_id', 'chat_initiated_at');
             }])
-                ->select('id', 'uuid', 'code') 
+                ->select('id', 'uuid', 'code')
                 ->whereHas('travelQuoteRequestDetail', function ($query) {
                     $query->whereNotNull('chat_initiated_at');
                 });
@@ -355,7 +357,7 @@ class AlfredChatController extends Controller
     }
 
     public function exportChat(Request $request)
-    {   
+    {
         $data = $this->processSqlChatFilters($request, CarQuote::class);
 
         $itemIds = array_column($data->toArray(), 'uuid');
