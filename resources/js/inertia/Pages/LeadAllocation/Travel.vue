@@ -16,18 +16,18 @@ const rolesEnum = page.props.rolesEnum;
 const notification = useToast();
 const loading = ref(false);
 
-const canManage = computed(() =>
-  !loading.value && hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering])
+const canManage = computed(
+  () =>
+    !loading.value &&
+    hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering]),
 );
-
 
 const statusText = isHardStop => {
   return isHardStop ? 'Active' : 'Inactive';
 };
 
-
 const tableHeader = ref([
-  { text: 'Name', value: 'userName', sortable: true, width: '100' },
+  { text: 'Name', value: 'userName', sortable: true },
   {
     text: 'Hard Stop Lead Allocation',
     value: 'isHardStop',
@@ -39,10 +39,13 @@ const tableHeader = ref([
 const onToggleStatus = async (status, userId) => {
   loading.value = true;
   try {
-    const response = await axios.post(`/travel-lead-allocation/update-hard-stop`, {
-      userId: userId,
-      status: status,
-    });
+    const response = await axios.post(
+      `/travel-lead-allocation/update-hard-stop`,
+      {
+        userId: userId,
+        status: status,
+      },
+    );
 
     notification.success({
       title: response.data.message,
@@ -113,7 +116,7 @@ onMounted(() => {
       hide-rows-per-page
       hide-footer
     >
-    <template #item-isHardStop="{ isHardStop , userId }">
+      <template #item-isHardStop="{ isHardStop, userId }">
         <div class="flex flex-col gap-1.5 items-center">
           <x-tag size="xs" :color="isHardStop ? 'emerald' : 'gray'">
             {{ statusText(isHardStop) }}
@@ -121,7 +124,11 @@ onMounted(() => {
 
           <ItemToggler
             v-if="
-              hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering])
+              hasAnyRole([
+                rolesEnum.Admin,
+                rolesEnum.LeadPool,
+                rolesEnum.Engineering,
+              ])
             "
             :is-active="isHardStop"
             :disabled="!canManage"
