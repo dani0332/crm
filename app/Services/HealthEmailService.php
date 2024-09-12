@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\QuoteTypes;
+use App\Enums\WorkflowTypeEnum;
 use App\Models\ApplicationStorage;
 use App\Models\User;
 
@@ -18,11 +20,10 @@ class HealthEmailService extends BaseService
                 $emailData = $this->mapDataForFollowupEmail($lead, $advisor);
                 $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
                 if ($sicEvent) {
-                    $responseCode = app(BirdService::class)->triggerWebHookRequest($sicEvent->value, $emailData);
+                    $response = app(BirdService::class)->triggerWebHookRequest($sicEvent->value, $emailData);
                     $lead->sic_flow_enabled = true;
                     $lead->save();
                     info("SIC Health workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
-                    info("SIC Health workflow response: {$responseCode} | Ref-ID: {$lead->uuid} |Time: ".now());
                 } else {
                     info("SIC Health workflow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
                 }
@@ -33,7 +34,7 @@ class HealthEmailService extends BaseService
             info("triggerSICWorkFlow: {$triggerSICWorkFlow} | - SIC Health workflow not enabled for lead Ref-ID: {$lead->uuid} | Time: ".now());
         }
 
-        return $responseCode ?? null;
+        return $response ?? null;
     }
 
     private function mapDataForFollowupEmail($lead, $advisor)
@@ -57,6 +58,10 @@ class HealthEmailService extends BaseService
             'mobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
             'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
             'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
+            'workflowType' => WorkflowTypeEnum::HEALTH_SIC_FOLLOWUPS,
+            'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
+            'whatsappConsent' => getWhatsappConsent(QuoteTypes::HEALTH, $lead->uuid),
+            'instantAlfredLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
         ];
     }
 }

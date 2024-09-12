@@ -1347,5 +1347,10 @@ const fetchUpdatedQuote = async () => {
     <ApiLogs :type="modelClass" :id="$page.props.quote.id" />
 
     <LeadHistory :quote="$page.props.quote" />
+
+    <lead-raw-data
+      :modelType="'Bike'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

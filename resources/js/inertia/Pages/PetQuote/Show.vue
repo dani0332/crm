@@ -1078,5 +1078,10 @@ const onAddUpdate = () => {
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
     />
+
+    <lead-raw-data
+      :modelType="'Pet'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>
