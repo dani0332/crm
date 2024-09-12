@@ -156,12 +156,12 @@ class AlfredChatController extends Controller
             'tqr.payment_paid_at',
             // 'ps.created_at AS payment_created_at',
             'ep.display_name',
-            
-        )   
-        ->leftJoin('payments as py', function ($join) {
-            $join->on('py.paymentable_id', '=', 'tqr.id')
-                ->where('py.paymentable_type', '=', TravelQuote::class);
-        })
+
+        )
+            ->leftJoin('payments as py', function ($join) {
+                $join->on('py.paymentable_id', '=', 'tqr.id')
+                    ->where('py.paymentable_type', '=', TravelQuote::class);
+            })
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
             ->leftJoin('lookups as lu', 'lu.id', '=', 'tqr.transaction_type_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
