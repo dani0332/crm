@@ -167,7 +167,7 @@ class CycleQuoteController extends Controller
             'quote_request_id' => $quote->id,
         ])->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
 
-        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote->id, QuoteTypes::CYCLE->id(), $quoteStatuses);
+        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::CYCLE->id(), $quoteStatuses);
 
         if (AMLService::checkAMLStatusFailed(QuoteTypes::CYCLE->id(), $quote->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {

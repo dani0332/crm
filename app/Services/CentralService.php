@@ -808,26 +808,30 @@ class CentralService
         }
     }
 
-    public function lockTransactionStatus($quoteId, $quoteTypeId, $quoteStatuses)
+    public function lockTransactionStatus($quote, $quoteTypeId, $quoteStatuses)
     {
+        $lockLeadStatus = $this->lockLeadSectionsDetails($quote);
+        if ($lockLeadStatus['lead_status']) {
+            return $quoteStatuses;
+        }
         $lockedQuotesStatuses = [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued,
             QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked,
             QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued,
         ];
 
         $isTransactionApproved = QuoteStatusLog::where('quote_type_id', $quoteTypeId)
-            ->where('quote_request_id', $quoteId)
+            ->where('quote_request_id', $quote->id)
             ->where(function ($query) {
                 $query->where('current_quote_status_id', QuoteStatusEnum::TransactionApproved)
                     ->orWhere('previous_quote_status_id', QuoteStatusEnum::TransactionApproved);
             })
             ->count();
 
-        /*if (! $isTransactionApproved) {
+        if (! $isTransactionApproved) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) use ($lockedQuotesStatuses) {
                 return ! in_array($value['id'], $lockedQuotesStatuses);
             })->values();
-        }*/
+        }
 
         return $quoteStatuses;
     }

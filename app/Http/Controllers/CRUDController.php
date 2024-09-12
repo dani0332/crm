@@ -106,6 +106,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Artisan;
 
 class CRUDController extends Controller
 {
@@ -598,7 +599,7 @@ class CRUDController extends Controller
             return $value['id'] != QuoteStatusEnum::AMLScreeningCleared && $value['id'] != QuoteStatusEnum::AMLScreeningFailed;
         })->values();
 
-        $leadStatuses = app(CentralService::class)->lockTransactionStatus($record->id, $quoteTypeId, $leadStatuses);
+        $leadStatuses = app(CentralService::class)->lockTransactionStatus($record, $quoteTypeId, $leadStatuses);
         if (AMLService::checkAMLStatusFailed($quoteTypeId, $record->id)) {
             $leadStatuses = collect($leadStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
@@ -2080,6 +2081,12 @@ class CRUDController extends Controller
         $response = $this->crudService->scoreBreakdown($quoteModel, $quoteType);
 
         return $response;
+    }
+
+    public function updateAmlStatus ()
+    {
+        Artisan::call('UpdateAMLStatus:cron');
+        return response()->json(['message' => 'UpdateAMLStatus Command has been executed']);
     }
 
 }

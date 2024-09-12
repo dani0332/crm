@@ -150,7 +150,7 @@ class TravelController extends Controller
             })->values();
         }*/
 
-        $dropdownSource['quote_status_id'] = app(CentralService::class)->lockTransactionStatus($record->id, self::TYPE_ID, $dropdownSource['quote_status_id']);
+        $dropdownSource['quote_status_id'] = app(CentralService::class)->lockTransactionStatus($record, self::TYPE_ID, $dropdownSource['quote_status_id']);
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel);
         $filteredInsuranceProviders = [];
         if (! empty($insuranceProviders)) {

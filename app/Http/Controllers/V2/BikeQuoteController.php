@@ -164,7 +164,9 @@ class BikeQuoteController extends Controller
         $uboDetails = CustomerMembersRepository::getBy($quote->id, QuoteTypes::BIKE->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
-        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote->id, QuoteTypes::BIKE->id(), $quoteStatuses);
+
+        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::BIKE->id(), $quoteStatuses);
+
         if (AMLService::checkAMLStatusFailed(QuoteTypes::BIKE->id(), $quote->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
