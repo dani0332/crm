@@ -204,10 +204,6 @@ class CustomerService extends BaseService
                         ]);
                     }
                 }
-                $removeOldEmail = CustomerAdditionalContact::where('customer_id', $lead->customer_id)->get();
-                foreach ($removeOldEmail as $removeEmail) {
-                    $removeEmail->delete();
-                }
                 $lead->update(['customer_id' => $customer->id, 'email' => $value]);
 
                 // REMOVE EMAIL TO MAKE PRIMARY IN ADDITIONAL CONTACT
