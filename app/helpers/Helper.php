@@ -32,6 +32,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use App\Models\QuoteAdditionalDetail;
 
 if (! function_exists('generate_code')) {
     /**
