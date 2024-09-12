@@ -14,4 +14,5 @@ use BenSampo\Enum\Enum;
 final class QuoteTagEnums extends Enum
 {
     public const POLICY_SENT_TO_CUSTOMER = 'PSTC';
+    public const POLICY_BOOKED_ON_SAGE = 'PBOS';
 }

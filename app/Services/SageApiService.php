@@ -7,6 +7,7 @@ use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTagEnums;
 use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
@@ -20,6 +21,7 @@ use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatusLog;
+use App\Models\QuoteTag;
 use App\Models\SageApiLog;
 use App\Models\SageProcess;
 use App\Models\User;
@@ -1197,50 +1199,68 @@ class SageApiService
     public function bookPolicyOnSage($sageRequestDataArray)
     {
         [$sageRequest, $quote,  $request] = $sageRequestDataArray;
-        $sageLogArray = $quote->sageApiLogs->keyBy('step')->toArray();
-        $payment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
-        $paymentSplits = $payment->paymentSplits;
-        $quote->userId = $sageRequest->userId;
-
-        info('################################## Sage Book Policy started for : '.$quote->code.'##################################');
-        info('Sage API : Payment frequency : '.$payment->frequency.' for '.$quote->code);
-
-        //Create AR Commission and Premium Invoice
-        $createARInvoicePremAndComm = $this->createARInvoicePremAndComm([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
-        if (! $createARInvoicePremAndComm['status']) {
-            return $createARInvoicePremAndComm;
-        }
-
-        // Create AP Premium Invoice
-        $createAPInvoicePrem = $this->createAPInvoicePrem([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
-        if (! $createAPInvoicePrem['status']) {
-            return $createAPInvoicePrem;
-        }
-
-        // Create AR Discount Invoice
-        $createARInvoiceDis = $this->createARInvoiceDis([$sageRequest, $quote, $sageLogArray]);
-        if (! $createARInvoiceDis['status']) {
-            return $createARInvoiceDis;
-        }
-
-        // Apply Prepayments
-        $applyPaymentInvoices = $this->applyPaymentInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
-        if (! $applyPaymentInvoices['status']) {
-            return $applyPaymentInvoices;
-        }
-
         $quoteTypeId = $sageRequest->quoteTypeId;
         $userId = $quote->userId;
 
-        info('################################## Sage Policy Booked for : '.$quote->code.'##################################');
+        $isPolicyBookedOnSage = QuoteTag::where([
+            'quote_type_id' => $quoteTypeId,
+            'quote_uuid' => $quote->uuid,
+            'name' => QuoteTagEnums::POLICY_BOOKED_ON_SAGE,
+            'value' => 1,
+        ])->count();
+
+        if (! $isPolicyBookedOnSage) {
+            $sageLogArray = $quote->sageApiLogs->keyBy('step')->toArray();
+            $payment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
+            $paymentSplits = $payment->paymentSplits;
+            $quote->userId = $sageRequest->userId;
+
+            info('################################## Sage Book Policy started for : '.$quote->code.' ##################################');
+            info('Sage API : Payment frequency : '.$payment->frequency.' for '.$quote->code);
+
+            //Create AR Commission and Premium Invoice
+            $createARInvoicePremAndComm = $this->createARInvoicePremAndComm([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+            if (! $createARInvoicePremAndComm['status']) {
+                return $createARInvoicePremAndComm;
+            }
+
+            // Create AP Premium Invoice
+            $createAPInvoicePrem = $this->createAPInvoicePrem([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+            if (! $createAPInvoicePrem['status']) {
+                return $createAPInvoicePrem;
+            }
+
+            // Create AR Discount Invoice
+            $createARInvoiceDis = $this->createARInvoiceDis([$sageRequest, $quote, $sageLogArray]);
+            if (! $createARInvoiceDis['status']) {
+                return $createARInvoiceDis;
+            }
+
+            // Apply Prepayments
+            $applyPaymentInvoices = $this->applyPaymentInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+            if (! $applyPaymentInvoices['status']) {
+                return $applyPaymentInvoices;
+            }
+
+            QuoteTag::create([
+                'quote_type_id' => $quoteTypeId,
+                'quote_uuid' => $quote->uuid,
+                'name' => QuoteTagEnums::POLICY_BOOKED_ON_SAGE,
+                'value' => 1,
+            ]);
+
+            info('################################## Sage Policy Booked for : '.$quote->code.' ##################################');
+        } else {
+            info('################################## Sage Policy Booked Already for : '.$quote->code.' ##################################');
+        }
 
         if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
-            info('################################## Send Customer Documents to customer after booking of : '.$quote->code.'##################################');
+            info('################################## Send Customer Documents to customer after booking of : '.$quote->code.' ##################################');
             // dispath job to send email
             dispatch(new SendBookPolicyDocumentsJob($request));
         }
 
-        info('################################## mark status as policy booked for : '.$quote->code.'##################################');
+        info('################################## mark status as policy booked for : '.$quote->code.' ##################################');
         $latestQuoteStatusLog = QuoteStatusLog::where([
             'quote_type_id' => $quoteTypeId,
             'quote_request_id' => $quote->id,
@@ -1273,10 +1293,10 @@ class SageApiService
             QuoteStatusLog::create($quoteLogData);
         }
 
-        info('################################## straightforwardPayments for : '.$quote->code.'##################################');
+        info('################################## straightforwardPayments for : '.$quote->code.' ##################################');
         (new CentralService)->straightforwardPayments($payment, $paymentSplits, $quote);
 
-        info('################################## updatePaymentAllocationStatus for : '.$quote->code.'##################################');
+        info('################################## updatePaymentAllocationStatus for : '.$quote->code.' ##################################');
         $this->updatePaymentAllocationStatus($quote);
 
         info('########## End of Policy Booked for : '.$quote->code.' ##########');
@@ -2084,7 +2104,7 @@ class SageApiService
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
 
-        info('########## Start arSplitPrepaymentPayload for : '.$quote->code.'##########');
+        info('########## Start arSplitPrepaymentPayload for : '.$quote->code.' ##########');
         $totalSteps = 15;
 
         //12
@@ -2193,7 +2213,7 @@ class SageApiService
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
 
-        info('########## Start arSplitPrepaymentPayload for : '.$quote->code.'##########');
+        info('########## Start arSplitPrepaymentPayload for : '.$quote->code.' ##########');
         $totalSteps = 18;
 
         //15
