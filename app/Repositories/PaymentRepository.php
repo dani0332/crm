@@ -15,13 +15,10 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Interfaces\PaymentRepositoryInterface;
-use App\Models\CarQuote;
-use App\Models\HealthQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
-use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\ApplicationStorageService;
 use App\Services\PaymentLinkService;
@@ -630,7 +627,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             info('Updating lead status for Payment Code: '.$payment->code);
             app(SplitPaymentService::class)->updateLeadStatus($payment); //update lead status
         }
-    }    
+    }
 
     public function getPaymentsCountByLeadCode($quoteCode)
     {

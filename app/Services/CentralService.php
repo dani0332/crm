@@ -837,7 +837,9 @@ class CentralService
     public function lockTransactionStatus($quote, $quoteTypeId, $quoteStatuses)
     {
         $lockLeadStatus = $this->lockLeadSectionsDetails($quote);
-        if ($lockLeadStatus['lead_status']) return $quoteStatuses;
+        if ($lockLeadStatus['lead_status']) {
+            return $quoteStatuses;
+        }
         $lockedQuotesStatuses = [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued,
             QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked,
             QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued,
