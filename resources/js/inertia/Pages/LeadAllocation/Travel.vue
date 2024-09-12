@@ -22,7 +22,7 @@ const canManage = computed(() =>
 
 
 const statusText = isHardStop => {
-  return isHardStop ? 'Enabled' : 'Disabled';
+  return isHardStop ? 'Active' : 'Inactive';
 };
 
 
