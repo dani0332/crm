@@ -72,7 +72,8 @@ class AlfredChatController extends Controller
             ->leftJoin('car_quote_plan_details as cqpd', function ($join) {
                 $join->on('cqr.uuid', '=', 'cqpd.quote_uuid')
                     ->whereColumn('cqr.plan_id', '=', 'cqpd.plan_id');
-            })->leftJoin('embedded_transactions as e', function ($join) {
+            })
+            ->leftJoin('embedded_transactions as e', function ($join) {
                 $join->on('cqr.id', '=', 'e.quote_request_id')
                     ->where('e.quote_request_type', '=', CarQuote::class);
             })
@@ -329,7 +330,7 @@ class AlfredChatController extends Controller
             });
         }
 
-        dd($partialQuery->get());
+       
         if (isset($request->email) && $request->email != '') {
             $partialQuery->where('email', $request->email);
         }
@@ -351,6 +352,7 @@ class AlfredChatController extends Controller
             $partialQuery->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
         }
 
+        dd($partialQuery->get());
         if (isset($request->transaction_type_id) && $request->transaction_type_id != '') {
             $partialQuery->where('transaction_type_id', $request->transaction_type_id);
         }
