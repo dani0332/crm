@@ -103,10 +103,10 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Artisan;
 
 class CRUDController extends Controller
 {
@@ -2083,9 +2083,10 @@ class CRUDController extends Controller
         return $response;
     }
 
-    public function updateAmlStatus ()
+    public function updateAmlStatus()
     {
         Artisan::call('UpdateAMLStatus:cron');
+
         return response()->json(['message' => 'UpdateAMLStatus Command has been executed']);
     }
 
