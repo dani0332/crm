@@ -26,6 +26,7 @@ class AlfredChatController extends Controller
 {
     protected $carQuery;
     protected $healthQuery;
+    protected $travelQuery;
 
     public function __construct()
     {
@@ -51,7 +52,10 @@ class AlfredChatController extends Controller
                 'cpip.code as plan_provider_code',
                 'cpip.code as plan_provider_code',
                 'cqr.insurance_provider_id',
-                'cqrd.chat_initiated_at'
+                'cqrd.chat_initiated_at',
+                'cqpd.provider_name',
+                'cqpd.plan_name',
+                'ep.display_name',
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
@@ -64,7 +68,16 @@ class AlfredChatController extends Controller
             ->leftJoin('insurance_provider as cpdip', 'cpdip.id', '=', 'cqr.insurance_provider_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
-            ->leftJoin('quote_batches as qb', 'qb.id', '=', 'cqr.quote_batch_id');
+            ->leftJoin('quote_batches as qb', 'qb.id', '=', 'cqr.quote_batch_id')
+            ->leftJoin('car_quote_plan_details as cqpd', function ($join) {
+                $join->on('cqr.uuid', '=', 'cqpd.quote_uuid')
+                    ->whereColumn('cqr.plan_id', '=', 'cqpd.plan_id');
+            })->leftJoin('embedded_transactions as e', function ($join) {
+                $join->on('cqr.id', '=', 'e.quote_request_id')
+                    ->where('e.quote_request_type', '=', CarQuote::class);
+            })
+            ->leftJoin('embedded_product_options as po', 'po.id', '=', 'e.product_id')
+            ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id');
 
         $this->healthQuery = DB::table('health_quote_request as hqr')->select(
             'hqr.id',
@@ -99,6 +112,30 @@ class AlfredChatController extends Controller
             ->leftJoin('insurance_provider as ihp', 'ihp.id', '=', 'hp.provider_id')
             ->leftJoin('insurance_provider as ins_provider', 'ins_provider.id', '=', 'hqr.currently_insured_with_id')
             ->leftjoin('payment_status', 'hqr.payment_status_id', 'payment_status.id');
+
+            $this->travelQuery = TravelQuote::as('tqr')->select(
+                'tqr.id',
+                'tqr.uuid',
+                'tqr.code',
+                'tqr.email',
+                'qs.id as quote_status_id',
+                'qs.text as quote_status_id_text',
+                'tqr.payment_status_id',
+                'ps.text AS payment_status_id_text',
+                'tqr.plan_id',
+                'tp.text AS plan_id_text',
+                'tpip.text AS travel_plan_provider_text',
+                'lu.text as transaction_type_text',
+                'c.insured_first_name',
+                'c.insured_last_name',
+            )
+                ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
+                ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
+                ->leftJoin('lookups as lu', 'lu.id', '=', 'tqr.transaction_type_id')
+                ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
+                ->leftJoin('travel_plan as tp', 'tp.id', '=', 'tqr.plan_id')
+                ->leftJoin('insurance_provider as tpip', 'tpip.id', '=', 'tp.provider_id')
+                ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id');       
     }
 
     /**
@@ -287,15 +324,12 @@ class AlfredChatController extends Controller
                 $query->where('hqr.uuid', $request->quoteId);
             });
         } elseif ($modelType == TravelQuote::class) {
-            $partialQuery = TravelQuote::with(['travelQuoteRequestDetail' => function ($query) {
-                $query->select('id', 'travel_quote_request_id', 'chat_initiated_at');
-            }])
-                ->select('id', 'uuid', 'code')
-                ->whereHas('travelQuoteRequestDetail', function ($query) {
-                    $query->whereNotNull('chat_initiated_at');
-                });
+            $partialQuery = $this->travelQuery->when(isset($request->quoteId) && $request->quoteId != '', function ($query) use ($request) {
+                $query->where('tqr.uuid', $request->quoteId);
+            });
         }
 
+        dd($partialQuery->get());
         if (isset($request->email) && $request->email != '') {
             $partialQuery->where('email', $request->email);
         }
