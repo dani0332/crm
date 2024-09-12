@@ -2,19 +2,23 @@
 
 namespace App\Factories;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CollectionTypeEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\quoteStatusCode;
+use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SagePaymentMethodsEnum;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\ApplicationStorage;
 use App\Models\BusinessInsuranceType;
 use App\Models\InsuranceProvider;
 use App\Models\Lookup;
 use App\Models\User;
 use App\Repositories\SendUpdateLogRepository;
 use Carbon\Carbon;
+use stdClass;
 
 class SagePayloadFactory
 {
@@ -1155,85 +1159,131 @@ class SagePayloadFactory
         return $receiptsAndAdjustmentsData;
     }
 
-    public static function sagePayLoad($quoteType, $quote, $payment, $splitPayments)
+    public static function sagePayLoad($modelType, $payment, $quote, $paymentSplits): object
     {
-        $quoteDetails = is_array($quote) ? $quote : $quote->toArray();
-        $firstChildPayment = $splitPayments->first();
-        $insuredFullName = isset($quote->customer_id) ? $quote?->customer?->insured_first_name.' '.$quote?->customer?->insured_last_name : '';
+        $firstChildPayment = $paymentSplits->first();
+        $insuredFullName = $quote?->customer?->insured_first_name.' '.$quote?->customer?->insured_last_name;
+        $latestEndorsementCode = '';
+        if ($quote->personal_quote_id) {
+            $latestEndorsement = SendUpdateLogRepository::endorsementsByPersonalQuoteId($quote->personal_quote_id)->first();
+            $latestEndorsementCode = $latestEndorsement?->code;
+        }
 
-        if ($quoteDetails['insly_migrated']) {
-            $insuranceProviderDetails = InsuranceProvider::where('id', $quoteDetails['insurance_provider_id'])->first();
-            $insurerGlLiaiblityAccount = $insuranceProviderDetails?->gl_liaiblity_account;
-            $sageVenderId = $insuranceProviderDetails?->sage_vendor_id;
-            $sageInsurerCustomerId = $insuranceProviderDetails?->sage_insurer_customer_id;
-            $insurerName = $payment->insuranceProvider?->text;
+        $businessTypeOfInsuranceCode = '';
+        if ($quote->business_type_of_insurance_id) {
+            $businessTypeOfInsurance = BusinessInsuranceType::find($quote->business_type_of_insurance_id);
+            $businessTypeOfInsuranceCode = $businessTypeOfInsurance->code;
+        }
+
+        if ($quote?->insly_migrated) {
             $premiumCollectedBy = ucfirst(CollectionTypeEnum::BROKER);
-            $policyIssuer = $quoteDetails['booking_filled_by'];
-
+            $policyIssuer = $quote->booking_filled_by;
         } else {
-            $insurerGlLiaiblityAccount = $payment->insuranceProvider?->gl_liaiblity_account;
-            $sageVenderId = $payment->insuranceProvider?->sage_vendor_id;
-            $insurerName = $payment->insuranceProvider?->text;
-            $sageInsurerCustomerId = $payment->insuranceProvider?->sage_insurer_customer_id;
             $premiumCollectedBy = ucfirst($payment->collection_type);
             $policyIssuer = $payment->policyIssuer?->name ?? '';
         }
 
-        $response = [
-            'discount' => floatval($payment->discount_value),
-            'invoiceDescription' => $payment->invoice_description,
-            'bookingDate' => $quoteDetails['policy_booking_date'] ? date('Y-m-d', strtotime($quote['policy_booking_date'])) : Carbon::now()->format(env('DATE_FORMAT_ONLY')),
-            'policyBookingDate' => $quoteDetails['policy_booking_date'] ? date('Ymd', strtotime($quoteDetails['policy_booking_date'])) : Carbon::now()->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT')),
-            'policyExpiryDate' => date('Ymd', strtotime($quote['policy_expiry_date'])),
-            'insurerInvoiceDate' => date('Y-m-d', strtotime($payment->insurer_invoice_date)),
-            'mainClassInsurance' => $quoteType,
-            'policyNumber' => substr($quoteDetails['policy_number'], 60),
-            'originalPolicyNumber' => $quoteDetails['policy_number'],
-            'policyIssuer' => $policyIssuer,
-            'requestType' => Lookup::where('id', $quoteDetails['transaction_type_id'] ?? '')->first()->text ?? '',
-            'subClass' => BusinessInsuranceType::where('id', $quoteDetails['business_type_of_insurance_id'] ?? '')->value('code') ?? '',
-            'ccCode' => $firstChildPayment->cc_payment_id ?? '',
-            'isPostDatedCheck' => ($firstChildPayment->payment_method == PaymentMethodsEnum::PostDatedCheque) ? 'Yes' : 'No',
-            'checkDetails' => $firstChildPayment->check_detail ?? '',
-            'endorsementNumber' => isset($quoteDetails['personal_quote_id']) ? SendUpdateLogRepository::endorsementsByPersonalQuoteId($quoteDetails['personal_quote_id'])->first()->code : '',
-            'insured' => $insuredFullName,
-            'policyHolder' => $insuredFullName,
-            'premiumCollectedBy' => $premiumCollectedBy,
-            'invoicePaymentStatus' => $payment->payment_status_id ?? null,
-            'advisorName' => ! empty($quoteDetails['advisor_id']) ? User::where('id', $quoteDetails['advisor_id'])->value('name') : '',
-            'manager' => implode(',', getManagersByUser(User::where('id', ($quoteDetails['advisor_id'] ?? ''))->value('id'))->pluck('name')->toArray()),
-            'vatOnPremium' => isset($quoteDetails['vat']) ?: (isset($quoteDetails['price_with_vat']) ? (floatval($quoteDetails['price_with_vat']) - floatval($quoteDetails['price_vat_applicable'] ?? 0)) : 0),
-            'premiumWithoutTax' => floatval($quoteDetails['price_vat_applicable'] ?? 0) + floatval($quoteDetails['price_vat_not_applicable'] ?? 0),
-            'premiumWithTax' => floatval($quoteDetails['price_with_vat']),
-            'vatOnCommission' => floatval($payment->commission_vat),
-            'totalAmount' => roundNumber(floatval($payment->total_amount)),
-            'totalPrice' => floatval($payment->total_price),
-            'commission' => roundNumber(floatval($payment->commission)),
-            'commissionIncludingVat' => roundNumber(floatval($payment->commission_vat_applicable)),
-            'commissionWithOutVat' => $payment->commission_vat_not_applicable ? roundNumber(floatval($payment->commission_vat_not_applicable)) : roundNumber(floatval($payment->commission_without_vat)),
-            'commissionPercentage' => strval($payment->commmission_percentage),
-            'insurerPremiumNumber' => (string) substr($payment['insurer_tax_number'], -18),
-            'insurerCommissionNumber' => (string) substr($payment['insurer_commmission_invoice_number'], -18),
-            'originalInsurerPremiumNumber' => (string) $payment['insurer_tax_number'],
-            'originalInsurerCommissionNumber' => (string) $payment['insurer_commmission_invoice_number'],
-            'insurerGlLiaiblityAccount' => $insurerGlLiaiblityAccount,
-            'sageVenderId' => $sageVenderId,
-            'sageInsurerCustomerId' => $sageInsurerCustomerId,
-            'insurerName' => $insurerName,
-        ];
+        $sageRequest = new stdClass;
 
-        if (! empty($splitPayments)) {
-            $response['paymentDueDate'] = date('Y-m-d', strtotime($splitPayments[0]['due_date']));
+        $sageRequest->userId = auth()->id();
+        $sageRequest->discount = floatval($payment->discount_value);
+        $sageRequest->invoiceDescription = $payment->invoice_description;
+        $sageRequest->bookingDate = $quote['policy_booking_date'] ? date(env('DATE_FORMAT_ONLY'), strtotime($quote['policy_booking_date'])) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
+        $sageRequest->policyBookingDate = $quote['policy_booking_date'] ? date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote['policy_booking_date'])) : Carbon::now()->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
+        $sageRequest->policyExpiryDate = date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote['policy_expiry_date']));
+        $sageRequest->insurerInvoiceDate = date(env('DATE_FORMAT_ONLY'), strtotime($payment->insurer_invoice_date));
+
+        if (! empty($paymentSplits)) {
+            $sageRequest->paymentDueDate = date(env('DATE_FORMAT_ONLY'), strtotime($paymentSplits[0]['due_date']));
         }
 
-        if (count($splitPayments) == 1) {
-            $response['sage_reciept_id'] = $splitPayments[0]['sage_reciept_id'] ?? null;
-            $response['collection_amount'] = roundNumber($splitPayments[0]['collection_amount']) + $response['discount'];
+        $sageRequest->mainClassInsurance = $modelType;
+        $sageRequest->policyNumber = substr($quote->policy_number, 60);
+        $sageRequest->originalPolicyNumber = $quote->policy_number;
+        $sageRequest->policyIssuer = $policyIssuer;
+        $sageRequest->requestType = Lookup::where('id', $quote->transaction_type_id)->first()->text ?? '';
+        $sageRequest->subClass = $businessTypeOfInsuranceCode;
+        $sageRequest->ccCode = $firstChildPayment->cc_payment_id ?? '';
+        $sageRequest->isPostDatedCheck = $firstChildPayment->payment_method == PaymentMethodsEnum::PostDatedCheque ? 'Yes' : 'No';
+        $sageRequest->checkDetails = $firstChildPayment->check_detail ?? '';
+        $sageRequest->endorsementNumber = $latestEndorsementCode;
+        $sageRequest->insured = $insuredFullName;
+        $sageRequest->policyHolder = $insuredFullName;
+        $sageRequest->premiumCollectedBy = $premiumCollectedBy;
+
+        $sageRequest->invoicePaymentStatus = $payment->payment_status_id;
+        // $sageRequest->invoicePaymentStatus = 'paid';
+        $advisorName = '';
+        $managerName = '';
+        if (! empty($quote->advisor_id)) {
+            $advisor = User::where('id', $quote->advisor_id)->first();
+            $advisorName = $advisor->name;
+            $managerName = implode(',', getManagersByUser($advisor->id)->pluck('name')->toArray());
+        }
+        $sageRequest->advisorName = $advisorName;
+        $sageRequest->manager = $managerName;
+
+        //calculate vat
+        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()?->value;
+        $sageRequest->vatOnPremium = $vatPercentage && $quote->price_vat_applicable ? (($quote->price_vat_applicable * $vatPercentage) / 100) : 0;
+        //        $sageRequest->vatOnPremium = isset($quote->vat) ?: (isset($quote->price_with_vat) ? (floatval($quote->price_with_vat) - floatval($quote->price_vat_applicable ?? 0)) : 0); TODO:: This was added previous endorsement function, need to verify
+
+        $sageRequest->premiumWithoutTax = floatval($quote->price_vat_applicable ?? 0) + floatval($quote->price_vat_not_applicable ?? 0);
+        $sageRequest->premiumWithTax = floatval($quote->price_with_vat);
+        $sageRequest->vatOnCommission = floatval($payment->commission_vat);
+        $sageRequest->totalAmount = floatval($payment->total_amount);
+        $sageRequest->totalPrice = floatval($payment->total_price);
+        $sageRequest->commission = floatval($payment->commission);
+        $sageRequest->commissionIncludingVat = floatval($payment->commission_vat_applicable);
+        $sageRequest->commissionWithOutVat = $payment->commission_vat_not_applicable ? floatval($payment->commission_vat_not_applicable) : floatval($payment->commission_without_vat);
+        $sageRequest->commissionPercentage = strval($payment->commmission_percentage);
+
+        // Slice the last 18 characters from the string to avoid sage document number length issue and store the original values in optional fields
+        $sageRequest->insurerPremiumNumber = (string) substr($payment['insurer_tax_number'], -18);
+        $sageRequest->insurerCommissionNumber = (string) substr($payment['insurer_commmission_invoice_number'], -18);
+        $sageRequest->originalInsurerPremiumNumber = (string) $payment['insurer_tax_number'];
+        $sageRequest->originalInsurerCommissionNumber = (string) $payment['insurer_commmission_invoice_number'];
+
+        if (count($paymentSplits) == 1) {
+            $sageRequest->sage_reciept_id = $paymentSplits[0]['sage_reciept_id'];
+            $sageRequest->collection_amount = $paymentSplits[0]['collection_amount'] + $sageRequest->discount;
         } else {
-            $response['invoicePaymentStatus'] = $splitPayments[0]['payment_status_id'];
+            $sageRequest->invoicePaymentStatus = $paymentSplits[0]['payment_status_id'];
         }
 
-        return (object) $response;
+        $insuranceProvider = null;
+
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
+        if (in_array(ucfirst($modelType), $allowedQuoteTypes)) {
+            $planRelationName = strtolower($modelType).'Plan';
+            $payment->load($planRelationName);
+            $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
+        }
+
+        if (! $insuranceProvider) {
+            $insuranceProvider = $payment->insuranceProvider;
+        }
+
+        if ($quote?->insly_migrated && ! empty($payment['send_update_log_id'])) {
+            $insuranceProviderDetails = InsuranceProvider::where('id', $quote->insurance_provider_id)->first();
+            $sageVenderId = $insuranceProviderDetails?->sage_vendor_id;
+            $sageInsurerCustomerId = $insuranceProviderDetails?->sage_insurer_customer_id;
+            $insurerGlLiaiblityAccount = $insuranceProviderDetails?->gl_liaiblity_account;
+
+        } else {
+            $sageVenderId = $insuranceProvider?->sage_vendor_id;
+            $sageInsurerCustomerId = $insuranceProvider?->sage_insurer_customer_id;
+            $insurerGlLiaiblityAccount = $insuranceProvider?->gl_liaiblity_account;
+        }
+
+        //Insurer GL Account and Vendor Number
+        $sageRequest->insurerGlLiaiblityAccount = $insurerGlLiaiblityAccount;
+        $sageRequest->sageVenderId = $sageVenderId;
+        $sageRequest->sageInsurerCustomerId = $sageInsurerCustomerId;
+        $sageRequest->insurerName = $insuranceProvider?->text;
+        $sageRequest->insurerID = $insuranceProvider?->id;
+
+        return $sageRequest;
     }
 
     public static function getInvoiceDetails($invoiceType, $batchNumber)

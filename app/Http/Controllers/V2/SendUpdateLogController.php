@@ -390,11 +390,9 @@ class SendUpdateLogController extends Controller
         }
     }
 
-    public function sendUpdate(SendUpdateRequest $sendUpdateRequest)
+    public function sendUpdate(SendUpdateRequest $sendUpdateRequest): \Illuminate\Http\JsonResponse
     {
-        //        $response = app(SendUpdateLogService::class)->sendUpdateProcess($sendUpdateRequest);
         $response = app(SendUpdateLogService::class)->preparedDataForEndorsement($sendUpdateRequest);
-        dd('Send Update Controller');
 
         return response()->json(['message' => $response['message']], $response['status'] ? 200 : 500);
     }

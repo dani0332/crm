@@ -3,8 +3,6 @@
 namespace App\Jobs;
 
 use App\Enums\SendUpdateLogStatusEnum;
-use App\Http\Controllers\V2\SendUpdateLogController;
-use App\Http\Requests\SendUpdateRequest;
 use App\Models\SendUpdateLog;
 use App\Services\SendEmailCustomerService;
 use App\Services\SendUpdateLogService;
@@ -42,42 +40,45 @@ class SendUpdateToCustomerJob implements ShouldQueue
     public function handle(SendEmailCustomerService $sendEmailCustomerService, SendUpdateLogService $sendUpdateLogServices)
     {
         $sendUpdateLog = SendUpdateLog::find($this->sendUpdate->id);
-        info('job: SendUpdateToCustomerJob started - Send Update UUID: '.$sendUpdateLog->uuid);
+        info('job:SendUpdateToCustomerJob - Job started - Send Update UUID: '.$sendUpdateLog->uuid);
 
         if ($sendUpdateLog->is_email_sent) {
-            info('job: SendUpdateToCustomerJob email process skipped - Send Update UUID: '.$sendUpdateLog->uuid.' as email already sent');
+            info('job:SendUpdateToCustomerJob - Email process skipped - Email already sent to Send Update UUID: '.$sendUpdateLog->uuid);
         } else {
             @[$templateId, $emailData, $tag, $quoteTypeId] = $sendUpdateLogServices->sendUpdateToCustomerEmailData($this->sendUpdate, $this->payload['action']);
             if (! empty($templateId)) {
-                info('job: SendUpdateToCustomerJob - Send Update UUID: '.$sendUpdateLog->uuid.' - Job Email Data '.json_encode($emailData));
-                $response = $sendEmailCustomerService->sendUpdateToCustomerEmail($templateId, $emailData, $tag, $quoteTypeId);
-                info('job: SendUpdateToCustomerJob - Send Update UUID: '.$sendUpdateLog->uuid.' - Job Response '.json_encode($response));
+                info('job:SendUpdateToCustomerJob - Send Update UUID: '.$sendUpdateLog->uuid.' - Job Email Data '.json_encode($emailData));
+                //                TODO:: Uncomment below line after testing is done
+                //                $response = $sendEmailCustomerService->sendUpdateToCustomerEmail($templateId, $emailData, $tag, $quoteTypeId);
+                //                info('job: SendUpdateToCustomerJob - Send Update UUID: '.$sendUpdateLog->uuid.' - Job Response '.json_encode($response));
 
-                if ($response == 201 || true) {
-                    //                    $sendUpdateLog->update([
-                    //                        'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
-                    //                        'is_email_sent' => true, TODO: Uncomment this after testing is done
-                    //                    ]);
-                    info('job: SendUpdateToCustomerJob - Updating status to: '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER.' - Send Update UUID: '.$sendUpdateLog->uuid);
+                //                TODO:: Remove true from if condition after testing is done and add $response == 201
+                if (true) {
+                    info('job:SendUpdateToCustomerJob - Updating status to: '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER.' - Send Update UUID: '.$sendUpdateLog->uuid);
+                    $sendUpdateLog->update([
+                        //                        'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
+                        'is_email_sent' => true,
+                    ]);
                     $sendUpdateLog->refresh();
                 } else {
-                    info('job: SendUpdateToCustomerJob - Send Update UUID: '.$sendUpdateLog->uuid.' - Job failed - Send Update UUID: '.$sendUpdateLog->uuid);
+                    info('job:SendUpdateToCustomerJob - Send Update UUID: '.$sendUpdateLog->uuid.' - Job failed - Send Update UUID: '.$sendUpdateLog->uuid);
                 }
             }
         }
 
-        //        TODO: Add ($sendUpdateLog->is_email_sent && ) this condition after testing is done
-        if ($this->payload['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
-            info('job: SendUpdateToCustomerJob - Calling sendUpdate function through sendUpdateToCustomer - Send Update UUID: '.$sendUpdateLog->uuid.' - Payload: '.json_encode($this->payload));
-            app(SendUpdateLogController::class)->sendUpdate(new SendUpdateRequest($this->payload));
+        if ($sendUpdateLog->is_email_sent && $this->payload['action'] == SendUpdateLogStatusEnum::ACTION_SNBU && isset($this->payload['dispatchSageCall'])) {
+            info('job:SendUpdateToCustomerJob - Calling updateSageProcessForDispatching function through sendUpdateToCustomer - Send Update UUID: '.$sendUpdateLog->uuid.' - Payload: '.json_encode($this->payload));
+            $sageRequestPayload = $this->payload['sageRequestPayload'];
+            unset($this->payload['sageRequestPayload']);
+            $sendUpdateLogServices->updateSageProcessForDispatching($this->payload, $sendUpdateLog, $sageRequestPayload);
         }
 
-        info('job: SendUpdateToCustomerJob completed - Send Update UUID: '.$sendUpdateLog->uuid);
+        info('job:SendUpdateToCustomerJob - Job completed - Send Update UUID: '.$sendUpdateLog->uuid);
     }
 
     public function failed(Throwable $exception)
     {
-        info('job: SendUpdateToCustomerJob - Send Update UUID: '.$this->sendUpdate->uuid.' Error: '.$exception->getMessage());
+        info('job:SendUpdateToCustomerJob - Send Update UUID: '.$this->sendUpdate->uuid.' Error: '.$exception->getMessage());
     }
 
     public function middleware()
