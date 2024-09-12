@@ -1386,7 +1386,7 @@ class RenewalsUploadService
      *
      * @param  object  $emailData
      */
-    private function triggerBirdWorkflow($emailData, $mobile = null, $uuid)
+    private function triggerBirdWorkflow($emailData, $mobile, $uuid)
     {
         $tag = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_MOTOR_RENEWAL_TAG)->first()->value ?? null;
         $birdEmailData = [
