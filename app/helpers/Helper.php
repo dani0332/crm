@@ -16,6 +16,7 @@ use App\Models\CustomerAdditionalInfo;
 use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
+use App\Models\QuoteAdditionalDetail;
 use App\Models\QuoteTag;
 use App\Models\Team;
 use App\Models\TravelQuote;
@@ -32,7 +33,6 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use App\Models\QuoteAdditionalDetail;
 
 if (! function_exists('generate_code')) {
     /**
