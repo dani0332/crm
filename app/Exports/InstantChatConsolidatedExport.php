@@ -70,9 +70,9 @@ class InstantChatConsolidatedExport implements FromArray, WithHeadings, WithMapp
                     QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked]
             ) ? 'Yes' : 'No', // 'SALE LEADS'
             $chat['provider_name'] ?? 'N/A', // 'PROVIDER NAME'
-            $chat['plan_type_text'] ?? 'N/A', // 'PLAN TYPE'
+            $chat['plan_type'] ?? 'N/A', // 'PLAN TYPE'
             $chat['plan_name'] ?? 'N/A', // 'PLAN NAME'
-            $chat['price'] ?? 'N/A', // 'PRICE'
+            $chat['total_price'] ?? 'N/A', // 'PRICE'
             $chat['payment_status_id_created_at'] ?? 'N/A', // 'PAYMENT DATE'
             $chat['display_name'] ?? 'N/A', // 'EP PURCHASED'
         ];

@@ -56,12 +56,15 @@ class AlfredChatController extends Controller
                 'cqpd.provider_name',
                 'cqpd.plan_name',
                 'ep.display_name',
+                'py.total_price',
+                'cti.text as plan_type'
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
                     ->where('py.paymentable_type', '=', CarQuote::class);
             })
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
+            ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
             ->leftJoin('lookups as lu', 'lu.id', '=', 'cqr.transaction_type_id')
             ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
             ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
