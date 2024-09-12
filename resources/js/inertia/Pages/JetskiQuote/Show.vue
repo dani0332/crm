@@ -34,6 +34,7 @@ const page = usePage();
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const modelClass = 'App\\Models\\PersonalQuote';
 const readOnlyMode = reactive({
   isDisable: true,
 });

@@ -64,6 +64,7 @@ defineProps({
   isAmlClearedForQuote: Boolean,
 });
 
+const modelClass = 'App\\Models\\TravelQuote';
 const permissionEnum = page.props.permissionsEnum;
 const permissionsEnum = page.props.permissionsEnum;
 const leadSource = page.props.leadSource;
@@ -3059,6 +3060,7 @@ const onAddUpdate = () => {
       :payments="payments"
       :expanded="sectionExpanded"
       :isAmlClearedForQuote="isAmlClearedForQuote"
+      :modelClass="modelClass"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -3299,7 +3301,7 @@ const onAddUpdate = () => {
     />
 
     <AuditLogs
-      :type="'App\\Models\\TravelQuote'"
+      :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
