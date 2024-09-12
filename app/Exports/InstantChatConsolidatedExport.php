@@ -45,6 +45,8 @@ class InstantChatConsolidatedExport implements FromArray, WithHeadings, WithMapp
             'PLAN NAME',
             'PRICE',
             'PAYMENT DATE',
+            'AUTHORISED AT',
+            'PAID AT',
             'EP PURCHASED',
         ];
     }
@@ -63,7 +65,7 @@ class InstantChatConsolidatedExport implements FromArray, WithHeadings, WithMapp
             $chat['ai_interactions'] ?? 0, // 'NO. OF RESPONSES SENT BY AI TO CUSTOMER'
             $chat['total_ai_interactions'] ?? 0, // 'TOTAL NO OF INTERACTIONS'
             $chat['fallbacks'] === 0 ? 'N/A' : $chat['fallbacks'], // 'COUNT OF FALLBACKS'
-            $chat['payment_status_id_text'] ?? 'N/A', // 'PAYMENT STATUS'
+            $chat['payment_status'] ?? 'N/A', // 'PAYMENT STATUS'
             in_array(
                 $chat['quote_status_id'] ?? null,
                 [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued,
@@ -73,7 +75,8 @@ class InstantChatConsolidatedExport implements FromArray, WithHeadings, WithMapp
             $chat['plan_type'] ?? 'N/A', // 'PLAN TYPE'
             $chat['plan_name'] ?? 'N/A', // 'PLAN NAME'
             $chat['total_price'] ?? 'N/A', // 'PRICE'
-            $chat['payment_status_id_created_at'] ?? 'N/A', // 'PAYMENT DATE'
+            $chat['paid_at'] ?? 'N/A',
+            $chat['payment_paid_at'] ?? 'N/A',
             $chat['display_name'] ?? 'N/A', // 'EP PURCHASED'
         ];
     }
