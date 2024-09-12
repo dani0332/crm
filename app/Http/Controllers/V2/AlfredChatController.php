@@ -113,29 +113,29 @@ class AlfredChatController extends Controller
             ->leftJoin('insurance_provider as ins_provider', 'ins_provider.id', '=', 'hqr.currently_insured_with_id')
             ->leftjoin('payment_status', 'hqr.payment_status_id', 'payment_status.id');
 
-            $this->travelQuery = TravelQuote::as('tqr')->select(
-                'tqr.id',
-                'tqr.uuid',
-                'tqr.code',
-                'tqr.email',
-                'qs.id as quote_status_id',
-                'qs.text as quote_status_id_text',
-                'tqr.payment_status_id',
-                'ps.text AS payment_status_id_text',
-                'tqr.plan_id',
-                'tp.text AS plan_id_text',
-                'tpip.text AS travel_plan_provider_text',
-                'lu.text as transaction_type_text',
-                'c.insured_first_name',
-                'c.insured_last_name',
-            )
-                ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
-                ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
-                ->leftJoin('lookups as lu', 'lu.id', '=', 'tqr.transaction_type_id')
-                ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
-                ->leftJoin('travel_plan as tp', 'tp.id', '=', 'tqr.plan_id')
-                ->leftJoin('insurance_provider as tpip', 'tpip.id', '=', 'tp.provider_id')
-                ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id');       
+        $this->travelQuery = TravelQuote::as('tqr')->select(
+            'tqr.id',
+            'tqr.uuid',
+            'tqr.code',
+            'tqr.email',
+            'qs.id as quote_status_id',
+            'qs.text as quote_status_id_text',
+            'tqr.payment_status_id',
+            'ps.text AS payment_status_id_text',
+            'tqr.plan_id',
+            'tp.text AS plan_id_text',
+            'tpip.text AS travel_plan_provider_text',
+            'lu.text as transaction_type_text',
+            'c.insured_first_name',
+            'c.insured_last_name',
+        )
+            ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
+            ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
+            ->leftJoin('lookups as lu', 'lu.id', '=', 'tqr.transaction_type_id')
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
+            ->leftJoin('travel_plan as tp', 'tp.id', '=', 'tqr.plan_id')
+            ->leftJoin('insurance_provider as tpip', 'tpip.id', '=', 'tp.provider_id')
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id');
     }
 
     /**
