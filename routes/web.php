@@ -114,7 +114,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         return inertia('Home/Home', ['im_logo' => getIMLogo()]);
     })->name('dashboard.home');
 
-    Route::post('get-lob-raw-data', [RawQueryController::class, 'executeQuery'])->name('getRawData');
+    Route::post('get-lob-raw-data', [RawQueryController::class, 'show'])->name('getRawData');
 
     Route::get('instant-alfred/logs', [AlfredChatController::class, 'logs'])->name('instant-alfred.logs');
 

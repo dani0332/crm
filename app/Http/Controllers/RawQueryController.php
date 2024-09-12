@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 
 class RawQueryController extends Controller
 {
-    public function executeQuery(Request $request)
+    public function show(Request $request)
     {
         $nameSpace = 'App\\Models\\';
         $modelType = (in_array(ucwords($request->modelType), newUi()) && checkPersonalQuotes(ucwords($request->modelType)))
@@ -41,5 +41,4 @@ class RawQueryController extends Controller
         return response()->json(['error' => 'Invalid model type'], 400);
 
     }
-
 }
