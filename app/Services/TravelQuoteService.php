@@ -640,7 +640,6 @@ class TravelQuoteService extends BaseService
             'policy_start_date' => 'input|date',
             'members' => 'input|array|required',
             'direction_code' => 'input|text|required',
-            'aml_status' => 'input|text|title',
 
         ];
     }
@@ -724,10 +723,6 @@ class TravelQuoteService extends BaseService
             case 'customer_type':
                 $title = 'Customer Type';
                 break;
-            case 'aml_status':
-                $title = 'AML STATUS';
-                break;
-
             default:
                 break;
         }
