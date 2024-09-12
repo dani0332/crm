@@ -11,6 +11,6 @@ use BenSampo\Enum\Enum;
  */
 final class ActivityTypeEnum extends Enum
 {
-    public const CALL_BACK = 'callback';
-    public const WHATS_APP = 'whatsapp';
+    public const CALL_BACK = 'CALL';
+    public const WHATS_APP = 'WHATSAPP';
 }

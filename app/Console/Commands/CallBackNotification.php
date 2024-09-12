@@ -80,7 +80,7 @@ class CallBackNotification extends Command
                             $url = url('/')."/$path";
 
                             // Define notification types and events based on activity type
-                            $notificationType = $activity->activity_type === ActivityTypeEnum::CALL_BACK
+                            $notificationType = strtoupper($activity->activity_type) === ActivityTypeEnum::CALL_BACK
                                 ? ActivityTypeEnum::CALL_BACK
                                 : ActivityTypeEnum::WHATS_APP;
 
@@ -88,9 +88,9 @@ class CallBackNotification extends Command
                                 ActivityNotificationLogs::create([
                                     'activity_id' => $activity->id,
                                     'advisor_id' => $activity->assignee_id,
-                                    'notification_type' => $notificationType,
+                                    'notification_type' => strtoupper($notificationType),
                                 ]);
-                                if ($notificationType === ActivityTypeEnum::CALL_BACK) {
+                                if (strtoupper($notificationType) === ActivityTypeEnum::CALL_BACK) {
                                     $title = 'InstantAlfred CallBack Reminder';
                                     $message = 'Urgent reminder callback request for ';
                                 } else {

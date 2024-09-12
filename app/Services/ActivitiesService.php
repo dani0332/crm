@@ -223,7 +223,7 @@ class ActivitiesService extends BaseService
 
         $url = url('/')."/$path";
 
-        if ($activityType === ActivityTypeEnum::CALL_BACK) {
+        if (strtoupper($activityType) === ActivityTypeEnum::CALL_BACK) {
             info('InstantAlfred CallBack Notification Trigger to Advisor '.$record->advisor_id.' And Lead Code is '.$record->code);
             $title = 'InstantAlfred Callback Request';
             $message = 'Urgent callback request for ';
@@ -278,12 +278,12 @@ class ActivitiesService extends BaseService
         $activity->title = $title;
         $activity->quote_status_id = $record?->quote_status_id ?? null;
         $activity->source = LeadSourceEnum::INSTANT_ALFRED;
-        $activity->activity_type = $activityType ? $activityType : null;
+        $activity->activity_type = $activityType ? strtoupper($activityType) : null;
         if ($activity->save()) {
             ActivityNotificationLogs::create([
                 'activity_id' => $activity->id,
                 'advisor_id' => $activity->assignee_id,
-                'notification_type' => $activity->activity_type,
+                'notification_type' => strtoupper($activity->activity_type),
             ]);
         }
 
