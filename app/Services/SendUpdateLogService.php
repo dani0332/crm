@@ -32,14 +32,12 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
-use App\Models\SageApiLog;
 use App\Models\SageProcess;
 use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
-use App\Repositories\PaymentRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -802,69 +800,9 @@ class SendUpdateLogService
         return [
             'status' => true,
             'message' => 'The send update booking process has started. It will take some time to complete. Please check back later to see the status',
-            //            'preparedDetailsForEndorsement' => $preparedDetailsForEndorsement,
+            'preparedDetailsForEndorsement' => $preparedDetailsForEndorsement,
             'sageRequestPayload' => $sageRequestPayload,
         ];
-
-        //        $sageLogArray = [];
-        //        if (in_array($sendUpdateLog?->category?->code, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
-        //            info('fn:preparedDataForEndorsements - Fetching Logs for Non CPD Endorsement - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-        //            $sageLogArray = $sendUpdateLog->sageApiLogs?->whereNotIn('entry_type', [
-        //                SageEnum::SRT_GET_AR_INVOICE,
-        //                SageEnum::SRT_GET_AP_INVOICE,
-        //                SageEnum::SCT_REVERSAL,
-        //                SageEnum::SCT_CORRECTION,
-        //            ])->keyBy('step')->toArray();
-        //        }
-        //
-        //        if ($sendUpdateLog?->category?->code == SendUpdateLogStatusEnum::CPD) {
-        //            info('fn:preparedDataForEndorsements - Fetching Logs for CPD Endorsement - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-        //            $getPaymentByInsurerInvoiceNumber = PaymentRepository::getPaymentByInsurerInvoiceNumber($quoteDetails, $sendUpdateRequest->reversalInvoice);
-        //            if ($getPaymentByInsurerInvoiceNumber->send_update_log_id !== null) {
-        //                $getReverseInvoiceRelation = [
-        //                    'section_type' => $sendUpdateLog->getMorphClass(),
-        //                    'section_id' => $getPaymentByInsurerInvoiceNumber->send_update_log_id,
-        //                ];
-        //            } else {
-        //                $getReverseInvoiceRelation = [
-        //                    'section_type' => $getPaymentByInsurerInvoiceNumber->paymentable_type,
-        //                    'section_id' => $getPaymentByInsurerInvoiceNumber->paymentable_id,
-        //                ];
-        //            }
-        //
-        //            $getReverseInvoicesLogs = SageApiLog::where($getReverseInvoiceRelation)
-        //                ->whereNotIn('entry_type', [
-        //                    SageEnum::SRT_GET_AR_INVOICE,
-        //                    SageEnum::SRT_GET_AP_INVOICE,
-        //                    SageEnum::SCT_REVERSAL,
-        //                    SageEnum::SCT_CORRECTION,
-        //                ])->orderBy('step')->get()->toArray();
-        //
-        //            info('fn:preparedDataForEndorsements - Fetching Invoice Logs for Reverse and Correction from Sage APIs Logs');
-        //            $preparedDetailsForEndorsement['invoicesForReverse'] = collect($getReverseInvoicesLogs)->filter(function ($sageApiLog) {
-        //                return in_array($sageApiLog['sage_request_type'], [
-        //                    SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
-        //                    SageEnum::SRT_CREATE_AR_SPPAY_INV,
-        //                    SageEnum::SRT_CREATE_AP_PREM_INV,
-        //                    SageEnum::SRT_CREATE_AP_SPPAY_INV,
-        //                    SageEnum::SRT_CREATE_AR_DISC_INV,
-        //                ]) && $sageApiLog['status'] == SageEnum::STATUS_SUCCESS;
-        //            })->values()->toArray();
-        //
-        //            if (empty($preparedDetailsForEndorsement['invoicesForReverse'])) {
-        //                logger()->error('fn:preparedDataForEndorsements - Invoice not found for Reverse and Correction');
-        //
-        //                return ['status' => false, 'message' => 'Invoice not found for Reverse and Correction'];
-        //            }
-        //
-        //            $sageLogArray = $sendUpdateLog->sageApiLogs?->whereIn('entry_type', [
-        //                SageEnum::SRT_GET_AR_INVOICE,
-        //                SageEnum::SRT_GET_AP_INVOICE,
-        //                SageEnum::SCT_REVERSAL,
-        //                SageEnum::SCT_CORRECTION,
-        //            ])->keyBy('step')->toArray();
-        //        }
-
     }
 
     public function updateSageProcessForDispatching($request, $quote, $sageRequestPayload)
@@ -879,6 +817,18 @@ class SendUpdateLogService
             ]),
             'status' => SageEnum::SAGE_PROCESS_PENDING_STATUS,
         ];
+
+        if ($quote::class == SendUpdateLog::class) {
+            $sageProcessDataRequest = json_decode($sageProcessData['request'], true);
+            $sageRequestPayload->sageProcessRequestType = SageEnum::SAGE_PROCESS_SEND_UPDATE_REQUEST;
+            $sageProcessDataRequest['sagePayload'] = $sageRequestPayload;
+            $sageProcessDataRequest['endorsementPreparedData'] = $request['preparedDetailsForEndorsement'];
+            unset($request['preparedDetailsForEndorsement']);
+            unset($request['dispatchSageCall']);
+
+            $sageProcessDataRequest['requestPayload'] = $request;
+            $sageProcessData['request'] = json_encode($sageProcessDataRequest);
+        }
 
         $sageProcess = SageProcess::where([
             'model_type' => $quote::class,
@@ -899,55 +849,6 @@ class SendUpdateLogService
 
         return $response;
     }
-
-    //    public function sendUpdateProcess($sendUpdateRequest)
-    //    {
-    //        $sendUpdateLog = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
-    //        $categoryCode = $sendUpdateLog->category?->code;
-    //        $allowedCategoriesForSage = [
-    //            SendUpdateLogStatusEnum::EF,
-    //            SendUpdateLogStatusEnum::CI,
-    //            SendUpdateLogStatusEnum::CIR,
-    //            SendUpdateLogStatusEnum::CPD,
-    //        ];
-    //
-    //        if (! in_array($categoryCode, $allowedCategoriesForSage)) {
-    //            info('Book Update - Skipping Sage APIs for Book Update - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-    //
-    //            return ['status' => true];
-    //        }
-    //
-    //        info('Book Update - Process Start - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-    //
-    //        $quoteModel = $this->getModelObject($sendUpdateRequest->quoteType);
-    //        $quoteDetails = $quoteModel::where('id', $sendUpdateRequest->quoteRefId)->first();
-    //        $prepareDataForERP = $this->getPreparedDataForERP($sendUpdateRequest, $quoteDetails, $sendUpdateLog);
-    //        $prepareDataForERP['quoteDetails'] = $quoteDetails;
-    //        $prepareDataForERP['quoteRefId'] = $sendUpdateRequest->quoteRefId;
-    //
-    //        if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
-    //            info('Book Update - Documents Pushed to ERP - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-    //            $prepareDataForERP['sendUpdateType'] = SageEnum::SUT_NORMAL;
-    //            $sageResponse = app(SageApiService::class)->documentsPushedToERP($sendUpdateRequest, $prepareDataForERP);
-    //        }
-    //
-    //        if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
-    //            info('Book Update - Documents Pushed to ERP - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.'- Reverse Insurer Tax Invoice Number: '.$sendUpdateRequest->reversalInvoice);
-    //            $prepareDataForERP['sendUpdateType'] = SageEnum::SUT_REVE_CORR;
-    //            $prepareDataForERP['reverseInvoice'] = $sendUpdateRequest->reversalInvoice;
-    //            $sageResponse = app(SageApiService::class)->documentsPushedToERP($sendUpdateRequest, $prepareDataForERP);
-    //        }
-    //
-    //        if (! $sageResponse['status']) {
-    //            logger()->error('Book Update - Something went wrong - Response: '.$sageResponse['message'].' - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-    //
-    //            return $sageResponse;
-    //        }
-    //
-    //        info('Book Update - Process Completed Successfully. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-    //
-    //        return $sageResponse;
-    //    }
 
     public function updatesMoveToLead($preparedDataForERP)
     {

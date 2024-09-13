@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Enums\SageEnum;
 use App\Jobs\BookPolicyOnSageJob;
+use App\Jobs\SendUpdateSageJob;
 use App\Models\SageProcess;
 use Illuminate\Console\Command;
 
@@ -28,7 +29,7 @@ class SageProcessesCommand extends Command
      */
     public function handle()
     {
-        $this->info('Sage Policy Booking Command Started');
+        $this->info('cmd:SageProcessesCommand - Policy Booking Started');
 
         $insuranceProvidersProcessingStatus = SageProcess::where('status', SageEnum::SAGE_PROCESS_PROCESSING_STATUS)->pluck('insurance_provider_id')->toArray();
 
@@ -43,20 +44,28 @@ class SageProcessesCommand extends Command
                     ->where('status', SageEnum::SAGE_PROCESS_PENDING_STATUS)
                     ->orderBy('created_at')
                     ->first();
-                $this->info('Processing Sage Process ID: '.$sageProcess->id.' for Insurance Provider ID: '.$insuranceProvider);
+                $this->info('cmd:SageProcessesCommand - Processing Sage Process ID: '.$sageProcess->id.' for Insurance Provider ID: '.$insuranceProvider);
                 $sageProcessRequest = json_decode($sageProcess->request);
                 $sageRequest = $sageProcessRequest->sagePayload;
                 $request = $sageProcessRequest->requestPayload;
 
                 if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST) {
                     $quote = $sageProcess->model;
-                    BookPolicyOnSageJob::dispatch($sageRequest, $quote, $request, $sageProcess)->onQueue('sage-book-policy');
+                    //                    TODO:: Need to enable again after testing
+                    //                    BookPolicyOnSageJob::dispatch($sageRequest, $quote, $request, $sageProcess)->onQueue('sage-book-policy');
+                }
+
+                if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_SEND_UPDATE_REQUEST) {
+                    $preparedEndorsementData = $sageProcessRequest->endorsementPreparedData;
+                    $quote = $sageProcess->model;
+                    //                    TODO:: Need to update queue name
+                    SendUpdateSageJob::dispatch($request, $quote, $sageRequest, $preparedEndorsementData, $sageProcess)->onQueue('sage-send-update');
                 }
             }
         } else {
-            $this->info('No Sage Process meet the selection criteria / already sage processes are being processed against all insurance providers');
+            $this->info('cmd:SageProcessesCommand - No Sage Process meet the selection criteria / already sage processes are being processed against all insurance providers');
         }
 
-        $this->info('Sage Policy Booking Command Ended');
+        $this->info('cmd:SageProcessesCommand - Sage Policy Booking Command Ended');
     }
 }

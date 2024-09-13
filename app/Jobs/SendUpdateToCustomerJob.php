@@ -67,7 +67,7 @@ class SendUpdateToCustomerJob implements ShouldQueue
         }
 
         if ($sendUpdateLog->is_email_sent && $this->payload['action'] == SendUpdateLogStatusEnum::ACTION_SNBU && isset($this->payload['dispatchSageCall'])) {
-            info('job:SendUpdateToCustomerJob - Calling updateSageProcessForDispatching function through sendUpdateToCustomer - Send Update UUID: '.$sendUpdateLog->uuid.' - Payload: '.json_encode($this->payload));
+            info('job:SendUpdateToCustomerJob - Calling updateSageProcessForDispatching function through sendUpdateToCustomer - Send Update UUID: '.$sendUpdateLog->uuid);
             $sageRequestPayload = $this->payload['sageRequestPayload'];
             unset($this->payload['sageRequestPayload']);
             $sendUpdateLogServices->updateSageProcessForDispatching($this->payload, $sendUpdateLog, $sageRequestPayload);

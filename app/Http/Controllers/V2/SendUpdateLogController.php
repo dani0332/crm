@@ -24,6 +24,7 @@ use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
+use App\Models\SageProcess;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\PersonalQuoteRepository;
@@ -32,6 +33,7 @@ use App\Repositories\QuoteTypeRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
+use App\Services\SageApiService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
@@ -361,6 +363,18 @@ class SendUpdateLogController extends Controller
 
     public function sendUpdateToCustomer(UpdateToCustomerRequest $updateToCustomerRequest)
     {
+        $sageProcess = SageProcess::where('id', 12)->first();
+        $sageProcessRequest = json_decode($sageProcess->request);
+
+        $response = (new SageApiService)->bookEndorsementOnSage([
+            $sageProcessRequest->requestPayload,
+            $sageProcess->model,
+            $sageProcessRequest->sagePayload,
+            $sageProcessRequest->endorsementPreparedData,
+        ]);
+
+        dd($response);
+
         $suEmailProcess = SendUpdateLogRepository::sendUpdateToCustomer($updateToCustomerRequest->validated());
 
         if (isset($suEmailProcess['status']) && $suEmailProcess['status'] == 500) {

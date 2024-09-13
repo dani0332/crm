@@ -7,25 +7,18 @@ use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Factories\SagePayloadFactory;
 use App\Jobs\SendBookPolicyDocumentsJob;
-use App\Jobs\SendUpdateSageJob;
-use App\Models\ApplicationStorage;
-use App\Models\BusinessInsuranceType;
 use App\Models\Customer;
-use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatusLog;
 use App\Models\SageApiLog;
 use App\Models\SageProcess;
-use App\Models\User;
 use App\Repositories\PaymentRepository;
 use App\Repositories\SageApiLogRepository;
-use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
 use App\Traits\TeamHierarchyTrait;
@@ -33,7 +26,6 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use stdClass;
 
 class SageApiService
 {
@@ -183,115 +175,94 @@ class SageApiService
         return $response;
     }
 
-//    public function documentsPushedToERP($sendUpdateRequest, $preparedData)
-//    {
-//        $customerTotalSteps = 4;
-//        $stepsAsPerType = [
-//            SageEnum::SUT_NORMAL => 13,
-//            SageEnum::SUT_REVE_CORR => 21,
-//        ];
-//
-//        $customerTotalSteps = in_array($preparedData['sendUpdateType'], array_keys($stepsAsPerType)) ? $stepsAsPerType[$preparedData['sendUpdateType']] : $customerTotalSteps;
-//        $sageCustomerNumber = $this->sageCustomer($preparedData['quoteType'], $preparedData['quoteDetails'], $customerTotalSteps);
-//        // TODO: Check new customer number verification function
-//        /*$sageCustomerNumber = $this->verifySageCustomer(
-//            $quote->customer_id,
-//            ['quoteTypeId' => $preparedData['quoteType'], 'id' => $quote->id],
-//            $quote,
-//            $customerTotalSteps
-//        );*/
-//
-//        if (! $sageCustomerNumber) {
-//            logger()->error('Book Update - Customer not found in ERP. QuoteType: '.$preparedData['quoteType'].' - QuoteUUID: '.$preparedData['quoteDetails']['uuid'].' - SendUpdateUUID: '.$preparedData['sendUpdateLog']['uuid']);
-//
-//            return ['status' => false, 'message' => 'Customer not found in ERP'];
-//        }
-//
-//        $sageRequestPayload = SagePayloadFactory::sagePayLoad($preparedData['quoteType'], $preparedData['quoteDetails'], $preparedData['payment'], $preparedData['splitPayments']);
-//        $sageRequestPayload->customerId = $sageCustomerNumber;
-//
-//        $checkERPPayloadValidations = $this->checkRequiredSageIds($sageRequestPayload);
-//        if (! $checkERPPayloadValidations['status']) {
-//            logger()->error('Book Update - '.$checkERPPayloadValidations['message'].'. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$preparedData['sendUpdateLog']['uuid']);
-//
-//            return $checkERPPayloadValidations;
-//        }
-//
-//        $quoteModelObject = ! empty($preparedData['sendUpdateLog']) ? $preparedData['sendUpdateLog'] : $preparedData['quoteDetails'];
-//        $sageLogArray = [];
-//
-//        switch ($preparedData['sendUpdateType']) {
-//            case SageEnum::SUT_NORMAL:
-//                $sageLogArray = $quoteModelObject->sageApiLogs?->whereNotIn('entry_type', [
-//                    SageEnum::SRT_GET_AR_INVOICE,
-//                    SageEnum::SRT_GET_AP_INVOICE,
-//                    SageEnum::SCT_REVERSAL,
-//                    SageEnum::SCT_CORRECTION,
-//                ])->keyBy('step')->toArray();
-//                break;
-//
-//            case SageEnum::SUT_REVE_CORR:
-//                $getPaymentByInsurerInvoiceNumber = PaymentRepository::getPaymentByInsurerInvoiceNumber($preparedData['quoteDetails'], $sendUpdateRequest->reversalInvoice);
-//                if ($getPaymentByInsurerInvoiceNumber->send_update_log_id !== null) {
-//                    $getReverseInvoiceRelation = [
-//                        'section_type' => $quoteModelObject->getMorphClass(),
-//                        'section_id' => $getPaymentByInsurerInvoiceNumber->send_update_log_id,
-//                    ];
-//                } else {
-//                    $getReverseInvoiceRelation = [
-//                        'section_type' => $getPaymentByInsurerInvoiceNumber->paymentable_type,
-//                        'section_id' => $getPaymentByInsurerInvoiceNumber->paymentable_id,
-//                    ];
-//                }
-//
-//                $getReverseInvoicesLogs = SageApiLog::where($getReverseInvoiceRelation)
-//                    ->whereNotIn('entry_type', [
-//                        SageEnum::SRT_GET_AR_INVOICE,
-//                        SageEnum::SRT_GET_AP_INVOICE,
-//                        SageEnum::SCT_REVERSAL,
-//                        SageEnum::SCT_CORRECTION,
-//                    ])->orderBy('step')->get()->toArray();
-//
-//                // Sage Logs for Reverse and Correction
-//                $sageLogArray = $quoteModelObject->sageApiLogs?->whereIn('entry_type', [
-//                    SageEnum::SRT_GET_AR_INVOICE,
-//                    SageEnum::SRT_GET_AP_INVOICE,
-//                    SageEnum::SCT_REVERSAL,
-//                    SageEnum::SCT_CORRECTION,
-//                ])->keyBy('step')->toArray();
-//
-//                info('Book Update - Fetching Invoices for Reverse and Correction from Sage APIs Logs');
-//                $preparedData['invoicesForReverse'] = collect($getReverseInvoicesLogs)->filter(function ($sageApiLog) {
-//                    return in_array($sageApiLog['sage_request_type'], [
-//                        SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
-//                        SageEnum::SRT_CREATE_AR_SPPAY_INV,
-//                        SageEnum::SRT_CREATE_AP_PREM_INV,
-//                        SageEnum::SRT_CREATE_AP_SPPAY_INV,
-//                        SageEnum::SRT_CREATE_AR_DISC_INV,
-//                    ]) && $sageApiLog['status'] == 'success';
-//                })->values()->toArray();
-//
-//                if (empty($preparedData['invoicesForReverse'])) {
-//                    logger()->error('Book Update - No Invoices found for Reverse and Correction');
-//
-//                    return ['status' => false, 'message' => 'No Invoices found for Reverse and Correction'];
-//                }
-//
-//                break;
-//        }
-//
-//        // TODO: Need to update with default Queue
-//        dispatch(new SendUpdateSageJob(
-//            $preparedData,
-//            $sageRequestPayload,
-//            $sageLogArray,
-//            auth()->user(),
-//        ))->onQueue('sageQueue');
-//
-//        info('Book Update - Sage Job Dispatched. QuoteType: '.$preparedData['quoteType'].' - QuoteUUID: '.$preparedData['quoteDetails']['uuid'].' - SendUpdateUUID: '.$preparedData['sendUpdateLog']['uuid']);
-//
-//        return ['status' => true, 'message' => SageEnum::SAGE_REQUEST_BEING_PROCESS];
-//    }
+    public function sendUpdateSageLogs($sendUpdateRequest, $sendUpdateLog): array
+    {
+        $sageLogsArray = $reversalInvoiceLogs = [];
+        $sendUpdateCategory = $sendUpdateLog?->category?->code;
+        if (in_array($sendUpdateCategory, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
+            info('fn:sendUpdateSageLogs - Fetching logs for non CPD Endorsement - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            $sageLogsArray = $sendUpdateLog->sageApiLogs?->whereNotIn('entry_type', [
+                SageEnum::SRT_GET_AR_INVOICE,
+                SageEnum::SRT_GET_AP_INVOICE,
+                SageEnum::SCT_REVERSAL,
+                SageEnum::SCT_CORRECTION,
+            ])->keyBy('step')->toArray();
+        }
+
+        if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD) {
+            info('fn:sendUpdateSageLogs - Fetching logs for CPD Endorsement - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            //            TODO:: This quoteDetails calls twice, we should post in sageProcess as well, Need to review on this
+
+            $quoteModelObject = $this->getModelObject($sendUpdateRequest->quoteType);
+            $quoteDetails = $quoteModelObject::where('id', $sendUpdateRequest->quoteRefId)->first();
+            $getPaymentByInsurerInvoiceNumber = PaymentRepository::getPaymentByInsurerInvoiceNumber($quoteDetails, $sendUpdateRequest->reversalInvoice);
+            if ($getPaymentByInsurerInvoiceNumber->send_update_log_id !== null) {
+                $getReverseInvoiceRelation = [
+                    'section_type' => $sendUpdateLog->getMorphClass(),
+                    'section_id' => $getPaymentByInsurerInvoiceNumber->send_update_log_id,
+                ];
+            } else {
+                $getReverseInvoiceRelation = [
+                    'section_type' => $getPaymentByInsurerInvoiceNumber->paymentable_type,
+                    'section_id' => $getPaymentByInsurerInvoiceNumber->paymentable_id,
+                ];
+            }
+
+            $getReverseInvoicesLogs = SageApiLog::where($getReverseInvoiceRelation)
+                ->whereNotIn('entry_type', [
+                    SageEnum::SRT_GET_AR_INVOICE,
+                    SageEnum::SRT_GET_AP_INVOICE,
+                    SageEnum::SCT_REVERSAL,
+                    SageEnum::SCT_CORRECTION,
+                ])->orderBy('step')->get()->toArray();
+
+            info('fn:sendUpdateSageLogs - Fetching reversal invoice logs for reverse and correction');
+            $reversalInvoiceLogs = collect($getReverseInvoicesLogs)->filter(function ($sageApiLog) {
+                return in_array($sageApiLog['sage_request_type'], [
+                    SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
+                    SageEnum::SRT_CREATE_AR_SPPAY_INV,
+                    SageEnum::SRT_CREATE_AP_PREM_INV,
+                    SageEnum::SRT_CREATE_AP_SPPAY_INV,
+                    SageEnum::SRT_CREATE_AR_DISC_INV,
+                ]) && $sageApiLog['status'] == SageEnum::STATUS_SUCCESS;
+            })->values()->toArray();
+
+            if (empty($reversalInvoiceLogs)) {
+                logger()->error('fn:sendUpdateSageLogs - Reversal invoice logs not found for reverse and correction');
+            }
+
+            $sageLogsArray = $sendUpdateLog->sageApiLogs?->whereIn('entry_type', [
+                SageEnum::SRT_GET_AR_INVOICE,
+                SageEnum::SRT_GET_AP_INVOICE,
+                SageEnum::SCT_REVERSAL,
+                SageEnum::SCT_CORRECTION,
+            ])->keyBy('step')->toArray();
+        }
+
+        return [$sageLogsArray, $reversalInvoiceLogs];
+    }
+
+    public function bookEndorsementOnSage($endorsementPreparedPayload)
+    {
+        [$request, $sendUpdateLog,  $sageRequestPayload, $preparedData] = $endorsementPreparedPayload;
+        info('fn:bookEndorsementOnSage - Endorsement Booking Start - QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+
+        $sendUpdateCategory = $sendUpdateLog?->category?->code;
+        [$sageLogsArray, $reversalInvoiceLogs] = $this->sendUpdateSageLogs($request, $sendUpdateLog);
+        //        TODO:: Need to add check if CPD and didn't get reversal logs then return error
+
+        if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD && ! empty($reversalInvoiceLogs)) {
+            $this->bookReversalEndorsementSage($preparedData, $sageRequestPayload, $sageLogsArray);
+        } else {
+            $this->bookStraightEndorsementSage($preparedData, $sageRequestPayload, $sageLogsArray);
+        }
+
+        info('fn:bookEndorsementOnSage - Endorsement Booking Successfully Completed. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+    }
+
+    public function bookStraightEndorsementSage($preparedData, $sageRequestPayload, $sageLogsArray) {}
+
+    public function bookReversalEndorsementSage($preparedData, $sageRequestPayload, $sageLogsArray) {}
 
     public function handleStraightDocumentsERP($preparedDataForERP, $sageRequestPayload, $sageLogArray)
     {
