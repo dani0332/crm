@@ -168,7 +168,7 @@ class CycleQuoteController extends Controller
 
         $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($quote->id, QuoteTypes::CYCLE->name);
 
-        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote->id, QuoteTypes::CYCLE->id(), $quoteStatuses);
+        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::CYCLE->id(), $quoteStatuses);
 
         if (AMLService::checkAMLStatusFailed(QuoteTypes::CYCLE->id(), $quote->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
