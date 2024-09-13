@@ -52,7 +52,7 @@ class InstantChatConsolidatedExport implements FromArray, WithHeadings, WithMapp
     }
 
     public function map($chat): array
-    {
+    {   
         return [
             $chat['quote_type'] ?? 'N/A', // 'QUOTE TYPE'
             $chat['code'] ?? 'N/A', // 'REF ID'
@@ -84,10 +84,16 @@ class InstantChatConsolidatedExport implements FromArray, WithHeadings, WithMapp
     private function formatCommunicationChannel($channel)
     {
 
-        if ($channel instanceof \MongoDB\Model\BSONArray) {
+
+        if ($channel instanceof \MongoDB\Model\BSONDocument || $channel instanceof \MongoDB\Model\BSONArray) {
             $channel = $channel->getArrayCopy();
         }
-
-        return implode(', ', $channel) ?? 'N/A';
+        // Ensure $channel is an array and not empty before attempting to implode
+        if (is_array($channel) && !empty($channel)) {
+            return implode(', ', $channel);
+        }
+        
+        // Fallback to 'N/A' if the array is empty or if $channel is not an array
+        return 'N/A';
     }
 }

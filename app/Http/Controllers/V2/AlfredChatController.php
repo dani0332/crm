@@ -50,12 +50,13 @@ class AlfredChatController extends Controller
                 'cqrd.chat_initiated_at',
                 'qb.name as quote_batch_id_text',
                 'lu.text as transaction_type_text',
+                'qt.name as segment',
                 'ps.text AS payment_status_id_text',
                 'cqpd.provider_name',
                 'cti.text as plan_type',
                 'cqpd.plan_name',
                 'cqpd.actual_premium as total_price',
-                // 'ps.created_at AS payment_created_at',
+                'ps.created_at AS payment_created_at',
                 'cqr.paid_at',
                 'cqr.payment_paid_at',
                 'ep.display_name',
@@ -65,6 +66,10 @@ class AlfredChatController extends Controller
                     ->where('py.paymentable_type', '=', CarQuote::class);
             })
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
+            ->leftJoin('quote_tags as qt', function($join){
+                $join->on('qt.quote_uuid', '=', 'cqr.uuid')
+                    ->where('qt.quote_type_id', '=', CarQuote::class);
+            })
             ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
             ->leftJoin('lookups as lu', 'lu.id', '=', 'cqr.transaction_type_id')
             ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
@@ -78,11 +83,12 @@ class AlfredChatController extends Controller
                     ->whereColumn('cqr.plan_id', '=', 'cqpd.plan_id');
             })
             ->leftJoin('embedded_transactions as e', function ($join) {
-                $join->on('cqr.id', '=', 'e.quote_request_id')
+                $join->on('e.quote_request_id', '=', 'cqr.id')
                     ->where('e.quote_request_type', '=', CarQuote::class);
             })
             ->leftJoin('embedded_product_options as po', 'po.id', '=', 'e.product_id')
-            ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id');
+            ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id')
+            ->groupBy('cqr.id');
 
         $this->healthQuery = DB::table('health_quote_request as hqr')->select(
             'hqr.id',
@@ -101,6 +107,7 @@ class AlfredChatController extends Controller
             'hp.plan_type_id as plan_type_id',
             'qb.name as quote_batch_id_text',
             'lu.text as transaction_type_text',
+            'qt.name as segment',
             'ps.text AS payment_status',
             'ihp.text as provider_name',
             'hpt.text as plan_type',
@@ -116,6 +123,10 @@ class AlfredChatController extends Controller
                 $join->on('py.paymentable_id', '=', 'hqr.id')
                     ->where('py.paymentable_type', '=', HealthQuote::class);
             })
+            ->leftJoin('quote_tags as qt', function($join){
+                $join->on('qt.quote_uuid', '=', 'cqr.uuid')
+                    ->where('qt.quote_type_id', '=', HealthQuote::class);
+            })
             ->leftJoin('health_plan_type as hpt', 'hpt.id', '=', 'hqr.health_plan_type_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
             ->leftJoin('lookups as lu', 'lu.id', '=', 'hqr.transaction_type_id')
@@ -130,7 +141,8 @@ class AlfredChatController extends Controller
                     ->where('e.quote_request_type', '=', HealthQuote::class);
             })
             ->leftJoin('embedded_product_options as po', 'po.id', '=', 'e.product_id')
-            ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id');
+            ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id')
+            ->groupBy('hqr.id');
 
         $this->travelQuery = TravelQuote::as('tqr')->select(
             'tqr.id',
@@ -147,6 +159,7 @@ class AlfredChatController extends Controller
             'tpip.text AS travel_plan_provider_text',
             'qb.name as quote_batch_id_text',
             'lu.text as transaction_type_text',
+            'qt.name as segment',
             'ps.text AS payment_status',
             'tqpd.provider_name',
             // missing plan_type
@@ -161,6 +174,10 @@ class AlfredChatController extends Controller
         ->leftJoin('payments as py', function ($join) {
             $join->on('py.paymentable_id', '=', 'tqr.id')
                 ->where('py.paymentable_type', '=', TravelQuote::class);
+        })
+        ->leftJoin('quote_tags as qt', function($join){
+            $join->on('qt.quote_uuid', '=', 'cqr.uuid')
+                ->where('qt.quote_type_id', '=', TravelQuote::class);
         })
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
             ->leftJoin('lookups as lu', 'lu.id', '=', 'tqr.transaction_type_id')
@@ -178,7 +195,8 @@ class AlfredChatController extends Controller
                     ->whereColumn('tqr.plan_id', '=', 'tqpd.plan_id');
             })
             ->leftJoin('embedded_product_options as po', 'po.id', '=', 'e.product_id')
-            ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id');
+            ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id')
+            ->groupBy('tqr.id');
     }
 
     /**
