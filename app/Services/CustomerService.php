@@ -186,7 +186,7 @@ class CustomerService extends BaseService
                         $removeEmail->delete();
                     }
 
-                }else{
+                } else {
 
                     $getCustomerAdditionalContact = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
                         ->get();
