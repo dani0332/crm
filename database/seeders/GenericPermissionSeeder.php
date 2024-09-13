@@ -664,7 +664,7 @@ class GenericPermissionSeeder extends Seeder
         try {
             $motorHeadRole->syncPermissions($carManagerRole->permissions);
         } catch (\Exception $e) {
-            Log::error('Error assigning permissions to Motor Head role: ' . $e->getMessage());
+            Log::error('Error assigning permissions to Motor Head role: '.$e->getMessage());
         }
     }
 
@@ -743,9 +743,9 @@ class GenericPermissionSeeder extends Seeder
             );
 
             if ($travelSicAllocationPermission->wasRecentlyCreated) {
-                Log::info('Permission created: ' . PermissionsEnum::TRAVEL_SIC_ALLOCATION);
+                Log::info('Permission created: '.PermissionsEnum::TRAVEL_SIC_ALLOCATION);
             } else {
-                Log::info('Permission already exists: ' . PermissionsEnum::TRAVEL_SIC_ALLOCATION);
+                Log::info('Permission already exists: '.PermissionsEnum::TRAVEL_SIC_ALLOCATION);
             }
 
             $roles = [RolesEnum::TravelManager, RolesEnum::LeadPool];
@@ -753,12 +753,13 @@ class GenericPermissionSeeder extends Seeder
             foreach ($roles as $roleName) {
                 $role = Role::where('name', $roleName)->first();
 
-                if (!$role) {
+                if (! $role) {
                     Log::warning("Role not found: {$roleName}");
+
                     continue;
                 }
 
-                if (!$role->hasPermissionTo($travelSicAllocationPermission)) {
+                if (! $role->hasPermissionTo($travelSicAllocationPermission)) {
                     $role->givePermissionTo($travelSicAllocationPermission);
                     Log::info("Permission {$travelSicAllocationPermission->name} assigned to role {$roleName}");
                 } else {
@@ -766,7 +767,7 @@ class GenericPermissionSeeder extends Seeder
                 }
             }
         } catch (\Exception $e) {
-            Log::error('Error while assigning permission: ' . $e->getMessage(), [
+            Log::error('Error while assigning permission: '.$e->getMessage(), [
                 'exception' => $e,
             ]);
         }
