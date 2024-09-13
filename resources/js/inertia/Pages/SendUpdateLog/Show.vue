@@ -42,7 +42,6 @@ const props = defineProps({
 const page = usePage();
 const notification = useToast();
 const modelClass = 'App\\Models\\SendUpdateLog';
-
 const { isRequired } = useRules();
 
 const state = reactive({

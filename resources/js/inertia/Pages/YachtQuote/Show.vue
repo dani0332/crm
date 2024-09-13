@@ -972,6 +972,7 @@ const onAddUpdate = () => {
       :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
+      :modelClass="modelClass"
     />
 
     <SendUpdates
@@ -991,5 +992,10 @@ const onAddUpdate = () => {
     />
 
     <LeadHistory :quote="$page.props.quote" :expanded="sectionExpanded" />
+
+    <lead-raw-data
+      :modelType="'Yacht'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

@@ -1,5 +1,6 @@
 <script setup>
 import NProgress from 'nprogress';
+const { copy, copied } = useClipboard();
 const props = defineProps({
   quoteType: {
     required: true,
@@ -28,20 +29,19 @@ const sageAPILogs = reactive({
   data: [],
   loader: false,
   table: [
-    { text: 'Id', value: 'id' },
+    { text: 'user', value: 'user' },
     { text: 'Request Type', value: 'sage_request_type' },
     { text: 'API End Point', value: 'sage_end_point' },
     { text: 'Request Payload', value: 'sage_payload' },
     { text: 'Request Response', value: 'response' },
     { text: 'Request Status', value: 'status' },
     { text: 'Logged At', value: 'created_at' },
+    { text: 'Updated At', value: 'updated_at' },
   ],
 });
 
 const isSageLogButtonEnable = computed(() => {
-  return (
-    can(props.permissionsEnum.VIEW_SAGE_API_LOGS) && sageAPILogs.data.length > 0
-  );
+  return can(props.permissionsEnum.VIEW_SAGE_API_LOGS);
 });
 
 const fetchSageAPILogs = async () => {
@@ -87,9 +87,21 @@ const showSageAPILogs = async () => {
   }
 };
 
-onBeforeMount(() => {
+const copyToClipboard = item => {
+  if (item.endpoint) delete item.endpoint;
+  if (item.payload) delete item.payload;
+  console.log(item);
+  copy(item);
+  if (copied)
+    notification.success({
+      title: 'Copied to clipboard!',
+      position: 'top',
+    });
+};
+
+/*onBeforeMount(() => {
   fetchSageAPILogs();
-});
+});*/
 </script>
 
 <template>
@@ -139,8 +151,52 @@ onBeforeMount(() => {
         :rows-per-page="15"
         :hide-footer="sageAPILogs.data?.length < 15"
       >
+        <template #item-user="{ user }">
+          {{ user.name }}
+        </template>
+        <template #item-sage_request_type="{ sage_request_type }">
+          {{ sage_request_type.substr(0, 10) }}
+          <x-icon
+            v-if="sage_request_type"
+            @click.prevent="copyToClipboard(sage_request_type)"
+            icon="copy"
+            class="text-primary"
+            size="md"
+          />
+        </template>
+        <template #item-sage_end_point="{ sage_end_point }">
+          {{ sage_end_point.substr(0, 10) }}
+          <x-icon
+            v-if="sage_end_point"
+            @click.prevent="copyToClipboard(sage_end_point)"
+            icon="copy"
+            class="text-primary"
+            size="md"
+          />
+        </template>
+        <template #item-sage_payload="{ sage_payload }">
+          {{ sage_payload.substr(0, 20) }}
+          <x-icon
+            @click.prevent="copyToClipboard(sage_payload)"
+            icon="copy"
+            class="text-primary"
+            size="md"
+          />
+        </template>
+        <template #item-response="{ response }">
+          {{ response.substr(0, 20) }}
+          <x-icon
+            @click.prevent="copyToClipboard(response)"
+            icon="copy"
+            class="text-primary"
+            size="md"
+          />
+        </template>
         <template #item-created_at="{ created_at }">
           {{ dateFormat(created_at).value }}
+        </template>
+        <template #item-updated_at="{ updated_at }">
+          {{ dateFormat(updated_at).value }}
         </template>
       </DataTable>
     </x-modal>

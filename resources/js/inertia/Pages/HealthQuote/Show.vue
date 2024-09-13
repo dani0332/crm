@@ -65,6 +65,7 @@ const props = defineProps({
   paymentDocument: Array,
   noteDocumentType: Array,
 });
+const modelClass = 'App\\Models\\HealthQuote';
 
 const isManualPlansCount = ref(0);
 const modelClass = 'App\\Models\\HealthQuote';
@@ -3638,6 +3639,7 @@ const onAddUpdate = () => {
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+      :modelClass="modelClass"
     />
 
     <SendUpdates
@@ -3887,5 +3889,10 @@ const onAddUpdate = () => {
       v-if="clientInquiryLogs?.length > 0"
       :logs="clientInquiryLogs"
     />
+
+    <lead-raw-data
+      :modelType="'Health'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

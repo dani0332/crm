@@ -64,6 +64,7 @@ defineProps({
   isAmlClearedForQuote: Boolean,
 });
 
+const modelClass = 'App\\Models\\TravelQuote';
 const permissionEnum = page.props.permissionsEnum;
 const permissionsEnum = page.props.permissionsEnum;
 const leadSource = page.props.leadSource;
@@ -3061,6 +3062,7 @@ const onAddUpdate = () => {
       :payments="payments"
       :expanded="sectionExpanded"
       :isAmlClearedForQuote="isAmlClearedForQuote"
+      :modelClass="modelClass"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -3335,6 +3337,11 @@ const onAddUpdate = () => {
       :quoteType="'TRAVEL'"
       :expanded="sectionExpanded"
     />
+
+    <lead-raw-data
+      :modelType="'Travel'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>
 <style>

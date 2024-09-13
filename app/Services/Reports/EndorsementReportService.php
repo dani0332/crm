@@ -110,6 +110,7 @@ class EndorsementReportService extends ManagementReport
                 'btoi.text as sub_type_line_of_business',
                 'l.text as endorsement_sub_type',
                 'send_update_logs.booking_date',
+                DB::raw('IFNULL(send_update_logs.insurer_commission_invoice_number, p.insurer_commmission_invoice_number) as insurer_commmission_invoice_number'),
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -184,6 +185,7 @@ class EndorsementReportService extends ManagementReport
                 'btoi.text as sub_type_line_of_business',
                 'l.text as endorsement_sub_type',
                 'send_update_logs.booking_date',
+                DB::raw('IFNULL(CONCAT(p.insurer_commmission_invoice_number, "-REV"), IFNULL(CONCAT(send_update_logs.insurer_commission_invoice_number, "-REV"), null)) as insurer_commmission_invoice_number'),
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -318,6 +320,7 @@ class EndorsementReportService extends ManagementReport
             'Booking Date',
             'Endorsement Sub-Type',
             'SU Ref-ID',
+            'Commission Tax Invoice Number',
         ];
     }
 
@@ -357,6 +360,7 @@ class EndorsementReportService extends ManagementReport
             $quote->booking_date ?? 'N/A',
             $quote->endorsement_sub_type ?? 'N/A',
             $quote->code ?? 'N/A',
+            $quote->insurer_commmission_invoice_number ?? 'N/A',
         ];
     }
 }

@@ -55,6 +55,10 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
+  modelClass: {
+    type: String,
+    default: '',
+  },
 });
 
 const state = reactive({
