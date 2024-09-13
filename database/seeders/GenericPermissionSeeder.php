@@ -18,6 +18,19 @@ class GenericPermissionSeeder extends Seeder
      */
     public function run()
     {
+        // ADD Permission to Access raw query data
+        $quoteRawData = Permission::where('name', PermissionsEnum::QUOTE_RAW_DATA)->first();
+        if (! $quoteRawData) {
+            Permission::create([
+                'name' => PermissionsEnum::QUOTE_RAW_DATA,
+            ]);
+        }
+
+        $role = Role::where('name', RolesEnum::Engineering)->first();
+
+        if (! $role->hasPermissionTo($quoteRawData)) {
+            $role->givePermissionTo($quoteRawData);
+        }
 
         // ADD Permission to Read only Access LOBS
         $readOnlyAccessPermission = Permission::where('name', PermissionsEnum::All_QUOTES_VIEWONLY_ACCESS)->first();
@@ -658,6 +671,9 @@ class GenericPermissionSeeder extends Seeder
     private function syncMasterPermissionList()
     {
         $permissionList = [
+            PermissionsEnum::VIEW_SAGE_API_LOGS => [
+                RolesEnum::Admin,
+            ],
             PermissionsEnum::ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION => [
                 RolesEnum::Admin,
                 RolesEnum::ServiceExecutive,
