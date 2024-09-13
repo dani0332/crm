@@ -210,7 +210,7 @@ class TravelEmailService extends BaseService
         $members = $lead->customerMembers;
         $emailData->totalTravelers = $members->count();
         $emailData->allPlansCount = count($plans->all);
-        $emailData->plans = $this->buildPlansData($emailData->hasPlansGroups, $lead, $plans, $members);
+        $emailData->plans = $this->buildPlansData($emailData->hasPlansGroups, $lead, $plans, $members) ?? [] ;
 
         return $emailData;
     }
