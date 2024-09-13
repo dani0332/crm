@@ -422,7 +422,7 @@ class HandleInertiaRequests extends Middleware
         }
 
         $nav = $nav->addIf(auth()->user()->can(PermissionsEnum::VIEW_LEGACY_DETAILS), 'Legacy Policies', route('legacy-policy.index'));
-        $nav = $nav->addIf(auth()->user()->can(PermissionsEnum::VIEW_BULK_POLICY_BOOKING_LIST), 'Bulk Policy Book', route('bulk-policy-booking.index'));
+        /*$nav = $nav->addIf(auth()->user()->can(PermissionsEnum::VIEW_BULK_POLICY_BOOKING_LIST), 'Bulk Policy Book', route('bulk-policy-booking.index'));*/
 
         if (auth()->user()->can(PermissionsEnum::TeleMarketingList)) {
             $nav = $nav->add('Telemarketing', '', function (Section $section) {
