@@ -199,13 +199,6 @@ class CustomerService extends BaseService
                     }
 
                 }
-                if (! str_ends_with($email, '@insurancemarket.ae') || ! str_ends_with($email, '@afia.ae')) {
-
-                    $removeOldEmail = CustomerAdditionalContact::where('customer_id', $lead->customer_id)->get();
-                    foreach ($removeOldEmail as $removeEmail) {
-                        $removeEmail->delete();
-                    }
-                }
                 // Check if the email ends with the specified domains
                 if (! str_ends_with($email, '@insurancemarket.ae') && ! str_ends_with($email, '@afia.ae')) {
                     $isExist = CustomerAdditionalContact::where('key', 'email')
