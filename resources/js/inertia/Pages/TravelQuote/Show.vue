@@ -72,7 +72,6 @@ const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const quoteStatusEnum = page.props.quoteStatusEnum;
-const modelClass = 'App\\Models\\TravelQuote';
 const checkedItems = ref([]);
 const checkCheckedPlans = computed(() => {
   return true;
@@ -3062,7 +3061,6 @@ const onAddUpdate = () => {
       :payments="payments"
       :expanded="sectionExpanded"
       :isAmlClearedForQuote="isAmlClearedForQuote"
-      :modelClass="modelClass"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

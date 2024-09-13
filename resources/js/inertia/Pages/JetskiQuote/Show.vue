@@ -44,7 +44,6 @@ onMounted(() => {
 });
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
-const modelClass = 'App\\Models\\PersonalQuote';
 
 const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
   createReusableTemplate();

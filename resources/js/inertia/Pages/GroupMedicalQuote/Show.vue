@@ -55,7 +55,6 @@ const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
 const modelClass = 'App\\Models\\BusinessQuote';
 
-const modelClass = 'App\\Models\\BusinessQuote';
 const historyData = ref(null),
   historyLoading = ref(false);
 
@@ -1141,7 +1140,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
-      :modelClass="modelClass"
     />
 
     <SendUpdates

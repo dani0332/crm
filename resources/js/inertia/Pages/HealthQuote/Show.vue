@@ -68,7 +68,6 @@ const props = defineProps({
 const modelClass = 'App\\Models\\HealthQuote';
 
 const isManualPlansCount = ref(0);
-const modelClass = 'App\\Models\\HealthQuote';
 
 const page = usePage();
 const authId = computed(() => page.props.auth.user.id);
@@ -3639,7 +3638,6 @@ const onAddUpdate = () => {
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
-      :modelClass="modelClass"
     />
 
     <SendUpdates

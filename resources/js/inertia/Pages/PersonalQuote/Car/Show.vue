@@ -3661,7 +3661,6 @@ const onAddUpdate = () => {
       :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
-      :modelClass="modelClass"
     />
 
     <SendUpdates

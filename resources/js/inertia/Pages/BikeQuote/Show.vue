@@ -78,7 +78,6 @@ const leadSource = page.props.leadSource;
 const notification = useToast();
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
-const modelClass = 'App\\Models\\PersonalQuote';
 
 const bike_current_insurance_status = computed(() => {
   if (
@@ -434,52 +433,55 @@ const fetchUpdatedQuote = async () => {
         <h2 class="text-lg font-semibold text-primary-800">E-COM Detail</h2>
       </div>
       <x-divider class="my-4" />
-          <div class="text-sm">
-              <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">PRICE</dt>
-                      <dd>{{ quote?.premium ?? '' }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">PAID AT</dt>
-                      <dd>{{ quote?.paid_at ?? '' }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">PAYMENT STATUS</dt>
-                      <dd>{{ quote?.payment_status?.text }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">PROVIDER NAME</dt>
-                      <dd>{{quote?.car_plan?.insurance_provider?.text}}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">PAYMENT METHOD</dt>
-                      <dd>{{quote?.payments[0]?.payment_method?.name}}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">PLAN NAME</dt>
-                      <dd>{{ quote?.car_plan?.text }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">ECOMMERCE</dt>
-                      <dd>{{ quote?.is_ecommerce == 1 ? 'Yes' : 'No' }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">QUOTE LINK</dt>
-                      <dd>{{ quote?.quote_link ?? '' }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">ORDER REFERENCE</dt>
-                      <dd>{{ quote?.payments[0]?.reference ?? '' }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">PAYMENT REFERENCE</dt>
-                      <dd>{{ quote?.payments[0]?.code ?? '' }}</dd>
-                  </div>
-              </dl>
-              <AddOn v-if="bikeQuotePlanAddons.length > 0" :quotePlanAddons="bikeQuotePlanAddons" />
+      <div class="text-sm">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PRICE</dt>
+            <dd>{{ quote?.premium ?? '' }}</dd>
           </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PAID AT</dt>
+            <dd>{{ quote?.paid_at ?? '' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PAYMENT STATUS</dt>
+            <dd>{{ quote?.payment_status?.text }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PROVIDER NAME</dt>
+            <dd>{{ quote?.car_plan?.insurance_provider?.text }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PAYMENT METHOD</dt>
+            <dd>{{ quote?.payments[0]?.payment_method?.name }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PLAN NAME</dt>
+            <dd>{{ quote?.car_plan?.text }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ECOMMERCE</dt>
+            <dd>{{ quote?.is_ecommerce == 1 ? 'Yes' : 'No' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">QUOTE LINK</dt>
+            <dd>{{ quote?.quote_link ?? '' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ORDER REFERENCE</dt>
+            <dd>{{ quote?.payments[0]?.reference ?? '' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PAYMENT REFERENCE</dt>
+            <dd>{{ quote?.payments[0]?.code ?? '' }}</dd>
+          </div>
+        </dl>
+        <AddOn
+          v-if="bikeQuotePlanAddons.length > 0"
+          :quotePlanAddons="bikeQuotePlanAddons"
+        />
       </div>
+    </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
@@ -1322,7 +1324,6 @@ const fetchUpdatedQuote = async () => {
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
-      :modelClass="modelClass"
     />
 
     <EmailStatus :emailStatuses="emailStatuses" />

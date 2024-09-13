@@ -58,8 +58,6 @@ const modals = reactive({
   docConfirm: false,
 });
 
-const modelClass = 'App\\Models\\LifeQuote';
-
 const rules = {
   isRequired: v => !!v || 'This field is required',
 };
@@ -1367,7 +1365,6 @@ const onAddUpdate = () => {
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
-      :modelClass="modelClass"
     />
 
     <SendUpdates
