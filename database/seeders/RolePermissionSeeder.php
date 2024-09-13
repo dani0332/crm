@@ -16,10 +16,14 @@ class RolePermissionSeeder extends Seeder
      */
     public function run(): void
     {
+        try {
         $quoteRawData = Permission::where('name', PermissionsEnum::QUOTE_RAW_DATA)->first();
         if (! $quoteRawData) {
             Permission::create([
                 'name' => PermissionsEnum::QUOTE_RAW_DATA,
+                'guard_name' => 'web',
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         }
 
@@ -58,6 +62,9 @@ class RolePermissionSeeder extends Seeder
         if (! $paymentSummaryPermission) {
             Permission::create([
                 'name' => PermissionsEnum::MANAGER_AUTHORISED_PAYMENT_SUMMARY,
+                'guard_name' => 'web',
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         }
 
@@ -65,7 +72,15 @@ class RolePermissionSeeder extends Seeder
         if (! $migrateInslyLead) {
             Permission::create([
                 'name' => PermissionsEnum::MIGRATE_INSLY_LEAD,
+                'guard_name' => 'web',
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
+        }
+
+        } catch (\Throwable $th) {
+            info("RolePermission Seeder issue Error:" . $th->getMessage()." Line:" . $th->getLine());
+            throw $th;
         }
     }
 }
