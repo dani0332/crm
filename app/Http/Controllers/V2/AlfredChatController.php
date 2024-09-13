@@ -66,7 +66,7 @@ class AlfredChatController extends Controller
                     ->where('py.paymentable_type', '=', CarQuote::class);
             })
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
-            ->leftJoin('quote_tags as qt', function($join){
+            ->leftJoin('quote_tags as qt', function ($join) {
                 $join->on('qt.quote_uuid', '=', 'cqr.uuid')
                     ->where('qt.quote_type_id', '=', CarQuote::class);
             })
@@ -123,7 +123,7 @@ class AlfredChatController extends Controller
                 $join->on('py.paymentable_id', '=', 'hqr.id')
                     ->where('py.paymentable_type', '=', HealthQuote::class);
             })
-            ->leftJoin('quote_tags as qt', function($join){
+            ->leftJoin('quote_tags as qt', function ($join) {
                 $join->on('qt.quote_uuid', '=', 'cqr.uuid')
                     ->where('qt.quote_type_id', '=', HealthQuote::class);
             })
@@ -169,16 +169,16 @@ class AlfredChatController extends Controller
             'tqr.payment_paid_at',
             // 'ps.created_at AS payment_created_at',
             'ep.display_name',
-            
-        )   
-        ->leftJoin('payments as py', function ($join) {
-            $join->on('py.paymentable_id', '=', 'tqr.id')
-                ->where('py.paymentable_type', '=', TravelQuote::class);
-        })
-        ->leftJoin('quote_tags as qt', function($join){
-            $join->on('qt.quote_uuid', '=', 'cqr.uuid')
-                ->where('qt.quote_type_id', '=', TravelQuote::class);
-        })
+
+        )
+            ->leftJoin('payments as py', function ($join) {
+                $join->on('py.paymentable_id', '=', 'tqr.id')
+                    ->where('py.paymentable_type', '=', TravelQuote::class);
+            })
+            ->leftJoin('quote_tags as qt', function ($join) {
+                $join->on('qt.quote_uuid', '=', 'cqr.uuid')
+                    ->where('qt.quote_type_id', '=', TravelQuote::class);
+            })
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
             ->leftJoin('lookups as lu', 'lu.id', '=', 'tqr.transaction_type_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
