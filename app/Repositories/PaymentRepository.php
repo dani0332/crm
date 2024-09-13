@@ -15,6 +15,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Interfaces\PaymentRepositoryInterface;
+use App\Models\BrokerInvoiceNumber;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
@@ -25,6 +26,7 @@ use App\Services\PaymentLinkService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -653,11 +655,21 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $insuranceProvider = $payment?->insuranceProvider;
         }
 
-        $insuranceProviderCode = $insuranceProvider?->code;
-        $latestBINByInsurer = Payment::whereNotNull('broker_invoice_number')->where('insurance_provider_id', $insuranceProvider->id)->orderBy('updated_at', 'desc')->first()?->broker_invoice_number;
-        $insuranceProviderLeadCount = (int) str_replace($insuranceProviderCode, '', $latestBINByInsurer) + 1;
+        $currentDate = Carbon::now();
+        $invoiceBrokerSequence = BrokerInvoiceNumber::firstOrCreate([
+            'insurance_provider_id' => $insuranceProvider->id,
+            'date' => $currentDate->format('Y-m'),
+        ], [
+            'insurance_provider_id' => $insuranceProvider->id,
+            'date' => $currentDate->format('Y-m'),
+            'sequence_number' => 1,
+        ]
+        );
 
-        return $insuranceProviderCode.$insuranceProviderLeadCount;
+        $currentSequence = $invoiceBrokerSequence->sequence_number;
+        $insuranceProviderCode = $insuranceProvider?->code;
+
+        return 'AFIA/'.$insuranceProviderCode.'/'.$currentDate->format('Y').'/'.$currentDate->format('m').'/'.$currentSequence;
     }
     public function generateInvoiceDescription($payment, $quoteType, $record): string
     {
