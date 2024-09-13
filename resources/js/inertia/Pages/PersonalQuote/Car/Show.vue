@@ -107,6 +107,8 @@ const selectedProviderPlan = ref({
   premium: page.props.record.premium,
 });
 
+const modelClass = 'App\\Models\\CarQuote';
+
 /*
 * comment for now, will be used in later after confirmation
 
@@ -3659,6 +3661,7 @@ const onAddUpdate = () => {
       :quoteType="quoteType"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
+      :modelClass="modelClass"
     />
 
     <SendUpdates
@@ -4027,14 +4030,14 @@ const onAddUpdate = () => {
     />
   </div>
   <AuditLogs
-    :type="'App\\Models\\CarQuote'"
+    :type="modelClass"
     :id="$page.props.record.id"
     :quoteCode="$page.props.record.code"
     :expanded="sectionExpanded"
   />
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
-    :type="'App\\Models\\CarQuote'"
+    :type="modelClass"
     :id="$page.props.record.id"
     :expanded="sectionExpanded"
   />

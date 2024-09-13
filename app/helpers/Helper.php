@@ -16,6 +16,7 @@ use App\Models\CustomerAdditionalInfo;
 use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
+use App\Models\QuoteAdditionalDetail;
 use App\Models\QuoteTag;
 use App\Models\Team;
 use App\Models\TravelQuote;

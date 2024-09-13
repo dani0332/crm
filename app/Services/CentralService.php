@@ -836,6 +836,7 @@ class CentralService
 
     public function lockTransactionStatus($quote, $quoteTypeId, $quoteStatuses)
     {
+        return $quoteStatuses; //Temporary return due to dependency on other enhancement
         $lockLeadStatus = $this->lockLeadSectionsDetails($quote);
         if ($lockLeadStatus['lead_status']) {
             return $quoteStatuses;

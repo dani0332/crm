@@ -60,6 +60,7 @@ const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
+const modelClass = 'App\\Models\\PersonalQuote';
 
 const countDays = useDaysSinceStale(
   props.quoteRequest?.stale_at ?? props.quote?.stale_at,
@@ -970,6 +971,7 @@ const onAddUpdate = () => {
       quoteType="Yacht"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
+      :modelClass="modelClass"
     />
 
     <SendUpdates

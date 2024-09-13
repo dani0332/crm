@@ -41,7 +41,7 @@ const props = defineProps({
 
 const page = usePage();
 const notification = useToast();
-
+const modelClass = 'App\\Models\\SendUpdateLog';
 const { isRequired } = useRules();
 
 const state = reactive({
@@ -558,6 +558,7 @@ const isLegacyPolicy = computed(() => {
       :update-btn="props.updateBtn"
       :uploaded-documents="props.uploadedDocuments"
       :payments="props.payments"
+      :modelClass="modelClass"
       @update-error-status="handleErrorStatusUpdate"
     />
 
