@@ -72,8 +72,7 @@ class SICFollowupEmailJob implements ShouldQueue
                     'quoteUUID' => $lead->uuid,
                     'requestForAdvisor' => $this->quoteType->quoteLink($lead->uuid, ['assignAdvisor' => 'true']),
                     'quoteTypeId' => $this->quoteType->id(),
-                    'quoteUUID' => $lead->uuid,
-                    'refID' => $this->quoteType->quoteLink($lead->uuid),
+                    'refID' => $lead->code,
                     'whatsappConsent' => getWhatsappConsent($this->quoteType, $lead->uuid),
                     'workflowType'=> WorkflowTypeEnum::TRAVEL_SIC_FOLLOWUPS,
                 ];
