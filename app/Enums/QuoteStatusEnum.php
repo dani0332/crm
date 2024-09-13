@@ -73,8 +73,8 @@ final class QuoteStatusEnum extends Enum
     public const PolicyPending = 72;
     public const EarlyRenewal = 73;
     public const PolicyCancelledReissued = 74;
-    public const PolicyBookingQueued = 75;
-    public const PolicyBookingFailed = 76;
+    public const POLICY_BOOKING_QUEUED = 75;
+    public const POLICY_BOOKING_FAILED = 76;
 
     // This is use for lost reason id not for Quote status
     public const LOSTREASONID = 34;
