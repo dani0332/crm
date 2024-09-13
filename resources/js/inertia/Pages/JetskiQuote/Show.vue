@@ -87,11 +87,10 @@ const dateFormat = date =>
               >
                 <x-button size="sm" tag="div">Edit</x-button>
               </Link>
-              <x-button v-else:disabled="isDisabled"size="sm" tag="div"
+              <x-button v-else:disabled="isDisabled" size="sm" tag="div"
                 >Edit</x-button
               >
-
-</LeadEditBtnTemplate>
+            </LeadEditBtnTemplate>
 
             <x-tooltip
               v-if="lockLeadSectionsDetails.lead_details"
@@ -360,7 +359,7 @@ const dateFormat = date =>
       :quoteType="quoteType"
       :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
-    :isAddUpdate="isAddUpdate"
+      :isAddUpdate="isAddUpdate"
     />
 
     <EmbeddedProducts

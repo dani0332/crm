@@ -1190,7 +1190,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 placeholder="Lost Reason is required"
                 class="w-full"
                 :error="leadStatusForm.errors.lostReason"
-              :disabled="lockLeadSectionsDetails.lead_status"
+                :disabled="lockLeadSectionsDetails.lead_status"
               />
             </div>
           </div>

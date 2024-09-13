@@ -381,8 +381,8 @@ const isLegacyPolicy = computed(() => {
                     :disabled="!state.edit"
                     :class="{ 'pointer-events-none': !state.edit }"
                     multiple
-                  :error="isAdditionalFieldError"
-                    />
+                    :error="isAdditionalFieldError"
+                  />
                 </dd>
               </template>
               <template
@@ -409,8 +409,8 @@ const isLegacyPolicy = computed(() => {
                     :options="additionalFieldOptions"
                     size="xs"
                     :disabled="!state.edit"
-                  :error="isAdditionalFieldError"
-                    />
+                    :error="isAdditionalFieldError"
+                  />
                 </dd>
               </template>
               <template
