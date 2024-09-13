@@ -102,7 +102,7 @@ const urls = computed(() => {
         class="flex-col gap-y-6 w-screen flex-1 h-full transition-all lg:pl-[var(--sidebar-width)]"
       >
         <header
-          class="sticky top-0 z-40 flex h-16 w-full shrink-0 items-center border-b bg-white"
+          class="sticky top-0 z-40 flex h-20 w-full shrink-0 items-center border-b bg-white"
         >
           <div
             class="flex items-center justify-between w-full px-2 sm:px-4 md:px-6 lg:px-8"
@@ -131,18 +131,24 @@ const urls = computed(() => {
               </button>
 
               <div id="headerportal"></div>
-              <div class="flex gap-3">
+              <div class="flex gap-3 mt-2">
                 <div
                   class="items-center"
-                  style="border: 1px solid #ebebeb; padding: 5px 5px"
+                  style="border: 1px solid #ebebeb; padding: 5px 5px ; border-radius: 5px ;font-size: 13px"
                 >
-                  Pending Callbacks: {{ pendingActivityCount.pendingCallback }}
+                  Pending Callbacks :
+                    <strong>
+                    {{ pendingActivityCount.pendingCallback }}
+                    </strong>
                 </div>
                 <div
                   class="items-center"
-                  style="border: 1px solid #ebebeb; padding: 5px 5px"
+                  style="border: 1px solid #ebebeb; border-radius: 5px ;padding: 5px 5px ; font-size: 13px"
                 >
-                  Pending Whatsapp: {{ pendingActivityCount.pendingWhatsapp }}
+                  Pending Whatsapp :
+                    <strong>
+                    {{ pendingActivityCount.pendingWhatsapp }}
+                    </strong>
                 </div>
               </div>
             </div>
@@ -155,7 +161,7 @@ const urls = computed(() => {
               <PaymentExpireNotifications />
 
               <!--                ADD BANER HERE-->
-              <x-button class="w-full" size="sm">
+              <x-button class="w-full mt-1" size="sm">
                 <div class="items-center">
                   <Link
                     v-bind:href="urls"

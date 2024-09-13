@@ -21,7 +21,7 @@ const listen = () => {
         quoteUuid: e.quoteUuid,
         title: e.title,
         message: e.message,
-        timeout: 3500,
+        timeout: 10000,
       };
         hideNotificationTimeOut();
     }
