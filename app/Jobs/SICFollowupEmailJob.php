@@ -77,7 +77,7 @@ class SICFollowupEmailJob implements ShouldQueue
                     'whatsappConsent' => getWhatsappConsent($this->quoteType, $lead->uuid),
                     'workflowType'=> WorkflowTypeEnum::TRAVEL_SIC_FOLLOWUPS,
                 ];
-
+                info("SICTravelFollowupEmailJob - Sending webhook request to: {$url} with Ref-ID: {$lead->uuid} | Time:".now());
                 app(BirdService::class)->triggerWebHookRequest($url, (object) $data);
             }
         } else {
