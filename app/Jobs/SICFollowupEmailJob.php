@@ -13,6 +13,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use App\Enums\ApplicationStorageEnums;
 use App\Services\BirdService;
+use App\Enums\WorkflowTypeEnum;
 
 class SICFollowupEmailJob implements ShouldQueue
 {
@@ -66,6 +67,7 @@ class SICFollowupEmailJob implements ShouldQueue
                 $data = [
                     'customerEmail' => $lead->email,
                     'customerName' => "{$lead->first_name} {$lead->last_name}",
+                    'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
                     'instantAlfredLink' => $this->quoteType->quoteLink($lead->uuid, ['IA' => 'true']),
                     'quoteUUID' => $lead->uuid,
                     'requestForAdvisor' => $this->quoteType->quoteLink($lead->uuid, ['assignAdvisor' => 'true']),
@@ -73,6 +75,7 @@ class SICFollowupEmailJob implements ShouldQueue
                     'quoteUUID' => $lead->uuid,
                     'refID' => $this->quoteType->quoteLink($lead->uuid),
                     'whatsappConsent' => getWhatsappConsent($this->quoteType, $lead->uuid),
+                    'workflowType'=> WorkflowTypeEnum::TRAVEL_SIC_FOLLOWUPS,
                 ];
 
                 app(BirdService::class)->triggerWebHookRequest($url, (object) $data);
