@@ -120,12 +120,13 @@ class QuoteAllocation extends Command
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->where('health_quote_request.price_starting_from', '!=', null)
             ->where('health_quote_request.is_error_email_sent', 0)
-            ->where('health_quote_request.advisor_id', null)
-            ->where('sic_flow_enabled', 0)
-            ->orWhere(function ($query) {
-                $query->where('sic_advisor_requested', 1)->where('sic_flow_enabled', 1);
+            ->where(function ($query) {
+                $query->where('sic_flow_enabled', 0)
+                    ->orWhere(function ($subQuery) {
+                        $subQuery->where('sic_advisor_requested', 1)
+                            ->where('sic_flow_enabled', 1);
+                    });
             })->take($chunkSize);
-        info('Health leads fetch query is : '. $leads->toRawSql());
         foreach ($leads->get() as $lead) {
             $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
             $allocationStrategy->executeSteps();
