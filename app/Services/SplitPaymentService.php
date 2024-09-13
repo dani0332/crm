@@ -849,26 +849,23 @@ class SplitPaymentService
     }
 
     // Update lead status for ecomm quotes
-    private function updateLeadStatus($payment)
+    public function updateLeadStatus($payment)
     {
-        $quoteType = '';
-        if ($payment->paymentable_type == CarQuote::class) {
-            $quoteType = quoteTypeCode::Car;
-        } elseif ($payment->paymentable_type == HealthQuote::class) {
-            $quoteType = quoteTypeCode::Health;
-        } elseif ($payment->paymentable_type == TravelQuote::class) {
-            $quoteType = quoteTypeCode::Travel;
-        }
-        // If a quote type is found, get the corresponding quote object
-        if ($quoteType !== '') {
-            $quoteModel = $this->getQuoteObject($quoteType, $payment->paymentable_id);
-            if ($quoteModel) {
-                $quoteModel->payment_status_id = $payment->payment_status_id;
-                if ($payment->payment_status_id == PaymentStatusEnum::PAID) {
-                    $quoteModel->payment_paid_at = now();
-                }
-                $quoteModel->save();
+        $quoteModel = $payment->paymentable;
+        $ecommQuotes = [
+            CarQuote::class,
+            HealthQuote::class,
+            TravelQuote::class,
+        ];
+        if ($quoteModel) {
+            $quoteModel->payment_status_id = $payment->payment_status_id;
+            if (in_array($payment->paymentable_type, $ecommQuotes) && $payment->payment_status_id == PaymentStatusEnum::PAID) {
+                info('Setting payment_paid_at for Payment Code: '.$payment->code);
+                $quoteModel->payment_paid_at = now();
             }
+            $quoteModel->save();
+            // Log after successfully saving the quote model
+            info('Lead payment status updated for Code: '.$payment->code.' to '.$payment->payment_status_id);
         }
     }
 
