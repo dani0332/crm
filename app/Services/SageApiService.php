@@ -251,18 +251,56 @@ class SageApiService
         [$sageLogsArray, $reversalInvoiceLogs] = $this->sendUpdateSageLogs($request, $sendUpdateLog);
         //        TODO:: Need to add check if CPD and didn't get reversal logs then return error
 
+        $quoteModelObject = $this->getModelObject($request->quoteType);
+        $preparedData->quoteDetails = $quoteModelObject::where('id', $request->quoteRefId)->first();
+        $preparedData->sendUpdateLog = $sendUpdateLog;
+
         if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD && ! empty($reversalInvoiceLogs)) {
-            $this->bookReversalEndorsementSage($preparedData, $sageRequestPayload, $sageLogsArray);
+//            $this->bookReversalEndorsementOnSage($preparedData, $sageRequestPayload, $sageLogsArray);
         } else {
-            $this->bookStraightEndorsementSage($preparedData, $sageRequestPayload, $sageLogsArray);
+            $this->bookStraightEndorsementOnSage($preparedData, $sageRequestPayload, $sageLogsArray);
         }
 
         info('fn:bookEndorsementOnSage - Endorsement Booking Successfully Completed. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
     }
 
-    public function bookStraightEndorsementSage($preparedData, $sageRequestPayload, $sageLogsArray) {}
+    public function bookStraightEndorsementOnSage($preparedData, $sageRequestPayload, $sageLogsArray)
+    {
+        info('fn bookStraightEndorsementOnSage - Endorsement Booking Start on Sage');
+        info('fn bookStraightEndorsementOnSage - Payment frequency : '.$preparedData->payment->frequency);
 
-    public function bookReversalEndorsementSage($preparedData, $sageRequestPayload, $sageLogsArray) {}
+        $extraDetails = ['sage_request_type' => SageEnum::SRT_CREATE_AR_PREM_COMM_INV];
+        if (isset($preparedData->mainLeadDetails)) {
+            $extraDetails['mainLeadDetails'] = $preparedData->mainLeadDetails;
+            $extraDetails['extras']['option_id'] = $preparedData->sendUpdateLog?->option?->code ?? null;
+        }
+        //Create AR Commission and Premium Invoice
+        $createARInvoicePremAndComm = $this->createARInvoicePremAndComm([$sageRequestPayload, $preparedData->sendUpdateLog, $preparedData->payment, $preparedData->splitPayments, $sageLogsArray, $extraDetails]);
+        if (! $createARInvoicePremAndComm['status']) {
+            return $createARInvoicePremAndComm;
+        }
+
+        // Create AP Premium Invoice
+        $extraDetails['sage_request_type'] = SageEnum::SRT_CREATE_AP_PREM_INV;
+        if ($preparedData->sendUpdateLog?->option?->code !== SendUpdateLogStatusEnum::ACB) {
+            $createAPInvoicePrem = $this->createAPInvoicePrem([$sageRequestPayload, $preparedData->sendUpdateLog, $preparedData->payment, $preparedData->splitPayments, $sageLogsArray, $extraDetails]);
+            if (! $createAPInvoicePrem['status']) {
+                return $createAPInvoicePrem;
+            }
+        }
+
+        // Create AR Discount Invoice
+        $extraDetails['sage_request_type'] = SageEnum::SRT_CREATE_AR_DISC_INV;
+        if ($sageRequestPayload->discount > 0 && ! in_array(($preparedData->sendUpdateLog?->option?->code ?? ''), [SendUpdateLogStatusEnum::ATIB, SendUpdateLogStatusEnum::ACB])) {
+            $createARInvoiceDis = $this->createARInvoiceDis([$sageRequestPayload, $preparedData->sendUpdateLog, $sageLogsArray, $extraDetails]);
+            if (! $createARInvoiceDis['status']) {
+                return $createARInvoiceDis;
+            }
+        }
+
+        info('fn bookStraightEndorsementOnSage - Endorsement Booking Completed on Sage');
+    }
+
 
     public function handleStraightDocumentsERP($preparedDataForERP, $sageRequestPayload, $sageLogArray)
     {
@@ -1150,12 +1188,14 @@ class SageApiService
 
     private function createARInvoicePremAndComm($sageRequestDataArray)
     {
-        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
+        $sageRequestDataArray = array_pad($sageRequestDataArray, 6, []);
+        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails] = $sageRequestDataArray;
+
         $isPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
         if ($isPaymentFrequencyUpfront) {
-            return $this->createUpfrontARInvoicePremAndComm([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+            return $this->createUpfrontARInvoicePremAndComm([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails]);
         } else {
-            return $this->createNonUpfrontARInvoicePremAndComm([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+            return $this->createNonUpfrontARInvoicePremAndComm([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails]);
         }
 
     }
@@ -1163,7 +1203,7 @@ class SageApiService
     private function createUpfrontARInvoicePremAndComm($sageRequestDataArray)
     {
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
-        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
+        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails] = $sageRequestDataArray;
         $isLiveApiCallStep2 = true;
         if (isset($sageLogArray[2]) && $sageLogArray[2]['status'] == 'success') {
             info('SAGE API :  createARInvoicePremAndComm  Sent Already for '.$quote->code);
@@ -1171,7 +1211,7 @@ class SageApiService
             $sageResponse = json_decode($sageLogArray[2]['response'], true);
         } else {
             info('SAGE API :  Send createARInvoicePremAndComm  for '.$quote->code);
-            $payLoadOptions = SagePayloadFactory::createARInvoicePremAndComm($sageRequest);
+            $payLoadOptions = SagePayloadFactory::createARInvoicePremAndComm(request: $sageRequest, extras: $extraDetails);
             $resp = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
             $sageResponse = json_decode($resp, true);
         }
@@ -1188,7 +1228,7 @@ class SageApiService
                 $readyToPostResponse = json_decode($sageLogArray[3]['response'], true);
             } else {
                 info('SAGE API :  Send readyToPostInvoiceAr  for '.$quote->code);
-                $readyToPostInvoiceAr = SagePayloadFactory::readyToPostInvoiceAr($sageResponse['BatchNumber']);
+                $readyToPostInvoiceAr = SagePayloadFactory::readyToPostInvoiceAr(batchNumber: $sageResponse['BatchNumber'], extras: $extraDetails);
                 $readyToPostResponse = $this->postToSage300($readyToPostInvoiceAr['endPoint'], $readyToPostInvoiceAr['payload'], 'PATCH');
             }
 
@@ -1209,7 +1249,7 @@ class SageApiService
                 $isLiveApiCallStep4 = false;
                 $postedResponse = json_decode($sageLogArray[4]['response'], true);
             } else {
-                $aRPostInvoices = SagePayloadFactory::aRPostInvoices($sageResponse['BatchNumber']);
+                $aRPostInvoices = SagePayloadFactory::aRPostInvoices(batchNumber: $sageResponse['BatchNumber'], extras: $extraDetails);
 
                 $isAlreadyPosted = false;
                 if (isset($sageLogArray[4]) && $sageLogArray[4]['status'] == SageEnum::STATUS_FAIL) {
@@ -1426,17 +1466,18 @@ class SageApiService
 
     private function createAPInvoicePrem($sageRequestDataArray)
     {
-        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
+        $sageRequestDataArray = array_pad($sageRequestDataArray, 6, []);
+        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails] = $sageRequestDataArray;
         $isPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
         if ($isPaymentFrequencyUpfront) {
-            return $this->createUpfrontAPInvoicePrem([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+            return $this->createUpfrontAPInvoicePrem([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails]);
         } else {
-            return $this->createNonUpfrontAPInvoicePrem([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+            return $this->createNonUpfrontAPInvoicePrem([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails]);
         }
     }
     private function createUpfrontAPInvoicePrem($sageRequestDataArray)
     {
-        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
+        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails] = $sageRequestDataArray;
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
         $isTotalPriceZero = $payment->total_price == 0;
         info('########## Start of Upfront createAPInvoicePrem for : '.$quote->code.' ##########');
@@ -1448,7 +1489,7 @@ class SageApiService
                 $postedResponse = json_decode($sageLogArray[5]['response'], true);
             } else {
                 info('SAGE API :  Send createAPInvoicePrem  for '.$quote->code);
-                $createAPInvoicePrem = SagePayloadFactory::createAPInvoicePrem($sageRequest);
+                $createAPInvoicePrem = SagePayloadFactory::createAPInvoicePrem(request: $sageRequest, extras: $extraDetails);
                 $resp = $this->postToSage300($createAPInvoicePrem['endPoint'], $createAPInvoicePrem['payload']);
                 $postedResponse = json_decode($resp, true);
             }
@@ -1466,7 +1507,7 @@ class SageApiService
                     $readyToPostResponse = json_decode($sageLogArray[6]['response'], true);
                 } else {
                     info('SAGE API :  Send readyToPostInvoiceAP  for '.$quote->code);
-                    $readyToPostInvoiceAP = SagePayloadFactory::readyToPostInvoiceAP($postedResponse['BatchNumber']);
+                    $readyToPostInvoiceAP = SagePayloadFactory::readyToPostInvoiceAP(batchNumber: $postedResponse['BatchNumber']);
                     $readyToPostResponse = $this->postToSage300($readyToPostInvoiceAP['endPoint'], $readyToPostInvoiceAP['payload'], 'PATCH');
                 }
 
@@ -1529,7 +1570,7 @@ class SageApiService
                 return $this->logErrorAndReturn([$quote, $message, $errorMessage, $createAPInvoicePrem, $postedResponse, 5, 13, 'fail']);
             }
         } else {
-            info('########## skipping of createAPInvoicePrem for : '.$quote->code.' dye to Zero Pricing ########## ');
+            info('########## skipping of createAPInvoicePrem for : '.$quote->code.' due to Zero Pricing ########## ');
         }
         info('########## End of Upfront createAPInvoicePrem for : '.$quote->code.' ##########');
 
@@ -1695,7 +1736,8 @@ class SageApiService
 
     public function createARInvoiceDis($sageRequestDataArray)
     {
-        [$sageRequest, $quote, $sageLogArray] = $sageRequestDataArray;
+        $sageRequestDataArray = array_pad($sageRequestDataArray, 4, []);
+        [$sageRequest, $quote, $sageLogArray, $extraDetails] = $sageRequestDataArray;
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
         $isDiscountApplied = $sageRequest->discount > 0;
         /* createARInvoiceDis */
@@ -1708,7 +1750,7 @@ class SageApiService
                 $postedResponse = json_decode($sageLogArray[10]['response'], true);
             } else {
                 info('SAGE API :  Send createARInvoiceDis  for '.$quote->code);
-                $createARInvoiceDis = SagePayloadFactory::createARInvoiceDis($sageRequest);
+                $createARInvoiceDis = SagePayloadFactory::createARInvoiceDis(request: $sageRequest, extras: $extraDetails);
                 $resp = $this->postToSage300($createARInvoiceDis['endPoint'], $createARInvoiceDis['payload']);
                 $postedResponse = json_decode($resp, true);
             }
@@ -1726,7 +1768,7 @@ class SageApiService
                     $readyToPostResponse = json_decode($sageLogArray[11]['response'], true);
                 } else {
                     info('SAGE API :  Send readyToPostInvoiceAr  for '.$quote->code);
-                    $readyToPostInvoiceAr = SagePayloadFactory::readyToPostInvoiceAr($postedResponse['BatchNumber']);
+                    $readyToPostInvoiceAr = SagePayloadFactory::readyToPostInvoiceAr(batchNumber: $postedResponse['BatchNumber'], extras: $extraDetails);
                     $readyToPostResponse = $this->postToSage300($readyToPostInvoiceAr['endPoint'], $readyToPostInvoiceAr['payload'], 'PATCH');
                 }
 
@@ -1748,7 +1790,7 @@ class SageApiService
                     $isLiveApiCallStep12 = false;
                     $postedResponse = json_decode($sageLogArray[12]['response'], true);
                 } else {
-                    $aRPostInvoices = SagePayloadFactory::aRPostInvoices($postedResponse['BatchNumber']);
+                    $aRPostInvoices = SagePayloadFactory::aRPostInvoices(batchNumber: $postedResponse['BatchNumber'], extras: $extraDetails);
 
                     $isAlreadyPosted = false;
                     if (isset($sageLogArray[12]) && $sageLogArray[12]['status'] == SageEnum::STATUS_FAIL) {

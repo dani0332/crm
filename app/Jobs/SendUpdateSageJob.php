@@ -39,11 +39,11 @@ class SendUpdateSageJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle(SageApiService $sageApiService): void
     {
         info('job:SendUpdateSageJob - Send Update Sage Job Process Start -  QuoteType: '.$this->requestPayload->quoteType.' - QuoteUUID: '.$this->requestPayload->quoteUuid.' - SendUpdateUUID: '.$this->sendUpdateLog->uuid);
 
-        $response = (new SageApiService)->bookEndorsementOnSage([
+        $response = $sageApiService->bookEndorsementOnSage([
             $this->requestPayload,
             $this->sendUpdateLog,
             $this->sageRequestPayload,

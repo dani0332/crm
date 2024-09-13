@@ -132,7 +132,7 @@ class SendUpdateValidationRequest extends FormRequest
 
                 if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF &&
                     ! in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) &&
-                    in_array($categorySubType, [
+                    ! in_array($categorySubType, [ // TODO:: Add not condition need to verify
                         SendUpdateLogStatusEnum::MPC,
                         SendUpdateLogStatusEnum::MDOM,
                         SendUpdateLogStatusEnum::MDOV,

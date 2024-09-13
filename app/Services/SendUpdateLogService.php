@@ -781,8 +781,22 @@ class SendUpdateLogService
         $quoteDetails = $quoteModelObject::where('id', $sendUpdateRequest->quoteRefId)->first();
         $preparedDetailsForEndorsement = $this->preparedDetailsForEndorsement($sendUpdateRequest, $quoteDetails, $sendUpdateLog);
 
+        $sendUpdateLogDetails = [
+            //            'personal_quote_id' => '', TODO:: Need to post this id in the Sage API
+            'policy_booking_date' => $sendUpdateLog->booking_date,
+            'policy_expiry_date' => $sendUpdateLog->expiry_date,
+            'policy_number' => $sendUpdateLog->policy_number,
+            'transaction_type_id' => $quoteDetails->transaction_type_id,
+            'advisor_id' => $sendUpdateLog->advisor_id,
+            'price_vat_applicable' => abs($preparedDetailsForEndorsement['payment']->total_price),
+            'price_with_vat' => abs($sendUpdateLog->price_with_vat),
+            'insly_migrated' => $quoteDetails->insly_migrated,
+            'insurance_provider_id' => $sendUpdateLog->insurance_provider_id,
+            'booking_filled_by' => $sendUpdateLog->booking_filled_by,
+        ];
+
         info('fn:preparedDataForEndorsement - Preparing Sage Payload for Endorsement - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-        $sageRequestPayload = SagePayloadFactory::sagePayLoad($sendUpdateRequest->quoteType, $preparedDetailsForEndorsement['payment'], $quoteDetails, $preparedDetailsForEndorsement['splitPayments']);
+        $sageRequestPayload = SagePayloadFactory::sagePayLoad($sendUpdateRequest->quoteType, $preparedDetailsForEndorsement['payment'], (object) $sendUpdateLogDetails, $preparedDetailsForEndorsement['splitPayments']);
         $sageRequestPayload->customerId = app(SageApiService::class)->verifySageCustomer(
             $quoteDetails->customer_id,
             ['quoteTypeId' => $sendUpdateRequest->quoteType, 'id' => $quoteDetails->id],

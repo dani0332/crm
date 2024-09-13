@@ -363,17 +363,15 @@ class SendUpdateLogController extends Controller
 
     public function sendUpdateToCustomer(UpdateToCustomerRequest $updateToCustomerRequest)
     {
-        $sageProcess = SageProcess::where('id', 12)->first();
-        $sageProcessRequest = json_decode($sageProcess->request);
-
-        $response = (new SageApiService)->bookEndorsementOnSage([
-            $sageProcessRequest->requestPayload,
-            $sageProcess->model,
-            $sageProcessRequest->sagePayload,
-            $sageProcessRequest->endorsementPreparedData,
-        ]);
-
-        dd($response);
+//        $sageProcess = SageProcess::where('id', 19)->first();
+//        $sageProcessRequest = json_decode($sageProcess->request);
+//
+//        $response = (new SageApiService)->bookEndorsementOnSage([
+//            $sageProcessRequest->requestPayload,
+//            $sageProcess->model,
+//            $sageProcessRequest->sagePayload,
+//            $sageProcessRequest->endorsementPreparedData,
+//        ]);
 
         $suEmailProcess = SendUpdateLogRepository::sendUpdateToCustomer($updateToCustomerRequest->validated());
 
@@ -406,6 +404,7 @@ class SendUpdateLogController extends Controller
 
     public function sendUpdate(SendUpdateRequest $sendUpdateRequest): \Illuminate\Http\JsonResponse
     {
+        dd($sendUpdateRequest->toArray());
         $response = app(SendUpdateLogService::class)->preparedDataForEndorsement($sendUpdateRequest);
 
         return response()->json(['message' => $response['message']], $response['status'] ? 200 : 500);
