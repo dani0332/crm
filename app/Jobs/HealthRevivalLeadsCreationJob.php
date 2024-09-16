@@ -85,15 +85,14 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 'memberCategoryId' => $this->lead->member_category_id,
             ];
 
-            info($logPrefix . 'capiPayLoad' . json_encode($dataArr));
+            info($logPrefix.'capiPayLoad'.json_encode($dataArr));
 
             $capiResponse = CapiRequestService::sendCAPIRequest('/api/v1-save-health-quote', $dataArr, HealthQuote::class);
 
-            if (!isset($capiResponse->errors) && !empty($capiResponse->quoteUID)) {
-                info($logPrefix . 'healthRevivalParentLead -' . $this->lead->uuid . '- childLeadCreated - ' . $capiResponse->quoteUID . ' - CAPI Response-' . json_encode($capiResponse));
+            if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
+                info($logPrefix.'healthRevivalParentLead -'.$this->lead->uuid.'- childLeadCreated - '.$capiResponse->quoteUID.' - CAPI Response-'.json_encode($capiResponse));
 
                 if (empty($this->lead->health_team_type)) {
-
 
                     $key = ApplicationStorageEnums::DTT_HEALTH_INITIAL_WITHOUT_HEALTH_TEAM;
 
@@ -106,8 +105,8 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                         'quoteUID' => 'R6GP2BZ8',
                     ]);
                     $plansArray = [];
-                    foreach ($response['plans'] as  $item) {
-                        $planObj = new \stdClass();
+                    foreach ($response['plans'] as $item) {
+                        $planObj = new \stdClass;
                         $planObj->id = $item['id'];
                         $planObj->name = $item['name'];
                         $planObj->providerName = $item['providerName'];
@@ -119,72 +118,66 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
                         $lowestRate = collect($item['ratesPerCopay'])->sortBy('discountPremium')->first();
 
-
                         $coPaymentsCollection = collect($item['coPayments']);
                         $filteredSelectedCopay = $coPaymentsCollection->where('id', $lowestRate['healthPlanCoPaymentId'])->first();
                         $planObj->planBenefit = $this->getBenefitsDetails($item['benefits'], $filteredSelectedCopay);
                         $plansArray[] = $planObj;
                     }
 
+                    info($logPrefix.'plans'.json_encode($plansArray));
 
-                    info($logPrefix . 'plans' . json_encode($plansArray));
-
-                    $emailData = new \stdClass();
-                    $customerName = $healthQuote->first_name . ' ' . $healthQuote->last_name;
+                    $emailData = new \stdClass;
+                    $customerName = $healthQuote->first_name.' '.$healthQuote->last_name;
 
                     $key = ApplicationStorageEnums::DTT_HEALTH_INITIAL_AND_FOLLOWUP_TEMPLATE;
 
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
 
-                    $emailData->subject = $customerName . "'s" . ' Health Insurance with Alfred ' . $healthQuote->code;
+                    $emailData->subject = $customerName."'s".' Health Insurance with Alfred '.$healthQuote->code;
 
                     $emailData->customerName = $customerName;
                     $emailData->customerEmail = 'nouman.hussain@myalfred.com';
                     // $emailData->customerEmail =  $healthQuote->email;
                     $emailData->templateId = (int) $emailTemplateId;
-                    $emailData->quotePlanLink = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL') . $healthQuote->uuid;
+                    $emailData->quotePlanLink = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid;
                     $emailData->tag = 'health-revival-initial-email';
                     $emailData->plans = $plansArray;
                     $emailData->templateType = 'revivalHealthInitial';
 
-                    info($logPrefix . 'emailData -' . json_encode($emailData));
+                    info($logPrefix.'emailData -'.json_encode($emailData));
                 }
-
-
 
                 $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
                 if ($response == 201) {
-                    info($logPrefix . 'healthRevivalParentLead -' . $this->lead->uuid . '-childLead - ' . $capiResponse->quoteUID . '- emailSent -- ' . $emailData->customerEmail);
-
+                    info($logPrefix.'healthRevivalParentLead -'.$this->lead->uuid.'-childLead - '.$capiResponse->quoteUID.'- emailSent -- '.$emailData->customerEmail);
 
                     // Get the latest quote batch and assign it to the lead.
                     $quoteBatch = QuoteBatches::latest()->first();
 
                     DttRevival::create([
                         'quote_type_id' => QuoteTypes::HEALTH->id(),
-                        'quote_id' =>  $healthQuote->id,
+                        'quote_id' => $healthQuote->id,
                         'uuid' => $capiResponse->quoteUID,
                         'revival_quote_batch_id' => $quoteBatch->id,
                         'email_sent' => true,
                         'previous_health_plan_type' => empty($this->lead->health_team_type) ? false : true,
                     ]);
 
-                    info($logPrefix . 'healthRevivalParentLead -' . $this->lead->uuid . '- childLead - ' . $capiResponse->quoteUID . '-dttRevivalsInsertedUUID - ' . $capiResponse->quoteUID);
+                    info($logPrefix.'healthRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$capiResponse->quoteUID.'-dttRevivalsInsertedUUID - '.$capiResponse->quoteUID);
 
                     // HealthQuote::find($this->lead->id)->update(['is_revived' => true]);
 
-                    info($logPrefix . 'healthRevivalParentLead -' . $this->lead->uuid . '- childLead - ' . $capiResponse->quoteUID . '- parentLeadIsRevived - ' . $this->lead->id);
+                    info($logPrefix.'healthRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$capiResponse->quoteUID.'- parentLeadIsRevived - '.$this->lead->id);
                 } else {
-                    info('HealthRevivalLeadsCreationJob - healthRevivalParentLead -' . $this->lead->uuid . '- childLead - ' . $capiResponse->quoteUID . 'emailIsNotSent - ' . $emailData->customerEmail);
+                    info('HealthRevivalLeadsCreationJob - healthRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$capiResponse->quoteUID.'emailIsNotSent - '.$emailData->customerEmail);
                 }
             } else {
-                info($logPrefix . 'healthRevivalParentLead -' . $this->lead->uuid . '- capiResponseError - ' . json_encode($capiResponse));
+                info($logPrefix.'healthRevivalParentLead -'.$this->lead->uuid.'- capiResponseError - '.json_encode($capiResponse));
             }
         } catch (\Exception $exception) {
-            Log::error($logPrefix . 'health revival Exception - ' . $this->lead->id . ' - Exception:' . $exception->getMessage());
+            Log::error($logPrefix.'health revival Exception - '.$this->lead->id.' - Exception:'.$exception->getMessage());
         }
     }
-
 
     private function getBenefitsDetails($benefitList, $filteredSelectedCopay)
     {
@@ -197,7 +190,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 foreach ($covers as $cover) {
                     if ($cover['code'] === 'medicine') {
                         $benefitsTypes[$cover['code']] = [
-                            'text' => $cover['value'] ?? ''
+                            'text' => $cover['value'] ?? '',
                         ];
                     }
                 }
@@ -205,12 +198,12 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 foreach ($covers as $cover) {
                     if (in_array($cover['code'], $getBenefitCode)) {
                         $benefitsTypes[$cover['code']] = [
-                            'text' => $cover['value'] ?? ''
+                            'text' => $cover['value'] ?? '',
                         ];
                     }
                     if ($cover['code'] == 'outpatientConsultation') {
                         $benefitsTypes[$cover['code']] = [
-                            'text' => $filteredSelectedCopay['text'] ?? ''
+                            'text' => $filteredSelectedCopay['text'] ?? '',
                         ];
                     }
                 }
