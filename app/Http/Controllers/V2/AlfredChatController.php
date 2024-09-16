@@ -376,17 +376,27 @@ class AlfredChatController extends Controller
         checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
 
         $partialQuery = null;
+        $quoteId = null;
+        if ($request->has('quoteId') && $request->quoteId != null) {
+            if (strpos($request->quoteId, '-') !== false) {
+                $quote = explode('-', $request->quoteId);
+                $quoteId = $quote[1];
+            } else {
+                $quoteId = $request->quoteId;
+            }
+        }
+
         if ($modelType == CarQuote::class) {
-            $partialQuery = $this->carQuery->when(isset($request->quoteId) && $request->quoteId != '', function ($query) use ($request) {
-                $query->where('cqr.uuid', $request->quoteId);
+            $partialQuery = $this->carQuery->when(isset($quoteId) && $quoteId != '', function ($query) use ($quoteId) {
+                $query->where('cqr.uuid', $quoteId);
             });
         } elseif ($modelType == HealthQuote::class) {
-            $partialQuery = $this->healthQuery->when(isset($request->quoteId) && $request->quoteId != '', function ($query) use ($request) {
-                $query->where('hqr.uuid', $request->quoteId);
+            $partialQuery = $this->healthQuery->when(isset($quoteId) && $quoteId != '', function ($query) use ($quoteId)  {
+                $query->where('hqr.uuid', $quoteId);
             });
         } elseif ($modelType == TravelQuote::class) {
-            $partialQuery = $this->travelQuery->when(isset($request->quoteId) && $request->quoteId != '', function ($query) use ($request) {
-                $query->where('tqr.uuid', $request->quoteId);
+            $partialQuery = $this->travelQuery->when(isset($quoteId) && $quoteId != '', function ($query) use ($quoteId)  {
+                $query->where('tqr.uuid', $quoteId);
             });
         }
 
