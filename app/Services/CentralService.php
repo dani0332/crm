@@ -844,7 +844,7 @@ class CentralService
 
         $lockedQuotesStatuses = [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued,
             QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked,
-            QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued,            
+            QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued,
         ];
 
         $isTransactionApproved = QuoteStatusLog::where('quote_type_id', $quoteTypeId)
