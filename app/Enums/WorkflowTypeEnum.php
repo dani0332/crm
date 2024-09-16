@@ -11,4 +11,5 @@ final class WorkflowTypeEnum extends Enum
     public const TRAVEL_HAPEX_EMAIL_REMINDER = 'travel_hapex';
     public const TRAVEL_HAPEX_STOP_EMAIL_REMINDER = 'travel_hapex_disable';
     public const HEALTH_SIC_FOLLOWUPS = 'health_sic_followups';
+    public const TRAVEL_SIC_FOLLOWUPS = 'travel_sic_followups';
 }

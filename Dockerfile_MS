@@ -10,7 +10,7 @@ cp remote_syslog/remote_syslog /usr/local/bin
 
 FROM node:21.7.3 as frontend
 WORKDIR /var/www
-COPY --chown=www:www-data package*.json yarn.lock /var/www/
+COPY package*.json yarn.lock /var/www/
 RUN yarn install --pure-lockfile
 
 FROM php:8.1-fpm as build
@@ -48,7 +48,7 @@ RUN docker-php-ext-install -j$(nproc) gd
 RUN pecl install mongodb && docker-php-ext-enable mongodb
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-COPY --chown=www:www-data . /app
+COPY . /app
 COPY composer.json composer.json
 COPY composer.lock composer.lock
 RUN composer install --optimize-autoloader --no-dev
