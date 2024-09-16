@@ -396,17 +396,23 @@ const rules = {
 };
 
 const isPaymentLocked = computed(() => {
+  const { status } = paymentMethodsForm;
+  const { quote_status_id } = props.quoteRequest;
+  const { quoteStatusEnum } = page.props;
+  const lockedStatuses = [
+    quoteStatusEnum.CancellationPending,
+    quoteStatusEnum.PolicyCancelled,
+    quoteStatusEnum.PolicyBooked,
+    quoteStatusEnum.PolicyCancelledReissued,
+    quoteStatusEnum.POLICY_BOOKING_QUEUED,
+  ];
+
   if (
-    paymentMethodsForm.status == 'edit' &&
+    status === 'edit' &&
     !props.sendUpdate &&
-    (props.quoteRequest.quote_status_id ===
-      page.props.quoteStatusEnum.CancellationPending ||
-      props.quoteRequest.quote_status_id ===
-        page.props.quoteStatusEnum.PolicyCancelled ||
-      props.quoteRequest.quote_status_id ===
-        page.props.quoteStatusEnum.PolicyBooked ||
-      props.quoteRequest.quote_status_id ===
-        page.props.quoteStatusEnum.PolicyCancelledReissued)
+    (lockedStatuses.includes(quote_status_id) ||
+      (quote_status_id === quoteStatusEnum.POLICY_BOOKING_FAILED &&
+        !can(permissionEnum.BOOKING_FAILED_EDIT)))
   ) {
     return true;
   }
