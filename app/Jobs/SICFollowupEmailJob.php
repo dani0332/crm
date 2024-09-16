@@ -58,7 +58,7 @@ class SICFollowupEmailJob implements ShouldQueue
                 $sendEmailCustomerService->sendSICFollowupEmail($lead, $this->quoteType);
                 $this->sendWhatsAppMessage();
             } else {
-                $sendEmailCustomerService->sendSICDedicatedEmail($lead,$this->quoteType);
+                $sendEmailCustomerService->sendSICDedicatedEmail($lead, $this->quoteType);
             }
         } else {
             info('SICFollowupEmailJob - Lead Advisor Available - Ref ID: '.$lead->uuid.'- Time: '.now());

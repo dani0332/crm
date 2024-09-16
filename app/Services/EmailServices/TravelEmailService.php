@@ -210,7 +210,7 @@ class TravelEmailService extends BaseService
         $members = $lead->customerMembers;
         $emailData->totalTravelers = $members->count();
         $emailData->allPlansCount = count($plans->all);
-        $emailData->plans = $this->buildPlansData($emailData->hasPlansGroups, $lead, $plans, $members) ?? [] ;
+        $emailData->plans = $this->buildPlansData($emailData->hasPlansGroups, $lead, $plans, $members) ?? [];
 
         return $emailData;
     }
@@ -271,11 +271,10 @@ class TravelEmailService extends BaseService
 
         if ($responseCode) {
             // Dispatch the job with a 24 hours delay
-            if(isLeadSic($lead->uuid)){
+            if (isLeadSic($lead->uuid)) {
                 SICFollowupEmailJob::dispatch($lead->uuid, QuoteTypes::TRAVEL)->delay(now()->addminutes(1));
                 info(self::class." - SICFollowupEmailJob Dispatched - Ref ID: {$lead->uuid} Time: ".now());
-            }
-            else {
+            } else {
                 info(self::class." | SICFollowupEmailJob - No SIC - Ref ID: {$lead->uuid} Time: ".now());
             }
 

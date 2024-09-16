@@ -9,6 +9,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
+use App\Enums\WorkflowTypeEnum;
 use App\Facades\Capi;
 use App\Jobs\UpdateSendPolicySubjectJob;
 use App\Models\ApplicationStorage;
@@ -19,8 +20,6 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use App\Enums\WorkflowTypeEnum;
-use App\Services\BirdService;
 
 class SendEmailCustomerService extends BaseService
 {
@@ -1383,7 +1382,8 @@ class SendEmailCustomerService extends BaseService
 
         return $buyNowLink;
     }
-    public function buildDedicatedTravelEmailData($lead,$quoteType){
+    public function buildDedicatedTravelEmailData($lead, $quoteType)
+    {
         return [
             'customerEmail' => $lead->email,
             'customerName' => "{$lead->first_name} {$lead->last_name}",
@@ -1394,14 +1394,15 @@ class SendEmailCustomerService extends BaseService
             'quoteTypeId' => $quoteType->id(),
             'refID' => $lead->code,
             'whatsappConsent' => getWhatsappConsent($quoteType, $lead->uuid),
-            'workflowType'=> WorkflowTypeEnum::TRAVEL_SIC_FOLLOWUPS,
+            'workflowType' => WorkflowTypeEnum::TRAVEL_SIC_FOLLOWUPS,
         ];
-        }
-        public function sendSICDedicatedEmail($lead,$quoteType){
-            $url = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL);
-            $sicDedicatedEmailPayload = $this->buildDedicatedTravelEmailData($lead,$quoteType);
-            info("sendSICDedicatedEmail - Sending webhook request to: {$url} with Ref-ID: {$lead->uuid} | Time:".now());
-            app(BirdService::class)->triggerWebHookRequest($url, (object) $sicDedicatedEmailPayload);
-            info("sendSICDedicatedEmail - Webhook request sent to: {$url} with Ref-ID: {$lead->uuid} | Time:".now());
-         }
+    }
+    public function sendSICDedicatedEmail($lead, $quoteType)
+    {
+        $url = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL);
+        $sicDedicatedEmailPayload = $this->buildDedicatedTravelEmailData($lead, $quoteType);
+        info("sendSICDedicatedEmail - Sending webhook request to: {$url} with Ref-ID: {$lead->uuid} | Time:".now());
+        app(BirdService::class)->triggerWebHookRequest($url, (object) $sicDedicatedEmailPayload);
+        info("sendSICDedicatedEmail - Webhook request sent to: {$url} with Ref-ID: {$lead->uuid} | Time:".now());
+    }
 }
