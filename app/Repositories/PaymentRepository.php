@@ -647,6 +647,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         $attempts = 0;
         $response = ['status' => false, 'message' => ''];
         if ($payment->broker_invoice_number) {
+            info('Payment  : '. $payment->code .' : Broker Invoice Number already exists - BIN : ' .$payment->broker_invoice_number);
             $response['status'] = true;
             $response['message'] = 'Broker Invoice Number: '.$payment->broker_invoice_number;
 
@@ -656,6 +657,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $insuranceProvider = getInsuranceProvider($payment, $quoteType);
 
             if (!isNonSelfBillingEnabledForInsuranceProvider($insuranceProvider)) {
+                info('Payment  : '. $payment->code .' : Non-self Billing is not enabled for Insurance Provider ID : ' .$insuranceProvider->id);
                 $response['status'] = true;
                 $response['message'] = 'Non-self Billing is not enabled for Insurance Provider';
 
@@ -679,13 +681,14 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                         'sequence_number' => 1,
                     ]);
                 }
-
+                info('Payment  : '. $payment->code .' : Insurer sequence number is : ' . $invoiceBrokerSequence->sequence_number . ' for Insurance Provider ID : ' .$insuranceProvider->id);
                 $currentSequence = $invoiceBrokerSequence->sequence_number;
                 $insuranceProviderCode = $insuranceProvider?->code;
                 $brokerInvoiceNumber = 'AFIA/'.$insuranceProviderCode.'/'.$currentDate->format('Y').'/'.$currentDate->format('m').'/'.$currentSequence;
                 $payment->update([
                     'broker_invoice_number' => $brokerInvoiceNumber,
                 ]);
+                info('Payment  : '. $payment->code .' : Broker Invoice Number updated : '.$brokerInvoiceNumber);
                 $invoiceBrokerSequence->increment('sequence_number');
                 $response['status'] = true;
                 $response['message'] = 'Broker Invoice Number: '.$brokerInvoiceNumber;
@@ -698,13 +701,13 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 if ($attempts < $maxRetries) {
                     $this->generateAndStoreBrokerInvoiceNumber($payment, $quoteType);
                 } else {
-                    info('Error occurred while generating broker invoice number: Could not acquire lock after multiple attempts');
+                    info('Payment  : '. $payment->code .' :Error occurred while generating broker invoice number: Could not acquire lock after multiple attempts');
                     $response['message'] = 'Exception: Could not acquire lock after multiple attempts';
 
                     return $response;
                 }
             } else {
-                info('Error occurred while generating broker invoice number: '.$e->getMessage());
+                info('Payment  : '. $payment->code .' : Error occurred while generating broker invoice number: '.$e->getMessage());
 
                 $response['message'] = 'Exception: '.$e->getMessage();
 

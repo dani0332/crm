@@ -1308,7 +1308,7 @@ if (! function_exists('isNonSelfBillingEnabledForInsuranceProvider')) {
     }
 }
 if (! function_exists('getInsuranceProvider')) {
-    function getInsuranceProvider($payment , $quoteType): bool
+    function getInsuranceProvider($payment , $quoteType)
     {
         $insuranceProvider = null;
         $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
