@@ -11,9 +11,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use App\Enums\ApplicationStorageEnums;
-use App\Services\BirdService;
-use App\Enums\WorkflowTypeEnum;
 
 class SICFollowupEmailJob implements ShouldQueue
 {
@@ -61,23 +58,7 @@ class SICFollowupEmailJob implements ShouldQueue
                 $sendEmailCustomerService->sendSICFollowupEmail($lead, $this->quoteType);
                 $this->sendWhatsAppMessage();
             } else {
-                $url = match ($this->quoteType) {
-                    QuoteTypes::TRAVEL => getAppStorageValueByKey(ApplicationStorageEnums::BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL),
-                };
-                $data = [
-                    'customerEmail' => $lead->email,
-                    'customerName' => "{$lead->first_name} {$lead->last_name}",
-                    'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
-                    'instantAlfredLink' => $this->quoteType->quoteLink($lead->uuid, ['IA' => 'true']),
-                    'quoteUUID' => $lead->uuid,
-                    'requestForAdvisor' => $this->quoteType->quoteLink($lead->uuid, ['assignAdvisor' => 'true']),
-                    'quoteTypeId' => $this->quoteType->id(),
-                    'refID' => $lead->code,
-                    'whatsappConsent' => getWhatsappConsent($this->quoteType, $lead->uuid),
-                    'workflowType'=> WorkflowTypeEnum::TRAVEL_SIC_FOLLOWUPS,
-                ];
-                info("SICTravelFollowupEmailJob - Sending webhook request to: {$url} with Ref-ID: {$lead->uuid} | Time:".now());
-                app(BirdService::class)->triggerWebHookRequest($url, (object) $data);
+                $sendEmailCustomerService->triggerSICDedicatedEmail($lead,$this->quoteType);
             }
         } else {
             info('SICFollowupEmailJob - Lead Advisor Available - Ref ID: '.$lead->uuid.'- Time: '.now());

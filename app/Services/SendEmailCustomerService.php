@@ -19,6 +19,8 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Enums\WorkflowTypeEnum;
+use App\Services\BirdService;
 
 class SendEmailCustomerService extends BaseService
 {
@@ -1381,4 +1383,22 @@ class SendEmailCustomerService extends BaseService
 
         return $buyNowLink;
     }
+    public function triggerSICDedicatedEmail($lead,$quoteType){
+        $url = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL);
+         $data = [
+                     'customerEmail' => $lead->email,
+                     'customerName' => "{$lead->first_name} {$lead->last_name}",
+                     'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
+                     'instantAlfredLink' => $quoteType->quoteLink($lead->uuid, ['IA' => 'true']),
+                     'quoteUUID' => $lead->uuid,
+                     'requestForAdvisor' => $quoteType->quoteLink($lead->uuid, ['assignAdvisor' => 'true']),
+                     'quoteTypeId' => $quoteType->id(),
+                     'refID' => $lead->code,
+                     'whatsappConsent' => getWhatsappConsent($quoteType, $lead->uuid),
+                     'workflowType'=> WorkflowTypeEnum::TRAVEL_SIC_FOLLOWUPS,
+                 ];
+                 info("triggerSICDedicatedEmail - Sending webhook request to: {$url} with Ref-ID: {$lead->uuid} | Time:".now());
+                 app(BirdService::class)->triggerWebHookRequest($url, (object) $data);
+                 info("triggerSICDedicatedEmail - Webhook request sent to: {$url} with Ref-ID: {$lead->uuid} | Time:".now());
+     }
 }
