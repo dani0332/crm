@@ -1278,9 +1278,6 @@ class CarQuoteService extends BaseService
         $client = new \GuzzleHttp\Client;
 
         try {
-
-            info('FN: getQuotePlans request ready for KEN api');
-
             $kenRequest = $client->post(
                 $plansApiEndPoint,
                 [
@@ -1296,8 +1293,6 @@ class CarQuoteService extends BaseService
             );
 
             $getStatusCode = $kenRequest->getStatusCode();
-
-            info('FN: getQuotePlans response from KEN api status code: '.$getStatusCode);
 
             if ($getStatusCode == 200) {
                 $getContents = $kenRequest->getBody();
