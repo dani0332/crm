@@ -1301,9 +1301,7 @@ class CarQuoteService extends BaseService
 
             if ($getStatusCode == 200) {
                 $getContents = $kenRequest->getBody();
-                info('FN: getQuotePlans response ready');
                 $getdecodeContents = json_decode($getContents);
-                info('FN: getQuotePlans response payload decoded now');
 
                 return $getdecodeContents;
             }
