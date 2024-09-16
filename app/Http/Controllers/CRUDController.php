@@ -1816,6 +1816,11 @@ class CRUDController extends Controller
         // store policy issuer
         $payment = $quoteModel->payments()->mainLeadPayment()->first();
         if ($payment) {
+            $updateBINResponse = (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment , $request->modelType);
+            if(!$updateBINResponse['status']){
+                return redirect()->back()->with('success', $updateBINResponse['message']);
+            }
+
             $payment->policy_issuer_id = auth()->id();
             $payment->save();
         }

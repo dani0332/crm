@@ -641,35 +641,77 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return $quote->payments()->where('insurer_tax_number', $invoiceNumber)->first();
     }
 
-    public function generateBrokerInvoiceNumber($payment, $quoteType): string
+    public function generateAndStoreBrokerInvoiceNumber($payment, $quoteType)
     {
-        $insuranceProvider = null;
-        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
-        if (in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
-            $planRelationName = strtolower($quoteType).'Plan';
-            $payment->load($planRelationName);
-            $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
+        $maxRetries = 3;
+        $attempts = 0;
+        $response = ['status' => false, 'message' => ''];
+        if ($payment->broker_invoice_number) {
+            $response['status'] = true;
+            $response['message'] = 'Broker Invoice Number: '.$payment->broker_invoice_number;
+
+            return $response;
         }
+        try {
+            $insuranceProvider = getInsuranceProvider($payment, $quoteType);
 
-        if (! $insuranceProvider) {
-            $insuranceProvider = $payment?->insuranceProvider;
+            if (!isNonSelfBillingEnabledForInsuranceProvider($insuranceProvider)) {
+                $response['status'] = true;
+                $response['message'] = 'Non-self Billing is not enabled for Insurance Provider';
+
+                return $response;
+            }
+
+            $currentDate = Carbon::now();
+
+            DB::transaction(function () use ($insuranceProvider, $currentDate, &$response, $payment) {
+                $invoiceBrokerSequence = BrokerInvoiceNumber::where([
+                    'insurance_provider_id' => $insuranceProvider->id,
+                    'date' => $currentDate->format('Y-m'),
+                ])
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $invoiceBrokerSequence) {
+                    $invoiceBrokerSequence = BrokerInvoiceNumber::create([
+                        'insurance_provider_id' => $insuranceProvider->id,
+                        'date' => $currentDate->format('Y-m'),
+                        'sequence_number' => 1,
+                    ]);
+                }
+
+                $currentSequence = $invoiceBrokerSequence->sequence_number;
+                $insuranceProviderCode = $insuranceProvider?->code;
+                $brokerInvoiceNumber = 'AFIA/'.$insuranceProviderCode.'/'.$currentDate->format('Y').'/'.$currentDate->format('m').'/'.$currentSequence;
+                $payment->update([
+                    'broker_invoice_number' => $brokerInvoiceNumber,
+                ]);
+                $invoiceBrokerSequence->increment('sequence_number');
+                $response['status'] = true;
+                $response['message'] = 'Broker Invoice Number: '.$brokerInvoiceNumber;
+            });
+
+            return $response;
+        } catch (Exception $e) {
+            $attempts++;
+            if (in_array($e->getCode(), ['40001', '1213'])) {
+                if ($attempts < $maxRetries) {
+                    $this->generateAndStoreBrokerInvoiceNumber($payment, $quoteType);
+                } else {
+                    info('Error occurred while generating broker invoice number: Could not acquire lock after multiple attempts');
+                    $response['message'] = 'Exception: Could not acquire lock after multiple attempts';
+
+                    return $response;
+                }
+            } else {
+                info('Error occurred while generating broker invoice number: '.$e->getMessage());
+
+                $response['message'] = 'Exception: '.$e->getMessage();
+
+                return $response;
+            }
+
         }
-
-        $currentDate = Carbon::now();
-        $invoiceBrokerSequence = BrokerInvoiceNumber::firstOrCreate([
-            'insurance_provider_id' => $insuranceProvider->id,
-            'date' => $currentDate->format('Y-m'),
-        ], [
-            'insurance_provider_id' => $insuranceProvider->id,
-            'date' => $currentDate->format('Y-m'),
-            'sequence_number' => 1,
-        ]
-        );
-
-        $currentSequence = $invoiceBrokerSequence->sequence_number;
-        $insuranceProviderCode = $insuranceProvider?->code;
-
-        return 'AFIA/'.$insuranceProviderCode.'/'.$currentDate->format('Y').'/'.$currentDate->format('m').'/'.$currentSequence;
     }
     public function generateInvoiceDescription($payment, $quoteType, $record): string
     {
