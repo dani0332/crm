@@ -192,6 +192,16 @@ onMounted(() => {
 });
 
 const downloadReport = () => {
+  let diff = calculateDaysDifference(filters.start_at, filters.end_date);
+
+  if (diff > 30) {
+    notification.error({
+      message: 'Maximum of 31 days (created date) are allowed to be exported.',
+      position: 'top',
+    });
+    return;
+  }
+
   const data = useObjToUrl(useCleanObj(filters));
   const url = route('exportChatData');
   window.open(url + '?' + new URLSearchParams(data).toString());
