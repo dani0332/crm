@@ -98,6 +98,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->insuranceType = $insuranceType;
             $emailData->planName = $planName;
             $emailData->currentInsurer = '';
+            $emailData->profilePicture =  '';
             if (! empty($quote->advisor)) {
                 $emailData->advisorName = $quote->advisor->name;
                 $emailData->advisorEmail = $quote->advisor->email;
@@ -105,6 +106,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
                 $emailData->advisorMobileNo = str_replace('+', '', $advisorMobileNo);
                 $emailData->advisorLandlineNo = $quote->advisor->landline_no;
                 $emailData->googleMeet = $quote->advisor->calendar_link;
+                $emailData->profilePicture = $quote->advisor->profile_photo_path;
             }
             if (in_array(ucfirst($this->data->model_type), [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel])) {
                 if (isset($quote->plan) && isset($quote->plan->insuranceProvider)) {

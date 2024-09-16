@@ -822,6 +822,7 @@ class SendEmailCustomerService extends BaseService
                         'email' => $emailData->advisorEmail,
                         'mobileNo' => $emailData->advisorMobileNo,
                         'landLine' => $emailData->advisorLandlineNo,
+                        'profilePicture' => $emailData->profilePicture
                     ],
                 ],
                 'tags' => [

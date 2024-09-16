@@ -934,6 +934,7 @@ class SendUpdateLogService
                 'email' => $quote->advisor->email ?? '',
                 'name' => $quote->advisor->name ?? '',
                 'mobileNo' => $quote->advisor->mobile_no ?? '',
+                'profilePicture' => $quote->advisor->profile_photo_path
             ],
             'googleMeet' => $quote->advisor->calendar_link ?? '',
             'documents' => $documents,
