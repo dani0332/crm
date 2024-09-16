@@ -12,7 +12,6 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\BusinessInsuranceType;
 use App\Models\InsuranceProvider;
 use App\Models\Lookup;
-use App\Models\QuoteRequestEntityMapping;
 use App\Models\User;
 use App\Repositories\SendUpdateLogRepository;
 use Carbon\Carbon;
@@ -105,16 +104,16 @@ class SagePayloadFactory
                     'TaxGroup' => 'VAT', // alway will be VAT discussed with denber
                     'TaxClass1' => 5,
                     'TaxAmount1' => 0.000,
-                    'DocumentTotalBeforeTaxes' => roundNumber($request->totalAmount),
-                    'DocumentTotalIncludingTax' => roundNumber($request->totalAmount),
+                    'DocumentTotalBeforeTaxes' => roundNumber($request->totalPrice),
+                    'DocumentTotalIncludingTax' => roundNumber($request->totalPrice),
                     'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
                     'InvoiceDetails' => [
                         [
                             'DistributionDescription' => $premiumDescription,
                             'TaxClass1' => 5,
                             'GLAccount' => $request->insurerGlLiaiblityAccount,
-                            'DistributedAmount' => roundNumber($request->totalAmount),
-                            'DistributedAmountBeforeTaxes' => roundNumber($request->totalAmount),
+                            'DistributedAmount' => roundNumber($request->totalPrice),
+                            'DistributedAmountBeforeTaxes' => roundNumber($request->totalPrice),
                         ],
                     ],
                     'InvoicePaymentSchedules' => [
@@ -658,16 +657,9 @@ class SagePayloadFactory
         return $data;
     }
 
-    public static function createCustomerPayload($customer)
+    public static function createCustomerPayload($customer, $entity)
     {
         $entryType = SageEnum::SCT_STRAIGHT;
-        $data = $customer->data;
-        $entity = $data['entity'] ?? null;
-        if ($entity) {
-            $quoteEntityMapping = QuoteRequestEntityMapping::where([['quote_type_id', $data['quoteTypeId']], ['quote_request_id', $data['id']]])->first();
-            $entity = $quoteEntityMapping?->entity;
-        }
-
         if ($entity) {
             $payLoad = [
                 'CustomerNumber' => 'C'.$customer->id,
@@ -683,7 +675,7 @@ class SagePayloadFactory
         }
 
         return [
-            'endPoint' => 'AR/ARCustomers',
+            'endPoint' => SageEnum::END_POINT_AR_CUSTOMER,
             'payload' => $payLoad,
             'customerNumber' => $payLoad['CustomerNumber'],
             'sage_request_type' => SageEnum::SRT_CREATE_CUSTOMER,

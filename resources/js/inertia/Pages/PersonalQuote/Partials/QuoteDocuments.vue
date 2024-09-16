@@ -44,7 +44,8 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const leadSource = page.props.leadSource;
 const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
-
+const hasAnyRole = roles => useHasAnyRole(roles);
+const rolesEnum = page.props.rolesEnum;
 const quoteDocumentsTable = reactive({
   isLoading: false,
   columns: [
@@ -289,6 +290,30 @@ const sendUpdatePermissionCheck = computed(() => {
 
   return true;
 });
+
+const getS3TempUrl = async docURL => {
+  try {
+    const response = await axios.post('/quotes/documents/get-s3-temp-url', {
+      docURL,
+    });
+    // Check if the request was successful and the response contains the URL
+    if (response.status === 200 && response.data.url) {
+      // Open the URL in a new tab
+      window.open(response.data.url, '_blank');
+    } else {
+      notification.error({
+        title: response.data.error,
+        position: 'top',
+      });
+    }
+  } catch (error) {
+    notification.error({
+      title: error,
+      position: 'top',
+    });
+    console.error('An error occurred:', error);
+  }
+};
 </script>
 
 <template>
@@ -352,7 +377,15 @@ const sendUpdatePermissionCheck = computed(() => {
         >
           <template #item-original_name="item">
             <a
-              :href="`documents/${item.doc_uuid}/download`"
+              v-if="hasAnyRole([rolesEnum.BetaUser])"
+              @click.prevent="getS3TempUrl(item.doc_url)"
+              class="text-primary-600 cursor-pointer"
+            >
+              {{ item.original_name }}
+            </a>
+            <a
+              v-else
+              :href="storageUrl + item.doc_url"
               target="_blank"
               class="text-primary-600"
             >
@@ -450,26 +483,50 @@ const sendUpdatePermissionCheck = computed(() => {
               />
               <div v-if="isSendUpdatePage">
                 <a
+                  v-if="hasAnyRole([rolesEnum.BetaUser])"
                   v-for="quoteDocument in quoteDocuments.filter(
                     d => d.document_type_text == documentType.text,
                   )"
                   :key="quoteDocument.id"
-                  :href="`documents/${quoteDocument.doc_uuid}/download`"
+                  @click.prevent="getS3TempUrl(quoteDocument.doc_url)"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
+                >
+                  {{ quoteDocument.original_name || quoteDocument.doc_name }}
+                </a>
+                <a
+                  v-else
+                  v-for="quoteDocument in quoteDocuments.filter(
+                    d => d.document_type_text == documentType.text,
+                  )"
+                  :key="quoteDocument.id"
+                  :href="storageUrl + quoteDocument.doc_url"
                   target="_blank"
-                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}
                 </a>
               </div>
               <div v-else>
                 <a
+                  v-if="hasAnyRole([rolesEnum.BetaUser])"
                   v-for="quoteDocument in quoteDocuments.filter(
                     d => d.document_type_code == documentType.code,
                   )"
                   :key="quoteDocument.id"
-                  :href="`documents/${quoteDocument.doc_uuid}/download`"
+                  @click.prevent="getS3TempUrl(quoteDocument.doc_url)"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
+                >
+                  {{ quoteDocument.original_name || quoteDocument.doc_name }}
+                </a>
+                <a
+                  v-else
+                  v-for="quoteDocument in quoteDocuments.filter(
+                    d => d.document_type_code == documentType.code,
+                  )"
+                  :key="quoteDocument.id"
+                  :href="storageUrl + quoteDocument.doc_url"
                   target="_blank"
-                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
                 >
                   {{ quoteDocument.original_name || quoteDocument.doc_name }}
                 </a>
