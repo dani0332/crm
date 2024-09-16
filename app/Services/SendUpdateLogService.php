@@ -636,7 +636,7 @@ class SendUpdateLogService
     public function updatePaymentDetails($payment, $sendUpdateLog, $ignoreDiscount = false, $insurerDetails = null)
     {
         try {
-            if ($insurerDetails) {
+            if ($insurerDetails !== null) {
                 $sendUpdatePaymentDetails = [
                     'invoice_description' => $insurerDetails['invoice_description'],
                     'broker_invoice_number' => $insurerDetails['broker_invoice_number'],
@@ -858,6 +858,7 @@ class SendUpdateLogService
             $sageProcessData['model_type'] = $quote::class;
             $sageProcessData['model_id'] = $quote->id;
             $response = $sageScheduleResponse = SageProcess::create($sageProcessData);
+            $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED]);
             info('fn:updateSageProcessForDispatching - Sage process scheduled Successfully');
         }
 
@@ -866,6 +867,7 @@ class SendUpdateLogService
 
     public function updatesMoveToLead($preparedDataForERP)
     {
+        dd($preparedDataForERP);
         $endorsementDetails = $preparedDataForERP;
         $categoryCode = $preparedDataForERP['sendUpdateLog']->category?->code;
         $optionCode = $preparedDataForERP['sendUpdateLog']->option?->code;
@@ -922,7 +924,7 @@ class SendUpdateLogService
                         $quote->update(['seat_capacity' => $preparedDataForERP['sendUpdateLog']->seating_capacity]);
                     }
                 }
-                // Cases for Endorsment Financial End
+                // Cases for Endorsement Financial End
 
                 // Cases for Cancel Inception and Cancel Inception Reissue Start
                 if ($categoryCode === SendUpdateLogStatusEnum::CIR) {

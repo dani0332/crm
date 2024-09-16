@@ -51,8 +51,7 @@ class SageProcessesCommand extends Command
 
                 if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST) {
                     $quote = $sageProcess->model;
-                    //                    TODO:: Need to enable again after testing
-                    //                    BookPolicyOnSageJob::dispatch($sageRequest, $quote, $request, $sageProcess)->onQueue('sage-book-policy');
+                    BookPolicyOnSageJob::dispatch($sageRequest, $quote, $request, $sageProcess)->onQueue('sage-book-policy');
                 }
 
                 if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_SEND_UPDATE_REQUEST) {

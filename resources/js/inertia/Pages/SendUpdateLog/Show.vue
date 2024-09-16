@@ -50,6 +50,10 @@ const state = reactive({
   redirectURL: '',
 });
 
+const isEditingBlocked = computed(() => {
+    return (props.sendUpdateLog.status === props.sendUpdateStatusEnum.UPDATE_BOOKING_QUEUED);
+});
+
 // as per the link 'Transaction Type' column -> https://docs.google.com/spreadsheets/d/1TE7RfMpEtL7kenl8s1DUVKRvP_DbUvCJ82XyCFYJ7Rw/edit#gid=803033517
 const transactionType = computed(() => {
   if (
@@ -447,7 +451,7 @@ const isLegacyPolicy = computed(() => {
           </dl>
         </div>
         <div class="flex justify-end">
-          <x-button size="sm" @click="onEdit" v-if="!state.edit">
+          <x-button size="sm" @click="onEdit" v-if="!state.edit" :disabled="isEditingBlocked">
             Edit
           </x-button>
           <template v-else>
@@ -479,6 +483,7 @@ const isLegacyPolicy = computed(() => {
       v-if="isLegacyPolicy"
       :sendUpdateLog="sendUpdateLog"
       :insuranceProviders="props.insuranceProviders"
+      :isEditingBlocked="isEditingBlocked"
     />
 
     <!-- Indicative additional price & Plan details comp -->
@@ -489,6 +494,7 @@ const isLegacyPolicy = computed(() => {
       :insuranceProviders="props.insuranceProviders"
       :quoteType="quoteType"
       :isUpdateBooked="isUpdateBooked"
+      :isEditingBlocked="isEditingBlocked"
     />
 
     <PaymentTableNew

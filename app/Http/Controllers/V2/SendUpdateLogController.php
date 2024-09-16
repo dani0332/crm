@@ -25,6 +25,7 @@ use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Models\SageProcess;
+use App\Models\SendUpdateLog;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\PersonalQuoteRepository;
@@ -363,16 +364,6 @@ class SendUpdateLogController extends Controller
 
     public function sendUpdateToCustomer(UpdateToCustomerRequest $updateToCustomerRequest)
     {
-//        $sageProcess = SageProcess::where('id', 19)->first();
-//        $sageProcessRequest = json_decode($sageProcess->request);
-//
-//        $response = (new SageApiService)->bookEndorsementOnSage([
-//            $sageProcessRequest->requestPayload,
-//            $sageProcess->model,
-//            $sageProcessRequest->sagePayload,
-//            $sageProcessRequest->endorsementPreparedData,
-//        ]);
-
         $suEmailProcess = SendUpdateLogRepository::sendUpdateToCustomer($updateToCustomerRequest->validated());
 
         if (isset($suEmailProcess['status']) && $suEmailProcess['status'] == 500) {
@@ -404,10 +395,32 @@ class SendUpdateLogController extends Controller
 
     public function sendUpdate(SendUpdateRequest $sendUpdateRequest): \Illuminate\Http\JsonResponse
     {
-        dd($sendUpdateRequest->toArray());
-        $response = app(SendUpdateLogService::class)->preparedDataForEndorsement($sendUpdateRequest);
+        //        $sageProcess = SageProcess::where('id', 21)->first();
+        //        $sageProcessRequest = json_decode($sageProcess->request);
+        //
+        //        $response = (new SageApiService)->bookEndorsementOnSage([
+        //            $sageProcessRequest->requestPayload,
+        //            $sageProcess->model,
+        //            $sageProcessRequest->sagePayload,
+        //            $sageProcessRequest->endorsementPreparedData,
+        //        ]);
+        //
+        //        dd($response);
 
-        return response()->json(['message' => $response['message']], $response['status'] ? 200 : 500);
+        $sendUpdateLog = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
+        $endorsementResponse = app(SendUpdateLogService::class)->preparedDataForEndorsement($sendUpdateRequest);
+
+        if (! $endorsementResponse['status'] || empty($endorsementResponse['sageRequestPayload'])) {
+            $responseMessage = empty($endorsementResponse['sageRequestPayload']) ? 'Something went wrong' : $endorsementResponse['message'];
+
+            return response()->json(['message' => $responseMessage], 500);
+        }
+
+        $sendUpdateRequest->merge(['preparedDetailsForEndorsement' => $endorsementResponse['preparedDetailsForEndorsement']]);
+        info('fn:sendUpdate - Calling updateSageProcessForDispatching function through sendUpdate - Send Update UUID: '.$sendUpdateLog->uuid);
+        app(SendUpdateLogService::class)->updateSageProcessForDispatching($sendUpdateRequest->toArray(), $sendUpdateLog, $endorsementResponse['sageRequestPayload']);
+
+        return response()->json(['message' => $endorsementResponse['message']], 200);
     }
 
     public function getOptions(Request $request)

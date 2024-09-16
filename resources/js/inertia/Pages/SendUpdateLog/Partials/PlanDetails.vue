@@ -22,6 +22,9 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
+  isEditingBlocked: {
+      type: Boolean,
+  },
 });
 
 const page = usePage();
@@ -352,7 +355,7 @@ onMounted(() => {
           class="flex justify-end gap-2"
           v-if="readOnlyMode.isDisable === true"
         >
-          <x-button size="sm" @click="onEdit" v-if="!state.isEdit">
+          <x-button size="sm" @click="onEdit" v-if="!state.isEdit" :disabled="isEditingBlocked">
             Edit
           </x-button>
           <template v-else>

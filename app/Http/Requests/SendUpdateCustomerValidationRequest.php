@@ -48,6 +48,10 @@ class SendUpdateCustomerValidationRequest extends FormRequest
             $category = $this->sendUpdate?->category?->code;
             $option = $this->sendUpdate?->option?->code;
 
+            if ($this->sendUpdate->status == SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED) {
+                return $validator->errors()->add('error', 'Update booking already in queued');
+            }
+
             if ($this->sendUpdate->status == SendUpdateLogStatusEnum::UPDATE_BOOKED) {
                 return $validator->errors()->add('error', 'Update already booked');
             }

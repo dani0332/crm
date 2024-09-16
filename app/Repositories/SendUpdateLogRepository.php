@@ -330,6 +330,9 @@ class SendUpdateLogRepository extends BaseRepository
                 $bookingDetails['reversal_invoice'] = $data['reversal_invoice'];
             }
 
+            $result = $sendUpdate->update($bookingDetails);
+            $sendUpdate->refresh();
+
             $payment = Payment::where('send_update_log_id', $data['id'])->first();
             if ($payment) {
                 $sendUpdateLogService = app(SendUpdateLogService::class);
@@ -338,8 +341,6 @@ class SendUpdateLogRepository extends BaseRepository
                 $sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate, true);
                 app(SplitPaymentService::class)->updateCommissionSchedule($payment);
             }
-
-            $result = $sendUpdate->update($bookingDetails);
 
         } catch (\Exception $ex) {
             $result = (object) [
