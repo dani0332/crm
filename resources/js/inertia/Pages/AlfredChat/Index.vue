@@ -192,13 +192,9 @@ onMounted(() => {
 });
 
 const downloadReport = () => {
-  router.visit(route('exportChatData'), {
-    method: 'get',
-    data: cleanObj(filters),
-    preserveScroll: true,
-    onBefore: () => (loader.table = true),
-    onSuccess: () => (loader.table = false),
-  });
+  const data = useObjToUrl(useCleanObj(filters));
+  const url = route('exportChatData');
+  window.open(url + '?' + new URLSearchParams(data).toString());
 };
 </script>
 
@@ -365,7 +361,7 @@ const downloadReport = () => {
           :disabled="reportButtonCon.disable"
           size="sm"
           color="emerald"
-          :href="`export-chat-data?${objToUrl(filters)}`"
+          @click.prevent="downloadReport"
           >Export Excel</x-button
         >
         <template #tooltip v-if="reportButtonCon.msg">
@@ -380,7 +376,7 @@ const downloadReport = () => {
         :disabled="reportButtonCon.disable"
         size="sm"
         color="emerald"
-        :href="`export-chat-data?${objToUrl(cleanObj(filters))}`"
+        @click.prevent="downloadReport"
         >Export Excel</x-button
       >
       <div class="flex justify-end gap-3">
