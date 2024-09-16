@@ -872,16 +872,6 @@ class RenewalsUploadService
                 $quoteDetail->save();
 
                 info($logPrefix . '-insertion in mongo db for : UUID: ' . $quote->uuid);
-
-                $response = Ken::request('/send-motor-renewal-ocb-whatsapp', 'post', [
-                    'quoteUID' =>  $quote->uuid,
-                    'filters' => [[
-                        'field' => 'isRenewalSort',
-                        'value' => false,
-                    ]],
-                    'callSource' => 'imcrm',
-                ]);
-                info($logPrefix . 'renewal-ocb-whatsapp-status-' . $response->message . '- UUID: ' . $quote->uuid);
             }
 
             //update advisor assign date/time
@@ -1304,6 +1294,16 @@ class RenewalsUploadService
                         $emailTemplateId = 551; // keeping it as a fallback
                     }
                 }
+
+                $response = Ken::request('/send-motor-renewal-ocb-whatsapp', 'post', [
+                    'quoteUID' =>  $carQuote->uuid,
+                    'filters' => [[
+                        'field' => 'isRenewalSort',
+                        'value' => false,
+                    ]],
+                    'callSource' => 'imcrm',
+                ]);
+                info('fn: renewalBatchEmailProcess Renewals OCB Email renewal-ocb-whatsapp-' . $response->message . '- UUID: ' . $carQuote->uuid);
 
                 $previousAdvisor = null;
                 if (! empty($carQuote->previous_advisor_id)) {
