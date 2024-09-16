@@ -39,7 +39,6 @@ class TravelQuoteObserver
             }
         }
 
-
         if ($travelQuote->isDirty('advisor_id')) {
             $oldAdvisorId = $changes['advisor_id']['old'];
             TravelQuoteAdvisorUpdated::dispatch($travelQuote, $oldAdvisorId);
