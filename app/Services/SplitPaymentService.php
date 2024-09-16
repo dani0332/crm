@@ -40,7 +40,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Services\CentralService;
 use PDF;
 
 class SplitPaymentService
@@ -783,12 +782,12 @@ class SplitPaymentService
                 } else {
 
                     $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quoteModel);
-                    if (!$lockLeadSectionsDetails['lead_status']) {
+                    if (! $lockLeadSectionsDetails['lead_status']) {
                         $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
                         app(CRUDService::class)->calculateScore($quoteModel, $modelType);
                         info('Transaction Score Calculated: '.$quoteModel->code);
                     }
-                    
+
                 }
                 $quoteModel->save();
                 if (! $sendUpdateId) {
