@@ -356,15 +356,15 @@ class TravelQuoteService extends BaseService
         }
 
         if (
-            ! empty($request->created_at_start) 
-            && ! empty($request->created_at_end) 
-            && empty($request->code) 
-            && empty($request->email) 
-            && empty($request->mobile_no) 
-            && empty($request->payment_due_date) 
-            && empty($request->booking_date) 
+            ! empty($request->created_at_start)
+            && ! empty($request->created_at_end)
+            && empty($request->code)
+            && empty($request->email)
+            && empty($request->mobile_no)
+            && empty($request->payment_due_date)
+            && empty($request->booking_date)
             && empty($request->renewal_batch)
-            ) {
+        ) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
             $this->query->whereBetween('tqr.created_at', [$dateFrom, $dateTo]);
