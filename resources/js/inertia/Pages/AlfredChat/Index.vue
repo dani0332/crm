@@ -7,6 +7,7 @@ const props = defineProps({
 });
 
 const page = usePage();
+const notification = useNotifications('toast');
 
 const { isRequired } = useRules();
 
@@ -192,11 +193,11 @@ onMounted(() => {
 });
 
 const downloadReport = () => {
-  let diff = calculateDaysDifference(filters.start_at, filters.end_date);
+  let diff = calculateDaysDifference(filters.start_date, filters.end_date);
 
   if (diff > 30) {
     notification.error({
-      message: 'Maximum of 31 days (created date) are allowed to be exported.',
+      message: 'Maximum of 30 days (created date) are allowed to be exported.',
       position: 'top',
     });
     return;
@@ -367,13 +368,9 @@ const downloadReport = () => {
 
     <div class="flex justify-between gap-3">
       <x-tooltip v-if="reportButtonCon.disable" position="right">
-        <x-button
-          :disabled="reportButtonCon.disable"
-          size="sm"
-          color="emerald"
-          @click.prevent="downloadReport"
-          >Export Excel</x-button
-        >
+        <!-- :disabled="reportButtonCon.disable" -->
+        <!-- @click.prevent="downloadReport" -->
+        <x-button size="sm" color="emerald">Export Excel</x-button>
         <template #tooltip v-if="reportButtonCon.msg">
           <span class="font-medium">
             {{ reportButtonCon.msg }}
@@ -382,8 +379,8 @@ const downloadReport = () => {
       </x-tooltip>
 
       <x-button
-        v-else
         :disabled="reportButtonCon.disable"
+        v-else
         size="sm"
         color="emerald"
         @click.prevent="downloadReport"
