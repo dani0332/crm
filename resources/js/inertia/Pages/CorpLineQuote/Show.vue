@@ -63,6 +63,7 @@ const countDays = useDaysSinceStale(props.quoteRequest?.stale_at);
 const compareDueDate = useCompareDueDate;
 
 const { copy, copied } = useClipboard();
+const modelClass = 'App\\Models\\BusinessQuote';
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -1211,7 +1212,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
             <x-field label="Transaction Type">
               <x-input
                 type="text"
-                :value="quote.transaction_type_text"
+                v-model="quote.transaction_type_text"
                 class="w-full"
                 :disabled="true"
               />
@@ -1332,6 +1333,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+      :modelClass="modelClass"
     />
 
     <SendUpdates
@@ -1566,10 +1568,15 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
     </div> -->
 
     <AuditLogs
-      :type="'App\\Models\\BusinessQuote'"
+      :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
     />
+
+    <lead-raw-data
+      :modelType="'Business'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

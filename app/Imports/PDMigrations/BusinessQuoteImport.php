@@ -59,7 +59,7 @@ class BusinessQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
 
     public function chunkSize(): int
     {
-        return 1000;
+        return 1500;
     }
 
     private function getQuoteStatusId($dealStatus, $dealStage)
