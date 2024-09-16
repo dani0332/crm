@@ -1278,7 +1278,7 @@ class RenewalsUploadService
                     ]],
                     'callSource' => 'imcrm',
                 ]);
-                info('fn: renewalBatchEmailProcess renewals-ocb-whatsapp-'.$response->message.'- UUID: '.$carQuote->uuid);
+                info('fn: renewalBatchEmailProcess renewals-ocb-whatsapp-'.json_encode($response).'- UUID: '.$carQuote->uuid);
 
                 $listQuotePlans = $this->carQuoteService->getPlans($carQuote->uuid, true, true);
                 $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
