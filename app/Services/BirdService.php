@@ -9,7 +9,7 @@ class BirdService extends BaseService
 {
     public function triggerWebHookRequest($url, $data, $method = 'post')
     {
-        $uuid = $data->uuid ?? '';
+        $uuid = $data->uuid ?? $data->quoteUUID ?? '';
         $logContext = ['Ref-ID' => $uuid, 'URL' => $url, 'Method' => $method];
 
         try {
