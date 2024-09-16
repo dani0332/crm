@@ -14,6 +14,7 @@ use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 
 class TravelAllocationService extends AllocationService
 {
@@ -27,6 +28,7 @@ class TravelAllocationService extends AllocationService
 
     public function fetchAvailableAdvisor($isReassignmentJob = false, $teamId = null, $quoteUUID = null)
     {
+        Log::info(self::class . " - fetchAvailableAdvisor: {$isReassignmentJob} - {$teamId} - {$quoteUUID}");
         $statusOrder = [
             UserStatusEnum::ONLINE,
             UserStatusEnum::OFFLINE,
