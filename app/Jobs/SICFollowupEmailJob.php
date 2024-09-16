@@ -58,7 +58,7 @@ class SICFollowupEmailJob implements ShouldQueue
                 $sendEmailCustomerService->sendSICFollowupEmail($lead, $this->quoteType);
                 $this->sendWhatsAppMessage();
             } else {
-                $sendEmailCustomerService->triggerSICDedicatedEmail($lead,$this->quoteType);
+                $sendEmailCustomerService->sendSICDedicatedEmail($lead,$this->quoteType);
             }
         } else {
             info('SICFollowupEmailJob - Lead Advisor Available - Ref ID: '.$lead->uuid.'- Time: '.now());
@@ -70,6 +70,7 @@ class SICFollowupEmailJob implements ShouldQueue
         try {
             $response = Ken::request('/send-sic-dedicated-wa', 'post', [
                 'quoteUID' => $this->uuid,
+                'quoteTypeId' => $this->quoteType?->id(),
             ]);
             info('SICFollowupEmailJob - '.now().' - sendWhatsAppMessage: response from ken| '.json_encode($response));
             if ($response) {
