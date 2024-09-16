@@ -51,6 +51,10 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
+  modelClass: {
+    type: String,
+    default: '',
+  },
 });
 
 const state = reactive({
@@ -64,6 +68,7 @@ const sendUpdateStatusEnum = page.props.sendUpdateStatusEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const vat = page.props.vatValue;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+const permissionsEnum = page.props.permissionsEnum;
 
 const dateToYMD = date => {
   if (date) {
@@ -2096,6 +2101,12 @@ watch(
           </div>
           <x-divider class="my-4 mt-10" />
           <div class="flex justify-end gap-2">
+            <SageAPILogs
+              :quoteType="props.quoteType"
+              :record="props.sendUpdateLog"
+              :modelClass="props.modelClass"
+              :permissionsEnum="page.props.permissionsEnum"
+            />
             <template v-if="!state.isEdit">
               <x-button size="sm" @click="checkSectionTwoEdit"> Edit </x-button>
               <template v-if="isLackingPayment">

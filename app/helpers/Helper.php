@@ -16,6 +16,7 @@ use App\Models\CustomerAdditionalInfo;
 use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
+use App\Models\QuoteAdditionalDetail;
 use App\Models\QuoteTag;
 use App\Models\Team;
 use App\Models\TravelQuote;
@@ -1282,5 +1283,21 @@ if (! function_exists('isLeadSic')) {
 
             return false;
         }
+    }
+}
+if (! function_exists('getWhatsappConsent')) {
+    function getWhatsappConsent(QuoteTypes $quoteType, string $uuid): bool
+    {
+        $whatsappConsent = false;
+        $quoteAdditionalDetail = QuoteAdditionalDetail::where('quote_uuid', $uuid)->where(function ($q) use ($quoteType) {
+            $q->where('quote_type_id', (int) $quoteType?->id());
+            $q->orWhere('quote_type_id', $quoteType?->id());
+        })->first();
+
+        if ($quoteAdditionalDetail) {
+            $whatsappConsent = isset($quoteAdditionalDetail->flags['whatsapp_consent']) ? $quoteAdditionalDetail->flags['whatsapp_consent'] : false;
+        }
+
+        return $whatsappConsent;
     }
 }
