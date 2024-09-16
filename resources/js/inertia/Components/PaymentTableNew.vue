@@ -4576,7 +4576,7 @@ const splitPaymentTotalPrice = (
                       <span class="text-sm">
                         <span
                           class="border-b-2 border-dotted border-black text-sm"
-                          >SAGE RECIEPT ID</span
+                          >SAGE RECEIPT ID</span
                         >
                       </span>
                       <template #tooltip>

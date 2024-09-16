@@ -54,13 +54,13 @@ class SendHealthOCBIntroEmailJob implements ShouldQueue
             }
 
             info("SendHealthOCBIntroEmailJob - SIC workflow is not enabled for UUID: {$this->quoteUuid}");
-            $responseCode = $healthEmailService->sendHealthOCBIntroEmail($lead, $this->triggerSICWorkflow);
+            $response = $healthEmailService->sendHealthOCBIntroEmail($lead, $this->triggerSICWorkflow);
 
-            $logMessage = in_array($responseCode, [200, 201])
+            $logMessage = in_array($response->status_code, [200, 201])
                 ? 'OCB INTRO Email Sent'
                 : 'OCB INTRO Email Not Sent';
 
-            info("SendHealthOCBIntroEmailJob - {$logMessage}: {$responseCode} | Email: {$lead->email} | UUID: {$this->quoteUuid}");
+            info("SendHealthOCBIntroEmailJob - {$logMessage}: {$response->status_code} | Email: {$lead->email} | UUID: {$this->quoteUuid}");
         } catch (Exception $e) {
             Log::error("SendHealthOCBIntroEmailJob - Exception: {$e->getMessage()} | Stack Trace: {$e->getTraceAsString()}");
         }
