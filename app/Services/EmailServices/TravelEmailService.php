@@ -7,6 +7,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
+use App\Jobs\SICFollowupEmailJob;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\BaseService;
@@ -144,8 +145,8 @@ class TravelEmailService extends BaseService
             'advisorEmail' => (! empty($advisor?->email) ? $advisor?->email : ''),
             'advisorName' => (! empty($advisor?->name) ? $advisor?->name : ''),
             'travelQuoteId' => $lead->code,
-            'travelQuoteLink' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL').$lead->uuid.($isRevivalLead ? '?dla=true' : ''), // DLA = Disable Lead Assignment
-            'requestAdvisorLink' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
+            'travelQuoteLink' => QuoteTypes::TRAVEL->quoteLink($lead->uuid, $isRevivalLead ? ['dla' => 'true'] : []), // DLA = Disable Lead Assignment
+            'requestAdvisorLink' => QuoteTypes::TRAVEL->quoteLink($lead->uuid, ['assignAdvisor' => 'true']),
             'assignmentType' => getAssignmentTypeText($lead->assignment_type),
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor?->name : '',
             'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor?->status) : '',
@@ -209,7 +210,7 @@ class TravelEmailService extends BaseService
         $members = $lead->customerMembers;
         $emailData->totalTravelers = $members->count();
         $emailData->allPlansCount = count($plans->all);
-        $emailData->plans = $this->buildPlansData($emailData->hasPlansGroups, $lead, $plans, $members);
+        $emailData->plans = $this->buildPlansData($emailData->hasPlansGroups, $lead, $plans, $members) ?? [];
 
         return $emailData;
     }
@@ -266,7 +267,20 @@ class TravelEmailService extends BaseService
 
         info(self::class." - sendNonAdvisorIntroEmail - Ref ID: {$lead->uuid} Time: ".now());
 
-        return $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId, QuoteTypes::TRAVEL);
+        $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId, QuoteTypes::TRAVEL);
+
+        if ($responseCode) {
+            // Dispatch the job with a 24 hours delay
+            if (isLeadSic($lead->uuid)) {
+                SICFollowupEmailJob::dispatch($lead->uuid, QuoteTypes::TRAVEL)->delay(now()->addminutes(1));
+                info(self::class." - SICFollowupEmailJob Dispatched - Ref ID: {$lead->uuid} Time: ".now());
+            } else {
+                info(self::class." | SICFollowupEmailJob - No SIC - Ref ID: {$lead->uuid} Time: ".now());
+            }
+
+        }
+
+        return $responseCode;
     }
 
     public function sendSICNotificationToAdvisor(TravelQuote $lead, User $user)
