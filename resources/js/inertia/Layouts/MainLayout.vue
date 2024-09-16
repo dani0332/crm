@@ -134,21 +134,31 @@ const urls = computed(() => {
               <div class="flex gap-3 mt-2">
                 <div
                   class="items-center"
-                  style="border: 1px solid #ebebeb; padding: 5px 5px ; border-radius: 5px ;font-size: 13px"
+                  style="
+                    border: 1px solid #ebebeb;
+                    padding: 5px 5px;
+                    border-radius: 5px;
+                    font-size: 13px;
+                  "
                 >
                   Pending Callbacks :
-                    <strong>
+                  <strong>
                     {{ pendingActivityCount.pendingCallback }}
-                    </strong>
+                  </strong>
                 </div>
                 <div
                   class="items-center"
-                  style="border: 1px solid #ebebeb; border-radius: 5px ;padding: 5px 5px ; font-size: 13px"
+                  style="
+                    border: 1px solid #ebebeb;
+                    border-radius: 5px;
+                    padding: 5px 5px;
+                    font-size: 13px;
+                  "
                 >
                   Pending Whatsapp :
-                    <strong>
+                  <strong>
                     {{ pendingActivityCount.pendingWhatsapp }}
-                    </strong>
+                  </strong>
                 </div>
               </div>
             </div>

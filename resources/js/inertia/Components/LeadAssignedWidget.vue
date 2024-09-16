@@ -35,7 +35,7 @@ onMounted(() => {
           <x-tag
             class="underline decoration-dotted decoration-primary-700"
             outlined
-            style="border: 1px solid #ebebeb;font-size: 13px"
+            style="border: 1px solid #ebebeb; font-size: 13px"
           >
             <span>Assigned Yesterday : &nbsp;</span>
             <strong> {{ yesterdayAutoCount + yesterdayManualCount }}</strong>
@@ -50,8 +50,7 @@ onMounted(() => {
           <x-tag
             class="underline decoration-dotted decoration-primary-700"
             outlined
-            style="border: 1px solid #ebebeb;font-size: 13px"
-
+            style="border: 1px solid #ebebeb; font-size: 13px"
           >
             <span>Assigned Today : &nbsp;</span>
             <strong>{{ todayAutoCount + todayManualCount }}</strong>
@@ -61,9 +60,11 @@ onMounted(() => {
           </template>
         </x-tooltip>
 
-        <x-tag color="gray" class="decoration-primary-700" outlined
-               style="border: 1px solid #ebebeb;font-size: 13px"
-
+        <x-tag
+          color="gray"
+          class="decoration-primary-700"
+          outlined
+          style="border: 1px solid #ebebeb; font-size: 13px"
         >
           <span>Max Capacity : &nbsp;</span>
           <strong>{{ userMaxCap }}</strong>

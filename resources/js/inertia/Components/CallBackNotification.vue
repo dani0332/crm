@@ -23,7 +23,7 @@ const listen = () => {
         message: e.message,
         timeout: 10000,
       };
-        hideNotificationTimeOut();
+      hideNotificationTimeOut();
     }
   });
 };
@@ -36,11 +36,11 @@ const hideNotification = () => {
 };
 
 const hideNotificationTimeOut = () => {
-    if (notificationData.value.timeout) {
-        setTimeout(() => {
-            showNotification.value = false;
-        }, notificationData.value.timeout);
-    }
+  if (notificationData.value.timeout) {
+    setTimeout(() => {
+      showNotification.value = false;
+    }, notificationData.value.timeout);
+  }
 };
 
 onMounted(() => {
