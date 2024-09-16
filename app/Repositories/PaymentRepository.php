@@ -656,7 +656,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         try {
             $insuranceProvider = getInsuranceProvider($payment, $quoteType);
 
-            if (!isNonSelfBillingEnabledForInsuranceProvider($insuranceProvider)) {
+            if (! isNonSelfBillingEnabledForInsuranceProvider($insuranceProvider)) {
                 info('Payment  : '. $payment->code .' : Non-self Billing is not enabled for Insurance Provider ID : ' .$insuranceProvider->id);
                 $response['status'] = true;
                 $response['message'] = 'Non-self Billing is not enabled for Insurance Provider';
