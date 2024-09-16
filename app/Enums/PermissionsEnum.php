@@ -251,6 +251,7 @@ final class PermissionsEnum extends Enum
     public const EXPORT_MAKES_MODELS = 'export-makes-models';
     public const VIEW_INSLY_BOOK_POLICY = 'view-insly-book-policy';
     public const SEND_INSLY_BOOK_POLICY = 'send-insly-book-policy';
+    public const MIGRATE_INSLY_LEAD = 'migrate-insly-lead';
     public const LEAD_CARD_SEARCH = 'lead-card-search';
     public const HEALTH_QUOTES_MANAGER_ACCESS = 'health-quotes-manager-access';
     public const HEALTH_QUOTES_ACCESS = 'health-quotes-access';
@@ -361,7 +362,9 @@ final class PermissionsEnum extends Enum
     public const TRAVEL_HAPEX = 'travel-hapex';
     public const All_QUOTES_VIEWONLY_ACCESS = 'all-quotes-view-only-access';
     public const CUSTOMER_RISKRRATING_OVERRIDE = 'customer-riskrrating-override';
+    public const QUOTE_RAW_DATA = 'quote-raw-data';
     public const MANAGER_AUTHORISED_PAYMENT_SUMMARY = 'manager-authorised-payment-summary';
+    public const VIEW_SAGE_API_LOGS = 'view-sage-api-logs';
 
     public static function getAdvisorConversionReportPermissions()
     {

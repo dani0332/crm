@@ -29,6 +29,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MembersDetailController;
 use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\QuoteDocumentController;
+use App\Http\Controllers\RawQueryController;
 use App\Http\Controllers\ReasonController;
 use App\Http\Controllers\RenewalBatchController;
 use App\Http\Controllers\RenewalsUploadController;
@@ -112,6 +113,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('home', function () {
         return inertia('Home/Home', ['im_logo' => getIMLogo()]);
     })->name('dashboard.home');
+
+    Route::post('get-lob-raw-data', [RawQueryController::class, 'show'])->name('getRawData');
 
     Route::get('instant-alfred/logs', [AlfredChatController::class, 'logs'])->name('instant-alfred.logs');
 
@@ -236,6 +239,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('legacy-policy/move-to-imcrm', [LegacyPolicyController::class, 'moveToImcrm']);
     Route::get('legacy-policy/{policyNumber}/policy', [LegacyPolicyController::class, 'getPolicyByPolicyNumber'])->name('view-legacy-policy.renewal-uploads');
     Route::post('legacy-policy/get-s3-temp-url', [LegacyPolicyController::class, 'getS3TempUrl']);
+    Route::post('migrate-legacy-policy/{poid}', [LegacyPolicyController::class, 'migratePolicy'])->name('migrate-legacy-policy');
 
     Route::post('embedded-products/upload-document', [EmbeddedProductController::class, 'uploadDocument'])->name('embedded-products.upload-document');
     Route::post('embedded-products/send-document', [EmbeddedProductController::class, 'sendDocument'])->name('embedded-products.send-document');
@@ -321,6 +325,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/lead-allocation/toggle-renewal-car-lead-allocation-status', [LeadAllocationController::class, 'toggleRenewalCarLeadAllocationStatus']);
     Route::post('/lead-allocation/toggle-car-lead-fetch-sequence', [LeadAllocationController::class, 'toggleCarLeadFetchSequence']);
 
+    Route::post('quotes/documents/get-s3-temp-url', [QuoteDocumentController::class, 'getS3TempUrl']);
     Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'list']);
     Route::post('quotes/{quoteType}/{quoteUuId}/update-validate-documents', [QuoteDocumentController::class, 'validateDocumentsUpdate']);
     Route::post('quotes/{quoteType}/documents/store', [QuoteDocumentController::class, 'store']);
@@ -600,6 +605,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/getCarModelTrimValues', [AjaxController::class, 'getCarModelTrimValues']);
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
     Route::post('auditlogs', [AuditableController::class, 'loadAuditLogs']);
+    Route::get('sage-api-logs/{sectionId}', [AuditableController::class, 'sageApiLogs'])->name('sage.api.logs')->middleware('permission:'.PermissionsEnum::VIEW_SAGE_API_LOGS);
 
     Route::post('insurer-logs', [AuditableController::class, 'loadApiLogs']);
     Route::post('audits/get-quote-audits', [AuditableController::class, 'getQuoteAudits']);

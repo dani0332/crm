@@ -386,7 +386,7 @@
     $advisor = $quote->advisor;
     $invoiceDate = Carbon\Carbon::parse($proformaPaymentRequest->collection_date)->format($dateFormat);
     $customer = $quote->customer;
-    $customerName =  ucwords($customer->first_name .' '. $customer->last_name);
+    $customerName =  ucwords($customer->insured_first_name .' '. $customer->insured_last_name);
     $customerDetail =  $customer->detail;
     $vat = 0;
     $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()?->value;

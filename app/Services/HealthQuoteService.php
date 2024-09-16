@@ -53,6 +53,7 @@ class HealthQuoteService extends BaseService
     protected $query;
     protected $leadAllocationService;
     protected $httpService;
+
     use AddPremiumAllLobs, GenericQueriesAllLobs, GetUserTreeTrait, RolePermissionConditions;
 
     public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
@@ -346,6 +347,9 @@ class HealthQuoteService extends BaseService
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
             $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
+        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date) && ! isset($request->renewal_batch)) {
+            $this->query->whereBetween('hqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
+        }
         if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], true);
@@ -431,7 +435,7 @@ class HealthQuoteService extends BaseService
 
         // advisors filter
         if (isset($request->advisors) && is_array($request->advisors) && count($request->advisors) > 0 && ! in_array(DefaultAdvisorEnum::UNASSIGNED, $request->advisors)) {
-            $this->query->whereIn('advisor_id', $request->advisors)->orWhereIn('wcu_id', $request->advisors);
+            $this->query->whereIn('advisor_id', $request->advisors);
         }
         // is_renewal filter
         if (isset($request->is_renewal) && $request->is_renewal != '') {
@@ -528,7 +532,7 @@ class HealthQuoteService extends BaseService
                     if ($request[$item][0] == 'null') {
                         $this->query->whereNull('advisor_id');
                     } else {
-                        $this->query->whereIn('advisor_id', $request[$item])->orWhereIn('wcu_id', $request[$item]);
+                        $this->query->whereIn('advisor_id', $request[$item]);
                     }
                 } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('quote_status_id', $request[$item]);

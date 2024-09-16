@@ -30,10 +30,15 @@ class CorplineDataMigration extends Command
     public function handle()
     {
         $filePaths = [
-            'Corpline_Part1.xlsx',
-            'Corpline_Part2.xlsx',
-            'Corpline_Part3.xlsx',
-            'Corpline_Part4.xlsx',
+            // 'corpline-1.xlsx',
+            // 'corpline-2.xlsx',
+            // 'corpline-3.xlsx',
+            // 'corpline-4.xlsx',
+            // 'corpline-5.xlsx',
+            // 'corpline-6.xlsx',
+            'corpline-7.xlsx',
+            'corpline-8.xlsx',
+            'corpline-9.xlsx',
         ];
 
         foreach ($filePaths as $filePath) {
