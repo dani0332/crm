@@ -1,8 +1,9 @@
 <script setup>
 import { useRoundIt } from '../Composables/utilities';
-import SageAPILogs from '@/inertia/Components/SageAPILogs.vue';
 const page = usePage();
 const notification = useNotifications('toast');
+import SageAPILogs from '@/inertia/Components/SageAPILogs.vue';
+import NProgress from 'nprogress';
 const { isRequired } = useRules();
 
 const props = defineProps({

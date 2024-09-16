@@ -1190,7 +1190,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 placeholder="Lost Reason is required"
                 class="w-full"
                 :error="leadStatusForm.errors.lostReason"
-              :disabled="lockLeadSectionsDetails.lead_status"
+                :disabled="lockLeadSectionsDetails.lead_status"
               />
             </div>
           </div>
@@ -1568,10 +1568,15 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
     </div> -->
 
     <AuditLogs
-      :type="'App\\Models\\BusinessQuote'"
+      :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
     />
+
+    <lead-raw-data
+      :modelType="'Business'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

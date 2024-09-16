@@ -64,6 +64,7 @@ defineProps({
   isAmlClearedForQuote: Boolean,
 });
 
+const modelClass = 'App\\Models\\TravelQuote';
 const permissionEnum = page.props.permissionsEnum;
 const permissionsEnum = page.props.permissionsEnum;
 const leadSource = page.props.leadSource;
@@ -71,7 +72,6 @@ const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const quoteStatusEnum = page.props.quoteStatusEnum;
-const modelClass = 'App\\Models\\TravelQuote';
 const checkedItems = ref([]);
 const checkCheckedPlans = computed(() => {
   return true;
@@ -3335,6 +3335,11 @@ const onAddUpdate = () => {
       :quoteType="'TRAVEL'"
       :expanded="sectionExpanded"
     />
+
+    <lead-raw-data
+      :modelType="'Travel'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>
 <style>

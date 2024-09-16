@@ -81,6 +81,7 @@ class TransactionReportService extends ManagementReport
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'p.broker_invoice_number',
                 'btoi.text as sub_type_line_of_business',
+                'p.insurer_commmission_invoice_number',
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
@@ -190,6 +191,7 @@ class TransactionReportService extends ManagementReport
             'Insurer Invoice No.',
             'Insurer Invoice Date',
             'Broker Invoice No',
+            'Commission Tax Invoice Number',
         ];
     }
 
@@ -226,6 +228,7 @@ class TransactionReportService extends ManagementReport
             $quote->insurer_invoice_number ?? 'N/A',
             $quote->insurer_tax_invoice_date ?? 'N/A',
             $quote->broker_invoice_number ?? 'N/A',
+            $quote->insurer_commmission_invoice_number ?? 'N/A',
         ];
     }
 }

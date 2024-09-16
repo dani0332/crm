@@ -65,9 +65,9 @@ const props = defineProps({
   paymentDocument: Array,
   noteDocumentType: Array,
 });
+const modelClass = 'App\\Models\\HealthQuote';
 
 const isManualPlansCount = ref(0);
-const modelClass = 'App\\Models\\HealthQuote';
 
 const page = usePage();
 const authId = computed(() => page.props.auth.user.id);
@@ -3887,5 +3887,10 @@ const onAddUpdate = () => {
       v-if="clientInquiryLogs?.length > 0"
       :logs="clientInquiryLogs"
     />
+
+    <lead-raw-data
+      :modelType="'Health'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

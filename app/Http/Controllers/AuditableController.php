@@ -104,7 +104,7 @@ class AuditableController extends Controller
 
     public function sageApiLogs(Request $request, $sectionId)
     {
-        $sageApiLogs = SageApiLog::where(['section_type' => $request->modelClass, 'section_id' => $sectionId])->get();
+        $sageApiLogs = SageApiLog::with('user')->where(['section_type' => $request->modelClass, 'section_id' => $sectionId])->get();
 
         return response()->json(['success' => true, 'sageApiLogs' => $sageApiLogs]);
     }

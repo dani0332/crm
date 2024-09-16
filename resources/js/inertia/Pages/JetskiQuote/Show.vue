@@ -35,6 +35,7 @@ const page = usePage();
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const modelClass = 'App\\Models\\PersonalQuote';
 const readOnlyMode = reactive({
   isDisable: true,
 });
@@ -43,7 +44,6 @@ onMounted(() => {
 });
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
-const modelClass = 'App\\Models\\PersonalQuote';
 
 const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
   createReusableTemplate();
@@ -87,11 +87,10 @@ const dateFormat = date =>
               >
                 <x-button size="sm" tag="div">Edit</x-button>
               </Link>
-              <x-button v-else:disabled="isDisabled"size="sm" tag="div"
+              <x-button v-else:disabled="isDisabled" size="sm" tag="div"
                 >Edit</x-button
               >
-
-</LeadEditBtnTemplate>
+            </LeadEditBtnTemplate>
 
             <x-tooltip
               v-if="lockLeadSectionsDetails.lead_details"
@@ -360,7 +359,7 @@ const dateFormat = date =>
       :quoteType="quoteType"
       :vatPrice="vatPercentage"
       :expanded="sectionExpanded"
-    :isAddUpdate="isAddUpdate"
+      :isAddUpdate="isAddUpdate"
     />
 
     <EmbeddedProducts
@@ -379,5 +378,10 @@ const dateFormat = date =>
     />
 
     <LeadHistory :quote="$page.props.quote" :expanded="sectionExpanded" />
+
+    <lead-raw-data
+      :modelType="'Jetski'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

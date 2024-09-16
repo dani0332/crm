@@ -311,11 +311,11 @@ use App\Enums\PermissionsEnum;
                 </ul>
 
 
-                <ul class="nav side-menu">
+                {{--<ul class="nav side-menu">
                     @can(PermissionsEnum::VIEW_LEGACY_DETAILS)
                         <li><a href="{{ route('bulk-policy-booking.index') }}"><i></i>Bulk Policy Book</a>
                     @endcan
-                </ul>
+                </ul>--}}
 
                 {{-- @if (auth()->check() && auth()->user()->isAdmin())
                 <ul class="nav side-menu">

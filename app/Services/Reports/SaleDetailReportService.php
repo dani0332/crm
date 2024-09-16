@@ -73,6 +73,7 @@ class SaleDetailReportService extends ManagementReport
                 'dp.name as department',
                 'pi.name as policy_issuer',
                 'btoi.text as sub_type_line_of_business',
+                'p.insurer_commmission_invoice_number',
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
@@ -185,6 +186,7 @@ class SaleDetailReportService extends ManagementReport
             'Sub-Type',
             'Advisor',
             'Policy Issuer ',
+            'Commission Tax Invoice Number',
         ];
     }
 
@@ -221,6 +223,7 @@ class SaleDetailReportService extends ManagementReport
             $quote->sub_type_line_of_business ?? 'N/A',
             $quote->advisor ?? 'N/A',
             $quote->policy_issuer ?? 'N/A',
+            $quote->insurer_commmission_invoice_number ?? 'N/A',
         ];
     }
 }

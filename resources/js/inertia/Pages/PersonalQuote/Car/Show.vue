@@ -4045,4 +4045,9 @@ const onAddUpdate = () => {
     v-if="clientInquiryLogs?.length > 0"
     :logs="clientInquiryLogs"
   />
+
+  <lead-raw-data
+    :modelType="'Car'"
+    :code="$page.props.quote.code"
+  ></lead-raw-data>
 </template>

@@ -1087,5 +1087,10 @@ const onAddUpdate = () => {
     />
 
     <LeadHistory :quote="$page.props.quote" :expanded="sectionExpanded" />
+
+    <lead-raw-data
+      :modelType="'Cycle'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

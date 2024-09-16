@@ -47,6 +47,7 @@ defineProps({
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
 const leadSource = page.props.leadSource;
+const modelClass = 'App\\Models\\LifeQuote';
 const hasRole = role => useHasRole(role);
 
 const modals = reactive({
@@ -56,8 +57,6 @@ const modals = reactive({
   doc: false,
   docConfirm: false,
 });
-
-const modelClass = 'App\\Models\\LifeQuote';
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -1579,5 +1578,10 @@ const onAddUpdate = () => {
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
     />
+
+    <lead-raw-data
+      :modelType="'Life'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

@@ -55,6 +55,10 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
+  modelClass: {
+    type: String,
+    default: '',
+  },
 });
 
 const state = reactive({
@@ -269,13 +273,9 @@ const bookingDetailsForm = useForm({
     '',
   total_vat_amount: props.sendUpdateLog?.total_vat_amount || '0.00',
   price_vat_applicable:
-    Math.abs(
-    props.sendUpdateLog.price_vat_applicable) ||
-    '0.00',
+    Math.abs(props.sendUpdateLog.price_vat_applicable) || '0.00',
   price_vat_not_applicable:
-    Math.abs(
-    props.sendUpdateLog.price_vat_not_applicable) ||
-    '0.00',
+    Math.abs(props.sendUpdateLog.price_vat_not_applicable) || '0.00',
   price_with_vat: props.sendUpdateLog?.price_with_vat || '0.00',
   // new entry section related.
   reversal_invoice: props.sendUpdateLog?.reversal_invoice || null,
@@ -347,19 +347,20 @@ const calculateCommission = () => {
     calculateCommisionDetailsForACB();
   } else if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB) {
     calculatePriceDetailsForATIB();
-  } else {if (
-    bookingDetailsForm.commission_vat_applicable > 0 ||
-    bookingDetailsForm.price_vat_applicable > 0 ||
-    bookingDetailsForm.price_vat_not_applicable > 0
-
-    ) {if (
-      Number(bookingDetailsForm.price_vat_applicable > 0) ||
-      Number(bookingDetailsForm.price_vat_not_applicable > 0)
+  } else {
+    if (
+      bookingDetailsForm.commission_vat_applicable > 0 ||
+      bookingDetailsForm.price_vat_applicable > 0 ||
+      bookingDetailsForm.price_vat_not_applicable > 0
     ) {
-      let vat_on_commission =
-        bookingDetailsForm.commission_vat_applicable * Number(vat / 100);
-      bookingDetailsForm.vat_on_commission =
-        convertToNegative(vat_on_commission);
+      if (
+        Number(bookingDetailsForm.price_vat_applicable > 0) ||
+        Number(bookingDetailsForm.price_vat_not_applicable > 0)
+      ) {
+        let vat_on_commission =
+          bookingDetailsForm.commission_vat_applicable * Number(vat / 100);
+        bookingDetailsForm.vat_on_commission =
+          convertToNegative(vat_on_commission);
 
         let total_commission =
           Number(bookingDetailsForm.commission_vat_not_applicable) +
@@ -894,7 +895,7 @@ const submitToCustomer = (withPartialPaymentCheck = true) => {
     .then(response => {
       if (response.status == 200) {
         Object.keys(response.data).forEach(function (key) {
-          if(response.data[key]['status'] == 200) {
+          if (response.data[key]['status'] == 200) {
             notification.success({
               title: response.data[key]['message'],
               position: 'top',
