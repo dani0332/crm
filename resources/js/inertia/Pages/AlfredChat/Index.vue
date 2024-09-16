@@ -173,11 +173,13 @@ onMounted(() => {
     border-cell
     hide-rows-per-page
     hide-footer
-    fixed-checkbox
   >
     <template #item-quote_id="{ quote_id, quote_type }">
       <span v-if="quote_type.toLowerCase().includes('hea')">
         {{ 'HEA' + '-' + quote_id }}
+      </span>
+      <span v-else-if="quote_type.toLowerCase().includes('travel')">
+        {{ 'TRA' + '-' + quote_id }}
       </span>
       <span v-else>
         {{ quote_type + '-' + quote_id }}

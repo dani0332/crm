@@ -257,7 +257,7 @@ onMounted(() => {
             >
               Export
             </x-button>
-            <x-tooltip v-else position="right">
+            <x-tooltip v-else placement="right">
               <x-button tag="div" size="sm" color="emerald"> Export </x-button>
               <template #tooltip>
                 <span class="font-medium">
@@ -301,7 +301,6 @@ onMounted(() => {
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-cdb_id="{ cdb_id }">
         <Link

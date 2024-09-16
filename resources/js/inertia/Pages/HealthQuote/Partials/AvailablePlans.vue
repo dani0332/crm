@@ -8,6 +8,8 @@ const props = defineProps({
   memebersDetailsChanged: Boolean,
 });
 
+const page = usePage();
+
 const emit = defineEmits([
   'copayUpdate',
   'update:modelValue',
@@ -526,20 +528,44 @@ onUpdated(() => {
       Number(totalLoadingPrice.value) + Number(data.price);
   });
 });
+const [ToggleManualButtonTemplate, ToggleManualButtonReuseTemplate] =
+  createReusableTemplate();
 </script>
 
 <template>
-  <x-modal v-model="showModal" size="xl" show-close backdrop>
-    <template #header>
+  <x-modal
+    v-model="showModal"
+    size="xl"
+    :title="`${plan?.providerName} - ${plan?.name}`"
+    show-close
+    backdrop
+    :has-actions="false"
+  >
+    <div class="flex justify-end">
+      <ToggleManualButtonTemplate v-slot="{ isDisabled }">
+        <x-toggle
+          v-model="isManual"
+          color="success"
+          label="Manual"
+          :loading="toggleLoader"
+          :disabled="isDisabled"
+        />
+      </ToggleManualButtonTemplate>
+
       <div class="flex justify-between items-center">
-        <h3>{{ plan.providerName }} - {{ plan.name }}</h3>
         <div class="flex gap-3 pr-8">
-          <x-toggle
-            v-model="isManual"
-            color="success"
-            label="Manual"
-            :loading="toggleLoader"
-          />
+          <x-tooltip
+            v-if="page.props.lockLeadSectionsDetails.plan_selection"
+            placement="bottom"
+          >
+            <ToggleManualButtonReuseTemplate :isDisabled="true" />
+            <template #tooltip>
+              No further action allowed on issued policy, If changes are
+              required, such as increase in price, please proceed through the
+              'Send Update' feature using the 'Correction of Policy' option.
+            </template>
+          </x-tooltip>
+          <ToggleManualButtonReuseTemplate v-else />
           <x-toggle
             v-model="hidePlan"
             color="error"
@@ -549,7 +575,7 @@ onUpdated(() => {
           />
         </div>
       </div>
-    </template>
+    </div>
     <div class="w-full">
       <TabGroup>
         <TabList
@@ -567,8 +593,7 @@ onUpdated(() => {
                 props.plan.isManualPlan &&
                 props.plan.needPriceUpdate
               "
-              position="bottom"
-              class="arrow-t"
+              placement="bottom"
             >
               <x-badge
                 size="xs"
@@ -835,7 +860,7 @@ onUpdated(() => {
               >
                 <template #header-premium="header">
                   <div class="customize-header">
-                    <x-tooltip position="bottom" class="arrow-t">
+                    <x-tooltip placement="bottom">
                       <span
                         class="font-semibold tracking-widest uppercase text-xs underline decoration-dotted decoration-primary-600 cursor-help"
                       >
@@ -852,7 +877,7 @@ onUpdated(() => {
 
                 <template #header-loadingPrice="header">
                   <div class="customize-header large-tip">
-                    <x-tooltip position="bottom" class="arrow-t">
+                    <x-tooltip placement="bottom">
                       <span
                         class="font-semibold tracking-widest uppercase text-xs underline decoration-dotted decoration-primary-600 cursor-help"
                       >
@@ -883,7 +908,7 @@ onUpdated(() => {
 
                 <template #header-finalPrice="header">
                   <div class="customize-header">
-                    <x-tooltip position="bottom" class="arrow-t">
+                    <x-tooltip placement="bottom">
                       <span
                         class="font-semibold tracking-widest uppercase text-xs underline decoration-dotted decoration-primary-600 cursor-help"
                       >
@@ -964,10 +989,9 @@ onUpdated(() => {
                       :disabled="true"
                       size="sm"
                     /> -->
-
                     <x-input
                       v-if="data.healthPlanCoPaymentId == selectedCopay.id"
-                      :value="data.premium?.toLocaleString()"
+                      :modelValue="data.premium?.toLocaleString()"
                       :disabled="true"
                       size="sm"
                     />
@@ -977,7 +1001,7 @@ onUpdated(() => {
                           selectedCopay.length == 0) &&
                         data.healthPlanCoPaymentId == defaultCopayId
                       "
-                      :value="data.premium?.toLocaleString()"
+                      :modelValue="data.premium?.toLocaleString()"
                       :disabled="true"
                       size="sm"
                     />
@@ -1087,7 +1111,7 @@ onUpdated(() => {
                       "
                       :disabled="true"
                       size="sm"
-                      :value="
+                      :modelValue="
                         (
                           Number(
                             loadingPrices[memberIndexPerId(item.memberId)]
@@ -1112,7 +1136,7 @@ onUpdated(() => {
                       "
                       :disabled="true"
                       size="sm"
-                      :value="
+                      :modelValue="
                         (
                           Number(
                             loadingPrices[memberIndexPerId(item.memberId)]
@@ -1136,7 +1160,7 @@ onUpdated(() => {
                       "
                       :disabled="true"
                       size="sm"
-                      :value="
+                      :modelValue="
                         (
                           Number(
                             loadingPrices[memberIndexPerId(item.memberId)]
@@ -1163,7 +1187,7 @@ onUpdated(() => {
                       "
                       :disabled="true"
                       size="sm"
-                      :value="
+                      :modelValue="
                         (
                           Number(
                             loadingPrices[memberIndexPerId(item.memberId)]
@@ -1186,7 +1210,7 @@ onUpdated(() => {
                       "
                       :disabled="true"
                       size="sm"
-                      :value="
+                      :modelValue="
                         (
                           Number(
                             loadingPrices[memberIndexPerId(item.memberId)]
@@ -1222,7 +1246,7 @@ onUpdated(() => {
                       "
                       :disabled="true"
                       size="sm"
-                      :value="
+                      :modelValue="
                         (
                           Number(
                             loadingPrices[memberIndexPerId(item.memberId)]
@@ -1241,7 +1265,7 @@ onUpdated(() => {
                       "
                       :disabled="true"
                       size="sm"
-                      :value="
+                      :modelValue="
                         (
                           Number(
                             loadingPrices[memberIndexPerId(item.memberId)]
@@ -1376,7 +1400,10 @@ onUpdated(() => {
                 color="primary"
                 size="sm"
                 @click="
-                  onLoadingPricesUpdate(props.plan.memberPremiumBreakdown)
+                  onLoadingPricesUpdate(
+                    props.plan.memberPremiumBreakdown,
+                    false,
+                  )
                 "
               >
                 Update & Save
@@ -1398,28 +1425,50 @@ onUpdated(() => {
 
           <TabPanel>
             <dl class="grid md:grid-cols-1 gap-x-6 gap-y-4 p-4">
-                <div class="grid sm:grid-cols-4" v-if="(props.plan?.healthNetwork?.featuredFacilities?.filter(e => e.type === 'HOSPITAL') || []).length > 0">
-                    <dt class="font-medium">Key Hospitals:</dt>
-                    <dd>
-                        <div
-                          v-for="data in props.plan?.healthNetwork?.featuredFacilities?.filter(e => e.type === 'HOSPITAL') || []"
-                          :key="data.id"
-                        >
-                          {{ data.text }}
-                        </div>
-                    </dd>
-                </div>
-                <div class="grid sm:grid-cols-4" v-if="(props.plan?.healthNetwork?.featuredFacilities?.filter(e => e.type === 'CLINIC') || []).length > 0">
-                    <dt class="font-medium">Key Clinics:</dt>
-                    <dd>
-                        <div
-                          v-for="data in props.plan?.healthNetwork?.featuredFacilities?.filter(e => e.type === 'CLINIC') || []"
-                          :key="data.id"
-                        >
-                          {{ data.text }}
-                        </div>
-                    </dd>
-                </div>
+              <div
+                class="grid sm:grid-cols-4"
+                v-if="
+                  (
+                    props.plan?.healthNetwork?.featuredFacilities?.filter(
+                      e => e.type === 'HOSPITAL',
+                    ) || []
+                  ).length > 0
+                "
+              >
+                <dt class="font-medium">Key Hospitals:</dt>
+                <dd>
+                  <div
+                    v-for="data in props.plan?.healthNetwork?.featuredFacilities?.filter(
+                      e => e.type === 'HOSPITAL',
+                    ) || []"
+                    :key="data.id"
+                  >
+                    {{ data.text }}
+                  </div>
+                </dd>
+              </div>
+              <div
+                class="grid sm:grid-cols-4"
+                v-if="
+                  (
+                    props.plan?.healthNetwork?.featuredFacilities?.filter(
+                      e => e.type === 'CLINIC',
+                    ) || []
+                  ).length > 0
+                "
+              >
+                <dt class="font-medium">Key Clinics:</dt>
+                <dd>
+                  <div
+                    v-for="data in props.plan?.healthNetwork?.featuredFacilities?.filter(
+                      e => e.type === 'CLINIC',
+                    ) || []"
+                    :key="data.id"
+                  >
+                    {{ data.text }}
+                  </div>
+                </dd>
+              </div>
             </dl>
           </TabPanel>
 

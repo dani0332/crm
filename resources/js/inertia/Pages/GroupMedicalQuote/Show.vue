@@ -1,7 +1,7 @@
 <script setup>
-import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
 import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
+import EntityRiskRatingScoreDetails from '../../Components/EntityRiskRatingScoreDetails.vue';
 
 defineProps({
   quote: Object,
@@ -29,12 +29,13 @@ defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
-  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
   permissions: Object,
   enums: Object,
   bookPolicyDetails: Array,
   payments: Array,
+  lockLeadSectionsDetails: Object,
+  paymentDocument: Array,
 });
 
 const page = usePage();
@@ -52,6 +53,7 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
 
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
+const modelClass = 'App\\Models\\BusinessQuote';
 
 const historyData = ref(null),
   historyLoading = ref(false);
@@ -64,6 +66,9 @@ const genderText = gender =>
   computed(() => {
     return page.props.genderOptions[gender];
   });
+
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
 const modals = reactive({
   duplicate: false,
@@ -346,6 +351,12 @@ const linkEntity = () => {
     })
     .finally(() => (loader.tradeDetail = false));
 };
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
@@ -363,6 +374,11 @@ watch(
     }
   },
 );
+
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
+  createReusableTemplate();
+const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
+  createReusableTemplate();
 </script>
 
 <template>
@@ -370,11 +386,13 @@ watch(
     <Head title="Group Medical Lead Detail" />
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
-      <div class="flex gap-2 mb-3 justify-end">
+      <div
+        class="flex gap-2 mb-3 justify-end"
+        v-if="readOnlyMode.isDisable === true"
+      >
         <Link
           v-if="
-            quoteDetails?.insly_id &&
-            can(permissionsEnum.VIEW_LEGACY_DETAILS)
+            quoteDetails?.insly_id && can(permissionsEnum.VIEW_LEGACY_DETAILS)
           "
           :href="`/legacy-policy/${quoteDetails?.insly_id}`"
           preserve-scroll
@@ -386,6 +404,7 @@ watch(
         <Link
           v-else-if="
             quote.source == leadSource.RENEWAL_UPLOAD &&
+            quote.previous_quote_policy_number != null &&
             can(permissionsEnum.VIEW_LEGACY_DETAILS)
           "
           :href="
@@ -413,58 +432,89 @@ watch(
             Group Medical List
           </x-button>
         </Link>
-        <Link
-          v-if="!can(permissionsEnum.canEditQuote)"
-          :href="route('amt.edit', quote.uuid)"
+        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+          <Link v-if="!isDisabled" :href="route('amt.edit', quote.uuid)">
+            <x-button size="sm" tag="div">Edit</x-button>
+          </Link>
+          <x-button v-else :disabled="isDisabled" size="sm" tag="div"
+            >Edit</x-button
+          >
+        </LeadEditBtnTemplate>
+
+        <x-tooltip
+          v-if="lockLeadSectionsDetails.lead_details"
+          placement="bottom"
         >
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
+          <LeadEditBtnReuseTemplate
+            v-if="!can(permissionsEnum.canEditQuote)"
+            :isDisabled="true"
+          />
+          <template #tooltip
+            >This lead is now locked as the policy has been booked. If changes
+            are needed, go to 'Send Update', select 'Add Update', and choose
+            'Correction of Policy'</template
+          >
+        </x-tooltip>
+        <template v-else>
+          <LeadEditBtnReuseTemplate v-if="!can(permissionsEnum.canEditQuote)" />
+        </template>
       </div>
     </div>
-    <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
-      <template #header> Duplicate Lead </template>
-      <x-form @submit="onCreateDuplicate" :auto-focus="false">
-        <div class="grid gap-4">
-          <x-select
-            v-model="leadDuplicateForm.lob_team"
-            label="LOBs"
-            :options="
-              allowedDuplicateLOB.map(lob => ({
-                value: lob,
-                label: lob,
-              }))
-            "
-            :rules="[isRequired]"
-            placeholder="Select LOB For Duplication"
-            class="w-full"
-            multiple
-          />
-          <x-select
-            v-model="leadDuplicateForm.lob_team_sub_selection"
-            label="Reason"
-            :rules="[isRequired]"
-            class="w-full"
-            :options="[
-              { value: 'new_enquiry', label: 'New enquiry' },
-              { value: 'record_only', label: 'Record purposes only' },
-            ]"
-          />
-          <x-button
-            color="orange"
-            type="submit"
-            :loading="leadDuplicateForm.processing"
-          >
-            Create Duplicate
-          </x-button>
-        </div>
-      </x-form>
+    <x-modal
+      v-model="modals.duplicate"
+      size="md"
+      title="Duplicate Lead"
+      show-close
+      backdrop
+      is-form
+      @submit="onCreateDuplicate"
+    >
+      <div class="grid gap-4">
+        <x-select
+          v-model="leadDuplicateForm.lob_team"
+          label="LOBs"
+          :options="
+            allowedDuplicateLOB.map(lob => ({
+              value: lob,
+              label: lob,
+            }))
+          "
+          :rules="[isRequired]"
+          placeholder="Select LOB For Duplication"
+          class="w-full"
+          multiple
+        />
+        <x-select
+          v-model="leadDuplicateForm.lob_team_sub_selection"
+          label="Reason"
+          :rules="[isRequired]"
+          class="w-full"
+          :options="[
+            { value: 'new_enquiry', label: 'New enquiry' },
+            { value: 'record_only', label: 'Record purposes only' },
+          ]"
+        />
+      </div>
+      <template #secondary-action>
+        <x-button ghost tabindex="-1" @click="modals.duplicate = false"
+          >Cancel</x-button
+        >
+      </template>
+      <template #primary-action>
+        <x-button
+          color="orange"
+          type="submit"
+          :loading="leadDuplicateForm.processing"
+        >
+          Create Duplicate
+        </x-button>
+      </template>
     </x-modal>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div class="flex justify-between items-center flex-wrap gap-2">
-          </div>
+          <div class="flex justify-between items-center flex-wrap gap-2"></div>
         </template>
         <template #body>
           <div class="text-sm">
@@ -478,7 +528,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -566,8 +616,8 @@ watch(
               </div>
 
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">RENEWAL EXPIRY DATE</dt>
-                <dd>{{ quote.renewal_expiry_date }}</dd>
+                <dt class="font-medium">POLICY EXPIRY DATE</dt>
+                <dd>{{ quote.policy_expiry_date }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
@@ -582,7 +632,7 @@ watch(
 
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -611,7 +661,7 @@ watch(
                 v-if="linkedQuoteDetails.childLeadsCount == 1"
               >
                 <div>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -652,6 +702,11 @@ watch(
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
                 <dd>{{ quote.premium }}</dd>
+              </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
               </div>
             </dl>
           </div>
@@ -715,6 +770,7 @@ watch(
                       color="primary"
                       class="mt-1"
                       :loading="loader.tradeSearch"
+                      v-if="readOnlyMode.isDisable === true"
                     >
                       Search
                     </x-button>
@@ -768,8 +824,15 @@ watch(
                     />
                   </dd>
                 </div>
+                <EntityRiskRatingScoreDetails
+                  :quote="quote"
+                  :modelType="'business'"
+                />
               </dl>
-              <div class="flex justify-end">
+              <div
+                class="flex justify-end"
+                v-if="readOnlyMode.isDisable === true"
+              >
                 <x-button
                   v-if="isProfileUpdateAllow"
                   class="mt-4"
@@ -804,17 +867,17 @@ watch(
           </dd>
         </div>
       </dl>
-      <div class="flex justify-end">
+      <template #actions>
         <x-button
-          class="mt-4"
           color="primary"
           size="sm"
           :loading="customerProfileForm.processing"
           @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
         >
           Search
         </x-button>
-      </div>
+      </template>
     </x-modal>
 
     <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
@@ -858,17 +921,18 @@ watch(
             />
           </dd>
         </div>
-        <div class="text-left space-x-4">
-          <x-button
-            size="sm"
-            color="orange"
-            @click.prevent="linkEntity"
-            :loading="loader.tradeDetail"
-          >
-            Link
-          </x-button>
-        </div>
       </dl>
+      <template #actions>
+        <x-button
+          size="sm"
+          color="orange"
+          @click.prevent="linkEntity"
+          :loading="loader.tradeDetail"
+          v-if="readOnlyMode.isDisable === true"
+        >
+          Link
+        </x-button>
+      </template>
     </x-modal>
 
     <UBODetails
@@ -921,10 +985,13 @@ watch(
                   label="Status"
                   :options="leadStatusOptions"
                   :disabled="
-                    quote.quote_status_id == quoteStatusEnum.TransactionApproved
+                    quote.quote_status_id ==
+                      quoteStatusEnum.TransactionApproved ||
+                    lockLeadSectionsDetails.lead_status
                   "
                   placeholder="Lead Status"
                   class="w-full"
+                  filterable
                 />
                 <x-textarea
                   v-model="leadStatusForm.notes"
@@ -933,7 +1000,9 @@ watch(
                   placeholder="Lead Notes"
                   class="w-full"
                   :disabled="
-                    quote.quote_status_id == quoteStatusEnum.TransactionApproved
+                    quote.quote_status_id ==
+                      quoteStatusEnum.TransactionApproved ||
+                    lockLeadSectionsDetails.lead_status
                   "
                 />
               </div>
@@ -952,18 +1021,19 @@ watch(
                 placeholder="Lost Reason is required"
                 class="w-full"
                 :error="leadStatusForm.errors.lostReason"
+                :disabled="lockLeadSectionsDetails.lead_status"
               />
               <x-field label="Transaction Type">
                 <x-input
                   type="text"
-                  :value="quote.transaction_type_text"
+                  v-model="quote.transaction_type_text"
                   class="w-full"
                   :disabled="true"
                 />
               </x-field>
             </div>
           </div>
-          <div class="flex justify-end">
+          <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
             <x-button
               class="mt-4"
               color="emerald"
@@ -971,11 +1041,26 @@ watch(
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
               :disabled="
-                quote.quote_status_id == quoteStatusEnum.TransactionApproved
+                quote.quote_status_id == quoteStatusEnum.TransactionApproved ||
+                isDisabled
               "
+              v-if="readOnlyMode.isDisable === true"
             >
               Change Status
             </x-button>
+          </StatusUpdateButtonTemplate>
+          <div class="flex justify-end">
+            <x-tooltip
+              v-if="lockLeadSectionsDetails.lead_status"
+              placement="bottom"
+            >
+              <StatusUpdateButtonReuseTemplate :isDisabled="true" />
+              <template #tooltip>
+                The lead status cannot be manually updated once it has reached
+                'Transaction Approved'
+              </template>
+            </x-tooltip>
+            <StatusUpdateButtonReuseTemplate v-else />
           </div>
         </template>
       </Collapsible>
@@ -995,12 +1080,12 @@ watch(
       :quoteType="page.props.quoteType"
       :payments="quote.payments"
     />
-    
+
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			:quoteType="page.props.quoteType"
-			:payments="quote.payments"
-      :paymentDocument="documentTypeCodes.filter(item => ['GMQPD', 'GMQPDR', 'GMQDPDR'].includes(item.code))"
+      v-if="isNewPaymentStructure"
+      :quoteType="page.props.quoteType"
+      :payments="quote.payments"
+      :paymentDocument="paymentDocument"
       :proformaPayment="
         quote.payments.find(
           item =>
@@ -1008,14 +1093,19 @@ watch(
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
         )
       "
-			:quoteRequest="quote"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      :quoteRequest="quote"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       quoteSubType="Group Medical"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
+      :expanded="sectionExpanded"
     />
 
     <PolicyDetail
@@ -1025,7 +1115,7 @@ watch(
       :expanded="sectionExpanded"
     />
 
-    <QuoteDocuments
+    <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
@@ -1033,6 +1123,7 @@ watch(
       :insly-id="quoteDetails?.insly_id"
       :expanded="sectionExpanded"
       quoteType="Business"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy
@@ -1048,6 +1139,7 @@ watch(
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+      :modelClass="modelClass"
     />
 
     <SendUpdates
@@ -1093,9 +1185,14 @@ watch(
     </div>
 
     <AuditLogs
-      :type="'App\\Models\\BusinessQuote'"
+      :type="modelClass"
       :id="$page.props.quote.id"
       :expanded="sectionExpanded"
     />
+
+    <lead-raw-data
+      :modelType="'Business'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

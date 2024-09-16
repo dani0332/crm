@@ -3,13 +3,16 @@
 namespace App\Listeners;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Events\CarQuoteAdvisorUpdated;
-use App\Jobs\SendOCBIntroEmailJob;
+use App\Facades\Marshall;
+use App\Jobs\OCB\SendCarOCBIntroEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\Customer;
 use App\Models\User;
 use App\Services\CarAllocationService;
-use App\Services\CarEmailService;
+use App\Services\EmailServices\CarEmailService;
 use App\Services\HttpRequestService;
 use App\Services\SendSmsCustomerService;
 use App\Services\SIBService;
@@ -47,8 +50,34 @@ class HandleCarAdvisorUpdated
 
         $lead = $event->lead;
 
-        if ($lead->source == LeadSourceEnum::RENEWAL_UPLOAD) {
-            info('lead is source is renewal upload. Skipping intro email job');
+        if ($lead) {
+            try {
+                $isPaymentAuthorized = $lead->payment_status_id === PaymentStatusEnum::AUTHORISED;
+
+                if ($isPaymentAuthorized) {
+                    info(self::class." - Payment authorized for UUID: {$lead->uuid}, proceeding to send FTC email.");
+
+                    $isSic = isLeadSic($lead->uuid);
+                    $data = [
+                        'quoteUID' => $lead->uuid,
+                        'quoteTypeId' => (int) QuoteTypes::CAR->id(),
+                        'isSic' => $isSic,
+                    ];
+
+                    Marshall::request('/payment/send-payment-auth-email', 'post', $data);
+
+                    info(self::class." - FTC email sent successfully for UUID: {$lead->uuid}");
+                } else {
+                    info(self::class." - Payment not authorized for UUID: {$lead->uuid}. No action taken.");
+                }
+            } catch (\Exception $e) {
+                info(self::class." - Exception occurred for UUID: {$lead->uuid}: {$e->getMessage()}");
+            }
+        }
+
+        $skippableSources = [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY];
+        if (in_array($lead->source, $skippableSources)) {
+            info('lead is source is '.$lead->source.' upload. Skipping intro email job');
 
             return;
         }
@@ -85,7 +114,7 @@ class HandleCarAdvisorUpdated
             }
         }
 
-        SendOCBIntroEmailJob::dispatch($lead->uuid, $previousAdvisor);
+        SendCarOCBIntroEmailJob::dispatch($lead->uuid, $previousAdvisor);
 
         info('SMS sending code reached');
     }

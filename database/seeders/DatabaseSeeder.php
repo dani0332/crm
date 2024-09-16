@@ -15,52 +15,12 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
-            LookupSeeder::class,
-            // LostReasonsTableSeeder::class,
-            // AddGenericRolePermissionSeeder::class,
-            // addDubaiNowEmailGroup::class,
-            // DubaiLeadSource::class,
-            // ActivitySchedulesSeeder::class,
-            GenericPermissionSeeder::class,
-            /*addSICWorkflow::class,
-            UpdateRenewalTemplateStorageSeeder::class,
-            addDubaiNowEmailGroup::class,
-            DubaiLeadSource::class,*/
-            // AddNewDocumentTypesSeeder::class,
-            // UpdateCustomerToHealthAndTravelMemberDetails::class,
-            /* PaymentMethodsAddSeeder::class,
-            AddNewDocumentTypeSeeder::class,
-            PaymentStatusAddSeeder::class,
-            updateDocTypePayment::class,
-            AddSageFlagApplicationStorage::class,
-            AddTempUpdateTotalPricePermission::class,
-            PaymentLookupSeeder::class,
-            InsuranceQuoteTypeSeeder::class,
-            AddPaymentPermissionsSeeder::class,
-            TotalPremiumReportPermissionSeeder::class,*/
-
-            // dtt seeder
-            // AddDttFlagApplicationStorage::class,
-            // DttOCBNewBusinessSeeder::class,
-            // RevivalConversionReportPermissionSeeder::class,
-            // end
-            // AddCrossLOBSeeder::class,
-            MapBusinessTypeOfInsuranceIdsFromBusinessQuotesToPersonalQuotesTableSeeder::class,
-            // BusinessTypeInsuranceSeeder::class,
-            // MarineSeeder::class,
-
-            AddPaymentPermissions::class,
-            AddCreateSendUpdatePermissionToAllRoles::class,
-            // AddSendUpdatesCategoriesInLookups::class, Please don't run this seeder on test and stage env.
-            InslyRoles::class,
-            InslyPermissions::class,
-            QuoteStatusMapSeeder::class,
-            QuoteStatusSeeder::class,
             ApplicationStorageSeeder::class,
             addInsuranceProvidersConfiguration::class,
             HealthRevivalQuotesSeeder::class,
             RevokeTempPaymentUpdatePermissionsSeeder::class,
             ImcrmUsersRolesCleaner::class,
+            RolePermissionSeeder::class,
         ]);
     }
 }

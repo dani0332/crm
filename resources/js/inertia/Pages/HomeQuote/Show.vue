@@ -1,8 +1,4 @@
 <script setup>
-import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
-import MemberDetails from '../../Components/MemberDetails.vue';
-import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
-
 const props = defineProps({
   quote: Object,
   quoteType: String,
@@ -45,8 +41,9 @@ const props = defineProps({
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
-  documentTypeCodes: Array,
   linkedQuoteDetails: Object,
+  lockLeadSectionsDetails: Object,
+  paymentDocument: Array,
 });
 
 const page = usePage();
@@ -59,6 +56,8 @@ const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const quoteStatusEnum = page.props.quoteStatusEnum;
+const can = permission => useCan(permission);
+const modelClass = 'App\\Models\\HomeQuote';
 
 const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at),
@@ -181,13 +180,13 @@ const onLeadStatus = () => {
 
 //activities
 const activityTable = [
-    { text: 'Client Name', value: 'client_name' },
-    { text: 'Lead Status', value: 'quote_status.text' },
-    { text: 'Title', value: 'title' },
-    { text: 'Followup Date', value: 'due_date' },
-    { text: 'Assigned To', value: 'assignee' },
-    { text: 'Done', value: 'status', width: 60, align: 'center' },
-    { text: 'Action', value: 'action' },
+  { text: 'Client Name', value: 'client_name' },
+  { text: 'Lead Status', value: 'quote_status.text' },
+  { text: 'Title', value: 'title' },
+  { text: 'Followup Date', value: 'due_date' },
+  { text: 'Assigned To', value: 'assignee' },
+  { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Action', value: 'action' },
 ];
 
 const activityForm = useForm({
@@ -333,7 +332,7 @@ const policyDetails = useForm({
   premium: page.props.quote.premium,
   policy_number: page.props.quote.policy_number || '',
   policy_start_date: dateToYMD(page.props.quote.policy_start_date),
-  renewal_expiry_date: dateToYMD(page.props.quote.renewal_expiry_date) || '',
+  policy_expiry_date: dateToYMD(page.props.quote.policy_expiry_date) || '',
   policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || '',
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
@@ -476,6 +475,12 @@ const linkEntity = () => {
       console.log(err);
     });
 };
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
 const getDetailPageRoute = (uuid, quote_type_id) =>
@@ -489,6 +494,16 @@ watch(
     }
   },
 );
+
+const [LeadEditBtnTemplate, LeadEditBtnReuseTemplate] =
+  createReusableTemplate();
+const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
+  createReusableTemplate();
+
+const isAddUpdate = ref(false);
+const onAddUpdate = () => {
+  isAddUpdate.value = true;
+};
 </script>
 
 <template>
@@ -504,7 +519,7 @@ watch(
           Stale for {{ countDays }}
         </p>
       </template>
-      <template #default>
+      <template #default v-if="readOnlyMode.isDisable === true">
         <LeadNotes
           :documentType="noteDocumentType"
           :notes="quoteNotes"
@@ -529,71 +544,99 @@ watch(
           <x-button size="sm" color="primary" tag="div"> Home List </x-button>
         </Link>
 
-        <Link :href="route('home.edit', quote.uuid)">
-          <x-button size="sm" tag="div">Edit</x-button>
-        </Link>
+        <LeadEditBtnTemplate v-slot="{ isDisabled }">
+          <Link v-if="!isDisabled" :href="route('home.edit', quote.uuid)">
+            <x-button size="sm" tag="div">Edit</x-button>
+          </Link>
+          <x-button v-else :disabled="isDisabled" size="sm" tag="div"
+            >Edit</x-button
+          >
+        </LeadEditBtnTemplate>
+
+        <x-tooltip
+          v-if="lockLeadSectionsDetails.lead_details"
+          placement="bottom"
+        >
+          <LeadEditBtnReuseTemplate :isDisabled="true" />
+          <template #tooltip
+            >This lead is now locked as the policy has been booked. If changes
+            are needed, go to 'Send Update', select 'Add Update', and choose
+            'Correction of Policy'</template
+          >
+        </x-tooltip>
+        <LeadEditBtnReuseTemplate v-else />
       </template>
     </StickyHeader>
 
-    <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
-      <template #header> Duplicate Lead </template>
-      <x-form @submit="onCreateDuplicate" :auto-focus="false">
-        <div class="grid gap-4">
-          <x-select
-            v-model="leadDuplicateForm.lob_team"
-            label="LOBs"
-            :options="
-              allowedDuplicateLOB.map(lob => ({
-                value: lob,
-                label: lob,
-              }))
-            "
-            :rules="[rules.isRequired]"
-            placeholder="Select LOB For Duplication"
-            class="w-full"
-            multiple
-          />
-          <x-select
-            v-model="leadDuplicateForm.lob_team_sub_selection"
-            label="Reason"
-            :rules="[rules.isRequired]"
-            class="w-full"
-            :options="[
-              { value: 'new_enquiry', label: 'New enquiry' },
-              { value: 'record_only', label: 'Record purposes only' },
-            ]"
-          />
-
-          <x-button
-            color="orange"
-            type="submit"
-            :loading="leadDuplicateForm.processing"
-          >
-            Create Duplicate
-          </x-button>
-        </div>
-      </x-form>
+    <x-modal
+      v-model="modals.duplicate"
+      title="Duplicate Lead"
+      size="md"
+      show-close
+      backdrop
+      is-form
+      @submit="onCreateDuplicate"
+    >
+      <div class="grid gap-4">
+        <x-select
+          v-model="leadDuplicateForm.lob_team"
+          label="LOBs"
+          :options="
+            allowedDuplicateLOB.map(lob => ({
+              value: lob,
+              label: lob,
+            }))
+          "
+          :rules="[rules.isRequired]"
+          placeholder="Select LOB For Duplication"
+          class="w-full"
+          multiple
+        />
+        <x-select
+          v-model="leadDuplicateForm.lob_team_sub_selection"
+          label="Reason"
+          :rules="[rules.isRequired]"
+          class="w-full"
+          :options="[
+            { value: 'new_enquiry', label: 'New enquiry' },
+            { value: 'record_only', label: 'Record purposes only' },
+          ]"
+        />
+      </div>
+      <template #secondary-action>
+        <x-button ghost tabindex="-1" @click="modals.duplicate = false"
+          >Cancel</x-button
+        >
+      </template>
+      <template #primary-action>
+        <x-button
+          color="orange"
+          type="submit"
+          :loading="leadDuplicateForm.processing"
+        >
+          Create Duplicate
+        </x-button>
+      </template>
     </x-modal>
 
     <div class="p-4 rounded shadow mt-6 mmmbmb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
-          <div class="flex justify-between items-center flex-wrap gap-2">
-          </div>
+          <div class="flex justify-between items-center flex-wrap gap-2"></div>
         </template>
         <template #body>
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
-            <div
-              class="grid sm:grid-cols-2"
-              v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
-            >
-              <dt class="font-medium">ID</dt>
-              <dd>{{ quote.id }}</dd>
-            </div>
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+              >
+                <dt class="font-medium">ID</dt>
+                <dd>{{ quote.id }}</dd>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -626,7 +669,7 @@ watch(
               </div>
               <div class="grid sm:grid-cols-2">
                 <div>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -655,7 +698,7 @@ watch(
                 v-if="linkedQuoteDetails.childLeadsCount == 1"
               >
                 <div>
-                  <x-tooltip position="bottom">
+                  <x-tooltip placement="bottom">
                     <label
                       class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                     >
@@ -752,6 +795,10 @@ watch(
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">DETAILS</dt>
                 <dd>{{ quote.details }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ quote.transaction_approved_at }}</dd>
               </div>
             </dl>
           </div>
@@ -1002,17 +1049,17 @@ watch(
           </dd>
         </div>
       </dl>
-      <div class="flex justify-end">
+      <template #actions>
         <x-button
-          class="mt-4"
           color="primary"
           size="sm"
           :loading="customerProfileForm.processing"
           @click.prevent="searchByTradeLicense('SubEntity')"
+          v-if="readOnlyMode.isDisable === true"
         >
           Search
         </x-button>
-      </div>
+      </template>
     </x-modal>
 
     <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
@@ -1057,11 +1104,21 @@ watch(
           </dd>
         </div>
         <div class="text-left space-x-4">
-          <x-button size="sm" color="orange" @click.prevent="linkEntity">
+          <x-button
+            size="sm"
+            color="orange"
+            @click.prevent="linkEntity"
+            v-if="readOnlyMode.isDisable === true"
+          >
             Link
           </x-button>
         </div>
       </dl>
+      <template #actions>
+        <x-button size="sm" color="orange" @click.prevent="linkEntity">
+          Link
+        </x-button>
+      </template>
     </x-modal>
 
     <MemberDetails
@@ -1121,10 +1178,13 @@ watch(
                 <x-select
                   v-model="leadStatusForm.leadStatus"
                   :options="leadStatusOptions"
-                  :disabled="allowStatusUpdate"
+                  :disabled="
+                    allowStatusUpdate || lockLeadSectionsDetails.lead_status
+                  "
                   placeholder="Lead Status"
                   class="w-full"
                   label="Status"
+                  filterable
                 />
 
                 <x-select
@@ -1140,7 +1200,9 @@ watch(
                   placeholder="Lost Reason is required"
                   class="w-full"
                   :error="leadStatusForm.errors.lostReason"
-                  :disabled="allowStatusUpdate"
+                  :disabled="
+                    allowStatusUpdate || lockLeadSectionsDetails.lead_status
+                  "
                 />
                 <x-textarea
                   v-model="leadStatusForm.notes"
@@ -1148,32 +1210,50 @@ watch(
                   label="Notes"
                   placeholder="Lead Notes"
                   class="w-full"
-                  :disabled="allowStatusUpdate"
+                  :disabled="
+                    allowStatusUpdate || lockLeadSectionsDetails.lead_status
+                  "
                 />
               </div>
             </div>
           </div>
-          <div class="flex justify-end">
+          <StatusUpdateButtonTemplate v-slot="{ isDisabled }">
             <x-button
               class="mt-4"
               color="emerald"
               size="sm"
               :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
-              :disabled="allowStatusUpdate"
+              :disabled="allowStatusUpdate || isDisabled"
+              v-if="readOnlyMode.isDisable === true"
             >
               Change Status
             </x-button>
+          </StatusUpdateButtonTemplate>
+          <div class="flex justify-end">
+            <x-tooltip
+              v-if="lockLeadSectionsDetails.lead_status"
+              placement="bottom"
+            >
+              <StatusUpdateButtonReuseTemplate :isDisabled="true" />
+              <template #tooltip>
+                The lead status cannot be manually updated once it has reached
+                'Transaction Approved'
+              </template>
+            </x-tooltip>
+            <StatusUpdateButtonReuseTemplate v-else />
           </div>
         </template>
       </Collapsible>
     </div>
+
     <PlanDetails
       :insuranceProviders="insuranceProviders"
       :quote="quote"
       :quoteType="quoteType"
       :expanded="sectionExpanded"
       :vatPrice="vatPercentage"
+      :isAddUpdate="isAddUpdate"
     />
 
     <MigratePayment
@@ -1184,10 +1264,10 @@ watch(
       :payments="payments"
     />
     <PaymentTableNew
-			v-if="isNewPaymentStructure"
-			:quoteType="quoteType"
-			:payments="payments"
-      :paymentDocument="page.props.documentTypeCodes.filter(item => ['HOMPD', 'HOMPDR', 'HOMDPDR'].includes(item.code))"
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="payments"
+      :paymentDocument="paymentDocument"
       :proformaPayment="
         payments.find(
           item =>
@@ -1195,13 +1275,18 @@ watch(
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
         )
       "
-			:quoteRequest="quoteRequest"
-			:paymentStatusEnum="paymentStatusEnum"
-			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
-			:storageUrl="storageUrl"
+      :quoteRequest="quoteRequest"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
+      :expanded="sectionExpanded"
     />
     <PaymentTable
       v-else
@@ -1231,13 +1316,14 @@ watch(
       :payments="payments"
     />
 
-    <QuoteDocuments
+    <QuoteDocument
       :document-types="documentTypes"
       :quote-documents="quoteDocuments || []"
       :storageUrl="storageUrl"
       :quote="quote"
       :insly-id="quote?.insly_id"
       :expanded="sectionExpanded"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy
@@ -1252,6 +1338,7 @@ watch(
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+      :modelClass="modelClass"
     />
 
     <SendUpdates
@@ -1260,6 +1347,7 @@ watch(
       :quote_type_id="$page.props.quoteTypeId"
       :options="sendUpdateOptions"
       :data="sendUpdateLogs"
+      @onAddUpdate="onAddUpdate"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -1275,7 +1363,12 @@ watch(
         <template #body>
           <x-divider class="my-4" />
           <div class="flex justify-end mb-4">
-            <x-button size="sm" color="orange" @click.prevent="addActivity">
+            <x-button
+              size="sm"
+              color="orange"
+              @click.prevent="addActivity"
+              v-if="readOnlyMode.isDisable === true"
+            >
               Add Activity
             </x-button>
           </div>
@@ -1305,6 +1398,7 @@ watch(
                   outlined
                   :disabled="item.status === 1"
                   @click.prevent="activityEdit(item)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Edit
                 </x-button>
@@ -1314,6 +1408,7 @@ watch(
                   :disabled="item.status === 1"
                   outlined
                   @click.prevent="activityDelete(item.id)"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Delete
                 </x-button>
@@ -1322,62 +1417,74 @@ watch(
           </DataTable>
         </template>
       </Collapsible>
-      <x-modal v-model="modals.activity" size="lg" show-close backdrop>
-        <template #header>
-          {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
+      <x-modal
+        v-model="modals.activity"
+        :title="`${activityActionEdit ? 'Edit' : 'Add'} Lead Activity`"
+        size="lg"
+        show-close
+        backdrop
+        is-form
+        @submit="onActivitySubmit"
+      >
+        <div class="grid gap-4">
+          <x-input
+            v-model="activityForm.title"
+            label="Title*"
+            :rules="[rules.isRequired]"
+            class="w-full"
+          />
+
+          <x-textarea
+            v-model="activityForm.description"
+            label="Description"
+            :adjust-to-text="false"
+            class="w-full"
+          />
+
+          <x-select
+            v-model="activityForm.assignee_id"
+            label="Assignee*"
+            :options="advisorOptions"
+            :rules="[rules.isRequired]"
+            placeholder="Select Assignee"
+            class="w-full"
+          />
+
+          <DatePicker
+            v-model="activityForm.due_date"
+            withTime
+            :rules="[rules.isRequired]"
+            label="Due Date*"
+          />
+        </div>
+
+        <template #secondary-action>
+          <x-button
+            ghost
+            tabindex="-1"
+            size="sm"
+            @click.prevent="modals.activity = false"
+          >
+            Cancel
+          </x-button>
         </template>
-
-        <x-form @submit="onActivitySubmit" :auto-focus="false">
-          <div class="grid gap-4">
-            <x-input
-              v-model="activityForm.title"
-              label="Title*"
-              :rules="[rules.isRequired]"
-              class="w-full"
-            />
-
-            <x-textarea
-              v-model="activityForm.description"
-              label="Description"
-              :adjust-to-text="false"
-              class="w-full"
-            />
-
-            <x-select
-              v-model="activityForm.assignee_id"
-              label="Assignee*"
-              :options="advisorOptions"
-              :rules="[rules.isRequired]"
-              placeholder="Select Assignee"
-              class="w-full"
-            />
-
-            <DatePicker
-              v-model="activityForm.due_date"
-              withTime
-              :rules="[rules.isRequired]"
-              label="Due Date*"
-            />
-          </div>
-
-          <div class="text-right space-x-4 mt-12">
-            <x-button size="sm" @click.prevent="modals.activity = false">
-              Cancel
-            </x-button>
-
-            <x-button
-              size="sm"
-              color="emerald"
-              :loading="activityForm.processing"
-              type="submit"
-            >
-              {{ activityActionEdit ? 'Update' : 'Save' }}
-            </x-button>
-          </div>
-        </x-form>
+        <template #primary-action>
+          <x-button
+            size="sm"
+            color="emerald"
+            :loading="activityForm.processing"
+            type="submit"
+          >
+            {{ activityActionEdit ? 'Update' : 'Save' }}
+          </x-button>
+        </template>
       </x-modal>
-      <x-modal v-model="modals.activityConfirm" show-close backdrop>
-        <template #header> Delete Activity </template>
+      <x-modal
+        v-model="modals.activityConfirm"
+        title="Delete Activity"
+        show-close
+        backdrop
+      >
         <p>Are you sure you want to delete this activity?</p>
         <template #actions>
           <div class="text-right space-x-4">
@@ -1436,10 +1543,15 @@ watch(
     </div>
 
     <AuditLogs
-      :type="'App\\Models\\HomeQuote'"
+      :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
     />
+
+    <lead-raw-data
+      :modelType="'Home'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

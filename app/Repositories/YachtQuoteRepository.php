@@ -9,6 +9,7 @@ use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\YachtQuote;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,8 @@ use Illuminate\Support\Facades\URL;
 
 class YachtQuoteRepository extends BaseRepository
 {
+    use GenericQueriesAllLobs;
+
     public function model()
     {
         return PersonalQuote::class;
@@ -69,7 +72,7 @@ class YachtQuoteRepository extends BaseRepository
 
             $quote->yachtQuote()->updateOrCreate(
                 ['personal_quote_id' => $quote->id],
-                Arr::only($data, (new YachtQuote())->allowedColumns())
+                Arr::only($data, (new YachtQuote)->allowedColumns())
             );
 
             return $quote;
@@ -97,6 +100,7 @@ class YachtQuoteRepository extends BaseRepository
                         'paymentSplits.paymentMethod',
                         'paymentSplits.verifiedByUser',
                         'paymentSplits.documents',
+                        'paymentSplits.processJob',
                     ]);
                 },
                 'createdBy',
@@ -111,7 +115,7 @@ class YachtQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
-                'renewal_expiry_date',
+                'policy_expiry_date',
                 'policy_start_date',
                 'policy_issuance_date',
                 \DB::raw('IF(EXISTS (
@@ -145,13 +149,16 @@ class YachtQuoteRepository extends BaseRepository
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
+            'paymentStatus',
+            'payments',
         ])
             ->when(\auth()->user()->hasRole(RolesEnum::YachtAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
             ->filter(! $forExport, $forTotalLeadsCount)
-            ->withFakeLeadCriteria($forTotalLeadsCount)
-            ->orderBy($sort_by, $sort_type);
+            ->withFakeLeadCriteria($forTotalLeadsCount);
+        $this->adjustQueryByDateFilters($query, 'personal_quotes');
+        $this->orderBy($sort_by, $sort_type);
 
         if ($forTotalLeadsCount) {
             //PD Revert

@@ -7,32 +7,26 @@ use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
 use App\Enums\PaymentAllocationStatus;
+use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Interfaces\PaymentRepositoryInterface;
-use App\Jobs\MAWelcomeJob;
-use App\Models\CarQuote;
-use App\Models\HealthQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
-use App\Models\SendUpdateLog;
-use App\Models\TravelQuote;
+use App\Models\User;
 use App\Services\ApplicationStorageService;
-use App\Services\BerlinService;
-use App\Services\CRUDService;
-use App\Services\CustomerService;
 use App\Services\PaymentLinkService;
 use App\Services\SplitPaymentService;
-use App\Services\TravelQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
 use Exception;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -86,11 +80,13 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         DB::beginTransaction();
         try {
             $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
+            info('Starting payment creation process for Quote: '.$quoteModel->code);
             $masterPayment = (object) $request->payment;
             $masterPaymentStatus = PaymentStatusEnum::NEW;
             if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
                 $masterPaymentStatus = PaymentStatusEnum::CREDIT_APPROVED;
             }
+
             $paymentInformation = [
                 'total_price' => $masterPayment->total_price,
                 'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
@@ -114,16 +110,20 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'updated_by' => $request->user()->id,
             ];
 
-            // Payment follow up count is now iterative (- nth+1) and not dependent on the count of payments in the quote
-            // Count will be iterative for each payment added through the send update or Child lead
-            $mainLeadCode = implode('-', array_slice(explode('-', $quoteModel->code), 0, 2));
-            $paymentCount = $this->getPaymentsCountByLeadCode($mainLeadCode);
-            $paymentInformation['code'] = ($paymentCount > 0) ? $mainLeadCode.'-'.$paymentCount : $mainLeadCode;
+            $count = $quoteModel->payments->count();
+            $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
 
-            if ($request->send_update_id) {
-                // it will make $quoteModel as SendUpdateLog model.
-                $paymentInformation['send_update_log_id'] = $request->send_update_id;
-                $quoteModel = SendUpdateLogRepository::getLogById($request->send_update_id);
+            if ($request->send_update_id || ! empty($quoteModel->parent_duplicate_quote_id)) {
+                // Payment follow-up count is now iterative (uuid-(nth+1)) and not dependent on the count of payments in the quote
+                // Count will be iterative for each payment added through the send update or Child lead
+                $mainLeadCode = implode('-', array_slice(explode('-', $quoteModel->code), 0, 2));
+                $paymentCount = $this->getPaymentsCountByLeadCode($mainLeadCode);
+                $paymentInformation['code'] = ($paymentCount > 0) ? $mainLeadCode.'-'.$paymentCount : $mainLeadCode;
+
+                if (! empty(request()->send_update_id)) {
+                    $paymentInformation['send_update_log_id'] = $request->send_update_id;
+                    $quoteModel = SendUpdateLogRepository::getLogById($request->send_update_id);
+                }
             }
 
             if ($masterPayment->reference) {
@@ -133,9 +133,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 $paymentInformation['authorized_at'] = now();
             }
             $quoteModel->payments()->create($paymentInformation);
+            info('Payment created with Code: '.$paymentInformation['code']);
             //Add split payments start
             $this->addPaymentSplits($request, $paymentInformation['code']);
             //Add split payments ends
+            info('Payment splits added for Payment Code: '.$paymentInformation['code']);
 
             $paymentLog = new PaymentStatusLog([
                 'current_payment_status_id' => PaymentStatusEnum::NEW,
@@ -149,10 +151,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
             $quoteModel->save();
             DB::commit();
+            info('Payment creation process completed successfully for Payment Code: '.$paymentInformation['code']);
 
             return ['status' => 'success', 'message' => 'Payment Added'];
         } catch (Exception $exception) {
             DB::rollBack(); // Rollback changes if any error occurred
+            info('Error occurred during payment creation: '.$exception->getMessage());
 
             return ['status' => 'error', 'message' => $exception->getMessage()];
         }
@@ -164,43 +168,67 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         return $this->handleWithDeadlockRetries(function () use ($request) {
             $masterPayment = (object) $request->payment;
-            $paymentInformation = [
-                'total_price' => $masterPayment->total_price,
-                'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
-                'custom_reason' => ! empty($masterPayment->custom_reason) ? $masterPayment->custom_reason : null,
-                'discount_reason' => $masterPayment->discount_reason,
-                'discount_custom_reason' => $masterPayment->discount_custom_reason,
-                'discount_type' => $masterPayment->discount,
-                'frequency' => $masterPayment->frequency,
-                'credit_approval' => $masterPayment->credit_approval,
-                'total_payments' => $masterPayment->payment_no,
-                'collection_type' => $masterPayment->collection_type,
-                'total_amount' => $masterPayment->total_amount, //amount after discount
-                'collection_date' => $masterPayment->collection_date,
-                'discount_value' => $masterPayment->discount_value,
-                'payment_methods_code' => $masterPayment->payment_methods,
-                'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
-                'updated_by' => $request->user()->id,
-            ];
 
-            if ($masterPayment->reference) {
-                $paymentInformation['reference'] = $masterPayment->reference;
-            }
             $payment = Payment::where('code', $request->paymentCode)->first();
             if (! $payment) {
+                info('Payment does not exist for Payment Code: '.$request->paymentCode);
+
                 return ['status' => 'error', 'message' => 'Payment record not found'];
             }
 
-            if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
-                $paymentInformation['payment_status_id'] = PaymentStatusEnum::CREDIT_APPROVED;
-            } elseif ($payment->payment_status_id == PaymentStatusEnum::CREDIT_APPROVED) {
-                $paymentInformation['payment_status_id'] = PaymentStatusEnum::NEW;
+            if ($request->isPaymentLocked) { // Check if payment is locked to update specific fields
+                $paymentInformation = [
+                    'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
+                    'custom_reason' => ! empty($masterPayment->custom_reason) ? $masterPayment->custom_reason : null,
+                    'credit_approval' => $masterPayment->credit_approval,
+                    'updated_by' => $request->user()->id,
+                ];
+
+                // Check if payment frequency is upfron and Old or new Payment method is Proforma Payment Request, only than update parent payment method
+                $isProformaPaymentNewParentPaymentMethod = $masterPayment->payment_methods == PaymentMethodsEnum::ProformaPaymentRequest;
+                $isProformaPaymentOldParentPaymentMethod = $payment->payment_methods_code == PaymentMethodsEnum::ProformaPaymentRequest;
+                $isParentPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
+                if ($isParentPaymentFrequencyUpfront && ($isProformaPaymentNewParentPaymentMethod || $isProformaPaymentOldParentPaymentMethod)) {
+                    $paymentInformation['payment_methods_code'] = $masterPayment->payment_methods;
+                }
+
+            } else {
+
+                $paymentInformation = [
+                    'total_price' => $masterPayment->total_price,
+                    'notes' => ! empty($masterPayment->notes) ? $masterPayment->notes : null,
+                    'custom_reason' => ! empty($masterPayment->custom_reason) ? $masterPayment->custom_reason : null,
+                    'discount_reason' => $masterPayment->discount_reason,
+                    'discount_custom_reason' => $masterPayment->discount_custom_reason,
+                    'discount_type' => $masterPayment->discount,
+                    'frequency' => $masterPayment->frequency,
+                    'credit_approval' => $masterPayment->credit_approval,
+                    'total_payments' => $masterPayment->payment_no,
+                    'collection_type' => $masterPayment->collection_type,
+                    'total_amount' => $masterPayment->total_amount, //amount after discount
+                    'collection_date' => $masterPayment->collection_date,
+                    'discount_value' => $masterPayment->discount_value,
+                    'payment_methods_code' => $masterPayment->payment_methods,
+                    'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
+                    'updated_by' => $request->user()->id,
+                ];
+
+                if ($masterPayment->reference) {
+                    $paymentInformation['reference'] = $masterPayment->reference;
+                }
+                if ($masterPayment->payment_methods == PaymentMethodsEnum::CreditApproval) {
+                    $paymentInformation['payment_status_id'] = PaymentStatusEnum::CREDIT_APPROVED;
+                } elseif ($payment->payment_status_id == PaymentStatusEnum::CREDIT_APPROVED) {
+                    $paymentInformation['payment_status_id'] = PaymentStatusEnum::NEW;
+                }
             }
             $payment->update($paymentInformation);
+            // Log payment update
+            info('Payment updated successfully for Payment Code: '.$request->paymentCode);
 
             //Update split payments start
             if (! empty($request->trashedFilesModal)) {
-                QuoteDocument::whereIn('doc_name', $request->trashedFilesModal)->delete();
+                QuoteDocument::whereIn('id', $request->trashedFilesModal)->delete();
             }
             $this->updatePaymentSplits($request);
 
@@ -220,6 +248,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         foreach ($masterPayment->payment_splits as $splitPayment) {
             if (isset($splitPayment['payment_method']) && $splitPayment['payment_method'] != null) {
+                //[$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat($masterPayment->frequency, $masterPayment->total_price, $splitPayment['sr_no'], $splitPayment['payment_amount'], $request->modelType, $request->quote_id, $totalSplitPayments);
                 $splitPaymentInformation = [
                     'code' => $quoteID,
                     'sr_no' => $splitPayment['sr_no'],
@@ -303,16 +332,23 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
 
             if (isset($splitPayment['payment_method']) && $splitPayment['payment_method'] != null) {
-                $splitPaymentInformation = [
-                    'code' => $request->paymentCode,
-                    'sr_no' => $serialNo,
-                    'payment_method' => $splitPayment['payment_method'],
-                    'check_detail' => isset($splitPayment['check_detail']) ? $splitPayment['check_detail'] : null,
-                    'payment_amount' => $splitPayment['payment_amount'],
-                    'payment_status_id' => PaymentStatusEnum::NEW, //reset status to 'NEW
-                    'due_date' => $splitPayment['due_date'],
-                    'discount_value' => $discount,
-                ];
+
+                if ($request->isPaymentLocked) { // Check if payment is locked to update specific fields
+                    $splitPaymentInformation = [
+                        'payment_method' => $splitPayment['payment_method'],
+                    ];
+                } else {
+                    $splitPaymentInformation = [
+                        'code' => $request->paymentCode,
+                        'sr_no' => $serialNo,
+                        'payment_method' => $splitPayment['payment_method'],
+                        'check_detail' => isset($splitPayment['check_detail']) ? $splitPayment['check_detail'] : null,
+                        'payment_amount' => $splitPayment['payment_amount'],
+                        'payment_status_id' => PaymentStatusEnum::NEW, //reset status to 'NEW
+                        'due_date' => $splitPayment['due_date'],
+                        'discount_value' => $discount,
+                    ];
+                }
 
                 $paymentSplitRecord = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $serialNo])->first();
                 if (! $paymentSplitRecord) {
@@ -347,150 +383,45 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
     public function fetchUpdateSplitPaymentsApprove($request)
     {
-        $parentQuoteModel =
-        $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
-
-        if (! $quoteModel) {
-            return response()->json(['success' => false]);
-        }
-
-        if ($request->send_update_id) {
-            $quoteModel = SendUpdateLogRepository::getLogById($request->send_update_id);
-        }
-
-        $firstPayment = $quoteModel->payments()->where('code', $request->payment_code)->first();
         if ($request->is_declined) {
+            if ($request->send_update_id > 0) {
+                $quoteModel = SendUpdateLogRepository::getLogById($request->send_update_id);
+            } else {
+                $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
+            }
+            $firstPayment = $quoteModel->payments()->where('code', $request->payment_code)->first();
             $firstPayment->update([
                 'decline_reason_id' => $request->declined_reason,
                 'decline_custom_reason' => $request->declined_custom_reason,
                 'updated_by' => Auth::user()->id,
             ]);
-            if ($request->send_update_id) {
+            if ($request->send_update_id > 0) {
                 $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_DECLINE;
             } else {
                 $quoteModel->quote_status_id = QuoteStatusEnum::TransactionDeclined;
             }
             $quoteModel->save();
             $successMessage = 'Transaction declined';
+            info('Transaction declined for Payment Code: '.$request->payment_code);
         } else {
-            $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
-            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
             if ($request->is_capture) { //update collected amount in childs
                 foreach ($request->collection_amount as $key => $splitAmount) {
                     $paymentSplit = PaymentSplits::where(['code' => $request->payment_code, 'sr_no' => $key])->first();
                     if ($paymentSplit && $paymentSplit->payment_status_id != PaymentStatusEnum::PAID) {
-                        if ($paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
-                            //create sage reciept
-                            if ($isSageEnabled && ($paymentSplit->sage_reciept_id == null || $paymentSplit->sage_reciept_id == '')) {
-                                $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $paymentSplit, $splitAmount);
-                                if ($sageResponse['status'] == 'success') {
-                                    $paymentSplit->sage_reciept_id = $sageResponse['response'];
-                                } else {
-                                    $sageMessage = $sageResponse['response'];
-                                    vAbort($sageMessage);
-                                }
-                            }
-                            //Marshal Service to capture split payment
-                            $response = app(CRUDService::class)->capturePayment($quoteModel, $paymentSplit, $quoteTypeId, $splitAmount);
-                            //$paymentSplit->payment_status_id = PaymentStatusEnum::CAPTURED; //Temporarily commented on API request
-                        }
-                        DB::beginTransaction();
-                        try {
-                            if (empty($paymentSplit->verified_at)) {
-                                $paymentSplit->verified_at = now();
-                                $paymentSplit->verified_by = Auth::user()->id;
-                            }
-                            $paymentSplit->collection_amount = $splitAmount;
-                            $paymentSplit->save();
-                            $parentPayment = $paymentSplit->payment;
-                            /* Create payment receipt for broker */
-                            if ($parentPayment->collection_type == CollectionTypeEnum::BROKER &&
-                                ! in_array($paymentSplit->payment_method, [PaymentMethodsEnum::CreditCard, PaymentMethodsEnum::CreditApproval]) &&
-                                in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID])
-                            ) {
-                                app(SplitPaymentService::class)->createReceipt($request->modelType, $request->quote_id, $paymentSplit);
-                            }
-                            $parentPayment->captured_amount = ($parentPayment->captured_amount + $splitAmount);
-                            $parentPayment->save();
 
-                            if ($parentPayment->send_update_log_id) {
-                                SendUpdateLog::where('id', $parentPayment->send_update_log_id)->update([
-                                    'status' => SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
-                                ]);
-                            }
-                            DB::commit();
-                        } catch (Exception $exception) {
-                            DB::rollBack();
-                        }
+                        // Log the split payment approval process
+                        info('Approving split payment. Payment Code: '.$request->payment_code.', SR No: '.$key);
+
+                        // process split payment approve
+                        app(SplitPaymentService::class)->processSplitPaymentApprove($request->modelType, $request->quote_id, $paymentSplit->id, $splitAmount);
                     }
                 }
             }
+            // Log the master payment approval process
+            info('Processing master payment approval for Payment Code: '.$request->payment_code);
 
-            $canCaptureEp = false;
-            // On failure, the capture button will render again and the user can try again
-            DB::beginTransaction();
-            try {
-                $masterPaymentStatus = $firstPayment->payment_status_id;
-                $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
-                    PaymentStatusEnum::PAID,
-                    PaymentStatusEnum::CAPTURED,
-                ])->where('code', $firstPayment->code)->count();
-
-                $totalPartialPaidPayments = PaymentSplits::whereIn('payment_status_id', [
-                    PaymentStatusEnum::PARTIAL_CAPTURED,
-                    PaymentStatusEnum::PARTIALLY_PAID,
-                ])->where('code', $firstPayment->code)->count();
-
-                if ($totalPaidPayments == $firstPayment->total_payments) {
-                    $masterPaymentStatus = PaymentStatusEnum::CAPTURED;
-                } elseif ($totalPartialPaidPayments > 0) {
-                    $masterPaymentStatus = PaymentStatusEnum::PARTIAL_CAPTURED;
-                }
-                $firstPayment->update([
-                    'is_approved' => 1,
-                    'payment_status_id' => $masterPaymentStatus,
-                    'updated_by' => Auth::user()->id,
-                ]);
-                $successMessage = 'Transaction approved';
-                $totalApproved = $quoteModel->payments()->where('is_approved', 1)->count();
-                if ($totalApproved == $quoteModel->payments()->count()) {
-                    if ($request->send_update_id) {
-                        $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
-                    } else {
-                        $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
-                    }
-                    $quoteModel->save();
-                    $canCaptureEp = true;
-                    // Berlin Service - Extend Customer Subscription on Shaji request
-                    $customerData = app(CustomerService::class)->getCustomerById($quoteModel->customer_id);
-                    if ($customerData) {
-                        $quoteOptions = QuoteTypeId::getOptions();
-                        $responseExtend = app(BerlinService::class)->extendCustomerSubscription($customerData->id, $customerData->email, strtoupper($quoteOptions[$quoteTypeId]).'-QUOTE', strtolower($quoteOptions[$quoteTypeId]).'-quote-myalfred-we');
-                        info('Transaction Approved responseExtend: '.$responseExtend);
-                    }
-                    //dispatch(new MAWelcomeJob($quoteModel->first_name, $quoteModel->last_name, $quoteModel->email, $quoteModel->mobile_no, 'IMCRM', ''));
-                    // dispatch(new MAWelcomeJob($parentQuoteModel->first_name, $parentQuoteModel->last_name, $parentQuoteModel->email, $parentQuoteModel->mobile_no, 'IMCRM', ''));
-
-                    //Create duplicate lead for TRAVEL
-                    if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1 && ! $request->send_update_id) {
-                        if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel)) {
-                            $successMessage .= ', '.$quoteModel->code.'-1 Created For Booking The Additional Policy';
-                        }
-                    }
-                }
-                if (! $request->send_update_id) {
-                    $this->updateLeadStatus($firstPayment); //update lead status
-                }
-                DB::commit();
-            } catch (Exception $exception) {
-                $canCaptureEp = false;
-                DB::rollBack();
-            }
-
-            if ($canCaptureEp) {
-                // capture EP and send documents
-                EmbeddedProductRepository::capturePayment($request->quote_id, $request->modelType);
-            }
+            // process master payment approve
+            $successMessage = app(SplitPaymentService::class)->processMasterPaymentApprove($request->modelType, $request->quote_id, $request->send_update_id, false, 0, $request->payment_code);
         }
 
         return $successMessage;
@@ -519,7 +450,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $payment->is_approved = 0;
             $payment->payment_status_id = PaymentStatusEnum::PARTIAL_CAPTURED;
             $payment->save();
-            $this->updateLeadStatus($payment); //update lead status
+            app(SplitPaymentService::class)->updateLeadStatus($payment); //update lead status
 
             return response()->json(['message' => 'Total Price Updated Successfully']);
         }
@@ -662,14 +593,18 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     ->where('code', $payment->code)
                     ->count();
 
+                info('Total paid payments for '.$payment->code.': '.$totalPaidPayments.' out of '.$payment->total_payments);
+
                 if (
                     $totalPaidPayments == $payment->total_payments
                     && $payment->captured_amount >= ($payment->total_price - $payment->discount_value)
                 ) {
+                    info('All payments are captured. Updating Payment status to CAPTURED: '.$payment->code);
                     $payment->update(
                         ['payment_status_id' => PaymentStatusEnum::CAPTURED]
                     );
                 } elseif ($totalPaidPayments > 0) {
+                    info('Some payments are captured. Updating Payment status to PARTIAL_CAPTURED: '.$payment->code);
                     $payment->update(
                         ['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED]
                     );
@@ -689,31 +624,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     }
                 }
             }
-            $this->updateLeadStatus($payment); //update lead status
-        }
-    }
-
-    // Update lead status for ecomm quotes
-    private function updateLeadStatus($payment)
-    {
-        $quoteType = '';
-        if ($payment->paymentable_type == CarQuote::class) {
-            $quoteType = quoteTypeCode::Car;
-        } elseif ($payment->paymentable_type == HealthQuote::class) {
-            $quoteType = quoteTypeCode::Health;
-        } elseif ($payment->paymentable_type == TravelQuote::class) {
-            $quoteType = quoteTypeCode::Travel;
-        }
-        // If a quote type is found, get the corresponding quote object
-        if ($quoteType !== '') {
-            $quoteModel = $this->getQuoteObject($quoteType, $payment->paymentable_id);
-            if ($quoteModel) {
-                $quoteModel->payment_status_id = $payment->payment_status_id;
-                if ($payment->payment_status_id == PaymentStatusEnum::PAID) {
-                    $quoteModel->payment_paid_at = now();
-                }
-                $quoteModel->save();
-            }
+            info('Updating lead status for Payment Code: '.$payment->code);
+            app(SplitPaymentService::class)->updateLeadStatus($payment); //update lead status
         }
     }
 
@@ -725,5 +637,107 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     public function fetchGetPaymentByInsurerInvoiceNumber($quote, $invoiceNumber)
     {
         return $quote->payments()->where('insurer_tax_number', $invoiceNumber)->first();
+    }
+
+    public function generateBrokerInvoiceNumber($payment, $quoteType): string
+    {
+        $insuranceProvider = null;
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
+        if (in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
+            $planRelationName = strtolower($quoteType).'Plan';
+            $payment->load($planRelationName);
+            $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
+        }
+
+        if (! $insuranceProvider) {
+            $insuranceProvider = $payment?->insuranceProvider;
+        }
+
+        $insuranceProviderCode = $insuranceProvider?->code;
+        $latestBINByInsurer = Payment::whereNotNull('broker_invoice_number')->where('insurance_provider_id', $insuranceProvider->id)->orderBy('updated_at', 'desc')->first()?->broker_invoice_number;
+        $insuranceProviderLeadCount = (int) str_replace($insuranceProviderCode, '', $latestBINByInsurer) + 1;
+
+        return $insuranceProviderCode.$insuranceProviderLeadCount;
+    }
+    public function generateInvoiceDescription($payment, $quoteType, $record): string
+    {
+        $insuranceProvider = null;
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
+        if (in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
+            $planRelationName = strtolower($quoteType).'Plan';
+            $payment->load($planRelationName);
+            $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
+        }
+
+        if (! $insuranceProvider) {
+            $insuranceProvider = $payment?->insuranceProvider;
+        }
+
+        $insuranceProviderCode = $insuranceProvider?->code;
+
+        return substr($insuranceProviderCode.'-'.ucfirst($quoteType).'-'.$record->policy_number, 0, 60);
+    }
+
+    public function updatePriceVatApplicableAndVat($quote, $modelType)
+    {
+        /* Start - Temporarily adding for correcting historic data  */
+        info('Start - Temporarily adding for correcting historic data'.$quote->uuid);
+        /* calculate price and vat for payments for old payment data  where price_vat_applicable is not available */
+        $quotePayment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
+        if ($quotePayment) {
+            if (! $quotePayment->price_vat_applicable) {
+                [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculateMasterPriceAndVat($quotePayment->frequency, $quotePayment->total_price, $modelType, $quote->id);
+                $quotePayment->update([
+                    'price_vat_applicable' => $priceWithoutVat,
+                    'price_vat' => $vat,
+                ]);
+            }
+
+            /* calculate price and vat for split payments for old split payment data where price_vat_applicable is not available */
+            $paymentSplits = $quotePayment->paymentSplits;
+            if ($paymentSplits->whereNull('price_vat_applicable')->count()) {
+                foreach ($quotePayment->paymentSplits as $splitPayment) {
+                    if (isset($splitPayment->payment_method) && $splitPayment->payment_method != null) {
+                        [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat($quotePayment->frequency, $quotePayment->total_price, $splitPayment->sr_no, $splitPayment->payment_amount, $modelType, $quote->id, count($paymentSplits));
+                        $splitPayment->update([
+                            'price_vat_applicable' => $priceWithoutVat,
+                            'price_vat' => $vat,
+                        ]);
+                    }
+                }
+            }
+        }
+
+        info('End - Temporarily adding for correcting historic data '.$quote->uuid);
+        /* End - Temporarily adding for correcting historic data  */
+
+    }
+
+    public function getAuthorisePaymentCount($userId = null)
+    {
+        if (! Auth::check() && $userId == null) {
+            return 0;
+        }
+        $userId = $userId != null ? $userId : Auth::user()->id;
+        $user = User::where('id', $userId)->first();
+        $userTeams = $user->getUserTeams($userId);
+
+        $personalCount = DB::table('payments')
+            ->distinct()
+            ->Join('personal_quotes as pq', 'pq.code', '=', 'payments.code')
+            ->join('users', 'users.id', 'pq.advisor_id')
+            ->join('user_team', 'user_team.user_id', 'users.id')
+            ->join('teams', 'teams.id', '=', 'user_team.team_id')
+            ->where('payments.payment_status_id', PaymentStatusEnum::AUTHORISED);
+
+        if ($user->hasAnyRole([RolesEnum::CarManager, RolesEnum::HealthManager, RolesEnum::TravelManager, RolesEnum::LifeManager, RolesEnum::HomeManager, RolesEnum::PetManager, RolesEnum::BikeManager, RolesEnum::CycleManager, RolesEnum::YachtManager, RolesEnum::JetskiManager, RolesEnum::BusinessManager])) {
+            $personalCount = $personalCount->whereIn('teams.name', $userTeams)->count('payments.id');
+
+        } else {
+            $personalCount = $personalCount->where('pq.advisor_id', $userId)->count('payments.id');
+
+        }
+
+        return $personalCount;
     }
 }

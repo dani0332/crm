@@ -11,11 +11,19 @@ use BenSampo\Enum\Enum;
  */
 final class SageEnum extends Enum
 {
+    // Sage Custom API Enums
+    const SAGE_CUSTOM_API_INVALID_TOKEN_MESSAGE = 'Invalid token';
+    const SAGE_CUSTOM_API_AUTH_TOKEN_CACHE_KEY = 'sage-customer-api-token';
+    const SAGE_CUSTOM_API_GET_AP_PAYMENT_SCHEDULE_ENDPOINT = '/api/APBatch/GetInvoiceBatchWise/';
+    const SAGE_CUSTOM_API_UPDATE_AP_PAYMENT_SCHEDULE_ENDPOINT = '/api/APBatch/';
+    const SAGE_CUSTOM_API_GET_AUTH_TOKEN_ENDPOINT = '/api/User/Login';
+
     // Endpoints
     const END_POINT_AR_CUSTOMER = 'AR/ARCustomers';
 
     // Error Codes
-    const ERROR_RECORD_DUPLICATE = 'RecordDuplicate';
+    // const ERROR_RECORD_DUPLICATE = 'RecordDuplicate';
+    const ERROR_RECORD_NOT_FOUND = 'RecordNotFound';
 
     // Status
     const STATUS_SUCCESS = 'success';
@@ -36,6 +44,16 @@ final class SageEnum extends Enum
     const SRT_CREATE_AR_PREM_COMM_INV = 'CREATE_AR_PREM_COMM_INV';
     const SRT_RTP_AR_PREM_COMM_INV = 'RTP_AR_PREM_COMM_INV';
     const SRT_POST_AR_PREM_COMM_INV = 'POST_AR_PREM_COMM_INV';
+
+    // AR Premium Invoice - Upfront
+    const SRT_CREATE_AR_PREM_INV = 'CREATE_AR_PREM_INV';
+    const SRT_RTP_AR_PREM_INV = 'RTP_AR_PREM_INV';
+    const SRT_POST_AR_PREM_INV = 'POST_AR_PREM_INV';
+
+    // AR Commission Invoice - Upfront
+    const SRT_CREATE_AR_COMM_INV = 'CREATE_AR_COMM_INV';
+    const SRT_RTP_AR_COMM_INV = 'RTP_AR_COMM_INV';
+    const SRT_POST_AR_COMM_INV = 'POST_AR_COMM_INV';
 
     // AR Invoices - Monthly, Quaterly, Semi-Annual, Split, Custom
     const SRT_CREATE_AR_SPPAY_INV = 'CREATE_AR_SPPAY_INV';
@@ -142,4 +160,8 @@ final class SageEnum extends Enum
     const SF_SPLIT_PAYMENT = 'split_payments';
     const AR_INVOICE = 'AR Invoice';
     const AP_INVOICE = 'AP Invoice';
+
+    // Sage Batch Status
+    const SAGE_STATUS_POSTED = 'Posted';
+    const SAGE_STATUS_OPEN = 'Open';
 }

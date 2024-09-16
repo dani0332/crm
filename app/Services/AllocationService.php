@@ -55,7 +55,7 @@ class AllocationService
         $apiToken = config('constants.KEN_API_TOKEN');
         $apiTimeout = config('constants.KEN_API_TIMEOUT');
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client;
         $request = $client->post(
             $apiEndPoint,
             [
@@ -112,22 +112,15 @@ class AllocationService
         }
     }
 
-    public function updateExistingQuoteDetail($quoteDetail, $uuid): void
+    public function upsertQuoteDetail($leadId, $quoteModel, $keyColumn): void
     {
-        $quoteDetail->advisor_assigned_date = now();
-        $quoteDetail->advisor_assigned_by_id = auth()->id();
-        $quoteDetail->save();
-    }
-
-    public function createNewQuoteDetail($leadId, $quoteModel, $keyColumn): void
-    {
-        $quoteModel::create([
-            $keyColumn => $leadId,
-            'advisor_assigned_date' => now(),
-            'advisor_assigned_by_id' => auth()->id(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $quoteModel::updateOrCreate(
+            [$keyColumn => $leadId],
+            [
+                'advisor_assigned_date' => now(),
+                'advisor_assigned_by_id' => auth()->id(),
+            ]
+        );
     }
 
     public function getAssignmentTypeText($assignmentType)

@@ -18,6 +18,9 @@ export const useRules = () => {
   const isNumber = v =>
     !v || /^\d+$/.test(v) || !isNaN(Number(v)) || 'This field must be a number';
 
+  const isNumberOrDecimal = v =>
+    /^\d+(\.\d+)?$/.test(v) || 'This field must be a number';
+
   const policy_number = v => {
     if (v) {
       return (
@@ -35,7 +38,7 @@ export const useRules = () => {
     return true;
   };
 
-  const renewal_expiry_date = v => {
+  const policy_expiry_date = v => {
     if (v) {
       const date = new Date(v);
       if (policyDetails.policy_start_date) {
@@ -103,6 +106,13 @@ export const useRules = () => {
       'Price should be number and greater than 0'
     );
   };
+  const emptyOrNumericAndNoSpecialChar = v => {
+    return (
+      !v ||
+      /^[0-9]+$/.test(v) ||
+      'This field must be a number, special characters are not allowed.'
+    );
+  };
 
   return {
     isEmail,
@@ -110,9 +120,10 @@ export const useRules = () => {
     isRequired,
     allowEmpty,
     isNumber,
+    isNumberOrDecimal,
     policy_number,
     policy_start_date,
-    renewal_expiry_date,
+    policy_expiry_date,
     premium,
     isDecimal,
     emptyOrDecimal,
@@ -121,5 +132,6 @@ export const useRules = () => {
     price_vat_applicable,
     vat,
     amount_with_vat,
+    emptyOrNumericAndNoSpecialChar,
   };
 };

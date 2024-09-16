@@ -18,8 +18,16 @@ const priceFormat = (price, thousandSeparator = false) => {
 
 const tableHeader = reactive([
   {
+    text: 'Ref-ID',
+    value: 'uuid',
+  },
+  {
     text: 'Policy No.',
     value: 'policy_number',
+  },
+  {
+    text: 'Department',
+    value: 'department',
   },
   {
     text: 'Transactions',
@@ -130,6 +138,10 @@ const tableHeader = reactive([
     text: 'Policy Issuer ',
     value: 'policy_issuer',
   },
+  {
+    text: 'Commission Tax Invoice Number',
+    value: 'insurer_commmission_invoice_number',
+  },
 ]);
 
 const calculateTotalSum = useCalculateTotalSum;
@@ -138,7 +150,7 @@ const isIntegerColumn = key => {
   // Add logic to determine if the column contains an integer
   // For example, check if the key corresponds to an integer column
   return [
-    'transactions',
+    // 'transactions',
     'price_vat_applicable',
     'vat',
     'price_vat_not_applicable',
@@ -155,7 +167,7 @@ const isIntegerColumn = key => {
 <template>
   <DataTable
     class="mt-4"
-    table-class-name=""
+    table-class-name="table-fixed"
     :loading="loader"
     :headers="tableHeader"
     :items="props.reportData.data || []"
@@ -166,17 +178,26 @@ const isIntegerColumn = key => {
     hide-footer
     :rows-per-page="100"
   >
+    <template #item-uuid="{ uuid, routeName, code }">
+      <a
+        :href="route(routeName, uuid)"
+        class="text-primary-500 hover:underline"
+        target="_blank"
+      >
+        {{ code }}
+      </a>
+    </template>
     <template #item-policy_number="{ policy_number }">
       {{ policy_number }}
     </template>
     <template #item-transactions="{ transactions }">
-      {{ transactions ?? 0 }}
+      {{ transactions ? transactions : 'N/A' }}
     </template>
     <template #item-policy_start_date="{ policy_start_date }">
       {{ policy_start_date ?? 'N/A' }}
     </template>
-    <template #item-payment_due_date="{payment_due_date, due_date}">
-      {{ (payment_due_date ? payment_due_date : (due_date ? due_date : 'N/A')) }}
+    <template #item-payment_due_date="{ payment_due_date, due_date }">
+      {{ payment_due_date ? payment_due_date : due_date ? due_date : 'N/A' }}
     </template>
     <template #item-source="{ source }">
       {{ source }}
@@ -185,39 +206,33 @@ const isIntegerColumn = key => {
       {{ team }}
     </template>
     <template #item-price_vat_applicable="{ price_vat_applicable }">
-      {{ price_vat_applicable ? (price_vat_applicable) : 0.00 }}
+      {{ price_vat_applicable ? price_vat_applicable : 0.0 }}
     </template>
     <template #item-vat="{ vat }">
       {{ vat ?? 0 }}
     </template>
     <template #item-price_vat_not_applicable="{ price_vat_not_applicable }">
-      {{ price_vat_not_applicable ? (price_vat_not_applicable) : 0.00 }}
+      {{ price_vat_not_applicable ? price_vat_not_applicable : 0.0 }}
     </template>
     <template #item-discount="{ discount }">
-      {{ discount ? (discount) : 0.00 }}
+      {{ discount ? discount : 0.0 }}
     </template>
     <template #item-total_price="{ total_price }">
-      {{ total_price ? (total_price) : 0.00 }}
+      {{ total_price ? total_price : 0.0 }}
     </template>
     <template #item-commission_vat_applicable="{ commission_vat_applicable }">
-      {{
-        commission_vat_applicable ? (commission_vat_applicable) : 0.00
-      }}
+      {{ commission_vat_applicable ? commission_vat_applicable : 0.0 }}
     </template>
     <template #item-commission_vat="{ commission_vat }">
-      {{ commission_vat ? (commission_vat) : 0.00 }}
+      {{ commission_vat ? commission_vat : 0.0 }}
     </template>
     <template
       #item-commission_vat_not_applicable="{ commission_vat_not_applicable }"
     >
-      {{
-        commission_vat_not_applicable
-          ? (commission_vat_not_applicable)
-          : 0.00
-      }}
+      {{ commission_vat_not_applicable ? commission_vat_not_applicable : 0.0 }}
     </template>
     <template #item-total_commission="{ total_commission }">
-      {{ total_commission ? (total_commission) : 0.00 }}
+      {{ total_commission ? total_commission : 0.0 }}
     </template>
     <template #item-collects="{ collects }">
       {{ collects }}
@@ -241,7 +256,7 @@ const isIntegerColumn = key => {
       {{ customer_name }}
     </template>
     <template #item-customer_type="{ customer_type }">
-      {{ (customer_type && customer_type.includes('IND')) ? 'Individual' : '--' }}
+      {{ customer_type && customer_type.includes('IND') ? 'Individual' : '--' }}
     </template>
     <template #item-insurer="{ insurer }">
       {{ insurer }}
@@ -258,8 +273,15 @@ const isIntegerColumn = key => {
     <template #item-policy_issuer="{ policy_issuer }">
       {{ policy_issuer ?? 'N/A' }}
     </template>
+    <template
+      #item-insurer_commmission_invoice_number="{
+        insurer_commmission_invoice_number,
+      }"
+    >
+      {{ insurer_commmission_invoice_number ?? 'N/A' }}
+    </template>
     <template #body-append>
-      <tr v-if="reportData.data.length > 0" class="total-row">
+      <tr v-if="reportData.data.length > 0" class="total-row sticky bottom-0">
         <td class="direction-left">Total</td>
         <td
           v-for="header in tableHeader.slice(1, tableHeader.length)"
@@ -268,7 +290,10 @@ const isIntegerColumn = key => {
         >
           {{
             isIntegerColumn(header.value)
-              ? priceFormat(calculateTotalSum(reportData.data, header.value), true)
+              ? priceFormat(
+                  calculateTotalSum(reportData.data, header.value),
+                  true,
+                )
               : 'N/A'
           }}
         </td>

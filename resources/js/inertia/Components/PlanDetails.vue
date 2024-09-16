@@ -1,9 +1,6 @@
 <script setup>
-import { useFormatPrice } from '../Composables/utilities';
-
 const page = usePage();
 const notification = useToast();
-
 const props = defineProps({
   quote: {
     type: Object,
@@ -15,19 +12,21 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  isAddUpdate: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
 const planDetailsForm = useForm({
   insurance_provider_id: props.quote?.insurance_provider_id ?? null,
-  price_vat_applicable:
-    props.quote?.price_vat_applicable ?? null /* temperate setting null */, // price vat applicable
-  price_vat_not_applicable:
-    props.quote?.price_vat_not_applicable ?? null /* temperate setting null */, //price vat not applicable
+  price_vat_applicable: props.quote?.price_vat_applicable ?? 0, // price vat applicable
+  price_vat_not_applicable: props.quote?.price_vat_not_applicable ?? 0, //price vat not applicable
   price_with_vat: props.quote.price_with_vat
     ? useFormatPrice(props.quote.price_with_vat, true)
-    : null /* temperate setting null */,
+    : 0,
   insurer_quote_number: props.quote?.insurer_quote_number ?? null,
 });
 
@@ -114,7 +113,7 @@ const submitPlanDetailsForm = isValid => {
 };
 
 const updatePriceWithVat = () => {
-  planDetailsForm.price_with_vat = ''; /* temperate setting empty */
+  planDetailsForm.price_with_vat = 0;
 
   let priceVatApp = parseFloat(
     planDetailsForm.price_vat_applicable !== null &&
@@ -157,6 +156,26 @@ const can = permission => useCan(permission);
 
 const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
+
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
+const [SavePlanDetailsButtonTemplate, SavePlanDetailsButtonReuseTemplate] =
+  createReusableTemplate();
+
+watch(
+  () => props.isAddUpdate,
+  () => {
+    planDetailsForm.insurance_provider_id = null;
+    planDetailsForm.price_vat_applicable = null;
+    planDetailsForm.price_vat_not_applicable = null;
+    planDetailsForm.price_with_vat = null;
+    planDetailsForm.insurer_quote_number = null;
+  },
+);
 </script>
 
 <template>
@@ -179,6 +198,7 @@ const permissionEnum = page.props.permissionsEnum;
             :options="insuranceProviderOptions"
             label="Insurance Provider"
             class="w-full uppercase"
+            :disabled="page.props.lockLeadSectionsDetails.plan_details"
           />
         </div>
 
@@ -196,8 +216,9 @@ const permissionEnum = page.props.permissionsEnum;
                   ]
             "
             :disabled="
-              props.quoteType == quoteTypeCodeEnum.Life &&
-              props.quoteType != quoteTypeCodeEnum.Business
+              (props.quoteType == quoteTypeCodeEnum.Life &&
+                props.quoteType != quoteTypeCodeEnum.Business) ||
+              page.props.lockLeadSectionsDetails.plan_details
             "
             label="Price (VAT Applicable)"
             class="w-full uppercase"
@@ -222,8 +243,9 @@ const permissionEnum = page.props.permissionsEnum;
             "
             :error="planDetailsForm.errors.price_vat_not_applicable"
             :disabled="
-              props.quoteType != quoteTypeCodeEnum.Life &&
-              props.quoteType != quoteTypeCodeEnum.Business
+              (props.quoteType != quoteTypeCodeEnum.Life &&
+                props.quoteType != quoteTypeCodeEnum.Business) ||
+              page.props.lockLeadSectionsDetails.plan_details
             "
             type="text"
             label="Price (VAT not applicable)"
@@ -250,18 +272,38 @@ const permissionEnum = page.props.permissionsEnum;
             type="text"
             label="Insurer Quote Number"
             class="w-full uppercase"
+            :disabled="page.props.lockLeadSectionsDetails.plan_details"
           />
         </div>
       </div>
 
-      <div class="text-right space-x-4 mt-12">
+      <SavePlanDetailsButtonTemplate v-slot="{ isDisabled }">
         <x-button
+          class="mt-4"
           color="#26B99A"
           type="submit"
           size="sm"
           :loading="formProcessing"
-          >Save</x-button
+          :disabled="isDisabled"
+          v-if="readOnlyMode.isDisable === true"
         >
+          Save
+        </x-button>
+      </SavePlanDetailsButtonTemplate>
+
+      <div class="flex mb-3 justify-end">
+        <x-tooltip
+          v-if="page.props.lockLeadSectionsDetails.plan_details"
+          placement="bottom"
+        >
+          <SavePlanDetailsButtonReuseTemplate :isDisabled="true" />
+          <template #tooltip>
+            This lead is now locked as the policy has been booked. If changes
+            are needed, go to 'Send Update', select 'Add Update', and choose
+            'Correction of Policy'
+          </template>
+        </x-tooltip>
+        <SavePlanDetailsButtonReuseTemplate v-else />
       </div>
     </x-form>
   </div>

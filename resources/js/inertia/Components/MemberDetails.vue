@@ -26,6 +26,8 @@ const props = defineProps({
 const page = usePage();
 const notification = useToast();
 const { isRequired } = useRules();
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 
 const modals = reactive({
   member: false,
@@ -49,7 +51,7 @@ const memberRelationOptions = computed(() => {
 
 const members = ref(props.membersDetails);
 const computedMembers = computed(() => {
-    return members.value?.filter(x => !x.is_third_party_payer);
+  return members?.value?.filter(x => !x.is_third_party_payer);
 });
 
 const memberActionEdit = ref(false);
@@ -166,6 +168,20 @@ const memberDeleteConfirmed = () => {
     },
   );
 };
+
+const [AddMemberButtonTemplate, AddMemButtonReuseTemplate] =
+  createReusableTemplate();
+const [EditMemberButtonTemplate, EditMemberButtonReuseTemplate] =
+  createReusableTemplate();
+const [DeleteMemberButtonTemplate, DeleteMemberButtonReuseTemplate] =
+  createReusableTemplate();
+
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
 </script>
 
 <template>
@@ -181,6 +197,17 @@ const memberDeleteConfirmed = () => {
       </template>
       <template #body>
         <x-divider class="my-4" />
+        <AddMemberButtonTemplate v-slot="{ isDisabled }">
+          <x-button
+            @click.prevent="addMemberModal"
+            size="sm"
+            color="orange"
+            :disabled="isDisabled"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Add Member
+          </x-button>
+        </AddMemberButtonTemplate>
         <div
           class="flex mb-3 justify-end"
           v-if="
@@ -189,10 +216,45 @@ const memberDeleteConfirmed = () => {
             page.props.linkedQuoteDetails.childLeadsCount == 0
           "
         >
-          <x-button @click.prevent="addMemberModal" size="sm" color="orange">
-            Add Member
-          </x-button>
+          <x-tooltip
+            v-if="page.props.lockLeadSectionsDetails.member_details"
+            position="bottom"
+          >
+            <AddMemButtonReuseTemplate :isDisabled="true" />
+            <template #tooltip>
+              This lead is now locked as the policy has been booked. If changes
+              are needed such midterm addition of member, go to 'Send Update',
+              select 'Add Update', and choose 'Endorsement Financial'
+            </template>
+          </x-tooltip>
+          <AddMemButtonReuseTemplate v-else />
         </div>
+
+        <EditMemberButtonTemplate v-slot="{ isDisabled, item }">
+          <x-button
+            size="xs"
+            color="primary"
+            outlined
+            @click.prevent="onEditMember(item)"
+            :disabled="isDisabled"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Edit
+          </x-button>
+        </EditMemberButtonTemplate>
+
+        <DeleteMemberButtonTemplate v-slot="{ isDisabled, item }">
+          <x-button
+            size="xs"
+            color="error"
+            outlined
+            @click.prevent="memberDelete(item.id)"
+            :disabled="isDisabled"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Delete
+          </x-button>
+        </DeleteMemberButtonTemplate>
 
         <DataTable
           table-class-name="tablefixed compact"
@@ -224,84 +286,120 @@ const memberDeleteConfirmed = () => {
               "
               class="flex gap-2"
             >
-              <x-button
-                size="xs"
-                color="primary"
-                outlined
-                @click.prevent="onEditMember(item)"
+              <x-tooltip
+                v-if="page.props.lockLeadSectionsDetails.member_details"
+                position="left"
+                align="top"
               >
-                Edit
-              </x-button>
-              <x-button
-                size="xs"
-                color="error"
-                outlined
-                @click.prevent="memberDelete(item.id)"
+                <EditMemberButtonReuseTemplate
+                  :isDisabled="true"
+                  :item="item"
+                />
+                <template #tooltip>
+                  <div class="!whitespace-normal text-xs">
+                    This lead is now locked as the policy has been booked. If
+                    changes are needed such midterm deletion of member or
+                    marital status change, go to 'Send Update', select 'Add
+                    Update', and choose 'Endorsement Financial'
+                  </div>
+                </template>
+              </x-tooltip>
+
+              <EditMemberButtonReuseTemplate v-else :item="item" />
+
+              <x-tooltip
+                v-if="page.props.lockLeadSectionsDetails.member_details"
+                position="left"
               >
-                Delete
-              </x-button>
+                <DeleteMemberButtonReuseTemplate
+                  :isDisabled="true"
+                  :item="item"
+                />
+                <template #tooltip>
+                  <div class="whitespace-normal text-xs">
+                    This lead is now locked as the policy has been booked. If
+                    changes are needed such midterm deletion of member or
+                    marital status change, go to 'Send Update', select 'Add
+                    Update', and choose 'Endorsement Financial'
+                  </div>
+                </template>
+              </x-tooltip>
+
+              <DeleteMemberButtonReuseTemplate v-else :item="item" />
             </div>
           </template>
         </DataTable>
       </template>
     </Collapsible>
 
-    <x-modal v-model="modals.member" size="lg" show-close backdrop>
-      <template #header>
-        {{ memberActionEdit ? 'Edit' : 'Add' }} Member
+    <x-modal
+      v-model="modals.member"
+      size="lg"
+      :title="`${memberActionEdit ? 'Edit' : 'Add'} Member`"
+      show-close
+      backdrop
+      is-form
+      @submit="onMemberSubmit"
+    >
+      <div class="grid md:grid-cols-2 gap-4">
+        <input type="hidden" :value="memberForm.id" />
+        <x-input
+          v-model="memberForm.first_name"
+          label="Member Name*"
+          placeholder="Member Name"
+          :rules="[isRequired]"
+        />
+        <ComboBox
+          v-model="memberForm.nationality_id"
+          label="Nationality"
+          :options="nationalitiesOptions"
+          placeholder="Select Nationality"
+          :single="true"
+          :hasError="memberFieldReq.nationality"
+        />
+        <DatePicker
+          v-model="memberForm.dob"
+          label="DOB*"
+          :hasError="memberFieldReq.dob"
+          :rules="[isRequired]"
+        />
+        <x-select
+          v-model="memberForm.relation_code"
+          label="Relation"
+          :options="memberRelationOptions"
+          placeholder="Select Relation"
+          class="w-full"
+        />
+      </div>
+
+      <template #secondary-action>
+        <x-button
+          ghost
+          tabindex="-1"
+          size="sm"
+          @click.prevent="modals.member = false"
+        >
+          Cancel
+        </x-button>
       </template>
-
-      <x-form @submit="onMemberSubmit" :auto-focus="false">
-        <div class="grid md:grid-cols-2 gap-4">
-          <input type="hidden" :value="memberForm.id" />
-          <x-input
-            v-model="memberForm.first_name"
-            label="Member Name*"
-            placeholder="Member Name"
-            :rules="[isRequired]"
-          />
-          <ComboBox
-            v-model="memberForm.nationality_id"
-            label="Nationality"
-            :options="nationalitiesOptions"
-            placeholder="Select Nationality"
-            :single="true"
-            :hasError="memberFieldReq.nationality"
-          />
-          <DatePicker
-            v-model="memberForm.dob"
-            label="DOB*"
-            :hasError="memberFieldReq.dob"
-            :rules="[isRequired]"
-          />
-          <x-select
-            v-model="memberForm.relation_code"
-            label="Relation"
-            :options="memberRelationOptions"
-            placeholder="Select Relation"
-            class="w-full"
-          />
-        </div>
-
-        <div class="text-right space-x-4 mt-8">
-          <x-button size="sm" @click.prevent="modals.member = false">
-            Cancel
-          </x-button>
-
-          <x-button
-            size="sm"
-            color="emerald"
-            :loading="memberForm.processing"
-            type="submit"
-          >
-            {{ memberActionEdit ? 'Update' : 'Save' }}
-          </x-button>
-        </div>
-      </x-form>
+      <template #primary-action>
+        <x-button
+          size="sm"
+          color="emerald"
+          :loading="memberForm.processing"
+          type="submit"
+        >
+          {{ memberActionEdit ? 'Update' : 'Save' }}
+        </x-button>
+      </template>
     </x-modal>
 
-    <x-modal v-model="modals.memberConfirm" show-close backdrop>
-      <template #header> Delete Member Detail </template>
+    <x-modal
+      v-model="modals.memberConfirm"
+      title="Delete Member Detail"
+      show-close
+      backdrop
+    >
       <p>Are you sure you want to delete this?</p>
       <template #actions>
         <div class="text-right space-x-4">

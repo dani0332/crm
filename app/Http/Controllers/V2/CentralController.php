@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\SendPolicyTypeEnum;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
 use App\Exports\CarQuoteExport;
@@ -24,11 +27,13 @@ use App\Http\Requests\BookPolicyRequest;
 use App\Http\Requests\CustomerProfileRequest;
 use App\Http\Requests\DragAndDropUpdateLeadStatusRequest;
 use App\Http\Requests\DuplicateLobRequest;
+use App\Http\Requests\ExportValidationRequest;
 use App\Http\Requests\GeneratePaymentLinkRequest;
 use App\Http\Requests\LeadAssignRequest;
 use App\Http\Requests\MigratePaymentsRequest;
 use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\QuoteNotesRequest;
+use App\Http\Requests\RetrySplitPaymentRequest;
 use App\Http\Requests\SendBookPolicyRequest;
 use App\Http\Requests\SplitPaymentApproveRequest;
 use App\Http\Requests\SplitPaymentUpdateRequest;
@@ -38,8 +43,11 @@ use App\Http\Requests\UpdatePaymentRequest;
 use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Http\Requests\UpdateTotalPriceRequest;
 use App\Jobs\SendBookPolicyDocumentsJob;
+use App\Models\ApplicationStorage;
+use App\Models\CcPaymentProcess;
 use App\Models\Customer;
 use App\Models\Entity;
+use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\Payment;
 use App\Models\QuoteNote;
@@ -47,21 +55,25 @@ use App\Models\QuoteRequestEntityMapping;
 use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
 use App\Services\CentralService;
+use App\Services\HealthQuoteService;
+use App\Services\NotificationService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
+use App\Services\SendEmailCustomerService;
 use App\Services\SplitPaymentService;
+use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class CentralController extends Controller
 {
     use GenericQueriesAllLobs;
+
     public function createDuplicate(DuplicateLobRequest $request)
     {
-        $response = (new CentralService())->saveDuplicateLeads($request->validated());
+        $response = (new CentralService)->saveDuplicateLeads($request->validated());
 
         if (! empty($response['errors'])) {
             return redirect()->back()->withErrors($response['errors']);
@@ -70,52 +82,8 @@ class CentralController extends Controller
         return back()->with('message', 'Quote is created successfully.');
     }
 
-    public function exportLeads(Request $request, $quoteType, $exportTye = null)
+    public function exportLeads(ExportValidationRequest $request, $quoteType, $exportTye = null)
     {
-        $diffInDays = 120;
-
-        if (! $quoteType) {
-            return abort(404);
-        }
-
-        if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {
-            if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
-                $error_fields = 'paid at';
-
-                $request->validate([
-                    'paid_at_start' => 'required',
-                    'paid_at_end' => 'required',
-                ]);
-                $created_at_start = Carbon::parse($request->paid_at_start)->format('Y-m-d');
-                $created_at_end = Carbon::parse($request->paid_at_end)->format('Y-m-d');
-            } else {
-                $error_fields = 'created date';
-
-                if (request()->has('created_at')) {
-                    request()->merge(['created_at_start' => request()->get('created_at')]);
-                    request()->query->remove('created_at');
-                }
-
-                $request->validate([
-                    'created_at_start' => 'required',
-                    'created_at_end' => 'required',
-                ]);
-
-                $created_at_start = Carbon::parse($request->created_at_start)->format('Y-m-d');
-                $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
-            }
-
-            if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
-                $diffInDays = 31;
-            }
-
-            $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
-
-            if ($diff > $diffInDays) {
-                return back()->with('error', 'Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.');
-            }
-        }
-
         // For Personal Quotes
         if (in_array(ucfirst($quoteType), [
             QuoteTypes::BIKE->value,
@@ -166,7 +134,15 @@ class CentralController extends Controller
 
     public function manualLeadAssign(LeadAssignRequest $leadAssignRequest)
     {
-        (new CentralService())->assignLeadToAdvisor($leadAssignRequest);
+        (new CentralService)->assignLeadToAdvisor($leadAssignRequest);
+
+        $quoteIds = explode(',', $leadAssignRequest->selectTmLeadId);
+        foreach ($quoteIds as $id) {
+            $quoteData = $this->getQuoteObject($leadAssignRequest->modelType, $id);
+            if ($quoteData && $quoteData->payment_status_id === PaymentStatusEnum::AUTHORISED) {
+                app(NotificationService::class)->paymentStatusUpdate($leadAssignRequest->modelType, $quoteData->uuid);
+            }
+        }
 
         return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType).' Leads has been Assigned');
     }
@@ -214,6 +190,8 @@ class CentralController extends Controller
 
     public function updateBookingPolicy(BookPolicyRequest $bookPolicyRequest)
     {
+        info('fn: updateBookingPolicy called');
+
         $validatedData = $bookPolicyRequest->validated();
 
         $paymentInformation = [
@@ -235,8 +213,10 @@ class CentralController extends Controller
         }
         $payment->update($paymentInformation);
         $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
-        $quote->update(['policy_booking_date' => Carbon::parse($validatedData['booking_date'])]);
-        Log::info('Book policy details update successfully for : '.$quote->uuid);
+        info('Book policy details update successfully for : '.$quote->uuid);
+
+        (new SplitPaymentService)->updateCommissionSchedule($payment);
+        info('Commission Schedule updated successfully for : '.$quote->uuid);
 
         return redirect()->back()->with('success', 'Booking details has been updated.');
     }
@@ -246,17 +226,21 @@ class CentralController extends Controller
         $request = (object) $sendBookPolicyRequest->validated();
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
-        if ($request->send_policy_type == 'customer') {
-            // dispath job to send email
-            dispatch(new SendBookPolicyDocumentsJob($request));
+        info('fn: sendBookingPolicy called for '.$quote->uuid.' policy type '.$request->send_policy_type);
+
+        if ($request->send_policy_type == SendPolicyTypeEnum::CUSTOMER) {
+            dispatch(new SendBookPolicyDocumentsJob($request, $quote->code));
 
             $quote->update([
                 'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
+                'quote_status_date' => now(),
             ]);
+
+            info('Policy send to customer for '.$quote->uuid);
 
             return response()->json(['message' => 'Policy sent to customer'], 200);
         }
-        if ($request->send_policy_type == 'sage') {
+        if ($request->send_policy_type == SendPolicyTypeEnum::SAGE) {
             if (! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
                 return response()->json(['errors' => [
                     'message' => 'You are not authorized to perform this action',
@@ -264,12 +248,15 @@ class CentralController extends Controller
             }
             $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
             $payment = Payment::where('code', $quote['code'])->mainLeadPayment()->with('paymentSplits')->first();
+            $payment->update([
+                'broker_invoice_number' => (new PaymentRepository)->generateBrokerInvoiceNumber($payment, $request->model_type),
+            ]);
             $paymentSplits = $payment->paymentSplits;
             $data['quoteTypeId'] = $quoteTypeId;
             $data['id'] = $quote->id;
 
-            $sageService = new SageApiService();
-            $response = $sageService->postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data, true, false);
+            $sageService = new SageApiService;
+            $response = $sageService->postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data);
 
             if ($response['status'] === false) {
                 return response()->json(['errors' => [
@@ -279,25 +266,29 @@ class CentralController extends Controller
             }
 
             if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
-                // dispath job to send email
-                dispatch(new SendBookPolicyDocumentsJob($request));
+                // dispatch job to send email
+                dispatch(new SendBookPolicyDocumentsJob($request, $quote->code));
             }
 
             $quote->update([
                 'quote_status_id' => QuoteStatusEnum::PolicyBooked,
                 'policy_booking_date' => Carbon::now(),
+                'quote_status_date' => now(),
             ]);
 
-            (new CentralService())->straightforwardPayments($payment, $paymentSplits, $quote);
+            (new CentralService)->straightforwardPayments($payment, $paymentSplits, $quote);
 
             $this->updatePaymentAllocationStatus($quote);
+
+            info('Payment allocation && Transaction payment status update & policy send to customer for '.$quote->uuid);
 
             return response()->json(['message' => $response['message']], 200);
         }
     }
+
     public function loadAvailablePlans($type, $id)
     {
-        return (new CentralService())->loadAvailablePlans($type, $id);
+        return (new CentralService)->loadAvailablePlans($type, $id);
     }
 
     /**
@@ -305,14 +296,14 @@ class CentralController extends Controller
      */
     public function savePlanDetails($quoteType, $code, PlanDetailsRequest $request)
     {
-        $response = (new CentralService())->savePlanDetails($quoteType, $code, $request->safe());
+        $response = (new CentralService)->savePlanDetails($quoteType, $code, $request->safe());
 
         return redirect()->back();
     }
 
     public function updateSelectedPlan(UpdateSelectedPlanRequest $request, $quoteType, $uuid)
     {
-        $response = (new CentralService())->updateSelectedPlan($quoteType, $uuid, $request->safe());
+        $response = (new CentralService)->updateSelectedPlan($quoteType, $uuid, $request->safe());
 
         return response()->json(['plan' => $response]);
     }
@@ -324,6 +315,7 @@ class CentralController extends Controller
 
         return $successMessage;
     }
+
     // Update split payment status
     public function splitPaymentUpdate(SplitPaymentUpdateRequest $request)
     {
@@ -331,23 +323,38 @@ class CentralController extends Controller
 
         return back()->with('success', $successMessage);
     }
+
     // Approve split payments
     public function splitPaymentsApprove(SplitPaymentApproveRequest $request)
     {
         $successMessage = PaymentRepository::updateSplitPaymentsApprove($request);
+        if (! $successMessage) {
+            return back()->with('error', 'Error in approving payment');
+        }
 
         return back()->with('success', $successMessage);
     }
 
     public function getQuoteWisePlans($quoteType, $providerId, $plandId = null): object
     {
-        return response()->json((new CentralService())->getQuoteWiseProviderPlans($quoteType, $providerId, $plandId));
+        return response()->json((new CentralService)->getQuoteWiseProviderPlans($quoteType, $providerId, $plandId));
     }
 
     // Update total price
     public function updateTotalPrice(UpdateTotalPriceRequest $request)
     {
         $successMessage = PaymentRepository::updateTotalPrice($request);
+
+        return $successMessage;
+    }
+
+    // Retry CC split payment
+    public function retrySplitPayment(RetrySplitPaymentRequest $request)
+    {
+        $paymentProcessJob = CcPaymentProcess::find($request->payment_process_job_id);
+        info('Manual CC Payments Job Started For Payment Split ID: '.$paymentProcessJob->payment_splits_id);
+
+        $successMessage = app(SplitPaymentService::class)->processSplitPaymentApprove($paymentProcessJob->quote_type, $paymentProcessJob->quoteable_id, $paymentProcessJob->payment_splits_id, $paymentProcessJob->amount_captured, true);
 
         return $successMessage;
     }
@@ -377,7 +384,7 @@ class CentralController extends Controller
     // Generate payment link for split payment
     public function generatePaymentLink(GeneratePaymentLinkRequest $request)
     {
-        return (new SplitPaymentService())->generateSplitPaymentLink($request);
+        return (new SplitPaymentService)->generateSplitPaymentLink($request);
     }
 
     public function saveQuoteNotes(QuoteNotesRequest $quoteNotesRequest)
@@ -392,7 +399,7 @@ class CentralController extends Controller
         $quote->notes()->save($notes);
 
         if ($quoteNotesRequest->hasFile('files')) {
-            $quoteDocumentService = new QuoteDocumentService();
+            $quoteDocumentService = new QuoteDocumentService;
 
             foreach ($quoteNotesRequest->file('files') as $file) {
                 $quoteDoument = $quoteDocumentService->uploadQuoteDocument($file, $quoteNotesRequest->all(), $quote);
@@ -413,7 +420,7 @@ class CentralController extends Controller
         $quote->notes()->where('id', $quoteNotesRequest->id)->update(['note' => $quoteNotesRequest->notes, 'updated_by' => auth()->id()]);
 
         if ($quoteNotesRequest->hasFile('files')) {
-            $quoteDocumentService = new QuoteDocumentService();
+            $quoteDocumentService = new QuoteDocumentService;
 
             foreach ($quoteNotesRequest->file('files') as $file) {
                 $quoteDoument = $quoteDocumentService->uploadQuoteDocument($file, $quoteNotesRequest->all(), $quote);
@@ -440,7 +447,6 @@ class CentralController extends Controller
 
     public function updateLeadStatusDragDrop(DragAndDropUpdateLeadStatusRequest $dragAndDropUpdateLeadStatusRequest)
     {
-
         $responseMessage = ['Lead status has been updated'];
         $dataFrom = $dragAndDropUpdateLeadStatusRequest->get('data')['form'];
         $dataTo = $dragAndDropUpdateLeadStatusRequest->get('data')['to'];
@@ -468,14 +474,13 @@ class CentralController extends Controller
 
             $repository->refresh();
 
-            $activity = (new CentralService())->saveAndAssignActivitesToAdvisor($repository, $dataFrom['quoteTypeId'], $previousStatusIdChanged);
+            $activity = (new CentralService)->saveAndAssignActivitesToAdvisor($repository, $dataFrom['quoteTypeId'], $previousStatusIdChanged);
 
             if ($activity) {
                 $responseMessage[] = 'Activity has been created';
             }
 
             DB::commit();
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -483,6 +488,75 @@ class CentralController extends Controller
         }
 
         return response()->json(['message' => $responseMessage]);
+    }
 
+    public function sendOCBEmail(Request $request)
+    {
+        $healthQuote = HealthQuote::where('uuid', $request->quote_uuid)->first();
+
+        $previousAdvisor = null;
+        if (isset($healthQuote) && ! empty($healthQuote->previous_advisor_id)) {
+            $previousAdvisor = app(UserService::class)->getUserById($healthQuote->previous_advisor_id);
+        }
+
+        // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
+        // Fetch all quote plans
+        $listQuotePlans = app(HealthQuoteService::class)->getQuotePlans($request->quote_uuid);
+        if (! isset($listQuotePlans)) {
+            return response()->json(['error' => 'OCB Health Plan Not Found'], 404);
+        }
+        if (! empty($request->selected_plans) && is_array($request->selected_plans)) {
+            if (! isset($listQuotePlans->quote->plans)) {
+                $listQuotePlans = 'Plans not available!';
+            } else {
+                $allPlans = $listQuotePlans->quote->plans;
+                if (isset($request->selected_plans) && is_array($request->selected_plans)) {
+                    $selectedPlanIds = array_map(function ($plan) {
+                        return $plan['id'];
+                    }, $request->selected_plans);
+                    $filteredQuotePlans = array_filter($allPlans, function ($plan) use ($selectedPlanIds) {
+                        return in_array($plan->id, $selectedPlanIds);
+                    });
+
+                    $listQuotePlans = array_values($filteredQuotePlans);
+                } else {
+                    $listQuotePlans = [];
+                }
+            }
+        } else {
+            $visiblePlans = array_filter($listQuotePlans->quote->plans, function ($plan) {
+                return ! $plan->isHidden;
+            });
+            shuffle($visiblePlans);
+            $randomPlans = array_slice($visiblePlans, 0, 6);
+            $listQuotePlans = $randomPlans;
+        }
+
+        info('sendHealthEmailOneClickBuy OCB email plans fetched for quote uuid: '.$request->quote_uuid);
+
+        $emailTemplateId = (int) ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_OCB_EMAIL_TEMPLATE)->value('value');
+
+        if (! isset($emailTemplateId)) {
+            return response()->json(['error' => 'Invalid email template ID'], 400);
+        }
+        $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
+
+        $emailData = app(SendEmailCustomerService::class)->buildEmailData($healthQuote, $listQuotePlans, $previousAdvisor, $request, $emailTemplateId);
+
+        $responseCode = app(SendEmailCustomerService::class)->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'health-quote-one-click-buy');
+        if ($responseCode == 201) {
+            if (isset($healthQuote)) {
+                $healthQuote->quote_status_id = QuoteStatusEnum::Quoted;
+                $healthQuote->quote_status_date = now();
+                $healthQuote->save();
+            }
+            info('sendHealthEmailOneClickBuy - OCB Email Sent & Quote Status Changed to "QUOTED" for quote uuid: '.$request->quote_uuid);
+
+            return response()->json(['success' => 'OCB email sent to customer']);
+        } else {
+            info('sendHealthEmailOneClickBuy OCB email sending failed for quote uuid: '.$request->quote_uuid.' with error code: '.$responseCode);
+
+            return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
+        }
     }
 }

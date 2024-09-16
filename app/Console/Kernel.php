@@ -4,7 +4,6 @@ namespace App\Console;
 
 use App\Console\Commands\UpdateManualOffline;
 use App\Jobs\CarLost\CarSoldResubmissions;
-use App\Jobs\CarLost\UnconSubmissionReminder;
 use Carbon\Carbon;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
@@ -31,9 +30,8 @@ class Kernel extends ConsoleKernel
         Commands\AutomateActivitiesCommand::class,
         Commands\PaymentOverdueStatus::class,
         Commands\AlfredFollowUpSchedulerCommand::class,
+        Commands\ProcessCCPaymentsCommand::class,
     ];
-
-    private $appEnv = '';
 
     /**
      * Define the application's command schedule.
@@ -42,17 +40,26 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $this->appEnv = config('constants.APP_ENV');
         $schedule
             ->command('UpdateUserStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
         $schedule->command('PaymentOverdueStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(5);
+        $schedule->command('ProcessCCPaymentsCommand:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
+
+        $schedule->command('SendPaymentEmail:cron')->timezone('Asia/Dubai')->dailyAt('10:00')->onOneServer()->withoutOverlapping();
+
+        $schedule->command('PaymentExpireNotification:cron')
+            ->timezone('Asia/Dubai')
+            ->hourly()
+            ->between('9:00', '18:00')
+            ->onOneServer()
+            ->withoutOverlapping();
 
         /*$schedule->job(new UnconSubmissionReminder)
-            ->tuesdays()
-            ->fridays()
-            ->withoutOverlapping(1)->onOneServer()
-            ->at('9:00');*/
+        ->tuesdays()
+        ->fridays()
+        ->withoutOverlapping(1)->onOneServer()
+        ->at('9:00');*/
 
         //send leads which are resubmitted for car sold approval yesterday
         $schedule->job((new CarSoldResubmissions))
@@ -70,9 +77,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('ResetLeadAllocationCounts:cron')->timezone('Asia/Dubai')->dailyAt('23:55')->onOneServer()->withoutOverlapping();
 
         $schedule->command('QuoteSyncUpdate:cron')
-            ->everyFiveMinutes()
+            ->everyThreeMinutes()
             ->onOneServer()
-            ->withoutOverlapping(29)
+            ->withoutOverlapping(5)
             ->onSuccess(function (Stringable $output) {
                 info('----------- QuoteSyncJob Completed -----------'.$output);
             })
@@ -95,8 +102,19 @@ class Kernel extends ConsoleKernel
         $schedule->command('ActivitiesAutomate:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
 
         $schedule->command('Dtt')->timezone('Asia/Dubai')->dailyAt('09:00')->onOneServer()->withoutOverlapping();
+
         $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->dailyAt('11:45')->onOneServer()->withoutOverlapping();
-        $schedule->command('alfred:followupEmails')->timezone('Asia/Dubai')->weekly()->mondays()->at('11:00')->onOneServer()->withoutOverlapping();
+        // $schedule->command('alfred:followupEmails')->timezone('Asia/Dubai')->weekly()->mondays()->at('11:00')->onOneServer()->withoutOverlapping();
+
+        // $schedule->command('CorplineDataMigration:cron')->timezone('Asia/Dubai')->dailyAt('12:20')
+        //     ->onOneServer()
+        //     ->withoutOverlapping()
+        //     ->onSuccess(function (Stringable $output) {
+        //         info('----------- Business Data Migrations Completed -----------'.$output);
+        //     })
+        //     ->onFailure(function (Stringable $output) {
+        //         info('----------- Business Data Migrations Failed -----------'.$output);
+        //     });
     }
 
     /**

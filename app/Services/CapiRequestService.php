@@ -18,7 +18,7 @@ class CapiRequestService
         $apiToken = config('constants.CENTRAL_API_TOKEN');
         $apiTimeout = config('constants.CENTRAL_API_TIMEOUT');
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client;
         $capiRequest = $client->post(
             $apiEndPoint,
             [
@@ -69,21 +69,16 @@ class CapiRequestService
                 if ($carQuote->advisor_id != null) {
                     $carQuote->quote_batch_id = QuoteBatches::latest()->first()->id;
                     $carQuote->save();
-                    $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $carQuote->id)->first();
-                    if ($carQuoteDetail) {
-                        $carQuoteDetail->advisor_assigned_date = now();
-                        $carQuoteDetail->advisor_assigned_by_id = auth()->id();
-                        $carQuoteDetail->updated_at = now();
-                        $carQuoteDetail->save();
-                    } else {
-                        CarQuoteRequestDetail::create([
-                            'car_quote_request_id' => $carQuote->id,
+
+                    $upsertRecord = CarQuoteRequestDetail::updateOrCreate(
+                        ['car_quote_request_id' => $carQuote->id],
+                        [
                             'advisor_assigned_date' => now(),
-                            'advisor_assigned_by_id' => auth()->user()->id ?? User::where('name', UserNameEnum::System)->first(),
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                    }
+                            'advisor_assigned_by_id' => auth()->id() ?? User::where('name', UserNameEnum::System)->first(),
+                        ]
+                    );
+
+                    info('handleCarResponse - leadId : '.$carQuote->id.' - CarQuoteRequestDetail - created: '.$upsertRecord->wasRecentlyCreated);
                 }
             }
         }
@@ -93,20 +88,14 @@ class CapiRequestService
     {
         if (isset($requestContent->quoteUID)) {
             $healthQuote = HealthQuote::where('uuid', $requestContent->quoteUID)->first();
-            $healthQuoteDetail = HealthQuoteRequestDetail::where('health_quote_request_id', $healthQuote->id)->first();
-            if ($healthQuoteDetail) {
-                $healthQuoteDetail->advisor_assigned_date = now();
-                $healthQuoteDetail->advisor_assigned_by_id = auth()->id();
-                $healthQuoteDetail->updated_at = now();
-                $healthQuoteDetail->save();
-            } else {
-                HealthQuoteRequestDetail::create([
-                    'health_quote_request_id' => $healthQuote->id,
-                    'advisor_assigned_date' => now(),
-                    'advisor_assigned_by_id' => auth()->user()->id ?? User::where('name', UserNameEnum::System)->first(),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+            if ($healthQuote) {
+                HealthQuoteRequestDetail::updateOrCreate(
+                    ['health_quote_request_id' => $healthQuote->id],
+                    [
+                        'advisor_assigned_date' => now(),
+                        'advisor_assigned_by_id' => auth()->user()->id ?? User::where('name', UserNameEnum::System)->first(),
+                    ]
+                );
             }
         }
     }

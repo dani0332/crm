@@ -29,6 +29,7 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
+use App\Repositories\PaymentRepository;
 use App\Repositories\PersonalPlanRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\QuoteNoteRepository;
@@ -66,12 +67,14 @@ class PetQuoteController extends Controller
 
         $count = $personalQuotes->count();
         $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
+        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
 
         return inertia('PetQuote/Index', [
             'quotes' => $personalQuotes->simplePaginate(10)->withQueryString(),
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : PetQuoteRepository::getData(true, true),
+            'authorizedDays' => intval($authorizedDays->value),
         ]);
     }
 
@@ -114,10 +117,16 @@ class PetQuoteController extends Controller
      */
     public function show($uuid)
     {
+        /* Start - Temporarily adding for correcting historic data  */
+        $quote = PetQuoteRepository::where('uuid', $uuid)->first();
+        abort_if(! $quote, 404);
+        (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::PET->value);
+        /* End - Temporarily adding for correcting historic data  */
+
         $quote = PetQuoteRepository::getBy('uuid', $uuid);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
 
-        @[$documentTypes, $documentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Pet);
+        @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Pet);
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::PET->value, $quote);
         $noteDocumentType = DocumentTypeRepository::where('code', DocumentTypeCode::OD)->first();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::PET->name);
@@ -151,18 +160,21 @@ class PetQuoteController extends Controller
         }
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
-        $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::PET->value, $quote->code);
+        $duplicateAllowedLobs = (new CentralService)->duplicateAllowedLobsList(QuoteTypes::PET->value, $quote->code);
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::PET->id(), $quote->id);
+
+        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::PET->id(), $quoteStatuses);
         if (AMLService::checkAMLStatusFailed(QuoteTypes::PET->id(), $quote->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
             })->values();
         }
         $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::PET->value);
-        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::PET->value, $quote->id);
+        $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::PET->value, $quote->id);
         $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::PET->value, $quote->payments, $quoteDocuments);
 
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
 
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Pet);
@@ -202,15 +214,16 @@ class PetQuoteController extends Controller
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],
             'bookPolicyDetails' => $bookPolicyDetails,
-            'payments' => $quote->payments->toArray() ?? [],
+            'payments' => $quote?->payments,
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
             'isAmlClearedForPayment' => $isAmlClearedForPayment,
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
-            'documentTypeCodes' => $documentTypeCodes,
             'linkedQuoteDetails' => $linkedQuoteDetails,
+            'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
+            'paymentDocument' => $paymentDocument,
         ]);
     }
 
@@ -246,6 +259,24 @@ class PetQuoteController extends Controller
 
     public function cardsView(Request $request)
     {
+
+        $userTeams = auth()->user()->getUserTeams(auth()->id())->toArray();
+
+        $newBusinessTeam = in_array(TeamNameEnum::PET_TEAM, $userTeams);
+        $renewalsTeam = in_array(TeamNameEnum::PET_RENEWALS, $userTeams);
+
+        $areBothTeamsPresent = $newBusinessTeam && $renewalsTeam;
+
+        $isManagerOrDeputy = auth()->user()->hasAnyRole([RolesEnum::PetManager, RolesEnum::PetNewBusinessManager, RolesEnum::PetRenewalManager]);
+
+        if (($request->is_renewal === null && $areBothTeamsPresent) || ($request->is_renewal === null && $isManagerOrDeputy)) {
+            $request->merge(['is_renewal' => quoteTypeCode::yesText]);
+        } elseif ($request->is_renewal === null && $newBusinessTeam) {
+            $request->merge(['is_renewal' => quoteTypeCode::noText]);
+        } elseif ($request->is_renewal === null && $renewalsTeam) {
+            $request->merge(['is_renewal' => quoteTypeCode::yesText]);
+        }
+
         $quotes = [
             ['id' => QuoteStatusEnum::NewLead, 'title' => quoteStatusCode::NEW_LEAD, 'data' => getDataAgainstStatus(QuoteTypes::PET->value, QuoteStatusEnum::NewLead, $request)],
             ['id' => QuoteStatusEnum::Allocated, 'title' => quoteStatusCode::ALLOCATED, 'data' => getDataAgainstStatus(QuoteTypes::PET->value, QuoteStatusEnum::Allocated, $request)],
@@ -257,12 +288,72 @@ class PetQuoteController extends Controller
             ['id' => QuoteStatusEnum::PolicyIssued, 'title' => quoteStatusCode::POLICY_ISSUED, 'data' => getDataAgainstStatus(QuoteTypes::PET->value, QuoteStatusEnum::PolicyIssued, $request)],
         ];
 
+        $newBusiness = [
+            QuoteStatusEnum::NewLead => 0,
+            QuoteStatusEnum::Quoted => 1,
+            QuoteStatusEnum::FollowedUp => 2,
+            QuoteStatusEnum::PaymentPending => 3,
+            QuoteStatusEnum::TransactionApproved => 4,
+            QuoteStatusEnum::PolicyIssued => 5,
+        ];
+
+        $renewals = [
+            QuoteStatusEnum::Allocated => 0,
+            QuoteStatusEnum::Quoted => 1,
+            QuoteStatusEnum::FollowedUp => 2,
+            QuoteStatusEnum::PaymentPending => 3,
+            QuoteStatusEnum::TransactionApproved => 4,
+            QuoteStatusEnum::PolicyIssued => 5,
+        ];
+
         $quoteStatusEnums = QuoteStatusEnum::asArray();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 
-        $userId = auth()->id();
-        $userTeams = auth()->user()->getUserTeams($userId)->toArray();
-        if (array_intersect([TeamNameEnum::PET_TEAM], $userTeams)) {
+        if ($areBothTeamsPresent || $isManagerOrDeputy) {
+            if ($request->is_renewal === quoteTypeCode::yesText) {
+                $renewalKeys = array_keys($renewals);
+                $quotes = array_filter($quotes, function ($quote) use ($renewalKeys) {
+                    return in_array($quote['id'], $renewalKeys);
+                });
+
+                // Sort filtered quotes based on the renewals array order
+                usort($quotes, function ($a, $b) use ($renewals) {
+                    return $renewals[$a['id']] <=> $renewals[$b['id']];
+                });
+            }
+            if ($request->is_renewal === quoteTypeCode::noText) {
+                $newBusinessKeys = array_keys($newBusiness);
+                $quotes = array_filter($quotes, function ($quote) use ($newBusinessKeys) {
+                    return in_array($quote['id'], $newBusinessKeys);
+                });
+
+                // Sort filtered quotes based on the newBusiness array order
+                usort($quotes, function ($a, $b) use ($newBusiness) {
+                    return $newBusiness[$a['id']] <=> $newBusiness[$b['id']];
+                });
+            }
+
+        } elseif ($newBusinessTeam) {
+            $newBusinessKeys = array_keys($newBusiness);
+            $quotes = array_filter($quotes, function ($quote) use ($newBusinessKeys) {
+                return in_array($quote['id'], $newBusinessKeys);
+            });
+
+            // Sort filtered quotes based on the newBusiness array order
+            usort($quotes, function ($a, $b) use ($newBusiness) {
+                return $newBusiness[$a['id']] <=> $newBusiness[$b['id']];
+            });
+        } elseif ($renewalsTeam) {
+            $renewalKeys = array_keys($renewals);
+            $quotes = array_filter($quotes, function ($quote) use ($renewalKeys) {
+                return in_array($quote['id'], $renewalKeys);
+            });
+
+            // Sort filtered quotes based on the renewals array order
+            usort($quotes, function ($a, $b) use ($renewals) {
+                return $renewals[$a['id']] <=> $renewals[$b['id']];
+            });
+        } elseif (array_intersect([TeamNameEnum::PET_TEAM], $userTeams)) {
             $quotes = collect($quotes)->whereNotIn('id', [
                 QuoteStatusEnum::Allocated,
                 QuoteStatusEnum::InNegotiation,
@@ -294,6 +385,8 @@ class PetQuoteController extends Controller
             'quoteTypeId' => QuoteTypes::PET->id(),
             'quoteType' => QuoteTypes::PET->value,
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : PetQuoteRepository::getData(true, true),
+            'areBothTeamsPresent' => $areBothTeamsPresent || $isManagerOrDeputy ? true : false,
+            'is_renewal' => ($areBothTeamsPresent || $isManagerOrDeputy ? 'Yes' : $renewalsTeam) ? 'Yes' : ($newBusinessTeam ? 'No' : null),
         ]);
     }
 }

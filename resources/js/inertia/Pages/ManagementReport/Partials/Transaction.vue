@@ -20,6 +20,14 @@ const priceFormat = (price, thousandSeparator = false) => {
 
 const tableHeader = reactive([
   {
+    text: 'Ref-ID',
+    value: 'uuid',
+  },
+  {
+    text: 'Department',
+    value: 'department',
+  },
+  {
     text: 'Policy Number',
     value: 'policy_number',
   },
@@ -133,6 +141,10 @@ const tableHeader = reactive([
     text: 'Broker Invoice No',
     value: 'broker_invoice_number',
   },
+  {
+    text: 'Commission Tax Invoice Number',
+    value: 'insurer_commmission_invoice_number',
+  },
 ]);
 const isIntegerColumn = key => {
   // Add logic to determine if the column contains an integer
@@ -155,7 +167,7 @@ const isIntegerColumn = key => {
 <template>
   <DataTable
     class="mt-4"
-    table-class-name=""
+    table-class-name="compact table-fixed"
     :loading="loader"
     :headers="tableHeader"
     :items="props.reportData.data || []"
@@ -166,17 +178,26 @@ const isIntegerColumn = key => {
     hide-footer
     :rows-per-page="100"
   >
+    <template #item-uuid="{ uuid, routeName, code }">
+      <a
+        :href="route(routeName, uuid)"
+        class="text-primary-500 hover:underline"
+        target="_blank"
+      >
+        {{ code }}
+      </a>
+    </template>
     <template #item-policy_number="{ policy_number }">
       {{ policy_number ?? 'N/A' }}
     </template>
     <template #item-transactions="{ transactions }">
-      {{ transactions ?? 0 }}
+      {{ transactions ? transactions : 'N/A' }}
     </template>
     <template #item-policy_start_date="{ policy_start_date }">
       {{ policy_start_date ?? 'N/A' }}
     </template>
-    <template #item-payment_due_date="{payment_due_date, due_date}">
-      {{ (payment_due_date ? payment_due_date : (due_date ? due_date : 'N/A')) }}
+    <template #item-payment_due_date="{ payment_due_date, due_date }">
+      {{ payment_due_date ? payment_due_date : due_date ? due_date : 'N/A' }}
     </template>
     <template #item-price_vat_applicable="{ price_vat_applicable }">
       {{ price_vat_applicable ? priceFormat(price_vat_applicable) : 0.0 }}
@@ -214,7 +235,7 @@ const isIntegerColumn = key => {
       {{ payment_date ?? 'N/A' }}
     </template>
     <template #item-pending_balance="{ pending_balance }">
-      {{ pending_balance ?? 'N/A' }}
+      {{ pending_balance ?? 0 }}
     </template>
     <template #item-collects="{ collects }">
       {{ collects ?? 'N/A' }}
@@ -255,8 +276,15 @@ const isIntegerColumn = key => {
     <template #item-broker_invoice_number="{ broker_invoice_number }">
       {{ broker_invoice_number ?? 'N/A' }}
     </template>
+    <template
+      #item-insurer_commmission_invoice_number="{
+        insurer_commmission_invoice_number,
+      }"
+    >
+      {{ insurer_commmission_invoice_number ?? 'N/A' }}
+    </template>
     <template #body-append>
-      <tr v-if="reportData.data.length > 0" class="total-row">
+      <tr v-if="reportData.data.length > 0" class="total-row sticky bottom-0">
         <td class="direction-left">Total</td>
         <td
           v-for="header in tableHeader.slice(1, tableHeader.length)"

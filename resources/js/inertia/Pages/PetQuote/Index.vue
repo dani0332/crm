@@ -13,10 +13,11 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  authorizedDays: Number,
 });
 
 const page = usePage();
-
+const notification = useNotifications('toast');
 const loader = reactive({
   table: false,
   export: false,
@@ -40,21 +41,29 @@ let availableFilters = {
   payment_status: [],
   is_cold: '',
   stale_at: '',
+  payment_due_date: '',
+  booking_date: '',
+  policy_expiry_date: '',
+  policy_expiry_date_end: '',
 };
 
 const canExport = ref(false);
 const filters = reactive(availableFilters);
 
 watch(
-    () => filters,
-    () => {
-        if (filters.created_at_start && filters.created_at_end) {
-            canExport.value = true;
-        } else {
-            canExport.value = false;
-        }
-    },
-    { deep: true, immediate: true },
+  () => filters,
+  () => {
+    if (
+      (filters.created_at_start && filters.created_at_end) ||
+      filters.payment_due_date ||
+      filters.booking_date
+    ) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
+  },
+  { deep: true, immediate: true },
 );
 
 let params = useUrlSearchParams('history');
@@ -71,6 +80,8 @@ const tableHeader = ref([
   { text: 'Ref-ID', value: 'uuid', is_active: true },
   { text: 'FIRST NAME', value: 'first_name', is_active: true },
   { text: 'LAST NAME', value: 'last_name', is_active: true },
+  { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at', is_active: true },
+  { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true },
   { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
   { text: 'ADVISOR', value: 'advisor', is_active: true },
   {
@@ -82,6 +93,12 @@ const tableHeader = ref([
   {
     text: 'LAST MODIFIED DATE',
     value: 'updated_at',
+    is_active: true,
+    sortable: true,
+  },
+  {
+    text: 'POLICY EXPIRY DATE',
+    value: 'previous_policy_expiry_date',
     is_active: true,
     sortable: true,
   },
@@ -111,6 +128,14 @@ const tableHeader = ref([
 
 function onSubmit(isValid) {
   if (isValid) {
+    if (validateDateRange()) {
+      notification.error({
+        title:
+          'The selected date range exceeds one month. Please select a range within one month.',
+        position: 'top',
+      });
+      return;
+    }
     serverOptions.value.page = 1;
 
     const filtersCleaned = cleanObj(filters);
@@ -209,7 +234,9 @@ function setQueryStringFilters() {
     }
   }
 }
-
+const readOnlyMode = reactive({
+  isDisable: true,
+});
 onMounted(() => {
   params = getSavedQueryParams() || params;
   setQueryStringFilters();
@@ -232,6 +259,7 @@ onMounted(() => {
   }
 
   filtersCount.value = Object.keys(filtersCleaned).length;
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
 watch(
@@ -240,6 +268,92 @@ watch(
     if (oldValue !== newValue) onSubmit(true);
   },
 );
+function daysAgoFromAuthorizedDate(authorizedDate) {
+  let date = authorizedDate.split(' ')[0];
+  if (!date) {
+    return;
+  }
+  const [day, month, year] = date.split('-').map(Number);
+  const parsedDate = new Date(year, month - 1, day);
+
+  if (isNaN(parsedDate.getTime())) {
+    return 'Invalid date';
+  }
+
+  // Reset time to 00:00:00 to consider only the date
+  parsedDate.setHours(0, 0, 0, 0);
+
+  // Add `page.props.authorizedDays` to the parsed date
+  const authorizedDays = page.props.authorizedDays || 8; // Default to 8 if not defined
+  const newDate = new Date(parsedDate);
+  newDate.setDate(parsedDate.getDate() + authorizedDays);
+  // Reset time for newDate as well
+  newDate.setHours(0, 0, 0, 0);
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0); // Reset time for current date
+
+  // Calculate the difference in days
+  const differenceInTime = newDate.getTime() - currentDate.getTime();
+  const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+  // Return appropriate message
+  if (differenceInDays <= 0) {
+    return 'Expired';
+  }
+  return differenceInDays === 1
+    ? `${differenceInDays} day`
+    : `${differenceInDays} days`;
+}
+
+const resetDateFilters = filterName => {
+  const filterMappings = {
+    payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
+    booking_date: ['payment_due_date', 'created_at_start', 'created_at_end'],
+    created_at: ['booking_date', 'payment_due_date'],
+  };
+
+  const filtersToReset =
+    filterMappings[filterName] ||
+    (filterName.startsWith('created_at') ? filterMappings.created_at : []);
+
+  filtersToReset.forEach(filter => {
+    filters[filter] = '';
+  });
+};
+
+[
+  'payment_due_date',
+  'booking_date',
+  'created_at_start',
+  'created_at_end',
+].forEach(filterName => {
+  watch(
+    () => filters[filterName],
+    newValue => {
+      if (newValue) {
+        resetDateFilters(filterName);
+      }
+    },
+  );
+});
+const formatDate = dateString =>
+  useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY').value;
+const validateDateRange = () => {
+  const { policy_expiry_date, policy_expiry_date_end } = filters;
+  if (policy_expiry_date && policy_expiry_date_end) {
+    const startDate = new Date(policy_expiry_date);
+    const endDate = new Date(policy_expiry_date_end);
+    const oneMonthLater = new Date(startDate);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    // Adjust for months with fewer than 31 days
+    if (oneMonthLater.getDate() < startDate.getDate()) {
+      oneMonthLater.setDate(0);
+    }
+    if (endDate > oneMonthLater) {
+      return true;
+    }
+  }
+  return false;
+};
 </script>
 
 <template>
@@ -266,16 +380,25 @@ watch(
           @toggleFilters="showFilters = !showFilters"
         />
         <Link :href="route('pet-quotes-card')">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
+          <x-button
+            size="sm"
+            color="#1d83bc"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Cards View
+          </x-button>
         </Link>
-        <x-button
-          v-if="can(permissionsEnum.PetQuotesCreate)"
-          size="sm"
-          color="#ff5e00"
-          :href="route('pet-quotes-create')"
-        >
-          Create Lead
-        </x-button>
+        <div v-if="readOnlyMode.isDisable === true">
+          <x-button
+            v-if="can(permissionsEnum.PetQuotesCreate)"
+            size="sm"
+            color="#ff5e00"
+            :href="route('pet-quotes-create')"
+          >
+            Create Lead
+          </x-button>
+        </div>
       </template>
     </StickyHeader>
 
@@ -312,7 +435,7 @@ watch(
     <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -391,13 +514,22 @@ watch(
             "
           />
         </x-field>
+        <x-field label="Policy Expiry Start Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date"
+            name="policy_expiry_date"
+          />
+        </x-field>
+        <x-field label="Policy Expiry End Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date_end"
+            name="policy_expiry_date_end"
+          />
+        </x-field>
         <x-field
           label="Advisor"
           v-if="
-            !hasAnyRole([
-              rolesEnum.PetAdvisor,
-              rolesEnum.PetRenewalAdvisor,
-            ])
+            !hasAnyRole([rolesEnum.PetAdvisor, rolesEnum.PetRenewalAdvisor])
           "
         >
           <ComboBox
@@ -406,7 +538,7 @@ watch(
             :options="advisorOptions"
           />
         </x-field>
-        <x-field label="Is Renewal">
+        <x-field label="Renewal">
           <x-select
             v-model="filters.is_renewal"
             placeholder="Search by Renewal"
@@ -434,9 +566,9 @@ watch(
           v-model="filters.previous_quote_policy_number_text"
           type="text"
           name="previous_quote_policy_number"
-          label="Previous Policy Number"
+          label="Policy Number"
           class="w-full"
-          placeholder="Search by Previous Policy Number"
+          placeholder="Policy Number"
         />
         <x-input
           v-model="filters.renewal_batch"
@@ -445,6 +577,23 @@ watch(
           label="Renewal Batch"
           class="w-full"
           placeholder="Search by Renewal Batch"
+        />
+
+        <DatePicker
+          v-model="filters.payment_due_date"
+          label="Payment Due Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.booking_date"
+          label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
@@ -458,11 +607,12 @@ watch(
           >
             Export
           </x-button>
-          <x-tooltip v-else position="right">
+          <x-tooltip v-else placement="right">
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates are required to export data.
+                Created dates or payment due date or booking date are required
+                to export data.
               </span>
             </template>
           </x-tooltip>
@@ -508,7 +658,6 @@ watch(
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-uuid="{ code, uuid, stale_at }">
         <Link
@@ -521,9 +670,31 @@ watch(
         </Link>
         <span v-else>{{ code }}</span>
       </template>
+      <template #item-authorized_at="item">
+        <p v-if="item?.payment_status?.text === 'AUTHORISED'">
+          {{ item?.payments[0]?.authorized_at }}
+        </p>
+      </template>
+      <template #item-expiry_date="item">
+        <p v-if="item?.payment_status?.text === 'AUTHORISED'">
+          {{ daysAgoFromAuthorizedDate(item?.payments[0]?.authorized_at) }}
+        </p>
+      </template>
 
       <template #item-price_with_vat="{ price_with_vat }">
         <span>{{ price_with_vat }}</span>
+      </template>
+      <template
+        #item-previous_policy_expiry_date="{
+          previous_policy_expiry_date,
+          source,
+        }"
+      >
+        {{
+          source === 'Renewal_upload'
+            ? formatDate(previous_policy_expiry_date)
+            : ''
+        }}
       </template>
 
       <template #item-advisor="{ advisor }">
@@ -542,8 +713,8 @@ watch(
         {{ currently_insured_with?.text }}
       </template>
 
-      <template #item-policy_number="{ pet_quote }">
-        {{ pet_quote?.policy_number }}
+      <template #item-policy_number="{ policy_number }">
+        {{ policy_number }}
       </template>
       <template #item-type_of_pet="{ pet_quote }">
         {{ pet_quote?.pet_type?.text }}
@@ -581,6 +752,11 @@ watch(
         <div class="text-center">
           {{ is_ecommerce ? 'Yes' : 'No' }}
         </div>
+      </template>
+      <template
+        #item-previous_quote_policy_number="{ previous_quote_policy_number }"
+      >
+        {{ previous_quote_policy_number ?? 'N/A' }}
       </template>
     </DataTable>
 

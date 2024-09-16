@@ -114,7 +114,7 @@ class CarPlanAddonService extends BaseService
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ];
-        $carPlanAddonBridge = new CarPlanAddonBridge();
+        $carPlanAddonBridge = new CarPlanAddonBridge;
         $carPlanAddonBridge->create($addonData);
 
         return $record;

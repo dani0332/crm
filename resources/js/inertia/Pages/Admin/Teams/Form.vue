@@ -21,8 +21,8 @@ const teamForm = useForm({
     props.team?.is_active === 'True'
       ? true
       : props.team?.is_active === 'False'
-      ? false
-      : true,
+        ? false
+        : true,
 
   parent_team_id: props.team?.parent_team_id ?? null,
 });

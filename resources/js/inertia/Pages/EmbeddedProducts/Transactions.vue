@@ -37,6 +37,8 @@ const tableHeader = [
   { text: 'EMIRATES ID NUMBER', value: 'emirates_id_number' },
   { text: 'DOB', value: 'dob' },
   { text: 'AGE', value: 'age' },
+  { text: 'PASSPORT', value: 'passport_number' },
+  { text: 'NATIONALITY', value: 'nationality' },
   { text: 'Vehicle', value: 'vehicle' },
   { text: 'Contact Number', value: 'contact_number' },
   { text: 'Email ID', value: 'email' },
@@ -127,21 +129,42 @@ onMounted(() => {
   setQueryFilters();
 });
 
-watch(serverOptions, (value) => { filterTransactions(true); }, { deep: true });
-
+watch(
+  serverOptions,
+  value => {
+    filterTransactions(true);
+  },
+  { deep: true },
+);
 </script>
 
 <template>
   <div>
     <Head title="Reports" />
     <nav class="mb-4">
-        <ol class="flex gap-1">
-            <li> <Link :href="route('embedded-products.index')" class="text-sm border-b text-gray-500"><span> Embedded Products </span></Link> </li>
-            <li> <span class="text-gray-400">/</span> </li>
-            <li> <Link :href="route('embedded-products.reports')" class="text-sm border-b text-gray-500"><span> Reports </span></Link> </li>
-            <li> <span class="text-gray-400">/</span> </li>
-            <li> <span class="text-sm font-semibold"> {{ embeddedProduct.detail.product_name }} </span> </li>
-        </ol>
+      <ol class="flex gap-1">
+        <li>
+          <Link
+            :href="route('embedded-products.index')"
+            class="text-sm border-b text-gray-500"
+            ><span> Embedded Products </span></Link
+          >
+        </li>
+        <li><span class="text-gray-400">/</span></li>
+        <li>
+          <Link
+            :href="route('embedded-products.reports')"
+            class="text-sm border-b text-gray-500"
+            ><span> Reports </span></Link
+          >
+        </li>
+        <li><span class="text-gray-400">/</span></li>
+        <li>
+          <span class="text-sm font-semibold">
+            {{ embeddedProduct.detail.product_name }}
+          </span>
+        </li>
+      </ol>
     </nav>
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">
@@ -156,7 +179,7 @@ watch(serverOptions, (value) => { filterTransactions(true); }, { deep: true });
     <x-form @submit="filterTransactions" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -190,7 +213,7 @@ watch(serverOptions, (value) => { filterTransactions(true); }, { deep: true });
             placeholder="Type here"
           />
         </x-field>
-        <x-field label="Date of purchase">
+        <x-field label="Date of issuance">
           <DatePicker
             v-model="filters.date_of_purchase"
             name="date_of_purchase"
@@ -232,7 +255,6 @@ watch(serverOptions, (value) => { filterTransactions(true); }, { deep: true });
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-id="{ id }">
         <Link
@@ -277,6 +299,5 @@ watch(serverOptions, (value) => { filterTransactions(true); }, { deep: true });
         to: embeddedProduct.transactions.to,
       }"
     />
-
   </div>
 </template>

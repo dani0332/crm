@@ -2,18 +2,25 @@
 
 namespace App\Services;
 
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
+use App\Enums\TeamNameEnum;
 use App\Factories\AllocationFactory;
 use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\EvaluateTierRequest;
+use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\SICWorkflowRequest;
-use App\Jobs\SendOCBIntroEmailJob;
+use App\Jobs\SendHealthOCBIntroEmailJob;
 use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
+use App\Models\TravelQuote;
 use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 
 class ApiService
 {
@@ -55,7 +62,7 @@ class ApiService
         if (gettype($WEGenerateUrlResponse) == 'string') {
             Customer::where('id', $customer->id)->update(['is_we_sent' => true]);
 
-            $newMyAlFredUser = new MyAlFredUser();
+            $newMyAlFredUser = new MyAlFredUser;
             $newMyAlFredUser->signup_url = $WEGenerateUrlResponse;
             $newMyAlFredUser->customer_id = $customer->id;
             $newMyAlFredUser->code = substr($WEGenerateUrlResponse, strpos($WEGenerateUrlResponse, 'signup/') + 7); // code;
@@ -96,7 +103,7 @@ class ApiService
         }
 
         if (! $assignAdvisor && $triggerOCB) {
-            return $this->triggerOCBOnly($allocationId);
+            return $this->triggerOCBOnly($allocationId, $allocationType);
         }
 
         if (! $assignAdvisor && ! $triggerOCB) {
@@ -109,43 +116,75 @@ class ApiService
     private function assignAdvisorOnly($allocationType, $allocationId)
     {
         info('------ Lead allocation request received to assign advisor only for '.$allocationId.' ------');
-        $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
-        $overrideAdvisorId = true;
-        $assignedAdvisorId = $allocationStrategy->executeSteps($overrideAdvisorId);
-        $responseData = ['assignedAdvisorId' => $assignedAdvisorId];
+        $responsePayload = $this->executeAllocation($allocationType, $allocationId, false, false, true);
         info('------ Lead allocation request completed to assign advisor only for '.$allocationId.' ------');
 
-        return apiResponse($responseData, Response::HTTP_OK, 'Advisor assigned successfully!');
-
+        return apiResponse($responsePayload['data'], Response::HTTP_OK, $responsePayload['message']);
     }
 
-    private function triggerOCBOnly($allocationId)
+    private function triggerOCBOnly($quoteUUID, $quoteTypeId = QuoteTypeId::Car)
     {
-        info('------ Lead allocation request received to send OCB only for '.$allocationId.' ------');
-        SendOCBIntroEmailJob::dispatch($allocationId, null, false);
-        info('------ Lead allocation request completed to send OCB only for '.$allocationId.' ------');
+        if (! $quoteTypeId) {
+            $quoteTypeId = QuoteTypeId::Car;
+        }
+        $quoteType = QuoteTypes::getName($quoteTypeId);
+        if (! $quoteType) {
+            return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
+        }
+
+        $ocbEmailJob = $quoteType?->ocbEmailJob();
+        if ($ocbEmailJob) {
+            info("------ Lead allocation request received to send OCB only for {$quoteUUID} ------");
+            dispatch(new $ocbEmailJob($quoteUUID, null, false));
+            info("------ Lead allocation request completed to send OCB only for {$quoteUUID} ------");
+        }
 
         return apiResponse(null, Response::HTTP_OK, 'OCB email triggered successfully!');
     }
 
-    private function performLeadAllocation($allocationType, $allocationId, $teamId)
+    private function performLeadAllocation($allocationType, $leadId, $teamId)
     {
-        info('------ Lead allocation started for lead : '.$allocationId.' ------');
-        $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId, $teamId);
-        $assignedAdvisorId = $allocationStrategy->executeSteps();
-        info('------ Lead allocation ended for lead : '.$allocationId.' ------');
-        $responseData = ['assignedAdvisorId' => $assignedAdvisorId];
+        info('------ Lead allocation started for lead : '.$leadId.' ------');
+        $responsePayload = $this->executeAllocation($allocationType, $leadId, $teamId);
+        info('------ Lead allocation ended for lead '.$leadId.' ------');
 
-        return apiResponse($responseData, Response::HTTP_OK, 'Lead allocated successfully!');
+        return apiResponse($responsePayload['data'], Response::HTTP_OK, $responsePayload['message']);
     }
 
     public function triggerSICWorkflow(SICWorkflowRequest $request)
     {
-        info('------ SIC workflow trigger request received for lead : '.$request->quoteUuid.' ------');
-        SendOCBIntroEmailJob::dispatch($request->quoteUuid, null, true);
-        info('------ SIC workflow trigger request completed for lead : '.$request->quoteUuid.' ------');
+        if (isset($request->quoteTypeId) && $request->quoteTypeId == QuoteTypes::HEALTH->id()) {
 
-        return apiResponse(null, Response::HTTP_OK, 'SIC workflow triggered successfully!');
+            info('------ Health SIC workflow trigger request received for  lead : '.($request->quoteUuid ?? '').' ------');
+            SendHealthOCBIntroEmailJob::dispatch($request->quoteUuid, null, true);
+            info('------ Health SIC workflow trigger request completed for lead : '.$request->quoteUuid.' ------');
+
+            return apiResponse(null, Response::HTTP_OK, 'SIC workflow triggered successfully!');
+        } else {
+            $quoteTypeId = QuoteTypeId::Car;
+            if ($request->has('quoteTypeId')) {
+                $quoteTypeId = $request->quoteTypeId;
+            }
+            $quoteType = QuoteTypes::getName($quoteTypeId);
+            if (! $quoteType) {
+                return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
+            }
+
+            if (! $quoteType?->model()->where('uuid', $request->quoteUuid)->exists()) {
+                return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found!');
+            }
+
+            $ocbEmailJob = $quoteType?->ocbEmailJob();
+            if ($ocbEmailJob) {
+                info("------ SIC workflow trigger request received for lead : {$request->quoteUuid} ------");
+                dispatch(new $ocbEmailJob($request->quoteUuid, null, true));
+                info("------ SIC workflow trigger request completed for lead : {$request->quoteUuid} ------");
+
+                return apiResponse(null, Response::HTTP_OK, 'SIC workflow triggered successfully!');
+            }
+        }
+
+        return apiResponse(null, Response::HTTP_NOT_FOUND, 'OCB Email not found!');
     }
 
     public function evaluateTier(EvaluateTierRequest $request)
@@ -154,11 +193,121 @@ class ApiService
         $allocationId = $request->input('quoteUUID');
 
         info('------ Lead allocation request received to evaluate tier only for '.$allocationId.' ------');
-        $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
-        $tierId = $allocationStrategy->executeSteps(false, false, true);
-        $responseData = ['assignedTierId' => $tierId];
-        info('------ Lead allocation request completed to evaluate tier only for '.$allocationId.' ------');
+        $responsePayload = $this->executeAllocation($allocationType, $allocationId, false, true);
+        info('------ Lead allocation request completed to evaluate tier only for '.$responsePayload['tierId'].' ------');
 
-        return apiResponse($responseData, Response::HTTP_OK, 'Tier assigned successfully!');
+        return apiResponse($responsePayload['data'], Response::HTTP_OK, $responsePayload['message']);
+    }
+    /**
+     * This function use to allocate the lead to advisor on the basis of lead type Bike, Car, Health, Travel
+     *
+     * @param  string  $allocationType
+     * @param  string  $allocationId
+     * @param  bool  $teamId
+     * @return void
+     */
+    private function executeAllocation($allocationType, $allocationId, $teamId = false, $tierOnly = false, $overrideAdvisorId = false)
+    {
+        $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId, $teamId);
+        if (is_null($allocationStrategy)) {
+            info('-- Exception against - allocationType: '.$allocationId.' and allocationId: '.$allocationId.' --');
+            throw new InvalidArgumentException("Allocation strategy for type '$allocationType -- $allocationId' not found.");
+        }
+        $responsePayload = $allocationStrategy->executeSteps($overrideAdvisorId, $teamId, $tierOnly);
+        $status = $responsePayload['status'];
+        $rest = array_diff_key($responsePayload, array_flip(['status', 'message']));
+        $message = $responsePayload['message'];
+        if ((isset($rest['advisorId']) && $rest['advisorId'] == 0) || (isset($rest['tierId']) && $rest['tierId'] == 0)) {
+            $message = (isset($rest['tierId']) && $rest['tierId'] == 0) ? 'Tier failed: '.$responsePayload['message'] : 'Allocation failed: '.$responsePayload['message'];
+        }
+
+        return [
+            'data' => [
+                'tierId' => $responsePayload['tierId'] ?? 0,
+                'assignedAdvisorId' => $responsePayload['advisorId'] ?? 0,
+                'status' => $status,
+            ],
+            'message' => $message,
+        ];
+    }
+
+    public function handleZeroPlansEmail(HandleZeroPlansRequest $request)
+    {
+        $quoteType = QuoteTypes::getName($request->quoteTypeId);
+        if (! $quoteType) {
+            return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
+        }
+
+        $lead = $quoteType?->model()->where('uuid', $request->quoteUuid)->first();
+
+        if (! $lead) {
+            return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found!');
+        }
+
+        if ($lead instanceof TravelQuote && $lead->isMultiTrip()) {
+            info(self::class." - handleZeroPlansEmail: First OCB Email Skipped because it is a Multi Trip Lead uuid: {$lead->uuid}");
+
+            return apiResponse(null, Response::HTTP_OK, 'First OCB Email Skipped because it is a Multi Trip Lead!');
+        }
+
+        $ocbEmailJob = $quoteType?->ocbEmailJob();
+
+        if (! $ocbEmailJob) {
+            return apiResponse(null, Response::HTTP_NOT_FOUND, 'OCB Email not found!');
+        }
+
+        info("------ Handling First OCB email when 0 Plans : {$request->quoteUuid} ------");
+        dispatch(new $ocbEmailJob($request->quoteUuid, null, handleZeroPlans: true));
+        info("------ Triggered Job for First OCB email when 0 Plans : {$request->quoteUuid} ------");
+
+        return apiResponse(null, Response::HTTP_OK, 'Email triggered successfully!');
+    }
+
+    public function sicReplyToILA($lead)
+    {
+
+        info('sicReplyToILA - Request received');
+
+        $uuid = $lead->uuid;
+        if (empty($lead)) {
+            info('UpdateLeadSource - UUID - '.$uuid.' - not found');
+
+            return false;
+        }
+        if ($this->isLeadAllocationEndpointDisabled()) {
+            Log::info('Lead allocation endpoint disabled');
+
+            return false;
+        }
+        if (empty($lead->advisor_id)) {
+            // advisor not assigned
+            // assign advisor to the lead either Oragnic or Unassisted 2.0 advisor
+            $isPaymentAuthorised = $lead->payment_status_id;
+            if ($isPaymentAuthorised == PaymentStatusEnum::AUTHORISED) {
+                // payment is authorised, so assign Unassisted 2.0 advisor
+                $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+                if ($teamId == 0) {
+                    $teamId = 63; // Unassisted 2.0 team Id on IMCRM on Production
+                }
+                $request = AssignLeadRequest::create('/api/imcrm/assign-quote', 'POST', [
+                    'quoteTypeId' => QuoteTypeId::Car,
+                    'quoteUUID' => $uuid,
+                    'teamId' => $teamId,
+                ]);
+                $this->processAssignLead($request);
+            } else {
+                // payment is not authorised, so assign Organic advisor
+                $teamId = getTeamId(TeamNameEnum::ORGANIC);
+                if ($teamId == 0) {
+                    $teamId = 26; // Organic team Id on IMCRM on Production
+                }
+                $request = AssignLeadRequest::create('/api/imcrm/assign-quote', 'POST', [
+                    'quoteTypeId' => QuoteTypeId::Car,
+                    'quoteUUID' => $uuid,
+                    'teamId' => $teamId,
+                ]);
+                $this->processAssignLead($request);
+            }
+        }
     }
 }
