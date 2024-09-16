@@ -161,6 +161,10 @@ const tableHeader = reactive([
     text: 'Commission Percentage',
     value: 'commmission_percentage',
   },
+  {
+    text: 'Transaction Type',
+    value: 'transaction_type',
+  },
 ]);
 const isIntegerColumn = key => {
   // Add logic to determine if the column contains an integer

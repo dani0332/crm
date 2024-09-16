@@ -112,6 +112,7 @@ class EndorsementReportService extends ManagementReport
                 'send_update_logs.booking_date',
                 DB::raw('IFNULL(send_update_logs.insurer_commission_invoice_number, p.insurer_commmission_invoice_number) as insurer_commmission_invoice_number'),
                 DB::raw('CASE WHEN ps.sr_no is NULL OR ps.sr_no=1 THEN IFNULL(send_update_logs.commission_percentage, p.commmission_percentage) ELSE 0 END as commmission_percentage'),
+                DB::raw("'Endorsement' as transaction_type")
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -188,6 +189,7 @@ class EndorsementReportService extends ManagementReport
                 'send_update_logs.booking_date',
                 DB::raw('IFNULL(CONCAT(p.insurer_commmission_invoice_number, "-REV"), IFNULL(CONCAT(send_update_logs.insurer_commission_invoice_number, "-REV"), null)) as insurer_commmission_invoice_number'),
                 DB::raw('-1 * IFNULL(send_update_logs.commission_percentage, IFNULL(p.commmission_percentage, 0)) as commmission_percentage'),
+                DB::raw("'Endorsement' as transaction_type")
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -325,6 +327,7 @@ class EndorsementReportService extends ManagementReport
             'SU Ref-ID',
             'Commission Tax Invoice Number',
             'Commission Percentage',
+            'Transaction Type',
         ];
     }
 
@@ -366,6 +369,7 @@ class EndorsementReportService extends ManagementReport
             $quote->code ?? 'N/A',
             $quote->insurer_commmission_invoice_number ?? 'N/A',
             $quote->commmission_percentage ?? 'N/A',
+            $quote->transaction_type ?? 'N/A',
         ];
     }
 }
