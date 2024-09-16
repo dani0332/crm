@@ -117,7 +117,7 @@ class TravelEmailService extends BaseService
             }
         }
 
-        $sortedFixtures = $toExtract->map(fn ($itemCode) => $planFixtures->firstWhere('code', $itemCode))->filter(fn ($item) => strtolower($item->value) !== 'excluded');
+        $sortedFixtures = $toExtract->map(fn ($itemCode) => $planFixtures->firstWhere('code', $itemCode))->filter(fn ($item) => $item && strtolower($item->value) !== 'excluded');
 
         if ($sortedFixtures->count() === 0) {
             return 'N/A';

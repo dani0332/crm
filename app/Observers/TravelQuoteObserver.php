@@ -13,6 +13,13 @@ class TravelQuoteObserver
 {
     use PersonalQuoteSyncTrait;
 
+    public function updating(TravelQuote $quote): void
+    {
+        if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
+            $quote->quote_status_date = now();
+        }
+    }
+
     /**
      * Handle the TravelQuote "updated" event.
      */
@@ -55,5 +62,9 @@ class TravelQuoteObserver
         }
 
         $this->syncQuote($travelQuote, $dirty);
+
+        if (isset($dirty['quote_status_id']) && $travelQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
+            $this->syncLeadEntries($travelQuote->uuid);
+        }
     }
 }

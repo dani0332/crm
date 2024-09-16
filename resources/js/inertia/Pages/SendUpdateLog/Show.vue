@@ -13,7 +13,6 @@ const props = defineProps({
   sendUpdateStatusEnum: Array,
   quote: Object,
   indicativePrice: Object,
-  isBookingDetailsVisible: Boolean,
   membersDetail: Array,
   memberCategories: Array,
   documentTypes: Object,
@@ -42,7 +41,7 @@ const props = defineProps({
 
 const page = usePage();
 const notification = useToast();
-
+const modelClass = 'App\\Models\\SendUpdateLog';
 const { isRequired } = useRules();
 
 const state = reactive({
@@ -516,6 +515,7 @@ const isLegacyPolicy = computed(() => {
       :send-update-status-enum="props.sendUpdateStatusEnum"
       :insuranceProviders="props.insuranceProviders"
       :quoteDocuments="props.quoteDocuments"
+      :expanded="sectionExpanded"
     />
 
     <LazyPolicyDetails
@@ -558,6 +558,7 @@ const isLegacyPolicy = computed(() => {
       :update-btn="props.updateBtn"
       :uploaded-documents="props.uploadedDocuments"
       :payments="props.payments"
+      :modelClass="modelClass"
       @update-error-status="handleErrorStatusUpdate"
     />
 

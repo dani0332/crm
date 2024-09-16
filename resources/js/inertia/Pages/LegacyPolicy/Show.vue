@@ -1,7 +1,6 @@
 <script setup>
 import NProgress from 'nprogress';
 import LegacyCard from '../LegacyPolicy/Partials/LegacyCard';
-import DocumentListing from './Partials/DocumentListing.vue';
 
 const props = defineProps({
   policy: Object,
@@ -537,7 +536,6 @@ const dateFormat = date => {
           border-cell
           hide-rows-per-page
           hide-footer
-          fixed-checkbox
         >
           <template #item-comment="{ comment }">
             {{ comment ? comment : '' }}
@@ -676,7 +674,6 @@ const dateFormat = date => {
         border-cell
         hide-rows-per-page
         hide-footer
-        fixed-checkbox
         v-if="!single"
       >
         <template #item-id="{ id, link }">

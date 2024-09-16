@@ -1,4 +1,7 @@
 <script setup>
+import { defineEmits } from 'vue';
+// Define the emit function
+const emit = defineEmits(['plan-selected']);
 import LazyCreatePlan from '@/inertia/Pages/BikeQuote/CreatePlan.vue';
 import UpdateShowPlan from '@/inertia/Pages/BikeQuote/UpdateShowPlans.vue';
 
@@ -134,6 +137,11 @@ const onLoadAvailablePlansData = async () => {
     .catch(err => {
       console.log(err);
     });
+};
+
+const onCreatePlan = async () => {
+  modals.createPlan = false;
+  onLoadAvailablePlansData();
 };
 
 onMounted(() => {
@@ -342,6 +350,8 @@ const handlePlanSelected = plan => {
     preserveScroll: true,
     only: ['payments', 'paymentEntityModel'],
   });
+  emit('plan-selected', plan);
+  onLoadAvailablePlansData();
 };
 
 const readOnlyMode = reactive({

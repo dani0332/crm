@@ -12,6 +12,13 @@ class LifeQuoteObserver
 {
     use PersonalQuoteSyncTrait;
 
+    public function updating(LifeQuote $quote): void
+    {
+        if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
+            $quote->quote_status_date = now();
+        }
+    }
+
     /**
      * Handle the LifeQuote "updated" event.
      */
@@ -39,5 +46,9 @@ class LifeQuoteObserver
         }
 
         $this->syncQuote($lifeQuote, $dirty);
+
+        if (isset($dirty['quote_status_id']) && $lifeQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
+            $this->syncLeadEntries($lifeQuote->uuid);
+        }
     }
 }

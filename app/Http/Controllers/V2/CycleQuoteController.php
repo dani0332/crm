@@ -66,12 +66,14 @@ class CycleQuoteController extends Controller
 
         $count = $personalQuotes->count();
         $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
+        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
 
         return inertia('CycleQuote/Index', [
             'quotes' => $personalQuotes->simplePaginate(10)->withQueryString(),
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : CycleQuoteRepository::getData(true, true),
+            'authorizedDays' => intval($authorizedDays->value),
         ]);
     }
 
@@ -165,6 +167,8 @@ class CycleQuoteController extends Controller
         ])->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
 
         $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($quote->id, QuoteTypes::CYCLE->name);
+
+        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::CYCLE->id(), $quoteStatuses);
 
         if (AMLService::checkAMLStatusFailed(QuoteTypes::CYCLE->id(), $quote->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {

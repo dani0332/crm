@@ -65,6 +65,7 @@ const props = defineProps({
   paymentDocument: Array,
   noteDocumentType: Array,
 });
+const modelClass = 'App\\Models\\HealthQuote';
 
 const isManualPlansCount = ref(0);
 
@@ -3000,7 +3001,7 @@ const onAddUpdate = () => {
                 <x-field class="" label="Transaction Type">
                   <x-input
                     type="text"
-                    :value="quote.transaction_type_text"
+                    v-model="quote.transaction_type_text"
                     class="w-full"
                     :disabled="true"
                   />
@@ -3596,7 +3597,6 @@ const onAddUpdate = () => {
         :items="emailStatuses || []"
         show-index
         border-cell
-        fixed-checkbox
         hide-rows-per-page
         hide-footer
       >
@@ -3622,6 +3622,7 @@ const onAddUpdate = () => {
       quoteType="Health"
       :sendPolicy="sendPolicy"
       @sendPolicyToClient="sendPolicyToClient"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy
@@ -3636,6 +3637,7 @@ const onAddUpdate = () => {
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+      :modelClass="modelClass"
     />
 
     <SendUpdates
@@ -3872,10 +3874,11 @@ const onAddUpdate = () => {
       :customerName="quote?.first_name + ' ' + quote?.last_name"
       :quoteId="quote.uuid"
       :quoteType="'HEALTH'"
+      :expanded="sectionExpanded"
     />
 
     <AuditLogs
-      :type="'App\\Models\\HealthQuote'"
+      :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
     />
@@ -3884,5 +3887,10 @@ const onAddUpdate = () => {
       v-if="clientInquiryLogs?.length > 0"
       :logs="clientInquiryLogs"
     />
+
+    <lead-raw-data
+      :modelType="'Health'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>
