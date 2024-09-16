@@ -198,6 +198,7 @@ class BusinessQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
             DealStageInsuranceTypes::TRAVEL_ISURANCE => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::several),
             DealStageInsuranceTypes::MEDICAL_INSURANCE => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::medicalMalpractices),
             DealStageInsuranceTypes::WORKSMEN => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::workmens),
+            DealStageInsuranceTypes::PHOTOGRAPHER => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::photographers),
         ];
 
         return $mapping[$insuranceType];

@@ -51,4 +51,5 @@ class DealStageInsuranceTypes extends Enum
     const TRAVEL_ISURANCE = 'Travel Insurance';
     const MEDICAL_INSURANCE = 'Medical Insurance';
     const WORKSMEN = 'Workmens Compensation & Employers Liability';
+    const PHOTOGRAPHER = 'Photographers Insurance';
 }
