@@ -413,7 +413,9 @@ class AlfredChatController extends Controller
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['end_date']));
 
             $partialQuery->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
-        } else {
+        } 
+
+        if($request->email == null && $request->mobile_no == null && $quoteId == null  && empty($request->start_date) && empty($request->end_date)) {
             // Default to last 30 days if no dates are provided
             $dateFrom = now()->subDays(30)->startOfDay();
             $dateTo = now()->endOfDay();
@@ -519,6 +521,14 @@ class AlfredChatController extends Controller
             $start_date = Carbon::createFromFormat('Y-m-d', Carbon::parse($request->start_date)->format('Y-m-d'))->startOfDay()->toIso8601String();
             $end_date = Carbon::createFromFormat('Y-m-d', Carbon::parse($request->end_date)->format('Y-m-d'))->endOfDay()->toIso8601String();
             $pipeline[] = ['$match' => ['created_at' => ['$gte' => $start_date, '$lte' => $end_date]]];
+        }
+
+        if($request->email == null && $request->mobile_no == null && $quoteId == null  && empty($request->start_date) && empty($request->end_date)) {
+            // Default to last 30 days if no dates are provided
+            $dateFrom = now()->subDays(30)->startOfDay();
+            $dateTo = now()->endOfDay();
+
+            $pipeline[] = ['$match' => ['created_at' => ['$gte' => $dateFrom, '$lte' => $dateTo]]];
         }
 
         if ($type === 'chat') {

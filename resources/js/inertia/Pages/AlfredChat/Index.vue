@@ -242,14 +242,22 @@ const downloadReport = () => {
       </x-field>
       <x-field label="Start Date">
         <DatePicker
-          :rules="[isRequired]"
+          :rules="
+            filters.quoteId || filters.email || filters.mobile_no
+              ? []
+              : [isRequired]
+          "
           v-model="filters.start_date"
           class="w-full"
         />
       </x-field>
       <x-field label="End Date">
         <DatePicker
-          :rules="[isRequired]"
+          :rules="
+            filters.quoteId || filters.email || filters.mobile_no
+              ? []
+              : [isRequired]
+          "
           v-model="filters.end_date"
           class="w-full"
         />
