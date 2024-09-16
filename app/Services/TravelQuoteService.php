@@ -335,7 +335,9 @@ class TravelQuoteService extends BaseService
         } else {
             $searchProperties = $model->searchProperties;
         }
-
+        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date) && ! isset($request->renewal_batch)) {
+            $this->query->whereBetween('tqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
+        }
         if (
             empty($request->email) && empty($request->code) && empty($request->first_name) &&
             empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)
