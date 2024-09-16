@@ -3,7 +3,9 @@
 namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Models\JetskiQuote;
+use App\Repositories\PaymentRepository;
 
 class JetskiQuoteObserver
 {
@@ -21,6 +23,15 @@ class JetskiQuoteObserver
                 $jetskiQuote->update(['transaction_approved_at' => now()]);
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $jetskiQuote->transaction_approved_at];
+        }
+
+        if (
+            $jetskiQuote->isDirty('quote_status_id') &&
+            $jetskiQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
+        ) {
+            $payment = $jetskiQuote->payments()->mainLeadPayment()->first();
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::JETSKI->value);
+
         }
     }
 }

@@ -3,7 +3,9 @@
 namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Models\BikeQuote;
+use App\Repositories\PaymentRepository;
 
 class BikeQuoteObserver
 {
@@ -21,6 +23,14 @@ class BikeQuoteObserver
                 $bikeQuote->update(['transaction_approved_at' => now()]);
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $bikeQuote->transaction_approved_at];
+        }
+        if (
+            $bikeQuote->isDirty('quote_status_id') &&
+            $bikeQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
+        ) {
+            $payment = $bikeQuote->payments()->mainLeadPayment()->first();
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::BIKE->value);
+
         }
     }
 }

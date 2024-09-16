@@ -4,8 +4,10 @@ namespace App\Observers;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Jobs\MAWelcomeJob;
 use App\Models\BusinessQuote;
+use App\Repositories\PaymentRepository;
 use App\Traits\PersonalQuoteSyncTrait;
 
 class BusinessQuoteObserver
@@ -48,6 +50,15 @@ class BusinessQuoteObserver
 
         if (isset($dirty['quote_status_id']) && $businessQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             $this->syncLeadEntries($businessQuote->uuid);
+        }
+
+        if (
+            $businessQuote->isDirty('quote_status_id') &&
+            $businessQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
+        ) {
+            $payment = $businessQuote->payments()->mainLeadPayment()->first();
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::BUSINESS->value);
+
         }
     }
 }

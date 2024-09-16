@@ -5,9 +5,11 @@ namespace App\Observers;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Jobs\MAWelcomeJob;
 use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
+use App\Repositories\PaymentRepository;
 use App\Services\HealthQuoteService;
 use App\Traits\PersonalQuoteSyncTrait;
 
@@ -56,6 +58,15 @@ class HealthQuoteObserver
 
         if (isset($dirty['quote_status_id']) && $healthQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             $this->syncLeadEntries($healthQuote->uuid);
+        }
+
+        if (
+            $healthQuote->isDirty('quote_status_id') &&
+            $healthQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
+        ) {
+            $payment = $healthQuote->payments()->mainLeadPayment()->first();
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::HEALTH->value);
+
         }
     }
 }

@@ -4,9 +4,11 @@ namespace App\Observers;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Events\CarQuoteAdvisorUpdated;
 use App\Jobs\MAWelcomeJob;
 use App\Models\CarQuote;
+use App\Repositories\PaymentRepository;
 use App\Traits\PersonalQuoteSyncTrait;
 
 class CarQuoteObserver
@@ -63,6 +65,15 @@ class CarQuoteObserver
 
         if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             $this->syncLeadEntries($lead->uuid);
+        }
+
+        if (
+            $lead->isDirty('quote_status_id') &&
+            $lead->quote_status_id === QuoteStatusEnum::PolicyIssued
+        ) {
+            $payment = $lead->payments()->mainLeadPayment()->first();
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::CAR->value);
+
         }
     }
 }

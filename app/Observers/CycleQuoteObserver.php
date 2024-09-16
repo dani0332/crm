@@ -3,7 +3,9 @@
 namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Models\CycleQuote;
+use App\Repositories\PaymentRepository;
 
 class CycleQuoteObserver
 {
@@ -21,6 +23,15 @@ class CycleQuoteObserver
                 $cycleQuote->update(['transaction_approved_at' => now()]);
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $cycleQuote->transaction_approved_at];
+        }
+
+        if (
+            $cycleQuote->isDirty('quote_status_id') &&
+            $cycleQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
+        ) {
+            $payment = $cycleQuote->payments()->mainLeadPayment()->first();
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::CYCLE->value);
+
         }
     }
 }

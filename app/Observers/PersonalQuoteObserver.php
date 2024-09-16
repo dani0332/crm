@@ -4,9 +4,11 @@ namespace App\Observers;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Events\BikeQuoteAdvisorUpdated;
 use App\Jobs\MAWelcomeJob;
 use App\Models\PersonalQuote;
+use App\Repositories\PaymentRepository;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -69,6 +71,15 @@ class PersonalQuoteObserver
             } catch (Exception $e) {
                 Log::error('PersonalQuoteObserver Error: '.$e->getMessage());
             }
+        }
+
+        if (
+            $personalQuote->isDirty('quote_status_id') &&
+            $personalQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
+        ) {
+            $payment = $personalQuote->payments()->mainLeadPayment()->first();
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::PERSONAL->value);
+
         }
     }
 }

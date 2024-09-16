@@ -4,8 +4,10 @@ namespace App\Observers;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Jobs\MAWelcomeJob;
 use App\Models\LifeQuote;
+use App\Repositories\PaymentRepository;
 use App\Traits\PersonalQuoteSyncTrait;
 
 class LifeQuoteObserver
@@ -49,6 +51,15 @@ class LifeQuoteObserver
 
         if (isset($dirty['quote_status_id']) && $lifeQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             $this->syncLeadEntries($lifeQuote->uuid);
+        }
+
+        if (
+            $lifeQuote->isDirty('quote_status_id') &&
+            $lifeQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
+        ) {
+            $payment = $lifeQuote->payments()->mainLeadPayment()->first();
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::LIFE->value);
+
         }
     }
 }

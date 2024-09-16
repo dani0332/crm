@@ -4,9 +4,11 @@ namespace App\Observers;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Events\TravelQuoteAdvisorUpdated;
 use App\Jobs\MAWelcomeJob;
 use App\Models\TravelQuote;
+use App\Repositories\PaymentRepository;
 use App\Traits\PersonalQuoteSyncTrait;
 
 class TravelQuoteObserver
@@ -37,6 +39,7 @@ class TravelQuoteObserver
             }
         }
 
+
         if ($travelQuote->isDirty('advisor_id')) {
             $oldAdvisorId = $changes['advisor_id']['old'];
             TravelQuoteAdvisorUpdated::dispatch($travelQuote, $oldAdvisorId);
@@ -65,6 +68,15 @@ class TravelQuoteObserver
 
         if (isset($dirty['quote_status_id']) && $travelQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             $this->syncLeadEntries($travelQuote->uuid);
+        }
+
+        if (
+            $travelQuote->isDirty('quote_status_id') &&
+            $travelQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
+        ) {
+            $payment = $travelQuote->payments()->mainLeadPayment()->first();
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::TRAVEL->value);
+
         }
     }
 }

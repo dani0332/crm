@@ -4,8 +4,10 @@ namespace App\Observers;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Jobs\MAWelcomeJob;
 use App\Models\HomeQuote;
+use App\Repositories\PaymentRepository;
 use App\Traits\PersonalQuoteSyncTrait;
 
 class HomeQuoteObserver
@@ -49,6 +51,15 @@ class HomeQuoteObserver
 
         if (isset($dirty['quote_status_id']) && $homeQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             $this->syncLeadEntries($homeQuote->uuid);
+        }
+
+        if (
+            $homeQuote->isDirty('quote_status_id') &&
+            $homeQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
+        ) {
+            $payment = $homeQuote->payments()->mainLeadPayment()->first();
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::HOME->value);
+
         }
     }
 }
