@@ -1408,10 +1408,8 @@ class SendEmailCustomerService extends BaseService
 
     private function encodeUrl($url)
     {
-        $filename = basename($url);
-        $encoded_filename = urlencode($filename);
-        $encoded_url = str_replace($filename, $encoded_filename, $url);
-
-        return $encoded_url;
+        $fileName = basename($url);
+        $encodedFileName = urlencode($fileName);
+        return str_replace($fileName, $encodedFileName, $url);
     }
 }
