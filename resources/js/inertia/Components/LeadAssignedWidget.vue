@@ -33,9 +33,9 @@ onMounted(() => {
       <div class="flex justify-between text-sm w-full gap-3">
         <x-tooltip placement="top">
           <x-tag
-            color="blue"
             class="underline decoration-dotted decoration-primary-700"
             outlined
+            style="border: 1px solid #ebebeb; font-size: 13px"
           >
             <span>Assigned Yesterday : &nbsp;</span>
             <strong> {{ yesterdayAutoCount + yesterdayManualCount }}</strong>
@@ -48,9 +48,9 @@ onMounted(() => {
 
         <x-tooltip placement="top">
           <x-tag
-            color="blue"
             class="underline decoration-dotted decoration-primary-700"
             outlined
+            style="border: 1px solid #ebebeb; font-size: 13px"
           >
             <span>Assigned Today : &nbsp;</span>
             <strong>{{ todayAutoCount + todayManualCount }}</strong>
@@ -60,7 +60,12 @@ onMounted(() => {
           </template>
         </x-tooltip>
 
-        <x-tag color="gray" class="decoration-primary-700" outlined>
+        <x-tag
+          color="gray"
+          class="decoration-primary-700"
+          outlined
+          style="border: 1px solid #ebebeb; font-size: 13px"
+        >
           <span>Max Capacity : &nbsp;</span>
           <strong>{{ userMaxCap }}</strong>
         </x-tag>
