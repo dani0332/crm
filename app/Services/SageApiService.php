@@ -616,7 +616,7 @@ class SageApiService
         if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
             info('################################## Send Customer Documents to customer after booking of : '.$quote->code.' ##################################');
             // dispath job to send email
-            dispatch(new SendBookPolicyDocumentsJob($request));
+            dispatch(new SendBookPolicyDocumentsJob($request, $quote->code));
         }
 
         info('################################## mark status as policy booked for : '.$quote->code.' ##################################');
