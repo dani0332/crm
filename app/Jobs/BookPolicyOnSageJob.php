@@ -35,6 +35,10 @@ class BookPolicyOnSageJob implements ShouldQueue
         $this->quote = $quote;
         $this->request = $request;
         $this->sageProcess = $sageProcess;
+
+        $this->updateSageProcessStatus(SageEnum::SAGE_PROCESS_PROCESSING_STATUS);
+
+        $this->updateAndLogQuoteStatus(QuoteStatusEnum::POLICY_BOOKING_QUEUED);
     }
 
     /**
@@ -43,10 +47,6 @@ class BookPolicyOnSageJob implements ShouldQueue
     public function handle()
     {
         info('BookPolicyOnSageJob - '.$this->quote->code.' - Started');
-
-        $this->updateSageProcessStatus(SageEnum::SAGE_PROCESS_PROCESSING_STATUS);
-
-        $this->updateAndLogQuoteStatus(QuoteStatusEnum::POLICY_BOOKING_QUEUED);
 
         $response = (new SageApiService)->bookPolicyOnSage([$this->sageRequest, $this->quote,  $this->request]);
 
