@@ -366,7 +366,7 @@ class QuoteDocumentService extends BaseService
                 }
 
                 return [
-                    'url' => $policyWording->link,
+                    'url' => preg_replace('/\s+$/m', '', $policyWording->link),
                     'name' => 'InsuranceMarket.ae™ Policy Handbook for Policy Number '.$quote->policy_number.'.'.pathinfo($policyWording->link, PATHINFO_EXTENSION),
                 ];
             });
