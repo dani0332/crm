@@ -98,27 +98,6 @@ const urls = computed(() => {
     </div>
 
     <div
-      class="hidden lg:block absolute top-[72px] transition z-30"
-      :class="!minimizeSidebar ? 'lg:pl-[var(--sidebar-width)]' : ''"
-    >
-      <button
-        type="button"
-        :title="minimizeSidebar ? 'Expand sidebar' : 'Minimize sidebar'"
-        class="text-white flex h-9 w-9 shrink-0 items-center justify-center rounded-e-lg bg-primary-500 hover:bg-primary-700 focus:outline-none transition"
-        aria-label="Minimize sidebar"
-        @click.prevent="
-          minimizeSidebar = !minimizeSidebar;
-          openSidebar = false;
-        "
-      >
-        <x-icon
-          :icon="minimizeSidebar ? 'sideExpand' : 'sideCollapse'"
-          size="lg"
-        />
-      </button>
-    </div>
-
-    <div
       v-if="openSidebar"
       class="bg-black/75 backdrop-blur-sm w-full h-full fixed inset-0 z-30 lg:hidden"
       @click.prevent="openSidebar = false"
@@ -135,21 +114,46 @@ const urls = computed(() => {
           <div
             class="flex items-center justify-between w-full px-2 sm:px-4 md:px-6 lg:px-8"
           >
-            <Transition name="fade" mode="out-in">
-              <Link
-                v-if="minimizeSidebar"
-                :href="route('dashboard.home')"
-                class="w-64 hidden lg:flex"
-              >
-                <x-image
-                  :src="page.props.im_logo"
-                  alt="IMCRM"
-                  class="w-full px-2"
-                  width="439"
-                  height="66"
-                />
-              </Link>
-            </Transition>
+            <div class="items-center justify-between gap-1 hidden lg:flex">
+              <x-tooltip>
+                <button
+                  type="button"
+                  :title="
+                    minimizeSidebar ? 'Expand sidebar' : 'Minimize sidebar'
+                  "
+                  class="text-primary-500 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg hover:bg-gray-500/5 focus:bg-primary-500/10 focus:outline-none transition"
+                  aria-label="Minimize sidebar"
+                  @click.prevent="
+                    minimizeSidebar = !minimizeSidebar;
+                    openSidebar = false;
+                  "
+                >
+                  <x-icon
+                    :icon="minimizeSidebar ? 'sideExpand' : 'sideCollapse'"
+                    size="lg"
+                  />
+                </button>
+                <template #tooltip>
+                  {{ minimizeSidebar ? 'Expand sidebar' : 'Minimize sidebar' }}
+                </template>
+              </x-tooltip>
+
+              <Transition name="fade" mode="out-in">
+                <Link
+                  v-if="minimizeSidebar"
+                  :href="route('dashboard.home')"
+                  class="w-64 hidden lg:flex"
+                >
+                  <x-image
+                    :src="page.props.im_logo"
+                    alt="IMCRM"
+                    class="w-full px-2"
+                    width="439"
+                    height="66"
+                  />
+                </Link>
+              </Transition>
+            </div>
             <div>
               <button
                 type="button"
