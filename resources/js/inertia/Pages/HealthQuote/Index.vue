@@ -351,6 +351,22 @@ const fixedValue = numberString => {
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
+const onDataExport = () => {
+    filters.created_at_start = useDateFormat(
+        filters.created_at_start,
+        'YYYY-MM-DD',
+    ).value;
+
+    filters.created_at_end = useDateFormat(
+        filters.created_at_end,
+        'YYYY-MM-DD',
+    ).value;
+
+    const data = useObjToUrl(filters);
+    const url = route('data-extraction', 'health');
+    window.open(url + '?' + new URLSearchParams(data).toString());
+};
+
 onMounted(() => {
   params = getSavedQueryParams() || params;
   setQueryStringFilters();
@@ -738,7 +754,7 @@ const formatDate = dateString =>
             v-if="canExport"
             size="sm"
             color="emerald"
-            :href="`/health/leads-export?${objToUrl(filters)}`"
+            @click.prevent="onDataExport"
             class="justify-self-start"
           >
             Export
