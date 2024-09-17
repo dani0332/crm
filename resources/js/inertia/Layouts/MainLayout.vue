@@ -64,10 +64,15 @@ const urls = computed(() => {
 
 <template>
   <main class="flex w-full min-h-screen overflow-x-clip">
-    <div :class="
-        minimizeSidebar ? '-translate-x-full' : (openSidebar ? 'translate-x-0' : '-translate-x-full lg:translate-x-0')
+    <div
+      :class="
+        minimizeSidebar
+          ? '-translate-x-full'
+          : openSidebar
+            ? 'translate-x-0'
+            : '-translate-x-full lg:translate-x-0'
       "
-      class="fixed inset-y-0 left-0 z-30 flex h-dvh w-64 flex-col overflow-y-auto bg-gradient-to-b from-primary-600 to-primary-700 transition-all md:w-64"
+      class="fixed inset-y-0 left-0 z-40 flex h-dvh w-64 flex-col overflow-y-auto bg-gradient-to-b from-primary-600 to-primary-700 transition-all md:w-64"
     >
       <aside class="relative h-full w-full">
         <div
@@ -92,29 +97,36 @@ const urls = computed(() => {
       </aside>
     </div>
 
-    <div 
-    class="hidden lg:block absolute top-[60px]"
-    :class="!minimizeSidebar ? 'lg:pl-[var(--sidebar-width)]' : ''"
+    <div
+      class="hidden lg:block absolute top-[72px] transition z-30"
+      :class="!minimizeSidebar ? 'lg:pl-[var(--sidebar-width)]' : ''"
     >
-      <button type="button"
-        class="bg-primary-700 color-white p-1"
-        aria-label="Minimize sidebar" @click.prevent="minimizeSidebar = !minimizeSidebar; openSidebar = false;">
-        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-          stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5">
-          </path>
-        </svg>
+      <button
+        type="button"
+        :title="minimizeSidebar ? 'Expand sidebar' : 'Minimize sidebar'"
+        class="text-white flex h-9 w-9 shrink-0 items-center justify-center rounded-e-lg bg-primary-500 hover:bg-primary-700 focus:outline-none transition"
+        aria-label="Minimize sidebar"
+        @click.prevent="
+          minimizeSidebar = !minimizeSidebar;
+          openSidebar = false;
+        "
+      >
+        <x-icon
+          :icon="minimizeSidebar ? 'sideExpand' : 'sideCollapse'"
+          size="lg"
+        />
       </button>
     </div>
 
     <div
       v-if="openSidebar"
-      class="bg-black/75 backdrop-blur-sm w-full h-full fixed inset-0 z-20 lg:hidden"
+      class="bg-black/75 backdrop-blur-sm w-full h-full fixed inset-0 z-30 lg:hidden"
       @click.prevent="openSidebar = false"
     ></div>
 
     <XNotifications inject-key="toast">
-      <article :class="!minimizeSidebar ? 'lg:pl-[var(--sidebar-width)]' : ''"
+      <article
+        :class="!minimizeSidebar ? 'lg:pl-[var(--sidebar-width)]' : ''"
         class="flex-col gap-y-6 w-screen flex-1 h-full transition-all"
       >
         <header
@@ -123,12 +135,30 @@ const urls = computed(() => {
           <div
             class="flex items-center justify-between w-full px-2 sm:px-4 md:px-6 lg:px-8"
           >
+            <Transition name="fade" mode="out-in">
+              <Link
+                v-if="minimizeSidebar"
+                :href="route('dashboard.home')"
+                class="w-64 hidden lg:flex"
+              >
+                <x-image
+                  :src="page.props.im_logo"
+                  alt="IMCRM"
+                  class="w-full px-2"
+                  width="439"
+                  height="66"
+                />
+              </Link>
+            </Transition>
             <div>
               <button
                 type="button"
                 class="shrink-0 flex lg:hidden items-center justify-center w-10 h-10 text-primary-500 rounded-full hover:bg-gray-500/5 focus:bg-primary-500/10 focus:outline-none"
                 aria-label="Open sidebar"
-                @click.prevent="openSidebar = !openSidebar; minimizeSidebar = false;"
+                @click.prevent="
+                  openSidebar = !openSidebar;
+                  minimizeSidebar = false;
+                "
               >
                 <svg
                   class="w-6 h-6"
@@ -186,8 +216,7 @@ const urls = computed(() => {
               <PaymentNotification />
               <PaymentExpireNotifications />
 
-              <!--                ADD BANER HERE-->
-              <x-button class="w-full mt-1" size="sm">
+              <x-button class="w-full" size="sm">
                 <div class="items-center">
                   <Link
                     v-bind:href="urls"
