@@ -8,9 +8,11 @@ use App\Enums\QuoteTypes;
 use App\Factories\AllocationFactory;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
+use App\Models\HealthQuote;
 use App\Models\TravelQuote;
 use Exception;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 
 //Scheduled to delete 1st April 2024
 class InboundEmailsHookService extends BaseService
@@ -21,7 +23,7 @@ class InboundEmailsHookService extends BaseService
         $authPass = config('constants.INBOUND_WEBHOOK_BASIC_AUTH_PASSWORD');
 
         if (request('basicAuthUsername') === $authUser && request('basicAuthPassword') === $authPass) {
-            info(self::class.' - verifyAuthorization: Authorized Access');
+            info(self::class . ' - verifyAuthorization: Authorized Access');
 
             return true;
         }
@@ -32,10 +34,10 @@ class InboundEmailsHookService extends BaseService
     public function process()
     {
         try {
-            info(self::class.' - process: Webhook Received - Verifying Auth...');
+            info(self::class . ' - process: Webhook Received - Verifying Auth...');
 
             if (! $this->verifyAuthorization()) {
-                info(self::class.' - process: Unauthorized Access');
+                info(self::class . ' - process: Unauthorized Access');
 
                 return apiResponse([], Response::HTTP_UNAUTHORIZED, 'Unauthorized Access');
             }
@@ -43,13 +45,13 @@ class InboundEmailsHookService extends BaseService
             $inbound = new \Postmark\Inbound(file_get_contents('php://input'));
 
             $subject = $inbound->Subject();
-            info(self::class." - process: Webhook Received with Subject: {$subject}");
+            info(self::class . " - process: Webhook Received with Subject: {$subject}");
 
             $data = getQuoteUsingSubject($subject);
 
             return $this->resolveLead($subject, $data);
         } catch (Exception $e) {
-            info(self::class.' - process: Exception occurred', [
+            info(self::class . ' - process: Exception occurred', [
                 'message' => $e->getMessage(),
                 'line' => $e->getLine(),
                 'file' => $e->getFile(),
@@ -70,16 +72,17 @@ class InboundEmailsHookService extends BaseService
                 return match ($quoteType) {
                     QuoteTypes::CAR => $this->handleCar($lead),
                     QuoteTypes::TRAVEL => $this->handleTravel($lead),
+                    QuoteTypes::HEALTH => $this->handleHealth($lead),
                     default => apiResponse([], Response::HTTP_UNPROCESSABLE_ENTITY, "Unhandled quote type: {$quoteType->value}")
                 };
             }
 
-            info(self::class." - resolveLead: Lead not found for uuid: {$uuid}");
+            info(self::class . " - resolveLead: Lead not found for uuid: {$uuid}");
 
             return apiResponse([], Response::HTTP_NOT_FOUND, "Lead not found for uuid: {$uuid}");
         }
 
-        info(self::class." - resolveLead: uuid not found in subject: {$subject}");
+        info(self::class . " - resolveLead: uuid not found in subject: {$subject}");
 
         return apiResponse([], Response::HTTP_NOT_FOUND, "UUID & Quote Type could not be extracted from subject: {$subject}");
     }
@@ -87,20 +90,20 @@ class InboundEmailsHookService extends BaseService
     private function handleCar(CarQuote $lead)
     {
         if ($lead->source == LeadSourceEnum::REVIVAL) {
-            info(self::class." - handleCar: Going to update Car Quote for uuid {$lead->uuid}");
+            info(self::class . " - handleCar: Going to update Car Quote for uuid {$lead->uuid}");
             $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
             DttRevival::where('uuid', $lead->uuid)->update(['reply_received' => 1]);
-            info(self::class." - handleCar: Car Quote Source updated for Revival for uuid {$lead->uuid}");
+            info(self::class . " - handleCar: Car Quote Source updated for Revival for uuid {$lead->uuid}");
 
             return apiResponse([], Response::HTTP_OK, 'Car Source Updated Successfully!');
         } else {
             try {
-                info(self::class." - handleCar: Going to handle Car Quote for uuid {$lead->uuid}");
+                info(self::class . " - handleCar: Going to handle Car Quote for uuid {$lead->uuid}");
                 (new ApiService)->sicReplyToILA($lead);
 
                 return apiResponse([], Response::HTTP_OK, 'Car Handled for SIC to ILA Successfully!');
             } catch (\Exception $e) {
-                info(self::class." - handleCar: Error occurred in SIC Reply to ILA for uuid {$lead->uuid}");
+                info(self::class . " - handleCar: Error occurred in SIC Reply to ILA for uuid {$lead->uuid}");
 
                 return apiResponse([], Response::HTTP_INTERNAL_SERVER_ERROR, 'Something went wrong!');
             }
@@ -109,19 +112,51 @@ class InboundEmailsHookService extends BaseService
 
     private function handleTravel(TravelQuote $lead)
     {
-        info(self::class." - handleTravel: Going to Assign Advisor to uuid: {$lead->uuid}");
+        info(self::class . " - handleTravel: Going to Assign Advisor to uuid: {$lead->uuid}");
 
         if ($lead->advisor_id) {
-            info(self::class." - handleTravel: Lead already has an advisor assigned: {$lead->uuid}");
+            info(self::class . " - handleTravel: Lead already has an advisor assigned: {$lead->uuid}");
 
             return apiResponse([], Response::HTTP_OK, 'Lead already has an advisor assigned!');
         }
 
-        info(self::class." - handleTravel: AllocationFactory Strategy Executing for lead: {$lead->uuid}");
+        info(self::class . " - handleTravel: AllocationFactory Strategy Executing for lead: {$lead->uuid}");
         $allocationStrategy = AllocationFactory::createStrategy(QuoteTypeId::Travel, $lead->uuid);
         $assignedAdvisorId = $allocationStrategy->executeSteps();
-        info(self::class." - handleTravel: AllocationStrategy Executed for lead: {$lead->uuid} and assignedAdvisorId: {$assignedAdvisorId}");
+        info(self::class . " - handleTravel: AllocationStrategy Executed for lead: {$lead->uuid} and assignedAdvisorId: {$assignedAdvisorId}");
 
         return apiResponse([], Response::HTTP_OK, 'Lead Assigned to Advisor Successfully!');
+    }
+
+    private function handleHealth(HealthQuote $lead)
+    {
+        Log::info(self::class . " - handleHealth: Going to Assign Advisor to uuid: {$lead->uuid}");
+
+        // for only if we have to follow DTT revival flow like car
+        // if ($lead->source == LeadSourceEnum::REVIVAL) {
+        //     Log::info(self::class . " - handleHealth: Going to update Health Quote for uuid {$lead->uuid}");
+        //     $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
+        //     DttRevival::where('uuid', $lead->uuid)->update(['reply_received' => 1]);
+        //     Log::info(self::class . " - handleHealth: Health Quote Source updated for Revival for uuid {$lead->uuid}");
+
+        //     return apiResponse([], Response::HTTP_OK, 'Health Source Updated Successfully!');
+        // }
+
+        // for normal health allocation flow
+        // if ($lead->advisor_id) {
+        //     Log::info(self::class . " - handleHealth: Lead already has an advisor assigned: {$lead->uuid}");
+
+        //     return apiResponse([], Response::HTTP_OK, 'Lead already has an advisor assigned!');
+        // }
+
+        // $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
+        // Log::info(self::class . " - handleHealth: Car Quote Source updated for Revival for uuid {$lead->uuid} to REVIVAL_REPLIED");
+
+        // Log::info(self::class . " - handleHealth: AllocationFactory Strategy Executing for lead: {$lead->uuid}");
+        // $allocationStrategy = AllocationFactory::createStrategy(QuoteTypeId::Health, $lead->uuid);
+        // $assignedAdvisorId = $allocationStrategy->executeSteps();
+        // Log::info(self::class . " - handleHealth: AllocationStrategy Executed for lead: {$lead->uuid} and assignedAdvisorId: {$assignedAdvisorId}");
+
+        // return apiResponse([], Response::HTTP_OK, 'Lead Assigned to Advisor Successfully!');
     }
 }
