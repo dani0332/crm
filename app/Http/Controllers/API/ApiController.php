@@ -18,6 +18,9 @@ use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
+use App\Http\Requests\EmailEventsRequest;
+use App\Services\EmailStatusService;
+use Illuminate\Support\Facades\Log;
 
 class ApiController extends Controller
 {
@@ -111,5 +114,25 @@ class ApiController extends Controller
         }
 
         return apiResponse(null, Response::HTTP_OK, 'Invalid Quote Type');
+    }
+
+    public function logFollowUpEvent(EmailEventsRequest $request){
+       try {
+       $response = app(EmailStatusService::class)->addBirdEmailStatus($request);
+       if($response->status){
+        return apiResponse([], Response::HTTP_OK, $response->message);
+       }
+       else {
+        return apiResponse([], Response::HTTP_NOT_FOUND, $response->message);
+       }
+        } catch (\Throwable $th) {
+            Log::error("logFollowUpEvent - Exception occurred while processing follow-up event", [
+                'error_message' => $th->getMessage(),
+                'line' => $th->getLine(),
+                'file' => $th->getFile(),
+                'stack_trace' => $th->getTraceAsString(),
+            ]);
+            throw $th;
+        }
     }
 }

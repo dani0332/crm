@@ -32,6 +32,7 @@ Route::post('/imcrm/zero-plans-email', [ApiController::class, 'handleZeroPlansEm
 Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuoteCallBack']);
 
 Route::post('/inbound-emails-hook', [ApiController::class, 'inboundEmailsHook']);
+Route::post('/followups/emails/events/{quoteTypeId}/{uuid}', [ApiController::class, 'logFollowUpEvent']);
 
 Route::prefix('v1')->group(function () {
 
