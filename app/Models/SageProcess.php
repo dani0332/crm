@@ -9,7 +9,7 @@ class SageProcess extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'insurance_provider_id', 'model_type', 'model_id', 'request', 'status'];
+    protected $fillable = ['user_id', 'insurance_provider_id', 'model_type', 'model_id', 'request', 'message', 'status'];
 
     public function model()
     {
