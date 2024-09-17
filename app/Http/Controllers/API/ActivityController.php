@@ -2,12 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Enums\ActivityTypeEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ActivityApiRequest;
 use App\Http\Requests\ActivityGetApiRequest;
 use App\Services\ActivitiesService;
-use Illuminate\Support\Facades\DB;
 
 class ActivityController extends Controller
 {
