@@ -1396,7 +1396,7 @@ class SendEmailCustomerService extends BaseService
             'workflowType' => WorkflowTypeEnum::TRAVEL_SIC_FOLLOWUPS,
         ];
     }
-    
+
     public function sendSICDedicatedEmail($lead, $quoteType)
     {
         $url = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL);
@@ -1411,6 +1411,7 @@ class SendEmailCustomerService extends BaseService
         $filename = basename($url);
         $encoded_filename = urlencode($filename);
         $encoded_url = str_replace($filename, $encoded_filename, $url);
+
         return $encoded_url;
     }
 }
