@@ -117,6 +117,11 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                     $response = Ken::request('/get-health-quote-plans-order-priority', 'post', [
                         'quoteUID' => $healthQuote->uuid,
                     ]);
+
+                    if (empty($response['plans'])) {
+                        info($logPrefix . 'noPlansReturned-UUID-' . $capiResponse->quoteUID . '-' . json_encode($response));
+                        return false;
+                    }
                     $plansArray = [];
                     foreach ($response['plans'] as $item) {
                         $planObj = new \stdClass;
@@ -155,8 +160,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 }
                 $emailData->subject = $customerName . "'s" . ' Health Insurance with Alfred ' . $healthQuote->code;
                 $emailData->customerName = $customerName;
-                $emailData->customerEmail = 'nouman.hussain@myalfred.com';
-                // $emailData->customerEmail =  $healthQuote->email;
+                $emailData->customerEmail =  $healthQuote->email;
                 $emailData->templateId = (int) $emailTemplateId;
 
                 $emailData->tag = 'health-revival-initial-email';
