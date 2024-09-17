@@ -30,8 +30,11 @@ class HealthAllocationService extends AllocationService
 {
     public function fetchLead($quoteId, $overrideAdvisorId)
     {
+        $exemptedLeadSources = [LeadSourceEnum::REVIVAL];
+
         $healthQuoteQuery = HealthQuote::where('uuid', $quoteId)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->whereNotIn('source', $exemptedLeadSources)
             ->whereNotNull('health_quote_request.price_starting_from');
 
         if (! $overrideAdvisorId) {
@@ -44,7 +47,7 @@ class HealthAllocationService extends AllocationService
     public function fetchReAssignmentLead($advisorId)
     {
         $from = now()->subDay()->setTime(12, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
-        info('leads will be picked up in reassignment from : '.$from);
+        info('leads will be picked up in reassignment from : ' . $from);
 
         $leads = HealthQuote::whereBetween('created_at', [$from, now()])
             ->whereNotNull('health_quote_request.price_starting_from')
@@ -100,10 +103,10 @@ class HealthAllocationService extends AllocationService
         if ($this->isSICLead($lead->uuid)) {
             $price = ! empty($lead->plan_id) && ! empty($lead->premium) ? $lead->premium : $lead->price_starting_from;
             $planStatus = ! empty($lead->plan_id) ? 'found' : 'not found';
-            info("Plan {$planStatus} for {$lead->uuid} with plan id: {$lead->plan_id} | premium: {$lead->premium} | Time: ".now());
+            info("Plan {$planStatus} for {$lead->uuid} with plan id: {$lead->plan_id} | premium: {$lead->premium} | Time: " . now());
         } else {
             $price = $lead->price_starting_from;
-            info("No SIC lead for {$lead->uuid} | plan id: {$lead->plan_id} | premium: {$lead->premium} | Time: ".now());
+            info("No SIC lead for {$lead->uuid} | plan id: {$lead->plan_id} | premium: {$lead->premium} | Time: " . now());
         }
 
         return $price;
@@ -124,7 +127,7 @@ class HealthAllocationService extends AllocationService
             $eligibleUser = $this->getAdvisorByStatus($status, $leadTeam);
 
             if ($eligibleUser) {
-                info('eligible user found for team : '.$leadTeam.' with status : '.$status.' and user id :'.$eligibleUser->user_id);
+                info('eligible user found for team : ' . $leadTeam . ' with status : ' . $status . ' and user id :' . $eligibleUser->user_id);
 
                 return User::where('id', $eligibleUser->user_id)->first();
             }
@@ -135,7 +138,7 @@ class HealthAllocationService extends AllocationService
 
     public function getAdvisorByStatus($status, $leadTeam)
     {
-        info('trying to get advisors for team : '.$leadTeam.' with current status as '.$status);
+        info('trying to get advisors for team : ' . $leadTeam . ' with current status as ' . $status);
 
         return User::join('lead_allocation as la', 'la.user_id', '=', 'users.id')
             ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
@@ -165,7 +168,7 @@ class HealthAllocationService extends AllocationService
         $quoteBatch = QuoteBatches::latest()->first();
         $lead->quote_batch_id = $quoteBatch->id;
         $lead->save();
-        info('Lead Id '.$lead->uuid.' assigned to advisor : '.$advisor->name.' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+        info('Lead Id ' . $lead->uuid . ' assigned to advisor : ' . $advisor->name . ' Quote Batch with ID: ' . $quoteBatch->id . ' and Name: ' . $quoteBatch->name);
 
         $previousAdvisorAssignedDate = $this->updateQuoteDetail($lead->id);
 
@@ -188,7 +191,7 @@ class HealthAllocationService extends AllocationService
 
     public function updateQuoteDetail($leadId)
     {
-        info('about to update health quote detail record for : '.$leadId);
+        info('about to update health quote detail record for : ' . $leadId);
 
         $quoteDetail = HealthQuoteRequestDetail::where('health_quote_request_id', $leadId)->first();
         $oldAdvisorAssignedDate = $quoteDetail->advisor_assigned_date ?? '';
