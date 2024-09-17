@@ -646,6 +646,14 @@ class ReportService extends BaseService
             $endDate = Carbon::parse($request->customDate[1])->endOfDay();
             $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startDate, $endDate]);
         }
+        if (isset($request->userIds)) {
+            $query->whereIn('advisor_id', $request->userIds);
+
+        }
+        if (isset($request->statusId)) {
+            $query->whereIn('quote_status_id', $request->statusId);
+
+        }
 
         return $query->simplePaginate(5)->withQueryString();
     }

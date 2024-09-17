@@ -2,12 +2,16 @@
 const props = defineProps({
   reportData: Object,
   defaultFilters: Object,
+    advisor: Array,
+    leadStatuses: Array,
+    fieldDisable: Boolean,
 });
 
 const loaders = reactive({
   table: false,
 });
 const notification = useToast();
+const page = usePage();
 
 // const { isRequired } = useRules();
 
@@ -19,6 +23,9 @@ const filters = reactive({
   customDate: [],
   teams: [],
   quoteType : '',
+    selectedAdvisor : '',
+    userIds:[],
+    statusId:[],
   page: 1,
 });
 
@@ -31,7 +38,6 @@ const teams = computed(() => {
 
 const onSubmit = isValid => {
   if (!isValid) return;
-    setUrl();
   filters.page = 1;
   router.visit(route('authorized-payment-summary'), {
     method: 'get',
@@ -192,6 +198,22 @@ function setUrl(advisor_id) {
         window.location.href = url;
     }
 }
+watch(
+    () => filters.quoteType,
+    (newQuoteType) => {
+        if (newQuoteType) {
+            onSubmit(true); // Call onSubmit with isValid as true
+        }
+    }
+);
+onMounted(() => {
+   if(props.advisor.length === 1){
+       let data = props.advisor.map(user => ({
+           value: user.name,
+       }))
+       filters.selectedAdvisor = data[0].value;
+   }
+});
 </script>
 <template>
   <Head title="Authorised Payment Report" />
@@ -211,11 +233,47 @@ function setUrl(advisor_id) {
         />
       </x-field>
         <x-select
+            v-if="fieldDisable"
             v-model="filters.quoteType"
             label="Line of Business"
             placeholder="Select Line of Business"
             :options="quoteTypesOptions"
         />
+        <div v-if="fieldDisable">
+            <ComboBox
+                v-model="filters.userIds"
+                label="Advisor"
+                placeholder="Search by Advisor"
+                :options="
+            props.advisor.original.advisors.map(team => ({
+              value: team.id,
+              label: team.name,
+            }))
+          "
+            />
+        </div>
+        <div v-else>
+            <x-input
+                v-model="filters.selectedAdvisor"
+                type="text"
+                label="Advisor"
+                placeholder="Search by Advisor"
+                disabled
+            />
+        </div>
+
+        <ComboBox
+            v-model="filters.statusId"
+            label="Lead Status"
+            placeholder="Search by Status"
+            :options="
+            props.leadStatuses.map(status => ({
+              value: status.id,
+              label: status.text,
+            }))
+          "
+        />
+
     </div>
     <div class="flex gap-3 pt-3">
       <x-button
@@ -291,8 +349,15 @@ function setUrl(advisor_id) {
     <template #item-advisor_name="{ advisor_name, advisor_id }">
       <div class="text-left">
           <a
+              v-if="fieldDisable"
               :href="url"
               @click.prevent="setUrl(advisor_id)"
+              class="text-black underline"
+          >
+              {{ advisor_name }}
+          </a>
+          <a
+              v-else
               class="text-black underline"
           >
               {{ advisor_name }}
