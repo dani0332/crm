@@ -170,10 +170,9 @@ function showCustomDate() {
   filters.expireDate = '';
   filters.thisWeek = [];
 }
-function setUrl(advisor_id) {
+function setUrl(advisor_id, quote_status_id) {
     let url = '';
 
-    // Check if filters.quoteType exists
     if (!this.filters || !this.filters.quoteType) {
         notification.error({
             title: 'Please select a line of business.',
@@ -185,24 +184,37 @@ function setUrl(advisor_id) {
             'Health Insurance': 'health',
             'Business Insurance': 'business',
             'Bike Insurance': 'bike',
+            'Life Insurance': 'life',
+            'Pet Insurance': 'pet',
+            'Jetski Insurance': 'jetski',
+            'Yacht Insurance': 'yacht',
+            'Travel Insurance': 'travel',
+            'Cycle Insurance': 'cycle',
+            'Home Insurance': 'home',
         };
+
+        const personalQuoteTypes = new Set([
+            'Bike Insurance',
+            'Jetski Insurance',
+            'Cycle Insurance',
+            'Pet Insurance',
+            'Yacht Insurance'
+        ]);
 
         const formattedQuoteType = quoteTypeMapping[this.filters.quoteType];
 
-        if (this.filters.quoteType === 'Bike Insurance') {
-            url = `/personal-quotes/${formattedQuoteType}?payment_status_id=4&advisor_id[]=${advisor_id}`;
-        } else {
-            url = `/quotes/${formattedQuoteType}?payment_status_id=4&advisor_id[]=${advisor_id}`;
-        }
+        const quoteStatusParams = quote_status_id.map(id => `quote_status_id[]=${id}`).join('&');
 
+        url = `/${personalQuoteTypes.has(this.filters.quoteType) ? 'personal-quotes' : 'quotes'}/${formattedQuoteType}?${quoteStatusParams}&advisor_id[]=${advisor_id}&segment_filter=all`;
         window.location.href = url;
     }
 }
+
 watch(
     () => filters.quoteType,
     (newQuoteType) => {
         if (newQuoteType) {
-            onSubmit(true); // Call onSubmit with isValid as true
+            onSubmit(true);
         }
     }
 );
@@ -233,7 +245,6 @@ onMounted(() => {
         />
       </x-field>
         <x-select
-            v-if="fieldDisable"
             v-model="filters.quoteType"
             label="Line of Business"
             placeholder="Select Line of Business"
@@ -351,7 +362,7 @@ onMounted(() => {
           <a
               v-if="fieldDisable"
               :href="url"
-              @click.prevent="setUrl(advisor_id)"
+              @click.prevent="setUrl(advisor_id , filters.statusId)"
               class="text-black underline"
           >
               {{ advisor_name }}

@@ -575,6 +575,7 @@ class ReportService extends BaseService
                     ->select(
                         'users.id as advisor_id',
                         'users.name as advisor_name',
+                        'quote_status_id',
                         DB::raw('COUNT(*) as total_leads'),
                         DB::raw('SUM('.$details['table'].'.premium) as total_premium'),
                         DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
@@ -583,11 +584,7 @@ class ReportService extends BaseService
                     ->leftJoin('payments as py', 'py.code', '=', $details['table'].'.code')
                     ->join('users', 'users.id', $details['table'].'.advisor_id');
 
-                if ($user->hasAnyRole([
-                    RolesEnum::CarAdvisor, RolesEnum::HealthAdvisor, RolesEnum::TravelAdvisor, RolesEnum::LifeAdvisor,
-                    RolesEnum::HomeAdvisor, RolesEnum::PetAdvisor, RolesEnum::BikeAdvisor, RolesEnum::CycleAdvisor,
-                    RolesEnum::YachtAdvisor, RolesEnum::JetskiAdvisor, RolesEnum::BusinessAdvisor,
-                ])) {
+                if ($user->isAdvisor()) {
                     $query->where($details['table'].'.advisor_id', $user->id);
                 } else {
                     $query->join('user_team', 'user_team.user_id', 'users.id')

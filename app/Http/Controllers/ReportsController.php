@@ -397,12 +397,7 @@ class ReportsController extends Controller
             })->toArray();
         }
         $fieldDisable = true;
-        if ($user->hasAnyRole([
-            RolesEnum::CarAdvisor, RolesEnum::HealthAdvisor, RolesEnum::TravelAdvisor, RolesEnum::LifeAdvisor,
-            RolesEnum::HomeAdvisor, RolesEnum::PetAdvisor, RolesEnum::BikeAdvisor, RolesEnum::CycleAdvisor,
-            RolesEnum::YachtAdvisor, RolesEnum::JetskiAdvisor, RolesEnum::BusinessAdvisor,
-        ])) {
-
+        if ($user->isAdvisor()) {
             $advisor = [
                 [
                     'id' => $user->id,
