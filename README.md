@@ -16,7 +16,7 @@ URLs:
 - [Laravel Code Standard Guide Lines](https://xqsit94.github.io/laravel-coding-guidelines/)
 - [Team Engineering Guide](https://github.com/InsuranceMarket-ae/engineering/wiki)
 
-Please make sure to go through the last two lines to familiarize yourself with the code quality guide before you start contributing..
+Please make sure to go through the last two lines to familiarize yourself with the code quality guide before you start contributing.
 
 ## Setting up Laravel
 

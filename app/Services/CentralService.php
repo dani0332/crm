@@ -9,6 +9,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -836,11 +837,11 @@ class CentralService
 
     public function lockTransactionStatus($quote, $quoteTypeId, $quoteStatuses)
     {
-        return $quoteStatuses; //Temporary return due to dependency on other enhancement
         $lockLeadStatus = $this->lockLeadSectionsDetails($quote);
-        if ($lockLeadStatus['lead_status']) {
+        if ($lockLeadStatus['lead_status'] || auth()->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE)) {
             return $quoteStatuses;
         }
+
         $lockedQuotesStatuses = [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued,
             QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked,
             QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued,
