@@ -644,7 +644,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     public function generateAndStoreBrokerInvoiceNumber($payment, $quoteType)
     {
         info('Payment  : '.$payment->code.' : fn : generateAndStoreBrokerInvoiceNumber');
-        $maxRetries = 3;
+        $maxRetries = 5;
         $attempts = 0;
         $response = ['status' => false, 'message' => ''];
         if ($payment->broker_invoice_number) {
