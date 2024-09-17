@@ -150,10 +150,10 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
                     $emailData->plans = $plansArray;
 
-                    $emailData->subject = $customerName . "'s" . ' Health Insurance with Alfred ' . $healthQuote->code;
+
                     info($logPrefix . 'emailData -' . json_encode($emailData));
                 }
-
+                $emailData->subject = $customerName . "'s" . ' Health Insurance with Alfred ' . $healthQuote->code;
                 $emailData->customerName = $customerName;
                 $emailData->customerEmail = 'nouman.hussain@myalfred.com';
                 // $emailData->customerEmail =  $healthQuote->email;
