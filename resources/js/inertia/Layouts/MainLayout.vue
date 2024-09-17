@@ -118,11 +118,10 @@ const urls = computed(() => {
               <x-tooltip>
                 <button
                   type="button"
-                  :title="
+                  class="text-primary-500 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg hover:bg-gray-500/5 focus:bg-primary-500/10 focus:outline-none transition"
+                  :aria-label="
                     minimizeSidebar ? 'Expand sidebar' : 'Minimize sidebar'
                   "
-                  class="text-primary-500 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg hover:bg-gray-500/5 focus:bg-primary-500/10 focus:outline-none transition"
-                  aria-label="Minimize sidebar"
                   @click.prevent="
                     minimizeSidebar = !minimizeSidebar;
                     openSidebar = false;
