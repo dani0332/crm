@@ -51,13 +51,13 @@ class SageProcessesCommand extends Command
 
                 if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST) {
                     $quote = $sageProcess->model;
-                    BookPolicyOnSageJob::dispatch($sageRequest, $quote, $request, $sageProcess)->onQueue('sage-book-policy');
+                    BookPolicyOnSageJob::dispatch($sageRequest, $quote, $request, $sageProcess)->onQueue('sage-processes');
                 }
 
                 if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_SEND_UPDATE_REQUEST) {
                     $preparedEndorsementData = $sageProcessRequest->endorsementPreparedData;
                     $quote = $sageProcess->model;
-                    SendUpdateSageJob::dispatch($request, $quote, $sageRequest, $preparedEndorsementData, $sageProcess)->onQueue('sage-book-endorsement');
+                    SendUpdateSageJob::dispatch($request, $quote, $sageRequest, $preparedEndorsementData, $sageProcess)->onQueue('sage-processes');
                 }
             }
         } else {
