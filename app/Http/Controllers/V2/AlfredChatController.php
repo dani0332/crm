@@ -375,7 +375,18 @@ class AlfredChatController extends Controller
         $modelType = (in_array(ucwords($modelType), newUi()) &&
         checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
 
-        $partialQuery = null;
+       
+        $aliases = [
+            CarQuote::class => ['query' => $this->carQuery, 'alias' => 'cqr'],  
+            HealthQuote::class => ['query' => $this->healthQuery, 'alias' => 'hqr'], 
+            TravelQuote::class => ['query' => $this->travelQuery, 'alias' => 'tqr'],
+        ];
+
+
+        $modelData = $aliases[$modelType] ?? $aliases[CarQuote::class]; 
+        $alias = $modelData['alias'];
+
+        $partialQuery = $modelData['query'];
         $quoteId = null;
         if ($request->has('quoteId') && $request->quoteId != null) {
             if (strpos($request->quoteId, '-') !== false) {
@@ -386,18 +397,8 @@ class AlfredChatController extends Controller
             }
         }
 
-        if ($modelType == CarQuote::class) {
-            $partialQuery = $this->carQuery->when(isset($quoteId) && $quoteId != '', function ($query) use ($quoteId) {
-                $query->where('cqr.uuid', $quoteId);
-            });
-        } elseif ($modelType == HealthQuote::class) {
-            $partialQuery = $this->healthQuery->when(isset($quoteId) && $quoteId != '', function ($query) use ($quoteId)  {
-                $query->where('hqr.uuid', $quoteId);
-            });
-        } elseif ($modelType == TravelQuote::class) {
-            $partialQuery = $this->travelQuery->when(isset($quoteId) && $quoteId != '', function ($query) use ($quoteId)  {
-                $query->where('tqr.uuid', $quoteId);
-            });
+        if (isset($quoteId) && $quoteId != '') {
+            $partialQuery->where("{$alias}.uuid", $quoteId);
         }
 
         if (isset($request->email) && $request->email != '') {
@@ -436,7 +437,7 @@ class AlfredChatController extends Controller
         }
 
         if (isset($request->payment_status_id) && $request->payment_status_id != '') {
-            $partialQuery->where('payment_status_id', $request->payment_status_id);
+            $partialQuery->where("{$alias}.payment_status_id", $request->payment_status_id);
         }
 
         if (in_array($modelType, [HealthQuote::class, CarQuote::class]) && isset($request->assigment_type) && $request->assigment_type != '') {
@@ -486,50 +487,12 @@ class AlfredChatController extends Controller
 
     public function createPipeline(Request $request, $itemIds, $type)
     {
-        $quoteId = $item->uuid ?? null;
-        $quoteType = $request->quoteType ?? 'CAR';
-        $pipeline = [];
-
-        if ($request->has('quoteId') && $request->quoteId != null) {
-            if (strpos($request->quoteId, '-') !== false) {
-                $quote = explode('-', $request->quoteId);
-                $quoteId = $quote[1];
-            } else {
-                $quoteId = $request->quoteId;
-            }
-        }
-
-        if ($request->get('quoteType')) {
-            $quoteType = strtoupper($request->quoteType);
-        }
-
         $pipeline[] = [
             '$match' => [
                 'quote_id' => ['$in' => $itemIds],
             ],
         ];
 
-        if (isset($quoteType) && $quoteType != null) {
-            $pipeline[] = ['$match' => ['quote_type' => $quoteType]];
-        }
-
-        if (isset($quoteId) && $quoteId != null) {
-            $pipeline[] = ['$match' => ['quote_id' => $quoteId]];
-        }
-
-        if ($request->has('start_date') && $request->start_date != null && $request->has('end_date') && $request->end_date != null) {
-            $start_date = Carbon::createFromFormat('Y-m-d', Carbon::parse($request->start_date)->format('Y-m-d'))->startOfDay()->toIso8601String();
-            $end_date = Carbon::createFromFormat('Y-m-d', Carbon::parse($request->end_date)->format('Y-m-d'))->endOfDay()->toIso8601String();
-            $pipeline[] = ['$match' => ['created_at' => ['$gte' => $start_date, '$lte' => $end_date]]];
-        }
-
-        if($request->email == null && $request->mobile_no == null && $quoteId == null  && empty($request->start_date) && empty($request->end_date)) {
-            // Default to last 30 days if no dates are provided
-            $dateFrom = now()->subDays(30)->startOfDay();
-            $dateTo = now()->endOfDay();
-
-            $pipeline[] = ['$match' => ['created_at' => ['$gte' => $dateFrom, '$lte' => $dateTo]]];
-        }
 
         if ($type === 'chat') {
             $pipeline[] = [
