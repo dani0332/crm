@@ -583,6 +583,11 @@ class SageApiService
         $quoteTypeId = $sageRequest->quoteTypeId;
         $userId = $quote->userId;
 
+        $sageLogArray = $quote->sageApiLogs->keyBy('step')->toArray();
+        $payment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
+        $paymentSplits = $payment->paymentSplits;
+        $quote->userId = $sageRequest->userId;
+
         $isPolicyBookedOnSage = QuoteTag::where([
             'quote_type_id' => $quoteTypeId,
             'quote_uuid' => $quote->uuid,
@@ -591,10 +596,6 @@ class SageApiService
         ])->count();
 
         if (! $isPolicyBookedOnSage) {
-            $sageLogArray = $quote->sageApiLogs->keyBy('step')->toArray();
-            $payment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
-            $paymentSplits = $payment->paymentSplits;
-            $quote->userId = $sageRequest->userId;
 
             info('################################## Sage Book Policy started for : '.$quote->code.' ##################################');
             info('Sage API : Payment frequency : '.$payment->frequency.' for '.$quote->code);
