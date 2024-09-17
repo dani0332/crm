@@ -275,7 +275,7 @@ class EmbeddedProductRepository extends BaseRepository
     {
         $canSend = false;
         if ($productCategory == EpCategoryEnum::BOLT_ON) {
-            if (in_array($quoteStatusId, canSendDocumentEnums())) {
+            if (in_array($quoteStatusId, $this->canSendDocumentEnums())) {
                 if ($transaction->isNotEmpty()) {
                     $canSend = true;
                 }
@@ -287,6 +287,17 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         return $canSend;
+    }
+
+    public function canSendDocumentEnums(): array
+    {
+        return [
+            QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued,
+        ];
     }
 
     public function fetchSendDocumentsByLead($leadId, $modelType, $epId = null)

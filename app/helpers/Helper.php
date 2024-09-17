@@ -1235,17 +1235,3 @@ if (! function_exists('isVatApplied')) {
         return false;
     }
 }
-
-if (! function_exists('canSendDocumentEnums')) {
-    function canSendDocumentEnums(): array
-    {
-        return [
-            QuoteStatusEnum::PolicySentToCustomer,
-            QuoteStatusEnum::PolicyBooked,
-            QuoteStatusEnum::CancellationPending,
-            QuoteStatusEnum::PolicyCancelled,
-            QuoteStatusEnum::PolicyCancelledReissued,
-        ];
-    }
-}
-
