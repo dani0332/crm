@@ -1410,6 +1410,7 @@ class SendEmailCustomerService extends BaseService
     {
         $fileName = basename($url);
         $encodedFileName = urlencode($fileName);
+
         return str_replace($fileName, $encodedFileName, $url);
     }
 }
