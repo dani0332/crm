@@ -29,7 +29,7 @@ class SageProcessesCommand extends Command
      */
     public function handle()
     {
-        $this->info('cmd:SageProcessesCommand - Policy Booking Started');
+        info('cmd:SageProcessesCommand - Policy Booking Started');
 
         $insuranceProvidersProcessingStatus = SageProcess::where('status', SageEnum::SAGE_PROCESS_PROCESSING_STATUS)->pluck('insurance_provider_id')->toArray();
 
@@ -44,7 +44,7 @@ class SageProcessesCommand extends Command
                     ->where('status', SageEnum::SAGE_PROCESS_PENDING_STATUS)
                     ->orderBy('created_at')
                     ->first();
-                $this->info('cmd:SageProcessesCommand - Processing Sage Process ID: '.$sageProcess->id.' for Insurance Provider ID: '.$insuranceProvider);
+                info('cmd:SageProcessesCommand - Processing Sage Process ID: '.$sageProcess->id.' for Insurance Provider ID: '.$insuranceProvider);
                 $sageProcessRequest = json_decode($sageProcess->request);
                 $sageRequest = $sageProcessRequest->sagePayload;
                 $request = $sageProcessRequest->requestPayload;
@@ -61,9 +61,9 @@ class SageProcessesCommand extends Command
                 }
             }
         } else {
-            $this->info('cmd:SageProcessesCommand - No Sage Process meet the selection criteria / already sage processes are being processed against all insurance providers');
+            info('cmd:SageProcessesCommand - No Sage Process meet the selection criteria / already sage processes are being processed against all insurance providers');
         }
 
-        $this->info('cmd:SageProcessesCommand - Sage Policy Booking Command Ended');
+        info('cmd:SageProcessesCommand - Sage Policy Booking Command Ended');
     }
 }
