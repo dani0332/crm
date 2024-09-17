@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\API\ActivityController;
 use App\Http\Controllers\API\ApiController;
 use App\Http\Controllers\API\V1\CarQuoteController;
 use App\Http\Controllers\API\V1\EmbeddedProductController;
@@ -53,6 +54,7 @@ Route::prefix('v1')->group(function () {
 
     Route::get('quotes/car/{uuid}', [CarQuoteController::class, 'show']);
     Route::post('quotes/send-ep-certificate', [EmbeddedProductController::class, 'sendDocument'])->name('sendDocument');
+    Route::post('activities/create', [ActivityController::class, 'createActivity'])->name('createActivity');
+    Route::get('activities', [ActivityController::class, 'getActivity'])->name('getActivity');
 });
-
 Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);
