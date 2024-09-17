@@ -348,7 +348,7 @@ class SendUpdateLogController extends Controller
         return response()->json($reversalEntries);
     }
 
-    public function sendUpdateCustomerValidation(SendUpdateCustomerValidationRequest $sendUpdateCustomerValidationRequest)
+    public function sendUpdateCustomerValidation(SendUpdateCustomerValidationRequest $sendUpdateCustomerValidationRequest): \Illuminate\Http\JsonResponse
     {
         $sendUpdateCustomerValidatedRequest = $sendUpdateCustomerValidationRequest->validated();
         $message = app(SendUpdateLogService::class)->getSendToCustomerValidation($sendUpdateCustomerValidatedRequest);
@@ -364,7 +364,7 @@ class SendUpdateLogController extends Controller
         return response()->json($response);
     }
 
-    public function sendUpdateToCustomer(UpdateToCustomerRequest $updateToCustomerRequest)
+    public function sendUpdateToCustomer(UpdateToCustomerRequest $updateToCustomerRequest): \Illuminate\Http\JsonResponse
     {
         $suEmailProcess = SendUpdateLogRepository::sendUpdateToCustomer($updateToCustomerRequest->validated());
 
@@ -397,18 +397,6 @@ class SendUpdateLogController extends Controller
 
     public function sendUpdate(SendUpdateRequest $sendUpdateRequest): \Illuminate\Http\JsonResponse
     {
-        //        $sageProcess = SageProcess::where('id', 21)->first();
-        //        $sageProcessRequest = json_decode($sageProcess->request);
-        //
-        //        $response = (new SageApiService)->bookEndorsementOnSage([
-        //            $sageProcessRequest->requestPayload,
-        //            $sageProcess->model,
-        //            $sageProcessRequest->sagePayload,
-        //            $sageProcessRequest->endorsementPreparedData,
-        //        ]);
-        //
-        //        dd($response);
-
         $sendUpdateLog = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
         $endorsementResponse = app(SendUpdateLogService::class)->preparedDataForEndorsement($sendUpdateRequest);
 

@@ -57,8 +57,7 @@ class SageProcessesCommand extends Command
                 if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_SEND_UPDATE_REQUEST) {
                     $preparedEndorsementData = $sageProcessRequest->endorsementPreparedData;
                     $quote = $sageProcess->model;
-                    //                    TODO:: Need to update queue name
-                    SendUpdateSageJob::dispatch($request, $quote, $sageRequest, $preparedEndorsementData, $sageProcess)->onQueue('send_update_to_customer');
+                    SendUpdateSageJob::dispatch($request, $quote, $sageRequest, $preparedEndorsementData, $sageProcess)->onQueue('sage-book-endorsement');
                 }
             }
         } else {

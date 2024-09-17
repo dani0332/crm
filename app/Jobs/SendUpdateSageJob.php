@@ -57,9 +57,8 @@ class SendUpdateSageJob implements ShouldQueue
         ]);
 
         if (! $response['status']) {
-            $this->updateSageProcessStatus(SageEnum::SAGE_PROCESS_FAILED_STATUS);
+            $this->updateSageProcessStatus(SageEnum::SAGE_PROCESS_FAILED_STATUS, $response['message']);
             $this->sendUpdateLog->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED]);
-            //            TODO:: Need to add message why it's failed
         } else {
             $this->updateSageProcessStatus(SageEnum::SAGE_PROCESS_COMPLETED_STATUS);
         }

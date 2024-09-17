@@ -687,8 +687,15 @@ class SendUpdateLogService
     private function preparedDetailsForEndorsement($sendUpdateRequest, $quote, $sendUpdateLog): array
     {
         $paymentBeforeUpdate = Payment::where('send_update_log_id', $sendUpdateRequest->sendUpdateId)->first();
-        //        Update Send update booking details in Payments just for double check
-        $this->updatePaymentDetails($paymentBeforeUpdate, $sendUpdateLog, true);
+
+        if (empty($sendUpdateLog->broker_invoice_number) && empty($sendUpdateLog->invoice_description)) {
+            $this->updateInsurerDetails($sendUpdateRequest, $sendUpdateLog);
+        }
+
+        if ($paymentBeforeUpdate) {
+            $this->updatePaymentDetails($paymentBeforeUpdate, $sendUpdateLog, true);
+        }
+
         $payment = Payment::with('paymentSplits')->where(['send_update_log_id' => $sendUpdateRequest->sendUpdateId])->first();
         if ($payment) {
             info('fn:preparedDetailsForEndorsement - Fetching Payment details from Send Update. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
@@ -783,8 +790,8 @@ class SendUpdateLogService
         $quoteDetails = $quoteModelObject::where('id', $sendUpdateRequest->quoteRefId)->first();
         $preparedDetailsForEndorsement = $this->preparedDetailsForEndorsement($sendUpdateRequest, $quoteDetails, $sendUpdateLog);
 
-        $paymentInsurerTaxInvoiceNumber = $preparedDetailsForEndorsement['payment']->insurer_tax_number;
-        if (empty($paymentInsurerTaxInvoiceNumber)) {
+        $paymentInsurerInvoiceNumber = ($preparedDetailsForEndorsement['payment']->insurer_tax_number ?? $preparedDetailsForEndorsement['payment']->insurer_commmission_invoice_number) ?? null;
+        if (empty($paymentInsurerInvoiceNumber)) {
             logger()->error('fn:preparedDataForEndorsement - Payment not successfully updated - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
 
             return ['status' => false, 'message' => 'Payment not successfully updated'];
@@ -874,26 +881,25 @@ class SendUpdateLogService
         return $response;
     }
 
-    public function updatesMoveToLead($preparedDataForERP)
+    public function updatesMoveToLead($preparedData)
     {
-        dd($preparedDataForERP);
-        $endorsementDetails = $preparedDataForERP;
-        $categoryCode = $preparedDataForERP['sendUpdateLog']->category?->code;
-        $optionCode = $preparedDataForERP['sendUpdateLog']->option?->code;
-        $quoteModel = $this->getModelObject($preparedDataForERP['quoteType']);
-        $quote = $quoteModel::where('id', $preparedDataForERP['quoteRefId'])->with(['payments' => function ($query) {
+        [$request, $sendUpdateLog, $preparedData] = $preparedData;
+        $categoryCode = $sendUpdateLog?->category?->code;
+        $optionCode = $sendUpdateLog?->option?->code;
+        $quoteModel = $this->getModelObject($request->quoteType);
+        $quote = $quoteModel::where('id', $request->quoteRefId)->with(['payments' => function ($query) {
             $query->whereNull('send_update_log_id');
         }])->first();
         $currentDate = now();
 
         try {
             DB::beginTransaction();
-            info('Book Update - Moving Send Update impact to Main Lead. QuoteType: '.$preparedDataForERP['quoteType'].' - QuoteUUID: '.$preparedDataForERP['quoteDetails']->uuid.' - SendUpdateUUID: '.$preparedDataForERP['sendUpdateLog']->uuid);
+            info('Book Update - Moving Send Update impact to Main Lead. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
 
-            $payment = Payment::where('send_update_log_id', $preparedDataForERP['sendUpdateLog']->id)->first();
+            $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
             if (in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPD])) {
                 if ($payment) {
-                    info('Book Update - Updating Payment Details for Main Lead - QuoteType: '.$preparedDataForERP['quoteType'].' - QuoteUUID: '.$preparedDataForERP['quoteDetails']->uuid.' - SendUpdateUUID: '.$preparedDataForERP['sendUpdateLog']->uuid);
+                    info('Book Update - Updating Payment Details for Main Lead - QuoteType: '.$request->quoteType.' - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
                     $payment->update([
                         'paymentable_id' => $quote->id,
                         'paymentable_type' => ltrim($quoteModel, '\\'),
@@ -902,14 +908,14 @@ class SendUpdateLogService
 
                 // Cases for Endorsment Financial Start
                 if ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::PPE) {
-                    info('Book Update - Updating Policy Expiry Date for Main Lead - QuoteType: '.$preparedDataForERP['quoteType'].' - QuoteUUID: '.$preparedDataForERP['quoteDetails']->uuid.' - SendUpdateUUID: '.$preparedDataForERP['sendUpdateLog']->uuid);
-                    $quote->update(['policy_expiry_date' => $preparedDataForERP['sendUpdateLog']->expiry_date]);
+                    info('Book Update - Updating Policy Expiry Date for Main Lead - QuoteType: '.$request->quoteType.' - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+                    $quote->update(['policy_expiry_date' => $sendUpdateLog->expiry_date]);
                 }
 
-                if ($preparedDataForERP['quoteType'] == quoteTypeCode::Car && $categoryCode == SendUpdateLogStatusEnum::EF) {
+                if ($request->quoteType == quoteTypeCode::Car && $categoryCode == SendUpdateLogStatusEnum::EF) {
                     // Addons for Car move to main lead
-                    if (! empty($preparedDataForERP['sendUpdateLog']->car_addons) && $optionCode == SendUpdateLogStatusEnum::AOCOV) {
-                        foreach ($preparedDataForERP['sendUpdateLog']->car_addons as $addonId) {
+                    if (! empty($sendUpdateLog->car_addons) && $optionCode == SendUpdateLogStatusEnum::AOCOV) {
+                        foreach ($sendUpdateLog->car_addons as $addonId) {
                             $plansAddons = CarAddOnOption::where('addon_id', $addonId)->get();
                             foreach ($plansAddons as $planAddon) {
                                 CarQuoteRequestAddOn::updateOrCreate([
@@ -924,13 +930,13 @@ class SendUpdateLogService
                         }
                     }
                     // Emirate of Registration for Car move to main lead
-                    elseif (! empty($preparedDataForERP['sendUpdateLog']->emirates_id) && $optionCode == SendUpdateLogStatusEnum::COE) {
-                        $quote->update(['emirate_of_registration_id' => $preparedDataForERP['sendUpdateLog']->emirates_id]);
-                        info('emirate id : '.$preparedDataForERP['sendUpdateLog']->emirates_id);
+                    elseif (! empty($sendUpdateLog->emirates_id) && $optionCode == SendUpdateLogStatusEnum::COE) {
+                        $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_id]);
+                        info('emirate id : '.$sendUpdateLog->emirates_id);
                     }
                     // Seat Capacity for Car move to main lead
-                    elseif (! empty($preparedDataForERP['sendUpdateLog']->seating_capacity) && $preparedDataForERP['sendUpdateLog']->seating_capacity != 0 && $optionCode == SendUpdateLogStatusEnum::CISC) {
-                        $quote->update(['seat_capacity' => $preparedDataForERP['sendUpdateLog']->seating_capacity]);
+                    elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0 && $optionCode == SendUpdateLogStatusEnum::CISC) {
+                        $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
                     }
                 }
                 // Cases for Endorsement Financial End
@@ -942,7 +948,7 @@ class SendUpdateLogService
                         // 'quote_status_id' => QuoteStatusEnum::PolicyCancelled, // Below code overrides status, it should be PolicyCancelledReissued not PolicyCancelled
                         'quote_batch_id' => null,
                     ]);
-                    (new AllocationService)->deductLeadAllocationCount($quoteModel, $preparedDataForERP['quoteDetails']->uuid);
+                    (new AllocationService)->deductLeadAllocationCount($quoteModel, $quote->uuid);
                 } elseif ($categoryCode == SendUpdateLogStatusEnum::CI || ($categoryCode == SendUpdateLogStatusEnum::EF && $optionCode == SendUpdateLogStatusEnum::MPC)) {
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyCancelled,
@@ -951,18 +957,15 @@ class SendUpdateLogService
                 // Cases for Cancel Inception and Cancel Inception Reissue End
 
                 // Cases for Correct Policy Details Start
-                if ($categoryCode == SendUpdateLogStatusEnum::CPD && (
-                    $preparedDataForERP['reverseInvoice'] == $quote->payments->value('insurer_tax_number')
+                if ($categoryCode == SendUpdateLogStatusEnum::CPD && ($request->reversalInvoice == $quote->payments->value('insurer_tax_number')
                 )) {
-                    info('Book Update - Updating Policy and Booking Details for Main Lead - QuoteType: '.$preparedDataForERP['quoteType'].' - QuoteUUID: '.$preparedDataForERP['quoteDetails']->uuid.' - SendUpdateUUID: '.$preparedDataForERP['sendUpdateLog']->uuid);
-                    info('Book Update - Before Policy Details update on Main Lead - PolicyNumber: '.$quote->policy_number.' - PolicyStartDate: '.$quote->policy_start_date.' - PolicyExpiryDate: '.$quote->policy_expiry_date.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+                    info('Book Update - Updating Policy and Booking Details for Main Lead - QuoteType: '.$request->quoteType.' - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
                     $quote->update([
-                        'policy_number' => $endorsementDetails->policy_number,
-                        'policy_start_date' => $endorsementDetails->start_date,
-                        'policy_expiry_date' => $endorsementDetails->expiry_date,
+                        'policy_number' => $sendUpdateLog->policy_number,
+                        'policy_start_date' => $sendUpdateLog->start_date,
+                        'policy_expiry_date' => $sendUpdateLog->expiry_date,
                         'policy_booking_date' => $currentDate,
                     ]);
-                    info('Book Update - After Policy Details updated on Main Lead - PolicyNumber: '.$sendUpdateLog->policy_number.' - PolicyStartDate: '.$sendUpdateLog->start_date.' - PolicyExpiryDate: '.$sendUpdateLog->expiry_date.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
                 }
                 // Cases for Correct Policy Details End
             }
@@ -977,26 +980,22 @@ class SendUpdateLogService
                 }
             }
 
-            // Temp Log just for Debugging
-            info('Book Update - Before Endorsement update - PolicyNumber: '.$sendUpdateLog->policy_number.' - PolicyStartDate: '.$sendUpdateLog->start_date.' - PolicyExpiryDate: '.$sendUpdateLog->expiry_date.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-
-            $preparedDataForERP['sendUpdateLog']->update([
+            $sendUpdateLog->update([
                 'booking_date' => $currentDate,
                 'transaction_payment_status' => $status ?? '',
                 'status' => SendUpdateLogStatusEnum::UPDATE_BOOKED,
             ]);
-            info('Book Update - After Endorsement updated - PolicyNumber: '.$sendUpdateLog->policy_number.' - PolicyStartDate: '.$sendUpdateLog->start_date.' - PolicyExpiryDate: '.$sendUpdateLog->expiry_date.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
 
             DB::commit();
 
         } catch (\Exception $exception) {
             DB::rollBack();
-            logger()->error('Book Update - Error while moving updates to main lead - QuoteType: '.$preparedDataForERP['quoteType'].' - QuoteUUID: '.$preparedDataForERP['quoteDetails']->uuid.' - SendUpdateUUID: '.$preparedDataForERP['sendUpdateLog']->uuid.' - Exception: '.$exception->getMessage());
+            logger()->error('Book Update - Error while moving updates to main lead - QuoteType: '.$request->quoteType.' - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid.' - Exception: '.$exception->getMessage());
 
             return ['status' => false, 'message' => 'Update not booked'];
         }
 
-        info('Book Update - Send Update impact successfully moved - QuoteType: '.$preparedDataForERP['quoteType'].' - QuoteUUID: '.$preparedDataForERP['quoteDetails']->uuid.' - SendUpdateUUID: '.$preparedDataForERP['sendUpdateLog']->uuid);
+        info('Book Update - Send Update impact successfully moved - QuoteType: '.$request->quoteType.' - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
 
         return ['status' => true, 'message' => SendUpdateLogStatusEnum::UPDATE_BOOKED];
     }

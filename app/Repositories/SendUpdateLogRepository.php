@@ -292,8 +292,8 @@ class SendUpdateLogRepository extends BaseRepository
             } else {
                 $response[] = ['status' => 200, 'message' => 'Send Update to customer email is being scheduled'];
             }
-            //            TODO:: Need to set this job to default queue
-            dispatch(new SendUpdateToCustomerJob($sendUpdateLog, $request))->onQueue('send_update_to_customer');
+
+            dispatch(new SendUpdateToCustomerJob($sendUpdateLog, $request));
             info('fn:SendUpdateToCustomer - Process End - Send Update UUID: '.$sendUpdateLog->uuid.' - Status updating to '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
         } catch (\Exception $ex) {
             logger()->error('fn:SendUpdateToCustomer - Failed - Send Update UUID: '.$sendUpdateLog->uuid.' - Error : '.json_encode($ex->getMessage()));

@@ -48,15 +48,13 @@ class SendUpdateToCustomerJob implements ShouldQueue
             @[$templateId, $emailData, $tag, $quoteTypeId] = $sendUpdateLogServices->sendUpdateToCustomerEmailData($this->sendUpdate, $this->payload['action']);
             if (! empty($templateId)) {
                 info('job:SendUpdateToCustomerJob - Send Update UUID: '.$sendUpdateLog->uuid.' - Job Email Data '.json_encode($emailData));
-                //                TODO:: Uncomment below line after testing is done
-                //                $response = $sendEmailCustomerService->sendUpdateToCustomerEmail($templateId, $emailData, $tag, $quoteTypeId);
-                //                info('job: SendUpdateToCustomerJob - Send Update UUID: '.$sendUpdateLog->uuid.' - Job Response '.json_encode($response));
+                $response = $sendEmailCustomerService->sendUpdateToCustomerEmail($templateId, $emailData, $tag, $quoteTypeId);
+                info('job: SendUpdateToCustomerJob - Send Update UUID: '.$sendUpdateLog->uuid.' - Job Response '.json_encode($response));
 
-                //                TODO:: Remove true from if condition after testing is done and add $response == 201
-                if (true) {
+                if ($response == 201) {
                     info('job:SendUpdateToCustomerJob - Updating status to: '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER.' - Send Update UUID: '.$sendUpdateLog->uuid);
                     $sendUpdateLog->update([
-                        //                        'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
+                        'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
                         'is_email_sent' => true,
                     ]);
                     $sendUpdateLog->refresh();
