@@ -27,9 +27,10 @@ const dateFormat = date => {
       return '-';
     }
 
-    if (date.includes(':')) {
+    if (date.includes(':') && !date.includes(' ')) {
       return date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
     }
+
     const formattedDate = parseDate(date);
     return formattedDate;
   } catch (error) {

@@ -1242,7 +1242,7 @@ const onAddUpdate = () => {
                 <x-field label="Transaction Type">
                   <x-input
                     type="text"
-                    :value="quote.transaction_type_text"
+                    v-model="quote.transaction_type_text"
                     class="w-full"
                     :disabled="true"
                   />
