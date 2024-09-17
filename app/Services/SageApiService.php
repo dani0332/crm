@@ -595,9 +595,10 @@ class SageApiService
             'value' => 1,
         ])->count();
 
+        info('################################## Sage Book Policy started for : '.$quote->code.' ##################################');
+
         if (! $isPolicyBookedOnSage) {
 
-            info('################################## Sage Book Policy started for : '.$quote->code.' ##################################');
             info('Sage API : Payment frequency : '.$payment->frequency.' for '.$quote->code);
 
             //Create AR Commission and Premium Invoice
