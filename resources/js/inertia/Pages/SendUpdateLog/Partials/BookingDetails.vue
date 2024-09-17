@@ -59,7 +59,7 @@ const props = defineProps({
     type: String,
     default: '',
   },
-    isEditDisabledForQueuedBooking: Boolean
+  isEditDisabledForQueuedBooking: Boolean,
 });
 
 const state = reactive({
@@ -727,20 +727,30 @@ const sendUpdateValidation = () => {
     })
     .then(response => {
       if (response.status == 200) {
-        if (response.data.action === sendUpdateStatusEnum.ACTION_SNBU && sendUpdateValidationURL.value === 'send-update-customer-validation') {
-            isSendUpdateWithEmail.value = true;
+        if (
+          response.data.action === sendUpdateStatusEnum.ACTION_SNBU &&
+          sendUpdateValidationURL.value === 'send-update-customer-validation'
+        ) {
+          isSendUpdateWithEmail.value = true;
         }
-        if (props.updateBtn === sendUpdateStatusEnum.SU || response.data.action === sendUpdateStatusEnum.ACTION_SNBU) {
-            if (response.data.insufficientPaymentCheck == true) {
-                insuficientPaymentConfirmation(response);
-            } else if (response.data.insufficientPaymentCheck == false) {
-                if (response.data.action === sendUpdateStatusEnum.ACTION_SNBU && sendUpdateValidationURL.value === 'send-update-customer-validation') {
-                    modals.sendConfirm = true;
-                    isStating.value = response.data?.message;
-                } else {
-                    attestRecord();
-                }
+        if (
+          props.updateBtn === sendUpdateStatusEnum.SU ||
+          response.data.action === sendUpdateStatusEnum.ACTION_SNBU
+        ) {
+          if (response.data.insufficientPaymentCheck == true) {
+            insuficientPaymentConfirmation(response);
+          } else if (response.data.insufficientPaymentCheck == false) {
+            if (
+              response.data.action === sendUpdateStatusEnum.ACTION_SNBU &&
+              sendUpdateValidationURL.value ===
+                'send-update-customer-validation'
+            ) {
+              modals.sendConfirm = true;
+              isStating.value = response.data?.message;
+            } else {
+              attestRecord();
             }
+          }
         } else {
           modals.sendConfirm = true;
           isStating.value = response.data?.message;
@@ -1524,21 +1534,24 @@ watch(
         </div>
         <x-divider class="my-4 mt-10" />
         <div class="flex justify-end gap-2">
-            <template v-if="!state.reversalSectionEdit">
-                <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
-                    <x-button size="sm" @click="onReversalEdit" :disabled="props.isEditDisabledForQueuedBooking">
-                        Edit
-                    </x-button>
-                    <template #tooltip>
-                    <span class="custom-tooltip-content">
-                      No further action can be taken on Update Booking Queued or Failed status.
-                    </span>
-                    </template>
-                </x-tooltip>
-                <x-button v-else size="sm" @click="onReversalEdit">
-                    Edit
-                </x-button>
-            </template>
+          <template v-if="!state.reversalSectionEdit">
+            <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
+              <x-button
+                size="sm"
+                @click="onReversalEdit"
+                :disabled="props.isEditDisabledForQueuedBooking"
+              >
+                Edit
+              </x-button>
+              <template #tooltip>
+                <span class="custom-tooltip-content">
+                  No further action can be taken on Update Booking Queued or
+                  Failed status.
+                </span>
+              </template>
+            </x-tooltip>
+            <x-button v-else size="sm" @click="onReversalEdit"> Edit </x-button>
+          </template>
           <template v-else>
             <x-button
               size="sm"
@@ -2138,19 +2151,24 @@ watch(
               :permissionsEnum="page.props.permissionsEnum"
             />
             <template v-if="!state.isEdit">
-                    <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
-                        <x-button size="sm" @click="checkSectionTwoEdit" :disabled="props.isEditDisabledForQueuedBooking">
-                            Edit
-                        </x-button>
-                        <template #tooltip>
-                    <span class="custom-tooltip-content">
-                      No further action can be taken on Update Booking Queued or Failed status.
-                    </span>
-                        </template>
-                    </x-tooltip>
-                    <x-button v-else size="sm" @click="checkSectionTwoEdit">
-                        Edit
-                    </x-button>
+              <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
+                <x-button
+                  size="sm"
+                  @click="checkSectionTwoEdit"
+                  :disabled="props.isEditDisabledForQueuedBooking"
+                >
+                  Edit
+                </x-button>
+                <template #tooltip>
+                  <span class="custom-tooltip-content">
+                    No further action can be taken on Update Booking Queued or
+                    Failed status.
+                  </span>
+                </template>
+              </x-tooltip>
+              <x-button v-else size="sm" @click="checkSectionTwoEdit">
+                Edit
+              </x-button>
 
               <template v-if="isLackingPayment">
                 <x-tooltip>
@@ -2282,7 +2300,11 @@ watch(
             size="sm"
             color="error"
             :loading="isSendUpdateWithEmail ? isLoading : loader.sendUpdate"
-            @click.prevent="isSendUpdateWithEmail ? submitToCustomer(false) : sendUpdate(false)"
+            @click.prevent="
+              isSendUpdateWithEmail
+                ? submitToCustomer(false)
+                : sendUpdate(false)
+            "
           >
             Continue
           </x-button>

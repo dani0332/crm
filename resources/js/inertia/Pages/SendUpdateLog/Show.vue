@@ -37,7 +37,7 @@ const props = defineProps({
   },
   isPlanDetailAvailable: Boolean,
   quoteLink: String,
-  isEditDisabledForQueuedBooking: Boolean
+  isEditDisabledForQueuedBooking: Boolean,
 });
 
 const page = usePage();
@@ -213,20 +213,22 @@ const isLegacyPolicy = computed(() => {
 });
 
 const showBookingFailedAlert = () => {
-    if (props.isEditDisabledForQueuedBooking && props.sendUpdateLog?.status === props.sendUpdateStatusEnum.UPDATE_BOOKING_FAILED) {
-        notification.error({
-            title:
-                'Endorsement Booking Failed! Please contact finance',
-            position: 'top',
-            timeout: 30000,
-        });
-    }
+  if (
+    props.isEditDisabledForQueuedBooking &&
+    props.sendUpdateLog?.status ===
+      props.sendUpdateStatusEnum.UPDATE_BOOKING_FAILED
+  ) {
+    notification.error({
+      title: 'Endorsement Booking Failed! Please contact finance',
+      position: 'top',
+      timeout: 30000,
+    });
+  }
 };
 
 onBeforeMount(() => {
-    showBookingFailedAlert();
+  showBookingFailedAlert();
 });
-
 </script>
 
 <template>
@@ -463,21 +465,24 @@ onBeforeMount(() => {
           </dl>
         </div>
         <div class="flex justify-end">
-            <template v-if="!state.edit">
-                <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
-                    <x-button size="sm" @click="onEdit" :disabled="props.isEditDisabledForQueuedBooking">
-                        Edit
-                    </x-button>
-                    <template #tooltip>
-                    <span class="custom-tooltip-content">
-                      No further action can be taken on Update Booking Queued or Failed status.
-                    </span>
-                    </template>
-                </x-tooltip>
-                <x-button v-else size="sm" @click="onEdit">
-                    Edit
-                </x-button>
-            </template>
+          <template v-if="!state.edit">
+            <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
+              <x-button
+                size="sm"
+                @click="onEdit"
+                :disabled="props.isEditDisabledForQueuedBooking"
+              >
+                Edit
+              </x-button>
+              <template #tooltip>
+                <span class="custom-tooltip-content">
+                  No further action can be taken on Update Booking Queued or
+                  Failed status.
+                </span>
+              </template>
+            </x-tooltip>
+            <x-button v-else size="sm" @click="onEdit"> Edit </x-button>
+          </template>
           <template v-else>
             <x-button
               size="sm"
