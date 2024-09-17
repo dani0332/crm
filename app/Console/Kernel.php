@@ -62,6 +62,8 @@ class Kernel extends ConsoleKernel
         ->withoutOverlapping(1)->onOneServer()
         ->at('9:00');*/
 
+        $schedule->command('InstantAlfredNotification:cron')->everyMinute()->onOneServer()->withoutOverlapping();
+
         //send leads which are resubmitted for car sold approval yesterday
         $schedule->job((new CarSoldResubmissions))
             ->daily()
@@ -109,15 +111,15 @@ class Kernel extends ConsoleKernel
 
         // $schedule->command('alfred:followupEmails')->timezone('Asia/Dubai')->weekly()->mondays()->at('11:00')->onOneServer()->withoutOverlapping();
 
-        $schedule->command('CorplineDataMigration:cron')->timezone('Asia/Dubai')->dailyAt('12:20')
-            ->onOneServer()
-            ->withoutOverlapping()
-            ->onSuccess(function (Stringable $output) {
-                info('----------- Business Data Migrations Completed -----------'.$output);
-            })
-            ->onFailure(function (Stringable $output) {
-                info('----------- Business Data Migrations Failed -----------'.$output);
-            });
+        // $schedule->command('CorplineDataMigration:cron')->timezone('Asia/Dubai')->dailyAt('12:20')
+        //     ->onOneServer()
+        //     ->withoutOverlapping()
+        //     ->onSuccess(function (Stringable $output) {
+        //         info('----------- Business Data Migrations Completed -----------'.$output);
+        //     })
+        //     ->onFailure(function (Stringable $output) {
+        //         info('----------- Business Data Migrations Failed -----------'.$output);
+        //     });
     }
 
     /**
