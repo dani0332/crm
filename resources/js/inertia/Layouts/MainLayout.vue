@@ -29,6 +29,7 @@ const authorisePaymentCount = computed(() => page.props.authorisePaymentCount);
 const checkAuthUserRole = computed(() => page.props.checkAuthUserRole);
 const navLinks = computed(() => page.props.sidebar);
 const openSidebar = ref(false);
+const minimizeSidebar = ref(false);
 const bannerInfo = computed(() => {
   let { quote_route, total_count } = page.props.totalQuotesCount;
 
@@ -40,6 +41,7 @@ const bannerInfo = computed(() => {
 
 router.on('navigate', () => {
   openSidebar.value = false;
+  minimizeSidebar.value = false;
 });
 
 const params = useUrlSearchParams('history');
@@ -62,9 +64,8 @@ const urls = computed(() => {
 
 <template>
   <main class="flex w-full min-h-screen overflow-x-clip">
-    <div
-      :class="
-        openSidebar ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+    <div :class="
+        minimizeSidebar ? '-translate-x-full' : (openSidebar ? 'translate-x-0' : '-translate-x-full lg:translate-x-0')
       "
       class="fixed inset-y-0 left-0 z-30 flex h-dvh w-64 flex-col overflow-y-auto bg-gradient-to-b from-primary-600 to-primary-700 transition-all md:w-64"
     >
@@ -91,6 +92,21 @@ const urls = computed(() => {
       </aside>
     </div>
 
+    <div 
+    class="hidden lg:block absolute top-[60px]"
+    :class="!minimizeSidebar ? 'lg:pl-[var(--sidebar-width)]' : ''"
+    >
+      <button type="button"
+        class="bg-primary-700 color-white p-1"
+        aria-label="Minimize sidebar" @click.prevent="minimizeSidebar = !minimizeSidebar; openSidebar = false;">
+        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5">
+          </path>
+        </svg>
+      </button>
+    </div>
+
     <div
       v-if="openSidebar"
       class="bg-black/75 backdrop-blur-sm w-full h-full fixed inset-0 z-20 lg:hidden"
@@ -98,8 +114,8 @@ const urls = computed(() => {
     ></div>
 
     <XNotifications inject-key="toast">
-      <article
-        class="flex-col gap-y-6 w-screen flex-1 h-full transition-all lg:pl-[var(--sidebar-width)]"
+      <article :class="!minimizeSidebar ? 'lg:pl-[var(--sidebar-width)]' : ''"
+        class="flex-col gap-y-6 w-screen flex-1 h-full transition-all"
       >
         <header
           class="sticky top-0 z-40 flex h-20 w-full shrink-0 items-center border-b bg-white"
@@ -112,7 +128,7 @@ const urls = computed(() => {
                 type="button"
                 class="shrink-0 flex lg:hidden items-center justify-center w-10 h-10 text-primary-500 rounded-full hover:bg-gray-500/5 focus:bg-primary-500/10 focus:outline-none"
                 aria-label="Open sidebar"
-                @click.prevent="openSidebar = !openSidebar"
+                @click.prevent="openSidebar = !openSidebar; minimizeSidebar = false;"
               >
                 <svg
                   class="w-6 h-6"
