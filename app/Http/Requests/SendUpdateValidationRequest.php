@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
@@ -41,12 +42,18 @@ class SendUpdateValidationRequest extends FormRequest
         $validator->after(function ($validator) {
             $sendUpdateLog = SendUpdateLog::where('id', request()->sendUpdateId ?? '')->firstOrFail();
 
+            if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
+                $validator->errors()->add('error', 'Endorsement Booking Failed! Please contact finance');
+            }
+
+            if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED) {
+                $validator->errors()->add('error', 'Update booking already in queued');
+            }
+
             if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_BOOKED) {
                 return $validator->errors()->add('error', 'Update already booked');
             } elseif ($sendUpdateLog->status == SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS) {
                 $validator->errors()->add('error', 'Transaction approval is required');
-            } elseif ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED) {
-                $validator->errors()->add('error', 'Update booking already in queued');
             }
 
             $sendUpdateCategoryCode = $sendUpdateLog?->category->code ?? '';
@@ -132,8 +139,14 @@ class SendUpdateValidationRequest extends FormRequest
                     }
                 }
 
-                if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF &&
-                    ! in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) &&
+                $bypassStatuses = [
+                    SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
+                    SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED,
+                    SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED,
+                ];
+
+                if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF && $sendUpdateLog->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED &&
+                    ! in_array($sendUpdateLog->status, $bypassStatuses) &&
                     ! in_array($categorySubType, [ // TODO:: Add not condition need to verify
                         SendUpdateLogStatusEnum::MPC,
                         SendUpdateLogStatusEnum::MDOM,

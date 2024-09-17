@@ -37,6 +37,7 @@ const props = defineProps({
   },
   isPlanDetailAvailable: Boolean,
   quoteLink: String,
+  isEditDisabledForQueuedBooking: Boolean
 });
 
 const page = usePage();
@@ -47,10 +48,6 @@ const { isRequired } = useRules();
 const state = reactive({
   edit: false,
   redirectURL: '',
-});
-
-const isEditingBlocked = computed(() => {
-    return (props.sendUpdateLog.status === props.sendUpdateStatusEnum.UPDATE_BOOKING_QUEUED);
 });
 
 // as per the link 'Transaction Type' column -> https://docs.google.com/spreadsheets/d/1TE7RfMpEtL7kenl8s1DUVKRvP_DbUvCJ82XyCFYJ7Rw/edit#gid=803033517
@@ -214,6 +211,22 @@ const isLegacyPolicy = computed(() => {
     props.realQuote?.insly_id
   );
 });
+
+const showBookingFailedAlert = () => {
+    if (props.isEditDisabledForQueuedBooking && props.sendUpdateLog?.status === props.sendUpdateStatusEnum.UPDATE_BOOKING_FAILED) {
+        notification.error({
+            title:
+                'Endorsement Booking Failed! Please contact finance',
+            position: 'top',
+            timeout: 30000,
+        });
+    }
+};
+
+onBeforeMount(() => {
+    showBookingFailedAlert();
+});
+
 </script>
 
 <template>
@@ -450,9 +463,21 @@ const isLegacyPolicy = computed(() => {
           </dl>
         </div>
         <div class="flex justify-end">
-          <x-button size="sm" @click="onEdit" v-if="!state.edit" :disabled="isEditingBlocked">
-            Edit
-          </x-button>
+            <template v-if="!state.edit">
+                <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
+                    <x-button size="sm" @click="onEdit" :disabled="props.isEditDisabledForQueuedBooking">
+                        Edit
+                    </x-button>
+                    <template #tooltip>
+                    <span class="custom-tooltip-content">
+                      No further action can be taken on Update Booking Queued or Failed status.
+                    </span>
+                    </template>
+                </x-tooltip>
+                <x-button v-else size="sm" @click="onEdit">
+                    Edit
+                </x-button>
+            </template>
           <template v-else>
             <x-button
               size="sm"
@@ -482,7 +507,7 @@ const isLegacyPolicy = computed(() => {
       v-if="isLegacyPolicy"
       :sendUpdateLog="sendUpdateLog"
       :insuranceProviders="props.insuranceProviders"
-      :isEditingBlocked="isEditingBlocked"
+      :isEditDisabledForQueuedBooking="props.isEditDisabledForQueuedBooking"
     />
 
     <!-- Indicative additional price & Plan details comp -->
@@ -493,7 +518,7 @@ const isLegacyPolicy = computed(() => {
       :insuranceProviders="props.insuranceProviders"
       :quoteType="quoteType"
       :isUpdateBooked="isUpdateBooked"
-      :isEditingBlocked="isEditingBlocked"
+      :isEditDisabledForQueuedBooking="props.isEditDisabledForQueuedBooking"
     />
 
     <PaymentTableNew
@@ -532,6 +557,7 @@ const isLegacyPolicy = computed(() => {
       :quote="props.realQuote"
       :isUpdateBooked="isUpdateBooked"
       :quote-type="props.quoteType"
+      :isEditDisabledForQueuedBooking="props.isEditDisabledForQueuedBooking"
     />
 
     <QuoteDocuments
@@ -566,6 +592,7 @@ const isLegacyPolicy = computed(() => {
       :payments="props.payments"
       :modelClass="modelClass"
       @update-error-status="handleErrorStatusUpdate"
+      :isEditDisabledForQueuedBooking="props.isEditDisabledForQueuedBooking"
     />
 
     <AuditLogs

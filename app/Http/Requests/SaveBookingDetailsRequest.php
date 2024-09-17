@@ -79,4 +79,22 @@ class SaveBookingDetailsRequest extends FormRequest
 
         return $rules;
     }
+
+    /**
+     * @return void
+     */
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $this->sendUpdate = SendUpdateLog::where('id', request()->id ?? '')->firstOrFail();
+
+            if ($this->sendUpdate->status == SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
+                $validator->errors()->add('error', 'Endorsement Booking Failed! Please contact finance');
+            }
+
+            if ($this->sendUpdate->status == SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED) {
+                return $validator->errors()->add('error', 'Update booking already in queued');
+            }
+        });
+    }
 }

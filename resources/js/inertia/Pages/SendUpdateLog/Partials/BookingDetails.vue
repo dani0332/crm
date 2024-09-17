@@ -59,6 +59,7 @@ const props = defineProps({
     type: String,
     default: '',
   },
+    isEditDisabledForQueuedBooking: Boolean
 });
 
 const state = reactive({
@@ -1523,13 +1524,21 @@ watch(
         </div>
         <x-divider class="my-4 mt-10" />
         <div class="flex justify-end gap-2">
-          <x-button
-            size="sm"
-            @click="onReversalEdit"
-            v-if="!state.reversalSectionEdit"
-          >
-            Edit
-          </x-button>
+            <template v-if="!state.reversalSectionEdit">
+                <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
+                    <x-button size="sm" @click="onReversalEdit" :disabled="props.isEditDisabledForQueuedBooking">
+                        Edit
+                    </x-button>
+                    <template #tooltip>
+                    <span class="custom-tooltip-content">
+                      No further action can be taken on Update Booking Queued or Failed status.
+                    </span>
+                    </template>
+                </x-tooltip>
+                <x-button v-else size="sm" @click="onReversalEdit">
+                    Edit
+                </x-button>
+            </template>
           <template v-else>
             <x-button
               size="sm"
@@ -2129,7 +2138,20 @@ watch(
               :permissionsEnum="page.props.permissionsEnum"
             />
             <template v-if="!state.isEdit">
-              <x-button size="sm" @click="checkSectionTwoEdit"> Edit </x-button>
+                    <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
+                        <x-button size="sm" @click="checkSectionTwoEdit" :disabled="props.isEditDisabledForQueuedBooking">
+                            Edit
+                        </x-button>
+                        <template #tooltip>
+                    <span class="custom-tooltip-content">
+                      No further action can be taken on Update Booking Queued or Failed status.
+                    </span>
+                        </template>
+                    </x-tooltip>
+                    <x-button v-else size="sm" @click="checkSectionTwoEdit">
+                        Edit
+                    </x-button>
+
               <template v-if="isLackingPayment">
                 <x-tooltip>
                   <x-button

@@ -686,6 +686,9 @@ class SendUpdateLogService
 
     private function preparedDetailsForEndorsement($sendUpdateRequest, $quote, $sendUpdateLog): array
     {
+        $paymentBeforeUpdate = Payment::where('send_update_log_id', $sendUpdateRequest->sendUpdateId)->first();
+        //        Update Send update booking details in Payments just for double check
+        $this->updatePaymentDetails($paymentBeforeUpdate, $sendUpdateLog, true);
         $payment = Payment::with('paymentSplits')->where(['send_update_log_id' => $sendUpdateRequest->sendUpdateId])->first();
         if ($payment) {
             info('fn:preparedDetailsForEndorsement - Fetching Payment details from Send Update. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
@@ -773,13 +776,19 @@ class SendUpdateLogService
         if (in_array($sendUpdateLog?->category?->code, $skipCategories)) {
             info('fn:preparedDataForEndorsement - Skipping Sage APIs for Endorsement - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
 
-            //            TODO:: Need to check this condition
-            return ['status' => true];
+            return ['status' => true, 'skipSageCalls' => true, 'message' => 'Skipping Sage APIs for Non Financial Endorsement'];
         }
 
         $quoteModelObject = $this->getModelObject($sendUpdateRequest->quoteType);
         $quoteDetails = $quoteModelObject::where('id', $sendUpdateRequest->quoteRefId)->first();
         $preparedDetailsForEndorsement = $this->preparedDetailsForEndorsement($sendUpdateRequest, $quoteDetails, $sendUpdateLog);
+
+        $paymentInsurerTaxInvoiceNumber = $preparedDetailsForEndorsement['payment']->insurer_tax_number;
+        if (empty($paymentInsurerTaxInvoiceNumber)) {
+            logger()->error('fn:preparedDataForEndorsement - Payment not successfully updated - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+
+            return ['status' => false, 'message' => 'Payment not successfully updated'];
+        }
 
         $sendUpdateLogDetails = [
             //            'personal_quote_id' => '', TODO:: Need to post this id in the Sage API
@@ -1293,6 +1302,24 @@ class SendUpdateLogService
         });
 
         if (count($policyDetails) === count($filledValues)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function isEditDisabledForQueuedBooking($sendUpdateLog): bool
+    {
+        $sendUpdateLogStatus = $sendUpdateLog->status;
+        if ($sendUpdateLogStatus == SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED) {
+            return true;
+        }
+
+        if ($sendUpdateLogStatus == SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED) {
+            if (auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
+                return false;
+            }
+
             return true;
         }
 

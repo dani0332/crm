@@ -260,6 +260,10 @@ class SendUpdateLogRepository extends BaseRepository
         try {
             if (isset($request['action']) && $request['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
                 $endorsementResponse = app(SendUpdateLogService::class)->preparedDataForEndorsement((object) $request);
+                if ($endorsementResponse['status'] && isset($endorsementResponse['skipSageCalls'])) {
+                    $response[] = ['status' => 200, 'message' => $endorsementResponse['message']];
+                }
+
                 if (! $endorsementResponse['status']) {
                     $response[] = ['status' => 500, 'message' => $endorsementResponse['message']];
                 }
@@ -331,6 +335,7 @@ class SendUpdateLogRepository extends BaseRepository
             }
 
             $result = $sendUpdate->update($bookingDetails);
+            $sendUpdate->save(); // This save is used because sometime object not refresh properly
             $sendUpdate->refresh();
 
             $payment = Payment::where('send_update_log_id', $data['id'])->first();

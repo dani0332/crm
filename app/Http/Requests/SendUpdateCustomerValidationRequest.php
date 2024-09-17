@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\DocumentTypeCode;
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
@@ -48,6 +49,10 @@ class SendUpdateCustomerValidationRequest extends FormRequest
             $category = $this->sendUpdate?->category?->code;
             $option = $this->sendUpdate?->option?->code;
 
+            if ($this->sendUpdate->status == SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
+                $validator->errors()->add('error', 'Endorsement Booking Failed! Please contact finance');
+            }
+
             if ($this->sendUpdate->status == SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED) {
                 return $validator->errors()->add('error', 'Update booking already in queued');
             }
@@ -74,9 +79,14 @@ class SendUpdateCustomerValidationRequest extends FormRequest
                 return $validator->errors()->add('error', 'The expiry date field is required.');
             }
 
+            $bypassStatuses = [
+                SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED,
+                SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED,
+            ];
+
             switch ($category) {
                 case SendUpdateLogStatusEnum::CPD:
-                    if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED) {
+                    if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED && ! in_array($this->sendUpdate->status, $bypassStatuses)) {
                         $validator->errors()->add('error', 'Transaction approval is required. ');
                     }
                     break;

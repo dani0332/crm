@@ -192,6 +192,7 @@ class SendUpdateLogController extends Controller
         // quote type business only has 2 providers, but as per business lead detail page it's getting providers via Corpline.
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
         $linkedQuoteDetails = $this->sendUpdateLogService->linkedQuoteDetails($quoteType, $quote);
+        $isEditDisabledForQueuedBooking = $this->sendUpdateLogService->isEditDisabledForQueuedBooking($sendUpdateLog);
 
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
@@ -226,6 +227,7 @@ class SendUpdateLogController extends Controller
             'issuanceStatuses' => $issuanceStatuses,
             'isPlanDetailAvailable' => $isPlanDetailAvailable,
             'vatValue' => ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0,
+            'isEditDisabledForQueuedBooking' => $isEditDisabledForQueuedBooking,
         ]);
     }
 
