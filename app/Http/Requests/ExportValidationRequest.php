@@ -75,7 +75,7 @@ class ExportValidationRequest extends FormRequest
 
                     $diff = $start->diffInDays($end);
                     if ($diff > $diffInDays) {
-                        $validator->errors()->add('flash', 'Maximum of ' . $diffInDays . ' days (' . $error_fields . ') are allowed to be exported.');
+                        $validator->errors()->add('flash', 'Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.');
                     }
                 }
             } else {
