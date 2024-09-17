@@ -41,6 +41,7 @@ defineProps({
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
 const leadSource = page.props.leadSource;
+const modelClass = 'App\\Models\\LifeQuote';
 const hasRole = role => useHasRole(role);
 
 const modals = reactive({
@@ -1235,7 +1236,7 @@ const onAddUpdate = () => {
                 <x-field label="Transaction Type">
                   <x-input
                     type="text"
-                    :value="quote.transaction_type_text"
+                    v-model="quote.transaction_type_text"
                     class="w-full"
                     :disabled="true"
                   />
@@ -1357,6 +1358,7 @@ const onAddUpdate = () => {
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+      :modelClass="modelClass"
     />
 
     <SendUpdates
@@ -1565,10 +1567,15 @@ const onAddUpdate = () => {
       </Collapsible>
     </div>
     <AuditLogs
-      :type="'App\\Models\\LifeQuote'"
+      :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
     />
+
+    <lead-raw-data
+      :modelType="'Life'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

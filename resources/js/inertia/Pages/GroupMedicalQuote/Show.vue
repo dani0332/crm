@@ -53,6 +53,7 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
 
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
+const modelClass = 'App\\Models\\BusinessQuote';
 
 const historyData = ref(null),
   historyLoading = ref(false);
@@ -1025,7 +1026,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
               <x-field label="Transaction Type">
                 <x-input
                   type="text"
-                  :value="quote.transaction_type_text"
+                  v-model="quote.transaction_type_text"
                   class="w-full"
                   :disabled="true"
                 />
@@ -1138,6 +1139,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+      :modelClass="modelClass"
     />
 
     <SendUpdates
@@ -1183,9 +1185,14 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
     </div>
 
     <AuditLogs
-      :type="'App\\Models\\BusinessQuote'"
+      :type="modelClass"
       :id="$page.props.quote.id"
       :expanded="sectionExpanded"
     />
+
+    <lead-raw-data
+      :modelType="'Business'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

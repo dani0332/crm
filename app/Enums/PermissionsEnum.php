@@ -362,7 +362,10 @@ final class PermissionsEnum extends Enum
     public const TRAVEL_HAPEX = 'travel-hapex';
     public const All_QUOTES_VIEWONLY_ACCESS = 'all-quotes-view-only-access';
     public const CUSTOMER_RISKRRATING_OVERRIDE = 'customer-riskrrating-override';
+    public const QUOTE_RAW_DATA = 'quote-raw-data';
     public const MANAGER_AUTHORISED_PAYMENT_SUMMARY = 'manager-authorised-payment-summary';
+    public const VIEW_SAGE_API_LOGS = 'view-sage-api-logs';
+    public const SUPER_LEAD_STATUS_CHANGE = 'super-lead-status-change';
 
     public static function getAdvisorConversionReportPermissions()
     {

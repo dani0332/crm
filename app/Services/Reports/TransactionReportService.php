@@ -81,6 +81,10 @@ class TransactionReportService extends ManagementReport
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'p.broker_invoice_number',
                 'btoi.text as sub_type_line_of_business',
+                'p.insurer_commmission_invoice_number',
+                'l.text as transaction_type',
+                'qs.text as quote_status',
+                'p.commmission_percentage',
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
@@ -92,7 +96,9 @@ class TransactionReportService extends ManagementReport
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
             ->leftJoin('payment_methods as pm', 'pm.code', '=', 'p.payment_methods_code')
             ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'p.payment_gateway_id')
-            ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id');
+            ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
+            ->leftJoin('lookups as l', 'personal_quotes.transaction_type_id', '=', 'l.id')
+            ->join('quote_status as qs', 'qs.id', '=', 'personal_quotes.quote_status_id');
 
         $this->applyFilters($query, $request, isSSR: true);
 
@@ -109,7 +115,7 @@ class TransactionReportService extends ManagementReport
             $this->formatData($data);
 
             // Columns that are not integar and should not be summed
-            $nonIntegarIndexes = [0, 1, 2, 3, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27];
+            $nonIntegarIndexes = [0, 1, 2, 3, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33];
 
             return $this->download(
                 'Transaction Report '.$this->reportDateRange,
@@ -139,6 +145,7 @@ class TransactionReportService extends ManagementReport
             $item->collects = strtoupper($item->collects);
             $item->pending_balance = number_format($item->pending_balance, 2);
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
+            $item->commmission_percentage = number_format($item->commmission_percentage, 2);
         });
     }
 
@@ -190,6 +197,10 @@ class TransactionReportService extends ManagementReport
             'Insurer Invoice No.',
             'Insurer Invoice Date',
             'Broker Invoice No',
+            'Commission Tax Invoice Number',
+            'Commission Percentage',
+            'Transaction Type',
+            'Lead Status',
         ];
     }
 
@@ -226,6 +237,10 @@ class TransactionReportService extends ManagementReport
             $quote->insurer_invoice_number ?? 'N/A',
             $quote->insurer_tax_invoice_date ?? 'N/A',
             $quote->broker_invoice_number ?? 'N/A',
+            $quote->insurer_commmission_invoice_number ?? 'N/A',
+            $quote->commmission_percentage ?? 'N/A',
+            $quote->transaction_type ?? 'N/A',
+            $quote->quote_status ?? 'N/A',
         ];
     }
 }

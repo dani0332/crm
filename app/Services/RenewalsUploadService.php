@@ -1375,7 +1375,7 @@ class RenewalsUploadService
         } else {
             info('Renewals OCB Email sending without advisor');
             $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'car-quote-one-click-buy-batch', $emailTemplateId);
-            $this->triggerBirdWorkflow($emailData);
+            $this->triggerBirdWorkflow($emailData, $carQuote->mobile_no, $carQuote->uuid);
 
             return $responseCode;
         }
@@ -1386,16 +1386,20 @@ class RenewalsUploadService
      *
      * @param  object  $emailData
      */
-    private function triggerBirdWorkflow($emailData)
+    private function triggerBirdWorkflow($emailData, $mobile, $uuid)
     {
+        $tag = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_MOTOR_RENEWAL_TAG)->first()->value ?? null;
         $birdEmailData = [
             'SendNewProcessRenewalEmail' => true,
             'customerEmail' => $emailData->customerEmail,
+            'phone' => $mobile,
             'customerName' => $emailData->customerName,
             'quotePlanLink' => $emailData->quoteLink,
             'instantAlfredLink' => $emailData->quoteLink.'?IA=true',
             'refID' => $emailData->carQuoteId,
             'requestForAdvisor' => $emailData->requestAdvisorLink,
+            'quoteUUID' => $uuid,
+            'tag' => $tag,
         ];
 
         $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_MOTOR_RENEWAL_WORKFLOW)->first();

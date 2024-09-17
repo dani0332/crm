@@ -34,6 +34,7 @@ const page = usePage();
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const modelClass = 'App\\Models\\PersonalQuote';
 const readOnlyMode = reactive({
   isDisable: true,
 });
@@ -377,5 +378,10 @@ const dateFormat = date =>
     />
 
     <LeadHistory :quote="$page.props.quote" :expanded="sectionExpanded" />
+
+    <lead-raw-data
+      :modelType="'Jetski'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

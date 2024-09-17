@@ -15,13 +15,10 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Interfaces\PaymentRepositoryInterface;
-use App\Models\CarQuote;
-use App\Models\HealthQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
-use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\ApplicationStorageService;
 use App\Services\PaymentLinkService;
@@ -453,7 +450,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $payment->is_approved = 0;
             $payment->payment_status_id = PaymentStatusEnum::PARTIAL_CAPTURED;
             $payment->save();
-            $this->updateLeadStatus($payment); //update lead status
+            app(SplitPaymentService::class)->updateLeadStatus($payment); //update lead status
 
             return response()->json(['message' => 'Total Price Updated Successfully']);
         }
@@ -628,28 +625,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 }
             }
             info('Updating lead status for Payment Code: '.$payment->code);
-            $this->updateLeadStatus($payment); //update lead status
-        }
-    }
-
-    // Update lead status for ecomm quotes
-    private function updateLeadStatus($payment)
-    {
-        $quoteModel = $payment->paymentable;
-        $ecommQuotes = [
-            CarQuote::class,
-            HealthQuote::class,
-            TravelQuote::class,
-        ];
-        if ($quoteModel) {
-            $quoteModel->payment_status_id = $payment->payment_status_id;
-            if (in_array($payment->paymentable_type, $ecommQuotes) && $payment->payment_status_id == PaymentStatusEnum::PAID) {
-                info('Setting payment_paid_at for Payment Code: '.$payment->code);
-                $quoteModel->payment_paid_at = now();
-            }
-            $quoteModel->save();
-            // Log after successfully saving the quote model
-            info('Lead payment status updated for Code: '.$payment->code.' to '.$payment->payment_status_id);
+            app(SplitPaymentService::class)->updateLeadStatus($payment); //update lead status
         }
     }
 
