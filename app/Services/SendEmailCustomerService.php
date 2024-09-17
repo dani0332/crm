@@ -9,6 +9,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
+use App\Enums\WorkflowTypeEnum;
 use App\Facades\Capi;
 use App\Jobs\UpdateSendPolicySubjectJob;
 use App\Models\ApplicationStorage;
@@ -782,7 +783,7 @@ class SendEmailCustomerService extends BaseService
                     $path = $document->doc_url;
                     $documentURL = $path !== '' ? $websiteURL.$path : '';
                     $attachments[] = [
-                        'url' => $documentURL,
+                        'url' => $this->encodeUrl($documentURL),
                         'name' => 'InsuranceMarket.ae™ '.$document->document_type_text.' for Policy Number '.$emailData->policy_number.'.'.pathinfo($documentURL, PATHINFO_EXTENSION),
                     ];
                 }
@@ -849,10 +850,10 @@ class SendEmailCustomerService extends BaseService
             }
 
             $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
-            info('sendBookPolicyDocumentsEmail ---- body '.$body);
+            info('sendBookPolicyDocumentsEmail '.$emailData->code.' ---- body '.$body);
 
             $client = new \GuzzleHttp\Client;
-            $clientRequest = $client->post(
+            $clientResponse = $client->post(
                 config('constants.SIB_URL'),
                 [
                     'headers' => $headers,
@@ -861,19 +862,17 @@ class SendEmailCustomerService extends BaseService
                 ]
             );
 
-            $response = json_decode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents(), true);
-            $responseCode = $clientRequest->getStatusCode();
+            $response = json_decode($clientResponse->getStatusCode().' '.$clientResponse->getBody()->getContents(), true);
+            $responseCode = $clientResponse->getStatusCode();
             $isEmailSent = 1;
-            info('sendBookPolicyDocumentsEmail ---- Request Sent '.$emailData->code);
-            info('sendBookPolicyDocumentsEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
 
-            info('Email sent successfully to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId);
+            info('Email sent successfully for: '.$emailData->code.' to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId);
         } catch (Exception $ex) {
             $response = '';
             $responseCode = $ex->getCode();
-            $responseDetail = 'Brevo Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class();
+            $responseDetail = 'Brevo Send error for: '.$emailData->code.' Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class();
             Log::error($responseDetail);
-            info('Error sending email to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId.': '.$ex->getMessage());
+            info('Error sending '.$emailData->code.' email to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId.': '.$ex->getMessage());
         }
 
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
@@ -1380,5 +1379,38 @@ class SendEmailCustomerService extends BaseService
         $buyNowLink = url(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$uuid.'/payment', ['providerCode' => $plan->providerCode, 'planId' => $plan->id, 'selectedCopayId' => $plan->selectedCopayId]);
 
         return $buyNowLink;
+    }
+
+    public function buildDedicatedTravelEmailData($lead, $quoteType)
+    {
+        return [
+            'customerEmail' => $lead->email,
+            'customerName' => "{$lead->first_name} {$lead->last_name}",
+            'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
+            'instantAlfredLink' => $quoteType->quoteLink($lead->uuid, ['IA' => 'true']),
+            'quoteUUID' => $lead->uuid,
+            'requestForAdvisor' => $quoteType->quoteLink($lead->uuid, ['assignAdvisor' => 'true']),
+            'quoteTypeId' => $quoteType->id(),
+            'refID' => $lead->code,
+            'whatsappConsent' => getWhatsappConsent($quoteType, $lead->uuid),
+            'workflowType' => WorkflowTypeEnum::TRAVEL_SIC_FOLLOWUPS,
+        ];
+    }
+
+    public function sendSICDedicatedEmail($lead, $quoteType)
+    {
+        $url = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL);
+        $sicDedicatedEmailPayload = $this->buildDedicatedTravelEmailData($lead, $quoteType);
+        info("sendSICDedicatedEmail - Sending webhook request to: {$url} with Ref-ID: {$lead->uuid} | Time:".now());
+        app(BirdService::class)->triggerWebHookRequest($url, (object) $sicDedicatedEmailPayload);
+        info("sendSICDedicatedEmail - Webhook request sent to: {$url} with Ref-ID: {$lead->uuid} | Time:".now());
+    }
+
+    private function encodeUrl($url)
+    {
+        $fileName = basename($url);
+        $encodedFileName = urlencode($fileName);
+
+        return str_replace($fileName, $encodedFileName, $url);
     }
 }

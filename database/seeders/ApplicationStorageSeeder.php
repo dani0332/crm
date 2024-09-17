@@ -540,6 +540,7 @@ class ApplicationStorageSeeder extends Seeder
         );
 
         $this->seedTravelSICStorage();
+        $this->seedBirdWorkflowUrls();
 
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW],
@@ -638,6 +639,18 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::BIRD_SIC_MOTOR_RENEWAL_TAG],
             [
                 'value' => 'sic-3.0-renewal-process',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+    private function seedBirdWorkflowUrls()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL],
+            [
+                'value' => 'https://capture.eu-west-1.nest.messagebird.com/webhooks/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/7f5bd31b-6387-4e3e-826f-0f464badb2cd',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
