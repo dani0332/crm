@@ -7,6 +7,7 @@ const props = defineProps({
 const loaders = reactive({
   table: false,
 });
+const notification = useToast();
 
 // const { isRequired } = useRules();
 
@@ -17,6 +18,7 @@ const filters = reactive({
   thisWeek: [],
   customDate: [],
   teams: [],
+  quoteType : '',
   page: 1,
 });
 
@@ -29,6 +31,7 @@ const teams = computed(() => {
 
 const onSubmit = isValid => {
   if (!isValid) return;
+    setUrl();
   filters.page = 1;
   router.visit(route('authorized-payment-summary'), {
     method: 'get',
@@ -49,6 +52,12 @@ function onReset() {
     onSuccess: () => (loaders.table = false),
   });
 }
+const quoteTypesOptions = computed(() => {
+    return props.defaultFilters.quoteTypes.map(method => ({
+        value: method.text,
+        label: method.text,
+    }));
+});
 
 const tableHeader = reactive([
   {
@@ -155,6 +164,34 @@ function showCustomDate() {
   filters.expireDate = '';
   filters.thisWeek = [];
 }
+function setUrl(advisor_id) {
+    let url = '';
+
+    // Check if filters.quoteType exists
+    if (!this.filters || !this.filters.quoteType) {
+        notification.error({
+            title: 'Please select a line of business.',
+            position: 'top',
+        });
+    } else {
+        const quoteTypeMapping = {
+            'Car Insurance': 'car',
+            'Health Insurance': 'health',
+            'Business Insurance': 'business',
+            'Bike Insurance': 'bike',
+        };
+
+        const formattedQuoteType = quoteTypeMapping[this.filters.quoteType];
+
+        if (this.filters.quoteType === 'Bike Insurance') {
+            url = `/personal-quotes/${formattedQuoteType}?payment_status_id=4&advisor_id[]=${advisor_id}`;
+        } else {
+            url = `/quotes/${formattedQuoteType}?payment_status_id=4&advisor_id[]=${advisor_id}`;
+        }
+
+        window.location.href = url;
+    }
+}
 </script>
 <template>
   <Head title="Authorised Payment Report" />
@@ -173,6 +210,12 @@ function showCustomDate() {
           deselect-all
         />
       </x-field>
+        <x-select
+            v-model="filters.quoteType"
+            label="Line of Business"
+            placeholder="Select Line of Business"
+            :options="quoteTypesOptions"
+        />
     </div>
     <div class="flex gap-3 pt-3">
       <x-button
@@ -247,12 +290,13 @@ function showCustomDate() {
     </template>
     <template #item-advisor_name="{ advisor_name, advisor_id }">
       <div class="text-left">
-        <Link
-          v-bind:href="`/quotes/car?page=1&segment_filter=all&payment_status_id=4&advisor_id[]=${[advisor_id]}`"
-          class="text-black underline"
-        >
-          {{ advisor_name }}
-        </Link>
+          <a
+              :href="url"
+              @click.prevent="setUrl(advisor_id)"
+              class="text-black underline"
+          >
+              {{ advisor_name }}
+          </a>
       </div>
     </template>
   </DataTable>
