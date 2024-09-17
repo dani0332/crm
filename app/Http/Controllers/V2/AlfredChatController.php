@@ -124,7 +124,7 @@ class AlfredChatController extends Controller
                     ->where('py.paymentable_type', '=', HealthQuote::class);
             })
             ->leftJoin('quote_tags as qt', function ($join) {
-                $join->on('qt.quote_uuid', '=', 'cqr.uuid')
+                $join->on('qt.quote_uuid', '=', 'hqr.uuid')
                     ->where('qt.quote_type_id', '=', HealthQuote::class);
             })
             ->leftJoin('health_plan_type as hpt', 'hpt.id', '=', 'hqr.health_plan_type_id')
@@ -176,7 +176,7 @@ class AlfredChatController extends Controller
                     ->where('py.paymentable_type', '=', TravelQuote::class);
             })
             ->leftJoin('quote_tags as qt', function ($join) {
-                $join->on('qt.quote_uuid', '=', 'cqr.uuid')
+                $join->on('qt.quote_uuid', '=', 'tqr.uuid')
                     ->where('qt.quote_type_id', '=', TravelQuote::class);
             })
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
@@ -387,6 +387,7 @@ class AlfredChatController extends Controller
         $alias = $modelData['alias'];
 
         $partialQuery = $modelData['query'];
+        
         $quoteId = null;
         if ($request->has('quoteId') && $request->quoteId != null) {
             if (strpos($request->quoteId, '-') !== false) {
