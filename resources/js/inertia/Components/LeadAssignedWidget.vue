@@ -30,14 +30,14 @@ onMounted(() => {
 <template>
   <template v-if="mounted">
     <teleport to="#headerportal">
-      <div class="flex justify-between text-sm w-full gap-3">
+      <div class="flex justify-between text-sm w-full gap-1 mt-2">
         <x-tooltip placement="top">
           <x-tag
             class="underline decoration-dotted decoration-primary-700"
             outlined
             style="border: 1px solid #ebebeb; font-size: 13px"
           >
-            <span>Assigned Yesterday : &nbsp;</span>
+            <span>Assigned Yesterday: &nbsp;</span>
             <strong> {{ yesterdayAutoCount + yesterdayManualCount }}</strong>
           </x-tag>
           <template #tooltip>
@@ -52,7 +52,7 @@ onMounted(() => {
             outlined
             style="border: 1px solid #ebebeb; font-size: 13px"
           >
-            <span>Assigned Today : &nbsp;</span>
+            <span>Assigned Today: &nbsp;</span>
             <strong>{{ todayAutoCount + todayManualCount }}</strong>
           </x-tag>
           <template #tooltip>
@@ -66,7 +66,7 @@ onMounted(() => {
           outlined
           style="border: 1px solid #ebebeb; font-size: 13px"
         >
-          <span>Max Capacity : &nbsp;</span>
+          <span>Max Capacity: &nbsp;</span>
           <strong>{{ userMaxCap }}</strong>
         </x-tag>
       </div>
