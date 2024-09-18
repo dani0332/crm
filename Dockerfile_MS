@@ -78,7 +78,7 @@ COPY --from=build /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
 COPY --from=build /usr/bin/ /usr/bin/
 COPY --from=build /app /var/www/
 COPY --from=build /usr/local/etc/php/conf.d/newrelic.ini /usr/local/etc/php/conf.d/newrelic.ini
-COPY --from=build /var/log/newrelic/newrelic-daemon.log /var/log/newrelic/newrelic-daemon.log
+#COPY --from=build /var/log/newrelic/newrelic-daemon.log /var/log/newrelic/newrelic-daemon.log
 
 
 RUN apt-get update && apt-get install -y \
