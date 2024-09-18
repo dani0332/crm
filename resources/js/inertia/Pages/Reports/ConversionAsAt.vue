@@ -70,7 +70,7 @@ const tableHeader = ref([
     value: 'total_leads',
   },
   {
-    text: 'Total Sale',
+    text: 'Sale Leads',
     value: 'sale_leads',
   },
   {
