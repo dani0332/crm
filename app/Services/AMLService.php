@@ -26,7 +26,6 @@ use App\Repositories\CustomerMembersRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\View;
 
 class AMLService
@@ -420,33 +419,64 @@ class AMLService
         $appUrl = config('constants.APP_URL');
         $amlUrl = $appUrl.'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
 
-        $this->amlQuoteStatusUpdateMail('AmlQuoteStatusUpdateMail', [
-            'amlUrl' => $amlUrl,
-            'amlQuoteStatus' => $quoteStatusText,
-            'clientFullName' => $clientFullName,
-            'quoteTypeName' => $quoteTypeText,
-            'quoteCdbId' => $quoteCdbId,
-        ], $emailSubject, $toRecipient, $ccRecipients);
+        $this->amlQuoteStatusUpdateMail('AmlQuoteStatusUpdateMail', $amlUrl, $quoteStatusText, $clientFullName, $quoteTypeText, $quoteCdbId, $emailSubject, $toRecipient, $ccRecipients);
     }
 
-    private function amlQuoteStatusUpdateMail($templateName, $templateParams, $emailSubject, $toRecipient, $ccRecipients)
+    private function amlQuoteStatusUpdateMail($templateName, $amlUrl, $quoteStatusText, $clientFullName, $quoteTypeText, $quoteCdbId, $emailSubject, $toRecipient, $ccRecipients)
     {
-        $emailL_sys = config('constants.APP_ENV');
-        if ($emailL_sys == EnvEnum::PRODUCTION) {
-            $fromEmail = config('constants.MAIL_FROM_ADDRESS_AML');
-            $fromName = config('constants.MAIL_FROM_NAME_AML');
-        } else {
-            $fromEmail = config('constants.MAIL_FROM_ADDRESS');
-            $fromName = config('constants.MAIL_FROM_NAME');
-        }
-
-        Mail::send(
-            ['html' => $templateName],
-            $templateParams,
-            function ($message) use ($emailSubject, $toRecipient, $ccRecipients, $fromName, $fromEmail) {
-                $message->to($toRecipient)->cc($ccRecipients)->subject($emailSubject);
-                $message->from($fromEmail, $fromName);
+        try {
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => config('constants.SENDINBLUE_KEY'),
+                'Content-Type' => 'application/json',
+            ];
+            $url = config('constants.SIB_URL');
+            $emailL_sys = config('constants.APP_ENV');
+            if ($emailL_sys == EnvEnum::PRODUCTION) {
+                $fromEmail = config('constants.MAIL_FROM_ADDRESS_AML');
+                $fromName = config('constants.MAIL_FROM_NAME_AML');
+            } else {
+                $fromEmail = config('constants.MAIL_FROM_ADDRESS');
+                $fromName = config('constants.MAIL_FROM_NAME');
             }
-        );
+            $amlUrl = $amlUrl ? $amlUrl : 'N/A';
+            $amlQuoteStatus = $quoteStatusText ? $quoteStatusText : 'N/A';
+            $clientFullName = $clientFullName ? $clientFullName : 'N/A';
+            $quoteTypeName = $quoteTypeText ? $quoteTypeText : 'N/A';
+            $quoteCdbId = $quoteCdbId ? $quoteCdbId : 'N/A';
+            $htmlContent = View::make($templateName, compact('amlUrl', 'amlQuoteStatus', 'clientFullName', 'quoteTypeName', 'quoteCdbId'))->render();
+
+
+            $ccEmail = array_map(function ($email) {
+                return ['email' => $email];
+            }, $ccRecipients);
+
+            $bodyData = [
+                'sender' => ['name' => $fromName, 'email' => $fromEmail],
+                'to' => [['email' => $toRecipient]],
+                'subject' => $emailSubject,
+                'htmlContent' => $htmlContent,
+            ];
+
+            if (! empty($ccEmail)) {
+                $bodyData['cc'] = $ccEmail;
+            }
+            $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
+            $client = new \GuzzleHttp\Client;
+            $clientRequest = $client->post(
+                $url,
+                [
+                    'headers' => $headers,
+                    'body' => $body,
+                    'timeout' => 10,
+                ]
+            );
+
+            $responseCode = $clientRequest->getStatusCode();
+            info('sendAmlQuoteStatusUpdateMail ---- Received Code : '.$responseCode);
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            $responseDetail = 'sendAmlQuoteStatusUpdateMail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+        }
     }
 }
