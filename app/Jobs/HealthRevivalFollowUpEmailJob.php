@@ -8,7 +8,6 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 use Sammyjo20\LaravelHaystack\Concerns\Stackable;
 use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 
@@ -37,9 +36,9 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
         $response = app(SendEmailCustomerService::class)->sendDttEmail($this->data);
         if ($response == 201) {
             DttRevival::where('id', $this->data->id)->increment('follow_up_email_count');
-            info('healthRevivalFollowUp email is sent  -' . $this->data->customerEmail);
+            info('healthRevivalFollowUp email is sent  -'.$this->data->customerEmail);
         } else {
-            info('healthRevivalFollowUp email is not sent -' . $this->data->customerEmail);
+            info('healthRevivalFollowUp email is not sent -'.$this->data->customerEmail);
         }
     }
 }
