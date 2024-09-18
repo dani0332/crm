@@ -13,7 +13,7 @@ enum QuoteFlowType: int
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             QuoteFlowType::HEALTH_AUTOMATED_FOLLOWUPS => 'health_automated_followups',
             QuoteFlowType::HEALTH_SIC_FOLLOWUPS => 'health_sic_followups',
             QuoteFlowType::MOTOR_SIC_FOLLOWUPS => 'motor_sic_followups',
@@ -25,7 +25,7 @@ enum QuoteFlowType: int
 
     public static function fromValue(int $value): ?self
     {
-        return match($value) {
+        return match ($value) {
             1 => QuoteFlowType::HEALTH_AUTOMATED_FOLLOWUPS,
             2 => QuoteFlowType::HEALTH_SIC_FOLLOWUPS,
             3 => QuoteFlowType::MOTOR_SIC_FOLLOWUPS,

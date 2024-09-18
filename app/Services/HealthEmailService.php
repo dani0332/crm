@@ -3,13 +3,13 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\QuoteFlowType;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Models\ApplicationStorage;
-use App\Models\User;
 use App\Models\QuoteFlowDetails;
-use App\Enums\QuoteTypeId;
-use App\Enums\QuoteFlowType;
+use App\Models\User;
 
 class HealthEmailService extends BaseService
 {
@@ -76,13 +76,13 @@ class HealthEmailService extends BaseService
             $emailData = $this->buildOCAHealthFollowupEmailData($lead, $advisor);
             $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
             if ($sicEvent) {
-                $response =app(BirdService::class)->triggerWebHookRequest($sicEvent->value, $emailData);
+                $response = app(BirdService::class)->triggerWebHookRequest($sicEvent->value, $emailData);
                 $lead->oca_flow_enabled = true;
                 $lead->save();
                 info("OCA Health workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
                 info("OCA Health workflow response: {$response->status_code} | Ref-ID: {$lead->uuid} |Time: ".now());
 
-                if(!empty($response->headers['Run-Id'])) {
+                if (! empty($response->headers['Run-Id'])) {
                     $this->createQuoteFlowDetails($lead, $response);
                 }
             } else {
@@ -127,7 +127,7 @@ class HealthEmailService extends BaseService
     {
         try {
             $runId = collect($response->headers['Run-Id'])->first();
-            if (!empty($runId)) {
+            if (! empty($runId)) {
                 QuoteFlowDetails::create([
                     'quote_uuid' => $lead->uuid,
                     'quote_type_id' => QuoteTypeId::Health,
@@ -135,14 +135,13 @@ class HealthEmailService extends BaseService
                     'flow_id' => $runId,
                 ]);
                 info("OCA Health workflow run id created for lead : Ref-ID: {$lead->uuid} |Time: ".now());
-            }
-            else {
+            } else {
                 info("OCA Health workflow run id not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
             }
         } catch (\Throwable $th) {
-            $errorMessage = "Error while creating quote flow details for lead: Ref-ID: {$lead->uuid} | Time: " . now();
+            $errorMessage = "Error while creating quote flow details for lead: Ref-ID: {$lead->uuid} | Time: ".now();
             info($errorMessage);
-            info("Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: " . now());
+            info("Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
             throw $th;
         }
     }

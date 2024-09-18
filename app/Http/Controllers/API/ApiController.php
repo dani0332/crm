@@ -12,17 +12,17 @@ use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Jobs\FixQuoteStatusDate;
+use App\Models\QuoteFlowDetails;
 use App\Services\ApiService;
+use App\Services\BirdService;
+use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
 use App\Services\NotificationService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Validation\ValidationException;
-use App\Services\EmailStatusService;
-use App\Services\BirdService;
-use App\Models\QuoteFlowDetails;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
 {
@@ -105,39 +105,42 @@ class ApiController extends Controller
         return $this->inboundEmailsHookService->handleBirdWebhook();
     }
 
-    public function logFollowUpEvent(EmailEventsRequest $request){
+    public function logFollowUpEvent(EmailEventsRequest $request)
+    {
         try {
-        $response = app(EmailStatusService::class)->addBirdEmailStatus($request);
-        if($response->status){
-         return apiResponse([], Response::HTTP_OK, $response->message);
+            $response = app(EmailStatusService::class)->addBirdEmailStatus($request);
+            if ($response->status) {
+                return apiResponse([], Response::HTTP_OK, $response->message);
+            } else {
+                return apiResponse([], Response::HTTP_NOT_FOUND, $response->message);
+            }
+        } catch (\Throwable $th) {
+            Log::error('logFollowUpEvent - Exception occurred while processing follow-up event', [
+                'error_message' => $th->getMessage(),
+                'line' => $th->getLine(),
+                'file' => $th->getFile(),
+                'stack_trace' => $th->getTraceAsString(),
+            ]);
+            throw $th;
         }
-        else {
-         return apiResponse([], Response::HTTP_NOT_FOUND, $response->message);
-        }
-         } catch (\Throwable $th) {
-             Log::error("logFollowUpEvent - Exception occurred while processing follow-up event", [
-                 'error_message' => $th->getMessage(),
-                 'line' => $th->getLine(),
-                 'file' => $th->getFile(),
-                 'stack_trace' => $th->getTraceAsString(),
-             ]);
-             throw $th;
-         }
-     }
+    }
 
-    public function stopFollowUpEvent(){
+    public function stopFollowUpEvent()
+    {
         $flowType = request('flowType');
         $quoteUID = request('uuid');
 
-        info("getting request to stopFollowUpEvent Ref-ID: {$quoteUID} | FlowType: {$flowType} Time:" .now());
+        info("getting request to stopFollowUpEvent Ref-ID: {$quoteUID} | FlowType: {$flowType} Time:".now());
         $workflow = QuoteFlowDetails::where('quote_uuid', $quoteUID)
-                                      ->where('flow_type', $flowType)
-                                      ->first();
-        if(! $workflow) {
+            ->where('flow_type', $flowType)
+            ->first();
+        if (! $workflow) {
             info("lead not found for uuid: {$quoteUID} | FlowType: {$flowType} | Time: ".now());
+
             return apiResponse([], Response::HTTP_NOT_FOUND, 'Lead not found');
         }
         $response = app(BirdService::class)->stopWorkFlow($workflow);
+
         return apiResponse([$response], Response::HTTP_OK, 'Email event stopped successfully');
     }
     // Temporary Endpoint - Will be Removed after fixing Quote Status Dates for all LOBs
