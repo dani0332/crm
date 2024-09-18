@@ -8,12 +8,20 @@ pool:
 variables:
   - group: stg
   - name: imageName
-    value: 'imcrmdev01:$(Build.BuildId)'
+    value: 'imcrm$(env):$(Build.BuildId)'
   
 steps:
   - checkout: self
     fetchDepth: 1
     fetchTags: false
+## Build Stating notification    
+  - task: Bash@3
+    inputs:
+      targetType: 'inline'
+      script: |
+          curl --request POST -u $(serviceaccount):$(SERVICE_TOKEN) 'https://deploymentnotification.azurewebsites.net/api/notificationfunction?code=ewX4tkwM_o-mQw4Q55GWF-HfV1HDfPUcP3A3hfLnTFdaAzFu1ynwMQ==' \
+          --header 'Content-Type: application/json' \
+          --data '{"message": {"text": "Build on $(Build.DefinitionName) is Started"}}'    
 
   - script: |
      sudo apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl gnupg && \
@@ -26,6 +34,14 @@ steps:
     displayName: 'docker login'
   - script: docker push $(acrName).azurecr.io/$(imageName)
     displayName: 'docker push'
+  ## Build Completed notification
+  - task: Bash@3
+    inputs:
+      targetType: 'inline'
+      script: |
+          curl --request POST -u $(serviceaccount):$(SERVICE_TOKEN) 'https://deploymentnotification.azurewebsites.net/api/notificationfunction?code=ewX4tkwM_o-mQw4Q55GWF-HfV1HDfPUcP3A3hfLnTFdaAzFu1ynwMQ==' \
+          --header 'Content-Type: application/json' \
+          --data '{"message": {"text": "Deployment on $(Build.DefinitionName) is Completed, Deploying now..."}}'    
 
   - publish: '$(System.DefaultWorkingDirectory)'
     artifact: '$(imcrmdev)'
