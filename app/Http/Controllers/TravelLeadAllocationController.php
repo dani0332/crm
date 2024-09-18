@@ -2,18 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\QuoteTypes;
 use App\Http\Requests\UpdateLeadAllocationRequest;
 use App\Models\LeadAllocation;
 use App\Services\ApplicationStorageService;
 use App\Services\CacheService;
 use App\Services\TravelLeadAllocationDashboardService;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Http\JsonResponse;
 
 class TravelLeadAllocationController extends Controller
 {
@@ -63,10 +60,11 @@ class TravelLeadAllocationController extends Controller
                 ->travelQuote()
                 ->first();
 
-            if (!$leadAllocation) {
+            if (! $leadAllocation) {
                 Log::error('Lead allocation record not found for user', [
                     'user_id' => $validated['userId'],
                 ]);
+
                 return response()->json([
                     'message' => 'Lead allocation record not found for the specified user.',
                 ], 404);
