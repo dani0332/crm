@@ -8,7 +8,7 @@ pool:
 variables:
   - group: stg
   - name: imageName
-    value: '$(imcrmdev):$(Build.BuildId)'
+    value: '$(imcrm):$(Build.BuildId)'
   
 steps:
   - checkout: self
@@ -44,4 +44,4 @@ steps:
           --data '{"message": {"text": "Deployment on $(Build.DefinitionName) is Completed, Deploying now..."}}'    
 
   - publish: '$(System.DefaultWorkingDirectory)'
-    artifact: '$(imcrmdev)'
+    artifact: '$(imcrm)'
