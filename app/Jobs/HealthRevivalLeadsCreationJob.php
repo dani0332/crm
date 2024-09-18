@@ -86,22 +86,20 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 'memberCategoryId' => $this->lead->member_category_id,
             ];
 
-            info($logPrefix.'capiPayLoad'.json_encode($dataArr));
-
             $capiResponse = Capi::request('/api/v1-save-health-quote', 'post', $dataArr);
 
             if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
 
                 if ($capiResponse->isDuplicate) {
-                    info($logPrefix.'healthRevivalParentLead -'.$this->lead->uuid.'- childLeadNotCreated - '.$capiResponse->quoteUID.' -isduplicate-'.$capiResponse->isDuplicate);
+                    info($logPrefix . 'healthRevivalParentLead -' . $this->lead->uuid . '- childLeadNotCreated - ' . $capiResponse->quoteUID . ' -isduplicate-' . $capiResponse->isDuplicate);
 
                     return false;
                 }
-                info($logPrefix.'healthRevivalParentLead -'.$this->lead->uuid.'- childLeadCreated - '.$capiResponse->quoteUID.' - CAPI Response-'.json_encode($capiResponse));
+                info($logPrefix . 'healthRevivalParentLead -' . $this->lead->uuid . '- childLeadCreated - ' . $capiResponse->quoteUID);
 
                 $healthQuote = $this->getQuoteObject(QuoteTypes::HEALTH->value, $capiResponse->quoteUID);
 
-                $customerName = $healthQuote->first_name.' '.$healthQuote->last_name;
+                $customerName = $healthQuote->first_name . ' ' . $healthQuote->last_name;
 
                 if (empty($healthQuote->health_plan_type_id)) {
 
@@ -122,7 +120,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                     ]);
 
                     if (! isset($response['quote']['plans'])) {
-                        info($logPrefix.'noPlansReturned-UUID-'.$capiResponse->quoteUID.'-'.json_encode($response));
+                        info($logPrefix . 'noPlansReturned-UUID-' . $capiResponse->quoteUID . '-' . json_encode($response));
 
                         return false;
                     }
@@ -146,21 +144,17 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                         $plansArray[] = $planObj;
                     }
 
-                    info($logPrefix.'plans'.json_encode($plansArray));
-
                     $emailData = new \stdClass;
 
                     $key = ApplicationStorageEnums::DTT_HEALTH_INITIAL_AND_FOLLOWUP_TEMPLATE;
 
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
 
-                    $emailData->quotePlanLink = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid;
+                    $emailData->quotePlanLink = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL') . $healthQuote->uuid;
 
                     $emailData->plans = $plansArray;
-
-                    info($logPrefix.'emailData -'.json_encode($emailData));
                 }
-                $emailData->subject = $customerName."'s".' Health Insurance with Alfred '.$healthQuote->code;
+                $emailData->subject = $customerName . "'s" . ' Health Insurance with Alfred ' . $healthQuote->code;
                 $emailData->customerName = $customerName;
                 $emailData->customerEmail = $healthQuote->email;
                 $emailData->templateId = (int) $emailTemplateId;
@@ -170,7 +164,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
                 $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
                 if ($response == 201) {
-                    info($logPrefix.'healthRevivalParentLead -'.$this->lead->uuid.'-childLead - '.$capiResponse->quoteUID.'- emailSent -- '.$emailData->customerEmail);
+                    info($logPrefix . 'healthRevivalParentLead -' . $this->lead->uuid . '-childLead - ' . $capiResponse->quoteUID . '- emailSent -- ' . $emailData->customerEmail);
 
                     // Get the latest quote batch and assign it to the lead.
                     $quoteBatch = QuoteBatches::latest()->first();
@@ -184,19 +178,15 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                         'previous_health_plan_type' => empty($healthQuote->health_plan_type_id) ? false : true,
                     ]);
 
-                    info($logPrefix.'healthRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$capiResponse->quoteUID.'-dttRevivalsInsertedUUID - '.$capiResponse->quoteUID);
-
                     HealthQuote::find($this->lead->id)->update(['is_revived' => true]);
-
-                    info($logPrefix.'healthRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$capiResponse->quoteUID.'- parentLeadIsRevived - '.$this->lead->id);
                 } else {
-                    info('HealthRevivalLeadsCreationJob - healthRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$capiResponse->quoteUID.'emailIsNotSent - '.$emailData->customerEmail);
+                    info('HealthRevivalLeadsCreationJob - healthRevivalParentLead -' . $this->lead->uuid . '- childLead - ' . $capiResponse->quoteUID . 'emailIsNotSent - ' . $emailData->customerEmail);
                 }
             } else {
-                info($logPrefix.'healthRevivalParentLead -'.$this->lead->uuid.'- capiResponseError - '.json_encode($capiResponse));
+                info($logPrefix . 'healthRevivalParentLead -' . $this->lead->uuid . '- capiResponseError - ' . json_encode($capiResponse));
             }
         } catch (\Exception $exception) {
-            Log::error($logPrefix.'health revival Exception - '.$this->lead->id.' - Exception:'.$exception->getMessage());
+            Log::error($logPrefix . 'health revival Exception - ' . $this->lead->id . ' - Exception:' . $exception->getMessage());
         }
     }
 
