@@ -98,7 +98,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->insuranceType = $insuranceType;
             $emailData->planName = $planName;
             $emailData->currentInsurer = '';
-            $emailData->profilePicture =  '';
+            $emailData->profilePicture = '';
             if (! empty($quote->advisor)) {
                 $emailData->advisorName = $quote->advisor->name;
                 $emailData->advisorEmail = $quote->advisor->email;
