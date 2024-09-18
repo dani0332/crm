@@ -15,11 +15,9 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
 use App\Services\EmailStatusService;
-use App\Models\HealthQuote;
-use App\Enums\ProcessStatusCode;
-use App\Models\EmailStatus;
 use App\Services\BirdService;
 use App\Models\QuoteFlowDetails;
+use Illuminate\Support\Facades\Log;
 
 class ApiController extends Controller
 {
@@ -96,27 +94,25 @@ class ApiController extends Controller
         return $this->inboundEmailsHookService->handleBirdWebhook();
     }
 
-    public function logFollowUpEvent(EmailEventsRequest $request)
-    {
-
-        $quote = HealthQuote::where('uuid', $request->uuid)->first();
-        if(! $quote) {
-            info("lead not found for uuid: {$request->uuid} time: ".now());
-            return apiResponse([], Response::HTTP_NOT_FOUND, 'Lead not found');
-        }
-        if(!EmailStatus::where('email_status', ProcessStatusCode::SENT)
-        ->where('msg_id', $request->message_id)
-        ->where('quote_id', $quote->id)->exists()) {
-            $request->quoteId = $quote->id;
-            $request->customerEmail = $request->customer_email;
-            $this->emailStatusService->addEmailStatus($request, $request->message_id, $request->subject, ProcessStatusCode::SENT);
-            return apiResponse([], Response::HTTP_OK, 'Email event logged successfully');
+    public function logFollowUpEvent(EmailEventsRequest $request){
+        try {
+        $response = app(EmailStatusService::class)->addBirdEmailStatus($request);
+        if($response->status){
+         return apiResponse([], Response::HTTP_OK, $response->message);
         }
         else {
-            return apiResponse([], Response::HTTP_OK, 'Email event already logged');
+         return apiResponse([], Response::HTTP_NOT_FOUND, $response->message);
         }
-
-    }
+         } catch (\Throwable $th) {
+             Log::error("logFollowUpEvent - Exception occurred while processing follow-up event", [
+                 'error_message' => $th->getMessage(),
+                 'line' => $th->getLine(),
+                 'file' => $th->getFile(),
+                 'stack_trace' => $th->getTraceAsString(),
+             ]);
+             throw $th;
+         }
+     }
 
     public function stopFollowUpEvent(){
         $flowType = request('flowType');

@@ -14,12 +14,12 @@ use App\Enums\QuoteFlowType;
 class HealthEmailService extends BaseService
 {
 
-    public function triggerOCAWorkFlow($lead)
+    public function sendOCAHealthWorkFlow($lead)
     {
         info('Sending OCA Health followups email for lead: '.$lead->uuid.' | Time: '.now());
         if (! $lead->oca_flow_enabled) {
             $advisor = User::where('id', $lead->advisor_id)->first();
-            $emailData = $this->mapDataForOCAFollowupEmail($lead, $advisor);
+            $emailData = $this->buildOCAHealthFollowupEmailData($lead, $advisor);
             $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
             if ($sicEvent) {
                 $response =app(BirdService::class)->triggerWebHookRequest($sicEvent->value, $emailData);
@@ -41,7 +41,7 @@ class HealthEmailService extends BaseService
         return $response ?? null;
     }
 
-    public function mapDataForOCAFollowupEmail($lead, $advisor)
+    public function buildOCAHealthFollowupEmailData($lead, $advisor)
     {
         return (object) [
             'quoteUID' => $lead->code,

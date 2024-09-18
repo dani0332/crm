@@ -13,6 +13,7 @@ use Exception;
 use Illuminate\Http\Response;
 use App\Jobs\EmailStatusEventJob;
 use App\Models\EmailStatus;
+use Carbon\Carbon;
 
 //Scheduled to delete 1st April 2024
 class InboundEmailsHookService extends BaseService
@@ -146,7 +147,9 @@ class InboundEmailsHookService extends BaseService
                 info($msg);
                 return apiResponse([], Response::HTTP_OK, 'Webhook Received Successfully!');
             }
-            EmailStatusEventJob::dispatch($emailData);
+            // Dispatch the EmailStatusEventJob to handle the email status update
+            info("EmailStatusEventJob sending job dispatch | Time: " . now());
+            EmailStatusEventJob::dispatch($emailData)->delay(Carbon::now()->addSeconds(90));
             info('EmailStatusEventJob dispatched successfully!');
         }
         else
