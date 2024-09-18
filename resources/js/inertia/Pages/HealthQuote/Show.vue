@@ -1578,7 +1578,7 @@ const handlePlanSelected = plan => {
   selectedProviderPlan.value.planName = plan.planName;
   selectedProviderPlan.value.providerName = plan.providerName;
   selectedProviderPlan.value.premium = plan.premium;
-  selectedProviderPlan.value.planType = checkPlanType(plan.planTypeId);
+  selectedProviderPlan.value.planType = plan.planType;
   router.reload({
     preserveState: true,
     preserveScroll: true,
