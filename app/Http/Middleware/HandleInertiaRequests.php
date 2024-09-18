@@ -26,6 +26,7 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Models\PolicyIssuanceStatus;
 use App\Repositories\PaymentRepository;
+use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
 use App\Services\LeadsCountService;
 use App\Services\SplitPaymentService;
@@ -116,6 +117,7 @@ class HandleInertiaRequests extends Middleware
             'kycEnums' => Kyc::asArray(),
             'documentTypeCodeEnum' => DocumentTypeCode::asArray(),
             'paymentFrequencyEnum' => PaymentFrequency::asArray(),
+            'pendingActivityCount' => app(ActivitiesService::class)->getPendingActivityCount(),
         ];
     }
 

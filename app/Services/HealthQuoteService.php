@@ -347,7 +347,7 @@ class HealthQuoteService extends BaseService
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
             $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
-        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date) && ! isset($request->renewal_batch)) {
+        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date) && ! isset($request->renewal_batch) && ! isset($request->previous_quote_policy_number)) {
             $this->query->whereBetween('hqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
@@ -360,7 +360,18 @@ class HealthQuoteService extends BaseService
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['policy_expiry_date_end']));
             $this->query->whereBetween('hqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
         }
-        if (! empty($request->created_at_start) && ! empty($request->created_at_end) && empty($request->payment_due_date) && empty($request->booking_date)) {
+
+        if (
+            ! empty($request->created_at_start)
+            && ! empty($request->created_at_end)
+            && empty($request->code)
+            && empty($request->email)
+            && empty($request->mobile_no)
+            && empty($request->payment_due_date)
+            && empty($request->booking_date)
+            && empty($request->renewal_batch)
+            && empty($request->previous_quote_policy_number)
+        ) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
 
