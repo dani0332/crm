@@ -130,33 +130,25 @@ class InboundEmailsHookService extends BaseService
 
     private function handleHealth(HealthQuote $lead)
     {
-        Log::info(self::class . " - handleHealth: Going to Assign Advisor to uuid: {$lead->uuid}");
+        if ($lead->source == LeadSourceEnum::REVIVAL) {
+            Log::info(self::class . " - handleHealth: Going to Assign Advisor to uuid: {$lead->uuid}");
+            if ($lead->advisor_id) {
+                Log::info(self::class . " - handleHealth: Lead already has an advisor assigned: {$lead->uuid}");
 
-        // for only if we have to follow DTT revival flow like car
-        // if ($lead->source == LeadSourceEnum::REVIVAL) {
-        //     Log::info(self::class . " - handleHealth: Going to update Health Quote for uuid {$lead->uuid}");
-        //     $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
-        //     DttRevival::where('uuid', $lead->uuid)->update(['reply_received' => 1]);
-        //     Log::info(self::class . " - handleHealth: Health Quote Source updated for Revival for uuid {$lead->uuid}");
+                return apiResponse([], Response::HTTP_OK, 'Lead already has an advisor assigned!');
+            }
 
-        //     return apiResponse([], Response::HTTP_OK, 'Health Source Updated Successfully!');
-        // }
+            $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
+            Log::info(self::class . " - handleHealth: Car Quote Source updated for Revival for uuid {$lead->uuid} to REVIVAL_REPLIED");
+            DttRevival::where('uuid', $lead->uuid)->update(['reply_received' => 1]);
+            Log::info(self::class . " - handleHealth: Health Quote Source updated for Revival for uuid {$lead->uuid}");
 
-        // for normal health allocation flow
-        // if ($lead->advisor_id) {
-        //     Log::info(self::class . " - handleHealth: Lead already has an advisor assigned: {$lead->uuid}");
+            Log::info(self::class . " - handleHealth: AllocationFactory Strategy Executing for lead: {$lead->uuid}");
+            $allocationStrategy = AllocationFactory::createStrategy(QuoteTypeId::Health, $lead->uuid);
+            $assignedAdvisorId = $allocationStrategy->executeSteps();
+            Log::info(self::class . " - handleHealth: AllocationStrategy Executed for lead: {$lead->uuid} and assignedAdvisorId: {$assignedAdvisorId}");
 
-        //     return apiResponse([], Response::HTTP_OK, 'Lead already has an advisor assigned!');
-        // }
-
-        // $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
-        // Log::info(self::class . " - handleHealth: Car Quote Source updated for Revival for uuid {$lead->uuid} to REVIVAL_REPLIED");
-
-        // Log::info(self::class . " - handleHealth: AllocationFactory Strategy Executing for lead: {$lead->uuid}");
-        // $allocationStrategy = AllocationFactory::createStrategy(QuoteTypeId::Health, $lead->uuid);
-        // $assignedAdvisorId = $allocationStrategy->executeSteps();
-        // Log::info(self::class . " - handleHealth: AllocationStrategy Executed for lead: {$lead->uuid} and assignedAdvisorId: {$assignedAdvisorId}");
-
-        // return apiResponse([], Response::HTTP_OK, 'Lead Assigned to Advisor Successfully!');
+            return apiResponse([], Response::HTTP_OK, 'Lead Assigned to Advisor Successfully!');
+        }
     }
 }
