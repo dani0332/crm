@@ -167,11 +167,6 @@ class BikeQuoteController extends Controller
 
         $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::BIKE->id(), $quoteStatuses);
 
-        if (AMLService::checkAMLStatusFailed(QuoteTypes::BIKE->id(), $quote->id)) {
-            $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
-                return $value['id'] != QuoteStatusEnum::TransactionApproved;
-            })->values();
-        }
 
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];

@@ -150,11 +150,6 @@ class YachtQuoteController extends Controller
         ])->with('assignee', 'quoteStatus')->orderBy('created_at', 'desc')->get();
 
         $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::YACHT->id(), $quoteStatuses);
-        if (AMLService::checkAMLStatusFailed(QuoteTypes::YACHT->id(), $quote->id)) {
-            $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
-                return $value['id'] != QuoteStatusEnum::TransactionApproved;
-            })->values();
-        }
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();

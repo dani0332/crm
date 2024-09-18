@@ -215,11 +215,6 @@ class BusinessQuoteController extends Controller
         }
 
         $dropdownSource['quote_status_id'] = app(CentralService::class)->lockTransactionStatus($record, self::TYPE_ID, $dropdownSource['quote_status_id']);
-        if (AMLService::checkAMLStatusFailed(self::TYPE_ID, $record->id)) {
-            $dropdownSource['quote_status_id'] = collect($dropdownSource['quote_status_id'])->filter(function ($value) {
-                return $value['id'] != QuoteStatusEnum::TransactionApproved;
-            })->values();
-        }
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Business);
         $companyType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();

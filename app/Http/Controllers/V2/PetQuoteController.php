@@ -163,11 +163,6 @@ class PetQuoteController extends Controller
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::PET->id(), $quote->id);
 
         $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::PET->id(), $quoteStatuses);
-        if (AMLService::checkAMLStatusFailed(QuoteTypes::PET->id(), $quote->id)) {
-            $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
-                return $value['id'] != QuoteStatusEnum::TransactionApproved;
-            })->values();
-        }
         $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::PET->value);
         $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::PET->value, $quote->id);
         $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::PET->value, $quote->payments, $quoteDocuments);

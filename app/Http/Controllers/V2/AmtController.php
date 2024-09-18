@@ -294,12 +294,6 @@ class AmtController extends Controller
 
         $quoteStatuses = app(CentralService::class)->lockTransactionStatus($record, QuoteTypes::BUSINESS->id(), $quoteStatuses);
 
-        if (AMLService::checkAMLStatusFailed(QuoteTypes::BUSINESS->id(), $record->id)) {
-            $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
-                return $value['id'] != QuoteStatusEnum::TransactionApproved;
-            })->values();
-        }
-
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BUSINESS->id());
         $countries = Nationality::all();
         $amlQuoteStatus = $crudService->checkAmlQuoteStatus($record->quote_status_id);

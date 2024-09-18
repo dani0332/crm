@@ -600,11 +600,6 @@ class CRUDController extends Controller
         })->values();
 
         $leadStatuses = app(CentralService::class)->lockTransactionStatus($record, $quoteTypeId, $leadStatuses);
-        if (AMLService::checkAMLStatusFailed($quoteTypeId, $record->id)) {
-            $leadStatuses = collect($leadStatuses)->filter(function ($value) {
-                return $value['id'] != QuoteStatusEnum::TransactionApproved;
-            })->values();
-        }
 
         $lostReasons = $this->lookupService->getLostReasons();
         $selectedLostReasonId = '';

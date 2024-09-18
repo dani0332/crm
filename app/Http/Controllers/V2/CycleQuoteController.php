@@ -169,11 +169,6 @@ class CycleQuoteController extends Controller
 
         $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::CYCLE->id(), $quoteStatuses);
 
-        if (AMLService::checkAMLStatusFailed(QuoteTypes::CYCLE->id(), $quote->id)) {
-            $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
-                return $value['id'] != QuoteStatusEnum::TransactionApproved;
-            })->values();
-        }
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $duplicateAllowedLobs = (new CentralService)->duplicateAllowedLobsList(QuoteTypes::CYCLE->value, $quote->code);
