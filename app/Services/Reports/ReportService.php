@@ -21,14 +21,17 @@ use App\Models\Tier;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
 use App\Services\BaseService;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ReportService extends BaseService
 {
+    use GenericQueriesAllLobs;
     use GetUserTreeTrait;
     use TeamHierarchyTrait;
 
@@ -537,6 +540,10 @@ class ReportService extends BaseService
     }
     public function getPaymentAuthorisedSummary($request)
     {
+        if (isset($request->quoteType)) {
+            $quoteType = explode(' ', Str::lower(trim($request->quoteType)))[0];
+
+        }
         $user = Auth::user();
         $userTeams = $user->getUserTeams($user->id);
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
@@ -571,29 +578,40 @@ class ReportService extends BaseService
 
         foreach ($roleTables as $role => $details) {
             if ($user->hasRole($role)) {
-                $query = DB::table($details['table'])
+                $model = '';
+                $quoteTypeId = '';
+                if (isset($quoteType) && $quoteType != '') {
+                    if (checkPersonalQuotes(ucwords($quoteType))) {
+                        $model = 'personal_quotes';
+                        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($quoteType));
+                    } else {
+                        $model = strtolower($quoteType).'_quote_request';
+                    }
+                }
+                $premiumColumn = $model ? $model.'.premium' : $details['table'].'.premium';
+                $query = DB::table($model ? $model : $details['table'])
                     ->select(
                         'users.id as advisor_id',
                         'users.name as advisor_name',
                         'quote_status_id',
                         DB::raw('COUNT(*) as total_leads'),
-                        DB::raw('SUM('.$details['table'].'.premium) as total_premium'),
+                        DB::raw('SUM('.$premiumColumn.') as total_premium'),
                         DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
                         DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW()) as expiry_days")
                     )
-                    ->leftJoin('payments as py', 'py.code', '=', $details['table'].'.code')
-                    ->join('users', 'users.id', $details['table'].'.advisor_id');
+                    ->leftJoin('payments as py', 'py.code', '=', $model ? $model.'.code' : $details['table'].'.code')
+                    ->join('users', 'users.id', $model ? $model.'.advisor_id' : $details['table'].'.advisor_id');
 
                 if ($user->isAdvisor()) {
-                    $query->where($details['table'].'.advisor_id', $user->id);
+                    $query->where($model ? $model.'.advisor_id' : $details['table'].'.advisor_id', $user->id);
                 } else {
                     $query->join('user_team', 'user_team.user_id', 'users.id')
                         ->join('teams', 'teams.id', '=', 'user_team.team_id')
                         ->whereIn('teams.name', $userTeams);
                 }
 
-                if ($details['quoteType']) {
-                    $query->where($details['table'].'.quote_type_id', $details['quoteType']);
+                if ($details['quoteType'] || $quoteTypeId != null) {
+                    $query->where($model ? $model.'.quote_type_id' : $details['table'].'.quote_type_id', $quoteTypeId ? $quoteTypeId : $details['quoteType']);
                 }
 
                 $query->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)

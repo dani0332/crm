@@ -360,15 +360,8 @@ onMounted(() => {
     <template #item-advisor_name="{ advisor_name, advisor_id }">
       <div class="text-left">
           <a
-              v-if="fieldDisable"
               :href="url"
               @click.prevent="setUrl(advisor_id , filters.statusId)"
-              class="text-black underline"
-          >
-              {{ advisor_name }}
-          </a>
-          <a
-              v-else
               class="text-black underline"
           >
               {{ advisor_name }}
