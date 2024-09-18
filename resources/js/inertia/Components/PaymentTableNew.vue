@@ -399,22 +399,26 @@ const isPaymentLocked = computed(() => {
   const { status } = paymentMethodsForm;
   const { quote_status_id } = props.quoteRequest;
   const { quoteStatusEnum } = page.props;
-  const lockedStatuses = [
+  const lockedStatuses = new Set([
     quoteStatusEnum.CancellationPending,
     quoteStatusEnum.PolicyCancelled,
     quoteStatusEnum.PolicyBooked,
     quoteStatusEnum.PolicyCancelledReissued,
     quoteStatusEnum.POLICY_BOOKING_QUEUED,
-  ];
+  ]);
 
-  if (
-    status === 'edit' &&
-    !props.sendUpdate &&
-    (lockedStatuses.includes(quote_status_id) ||
-      (quote_status_id === quoteStatusEnum.POLICY_BOOKING_FAILED &&
-        !can(permissionEnum.BOOKING_FAILED_EDIT)))
-  ) {
-    return true;
+  if (status === 'edit') {
+    if (props.sendUpdate && can(permissionEnum.BOOKING_FAILED_EDIT)) {
+      return false;
+    }
+    if (
+      !props.sendUpdate &&
+      (lockedStatuses.has(quote_status_id) ||
+        (quote_status_id === quoteStatusEnum.POLICY_BOOKING_FAILED &&
+          !can(permissionEnum.BOOKING_FAILED_EDIT)))
+    ) {
+      return true;
+    }
   }
   return false;
 });
