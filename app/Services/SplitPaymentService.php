@@ -780,9 +780,14 @@ class SplitPaymentService
                 if ($sendUpdateId) {
                     $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
                 } else {
-                    $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
-                    app(CRUDService::class)->calculateScore($quoteModel, $modelType);
-                    info('Transaction Score Calculated: '.$quoteModel->code);
+
+                    $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quoteModel);
+                    if (! $lockLeadSectionsDetails['lead_status']) {
+                        $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
+                        app(CRUDService::class)->calculateScore($quoteModel, $modelType);
+                        info('Transaction Score Calculated: '.$quoteModel->code);
+                    }
+
                 }
                 $quoteModel->save();
                 if (! $sendUpdateId) {
