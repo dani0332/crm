@@ -18,6 +18,11 @@ use App\Services\BaseService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SIBService;
 use Carbon\Carbon;
+use App\Services\BirdService;
+use App\Enums\WorkflowTypeEnum;
+use App\Models\QuoteFlowDetails;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteFlowType;
 
 class CarEmailService extends BaseService
 {
@@ -76,6 +81,7 @@ class CarEmailService extends BaseService
         if (! $triggerOnlyWorkflow) {
             if ($lead->advisor_id) {
                 $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
+                $this->sendNBMotorWorkFlow( $lead);
             } else {
                 info('sendCarOCBIntroEmail - sendNonAdvisorIntroEmail - Ref ID:'.$lead->uuid.' Time: '.now());
                 $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId);
@@ -319,5 +325,81 @@ class CarEmailService extends BaseService
     public function sendSICNotificationToAdvisor($lead, $user)
     {
         return $this->sendEmailCustomerService->sendSICNotificationToAdvisor($lead, $user);
+    }
+
+    public function sendNBMotorWorkFlow($lead)
+    {
+        info('Sending NBMotorWorkFlow followups email for lead: '.$lead->uuid.' | Time: '.now());
+        if (! $lead->oca_flow_enabled) {
+            $advisor = User::where('id', $lead->advisor_id)->first();
+            $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor);
+            $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
+            if ($sicEvent) {
+                $response =app(BirdService::class)->triggerWebHookRequest($sicEvent->value, $emailData);
+                info("NBMotorWorkFlow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
+                info("NBMotorWorkFlow response: {$response->status_code} | Ref-ID: {$lead->uuid} |Time: ".now());
+
+                if(!empty($response->headers['Run-Id'])) {
+                    $this->createQuoteFlowDetails($lead, $response);
+                }
+            } else {
+                info("NBMotorWorkFlow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+            }
+        } else {
+            info("NBMotorWorkFlow already enabled for lead Ref-ID: {$lead->uuid} | Time: ".now());
+        }
+
+        return $response ?? null;
+    }
+    public function buildNBMotorFollowupEmailData($lead, $advisor)
+    {
+        return (object) [
+            'quoteUID' => $lead->code,
+            'customerEmail' => $lead->email,
+            'uuid' => $lead->uuid,
+            'refID' => $lead->uuid,
+            'customerName' => $lead->first_name.' '.$lead->last_name,
+            'advisorId' => $advisor->id ?? null,
+            'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
+            'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
+            'advisorDetails' => $advisor ?? null,
+            'quotePlanLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid,
+            'requestAdvisorLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
+            'quotePlanApiLink' => config('constants.KEN_API_ENDPOINT').'/get-health-quote-plans-order-priority?'.$lead->uuid.'&lang=en&isModified=true',
+            'ApiToken' => config('constants.KEN_API_TOKEN'),
+            'basicAuth' => 'Basic '.base64_encode(config('constants.KEN_API_USER').':'.config('constants.KEN_API_PWD')),
+            'landLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
+            'mobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
+            'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
+            'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
+            'workflowType' => WorkflowTypeEnum::NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS,
+            'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
+            'instantAlfredLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
+
+        ];
+    }
+
+    public function createQuoteFlowDetails($lead, $response)
+    {
+        try {
+            $runId = collect($response->headers['Run-Id'])->first();
+            if (!empty($runId)) {
+                QuoteFlowDetails::create([
+                    'quote_uuid' => $lead->uuid,
+                    'quote_type_id' => QuoteTypeId::Car,
+                    'flow_type' => QuoteFlowType::NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS->value,
+                    'flow_id' => $runId,
+                ]);
+                info("NBMotorWorkFlow  run id created for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+            }
+            else {
+                info("NBMotorWorkFlow  run id not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+            }
+        } catch (\Throwable $th) {
+            $errorMessage = "NBMotorWorkFlow-Error: while creating quote flow details for lead: Ref-ID: {$lead->uuid} | Time: " . now();
+            info($errorMessage);
+            info("NBMotorWorkFlow-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: " . now());
+            throw $th;
+        }
     }
 }
