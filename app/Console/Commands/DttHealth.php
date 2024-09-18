@@ -75,10 +75,14 @@ class DttHealth extends Command
             ->where('is_revived', '=', false)
             ->where('created_at', '>=', $dateOne)
             ->where('created_at', '<', $dateTwo)
-
-            ->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved])
-
-            ->where('payment_status_id', '!=', PaymentStatusEnum::CAPTURED)
+            ->where(function ($q) {
+                $q->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved]);
+                $q->orWhereNull('quote_status_id');
+            })
+            ->where(function ($q) {
+                $q->where('payment_status_id', '!=', PaymentStatusEnum::CAPTURED);
+                $q->orWhereNull('payment_status_id');
+            })
             ->whereHas('healthQuoteRequestDetail', function ($q) {
                 $q->whereNull('transapp_code');
             })
@@ -107,6 +111,7 @@ class DttHealth extends Command
         });
 
         info($logPrefix . ' count - ' . count($filteredLeads) . ' - ' . json_encode($filteredLeads->pluck('uuid')->toArray()));
+
 
         foreach ($filteredLeads as $item) {
             $jobs[] = new HealthRevivalLeadsCreationJob($item);
