@@ -34,6 +34,7 @@ class OCAHealthFollowupEmailJob implements ShouldQueue
             $healthLead = HealthQuote::where('uuid', $this->quoteUuid)->first();
             if (! $healthLead) {
                 info("OCAHealthFollowupEmailJob - Health Lead Not Found - Ref ID: {$this->quoteUuid} | Time: ".now());
+
                 return;
             }
 
@@ -42,7 +43,7 @@ class OCAHealthFollowupEmailJob implements ShouldQueue
                 info("Sending OCA health email follow-ups for Ref-ID: {$healthLead->uuid}, Lead Status ID: {$healthLead->quote_status_id} | Time: ".now());
                 // Send the Health OCA email using the HealthEmailService
                 $healthEmailService->sendOCAHealthWorkFlow($healthLead);
-                if($healthLead->quote_status_id  != QuoteStatusEnum::ApplicationPending){
+                if ($healthLead->quote_status_id != QuoteStatusEnum::ApplicationPending) {
                     $healthLead->quote_status_id = QuoteStatusEnum::FollowedUp;
                     $healthLead->save();
                 }

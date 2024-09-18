@@ -3,9 +3,9 @@
 namespace App\Services;
 
 use App\Enums\ProcessStatusCode;
-use App\Models\EmailStatus;
 use App\Enums\QuoteTypes;
 use App\Models\CarQuote;
+use App\Models\EmailStatus;
 use App\Models\HealthQuote;
 
 class EmailStatusService extends BaseService
@@ -33,33 +33,35 @@ class EmailStatusService extends BaseService
         return $newEmailStatus->id;
     }
 
-    public function addBirdEmailStatus($request){
+    public function addBirdEmailStatus($request)
+    {
 
-        switch(request('quoteTypeId')) {
+        switch (request('quoteTypeId')) {
             case QuoteTypes::CAR->value:
                 $quote = CarQuote::where('uuid', $request->uuid)->first();
                 break;
             case QuoteTypes::HEALTH->value:
-                    $quote = HealthQuote::where('uuid', $request->uuid)->first();
+                $quote = HealthQuote::where('uuid', $request->uuid)->first();
                 break;
             default:
-                 $quote =  null;
+                $quote = null;
                 break;
         }
-        if(! $quote) {
+        if (! $quote) {
             info("lead not found for uuid: {$request->uuid} time: ".now());
-            return (object)['message'=>'lead not found','status'=>false];
+
+            return (object) ['message' => 'lead not found', 'status' => false];
         }
-        if(!EmailStatus::where('email_status', ProcessStatusCode::SENT)
-        ->where('msg_id', $request->message_id)
-        ->where('quote_id', $quote->id)->exists()) {
+        if (! EmailStatus::where('email_status', ProcessStatusCode::SENT)
+            ->where('msg_id', $request->message_id)
+            ->where('quote_id', $quote->id)->exists()) {
             $request->quoteId = $quote->id;
             $request->customerEmail = $request->customer_email;
             $this->addEmailStatus($request, $request->message_id, $request->subject, ProcessStatusCode::SENT);
-            return (object)['message'=>'Email event logged successfully','status'=>true];
-        }
-        else {
-            return (object)['message'=>'Email event already logged','status'=>true];
+
+            return (object) ['message' => 'Email event logged successfully', 'status' => true];
+        } else {
+            return (object) ['message' => 'Email event already logged', 'status' => true];
         }
     }
 
