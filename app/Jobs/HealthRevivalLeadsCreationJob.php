@@ -11,7 +11,6 @@ use App\Models\ApplicationStorage;
 use App\Models\DttRevival;
 use App\Models\HealthQuote;
 use App\Models\QuoteBatches;
-use App\Services\CapiRequestService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
