@@ -8,9 +8,11 @@ use App\Enums\QuoteTypes;
 use App\Factories\AllocationFactory;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
+use App\Models\HealthQuote;
 use App\Models\TravelQuote;
 use Exception;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 
 //Scheduled to delete 1st April 2024
 class InboundEmailsHookService extends BaseService
@@ -70,6 +72,7 @@ class InboundEmailsHookService extends BaseService
                 return match ($quoteType) {
                     QuoteTypes::CAR => $this->handleCar($lead),
                     QuoteTypes::TRAVEL => $this->handleTravel($lead),
+                    QuoteTypes::HEALTH => $this->handleHealth($lead),
                     default => apiResponse([], Response::HTTP_UNPROCESSABLE_ENTITY, "Unhandled quote type: {$quoteType->value}")
                 };
             }
@@ -123,5 +126,29 @@ class InboundEmailsHookService extends BaseService
         info(self::class." - handleTravel: AllocationStrategy Executed for lead: {$lead->uuid} and assignedAdvisorId: {$assignedAdvisorId}");
 
         return apiResponse([], Response::HTTP_OK, 'Lead Assigned to Advisor Successfully!');
+    }
+
+    private function handleHealth(HealthQuote $lead)
+    {
+        if ($lead->source == LeadSourceEnum::REVIVAL) {
+            Log::info(self::class." - handleHealth: Going to Assign Advisor to uuid: {$lead->uuid}");
+            if ($lead->advisor_id) {
+                Log::info(self::class." - handleHealth: Lead already has an advisor assigned: {$lead->uuid}");
+
+                return apiResponse([], Response::HTTP_OK, 'Lead already has an advisor assigned!');
+            }
+
+            $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
+            Log::info(self::class." - handleHealth: Car Quote Source updated for Revival for uuid {$lead->uuid} to REVIVAL_REPLIED");
+            DttRevival::where('uuid', $lead->uuid)->update(['reply_received' => 1]);
+            Log::info(self::class." - handleHealth: Health Quote Source updated for Revival for uuid {$lead->uuid}");
+
+            Log::info(self::class." - handleHealth: AllocationFactory Strategy Executing for lead: {$lead->uuid}");
+            $allocationStrategy = AllocationFactory::createStrategy(QuoteTypeId::Health, $lead->uuid);
+            $assignedAdvisorId = $allocationStrategy->executeSteps();
+            Log::info(self::class." - handleHealth: AllocationStrategy Executed for lead: {$lead->uuid} and assignedAdvisorId: {$assignedAdvisorId}");
+
+            return apiResponse([], Response::HTTP_OK, 'Lead Assigned to Advisor Successfully!');
+        }
     }
 }

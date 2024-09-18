@@ -92,7 +92,7 @@ class DttHealth extends Command
             ->get();
 
         if ($leads->count() == 0) {
-            info($logPrefix . 'No leads found');
+            info($logPrefix.'No leads found');
 
             return false;
         }
@@ -110,7 +110,7 @@ class DttHealth extends Command
             return in_array($item->customer_id, $customerIdsWithTransApp) ? false : true;
         });
 
-        info($logPrefix . ' count - ' . count($filteredLeads) . ' - ' . json_encode($filteredLeads->pluck('uuid')->toArray()));
+        info($logPrefix.' count - '.count($filteredLeads).' - '.json_encode($filteredLeads->pluck('uuid')->toArray()));
 
 
         foreach ($filteredLeads as $item) {
@@ -122,19 +122,19 @@ class DttHealth extends Command
                 ->addJobs($jobs)
 
                 ->then(function () use ($logPrefix) {
-                    info($logPrefix . ' all jobs completed successfully');
+                    info($logPrefix.' all jobs completed successfully');
                 })
                 ->catch(function () use ($logPrefix) {
-                    info($logPrefix . ' one of batch is failed.');
+                    info($logPrefix.' one of batch is failed.');
                 })
                 ->finally(function () use ($logPrefix) {
-                    info($logPrefix . ' everything done');
+                    info($logPrefix.' everything done');
                 })
                 ->allowFailures()
                 ->withDelay(5)
                 ->dispatch();
         } else {
-            info($logPrefix . '------No lead Found------');
+            info($logPrefix.'------No lead Found------');
         }
     }
 }
