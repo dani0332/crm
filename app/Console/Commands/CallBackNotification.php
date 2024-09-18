@@ -56,8 +56,8 @@ class CallBackNotification extends Command
         Activities::where('source', LeadSourceEnum::INSTANT_ALFRED)
             ->where('status', 0)
             ->where(function ($query) use ($currentTime) {
-                $query->where(DB::raw("TIMESTAMPDIFF(MINUTE, created_at, '$currentTime')"), '=', 10)
-                    ->orWhere(DB::raw("TIMESTAMPDIFF(MINUTE, created_at, '$currentTime')"), '=', 20);
+                $query->where(DB::raw("TIMESTAMPDIFF(MINUTE, created_at, '$currentTime')"), '=', 60)
+                    ->orWhere(DB::raw("TIMESTAMPDIFF(MINUTE, created_at, '$currentTime')"), '=', 120);
             })
             ->chunk(500, function ($activities) {
                 foreach ($activities as $activity) {
