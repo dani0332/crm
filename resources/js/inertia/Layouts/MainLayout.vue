@@ -183,15 +183,15 @@ const urls = computed(() => {
                 </button>
 
                 <div id="headerportal"></div>
-                <div class="lg:flex gap-3 hidden">
-                  <x-tag class="border-gray-200" outlined>
+                <div class="lg:flex gap-1 hidden">
+                  <x-tag size="xs" class="border-gray-200" outlined>
                     Pending Callbacks:
                     <strong class="pl-1">
                       {{ pendingActivityCount.pendingCallback }}
                     </strong>
                   </x-tag>
 
-                  <x-tag class="border-gray-200" outlined>
+                  <x-tag size="xs" class="border-gray-200" outlined>
                     Pending Whatsapp:
                     <strong class="pl-1">
                       {{ pendingActivityCount.pendingWhatsapp }}
