@@ -40,7 +40,7 @@ class HealthEmailService extends BaseService
         return $response ?? null;
     }
 
-    private function buildHealthFollowupEmailData($lead, $advisor,$workflowType)
+    private function buildHealthFollowupEmailData($lead, $advisor, $workflowType)
     {
         return (object) [
             'quoteUID' => $lead->uuid,
