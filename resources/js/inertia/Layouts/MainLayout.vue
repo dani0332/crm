@@ -183,8 +183,9 @@ const urls = computed(() => {
                 </button>
 
                 <div id="headerportal"></div>
-                <div class="lg:flex gap-1 hidden mt-1 mb-1"
-                     style="font-size: 12px"
+                <div
+                  class="lg:flex gap-1 hidden mt-1 mb-1"
+                  style="font-size: 12px"
                 >
                   <x-tag class="border-gray-200" outlined>
                     Pending Callbacks:
