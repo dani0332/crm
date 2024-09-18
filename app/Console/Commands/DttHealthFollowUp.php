@@ -56,7 +56,7 @@ class DttHealthFollowUp extends Command
         $fourDaysBefore = Carbon::now()->subDays(4)->toDateString();
         $sixDaysBefore = Carbon::now()->subDays(6)->toDateString();
 
-        $logPrefix = 'healthRevivalFollowUpEmailJob -';
+        $logPrefix = 'healthRevivalFollowUpEmailJob-';
 
         $leads = [];
         // dd('DTTFollowup date: '.$twoDaysBefore.'-----'.$fiveDaysBefore.'------'.$eightDaysBefore.'------'.$twelveDaysBefore.'------'.$sixteenDaysBefore.'------'.$twentyDaysBefore.'-');
