@@ -95,12 +95,45 @@ class HealthRevivalQuotesSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-        }  // dtt health initial without health team type
+        }
+        // dtt health initial without health team type
         $dttHealthInitialWithOutHealthTeamTemplate = ApplicationStorage::where('key_name', ApplicationStorageEnums::DTT_HEALTH_INITIAL_WITHOUT_HEALTH_TEAM)->first();
         if (! $dttHealthInitialWithOutHealthTeamTemplate) {
             DB::table('application_storage')->insert([
                 'key_name' => ApplicationStorageEnums::DTT_HEALTH_INITIAL_WITHOUT_HEALTH_TEAM,
                 'value' => '692',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+        // dtt health first follow up without health team type
+        $dttHealthFollowupOneWithOutHealthTeamTemplate = ApplicationStorage::where('key_name', ApplicationStorageEnums::DTT_HEALTH_FOLLOWUP_AFTER_TWO_DAYS_WITHOUT_HEALTH_TEAM)->first();
+        if (! $dttHealthFollowupOneWithOutHealthTeamTemplate) {
+            DB::table('application_storage')->insert([
+                'key_name' => ApplicationStorageEnums::DTT_HEALTH_FOLLOWUP_AFTER_TWO_DAYS_WITHOUT_HEALTH_TEAM,
+                'value' => '693',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+        // dtt health 2nd follow up without health team type
+        $dttHealthFollowupTwoWithOutHealthTeamTemplate = ApplicationStorage::where('key_name', ApplicationStorageEnums::DTT_HEALTH_FOLLOWUP_AFTER_FOUR_DAYS_WITHOUT_HEALTH_TEAM)->first();
+        if (! $dttHealthFollowupTwoWithOutHealthTeamTemplate) {
+            DB::table('application_storage')->insert([
+                'key_name' => ApplicationStorageEnums::DTT_HEALTH_FOLLOWUP_AFTER_FOUR_DAYS_WITHOUT_HEALTH_TEAM,
+                'value' => '694',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } // dtt health 2nd follow up without health team type
+        $dttHealthFollowupThreeWithOutHealthTeamTemplate = ApplicationStorage::where('key_name', ApplicationStorageEnums::DTT_HEALTH_FOLLOWUP_AFTER_SIX_DAYS_WITHOUT_HEALTH_TEAM)->first();
+        if (! $dttHealthFollowupThreeWithOutHealthTeamTemplate) {
+            DB::table('application_storage')->insert([
+                'key_name' => ApplicationStorageEnums::DTT_HEALTH_FOLLOWUP_AFTER_SIX_DAYS_WITHOUT_HEALTH_TEAM,
+                'value' => '695',
                 'is_active' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
