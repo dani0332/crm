@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\QuoteTypes;
+use App\Http\Requests\UpdateLeadAllocationRequest;
 use App\Models\LeadAllocation;
 use App\Services\ApplicationStorageService;
 use App\Services\CacheService;
@@ -12,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Http\JsonResponse;
 
 class TravelLeadAllocationController extends Controller
 {
@@ -50,20 +52,27 @@ class TravelLeadAllocationController extends Controller
         }
     }
 
-    public function updateUserHardStopStatus(Request $request)
+    public function updateUserHardStopStatus(UpdateLeadAllocationRequest $request): JsonResponse
     {
         try {
-            $validated = $request->validate([
-                'userId' => 'required|integer|exists:users,id',
-                'status' => 'required|boolean',
-            ]);
+            $validated = $request->validated();
 
-            $leadAllocation = LeadAllocation::where('user_id', $validated['userId'])
-                ->where('quote_type_id', QuoteTypes::TRAVEL->id())
-                ->firstOrFail();
+            $leadAllocation = LeadAllocation::whereHas('leadAllocationUser', function ($query) use ($validated) {
+                $query->where('id', $validated['userId']);
+            })
+                ->travelQuote()
+                ->first();
 
-            $leadAllocation->is_hardstop = $validated['status'];
-            $leadAllocation->save();
+            if (!$leadAllocation) {
+                Log::error('Lead allocation record not found for user', [
+                    'user_id' => $validated['userId'],
+                ]);
+                return response()->json([
+                    'message' => 'Lead allocation record not found for the specified user.',
+                ], 404);
+            }
+
+            $leadAllocation->update(['is_hardstop' => $validated['status']]);
 
             Log::info('Successfully updated is_hardstop status', [
                 'user_id' => $validated['userId'],
@@ -73,27 +82,10 @@ class TravelLeadAllocationController extends Controller
             return response()->json([
                 'message' => 'Hard stop status updated successfully.',
             ], 200);
-        } catch (ValidationException $e) {
-            Log::warning('Validation failed for updating is_hardstop status', [
-                'errors' => $e->errors(),
-            ]);
-
-            return response()->json([
-                'message' => 'Invalid input data.',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (ModelNotFoundException $e) {
-            Log::error('Lead allocation not found for user', [
-                'user_id' => $request->userId,
-            ]);
-
-            return response()->json([
-                'message' => 'Lead allocation not found for the specified user.',
-            ], 404);
         } catch (\Exception $e) {
             Log::error('Failed to update is_hardstop status', [
-                'user_id' => $request->userId,
-                'status' => $request->status,
+                'user_id' => $request->input('userId'),
+                'status' => $request->input('status'),
                 'error' => $e->getMessage(),
             ]);
 
