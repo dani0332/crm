@@ -20,7 +20,7 @@ class HealthEmailService extends BaseService
         if ($triggerSICWorkFlow) {
             if (! $lead->sic_flow_enabled) {
                 $advisor = User::where('id', $lead->advisor_id)->first();
-                $emailData = $this->mapDataForFollowupEmail($lead, $advisor);
+                $emailData = $this->buildHealthFollowupEmailData($lead, $advisor, WorkflowTypeEnum::HEALTH_SIC_FOLLOWUPS);
                 $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
                 if ($sicEvent) {
                     $response = app(BirdService::class)->triggerWebHookRequest($sicEvent->value, $emailData);
@@ -40,7 +40,7 @@ class HealthEmailService extends BaseService
         return $response ?? null;
     }
 
-    private function mapDataForFollowupEmail($lead, $advisor)
+    private function buildHealthFollowupEmailData($lead, $advisor,$workflowType)
     {
         return (object) [
             'quoteUID' => $lead->uuid,
@@ -48,6 +48,7 @@ class HealthEmailService extends BaseService
             'refID' => $lead->code,
             'uuid' => $lead->uuid,
             'customerFullName' => $lead->first_name.' '.$lead->last_name,
+            'customerName' => $lead->first_name.' '.$lead->last_name,
             'advisorId' => $advisor->id ?? null,
             'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
@@ -61,7 +62,7 @@ class HealthEmailService extends BaseService
             'mobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
             'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
             'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
-            'workflowType' => WorkflowTypeEnum::HEALTH_SIC_FOLLOWUPS,
+            'workflowType' => $workflowType,
             'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
             'whatsappConsent' => getWhatsappConsent(QuoteTypes::HEALTH, $lead->uuid),
             'instantAlfredLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
@@ -73,7 +74,7 @@ class HealthEmailService extends BaseService
         info('Sending OCA Health followups email for lead: '.$lead->uuid.' | Time: '.now());
         if (! $lead->oca_flow_enabled) {
             $advisor = User::where('id', $lead->advisor_id)->first();
-            $emailData = $this->buildOCAHealthFollowupEmailData($lead, $advisor);
+            $emailData = $this->buildHealthFollowupEmailData($lead, $advisor, WorkflowTypeEnum::HEALTH_AUTOMATED_FOLLOWUPS);
             $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
             if ($sicEvent) {
                 $response =app(BirdService::class)->triggerWebHookRequest($sicEvent->value, $emailData);
@@ -94,35 +95,6 @@ class HealthEmailService extends BaseService
 
         return $response ?? null;
     }
-
-    public function buildOCAHealthFollowupEmailData($lead, $advisor)
-    {
-        return (object) [
-            'quoteUID' => $lead->code,
-            'customerEmail' => $lead->email,
-            'uuid' => $lead->uuid,
-            'refID' => $lead->uuid,
-            'customerName' => $lead->first_name.' '.$lead->last_name,
-            'advisorId' => $advisor->id ?? null,
-            'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
-            'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
-            'advisorDetails' => $advisor ?? null,
-            'quotePlanLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid,
-            'requestAdvisorLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
-            'quotePlanApiLink' => config('constants.KEN_API_ENDPOINT').'/get-health-quote-plans-order-priority?'.$lead->uuid.'&lang=en&isModified=true',
-            'ApiToken' => config('constants.KEN_API_TOKEN'),
-            'basicAuth' => 'Basic '.base64_encode(config('constants.KEN_API_USER').':'.config('constants.KEN_API_PWD')),
-            'landLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
-            'mobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
-            'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
-            'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
-            'workflowType' => WorkflowTypeEnum::HEALTH_AUTOMATED_FOLLOWUPS,
-            'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
-            'instantAlfredLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
-
-        ];
-    }
-
     public function createQuoteFlowDetails($lead, $response)
     {
         try {
