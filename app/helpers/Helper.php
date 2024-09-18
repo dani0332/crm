@@ -9,12 +9,16 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessQuote;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
+use App\Models\QuoteAdditionalDetail;
+use App\Models\QuoteTag;
+use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\CentralService;
@@ -29,7 +33,6 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use App\Models\QuoteTag;
 
 if (! function_exists('generate_code')) {
     /**
@@ -715,6 +718,21 @@ if (! function_exists('mimeContentType')) {
         }
     }
 }
+if (! function_exists('checkAuthUserRole')) {
+    function checkAuthUserRole()
+    {
+
+        if (! Auth::check()) {
+            return false;
+        }
+
+        if (Auth::user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::HealthManager, RolesEnum::BusinessManager, RolesEnum::HomeManager, RolesEnum::LifeManager, RolesEnum::PetManager, RolesEnum::YachtManager, RolesEnum::TravelManager, RolesEnum::BikeManager, RolesEnum::CycleManager, RolesEnum::JetskiManager])) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
 
 if (! function_exists('apiResponse')) {
     function apiResponse($data, $statusCode = 200, $message = null)
@@ -1235,6 +1253,24 @@ if (! function_exists('isVatApplied')) {
     }
 }
 
+if (! function_exists('getTeamId')) {
+    /**
+     * Get the ID of a team by its name.
+     */
+    function getTeamId(string $teamName): int
+    {
+        try {
+            $team = Team::where('name', $teamName)->first();
+
+            return optional($team)->id ?? 0;
+        } catch (Exception $e) {
+            Log::error("Error retrieving team ID for team name: {$teamName}", ['exception' => $e]);
+
+            return 0;
+        }
+    }
+}
+
 if (! function_exists('isLeadSic')) {
     function isLeadSic(string $uuid): bool
     {
@@ -1247,5 +1283,21 @@ if (! function_exists('isLeadSic')) {
 
             return false;
         }
+    }
+}
+if (! function_exists('getWhatsappConsent')) {
+    function getWhatsappConsent(QuoteTypes $quoteType, string $uuid): bool
+    {
+        $whatsappConsent = false;
+        $quoteAdditionalDetail = QuoteAdditionalDetail::where('quote_uuid', $uuid)->where(function ($q) use ($quoteType) {
+            $q->where('quote_type_id', (int) $quoteType?->id());
+            $q->orWhere('quote_type_id', $quoteType?->id());
+        })->first();
+
+        if ($quoteAdditionalDetail) {
+            $whatsappConsent = isset($quoteAdditionalDetail->flags['whatsapp_consent']) ? $quoteAdditionalDetail->flags['whatsapp_consent'] : false;
+        }
+
+        return $whatsappConsent;
     }
 }

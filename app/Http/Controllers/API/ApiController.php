@@ -2,15 +2,20 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\APiFetchUrl;
 use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\EmailEventsRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
+use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\SICWorkflowRequest;
+use App\Jobs\FixQuoteStatusDate;
 use App\Services\ApiService;
 use App\Services\InboundEmailsHookService;
+use App\Services\NotificationService;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
@@ -21,6 +26,8 @@ use Illuminate\Support\Facades\Log;
 
 class ApiController extends Controller
 {
+    use GenericQueriesAllLobs;
+
     public $apiService;
     public $inboundEmailsHookService;
     protected $emailStatusService;
@@ -68,6 +75,11 @@ class ApiController extends Controller
         }
     }
 
+    public function quotePaymentStatusUpdated(PaymentNotificationRequest $request)
+    {
+        return app(NotificationService::class)->paymentStatusUpdate($request->quoteType, $request->quoteId);
+    }
+
     public function triggerSICWorkflow(SICWorkflowRequest $request)
     {
         return $this->apiService->triggerSICWorkflow($request);
@@ -77,7 +89,6 @@ class ApiController extends Controller
     {
         return $this->apiService->evaluateTier($request);
     }
-
     public function inboundEmailsHook()
     {
         return $this->inboundEmailsHookService->process();
@@ -126,7 +137,26 @@ class ApiController extends Controller
             info("lead not found for uuid: {$quoteUID} | FlowType: {$flowType} | Time: ".now());
             return apiResponse([], Response::HTTP_NOT_FOUND, 'Lead not found');
         }
-        $response =app(BirdService::class)->stopWorkFlow($workflow);
+        $response = app(BirdService::class)->stopWorkFlow($workflow);
         return apiResponse([$response], Response::HTTP_OK, 'Email event stopped successfully');
+    }
+    // Temporary Endpoint - Will be Removed after fixing Quote Status Dates for all LOBs
+    public function fixQuoteStatusDate()
+    {
+        $quoteType = QuoteTypes::getName(request()->quoteTypeId);
+
+        if ($quoteType) {
+            if (request('process')) {
+                FixQuoteStatusDate::dispatch($quoteType, request('statuses'), request('chunkSize', 200));
+
+                return apiResponse(null, Response::HTTP_OK, 'Fix Quote Status Date Job dispatched');
+            } else {
+                $records = $quoteType->model()->whereIn('quote_status_id', request('statuses'))->count();
+
+                return apiResponse(null, Response::HTTP_OK, "Total Records are: {$records}");
+            }
+        }
+
+        return apiResponse(null, Response::HTTP_OK, 'Invalid Quote Type');
     }
 }

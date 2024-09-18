@@ -521,7 +521,7 @@ onMounted(() => {
             <x-input
               v-model="paymentForm.amount"
               label="Amount"
-              :rules="[isRequired, isNumber]"
+              :rules="[isRequired, isNumberOrDecimal]"
               class="w-full"
             />
 

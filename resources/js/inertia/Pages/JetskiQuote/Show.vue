@@ -34,6 +34,7 @@ const page = usePage();
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const modelClass = 'App\\Models\\PersonalQuote';
 const readOnlyMode = reactive({
   isDisable: true,
 });
@@ -50,6 +51,8 @@ const isAddUpdate = ref(false);
 const onAddUpdate = () => {
   isAddUpdate.value = true;
 };
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 </script>
 
 <template>
@@ -375,5 +378,10 @@ const onAddUpdate = () => {
     />
 
     <LeadHistory :quote="$page.props.quote" :expanded="sectionExpanded" />
+
+    <lead-raw-data
+      :modelType="'Jetski'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

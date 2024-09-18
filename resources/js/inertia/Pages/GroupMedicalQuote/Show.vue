@@ -53,6 +53,7 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
 
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
+const modelClass = 'App\\Models\\BusinessQuote';
 
 const historyData = ref(null),
   historyLoading = ref(false);
@@ -403,6 +404,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
         <Link
           v-else-if="
             quote.source == leadSource.RENEWAL_UPLOAD &&
+            quote.previous_quote_policy_number != null &&
             can(permissionsEnum.VIEW_LEGACY_DETAILS)
           "
           :href="
@@ -1024,7 +1026,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
               <x-field label="Transaction Type">
                 <x-input
                   type="text"
-                  :value="quote.transaction_type_text"
+                  v-model="quote.transaction_type_text"
                   class="w-full"
                   :disabled="true"
                 />
@@ -1103,6 +1105,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       quoteSubType="Group Medical"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
+      :expanded="sectionExpanded"
     />
 
     <PolicyDetail
@@ -1120,6 +1123,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :insly-id="quoteDetails?.insly_id"
       :expanded="sectionExpanded"
       quoteType="Business"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy
@@ -1135,6 +1139,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+      :modelClass="modelClass"
     />
 
     <SendUpdates
@@ -1180,9 +1185,14 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
     </div>
 
     <AuditLogs
-      :type="'App\\Models\\BusinessQuote'"
+      :type="modelClass"
       :id="$page.props.quote.id"
       :expanded="sectionExpanded"
     />
+
+    <lead-raw-data
+      :modelType="'Business'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

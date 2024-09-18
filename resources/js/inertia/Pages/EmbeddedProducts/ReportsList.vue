@@ -57,7 +57,6 @@ const tableHeader = [
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-company_name="{ insurance_provider }">
         {{ insurance_provider?.text }}

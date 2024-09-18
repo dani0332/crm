@@ -762,7 +762,7 @@
                             <p class="text-center">
                                 @if ($plans[$planId]->discountPremium)
                                     <a target="_blank" class="btn-buy"
-                                        href="{{ $websitURL . '/health-insurance/quote/' . $quote->uuid . '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId . (isset($plans[$planId]->addons['coPayment']['id']) ? '&selectedCopayId=' . $plans[$planId]->addons['coPayment']['id'] : '') }}">Buy
+                                        href="{{ $websitURL . '/health-insurance/quote/' . $quote->uuid . '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId . (isset($plans[$planId]->addons['coPayment']['id']) ? '&selectedCopayId=' . $plans[$planId]->addons['coPayment']['id'] : '') }}">APPLY
                                         Now</a>
                                 @else
                                     N/A
@@ -860,7 +860,7 @@
                                     @elseif($feature['type'] == 'buy')
                                         @if ($plans[$planId]->discountPremium)
                                             <a target="_blank" class="btn-buy"
-                                                href="{{ $websitURL . '/car-insurance/quote/' . $quote->uuid . '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId }}">Buy
+                                                href="{{ $websitURL . '/car-insurance/quote/' . $quote->uuid . '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId }}">APPLY
                                                 Now</a>
                                         @else
                                             N/A

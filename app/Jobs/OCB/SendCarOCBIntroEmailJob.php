@@ -77,7 +77,7 @@ class SendCarOCBIntroEmailJob implements ShouldQueue
                     $plans = $httpService->getPlans($lead->uuid, false, false, false, 'Car');
 
                     $responseCode = $carEmailService->sendCarOCBIntroEmail($plans, $lead, $tierR, $this->previousAdvisor, $carQuoteService, $this->triggerSICWorkflow, $this->triggerOnlyWorkflow);
-                    if (in_array($responseCode, [200, 201])) {
+                    if (in_array($responseCode, [200, 201]) || $responseCode == null) {
                         info('SendCarOCBIntroEmailJob - OCB INTRO Email Sent: '.$responseCode.' Customer Email Address: '.$lead->email.' Quote UuId: '.$this->quoteUuid);
                     } else {
                         Log::error('SendCarOCBIntroEmailJob - OCB INTRO Email Not Sent: '.$responseCode.' Customer EmailAddress:'.$lead->email);
