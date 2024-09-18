@@ -52,10 +52,10 @@ class SukoonDemocranceService
     /**
      * Makes an HTTP request to the specified path with the given method, data, and headers.
      *
-     * @param string $path The API endpoint path.
-     * @param string $method The HTTP method (default is 'post').
-     * @param array $data The data to send with the request.
-     * @param array $headers The headers to include with the request.
+     * @param  string  $path  The API endpoint path.
+     * @param  string  $method  The HTTP method (default is 'post').
+     * @param  array  $data  The data to send with the request.
+     * @param  array  $headers  The headers to include with the request.
      * @return mixed The response from the API.
      */
     private function request($path, $method = 'post', $data = [], $headers = [])
@@ -82,6 +82,7 @@ class SukoonDemocranceService
      * Logs into the Democrance system and sets the session ID.
      *
      * @return void
+     *
      * @throws Exception If login fails.
      */
     public function login()
@@ -108,13 +109,14 @@ class SukoonDemocranceService
     /**
      * Submits a form to the Democrance system.
      *
-     * @param array $data The data to submit with the form.
-     * @param mixed $transaction The transaction object.
-     * @param bool $isInitial Indicates if this is the initial form submission.
+     * @param  array  $data  The data to submit with the form.
+     * @param  mixed  $transaction  The transaction object.
+     * @param  bool  $isInitial  Indicates if this is the initial form submission.
      * @return void
+     *
      * @throws Exception If form submission fails.
      */
-    public function formSubmit($data, $transaction = null ,$save = false)
+    public function formSubmit($data, $transaction = null, $save = false)
     {
         try {
             $result = $this->request('/policy/submit/'.$this->productSlug.'/', 'post', $data, [
@@ -125,6 +127,7 @@ class SukoonDemocranceService
 
             if (isset($result['policy_number']) && $result['policy_number'] && ! $result['has_errors']) {
                 $save && $transaction->update(['quote_policy' => $result['policy_number']]);
+
                 return $this->policyNumber = $result['policy_number'];
             }
 
@@ -138,6 +141,7 @@ class SukoonDemocranceService
      * Initiates the payment process in the Democrance system.
      *
      * @return void
+     *
      * @throws Exception If payment initiation fails.
      */
     public function paymentInitiate()
@@ -165,6 +169,7 @@ class SukoonDemocranceService
      * Completes the payment process in the Democrance system.
      *
      * @return void
+     *
      * @throws Exception If payment completion fails.
      */
     public function paymentComplete($transaction)
@@ -181,6 +186,7 @@ class SukoonDemocranceService
 
             if ($result) {
                 $transaction->update(['certificate_number' => $result['policy_number']]);
+
                 return $this->documentPolicyNumber = $result['policy_number'];
             }
 
@@ -193,10 +199,10 @@ class SukoonDemocranceService
     /**
      * Retrieves a document for the given quote, embedded transaction, template ID, and document code.
      *
-     * @param mixed $quote The quote object.
-     * @param mixed $embeddedTransaction The embedded transaction object.
-     * @param int $templateId The template ID.
-     * @param string $docCode The document code.
+     * @param  mixed  $quote  The quote object.
+     * @param  mixed  $embeddedTransaction  The embedded transaction object.
+     * @param  int  $templateId  The template ID.
+     * @param  string  $docCode  The document code.
      * @return mixed The document.
      */
     public function getDocument($quote, $embeddedTransaction, $templateId, $docCode)
@@ -260,9 +266,10 @@ class SukoonDemocranceService
     /**
      * Retrieves documents related to the given quote and transaction.
      *
-     * @param mixed $quote The quote object.
-     * @param mixed $transaction The transaction object.
+     * @param  mixed  $quote  The quote object.
+     * @param  mixed  $transaction  The transaction object.
      * @return void
+     *
      * @throws Exception If document retrieval fails.
      */
     public function getDocuments($quote, $embeddedTransaction)
@@ -281,6 +288,7 @@ class SukoonDemocranceService
      * Retrieves transaction details from the Democrance system.
      *
      * @return array The transaction details.
+     *
      * @throws Exception If retrieval fails.
      */
     public function getTransactionDetails()
@@ -308,8 +316,8 @@ class SukoonDemocranceService
     /**
      * Processes the Democrance submission for the given quote and transaction.
      *
-     * @param mixed $quote The quote object.
-     * @param mixed $transaction The transaction object.
+     * @param  mixed  $quote  The quote object.
+     * @param  mixed  $transaction  The transaction object.
      * @return void
      */
     public function processDemocranceSubmission($quote, $transaction)
@@ -342,7 +350,7 @@ class SukoonDemocranceService
             EmbeddedProductRepository::sendDocument([
                 'epId' => $transaction->product->embeddedProduct->id,
                 'modelType' => quoteTypeCode::Car,
-                'quoteId' => $quote->id
+                'quoteId' => $quote->id,
             ]);
         } catch (Exception $e) {
             $this->logFailure('Process Democrance Submission', $e->getMessage(), ['quote' => $quote]);
@@ -352,8 +360,9 @@ class SukoonDemocranceService
     /**
      * Validates the customer details for the given quote.
      *
-     * @param mixed $quote The quote object.
+     * @param  mixed  $quote  The quote object.
      * @return void
+     *
      * @throws Exception If validation fails.
      */
     private function validateCustomerDetails($quote)
@@ -377,8 +386,8 @@ class SukoonDemocranceService
     /**
      * Prepares the user details array for the given quote and transaction.
      *
-     * @param mixed $quote The quote object.
-     * @param mixed $transaction The transaction object.
+     * @param  mixed  $quote  The quote object.
+     * @param  mixed  $transaction  The transaction object.
      * @return array The prepared user details.
      */
     private function prepareUserDetails($quote, $transaction)
@@ -403,15 +412,15 @@ class SukoonDemocranceService
             'address' => $quote->customer->detail->residential_address ?? '',
             'email' => 'hitesh.motwani@insurancemarket.ae',
             'mobile' => '+971505027325',
-            'plan_option' => $this->productSlug . '_' . strtolower(EmbeddedProductEnum::$shortCode()->value),
+            'plan_option' => $this->productSlug.'_'.strtolower(EmbeddedProductEnum::$shortCode()->value),
         ];
     }
 
     /**
      * Handles the quote policy logic for the given transaction and user details.
      *
-     * @param mixed $transaction The transaction object.
-     * @param array $userDetail The user details array.
+     * @param  mixed  $transaction  The transaction object.
+     * @param  array  $userDetail  The user details array.
      * @return void
      */
     private function handleQuotePolicy($transaction, $userDetail)
@@ -426,7 +435,7 @@ class SukoonDemocranceService
     /**
      * Prepares the additional data array for the given quote.
      *
-     * @param mixed $quote The quote object.
+     * @param  mixed  $quote  The quote object.
      * @return array The prepared additional data.
      */
     private function prepareAdditionalData($quote)
@@ -446,13 +455,13 @@ class SukoonDemocranceService
      */
     private function confirmPolicy()
     {
-        $this->request('/policy/' . $this->policyNumber . '/confirm/', 'post', ['confirm' => 'true'], ['x-session-id' => $this->sessionId]);
+        $this->request('/policy/'.$this->policyNumber.'/confirm/', 'post', ['confirm' => 'true'], ['x-session-id' => $this->sessionId]);
     }
 
     /**
      * Initiates and completes the payment for the given transaction.
      *
-     * @param mixed $transaction The transaction object.
+     * @param  mixed  $transaction  The transaction object.
      * @return void
      */
     private function initiateAndCompletePayment($transaction)
@@ -469,8 +478,8 @@ class SukoonDemocranceService
     /**
      * Updates the transaction with the given transaction details.
      *
-     * @param mixed $transaction The transaction object.
-     * @param array $transactionDetail The transaction details array.
+     * @param  mixed  $transaction  The transaction object.
+     * @param  array  $transactionDetail  The transaction details array.
      * @return void
      */
     private function updateTransaction($transaction, $transactionDetail)
@@ -494,7 +503,7 @@ class SukoonDemocranceService
     /**
      * Maps document types to the corresponding Democrance document types.
      *
-     * @param array $documents The documents to map.
+     * @param  array  $documents  The documents to map.
      * @return array The mapped document types.
      */
     private function mapDocumentsType()
@@ -523,7 +532,7 @@ class SukoonDemocranceService
     /**
      * Generates a unique UUID for the given document.
      *
-     * @param string $documentType The type of document.
+     * @param  string  $documentType  The type of document.
      * @return string The generated UUID.
      */
     private function generateUniqueUuid()
@@ -538,8 +547,8 @@ class SukoonDemocranceService
     /**
      * Logs the request details for debugging and auditing purposes.
      *
-     * @param string $action The action being logged.
-     * @param array $data The data associated with the action.
+     * @param  string  $action  The action being logged.
+     * @param  array  $data  The data associated with the action.
      * @return void
      */
     private function logRequest($status, $message, $data, $url = '', $response = '', $parentFunction = '')
@@ -575,9 +584,9 @@ class SukoonDemocranceService
     /**
      * Logs the failure of a process with the given message and data.
      *
-     * @param string $process The name of the process.
-     * @param string $message The failure message.
-     * @param array $data The data related to the failure.
+     * @param  string  $process  The name of the process.
+     * @param  string  $message  The failure message.
+     * @param  array  $data  The data related to the failure.
      * @return void
      */
     private function logFailure($operation, $message, $data = [])
