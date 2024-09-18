@@ -18,6 +18,13 @@ URLs:
 
 Please make sure to go through the last two lines to familiarize yourself with the code quality guide before you start contributing.
 
+## Other stack & libraries
+
+- [Vue](https://vuejs.org/)
+- [InertiaJS](https://inertiajs.com/)
+- [TailwindCSS](https://tailwindcss.com/)
+- [UI - indielayer](https://indielayer.com/)
+
 ## Setting up Laravel
 
 - Clone the repo in a new folder and use the develop branch for initial setup.
