@@ -74,6 +74,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 'hasWorldwideCover' => $this->lead->has_worldwide_cover == 'on' ? true : false,
                 'hasHome' => $this->lead->has_home == 'on' ? true : false,
                 'currentlyInsuredWithId' => $this->lead->currently_insured_with_id,
+                'healthPlanTypeId' => $this->lead->health_plan_type_id,
             ];
             $dataArr['memberDetails'][] = [
                 'firstName' => $this->lead->first_name,
@@ -103,7 +104,8 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 $healthQuote = $this->getQuoteObject(QuoteTypes::HEALTH->value, $capiResponse->quoteUID);
 
                 $customerName = $healthQuote->first_name . ' ' . $healthQuote->last_name;
-                if (empty($this->lead->health_team_type)) {
+
+                if (empty($healthQuote->health_plan_type_id)) {
 
                     $key = ApplicationStorageEnums::DTT_HEALTH_INITIAL_WITHOUT_HEALTH_TEAM;
 
@@ -121,13 +123,13 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                         'quoteUID' => $healthQuote->uuid,
                     ]);
 
-                    if (empty($response['plans'])) {
+                    if (!isset($response['quote']['plans'])) {
                         info($logPrefix . 'noPlansReturned-UUID-' . $capiResponse->quoteUID . '-' . json_encode($response));
 
                         return false;
                     }
                     $plansArray = [];
-                    foreach ($response['plans'] as $item) {
+                    foreach ($response['quote']['plans'] as $item) {
                         $planObj = new \stdClass;
                         $planObj->id = $item['id'];
                         $planObj->name = $item['name'];
@@ -181,7 +183,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                         'uuid' => $capiResponse->quoteUID,
                         'revival_quote_batch_id' => $quoteBatch->id,
                         'email_sent' => true,
-                        'previous_health_plan_type' => empty($this->lead->health_team_type) ? false : true,
+                        'previous_health_plan_type' => empty($healthQuote->health_plan_type_id) ? false : true,
                     ]);
 
                     info($logPrefix . 'healthRevivalParentLead -' . $this->lead->uuid . '- childLead - ' . $capiResponse->quoteUID . '-dttRevivalsInsertedUUID - ' . $capiResponse->quoteUID);
