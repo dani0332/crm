@@ -425,7 +425,7 @@ class AMLService
     private function amlQuoteStatusUpdateMail($templateName, $amlUrl, $quoteStatusText, $clientFullName, $quoteTypeText, $quoteCdbId, $emailSubject, $toRecipient, $ccRecipients)
     {
         try {
-            
+
             $headers = [
                 'Accept' => 'application/json',
                 'api-key' => config('constants.SENDINBLUE_KEY'),
@@ -446,7 +446,6 @@ class AMLService
             $quoteTypeName = $quoteTypeText ? $quoteTypeText : 'N/A';
             $quoteCdbId = $quoteCdbId ? $quoteCdbId : 'N/A';
             $htmlContent = View::make($templateName, compact('amlUrl', 'amlQuoteStatus', 'clientFullName', 'quoteTypeName', 'quoteCdbId'))->render();
-
 
             $ccEmail = array_map(function ($email) {
                 return ['email' => $email];
