@@ -3106,6 +3106,10 @@ const onAddUpdate = () => {
                 <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
                 <dd>{{ coPayment ? coPayment.text : 'N/A' }}</dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN TYPE</dt>
+                <dd>{{ selectedProviderPlan.planType ?? 'N/A' }}</dd>
+              </div>
             </dl>
           </div>
         </template>
