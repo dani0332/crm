@@ -114,6 +114,13 @@ const seniorPlansIds = reactive({
   ids: [],
 });
 
+const canSendOcbEmail = computed(() => {
+  return (
+    hasAnyRole([rolesEnum.LeadPool, rolesEnum.TravelManager]) &&
+    page.props.quote.source !== leadSource.RENEWAL_UPLOAD
+  );
+});
+
 const {
   isRequired,
   policy_number,
@@ -1399,10 +1406,7 @@ const onAddUpdate = () => {
           </x-button>
         </Link>
         <x-button
-          v-if="
-            hasAnyRole([rolesEnum.LeadPool, rolesEnum.TravelManager]) &&
-            quote.source !== leadSource.RENEWAL_UPLOAD
-          "
+          v-if="canSendOcbEmail"
           class="mr-2"
           size="sm"
           color="#ff5e00"
