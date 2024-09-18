@@ -21,7 +21,7 @@ steps:
       script: |
           curl --request POST -u $(serviceaccount):$(SERVICE_TOKEN) 'https://deploymentnotification.azurewebsites.net/api/notificationfunction?code=ewX4tkwM_o-mQw4Q55GWF-HfV1HDfPUcP3A3hfLnTFdaAzFu1ynwMQ==' \
           --header 'Content-Type: application/json' \
-          --data '{"message": {"text": "Build on $(Build.DefinitionName) is Started"}}'    
+          --data '{"message": {"text": "Building Project on $(Build.DefinitionName) is Initiated..."}}'    
 
   - script: |
      sudo apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl gnupg && \
@@ -41,7 +41,7 @@ steps:
       script: |
           curl --request POST -u $(serviceaccount):$(SERVICE_TOKEN) 'https://deploymentnotification.azurewebsites.net/api/notificationfunction?code=ewX4tkwM_o-mQw4Q55GWF-HfV1HDfPUcP3A3hfLnTFdaAzFu1ynwMQ==' \
           --header 'Content-Type: application/json' \
-          --data '{"message": {"text": "Deployment on $(Build.DefinitionName) is Completed, Deploying now..."}}'    
+          --data '{"message": {"text": "Building Project on $(Build.DefinitionName) is Completed, Deploying now..."}}'    
 
   - publish: '$(System.DefaultWorkingDirectory)'
     artifact: '$(imcrm)'
