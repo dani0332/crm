@@ -425,6 +425,7 @@ class AMLService
     private function amlQuoteStatusUpdateMail($templateName, $amlUrl, $quoteStatusText, $clientFullName, $quoteTypeText, $quoteCdbId, $emailSubject, $toRecipient, $ccRecipients)
     {
         try {
+            
             $headers = [
                 'Accept' => 'application/json',
                 'api-key' => config('constants.SENDINBLUE_KEY'),
