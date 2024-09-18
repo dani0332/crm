@@ -21,7 +21,7 @@ steps:
      echo "deb https://packages.doppler.com/public/cli/deb/debian any-version main" | sudo tee /etc/apt/sources.list.d/doppler-cli.list && \
      sudo apt-get update && sudo apt-get install doppler
   - script: doppler --token $(IMCRM_DEV01_TOKEN) run -- docker build --build-arg IMCRM_TOKEN=$(IMCRM_DEV01_TOKEN) -f Dockerfile_MS -t $(acrName).azurecr.io/$(imageName) .
-  displayName: 'docker build'
+    displayName: 'docker build'
   - script: docker login -u $(dockerId) -p $(dockerPassword) $(acrName).azurecr.io
     displayName: 'docker login'
   - script: docker push $(acrName).azurecr.io/$(imageName)
