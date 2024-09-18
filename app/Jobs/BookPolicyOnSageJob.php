@@ -73,7 +73,7 @@ class BookPolicyOnSageJob implements ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->quote->uuid))->releaseAfter($this->releaseAfter)];
+        return [(new WithoutOverlapping($this->quote->code))->releaseAfter($this->releaseAfter)];
     }
 
     private function updateAndLogQuoteStatus($quoteStatusId)
