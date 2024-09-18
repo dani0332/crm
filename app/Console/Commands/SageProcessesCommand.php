@@ -24,6 +24,12 @@ class SageProcessesCommand extends Command
      */
     protected $description = 'Process Sage Policy Booking single request per Insurance Provider';
 
+    public function __construct()
+    {
+        parent::__construct();
+    }
+
+
     /**
      * Execute the console command.
      */
