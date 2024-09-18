@@ -109,7 +109,7 @@ const urls = computed(() => {
         class="flex-col gap-y-6 w-screen flex-1 h-full transition-all"
       >
         <header
-          class="sticky top-0 z-40 flex h-18 w-full shrink-0 items-center border-b bg-white"
+          class="sticky top-0 z-40 flex h-16 w-full shrink-0 items-center border-b bg-white"
         >
           <div
             class="flex items-center justify-between w-full px-2 sm:px-4 md:px-6 lg:px-8"
@@ -182,19 +182,63 @@ const urls = computed(() => {
                   </svg>
                 </button>
 
-                <div id="headerportal"></div>
-                <div
-                  class="lg:flex gap-1 hidden mt-1 mb-1"
-                  style="font-size: 12px"
-                >
-                  <x-tag class="border-gray-200" outlined>
+                <div id="headerportal">
+                  <div
+                    class="lg:flex gap-1 hidden justify-between text-xs w-full mb-1"
+                  >
+                    <x-tooltip placement="top">
+                      <x-tag
+                        class="underline decoration-dotted decoration-primary-700 border-gray-200"
+                        size="xs"
+                        outlined
+                      >
+                        <span>Assigned Yesterday: &nbsp;</span>
+                        <strong>
+                          {{
+                            yesterdayAutoCount + yesterdayManualCount
+                          }}</strong
+                        >
+                      </x-tag>
+                      <template #tooltip>
+                        Auto : {{ yesterdayAutoCount }} | Manual :
+                        {{ yesterdayManualCount }}
+                      </template>
+                    </x-tooltip>
+
+                    <x-tooltip placement="top">
+                      <x-tag
+                        class="underline decoration-dotted decoration-primary-700 border-gray-200"
+                        size="xs"
+                        outlined
+                      >
+                        <span>Assigned Today: &nbsp;</span>
+                        <strong>{{ todayAutoCount + todayManualCount }}</strong>
+                      </x-tag>
+                      <template #tooltip>
+                        Auto : {{ todayAutoCount }} | Manual :
+                        {{ todayManualCount }}
+                      </template>
+                    </x-tooltip>
+
+                    <x-tag
+                      size="xs"
+                      class="decoration-primary-700 border-gray-200"
+                      outlined
+                    >
+                      <span>Max Capacity: &nbsp;</span>
+                      <strong>{{ userMaxCap }}</strong>
+                    </x-tag>
+                  </div>
+                </div>
+                <div class="lg:flex gap-1 hidden">
+                  <x-tag size="xs" class="border-gray-200" outlined>
                     Pending Callbacks:
                     <strong class="pl-1">
                       {{ pendingActivityCount.pendingCallback }}
                     </strong>
                   </x-tag>
 
-                  <x-tag class="border-gray-200" outlined>
+                  <x-tag size="xs" class="border-gray-200" outlined>
                     Pending Whatsapp:
                     <strong class="pl-1">
                       {{ pendingActivityCount.pendingWhatsapp }}
