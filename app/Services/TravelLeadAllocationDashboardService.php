@@ -34,7 +34,6 @@ class TravelLeadAllocationDashboardService extends BaseService
                 )
                 ->distinct('users.id');
 
-            // Restrict by user roles if necessary
             if (! auth()->user()->hasRole(RolesEnum::Admin)) {
                 $userTeamIds = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();
                 $users = $users->whereIn('teams.id', $userTeamIds);
