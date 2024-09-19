@@ -88,8 +88,7 @@ onMounted(() => {
         isHardStop: item.isHardStop,
       };
     });
-  }
-  else{
+  } else {
     userData.value = [];
     console.error('Error: Something went wrong while fetching data in Travel.');
     notification.error({
