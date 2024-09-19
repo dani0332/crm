@@ -500,7 +500,7 @@ class SplitPaymentService
 
             $data['document_type_code'] = $documentType;
             $data['quote_uuid'] = $quote->uuid;
-            if ($send_update_id) {
+            if ($send_update_id>0) {
                 $quote = SendUpdateLog::find($send_update_id);
             }
 
@@ -676,7 +676,7 @@ class SplitPaymentService
 
             $existingReceipts = QuoteDocument::where(['payment_split_id' => $splitPaymentId, 'document_type_text' => DocumentTypeEnum::RECEIPT])->get();
             if ($existingReceipts->count() === 0 && $isFromJob) {
-                $this->createReceipt($modelType, $quoteId, $paymentSplit);
+                $this->createReceipt($modelType, $quoteId, $paymentSplit, $sendUpdateId);
             }
         }
 
@@ -697,7 +697,7 @@ class SplitPaymentService
                     ! in_array($paymentSplit->payment_method, [PaymentMethodsEnum::CreditCard, PaymentMethodsEnum::CreditApproval]) &&
                     in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIALLY_PAID])
                 ) {
-                    $this->createReceipt($modelType, $quoteId, $paymentSplit);
+                    $this->createReceipt($modelType, $quoteId, $paymentSplit, $sendUpdateId);
                 }
                 $parentPayment->captured_amount = ($parentPayment->captured_amount + $amountCollected);
                 $parentPayment->save();
