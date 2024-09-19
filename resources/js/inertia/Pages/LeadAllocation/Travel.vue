@@ -81,12 +81,22 @@ onMounted(() => {
   tableHeader.value = tableHeader.value.filter(column => {
     return column;
   });
-  userData.value = props.data.map(item => {
-    return {
-      userId: item.userId,
-      isHardStop: item.isHardStop,
-    };
-  });
+  if (props.data && Array.isArray(props.data)) {
+    userData.value = props.data.map(item => {
+      return {
+        userId: item.userId,
+        isHardStop: item.isHardStop,
+      };
+    });
+  } else {
+    userData.value = [];
+    console.error('Error: Something went wrong while fetching data in Travel.');
+    notification.error({
+      title: 'Error',
+      description: 'Something went wrong! Data not found!',
+      position: 'top',
+    });
+  }
 });
 </script>
 
