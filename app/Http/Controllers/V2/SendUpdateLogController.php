@@ -214,6 +214,7 @@ class SendUpdateLogController extends Controller
         $linkedQuoteDetails = $this->sendUpdateLogService->linkedQuoteDetails($quoteType, $quote);
 
         info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - Page Loaded Successfully.');
+
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
             'quoteLink' => QuoteTypes::getName($quoteTypeId)?->url($quote->uuid),
