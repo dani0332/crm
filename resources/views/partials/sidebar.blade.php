@@ -312,8 +312,8 @@ use App\Enums\PermissionsEnum;
 
 
                 {{--<ul class="nav side-menu">
-                    @can(PermissionsEnum::VIEW_LEGACY_DETAILS)
-                        <li><a href="{{ route('bulk-policy-booking.index') }}"><i></i>Bulk Policy Book</a>
+                    @can(PermissionsEnum::VIEW_BULK_POLICY_BOOKING_LIST)
+                        <li><a href="{{ route('sage-process.index') }}"><i></i>Sage Process</a>
                     @endcan
                 </ul>--}}
 

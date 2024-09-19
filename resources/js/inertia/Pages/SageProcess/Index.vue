@@ -99,13 +99,10 @@ const bookPoliciesOnSage = async () => {
 
   try {
     NProgress.start();
-    const response = await axios.post(
-      route('send-policies-for-bulk-sage-booking'),
-      {
-        selectedQuoteIds: quoteIDs,
-        model_type: filtersForm.quoteType,
-      },
-    );
+    const response = await axios.post(route('sage-process.book-policies'), {
+      selectedQuoteIds: quoteIDs,
+      model_type: filtersForm.quoteType,
+    });
 
     NProgress.done();
 

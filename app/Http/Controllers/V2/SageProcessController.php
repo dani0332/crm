@@ -10,7 +10,7 @@ use App\Repositories\QuoteTypeRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 
-class BulkPolicyBookingController extends Controller
+class SageProcessController extends Controller
 {
     use GenericQueriesAllLobs;
     public function __construct()
@@ -36,7 +36,7 @@ class BulkPolicyBookingController extends Controller
                 ->withQueryString();
         }
 
-        return inertia('BulkPolicyBooking/Index', ['quotes' => $quotes, 'quoteTypes' => $quoteTypes]);
+        return inertia('SageProcess/Index', ['quotes' => $quotes, 'quoteTypes' => $quoteTypes]);
     }
 
     public function sendPoliciesForSageBulkBooking(BookBulkPoliciesRequest $request)
