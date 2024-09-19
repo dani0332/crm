@@ -150,6 +150,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         $quote->update([
             'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
             'quote_status_date' => now(),
+            'stale_at' => null
         ]);
 
         QuoteTag::create([

@@ -657,6 +657,7 @@ class SageApiService
             'quote_status_id' => $newQuoteStatusId,
             'policy_booking_date' => Carbon::now(),
             'quote_status_date' => now(),
+            'stale_at' => null
         ]);
 
         $quoteLogData = [
