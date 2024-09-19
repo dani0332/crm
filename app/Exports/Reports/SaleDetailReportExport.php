@@ -49,7 +49,7 @@ class SaleDetailReportExport extends BaseReportsExport
     {
         return [
             $quote->code ?? 'N/A',
-            $quote->policy_number ? $quote->policy_number : 'N/A',
+            $quote->policy_number ?? 'N/A',
             $quote->department ?? 'N/A',
             $quote->transactions ? $quote->transactions : 'N/A',
             $quote->policy_start_date ?? 'N/A',
