@@ -6,7 +6,7 @@ use BenSampo\Enum\Enum;
 
 /**
  */
-final class MarketSegmentEnum extends Enum
+final class ThirdPartyTagEnum extends Enum
 {
     const BIRD_SIC_MOTOR_RENEWAL_TAG = "sic-3-0-renewal-process";
 }
