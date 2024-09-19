@@ -112,7 +112,7 @@ class ApiController extends Controller
             if ($response->status) {
                 return apiResponse([], Response::HTTP_OK, $response->message);
             } else {
-                return apiResponse([], Response::HTTP_NOT_FOUND, $response->message);
+                return apiResponse([], Response::HTTP_OK, $response->message);
             }
         } catch (\Throwable $th) {
             Log::error('logFollowUpEvent - Exception occurred while processing follow-up event', [
