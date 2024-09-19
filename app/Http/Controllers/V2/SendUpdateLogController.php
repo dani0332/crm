@@ -146,7 +146,7 @@ class SendUpdateLogController extends Controller
 
         if (in_array($quoteType, [QuoteTypes::CAR, QuoteTypes::HEALTH, QuoteTypes::TRAVEL])) {
             $quote->load('plan.insuranceProvider');
-            info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - QuotePlan: '.json_encode($quote->plan));
+            info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - QuotePlan: '.$quote->plan?->id);
         }
 
         $categoryCode = $sendUpdateLog->category?->code;
