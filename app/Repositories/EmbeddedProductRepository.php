@@ -385,7 +385,7 @@ class EmbeddedProductRepository extends BaseRepository
 
         $canSendDocuments = $this->canSendAndDownloadDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
         if (! $canSendDocuments) {
-            info('Documents cannot be sent ' . json_encode(['uuid' => $quoteObject->uuid, 'ep category' => $ep->product_category, 'quote status' => $quoteObject->quote_status_id, 'transaction' => $transaction]));
+            info('Documents cannot be sent '.json_encode(['uuid' => $quoteObject->uuid, 'ep category' => $ep->product_category, 'quote status' => $quoteObject->quote_status_id, 'transaction' => $transaction]));
 
             return 'Documents cannot be sent';
         }
