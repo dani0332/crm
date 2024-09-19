@@ -6,6 +6,7 @@ use App\Enums\PermissionsEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookBulkPoliciesRequest;
 use App\Jobs\BulkPolicyBookingOnSage;
+use App\Models\SageProcess;
 use App\Repositories\QuoteTypeRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
@@ -27,11 +28,10 @@ class SageProcessController extends Controller
         $quotes = [];
         $quoteTypes = QuoteTypeRepository::all();
         if ($request->quoteType) {
-            $quoteRepositoryObject = $this->getRepositoryObject($request->quoteType);
-            $quotes = $quoteRepositoryObject::with(['advisor', 'payments', 'quoteStatus'])
-                ->filter()
-                ->withFakeLeadCriteria()
-                ->orderBy('created_at', 'desc')
+            $quoteModelObject = $this->getModelObject($request->quoteType);
+            $quotes = SageProcess::with(['model', 'model.advisor', 'model.quoteStatus'])
+                ->where('model_type', app($quoteModelObject)::class)
+                ->orderBy('created_at', 'asc')
                 ->simplePaginate(10)
                 ->withQueryString();
         }

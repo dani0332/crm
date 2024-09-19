@@ -32,10 +32,9 @@ const tableHeader = [
   { text: 'LEAD STATUS', value: 'quote_status', is_active: true },
   { text: 'ADVISOR', value: 'advisor', is_active: true },
   { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
+  { text: 'SOURCE', value: 'source', is_active: true },
   { text: 'CREATED DATE', value: 'created_at', is_active: true },
   { text: 'LAST MODIFIED DATE', value: 'updated_at', is_active: true },
-  { text: 'SOURCE', value: 'source', is_active: true },
-  { text: 'PRICE', value: 'premium', is_active: true },
 ];
 
 let availableFilters = {
@@ -60,7 +59,7 @@ function fetchQuotes() {
   Object.keys(filtersForm).forEach(
     key => filtersForm[key] === '' && delete filtersForm[key],
   );
-  filtersForm.get(route('bulk-policy-booking.index'), {
+  filtersForm.get(route('sage-process.index'), {
     preserveScroll: true,
     onBefore: () => {
       loader.table = true;
@@ -284,26 +283,43 @@ onMounted(() => {
       hide-rows-per-page
       hide-footer
     >
-      <template #item-code="{ code, uuid, business_type_of_insurance_id }">
+      <template #item-code="{ model }">
         <Link
-          :href="getQuoteDetailPageURL(uuid, business_type_of_insurance_id)"
+          :href="
+            getQuoteDetailPageURL(
+              model?.uuid,
+              model?.business_type_of_insurance_id,
+            )
+          "
           target="_blank"
           class="text-primary-500 hover:underline"
         >
-          <span>{{ code }}</span>
+          <span>{{ model?.code }}</span>
         </Link>
       </template>
-      <template #item-advisor="{ advisor }">
-        {{ advisor?.name }}
+      <template #item-first_name="{ model }">
+        {{ model?.first_name }}
       </template>
-      <template #item-quote_status="{ quote_status }">
-        {{ quote_status?.code }}
+      <template #item-last_name="{ model }">
+        {{ model?.last_name }}
       </template>
-      <template #item-nationality="{ nationality }">
-        {{ nationality?.code }}
+      <template #item-quote_status="{ model }">
+        {{ model?.quote_status?.text }}
       </template>
-      <template #item-lost_reason="{ life_quote_request_detail }">
-        {{ life_quote_request_detail?.lost_reason?.text }}
+      <template #item-advisor="{ model }">
+        {{ model?.advisor?.name }}
+      </template>
+      <template #item-policy_number="{ model }">
+        {{ model?.policy_number }}
+      </template>
+      <template #item-source="{ model }">
+        {{ model?.source }}
+      </template>
+      <template #item-created_at="{ model }">
+        {{ model?.created_at }}
+      </template>
+      <template #item-updated_at="{ model }">
+        {{ model?.updated_at }}
       </template>
     </DataTable>
 
