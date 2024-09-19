@@ -476,7 +476,6 @@ class CentralService
 
         if ($payment) {
             $paymentSplit = $paymentSplits->first();
-            info('Quote Code: '.$quote->code.' Sage Receipt Id : '.$paymentSplit->sage_reciept_id);
             $this->updatePaymentAllocationStatus($payment, $quote, $paymentSplit);
             if (in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SEMI_ANNUAL, PaymentFrequency::QUARTERLY, PaymentFrequency::MONTHLY, PaymentFrequency::CUSTOM])) {
                 $this->firstSplitAllocationStatus($payment, $paymentSplit, $quote);

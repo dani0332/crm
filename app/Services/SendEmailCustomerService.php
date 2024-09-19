@@ -855,6 +855,7 @@ class SendEmailCustomerService extends BaseService
             }
 
             $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
+            // Its a temp log and will be removed iin future
             info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- body '.$body);
 
             $client = new \GuzzleHttp\Client;
