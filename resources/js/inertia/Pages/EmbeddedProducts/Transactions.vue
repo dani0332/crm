@@ -118,7 +118,7 @@ function setQueryFilters() {
 
 function exportReport() {
   const filteredData = Object.fromEntries(
-    Object.entries(filters).filter(([key, value]) => value !== null)
+    Object.entries(filters).filter(([key, value]) => value !== null),
   );
   const data = useObjToUrl(filteredData);
   const url = route(
