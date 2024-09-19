@@ -1419,4 +1419,27 @@ class SendEmailCustomerService extends BaseService
 
         return str_replace($fileName, $encodedFileName, $url);
     }
+
+    public function sendApplyNowEmail($emailData)
+    {
+        $body = [
+            'to' => [[
+                'email' => $emailData->email,
+                'name' => $emailData->customerName,
+            ]],
+            'templateId' => (int) getAppStorageValueByKey(ApplicationStorageEnums::HEALTH_APPLY_NOW_EMAIL_TEMPLATE_ID),
+            'params' => $emailData,
+            'tags' => ['health-apply-now'],
+        ];
+
+        if (property_exists($emailData, 'advisorDetails')) {
+            $body['replyTo'] = ['name' => $emailData->advisorDetails['name'], 'email' => $emailData->advisorDetails['email']];
+        }
+
+        ['code' => $responseCode, 'response' => $response, 'sent' => $isEmailSent] = $this->sendMail($body);
+
+        $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->email);
+
+        return $responseCode;
+    }
 }

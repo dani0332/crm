@@ -561,6 +561,16 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HEALTH_APPLY_NOW_EMAIL_TEMPLATE_ID],
+            [
+                'value' => 433,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
     }
 
     private function seedTravelSICStorage()

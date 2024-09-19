@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Events\HealthQuoteAdvisorUpdated;
 use App\Jobs\MAWelcomeJob;
 use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
@@ -28,6 +29,11 @@ class HealthQuoteObserver
     public function updated(HealthQuote $healthQuote): void
     {
         $dirty = $healthQuote->getDirty();
+
+        if ($healthQuote->isDirty('advisor_id')) {
+            HealthQuoteAdvisorUpdated::dispatch($healthQuote, $healthQuote->getOriginal('advisor_id'));
+        }
+
         if (
             $healthQuote->isDirty('quote_status_id') &&
             $healthQuote->quote_status_id === QuoteStatusEnum::TransactionApproved

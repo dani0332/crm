@@ -5,6 +5,8 @@ namespace App\Strategies\Allocations;
 use App\Enums\AssignmentTypeEnum;
 use App\Factories\AllocationFactory;
 use App\Services\HealthAllocationService;
+use App\Services\HealthEmailService;
+use Carbon\Carbon;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -43,6 +45,11 @@ class HealthAllocation implements Allocation
 
             if (! $advisor) {
                 info('No advisors found against lead : '.$lead->uuid);
+
+                if ($lead->isApplicationPending() && ! $lead->isApplyNowEmailSent() && Carbon::parse($lead->quote_status_date)->lessThanOrEqualTo(now()->subMinutes(10))) {
+                    info("Sending Apply Now Email for uuid {$lead->uuid} as it's been 10 minutes since quote status was marked as applicatio pending");
+                    app(HealthEmailService::class)->sendApplyNowEmail($lead);
+                }
 
                 return AllocationFactory::createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
             }
