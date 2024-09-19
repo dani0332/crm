@@ -643,7 +643,7 @@ class SageApiService
             dispatch(new SendBookPolicyDocumentsJob($request, $quote->code));
         }
 
-        info('################################## mark status as policy booked for : '.$quote->code.' ##################################');
+        info('################################## Policy Book : mark status as policy booked for : '.$quote->code.' ##################################');
         $latestQuoteStatusLog = QuoteStatusLog::where([
             'quote_type_id' => $quoteTypeId,
             'quote_request_id' => $quote->id,
@@ -659,6 +659,8 @@ class SageApiService
             'quote_status_date' => now(),
             'stale_at' => null
         ]);
+
+        info('################################## Policy Book : Status updated to  : '. $quote->quote_status_id .' for '.$quote->code.' ##################################');
 
         $quoteLogData = [
             'quote_type_id' => $quoteTypeId,

@@ -147,12 +147,6 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             info('Send Book Policy Documents Job Response for '.$quote->code.' '.$quote->uuid.' : '.json_encode($response));
         }
 
-        $quote->update([
-            'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
-            'quote_status_date' => now(),
-            'stale_at' => null
-        ]);
-
         QuoteTag::create([
             'quote_type_id' => $quoteTypeId,
             'quote_uuid' => $quote->uuid,

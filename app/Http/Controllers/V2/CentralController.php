@@ -229,6 +229,12 @@ class CentralController extends Controller
         if ($request->send_policy_type == SendPolicyTypeEnum::CUSTOMER) {
             dispatch(new SendBookPolicyDocumentsJob($request, $quote->code));
 
+            $quote->update([
+                'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
+                'quote_status_date' => now(),
+                'stale_at' => null
+            ]);
+
             info('Policy send to customer for '.$quote->uuid);
 
             return response()->json(['message' => 'Documents are being sent to the customer. The status will be updated once the documents are sent.'], 200);
