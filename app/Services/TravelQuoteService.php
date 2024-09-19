@@ -117,8 +117,8 @@ class TravelQuoteService extends BaseService
             DB::raw('IF(EXISTS (
                 SELECT *
                 FROM quote_request_entity_mapping
-                WHERE quote_type_id = '.QuoteTypeId::Travel.' AND quote_request_id = tqr.id),
-                "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+                WHERE quote_type_id = ' . QuoteTypeId::Travel . ' AND quote_request_id = tqr.id),
+                "' . CustomerTypeEnum::Entity . '", "' . CustomerTypeEnum::Individual . '")
             as customer_type'),
             'c.insured_first_name',
             'c.insured_last_name',
@@ -144,6 +144,7 @@ class TravelQuoteService extends BaseService
             DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
             'tqr.policy_booking_date',
             'tqr.insly_migrated',
+            'tqr.sic_advisor_requested',
         )
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
@@ -186,7 +187,7 @@ class TravelQuoteService extends BaseService
             'referenceUrl' => config('constants.APP_URL'),
         ];
 
-        info(self::class.' - saveTravelQuote', ['data' => $travelQuote]);
+        info(self::class . ' - saveTravelQuote', ['data' => $travelQuote]);
         if ($request->has_arrived_destination == '0' || $request->has_arrived_uae == '0') {
 
             foreach ($request->members as $member) {
@@ -240,14 +241,14 @@ class TravelQuoteService extends BaseService
 
             return $response;
         }
-        info(self::class.' - saveTravelQuote: Going to Create Travel Quote on CAPI...');
+        info(self::class . ' - saveTravelQuote: Going to Create Travel Quote on CAPI...');
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $travelQuote);
-        info(self::class.' - saveTravelQuote: Capi Request Completed', ['response' => $response]);
+        info(self::class . ' - saveTravelQuote: Capi Request Completed', ['response' => $response]);
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::TravelQuote, $request, $response);
 
-            info(self::class.' - saveTravelQuote: Going to dispatch OCB Email for Travel');
+            info(self::class . ' - saveTravelQuote: Going to dispatch OCB Email for Travel');
             SendTravelOCBIntroEmailJob::dispatch($response->quoteUID);
         }
 
@@ -426,6 +427,9 @@ class TravelQuoteService extends BaseService
         if (isset($request->source) && $request->source != '') {
             $this->query->where('tqr.source', $request->source);
         }
+        if (isset($request->sic_advisor_requested)) {
+            $this->query->where('tqr.sic_advisor_requested', $request->sic_advisor_requested);
+        }
 
         foreach ($searchProperties as $item) {
             if (! empty($request[$item]) && $item != 'created_at') {
@@ -444,7 +448,7 @@ class TravelQuoteService extends BaseService
                     if (in_array($item, $skipped)) {
                         continue;
                     }
-                    $this->query->where($this->getQuerySuffix($item).'.'.$item, $request[$item]);
+                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                 }
             }
         }
@@ -597,7 +601,7 @@ class TravelQuoteService extends BaseService
         $travelQuote->save();
 
         if (isset($request->return_to_view)) {
-            return redirect('quote/travel/'.$id)->with('success', 'Travel Quote has been updated');
+            return redirect('quote/travel/' . $id)->with('success', 'Travel Quote has been updated');
         }
     }
 
@@ -769,12 +773,12 @@ class TravelQuoteService extends BaseService
     public function getQuotePlans($id, $extraData = [])
     {
         $quoteUuId = TravelQuote::where('uuid', '=', $id)->value('uuid');
-        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-travel-quote-plans';
+        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT') . '/get-travel-quote-plans';
         $plansApiToken = config('constants.KEN_API_TOKEN');
         $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
         $plansApiUserName = config('constants.KEN_API_USER');
         $plansApiPassword = config('constants.KEN_API_PWD');
-        $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
+        $authBasic = base64_encode($plansApiUserName . ':' . $plansApiPassword);
 
         $plansDataArr = [
             'quoteUID' => $quoteUuId,
@@ -789,9 +793,10 @@ class TravelQuoteService extends BaseService
                 $plansApiEndPoint,
                 [
                     'headers' => [
-                        'Content-Type' => 'application/json', 'Accept' => 'application/json',
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
                         'x-api-token' => $plansApiToken,
-                        'Authorization' => 'Basic '.$authBasic,
+                        'Authorization' => 'Basic ' . $authBasic,
                     ],
                     'body' => json_encode($plansDataArr),
                     'timeout' => $plansApiTimeout,
@@ -851,7 +856,7 @@ class TravelQuoteService extends BaseService
         }
         $userId = (int) $request->assigned_to_id_new;
         $quoteBatch = QuoteBatches::latest()->first();
-        Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+        Log::info('Leads ids to assign: ' . json_encode($leadsIds) . ' Quote Batch with ID: ' . $quoteBatch->id . ' and Name: ' . $quoteBatch->name);
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
@@ -958,7 +963,6 @@ class TravelQuoteService extends BaseService
 
             return $response;
         }
-
     }
 
     public function exportPlansPdf($quoteType, $data, $quotePlans = null)
@@ -985,10 +989,9 @@ class TravelQuoteService extends BaseService
             ->loadView('pdf.travel_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers', 'selectedPlanIds', 'hasAdultAndSeniorMember'));
 
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
-        $pdfName = 'InsuranceMarket.ae™ Travel Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
+        $pdfName = 'InsuranceMarket.ae™ Travel Insurance Comparison for ' . $quote->first_name . ' ' . $quote->last_name . '.pdf';
 
         return ['pdf' => $pdf, 'name' => $pdfName];
-
     }
 
     public function setQuoteUpdatedAt($id)
@@ -1003,7 +1006,7 @@ class TravelQuoteService extends BaseService
         if (! $leadModal) {
             return false; // Add validation to avoid failure if $leadModal is null
         }
-        $newLeadCode = $leadModal->code.'-1';
+        $newLeadCode = $leadModal->code . '-1';
         $leadExists = TravelQuote::where('code', $newLeadCode)->exists();
         if ($leadExists) {
             // Lead with the code already exists
@@ -1011,7 +1014,7 @@ class TravelQuoteService extends BaseService
         }
         $duplicateLead = $leadModal->replicate();
         $duplicateLead->parent_id = $leadModal->id;
-        $duplicateLead->uuid = $leadModal->uuid.'-1';
+        $duplicateLead->uuid = $leadModal->uuid . '-1';
         $duplicateLead->code = $newLeadCode;
         $duplicateLead->source = TravelQuoteEnum::IMCRM_BOOKING;
         $duplicateLead->save();
@@ -1040,7 +1043,7 @@ class TravelQuoteService extends BaseService
     {
         $transactionApprovedAudit = DB::table('audits as a')
             ->where(function ($query) use ($leadId) {
-                $query->where('a.auditable_type', 'App\Models\\'.QuoteTypes::TRAVEL->value.'Quote')
+                $query->where('a.auditable_type', 'App\Models\\' . QuoteTypes::TRAVEL->value . 'Quote')
                     ->where('a.auditable_id', $leadId)
                     ->where(DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))"), QuoteStatusEnum::TransactionApproved);
             })

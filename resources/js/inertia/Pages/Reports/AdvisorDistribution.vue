@@ -727,8 +727,13 @@ const travelCoverageOptions = computed(() => {
           :options="quoteSegments"
           :single="true"
         />
-        <x-select
-          v-if="filters.lob === quoteTypeCodeEnum.Car"
+
+        <ComboBox
+          v-if="
+            filters.lob === quoteTypeCodeEnum.Car ||
+            filters.lob === quoteTypeCodeEnum.Health ||
+            filters.lob === quoteTypeCodeEnum.Travel
+          "
           v-model="filters.sic_advisor_requested"
           label="Advisor Requested"
           placeholder="Select any option"
@@ -737,7 +742,7 @@ const travelCoverageOptions = computed(() => {
             { value: 1, label: 'Yes' },
             { value: 0, label: 'No' },
           ]"
-          class="w-full"
+          :single="true"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4">

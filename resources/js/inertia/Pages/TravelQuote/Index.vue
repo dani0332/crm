@@ -53,6 +53,7 @@ const filters = reactive({
   segment_filter: '',
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  sic_advisor_requested: 'All',
 });
 
 const loader = reactive({
@@ -78,6 +79,10 @@ const tableHeader = [
   { text: 'Travel Coverage', value: 'coverage_code' },
   { text: 'LEAD STATUS', value: 'quote_status_id_text' },
   { text: 'ADVISOR', value: 'advisor_id_text' },
+  {
+    text: 'ADVISOR REQUESTED',
+    value: 'sic_advisor_requested',
+  },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   {
@@ -582,6 +587,18 @@ const formatDate = date => {
           class="w-full"
           :single="true"
         />
+        <ComboBox
+          v-model="filters.sic_advisor_requested"
+          label="Advisor Requested"
+          placeholder="Select any option"
+          :options="[
+            { value: 'All', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+          class="w-full"
+          :single="true"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -695,7 +712,13 @@ const formatDate = date => {
             : ''
         }}
       </template>
-
+      <template #item-sic_advisor_requested="{ sic_advisor_requested }">
+        <div class="text-center">
+          <x-tag size="sm" :color="sic_advisor_requested ? 'success' : 'error'">
+            {{ sic_advisor_requested ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
+      </template>
       <template #item-is_ecommerce="{ is_ecommerce }">
         <div class="text-center">
           <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">

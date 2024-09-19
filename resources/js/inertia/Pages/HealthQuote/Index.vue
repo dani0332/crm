@@ -65,6 +65,11 @@ const tableHeader = ref([
   { text: 'ADVISOR', value: 'advisor_id_text', is_active: true },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type', is_active: true },
   {
+    text: 'ADVISOR REQUESTED',
+    value: 'sic_advisor_requested',
+    is_active: true,
+  },
+  {
     text: 'CREATED DATE',
     value: 'created_at',
     is_active: true,
@@ -154,6 +159,7 @@ const filters = reactive({
   policy_expiry_date: '',
   policy_expiry_date_end: '',
   segment_filter: '',
+  sic_advisor_requested: 'All',
 });
 
 const canExport = ref(false);
@@ -731,6 +737,18 @@ const formatDate = dateString =>
           :options="quoteSegments"
           :single="true"
         />
+        <ComboBox
+          v-model="filters.sic_advisor_requested"
+          label="Advisor Requested"
+          placeholder="Select any option"
+          :options="[
+            { value: 'All', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+          class="w-full"
+          :single="true"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -847,6 +865,13 @@ const formatDate = dateString =>
         <p v-if="item.payment_status_text === 'AUTHORISED'">
           {{ daysAgoFromAuthorizedDate(item.authorized_at) }}
         </p>
+      </template>
+      <template #item-sic_advisor_requested="{ sic_advisor_requested }">
+        <div class="text-center">
+          <x-tag size="sm" :color="sic_advisor_requested ? 'success' : 'error'">
+            {{ sic_advisor_requested ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
       </template>
       <template
         #item-previous_policy_expiry_date="{
