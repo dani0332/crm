@@ -58,7 +58,9 @@ class HealthQuotesExport
             'hp.text as health_plan_name_text',
             'ihp.text as plan_provider_name_text',
             'hqr.renewal_batch',
-            'hqr.previous_policy_expiry_date'
+            'hqr.previous_policy_expiry_date',
+            'hqr.transaction_approved_at',
+            'hqr.policy_booking_date'
         )->get();
     }
 
@@ -95,6 +97,8 @@ class HealthQuotesExport
             'Provider Name',
             'RENEWAL BATCH',
             'PREVIOUS POLICY EXPIRY DATE',
+            'TRANSACTION APPROVED DATE',
+            'BOOKING DATE',
         ];
     }
 
@@ -131,6 +135,8 @@ class HealthQuotesExport
             $quote->plan_provider_name_text,
             $quote->renewal_batch,
             $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
+            $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
+            $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
         ];
     }
 }
