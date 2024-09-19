@@ -1301,12 +1301,12 @@ class CarQuoteService extends BaseService
                 return $getdecodeContents;
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            Log::info('FN: getQuotePlans for quoteUUID: ' . $quoteUuId);
-            Log::error('KEN API: ' . $e->getMessage());
 
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
+
+            Log::error('FN: getQuotePlans KEN Error - UUID: '.$quoteUuId.' - Response Error: '.$contents.' - '.$e->getMessage());
 
             if (isset($response->message)) {
                 $responseBodyAsString = $response->message;
