@@ -28,7 +28,7 @@ class UpdateRenewalQuotesJob implements ShouldQueue, StackableJob
     /**
      * Create a new job instance.
      *
-     * @return voidhttps://app.clickup.com/t/86epqk2wr
+     * @return void
      */
     public function __construct($renewalQuoteProcess)
     {
