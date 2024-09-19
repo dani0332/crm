@@ -110,28 +110,43 @@ class SendUpdateLogController extends Controller
      */
     public function show($uuid)
     {
+        info('Send Update Log Show - UUID: '.$uuid);
         $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
+        info('Send Update Log Show - UUID: '.$uuid.' - SendUpdateLog:ID '.$sendUpdateLog->id);
+
         // we don't need to push this on production, need to remove this before production.
+        info('Send Update Log Show - UUID: '.$uuid.' - CategoryID: '.$sendUpdateLog->category_id.' - OptionID: '.$sendUpdateLog->option_id);
         if (! SendUpdateLogRepository::isCategoryOrOptionAvailable($sendUpdateLog->category_id, $sendUpdateLog->option_id)) {
+            logger()->error('Send Update Log Show - UUID: '.$uuid.' - CategoryID: '.$sendUpdateLog->category_id.' - OptionID: '.$sendUpdateLog->option_id.' - Category or Option not available.');
+
             return redirect()->back()->with('error', 'Send update log not found');
         }
         $this->sendUpdateLogService = app(SendUpdateLogService::class);
         $isPlanDetailAvailable = $this->sendUpdateLogService->isPlanDetailAvailable($sendUpdateLog); // check Indicative Additional Price section.
+        info('Send Update Log Show - UUID: '.$uuid.' - PlanDetailAvailable: '.$isPlanDetailAvailable);
+
         if ($this->sendUpdateLogService->checkSendUpdatePermission($sendUpdateLog->category->code)) {
+            logger()->error('Send Update Log Show - UUID: '.$uuid.' - CategoryID: '.$sendUpdateLog->category_id.' - OptionID: '.$sendUpdateLog->option_id.' - User does not have permission.');
+
             return redirect()->back()->with('error', 'You don\'t have permission to this. ');
         }
         $quoteTypeId = $sendUpdateLog->quote_type_id;
         $quoteType = QuoteTypeRepository::where('id', $quoteTypeId)->value('code');
+        info('Send Update Log Show - UUID: '.$uuid.' - QuoteType: '.$quoteType);
+
         if ($quoteType == quoteTypeCode::Car) {
             if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::AOCOV, SendUpdateLogStatusEnum::COE, SendUpdateLogStatusEnum::COE_NFI])) {
                 $additionalField = $this->sendUpdateLogService->getAdditionalOptionsForCar($sendUpdateLog);
+                info('Send Update Log Show - UUID: '.$uuid.' - AdditionalField: '.json_encode($additionalField));
             }
         }
 
         $quote = PersonalQuoteRepository::getById($sendUpdateLog->personal_quote_id);
+        info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id);
 
         if (in_array($quoteType, [QuoteTypes::CAR, QuoteTypes::HEALTH, QuoteTypes::TRAVEL])) {
             $quote->load('plan.insuranceProvider');
+            info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - QuotePlan: '.json_encode($quote->plan));
         }
 
         $categoryCode = $sendUpdateLog->category?->code;
@@ -146,12 +161,15 @@ class SendUpdateLogController extends Controller
             $quoteServiceFile = app(getServiceObject($quoteType));
             $realQuote = $quoteServiceFile->getEntity($quote->uuid);
         }
+        info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - RealQuote: '.json_encode($realQuote));
 
         // the business_type_of_insurance_id is only on business quotes.
         $sendUpdateOptions = SendUpdateLogRepository::sendUpdateOptions($quoteTypeId, $sendUpdateLog->category_id, $sendUpdateLog->category->code, $realQuote->business_type_of_insurance_id ?? null);
+        info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - SendUpdateOptions: '.json_encode($sendUpdateOptions));
 
         // booking details section.
         $payments = $this->sendUpdateLogService->getPayments($realQuote->id, $realQuote->uuid, $quoteType);
+        info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - Payments: '.json_encode($payments));
 
         if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
             // it will get all invoice_descriptions for booking details
@@ -162,6 +180,7 @@ class SendUpdateLogController extends Controller
             }
         }
         $bookingDetails = $this->sendUpdateLogService->getInvoiceDescription($sendUpdateLog, $realQuote, $quoteType, $payments);
+        info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - BookingDetails: '.json_encode($bookingDetails));
 
         $uploadedDocuments = $this->sendUpdateLogService->getUploadedDocuments($sendUpdateLog);
         // payment related work.
@@ -172,24 +191,34 @@ class SendUpdateLogController extends Controller
         $paymentMethods = app(LookupService::class)->getPaymentMethods();
         $filteredPaymentMethods = $paymentMethods;
 
+        info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - PaymentDocumentTypes: '.json_encode($paymentDocumentTypes).' - PaymentMethods: '.json_encode($paymentMethods));
+
         $serviceFile = 'App\\Services\\'.$quoteType.'QuoteService';
 
         if (! checkPersonalQuotes($quoteType)) {
             $paymentEntityModel = app($serviceFile)->getEntityPlain($realQuote->id);
+            info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - PaymentEntityModel: '.json_encode($paymentEntityModel));
         }
 
         $sendUpdatePayments = $this->sendUpdateLogService->getSendUpdatePayments($sendUpdateLog, $quoteType);
+        info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - SendUpdatePayments: '.json_encode($sendUpdatePayments));
 
         if (in_array($quoteType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
             $paymentEntityModel->load(['plan']);
+            info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - PaymentEntityModel: '.json_encode($paymentEntityModel));
+
         } else {
             checkPersonalQuotes($quoteType) ? $realQuote->load(['insuranceProvider']) : $paymentEntityModel->load(['insuranceProvider']);
+            info('Send Update Log Show - checkPersonalQuote: '.checkPersonalQuotes($quoteType).' - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - PaymentEntityModel: '.json_encode($paymentEntityModel));
         }
 
         // quote type business only has 2 providers, but as per business lead detail page it's getting providers via Corpline.
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
+        info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - InsuranceProviders: '.json_encode($insuranceProviders));
         $linkedQuoteDetails = $this->sendUpdateLogService->linkedQuoteDetails($quoteType, $quote);
+        info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - LinkedQuoteDetails: '.json_encode($linkedQuoteDetails));
 
+        info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - Page Loaded Successfully.');
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
             'quoteLink' => QuoteTypes::getName($quoteTypeId)?->url($quote->uuid),
