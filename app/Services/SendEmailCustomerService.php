@@ -773,11 +773,11 @@ class SendEmailCustomerService extends BaseService
 
     public function sendBookPolicyDocumentsEmail($emailData, $tag, $source = '')
     {
-        info('fn: sendBookPolicyDocumentsEmail called');
+        info('Quote Code: '.$emailData->code.' fn: sendBookPolicyDocumentsEmail called');
 
         $isEmailSent = 0;
         try {
-            info('sendBookPolicyDocumentsEmail , emailTemplateId: '.$emailData->emailTemplateId.' LOB Code '.$emailData->code);
+            info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail , emailTemplateId: '.$emailData->emailTemplateId);
 
             $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
             $documents = $emailData->quoteDocuments;
@@ -796,7 +796,7 @@ class SendEmailCustomerService extends BaseService
                 $attachments = array_merge($attachments, $emailData->handBookDocuments);
             }
 
-            info('Attachments: '.json_encode($attachments));
+            info('Quote Code: '.$emailData->code.' Attachments: '.json_encode($attachments));
 
             $headers = [
                 'Accept' => 'application/json',
@@ -843,7 +843,7 @@ class SendEmailCustomerService extends BaseService
                     'email' => $additionalBcc->value,
                 ];
             }
-            info('sendBookPolicyDocumentsEmail ---- bcc '.$additionalBcc->value);
+            info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- bcc '.$additionalBcc->value);
 
             if ($emailData->advisorEmail) {
                 $bodyData['cc'] = [
@@ -855,7 +855,8 @@ class SendEmailCustomerService extends BaseService
             }
 
             $body = json_encode($bodyData, JSON_UNESCAPED_SLASHES);
-            info('sendBookPolicyDocumentsEmail '.$emailData->code.' ---- body '.$body);
+            // Its a temp log and will be removed iin future
+            info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- body '.$body);
 
             $client = new \GuzzleHttp\Client;
             $clientResponse = $client->post(
@@ -870,14 +871,14 @@ class SendEmailCustomerService extends BaseService
             $response = json_decode($clientResponse->getStatusCode().' '.$clientResponse->getBody()->getContents(), true);
             $responseCode = $clientResponse->getStatusCode();
             $isEmailSent = 1;
-
-            info('Email sent successfully for: '.$emailData->code.' to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId);
+            info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
+            info('Quote Code: '.$emailData->code.' Email sent successfully to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId);
         } catch (Exception $ex) {
             $response = '';
             $responseCode = $ex->getCode();
             $responseDetail = 'Brevo Send error for: '.$emailData->code.' Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class();
             Log::error($responseDetail);
-            info('Error sending '.$emailData->code.' email to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId.': '.$ex->getMessage());
+            info('Quote Code: '.$emailData->code.' Error sending email to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId.': '.$ex->getMessage());
         }
 
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
