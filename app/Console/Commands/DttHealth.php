@@ -84,11 +84,9 @@ class DttHealth extends Command
                 $q->orWhereNull('payment_status_id');
             })
             ->whereHas('healthQuoteRequestDetail', function ($q) {
-                $q->whereNull('transapp_code');
+                $q->where('transapp_code', '');
+                $q->orWhereNull('transapp_code');
             })
-            ->with(['healthQuoteRequestDetail' => function ($q) {
-                $q->whereNull('transapp_code');
-            }])
             ->get();
 
         if ($leads->count() == 0) {
