@@ -119,7 +119,7 @@ class BookPolicyOnSageJob implements ShouldQueue
     {
         $sageProcessData['status'] = $status;
         if ($message) {
-            $sageProcessData['message'] = $message;
+            $sageProcessData['message'] = json_encode(['message' => $message]);
         }
 
         $this->sageProcess->update($sageProcessData);
