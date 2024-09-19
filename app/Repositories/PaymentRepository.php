@@ -461,6 +461,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     public function fetchUpdatePaymentStatus($request)
     {
         $maxRetries = 2;
+
         return $this->handleWithDeadlockRetries(function () use ($request) {
             $successMessage = 'Payment Verified';
             $splitPayment = PaymentSplits::find($request->splitPaymentId);
@@ -546,7 +547,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $this->setMasterPaymentStatus($masterPayment);
 
             return $successMessage;
-        }, $maxRetries);   
+        }, $maxRetries);
     }
 
     //map document type to reciept
