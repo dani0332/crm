@@ -3,11 +3,10 @@
 namespace App\Services;
 
 use App\Enums\ProcessStatusCode;
-use App\Enums\QuoteTypes;
+use App\Enums\QuoteTypeId;
 use App\Models\CarQuote;
 use App\Models\EmailStatus;
 use App\Models\HealthQuote;
-use App\Enums\QuoteTypeId;
 
 class EmailStatusService extends BaseService
 {
