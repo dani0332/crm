@@ -51,9 +51,9 @@ class BusinessQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                     $businessLead->update($data);
                     info('BusinessQuoteImport - Quote found: '.$businessLead->uuid.' - Quote updated');
                 }
+            } else {
+                info('BusinessQuoteImport - Quote status not defined');
             }
-            info('BusinessQuoteImport - Quote status not defined');
-
         }
     }
 
