@@ -89,6 +89,10 @@ onMounted(() => {
       };
     });
   }
+  else{
+    userData.value = [];
+    console.error('Error: Something went wrong while fetching data in Travel Lead Allocation in Travel.vue');
+  }
 });
 </script>
 
