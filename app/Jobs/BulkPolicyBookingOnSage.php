@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Enums\SageEnum;
+use App\Models\SageProcess;
 use App\Services\SageApiService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -30,16 +32,13 @@ class BulkPolicyBookingOnSage implements ShouldQueue
     {
 
         $quoteType = $this->request->model_type;
-        $quoteIDs = $this->request->selectedQuoteIds;
+        $quoteModelObject = $this->getModelObject($quoteType);
+        $sageProcessIDs = $this->request->selectedSageProcesses;
         $quoteErrors = collect([]);
-        foreach ($quoteIDs as $quoteID) {
-            $quote = $this->getQuoteObject($quoteType, $quoteID);
-            if ($quote) {
-                $response = (new SageApiService)->postBookPolicyToSage($this->request, $quote);
-                if (! $response['status']) {
-                    /* Log error in globel table for this lead */
-                }
-
+        foreach ($sageProcessIDs as $sageProcessID) {
+            $sageProcess = SageProcess::find($sageProcessID);
+            if ($sageProcess->status == SageEnum::SAGE_PROCESS_FAILED_STATUS) {
+                $sageProcess->update(['status' => SageEnum::SAGE_PROCESS_PENDING_STATUS]);
             }
         }
     }

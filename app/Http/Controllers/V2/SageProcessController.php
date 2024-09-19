@@ -42,7 +42,7 @@ class SageProcessController extends Controller
     public function sendPoliciesForSageBulkBooking(BookBulkPoliciesRequest $request)
     {
 
-        BulkPolicyBookingOnSage::dispatch($request)->onQueue('sage-book-policy');
+        BulkPolicyBookingOnSage::dispatch($request)->onQueue('sage-processes');
 
         return ['status' => true, 'message' => 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!'];
 

@@ -94,12 +94,12 @@ const bookPoliciesOnSage = async () => {
     });
     return;
   }
-  const quoteIDs = quotesSelected.value.map(e => e.id);
+  const sageProcessIDs = quotesSelected.value.map(e => e.id);
 
   try {
     NProgress.start();
     const response = await axios.post(route('sage-process.book-policies'), {
-      selectedQuoteIds: quoteIDs,
+      selectedSageProcesses: sageProcessIDs,
       model_type: filtersForm.quoteType,
     });
 
@@ -316,10 +316,10 @@ onMounted(() => {
         {{ model?.source }}
       </template>
       <template #item-created_at="{ model }">
-        {{ model?.created_at }}
+        {{ dateFormat(model?.created_at) }}
       </template>
       <template #item-updated_at="{ model }">
-        {{ model?.updated_at }}
+        {{ dateFormat(model?.updated_at) }}
       </template>
     </DataTable>
 
