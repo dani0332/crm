@@ -156,7 +156,7 @@ class EmbeddedProduct
                 $startDate = Carbon::parse($filters['months'])->startOfMonth()->format('Y-m-d');
                 $endDate = Carbon::parse($filters['months'])->endOfMonth()->format('Y-m-d');
                 $query->whereBetween('payments.captured_at', [$startDate, $endDate]);
-                
+
             })
             ->when(isset($filters['name']), function ($query) use ($filters) {
                 $query->whereHas('quoteRequest', function ($query) use ($filters) {
