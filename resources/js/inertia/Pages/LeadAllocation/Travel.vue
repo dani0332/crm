@@ -91,7 +91,12 @@ onMounted(() => {
   }
   else{
     userData.value = [];
-    console.error('Error: Something went wrong while fetching data in Travel Lead Allocation in Travel.vue');
+    console.error('Error: Something went wrong while fetching data in Travel.');
+    notification.error({
+      title: 'Error',
+      description: 'Something went wrong! Please try again later.',
+      position: 'top',
+    });
   }
 });
 </script>
