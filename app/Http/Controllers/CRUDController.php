@@ -2018,7 +2018,7 @@ class CRUDController extends Controller
             $ocbEmailJob = QuoteTypes::getName(QuoteTypes::getIdFromValue($quoteType))?->ocbEmailJob();
             if ($ocbEmailJob) {
                 Log::info("sendOCBEmailNB OCB email sending started for quote uuid: {$quoteUuId}");
-                dispatch(new $ocbEmailJob($request->quoteUuid, null));
+                dispatch(new $ocbEmailJob($quoteUuId, null));
                 info("sendOCBEmailNB OCB email Job dispatched for quote uuid: {$quoteUuId}");
             }
 

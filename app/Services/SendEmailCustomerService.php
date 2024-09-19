@@ -60,7 +60,7 @@ class SendEmailCustomerService extends BaseService
         return $emails;
     }
 
-    private function getEmailAttachments(object $emailData)
+    private function getEmailAttachments(object $emailData, $quoteId)
     {
         $attachments = [];
 
@@ -74,10 +74,12 @@ class SendEmailCustomerService extends BaseService
         }
 
         if (property_exists($emailData, 'pdfAttachment') && ! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
+            info(self::class." - Going to stream email attachments for uuid: {$quoteId}");
             $attachments[] = [
                 'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
                 'name' => $emailData->pdfAttachment->name,
             ];
+            info(self::class." - Streamed email attachments for uuid: {$quoteId}");
         }
 
         return $attachments;
@@ -513,7 +515,7 @@ class SendEmailCustomerService extends BaseService
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
             info("sendLMSIntroEmail ---- Tag : {$tag} for ID : {$quoteId}");
             $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.' - ';
-            $attachments = $this->getEmailAttachments($emailData);
+            $attachments = $this->getEmailAttachments($emailData, $quoteId);
 
             $bcc = [];
             if ($emailData->advisorEmail) {
@@ -565,7 +567,9 @@ class SendEmailCustomerService extends BaseService
                 $body['sender'] = ['name' => $emailData->advisorName, 'email' => $advisorCustomEmail];
             }
 
+            info(self::class." - Going to call final sendMail for uuid: {$quoteId}");
             ['code' => $responseCode, 'response' => $response, 'sent' => $isEmailSent] = $this->sendMail($body);
+            info(self::class." - Email response code {$responseCode} received for uuid: {$quoteId}");
         } catch (Exception $ex) {
             $isEmailSent = false;
             $responseCode = $ex->getCode();
@@ -647,7 +651,7 @@ class SendEmailCustomerService extends BaseService
 
             info("sendNonAdvisorIntroEmail  , emailTemplateId: {$emailTemplateId} with QuoteId: {$quoteId}");
             $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
-            $attachments = $this->getEmailAttachments($emailData);
+            $attachments = $this->getEmailAttachments($emailData, $quoteId);
 
             $bccAdditional = [];
             if ($quoteType === QuoteTypes::CAR) {
@@ -783,7 +787,7 @@ class SendEmailCustomerService extends BaseService
                     $path = $document->doc_url;
                     $documentURL = $path !== '' ? $websiteURL.$path : '';
                     $attachments[] = [
-                        'url' => $documentURL,
+                        'url' => $this->encodeUrl($documentURL),
                         'name' => 'InsuranceMarket.ae™ '.$document->document_type_text.' for Policy Number '.$emailData->policy_number.'.'.pathinfo($documentURL, PATHINFO_EXTENSION),
                     ];
                 }
@@ -853,7 +857,7 @@ class SendEmailCustomerService extends BaseService
             info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- body '.$body);
 
             $client = new \GuzzleHttp\Client;
-            $clientRequest = $client->post(
+            $clientResponse = $client->post(
                 config('constants.SIB_URL'),
                 [
                     'headers' => $headers,
@@ -862,15 +866,15 @@ class SendEmailCustomerService extends BaseService
                 ]
             );
 
-            $response = json_decode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents(), true);
-            $responseCode = $clientRequest->getStatusCode();
+            $response = json_decode($clientResponse->getStatusCode().' '.$clientResponse->getBody()->getContents(), true);
+            $responseCode = $clientResponse->getStatusCode();
             $isEmailSent = 1;
             info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
             info('Quote Code: '.$emailData->code.' Email sent successfully to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId);
         } catch (Exception $ex) {
             $response = '';
             $responseCode = $ex->getCode();
-            $responseDetail = 'Brevo Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class();
+            $responseDetail = 'Brevo Send error for: '.$emailData->code.' Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class();
             Log::error($responseDetail);
             info('Quote Code: '.$emailData->code.' Error sending email to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId.': '.$ex->getMessage());
         }
@@ -1380,6 +1384,7 @@ class SendEmailCustomerService extends BaseService
 
         return $buyNowLink;
     }
+
     public function buildDedicatedTravelEmailData($lead, $quoteType)
     {
         return [
@@ -1395,6 +1400,7 @@ class SendEmailCustomerService extends BaseService
             'workflowType' => WorkflowTypeEnum::TRAVEL_SIC_FOLLOWUPS,
         ];
     }
+
     public function sendSICDedicatedEmail($lead, $quoteType)
     {
         $url = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL);
@@ -1402,5 +1408,13 @@ class SendEmailCustomerService extends BaseService
         info("sendSICDedicatedEmail - Sending webhook request to: {$url} with Ref-ID: {$lead->uuid} | Time:".now());
         app(BirdService::class)->triggerWebHookRequest($url, (object) $sicDedicatedEmailPayload);
         info("sendSICDedicatedEmail - Webhook request sent to: {$url} with Ref-ID: {$lead->uuid} | Time:".now());
+    }
+
+    private function encodeUrl($url)
+    {
+        $fileName = basename($url);
+        $encodedFileName = urlencode($fileName);
+
+        return str_replace($fileName, $encodedFileName, $url);
     }
 }

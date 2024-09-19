@@ -29,6 +29,7 @@ const authorisePaymentCount = computed(() => page.props.authorisePaymentCount);
 const checkAuthUserRole = computed(() => page.props.checkAuthUserRole);
 const navLinks = computed(() => page.props.sidebar);
 const openSidebar = ref(false);
+const minimizeSidebar = ref(false);
 const bannerInfo = computed(() => {
   let { quote_route, total_count } = page.props.totalQuotesCount;
 
@@ -40,6 +41,7 @@ const bannerInfo = computed(() => {
 
 router.on('navigate', () => {
   openSidebar.value = false;
+  minimizeSidebar.value = false;
 });
 
 const params = useUrlSearchParams('history');
@@ -64,9 +66,13 @@ const urls = computed(() => {
   <main class="flex w-full min-h-screen overflow-x-clip">
     <div
       :class="
-        openSidebar ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        minimizeSidebar
+          ? '-translate-x-full'
+          : openSidebar
+            ? 'translate-x-0'
+            : '-translate-x-full lg:translate-x-0'
       "
-      class="fixed inset-y-0 left-0 z-30 flex h-dvh w-64 flex-col overflow-y-auto bg-gradient-to-b from-primary-600 to-primary-700 transition-all md:w-64"
+      class="fixed inset-y-0 left-0 z-40 flex h-dvh w-64 flex-col overflow-y-auto bg-gradient-to-b from-primary-600 to-primary-700 transition-all md:w-64"
     >
       <aside class="relative h-full w-full">
         <div
@@ -93,72 +99,104 @@ const urls = computed(() => {
 
     <div
       v-if="openSidebar"
-      class="bg-black/75 backdrop-blur-sm w-full h-full fixed inset-0 z-20 lg:hidden"
+      class="bg-black/75 backdrop-blur-sm w-full h-full fixed inset-0 z-30 lg:hidden"
       @click.prevent="openSidebar = false"
     ></div>
 
     <XNotifications inject-key="toast">
       <article
-        class="flex-col gap-y-6 w-screen flex-1 h-full transition-all lg:pl-[var(--sidebar-width)]"
+        :class="!minimizeSidebar ? 'lg:pl-[var(--sidebar-width)]' : ''"
+        class="flex-col gap-y-6 w-screen flex-1 h-full transition-all"
       >
         <header
-          class="sticky top-0 z-40 flex h-20 w-full shrink-0 items-center border-b bg-white"
+          class="sticky top-0 z-40 flex h-16 w-full shrink-0 items-center border-b bg-white"
         >
           <div
             class="flex items-center justify-between w-full px-2 sm:px-4 md:px-6 lg:px-8"
           >
-            <div>
-              <button
-                type="button"
-                class="shrink-0 flex lg:hidden items-center justify-center w-10 h-10 text-primary-500 rounded-full hover:bg-gray-500/5 focus:bg-primary-500/10 focus:outline-none"
-                aria-label="Open sidebar"
-                @click.prevent="openSidebar = !openSidebar"
-              >
-                <svg
-                  class="w-6 h-6"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="2"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-                  ></path>
-                </svg>
-              </button>
+            <div class="items-center justify-between gap-2 flex">
+              <div class="items-center justify-between gap-1 hidden lg:flex">
+                <x-tooltip>
+                  <button
+                    type="button"
+                    class="text-primary-500 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg hover:bg-gray-500/5 focus:bg-primary-500/10 focus:outline-none transition"
+                    :aria-label="
+                      minimizeSidebar ? 'Expand sidebar' : 'Minimize sidebar'
+                    "
+                    @click.prevent="
+                      minimizeSidebar = !minimizeSidebar;
+                      openSidebar = false;
+                    "
+                  >
+                    <x-icon
+                      :icon="minimizeSidebar ? 'sideExpand' : 'sideCollapse'"
+                      size="lg"
+                    />
+                  </button>
+                  <template #tooltip>
+                    {{
+                      minimizeSidebar ? 'Expand sidebar' : 'Minimize sidebar'
+                    }}
+                  </template>
+                </x-tooltip>
 
-              <div id="headerportal"></div>
-              <div class="flex gap-3 mt-2">
-                <div
-                  class="items-center"
-                  style="
-                    border: 1px solid #ebebeb;
-                    padding: 5px 5px;
-                    border-radius: 5px;
-                    font-size: 13px;
+                <Transition name="fade" mode="out-in">
+                  <Link
+                    v-if="minimizeSidebar"
+                    :href="route('dashboard.home')"
+                    class="w-64 hidden lg:flex"
+                  >
+                    <x-image
+                      :src="page.props.im_logo"
+                      alt="IMCRM"
+                      class="w-full px-2"
+                      width="439"
+                      height="66"
+                    />
+                  </Link>
+                </Transition>
+              </div>
+              <div>
+                <button
+                  type="button"
+                  class="shrink-0 flex lg:hidden items-center justify-center w-10 h-10 text-primary-500 rounded-full hover:bg-gray-500/5 focus:bg-primary-500/10 focus:outline-none"
+                  aria-label="Open sidebar"
+                  @click.prevent="
+                    openSidebar = !openSidebar;
+                    minimizeSidebar = false;
                   "
                 >
-                  Pending Callbacks :
-                  <strong>
-                    {{ pendingActivityCount.pendingCallback }}
-                  </strong>
-                </div>
-                <div
-                  class="items-center"
-                  style="
-                    border: 1px solid #ebebeb;
-                    border-radius: 5px;
-                    padding: 5px 5px;
-                    font-size: 13px;
-                  "
-                >
-                  Pending Whatsapp :
-                  <strong>
-                    {{ pendingActivityCount.pendingWhatsapp }}
-                  </strong>
+                  <svg
+                    class="w-6 h-6"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="2"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                    ></path>
+                  </svg>
+                </button>
+
+                <div id="headerportal"></div>
+                <div class="lg:flex gap-1 hidden">
+                  <x-tag size="xs" class="border-gray-200" outlined>
+                    Pending Callbacks:
+                    <strong class="pl-1">
+                      {{ pendingActivityCount.pendingCallback }}
+                    </strong>
+                  </x-tag>
+
+                  <x-tag size="xs" class="border-gray-200" outlined>
+                    Pending Whatsapp:
+                    <strong class="pl-1">
+                      {{ pendingActivityCount.pendingWhatsapp }}
+                    </strong>
+                  </x-tag>
                 </div>
               </div>
             </div>
@@ -170,8 +208,7 @@ const urls = computed(() => {
               <PaymentNotification />
               <PaymentExpireNotifications />
 
-              <!--                ADD BANER HERE-->
-              <x-button class="w-full mt-1" size="sm">
+              <x-button class="w-full" size="sm">
                 <div class="items-center">
                   <Link
                     v-bind:href="urls"
