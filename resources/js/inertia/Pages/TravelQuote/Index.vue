@@ -117,11 +117,11 @@ const advisorsOptions = computed(() => {
     };
   });
   return [
+      ...advisors,
     {
       value: -1,
       label: 'UnAssigned',
     },
-    ...advisors,
   ];
 });
 
