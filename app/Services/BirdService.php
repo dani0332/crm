@@ -9,7 +9,7 @@ class BirdService extends BaseService
 {
     public function triggerWebHookRequest($url, $data, $method = 'post')
     {
-        $uuid = $data->uuid ?? '';
+        $uuid = $data->uuid ?? $data->quoteUUID ?? '';
         $logContext = ['Ref-ID' => $uuid, 'URL' => $url, 'Method' => $method];
 
         try {
@@ -24,9 +24,9 @@ class BirdService extends BaseService
                 : $request->$method($url, ['query' => $data]);
 
             // Log the response details
-            info('Bird Webhook Response received', array_merge($logContext, ['Status' => $response->status(), 'Body' => $response->body()]));
+            info('Bird Webhook Response received', array_merge($logContext, ['Headers' => $response->headers() ?? '', 'Status' => $response->status(), 'Body' => $response->body()]));
 
-            return $response->status();
+            return (object) ['headers' => $response->headers() ?? '', 'body' => $response->body(), 'status_code' => $response->status()];
         } catch (\Exception $e) {
             // Log the error with full context and rethrow the exception
             Log::error('Bird API request failed', array_merge($logContext, [

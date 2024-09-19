@@ -160,7 +160,7 @@ enum QuoteTypes: string
 
     public static function getNameShortCode(string $code)
     {
-        return match ($code) {
+        $codes = [
             'CAR' => self::CAR,
             'HOM' => self::HOME,
             'HEA' => self::HEALTH,
@@ -172,7 +172,9 @@ enum QuoteTypes: string
             'PET' => self::PET,
             'CYC' => self::CYCLE,
             'JSK' => self::JETSKI,
-        };
+        ];
+
+        return $codes[$code] ?? null;
     }
 
     public function url(string $uuid): string
@@ -191,6 +193,15 @@ enum QuoteTypes: string
             self::JETSKI => checkPersonalQuotes($this->value) ? route('jetski-quotes-show', $uuid) : route('jetski.show', $uuid),
             self::CORPLINE => checkPersonalQuotes($this->value) ? route('business-quotes-show', $uuid) : route('business.show', $uuid),
             self::GROUP_MEDICAL => checkPersonalQuotes($this->value) ? route('gm-quotes-show', $uuid) : route('amt.show', $uuid),
+        };
+    }
+
+    public function quoteLink(string $uuid, array $queryParams = [])
+    {
+        $queryParamsStr = http_build_query($queryParams);
+
+        return match ($this) {
+            self::TRAVEL,self::CAR,self::HEALTH => "{$this->ecomUrl()}{$uuid}".($queryParamsStr ? "?{$queryParamsStr}" : ''),
         };
     }
 }

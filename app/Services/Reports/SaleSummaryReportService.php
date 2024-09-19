@@ -241,12 +241,6 @@ class SaleSummaryReportService extends ManagementReport
             // Endorsements
             $query->addSelect('quote_type.code as line_of_business');
         }
-
-        if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
-            $query->joinSub($distinctPaymentSplits, 'ps', function ($join) {
-                $join->on('p.code', '=', 'ps.code');
-            });
-        }
         $query = $this->applyFilters($query, $request, true, true);
 
         $reversalQuery = SendUpdateLog::query()
@@ -322,7 +316,7 @@ class SaleSummaryReportService extends ManagementReport
         }
 
         if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
-            $reversalQuery->joinSub($distinctPaymentSplits, 'ps', function ($join) {
+            $reversalQuery->leftJoinSub($distinctPaymentSplits, 'ps', function ($join) {
                 $join->on('p.code', '=', 'ps.code');
             });
         }

@@ -37,8 +37,8 @@ const filters = reactive({
   last_name: '',
   email: '',
   mobile_no: '',
-  created_at_start: '',
-  created_at_end: '',
+  created_at_start: new Date() || '',
+  created_at_end: new Date() || '',
   quote_status_id: [],
   advisor_id: [],
   is_ecommerce: '',
@@ -245,6 +245,16 @@ const permissionsEnum = page.props.permissionsEnum;
 const travelQuoteEnum = page.props.travelQuoteEnum;
 
 const onDataExport = () => {
+  filters.created_at_start = useDateFormat(
+    filters.created_at_start,
+    'YYYY-MM-DD',
+  ).value;
+
+  filters.created_at_end = useDateFormat(
+    filters.created_at_end,
+    'YYYY-MM-DD',
+  ).value;
+
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'travel');
   window.open(url + '?' + new URLSearchParams(data).toString());
@@ -726,16 +736,18 @@ const formatDate = date => {
           </x-tag>
         </div>
       </template>
-      <template #item-coverage_code="{ coverage_code, days_cover_for }">
+      <template #item-coverage_code="{ coverage_code, days_cover_for, source }">
         <div class="text-center">
           {{
-            coverage_code != null
-              ? coverage_code
-              : days_cover_for <= 92
-                ? travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
-                : travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
-                  '/' +
-                  travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
+            source == $page.props.leadSource.RENEWAL_UPLOAD
+              ? travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
+              : coverage_code != null
+                ? coverage_code
+                : days_cover_for <= 92
+                  ? travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
+                  : travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
+                    '/' +
+                    travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
           }}
         </div>
       </template>

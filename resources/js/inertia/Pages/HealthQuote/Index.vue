@@ -138,8 +138,8 @@ const filters = reactive({
   last_name: '',
   email: '',
   mobile_no: '',
-  created_at_start: '',
-  created_at_end: '',
+  created_at_start: new Date() || '',
+  created_at_end: new Date() || '',
   sub_team: '',
   quote_status: [],
   advisors: [],
@@ -356,6 +356,22 @@ const fixedValue = numberString => {
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+
+const onDataExport = () => {
+  filters.created_at_start = useDateFormat(
+    filters.created_at_start,
+    'YYYY-MM-DD',
+  ).value;
+
+  filters.created_at_end = useDateFormat(
+    filters.created_at_end,
+    'YYYY-MM-DD',
+  ).value;
+
+  const data = useObjToUrl(filters);
+  const url = route('data-extraction', 'health');
+  window.open(url + '?' + new URLSearchParams(data).toString());
+};
 
 onMounted(() => {
   params = getSavedQueryParams() || params;
@@ -756,7 +772,7 @@ const formatDate = dateString =>
             v-if="canExport"
             size="sm"
             color="emerald"
-            :href="`/health/leads-export?${objToUrl(filters)}`"
+            @click.prevent="onDataExport"
             class="justify-self-start"
           >
             Export

@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\DisplayByEnum;
 use App\Enums\LeadSourceEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
@@ -33,29 +32,28 @@ class ConversionAsAtReportService extends BaseService
         if ($request->lob && $request->startEndDate && $request->asAtDate) {
             $query = PersonalQuote::query()
                 ->select(
-                    DB::raw('SUM(CASE WHEN personal_quotes.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as total_leads'),
+                    DB::raw('COUNT(*) as total_leads'),
                     DB::raw('SUM(CASE WHEN
                         personal_quotes.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.')
-                        and personal_quotes.source != "'.LeadSourceEnum::IMCRM.'"
-                        and personal_quotes.transaction_approved_at <= "'.Carbon::parse($request->asAtDate)->endOfDay()->format($dateFormat).'"
                         THEN 1 ELSE 0 END) as bad_leads'),
                     DB::raw(
                         'SUM(
                             CASE WHEN (
-                                ( personal_quotes.payment_status_id = "'.PaymentStatusEnum::CAPTURED.'"
-                                and personal_quotes.payment_status_date <= "'.Carbon::parse($request->asAtDate)->endOfDay()->format($dateFormat).'"
-                                )
-                                OR
-                                ( personal_quotes.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.')
+                                ( personal_quotes.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.','.QuoteStatusEnum::PolicyBooked.','.QuoteStatusEnum::PolicySentToCustomer.')
                                 and personal_quotes.transaction_approved_at <= "'.Carbon::parse($request->asAtDate)->endOfDay()->format($dateFormat).'"
                                 )
                             )
-                          and personal_quotes.source != "'.LeadSourceEnum::IMCRM.'"
                           THEN 1 ELSE 0 END) as sale_leads'
                     ),
                 )
                 ->join('personal_quote_details as pqd', 'personal_quotes.id', 'pqd.personal_quote_id')
-                ->where('personal_quotes.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD);
+                ->whereNotIn('personal_quotes.source', [
+                    LeadSourceEnum::IMCRM,
+                    LeadSourceEnum::RENEWAL_UPLOAD,
+                    LeadSourceEnum::INSLY,
+                    LeadSourceEnum::SAPGO,
+                    LeadSourceEnum::SAPJO,
+                ]);
 
             $filters = [
                 'startEndDate' => $request->startEndDate,
