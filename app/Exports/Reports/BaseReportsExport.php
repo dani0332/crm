@@ -75,6 +75,11 @@ abstract class BaseReportsExport implements FromCollection, ShouldAutoSize, With
 
         $lastRow = $sheet->getHighestRow();
 
+        // if sheet has no row, then no need to show totals row
+        if ($lastRow < 2) {
+            return;
+        }
+
         $totalsRow = $lastRow + 1;
 
         $sheet->setCellValue("A{$totalsRow}", 'Total:');
