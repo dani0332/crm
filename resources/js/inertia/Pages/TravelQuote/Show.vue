@@ -114,6 +114,13 @@ const seniorPlansIds = reactive({
   ids: [],
 });
 
+const canSendOcbEmail = computed(() => {
+  return (
+    hasAnyRole([rolesEnum.LeadPool, rolesEnum.TravelManager]) &&
+    page.props.quote.source !== leadSource.RENEWAL_UPLOAD
+  );
+});
+
 const {
   isRequired,
   policy_number,
@@ -144,6 +151,7 @@ const memberActionEdit = ref(false),
       reason => reason.text === page.props.quote.lost_reason,
     )?.id || null,
   );
+const processingOCBEmailNB = ref(false);
 const leadDuplicateForm = useForm({
   modelType: 'travel',
   parentType: 'travel',
@@ -156,6 +164,9 @@ const leadDuplicateForm = useForm({
 const openDuplicate = () => {
   modals.duplicate = true;
   leadDuplicateForm.reset();
+};
+const openSendOCBConfirmNB = () => {
+  modals.sendOCBConfirmNB = true;
 };
 const onCreateDuplicate = isValid => {
   if (!isValid) return;
@@ -486,6 +497,29 @@ const deleteTraveler = id => {
       confirmModal.show = false;
     },
   });
+};
+
+const confirmSendOCBEmailNB = () => {
+  processingOCBEmailNB.value = true;
+  axios
+    .post(`/quotes/travel/${page.props.quote.uuid}/send-email-ocb-nb`, {
+      responseType: 'json',
+    })
+    .then(response => {
+      processingOCBEmailNB.value = false;
+      notification.success({
+        title: response.data.success,
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      processingOCBEmailNB.value = false;
+      console.log(error);
+    })
+    .finally(() => {
+      processingOCBEmailNB.value = false;
+      modals.sendOCBConfirmNB = false;
+    });
 };
 
 const confirmModal = reactive({
@@ -1372,6 +1406,15 @@ const onAddUpdate = () => {
           </x-button>
         </Link>
         <x-button
+          v-if="canSendOcbEmail"
+          class="mr-2"
+          size="sm"
+          color="#ff5e00"
+          @click.prevent="openSendOCBConfirmNB"
+        >
+          Send NB OCB To Customer
+        </x-button>
+        <x-button
           size="sm"
           color="#ff5e00"
           @click.prevent="openDuplicate"
@@ -1464,6 +1507,39 @@ const onAddUpdate = () => {
         </x-button>
       </template>
     </x-modal>
+    <AppModal
+      :actions="true"
+      :showHeader="true"
+      v-model:modelValue="modals.sendOCBConfirmNB"
+      :backdrop-close="false"
+    >
+      <template #header>
+        <p>Send Email OCB NB</p>
+      </template>
+      <template #default>
+        <p>Are you sure send email to customer?</p>
+      </template>
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button
+            size="sm"
+            ghost
+            @click.prevent="modals.sendOCBConfirmNB = false"
+            :disable="processingOCBEmailNB"
+          >
+            Cancel
+          </x-button>
+          <x-button
+            size="sm"
+            color="error"
+            :loading="processingOCBEmailNB"
+            @click.prevent="confirmSendOCBEmailNB"
+          >
+            Send
+          </x-button>
+        </div>
+      </template>
+    </AppModal>
 
     <div class="p-4 rounded shadow mt-6 mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
