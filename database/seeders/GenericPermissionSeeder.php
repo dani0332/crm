@@ -274,7 +274,6 @@ class GenericPermissionSeeder extends Seeder
         // $this->addMotorHeadNewRole();
         // $this->createAndAssignManulHealthPlanPermission();
         $this->syncMasterPermissionList();
-        $this->addTravelSicAllocationPermission();
     }
 
     /**
@@ -664,7 +663,7 @@ class GenericPermissionSeeder extends Seeder
         try {
             $motorHeadRole->syncPermissions($carManagerRole->permissions);
         } catch (\Exception $e) {
-            Log::error('Error assigning permissions to Motor Head role: '.$e->getMessage());
+            Log::error('Error assigning permissions to Motor Head role: ' . $e->getMessage());
         }
     }
 
@@ -731,45 +730,6 @@ class GenericPermissionSeeder extends Seeder
                     $role->givePermissionTo($dataset->id);
                 }
             }
-        }
-    }
-
-    public function addTravelSicAllocationPermission()
-    {
-        try {
-            $travelSicAllocationPermission = Permission::firstOrCreate(
-                ['name' => PermissionsEnum::TRAVEL_SIC_ALLOCATION],
-                ['guard_name' => 'web']
-            );
-
-            if ($travelSicAllocationPermission->wasRecentlyCreated) {
-                Log::info('Permission created: '.PermissionsEnum::TRAVEL_SIC_ALLOCATION);
-            } else {
-                Log::info('Permission already exists: '.PermissionsEnum::TRAVEL_SIC_ALLOCATION);
-            }
-
-            $roles = [RolesEnum::TravelManager, RolesEnum::LeadPool];
-
-            foreach ($roles as $roleName) {
-                $role = Role::where('name', $roleName)->first();
-
-                if (! $role) {
-                    Log::warning("Role not found: {$roleName}");
-
-                    continue;
-                }
-
-                if (! $role->hasPermissionTo($travelSicAllocationPermission)) {
-                    $role->givePermissionTo($travelSicAllocationPermission);
-                    Log::info("Permission {$travelSicAllocationPermission->name} assigned to role {$roleName}");
-                } else {
-                    Log::info("Role {$roleName} already has permission {$travelSicAllocationPermission->name}");
-                }
-            }
-        } catch (\Exception $e) {
-            Log::error('Error while assigning permission: '.$e->getMessage(), [
-                'exception' => $e,
-            ]);
         }
     }
 }

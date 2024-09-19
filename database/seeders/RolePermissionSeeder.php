@@ -8,6 +8,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class RolePermissionSeeder extends Seeder
 {
@@ -77,10 +78,49 @@ class RolePermissionSeeder extends Seeder
                     'updated_at' => now(),
                 ]);
             }
-
         } catch (\Throwable $th) {
-            info('RolePermission Seeder issue Error:'.$th->getMessage().' Line:'.$th->getLine());
+            info('RolePermission Seeder issue Error:' . $th->getMessage() . ' Line:' . $th->getLine());
             throw $th;
+        }
+        $this->addTravelSicAllocationPermission();
+    }
+
+    public function addTravelSicAllocationPermission()
+    {
+        try {
+            $travelSicAllocationPermission = Permission::firstOrCreate(
+                ['name' => PermissionsEnum::TRAVEL_SIC_ALLOCATION],
+                ['guard_name' => 'web']
+            );
+
+            if ($travelSicAllocationPermission->wasRecentlyCreated) {
+                Log::info('Permission created: ' . PermissionsEnum::TRAVEL_SIC_ALLOCATION);
+            } else {
+                Log::info('Permission already exists: ' . PermissionsEnum::TRAVEL_SIC_ALLOCATION);
+            }
+
+            $roles = [RolesEnum::TravelManager, RolesEnum::LeadPool];
+
+            foreach ($roles as $roleName) {
+                $role = Role::where('name', $roleName)->first();
+
+                if (! $role) {
+                    Log::warning("Role not found: {$roleName}");
+
+                    continue;
+                }
+
+                if (! $role->hasPermissionTo($travelSicAllocationPermission)) {
+                    $role->givePermissionTo($travelSicAllocationPermission);
+                    Log::info("Permission {$travelSicAllocationPermission->name} assigned to role {$roleName}");
+                } else {
+                    Log::info("Role {$roleName} already has permission {$travelSicAllocationPermission->name}");
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Error while assigning permission: ' . $e->getMessage(), [
+                'exception' => $e,
+            ]);
         }
     }
 }
