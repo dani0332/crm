@@ -24,8 +24,8 @@ let availableFilters = {
   last_name: '',
   email: '',
   mobile_no: '',
-  created_at_start: '',
-  created_at_end: '',
+  created_at_start: new Date() || '',
+  created_at_end: new Date() || '',
   renewal_batch: '',
   previous_quote_policy_number: '',
   is_ecommerce: '',
@@ -223,11 +223,12 @@ const resetDateFilters = filterName => {
   const filterMappings = {
     payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
     booking_date: ['payment_due_date', 'created_at_start', 'created_at_end'],
-    created_at_start: ['booking_date', 'payment_due_date', 'created_at_end'],
-    created_at_end: ['booking_date', 'payment_due_date', 'created_at_start'],
+    created_at: ['booking_date', 'payment_due_date'],
   };
 
-  const filtersToReset = filterMappings[filterName] || [];
+  const filtersToReset =
+    filterMappings[filterName] ||
+    (filterName.startsWith('created_at') ? filterMappings.created_at : []);
 
   filtersToReset.forEach(filter => {
     filters[filter] = '';
