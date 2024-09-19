@@ -663,7 +663,7 @@ class GenericPermissionSeeder extends Seeder
         try {
             $motorHeadRole->syncPermissions($carManagerRole->permissions);
         } catch (\Exception $e) {
-            Log::error('Error assigning permissions to Motor Head role: ' . $e->getMessage());
+            Log::error('Error assigning permissions to Motor Head role: '.$e->getMessage());
         }
     }
 

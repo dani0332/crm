@@ -79,7 +79,7 @@ class RolePermissionSeeder extends Seeder
                 ]);
             }
         } catch (\Throwable $th) {
-            info('RolePermission Seeder issue Error:' . $th->getMessage() . ' Line:' . $th->getLine());
+            info('RolePermission Seeder issue Error:'.$th->getMessage().' Line:'.$th->getLine());
             throw $th;
         }
         $this->addTravelSicAllocationPermission();
@@ -94,9 +94,9 @@ class RolePermissionSeeder extends Seeder
             );
 
             if ($travelSicAllocationPermission->wasRecentlyCreated) {
-                Log::info('Permission created: ' . PermissionsEnum::TRAVEL_SIC_ALLOCATION);
+                Log::info('Permission created: '.PermissionsEnum::TRAVEL_SIC_ALLOCATION);
             } else {
-                Log::info('Permission already exists: ' . PermissionsEnum::TRAVEL_SIC_ALLOCATION);
+                Log::info('Permission already exists: '.PermissionsEnum::TRAVEL_SIC_ALLOCATION);
             }
 
             $roles = [RolesEnum::TravelManager, RolesEnum::LeadPool];
@@ -118,7 +118,7 @@ class RolePermissionSeeder extends Seeder
                 }
             }
         } catch (\Exception $e) {
-            Log::error('Error while assigning permission: ' . $e->getMessage(), [
+            Log::error('Error while assigning permission: '.$e->getMessage(), [
                 'exception' => $e,
             ]);
         }
