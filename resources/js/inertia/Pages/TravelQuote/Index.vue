@@ -37,8 +37,8 @@ const filters = reactive({
   last_name: '',
   email: '',
   mobile_no: '',
-  created_at_start: '',
-  created_at_end: '',
+  created_at_start: new Date() || '',
+  created_at_end: new Date() || '',
   quote_status_id: [],
   advisor_id: [],
   is_ecommerce: '',
@@ -240,6 +240,16 @@ const permissionsEnum = page.props.permissionsEnum;
 const travelQuoteEnum = page.props.travelQuoteEnum;
 
 const onDataExport = () => {
+  filters.created_at_start = useDateFormat(
+    filters.created_at_start,
+    'YYYY-MM-DD',
+  ).value;
+
+  filters.created_at_end = useDateFormat(
+    filters.created_at_end,
+    'YYYY-MM-DD',
+  ).value;
+
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'travel');
   window.open(url + '?' + new URLSearchParams(data).toString());
