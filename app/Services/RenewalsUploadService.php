@@ -11,6 +11,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\MarketSegmentEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteSegmentEnum;
@@ -1388,7 +1389,6 @@ class RenewalsUploadService
      */
     private function triggerBirdWorkflow($emailData, $mobile, $uuid)
     {
-        $tag = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_MOTOR_RENEWAL_TAG)->first()->value ?? null;
         $birdEmailData = [
             'SendNewProcessRenewalEmail' => true,
             'customerEmail' => $emailData->customerEmail,
@@ -1399,7 +1399,7 @@ class RenewalsUploadService
             'refID' => $emailData->carQuoteId,
             'requestForAdvisor' => $emailData->requestAdvisorLink,
             'quoteUUID' => $uuid,
-            'tag' => $tag,
+            'tag' => MarketSegmentEnum::BIRD_SIC_MOTOR_RENEWAL_TAG,
         ];
 
         $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_MOTOR_RENEWAL_WORKFLOW)->first();
