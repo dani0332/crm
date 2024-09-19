@@ -71,7 +71,7 @@ const batchForm = useForm({
   end_date: props?.renewalBatch?.end_date ?? null,
   dead_date: props.carSoldDeadline ?? null,
   batchMonth: +props?.renewalBatch?.month
-    ? { month: props?.renewalBatch.month - 1 }
+    ? { month: props?.renewalBatch.month - 1, year: props?.renewalBatch?.year }
     : null,
   slab: props.lastBatchSlabs,
   segment_volume: props.volumeSegmentAdvisorsId ?? [],
@@ -81,9 +81,8 @@ const batchForm = useForm({
   quote_status_id: [props.quoteStatus.CarSold],
   deadline_date: [],
   month: '',
-  year: '',
+  year: props?.renewalBatch?.year ?? null,
 });
-
 const generateDeadlineDate = () => {
   let data = {
     [props.quoteStatus.CarSold]: batchForm.dead_date,

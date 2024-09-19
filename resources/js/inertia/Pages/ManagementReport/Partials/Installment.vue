@@ -145,6 +145,18 @@ const tableHeader = reactive([
     text: 'Lead Status',
     value: 'lead_status',
   },
+  {
+    text: 'Commission Tax Invoice Number',
+    value: 'insurer_commmission_invoice_number',
+  },
+  {
+    text: 'Commission Percentage',
+    value: 'commmission_percentage',
+  },
+  {
+    text: 'Transaction Type',
+    value: 'transaction_type',
+  },
 ]);
 const isIntegerColumn = key => {
   // Add logic to determine if the column contains an integer
@@ -275,6 +287,19 @@ const isIntegerColumn = key => {
     </template>
     <template #item-broker_invoice_number="{ broker_invoice_number }">
       {{ broker_invoice_number ?? 'N/A' }}
+    </template>
+    <template
+      #item-insurer_commmission_invoice_number="{
+        insurer_commmission_invoice_number,
+      }"
+    >
+      {{ insurer_commmission_invoice_number ?? 'N/A' }}
+    </template>
+    <template #item-transaction_type="{ transaction_type }">
+      {{ transaction_type ?? 'N/A' }}
+    </template>
+    <template #item-commmission_percentage="{ commmission_percentage }">
+      {{ commmission_percentage ?? 'N/A' }}
     </template>
     <template #body-append>
       <tr v-if="reportData.data.length > 0" class="total-row sticky bottom-0">

@@ -74,7 +74,7 @@ class InslyDataService extends BaseService
                 'Engineering and plant insurance', 'fidelity guarantee', 'group life', 'group medical insurance', 'holiday homes',
                 'livestock insurance', 'machinery breakdown insurance', 'marine cargo (individual shipment) insurance',
                 'marine hull insurance', 'medical malpractice insurance', 'money insurance', 'motor fleet',
-                'open cover - marine cargo insurance', 'professional indemnity insurance,property insurance',
+                'open cover - marine cargo insurance', 'professional indemnity insurance', 'property insurance',
                 'public liability insurance', 'road transit (international)', 'road transit (UAE only)',
                 'sme packaged insurance', 'trade credit insurance', 'workmens compensation insurance',
             ],
@@ -114,7 +114,7 @@ class InslyDataService extends BaseService
             quoteBusinessTypeCode::smeInsurance => ['sme packaged insurance'],
             quoteBusinessTypeCode::fidelityGuarantee => ['fidelity guarantee'],
             quoteBusinessTypeCode::goodsInTransit => ['road transit (uae only)'],
-            quoteBusinessTypeCode::MedicalMalpracticeInsurance => ['medical malpractice insurance'],
+            quoteBusinessTypeCode::medicalMalpractices => ['medical malpractice insurance'],
         ];
     }
 }

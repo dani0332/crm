@@ -9,6 +9,7 @@ defineProps({
     type: String,
     default: 'bike',
   },
+  authorizedDays: Number,
 });
 const notification = useNotifications('toast');
 const page = usePage();
@@ -163,39 +164,44 @@ const onDataExport = () => {
   window.open(url + '?' + new URLSearchParams(data).toString());
 };
 function daysAgoFromAuthorizedDate(authorizedDate) {
-  // Check if authorizedDate is null or undefined
-  if (!authorizedDate) {
+  let date = authorizedDate.split(' ')[0];
+  if (!date) {
     return;
   }
-  const [datePart] = authorizedDate.split(' ');
 
-  const [day, month, year] = datePart.split('-').map(Number);
-
+  const [day, month, year] = date.split('-').map(Number);
   const parsedDate = new Date(year, month - 1, day);
 
-  // Check if the parsed date is valid
   if (isNaN(parsedDate.getTime())) {
     return 'Invalid date';
   }
 
-  // Calculate the new date by adding 8 days to the authorized date
+  // Reset time to 00:00:00 to consider only the date
+  parsedDate.setHours(0, 0, 0, 0);
+
+  // Add `page.props.authorizedDays` to the parsed date
+  const authorizedDays = page.props.authorizedDays || 8; // Default to 8 if not defined
   const newDate = new Date(parsedDate);
-  newDate.setDate(parsedDate.getDate() + 8);
+  newDate.setDate(parsedDate.getDate() + authorizedDays);
 
-  // Get the current date
+  // Reset time for newDate as well
+  newDate.setHours(0, 0, 0, 0);
+
   const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0); // Reset time for current date
 
-  // Calculate the difference in time
+  // Calculate the difference in days
   const differenceInTime = newDate.getTime() - currentDate.getTime();
-  const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+  const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
 
-  // Check if the date has expired
-  if (Math.floor(differenceInDays) <= 0) {
+  // Return appropriate message
+  if (differenceInDays <= 0) {
     return 'Expired';
   }
 
-  // Return the difference in days
-  return Math.floor(differenceInDays) + ' days';
+  return differenceInDays === 1
+    ? `${differenceInDays} day`
+    : `${differenceInDays} days`;
 }
 watch(
   () => filters,
@@ -243,11 +249,9 @@ const resetDateFilters = filterName => {
     },
   );
 });
-const formatDate = date => {
-  if (!date) return '';
-  const options = { year: 'numeric', month: 'short', day: 'numeric' };
-  return new Date(date).toLocaleDateString('en-GB', options);
-};
+
+const formatDate = dateString => useDateFormat(dateString, 'DD-MMM-YYYY').value;
+
 const validateDateRange = () => {
   const { policy_expiry_date, policy_expiry_date_end } = filters;
   if (policy_expiry_date && policy_expiry_date_end) {
@@ -500,7 +504,6 @@ const validateDateRange = () => {
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-uuid="{ code, uuid }">
         <!-- :href="`/personal-quotes/bike/${uuid}`" -->

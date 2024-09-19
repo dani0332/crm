@@ -9,6 +9,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -832,5 +833,34 @@ class CentralService
 
             info('fn: updateQuotePayment payment updated for quote uuid: '.$quoteUuId);
         }
+    }
+
+    public function lockTransactionStatus($quote, $quoteTypeId, $quoteStatuses)
+    {
+        $lockLeadStatus = $this->lockLeadSectionsDetails($quote);
+        if ($lockLeadStatus['lead_status'] || auth()->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE)) {
+            return $quoteStatuses;
+        }
+
+        $lockedQuotesStatuses = [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued,
+        ];
+
+        $isTransactionApproved = QuoteStatusLog::where('quote_type_id', $quoteTypeId)
+            ->where('quote_request_id', $quote->id)
+            ->where(function ($query) {
+                $query->where('current_quote_status_id', QuoteStatusEnum::TransactionApproved)
+                    ->orWhere('previous_quote_status_id', QuoteStatusEnum::TransactionApproved);
+            })
+            ->count();
+
+        if (! $isTransactionApproved) {
+            $quoteStatuses = collect($quoteStatuses)->filter(function ($value) use ($lockedQuotesStatuses) {
+                return ! in_array($value['id'], $lockedQuotesStatuses);
+            })->values();
+        }
+
+        return $quoteStatuses;
     }
 }

@@ -110,6 +110,9 @@ class EndorsementReportService extends ManagementReport
                 'btoi.text as sub_type_line_of_business',
                 'l.text as endorsement_sub_type',
                 'send_update_logs.booking_date',
+                DB::raw('IFNULL(send_update_logs.insurer_commission_invoice_number, p.insurer_commmission_invoice_number) as insurer_commmission_invoice_number'),
+                DB::raw('CASE WHEN ps.sr_no is NULL OR ps.sr_no=1 THEN IFNULL(send_update_logs.commission_percentage, p.commmission_percentage) ELSE 0 END as commmission_percentage'),
+                DB::raw("'Endorsement' as transaction_type")
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -184,6 +187,9 @@ class EndorsementReportService extends ManagementReport
                 'btoi.text as sub_type_line_of_business',
                 'l.text as endorsement_sub_type',
                 'send_update_logs.booking_date',
+                DB::raw('IFNULL(CONCAT(p.insurer_commmission_invoice_number, "-REV"), IFNULL(CONCAT(send_update_logs.insurer_commission_invoice_number, "-REV"), null)) as insurer_commmission_invoice_number'),
+                DB::raw('-1 * IFNULL(send_update_logs.commission_percentage, IFNULL(p.commmission_percentage, 0)) as commmission_percentage'),
+                DB::raw("'Endorsement' as transaction_type")
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -202,6 +208,15 @@ class EndorsementReportService extends ManagementReport
             ->whereNotNull('send_update_logs.reversal_invoice')
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
         $this->getUtmGroup($request, $reversalQuery);
+
+        if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
+            $distinctPaymentSplits = DB::table('payment_splits as dps')
+                ->select('dps.code', 'due_date')
+                ->groupBy('dps.code');
+            $reversalQuery->leftJoinSub($distinctPaymentSplits, 'ps', function ($join) {
+                $join->on('p.code', '=', 'ps.code');
+            });
+        }
         $this->applyFilters($reversalQuery, $request);
 
         $query = $query->unionAll($reversalQuery);
@@ -212,7 +227,7 @@ class EndorsementReportService extends ManagementReport
             $this->formatData($data);
 
             // Columns that are not integar and should not be summed
-            $nonIntegarIndexes = [0, 1, 2, 3, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29];
+            $nonIntegarIndexes = [0, 1, 2, 3, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35];
 
             return $this->download(
                 'Endorsement Report '.$this->reportDateRange,
@@ -245,6 +260,7 @@ class EndorsementReportService extends ManagementReport
             $item->pending_balance = number_format($item->pending_balance, 2);
             $item->collects = strtoupper($item->collects);
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
+            $item->commmission_percentage = number_format($item->commmission_percentage, 2);
         });
     }
 
@@ -309,6 +325,9 @@ class EndorsementReportService extends ManagementReport
             'Booking Date',
             'Endorsement Sub-Type',
             'SU Ref-ID',
+            'Commission Tax Invoice Number',
+            'Commission Percentage',
+            'Transaction Type',
         ];
     }
 
@@ -348,6 +367,9 @@ class EndorsementReportService extends ManagementReport
             $quote->booking_date ?? 'N/A',
             $quote->endorsement_sub_type ?? 'N/A',
             $quote->code ?? 'N/A',
+            $quote->insurer_commmission_invoice_number ?? 'N/A',
+            $quote->commmission_percentage ?? 'N/A',
+            $quote->transaction_type ?? 'N/A',
         ];
     }
 }

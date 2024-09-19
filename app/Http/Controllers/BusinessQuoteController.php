@@ -100,8 +100,10 @@ class BusinessQuoteController extends Controller
         //PD Revert
         // $totalCount = count(request()->all()) > 1 || $hasOtherFilters ? $count : BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true, true);
         $totalCount = 0;
+        $paymentAuthorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
+        $authorizedDays = intval($paymentAuthorizedDays->value);
 
-        return inertia('CorpLineQuote/Index', compact('quotes', 'dropdownSource', 'isManualAllocationAllowed', 'totalCount'));
+        return inertia('CorpLineQuote/Index', compact('quotes', 'dropdownSource', 'isManualAllocationAllowed', 'totalCount', 'authorizedDays'));
     }
 
     private function parseDate($date, $isStartOfDay)
@@ -211,6 +213,7 @@ class BusinessQuoteController extends Controller
             })->values();
         }
 
+        $dropdownSource['quote_status_id'] = app(CentralService::class)->lockTransactionStatus($record, self::TYPE_ID, $dropdownSource['quote_status_id']);
         if (AMLService::checkAMLStatusFailed(self::TYPE_ID, $record->id)) {
             $dropdownSource['quote_status_id'] = collect($dropdownSource['quote_status_id'])->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;

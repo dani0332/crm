@@ -73,6 +73,9 @@ class SaleDetailReportService extends ManagementReport
                 'dp.name as department',
                 'pi.name as policy_issuer',
                 'btoi.text as sub_type_line_of_business',
+                'p.insurer_commmission_invoice_number',
+                'l.text as transaction_type',
+                'p.commmission_percentage',
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
@@ -86,7 +89,8 @@ class SaleDetailReportService extends ManagementReport
             ->leftJoin('user_team as ut', 'ut.user_id', '=', 'u.id')
             ->leftJoin('teams as t', 't.id', '=', 'ut.team_id')
             ->leftJoin('customer as cm', 'cm.id', '=', 'personal_quotes.customer_id')
-            ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id');
+            ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
+            ->leftJoin('lookups as l', 'personal_quotes.transaction_type_id', '=', 'l.id');
 
         $this->applyFilters($query, $request);
 
@@ -103,7 +107,7 @@ class SaleDetailReportService extends ManagementReport
             $this->formatData($data);
 
             // Columns that are not integar and should not be summed
-            $nonIntegarIndexes = [0, 1, 2, 3, 4, 5, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27];
+            $nonIntegarIndexes = [0, 1, 2, 3, 4, 5, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32];
 
             return $this->download(
                 'Sale Detail Report '.$this->reportDateRange,
@@ -134,6 +138,7 @@ class SaleDetailReportService extends ManagementReport
             $item->total_commission = number_format($item->total_commission, 2);
             $item->collects = strtoupper($item->collects);
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
+            $item->commmission_percentage = number_format($item->commmission_percentage, 2);
         });
     }
 
@@ -185,6 +190,9 @@ class SaleDetailReportService extends ManagementReport
             'Sub-Type',
             'Advisor',
             'Policy Issuer ',
+            'Commission Tax Invoice Number',
+            'Commission Percentage',
+            'Transaction Type',
         ];
     }
 
@@ -221,6 +229,9 @@ class SaleDetailReportService extends ManagementReport
             $quote->sub_type_line_of_business ?? 'N/A',
             $quote->advisor ?? 'N/A',
             $quote->policy_issuer ?? 'N/A',
+            $quote->insurer_commmission_invoice_number ?? 'N/A',
+            $quote->commmission_percentage ?? 'N/A',
+            $quote->transaction_type ?? 'N/A',
         ];
     }
 }

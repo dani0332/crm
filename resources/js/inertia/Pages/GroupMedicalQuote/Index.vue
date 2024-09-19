@@ -6,6 +6,7 @@ defineProps({
   isManagerORDeputy: Boolean,
   quotes: Object,
   isManualAllocationAllowed: Boolean,
+  authorizedDays: Number,
 });
 
 const canExport = ref(false);
@@ -40,8 +41,8 @@ const filters = reactive({
   last_name: '',
   email: '',
   mobile_no: '',
-  created_at_start: '',
-  created_at_end: '',
+  created_at_start: new Date() || '',
+  created_at_end: new Date() || '',
   leadStatus: [],
   advisor_id: '',
   page: 1,
@@ -70,6 +71,8 @@ const tableHeader = [
   { text: 'Ref-ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
+  { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
+  { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
   { text: 'LEAD STATUS', value: 'leadStatus' },
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'PRICE', value: 'premium' },
@@ -123,12 +126,12 @@ function filterQuotes(isValid) {
       delete filters[key];
     }
   }
-  if (filters.created_at_start) {
-    filters.created_at_start = filters.created_at_start.split('T')[0];
-  }
-  if (filters.created_at_end) {
-    filters.created_at_end = filters.created_at_end.split('T')[0];
-  }
+  // if (filters.created_at_start) {
+  //   filters.created_at_start = filters.created_at_start.split('T')[0];
+  // }
+  // if (filters.created_at_end) {
+  //   filters.created_at_end = filters.created_at_end.split('T')[0];
+  // }
   router.visit(route('amt.index'), {
     method: 'get',
     data: {
@@ -185,7 +188,9 @@ function displayNotification() {
 function setQueryFilters() {
   let urlParams = new URLSearchParams(window.location.search);
   for (const [key, value] of urlParams) {
-    if (key.includes('[')) {
+    if (key == 'created_at_start' || key == 'created_at_end') {
+      filters[key] = useDateFormat(urlParams[key], 'YYYY-MM-DD').value;
+    } else if (key.includes('[')) {
       let index = key.replace('[]', '');
       filters[index] = urlParams.getAll(key).map(item => parseInt(item));
     } else {
@@ -198,6 +203,29 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
 const onDataExport = () => {
+  let diff = calculateDaysDifference(
+    filters.created_at_start,
+    filters.created_at_end,
+  );
+
+  if (diff > 31) {
+    notification.error({
+      message: 'Maximum of 31 days (created date) are allowed to be exported.',
+      position: 'top',
+    });
+    return;
+  }
+
+  filters.created_at_start = useDateFormat(
+    filters.created_at_start,
+    'YYYY-MM-DD',
+  ).value;
+
+  filters.created_at_end = useDateFormat(
+    filters.created_at_end,
+    'YYYY-MM-DD',
+  ).value;
+
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'amt');
   window.open(url + '?' + new URLSearchParams(data).toString());
@@ -257,7 +285,44 @@ const resetDateFilters = filterName => {
     },
   );
 });
+function daysAgoFromAuthorizedDate(authorizedDate) {
+  if (!authorizedDate) {
+    return;
+  }
+  const [day, month, year] = authorizedDate.split('-').map(Number);
+  const parsedDate = new Date(year, month - 1, day);
 
+  if (isNaN(parsedDate.getTime())) {
+    return 'Invalid date';
+  }
+
+  // Reset time to 00:00:00 to consider only the date
+  parsedDate.setHours(0, 0, 0, 0);
+
+  // Add `page.props.authorizedDays` to the parsed date
+  const authorizedDays = page.props.authorizedDays || 8; // Default to 8 if not defined
+  const newDate = new Date(parsedDate);
+  newDate.setDate(parsedDate.getDate() + authorizedDays);
+
+  // Reset time for newDate as well
+  newDate.setHours(0, 0, 0, 0);
+
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0); // Reset time for current date
+
+  // Calculate the difference in days
+  const differenceInTime = newDate.getTime() - currentDate.getTime();
+  const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+
+  // Return appropriate message
+  if (differenceInDays <= 0) {
+    return 'Expired';
+  }
+
+  return differenceInDays === 1
+    ? `${differenceInDays} day`
+    : `${differenceInDays} days`;
+}
 const validateDateRange = () => {
   const { policy_expiry_date, policy_expiry_date_end } = filters;
   if (policy_expiry_date && policy_expiry_date_end) {
@@ -275,25 +340,8 @@ const validateDateRange = () => {
   }
   return false;
 };
-function formatDate(dateString) {
-  const monthNames = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  const [day, month, year] = dateString.split('-');
-  const formattedMonth = monthNames[parseInt(month, 10) - 1];
-  return `${day} ${formattedMonth} ${year}`;
-}
+const formatDate = dateString =>
+  useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY').value;
 </script>
 
 <template>
@@ -385,14 +433,32 @@ function formatDate(dateString) {
           <DatePicker
             v-model="filters.created_at_start"
             name="created_at_start"
-            :rules="[created_at_rule]"
+            :rules="
+              filters.previous_quote_policy_number ||
+              filters.code ||
+              filters.email ||
+              filters.renewal_batch ||
+              filters.payment_due_date ||
+              filters.booking_date
+                ? []
+                : [isRequired]
+            "
           />
         </x-field>
         <x-field label="Created Date End">
           <DatePicker
             v-model="filters.created_at_end"
             name="created_at_end"
-            :rules="[created_at_end_rule]"
+            :rules="
+              filters.previous_quote_policy_number ||
+              filters.code ||
+              filters.email ||
+              filters.renewal_batch ||
+              filters.payment_due_date ||
+              filters.booking_date
+                ? []
+                : [isRequired]
+            "
           />
         </x-field>
         <x-field label="Lead Status">
@@ -532,7 +598,6 @@ function formatDate(dateString) {
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-code="{ code, uuid }">
         <a
@@ -541,6 +606,16 @@ function formatDate(dateString) {
         >
           {{ code }}
         </a>
+      </template>
+      <template #item-authorized_at="item">
+        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
+          {{ item.authorized_at }}
+        </p>
+      </template>
+      <template #item-expiry_date="item">
+        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
+          {{ daysAgoFromAuthorizedDate(item.authorized_at) }}
+        </p>
       </template>
       <template
         #item-previous_policy_expiry_date="{
