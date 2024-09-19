@@ -784,6 +784,7 @@ class SplitPaymentService
                     $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quoteModel);
                     if (! $lockLeadSectionsDetails['lead_status']) {
                         $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
+                        $quoteModel->stale_at = null;
                         app(CRUDService::class)->calculateScore($quoteModel, $modelType);
                         info('Transaction Score Calculated: '.$quoteModel->code);
                     }

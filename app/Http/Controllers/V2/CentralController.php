@@ -234,6 +234,7 @@ class CentralController extends Controller
             $quote->update([
                 'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
                 'quote_status_date' => now(),
+                'stale_at' => null,
             ]);
 
             info('Policy send to customer for '.$quote->uuid);
@@ -274,6 +275,7 @@ class CentralController extends Controller
                 'quote_status_id' => QuoteStatusEnum::PolicyBooked,
                 'policy_booking_date' => Carbon::now(),
                 'quote_status_date' => now(),
+                'stale_at' => null,
             ]);
 
             (new CentralService)->straightforwardPayments($payment, $paymentSplits, $quote);
