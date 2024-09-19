@@ -53,6 +53,7 @@ const filters = reactive({
   segment_filter: '',
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  transaction_approved_dates: page.props.transaction_approved_dates || '',
 });
 
 const loader = reactive({
@@ -109,13 +110,21 @@ const paymentStatusOptions = computed(() => {
 });
 
 const advisorsOptions = computed(() => {
-  return page.props.dropdownSource.advisor_id.map(item => {
-    return {
-      value: item.id,
-      label: item.name,
-    };
-  });
+    const advisors = page.props.dropdownSource.advisor_id.map(item => {
+        return {
+            value: item.id,
+            label: item.name,
+        };
+    });
+    return [
+        {
+            value: -1,
+            label: 'UnAssigned',
+        },
+        ...advisors,
+    ];
 });
+
 
 const leadsStatusOptions = computed(() => {
   return page.props.dropdownSource.quote_status_id.map(item => {
@@ -504,6 +513,15 @@ const formatDate = date => {
             :options="advisorsOptions"
           />
         </x-field>
+          <DatePicker
+              v-model="filters.transaction_approved_dates"
+              label="Transaction Approved Date"
+              class="w-full"
+              range
+              multi-calendars
+              multi-calendars-solo
+              max-range="30"
+          />
         <x-field label="Ecommerce">
           <x-select
             v-model="filters.is_ecommerce"
