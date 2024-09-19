@@ -27,7 +27,15 @@ steps:
       curl -sLf --retry 3 --tlsv1.2 --proto "=https" 'https://packages.doppler.com/public/cli/gpg.DE2A7741A397C129.key' | sudo apt-key add - && \
       echo "deb https://packages.doppler.com/public/cli/deb/debian any-version main" | sudo tee /etc/apt/sources.list.d/doppler-cli.list && \
       sudo apt-get update && sudo apt-get install doppler
-  - script: doppler --token $(IMCRM_TOKEN) run -- docker build --build-arg IMCRM_TOKEN=$(IMCRM_TOKEN) -f Dockerfile_MS -t $(acrName).azurecr.io/$(imageName) .
+  - script: |
+      doppler --token $(IMCRM_TOKEN) run -- docker build --build-arg IMCRM_TOKEN=$(IMCRM_TOKEN) -f Dockerfile_MS -t $(acrName).azurecr.io/$(imageName) .
+      if [ $? -ne 0 ]; then
+       curl --request POST -u $(serviceaccount):$(SERVICE_TOKEN) 'https://deploymentnotification.azurewebsites.net/api/notificationfunction?code=ewX4tkwM_o-mQw4Q55GWF-HfV1HDfPUcP3A3hfLnTFdaAzFu1ynwMQ==' \
+        --header 'Content-Type: application/json' \
+        --data '{"message": {"text": "Building Project Failed on $(Build.DefinitionName), Recheck Code..."}}'
+      # Add additional actions like notifications or logging here
+       exit 1
+      fi
     displayName: 'docker build'
   - script: docker login -u $(dockerId) -p $(dockerPassword) $(acrName).azurecr.io
     displayName: 'docker login'
