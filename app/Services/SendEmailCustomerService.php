@@ -635,7 +635,7 @@ class SendEmailCustomerService extends BaseService
 
             info('RM Intro Email Triggered to CAPI for HEA-'.$quoteUuid.' - Message: '.$response->message);
             if (! isLeadSic($quoteUuid)) {
-                OCAHealthFollowupEmailJob::dispatch($quoteUuid)->delay(Carbon::now()->addMinutes(2));
+                OCAHealthFollowupEmailJob::dispatch($quoteUuid)->delay(Carbon::now()->addMinutes(5));
                 info('OCAHealthFollowupEmailJob dispatched for HEA-'.$quoteUuid.' - Time: '.now());
             } else {
                 info("This is the SIC Lead Ref-ID: {$quoteUuid} | Time:".now());
