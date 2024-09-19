@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Http\Requests\RenewalBatchRequest;
 use App\Models\RenewalBatch;
 use App\Models\Slab;
@@ -73,7 +74,7 @@ class RenewalBatchController extends Controller
     {
 
         $attributes = $request->validated();
-
+        $attributes['quote_type_id']= QuoteTypeId::Car;
         RenewalBatch::create($attributes);
 
         return redirect()->route('renewal-batches-list')->with('message', 'Renewal Batch Successfully created');
