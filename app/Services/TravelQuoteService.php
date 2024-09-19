@@ -451,9 +451,9 @@ class TravelQuoteService extends BaseService
                     $this->query->whereNull($item);
                 } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
                     if (in_array('-1', $request[$item]) || in_array(-1, $request[$item])) {
-                        $this->query->whereNull('tqr.advisor_id');
+                        $this->query->whereNull('advisor_id');
                     } else {
-                        $this->query->whereIn('tqr.advisor_id', $request[$item]);
+                        $this->query->whereIn('advisor_id', $request[$item]);
                     }
                 } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('quote_status_id', $request[$item]);
