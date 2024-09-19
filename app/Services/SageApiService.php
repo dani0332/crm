@@ -319,7 +319,7 @@ class SageApiService
         if ($sageCustomerNumber) {
             info('Book Update - Customer found in Sage300 - Customer Number: '.$sageCustomerNumber.' - QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
             $response = '';
-            $getingPaymentDetails = $this->getPaymentDetails($request, $extras);
+            $gettingPaymentDetails = $this->getPaymentDetails($request, $extras);
 
             // Need to update this code after Mirza's Implemenntation
             if ($extras['type'] == SageEnum::PT_SEND_UPDATE) {
@@ -330,19 +330,19 @@ class SageApiService
                     'policy_number' => $sendUpdateLog->policy_number,
                     'transaction_type_id' => $quote->transaction_type_id,
                     'advisor_id' => $sendUpdateLog->advisor_id,
-                    'price_vat_applicable' => abs($getingPaymentDetails['payment']->total_price),
+                    'price_vat_applicable' => abs($gettingPaymentDetails['payment']->total_price),
                     'price_with_vat' => abs($sendUpdateLog->price_with_vat),
                     'insly_migrated' => $quote->insly_migrated,
                     'insurance_provider_id' => $sendUpdateLog->insurance_provider_id,
                     'booking_filled_by' => $sendUpdateLog->booking_filled_by,
                 ];
 
-                if (isset($getingPaymentDetails['mainLeadDetails'])) {
-                    $extras['mainLeadDetails'] = $getingPaymentDetails['mainLeadDetails'];
+                if (isset($gettingPaymentDetails['mainLeadDetails'])) {
+                    $extras['mainLeadDetails'] = $gettingPaymentDetails['mainLeadDetails'];
                 }
             }
 
-            $sageRequestPayload = SagePayloadFactory::sagePayLoad($request->quoteType, $quoteDetails, $getingPaymentDetails['payment'], $getingPaymentDetails['splitPayments']);
+            $sageRequestPayload = SagePayloadFactory::sagePayLoad($request->quoteType, $quoteDetails, $gettingPaymentDetails['payment'], $gettingPaymentDetails['splitPayments']);
             $sageRequestPayload->customerId = $sageCustomerNumber;
 
             if (! $sageRequestPayload->insurerGlLiaiblityAccount || ! $sageRequestPayload->sageVenderId || ! $sageRequestPayload->sageInsurerCustomerId) {
@@ -364,7 +364,7 @@ class SageApiService
                     if ($request->send_update_type == SageEnum::SUT_REVE_CORR) {
                         $extras['reverse_invoice'] = $request->reversalInvoice;
                     }
-                    $response = $this->handleSendUpdateCalls($quote, $sageRequestPayload, $getingPaymentDetails['payment'], $getingPaymentDetails['splitPayments'], $extras);
+                    $response = $this->handleSendUpdateCalls($quote, $sageRequestPayload, $gettingPaymentDetails['payment'], $gettingPaymentDetails['splitPayments'], $extras);
                     break;
             }
 
@@ -425,7 +425,7 @@ class SageApiService
                     'invoice_description' => $extras['send_update_log']->invoice_description,
                     'insurer_invoice_date' => $extras['send_update_log']->invoice_date,
                     'commission_vat' => abs($extras['send_update_log']->vat_on_commission),
-                    'total_price' => abs($extras['send_update_log']->price_without_vat),
+                    'total_price' => abs($extras['send_update_log']->price_with_vat),
                     'total_amount' => abs($extras['send_update_log']->price_vat_applicable),
                     'commission' => abs($extras['send_update_log']->total_commission),
                     'commission_vat_applicable' => abs($extras['send_update_log']->commission_vat_applicable),
@@ -456,6 +456,7 @@ class SageApiService
                 $response = ['payment' => $payment, 'splitPayments' => $splitPayments, 'mainLeadDetails' => $mainLeadDetails];
 
                 // Reminder: price_vat_applicable > 0 => Debit Note, if negative then should be Credit Note
+                //                TODO:: Need to verify it should be price_with_vat (Total Price of Endorsement)
                 if ($checkInslyMigratedLead && ($extras['send_update_log']->price_vat_applicable > 0)) {
                     unset($response['mainLeadDetails']);
                 }
