@@ -783,7 +783,10 @@ trait GenericQueriesAllLobs
                 info('Quote Code: '.$payment->code.' Updating TA for Split Payment frequency is : '.$payment->frequency.' and payment_status_id: '.$payment->payment_status_id);
                 if ($payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
                     info('Quote Code: '.$payment->code.' Updating PA BTA: '.$paymentSplit->payment_amount.' WTA: '.$payment->total_amount);
-                    $paymentSplit->payment_amount = $payment->total_amount;
+                    if($paymentSplit->payment_amount != $payment->total_amount){
+                        $paymentSplit->payment_amount = $payment->total_amount;
+                        $paymentSplit->save();
+                    }
                 }
                 if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {
                     $oldPaymentStatusId = $paymentSplit->payment_status_id;
