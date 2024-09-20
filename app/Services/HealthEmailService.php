@@ -119,7 +119,7 @@ class HealthEmailService extends BaseService
             'totalPremium' => "AED {$lead->premium}",
             'referenceCode' => $lead->code,
             'mobile' => $lead->mobile_no ?? '',
-            "email" => $lead->email,
+            'email' => $lead->email,
             'totalMembers' => count($members),
             'members' => $members,
             'plan' => [
@@ -153,21 +153,24 @@ class HealthEmailService extends BaseService
     public function sendApplyNowEmail(HealthQuote $lead)
     {
         try {
-            if ($lead->isApplyNowEmailSent() || ! $lead->isApplicationPending()) {
+            if (! $lead->isApplicationPending()) {
                 return;
             }
 
             $advisor = User::where('id', $lead->advisor_id)->first();
             $emailData = $this->buildEmailDataForApplyNowEmail($lead, $advisor);
 
-            $responseCode = app(SendEmailCustomerService::class)->sendApplyNowEmail($emailData);
+            $responseCode = app(SendEmailCustomerService::class)->sendApplyNowEmail($emailData, $lead->isApplyNowEmailSent());
 
             if (in_array($responseCode, [200, 201])) {
-                if ($lead->advisor_id) {
+                if (! $lead->isApplyNowEmailSent()) {
                     $lead->apply_now_email_sent_at = now();
                     $lead->save();
+                    info(self::class." - Apply Now Email Sent: {$responseCode} Customer Email Address: {$lead->email} Quote UuId: {$lead->uuid}");
+                } elseif ($advisor) {
+                    info(self::class." - Apply Now Email Sent to Advisor: {$responseCode} Advisor Email Address: {$advisor->email} Quote UuId: {$lead->uuid}");
                 }
-                info(self::class." - Apply Now Email Sent: {$responseCode} Customer Email Address: {$lead->email} Quote UuId: {$lead->uuid}");
+
             } else {
                 Log::error(self::class." - Apply Now Email Not Sent: {$responseCode} Customer EmailAddress: {$lead->email} Quote UuId: {$lead->uuid}");
             }
