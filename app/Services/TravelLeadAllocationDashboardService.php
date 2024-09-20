@@ -7,8 +7,8 @@ use App\Enums\RolesEnum;
 use App\Models\Role;
 use App\Models\User;
 use App\Traits\TeamHierarchyTrait;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TravelLeadAllocationDashboardService extends BaseService
 {
@@ -47,12 +47,12 @@ class TravelLeadAllocationDashboardService extends BaseService
                 )
                 ->distinct('users.id');
 
-            if (!auth()->user()->hasRole(RolesEnum::Admin)) {
+            if (! auth()->user()->hasRole(RolesEnum::Admin)) {
                 $userTeamIds = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();
                 $users = $users->whereIn('teams.id', $userTeamIds);
             }
 
-            if (!auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
+            if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
                 $users = $users->where('users.manager_id', auth()->user()->id);
             }
 
