@@ -17,7 +17,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             ApplicationStorageSeeder::class,
             RolePermissionSeeder::class,
-            AddReApprovePaymentPermission::class,
-        ]);
+            AddSuperLeadStatusChangePermission::class,
+	    AddReApprovePaymentPermission::class,        
+	]);
     }
 }
