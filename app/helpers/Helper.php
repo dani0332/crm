@@ -1301,12 +1301,14 @@ if (! function_exists('getWhatsappConsent')) {
         return $whatsappConsent;
     }
 }
+
 if (! function_exists('isNonSelfBillingEnabledForInsuranceProvider')) {
     function isNonSelfBillingEnabledForInsuranceProvider($insuranceProvider): bool
     {
         return $insuranceProvider?->non_self_billing == 1;
     }
 }
+
 if (! function_exists('getInsuranceProvider')) {
     function getInsuranceProvider($payment, $quoteType)
     {

@@ -165,6 +165,7 @@ const binAsInsurerCommissionTaxInvoiceNumber = () => {
   }
   return '';
 };
+
 const bpForm = useForm({
   parent_duplicate_quote_id: page.props.quote?.parent_duplicate_quote_id,
   booking_date: dateToDMYWithTime(page.props.quote?.policy_booking_date) || '',

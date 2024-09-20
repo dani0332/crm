@@ -442,7 +442,6 @@ class SendUpdateLogRepository extends BaseRepository
     {
         try {
             $sendUpdate->update([
-                'broker_invoice_number' => $insurerDetails['broker_invoice_number'],
                 'invoice_description' => $insurerDetails['invoice_description'],
                 'insurance_provider_id' => $insurerDetails['insurance_provider_id'],
                 'plan_id' => $insurerDetails['plan_id'],

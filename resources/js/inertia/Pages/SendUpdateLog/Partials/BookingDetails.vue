@@ -69,6 +69,7 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
 const vat = page.props.vatValue;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const permissionsEnum = page.props.permissionsEnum;
+const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 
 const dateToYMD = date => {
   if (date) {
@@ -222,6 +223,10 @@ function isNotZero(value) {
 
   return value;
 }
+
+const isNonSelfBillingEnabled = computed(() => {
+    return props.bookingDetails?.is_non_self_billing_enabled ?? false;
+});
 
 const bookingDetailsForm = useForm({
   id: props.sendUpdateLog.id,
@@ -1260,8 +1265,11 @@ watch(
                     INSURER COMMISSION TAX INVOICE NUMBER
                   </label>
                   <template #tooltip>
-                    Input the invoice number issued by the insurer for
-                    commission purposes. Double-check for accuracy.
+                      {{
+                          isNonSelfBillingEnabled
+                              ? productionProcessTooltipEnum.NON_SELF_BILLING_INSURER_COM_TAX_INVOICE_NUMBER_TOOLTIP
+                              : productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                      }}
                   </template>
                 </x-tooltip>
               </div>
@@ -1755,8 +1763,11 @@ watch(
                       INSURER COMMISSION TAX INVOICE NUMBER
                     </label>
                     <template #tooltip>
-                      Input the invoice number issued by the insurer for
-                      commission purposes. Double-check for accuracy.
+                        {{
+                            isNonSelfBillingEnabled
+                                ? productionProcessTooltipEnum.NON_SELF_BILLING_INSURER_COM_TAX_INVOICE_NUMBER_TOOLTIP
+                                : productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                        }}
                     </template>
                   </x-tooltip>
                 </div>
