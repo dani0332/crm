@@ -463,10 +463,10 @@ class SendUpdateLogService
         $sendUpdateLogCategory = LookupRepository::where('id', $sendUpdateLog->category_id)->value('code');
 
         $insuranceProvider = InsuranceProviderRepository::find($insuranceProviderId);
-        $isSelfBillingEnabled = false;
+        $isNonSelfBillingEnabled = false;
         if ($insuranceProvider) {
             $brokerInvoiceNumber = $this->generateBrokerInvoiceNumberForSU($sendUpdateLog, $insuranceProvider, $updateBrokerInvoiceNumber);
-            $isSelfBillingEnabled = $insuranceProvider?->non_self_billing;
+            $isNonSelfBillingEnabled = $insuranceProvider?->non_self_billing;
         }
 
         if (empty($sendUpdateLog->invoice_description) && $insuranceProvider) {
@@ -493,7 +493,7 @@ class SendUpdateLogService
             'broker_invoice_number' => $brokerInvoiceNumber ?? '',
             'invoice_description' => $invoiceDescription ?? '',
             'reversal_invoice_description' => $reversalInvoiceDescription ?? '',
-            'is_non_self_billing_enabled' => $isSelfBillingEnabled,
+            'is_non_self_billing_enabled' => $isNonSelfBillingEnabled,
         ];
 
         $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
