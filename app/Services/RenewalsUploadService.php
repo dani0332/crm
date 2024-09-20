@@ -1392,7 +1392,7 @@ class RenewalsUploadService
         $birdEmailData = [
             'SendNewProcessRenewalEmail' => true,
             'customerEmail' => $emailData->customerEmail,
-            'phone' => $mobile,
+            'phone' => formatMobileNoWithoutPlus($mobile),
             'customerName' => $emailData->customerName,
             'quotePlanLink' => $emailData->quoteLink,
             'instantAlfredLink' => $emailData->quoteLink.'?IA=true',
