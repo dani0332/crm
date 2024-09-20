@@ -439,7 +439,7 @@ class TravelQuoteService extends BaseService
         if (isset($request->source) && $request->source != '') {
             $this->query->where('tqr.source', $request->source);
         }
-        if (isset($request->sic_advisor_requested)) {
+        if (isset($request->sic_advisor_requested) && $request->sic_advisor_requested != 'All') {
             $this->query->where('tqr.sic_advisor_requested', $request->sic_advisor_requested);
         }
 

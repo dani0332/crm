@@ -514,7 +514,7 @@ class HealthQuoteService extends BaseService
                 $this->query->whereNull('hqr.previous_quote_policy_number');
             }
         }
-        if (isset($request->sic_advisor_requested)) {
+        if (isset($request->sic_advisor_requested) && $request->sic_advisor_requested != 'All') {
             $this->query->where('hqr.sic_advisor_requested', $request->sic_advisor_requested);
         }
         if (isset($request->is_ecommerce)) {
