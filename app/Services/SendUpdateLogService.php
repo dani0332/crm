@@ -1093,6 +1093,7 @@ class SendUpdateLogService
         $insuranceProviderId = $plan_id = null;
         if ($forSendUpdateCreation && ($quote->insly_id || $quote->insly_migrated)) {
             info('fn: getProviderDetails - InsuranceProviderID: '.$quote->insurance_provider_id.' - PlanID: '.$quote->plan_id);
+
             return [$insuranceProviderId, $plan_id];
         }
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
@@ -1114,6 +1115,7 @@ class SendUpdateLogService
         }
 
         info('fn: getProviderDetails Final Response - InsuranceProviderID: '.$insuranceProviderId.' - PlanID: '.$plan_id);
+
         return [$insuranceProviderId, $plan_id];
     }
 
