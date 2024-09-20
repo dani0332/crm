@@ -754,7 +754,7 @@ const formatDate = dateString =>
           :options="quoteSegments"
           :single="true"
         />
-        <x-select
+        <ComboBox
           v-model="filters.sic_advisor_requested"
           label="Advisor Requested"
           placeholder="Select any option"
@@ -764,6 +764,7 @@ const formatDate = dateString =>
             { value: 0, label: 'No' },
           ]"
           class="w-full"
+          :single="true"
         />
         <DatePicker
           v-model="filters.payment_due_date"
