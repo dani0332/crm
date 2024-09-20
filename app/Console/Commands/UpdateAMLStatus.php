@@ -5,13 +5,6 @@ namespace App\Console\Commands;
 use App\Enums\AMLStatusCode;
 use App\Enums\QuoteStatusId;
 use App\Enums\QuoteTypeId;
-use App\Models\BusinessQuote;
-use App\Models\CarQuote;
-use App\Models\HealthQuote;
-use App\Models\HomeQuote;
-use App\Models\LifeQuote;
-use App\Models\PersonalQuote;
-use App\Models\TravelQuote;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -49,28 +42,6 @@ class UpdateAMLStatus extends Command
     public function handle()
     {
         info('Update Command Started');
-        // Update AMl Status in Quote Request Tables
-        $quoteTypes = [
-            CarQuote::class,
-            HealthQuote::class,
-            TravelQuote::class,
-            BusinessQuote::class,
-            HomeQuote::class,
-            LifeQuote::class,
-            PersonalQuote::class,
-        ];
-
-        foreach ($quoteTypes as $quoteType) {
-            $quoteType::whereIn('quote_status_id', [
-                QuoteStatusId::AMLScreeningCleared,
-                QuoteStatusId::AMLScreeningFailed,
-            ])->update([
-                'aml_status' => DB::raw('CASE
-            WHEN quote_status_id = '.QuoteStatusId::AMLScreeningCleared." THEN '".AMLStatusCode::AMLScreeningCleared."'
-            ELSE '".AMLStatusCode::AMLScreeningFailed."'
-            END"),
-            ]);
-        }
         //Update Record using Quote Status Logs Table
         $leadTables = [
             ['table' => 'car_quote_request', 'quoteType' => QuoteTypeId::Car],
@@ -91,9 +62,10 @@ class UpdateAMLStatus extends Command
             $quoteTypeId = $leadTable['quoteType'];
 
             $quoteStatusLogs = DB::table('quote_status_log as qsl')
-                ->select('qsl.id', 'qsl.quote_request_id', 'qsl.previous_quote_status_id')
+                ->select('qsl.id', 'qsl.quote_request_id', 'qsl.current_quote_status_id', 'qsl.created_at')
+                ->distinct()
                 ->where('qsl.quote_type_id', $quoteTypeId)
-                ->whereIn('qsl.previous_quote_status_id', [
+                ->whereIn('qsl.current_quote_status_id', [
                     QuoteStatusId::AMLScreeningCleared,
                     QuoteStatusId::AMLScreeningFailed,
                 ])
@@ -107,34 +79,20 @@ class UpdateAMLStatus extends Command
                         $query->select('id')->from($table);
                     }
                 })
-                ->join(
-                    DB::raw('(SELECT quote_request_id, MAX(created_at) as max_created_at
-                      FROM quote_status_log
-                      WHERE quote_type_id = '.$quoteTypeId.'
-                      AND previous_quote_status_id IN ('.QuoteStatusId::AMLScreeningCleared.', '.QuoteStatusId::AMLScreeningFailed.')
-                      GROUP BY quote_request_id) as latest_log'),
-                    function ($join) {
-                        $join->on('qsl.quote_request_id', '=', 'latest_log.quote_request_id')
-                            ->on('qsl.created_at', '=', 'latest_log.max_created_at');
-                    }
-                );
+                ->whereIn('qsl.created_at', function ($query) {
+                    $query->select(DB::raw('MAX(created_at)'))
+                        ->from('quote_status_log')
+                        ->groupBy('quote_request_id');
+                })->orderBy('qsl.id');
 
+            $quoteStatusLogs->chunk(2000, function ($logs) use ($table) {
+                foreach ($logs as $log) {
+                    $amlStatus = $log->current_quote_status_id === QuoteStatusId::AMLScreeningCleared ? AMLStatusCode::AMLScreeningCleared : AMLStatusCode::AMLScreeningFailed;
+                    DB::table($table)
+                        ->where("{$table}.id", '=', $log->quote_request_id)->update(['aml_status' => $amlStatus]);
+                }
+            });
 
-            // Update aml_status column in Tables
-            DB::table($table)
-                ->joinSub($quoteStatusLogs, 'logs', function ($join) use ($table) {
-                    $join->on("$table.id", '=', 'logs.quote_request_id');
-                })
-                ->update([
-                    "$table.aml_status" => DB::raw('
-                CASE
-                    WHEN logs.previous_quote_status_id = '.QuoteStatusId::AMLScreeningCleared." THEN '".AMLStatusCode::AMLScreeningCleared."'
-                    ELSE '".AMLStatusCode::AMLScreeningFailed."'
-                END
-            "),
-                ]);
         }
-
-
     }
 }
