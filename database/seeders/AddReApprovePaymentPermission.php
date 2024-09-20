@@ -14,6 +14,6 @@ class AddReApprovePaymentPermission extends Seeder
      */
     public function run(): void
     {
-        $permissionPaymentsCreate = Permission::findOrCreate(PermissionsEnum::ReApprovePayments, 'web');
+        Permission::findOrCreate(PermissionsEnum::ReApprovePayments, 'web');
     }
 }
