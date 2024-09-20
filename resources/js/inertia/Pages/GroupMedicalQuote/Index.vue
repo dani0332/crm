@@ -52,6 +52,7 @@ const filters = reactive({
   booking_date: '',
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  company_name: '',
 });
 
 const leadStatusOptions = computed(() => {
@@ -429,6 +430,15 @@ const formatDate = dateString =>
             placeholder="Search by Mobile Number"
           />
         </x-field>
+          <x-field label="Company Name">
+              <x-input
+                  v-model="filters.company_name"
+                  type="search"
+                  name="company_name"
+                  class="w-full"
+                  placeholder="Search by Company Name"
+              />
+          </x-field>
         <x-field label="Created Date Start">
           <DatePicker
             v-model="filters.created_at_start"
@@ -439,7 +449,8 @@ const formatDate = dateString =>
               filters.email ||
               filters.renewal_batch ||
               filters.payment_due_date ||
-              filters.booking_date
+              filters.booking_date ||
+              filters.company_name
                 ? []
                 : [isRequired]
             "
@@ -455,7 +466,8 @@ const formatDate = dateString =>
               filters.email ||
               filters.renewal_batch ||
               filters.payment_due_date ||
-              filters.booking_date
+              filters.booking_date ||
+              filters.company_name
                 ? []
                 : [isRequired]
             "

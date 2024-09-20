@@ -625,7 +625,8 @@ const formatDate = dateString =>
               filters.email ||
               filters.renewal_batch ||
               filters.payment_due_date ||
-              filters.booking_date
+              filters.booking_date ||
+              filters.company_name
                 ? []
                 : [isRequired]
             "
@@ -641,7 +642,8 @@ const formatDate = dateString =>
               filters.email ||
               filters.renewal_batch ||
               filters.payment_due_date ||
-              filters.booking_date
+              filters.booking_date ||
+              filters.company_name
                 ? []
                 : [isRequired]
             "
