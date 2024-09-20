@@ -143,6 +143,7 @@ const isRetryModalOpen = ref(false);
 const retryProcessJobId = ref(0);
 const retryPaymentErrorMessage = ref('');
 const isDeleteModalOpen = ref(false);
+const deleteSplitPaymentId = ref(0);
 
 const modal2Ref = ref(null);
 
@@ -1616,10 +1617,9 @@ const handleRetryPayment = async () => {
 };
 
 
-const deleteSplitPaymentModal = (process_job_id, message) => {
-  console.log('retrySplitPaymentModal', process_job_id, message);
-  retryProcessJobId.value = process_job_id;
-  deletePaymentErrorMessage.value = message;
+const deleteSplitPaymentModal = (payment_split_id) => {
+  console.log('deleteSplitPaymentModal', payment_split_id);
+  deleteSplitPaymentId.value = payment_split_id;
   isDeleteModalOpen.value = true;
 };
 
@@ -1629,7 +1629,7 @@ const closeDeleteModal = () => {
 
 const handleDeletePayment = async () => {
   let retryData = {
-    payment_process_job_id: retryProcessJobId.value,
+    payment_split_id: deleteSplitPaymentId.value,
     model_type: props.quoteType,
     quote_id: props.quoteRequest.id,
   };
@@ -3597,13 +3597,11 @@ const isSplitDeleteEnabled = computed(() => {
                               class="ml-2"
                               @click="
                                 deleteSplitPaymentModal(
-                                  splitPayment.process_job?.id,
-                                  splitPayment.process_job?.message,
+                                  splitPayment.id
                                 )
                               "
                               outlined
-                              >Delete</x-button
-                            >
+                              >Delete</x-button>
 
                           </div>
                         </td>

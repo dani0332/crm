@@ -998,4 +998,31 @@ class SplitPaymentService
         return [$priceWithoutVat, $vat];
     }
 
+     // function to delete split payment
+     public function deleteSplitPayment($splitPaymentId)
+     {       
+         
+         $maxRetries = 2;
+         $this->handleWithDeadlockRetries(function () use ($splitPaymentId) {
+            
+            $paymentSplit = PaymentSplits::find($splitPaymentId);
+            $masterPayment = $paymentSplit->payment;
+
+            if ($masterPayment->frequency != PaymentFrequency::UPFRONT){
+                if ($masterPayment->total_payments == 2 ) {
+                    $masterPayment->total_payments = 1;
+                    $masterPayment->frequency = PaymentFrequency::UPFRONT;                    
+                } else {
+                    $masterPayment->total_payments = $masterPayment->total_payments - 1;
+                    $masterPayment->frequency = PaymentFrequency::CUSTOM;                    
+                }
+                $masterPayment->save();
+                $paymentSplit->delete();
+            }           
+            info('Deleted Payment Split ID: '.$splitPaymentId.' for Code: '.$paymentSplit->code);      
+            
+        }, $maxRetries);
+
+     } 
+
 }

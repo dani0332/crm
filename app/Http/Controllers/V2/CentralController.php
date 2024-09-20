@@ -42,6 +42,7 @@ use App\Http\Requests\UpdateLastYearPolicyRequest;
 use App\Http\Requests\UpdatePaymentRequest;
 use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Http\Requests\UpdateTotalPriceRequest;
+use App\Http\Requests\DeleteSplitPaymentRequest;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\CcPaymentProcess;
@@ -356,6 +357,25 @@ class CentralController extends Controller
         $successMessage = app(SplitPaymentService::class)->processSplitPaymentApprove($paymentProcessJob->quote_type, $paymentProcessJob->quoteable_id, $paymentProcessJob->payment_splits_id, $paymentProcessJob->amount_captured, true);
 
         return $successMessage;
+    }
+
+    // Delete split payment
+    public function deleteSplitPayment(DeleteSplitPaymentRequest $request)
+    {
+        
+        $successMessage = app(SplitPaymentService::class)->deleteSplitPayment($request->payment_split_id);
+
+        return $successMessage;
+        
+        
+        
+        //return redirect()->back()->with('success', 'Payment has been deleted');
+        
+        /*$paymentProcessJob = CcPaymentProcess::find($request->payment_split_id);
+        info('Manual CC Payments Job Started For Payment Split ID: '.$paymentProcessJob->payment_splits_id);
+        $successMessage = app(SplitPaymentService::class)->deleteSplitPayment($request->payment_split_id);
+
+        return $successMessage;*/
     }
 
     // Store new payment
