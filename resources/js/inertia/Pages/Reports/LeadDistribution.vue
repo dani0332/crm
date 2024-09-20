@@ -180,7 +180,7 @@ const calculateTotalSum = (data, key) => {
           :options="quoteSegments"
           :single="true"
         />
-        <x-select
+        <ComboBox
           v-model="filters.sic_advisor_requested"
           label="Advisor Requested"
           placeholder="Select any option"
@@ -189,7 +189,7 @@ const calculateTotalSum = (data, key) => {
             { value: 1, label: 'Yes' },
             { value: 0, label: 'No' },
           ]"
-          class="w-full"
+          :single="true"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4">
