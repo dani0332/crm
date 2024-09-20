@@ -23,6 +23,9 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use App\Enums\QuoteStatusEnum;
+use App\Services\QuoteStatusService;
+use App\Http\Requests\Api\UpdateLeadStatusRequest;
 
 class ApiController extends Controller
 {
@@ -161,5 +164,14 @@ class ApiController extends Controller
         }
 
         return apiResponse(null, Response::HTTP_OK, 'Invalid Quote Type');
+    }
+
+    public function updateQuoteStatus(UpdateLeadStatusRequest $request)
+    {
+        $quoteStatus = QuoteStatusEnum::getKey($request->quote_status_id);
+        $quoteTypeId = QuoteTypes::getIdFromValue($request->quote_type);
+        app(QuoteStatusService::class)->updateQuoteStatus($quoteTypeId, $request->quote_uuid, $quoteStatus, [], $request->notes);
+
+        return response()->json(['success' => true, 'message' => 'Lead status updated successfully']);
     }
 }

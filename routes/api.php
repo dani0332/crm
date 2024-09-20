@@ -36,6 +36,7 @@ Route::post('/inbound-emails-hook', [ApiController::class, 'inboundEmailsHook'])
 Route::post('/bird-inbound-emails-hook', [ApiController::class, 'birdInboundEmailsHook']);
 Route::post('/followups/emails/events/{quoteTypeId}/{uuid}', [ApiController::class, 'logFollowUpEvent']);
 Route::post('/stop-followup/email-events/{flowType}/{uuid}', [ApiController::class, 'stopFollowUpEvent']);
+Route::post('/quote/update-quote-status', [ApiController::class, 'updateQuoteStatus']);
 
 Route::prefix('v1')->group(function () {
 
