@@ -104,7 +104,7 @@ class LeadAllocationService extends BaseService
             return false;
         }
         try {
-            $leadAllocation = new LeadAllocation();
+            $leadAllocation = new LeadAllocation;
             $leadAllocation->user_id = $userId;
             $leadAllocation->allocation_count = 0;
             $leadAllocation->last_allocated = now()->timestamp;
@@ -763,17 +763,17 @@ class LeadAllocationService extends BaseService
 
         info('car lead allocation renewal date from : '.$dateFrom.' and date to : '.$dateTo);
 
-        $renewalQuote = CarQuote::where('source', LeadSourceEnum::RENEWAL_UPLOAD)
+        $renewalQuotesCount = CarQuote::select('id')->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
             ->whereBetween('previous_policy_expiry_date', [$dateFrom, $dateTo])
             ->where(function ($query) use ($lead) {
                 $query->where('email', $lead->email)
                     ->orWhere('mobile_no', 'like', '%'.substr($lead->mobile_no, -7));
             })
             ->where('car_make_id', $lead->car_make_id)
-            ->where('car_model_id', $lead->car_model_id)->get();
+            ->where('car_model_id', $lead->car_model_id)->count();
 
-        if (count($renewalQuote) > 0) {
-            info('car lead allocation found a renewal quote with uuid : '.$renewalQuote->first()->uuid.' for car quote with uuid : '.$lead->uuid);
+        if ($renewalQuotesCount > 0) {
+            info('car lead allocation found '.$renewalQuotesCount.' renewal quote(s) for car quote with uuid : '.$lead->uuid);
 
             return true;
         } else {
@@ -1072,5 +1072,4 @@ class LeadAllocationService extends BaseService
 
         return $isCommercial;
     }
-
 }

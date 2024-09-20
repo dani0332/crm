@@ -35,7 +35,7 @@ class NotesForCustomerService extends BaseService
 
     public function addCustomerNote($request)
     {
-        $newNote = new NotesForCustomer();
+        $newNote = new NotesForCustomer;
         $newNote->quote_type_id = $request->quote_type_id;
         $newNote->quote_id = $request->quote_id;
         $newNote->description = nl2br($request->description);

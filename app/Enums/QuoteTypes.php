@@ -107,17 +107,17 @@ enum QuoteTypes: string
     public function model(): Model
     {
         return match ($this) {
-            self::CAR => checkPersonalQuotes($this->value) ? new PersonalQuote() : new CarQuote(),
-            self::HOME => checkPersonalQuotes($this->value) ? new PersonalQuote() : new HomeQuote(),
-            self::HEALTH => checkPersonalQuotes($this->value) ? new PersonalQuote() : new HealthQuote(),
-            self::LIFE => checkPersonalQuotes($this->value) ? new PersonalQuote() : new LifeQuote(),
-            self::BUSINESS, self::CORPLINE, self::GROUP_MEDICAL => checkPersonalQuotes($this->value) ? new PersonalQuote() : new BusinessQuote(),
-            self::BIKE => checkPersonalQuotes($this->value) ? new PersonalQuote() : new BikeQuote(),
-            self::YACHT => checkPersonalQuotes($this->value) ? new PersonalQuote() : new YachtQuote(),
-            self::TRAVEL => checkPersonalQuotes($this->value) ? new PersonalQuote() : new TravelQuote(),
-            self::PET => checkPersonalQuotes($this->value) ? new PersonalQuote() : new PetQuote(),
-            self::CYCLE => checkPersonalQuotes($this->value) ? new PersonalQuote() : new CycleQuote(),
-            self::JETSKI => checkPersonalQuotes($this->value) ? new PersonalQuote() : new JetskiQuote(),
+            self::CAR => checkPersonalQuotes($this->value) ? new PersonalQuote : new CarQuote,
+            self::HOME => checkPersonalQuotes($this->value) ? new PersonalQuote : new HomeQuote,
+            self::HEALTH => checkPersonalQuotes($this->value) ? new PersonalQuote : new HealthQuote,
+            self::LIFE => checkPersonalQuotes($this->value) ? new PersonalQuote : new LifeQuote,
+            self::BUSINESS, self::CORPLINE, self::GROUP_MEDICAL => checkPersonalQuotes($this->value) ? new PersonalQuote : new BusinessQuote,
+            self::BIKE => checkPersonalQuotes($this->value) ? new PersonalQuote : new BikeQuote,
+            self::YACHT => checkPersonalQuotes($this->value) ? new PersonalQuote : new YachtQuote,
+            self::TRAVEL => checkPersonalQuotes($this->value) ? new PersonalQuote : new TravelQuote,
+            self::PET => checkPersonalQuotes($this->value) ? new PersonalQuote : new PetQuote,
+            self::CYCLE => checkPersonalQuotes($this->value) ? new PersonalQuote : new CycleQuote,
+            self::JETSKI => checkPersonalQuotes($this->value) ? new PersonalQuote : new JetskiQuote,
             default => new PersonalQuote,
         };
     }
@@ -158,6 +158,25 @@ enum QuoteTypes: string
         };
     }
 
+    public static function getNameShortCode(string $code)
+    {
+        $codes = [
+            'CAR' => self::CAR,
+            'HOM' => self::HOME,
+            'HEA' => self::HEALTH,
+            'LIF' => self::LIFE,
+            'BUS' => self::BUSINESS,
+            'BIK' => self::BIKE,
+            'YAC' => self::YACHT,
+            'TRA' => self::TRAVEL,
+            'PET' => self::PET,
+            'CYC' => self::CYCLE,
+            'JSK' => self::JETSKI,
+        ];
+
+        return $codes[$code] ?? null;
+    }
+
     public function url(string $uuid): string
     {
         return match ($this) {
@@ -174,6 +193,15 @@ enum QuoteTypes: string
             self::JETSKI => checkPersonalQuotes($this->value) ? route('jetski-quotes-show', $uuid) : route('jetski.show', $uuid),
             self::CORPLINE => checkPersonalQuotes($this->value) ? route('business-quotes-show', $uuid) : route('business.show', $uuid),
             self::GROUP_MEDICAL => checkPersonalQuotes($this->value) ? route('gm-quotes-show', $uuid) : route('amt.show', $uuid),
+        };
+    }
+
+    public function quoteLink(string $uuid, array $queryParams = [])
+    {
+        $queryParamsStr = http_build_query($queryParams);
+
+        return match ($this) {
+            self::TRAVEL,self::CAR,self::HEALTH => "{$this->ecomUrl()}{$uuid}".($queryParamsStr ? "?{$queryParamsStr}" : ''),
         };
     }
 }

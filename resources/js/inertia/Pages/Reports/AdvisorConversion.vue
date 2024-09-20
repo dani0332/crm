@@ -19,7 +19,7 @@ const loaders = reactive({
 const page = usePage();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
-const quoteSegments = page.props.quoteSegments;
+let quoteSegments = reactive(page.props.quoteSegments ?? []);
 const params = useUrlSearchParams('history');
 const dataTableRef = ref();
 const teamOptions = ref([]);
@@ -142,12 +142,13 @@ const totalLeads = reactive({
 
 function calculateGrossConversion(item) {
   if (item) {
-    const totalLeadsCount = item.total_leads - item.cancelled_leads;
+    const totalLeadsCount = item.total_leads;
     const manualCreated = item.manual_created;
     const saleLeads = item.sale_leads;
     const createdSaleLeads = item.created_sale_leads;
     const numerator = saleLeads;
     const denominator = totalLeadsCount;
+
     if (denominator > 0) {
       return parseFloat((numerator / denominator) * 100).toFixed(2) + ' %';
     } else {
@@ -166,7 +167,7 @@ function calculateTotalNetConversion(data) {
   let saleLeads = 0;
   let createdSaleLeads = 0;
   data.forEach(row => {
-    totalLeads += Number(row.total_leads) - Number(row.cancelled_leads);
+    totalLeads += Number(row.total_leads);
     manualCreated += Number(row.manual_created);
     saleLeads += Number(row.sale_leads);
     createdSaleLeads += Number(row.created_sale_leads);
@@ -175,6 +176,7 @@ function calculateTotalNetConversion(data) {
   });
   const numerator = saleLeads;
   const denominator = totalLeads - badLeads;
+
   return denominator > 0
     ? ((numerator / denominator) * 100).toFixed(2) + ' %'
     : 'NaN';
@@ -186,7 +188,7 @@ function calculateTotalGrossConversion(data) {
   let saleLeads = 0;
   let createdSaleLeads = 0;
   data.forEach(row => {
-    totalLeads += Number(row.total_leads) - Number(row.cancelled_leads);
+    totalLeads += Number(row.total_leads);
     manualCreated += Number(row.manual_created);
     saleLeads += Number(row.sale_leads);
     createdSaleLeads += Number(row.created_sale_leads);
@@ -199,7 +201,7 @@ function calculateTotalGrossConversion(data) {
 }
 
 function calculateNetConversion(row) {
-  const totalLeads = row.total_leads - row.cancelled_leads;
+  const totalLeads = row.total_leads - row.bad_leads;
   const manualCreated = row.manual_created;
   const badLeads = row.bad_leads;
   const manualCreatedBadLeads = row.manual_created_bad_leads;
@@ -518,6 +520,12 @@ const onLobChange = (e, isOnMounted = false) => {
       quoteTypeCodeEnum.GroupMedical,
     ].includes(filters.lob)
   ) {
+    if (filters.lob == quoteTypeCodeEnum.Health) {
+      quoteSegments = quoteSegments.filter(
+        segment => segment.value !== 'sic-revival',
+      );
+    }
+
     loadTeams(e);
   } else {
     loadAdvisorsByLob(e);
@@ -1252,6 +1260,7 @@ const getAdvisorLabel = () => {
       :title="`${currentTypeTitle}`"
       show-close
       backdrop
+      :has-actions="false"
     >
       <section class="min-h-[70vh]">
         <div v-if="!loaders.advisorLeadTable">

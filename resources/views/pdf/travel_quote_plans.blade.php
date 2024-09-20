@@ -493,9 +493,11 @@
             }
 
             // Add Policy Price
-            $policyFee = isset($providers[$quotePlan->insuranceProviderId]['travel_policy_fee'])
-                ? $providers[$quotePlan->insuranceProviderId]['travel_policy_fee']
-                : 0;
+            $policyFee =
+                property_exists($quotePlan, 'insuranceProviderId') &&
+                isset($providers[$quotePlan->insuranceProviderId]['travel_policy_fee'])
+                    ? $providers[$quotePlan->insuranceProviderId]['travel_policy_fee']
+                    : 0;
             $quotePlan->discountPremium += $policyFee;
             // $quotePlan->vat += ($policyFee * ($vatPercentage / 100 ));
             $quotePlan->total += $policyFee;
@@ -561,7 +563,7 @@
                 'type' => 'exclusion',
             ],
 
-            ['code' => 'heading', 'title' => 'EXCESS'],
+            ['code' => 'excess', 'title' => 'Excess', 'type' => 'excess', 'heading_class' => 'text-heading'],
             ['code' => 'heading', 'title' => 'COVID 19'],
 
             ['code' => 'travelTestingCost', 'title' => 'Testing Cost', 'type' => 'covid19'],
@@ -765,6 +767,8 @@
                             ?>
                             @if ($feature['type'] == 'info')
                                 @php $return_value =  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' @endphp
+                            @elseif($feature['type'] == 'excess')
+                                @php $return_value =   $plans[$planId]->excess->premium ?? "" @endphp
                             @elseif($feature['type'] == 'prop')
                                 @php $return_value =   $plans[$planId]->{$feature['code']}  @endphp
                             @elseif($feature['type'] == 'buy')

@@ -62,6 +62,7 @@ const modals = reactive({
   duplicate: false,
 });
 const quoteStatusEnum = page.props.quoteStatusEnum;
+const modelClass = 'App\\Models\\PersonalQuote';
 
 const countDays = useDaysSinceStale(
   props.quoteRequest?.stale_at ?? props.quote?.stale_at,
@@ -97,6 +98,9 @@ const onCreateDuplicate = isValid => {
     },
   });
 };
+
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
 const historyLoading = ref(false);
 
@@ -615,6 +619,10 @@ const onAddUpdate = () => {
                   {{ quote?.cycle_quote?.has_good_condition ? 'YES' : 'NO' }}
                 </dd>
               </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">TRANSACTION APPROVED AT</dt>
+                <dd>{{ dateFormat(quote.transaction_approved_at) }}</dd>
+              </div>
             </dl>
           </div>
         </template>
@@ -1002,6 +1010,7 @@ const onAddUpdate = () => {
       :storageUrl="storageUrl"
       :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
+      :expanded="sectionExpanded"
     />
 
     <QuotePayments
@@ -1042,6 +1051,7 @@ const onAddUpdate = () => {
       :insly-id="quote?.quote_detail?.insly_id"
       :expanded="sectionExpanded"
       quoteType="Cycle"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy
@@ -1056,6 +1066,7 @@ const onAddUpdate = () => {
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+      :modelClass="modelClass"
     />
 
     <SendUpdates
@@ -1075,5 +1086,10 @@ const onAddUpdate = () => {
     />
 
     <LeadHistory :quote="$page.props.quote" :expanded="sectionExpanded" />
+
+    <lead-raw-data
+      :modelType="'Cycle'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

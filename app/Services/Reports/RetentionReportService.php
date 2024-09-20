@@ -190,7 +190,7 @@ class RetentionReportService extends BaseService
         $lob = $quoteType = $this->getQuoteType($request);
         $lob = in_array($lob, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE]) ? quoteTypeCode::Business : $lob;
         $lobId = QuoteTypeRepository::where('code', $lob)->first();
-        $query->where('quote_type_id', $lobId->id);
+        $query->where('personal_quotes.quote_type_id', $lobId->id);
 
         // Uncomment when move to stage or when we have renewel_upload data
         // $query->where('source', LeadSourceEnum::RENEWAL_UPLOAD);

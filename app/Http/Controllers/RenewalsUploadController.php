@@ -194,7 +194,7 @@ class RenewalsUploadController extends Controller
         $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
         $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
 
-        $renewalsUploadLead = new RenewalsUploadLeads();
+        $renewalsUploadLead = new RenewalsUploadLeads;
         $renewalsUploadLead->file_name = $fileName;
         $renewalsUploadLead->file_path = $azureStorageUrl.$azureStorageContainer.'/'.$filePathAzure;
         $renewalsUploadLead->status = ProcessStatusCode::IN_PROGRESS;
@@ -280,7 +280,7 @@ class RenewalsUploadController extends Controller
             $query->where('batch', $request->batch);
         }
 
-        $renewalQuotes = $query->groupBy('batch')
+        $renewalQuotes = $query->distinct()
             ->simplePaginate();
 
         return inertia('Renewals/Batches', [

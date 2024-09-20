@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <title>Proforma Payment Request</title>
 
@@ -371,17 +372,21 @@
     use App\Enums\PaymentStatusEnum;
     use App\Enums\QuoteTypeShortCode;
     use App\Models\ApplicationStorage;
+    use App\Models\QuoteType;
 
     $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
 
     $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
 
     $quoteType = $quote->quoteType;
-    $insuranceProvider = $quote->insuranceProvider;
+    if(!$quoteType && $quoteTypeId){
+        $quoteType = QuoteType::find($quoteTypeId);
+    }
+    $insuranceProvider = $proformaPaymentRequest->insuranceProvider;
     $advisor = $quote->advisor;
     $invoiceDate = Carbon\Carbon::parse($proformaPaymentRequest->collection_date)->format($dateFormat);
     $customer = $quote->customer;
-    $customerName =  ucwords($customer->first_name .' '. $customer->last_name);
+    $customerName =  ucwords($customer->insured_first_name .' '. $customer->insured_last_name);
     $customerDetail =  $customer->detail;
     $vat = 0;
     $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()?->value;
@@ -393,22 +398,22 @@
         $totalAmount =  $proformaPaymentRequest->total_price;
         $vat =  $sendUpdateLog->price_with_vat ? $totalAmount - $subTotal : 0; // if price with vat then vat = total - subTotal else 0
     }else{
-        $paidPayments = $quote->payments()->where('payment_status_id', PaymentStatusEnum::PAID)->get();
+
         if(explode('-', $quote->code)[0] == QuoteTypeShortCode::CAR){
             $carQuoteDetails = $quote->carQuoteRequestDetail;
             $subTotal =  $carQuoteDetails->actual_premium;
             $vat =  $carQuoteDetails->premium_vat;
             $totalAmount =  $subTotal + $vat;
         }else{
-            $subTotal =  floatval($quote->price_vat_applicable ?? 0) + floatval($quote->price_vat_not_applicable ?? 0 );
-            $totalAmount =  $quote->price_with_vat;
-            $vat =  $vatPercentage && $quote->price_vat_applicable ? (($quote->price_vat_applicable * $vatPercentage) / 100) : 0; // if amount with vat then vat = total - subTotal else 0
+            $subTotal =  $proformaPaymentRequest->price_vat_applicable;
+            $vat =  $proformaPaymentRequest->price_vat;
+            $totalAmount =  $subTotal + $vat;
         }
         if(explode('-', $quote->code)[0] == QuoteTypeShortCode::BUS){
             $entity = $quote?->quoteRequestEntityMapping?->entity;
         }
-    }
 
+    }
 
 @endphp
 
@@ -490,8 +495,7 @@
     <table class="tbl-disclaimer">
         <tr>
             <td class="text-left">
-                This document is issued for the sole purpose of collection of premium on behalf of Oriental Insurance
-                Company LTD, and should not be construed as an Official Tax Invoice compliant with FTA regulations. To
+                This document is issued for the sole purpose of collection of premium on behalf of {{ $insuranceProvider?->text }}, and should not be construed as an Official Tax Invoice compliant with FTA regulations. To
                 receive Tax Invoice and avail Input Vat credit, please reach out to your contact in AFIA who will obtain
                 the document from the Insurer and send it across to you.
             </td>
@@ -641,7 +645,7 @@
                     @else
                         {{ $quoteType?->text }} <br />
                     @endif
-                    {{ $insuranceProvider?->text }}
+                    ({{ $insuranceProvider?->text }})
                 </td>
                 <td>
                     {{ number_format($subTotal, 2 , '.', ',') }}

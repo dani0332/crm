@@ -72,6 +72,8 @@ class CycleQuoteRepository extends BaseRepository
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
+            'paymentStatus',
+            'payments',
         ])
             ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
@@ -124,7 +126,7 @@ class CycleQuoteRepository extends BaseRepository
 
             $quote->cycleQuote()->updateOrCreate(
                 ['personal_quote_id' => $quote->id],
-                Arr::only($data, (new CycleQuote())->allowedColumns())
+                Arr::only($data, (new CycleQuote)->allowedColumns())
             );
 
             return $quote;

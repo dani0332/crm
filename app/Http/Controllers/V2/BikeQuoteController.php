@@ -75,11 +75,13 @@ class BikeQuoteController extends Controller
         $personalQuotes = BikeQuoteRepository::getData();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::BIKE->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
+        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
 
         return inertia('BikeQuote/Index', [
             'quotes' => $personalQuotes,
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
+            'authorizedDays' => intval($authorizedDays->value),
         ]);
     }
 
@@ -134,7 +136,8 @@ class BikeQuoteController extends Controller
     {
         /* Start - Temporarily adding for correcting historic data  */
         $quote = BikeQuoteRepository::where('uuid', $uuid)->first();
-        (new PaymentRepository())->updatePriceVatApplicableAndVat($quote, QuoteTypes::BIKE->value);
+        abort_if(! $quote, 404);
+        (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::BIKE->value);
         /* End - Temporarily adding for correcting historic data  */
 
         $quote = BikeQuoteRepository::getBy('uuid', $uuid);
@@ -163,6 +166,7 @@ class BikeQuoteController extends Controller
 
         $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($quote->id, QuoteTypes::BIKE->name);
 
+        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::BIKE->id(), $quoteStatuses);
         if (AMLService::checkAMLStatusFailed(QuoteTypes::BIKE->id(), $quote->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
@@ -181,7 +185,7 @@ class BikeQuoteController extends Controller
         }
         $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
         $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::BIKE->value);
-        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments(QuoteTypes::BIKE->value, $quote->id);
+        $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::BIKE->value, $quote->id);
         $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::BIKE->value, $quote->payments, $quoteDocuments);
         $yearsOfManufacture = app(LookupService::class)->getYearsOfManufacture();
 
@@ -357,9 +361,9 @@ class BikeQuoteController extends Controller
         $response = $this->bikeQuoteService->bikePlanModify($request);
 
         if ($response == 200 || $response == 201) {
-            return redirect()->back()->with('success', $response);
+            return redirect()->back()->with('success', 'Bike Quote Plan created successfully');
         } else {
-            return redirect()->back()->with('error', $response);
+            return redirect()->back()->with('error', 'Plan Modification is not allowed');
         }
     }
 
@@ -389,5 +393,12 @@ class BikeQuoteController extends Controller
         $response = BikeQuoteRepository::changeInsurer($request->validated());
 
         return response()->json($response);
+    }
+
+    public function getBikeQuote($uuid)
+    {
+        $quote = BikeQuoteRepository::getBy('uuid', $uuid);
+
+        return response()->json($quote);
     }
 }

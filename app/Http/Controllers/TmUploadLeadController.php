@@ -77,7 +77,7 @@ class TmUploadLeadController extends Controller
             $azureStorageUrl = Config::get('constants.AZURE_IM_STORAGE_URL');
             $azureStorageContainer = Config::get('constants.AZURE_IM_STORAGE_CONTAINER');
 
-            $tmUploadLead = new TmUploadLead();
+            $tmUploadLead = new TmUploadLead;
             $tmUploadLead->file_name = $fileNameOriginal;
             $tmUploadLead->file_path = $azureStorageUrl.$azureStorageContainer.'/'.$filePathAzure;
             $tmUploadLead->good = $countRows;

@@ -72,7 +72,7 @@ class YachtQuoteRepository extends BaseRepository
 
             $quote->yachtQuote()->updateOrCreate(
                 ['personal_quote_id' => $quote->id],
-                Arr::only($data, (new YachtQuote())->allowedColumns())
+                Arr::only($data, (new YachtQuote)->allowedColumns())
             );
 
             return $quote;
@@ -149,6 +149,8 @@ class YachtQuoteRepository extends BaseRepository
             'quoteStatus',
             'currentlyInsuredWith',
             'advisor',
+            'paymentStatus',
+            'payments',
         ])
             ->when(\auth()->user()->hasRole(RolesEnum::YachtAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);

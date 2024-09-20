@@ -40,6 +40,6 @@ class AddBatchNumber extends Command
     public function handle()
     {
         Log::info('Add Batch Command Started');
-        dispatch(new AddBatchNumberJob());
+        dispatch(new AddBatchNumberJob);
     }
 }

@@ -47,7 +47,7 @@ class ReportsController extends Controller
         $advisorDistributionReportPermissions = implode('|', PermissionsEnum::getAdvisorDistributionReportPermissions());
         $this->middleware(['permission:'.$advisorDistributionReportPermissions], ['only' => ['renderAdvisorDistributionReport']]);
 
-        // $this->middleware('readonly_db');
+        $this->middleware('readonly_db');
     }
 
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
@@ -79,7 +79,7 @@ class ReportsController extends Controller
             'isCommercial' => $request->isCommercial,
             'isEmbeddedProducts' => $request->isEmbeddedProducts,
             'lob' => $request->lob,
-            'subeams' => $request->sub_teams,
+            'subteams' => $request->sub_teams,
             'vehicle_type' => $request->vehicle_type,
             'insurance_type' => $request->insurance_type,
             'insurance_for' => $request->insurance_for,
@@ -382,11 +382,20 @@ class ReportsController extends Controller
         ]);
     }
 
+    public function renderPaymentSummary(Request $request, ReportService $reportService)
+    {
+        return inertia('Reports/AuthorisedPaymentSummary', [
+            'reportData' => $reportService->getPaymentAuthorisedSummary($request),
+            'defaultFilters' => $reportService->getDefaultFiltersForLeadsList(),
+        ]);
+    }
     public function renderConversionAsAtReport(Request $request, ConversionAsAtReportService $conversionAsAtReportService)
     {
+
         $displayBy = $request->displayBy ?? null;
         $quoteTypes = QuoteTypeId::getOptions();
         $quoteTypeCodes = quoteTypeCode::asArray();
+        $quoteTypeIdEnum = QuoteTypeId::asArray();
 
         return inertia('Reports/ConversionAsAt', [
             'reportData' => $conversionAsAtReportService->getReportData($request),
@@ -394,6 +403,7 @@ class ReportsController extends Controller
             'quoteTypes' => $quoteTypes,
             'displayByColumn' => $displayBy,
             'quoteTypeCodes' => $quoteTypeCodes,
+            'quoteTypeIdEnum' => $quoteTypeIdEnum,
         ]);
     }
 
@@ -473,6 +483,7 @@ class ReportsController extends Controller
              * process the endorsements data
              */
             $reportData = ManagementReport::processEndorsementsData($rawReportData, $endorsementData, $request);
+            $reportInstance->formatData($reportData);
         }
 
         return inertia('ManagementReport/index', [
@@ -503,6 +514,7 @@ class ReportsController extends Controller
         return inertia('Reports/TotalPremiumLeadsSale', [
             'reportData' => $resp ?? null,
             'filterOptions' => $reportService->getDefaultFiltersForTotalPremium(),
+
         ]);
     }
 
