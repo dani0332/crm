@@ -786,12 +786,18 @@ trait GenericQueriesAllLobs
                     $paymentSplit->payment_amount = $payment->total_amount;
                 }
                 if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {
+                    $oldPaymentStatusId = $paymentSplit->payment_status_id;
+                    $newPaymentStatusId = null;
                     if ($paymentSplit->collection_amount >= $paymentSplit->payment_amount) {
-                        $paymentSplit->payment_status_id = PaymentStatusEnum::PAID;
+                        $newPaymentStatusId = PaymentStatusEnum::PAID;
                     } else {
-                        $paymentSplit->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
+                        $newPaymentStatusId = PaymentStatusEnum::PARTIALLY_PAID;
                     }
-                    $paymentSplit->save();
+                    if ($oldPaymentStatusId != $newPaymentStatusId) {
+                        $paymentSplit->payment_status_id = $newPaymentStatusId;
+                        $paymentSplit->save();
+                        info('Payment split status updated for: '.$paymentSplit->code.' from '.$oldPaymentStatusId.' to '.$newPaymentStatusId);
+                    }
                 }
             }
         }
