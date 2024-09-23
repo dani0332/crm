@@ -81,6 +81,8 @@ class PersonalQuotesExport
                     'CURRENTLY INSURED WITH',
                     'IS ECOMMERCE',
                     'PREVIOUS POLICY EXPIRY DATE',
+                    'TRANSACTION APPROVED DATE',
+                    'BOOKING DATE',
                 ];
             case QuoteTypes::YACHT->value:
             case QuoteTypes::JETSKI->value:
@@ -99,6 +101,8 @@ class PersonalQuotesExport
                     'IS ECOMMERCE',
                     'RENEWAL BATCH',
                     'PREVIOUS POLICY EXPIRY DATE',
+                    'TRANSACTION APPROVED DATE',
+                    'BOOKING DATE',
                 ];
 
             case QuoteTypes::PET->value:
@@ -128,6 +132,8 @@ class PersonalQuotesExport
                     'IS ECOMMERCE',
                     'RENEWAL BATCH',
                     'PREVIOUS POLICY EXPIRY DATE',
+                    'TRANSACTION APPROVED DATE',
+                    'BOOKING DATE',
                 ];
 
             case QuoteTypes::CYCLE->value:
@@ -145,6 +151,8 @@ class PersonalQuotesExport
                     'IS ECOMMERCE',
                     'RENEWAL BATCH',
                     'PREVIOUS POLICY EXPIRY DATE',
+                    'TRANSACTION APPROVED DATE',
+                    'BOOKING DATE',
                 ];
         }
     }
@@ -177,6 +185,8 @@ class PersonalQuotesExport
                     optional($quote->currentlyInsuredWith)->text,
                     $quote->is_ecommerce ? 'Yes' : 'No',
                     $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
+                    $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
+                    $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
                 ];
             case QuoteTypes::YACHT->value:
             case QuoteTypes::JETSKI->value:
@@ -195,6 +205,8 @@ class PersonalQuotesExport
                     $quote->is_ecommerce ? 'Yes' : 'No',
                     $quote->renewal_batch,
                     $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
+                    $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
+                    $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
                 ];
 
             case QuoteTypes::PET->value:
@@ -224,6 +236,8 @@ class PersonalQuotesExport
                     $quote->is_ecommerce ? 'Yes' : 'No',
                     $quote->renewal_batch,
                     $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
+                    $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
+                    $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
                 ];
 
             case QuoteTypes::CYCLE->value:
@@ -241,6 +255,8 @@ class PersonalQuotesExport
                     $quote->is_ecommerce ? 'Yes' : 'No',
                     $quote->renewal_batch,
                     $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
+                    $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
+                    $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
                 ];
         }
     }

@@ -46,6 +46,7 @@ use App\Http\Controllers\TmLeadStatusController;
 use App\Http\Controllers\TmUploadLeadController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TravelController;
+use App\Http\Controllers\TravelLeadAllocationController;
 use App\Http\Controllers\TravelMembersDetailController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\ActivityController;
@@ -312,6 +313,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::resource('lead-allocation', LeadAllocationController::class);
     Route::resource('car-lead-allocation', CarLeadAllocationController::class);
+    Route::resource('travel-lead-allocation', TravelLeadAllocationController::class);
+    Route::post('/travel-lead-allocation/update-hard-stop', [TravelLeadAllocationController::class, 'updateUserHardStopStatus']);
 
     Route::post('/update-cap/lead-allocation', [LeadAllocationController::class, 'updateCapsAllocation']);
     Route::get('/advisor-by-quotetype/{user_id}', [LeadAllocationController::class, 'getAdvisorByQuoteType'])->name('allocations.advisor-quotestype');

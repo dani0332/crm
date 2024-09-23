@@ -365,6 +365,7 @@ final class PermissionsEnum extends Enum
     public const QUOTE_RAW_DATA = 'quote-raw-data';
     public const MANAGER_AUTHORISED_PAYMENT_SUMMARY = 'manager-authorised-payment-summary';
     public const VIEW_SAGE_API_LOGS = 'view-sage-api-logs';
+    public const TRAVEL_SIC_ALLOCATION = 'travel-sic-allocation';
     public const SUPER_LEAD_STATUS_CHANGE = 'super-lead-status-change';
 
     public static function getAdvisorConversionReportPermissions()
