@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use App\Traits\GenericQueriesAllLobs;
+use App\Enums\PaymentStatusEnum;
 
 class DeleteSplitPaymentRequest extends FormRequest
 {
@@ -27,6 +28,7 @@ class DeleteSplitPaymentRequest extends FormRequest
             'model_type' => 'required|string',
             'quote_id' => 'required|integer',
             'payment_split_id' => 'required|integer|exists:payment_splits,id',
+            'payment_status_id' => 'required|integer',
         ];
     }
 
@@ -36,11 +38,22 @@ class DeleteSplitPaymentRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            $quoteModel = $this->getQuoteObject(request()->model_type, request()->quote_id);
+            $quoteModel = $this->getQuoteObject($this->input('model_type'), $this->input('quote_id'));
             if (! $quoteModel) {
-                $validator->errors()->add('value', 'Quote Not Exists');
+                $validator->errors()->add('quote_id', 'Quote does not exist.');
+            }
+            
+            $paidStatuses = [
+                PaymentStatusEnum::PAID,
+                PaymentStatusEnum::PARTIALLY_PAID,
+                PaymentStatusEnum::PARTIAL_CAPTURED,
+                PaymentStatusEnum::CAPTURED,
+                PaymentStatusEnum::AUTHORISED,
+                PaymentStatusEnum::REFUNDED,
+            ];
+            if (in_array($this->input('payment_status_id'), $paidStatuses)) {
+                $validator->errors()->add('payment_status_id', 'Payment deletion not allowed.');
             }
         });
-
     }
 }

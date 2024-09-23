@@ -1000,11 +1000,9 @@ class SplitPaymentService
 
      // function to delete split payment
      public function deleteSplitPayment($splitPaymentId)
-     {       
-         
+     {   
          $maxRetries = 2;
          $this->handleWithDeadlockRetries(function () use ($splitPaymentId) {
-            
             $paymentSplit = PaymentSplits::find($splitPaymentId);
             $masterPayment = $paymentSplit->payment;
 
@@ -1017,12 +1015,13 @@ class SplitPaymentService
                     $masterPayment->frequency = PaymentFrequency::CUSTOM;                    
                 }
                 $masterPayment->save();
+                // Delete QuoteDocuments referencing the payment split
+                $paymentSplit->documents()->forceDelete();
+                // Delete the payment split
                 $paymentSplit->delete();
-            }           
-            info('Deleted Payment Split ID: '.$splitPaymentId.' for Code: '.$paymentSplit->code);      
-            
-        }, $maxRetries);
-
+                info('Deleted Payment Split ID: '.$splitPaymentId.' for Code: '.$paymentSplit->code);      
+            }
+        }, $maxRetries);        
      } 
 
 }

@@ -144,6 +144,7 @@ const retryProcessJobId = ref(0);
 const retryPaymentErrorMessage = ref('');
 const isDeleteModalOpen = ref(false);
 const deleteSplitPaymentId = ref(0);
+const deleteSplitPaymentStatus = ref(0);
 
 const modal2Ref = ref(null);
 
@@ -1617,9 +1618,10 @@ const handleRetryPayment = async () => {
 };
 
 
-const deleteSplitPaymentModal = (payment_split_id) => {
+const deleteSplitPaymentModal = (payment_split_id,payment_status_id) => {
   console.log('deleteSplitPaymentModal', payment_split_id);
   deleteSplitPaymentId.value = payment_split_id;
+  deleteSplitPaymentStatus.value = payment_status_id;
   isDeleteModalOpen.value = true;
 };
 
@@ -1630,6 +1632,7 @@ const closeDeleteModal = () => {
 const handleDeletePayment = async () => {
   let retryData = {
     payment_split_id: deleteSplitPaymentId.value,
+    payment_status_id: deleteSplitPaymentStatus.value,
     model_type: props.quoteType,
     quote_id: props.quoteRequest.id,
   };
@@ -1642,19 +1645,16 @@ const handleDeletePayment = async () => {
           title: 'Split Payment has been deleted',
           position: 'top',
         });
-        isRetryModalOpen.value = false;
+        isDeleteModalOpen.value = false;
       },
       onError: () => {
         notification.error({
-          title: 'Payment retry failed',
+          title: 'Payment delete failed',
           position: 'top',
         });
       },
     });
 };
-
-
-
 
 const editPaymentModal = (
   payment,
@@ -1877,7 +1877,13 @@ const editPaymentModal = (
       payment.total_price <= payment.total_amount + payment.discount_value
     ) {
       //FOR EDIT
-      isFieldReadonly.value = true;
+      if(is_lacking_payment.value){
+        isFieldReadonly.value = false;
+        isTotalPriceUpdated.value = true;
+      } else {
+        isFieldReadonly.value = true;
+      }
+      
     } else if (
       payment.total_price >
       payment.total_amount + payment.discount_value
@@ -3591,13 +3597,18 @@ const isSplitDeleteEnabled = computed(() => {
                             >
 
                             <x-button
-                              v-if="isSplitDeleteEnabled"
+                            v-if="isSplitDeleteEnabled &&
+                                  ![paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED, paymentStatusEnum.AUTHORISED, 
+                                    paymentStatusEnum.REFUNDED, paymentStatusEnum.PARTIAL_CAPTURED, 
+                                    paymentStatusEnum.PARTIALLY_PAID].includes(splitPayment.payment_status_id) &&
+                                  splitPayment.sr_no > 1"
                               size="xs"
                               color="red"
                               class="ml-2"
                               @click="
                                 deleteSplitPaymentModal(
-                                  splitPayment.id
+                                  splitPayment.id,
+                                  splitPayment.payment_status_id,
                                 )
                               "
                               outlined

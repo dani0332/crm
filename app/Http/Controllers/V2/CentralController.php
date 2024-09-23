@@ -362,20 +362,8 @@ class CentralController extends Controller
     // Delete split payment
     public function deleteSplitPayment(DeleteSplitPaymentRequest $request)
     {
-        
-        $successMessage = app(SplitPaymentService::class)->deleteSplitPayment($request->payment_split_id);
+        return app(SplitPaymentService::class)->deleteSplitPayment($request->payment_split_id);
 
-        return $successMessage;
-        
-        
-        
-        //return redirect()->back()->with('success', 'Payment has been deleted');
-        
-        /*$paymentProcessJob = CcPaymentProcess::find($request->payment_split_id);
-        info('Manual CC Payments Job Started For Payment Split ID: '.$paymentProcessJob->payment_splits_id);
-        $successMessage = app(SplitPaymentService::class)->deleteSplitPayment($request->payment_split_id);
-
-        return $successMessage;*/
     }
 
     // Store new payment
