@@ -250,6 +250,7 @@ class EmbeddedProductRepository extends BaseRepository
                 ['quote_request_id',  '=', $quoteRequestId],
                 ['is_selected',  '=', true],
             ])->whereIn('product_id', $optionsIds)->get();
+            $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
 
             $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($item->short_code);
             if ($isAlfredProtect) {
@@ -263,10 +264,8 @@ class EmbeddedProductRepository extends BaseRepository
 
             }
 
-            $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
             $item->send_document_button = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
         });
-
         return $ep;
     }
 
