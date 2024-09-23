@@ -79,54 +79,5 @@ class BookPolicyOnSageJob implements ShouldQueue
         return [(new WithoutOverlapping($this->quote->code))->releaseAfter($this->releaseAfter)];
     }
 
-    private function updateAndLogQuoteStatus($quoteStatusId)
-    {
-        $quoteTypeId = $this->sageRequest->quoteTypeId;
-        $userId = $this->quote->userId;
-
-        $latestQuoteStatusLog = QuoteStatusLog::where([
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $this->quote->id,
-        ])->latest()->first();
-
-        unset($this->quote->userId);
-
-        $previousQuoteStatusId = $this->quote->quote_status_id;
-        $newQuoteStatusId = $quoteStatusId;
-
-        $this->quote->update([
-            'quote_status_id' => $newQuoteStatusId,
-            'quote_status_date' => now(),
-        ]);
-
-        info('BookPolicyOnSageJob - updateAndLogQuoteStatus - Status : '.$this->quote->code.', - Status : '.$newQuoteStatusId);
-
-        $quoteLogData = [
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $this->quote->id,
-            'current_quote_status_id' => $newQuoteStatusId,
-            'previous_quote_status_id' => $previousQuoteStatusId,
-            'created_by' => $userId,
-        ];
-
-        $isQuoteLogSameAsBefore = $latestQuoteStatusLog->current_quote_status_id == QuoteStatusEnum::PolicyBooked && $latestQuoteStatusLog->previous_quote_status_id = $previousQuoteStatusId;
-        //check if the last quote log status is same as new status then update the same log
-        if ($latestQuoteStatusLog && $isQuoteLogSameAsBefore) {
-            $latestQuoteStatusLog->update($quoteLogData);
-        } else {
-            QuoteStatusLog::create($quoteLogData);
-        }
-    }
-
-    private function updateSageProcessStatus($status, $message = null)
-    {
-        $sageProcessData['status'] = $status;
-        if ($message) {
-            $sageProcessData['message'] = json_encode(['message' => $message]);
-        }
-
-        $this->sageProcess->update($sageProcessData);
-        info('BookPolicyOnSageJob - updateSageProcessStatus - ID : '.$this->sageProcess->id.' - Status : '.$status);
-    }
 
 }
