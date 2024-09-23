@@ -266,6 +266,7 @@ class EmbeddedProductRepository extends BaseRepository
 
             $item->send_document_button = $this->canSendAndDownloadDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
         });
+
         return $ep;
     }
 
