@@ -26,7 +26,7 @@ const filters = reactive({
   payment_status_id: [],
   sale_leads: null,
   fallback: null,
-  message_channel: null,
+  channel: null,
   segment: null,
   mobile_no: null,
   report: null,
@@ -325,11 +325,10 @@ const downloadReport = () => {
       </x-field>
       <x-field label=" Message channel">
         <x-select
-          v-model="filters.message_channel"
+          v-model="filters.channel"
           :options="[
             { value: null, label: 'All' },
             { value: 'WHATSAPP', label: 'Whatsapp' },
-            { value: 'e-commerce', label: 'E-commerce' },
             { value: 'WEBSITE', label: 'Website' },
           ]"
           placeholder="Search by Message channel"

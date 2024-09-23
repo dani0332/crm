@@ -267,12 +267,13 @@ class AlfredChatController extends Controller
 
         $result = $this->processMongoDBChatFilters($request, $data);
 
+        // dd($result);
         $perPage = $request->input('per_page', 15);
         $currentPage = $request->input('page', 1);
         $total = count($data);
         $lastPage = ceil($total / $perPage);
 
-        $paginatedData = array_slice($result === false || empty($result) ? $data->toArray() : $data, ($currentPage - 1) * $perPage, $perPage);
+        $paginatedData = array_slice($result === false ? $data->toArray() : $result, ($currentPage - 1) * $perPage, $perPage);
 
         $path = $request->url();
 
@@ -354,8 +355,12 @@ class AlfredChatController extends Controller
                         return $item;
                     }
                 }
-                if ($channelFilter) {
-                    if (in_array($channelFilter, ['whatsapp', 'website', 'e-commerce'])) {
+
+                if ($channelFilter && ! empty($item['communication_channels'])) {
+                    $channels = array_filter($item['communication_channels'], function ($channel) {
+                        return is_string($channel);
+                    });
+                    if (array_intersect($channels, [$channelFilter])) {
                         return $item;
                     }
                 }
