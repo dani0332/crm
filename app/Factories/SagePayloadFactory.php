@@ -1199,7 +1199,7 @@ class SagePayloadFactory
         $sageRequest->insurerInvoiceDate = date(env('DATE_FORMAT_ONLY'), strtotime($payment->insurer_invoice_date));
 
         if (! empty($paymentSplits)) {
-            $sageRequest->paymentDueDate = date(env('DATE_FORMAT_ONLY'), strtotime($paymentSplits[0]['due_date']));
+            $sageRequest->paymentDueDate = date(env('DATE_FORMAT_ONLY'), strtotime($firstChildPayment->due_date));
         }
 
         $sageRequest->mainClassInsurance = $modelType;
@@ -1217,7 +1217,6 @@ class SagePayloadFactory
         $sageRequest->premiumCollectedBy = $premiumCollectedBy;
 
         $sageRequest->invoicePaymentStatus = $payment->payment_status_id;
-        // $sageRequest->invoicePaymentStatus = 'paid';
         $advisorName = '';
         $managerName = '';
         if (! empty($quote->advisor_id)) {
@@ -1244,16 +1243,16 @@ class SagePayloadFactory
         $sageRequest->commissionPercentage = strval($payment->commmission_percentage);
 
         // Slice the last 18 characters from the string to avoid sage document number length issue and store the original values in optional fields
-        $sageRequest->insurerPremiumNumber = (string) substr($payment['insurer_tax_number'], -18);
-        $sageRequest->insurerCommissionNumber = (string) substr($payment['insurer_commmission_invoice_number'], -18);
-        $sageRequest->originalInsurerPremiumNumber = (string) $payment['insurer_tax_number'];
-        $sageRequest->originalInsurerCommissionNumber = (string) $payment['insurer_commmission_invoice_number'];
+        $sageRequest->insurerPremiumNumber = (string) substr($payment->insurer_tax_number, -18);
+        $sageRequest->insurerCommissionNumber = (string) substr($payment->insurer_commmission_invoice_number, -18);
+        $sageRequest->originalInsurerPremiumNumber = (string) $payment->insurer_tax_number;
+        $sageRequest->originalInsurerCommissionNumber = (string) $payment->insurer_commmission_invoice_number;
 
         if (count($paymentSplits) == 1) {
-            $sageRequest->sage_reciept_id = $paymentSplits[0]['sage_reciept_id'];
-            $sageRequest->collection_amount = $paymentSplits[0]['collection_amount'] + $sageRequest->discount;
+            $sageRequest->sage_reciept_id = $firstChildPayment->sage_reciept_id;
+            $sageRequest->collection_amount = $firstChildPayment->collection_amount + $sageRequest->discount;
         } else {
-            $sageRequest->invoicePaymentStatus = $paymentSplits[0]['payment_status_id'];
+            $sageRequest->invoicePaymentStatus = $firstChildPayment->payment_status_id;
         }
 
         $insuranceProvider = null;
@@ -1269,7 +1268,7 @@ class SagePayloadFactory
             $insuranceProvider = $payment->insuranceProvider;
         }
 
-        if ($quote?->insly_migrated && ! empty($payment['send_update_log_id'])) {
+        if ($quote?->insly_migrated && ! empty($payment->send_update_log_id)) {
             $insuranceProviderDetails = InsuranceProvider::where('id', $quote->insurance_provider_id)->first();
             $sageVenderId = $insuranceProviderDetails?->sage_vendor_id;
             $sageInsurerCustomerId = $insuranceProviderDetails?->sage_insurer_customer_id;

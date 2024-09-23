@@ -772,7 +772,7 @@ class SageApiService
             }
             info('SAGE API :  Prepare Patch payload for SpitPayments  for '.$quote->code);
             foreach ($postedResponse['Invoices'][0]['InvoicePaymentSchedules'] as $key => $value) {
-                $paymentSplit = (array) $paymentSplits[$key];
+                $paymentSplit = $paymentSplits[$key];
                 // add discount amount to amount due for the first child payment in sage for balancing the amount
                 $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplit['due_date'])), $sageRequest->insurerInvoiceDate);
                 $dueAmount = roundNumber($paymentSplit['payment_amount'] + ($paymentSplit['sr_no'] == 1 ? $payment->discount_value : 0));
@@ -790,7 +790,7 @@ class SageApiService
             info('SAGE API :  Prepare Patch payload for Commission Spits  for '.$quote->code);
 
             foreach ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'] as $key => $value) {
-                $paymentSplit = (array) $paymentSplits[$key];
+                $paymentSplit = $paymentSplits[$key];
                 $commissionSplit = $paymentSplit['commission_vat_applicable'];
                 $vatOnCommission = $paymentSplit['commission_vat'];
 
