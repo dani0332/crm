@@ -2,10 +2,12 @@
 
 namespace App\Repositories;
 
+use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
@@ -113,7 +115,7 @@ class PersonalQuoteRepository extends BaseRepository
             $docUuid = uniqid().rand(1, 100);
         }
 
-        // This data will store in quote doocumeets table
+        // This data will store in quote documents table
         $document = [
             'doc_name' => $docName,
             'original_name' => $originalName,
@@ -125,6 +127,13 @@ class PersonalQuoteRepository extends BaseRepository
             'created_by_id' => auth()->id(),
         ];
         info('Document array prepared for creation', $document);
+
+        $quoteDocuments = $quote->documents->pluck('document_type_code')->toArray();
+        $taxInvoiceDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
+
+        if (request()->is_send_update && in_array($documentType->code, $taxInvoiceDocuments) && count(array_intersect($taxInvoiceDocuments, $quoteDocuments)) == 0) {
+            $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_ISSUED]);
+        }
 
         return $quote->documents()->create($document);
     }

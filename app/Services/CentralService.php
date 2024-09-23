@@ -43,6 +43,7 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use OwenIt\Auditing\Models\Audit;
 
 class CentralService
 {
@@ -862,5 +863,25 @@ class CentralService
         }
 
         return $quoteStatuses;
+    }
+
+    public function checkStatusInAuditLogs($auditableType, $auditAbleId, $quoteStatus, $filterColumn = 'quote_status_id'): bool
+    {
+        $auditLogs = Audit::where('auditable_type', $auditableType)
+            ->where('auditable_id', $auditAbleId)
+            ->where('event', 'updated')
+            ->where('new_values', 'like', '%'.$filterColumn.'%')
+            ->get();
+
+        $statusChanged = false;
+
+        foreach ($auditLogs as $auditLog) {
+            if (isset($auditLog->new_values[$filterColumn]) && $auditLog->new_values[$filterColumn] == $quoteStatus) {
+                $statusChanged = true;
+                break;
+            }
+        }
+
+        return $statusChanged;
     }
 }

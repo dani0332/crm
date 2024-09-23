@@ -7,6 +7,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
+use App\Services\CentralService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SendUpdateCustomerValidationRequest extends FormRequest
@@ -68,14 +69,21 @@ class SendUpdateCustomerValidationRequest extends FormRequest
                 return $validator->errors()->add('error', 'The expiry date field is required.');
             }
 
+            $checkTransactionApprovedAuditLogs = app(CentralService::class)->checkStatusInAuditLogs(
+                SendUpdateLog::class,
+                $this->sendUpdate->id,
+                SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
+                'status'
+            );
+
             switch ($category) {
                 case SendUpdateLogStatusEnum::CPD:
-                    if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED) {
+                    if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED && ! $checkTransactionApprovedAuditLogs) {
                         $validator->errors()->add('error', 'Transaction approval is required. ');
                     }
                     break;
                 case SendUpdateLogStatusEnum::EF:
-                    if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED) {
+                    if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED && ! $checkTransactionApprovedAuditLogs) {
                         if (! in_array(
                             $option,
                             [

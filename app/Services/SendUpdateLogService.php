@@ -30,6 +30,7 @@ use App\Models\LifeQuote;
 use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
+use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
 use App\Models\YachtQuote;
 use App\Repositories\InsuranceProviderRepository;
@@ -39,6 +40,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use OwenIt\Auditing\Models\Audit;
 
 class SendUpdateLogService
 {
@@ -465,7 +467,7 @@ class SendUpdateLogService
         $insuranceProvider = InsuranceProviderRepository::find($insuranceProviderId);
         $isNonSelfBillingEnabled = false;
         if ($insuranceProvider) {
-            $brokerInvoiceNumber = $this->generateBrokerInvoiceNumberForSU($sendUpdateLog, $insuranceProvider, $updateBrokerInvoiceNumber);
+            $brokerInvoiceNumber = app(CentralService::class)->checkStatusInAuditLogs(SendUpdateLog::class, $sendUpdateLog->id, SendUpdateLogStatusEnum::UPDATE_ISSUED, 'status') ? $this->generateBrokerInvoiceNumberForSU($sendUpdateLog, $insuranceProvider, $updateBrokerInvoiceNumber) : '';
             $isNonSelfBillingEnabled = $insuranceProvider?->non_self_billing;
         }
 

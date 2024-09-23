@@ -6,6 +6,7 @@ use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
+use App\Services\CentralService;
 use App\Services\SendUpdateLogService;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -42,7 +43,7 @@ class SendUpdateRequest extends FormRequest
             if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_BOOKED) {
                 return $validator->errors()->add('error', 'Update already booked');
             } elseif ($sendUpdateLog->status == SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS) {
-                $validator->errors()->add('error', 'Transaction approval is required. ');
+                $validator->errors()->add('error', 'Transaction approval is required.');
             }
 
             $sendUpdateCategoryCode = $sendUpdateLog?->category->code ?? '';
@@ -120,7 +121,7 @@ class SendUpdateRequest extends FormRequest
                     $validator->errors()->add('error', 'Please update the missing booking details');
                 }
 
-                // Check all policy details have been corretly filled
+                // Check all policy details have been correctly filled
                 if (($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF && $categorySubType == SendUpdateLogStatusEnum::PPE) ||
                     $sendUpdateCategoryCode == SendUpdateLogStatusEnum::CPD) {
                     if (! $sendUpdateLog->is_policy_filled) {
@@ -128,8 +129,18 @@ class SendUpdateRequest extends FormRequest
                     }
                 }
 
+                $checkTransactionApprovedAuditLogs = app(CentralService::class)->checkStatusInAuditLogs(
+                    SendUpdateLog::class,
+                    $sendUpdateLog->id,
+                    SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
+                    'status'
+                );
+
                 if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF &&
-                    ! in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) &&
+                    (! $checkTransactionApprovedAuditLogs && ! in_array(
+                        $sendUpdateLog->status,
+                        [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]
+                    )) && // Check if the transaction is approved
                     in_array($categorySubType, [
                         SendUpdateLogStatusEnum::MPC,
                         SendUpdateLogStatusEnum::MDOM,

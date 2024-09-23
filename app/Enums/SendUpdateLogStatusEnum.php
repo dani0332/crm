@@ -19,6 +19,7 @@ final class SendUpdateLogStatusEnum extends Enum
     const FULL_PAID = 'Fully paid';
 
     // const STALE_REQUEST = 'Stale Request';
+    const UPDATE_ISSUED = 'UPDATE_ISSUED';
     const UPDATE_SENT_TO_CUSTOMER = 'UPDATE_SENT_TO_CUSTOMER';
     const UPDATE_BOOKED = 'UPDATE_BOOKED';
     const SEND_UPDATE = 'SEND_UPDATE';
