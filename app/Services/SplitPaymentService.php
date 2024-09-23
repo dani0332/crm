@@ -1009,7 +1009,11 @@ class SplitPaymentService
             if ($masterPayment->frequency != PaymentFrequency::UPFRONT){
                 if ($masterPayment->total_payments == 2 ) {
                     $masterPayment->total_payments = 1;
-                    $masterPayment->frequency = PaymentFrequency::UPFRONT;                    
+                    $masterPayment->frequency = PaymentFrequency::UPFRONT;   
+                    if( $paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
+                        $masterPayment->payment_methods_code = PaymentMethodsEnum::CreditCard;
+                    }
+                    
                 } else {
                     $masterPayment->total_payments = $masterPayment->total_payments - 1;
                     $masterPayment->frequency = PaymentFrequency::CUSTOM;                    
