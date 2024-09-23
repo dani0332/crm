@@ -74,7 +74,9 @@ class TravelAllocationService extends AllocationService
             ->whereIn('r.name', [RolesEnum::TravelAdvisor])
             ->where('la.quote_type_id', QuoteTypes::TRAVEL->id())
             ->where('users.is_active', true)
-            ->where('la.is_hardstop', true) // fetch users only with hardstop as true as they are eligible for allocation
+            ->when($teamId, function ($q) {
+                $q->where('la.is_hardstop', true); // fetch users only with hardstop as true as they are eligible for allocation
+            })
             ->orderBy('la.last_allocated', 'asc')
             ->first();
     }

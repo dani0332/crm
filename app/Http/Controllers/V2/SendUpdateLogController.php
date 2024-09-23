@@ -169,6 +169,7 @@ class SendUpdateLogController extends Controller
 
         // booking details section.
         $payments = $this->sendUpdateLogService->getPayments($realQuote->id, $realQuote->uuid, $quoteType);
+        info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - Is Payment Exist: '.empty($payments));
 
         if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
             // it will get all invoice_descriptions for booking details
@@ -205,7 +206,7 @@ class SendUpdateLogController extends Controller
 
         } else {
             checkPersonalQuotes($quoteType) ? $realQuote->load(['insuranceProvider']) : $paymentEntityModel->load(['insuranceProvider']);
-            info('Send Update Log Show - checkPersonalQuote: '.checkPersonalQuotes($quoteType).' - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - PaymentEntityModel: '.$paymentEntityModel->id);
+            info('Send Update Log Show - checkPersonalQuote: '.checkPersonalQuotes($quoteType).' - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - PaymentEntityModel: '.($paymentEntityModel->id ?? null));
         }
 
         // quote type business only has 2 providers, but as per business lead detail page it's getting providers via Corpline.
