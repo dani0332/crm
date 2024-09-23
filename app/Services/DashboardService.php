@@ -22,6 +22,7 @@ class DashboardService extends BaseService
     public function getDashboardStatsByDate($start, $end, $type)
     {
         $tableName = $type.'_quote_request';
+
         return DB::select('
                     SELECT *
                     FROM (
