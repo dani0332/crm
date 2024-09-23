@@ -516,7 +516,7 @@ class SendEmailCustomerService extends BaseService
             info("sendLMSIntroEmail ---- Tag : {$tag} for ID : {$quoteId}");
             $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.' - ';
             if ($emailData->customerEmail === '0' || $emailData->customerEmail === 0) {
-                info('Customer email is missing or invalid for ID : {$quoteId}")');
+                info("Customer email is missing or invalid for ID : {$quoteId}");
 
                 return false;
             }
