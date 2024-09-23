@@ -141,9 +141,11 @@ class TravelQuoteService extends BaseService
             'tqr.insurer_quote_number',
             'tqr.policy_issuance_status_id',
             'tqr.policy_issuance_status_other',
+            DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
             'tqr.policy_booking_date',
             'tqr.insly_migrated',
         )
+            ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'tqrd.lost_reason_id')
@@ -333,7 +335,9 @@ class TravelQuoteService extends BaseService
         } else {
             $searchProperties = $model->searchProperties;
         }
-
+        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date) && ! isset($request->renewal_batch) && ! isset($request->previous_quote_policy_number)) {
+            $this->query->whereBetween('tqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
+        }
         if (
             empty($request->email) && empty($request->code) && empty($request->first_name) &&
             empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)
@@ -351,7 +355,17 @@ class TravelQuoteService extends BaseService
             $this->query->whereBetween('tqr.created_at', [$dateFrom, $dateTo]);
         }
 
-        if (! empty($request->created_at_start) && ! empty($request->created_at_end) && empty($request->payment_due_date) && empty($request->booking_date)) {
+        if (
+            ! empty($request->created_at_start)
+            && ! empty($request->created_at_end)
+            && empty($request->code)
+            && empty($request->email)
+            && empty($request->mobile_no)
+            && empty($request->payment_due_date)
+            && empty($request->booking_date)
+            && empty($request->renewal_batch)
+            && empty($request->previous_quote_policy_number)
+        ) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
             $this->query->whereBetween('tqr.created_at', [$dateFrom, $dateTo]);

@@ -45,7 +45,7 @@ class SaleDetailReportService extends ManagementReport
                 'personal_quotes.uuid',
                 'personal_quotes.source',
                 'personal_quotes.code',
-                't.name as team',
+                DB::raw('IFNULL(GROUP_CONCAT(DISTINCT t.name SEPARATOR ", "), "") as team'),
                 'personal_quotes.price_vat_applicable',
                 'personal_quotes.vat',
                 'personal_quotes.price_vat_not_applicable',
@@ -63,7 +63,7 @@ class SaleDetailReportService extends ManagementReport
                 'insurer_invoice_date as insurer_tax_invoice_date',
                 'payment_status.text as transaction_payment_status',
                 'p.captured_at as date_paid',
-                'personal_quotes.premium_captured as collected_amount',
+                'p.captured_amount as collected_amount',
                 'personal_quotes.first_name',
                 'personal_quotes.last_name',
                 'cm.code as customer_type',
@@ -73,20 +73,24 @@ class SaleDetailReportService extends ManagementReport
                 'dp.name as department',
                 'pi.name as policy_issuer',
                 'btoi.text as sub_type_line_of_business',
+                'p.insurer_commmission_invoice_number',
+                'l.text as transaction_type',
+                'p.commmission_percentage',
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
             ->join('payment_status', 'payment_status.id', '=', 'p.payment_status_id')
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
             ->join('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
-            ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('users as u', 'u.id', '=', 'advisor_id')
             ->leftJoin('departments as dp', 'u.department_id', '=', 'dp.id')
+            ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('users as pi', 'pi.id', '=', 'p.policy_issuer_id')
             ->leftJoin('user_team as ut', 'ut.user_id', '=', 'u.id')
             ->leftJoin('teams as t', 't.id', '=', 'ut.team_id')
             ->leftJoin('customer as cm', 'cm.id', '=', 'personal_quotes.customer_id')
-            ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id');
+            ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
+            ->leftJoin('lookups as l', 'personal_quotes.transaction_type_id', '=', 'l.id');
 
         $this->applyFilters($query, $request);
 
@@ -103,7 +107,7 @@ class SaleDetailReportService extends ManagementReport
             $this->formatData($data);
 
             // Columns that are not integar and should not be summed
-            $nonIntegarIndexes = [0, 1, 2, 3, 4, 5, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27];
+            $nonIntegarIndexes = [0, 1, 2, 3, 4, 5, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32];
 
             return $this->download(
                 'Sale Detail Report '.$this->reportDateRange,
@@ -130,9 +134,11 @@ class SaleDetailReportService extends ManagementReport
             $item->payment_due_date = ! empty($item->payment_due_date) ? Carbon::parse($item->payment_due_date)->format('Y-m-d') : null;
             $item->due_date = ! empty($item->due_date) ? Carbon::parse($item->due_date)->format('Y-m-d') : null;
             $item->total_price = number_format($item->total_price, 2);
+            $item->collected_amount = number_format($item->collected_amount, 2);
             $item->total_commission = number_format($item->total_commission, 2);
             $item->collects = strtoupper($item->collects);
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
+            $item->commmission_percentage = number_format($item->commmission_percentage, 2);
         });
     }
 
@@ -184,6 +190,9 @@ class SaleDetailReportService extends ManagementReport
             'Sub-Type',
             'Advisor',
             'Policy Issuer ',
+            'Commission Tax Invoice Number',
+            'Commission Percentage',
+            'Transaction Type',
         ];
     }
 
@@ -220,6 +229,9 @@ class SaleDetailReportService extends ManagementReport
             $quote->sub_type_line_of_business ?? 'N/A',
             $quote->advisor ?? 'N/A',
             $quote->policy_issuer ?? 'N/A',
+            $quote->insurer_commmission_invoice_number ?? 'N/A',
+            $quote->commmission_percentage ?? 'N/A',
+            $quote->transaction_type ?? 'N/A',
         ];
     }
 }

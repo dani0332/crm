@@ -12,6 +12,13 @@ class BusinessQuoteObserver
 {
     use PersonalQuoteSyncTrait;
 
+    public function updating(BusinessQuote $quote): void
+    {
+        if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
+            $quote->quote_status_date = now();
+        }
+    }
+
     /**
      * Handle the BusinessQuote "updated" event.
      */
@@ -38,5 +45,9 @@ class BusinessQuoteObserver
         }
 
         $this->syncQuote($businessQuote, $dirty);
+
+        if (isset($dirty['quote_status_id']) && $businessQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
+            $this->syncLeadEntries($businessQuote->uuid);
+        }
     }
 }

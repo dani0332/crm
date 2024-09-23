@@ -21,6 +21,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
 use App\Enums\PuaEnum;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -86,6 +87,7 @@ use App\Services\LeadAllocationService;
 use App\Services\LifeQuoteService;
 use App\Services\LookupService;
 use App\Services\NotesForCustomerService;
+use App\Services\NotificationService;
 use App\Services\PetQuoteService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
@@ -208,6 +210,7 @@ class CRUDController extends Controller
         $yesterdayAllocationData = $this->allocationService->getYesterdayCounts(auth()->user()->id);
         $yesterdayAutoCount = $yesterdayAllocationData['auto_assignment_count'];
         $yesterdayManualCount = $yesterdayAllocationData['manual_assignment_count'];
+        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
 
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $upcomingBatch = RenewalBatchRepository::getUpcomingBatch(QuoteStatusEnum::Uncontactable);
@@ -303,7 +306,9 @@ class CRUDController extends Controller
                 'todayManualCount' => $todayManualCount,
                 'yesterdayAutoCount' => $yesterdayAutoCount,
                 'yesterdayManualCount' => $yesterdayManualCount,
+                'quoteSegments' => QuoteSegmentEnum::withLabels(QuoteTypeId::Health),
                 'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : HealthQuoteRepository::getData(true, true),
+                'authorizedDays' => intval($authorizedDays->value),
             ]);
         }
 
@@ -322,6 +327,7 @@ class CRUDController extends Controller
                 'advisors' => $advisors,
                 'isManualAllocationAllowed' => $isManualAllocationAllowed,
                 'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : HomeQuoteRepository::getData(true, true),
+                'authorizedDays' => intval($authorizedDays->value),
             ]);
         }
 
@@ -351,6 +357,7 @@ class CRUDController extends Controller
                 'genericRequestEnum' => $genericRequestEnum,
                 'isBetaUser' => $isBetaUser,
                 'teams' => $teams,
+                'authorizedDays' => intval($authorizedDays->value),
             ]);
         }
 
@@ -588,6 +595,7 @@ class CRUDController extends Controller
         }
         $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', $quoteTypeId);
 
+        $leadStatuses = app(CentralService::class)->lockTransactionStatus($record, $quoteTypeId, $leadStatuses);
         if (AMLService::checkAMLStatusFailed($quoteTypeId, $record->id)) {
             $leadStatuses = collect($leadStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
@@ -1512,7 +1520,16 @@ class CRUDController extends Controller
 
             return Redirect::back()->with('message', $msg);
         } else {
+            $quoteIds = explode(',', $request->selectTmLeadId);
+            foreach ($quoteIds as $id) {
+                $quoteData = $this->getQuoteObject($request->modelType, $id);
+                if ($quoteData && $quoteData->payment_status_id === PaymentStatusEnum::AUTHORISED) {
+                    app(NotificationService::class)->paymentStatusUpdate($request->modelType, $quoteData->uuid);
+                }
+            }
+
             return Redirect::back()->with('success', $request->modelType.' Leads has been Assigned To '.$assignedUser->name);
+
         }
     }
 
@@ -1768,13 +1785,12 @@ class CRUDController extends Controller
 
     public function updateQuotePolicy(UpdatePolicyDetailRequest $policyDetailRequest)
     {
-        info('fn: updateQuotePolicy called');
-
         $request = (object) $policyDetailRequest->validated();
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (! $quoteModel) {
             return redirect()->back()->with('success', 'Error Updating Policy Details.');
         }
+        info('Quote Code: '.$quoteModel->code.' fn: updateQuotePolicy called');
         $quoteModel->update([
             'policy_number' => $request->quote_policy_number ?? '',
             'policy_issuance_date' => isset($request->quote_policy_issuance_date) ? Carbon::parse($request->quote_policy_issuance_date)->format('Y-m-d') : null,
@@ -1794,18 +1810,19 @@ class CRUDController extends Controller
                 'quote_status_id' => QuoteStatusEnum::PolicyPending,
             ]);
         }
-        Log::info('Updating policy_issuer_id  : '.auth()->id());
 
         // store policy issuer
-        $payment = $quoteModel->payments->first();
-        $payment->policy_issuer_id = auth()->id();
-        $payment->save();
+        $payment = $quoteModel->payments()->mainLeadPayment()->first();
+        if ($payment) {
+            $payment->policy_issuer_id = auth()->id();
+            $payment->save();
+        }
 
         // update status policy issued of req fulfilled
-        $this->updateQuoteStatus($request->modelType, $request->quote_id);
         $this->updatePriceAndDiscount($quoteModel);
+        $this->updateQuoteStatus($request->modelType, $request->quote_id);
 
-        Log::info('Policy details update successfully for : '.$quoteModel->uuid);
+        info('Quote Code: '.$quoteModel->code.' Policy detail updated successfully');
 
         return redirect()->back()->with([
             'success' => 'Policy details has been updated.',
@@ -2001,7 +2018,7 @@ class CRUDController extends Controller
             $ocbEmailJob = QuoteTypes::getName(QuoteTypes::getIdFromValue($quoteType))?->ocbEmailJob();
             if ($ocbEmailJob) {
                 Log::info("sendOCBEmailNB OCB email sending started for quote uuid: {$quoteUuId}");
-                dispatch(new $ocbEmailJob($request->quoteUuid, null));
+                dispatch(new $ocbEmailJob($quoteUuId, null));
                 info("sendOCBEmailNB OCB email Job dispatched for quote uuid: {$quoteUuId}");
             }
 
@@ -2058,4 +2075,5 @@ class CRUDController extends Controller
 
         return $response;
     }
+
 }

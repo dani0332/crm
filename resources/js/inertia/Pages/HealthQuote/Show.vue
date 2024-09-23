@@ -65,6 +65,7 @@ const props = defineProps({
   paymentDocument: Array,
   noteDocumentType: Array,
 });
+const modelClass = 'App\\Models\\HealthQuote';
 
 const isManualPlansCount = ref(0);
 
@@ -234,9 +235,6 @@ const memberCategoryText = memberCategoryId =>
 // });
 
 const subTeamOptions = [
-  { value: 'RM-NB', label: 'RM-NB' },
-  { value: 'RM-SPEED', label: 'RM-SPEED' },
-  { value: 'EBP', label: 'EBP' },
   { value: 'Best', label: 'Best' },
   { value: 'Good', label: 'Good' },
   { value: 'Entry-Level', label: 'Entry-Level' },
@@ -1580,7 +1578,7 @@ const handlePlanSelected = plan => {
   selectedProviderPlan.value.planName = plan.planName;
   selectedProviderPlan.value.providerName = plan.providerName;
   selectedProviderPlan.value.premium = plan.premium;
-  selectedProviderPlan.value.planType = checkPlanType(plan.planTypeId);
+  selectedProviderPlan.value.planType = plan.planType;
   router.reload({
     preserveState: true,
     preserveScroll: true,
@@ -1780,9 +1778,9 @@ const onAddUpdate = () => {
         <h2 class="text-xl font-semibold">Health Detail</h2>
         <p
           class="bg-red-600 px-2 py-1 rounded text-sm text-white"
-          v-if="daysSinceStale(quoteRequest?.stale_at) !== false"
+          v-if="countDays !== false"
         >
-          Stale for {{ daysSinceStale(quoteRequest?.stale_at) }} days
+          Stale for {{ countDays }}
         </p>
       </template>
 
@@ -3003,7 +3001,7 @@ const onAddUpdate = () => {
                 <x-field class="" label="Transaction Type">
                   <x-input
                     type="text"
-                    :value="quote.transaction_type_text"
+                    v-model="quote.transaction_type_text"
                     class="w-full"
                     :disabled="true"
                   />
@@ -3107,6 +3105,10 @@ const onAddUpdate = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
                 <dd>{{ coPayment ? coPayment.text : 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN TYPE</dt>
+                <dd>{{ selectedProviderPlan.planType ?? 'N/A' }}</dd>
               </div>
             </dl>
           </div>
@@ -3599,7 +3601,6 @@ const onAddUpdate = () => {
         :items="emailStatuses || []"
         show-index
         border-cell
-        fixed-checkbox
         hide-rows-per-page
         hide-footer
       >
@@ -3625,6 +3626,7 @@ const onAddUpdate = () => {
       quoteType="Health"
       :sendPolicy="sendPolicy"
       @sendPolicyToClient="sendPolicyToClient"
+      :bookPolicyDetails="bookPolicyDetails"
     />
 
     <BookPolicy
@@ -3639,6 +3641,7 @@ const onAddUpdate = () => {
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+      :modelClass="modelClass"
     />
 
     <SendUpdates
@@ -3875,10 +3878,11 @@ const onAddUpdate = () => {
       :customerName="quote?.first_name + ' ' + quote?.last_name"
       :quoteId="quote.uuid"
       :quoteType="'HEALTH'"
+      :expanded="sectionExpanded"
     />
 
     <AuditLogs
-      :type="'App\\Models\\HealthQuote'"
+      :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
     />
@@ -3887,5 +3891,10 @@ const onAddUpdate = () => {
       v-if="clientInquiryLogs?.length > 0"
       :logs="clientInquiryLogs"
     />
+
+    <lead-raw-data
+      :modelType="'Health'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

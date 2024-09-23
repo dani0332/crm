@@ -67,6 +67,9 @@ class InstallmentReportService extends ManagementReport
                 'p.broker_invoice_number',
                 'btoi.text as sub_type_line_of_business',
                 'q.text as lead_status',
+                'p.insurer_commmission_invoice_number',
+                'l.text as transaction_type',
+                DB::raw('CASE WHEN ps.sr_no=1 THEN p.commmission_percentage ELSE 0 END as commmission_percentage'),
             )
             ->join('payments as p', function ($join) {
                 $join->on('personal_quotes.code', '=', 'p.code')
@@ -83,6 +86,7 @@ class InstallmentReportService extends ManagementReport
             ->leftJoin('payment_methods as pm', 'pm.code', '=', 'ps.payment_method')
             ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'ps.payment_gateway_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
+            ->leftJoin('lookups as l', 'personal_quotes.transaction_type_id', '=', 'l.id')
             ->orderBy('personal_quotes.id', 'desc')
             ->orderBy('ps.due_date', 'asc');
 
@@ -94,7 +98,7 @@ class InstallmentReportService extends ManagementReport
             $this->formatData($data);
 
             // Columns that are not integar and should not be summed
-            $nonIntegarIndexes = [0, 1, 2, 3, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27];
+            $nonIntegarIndexes = [0, 1, 2, 3, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33];
 
             return $this->download(
                 'Installment Report '.$this->reportDateRange,
@@ -126,6 +130,7 @@ class InstallmentReportService extends ManagementReport
             $item->collects = strtoupper($item->collects);
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
             $item->transactions = $this->concatValues([$item->insurer_invoice_number, $item->notes, $item->reference], '-');
+            $item->commmission_percentage = number_format($item->commmission_percentage, 2);
         });
     }
 
@@ -188,6 +193,9 @@ class InstallmentReportService extends ManagementReport
             'Insurer Invoice Date',
             'Broker Invoice No',
             'Lead Status',
+            'Commission Tax Invoice Number',
+            'Commission Percentage',
+            'Transaction Type',
         ];
     }
 
@@ -225,6 +233,9 @@ class InstallmentReportService extends ManagementReport
             $quote->insurer_tax_invoice_date ?? 'N/A',
             $quote->broker_invoice_number ?? 'N/A',
             $quote->lead_status ?? 'N/A',
+            $quote->insurer_commmission_invoice_number ?? 'N/A',
+            $quote->commmission_percentage ?? 'N/A',
+            $quote->transaction_type ?? 'N/A',
         ];
     }
 }

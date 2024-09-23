@@ -6,11 +6,15 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Payment;
+use App\Models\SendUpdateLog;
 use Illuminate\Support\Facades\Config;
 
 trait QuoteModelTrait
 {
+    use Filterable;
+
     /**
      * @return mixed|void
      */
@@ -91,5 +95,12 @@ trait QuoteModelTrait
                 ]);
             });
         }
+    }
+
+    public function isCPDEndorsment($sendUpdateId)
+    {
+        $sendUpdateLog = SendUpdateLog::where('id', $sendUpdateId)->with('category')->first();
+
+        return ['isCPDEndorsment' => $sendUpdateLog->category?->code == SendUpdateLogStatusEnum::CPD, 'sendUpdateUUID' => $sendUpdateLog->uuid];
     }
 }

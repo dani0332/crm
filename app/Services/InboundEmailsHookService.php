@@ -12,7 +12,6 @@ use App\Models\TravelQuote;
 use Exception;
 use Illuminate\Http\Response;
 
-//Scheduled to delete 1st April 2024
 class InboundEmailsHookService extends BaseService
 {
     private function verifyAuthorization()
@@ -86,12 +85,25 @@ class InboundEmailsHookService extends BaseService
 
     private function handleCar(CarQuote $lead)
     {
-        info(self::class." - handleCar: Going to update Car Quote for uuid {$lead->uuid}");
-        $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
-        DttRevival::where('uuid', $lead->uuid)->update(['reply_received' => 1]);
-        info(self::class." - handleCar: Car Quote Source updated for Revival for uuid {$lead->uuid}");
+        if ($lead->source == LeadSourceEnum::REVIVAL) {
+            info(self::class." - handleCar: Going to update Car Quote for uuid {$lead->uuid}");
+            $lead->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
+            DttRevival::where('uuid', $lead->uuid)->update(['reply_received' => 1]);
+            info(self::class." - handleCar: Car Quote Source updated for Revival for uuid {$lead->uuid}");
 
-        return apiResponse([], Response::HTTP_OK, 'Car Source Updated Successfully!');
+            return apiResponse([], Response::HTTP_OK, 'Car Source Updated Successfully!');
+        } else {
+            try {
+                info(self::class." - handleCar: Going to handle Car Quote for uuid {$lead->uuid}");
+                (new ApiService)->sicReplyToILA($lead);
+
+                return apiResponse([], Response::HTTP_OK, 'Car Handled for SIC to ILA Successfully!');
+            } catch (\Exception $e) {
+                info(self::class." - handleCar: Error occurred in SIC Reply to ILA for uuid {$lead->uuid}");
+
+                return apiResponse([], Response::HTTP_INTERNAL_SERVER_ERROR, 'Something went wrong!');
+            }
+        }
     }
 
     private function handleTravel(TravelQuote $lead)
