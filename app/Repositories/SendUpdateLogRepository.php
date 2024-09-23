@@ -441,11 +441,17 @@ class SendUpdateLogRepository extends BaseRepository
     public function fetchUpdateInsurerDetails($sendUpdate, $insurerDetails)
     {
         try {
-            $sendUpdate->update([
+            $sendUpdateUpdatePayload = [
                 'invoice_description' => $insurerDetails['invoice_description'],
                 'insurance_provider_id' => $insurerDetails['insurance_provider_id'],
                 'plan_id' => $insurerDetails['plan_id'],
-            ]);
+            ];
+
+            if ($insurerDetails['is_non_self_billing_enabled']) {
+                $sendUpdateUpdatePayload['insurer_commission_invoice_number'] = $insurerDetails['broker_invoice_number'];
+            }
+
+            $sendUpdate->update($sendUpdateUpdatePayload);
 
             if (! $sendUpdate->payments->isEmpty()) {
                 app(SendUpdateLogService::class)->updatePaymentDetails($sendUpdate->payments->first(), $sendUpdate, false, $insurerDetails);

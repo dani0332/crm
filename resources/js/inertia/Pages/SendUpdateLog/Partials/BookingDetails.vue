@@ -62,6 +62,8 @@ const state = reactive({
   reversalSectionEdit: false,
 });
 
+const insCommTaxInvNumState = ref(false);
+
 const page = usePage();
 const notification = useToast();
 const sendUpdateStatusEnum = page.props.sendUpdateStatusEnum;
@@ -108,7 +110,7 @@ const hasTaxDocuments = computed(() => {
   );
 });
 
-const checkSectionTwoEdit = () => {
+const checkSectionToEdit = () => {
   if (props.isUpdateBooked) {
     notification.error({
       title: 'Update already booked',
@@ -178,7 +180,9 @@ const checkSectionTwoEdit = () => {
       return;
     }
   }
-
+    if (props.bookingDetails?.is_non_self_billing_enabled) {
+        insCommTaxInvNumState.value = true;
+    }
   state.isEdit = !state.isEdit;
 };
 
@@ -248,10 +252,10 @@ const bookingDetailsForm = useForm({
     props?.payments[0]?.discount_value ||
     props.sendUpdateLog?.discount ||
     '0.00',
-  insurer_commission_invoice_number:
+  insurer_commission_invoice_number: (props.bookingDetails?.is_non_self_billing_enabled) ? (props.bookingDetails?.broker_invoice_number ?? '') : (
     props.sendUpdateLog?.insurer_commission_invoice_number ||
     props?.payments[0]?.insurer_commmission_invoice_number ||
-    '',
+    ''),
   commission_percentage:
     props.sendUpdateLog?.commission_percentage ||
     props?.payments[0]?.commmission_percentage ||
@@ -916,12 +920,16 @@ const onCancel = () => {
   bookingDetailsForm.invoice_date = props.bookingDetails?.invoice_date || null;
   bookingDetailsForm.insurer_tax_invoice_number =
     props.bookingDetails?.insurer_tax_invoice_number || '';
-  bookingDetailsForm.insurer_commission_invoice_number =
-    props.bookingDetails?.insurer_commission_invoice_number || '';
+
   bookingDetailsForm.price_vat_applicable =
     props.bookingDetails?.price_vat_applicable || '';
   bookingDetailsForm.commission_vat_applicable =
     props.bookingDetails?.commission_vat_applicable || '';
+
+  if (! props.bookingDetails?.is_non_self_billing_enabled) {
+      bookingDetailsForm.insurer_commission_invoice_number =
+          props.bookingDetails?.insurer_commission_invoice_number || '';
+  }
 };
 
 const [sendUpdateConfirmBtnTemp, SendUpdateReuseBtnTemp] =
@@ -1778,7 +1786,7 @@ watch(
                       bookingDetailsForm.insurer_commission_invoice_number
                     "
                     class="!mb-0 w-full"
-                    :disabled="!state.isEdit"
+                    :disabled="!state.isEdit || insCommTaxInvNumState"
                     placeholder="Enter Commission Tax Invoice No"
                     :rules="[isRequired]"
                     size="xs"
@@ -2119,7 +2127,7 @@ watch(
               :permissionsEnum="page.props.permissionsEnum"
             />
             <template v-if="!state.isEdit">
-              <x-button size="sm" @click="checkSectionTwoEdit"> Edit </x-button>
+              <x-button size="sm" @click="checkSectionToEdit"> Edit </x-button>
               <template v-if="isLackingPayment">
                 <x-tooltip>
                   <x-button
