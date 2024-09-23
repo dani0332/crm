@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\QuoteTypes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
@@ -12,6 +13,7 @@ class LeadAllocation extends Model implements AuditableContract
     use Auditable, HasFactory;
 
     protected $table = 'lead_allocation';
+    protected $fillable = ['is_hardstop'];
 
     public function getCreatedAtAttribute($table)
     {
@@ -30,5 +32,10 @@ class LeadAllocation extends Model implements AuditableContract
     public function leadAllocationUser()
     {
         return $this->hasOne(User::class, 'id', 'user_id');
+    }
+
+    public function scopeTravelQuote($query)
+    {
+        return $query->where('quote_type_id', QuoteTypes::TRAVEL->id());
     }
 }
