@@ -272,7 +272,7 @@ class AlfredChatController extends Controller
         $total = count($data);
         $lastPage = ceil($total / $perPage);
 
-        $paginatedData = array_slice($result === false ? $data->toArray() : $data, ($currentPage - 1) * $perPage, $perPage);
+        $paginatedData = array_slice($result === false || empty($result) ? $data->toArray() : $data, ($currentPage - 1) * $perPage, $perPage);
 
         $path = $request->url();
 
