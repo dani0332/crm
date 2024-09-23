@@ -168,9 +168,8 @@ class ApiController extends Controller
 
     public function updateQuoteStatus(UpdateLeadStatusRequest $request)
     {
-        $quoteStatus = QuoteStatusEnum::getKey($request->quote_status_id);
         $quoteTypeId = QuoteTypes::getIdFromValue($request->quote_type);
-        app(QuoteStatusService::class)->updateQuoteStatus($quoteTypeId, $request->quote_uuid, $quoteStatus, [], $request->notes);
+        app(QuoteStatusService::class)->markQuoteAsStale($quoteTypeId, $request->quote_uuid);
 
         return response()->json(['success' => true, 'message' => 'Lead status updated successfully']);
     }
