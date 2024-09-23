@@ -1709,8 +1709,8 @@ class SageApiService
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
         [$quote, $message, $errorMessage, $payload, $response, $currentStep, $totalSteps, $status] = $logDataArray;
 
-        Log::error("SAGE API : $quote->code : $message");
-        Log::error("SAGE API : $quote->code : $errorMessage");
+        Log::info("SAGE API : $quote->code : $message");
+        Log::info("SAGE API : $quote->code : $errorMessage");
 
         $returnMessage['message'] = $errorMessage;
         $responseArray = $this->convertResponseToArray($response);
