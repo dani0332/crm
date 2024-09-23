@@ -43,14 +43,9 @@ const reportButtonCon = computed(() => {
     data.disable = true;
     data.msg = 'Please select the report type';
   } else if (
-    filters.report == 'Consolidated Report' &&
-    filters.quoteId == null
-  ) {
-    data.disable = true;
-    data.msg = 'Please select the Quote ID / Ref-ID';
-  } else if (
     (filters.start_date == null || filters.end_date == null) &&
-    filters.report == 'Detailed Report'
+    (filters.report == 'Detailed Report' ||
+      filters.report == 'Consolidated Report')
   ) {
     data.disable = true;
     data.msg = 'Please select the Start Date and End Date ';

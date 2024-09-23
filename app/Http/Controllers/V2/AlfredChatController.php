@@ -21,6 +21,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
+use MongoDB\Laravel\Queue\MongoJob;
 
 class AlfredChatController extends Controller
 {
@@ -267,7 +268,6 @@ class AlfredChatController extends Controller
 
         $result = $this->processMongoDBChatFilters($request, $data);
 
-        // dd($result);
         $perPage = $request->input('per_page', 15);
         $currentPage = $request->input('page', 1);
         $total = count($data);
@@ -481,9 +481,22 @@ class AlfredChatController extends Controller
         $fileName = 'alfred_chat_logs_'.Carbon::now()->format('Y-m-d_H-i-s');
 
         if ($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
-            $mergedData = array_merge((array) $data->first(), (array) $mongoResults[0]);
+            
+            foreach ($data as $item) {
+                $dataById[$item->uuid] = $item;
+                foreach($mongoResults as $mongoResult) {
+                    if($item->uuid == $mongoResult['_id']) {
+                        $item->communication_channels = $mongoResult['communication_channels'];
+                        $item->customer_interactions = $mongoResult['customer_interactions'];
+                        $item->ai_interactions = $mongoResult['ai_interactions'];
+                        $item->total_ai_interactions = $mongoResult['total_ai_interactions'];
+                        $item->fallbacks = $mongoResult['fallbacks'];
+                        $item->date_of_first_interaction = $mongoResult['date_of_first_interaction'];
+                    }
+                }
+            }
 
-            return Excel::download(new InstantChatConsolidatedExport($mergedData), $fileName.'.xlsx');
+            return Excel::download(new InstantChatConsolidatedExport($data->toArray()), $fileName.'.xlsx');
         }
 
         if ($request->report == InstantChatReportsEnum::DETAILED_REPORT) {
@@ -573,10 +586,9 @@ class AlfredChatController extends Controller
                             ],
                         ],
                     ],
-                    'fallbacks' => ['$sum' => ['$cond' => [['$ifNull' => ['$fallback', false]], 1, 0,
-                    ],
-                    ],
-                    ],
+                    'fallbacks' => [
+                        '$sum' => ['$cond' => [['$ifNull' => ['$fallback', false]], 1, 0,],],
+                ],
                 ],
             ];
         }
