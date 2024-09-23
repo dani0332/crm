@@ -22,7 +22,7 @@ class DashboardService extends BaseService
     public function getDashboardStatsByDate($start, $end, $type)
     {
         $tableName = $type.'_quote_request';
-        $stats = DB::select('
+        return DB::select('
                     SELECT *
                     FROM (
                     SELECT
@@ -42,8 +42,6 @@ class DashboardService extends BaseService
                     AND q.created_at BETWEEN '".$start."' and '".$end."'
                     AND q.renewal_import_code IS NULL
                     GROUP BY q.advisor_id)  a order by a.email;");
-
-        return $stats;
     }
 
     public function getPastDateByWeek($noOfWeeksInPast, $startOfWeek)
@@ -64,7 +62,7 @@ class DashboardService extends BaseService
     {
         $query = CarQuote::select(
             'tiers.name as tierNames',
-            DB::raw('count(*) as leadCount')
+            DB::raw('count(car_quote_request.id) as leadCount')
         )
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
@@ -79,7 +77,7 @@ class DashboardService extends BaseService
     {
         $query = CarQuote::select(
             'tiers.name as tierNames',
-            DB::raw('count(*) as leadCount')
+            DB::raw('count(car_quote_request.id) as leadCount')
         )
             ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->whereNull('car_quote_request.advisor_id')
@@ -123,7 +121,7 @@ class DashboardService extends BaseService
     {
         $query = CarQuote::select(
             DB::raw('distinct(source) as sourceName'),
-            DB::raw('count(*) as sourceCount'),
+            DB::raw('count(car_quote_request.id) as sourceCount'),
         )
             ->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']])
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
