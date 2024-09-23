@@ -687,12 +687,14 @@ class SageApiService
                 SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
                 SageEnum::SRT_CREATE_AR_SPPAY_INV,
                 SageEnum::SRT_CREATE_AR_PREM_COMM_CORR_INV,
+                SageEnum::SRT_CREATE_AR_SPPAY_CORR_INV,
                 SageEnum::SRT_CREATE_AP_PREM_INV,
                 SageEnum::SRT_CREATE_AP_SPPAY_INV,
                 SageEnum::SRT_CREATE_AP_PREM_CORR_INV,
+                SageEnum::SRT_CREATE_AP_SPPAY_CORR_INV,
                 SageEnum::SRT_CREATE_AR_DISC_INV,
                 SageEnum::SRT_CREATE_AR_DISC_CORR_INV,
-            ]) && $sageApiLog['status'] == 'success';
+            ]) && $sageApiLog['status'] == SageEnum::STATUS_SUCCESS;
         })->values()->toArray();
 
         if (empty($invoicesForReverse)) {
