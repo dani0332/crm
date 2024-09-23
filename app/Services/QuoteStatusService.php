@@ -44,6 +44,10 @@ class QuoteStatusService
             $currentStatusId = $quoteStatusID;
         } else {
             $updateQuote = $this->getQuoteObject($quoteType->code, $quoteRequestId);
+            if (isset($updateQuote->quote_status_id) && !empty($updateQuote->quote_status_id) && $updateQuote->quote_status_id == QuoteStatusEnum::FollowedUp) {
+                $updateQuote->quote_status_id = QuoteStatusEnum::Stale;
+                $updateQuote->save();
+            }
             $updateQuote->quote_status_id = $quoteStatus->id;
 
             $previousStatusId = $updateQuote->quote_status_id;
