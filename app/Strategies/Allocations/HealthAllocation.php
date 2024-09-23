@@ -48,7 +48,7 @@ class HealthAllocation implements Allocation
 
                 if ($lead->isApplicationPending() && ! $lead->isApplyNowEmailSent() && Carbon::parse($lead->quote_status_date)->lessThanOrEqualTo(now()->subMinutes(10))) {
                     info("Sending Apply Now Email for uuid {$lead->uuid} as it's been 10 minutes since quote status was marked as applicatio pending");
-                    app(HealthEmailService::class)->sendApplyNowEmail($lead);
+                    app(HealthEmailService::class)->initiateApplyNowEmail($lead);
                 }
 
                 return AllocationFactory::createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);

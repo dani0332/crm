@@ -150,7 +150,7 @@ class HealthEmailService extends BaseService
         return (object) $payload;
     }
 
-    public function sendApplyNowEmail(HealthQuote $lead)
+    public function initiateApplyNowEmail(HealthQuote $lead)
     {
         try {
             if (! $lead->isApplicationPending()) {

@@ -17,6 +17,6 @@ class HandleHealthAdvisorUpdated
      */
     public function handle(HealthQuoteAdvisorUpdated $event): void
     {
-        $this->healthEmailService->sendApplyNowEmail($event->lead);
+        $this->healthEmailService->initiateApplyNowEmail($event->lead);
     }
 }
