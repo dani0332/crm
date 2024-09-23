@@ -34,7 +34,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
     public function __construct($payload, $code)
     {
-        info('job: SendBookPolicyDocumentsJob constructor for: '.$code);
+        info('Quote Code: '.$code.' job: SendBookPolicyDocumentsJob constructor called ');
         $this->data = $payload;
         $this->code = $code;
     }
@@ -44,7 +44,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
      */
     public function handle(SendEmailCustomerService $sendEmailCustomerService, QuoteDocumentService $quoteDocumentService)
     {
-        info('job: SendBookPolicyDocumentsJob started for: '.$this->code);
+        info('Quote Code: '.$this->code.' job: SendBookPolicyDocumentsJob started');
         $insuranceType = '';
         $planName = '';
         // In case of Group Medical & Corpline, modelType is used & for rest of the LOBs model_type is used
@@ -98,6 +98,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->insuranceType = $insuranceType;
             $emailData->planName = $planName;
             $emailData->currentInsurer = '';
+            $emailData->profilePicture = '';
             if (! empty($quote->advisor)) {
                 $emailData->advisorName = $quote->advisor->name;
                 $emailData->advisorEmail = $quote->advisor->email;
@@ -105,6 +106,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
                 $emailData->advisorMobileNo = str_replace('+', '', $advisorMobileNo);
                 $emailData->advisorLandlineNo = $quote->advisor->landline_no;
                 $emailData->googleMeet = $quote->advisor->calendar_link;
+                $emailData->profilePicture = $quote->advisor->profile_photo_path;
             }
             if (in_array(ucfirst($this->data->model_type), [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel])) {
                 if (isset($quote->plan) && isset($quote->plan->insuranceProvider)) {
@@ -123,13 +125,13 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->roadsideAssistance = $roadsideAssistance;
             $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
             $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
-            info('Send Book Policy Documents Job Response for '.$quote->code.' '.json_encode($response));
+            info('Quote Code: '.$quote->code.' Send Book Policy Documents Job Response '.json_encode($response));
         }
     }
 
     public function failed(Throwable $exception)
     {
-        info('SendBookPolicyDocumentsJob -: '.$this->data->quote_id.' Error: '.$exception->getMessage());
+        info('Quote Code: '.$this->code.' SendBookPolicyDocumentsJob Error: '.$exception->getMessage());
     }
 
     public function middleware()
