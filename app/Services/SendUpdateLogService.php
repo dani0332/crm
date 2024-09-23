@@ -806,7 +806,7 @@ class SendUpdateLogService
                         'policy_number' => $endorsementDetails->policy_number,
                         'policy_start_date' => $endorsementDetails->start_date,
                         'policy_expiry_date' => $endorsementDetails->expiry_date,
-                        'policy_booking_date' => $currentDate,
+                        //                        'policy_booking_date' => $currentDate, // Booking Date should not be updated Task:86eqajbyv
                     ]);
                     info('Book Update - After Policy Details updated on Main Lead - PolicyNumber: '.$sendUpdateLog->policy_number.' - PolicyStartDate: '.$sendUpdateLog->start_date.' - PolicyExpiryDate: '.$sendUpdateLog->expiry_date.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
                 }
@@ -945,6 +945,7 @@ class SendUpdateLogService
                 'email' => $quote->advisor->email ?? '',
                 'name' => $quote->advisor->name ?? '',
                 'mobileNo' => $quote->advisor->mobile_no ?? '',
+                'profilePicture' => $quote->advisor->profile_photo_path,
             ],
             'googleMeet' => $quote->advisor->calendar_link ?? '',
             'documents' => $documents,
