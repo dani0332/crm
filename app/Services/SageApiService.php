@@ -8,6 +8,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTagEnums;
+use App\Enums\QuoteTypeId;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Factories\SagePayloadFactory;
@@ -121,60 +122,6 @@ class SageApiService
         } catch (Exception $e) {
             return json_encode(['error' => ['message' => ['value' => $e->getMessage()]], 'code' => 500]);
         }
-    }
-
-    /*
-     * this function is renamed and a new function is created with laravel http request for calling sage api
-     *
-     * will be removed once the 2nd function is matured.
-     * */
-    public function postToSage300Curl($endPoint, $payLoad, $verb = 'POST')
-    {
-        // Create the payload data for the POST request
-        $sageEndPoint = $this->sageRequestUrl.$endPoint;
-        //Http facade not giving expected response,so have to use curl
-        $ch = curl_init($sageEndPoint);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-        if ($verb == 'PATCH') {
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PATCH');
-        } elseif ($verb == 'POST') {
-            curl_setopt($ch, CURLOPT_POST, true);
-        } else {
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
-        }
-
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payLoad));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-        ]);
-        // Add basic authentication
-        curl_setopt($ch, CURLOPT_USERPWD, "$this->sageLogin:$this->sagePassword");
-        $response = curl_exec($ch);
-
-        if ($response === false || $response == '') {
-            $errorResponse = curl_error($ch);
-            $errorResponse = json_decode($errorResponse, true);
-            // echo $errorResponse; exit;
-            if (is_array($errorResponse)) {
-                $httpCode = $errorResponse['error']['code'];
-
-                if (isset($errorResponse['error']['message']['value'])) {
-                    $errorMessage = $errorResponse['error']['message']['value'];
-                } else {
-                    $errorMessage = 'An error occurred';
-                }
-                $response = response()->json(['error' => $errorMessage, 'code' => $httpCode], $httpCode);
-            }
-            // else {
-            //     $httpCode = 401;
-            //     $response = response()->json(['error' => 'Verify sage api credentials', 'code' => $httpCode], $httpCode);
-            // }
-        }
-        curl_close($ch);
-
-        // Return response or handle errors
-        return $response;
     }
 
     public function sendUpdateSageLogs($sendUpdateRequest, $sendUpdateLog): array
@@ -523,30 +470,9 @@ class SageApiService
             return ['status' => true, 'message' => 'Policy has been already booked!'];
         }
 
-        $sageProcessData = [
-            'user_id' => auth()->id(),
-            'insurance_provider_id' => $sageRequest->insurerID,
-            'request' => json_encode([
-                'sagePayload' => $sageRequest,
-                'requestPayload' => $request,
-            ]),
-            'status' => SageEnum::SAGE_PROCESS_PENDING_STATUS,
-        ];
+        $this->createSageProcess($quote, $sageRequest, $request);
 
-        $sageProcess = SageProcess::where([
-            'model_type' => $quote::class,
-            'model_id' => $quote->id,
-        ])->first();
-
-        if ($sageProcess) {
-            if ($sageProcess->status == SageEnum::SAGE_PROCESS_FAILED_STATUS) {
-                $sageProcess->update($sageProcessData);
-            }
-        } else {
-            $sageProcessData['model_type'] = $quote::class;
-            $sageProcessData['model_id'] = $quote->id;
-            SageProcess::create($sageProcessData);
-        }
+        $this->updateAndLogQuoteStatus($quote, $sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, $sageRequest->userId);
 
         return ['status' => true, 'message' => 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!'];
     }
@@ -644,46 +570,18 @@ class SageApiService
         }
 
         info('################################## Policy Book : mark status as policy booked for : '.$quote->code.' ##################################');
-        $latestQuoteStatusLog = QuoteStatusLog::where([
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quote->id,
-        ])->latest()->first();
 
-        unset($quote->userId);
+        $this->updateAndLogQuoteStatus($quote, $quoteTypeId, QuoteStatusEnum::PolicyBooked, $userId);
 
-        $previousQuoteStatusId = $quote->quote_status_id;
-        $newQuoteStatusId = QuoteStatusEnum::PolicyBooked;
-        $quote->update([
-            'quote_status_id' => $newQuoteStatusId,
-            'policy_booking_date' => Carbon::now(),
-            'quote_status_date' => now(),
-            'stale_at' => null
-        ]);
+        info('################################## Policy Book : Status updated to  : '.$quote->quote_status_id.' for '.$quote->code.' ##################################');
 
-        info('################################## Policy Book : Status updated to  : '. $quote->quote_status_id .' for '.$quote->code.' ##################################');
-
-        $quoteLogData = [
-            'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quote->id,
-            'current_quote_status_id' => $newQuoteStatusId,
-            'previous_quote_status_id' => $previousQuoteStatusId,
-            'notes' => 'Policy Booked',
-            'created_by' => $userId,
-        ];
-
-        $isQuoteLogSameAsBefore = $latestQuoteStatusLog->current_quote_status_id == QuoteStatusEnum::PolicyBooked && $latestQuoteStatusLog->previous_quote_status_id = $previousQuoteStatusId;
-        //check if the last quote log status is same as new status then update the same log
-        if ($latestQuoteStatusLog && $isQuoteLogSameAsBefore) {
-            $latestQuoteStatusLog->update($quoteLogData);
-        } else {
-            QuoteStatusLog::create($quoteLogData);
-        }
-
-        info('################################## straightforwardPayments for : '.$quote->code.' ##################################');
+        info('################################## Policy Book : straightforwardPayments for : '.$quote->code.' ##################################');
         (new CentralService)->straightforwardPayments($payment, $paymentSplits, $quote);
+        info('################################## Policy Book : straightforwardPayments for : '.$quote->code.' done ##################################');
 
-        info('################################## updatePaymentAllocationStatus for : '.$quote->code.' ##################################');
+        info('################################## Policy Book : updatePaymentAllocationStatus for : '.$quote->code.' ##################################');
         $this->updatePaymentAllocationStatus($quote);
+        info('################################## Policy Book : updatePaymentAllocationStatus for : '.$quote->code.' done ##################################');
 
         info('########## End of Policy Booked for : '.$quote->code.' ##########');
 
@@ -1820,7 +1718,7 @@ class SageApiService
         Log::error("SAGE API : $quote->code  : ".json_encode($sageErrorMessage));
         $returnMessage['error'] = $sageErrorMessage;
         if (str_contains($sageErrorMessage, 'Processing conflict')) {
-            $returnMessage['message'] = 'Please wait for 1 minute before booking again.';
+            $returnMessage['message'] = SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE;
         }
 
         if ($storeSageApiLog) {
@@ -1876,6 +1774,90 @@ class SageApiService
         }
 
         return $returnMessage;
+    }
+
+    public function updateSageProcessStatus($sageProcess, $status, $message = null)
+    {
+        $sageProcessData['status'] = $status;
+        if ($message) {
+            $sageProcessData['message'] = json_encode(['message' => $message]);
+        }
+
+        $sageProcess->update($sageProcessData);
+        info('Policy Book : updateSageProcessStatus - ID : '.$sageProcess->id.' - Status : '.$status);
+    }
+
+    public function updateAndLogQuoteStatus($quote, $quoteTypeId, $quoteStatusId, $userId)
+    {
+        $latestQuoteStatusLog = QuoteStatusLog::where([
+            'quote_type_id' => $quoteTypeId,
+            'quote_request_id' => $quote->id,
+        ])->latest()->first();
+
+        unset($quote->userId);
+
+        $previousQuoteStatusId = $quote->quote_status_id;
+        $newQuoteStatusId = $quoteStatusId;
+
+        $quoteData = [
+            'quote_status_id' => $newQuoteStatusId,
+            'quote_status_date' => now(),
+        ];
+
+        if (in_array($quoteTypeId, [QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Business])) {
+            $quoteData['stale_at'] = null;
+        }
+        if ($newQuoteStatusId == QuoteStatusEnum::PolicyBooked) {
+            $quoteData['policy_booking_date'] = Carbon::now();
+        }
+
+        $quote->update($quoteData);
+
+        info('Policy Book : updateAndLogQuoteStatus - Status : '.$quote->code.', - Status : '.$newQuoteStatusId);
+
+        $quoteLogData = [
+            'quote_type_id' => $quoteTypeId,
+            'quote_request_id' => $quote->id,
+            'current_quote_status_id' => $newQuoteStatusId,
+            'previous_quote_status_id' => $previousQuoteStatusId,
+            'created_by' => $userId,
+        ];
+
+        $isQuoteLogSameAsBefore = $latestQuoteStatusLog->current_quote_status_id == QuoteStatusEnum::PolicyBooked && $latestQuoteStatusLog->previous_quote_status_id = $previousQuoteStatusId;
+        //check if the last quote log status is same as new status then update the same log
+        if ($latestQuoteStatusLog && $isQuoteLogSameAsBefore) {
+            $latestQuoteStatusLog->update($quoteLogData);
+        } else {
+            QuoteStatusLog::create($quoteLogData);
+        }
+    }
+
+    public function createSageProcess($quote, $sageRequest, $request)
+    {
+        $sageProcessData = [
+            'user_id' => $sageRequest->userId,
+            'insurance_provider_id' => $sageRequest->insurerID,
+            'request' => json_encode([
+                'sagePayload' => $sageRequest,
+                'requestPayload' => $request,
+            ]),
+            'status' => SageEnum::SAGE_PROCESS_PENDING_STATUS,
+        ];
+
+        $sageProcess = SageProcess::where([
+            'model_type' => $quote::class,
+            'model_id' => $quote->id,
+        ])->first();
+
+        if ($sageProcess) {
+            if ($sageProcess->status == SageEnum::SAGE_PROCESS_FAILED_STATUS) {
+                $sageProcess->update($sageProcessData);
+            }
+        } else {
+            $sageProcessData['model_type'] = $quote::class;
+            $sageProcessData['model_id'] = $quote->id;
+            SageProcess::create($sageProcessData);
+        }
     }
 
 }

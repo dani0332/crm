@@ -4,7 +4,6 @@ namespace App\Jobs;
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\SageEnum;
-use App\Models\QuoteStatusLog;
 use App\Services\SageApiService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -44,18 +43,22 @@ class BookPolicyOnSageJob implements ShouldQueue
     {
         info('BookPolicyOnSageJob - '.$this->quote->code.' - Started');
 
-        $this->updateSageProcessStatus(SageEnum::SAGE_PROCESS_PROCESSING_STATUS);
-
-        $this->updateAndLogQuoteStatus(QuoteStatusEnum::POLICY_BOOKING_QUEUED);
+        (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PROCESSING_STATUS);
 
         $response = (new SageApiService)->bookPolicyOnSage([$this->sageRequest, $this->quote,  $this->request]);
 
         if (! $response['status']) {
-            $this->updateSageProcessStatus(SageEnum::SAGE_PROCESS_FAILED_STATUS, $response['message']);
+            $message = $response['message'];
+            if ($message == SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE) {
+                (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS , $message);
+            } else {
+                (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message);
 
-            $this->updateAndLogQuoteStatus(QuoteStatusEnum::POLICY_BOOKING_FAILED);
+                (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, $this->quote->userId);
+            }
+
         } else {
-            $this->updateSageProcessStatus(SageEnum::SAGE_PROCESS_COMPLETED_STATUS);
+            (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS);
         }
 
         info('BookPolicyOnSageJob - '.$this->quote->code.' - Response : '.json_encode($response));
@@ -64,9 +67,9 @@ class BookPolicyOnSageJob implements ShouldQueue
 
     public function failed(Throwable $exception)
     {
-        $this->updateSageProcessStatus(SageEnum::SAGE_PROCESS_FAILED_STATUS, $exception->getMessage());
+        (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $exception->getMessage());
 
-        $this->updateAndLogQuoteStatus(QuoteStatusEnum::POLICY_BOOKING_FAILED);
+        (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, $this->quote->userId);
 
         info('BookPolicyOnSageJob : '.$this->quote->code.' Error : '.$exception->getMessage());
     }

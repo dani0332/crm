@@ -177,4 +177,5 @@ final class SageEnum extends Enum
     // Sage Batch Status
     const SAGE_STATUS_POSTED = 'Posted';
     const SAGE_STATUS_OPEN = 'Open';
+    const SAGE_PROCESSING_CONFLICT_MESSAGE = 'Please wait for 1 minute before booking again.';
 }

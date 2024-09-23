@@ -53,6 +53,7 @@ use App\Models\Payment;
 use App\Models\QuoteNote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Repositories\PaymentRepository;
+use App\Services\ActivitiesService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
 use App\Services\NotificationService;
@@ -223,21 +224,25 @@ class CentralController extends Controller
     {
         $request = (object) $sendBookPolicyRequest->validated();
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
+        $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
 
         info('fn: sendBookingPolicy called for '.$quote->uuid.' policy type '.$request->send_policy_type);
 
         if ($request->send_policy_type == SendPolicyTypeEnum::CUSTOMER) {
             dispatch(new SendBookPolicyDocumentsJob($request, $quote->code));
 
-            $quote->update([
+            $quoteData = [
                 'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
                 'quote_status_date' => now(),
-                'stale_at' => null
-            ]);
+            ];
+            if (in_array($quoteTypeId, [QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Business])) {
+                $quoteData['stale_at'] = null;
+            }
+            $quote->update($quoteData);
 
             info('Policy send to customer for '.$quote->uuid);
 
-            return response()->json(['message' => 'Documents are being sent to the customer. The status will be updated once the documents are sent.'], 200);
+            return response()->json(['message' => 'Quote status updated to Policy Sent To Customer. Documents are being sent to the customer in background.'], 200);
         }
         if ($request->send_policy_type == SendPolicyTypeEnum::SAGE) {
             if (! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
