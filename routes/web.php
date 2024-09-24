@@ -659,3 +659,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('followups/emails/events', [FollowupController::class, 'getEmailEvents']);
     Route::post('/update-user-status', [UserController::class, 'updateUserStatus']);
 });
+
+
+Route::get('/add-batch-number', function(){
+    Artisan::command('AddBatchNumberNonMotors:cron', function () {
+        $this->info('Batch Number Added Successfully');
+    });
+});
