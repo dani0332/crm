@@ -602,13 +602,17 @@ class ReportService extends BaseService
                     ->leftJoin('payments as py', 'py.code', '=', $model ? $model.'.code' : $details['table'].'.code')
                     ->join('users', 'users.id', $model ? $model.'.advisor_id' : $details['table'].'.advisor_id');
 
-                if ($user->isAdvisor()) {
-                    $query->where($model ? $model.'.advisor_id' : $details['table'].'.advisor_id', $user->id);
-                } else {
                     $query->join('user_team', 'user_team.user_id', 'users.id')
-                        ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                        ->whereIn('teams.name', $userTeams);
-                }
+                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                    ->whereIn('teams.name', $userTeams);
+
+                // if ($user->isAdvisor()) {
+                //     $query->where($model ? $model.'.advisor_id' : $details['table'].'.advisor_id', $user->id);
+                // } else {
+                //     $query->join('user_team', 'user_team.user_id', 'users.id')
+                //         ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                //         ->whereIn('teams.name', $userTeams);
+                // }
 
                 if ($details['quoteType'] || $quoteTypeId != null) {
                     $query->where($model ? $model.'.quote_type_id' : $details['table'].'.quote_type_id', $quoteTypeId ? $quoteTypeId : $details['quoteType']);
