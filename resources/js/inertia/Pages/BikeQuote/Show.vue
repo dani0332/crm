@@ -67,6 +67,8 @@ const assumptionState = reactive({
 const page = usePage();
 const { isRequired } = useRules();
 
+const modelClass = 'App\\Models\\PersonalQuote';
+
 const can = permission => useCan(permission);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const hasRole = role => useHasRole(role);
@@ -1326,6 +1328,7 @@ const fetchUpdatedQuote = async () => {
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+      :modelClass="modelClass"
     />
 
     <EmailStatus :emailStatuses="emailStatuses" />
@@ -1345,7 +1348,13 @@ const fetchUpdatedQuote = async () => {
       :quoteCode="$page.props.quote.code"
     />
 
-    <ApiLogs :type="'App\\Models\\PersonalQuote'" :id="$page.props.quote.id" />
+    <ApiLogs :type="modelClass" :id="$page.props.quote.id" />
+
     <LeadHistory :quote="$page.props.quote" />
+
+    <lead-raw-data
+      :modelType="'Bike'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

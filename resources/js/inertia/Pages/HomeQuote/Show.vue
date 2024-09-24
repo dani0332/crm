@@ -58,6 +58,7 @@ const canAny = permissions => useCanAny(permissions);
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const can = permission => useCan(permission);
+const modelClass = 'App\\Models\\HomeQuote';
 
 const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at),
@@ -1341,6 +1342,7 @@ const onAddUpdate = () => {
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+      :modelClass="modelClass"
     />
 
     <SendUpdates
@@ -1544,10 +1546,15 @@ const onAddUpdate = () => {
     </div>
 
     <AuditLogs
-      :type="'App\\Models\\HomeQuote'"
+      :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
     />
+
+    <lead-raw-data
+      :modelType="'Home'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

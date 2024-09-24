@@ -1786,13 +1786,12 @@ class CRUDController extends Controller
 
     public function updateQuotePolicy(UpdatePolicyDetailRequest $policyDetailRequest)
     {
-        info('fn: updateQuotePolicy called');
-
         $request = (object) $policyDetailRequest->validated();
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (! $quoteModel) {
             return redirect()->back()->with('success', 'Error Updating Policy Details.');
         }
+        info('Quote Code: '.$quoteModel->code.' fn: updateQuotePolicy called');
         $quoteModel->update([
             'policy_number' => $request->quote_policy_number ?? '',
             'policy_issuance_date' => isset($request->quote_policy_issuance_date) ? Carbon::parse($request->quote_policy_issuance_date)->format('Y-m-d') : null,
@@ -1812,7 +1811,6 @@ class CRUDController extends Controller
                 'quote_status_id' => QuoteStatusEnum::PolicyPending,
             ]);
         }
-        Log::info('Updating policy_issuer_id  : '.auth()->id());
 
         // store policy issuer
         $payment = $quoteModel->payments()->mainLeadPayment()->first();
@@ -1825,7 +1823,7 @@ class CRUDController extends Controller
         $this->updatePriceAndDiscount($quoteModel);
         $this->updateQuoteStatus($request->modelType, $request->quote_id);
 
-        Log::info('Policy details update successfully for : '.$quoteModel->uuid);
+        info('Quote Code: '.$quoteModel->code.' Policy detail updated successfully');
 
         return redirect()->back()->with([
             'success' => 'Policy details has been updated.',
@@ -2021,7 +2019,7 @@ class CRUDController extends Controller
             $ocbEmailJob = QuoteTypes::getName(QuoteTypes::getIdFromValue($quoteType))?->ocbEmailJob();
             if ($ocbEmailJob) {
                 Log::info("sendOCBEmailNB OCB email sending started for quote uuid: {$quoteUuId}");
-                dispatch(new $ocbEmailJob($request->quoteUuid, null));
+                dispatch(new $ocbEmailJob($quoteUuId, null));
                 info("sendOCBEmailNB OCB email Job dispatched for quote uuid: {$quoteUuId}");
             }
 

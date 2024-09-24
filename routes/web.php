@@ -29,6 +29,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MembersDetailController;
 use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\QuoteDocumentController;
+use App\Http\Controllers\RawQueryController;
 use App\Http\Controllers\ReasonController;
 use App\Http\Controllers\RenewalBatchController;
 use App\Http\Controllers\RenewalsUploadController;
@@ -45,6 +46,7 @@ use App\Http\Controllers\TmLeadStatusController;
 use App\Http\Controllers\TmUploadLeadController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TravelController;
+use App\Http\Controllers\TravelLeadAllocationController;
 use App\Http\Controllers\TravelMembersDetailController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\ActivityController;
@@ -112,6 +114,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('home', function () {
         return inertia('Home/Home', ['im_logo' => getIMLogo()]);
     })->name('dashboard.home');
+
+    Route::post('get-lob-raw-data', [RawQueryController::class, 'show'])->name('getRawData');
 
     Route::get('instant-alfred/logs', [AlfredChatController::class, 'logs'])->name('instant-alfred.logs');
 
@@ -309,6 +313,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::resource('lead-allocation', LeadAllocationController::class);
     Route::resource('car-lead-allocation', CarLeadAllocationController::class);
+    Route::resource('travel-lead-allocation', TravelLeadAllocationController::class);
+    Route::post('/travel-lead-allocation/update-hard-stop', [TravelLeadAllocationController::class, 'updateUserHardStopStatus']);
 
     Route::post('/update-cap/lead-allocation', [LeadAllocationController::class, 'updateCapsAllocation']);
     Route::get('/advisor-by-quotetype/{user_id}', [LeadAllocationController::class, 'getAdvisorByQuoteType'])->name('allocations.advisor-quotestype');
@@ -543,10 +549,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-customer-details', [AMLController::class, 'updateCustomerDetails'])->name('aml-update-customer-details');
         Route::post('aml/{quoteTypeId}/details/{quoteRequestId}/update-entity-details', [AMLController::class, 'updateEntityDetails'])->name('aml-update-entity-details');
         Route::post('link-entity-details', [AMLController::class, 'linkEntityDetails'])->name('link-entity-details');
-
-        //        Route::get('aml/download/history', [AMLController::class, 'sanctionListHistory'])->name('sanctionListHistory');
-        //        Route::get('aml/upload/uae', [AMLController::class, 'uploadUaeSanctionList'])->name('uploadUaeSanctionList');
-        //        Route::post('aml/upload/uae-list', [AMLController::class, 'uaeSanctionListUpload'])->name('uaeSanctionListUpload');
     });
     Route::post('aml/update-quote-comment', [AMLController::class, 'updateQuoteComment'])->name('aml-update-quote-comment');
 
@@ -653,33 +655,5 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('followups/emails/events', [FollowupController::class, 'getEmailEvents']);
     Route::post('/update-user-status', [UserController::class, 'updateUserStatus']);
 });
-
-// Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class, 'ProcessBulkWelcomeEmails'])
-// ->withoutMiddleware([App\Http\Middleware\VerifyCsrfToken::class]);
-
-//Scheduled to delete 1st April 2024
-/***** RestAPI */
-// Route::group(['middleware' => ['auth.rest']], function () {
-//     Route::group(['prefix' => 'form'], function () {
-//         Route::GET('/{form}', [FormController::class, 'index']);
-//         Route::GET('/{form}/{form_id}', [FormController::class, 'getFormDetail']);
-//         Route::PUT('/{form}/{form_id}', [FormController::class, 'update']);
-//         Route::DELETE('/{form}/{form_id}', [FormController::class, 'delete']);
-//         Route::POST('/{form}', [FormController::class, 'save']);
-//     });
-//     // Route::POST('/sendReviewEmail', [FormController::class,'sendReviewEmail'])
-//     //         ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);;
-
-//     Route::group(['prefix' => 'users'], function () {
-//         Route::GET('/me', [UserController::class, 'me']);
-//     });
-
-//     Route::group(['prefix' => 'resource'], function () {
-//         Route::POST('/store', [UploadResourceController::class, 'store']);
-//     });
-// });
-
-// Route::POST('/processInslyRenewalData', [RenewalDataProcessingController::class, 'FetchAndProcessInslyData'])
-//     ->withoutMiddleware([App\Http\Middleware\VerifyCsrfToken::class]);
 
 Route::post('/update-aml-status', [CRUDController::class, 'updateAmlStatus']);

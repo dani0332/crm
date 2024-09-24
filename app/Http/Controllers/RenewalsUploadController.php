@@ -280,7 +280,7 @@ class RenewalsUploadController extends Controller
             $query->where('batch', $request->batch);
         }
 
-        $renewalQuotes = $query->groupBy('batch')
+        $renewalQuotes = $query->distinct()
             ->simplePaginate();
 
         return inertia('Renewals/Batches', [

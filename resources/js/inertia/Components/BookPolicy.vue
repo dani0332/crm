@@ -1,6 +1,8 @@
 <script setup>
 const page = usePage();
 const notification = useNotifications('toast');
+import SageAPILogs from '@/inertia/Components/SageAPILogs.vue';
+import NProgress from 'nprogress';
 const { isRequired } = useRules();
 
 const props = defineProps({
@@ -17,6 +19,10 @@ const props = defineProps({
     default: '',
   },
   modelType: {
+    type: String,
+    default: '',
+  },
+  modelClass: {
     type: String,
     default: '',
   },
@@ -969,6 +975,14 @@ onMounted(() => {
             </div>
 
             <div v-if="showActionButtons" class="flex justify-end">
+              <div class="mt-5 mr-2">
+                <SageAPILogs
+                  :quoteType="props.quoteType"
+                  :record="props.quote"
+                  :modelClass="props.modelClass"
+                  :permissionsEnum="page.props.permissionsEnum"
+                />
+              </div>
               <template v-if="showSendAndBookPolicyButtonBlock">
                 <x-button
                   v-if="bp.isEditing"
