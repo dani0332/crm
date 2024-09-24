@@ -14,6 +14,7 @@ const tableHeader = [
   { text: 'NAME', value: 'name' },
   { text: 'START DATE', value: 'start_date' },
   { text: 'END DATE', value: 'end_date' },
+  { text: 'Batch Type', value: 'quote_type_id' },
 ];
 </script>
 <template>
@@ -52,6 +53,9 @@ const tableHeader = [
       </template>
       <template #item-end_date="{ end_date }">
         {{ end_date ? formatted(end_date) : 'N/A' }}
+      </template>
+      <template #item-quote_type_id="{ quote_type_id }">
+        {{ quote_type_id == 1 ?  'Motor' : 'Non-motor' }}
       </template>
     </DataTable>
 

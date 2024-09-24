@@ -43,7 +43,7 @@ class RenewalBatchController extends Controller
      */
     public function create()
     {
-        $lastExistingBatch = RenewalBatch::orderByDesc('id')->first();
+        $lastExistingBatch = RenewalBatch::where('quote_type_id', QuoteTypeId::Car )->orderByDesc('id')->first();
         $params = $this->getProcessedBatchData($lastExistingBatch);
 
         $teams = $params['teams'];

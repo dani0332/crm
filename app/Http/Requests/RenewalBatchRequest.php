@@ -33,6 +33,33 @@ class RenewalBatchRequest extends FormRequest
         $slabArray = $this->input('slab');
         $optionalSlabsId = $this->input('optional_slabs') ?? [];
         $optionalTeamsId = $this->input('optional_teams') ?? [];
+        $isShowSegmentSlabs = $this->input('is_show_segment_slabs') ?? false;
+
+        if (! $isShowSegmentSlabs) {
+           return [
+                'name' => [
+                    'required',
+                    'max:240',
+                ],
+                'start_date' => [
+                    'required',
+                    'date',
+                ],
+                'end_date' => [
+                    'required',
+                    'date',
+                    'after:start_date',
+                ],
+                'month' => [
+                    'required',
+                    'integer',
+                ],
+                'isShowSegmentSlabs' => [
+                    'nullable'
+                ]
+
+            ];
+        }
 
         $slabIndex = count($slabArray);
 

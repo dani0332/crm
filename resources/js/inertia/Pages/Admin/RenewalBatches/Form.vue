@@ -1,4 +1,6 @@
 <script setup>
+import { computed } from 'vue';
+
 const props = defineProps({
   teams: Array,
   volumeSegmentAdvisorsId: Array,
@@ -20,8 +22,14 @@ const notification = useToast();
 const { isRequired } = useRules();
 const isSagmentVolumeEmpty = ref(false);
 const isSagmentValueEmpty = ref(false);
+
 const isEdit = computed(() => {
   return route().current().includes('edit');
+});
+
+const isShowSegmentSlabs = computed(() => {
+  if (!isEdit.value) return true;
+  else if (isEdit.value && props.renewalBatch.quote_type_id == 1) return true;
 });
 
 const tableHeader = computed(() => {
@@ -37,29 +45,30 @@ const tableHeader = computed(() => {
 
 const generateSlabArray = () => {
   let slabs = {};
-  props.teams.forEach(team => {
-    props.slabs.forEach(slab => {
-      if (team.slabs_count > 0) {
-        if (!slabs[slab.id]) {
-          slabs[slab.id] = {};
-        }
-        if (props.lastBatchSlabs[slab.id][team.id]) {
-          let minValue = props.lastBatchSlabs[slab.id][team.id]['pivot']['min'];
-          let maxValue = props.lastBatchSlabs[slab.id][team.id]['pivot']['max'];
-          if (minValue && maxValue) {
-            slabs[slab.id][team.id] = {
-              Min: +minValue,
-              Max: +maxValue,
-            };
+  if (isShowSegmentSlabs.value) {
+    props.teams.forEach(team => {
+      props.slabs.forEach(slab => {
+        if (team.slabs_count > 0) {
+          if (!slabs[slab.id]) {
+            slabs[slab.id] = {};
           }
-        } else {
-          batchForm.optional_slabs.push(slab.id);
-          batchForm.optional_teams.push(team.id);
+          if (props.lastBatchSlabs[slab.id][team.id]) {
+            let minValue = props.lastBatchSlabs[slab.id][team.id]['pivot']['min'];
+            let maxValue = props.lastBatchSlabs[slab.id][team.id]['pivot']['max'];
+            if (minValue && maxValue) {
+              slabs[slab.id][team.id] = {
+                Min: +minValue,
+                Max: +maxValue,
+              };
+            }
+          } else {
+            batchForm.optional_slabs.push(slab.id);
+            batchForm.optional_teams.push(team.id);
+          }
         }
-      }
+      });
     });
-  });
-
+  }
   return slabs;
 };
 
@@ -103,13 +112,21 @@ const setBatchYear = () => {
 };
 
 function onSubmit(isValid) {
-  if (batchForm.segment_volume.length > 0) isSagmentVolumeEmpty.value = false;
-  else isSagmentVolumeEmpty.value = true;
+  if (isShowSegmentSlabs.value) {
+    if (batchForm.segment_volume.length > 0) isSagmentVolumeEmpty.value = false;
+    else isSagmentVolumeEmpty.value = true;
 
-  if (batchForm.segment_value.length > 0) isSagmentValueEmpty.value = false;
-  else isSagmentValueEmpty.value = true;
-
-  let valid = validateSlabs();
+    if (batchForm.segment_value.length > 0) isSagmentValueEmpty.value = false;
+    else isSagmentValueEmpty.value = true;
+  } else {
+    isSagmentVolumeEmpty.value = false;
+    isSagmentValueEmpty.value = false;
+  }
+ 
+  let valid = true;
+  if (isShowSegmentSlabs.value) {
+    valid = validateSlabs();
+  }
 
   if (
     !isValid ||
@@ -127,6 +144,7 @@ function onSubmit(isValid) {
     [dynamicKey]: data.dead_date,
     slab: generateSlabArray(),
     deadline_date: generateDeadlineDate(),
+    isShowSegmentSlabs: isShowSegmentSlabs.value,
   }));
 
   const method = isEdit.value ? 'put' : 'post';
@@ -256,7 +274,7 @@ onMounted(() => {
         </x-field>
       </div>
     </x-card>
-    <x-card class="rounded-lg mt-5">
+    <x-card class="rounded-lg mt-5" v-if="isShowSegmentSlabs">
       <div class="bg-primary rounded-t-lg p-3">
         <p class="text-xl text-white">Renewal Batch DeadLines</p>
       </div>
@@ -272,7 +290,7 @@ onMounted(() => {
         </x-field>
       </div>
     </x-card>
-    <x-card class="rounded-lg mt-5">
+    <x-card class="rounded-lg mt-5" v-if="isShowSegmentSlabs">
       <div class="bg-primary rounded-t-lg p-3">
         <p class="text-xl text-white">Teamwise Slabs</p>
       </div>
@@ -341,7 +359,7 @@ onMounted(() => {
         </table>
       </div>
     </x-card>
-    <x-card class="rounded-lg mt-5">
+    <x-card class="rounded-lg mt-5" v-if="isShowSegmentSlabs">
       <div class="bg-primary rounded-t-lg p-3">
         <p class="text-xl text-white">Segments</p>
       </div>
