@@ -3,9 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
-use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
@@ -538,16 +536,5 @@ class CarQuote extends BaseModel
     public function insuranceProviderDetails()
     {
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
-    }
-
-    public function scopeIsSICLead($q, QuoteTypes $quoteType)
-    {
-        $q->whereIn('uuid', function ($query) use ($quoteType) {
-            $query->distinct()
-                ->select('quote_uuid')
-                ->from('quote_tags')
-                ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
-                ->where('quote_tags.quote_type_id', $quoteType->id());
-        });
     }
 }
