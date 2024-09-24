@@ -4,9 +4,11 @@ namespace App\Console\Commands;
 
 use App\Enums\AMLStatusCode;
 use App\Enums\QuoteStatusId;
-use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
+use App\Models\QuoteStatusLog;
+use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 class UpdateAMLStatus extends Command
 {
@@ -15,15 +17,15 @@ class UpdateAMLStatus extends Command
      *
      * @var string
      */
-    protected $signature = 'UpdateAMLStatus:cron';
+    protected $signature = 'update-aml-status:cron';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'AML Status update command for all quote types';
-
+    protected $description = 'Get latest AML Status from Quote Status Logs and update into Quote Request Table';
+    use GenericQueriesAllLobs;
     /**
      * Create a new command instance.
      *
@@ -42,57 +44,27 @@ class UpdateAMLStatus extends Command
     public function handle()
     {
         info('Cmd:UpdateAMLStatus - AML status update command started');
-        //Update Record using Quote Status Logs Table
-        $leadTables = [
-            ['table' => 'car_quote_request', 'quoteType' => QuoteTypeId::Car],
-            ['table' => 'health_quote_request', 'quoteType' => QuoteTypeId::Health],
-            ['table' => 'business_quote_request', 'quoteType' => QuoteTypeId::Business],
-            ['table' => 'travel_quote_request', 'quoteType' => QuoteTypeId::Travel],
-            ['table' => 'home_quote_request', 'quoteType' => QuoteTypeId::Home],
-            ['table' => 'life_quote_request', 'quoteType' => QuoteTypeId::Life],
-            ['table' => 'personal_quotes', 'quoteType' => QuoteTypeId::Pet],
-            ['table' => 'personal_quotes', 'quoteType' => QuoteTypeId::Yacht],
-            ['table' => 'personal_quotes', 'quoteType' => QuoteTypeId::Bike],
-            ['table' => 'personal_quotes', 'quoteType' => QuoteTypeId::Cycle],
-            ['table' => 'personal_quotes', 'quoteType' => QuoteTypeId::Jetski],
-        ];
+        $getQuoteStatuses = QuoteStatusLog::whereIn('current_quote_status_id', [QuoteStatusId::AMLScreeningCleared, QuoteStatusId::AMLScreeningFailed])
+            ->whereNotNull('quote_type_id')
+            ->whereNotNull('quote_request_id')
+            ->where('created_at', '>=', Carbon::create(2024, 01, 01))
+            ->chunkById(2000, function ($quoteStatusLogs) {
+                foreach ($quoteStatusLogs as $quoteStatusLog) {
+                    $amlStatus = $quoteStatusLog->current_quote_status_id === QuoteStatusId::AMLScreeningCleared ? AMLStatusCode::AMLScreeningCleared : AMLStatusCode::AMLScreeningFailed;
+                    $quoteType = QuoteTypes::getName($quoteStatusLog->quote_type_id)->value ?? null;
+                    $getQuoteObject = $this->getModelObject($quoteType);
+                    if (class_exists($getQuoteObject)) {
+                        $getQuoteDetails = $getQuoteObject::where('id', $quoteStatusLog->quote_request_id)
+                            ->whereDate('created_at', '>=', Carbon::create(2024, 01, 01))->first();
 
-        foreach ($leadTables as $leadTable) {
-            $table = $leadTable['table'];
-            $quoteTypeId = $leadTable['quoteType'];
-
-            $quoteStatusLogs = DB::table('quote_status_log as qsl')
-                ->select('qsl.id', 'qsl.quote_request_id', 'qsl.current_quote_status_id', 'qsl.created_at')
-                ->distinct()
-                ->where('qsl.quote_type_id', $quoteTypeId)
-                ->whereIn('qsl.current_quote_status_id', [
-                    QuoteStatusId::AMLScreeningCleared,
-                    QuoteStatusId::AMLScreeningFailed,
-                ])
-                ->whereNotNull('qsl.quote_request_id')
-                ->whereIn('qsl.quote_request_id', function ($query) use ($table, $quoteTypeId) {
-                    if ($table === 'personal_quotes') {
-                        $query->select('id')
-                            ->from($table)
-                            ->where('quote_type_id', $quoteTypeId);
-                    } else {
-                        $query->select('id')->from($table);
+                        if ($getQuoteDetails) {
+                            info('cmd:UpdateAMLStatus - QuoteType:'.$quoteType.' - QuoteID:'.$quoteStatusLog->quote_request_id.' - AMLStatus:'.$amlStatus);
+                            $getQuoteDetails->update(['aml_status' => $amlStatus]);
+                        }
                     }
-                })
-                ->whereIn('qsl.created_at', function ($query) {
-                    $query->select(DB::raw('MAX(created_at)'))
-                        ->from('quote_status_log')
-                        ->groupBy('quote_request_id');
-                })->orderBy('qsl.id');
 
-            $quoteStatusLogs->chunk(2000, function ($logs) use ($table) {
-                foreach ($logs as $log) {
-                    $amlStatus = $log->current_quote_status_id === QuoteStatusId::AMLScreeningCleared ? AMLStatusCode::AMLScreeningCleared : AMLStatusCode::AMLScreeningFailed;
-                    DB::table($table)
-                        ->where("{$table}.id", '=', $log->quote_request_id)->update(['aml_status' => $amlStatus]);
                 }
             });
-
-        }
+        info('Cmd:UpdateAMLStatus - AML status update command completed');
     }
 }
