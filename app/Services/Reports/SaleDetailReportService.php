@@ -166,7 +166,6 @@ class SaleDetailReportService extends ManagementReport
             'Transactions',
             'Policy Start Date',
             'Payment Due Date',
-            'Source',
             'Team',
             'Price (VAT applicable)',
             'Total VAT',
@@ -193,6 +192,7 @@ class SaleDetailReportService extends ManagementReport
             'Commission Tax Invoice Number',
             'Commission Percentage',
             'Transaction Type',
+            'Source',
         ];
     }
 

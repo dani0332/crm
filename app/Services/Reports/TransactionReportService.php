@@ -85,6 +85,7 @@ class TransactionReportService extends ManagementReport
                 'l.text as transaction_type',
                 'qs.text as quote_status',
                 'p.commmission_percentage',
+                'personal_quotes.source',
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
@@ -201,6 +202,7 @@ class TransactionReportService extends ManagementReport
             'Commission Percentage',
             'Transaction Type',
             'Lead Status',
+            'Source',
         ];
     }
 
@@ -241,6 +243,7 @@ class TransactionReportService extends ManagementReport
             $quote->commmission_percentage ?? 'N/A',
             $quote->transaction_type ?? 'N/A',
             $quote->quote_status ?? 'N/A',
+            $quote->source ?? 'N/A',
         ];
     }
 }
