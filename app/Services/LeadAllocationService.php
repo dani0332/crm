@@ -1005,11 +1005,6 @@ class LeadAllocationService extends BaseService
             );
     }
 
-    public function getUnAssignedHealthQuotes($teamType)
-    {
-        return HealthQuote::whereNull('advisor_id')->where('health_team_type', $teamType)->count() ?? 0;
-    }
-
     public function getAllocationLeads($quoteTypeIds)
     {
         try {
