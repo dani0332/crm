@@ -6,8 +6,10 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Payment;
+use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
 use Illuminate\Support\Facades\Config;
 
@@ -102,5 +104,15 @@ trait QuoteModelTrait
         $sendUpdateLog = SendUpdateLog::where('id', $sendUpdateId)->with('category')->first();
 
         return ['isCPDEndorsment' => $sendUpdateLog->category?->code == SendUpdateLogStatusEnum::CPD, 'sendUpdateUUID' => $sendUpdateLog->uuid];
+    }
+
+    public function isSIC(QuoteTypes $quoteType): bool
+    {
+        return QuoteTag::where('quote_uuid', $this->uuid)->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())->where('quote_tags.quote_type_id', $quoteType->id())->exists();
+    }
+
+    public function isNonSIC(QuoteTypes $quoteType): bool
+    {
+        return ! $this->isSIC($quoteType);
     }
 }

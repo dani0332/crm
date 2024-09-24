@@ -11,6 +11,7 @@ use App\Factories\AllocationFactory;
 use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
+use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Jobs\SendHealthOCBIntroEmailJob;
 use App\Models\Customer;
@@ -308,5 +309,26 @@ class ApiService
                 $this->processAssignLead($request);
             }
         }
+    }
+
+    public function sendHealthApplyNowEmail(SendHealthApplyNowEmailRequest $request)
+    {
+        $lead = HealthQuote::where('uuid', $request->quoteUuid)->first();
+
+        if (! $lead) {
+            return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found!');
+        }
+
+        if ($lead->isSIC(QuoteTypes::HEALTH)) {
+            info("sendApplyNowEmail: Skipping Apply Now Email for because the lead is SIC Lead uuid: {$lead->uuid}");
+
+            return apiResponse(null, Response::HTTP_OK, "Skipping Apply Now Email because it's SIC Lead");
+        }
+
+        if (! $lead->isApplyNowEmailSent()) {
+            app(HealthEmailService::class)->initiateApplyNowEmail($lead);
+        }
+
+        return apiResponse(null, Response::HTTP_OK, 'Email Sent');
     }
 }
