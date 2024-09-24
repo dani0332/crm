@@ -48,7 +48,8 @@ class MDX extends EmbeddedProduct
             'document_type' => 'Policy certificate',
             'document_number' => '',
             'can_send' => $canSendDocuments,
-            'action' => "downloadDcoument({$ep->id})",
+            'action' => "downloadDocument",
+            'ep_id' => $ep->id,
         ];
 
         if ($transaction->isNotEmpty()) {

@@ -419,8 +419,10 @@ onMounted(() => {
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
-const executeAction = action => {
-  eval(action);
+const executeAction = item => {
+  if (item.action === 'downloadDocument') {
+    downloadDcoument(item.ep_id);
+  }
 };
 
 const addEpDocument = id => {
@@ -712,7 +714,7 @@ const onAddDocumentSubmit = event => {
                   color="#ff5e00"
                   :disabled="!item.can_send"
                   :loading="downloadLoader"
-                  @click.prevent="executeAction(item.action)"
+                  @click.prevent="executeAction(item)"
                 >
                   Download
                 </x-button>
@@ -752,14 +754,6 @@ const onAddDocumentSubmit = event => {
               v-if="addDocumentForm.file"
               class="relative bg-primary-50 rounded-md text-center flex flex-col gap-4 items-center border border-primary-300 ease-linear transition-all duration-150 p-4"
             >
-              <div
-                v-if="addDocumentForm.file[0].file.type.startsWith('image/')"
-              >
-                <img
-                  :src="getBlog(addDocumentForm.file[0].file).value"
-                  class="max-w-xs max-h-32"
-                />
-              </div>
               <div>
                 {{ addDocumentForm.file[0].file.name }}
               </div>
