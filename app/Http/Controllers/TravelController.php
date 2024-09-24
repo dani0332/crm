@@ -31,7 +31,6 @@ use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\SendUpdateLogRepository;
-use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
