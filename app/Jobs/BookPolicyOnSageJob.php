@@ -50,7 +50,7 @@ class BookPolicyOnSageJob implements ShouldQueue
         if (! $response['status']) {
             $message = $response['message'];
             if ($message == SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE) {
-                (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS , $message);
+                (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message);
             } else {
                 (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message);
 
@@ -69,7 +69,7 @@ class BookPolicyOnSageJob implements ShouldQueue
     {
         (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $exception->getMessage());
 
-        (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, $this->quote->userId);
+        (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, $this->quote->userId);
 
         info('BookPolicyOnSageJob : '.$this->quote->code.' Error : '.$exception->getMessage());
     }
@@ -78,6 +78,5 @@ class BookPolicyOnSageJob implements ShouldQueue
     {
         return [(new WithoutOverlapping($this->quote->code))->releaseAfter($this->releaseAfter)];
     }
-
 
 }
