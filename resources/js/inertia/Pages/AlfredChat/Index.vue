@@ -366,7 +366,7 @@ const downloadReport = () => {
       </x-field>
     </div>
 
-    <div class="flex justify-between gap-3">
+    <div class="flex justify-end gap-3">
       <x-tooltip v-if="reportButtonCon.disable" position="right">
         <!-- :disabled="reportButtonCon.disable" -->
         <!-- @click.prevent="downloadReport" -->
