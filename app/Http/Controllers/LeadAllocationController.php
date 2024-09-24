@@ -60,20 +60,13 @@ class LeadAllocationController extends Controller
                 }
             }
 
-            $unAssignedGood = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::RM_SPEED);
-            $unAssignedBest = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::RM_NB);
-            $unAssignedEntryLevel = $this->leadAllocationService->getUnAssignedHealthQuotes(TeamNameEnum::EBP);
-
             return inertia('LeadAllocation/Health', [
                 'totalAssignedLeadCount' => $totalAssignedLeadCount,
                 'availableUsers' => $availableUsers,
                 'unAvailableUsers' => $unAvailableUsers,
                 'isAutoAllocationWorking' => (int) $isAutoAllocationWorking,
                 'data' => $data,
-                'unAssignedGood' => $unAssignedGood,
-                'unAssignedBest' => $unAssignedBest,
                 'quoteType' => QuoteTypes::HEALTH->value,
-                'unAssignedEntryLevel' => $unAssignedEntryLevel,
             ]);
         } else {
             abort(403, 'Unauthorized action.');
