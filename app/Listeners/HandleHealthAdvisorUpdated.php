@@ -17,6 +17,7 @@ class HandleHealthAdvisorUpdated
      */
     public function handle(HealthQuoteAdvisorUpdated $event): void
     {
+        info(self::class . " initiated for uuid: {$event->lead?->uuid}");
         $this->healthEmailService->initiateApplyNowEmail($event->lead);
     }
 }

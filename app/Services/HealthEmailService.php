@@ -152,8 +152,10 @@ class HealthEmailService extends BaseService
 
     public function initiateApplyNowEmail(HealthQuote $lead)
     {
+        info(self::class . " Inside Apply Now for uuid: {$lead->uuid}");
         try {
             if (! $lead->isApplicationPending()) {
+                info(self::class . " Skipping Apply Now Email becuase quote status is not application pending for uuid: {$lead->uuid}");
                 return;
             }
 
@@ -166,9 +168,9 @@ class HealthEmailService extends BaseService
                 if (! $lead->isApplyNowEmailSent()) {
                     $lead->apply_now_email_sent_at = now();
                     $lead->save();
-                    info(self::class." - Apply Now Email Sent: {$responseCode} Customer Email Address: {$lead->email} Quote UuId: {$lead->uuid}");
+                    info(self::class." - Apply Now Email Sent to Customer Email: {$lead->email} Quote UuId: {$lead->uuid} with response code {$responseCode}");
                 } elseif ($advisor) {
-                    info(self::class." - Apply Now Email Sent to Advisor: {$responseCode} Advisor Email Address: {$advisor->email} Quote UuId: {$lead->uuid}");
+                    info(self::class." - Apply Now Email Sent to Advisor Email: {$advisor->email} Quote UuId: {$lead->uuid} with response code {$responseCode}");
                 }
 
             } else {
