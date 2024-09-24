@@ -17,8 +17,8 @@ class BookPolicyOnSageJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 1;
-    public $releaseAfter = 30; // 30 seconds
+    public $tries = 3;
+    public $releaseAfter = 200; // 200 seconds
     public $timeout = 30;
     private $sageRequest;
     private $quote;
@@ -41,7 +41,7 @@ class BookPolicyOnSageJob implements ShouldQueue
      */
     public function handle()
     {
-        info('BookPolicyOnSageJob - '.$this->quote->code.' - Started');
+        info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Started');
 
         (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PROCESSING_STATUS);
 
@@ -61,8 +61,8 @@ class BookPolicyOnSageJob implements ShouldQueue
             (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS);
         }
 
-        info('BookPolicyOnSageJob - '.$this->quote->code.' - Response : '.json_encode($response));
-        info('BookPolicyOnSageJob - '.$this->quote->code.' - Finished');
+        info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Response : '.json_encode($response));
+        info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Finished');
     }
 
     public function failed(Throwable $exception)
@@ -71,7 +71,7 @@ class BookPolicyOnSageJob implements ShouldQueue
 
         (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, $this->quote->userId);
 
-        info('BookPolicyOnSageJob : '.$this->quote->code.' Error : '.$exception->getMessage());
+        info('Policy Book : BookPolicyOnSageJob : '.$this->quote->code.' Error : '.$exception->getMessage());
     }
 
     public function middleware()
