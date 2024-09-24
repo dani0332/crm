@@ -120,6 +120,7 @@ class SageApiService
 
             return is_array($response->json()) ? json_encode($response->json()) : $response->body();
         } catch (Exception $e) {
+            Log::error('Sage API : '.$endPoint.' : '.$e->getMessage());
             return json_encode(['error' => ['message' => ['value' => $e->getMessage()]], 'code' => 500]);
         }
     }
@@ -1709,13 +1710,13 @@ class SageApiService
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
         [$quote, $message, $errorMessage, $payload, $response, $currentStep, $totalSteps, $status] = $logDataArray;
 
-        Log::info("SAGE API : $quote->code : $message");
-        Log::info("SAGE API : $quote->code : $errorMessage");
+        info("SAGE API : $quote->code : $message");
+        info("SAGE API : $quote->code : $errorMessage");
 
         $returnMessage['message'] = $errorMessage;
         $responseArray = $this->convertResponseToArray($response);
         $sageErrorMessage = $responseArray['error']['message']['value'] ?? $responseArray['error'] ?? null;
-        Log::error("SAGE API : $quote->code  : ".json_encode($sageErrorMessage));
+        info("SAGE API : $quote->code  : ".json_encode($sageErrorMessage));
         $returnMessage['error'] = $sageErrorMessage;
         if (str_contains($sageErrorMessage, 'Processing conflict')) {
             $returnMessage['message'] = SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE;
