@@ -737,7 +737,7 @@ class CentralService
                 'quote_uuid' => $quoteDetails->uuid,
                 'quote_status_id' => $quoteDetails->quote_status_id,
                 'activity_schedule_id' => $getActivitySchedule->id,
-                'source' => LeadSourceEnum::IMCRM
+                'source' => LeadSourceEnum::IMCRM,
             ]);
 
             return $activity;
