@@ -31,6 +31,10 @@ class HealthQuoteObserver
         $dirty = $healthQuote->getDirty();
 
         if ($healthQuote->isDirty('advisor_id')) {
+            info(self::class . " - Going to dispatch HealthQuoteAdvisorUpdated event for uuid {$healthQuote->uuid}", [
+                'current_advisor_id' => $healthQuote->advisor_id,
+                'original_advisor_id' => $healthQuote->getOriginal('advisor_id'),
+            ]);
             HealthQuoteAdvisorUpdated::dispatch($healthQuote, $healthQuote->getOriginal('advisor_id'));
         }
 

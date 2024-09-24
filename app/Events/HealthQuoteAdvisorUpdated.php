@@ -19,6 +19,10 @@ class HealthQuoteAdvisorUpdated
      */
     public function __construct(HealthQuote $lead, $oldAdvisorId)
     {
+        info(self::class . " inside event for uuid {$lead->uuid}", [
+            'current_advisor_id' => $lead->advisor_id,
+            'original_advisor_id' => $oldAdvisorId,
+        ]);
         $this->lead = $lead;
         $this->oldAdvisorId = $oldAdvisorId;
     }
