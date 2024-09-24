@@ -9,6 +9,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -455,7 +456,11 @@ class CentralService
         $quote = $this->getQuoteObject($modelType, $quote_uuid);
         if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
             $payment = Payment::where('code', $quote->code)->with('paymentSplits')->first();
-            $this->straightforwardPayments($payment, $payment->paymentSplits, $quote);
+            if ($payment && $payment->paymentSplits->isNotEmpty()) {
+                $this->straightforwardPayments($payment, $payment->paymentSplits, $quote);
+            } else {
+                info('Quote Code: '.$quote->code.' updatePaymentAllocation no payment found');
+            }
         }
     }
 
@@ -467,11 +472,10 @@ class CentralService
      */
     public function straightforwardPayments($payment, $paymentSplits, $quote)
     {
-        info('fn: straightforwardPayments for: '.$payment->code);
+        info('Quote Code: '.$quote->code.' fn: straightforwardPayments');
 
         if ($payment) {
             $paymentSplit = $paymentSplits->first();
-            info('Sage Receipt Id : '.$paymentSplit->sage_reciept_id);
             $this->updatePaymentAllocationStatus($payment, $quote, $paymentSplit);
             if (in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SEMI_ANNUAL, PaymentFrequency::QUARTERLY, PaymentFrequency::MONTHLY, PaymentFrequency::CUSTOM])) {
                 $this->firstSplitAllocationStatus($payment, $paymentSplit, $quote);
@@ -503,31 +507,31 @@ class CentralService
     {
         $collectionAmount = $paymentSplit ? $paymentSplit->collection_amount : $payment->captured_amount;
         $priceWithVat = $quote->price_with_vat;
-        info('fn: calculateAllocationStatus code : '.$payment->code.'  sage_reciept_id: '.$paymentSplit->sage_reciept_id.' payment status id: '.$paymentSplit->payment_status_id.' payment_methods_code: '.$payment->payment_methods_code.' Split Payment method '.$paymentSplit->payment_method);
+        info('Quote Code: '.$quote->code.' fn: calculateAllocationStatus sage_reciept_id: '.$paymentSplit->sage_reciept_id.' payment status id: '.$paymentSplit->payment_status_id.' payment_methods_code: '.$payment->payment_methods_code.' Split Payment method '.$paymentSplit->payment_method);
 
         switch (true) {
             case $paymentSplit && $paymentSplit->sage_reciept_id == null:
-                info('Condition: Payment split sage_reciept_id is set to null');
+                info('Quote Code: '.$quote->code.' Condition: Payment split sage_reciept_id is set to null');
 
                 return PaymentAllocationStatus::NOT_ALLOCATED;
             case in_array($payment->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::NEW]):
-                info('Condition: Payment status is PENDING, CREDIT_APPROVED, or NEW');
+                info('Quote Code: '.$quote->code.' Condition: Payment status is PENDING, CREDIT_APPROVED, or NEW');
 
                 return null;
             case $paymentSplit && in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED]):
-                info('Condition: Payment split status is PENDING or CREDIT_APPROVED');
+                info('Quote Code: '.$quote->code.' Condition: Payment split status is PENDING or CREDIT_APPROVED');
 
                 return PaymentAllocationStatus::NOT_ALLOCATED;
             case $collectionAmount <= 0:
-                info('Condition: Collection amount is less than or equal to 0');
+                info('Quote Code: '.$quote->code.' Condition: Collection amount is less than or equal to 0');
 
                 return PaymentAllocationStatus::UNPAID;
             case $collectionAmount <= $priceWithVat:
-                info('Condition: Collection amount is less than or equal to price with VAT');
+                info('Quote Code: '.$quote->code.' Condition: Collection amount is less than or equal to price with VAT');
 
                 return PaymentAllocationStatus::FULLY_ALLOCATED;
             default:
-                info('Condition: Default case, partially allocated');
+                info('Quote Code: '.$quote->code.' Condition: Default case, partially allocated');
 
                 return PaymentAllocationStatus::PARTIALLY_ALLOCATED;
         }
@@ -834,15 +838,20 @@ class CentralService
         }
     }
 
-    public function lockTransactionStatus($quoteId, $quoteTypeId, $quoteStatuses)
+    public function lockTransactionStatus($quote, $quoteTypeId, $quoteStatuses)
     {
+        $lockLeadStatus = $this->lockLeadSectionsDetails($quote);
+        if ($lockLeadStatus['lead_status'] || auth()->user()->can(PermissionsEnum::SUPER_LEAD_STATUS_CHANGE)) {
+            return $quoteStatuses;
+        }
+
         $lockedQuotesStatuses = [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued,
             QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked,
             QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued,
         ];
 
         $isTransactionApproved = QuoteStatusLog::where('quote_type_id', $quoteTypeId)
-            ->where('quote_request_id', $quoteId)
+            ->where('quote_request_id', $quote->id)
             ->where(function ($query) {
                 $query->where('current_quote_status_id', QuoteStatusEnum::TransactionApproved)
                     ->orWhere('previous_quote_status_id', QuoteStatusEnum::TransactionApproved);

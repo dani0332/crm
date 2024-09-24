@@ -263,7 +263,6 @@ class ApiService
 
         return apiResponse(null, Response::HTTP_OK, 'Email triggered successfully!');
     }
-
     public function sicReplyToILA($lead)
     {
 

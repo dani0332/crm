@@ -108,6 +108,8 @@ const selectedProviderPlan = ref({
   premium: page.props.record.premium,
 });
 
+const modelClass = 'App\\Models\\CarQuote';
+
 /*
 * comment for now, will be used in later after confirmation
 
@@ -553,7 +555,9 @@ const assumptionsForm = useForm({
   vehicle_type_id: page.props.record.vehicle_type_id || null,
   is_modified: page.props.record.is_modified || 0,
   is_bank_financed: page.props.record.is_bank_financed || 0,
-  is_gcc_standard: page.props.record.is_gcc_standard || null,
+  is_gcc_standard: [0, 1].includes(page.props.record.is_gcc_standard)
+    ? page.props.record.is_gcc_standard
+    : null,
   current_insurance_status: page.props.record.current_insurance_status || null,
   year_of_first_registration:
     page.props.record.year_of_first_registration || null,
@@ -2624,7 +2628,7 @@ const fullAddress = computed(() => {
                 <x-field class="uppercase" label="Transaction Type">
                   <x-input
                     type="text"
-                    :value="record.transaction_type_text"
+                    v-model="record.transaction_type_text"
                     class="w-full"
                     :disabled="true"
                   />
@@ -3711,6 +3715,7 @@ const fullAddress = computed(() => {
       :quoteType="quoteType"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
+      :modelClass="modelClass"
     />
 
     <SendUpdates
@@ -4079,14 +4084,14 @@ const fullAddress = computed(() => {
     />
   </div>
   <AuditLogs
-    :type="'App\\Models\\CarQuote'"
+    :type="modelClass"
     :id="$page.props.record.id"
     :quoteCode="$page.props.record.code"
     :expanded="sectionExpanded"
   />
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
-    :type="'App\\Models\\CarQuote'"
+    :type="modelClass"
     :id="$page.props.record.id"
     :expanded="sectionExpanded"
   />
@@ -4095,4 +4100,9 @@ const fullAddress = computed(() => {
     v-if="clientInquiryLogs?.length > 0"
     :logs="clientInquiryLogs"
   />
+
+  <lead-raw-data
+    :modelType="'Car'"
+    :code="$page.props.quote.code"
+  ></lead-raw-data>
 </template>

@@ -293,7 +293,7 @@ class AmtController extends Controller
 
         $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($record->id, QuoteTypes::BUSINESS->name);
 
-        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($record->id, QuoteTypes::BUSINESS->id(), $quoteStatuses);
+        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($record, QuoteTypes::BUSINESS->id(), $quoteStatuses);
         if (AMLService::checkAMLStatusFailed(QuoteTypes::BUSINESS->id(), $record->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;

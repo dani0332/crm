@@ -3,11 +3,10 @@
 namespace App\Listeners;
 
 use App\Enums\LeadSourceEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Events\CarQuoteAdvisorUpdated;
-use App\Facades\Marshall;
 use App\Jobs\OCB\SendCarOCBIntroEmailJob;
+use App\Jobs\SendFTCEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\Customer;
 use App\Models\User;
@@ -51,28 +50,7 @@ class HandleCarAdvisorUpdated
         $lead = $event->lead;
 
         if ($lead) {
-            try {
-                $isPaymentAuthorized = $lead->payment_status_id === PaymentStatusEnum::AUTHORISED;
-
-                if ($isPaymentAuthorized) {
-                    info(self::class." - Payment authorized for UUID: {$lead->uuid}, proceeding to send FTC email.");
-
-                    $isSic = isLeadSic($lead->uuid);
-                    $data = [
-                        'quoteUID' => $lead->uuid,
-                        'quoteTypeId' => (int) QuoteTypes::CAR->id(),
-                        'isSic' => $isSic,
-                    ];
-
-                    Marshall::request('/payment/send-payment-auth-email', 'post', $data);
-
-                    info(self::class." - FTC email sent successfully for UUID: {$lead->uuid}");
-                } else {
-                    info(self::class." - Payment not authorized for UUID: {$lead->uuid}. No action taken.");
-                }
-            } catch (\Exception $e) {
-                info(self::class." - Exception occurred for UUID: {$lead->uuid}: {$e->getMessage()}");
-            }
+            SendFTCEmailJob::dispatch($lead->uuid, QuoteTypes::CAR)->delay(now()->addSeconds(5));
         }
 
         $skippableSources = [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY];

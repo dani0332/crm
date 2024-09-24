@@ -274,7 +274,7 @@ class EmbeddedProductRepository extends BaseRepository
     {
         $canSend = false;
         if ($productCategory == EpCategoryEnum::BOLT_ON) {
-            if (in_array($quoteStatusId, [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued])) {
+            if (in_array($quoteStatusId, [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyBooked])) {
                 if ($transaction->isNotEmpty()) {
                     $canSend = true;
                 }

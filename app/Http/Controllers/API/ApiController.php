@@ -83,7 +83,6 @@ class ApiController extends Controller
     {
         return $this->apiService->evaluateTier($request);
     }
-
     public function inboundEmailsHook()
     {
         return $this->inboundEmailsHookService->process();
