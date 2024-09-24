@@ -196,43 +196,73 @@ onUnmounted(() => (isActive.value = false));
   <x-card class="p-8">
     <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
       <x-card class="text-center h-auto shadow-md border p-2">
-        <span class="text-[#308BCA] uppercase font-bold">Total leads rcvd</span>
+        <x-tooltip placement="bottom">
+          <span
+            class="text-[#308BCA] uppercase font-bold underline decoration-dotted decoration-primary-700 cursor-help"
+            >Total leads rcvd</span
+          >
+          <template #tooltip>Total leads rcvd</template>
+        </x-tooltip>
         <b class="block">{{ totalLeadsReceived }}</b>
       </x-card>
       <x-card class="text-center h-auto shadow-md border p-2">
-        <span class="text-[#308BCA] uppercase font-bold"
-          >Total leads rcvd Ecom</span
-        >
+        <x-tooltip placement="bottom">
+          <span
+            class="text-[#308BCA] uppercase font-bold underline decoration-dotted decoration-primary-700 cursor-help"
+            >Total leads rcvd Ecom</span
+          >
+          <template #tooltip>Total leads rcvd Ecom</template>
+        </x-tooltip>
         <b class="block">{{ totalLeadsReceivedEcommerce }}</b>
       </x-card>
       <x-card class="text-center h-auto shadow-md border p-2">
-        <span class="text-[#308BCA] uppercase font-bold"
-          >TOTAL UNASSIGNED LEADS</span
-        >
+        <x-tooltip placement="bottom">
+          <span
+            class="text-[#308BCA] uppercase font-bold underline decoration-dotted decoration-primary-700 cursor-help"
+            >TOTAL UNASSIGNED LEADS</span
+          >
+          <template #tooltip>TOTAL UNASSIGNED LEADS</template>
+        </x-tooltip>
         <b class="block">{{ totalUnAssignedLeadsReceived }}</b>
       </x-card>
       <x-card class="text-center h-auto shadow-md border p-2">
-        <span class="text-[#308BCA] uppercase font-bold"
-          >TOTAL UNASSIGNED LEADS ECOM</span
-        >
+        <x-tooltip placement="bottom">
+          <span
+            class="text-[#308BCA] uppercase font-bold underline decoration-dotted decoration-primary-700 cursor-help"
+            >TOTAL UNASSIGNED LEADS ECOM</span
+          >
+          <template #tooltip>TOTAL UNASSIGNED LEADS ECOM</template>
+        </x-tooltip>
         <b class="block">{{ totalUnAssignedLeadsReceivedEcommerce }}</b>
       </x-card>
       <x-card class="text-center h-auto shadow-md border p-2">
-        <span class="text-[#308BCA] uppercase font-bold"
-          >TOTAL UNASSIGNED REVIVAL LEADS</span
-        >
+        <x-tooltip placement="bottom">
+          <span
+            class="text-[#308BCA] uppercase font-bold underline decoration-dotted decoration-primary-700 cursor-help"
+            >TOTAL UNASSIGNED REVIVAL LEADS</span
+          >
+          <template #tooltip>TOTAL UNASSIGNED REVIVAL LEADS</template>
+        </x-tooltip>
         <b class="block">{{ totalUnAssignedRevivalLeads }}</b>
       </x-card>
       <x-card class="text-center h-auto shadow-md border p-2">
-        <span class="text-[#308BCA] uppercase font-bold"
-          >TOTAL UNASSIGNED SIC LEADS</span
-        >
+        <x-tooltip placement="bottom">
+          <span
+            class="text-[#308BCA] uppercase font-bold underline decoration-dotted decoration-primary-700 cursor-help"
+            >TOTAL UNASSIGNED SIC LEADS</span
+          >
+          <template #tooltip>TOTAL UNASSIGNED SIC LEADS</template>
+        </x-tooltip>
         <b class="block">{{ totalUnAssignedOnlySICLeadsReceived }}</b>
       </x-card>
       <x-card class="text-center h-auto shadow-md border p-2">
-        <span class="text-[#308BCA] uppercase font-bold"
-          >TOTAL PAID UNASSIGNED SIC LEADS</span
-        >
+        <x-tooltip placement="bottom">
+          <span
+            class="text-[#308BCA] uppercase font-bold underline decoration-dotted decoration-primary-700 cursor-help"
+            >TOTAL PAID UNASSIGNED SIC LEADS</span
+          >
+          <template #tooltip>TOTAL PAID UNASSIGNED SIC LEADS</template>
+        </x-tooltip>
         <b class="block">{{ totalUnAssignedOnlyPaidSICLeadsReceived }}</b>
       </x-card>
     </div>
