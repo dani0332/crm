@@ -501,9 +501,9 @@ const leadStatusOptions = computed(() => {
   const statuses = Array.isArray(page.props.leadStatuses)
     ? page.props.leadStatuses
     : Object.values(page.props.leadStatuses);
+
   const filteredLeadStatuses = statuses
-    ?.filter(status => status.id !== 6 && status.id !== 7)
-    .map(status => {
+    ?.map(status => {
       if (
         (!isLeadPool &&
           [

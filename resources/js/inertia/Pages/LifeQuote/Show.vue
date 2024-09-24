@@ -280,20 +280,11 @@ const industryTypeOptions = computed(() => {
   }));
 });
 
-const quoteStatusOptions = computed(() => {
+const leadStatusOptions = computed(() => {
   return page.props.quoteStatuses.map(status => ({
     value: status.id,
     label: status.text,
   }));
-});
-
-const leadStatusOptions = computed(() => {
-  return page.props.quoteStatuses
-    .filter(status => status.id !== 6 && status.id !== 7)
-    .map(status => ({
-      value: status.id,
-      label: status.text,
-    }));
 });
 
 const allowStatusUpdate = computed(() => {

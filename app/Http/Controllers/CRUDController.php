@@ -596,9 +596,8 @@ class CRUDController extends Controller
         }
         $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', $quoteTypeId);
         $leadStatuses = collect($leadStatuses)->filter(function ($value) {
-            return $value['id'] != QuoteStatusEnum::AMLScreeningCleared && $value['id'] != QuoteStatusEnum::AMLScreeningFailed;
+            return ! in_array($value['id'], [QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed]);
         })->values();
-
         $leadStatuses = app(CentralService::class)->lockTransactionStatus($record, $quoteTypeId, $leadStatuses);
 
         $lostReasons = $this->lookupService->getLostReasons();

@@ -214,7 +214,10 @@ class BusinessQuoteController extends Controller
             })->values();
         }
 
-        $dropdownSource['quote_status_id'] = app(CentralService::class)->lockTransactionStatus($record, self::TYPE_ID, $dropdownSource['quote_status_id']);
+        $quoteStatuses = collect($dropdownSource['quote_status_id'])->filter(function ($value) {
+            return ! in_array($value['id'], [QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed]);
+        })->values();
+        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($record, self::TYPE_ID, $quoteStatuses);
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Business);
         $companyType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
@@ -311,7 +314,7 @@ class BusinessQuoteController extends Controller
             'modelType' => $this->genericModel->modelType,
             'quoteTypeId' => QuoteTypeId::Business,
             'dropdownSource' => $dropdownSource,
-            'leadStatuses' => $dropdownSource['quote_status_id'],
+            'leadStatuses' => $quoteStatuses,
             'advisors' => $advisors,
             'renewalAdvisors' => $renewalAdvisors,
             'allowedDuplicateLOB' => $allowedDuplicateLOB,

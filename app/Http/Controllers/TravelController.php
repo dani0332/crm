@@ -143,14 +143,12 @@ class TravelController extends Controller
                 ];
             })->values();
         }
-        /* // Will skip KYC and AML check , required by BA for payments
-        if (AMLService::checkAMLStatusFailed(self::TYPE_ID, $record->id)) {
-            $dropdownSource['quote_status_id'] = collect($dropdownSource['quote_status_id'])->filter(function ($value) {
-                return $value['id'] != QuoteStatusEnum::TransactionApproved;
-            })->values();
-        }*/
 
-        $dropdownSource['quote_status_id'] = app(CentralService::class)->lockTransactionStatus($record, self::TYPE_ID, $dropdownSource['quote_status_id']);
+        $leadStatuses = collect($dropdownSource['quote_status_id'])->filter(function ($value) {
+            return ! in_array($value['id'], [QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed]);
+        })->values();
+        $leadStatuses = app(CentralService::class)->lockTransactionStatus($record, self::TYPE_ID, $leadStatuses);
+
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel);
         $filteredInsuranceProviders = [];
         if (! empty($insuranceProviders)) {
@@ -229,7 +227,7 @@ class TravelController extends Controller
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
-        $isAmlClearedForQuote = $record->aml_status === AMLStatusCode::AMLScreeningCleared ? true : false;
+        $isAmlClearedForQuote = $record->aml_status === AMLStatusCode::AMLScreeningCleared;
         $amlStatusName = AMLStatusCode::getName($record->aml_status);
 
         return inertia('TravelQuote/Show', [
@@ -240,7 +238,7 @@ class TravelController extends Controller
             'modelType' => $this->genericModel->modelType,
             'quoteTypeId' => QuoteTypeId::Travel,
             'dropdownSource' => $dropdownSource,
-            'leadStatuses' => $dropdownSource['quote_status_id'],
+            'leadStatuses' => $leadStatuses,
             'advisors' => $advisors,
             'renewalAdvisors' => $renewalAdvisors,
             'allowedDuplicateLOB' => $allowedDuplicateLOB,

@@ -22,7 +22,7 @@ class UpdateAMLStatus extends Command
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'AML Status update command for all quote types';
 
     /**
      * Create a new command instance.
@@ -41,7 +41,7 @@ class UpdateAMLStatus extends Command
      */
     public function handle()
     {
-        info('Update Command Started');
+        info('Cmd:UpdateAMLStatus - AML status update command started');
         //Update Record using Quote Status Logs Table
         $leadTables = [
             ['table' => 'car_quote_request', 'quoteType' => QuoteTypeId::Car],
