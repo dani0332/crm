@@ -41,7 +41,6 @@ use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
-use App\Services\AMLService;
 use App\Services\BikeEmailService;
 use App\Services\BikeQuoteService;
 use App\Services\CentralService;
@@ -169,7 +168,6 @@ class BikeQuoteController extends Controller
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
         $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::BIKE->id(), $quoteStatuses);
-
 
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
