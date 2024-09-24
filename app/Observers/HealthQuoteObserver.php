@@ -29,8 +29,9 @@ class HealthQuoteObserver
     public function updated(HealthQuote $healthQuote): void
     {
         $dirty = $healthQuote->getDirty();
+        info(self::class . " - Updated event for uuid {$healthQuote->uuid}", $dirty);
 
-        if ($healthQuote->isDirty('advisor_id')) {
+        if ($healthQuote->isDirty('advisor_id') && $healthQuote->advisor_id !== $healthQuote->getOriginal('advisor_id')) {
             info(self::class . " - Going to dispatch HealthQuoteAdvisorUpdated event for uuid {$healthQuote->uuid}", [
                 'current_advisor_id' => $healthQuote->advisor_id,
                 'original_advisor_id' => $healthQuote->getOriginal('advisor_id'),

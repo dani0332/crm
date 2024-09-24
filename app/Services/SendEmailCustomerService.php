@@ -14,6 +14,7 @@ use App\Facades\Capi;
 use App\Jobs\UpdateSendPolicySubjectJob;
 use App\Models\ApplicationStorage;
 use App\Models\Customer;
+use App\Models\HealthQuote;
 use App\Models\InsuranceProvider;
 use App\Models\User;
 use Carbon\Carbon;
@@ -617,6 +618,12 @@ class SendEmailCustomerService extends BaseService
 
     public function sendRMIntroEmail($quoteUuid, $previousAdvisorId, $isReassignment)
     {
+        $healthQuote = HealthQuote::where('uuid', $quoteUuid)->first();
+        if($healthQuote && $healthQuote->isApplicationPending()) {
+            info('sendRMIntroEmail: Health quote is Application Pending, skipping RM Intro Email for uuid: '.$quoteUuid);
+            return;
+        }
+
         $dataArr = [
             'quoteUID' => $quoteUuid,
             'resend' => false,
