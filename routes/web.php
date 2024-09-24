@@ -657,4 +657,4 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/update-user-status', [UserController::class, 'updateUserStatus']);
 });
 
-Route::post('/update-aml-status', [CRUDController::class, 'updateAmlStatus']);
+Route::get('/update-aml-status', [CRUDController::class, 'updateAmlStatus']);
