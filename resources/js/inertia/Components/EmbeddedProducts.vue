@@ -288,7 +288,7 @@ const toggleProduct = (ep, event) => {
   propsDataReactive.value?.forEach(item => {
     if (item.id === ep.embedded_product_id) {
       item.prices.forEach(price => {
-        if (price.id !== ep.id && price.transactions[0].is_selected !== false) {
+        if (price.id !== ep.id && price.transactions.length > 0 && price.transactions[0].is_selected !== false) {
           price.transactions[0].is_selected = false;
           removeIdFromSelection.push(price.id);
         }
