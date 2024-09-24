@@ -515,8 +515,12 @@ class SendEmailCustomerService extends BaseService
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
             info("sendLMSIntroEmail ---- Tag : {$tag} for ID : {$quoteId}");
             $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.' - ';
-            $attachments = $this->getEmailAttachments($emailData, $quoteId);
+            if ($emailData->customerEmail === '0' || $emailData->customerEmail === 0) {
+                info("Customer email is missing or invalid for ID : {$quoteId}");
 
+                return false;
+            }
+            $attachments = $this->getEmailAttachments($emailData, $quoteId);
             $bcc = [];
             if ($emailData->advisorEmail) {
                 $bcc[] = [
@@ -651,6 +655,11 @@ class SendEmailCustomerService extends BaseService
 
             info("sendNonAdvisorIntroEmail  , emailTemplateId: {$emailTemplateId} with QuoteId: {$quoteId}");
             $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
+            if ($emailData->customerEmail === '0' || $emailData->customerEmail === 0) {
+                info("Customer email is missing or invalid for QuoteId: {$quoteId}");
+
+                return false;
+            }
             $attachments = $this->getEmailAttachments($emailData, $quoteId);
 
             $bccAdditional = [];
