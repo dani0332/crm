@@ -217,7 +217,8 @@ const viewDocument = id => {
       {
         responseType: 'json',
       },
-    ).then(response => {
+    )
+    .then(response => {
       documentsReactive.value = response.data;
       modals.viewDocuments = true;
     })
@@ -282,6 +283,8 @@ const epDocuments = reactive({
     },
   ],
 });
+
+const getBlog = file => useObjectUrl(file);
 
 const ppDoc = str => {
   const doc = JSON.parse(str);
@@ -420,7 +423,7 @@ const executeAction = action => {
   eval(action);
 };
 
-const addEpDocument = (id) => {
+const addEpDocument = id => {
   modals.viewDocuments = false;
   modals.addDocument = true;
   addDocumentForm.epId = id;
@@ -431,20 +434,19 @@ const resetAddForm = () => {
   addDocumentForm.title = null;
   addDocumentForm.type = null;
   addDocumentForm.file = null;
-}
+};
 
-const uploadEpDocument = (event) => {
+const uploadEpDocument = event => {
   addDocumentForm.file = event.files;
-}
+};
 
 const cancelEpDocument = () => {
   modals.addDocument = false;
   resetAddForm();
   modals.viewDocuments = true;
-}
+};
 
-const onAddDocumentSubmit = (event) => {
-
+const onAddDocumentSubmit = event => {
   if (!addDocumentForm.title || !addDocumentForm.type) {
     return;
   }
@@ -483,15 +485,14 @@ const onAddDocumentSubmit = (event) => {
           resetAddForm();
           modals.addDocument = false;
           modals.viewDocuments = true;
-          viewDocument(epId)
+          viewDocument(epId);
         },
         onFinish: () => {
-          addDocumentLoader.value = false; 
+          addDocumentLoader.value = false;
         },
       });
   });
-}
-
+};
 </script>
 
 <template>
@@ -521,7 +522,7 @@ const onAddDocumentSubmit = (event) => {
         </div>
       </div>
       <template #content>
-        <x-divider class="mb-4 mt-2 mt-1" />
+        <x-divider class="mb-4 mt-2" />
         <DataTable
           table-class-name="tablefixed"
           :headers="epTable.columns"
@@ -599,9 +600,9 @@ const onAddDocumentSubmit = (event) => {
               >
                 Send Documents
               </x-button>
-              <x-button 
-                size="xs" 
-                color="#ff5e00" 
+              <x-button
+                size="xs"
+                color="#ff5e00"
                 :loading="viewDocumentLoader"
                 @click.prevent="viewDocument(item.id)"
               >
@@ -668,61 +669,71 @@ const onAddDocumentSubmit = (event) => {
           </template>
         </x-modal>
         <x-modal v-model="modals.viewDocuments" size="lg" show-close backdrop>
-          <template #header> 
+          <template #header>
             <div class="px-6 py-4 bg-gray-100">
-              EP - {{documentsReactive.ep.display_name}} - Documents 
+              EP - {{ documentsReactive.ep.display_name }} - Documents
             </div>
           </template>
 
-          <template #footer> 
+          <template #footer>
             <div class="mt-2 mb-5 text-center">
-              <x-button size="xs" color="#ff5e00" @click.prevent="addEpDocument(documentsReactive.ep.id)"> 
-                Click to add document(s) 
+              <x-button
+                size="xs"
+                color="#ff5e00"
+                @click.prevent="addEpDocument(documentsReactive.ep.id)"
+              >
+                Click to add document(s)
               </x-button>
             </div>
           </template>
 
-          <DataTable 
-            :headers="epDocuments.columns" 
+          <DataTable
+            :headers="epDocuments.columns"
             :items="documentsReactive.documents || []"
-            border-cell 
-            hide-rows-per-page 
-            hide-footer 
+            border-cell
+            hide-rows-per-page
+            hide-footer
             :loading="viewDocumentLoader"
-            >
-
+          >
             <template #item-actions="item">
               <div class="flex flex-col gap-1">
-                <x-button size="xs" color="#ff5e00" :href="item.url" target="_blank" v-if="item.can_view">
+                <x-button
+                  size="xs"
+                  color="#ff5e00"
+                  :href="item.url"
+                  target="_blank"
+                  v-if="item.can_view"
+                >
                   View
                 </x-button>
-                <x-button v-if="item.action" size="xs" color="#ff5e00"
-                  :disabled="!item.can_send" :loading="downloadLoader"
-                  @click.prevent="executeAction(item.action)">
+                <x-button
+                  v-if="item.action"
+                  size="xs"
+                  color="#ff5e00"
+                  :disabled="!item.can_send"
+                  :loading="downloadLoader"
+                  @click.prevent="executeAction(item.action)"
+                >
                   Download
                 </x-button>
               </div>
             </template>
           </DataTable>
-
         </x-modal>
 
-        <x-modal 
-        v-model="modals.addDocument" 
-        size="sm" 
-        show-close 
-        backdrop
-        is-form
-        @submit="onAddDocumentSubmit"
+        <x-modal
+          v-model="modals.addDocument"
+          size="md"
+          show-close
+          backdrop
+          is-form
+          @submit="onAddDocumentSubmit"
         >
-          <template #header> 
-            <div class="px-6 py-4 bg-gray-100">
-              Add Document
-            </div>
+          <template #header>
+            <div class="px-6 py-4 bg-gray-100">Add Document</div>
           </template>
 
           <div class="grid gap-4">
-            
             <x-input
               v-model="addDocumentForm.type"
               label="Document Type"
@@ -737,17 +748,46 @@ const onAddDocumentSubmit = (event) => {
               class="w-full"
             />
 
+            <div
+              v-if="addDocumentForm.file"
+              class="relative bg-primary-50 rounded-md text-center flex flex-col gap-4 items-center border border-primary-300 ease-linear transition-all duration-150 p-4"
+            >
+              <div
+                v-if="addDocumentForm.file[0].file.type.startsWith('image/')"
+              >
+                <img
+                  :src="getBlog(addDocumentForm.file[0].file).value"
+                  class="max-w-xs max-h-32"
+                />
+              </div>
+              <div>
+                {{ addDocumentForm.file[0].file.name }}
+              </div>
+
+              <x-button
+                @click="addDocumentForm.file = null"
+                size="xs"
+                color="error"
+              >
+                Remove
+              </x-button>
+            </div>
+
             <Dropzone
-                @change="
-                  uploadEpDocument($event)
-                "
-                :maxSize='documentsReactive.document_type?.max_size'
-                :accept="documentsReactive.document_type?.accepted_files"
-              />
+              v-else
+              @change="uploadEpDocument($event)"
+              :maxSize="documentsReactive.document_type?.max_size"
+              :accept="documentsReactive.document_type?.accepted_files"
+            />
           </div>
 
           <template #secondary-action>
-            <x-button ghost tabindex="-1" @click="cancelEpDocument()" :disabled="addDocumentLoader">
+            <x-button
+              ghost
+              tabindex="-1"
+              @click="cancelEpDocument()"
+              :disabled="addDocumentLoader"
+            >
               Cancel
             </x-button>
           </template>
@@ -755,13 +795,12 @@ const onAddDocumentSubmit = (event) => {
             <x-button
               color="primary"
               type="submit"
-               :loading="addDocumentLoader"
+              :loading="addDocumentLoader"
             >
               Save
             </x-button>
           </template>
         </x-modal>
-
       </template>
     </x-accordion-item>
   </x-accordion>
