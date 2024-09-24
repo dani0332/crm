@@ -508,7 +508,7 @@ class SageApiService
     {
         [$sageRequest, $quote,  $request] = $sageRequestDataArray;
         $quoteTypeId = $sageRequest->quoteTypeId;
-        $userId = $quote->userId;
+        $userId = $sageRequest->userId;
 
         $sageLogArray = $quote->sageApiLogs->keyBy('step')->toArray();
         $payment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
