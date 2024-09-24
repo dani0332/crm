@@ -444,7 +444,7 @@ class SplitPaymentService
         $data['order_amount'] = number_format($splitPayment->collection_amount, 2, '.', ',');
         $data['payment_split_id'] = $splitPayment->id;
 
-        $data['customer_name'] = !empty($quote->first_name) ? $quote->first_name.' '.$quote->last_name : $quote->customer->first_name.' '.$quote->customer->last_name;
+        $data['customer_name'] = ! empty($quote->first_name) ? $quote->first_name.' '.$quote->last_name : $quote->customer->first_name.' '.$quote->customer->last_name;
 
         $data['advisor_name'] = $quote->advisor->name ?? '';
         $data['advisor_email'] = $quote->advisor->email ?? '';
@@ -507,12 +507,15 @@ class SplitPaymentService
     {
         if (in_array($modelType, [QuoteTypes::BUSINESS->value, QuoteTypes::GROUP_MEDICAL->value, QuoteTypes::HOME->value])) {
             $quote->load(['insuranceProviderDetails']);
+
             return $quote->insuranceProviderDetails->text;
         } elseif (in_array($modelType, [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value])) {
             $quote->load(['plan']);
+
             return $quote->plan->text;
         } else {
             $quote->load(['insuranceProvider']);
+
             return $quote->insuranceProvider->text;
         }
     }
@@ -521,6 +524,7 @@ class SplitPaymentService
     {
         if ($modelType == QuoteTypes::BUSINESS->value) {
             $quote->load(['businessTypeOfInsurance']);
+
             return $quote->businessTypeOfInsurance->text;
         } else {
             return $modelType.' Insurance';
