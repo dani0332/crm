@@ -619,8 +619,9 @@ class SendEmailCustomerService extends BaseService
     public function sendRMIntroEmail($quoteUuid, $previousAdvisorId, $isReassignment)
     {
         $healthQuote = HealthQuote::where('uuid', $quoteUuid)->first();
-        if($healthQuote && $healthQuote->isApplicationPending()) {
+        if ($healthQuote && $healthQuote->isApplicationPending()) {
             info('sendRMIntroEmail: Health quote is Application Pending, skipping RM Intro Email for uuid: '.$quoteUuid);
+
             return;
         }
 
