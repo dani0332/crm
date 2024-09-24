@@ -1,44 +1,12 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Services;
 
 use App\Models\RenewalBatch;
 use Carbon\Carbon;
-use Illuminate\Console\Command;
 
-class AddBatchNumberNonMotors extends Command
+class AddBatchForNonMotors extends BaseService
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'AddBatchNumberNonMotors:cron';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Create batch numbers for non-motors';
-
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        config(['database.default' => 'mysql']);
-
-        parent::__construct();
-    }
-
-    /**
-     * Execute the console command.
-     *
-     * @return int
-     */
     public function handle()
     {
         try {

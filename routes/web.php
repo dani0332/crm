@@ -76,6 +76,7 @@ use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Middleware\SetReadDbConnection;
+use App\Services\AddBatchForNonMotors;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
@@ -662,7 +663,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
 
 Route::get('/add-batch-number', function(){
-    Artisan::command('AddBatchNumberNonMotors:cron', function () {
-        $this->info('Batch Number Added Successfully');
-    });
+    $addBtchNuimber = new AddBatchForNonMotors();
+    $addBtchNuimber->handle();
+    echo "Done";
 });
