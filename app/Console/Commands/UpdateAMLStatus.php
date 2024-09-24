@@ -54,8 +54,7 @@ class UpdateAMLStatus extends Command
                     $quoteType = QuoteTypes::getName($quoteStatusLog->quote_type_id)->value ?? null;
                     $getQuoteObject = $this->getModelObject($quoteType);
                     if (class_exists($getQuoteObject)) {
-                        $getQuoteDetails = $getQuoteObject::where('id', $quoteStatusLog->quote_request_id)
-                            ->whereDate('created_at', '>=', Carbon::create(2024, 01, 01))->first();
+                        $getQuoteDetails = $getQuoteObject::where('id', $quoteStatusLog->quote_request_id)->first();
 
                         if ($getQuoteDetails) {
                             info('cmd:UpdateAMLStatus - QuoteType:'.$quoteType.' - QuoteID:'.$quoteStatusLog->quote_request_id.' - AMLStatus:'.$amlStatus);
