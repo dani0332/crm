@@ -11,7 +11,10 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Log;
 use Throwable;
+
+use function Laravel\Prompts\error;
 
 class BookPolicyOnSageJob implements ShouldQueue
 {
@@ -71,7 +74,7 @@ class BookPolicyOnSageJob implements ShouldQueue
 
         (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, $this->quote->userId);
 
-        info('Policy Book : BookPolicyOnSageJob : '.$this->quote->code.' Error : '.$exception->getMessage());
+        Log::error('Policy Book : BookPolicyOnSageJob : '.$this->quote->code.' Error : '.$exception->getMessage());
     }
 
     public function middleware()
