@@ -205,7 +205,7 @@ function setUrl(advisor_id, quote_status_id) {
 
         const quoteStatusParams = quote_status_id.map(id => `quote_status_id[]=${id}`).join('&');
 
-        url = `/${personalQuoteTypes.has(this.filters.quoteType) ? 'personal-quotes' : 'quotes'}/${formattedQuoteType}?${quoteStatusParams}&advisor_id[]=${advisor_id}&segment_filter=all&payment_status_id=4`;
+        url = `/${personalQuoteTypes.has(filters.quoteType) ? 'personal-quotes' : 'quotes'}/${formattedQuoteType}?${quoteStatusParams}&advisor_id[]=${advisor_id}&segment_filter=all&payment_status_id=4`;
         window.location.href = url;
     }
 }
