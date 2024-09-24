@@ -41,4 +41,20 @@ class MDX extends EmbeddedProduct
 
         return $data;
     }
+
+    protected function getCertificate($ep, $transaction, $canSendDocuments)
+    {
+        $certificate = [
+            'document_type' => 'Policy certificate',
+            'document_number' => '',
+            'can_send' => $canSendDocuments,
+            'action' => "downloadDcoument({$ep->id})",
+        ];
+
+        if ($transaction->isNotEmpty()) {
+            $certificate['document_number'] = $transaction->first()['certificate_number'];
+        }
+
+        return $certificate;
+    }
 }

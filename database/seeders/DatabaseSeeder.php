@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             AddSuperLeadStatusChangePermission::class,
             AddReApprovePaymentPermission::class,
+            DocumentTypeSeeder::class,
         ]);
     }
 }

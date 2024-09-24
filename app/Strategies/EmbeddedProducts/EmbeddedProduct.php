@@ -10,6 +10,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Collection;
+use App\Enums\QuoteDocumentsEnum;
 
 class EmbeddedProduct
 {
@@ -206,5 +207,84 @@ class EmbeddedProduct
         $product = strtoupper(trim($product));
 
         return in_array($product, EmbeddedProductEnum::getAlfredProtectCodes());
+    }
+
+    public function getDocumentList($ep, $transaction, $quoteObject, $canSendDocuments)
+    {
+        $epDocuments = $this->getPolicyWordings($ep);
+        $certificate = $this->getCertificate($ep, $transaction, $canSendDocuments);
+        if(!empty($certificate)) {
+            $epDocuments[] = $certificate;
+        }
+        $epDocuments = array_merge($epDocuments, $this->getadditionalDocuments($transaction));
+
+        return $epDocuments;
+    }
+
+    protected function getPolicyWordings($ep)
+    {
+        $epDocuments = [];
+
+        // get policy wordings
+        $websiteURL = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
+        $documents = json_decode($ep->company_documents);
+        if (!empty($documents)) {
+            foreach ($documents as $item) {
+                $path = $item->path;
+                $pwDoc = $path !== '' ? $websiteURL . $path : '';
+                if (!empty($path)) {
+
+                    $epDocuments[] = [
+                        'document_type' => 'Policy wordings',
+                        'document_number' => 'Not Applicatble',
+                        'url' => $pwDoc,
+                        'can_view' => true,
+                    ];
+                }
+            }
+        }
+
+        return $epDocuments;
+    }
+
+    protected function getCertificate($ep, $transaction, $canSendDocuments)
+    {
+        return [];
+    }
+    
+    protected function getadditionalDocuments($transaction)
+    {
+        if($transaction->isEmpty()) {
+            return [];
+        }
+
+        $transaction = $transaction->first();
+        $transaction->load('documents');
+        $documents = $transaction->documents;
+        if($documents->isEmpty()) {
+            return [];
+        }
+
+        $websiteURL = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
+        $documentNumbers = [
+            QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER => $transaction['tax_invoice_buyer_no'] ?? '',
+            QuoteDocumentsEnum::CAR_TAX_INVOICE => $transaction['tax_invoice_no'] ?? '',
+            QuoteDocumentsEnum::CAR_TAX_CREDIT_RAISE_BY_BUYER => $transaction['credit_note_buyer_no'] ?? '',
+            QuoteDocumentsEnum::CAR_TAX_CREDIT => $transaction['credit_note_no'] ?? '',
+            QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE => $transaction['certificate_number'] ?? '',
+        ];
+
+        $docs = $documents->map(function ($document) use ($documentNumbers, $websiteURL)  {
+
+            $documentNumber = $document->document_type_code === QuoteDocumentsEnum::EP ? $document->doc_name : $documentNumbers[$document->document_type_code] ?? '';
+            return [
+                'document_type' => $document->document_type_text,
+                'document_number' => $documentNumber,
+                'url' => $document->doc_url !== '' ? $websiteURL . $document->doc_url : '',
+                'can_view' => true,
+            ];
+        })->toArray();
+
+        return $docs;
     }
 }

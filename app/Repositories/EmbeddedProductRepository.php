@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
@@ -32,6 +33,7 @@ use finfo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PDF;
+use App\Models\DocumentType;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -363,14 +365,13 @@ class EmbeddedProductRepository extends BaseRepository
 
         [$attachments, $attachmentsUrls] = $this->fetchAttachments($ep, $isAlfredProtect);
 
-        $optionsIds = $ep->prices ? $ep->prices->pluck('id') : [];
         $quoteObject = $this->getQuoteObject($modelType, $quoteId);
         if (empty($quoteObject)) {
             return 'Quote not found';
         }
 
         $advisorData = $this->fetchAdvisorData($quoteObject);
-        $transaction = $this->fetchTransaction($modelType, $quoteId, $optionsIds);
+        $transaction = $this->fetchTransaction($modelType, $quoteId, $ep);
 
         if (! $this->canSendDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction)) {
             info('Documents cannot be sent '.json_encode(['uuid' => $quoteObject->uuid, 'ep category' => $ep->product_category, 'quote status' => $quoteObject->quote_status_id, 'transaction' => $transaction]));
@@ -431,8 +432,9 @@ class EmbeddedProductRepository extends BaseRepository
         return $advisorData;
     }
 
-    private function fetchTransaction($modelType, $quoteId, $optionsIds)
+    private function fetchTransaction($modelType, $quoteId, $ep)
     {
+        $optionsIds = $ep->prices ? $ep->prices->pluck('id') : [];
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
 
         return EmbeddedTransaction::where([
@@ -773,5 +775,72 @@ class EmbeddedProductRepository extends BaseRepository
         } catch (Exception $e) {
             Log::error('Capture Payment Error: '.$e->getMessage());
         }
+    }
+
+    public function fetchGetDocuments($data)
+    {
+        $ep = $this->where('id', $data['epId'])->first();
+        if (!$ep) {
+            return false;
+        }
+
+        $quoteObject = $this->getQuoteObject($data['modelType'], $data['quoteId']);
+        $transaction = $this->fetchTransaction($data['modelType'], $data['quoteId'], $ep);
+
+        $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($ep->short_code);
+        $strategy = $this->createStrategy($ep->short_code, $isAlfredProtect);
+
+        $canSendDocuments = $this->canSendDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
+        $epDocuments = $strategy->getDocumentList($ep, $transaction, $quoteObject, $canSendDocuments);
+
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($data['modelType']));
+        $documentType = DocumentType::where('code', QuoteDocumentsEnum::EP)->where('quote_type_id', $quoteTypeId)->first();
+
+        return [
+            'ep' => $ep,
+            'documents' => $epDocuments,
+            'document_type' => $documentType,
+        ];
+    }
+
+    public function fetchUploadQuoteDocument($data)
+    {
+        $ep = $this->where('id', $data['epId'])->first();
+        if (!$ep) {
+            return false;
+        }
+
+        $quoteObject = $this->getQuoteObject($data['modelType'], $data['quoteId']);
+        $transaction = $this->fetchTransaction($data['modelType'], $data['quoteId'], $ep);
+
+        $documentData = $this->prepareDocumentData($data['file'][0]['file'], $data['title'], $data['type'], $quoteObject, $data['modelType']);
+        $transaction->first()->documents()->create($documentData);
+
+        return true;
+    }
+
+    private function prepareDocumentData($file, $title, $type, $quoteObject, $modelType)
+    {
+        $originalName = $file->getClientOriginalName();
+        $docName = preg_replace('/\s+/', '', uniqid() . '_' . $originalName);
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        $documentType = DocumentType::where('code', QuoteDocumentsEnum::EP)->where('quote_type_id', $quoteTypeId)->first();
+        $fileNameAzure = $quoteObject->uuid . '_' . $docName;
+        $docUuid = uniqid();
+        $filePathAzure = $file->storeAs('documents/' . $documentType->folder_path, $fileNameAzure, 'azureIM');
+        if($filePathAzure == false) {
+            throw new Exception('Error uploading document');
+        }
+
+        return [
+            'doc_name' => $title,
+            'original_name' => $originalName,
+            'doc_url' => $filePathAzure,
+            'doc_mime_type' => $file->getClientMimeType(),
+            'document_type_code' => $documentType->code,
+            'document_type_text' => $type,
+            'doc_uuid' => $docUuid,
+            'created_by_id' => null,
+        ];
     }
 }

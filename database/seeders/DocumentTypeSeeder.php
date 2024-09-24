@@ -37630,5 +37630,21 @@ class DocumentTypeSeeder extends Seeder
             'category' => DocumentTypeCode::ISSUING_DOCUMENTS,
             'sort_order' => 13,
         ]);
+
+        DocumentType::firstOrCreate(([
+            'code' => QuoteDocumentsEnum::EP,
+            'category' => DocumentTypeCode::EP,
+        ]), [
+            'text' => 'Embedded product document uploaded by Advisor',
+            'is_active' => 1,
+            'quote_type_id' => 1,
+            'folder_path' => 'car',
+            'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
+            'max_files' => 1,
+            'max_size' => 25,
+            'is_required' => 1,
+            'category' => DocumentTypeCode::EP,
+            'sort_order' => 14,
+        ]);
     }
 }

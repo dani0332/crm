@@ -12,14 +12,15 @@ use App\Models\EmbeddedProduct;
 use App\Repositories\EmbeddedProductRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Exception;
 
 class EmbeddedProductController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_CONFIG, ['except' => ['sendDocument', 'downloadDocument', 'cancelPayment']]);
+        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_CONFIG, ['except' => ['sendDocument', 'downloadDocument', 'cancelPayment', 'getDocuments', 'uploadQuoteDocument']]);
         $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_PAYMENT_CANCEL, ['only' => ['cancelPayment']]);
-        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_VIEW, ['only' => ['sendDocument', 'downloadDocument']]);
+        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_VIEW, ['only' => ['sendDocument', 'downloadDocument', 'getDocuments', 'uploadQuoteDocument']]);
     }
 
     /**
@@ -203,5 +204,24 @@ class EmbeddedProductController extends Controller
                 },
                 $file[$lastIndex - 1]
             );
+    }
+
+    public function getDocuments(EmbeddedProducDocumentRequest $request)
+    {
+        $documents = EmbeddedProductRepository::getDocuments($request->validated());
+
+        return response()->json($documents);
+    }
+    
+    public function uploadQuoteDocument(Request $request)
+    {
+        try {
+            EmbeddedProductRepository::uploadQuoteDocument($request->all());
+        } catch (Exception $e) {
+            info('Documents upload failed - ' . json_encode($request->all()) . ' - ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Document uploaded failed!');
+        }
+        
+        return redirect()->back()->with('success', 'Document uploaded successfully!');
     }
 }
