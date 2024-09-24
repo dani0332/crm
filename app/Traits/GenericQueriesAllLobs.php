@@ -51,14 +51,16 @@ trait GenericQueriesAllLobs
         $nameSpace = '\\App\\Models\\';
         $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
         if (! class_exists($model)) {
-            if (in_array(ucwords($quoteType), [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE])){
+            if (in_array(ucwords($quoteType), [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE])) {
                 $model = $nameSpace.'BusinessQuote';
                 if (class_exists($model)) {
                     return $model;
                 }
             }
+
             return false;
         }
+
         return $model;
     }
 
@@ -787,15 +789,24 @@ trait GenericQueriesAllLobs
                 info('Quote Code: '.$payment->code.' Updating TA for Split Payment frequency is : '.$payment->frequency.' and payment_status_id: '.$payment->payment_status_id);
                 if ($payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
                     info('Quote Code: '.$payment->code.' Updating PA BTA: '.$paymentSplit->payment_amount.' WTA: '.$payment->total_amount);
-                    $paymentSplit->payment_amount = $payment->total_amount;
+                    if ($paymentSplit->payment_amount != $payment->total_amount) {
+                        $paymentSplit->payment_amount = $payment->total_amount;
+                        $paymentSplit->save();
+                    }
                 }
                 if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {
+                    $oldPaymentStatusId = $paymentSplit->payment_status_id;
+                    $newPaymentStatusId = null;
                     if ($paymentSplit->collection_amount >= $paymentSplit->payment_amount) {
-                        $paymentSplit->payment_status_id = PaymentStatusEnum::PAID;
+                        $newPaymentStatusId = PaymentStatusEnum::PAID;
                     } else {
-                        $paymentSplit->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
+                        $newPaymentStatusId = PaymentStatusEnum::PARTIALLY_PAID;
                     }
-                    $paymentSplit->save();
+                    if ($oldPaymentStatusId != $newPaymentStatusId) {
+                        $paymentSplit->payment_status_id = $newPaymentStatusId;
+                        $paymentSplit->save();
+                        info('Payment split status updated for: '.$paymentSplit->code.' from '.$oldPaymentStatusId.' to '.$newPaymentStatusId);
+                    }
                 }
             }
         }

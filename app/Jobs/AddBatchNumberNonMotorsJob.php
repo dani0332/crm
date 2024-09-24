@@ -85,20 +85,20 @@ class AddBatchNumberNonMotorsJob implements ShouldQueue
         while ($startDate < now()) {
             $currentDate = $startDate->copy();
             $nextWeek = $startDate->copy()->addDays(6);
-        
+
             $month = $currentDate->format('M');
             $year = $currentDate->format('y');
             $monthNumber = $currentDate->format('m');
             $fullYear = $currentDate->format('Y');
-    
+
             $batchArray[] = [
-                'name' => $month . '-' . $year,
+                'name' => $month.'-'.$year,
                 'startDate' => $currentDate->toDateString(),
                 'endDate' => $nextWeek->toDateString(),
                 'month' => $monthNumber,
-                'year' => $fullYear
+                'year' => $fullYear,
             ];
-        
+
             $startDate->addWeek();
         }
 

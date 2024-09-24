@@ -36,7 +36,7 @@ class RenewalBatchRequest extends FormRequest
         $isShowSegmentSlabs = $this->input('is_show_segment_slabs') ?? false;
 
         if (! $isShowSegmentSlabs) {
-           return [
+            return [
                 'name' => [
                     'required',
                     'max:240',
@@ -55,8 +55,8 @@ class RenewalBatchRequest extends FormRequest
                     'integer',
                 ],
                 'isShowSegmentSlabs' => [
-                    'nullable'
-                ]
+                    'nullable',
+                ],
 
             ];
         }

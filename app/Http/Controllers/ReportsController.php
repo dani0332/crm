@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ManagementReportCategoriesEnum;
-use App\Enums\MonthNameEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -518,19 +517,22 @@ class ReportsController extends Controller
         ]);
     }
 
-    public function renderRetentionReport(Request $request, RetentionReportService $retentionReportService){
-        @[$retentionReportData, $footerData] =  $retentionReportService->getReportData($request);
+    public function renderRetentionReport(Request $request, RetentionReportService $retentionReportService)
+    {
+        @[$retentionReportData, $footerData] = $retentionReportService->getReportData($request);
+
         return inertia('Reports/RetentionReport', [
             'filterOptions' => $retentionReportService->getFilterOptions(),
             'filtersByLob' => $retentionReportService->getFiltersByLob(),
             'reportData' => $retentionReportData,
             'footerData' => $footerData,
             'productName' => $retentionReportService->getUserPorductName(),
-            'retentionReportEnum' => RetentionReportEnum::asArray()
+            'retentionReportEnum' => RetentionReportEnum::asArray(),
         ]);
     }
 
-    public function fetchRetentionLeadsData(Request $request,  RetentionReportService $retentionReportService){
+    public function fetchRetentionLeadsData(Request $request, RetentionReportService $retentionReportService)
+    {
         return $retentionReportService->getRetentionLeadsData($request);
     }
 }

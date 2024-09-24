@@ -354,8 +354,8 @@ final class PermissionsEnum extends Enum
     public const INPL_USER = 'inpl-user';
     public const INPL_APPROVER = 'inpl-approver';
     public const DOCUMENT_VERIFY = 'document-verify';
-    public const MANAGER_RETENTION_REPORT_VIEW= 'manager-retention-report-view';
-    public const ADVISOR_RETENTION_REPORT_VIEW= 'advisor-retention-report-view ';
+    public const MANAGER_RETENTION_REPORT_VIEW = 'manager-retention-report-view';
+    public const ADVISOR_RETENTION_REPORT_VIEW = 'advisor-retention-report-view ';
     public const DEPARTMENT_CREATE = 'department-create';
     public const DEPARTMENT_UPDATE = 'department-update';
     public const DEPARTMENT_LIST = 'department-list';
@@ -369,6 +369,7 @@ final class PermissionsEnum extends Enum
     public const VIEW_SAGE_API_LOGS = 'view-sage-api-logs';
     public const TRAVEL_SIC_ALLOCATION = 'travel-sic-allocation';
     public const SUPER_LEAD_STATUS_CHANGE = 'super-lead-status-change';
+    public const ReApprovePayments = 'reapprove-payment';
 
     public static function getAdvisorConversionReportPermissions()
     {

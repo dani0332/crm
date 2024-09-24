@@ -12,7 +12,6 @@ use App\Models\TravelQuote;
 use Exception;
 use Illuminate\Http\Response;
 
-//Scheduled to delete 1st April 2024
 class InboundEmailsHookService extends BaseService
 {
     private function verifyAuthorization()

@@ -40,6 +40,6 @@ class AddBatchNumberNonMotors extends Command
     public function handle()
     {
         Log::info('Add Batch Number Command Started for non-motors ');
-        dispatch(new AddBatchNumberNonMotorsJob());
+        dispatch(new AddBatchNumberNonMotorsJob);
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Exports;
 
-use App\Repositories\HomeQuoteRepository;
 use App\Services\Reports\RetentionReportService;
 use App\Traits\ExcelExportable;
 use Illuminate\Http\Request;
@@ -10,10 +9,12 @@ use Illuminate\Http\Request;
 class RetentionReportExport
 {
     use ExcelExportable;
+
     private $data;
     private $isShowBatchColumn;
 
-    public function __construct(Request $request) {
+    public function __construct(Request $request)
+    {
         @[$this->data] = app(RetentionReportService::class)->getReportData($request, true);
         $this->isShowBatchColumn = app(RetentionReportService::class)->isShowBatchColumn($this->data);
     }
@@ -25,7 +26,7 @@ class RetentionReportExport
 
     public function headings(): array
     {
-        $headers= [
+        $headers = [
             'Month',
             'Advisor Name',
             'Total',
@@ -37,17 +38,18 @@ class RetentionReportExport
             'Relative Retention',
         ];
 
-        if ($this->isShowBatchColumn){
+        if ($this->isShowBatchColumn) {
             $headers[] = 'Batch';
             $headers[] = 'Start Date';
             $headers[] = 'End Date';
         }
+
         return $headers;
     }
 
     public function map($report): array
     {
-        $data= [
+        $data = [
             $report->month,
             $report->advisor_name,
             $report->total,
@@ -59,10 +61,10 @@ class RetentionReportExport
             $report->relative_retention,
         ];
 
-        if ($this->isShowBatchColumn){
-            $data[] =  $report->batch;
-            $data[] =  $report->start_date;
-            $data[] =  $report->end_date;
+        if ($this->isShowBatchColumn) {
+            $data[] = $report->batch;
+            $data[] = $report->start_date;
+            $data[] = $report->end_date;
         }
 
         return $data;

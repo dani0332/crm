@@ -32,7 +32,7 @@ class ExportValidationRequest extends FormRequest
                 $rules['payment_due_date.*'] = 'required|date';
             } elseif ($this->has('booking_date')) {
                 $rules['booking_date.*'] = 'required|date';
-            } elseif ($quoteType == RetentionReportEnum::RETENTION){
+            } elseif ($quoteType == RetentionReportEnum::RETENTION) {
                 $rules = [
                     'lob' => 'required',
                     'displayBy' => 'required',
