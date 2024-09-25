@@ -14,8 +14,6 @@ use Illuminate\Queue\SerializesModels;
 use Log;
 use Throwable;
 
-use function Laravel\Prompts\error;
-
 class BookPolicyOnSageJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
