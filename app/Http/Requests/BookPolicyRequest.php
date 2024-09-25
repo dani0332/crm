@@ -52,7 +52,7 @@ class BookPolicyRequest extends FormRequest
                 $validator->errors()->add('value', 'No further editing is required as the policy has been booked');
             }
 
-           if ($quoteModel && $quoteModel->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
+            if ($quoteModel && $quoteModel->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
                 $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
             }
 

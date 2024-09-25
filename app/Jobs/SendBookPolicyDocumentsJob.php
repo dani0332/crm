@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTagEnums;
 use App\Enums\quoteTypeCode;
 use App\Models\ApplicationStorage;
