@@ -17,6 +17,7 @@ const page = usePage();
 const isDirty = ref(false);
 const isMounted = ref(false);
 const advisorOptions = ref([]);
+const batchOptions = ref([]);
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const notification = useToast();
 const can = permission => useCan(permission);
@@ -50,12 +51,12 @@ const getFiltersObject = () => {
     policyExpiryDate: [],
     teams: [],
     advisors: [],
-    month: [],
     page: 1,
     insurance_type: "",
     type: '',
     advisor_id: '',
-    quote_batch_id: ''
+    quote_batch_id: '',
+    batch: [],
   }
 };
 
@@ -103,6 +104,7 @@ const loaders = reactive({
   advisorLeadTable: false,
   teamsOptions: false,
   advisorOptions: false,
+  batchOption: false
 });
 
 const loadTeams = e => {
@@ -182,7 +184,6 @@ const onLobChange = (e, isOnMounted = false) => {
     filters.policyExpiryDate=[];
     filters.teams=[];
     filters.advisors= [];
-    filters.month='';
     filters.page=1;
     filters.insurance_type="";
   }
@@ -253,7 +254,7 @@ watch(
   () => filters.displayBy,
   (newValue, oldValue) => {
     filters.policyExpiryDate = []
-    filters.month=''
+    filters.batch = []
   },
 );
 
@@ -345,16 +346,16 @@ function onSubmit(isValid=true) {
       });
       return
     }
-    if (filters.displayBy == RetentionReportEnum.BATCH && filters.policyExpiryDate.length == 0){
+    if (filters.policyExpiryDate.length == 0){
       notification.error({
-        title: 'Please select Previous Policy Expiry Date',
+        title: 'Please select start and end date',
         position: 'top',
       });
       return
     }
-    if (filters.displayBy == RetentionReportEnum.MONTHLY && filters.month.length == 0){
+    if (filters.displayBy == RetentionReportEnum.BATCH && filters.batch.length === 0){
       notification.error({
-        title: 'Please select Month',
+        title: 'Please select batch',
         position: 'top',
       });
       return
@@ -531,6 +532,28 @@ watch(
     },
     { immediate: true }
 );
+
+function handleDateChange(dateRange) {
+  if (filters.displayBy == RetentionReportEnum.BATCH && filters.policyExpiryDate.length == 2) {
+    loaders.batchOption = true;
+    axios
+      .post(`/reports/fetch-batch-by-date`, {
+        policyExpiryDate: filters.policyExpiryDate,
+      })
+      .then(res => {
+        if (res.data.length > 0) {
+          batchOptions.value = Object.keys(res.data).map(key => ({
+            value: res.data[key].id.toString(),
+            label: res.data[key].name,
+          }));
+        }
+      })
+      .finally(() => {
+        loaders.batchOption = false;
+      });
+  }
+}
+
 </script>
 
 <template>
@@ -564,25 +587,24 @@ watch(
         />
 
         <DatePicker
-          v-if="canShow('previous_policy_expiry_date') && filters.displayBy === RetentionReportEnum.BATCH"
+          v-if=" filters.displayBy === RetentionReportEnum.MONTHLY || filters.displayBy === RetentionReportEnum.BATCH"
           v-model="filters.policyExpiryDate"
-          label="Previous policy Expiry Date"
+          label="Select start and end date"
           placeholder="Select Start & End Date"
           range
           size="sm"
           model-type="yyyy-MM-dd"
-          :max-range="31"
+          :max-range="92"
+          @update:model-value="handleDateChange"
         />
 
-        <DatePicker
-          label="Select month"
-          v-if="filters.displayBy === RetentionReportEnum.MONTHLY"
-          v-model="filters.month"
-          class="w-full"
-          :monthPicker="true"
-          placeholder="Select month"
-          format="MMM-yyyy"
-          :disableYear="true"
+        <ComboBox
+          v-if="filters.displayBy === RetentionReportEnum.BATCH && filters.policyExpiryDate.length == 2"
+          v-model="filters.batch"
+          label="Batch"
+          placeholder="Search by Batch"
+          :options="batchOptions"
+          :loading="loaders.batchOption"
         />
 
         <ComboBox

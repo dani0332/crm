@@ -535,4 +535,8 @@ class ReportsController extends Controller
     {
         return $retentionReportService->getRetentionLeadsData($request);
     }
+
+    public function fetchBatchByDates(Request $request, RetentionReportService $retentionReportService) {
+        return $retentionReportService->getBatchByDates($request);
+    }
 }

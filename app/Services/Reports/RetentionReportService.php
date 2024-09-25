@@ -12,6 +12,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\RetentionReportEnum;
 use App\Enums\RolesEnum;
 use App\Models\PersonalQuote;
+use App\Models\RenewalBatch;
 use App\Models\UserManager;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\ApplicationStorageService;
@@ -22,6 +23,8 @@ use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+
+use function Ramsey\Uuid\v1;
 
 class RetentionReportService extends BaseService
 {
@@ -252,7 +255,7 @@ class RetentionReportService extends BaseService
     private function applyDateFilters($query, $request, $isDetailsFilter)
     {
         // Check if 'policyExpiryDate' or 'month' is not set in the request
-        if (! isset($request['displayBy']) && ! isset($request['policyExpiryDate']) && ! isset($request['month'])) {
+        if (! isset($request['displayBy']) && ! isset($request['policyExpiryDate'])) {
             $currentDate = Carbon::now();
 
             // Calculate the start date of the previous month
@@ -271,7 +274,7 @@ class RetentionReportService extends BaseService
             // Apply quote batch start and end date filter
             $query->whereBetween('renewal_batches.start_date', [$previousMonthStartDateFormatted, $nextMonthEndDateFormatted]);
 
-            $this->applyFilterForBatch($query, $request, $isDetailsFilter);
+            $this->applyDefaultFilterForBatch($query, $request, $isDetailsFilter);
         }
     }
 
@@ -364,7 +367,7 @@ class RetentionReportService extends BaseService
      *
      * @return void
      */
-    private function applyFilterForBatch($query, $request, $isDetailsFilter = false)
+    private function applyDefaultFilterForBatch($query, $request, $isDetailsFilter = false)
     {
         // Select batch name, start date, and end date from the renewal_batches table
         $query->selectRaw('renewal_batches.id, renewal_batches.name as batch, renewal_batches.start_date, renewal_batches.end_date')
@@ -389,6 +392,28 @@ class RetentionReportService extends BaseService
     }
 
     /**
+     * Applies batch filters to the query based on the request parameters.
+     * Filters the query to include data from specific quote batches and policy expiry dates.
+     *
+     * @return void
+     */
+    private function applyFilterForBatch($query, $request, $isDetailsFilter = false)
+    {
+        // Select batch name, start date, and end date from the renewal_batches table
+        $query->selectRaw('renewal_batches.id, renewal_batches.name as batch, renewal_batches.start_date, renewal_batches.end_date')
+            ->join('renewal_batches', 'renewal_batch', '=', 'renewal_batches.id');
+
+        // Check if 'policyExpiryDate' parameter is set in the request
+        if (isset($request['batch'])) {
+            $query->whereIn('id', $request['batch']);
+        }
+
+        if (! $isDetailsFilter) {
+            $query->groupBy('renewal_batches.id');
+        }
+    }
+
+    /**
      * Applies month filters to the query based on the request parameters.
      * Filters the query to include data for policies expiring in the specified month.
      *
@@ -396,34 +421,17 @@ class RetentionReportService extends BaseService
      */
     private function applyFilterByMonth($query, $request)
     {
-        if (isset($request['month'])) {
-            // Get the start and end dates for the specified month
-            $monthDates = $this->getMonthDatesByNumber($request['month']);
+        if (isset($request['policyExpiryDate'])) {
+            $startDate = Carbon::parse($request['policyExpiryDate'][0])->startOfDay();
+            $endDate = Carbon::parse($request['policyExpiryDate'][1])->endOfDay();
+
+            $startDate = $startDate->format($this->dateFormat);
+            $endDate = $endDate->format($this->dateFormat);
             // Apply the date range filter to the query
-            $query->whereBetween($this->policyExpiryColumnName, [$monthDates['start_date'], $monthDates['end_date']]);
+            $query->whereBetween($this->policyExpiryColumnName, [$startDate, $endDate]);
         }
     }
 
-    /**
-     * Gets the start and end dates for a given month and year.
-     * Returns an array with formatted start and end dates or an error message if the month number is invalid.
-     *
-     * @return array
-     */
-    private function getMonthDatesByNumber($month)
-    {
-        $year = $month['year'];
-        $monthNumber = $month['month'];
-        // Create Carbon instances for the start and end dates of the month
-        $startDate = Carbon::createFromDate($year, ($monthNumber + 1), 1);
-        $endDate = $startDate->copy()->endOfMonth();
-
-        // Return the formatted start and end dates
-        return [
-            'start_date' => $startDate->format($this->dateFormat),
-            'end_date' => $endDate->format($this->dateFormat),
-        ];
-    }
 
     /**
      * Formats the report data by calculating and adding volume net retention and volume gross retention.
@@ -700,5 +708,46 @@ class RetentionReportService extends BaseService
         }
 
         return $isShowBatchColumn;
+    }
+
+    /**
+     * Get batches by date range.
+     *
+     * @return array An associative array of batches with formatted date ranges.
+     */
+    public function getBatchByDates($request)
+    {
+        // Parse the start and end dates from the request and set them to the start and end of the day
+        $startDate = Carbon::parse($request['policyExpiryDate'][0])->startOfDay();
+        $endDate = Carbon::parse($request['policyExpiryDate'][1])->endOfDay();
+    
+        // Format the start and end dates according to the specified date format
+        $startDate = $startDate->format($this->dateFormat);
+        $endDate = $endDate->format($this->dateFormat);
+    
+        // Apply the date range filter to the query
+        $batches = RenewalBatch::select('name', 'start_date', 'end_date', 'id')
+            ->whereNull('quote_type_id')
+            ->whereBetween('start_date', [$startDate, $endDate]);
+    
+        // Order the batches by ID and format the results
+        $batches = $batches->orderBy('id')
+            ->get()
+            ->map(function ($batch) {
+                // Get the date display format from the configuration
+                $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
+                // Format the start and end dates of the batch
+                $start_date = Carbon::parse($batch->start_date)->format($dateFormat);
+                $end_date = Carbon::parse($batch->end_date)->format($dateFormat);
+    
+            // Return an associative array with the batch 'name' and 'id'
+            return [
+                    'name' => $batch->name.'-('.$start_date.' to '.$end_date.')',
+                    'id' => $batch->id
+                ];
+            })
+            ->toArray();
+    
+        return $batches;
     }
 }
