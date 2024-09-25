@@ -119,6 +119,16 @@ class AlfredChatController extends Controller
                     'created_at' => ['$gte' => $start_date, '$lte' => $end_date],
                 ],
             ];
+        }else {
+            // If dates are not provided, use the current day as default for both
+            $start_date = Carbon::now()->startOfDay()->toIso8601String();
+            $end_date = Carbon::now()->endOfDay()->toIso8601String();
+            
+            $chatPipeline[] = [
+                '$match' => [
+                    'created_at' => ['$gte' => $start_date, '$lte' => $end_date],
+                ],
+            ];
         }
 
         // Add $group, $sort, $skip, and $limit stages for pagination
