@@ -59,8 +59,8 @@ function onSubmit() {
     return;
   }
 
-  filters.start_date = useDateFormat(filters.start_date).value;
-  filters.end_date = useDateFormat(filters.end_date).value;
+  filters.start_date = useDateFormat(filters.start_date, 'YYYY-MM-DD').value;
+  filters.end_date = useDateFormat(filters.end_date, 'YYYY-MM-DD').value;
 
   filters.page = 1;
   router.visit(route('instant-alfred.logs'), {
