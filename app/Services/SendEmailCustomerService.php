@@ -1446,8 +1446,8 @@ class SendEmailCustomerService extends BaseService
 
         if ($sendToAdvisor && property_exists($emailData, 'advisorDetails')) {
             $body['to'] = [[
-                'email' => $emailData->email,
-                'name' => $emailData->customerName,
+                'email' => $emailData->advisorDetails['email'],
+                'name' => $emailData->advisorDetails['name'],
             ]];
         }
 
