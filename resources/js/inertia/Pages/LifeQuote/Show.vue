@@ -36,13 +36,14 @@ defineProps({
   permissions: Object,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
-  isAmlClearedForPayment: Boolean,
+
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
+  amlStatusName: String,
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
@@ -283,13 +284,6 @@ const industryTypeOptions = computed(() => {
   return page.props.industryType.map(indType => ({
     value: indType.code,
     label: indType.text,
-  }));
-});
-
-const quoteStatusOptions = computed(() => {
-  return page.props.quoteStatuses.map(status => ({
-    value: status.id,
-    label: status.text,
   }));
 });
 
@@ -648,7 +642,6 @@ const onAddUpdate = () => {
         </x-button>
       </template>
     </x-modal>
-
     <div class="p-4 rounded shadow mb-6 mt-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -680,6 +673,10 @@ const onAddUpdate = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
                 <dd>{{ quote.customer_type }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
@@ -1179,7 +1176,6 @@ const onAddUpdate = () => {
       :canAddBatchNumber="canAddBatchNumber"
       :expanded="sectionExpanded"
     />
-
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -1318,7 +1314,6 @@ const onAddUpdate = () => {
         })
       "
       :storageUrl="storageUrl"
-      :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
     />

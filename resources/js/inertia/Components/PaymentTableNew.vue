@@ -50,10 +50,6 @@ const props = defineProps({
     type: Array,
     required: false,
   },
-  isAmlClearedForPayment: {
-    type: Boolean,
-    default: false,
-  },
   eCommercePriceWithLP: {
     type: [String, Number],
     default: '0',
@@ -2564,9 +2560,8 @@ const getCaptureValidation = computed(() => {
     if (
       props.payments.length > 0 &&
       totalPriceRounded === calculatedTotal &&
-      (((props.isAmlClearedForPayment ||
-        props.quoteRequest.quote_status_id ===
-          page.props.quoteStatusEnum.AMLScreeningCleared ||
+      (((props.quoteRequest.aml_status ===
+        page.props.amlStatusEnum.AMLScreeningCleared ||
         props.quoteRequest.quote_status_id ===
           page.props.quoteStatusEnum.TransactionDeclined ||
         props.quoteRequest.quote_status_id ===
