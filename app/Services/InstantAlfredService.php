@@ -2,13 +2,16 @@
 
 namespace App\Services;
 
+use App\Enums\InstantChatReportsEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Models\AlfredChat;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\TravelQuote;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -297,4 +300,142 @@ class InstantAlfredService extends BaseService
         return $partialQuery->get();
     }
 
+    public function consolidateReport(Request $request){
+
+        $modelType = $request->quoteType ?? 'Car';
+
+        $data = app(InstantAlfredService::class)->processSqlChatFilters($request, $modelType);
+
+        $data->chunk(1000)->each(function ($sqlBatch) use ($request) {
+            $uuids = $sqlBatch->pluck('uuid')->toArray();
+
+            $mongoPipeline = $this->createPipeline($request, $uuids, $request->report);
+
+            $mongoResults = AlfredChat::raw(fn ($collection) => $collection->aggregate($mongoPipeline))->toArray();
+
+            $mongoResultsCollection = collect($mongoResults);
+
+            foreach ($sqlBatch as $sqlRecord) {
+
+                $relatedMongoRecord = $mongoResultsCollection->firstWhere('_id', $sqlRecord->uuid);
+                if ($relatedMongoRecord) {
+                    $sqlRecord->quote_type = $relatedMongoRecord['quote_type'];
+                    $sqlRecord->communication_channels = $relatedMongoRecord['communication_channels'];
+                    $sqlRecord->customer_interactions = $relatedMongoRecord['customer_interactions'];
+                    $sqlRecord->ai_interactions = $relatedMongoRecord['ai_interactions'];
+                    $sqlRecord->total_ai_interactions = $relatedMongoRecord['total_ai_interactions'];
+                    $sqlRecord->fallbacks = $relatedMongoRecord['fallbacks'];
+                    $sqlRecord->date_of_first_interaction = $relatedMongoRecord['date_of_first_interaction'];
+                }
+            }
+
+        });
+
+        return $data;
+    }
+
+    public function detailedReport(Request $request){
+        $modelType = $request->quoteType ?? 'Car';
+
+        $data = app(InstantAlfredService::class)->processSqlChatFilters($request, $modelType);
+
+        $uuids = array_column($data->toArray(), 'uuid');
+
+        $mongoPipeline = $this->createPipeline($request, $uuids, $request->report);
+
+        $mongoResults = AlfredChat::raw(fn ($collection) => $collection->aggregate($mongoPipeline));
+
+        dd($mongoResults);
+    }
+
+    public function createPipeline(Request $request, $itemIds, $type)
+    {
+        $pipeline[] = [
+            '$match' => [
+                'quote_id' => ['$in' => $itemIds],
+            ],
+        ];
+
+        if ($type === 'chat') {
+            $pipeline[] = [
+                '$group' => [
+                    '_id' => '$quote_id',
+                    'created_at' => ['$first' => '$created_at'],
+                    'communication_channels' => ['$addToSet' => [
+                        '$cond' => [
+                            ['$ifNull' => ['$channel', false]],
+                            '$channel',
+                            '$$REMOVE',
+                        ],
+                    ]],
+                    'fallback' => ['$first' => '$fallback'],
+                ],
+            ];
+        } elseif ($request->report == InstantChatReportsEnum::DETAILED_REPORT) {
+            $pipeline[] = [
+                '$project' => [
+                    'created_at' => 1,
+                    'role' => 1,
+                    'msg' => 1,
+                    'quote_id' => 1,
+                    'quote_type' => 1,
+                    'employee_flag' => '$who_chatted.is_employee',
+                    'email' => '$who_chatted.email',
+                    'user_system' => '$who_chatted.user_agent',
+                    'user_ip_address' => '$who_chatted.ip',
+                    'communication_channel' => '$channel',
+                    'input_tokens_usage' => '$response.usage.prompt_tokens',
+                    'completion_tokens' => '$response.usage.completion_tokens',
+                    'total_tokens' => '$response.usage.total_tokens',
+                ],
+            ];
+        } elseif ($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
+            $pipeline[] = [
+                '$group' => [
+                    '_id' => '$quote_id',
+                    'quote_type' => ['$last' => '$quote_type'],
+                    'date_of_first_interaction' => ['$min' => '$created_at'],
+                    'communication_channels' => ['$addToSet' => [
+                        '$cond' => [
+                            ['$ifNull' => ['$channel', false]],
+                            '$channel',
+                            '$$REMOVE',
+                        ],
+                    ]],
+                    'customer_interactions' => [
+                        '$sum' => [
+                            '$cond' => [
+                                ['$eq' => ['$role', 'USER']],
+                                1,
+                                0,
+                            ],
+                        ],
+                    ],
+                    'ai_interactions' => [
+                        '$sum' => [
+                            '$cond' => [
+                                ['$eq' => ['$role', 'AI']],
+                                1,
+                                0,
+                            ],
+                        ],
+                    ],
+                    'total_ai_interactions' => [
+                        '$sum' => [
+                            '$cond' => [
+                                ['$in' => ['$role', ['AI', 'USER']]],
+                                1,
+                                0,
+                            ],
+                        ],
+                    ],
+                    'fallbacks' => [
+                        '$sum' => ['$cond' => [['$ifNull' => ['$fallback', false]], 1, 0]],
+                    ],
+                ],
+            ];
+        }
+
+        return $pipeline;
+    }
 }

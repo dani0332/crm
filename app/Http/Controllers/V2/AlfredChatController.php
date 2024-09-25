@@ -198,36 +198,23 @@ class AlfredChatController extends Controller
 
     public function exportChat(Request $request)
     {
-        $data = $this->processSqlChatFilters($request, CarQuote::class);
 
-        $itemIds = array_column($data->toArray(), 'uuid');
-
-        $chatPipeline = $this->createPipeline($request, $itemIds, $request->report);
-        $mongoResults = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline))->toArray();
-
-        $fileName = 'alfred_chat_logs_'.Carbon::now()->format('Y-m-d_H-i-s');
-
+        $fileName = $request->report . ' ' . Carbon::now()->format('Y-m-d_H-i-s') . '.xlsx';
+        
+        // $modelType = $request->quoteType ?? 'Car';
+        
+        // $data = app(InstantAlfredService::class)->processSqlChatFilters($request, $modelType);
+        
+        // $mongoResults = [];
+        
         if ($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
-
-            foreach ($data as $item) {
-                $dataById[$item->uuid] = $item;
-                foreach ($mongoResults as $mongoResult) {
-                    if ($item->uuid == $mongoResult['_id']) {
-                        $item->quote_type = $mongoResult['quote_type'];
-                        $item->communication_channels = $mongoResult['communication_channels'];
-                        $item->customer_interactions = $mongoResult['customer_interactions'];
-                        $item->ai_interactions = $mongoResult['ai_interactions'];
-                        $item->total_ai_interactions = $mongoResult['total_ai_interactions'];
-                        $item->fallbacks = $mongoResult['fallbacks'];
-                        $item->date_of_first_interaction = $mongoResult['date_of_first_interaction'];
-                    }
-                }
-            }
-
-            return Excel::download(new InstantChatConsolidatedExport($data->toArray()), $fileName.'.xlsx');
+            
+            return (new InstantChatConsolidatedExport($request))->download($fileName);
         }
 
         if ($request->report == InstantChatReportsEnum::DETAILED_REPORT) {
+            
+
             return Excel::download(new InstantChatDetailedExport($mongoResults), $fileName.'.xlsx');
         }
     }

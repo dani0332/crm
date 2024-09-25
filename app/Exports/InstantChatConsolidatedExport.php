@@ -3,25 +3,27 @@
 namespace App\Exports;
 
 use App\Enums\QuoteStatusEnum;
+use App\Services\InstantAlfredService;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromArray;
+use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class InstantChatConsolidatedExport implements FromArray, WithHeadings, WithMapping
+
+class InstantChatConsolidatedExport implements FromCollection, WithHeadings, WithMapping
 {
     use Exportable;
 
-    protected $chat;
-    public function __construct(array $data)
+    protected $request;
+
+    public function __construct($request)
     {
-        $this->chat = $data;
+        $this->request = $request;
     }
 
-    public function array(): array
-    {
-
-        return $this->chat;
+    public function collection(){
+        return app(InstantAlfredService::class)->consolidateReport($this->request);
     }
 
     public function headings(): array
@@ -56,7 +58,7 @@ class InstantChatConsolidatedExport implements FromArray, WithHeadings, WithMapp
         return [
             $chat->quote_type ?? 'N/A', // 'QUOTE TYPE'
             $chat->code ?? 'N/A', // 'REF ID'
-            $chat->date_of_first_interaction ?? $chat->chat_initiated_at ?? 'N/A', // 'DATE OF FIRST INTERACTION'
+            $chat->chat_initiated_at ?? $chat->date_of_first_interaction ?? 'N/A', // 'DATE OF FIRST INTERACTION'
             $this->formatCommunicationChannel($chat->communication_channels ?? []), // 'COMMUNICATION CHANNEL'
             $chat->quote_batch_id_text ?? 'N/A', // 'BATCH'
             $chat->transaction_type_text ?? 'N/A', // 'TRANSACTION TYPE'
