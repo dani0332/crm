@@ -54,7 +54,7 @@ class InstantChatConsolidatedExport implements FromArray, WithHeadings, WithMapp
     public function map($chat): array
     {
         return [
-            $chat ->quote_type ?? 'N/A', // 'QUOTE TYPE'
+            $chat->quote_type ?? 'N/A', // 'QUOTE TYPE'
             $chat->code ?? 'N/A', // 'REF ID'
             $chat->date_of_first_interaction ?? $chat->chat_initiated_at ?? 'N/A', // 'DATE OF FIRST INTERACTION'
             $this->formatCommunicationChannel($chat->communication_channels ?? []), // 'COMMUNICATION CHANNEL'
@@ -92,8 +92,6 @@ class InstantChatConsolidatedExport implements FromArray, WithHeadings, WithMapp
         });
 
         return implode(', ', $channels);
-
-       
 
         // // dd($channel);
         // // Ensure $channel is an array and not empty before attempting to implode
