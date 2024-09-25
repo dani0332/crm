@@ -319,16 +319,12 @@ class ApiService
             return apiResponse(null, Response::HTTP_BAD_REQUEST, 'Lead not found!');
         }
 
-        if ($lead->isSIC(QuoteTypes::HEALTH)) {
-            info("sendApplyNowEmail: Skipping Apply Now Email for because the lead is SIC Lead uuid: {$lead->uuid}");
-
-            return apiResponse(null, Response::HTTP_OK, "Skipping Apply Now Email because it's SIC Lead");
-        }
-
         if (! $lead->isApplyNowEmailSent()) {
             app(HealthEmailService::class)->initiateApplyNowEmail($lead);
+            return apiResponse(null, Response::HTTP_OK, 'Email Sent');
         }
 
-        return apiResponse(null, Response::HTTP_OK, 'Email Sent');
+
+        return apiResponse(null, Response::HTTP_OK, 'Email Already Sent!');
     }
 }
