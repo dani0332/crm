@@ -137,8 +137,17 @@ class DashboardController extends Controller
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         if (isset($request->range) && $request->range != null) {
             $date = explode(',', $request->range);
-            $startDate = Carbon::parse($date[0])->startOfDay()->format($dateFormat);
-            $endDate = Carbon::parse($date[1])->endOfDay()->format($dateFormat);
+            $startDate = Carbon::parse($date[0])->startOfDay();
+            $endDate = Carbon::parse($date[1])->endOfDay();
+
+            // Ensure that the date range does not exceed 31 days
+            if ($startDate->diffInDays($endDate) > 31) {
+                $endDate = $startDate->copy()->addDays(30)->endOfDay(); // Set end date to 31 days max
+            }
+
+            // Format dates as per the $dateFormat
+            $startDate = $startDate->format($dateFormat);
+            $endDate = $endDate->format($dateFormat);
         } else {
             $startDate = now()->startOfDay()->format($dateFormat);
             $endDate = now()->endOfDay()->format($dateFormat);
