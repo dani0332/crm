@@ -189,9 +189,9 @@ class CentralController extends Controller
 
     public function updateBookingPolicy(BookPolicyRequest $bookPolicyRequest)
     {
-        info('fn: updateBookingPolicy called');
 
         $validatedData = $bookPolicyRequest->validated();
+        info('Quote Code: '.$validatedData['payment_code'].' fn: updateBookingPolicy called');
 
         $paymentInformation = [
             'insurer_tax_number' => $validatedData['insurer_tax_invoice_number'],
@@ -211,11 +211,10 @@ class CentralController extends Controller
             return back()->with('message', 'Payment record not found');
         }
         $payment->update($paymentInformation);
-        $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
-        info('Book policy details update successfully for : '.$quote->uuid);
+        info('Quote Code: '.$validatedData['payment_code'].' Book policy details update successfully');
 
         (new SplitPaymentService)->updateCommissionSchedule($payment);
-        info('Commission Schedule updated successfully for : '.$quote->uuid);
+        info('Quote Code: '.$validatedData['payment_code'].' Commission Schedule updated successfully');
 
         return redirect()->back()->with('success', 'Booking details has been updated.');
     }
@@ -226,7 +225,7 @@ class CentralController extends Controller
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
         $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
 
-        info('fn: sendBookingPolicy called for '.$quote->uuid.' policy type '.$request->send_policy_type);
+        info('Quote Code: '.$quote->code.' fn: sendBookingPolicy called policy type '.$request->send_policy_type);
 
         if ($request->send_policy_type == SendPolicyTypeEnum::CUSTOMER) {
             dispatch(new SendBookPolicyDocumentsJob($request, $quote->code));
@@ -240,7 +239,7 @@ class CentralController extends Controller
             }
             $quote->update($quoteData);
 
-            info('Policy send to customer for '.$quote->uuid);
+            info('Quote Code: '.$quote->code.' Policy send to customer');
 
             return response()->json(['message' => 'Quote status updated to Policy Sent To Customer. Documents are being sent to the customer in background.'], 200);
         }

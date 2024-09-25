@@ -300,7 +300,6 @@ class GenericPermissionSeeder extends Seeder
         if (! $role->hasPermissionTo(PermissionsEnum::ADD_MANUAL_HEALTH_PLAN)) {
             $role->givePermissionTo(PermissionsEnum::ADD_MANUAL_HEALTH_PLAN);
         }
-
     }
 
     private function generateSegmentFilterPermission()
@@ -684,8 +683,7 @@ class GenericPermissionSeeder extends Seeder
                 RolesEnum::GMManager,
                 RolesEnum::CorplineManager,
             ],
-            PermissionsEnum::ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON => [
-            ],
+            PermissionsEnum::ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON => [],
             PermissionsEnum::POLICY_DETAILS_ADD => [
                 RolesEnum::Admin,
                 RolesEnum::Production,
