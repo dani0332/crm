@@ -69,12 +69,12 @@ class AlfredChatController extends Controller
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
             ->leftJoin('quote_tags as qt', function ($join) {
                 $join->on('qt.quote_uuid', '=', 'cqr.uuid')
-                ->where(function($query) {
-                    $query->where('qt.name', QuoteSegmentEnum::SIC->tag())
-                        ->orWhere('qt.name', QuoteSegmentEnum::SIC_REVIVAL->tag())
-                        ->orWhere('qt.name', QuoteSegmentEnum::NON_SIC->tag());
-                 })
-                 ->where('qt.quote_type_id', '=', QuoteTypeId::Car);
+                    ->where(function ($query) {
+                        $query->where('qt.name', QuoteSegmentEnum::SIC->tag())
+                            ->orWhere('qt.name', QuoteSegmentEnum::SIC_REVIVAL->tag())
+                            ->orWhere('qt.name', QuoteSegmentEnum::NON_SIC->tag());
+                    })
+                    ->where('qt.quote_type_id', '=', QuoteTypeId::Car);
             })
             ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
             ->leftJoin('lookups as lu', 'lu.id', '=', 'cqr.transaction_type_id')
@@ -131,11 +131,11 @@ class AlfredChatController extends Controller
             })
             ->leftJoin('quote_tags as qt', function ($join) {
                 $join->on('qt.quote_uuid', '=', 'hqr.uuid')
-                ->where(function($query) {
-                    $query->where('qt.name', QuoteSegmentEnum::SIC->tag())
-                        ->orWhere('qt.name', QuoteSegmentEnum::SIC_REVIVAL->tag())
-                        ->orWhere('qt.name', QuoteSegmentEnum::NON_SIC->tag());
-                 })
+                    ->where(function ($query) {
+                        $query->where('qt.name', QuoteSegmentEnum::SIC->tag())
+                            ->orWhere('qt.name', QuoteSegmentEnum::SIC_REVIVAL->tag())
+                            ->orWhere('qt.name', QuoteSegmentEnum::NON_SIC->tag());
+                    })
                     ->where('qt.quote_type_id', '=', QuoteTypeId::Health);
             })
             ->leftJoin('health_plan_type as hpt', 'hpt.id', '=', 'hqr.health_plan_type_id')
@@ -188,12 +188,12 @@ class AlfredChatController extends Controller
             })
             ->leftJoin('quote_tags as qt', function ($join) {
                 $join->on('qt.quote_uuid', '=', 'tqr.uuid')
-                ->where(function($query) {
-                    $query->where('qt.name', QuoteSegmentEnum::SIC->tag())
-                        ->orWhere('qt.name', QuoteSegmentEnum::SIC_REVIVAL->tag())
-                        ->orWhere('qt.name', QuoteSegmentEnum::NON_SIC->tag());
-                 })
-                ->where('qt.quote_type_id', '=', QuoteTypeId::Travel);
+                    ->where(function ($query) {
+                        $query->where('qt.name', QuoteSegmentEnum::SIC->tag())
+                            ->orWhere('qt.name', QuoteSegmentEnum::SIC_REVIVAL->tag())
+                            ->orWhere('qt.name', QuoteSegmentEnum::NON_SIC->tag());
+                    })
+                    ->where('qt.quote_type_id', '=', QuoteTypeId::Travel);
             })
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
             ->leftJoin('lookups as lu', 'lu.id', '=', 'tqr.transaction_type_id')
