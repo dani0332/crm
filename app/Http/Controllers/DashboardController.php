@@ -65,7 +65,6 @@ class DashboardController extends Controller
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->get();
-        $car = $this->getProductByName(quoteTypeCode::Car);
         $teams = $this->getCurrentUserTeamsAndSubTeams($loggedInUserId);
         $teamIds = DB::table('user_team')->where('user_id', $loggedInUserId)->get()->pluck('team_id');
         $carAdvisors = $this->getUsersByTeamId(count($teamIds->toArray()) > 0 ? $teamIds->toArray() : []);
@@ -81,14 +80,15 @@ class DashboardController extends Controller
         $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($filters);
         $totalLeadsReceived = count($todaysLeads);
         $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
+
         $totalUnAssignedLeads = $this->dashboardService->getTotalUnAssignedLeads($filters);
-        $totalUnAssignedLeadsReceived = count($totalUnAssignedLeads);
+        $totalUnAssignedLeadsReceived = $totalUnAssignedLeads->count();
+        $totalUnAssignedLeadsReceivedEcommerce = $totalUnAssignedLeads->where('is_ecommerce', 1)->count();
+        $totalUnAssignedRevivalLeads = $totalUnAssignedLeads->where('source', LeadSourceEnum::REVIVAL)->count();
+
         $totalUnAssignedOnlySICLeads = $this->dashboardService->getTotalUnAssignedOnlySICLeads($filters);
-        $totalUnAssignedOnlySICLeadsReceived = count($totalUnAssignedOnlySICLeads);
-        $totalUnAssignedOnlyPaidSICLeads = $this->dashboardService->getTotalUnAssignedOnlySICLeads($filters, true);
-        $totalUnAssignedOnlyPaidSICLeadsReceived = count($totalUnAssignedOnlyPaidSICLeads);
-        $totalUnAssignedLeadsReceivedEcommerce = count($totalUnAssignedLeads->where('is_ecommerce', 1));
-        $totalUnAssignedRevivalLeads = count($totalUnAssignedLeads->where('source', LeadSourceEnum::REVIVAL));
+        $totalUnAssignedOnlySICLeadsReceived = $totalUnAssignedOnlySICLeads->count();
+        $totalUnAssignedOnlyPaidSICLeadsReceived = $totalUnAssignedOnlySICLeads->where('payment_status_id', PaymentStatusEnum::AUTHORISED)->count();
 
         $leadsCountByTier = $this->dashboardService->getLeadsCountByTier($filters);
         $unAssignedLeadsByTier = $this->dashboardService->getUnAssignedLeadsCountByTier($filters);
@@ -159,14 +159,16 @@ class DashboardController extends Controller
 
         $totalLeadsReceived = count($todaysLeads);
         $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
+
         $totalUnAssignedLeads = $this->dashboardService->getTotalUnAssignedLeads($filters);
-        $totalUnAssignedLeadsReceived = count($totalUnAssignedLeads);
+        $totalUnAssignedLeadsReceived = $totalUnAssignedLeads->count();
+        $totalUnAssignedLeadsReceivedEcommerce = $totalUnAssignedLeads->where('is_ecommerce', 1)->count();
+        $totalUnAssignedRevivalLeads = $totalUnAssignedLeads->where('source', LeadSourceEnum::REVIVAL)->count();
+
         $totalUnAssignedOnlySICLeads = $this->dashboardService->getTotalUnAssignedOnlySICLeads($filters);
-        $totalUnAssignedOnlySICLeadsReceived = count($totalUnAssignedOnlySICLeads);
-        $totalUnAssignedOnlyPaidSICLeads = $this->dashboardService->getTotalUnAssignedOnlySICLeads($filters, true);
-        $totalUnAssignedOnlyPaidSICLeadsReceived = count($totalUnAssignedOnlyPaidSICLeads);
-        $totalUnAssignedLeadsReceivedEcommerce = count($totalUnAssignedLeads->where('is_ecommerce', 1));
-        $totalUnAssignedRevivalLeads = count($totalUnAssignedLeads->where('source', LeadSourceEnum::REVIVAL));
+        $totalUnAssignedOnlySICLeadsReceived = $totalUnAssignedOnlySICLeads->count();
+        $totalUnAssignedOnlyPaidSICLeadsReceived = $totalUnAssignedOnlySICLeads->where('payment_status_id', PaymentStatusEnum::AUTHORISED)->count();
+
         $leadsCountByTier = $this->dashboardService->getLeadsCountByTier($filters);
         $revivalLeadsCount = $this->dashboardService->getLeadsCountRevival($filters);
         $unAssignedLeadsByTier = $this->dashboardService->getUnAssignedLeadsCountByTier($filters);

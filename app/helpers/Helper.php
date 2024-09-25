@@ -583,6 +583,17 @@ if (! function_exists('formatMobileNo')) {
     }
 }
 
+if (! function_exists('formatMobileNoWithoutPlus')) {
+    function formatMobileNoWithoutPlus($mobile)
+    {
+        if (preg_match('/^971|92|91/', $mobile)) {
+            return $mobile;
+        }
+
+        return preg_replace('/^(?:\+?971|0)?/', '971', str_replace(' ', '', $mobile));
+    }
+}
+
 if (! function_exists('removeCountryCode')) {
     function removeCountryCode($mobile)
     {
