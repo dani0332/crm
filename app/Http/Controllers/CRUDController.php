@@ -198,19 +198,7 @@ class CRUDController extends Controller
         $isNewBusinessUser = false;
         $isManualAllocationAllowed = false;
         $showDeadlineAlert = false;
-        $userMaxCap = 0;
-        $todayAutoCount = 0;
-        $todayManualCount = 0;
-        $yesterdayAutoCount = 0;
-        $yesterdayManualCount = 0;
 
-        $todaysAllocationData = $this->allocationService->getTodayCounts(auth()->user()->id);
-        $userMaxCap = $todaysAllocationData['max_capacity'];
-        $todayAutoCount = $todaysAllocationData['auto_assignment_count'];
-        $todayManualCount = $todaysAllocationData['manual_assignment_count'];
-        $yesterdayAllocationData = $this->allocationService->getYesterdayCounts(auth()->user()->id);
-        $yesterdayAutoCount = $yesterdayAllocationData['auto_assignment_count'];
-        $yesterdayManualCount = $yesterdayAllocationData['manual_assignment_count'];
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
 
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
@@ -334,6 +322,20 @@ class CRUDController extends Controller
 
         if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
+
+            $userMaxCap = 0;
+            $todayAutoCount = 0;
+            $todayManualCount = 0;
+            $yesterdayAutoCount = 0;
+            $yesterdayManualCount = 0;
+
+            $todaysAllocationData = $this->allocationService->getTodayCounts(auth()->user()->id);
+            $userMaxCap = $todaysAllocationData['max_capacity'];
+            $todayAutoCount = $todaysAllocationData['auto_assignment_count'];
+            $todayManualCount = $todaysAllocationData['manual_assignment_count'];
+            $yesterdayAllocationData = $this->allocationService->getYesterdayCounts(auth()->user()->id);
+            $yesterdayAutoCount = $yesterdayAllocationData['auto_assignment_count'];
+            $yesterdayManualCount = $yesterdayAllocationData['manual_assignment_count'];
 
             $dateFormat = config('constants.DATE_FORMAT_ONLY');
             $createdAtStart = Carbon::parse(now())->startOfDay()->format($dateFormat);
@@ -2080,5 +2082,4 @@ class CRUDController extends Controller
 
         return response()->json(['message' => 'UpdateAMLStatus Command has been executed']);
     }
-
 }
