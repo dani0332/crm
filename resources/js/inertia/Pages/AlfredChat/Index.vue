@@ -16,6 +16,9 @@ const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 const { isRequired } = useRules();
 const isError = ref(false);
 const page = usePage();
+
+const notification = useNotifications('toast');
+
 const loader = reactive({
   table: false,
   view: false,
