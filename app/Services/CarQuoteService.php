@@ -1017,7 +1017,7 @@ class CarQuoteService extends BaseService
         }
 
         $wheres = collect($this->query->wheres)->pluck('', 'column')->toArray();
-        if(!array_key_exists('cqr.created_at', $wheres) && !$request->hasAny(['code', 'email', 'mobile_no', 'created_at', 'payment_due_date', 'booking_date', 'previous_quote_policy_number', 'renewal_batch'])) {
+        if (! array_key_exists('cqr.created_at', $wheres) && ! $request->hasAny(['code', 'email', 'mobile_no', 'created_at', 'payment_due_date', 'booking_date', 'previous_quote_policy_number', 'renewal_batch'])) {
             $this->query->whereBetween('cqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
 
