@@ -432,16 +432,21 @@ class EmbeddedProductRepository extends BaseRepository
         return $advisorData;
     }
 
-    private function fetchTransaction($modelType, $quoteId, $ep)
+    private function fetchTransaction($modelType, $quoteId, $ep, $selected = true)
     {
         $optionsIds = $ep->prices ? $ep->prices->pluck('id') : [];
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
 
-        return EmbeddedTransaction::where([
+        $transactions = EmbeddedTransaction::where([
             ['quote_type_id', '=', $quoteTypeId],
             ['quote_request_id', '=', $quoteId],
-            ['is_selected', '=', true],
-        ])->whereIn('product_id', $optionsIds)->get();
+        ])->whereIn('product_id', $optionsIds);
+
+        if($selected) {
+            $transactions = $transactions->where('is_selected', true);
+        }
+
+        return $transactions->get();
     }
 
     private function sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData)
@@ -785,7 +790,7 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         $quoteObject = $this->getQuoteObject($data['modelType'], $data['quoteId']);
-        $transaction = $this->fetchTransaction($data['modelType'], $data['quoteId'], $ep);
+        $transaction = $this->fetchTransaction($data['modelType'], $data['quoteId'], $ep, false);
 
         $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($ep->short_code);
         $strategy = $this->createStrategy($ep->short_code, $isAlfredProtect);
@@ -811,7 +816,7 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         $quoteObject = $this->getQuoteObject($data['modelType'], $data['quoteId']);
-        $transaction = $this->fetchTransaction($data['modelType'], $data['quoteId'], $ep);
+        $transaction = $this->fetchTransaction($data['modelType'], $data['quoteId'], $ep, false);
 
         $documentData = $this->prepareDocumentData($data['file'][0]['file'], $data['title'], $data['type'], $quoteObject, $data['modelType']);
         $transaction->first()->documents()->create($documentData);
