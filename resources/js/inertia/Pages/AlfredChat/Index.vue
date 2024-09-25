@@ -172,8 +172,6 @@ const showChat = item => {
     .then(response => {
       let { data } = { ...response.data };
       loader.view = false;
-      // chatMessages.value.created_at = item.created_at;
-      // chatMessages.value.created_at = '2024-09-02';
       chatMessages.value.data = data.length > 0 ? data : [];
       chatMessages.value.id = item.code;
       showChatLogs.value = true;

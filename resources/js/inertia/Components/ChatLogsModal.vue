@@ -109,10 +109,7 @@ const checkCaption = (whatsapp_request, UserAudio) => {
     show-header
     @update:modelValue="$emit('update:showChatLogs', $event)"
   >
-    <template #header>
-      Ref ID: {{ chatMessages.id }} - Created At:
-      {{ chatMessages.created_at.split(' ')[0] }}
-    </template>
+    <template #header> Ref ID: {{ chatMessages.id }} </template>
     <template #default>
       <div>
         <x-field label="Message Source" required>

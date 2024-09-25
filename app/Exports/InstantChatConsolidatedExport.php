@@ -93,15 +93,6 @@ class InstantChatConsolidatedExport implements FromArray, WithHeadings, WithMapp
 
         return implode(', ', $channels);
 
-        // // dd($channel);
-        // // Ensure $channel is an array and not empty before attempting to implode
-        // if (is_array($channel) && ! empty($channel)) {
-        //     foreach ($channel as $item){
-
-        //     }
-        // }
-
-        // Fallback to 'N/A' if the array is empty or if $channel is not an array
         return 'N/A';
     }
 }
