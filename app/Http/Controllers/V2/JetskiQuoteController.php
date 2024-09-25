@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
@@ -102,11 +104,12 @@ class JetskiQuoteController extends Controller
         /* End - Temporarily adding for correcting historic data  */
 
         $quote = JetskiQuoteRepository::getBy('uuid', $uuid);
-
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::JETSKI->id())->get();
-
+        $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
+            return ! in_array($value['id'], [QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed]);
+        })->values();
         $quote->load('documents.createdBy');
 
         @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypes::JETSKI->id());
@@ -117,7 +120,6 @@ class JetskiQuoteController extends Controller
         $personalPlans = PersonalPlanRepository::get();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::JETSKI->value);
 
-        $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($quote->id, QuoteTypes::JETSKI->name);
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::JETSKI->id(),
             'quote_request_id' => $quote->id,
@@ -139,10 +141,12 @@ class JetskiQuoteController extends Controller
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
+        $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
         return inertia('JetskiQuote/Show', [
             'quoteType' => QuoteTypes::JETSKI,
             'quote' => $quote,
+            'amlStatusName' => $amlStatusName,
             'activities' => $activities,
             'lostReasons' => $lostReasons,
             'advisors' => $advisors,
@@ -159,7 +163,6 @@ class JetskiQuoteController extends Controller
             'quoteTypeId' => QuoteTypes::JETSKI->id(),
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::JetskiManager),
             'vatPercentage' => $vatPercentage,
-            'isAmlClearedForPayment' => $isAmlClearedForPayment,
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\AMLDecisionStatusEnum;
+use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\LookupsEnum;
@@ -242,9 +243,11 @@ class AMLController extends Controller
         if (isset($payment->getCustomerPaymentInstrument->card_holder_name)) {
             $cardHolderName = $payment->getCustomerPaymentInstrument;
         }
+        $amlStatusName = AMLStatusCode::getName($quoteRequest->aml_status);
         $data = [
             'quoteType' => $quoteType,
             'quoteRequest' => $quoteRequest,
+            'amlStatusName' => $amlStatusName,
             'entityDetails' => $entityDetails,
             'membersDetails' => $membersDetail,
             'uboDetails' => $uboDetails,
@@ -599,7 +602,6 @@ class AMLController extends Controller
                 auth()->user()->email
             );
         }
-
         if (! in_array(true, session()->get('amlResponseCheck')) && ! AMLService::checkAMLStatusFailed($quoteTypeId, $quoteRequestId)) {
             QuoteStatusLog::create([
                 'quote_type_id' => $quoteTypeId,
@@ -612,7 +614,8 @@ class AMLController extends Controller
             if ($quoteTypeId == QuoteTypeId::Health || $quoteTypeId == QuoteTypeId::Home || $quoteTypeId == QuoteTypeId::Cycle || $quoteTypeId == QuoteTypeId::Pet || $quoteTypeId == QuoteTypeId::Yacht || $quoteTypeId == QuoteTypeId::Corpline) {
                 $quoteDetails->stale_at = null;
             }
-            $quoteDetails->quote_status_id = QuoteStatusEnum::AMLScreeningCleared;
+
+            $quoteDetails->aml_status = AMLStatusCode::AMLScreeningCleared;
             $quoteDetails->save();
             // this event only working for travel lob
             if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
@@ -629,7 +632,7 @@ class AMLController extends Controller
                 'updated_at' => Carbon::now(),
             ]);
 
-            $quoteDetails->quote_status_id = QuoteStatusEnum::AMLScreeningFailed;
+            $quoteDetails->aml_status = AMLStatusCode::AMLScreeningFailed;
             $quoteDetails->save();
             if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
                 if (isset($quoteDetails->is_documents_valid) && ! $quoteDetails->is_documents_valid) {

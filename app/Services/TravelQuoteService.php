@@ -144,6 +144,7 @@ class TravelQuoteService extends BaseService
             DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
             'tqr.policy_booking_date',
             'tqr.insly_migrated',
+            'tqr.aml_status',
         )
             ->leftJoin('payments as py', 'py.code', '=', 'tqr.code')
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
