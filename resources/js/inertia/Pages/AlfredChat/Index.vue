@@ -53,7 +53,7 @@ function onSubmit() {
   let diff = calculateDaysDifference(filters.start_date, filters.end_date);
   if (diff > 30) {
     notification.error({
-      message: 'Maximum of 30 days (created date) are allowed',
+      message: 'Maximum of 30 days are allowed',
       position: 'top',
     });
     return;
