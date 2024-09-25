@@ -297,6 +297,26 @@ onMounted(() => {
       <p>{{ unAvailableUsers + availableUsers ?? 0 }}</p>
     </div>
   </div>
+  <div class="mt-5 mb-5">
+    <h2 class="text-lg font-semibold">Unassigned Leads Count</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 w-full gap-5">
+      <TransitionGroup name="fade">
+        <div v-if="isCapChanged" class="col-span-2">
+          <x-alert type="info" light>For Unlimited Capactiy Add ( -1 )</x-alert>
+        </div>
+        <div v-if="isCapChanged" class="col-span-2">
+          <x-button
+            color="emerald"
+            :loading="loader.submit"
+            block
+            @click="onSubmitChanges"
+          >
+            Save Cap Changes
+          </x-button>
+        </div>
+      </TransitionGroup>
+    </div>
+  </div>
   <DataTable
     id="car-lead-allocation"
     table-class-name="compact"
