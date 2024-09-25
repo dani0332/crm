@@ -438,7 +438,15 @@ class SageApiService
         }
         $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
 
-        $payment = Payment::where('code', $quote['code'])->mainLeadPayment()->with('paymentSplits')->first();
+        $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
+        $payment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
+
+        if ($isDuplicateOrCIRLead && empty($payment)) {
+            $payment = Payment::where([
+                'paymentable_id' => $quote->id,
+                'paymentable_type' => $quote->getMorphClass(),
+            ])->mainLeadPayment()->with('paymentSplits')->first();
+        }
         $payment->update([
             'broker_invoice_number' => (new PaymentRepository)->generateBrokerInvoiceNumber($payment, $request->model_type),
         ]);
@@ -512,7 +520,17 @@ class SageApiService
         $userId = $sageRequest->userId;
 
         $sageLogArray = $quote->sageApiLogs->keyBy('step')->toArray();
+
+        $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
         $payment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
+
+        if ($isDuplicateOrCIRLead && empty($payment)) {
+            $payment = Payment::where([
+                'paymentable_id' => $quote->id,
+                'paymentable_type' => $quote->getMorphClass(),
+            ])->mainLeadPayment()->with('paymentSplits')->first();
+        }
+
         $paymentSplits = $payment->paymentSplits;
         $quote->userId = $sageRequest->userId;
 
