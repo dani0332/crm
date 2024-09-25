@@ -17,10 +17,8 @@ use Throwable;
 class SendUpdateSageJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    public int $tries = 1;
-    public int $releaseAfter = 30; // 30 seconds
-    public int $timeout = 30;
+// 30 seconds
+    public int $timeout = 70;
     private $requestPayload;
     private $sendUpdateLog;
     private $sageRequestPayload;
@@ -71,14 +69,14 @@ class SendUpdateSageJob implements ShouldQueue
     {
         $this->updateSageProcessStatus(SageEnum::SAGE_PROCESS_FAILED_STATUS, $exception->getMessage());
         $this->sendUpdateLog->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED]);
-        //            TODO:: Need to add message why it's failed
+        // TODO:: Need to add message why it's failed
 
         info('job:SendUpdateSageJob - SendUpdateUUID: '.$this->sendUpdateLog->uuid.' - Error : '.$exception->getMessage());
     }
 
     public function middleware(): array
     {
-        return [(new WithoutOverlapping($this->sendUpdateLog->uuid))->releaseAfter($this->releaseAfter)];
+        return [(new WithoutOverlapping($this->sendUpdateLog->uuid))->dontRelease()];
     }
 
     private function updateSageProcessStatus($status, $message = null): void

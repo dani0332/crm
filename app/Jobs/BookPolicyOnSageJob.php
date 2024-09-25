@@ -19,10 +19,8 @@ use function Laravel\Prompts\error;
 class BookPolicyOnSageJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    public $tries = 3;
-    public $releaseAfter = 200; // 200 seconds
-    public $timeout = 30;
+// 200 seconds
+    public $timeout = 70;
     private $sageRequest;
     private $quote;
     private $request;
@@ -79,7 +77,7 @@ class BookPolicyOnSageJob implements ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->quote->code))->releaseAfter($this->releaseAfter)];
+        return [(new WithoutOverlapping($this->quote->code))->dontRelease()];
     }
 
 }
