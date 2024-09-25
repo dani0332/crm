@@ -64,6 +64,11 @@ function onSubmit() {
     filters.end_date = useDateFormat(filters.end_date, 'YYYY-MM-DD').value;
   }
 
+  if (filters.quoteId) {
+    filters.start_date = null;
+    filters.end_date = null;
+  }
+
   filters.page = 1;
   router.visit(route('instant-alfred.logs'), {
     method: 'get',
