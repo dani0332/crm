@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\InstantChatReportsEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -68,7 +69,12 @@ class AlfredChatController extends Controller
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
             ->leftJoin('quote_tags as qt', function ($join) {
                 $join->on('qt.quote_uuid', '=', 'cqr.uuid')
-                    ->where('qt.quote_type_id', '=', CarQuote::class);
+                ->where(function($query) {
+                    $query->where('qt.name', QuoteSegmentEnum::SIC->tag())
+                        ->orWhere('qt.name', QuoteSegmentEnum::SIC_REVIVAL->tag())
+                        ->orWhere('qt.name', QuoteSegmentEnum::NON_SIC->tag());
+                 })
+                 ->where('qt.quote_type_id', '=', QuoteTypeId::Car);
             })
             ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
             ->leftJoin('lookups as lu', 'lu.id', '=', 'cqr.transaction_type_id')
@@ -125,7 +131,12 @@ class AlfredChatController extends Controller
             })
             ->leftJoin('quote_tags as qt', function ($join) {
                 $join->on('qt.quote_uuid', '=', 'hqr.uuid')
-                    ->where('qt.quote_type_id', '=', HealthQuote::class);
+                ->where(function($query) {
+                    $query->where('qt.name', QuoteSegmentEnum::SIC->tag())
+                        ->orWhere('qt.name', QuoteSegmentEnum::SIC_REVIVAL->tag())
+                        ->orWhere('qt.name', QuoteSegmentEnum::NON_SIC->tag());
+                 })
+                    ->where('qt.quote_type_id', '=', QuoteTypeId::Health);
             })
             ->leftJoin('health_plan_type as hpt', 'hpt.id', '=', 'hqr.health_plan_type_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -177,7 +188,12 @@ class AlfredChatController extends Controller
             })
             ->leftJoin('quote_tags as qt', function ($join) {
                 $join->on('qt.quote_uuid', '=', 'tqr.uuid')
-                    ->where('qt.quote_type_id', '=', TravelQuote::class);
+                ->where(function($query) {
+                    $query->where('qt.name', QuoteSegmentEnum::SIC->tag())
+                        ->orWhere('qt.name', QuoteSegmentEnum::SIC_REVIVAL->tag())
+                        ->orWhere('qt.name', QuoteSegmentEnum::NON_SIC->tag());
+                 })
+                ->where('qt.quote_type_id', '=', QuoteTypeId::Travel);
             })
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
             ->leftJoin('lookups as lu', 'lu.id', '=', 'tqr.transaction_type_id')
@@ -248,6 +264,7 @@ class AlfredChatController extends Controller
 
         $chat = AlfredChat::where('quote_id', $request->quoteId)
             ->where('quote_type', $request->quoteType)
+            ->select('quote_id', 'quote_type', 'role', 'msg', 'created_at', 'channel')
             ->get();
 
         if ($chat->isEmpty()) {
