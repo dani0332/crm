@@ -121,6 +121,7 @@ class SageApiService
             return is_array($response->json()) ? json_encode($response->json()) : $response->body();
         } catch (Exception $e) {
             Log::error('Sage API : '.$endPoint.' : '.$e->getMessage());
+
             return json_encode(['error' => ['message' => ['value' => $e->getMessage()]], 'code' => 500]);
         }
     }
@@ -1718,7 +1719,7 @@ class SageApiService
         $sageErrorMessage = $responseArray['error']['message']['value'] ?? $responseArray['error'] ?? null;
         info("SAGE API : $quote->code  : ".json_encode($sageErrorMessage));
         $returnMessage['error'] = $sageErrorMessage;
-        if (str_contains($sageErrorMessage, 'Processing conflict')) {
+        if ($this->sageHasProcessingConflict($sageErrorMessage)) {
             $returnMessage['message'] = SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE;
         }
 
@@ -1859,6 +1860,11 @@ class SageApiService
             $sageProcessData['model_id'] = $quote->id;
             SageProcess::create($sageProcessData);
         }
+    }
+
+    public function sageHasProcessingConflict($sageErrorMessage)
+    {
+        return str_contains($sageErrorMessage, 'Processing conflict') || str_contains($sageErrorMessage, 'Post in Progress');
     }
 
 }
