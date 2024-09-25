@@ -4,7 +4,7 @@
 
 Insurance Market CRM (IMCRM) is the CRM used by internal team to handle the incoming leads, transactions, view or generate quotes for customers, generate car valuation, and manage customers. Basically its a complete solution for the back office to handle incoming customer inquiries and process their insurnace quotes.
 
-IMCRM is developed on Laravel using PHP 8.0.1 or above, MariaDB 10.x or above.
+IMCRM is developed on Laravel using PHP 8.0.1 or above, MariaDB 10.x or above..
 
 URLs:
 
@@ -16,7 +16,14 @@ URLs:
 - [Laravel Code Standard Guide Lines](https://xqsit94.github.io/laravel-coding-guidelines/)
 - [Team Engineering Guide](https://github.com/InsuranceMarket-ae/engineering/wiki)
 
-Please make sure to go through the last two lines to familiarize yourself with the code quality guide before you start contributing..
+Please make sure to go through the last two lines to familiarize yourself with the code quality guide before you start contributing.
+
+## Other stack & libraries
+
+- [Vue](https://vuejs.org/)
+- [InertiaJS](https://inertiajs.com/)
+- [TailwindCSS](https://tailwindcss.com/)
+- [UI - indielayer](https://indielayer.com/)
 
 ## Setting up Laravel
 
