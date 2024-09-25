@@ -205,6 +205,7 @@ class CarQuoteService extends BaseService
                 DB::raw('GROUP_CONCAT(team.name) as team_name'),
                 DB::raw('DATE_FORMAT(cqr.transaction_approved_at, "%d-%m-%Y %H:%i:%s") as transaction_approved_at'),
                 'cqr.insly_migrated',
+                'cqr.aml_status',
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
