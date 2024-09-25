@@ -9,6 +9,7 @@ import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
 const notification = useNotifications('toast');
 const page = usePage();
 
+const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
 const permissionEnum = page.props.permissionsEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const paymentLookups = page.props.paymentLookups;
@@ -807,8 +808,7 @@ const handlePaymentTypes = count => {
     count >= 2 &&
     (paymentMethodsForm.frequency === 'semi_annual' ||
       paymentMethodsForm.frequency === 'quarterly' ||
-      paymentMethodsForm.frequency === 'monthly' ||
-      paymentMethodsForm.frequency === 'custom')
+      paymentMethodsForm.frequency === 'monthly')
   ) {
     paymentTypesWithoutCheck = paymentTypesFiltered.value.filter(
       item =>
@@ -3071,8 +3071,9 @@ const splitPaymentTotalPrice = (
 // verifiy if split payment deletion is enabled
 const isSplitDeleteEnabled = computed(() => {
   if (
-    paymentMethodsForm.frequency != 'upfront' &&
-    can(permissionEnum.PaymentsEdit)
+    paymentMethodsForm.frequency != paymentFrequencyEnum.UPFRONT &&
+    can(permissionEnum.PaymentsEdit) &&
+    props.quoteRequest.quote_status_id != page.props.quoteStatusEnum.PolicyBooked
 
   ) {
     return true;
@@ -3495,7 +3496,7 @@ const isSplitDeleteEnabled = computed(() => {
                     </tr>
                     <template v-if="isExpandedSplitPayments[index]">
                       <tr
-                        v-for="splitPayment in item.payment_splits"
+                        v-for="(splitPayment, splitIndex) in item.payment_splits"
                         :key="splitPayment.id"
                       >
                         <td class="text-center">{{ splitPayment.sr_no }}</td>
@@ -3595,8 +3596,8 @@ const isSplitDeleteEnabled = computed(() => {
                               outlined
                               >Copy Payment Link</x-button
                             >
-<x-button
-                            v-if="isSplitDeleteEnabled &&
+                          <x-button
+                            v-if="isSplitDeleteEnabled && item.total_payments == (splitIndex + 1) &&
                                   ![paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED, paymentStatusEnum.AUTHORISED, 
                                     paymentStatusEnum.REFUNDED, paymentStatusEnum.PARTIAL_CAPTURED, 
                                     paymentStatusEnum.PARTIALLY_PAID].includes(splitPayment.payment_status_id) &&

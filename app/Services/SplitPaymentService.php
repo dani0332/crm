@@ -1033,14 +1033,17 @@ class SplitPaymentService
                     
                 } else {
                     $masterPayment->total_payments = $masterPayment->total_payments - 1;
-                    $masterPayment->frequency = PaymentFrequency::CUSTOM;                    
+                    if( $masterPayment->frequency != PaymentFrequency::SPLIT_PAYMENTS){
+                        $masterPayment->frequency = PaymentFrequency::CUSTOM;                    
+                    }
+                
                 }
                 $masterPayment->save();
                 // Delete QuoteDocuments referencing the payment split
                 $paymentSplit->documents()->forceDelete();
                 // Delete the payment split
                 $paymentSplit->delete();
-                info('Deleted Payment Split ID: '.$splitPaymentId.' for Code: '.$paymentSplit->code);      
+                info('Deleted Payment Split For Code: '.$paymentSplit->code.' Split Payment: '.$paymentSplit->id.'-'. $paymentSplit->sr_no);      
             }
         }, $maxRetries);        
      } 
