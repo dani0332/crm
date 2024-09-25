@@ -180,7 +180,7 @@ class SendUpdateLogController extends Controller
             }
         }
         $bookingDetails = $this->sendUpdateLogService->getInvoiceDescription($sendUpdateLog, $realQuote, $quoteType, $payments);
-        if (! $bookingDetails) {
+        if ((! $bookingDetails) && in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPD])) {
             $redirectUrl = checkPersonalQuotes($quoteType)
                 ? 'personal-quotes/'.strtolower($quoteType).'/'.$sendUpdateLog->quote_uuid
                 : 'quotes/'.strtolower($quoteType).'/'.$sendUpdateLog->quote_uuid;
