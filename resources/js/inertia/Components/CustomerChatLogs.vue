@@ -42,7 +42,7 @@ const chatMessages = ref({
 const getAllChat = () => {
   loader.value = true;
   axios
-    .post('/get-alfred-chat', {
+    .post('/instant-alfred/get-alfred-chat', {
       quoteId: props.quoteId,
       quoteType: props.quoteType,
     })
@@ -59,7 +59,7 @@ const getAllChat = () => {
 const showChat = item => {
   loader.value = true;
   axios
-    .post('/get-alfred-chat-by-date', {
+    .post('/instant-alfred/get-alfred-chat-by-date', {
       quoteId: props.quoteId,
       quoteType: props.quoteType,
       created_at: item._id,

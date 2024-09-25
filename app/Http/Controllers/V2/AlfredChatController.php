@@ -128,98 +128,77 @@ class AlfredChatController extends Controller
 
     }
 
-    public function processSqlChatFilters(Request $request, $modelType)
+    public function processMongoDBChatFilters(Request $request, $data)
     {
-        $modelType = $request->quoteType ?? 'Car';
-        $nameSpace = 'App\\Models\\';
-        $modelType = (in_array(ucwords($modelType), newUi()) &&
-        checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
 
-        $aliases = [
-            CarQuote::class => ['query' => $this->carQuery, 'alias' => 'cqr'],
-            HealthQuote::class => ['query' => $this->healthQuery, 'alias' => 'hqr'],
-            TravelQuote::class => ['query' => $this->travelQuery, 'alias' => 'tqr'],
-        ];
+        if (isset($request->fallback) && $request->fallback != '' || isset($request->channel) && $request->channel != '') {
 
-        $modelData = $aliases[$modelType] ?? $aliases[CarQuote::class];
-        $alias = $modelData['alias'];
+            $dataArray = json_decode(json_encode($data), true);
 
-        $partialQuery = $modelData['query'];
+            $itemIds = array_column($dataArray, 'uuid');
 
-        $quoteId = null;
-        if ($request->has('quoteId') && $request->quoteId != null) {
-            if (strpos($request->quoteId, '-') !== false) {
-                $quote = explode('-', $request->quoteId);
-                $quoteId = $quote[1];
-            } else {
-                $quoteId = $request->quoteId;
+            $chatPipeline = $this->createPipeline($request, $itemIds, 'chat');
+
+            $mongoResults = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline))->toArray();
+
+            $refactoredData = array_map(function ($entry) {
+                if (isset($entry['communication_channels']) && $entry['communication_channels'] instanceof \MongoDB\Model\BSONArray) {
+                    $entry['communication_channels'] = $entry['communication_channels']->getArrayCopy();
+                }
+
+                return $entry;
+            }, $mongoResults);
+
+            $dataById = [];
+            foreach ($dataArray as $item) {
+                $dataById[$item['uuid']] = $item;
             }
-        }
 
-        if (isset($quoteId) && $quoteId != '') {
-            $partialQuery->where("{$alias}.uuid", $quoteId);
-        }
-
-        if (isset($request->email) && $request->email != '') {
-            $partialQuery->where('email', $request->email);
-        }
-
-        if (isset($request->mobile_no) && $request->mobile_no != '') {
-            $partialQuery->where('mobile_no', $request->mobile_no);
-        }
-
-        if (! empty($request->start_date) && ! empty($request->end_date)) {
-            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['start_date']));
-            $dateTo = date('Y-m-d 23:59:59', strtotime($request['end_date']));
-
-            $partialQuery->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
-        }
-
-        if ($request->email == null && $request->mobile_no == null && $quoteId == null && empty($request->start_date) && empty($request->end_date)) {
-            // Default to last 30 days if no dates are provided
-            $dateFrom = now()->subDays(30)->startOfDay();
-            $dateTo = now()->endOfDay();
-
-            $partialQuery->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
-        }
-
-        if (isset($request->transaction_type_id) && $request->transaction_type_id != '') {
-            $partialQuery->where('transaction_type_id', $request->transaction_type_id);
-        }
-
-        if (isset($request->quote_batch_id) && ! empty($request->quote_batch_id)) {
-            $partialQuery->whereIn('quote_batch_id', $request->quote_batch_id);
-        }
-
-        if (isset($request->quote_status_id) && is_array($request->quote_status_id) && count($request->quote_status_id) > 0) {
-            $partialQuery->whereIn('quote_status_id', $request->quote_status_id);
-        }
-
-        if (isset($request->payment_status_id) && $request->payment_status_id != '') {
-            $partialQuery->where("{$alias}.payment_status_id", $request->payment_status_id);
-        }
-
-        if (in_array($modelType, [HealthQuote::class, CarQuote::class]) && isset($request->assigment_type) && $request->assigment_type != '') {
-            $partialQuery->where('assignment_type', $request->assigment_type);
-        }
-
-        if (isset($request->sale_leads) && $request->sale_leads != '') {
-            if ($request->sale_leads == quoteTypeCode::yesText) {
-                $partialQuery->whereIn('quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked]);
+            $refactoredById = [];
+            foreach ($refactoredData as $entry) {
+                $refactoredById[$entry['_id']] = $entry;
             }
-            if ($request->sale_leads == quoteTypeCode::noText) {
-                $partialQuery->whereNotNull('quote_status_id');
-            }
+
+            $mergedData = array_map(function ($item) use ($refactoredById) {
+                $uuid = $item['uuid'];
+                if (isset($refactoredById[$uuid])) {
+                    return array_merge($item, $refactoredById[$uuid]);
+                }
+
+                return $item;
+            }, $dataById);
+
+            $mergedData = array_values($mergedData);
+
+            $fallbackFilter = $request->fallback;
+            $channelFilter = $request->channel;
+            $filteredData = [];
+
+            $filteredData = array_filter($mergedData, function ($item) use ($fallbackFilter, $channelFilter) {
+                if ($fallbackFilter) {
+                    $hasFallback = isset($item['fallback']) ? $item['fallback'] : null;
+                    if ($fallbackFilter === quoteTypeCode::yesText && $hasFallback) {
+                        return $item;
+                    } elseif ($fallbackFilter === quoteTypeCode::noText && $hasFallback === null) {
+                        return $item;
+                    }
+                }
+
+                if ($channelFilter && ! empty($item['communication_channels'])) {
+                    $channels = array_filter($item['communication_channels'], function ($channel) {
+                        return is_string($channel);
+                    });
+                    if (array_intersect($channels, [$channelFilter])) {
+                        return $item;
+                    }
+                }
+
+            });
+
+            return $filteredData;
+        } else {
+            return false;
         }
-
-        if (isset($request->segment_filter) && $request->segment_filter != '') {
-            $query = $modelType == HealthQuote::class ? 'hqr' : ($modelType == CarQuote::class ? 'cqr' : 'tqr');
-            $quoteTypeId = $modelType == HealthQuote::class ? QuoteTypeId::Health : ($modelType == CarQuote::class ? QuoteTypeId::Car : QuoteTypeId::Travel);
-
-            $modelType::applySegmentFilter($partialQuery, $request->segment_filter, $query, $quoteTypeId);
-        }
-
-        return $partialQuery->get();
     }
 
     public function exportChat(Request $request)
