@@ -147,7 +147,7 @@ const tableHeader = reactive([
     value: 'transaction_type',
   },
   {
-    text: 'Source',
+    text: 'Lead Source',
     value: 'source',
   },
 ]);
