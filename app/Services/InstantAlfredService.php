@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services;
+
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -201,7 +202,7 @@ class InstantAlfredService extends BaseService
             ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id')
             ->groupBy('tqr.id');
     }
-    
+
     public function processSqlChatFilters(Request $request, $modelType)
     {
         $modelType = $request->quoteType ?? 'Car';
