@@ -367,6 +367,7 @@ final class PermissionsEnum extends Enum
     public const VIEW_SAGE_API_LOGS = 'view-sage-api-logs';
     public const TRAVEL_SIC_ALLOCATION = 'travel-sic-allocation';
     public const SUPER_LEAD_STATUS_CHANGE = 'super-lead-status-change';
+    public const ReApprovePayments = 'reapprove-payment';
 
     public static function getAdvisorConversionReportPermissions()
     {
