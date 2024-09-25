@@ -37,7 +37,7 @@ defineProps({
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
-    amlStatusName: String,
+  amlStatusName: String,
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');

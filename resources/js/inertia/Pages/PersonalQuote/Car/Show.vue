@@ -504,34 +504,32 @@ const leadStatusOptions = computed(() => {
     ? page.props.leadStatuses
     : Object.values(page.props.leadStatuses);
 
-  const filteredLeadStatuses = statuses
-    ?.map(status => {
-      if (
-        (!isLeadPool &&
-          [
-            page.props.quoteStatusEnum.Fake,
-            page.props.quoteStatusEnum.Duplicate,
-          ].includes(status.id)) ||
-        (!isPA &&
-          status.id === page.props.quoteStatusEnum.TransactionApproved) ||
-        ((renewal_batch === '' ||
-          previous_quote_policy_number === '' ||
-          source != renewal_upload) &&
-          status.id === page.props.quoteStatusEnum.Lost)
-      ) {
-        return {
-          value: status.id,
-          label: status.text,
-          disabled: true,
-        };
-      }
-      // if (status.id == page.props.quoteStatusEnum.PolicyIssued && page.props.isQuoteDocumentEnabled) return true;
-      // else if (status.id != page.props.quoteStatusEnum.PolicyIssued) return true;
+  const filteredLeadStatuses = statuses?.map(status => {
+    if (
+      (!isLeadPool &&
+        [
+          page.props.quoteStatusEnum.Fake,
+          page.props.quoteStatusEnum.Duplicate,
+        ].includes(status.id)) ||
+      (!isPA && status.id === page.props.quoteStatusEnum.TransactionApproved) ||
+      ((renewal_batch === '' ||
+        previous_quote_policy_number === '' ||
+        source != renewal_upload) &&
+        status.id === page.props.quoteStatusEnum.Lost)
+    ) {
       return {
         value: status.id,
         label: status.text,
+        disabled: true,
       };
-    });
+    }
+    // if (status.id == page.props.quoteStatusEnum.PolicyIssued && page.props.isQuoteDocumentEnabled) return true;
+    // else if (status.id != page.props.quoteStatusEnum.PolicyIssued) return true;
+    return {
+      value: status.id,
+      label: status.text,
+    };
+  });
 
   return filteredLeadStatuses;
 });

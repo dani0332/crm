@@ -28,7 +28,7 @@ defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   lockLeadSectionsDetails: Object,
-    amlStatusName: String,
+  amlStatusName: String,
 });
 
 const page = usePage();

@@ -19,11 +19,10 @@ const permissionsEnum = page.props.permissionsEnum;
 const can = permission => useCan(permission);
 const quoteStatusEnum = page.props.quoteStatusEnum;
 const quoteStatusOptions = computed(() => {
-  return props.quoteStatuses
-    .map(status => ({
-      value: status.id,
-      label: status.text,
-    }));
+  return props.quoteStatuses.map(status => ({
+    value: status.id,
+    label: status.text,
+  }));
 });
 
 const quoteStatusForm = useForm({
