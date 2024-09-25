@@ -134,23 +134,21 @@ const calculateVatAmount = () => {
   let priceVatNotApplicable = Number(policyDetailsForm.price_vat_notapplicable);
   // if price vat applicable and not applicable both are there
   if (priceVatApplicable > 0 && priceVatNotApplicable > 0) {
-    let vat = priceVatApplicable * page.props.vat.toFixed(2);
-    policyDetailsForm.vat = vat.toFixed(2);
-    policyDetailsForm.amount_with_vat = (
-      Number(vat) +
-      Number(priceVatApplicable) +
-      Number(priceVatNotApplicable)
+    let vat = priceVatApplicable * useRoundIt(page.props.vat).toFixed(2);
+    policyDetailsForm.vat = useRoundIt(vat).toFixed(2);
+    policyDetailsForm.amount_with_vat = useRoundIt(
+      Number(vat) + Number(priceVatApplicable) + Number(priceVatNotApplicable),
     ).toFixed(2);
   } else if (priceVatApplicable > 0) {
-    let vat = priceVatApplicable * page.props.vat.toFixed(2);
-    policyDetailsForm.vat = vat.toFixed(2);
-    policyDetailsForm.amount_with_vat = (
-      Number(vat) + Number(priceVatApplicable)
+    let vat = priceVatApplicable * useRoundIt(page.props.vat).toFixed(2);
+    policyDetailsForm.vat = useRoundIt(vat).toFixed(2);
+    policyDetailsForm.amount_with_vat = useRoundIt(
+      Number(vat) + Number(priceVatApplicable),
     ).toFixed(2);
   } else if (priceVatNotApplicable > 0) {
-    policyDetailsForm.amount_with_vat = Number(priceVatNotApplicable).toFixed(
-      2,
-    );
+    policyDetailsForm.amount_with_vat = useRoundIt(
+      Number(priceVatNotApplicable),
+    ).toFixed(2);
   } else {
     policyDetailsForm.vat = 0;
     policyDetailsForm.amount_with_vat = 0;

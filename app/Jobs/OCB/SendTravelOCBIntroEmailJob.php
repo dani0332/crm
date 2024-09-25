@@ -83,7 +83,7 @@ class SendTravelOCBIntroEmailJob implements ShouldQueue
                 Log::error(self::class." - OCB INTRO Email Not Sent: {$responseCode} Customer EmailAddress: {$lead->email} Quote UuId: {$this->quoteUuid}");
             }
         } catch (Exception $e) {
-            Log::error(self::class." - Error: {$e->getMessage()} with stack trace {$e->getTraceAsString()}");
+            Log::error(self::class." - Error: {$e->getMessage()} for uuid {$this->quoteUuid} with stack trace {$e->getTraceAsString()}");
         }
     }
 
