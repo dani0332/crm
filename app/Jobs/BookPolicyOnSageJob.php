@@ -17,7 +17,8 @@ use Throwable;
 class BookPolicyOnSageJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-// 200 seconds
+
+    // 200 seconds
     public $timeout = 70;
     private $sageRequest;
     private $quote;

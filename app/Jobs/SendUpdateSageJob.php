@@ -17,7 +17,8 @@ use Throwable;
 class SendUpdateSageJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-// 30 seconds
+
+    // 30 seconds
     public int $timeout = 70;
     private $requestPayload;
     private $sendUpdateLog;
