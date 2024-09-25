@@ -40,7 +40,6 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
-use OwenIt\Auditing\Models\Audit;
 
 class SendUpdateLogService
 {
