@@ -180,6 +180,13 @@ class SendUpdateLogController extends Controller
             }
         }
         $bookingDetails = $this->sendUpdateLogService->getInvoiceDescription($sendUpdateLog, $realQuote, $quoteType, $payments);
+        if (! $bookingDetails) {
+            $redirectUrl = checkPersonalQuotes($quoteType)
+                ? 'personal-quotes/'.strtolower($quoteType).'/'.$sendUpdateLog->quote_uuid
+                : 'quotes/'.strtolower($quoteType).'/'.$sendUpdateLog->quote_uuid;
+
+            return redirect($redirectUrl)->with(['error' => 'Broker Invoice Number Generation failed.']);
+        }
         info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - BookingDetails: '.json_encode($bookingDetails));
 
         $uploadedDocuments = $this->sendUpdateLogService->getUploadedDocuments($sendUpdateLog);
