@@ -1021,9 +1021,10 @@ class CarQuoteService extends BaseService
 
         $wheres = collect($this->query->wheres)->pluck('', 'column')->toArray();
         if(!array_key_exists('cqr.created_at', $wheres)) {
+            info('carQuoteService getGridData without created_at case found');
             $this->query->whereBetween('cqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
-        
+
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
