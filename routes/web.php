@@ -658,4 +658,3 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('/update-aml-status', [CRUDController::class, 'updateAmlStatus']);
 });
-
