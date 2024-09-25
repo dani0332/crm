@@ -119,8 +119,9 @@ class AlfredChatController extends Controller
                     'created_at' => ['$gte' => $start_date, '$lte' => $end_date],
                 ],
             ];
-        }else {
+        } else {
             // If dates are not provided, use the current day as default for both
+<<<<<<< HEAD
             if($request->quoteId == '' || $request->quoteId == null){
                 $start_date = Carbon::now()->startOfDay()->toIso8601String();
                 $end_date = Carbon::now()->endOfDay()->toIso8601String();
@@ -132,6 +133,16 @@ class AlfredChatController extends Controller
                 ];
             }
            
+=======
+            $start_date = Carbon::now()->startOfDay()->toIso8601String();
+            $end_date = Carbon::now()->endOfDay()->toIso8601String();
+
+            $chatPipeline[] = [
+                '$match' => [
+                    'created_at' => ['$gte' => $start_date, '$lte' => $end_date],
+                ],
+            ];
+>>>>>>> d8c94297711f9ee0d8d106f91f2acbd16f24a7ba
         }
 
         // Add $group, $sort, $skip, and $limit stages for pagination
