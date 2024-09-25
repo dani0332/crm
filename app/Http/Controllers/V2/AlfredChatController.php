@@ -21,7 +21,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
-use MongoDB\Laravel\Queue\MongoJob;
 
 class AlfredChatController extends Controller
 {
@@ -380,19 +379,17 @@ class AlfredChatController extends Controller
         $modelType = (in_array(ucwords($modelType), newUi()) &&
         checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
 
-       
         $aliases = [
-            CarQuote::class => ['query' => $this->carQuery, 'alias' => 'cqr'],  
-            HealthQuote::class => ['query' => $this->healthQuery, 'alias' => 'hqr'], 
+            CarQuote::class => ['query' => $this->carQuery, 'alias' => 'cqr'],
+            HealthQuote::class => ['query' => $this->healthQuery, 'alias' => 'hqr'],
             TravelQuote::class => ['query' => $this->travelQuery, 'alias' => 'tqr'],
         ];
 
-
-        $modelData = $aliases[$modelType] ?? $aliases[CarQuote::class]; 
+        $modelData = $aliases[$modelType] ?? $aliases[CarQuote::class];
         $alias = $modelData['alias'];
 
         $partialQuery = $modelData['query'];
-        
+
         $quoteId = null;
         if ($request->has('quoteId') && $request->quoteId != null) {
             if (strpos($request->quoteId, '-') !== false) {
@@ -420,9 +417,9 @@ class AlfredChatController extends Controller
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['end_date']));
 
             $partialQuery->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
-        } 
+        }
 
-        if($request->email == null && $request->mobile_no == null && $quoteId == null  && empty($request->start_date) && empty($request->end_date)) {
+        if ($request->email == null && $request->mobile_no == null && $quoteId == null && empty($request->start_date) && empty($request->end_date)) {
             // Default to last 30 days if no dates are provided
             $dateFrom = now()->subDays(30)->startOfDay();
             $dateTo = now()->endOfDay();
@@ -481,11 +478,11 @@ class AlfredChatController extends Controller
         $fileName = 'alfred_chat_logs_'.Carbon::now()->format('Y-m-d_H-i-s');
 
         if ($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
-            
+
             foreach ($data as $item) {
                 $dataById[$item->uuid] = $item;
-                foreach($mongoResults as $mongoResult) {
-                    if($item->uuid == $mongoResult['_id']) {
+                foreach ($mongoResults as $mongoResult) {
+                    if ($item->uuid == $mongoResult['_id']) {
                         $item->communication_channels = $mongoResult['communication_channels'];
                         $item->customer_interactions = $mongoResult['customer_interactions'];
                         $item->ai_interactions = $mongoResult['ai_interactions'];
@@ -511,7 +508,6 @@ class AlfredChatController extends Controller
                 'quote_id' => ['$in' => $itemIds],
             ],
         ];
-
 
         if ($type === 'chat') {
             $pipeline[] = [
@@ -587,8 +583,8 @@ class AlfredChatController extends Controller
                         ],
                     ],
                     'fallbacks' => [
-                        '$sum' => ['$cond' => [['$ifNull' => ['$fallback', false]], 1, 0,],],
-                ],
+                        '$sum' => ['$cond' => [['$ifNull' => ['$fallback', false]], 1, 0]],
+                    ],
                 ],
             ];
         }

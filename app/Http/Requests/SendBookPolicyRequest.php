@@ -59,7 +59,7 @@ class SendBookPolicyRequest extends FormRequest
 
                     // Blow code is for checking if payment and payment split record exists or not which is required for sage
 
-                    if ($payment->first() && $paymentSplit->first()) {
+                    if ($payment && $paymentSplit) {
                         if (empty($payment->insurer_invoice_date)) {
                             $validator->errors()->add('value', 'Insurer Invoice date is required');
                         }

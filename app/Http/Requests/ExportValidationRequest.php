@@ -44,37 +44,42 @@ class ExportValidationRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            $diffInDays = 120;
-            $exportTye = $this->route('exportTye');
-            $quoteType = $this->route('quoteType');
 
-            if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
-                $diffInDays = 31;
-            }
+            if (! $validator->errors()->any()) {
+                $diffInDays = 120;
+                $exportTye = $this->route('exportTye');
+                $quoteType = $this->route('quoteType');
 
-            if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {
-                if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
-                    $start = Carbon::parse($this->input('paid_at_start'));
-                    $end = Carbon::parse($this->input('paid_at_end'));
-                    $error_fields = 'paid at';
-                } elseif (request()->has('payment_due_date')) {
-                    $start = Carbon::parse($this->input('payment_due_date')[0])->startOfDay();
-                    $end = Carbon::parse($this->input('payment_due_date')[1])->endOfDay();
-                    $error_fields = 'payment due date';
-                } elseif (request()->has('booking_date')) {
-                    $start = Carbon::parse($this->input('booking_date')[0])->startOfDay();
-                    $end = Carbon::parse($this->input('booking_date')[1])->endOfDay();
-                    $error_fields = 'booking date';
-                } elseif ($this->has('created_at_start') && $this->has('created_at_end')) {
-                    $start = Carbon::parse($this->input('created_at_start'));
-                    $end = Carbon::parse($this->input('created_at_end'));
-                    $error_fields = 'created date';
+                if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
+                    $diffInDays = 31;
                 }
 
-                $diff = $start->diffInDays($end);
-                if ($diff > $diffInDays) {
-                    $validator->errors()->add('flash', 'Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.');
+                if ($exportTye != GenericRequestEnum::EXPORT_MAKES_MODELS) {
+                    if ($exportTye == GenericRequestEnum::EXPORT_PLAN_DETAIL) {
+                        $start = Carbon::parse($this->input('paid_at_start'));
+                        $end = Carbon::parse($this->input('paid_at_end'));
+                        $error_fields = 'paid at';
+                    } elseif (request()->has('payment_due_date')) {
+                        $start = Carbon::parse($this->input('payment_due_date')[0])->startOfDay();
+                        $end = Carbon::parse($this->input('payment_due_date')[1])->endOfDay();
+                        $error_fields = 'payment due date';
+                    } elseif (request()->has('booking_date')) {
+                        $start = Carbon::parse($this->input('booking_date')[0])->startOfDay();
+                        $end = Carbon::parse($this->input('booking_date')[1])->endOfDay();
+                        $error_fields = 'booking date';
+                    } elseif ($this->has('created_at_start') && $this->has('created_at_end')) {
+                        $start = Carbon::parse($this->input('created_at_start'));
+                        $end = Carbon::parse($this->input('created_at_end'));
+                        $error_fields = 'created date';
+                    }
+
+                    $diff = $start->diffInDays($end);
+                    if ($diff > $diffInDays) {
+                        $validator->errors()->add('flash', 'Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.');
+                    }
                 }
+            } else {
+                $validator->errors()->add('flash', 'Valid dates are required to export.');
             }
         });
     }
