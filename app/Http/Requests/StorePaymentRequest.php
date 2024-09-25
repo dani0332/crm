@@ -82,8 +82,11 @@ class StorePaymentRequest extends FormRequest
                     }
 
                     if (! empty($quoteModel->parent_duplicate_quote_id)) {
-                        $paymentAlreadyExistsForCIR = $quoteModel->payments->count();
-                        if ($paymentAlreadyExistsForCIR > 0) {
+                        // This will check the double tab case and if the lead created through duplicate functionality
+                        $paymentAlreadyExists = $quoteModel->payments->count();
+
+                        // This condition check if the payment already exists and the payment is not added through send update
+                        if ($paymentAlreadyExists > 0 && empty(request()->send_update_id)) {
                             $validator->errors()->add('payment', 'Payment Already Added');
                         }
                     }
