@@ -483,6 +483,7 @@ class AlfredChatController extends Controller
                 $dataById[$item->uuid] = $item;
                 foreach ($mongoResults as $mongoResult) {
                     if ($item->uuid == $mongoResult['_id']) {
+                        $item->quote_type = $mongoResult['quote_type'];
                         $item->communication_channels = $mongoResult['communication_channels'];
                         $item->customer_interactions = $mongoResult['customer_interactions'];
                         $item->ai_interactions = $mongoResult['ai_interactions'];
