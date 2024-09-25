@@ -53,11 +53,14 @@ function onSubmit() {
   let diff = calculateDaysDifference(filters.start_date, filters.end_date);
   if (diff > 30) {
     notification.error({
-      message: 'Maximum of 30 days are allowed',
+      message: 'Maximum of 30 days  are allowed',
       position: 'top',
     });
     return;
   }
+
+  filters.start_date = useDateFormat(filters.start_date).value;
+  filters.end_date = useDateFormat(filters.end_date).value;
 
   filters.page = 1;
   router.visit(route('instant-alfred.logs'), {
