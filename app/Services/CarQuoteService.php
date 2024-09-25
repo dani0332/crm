@@ -933,9 +933,6 @@ class CarQuoteService extends BaseService
             $this->query->whereBetween('cqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
 
-        if (! $request->code && ! $request->email && ! $request->mobile_no && ! $request->created_at && ! $request->payment_due_date && ! $request->booking_date && ! $request->previous_quote_policy_number && ! $request->renewal_batch) {
-            $this->query->whereBetween('cqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
-        }
         if (
             in_array('created_at', $searchProperties)
             && isset($request->created_at) && $request->created_at != ''
@@ -1020,8 +1017,7 @@ class CarQuoteService extends BaseService
         }
 
         $wheres = collect($this->query->wheres)->pluck('', 'column')->toArray();
-        if (! array_key_exists('cqr.created_at', $wheres)) {
-            info('carQuoteService getGridData without created_at case found');
+        if(!array_key_exists('cqr.created_at', $wheres) && !$request->hasAny(['code', 'email', 'mobile_no', 'created_at', 'payment_due_date', 'booking_date', 'previous_quote_policy_number', 'renewal_batch'])) {
             $this->query->whereBetween('cqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
 
