@@ -9,6 +9,9 @@ const props = defineProps({
 const page = usePage();
 const notification = useNotifications('toast');
 
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+
 const { isRequired } = useRules();
 
 const objToUrl = obj => useObjToUrl(obj);
@@ -365,25 +368,28 @@ const downloadReport = () => {
     </div>
 
     <div class="flex justify-between gap-3">
-      <x-tooltip v-if="reportButtonCon.disable" position="right">
-        <!-- :disabled="reportButtonCon.disable" -->
-        <!-- @click.prevent="downloadReport" -->
-        <x-button size="sm" color="emerald">Export Excel</x-button>
-        <template #tooltip v-if="reportButtonCon.msg">
-          <span class="font-medium">
-            {{ reportButtonCon.msg }}
-          </span>
-        </template>
-      </x-tooltip>
+      <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+        <x-tooltip v-if="reportButtonCon.disable" position="right">
+          <!-- :disabled="reportButtonCon.disable" -->
+          <!-- @click.prevent="downloadReport" -->
+          <x-button size="sm" color="emerald">Export Excel</x-button>
+          <template #tooltip v-if="reportButtonCon.msg">
+            <span class="font-medium">
+              {{ reportButtonCon.msg }}
+            </span>
+          </template>
+        </x-tooltip>
 
-      <x-button
-        :disabled="reportButtonCon.disable"
-        v-else
-        size="sm"
-        color="emerald"
-        @click.prevent="downloadReport"
-        >Export Excel</x-button
-      >
+        <x-button
+          :disabled="reportButtonCon.disable"
+          v-else
+          size="sm"
+          color="emerald"
+          @click.prevent="downloadReport"
+          >Export Excel</x-button
+        >
+      </div>
+
       <div class="flex justify-end gap-3">
         <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
         <x-button size="sm" color="primary" @click.prevent="onReset">
