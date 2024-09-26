@@ -22,7 +22,7 @@ class SageProcessesCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Process Sage Policy Booking single request per Insurance Provider';
+    protected $description = 'Process Sage Policy and Endorsements Booking single request per Insurance Provider';
 
     public function __construct()
     {
@@ -49,6 +49,7 @@ class SageProcessesCommand extends Command
                     ->where('status', SageEnum::SAGE_PROCESS_PENDING_STATUS)
                     ->orderBy('created_at')
                     ->first();
+
                 info('cmd:SageProcessesCommand - Processing Sage Process ID: '.$sageProcess->id.' for Insurance Provider ID: '.$insuranceProvider);
                 $sageProcessRequest = json_decode($sageProcess->request);
                 $sageRequest = $sageProcessRequest->sagePayload;
@@ -60,9 +61,8 @@ class SageProcessesCommand extends Command
                 }
 
                 if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_SEND_UPDATE_REQUEST) {
-                    $preparedEndorsementData = $sageProcessRequest->endorsementPreparedData;
                     $quote = $sageProcess->model;
-                    SendUpdateSageJob::dispatch($request, $quote, $sageRequest, $preparedEndorsementData, $sageProcess)->onQueue('sage-processes');
+                    SendUpdateSageJob::dispatch($request, $quote, $sageRequest, $sageProcess)->onQueue('sage-processes');
                 }
             }
         } else {
@@ -71,4 +71,5 @@ class SageProcessesCommand extends Command
 
         info('cmd:SageProcessesCommand - Sage Policy Booking Command Ended');
     }
+
 }
