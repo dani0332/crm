@@ -173,9 +173,14 @@ class SageApiService
                 return in_array($sageApiLog['sage_request_type'], [
                     SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
                     SageEnum::SRT_CREATE_AR_SPPAY_INV,
+                    SageEnum::SRT_CREATE_AR_PREM_COMM_CORR_INV,
+                    SageEnum::SRT_CREATE_AR_SPPAY_CORR_INV,
                     SageEnum::SRT_CREATE_AP_PREM_INV,
                     SageEnum::SRT_CREATE_AP_SPPAY_INV,
+                    SageEnum::SRT_CREATE_AP_PREM_CORR_INV,
+                    SageEnum::SRT_CREATE_AP_SPPAY_CORR_INV,
                     SageEnum::SRT_CREATE_AR_DISC_INV,
+                    SageEnum::SRT_CREATE_AR_DISC_CORR_INV,
                 ]) && $sageApiLog['status'] == SageEnum::STATUS_SUCCESS;
             })->values()->toArray();
 
@@ -283,10 +288,15 @@ class SageApiService
         $invoiceTypeForCPD = [SageEnum::SCT_REVERSAL, SageEnum::SCT_CORRECTION];
         $getInvoiceTypes = [
             SageEnum::SRT_CREATE_AR_PREM_COMM_INV => SageEnum::SRT_GET_AR_INVOICE,
-            SageEnum::SRT_CREATE_AR_DISC_INV => SageEnum::SRT_GET_AR_INVOICE,
-            SageEnum::SRT_CREATE_AP_PREM_INV => SageEnum::SRT_GET_AP_INVOICE,
             SageEnum::SRT_CREATE_AR_SPPAY_INV => SageEnum::SRT_GET_AR_INVOICE,
+            SageEnum::SRT_CREATE_AR_PREM_COMM_CORR_INV => SageEnum::SRT_GET_AR_INVOICE,
+            SageEnum::SRT_CREATE_AR_SPPAY_CORR_INV => SageEnum::SRT_GET_AR_INVOICE,
+            SageEnum::SRT_CREATE_AP_PREM_INV => SageEnum::SRT_GET_AP_INVOICE,
             SageEnum::SRT_CREATE_AP_SPPAY_INV => SageEnum::SRT_GET_AP_INVOICE,
+            SageEnum::SRT_CREATE_AP_PREM_CORR_INV => SageEnum::SRT_GET_AP_INVOICE,
+            SageEnum::SRT_CREATE_AP_SPPAY_CORR_INV => SageEnum::SRT_GET_AP_INVOICE,
+            SageEnum::SRT_CREATE_AR_DISC_INV => SageEnum::SRT_GET_AR_INVOICE,
+            SageEnum::SRT_CREATE_AR_DISC_CORR_INV => SageEnum::SRT_GET_AR_INVOICE,
         ];
 
         $extraDetails = ['sage_request_type' => SageEnum::SRT_REV_CORR_AR_PREM_COMM_INV];
@@ -372,17 +382,27 @@ class SageApiService
         $sageEntryTypes = [
             SageEnum::SRT_CREATE_AR_PREM_COMM_INV => SageEnum::SRT_GET_AR_INVOICE,
             SageEnum::SRT_CREATE_AR_SPPAY_INV => SageEnum::SRT_GET_AR_INVOICE,
+            SageEnum::SRT_CREATE_AR_PREM_COMM_CORR_INV => SageEnum::SRT_GET_AR_INVOICE,
+            SageEnum::SRT_CREATE_AR_SPPAY_CORR_INV => SageEnum::SRT_GET_AR_INVOICE,
             SageEnum::SRT_CREATE_AP_PREM_INV => SageEnum::SRT_GET_AP_INVOICE,
             SageEnum::SRT_CREATE_AP_SPPAY_INV => SageEnum::SRT_GET_AP_INVOICE,
+            SageEnum::SRT_CREATE_AP_PREM_CORR_INV => SageEnum::SRT_GET_AP_INVOICE,
+            SageEnum::SRT_CREATE_AP_SPPAY_CORR_INV => SageEnum::SRT_GET_AP_INVOICE,
             SageEnum::SRT_CREATE_AR_DISC_INV => SageEnum::SRT_GET_AR_INVOICE,
+            SageEnum::SRT_CREATE_AR_DISC_CORR_INV => SageEnum::SRT_GET_AR_INVOICE,
         ];
 
         $stepMapping = [
             SageEnum::SRT_CREATE_AR_PREM_COMM_INV => 2,
             SageEnum::SRT_CREATE_AR_SPPAY_INV => 2,
+            SageEnum::SRT_CREATE_AR_PREM_COMM_CORR_INV => 2,
+            SageEnum::SRT_CREATE_AR_SPPAY_CORR_INV => 2,
             SageEnum::SRT_CREATE_AP_PREM_INV => 9,
             SageEnum::SRT_CREATE_AP_SPPAY_INV => 9,
+            SageEnum::SRT_CREATE_AP_PREM_CORR_INV => 9,
+            SageEnum::SRT_CREATE_AP_SPPAY_CORR_INV => 9,
             SageEnum::SRT_CREATE_AR_DISC_INV => 16,
+            SageEnum::SRT_CREATE_AR_DISC_CORR_INV => 16,
         ];
 
         $sageRequestType = $sageEntryType = $sageEntryTypes[$getRequestType];
