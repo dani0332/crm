@@ -313,7 +313,7 @@ const getS3TempUrl = async docURL => {
 
             <a
               v-else
-              :href="storageUrl + item.doc_url"
+              :href="storageUrl + encodeURIComponent(item.doc_url)"
               target="_blank"
               class="text-primary-600"
             >
@@ -435,7 +435,7 @@ const getS3TempUrl = async docURL => {
                 </a>
                 <a
                   v-else
-                  :href="storageUrl + quoteDocument.doc_url"
+                  :href="storageUrl + encodeURIComponent(quoteDocument.doc_url)"
                   target="_blank"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
                 >

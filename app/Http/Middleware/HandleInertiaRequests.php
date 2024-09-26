@@ -219,6 +219,12 @@ class HandleInertiaRequests extends Middleware
                         'Car',
                         route('car-lead-allocation.index'),
                         fn ($s) => $s->attributes(['icon' => 'car'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::TRAVEL_SIC_ALLOCATION),
+                        'Travel',
+                        route('travel-lead-allocation.index'),
+                        fn ($s) => $s->attributes(['icon' => 'travel'])
                     );
             });
         }

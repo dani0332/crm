@@ -65,7 +65,6 @@ class DashboardController extends Controller
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->get();
-        $car = $this->getProductByName(quoteTypeCode::Car);
         $teams = $this->getCurrentUserTeamsAndSubTeams($loggedInUserId);
         $teamIds = DB::table('user_team')->where('user_id', $loggedInUserId)->get()->pluck('team_id');
         $carAdvisors = $this->getUsersByTeamId(count($teamIds->toArray()) > 0 ? $teamIds->toArray() : []);
@@ -81,14 +80,15 @@ class DashboardController extends Controller
         $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($filters);
         $totalLeadsReceived = count($todaysLeads);
         $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
+
         $totalUnAssignedLeads = $this->dashboardService->getTotalUnAssignedLeads($filters);
-        $totalUnAssignedLeadsReceived = count($totalUnAssignedLeads);
+        $totalUnAssignedLeadsReceived = $totalUnAssignedLeads->count();
+        $totalUnAssignedLeadsReceivedEcommerce = $totalUnAssignedLeads->where('is_ecommerce', 1)->count();
+        $totalUnAssignedRevivalLeads = $totalUnAssignedLeads->where('source', LeadSourceEnum::REVIVAL)->count();
+
         $totalUnAssignedOnlySICLeads = $this->dashboardService->getTotalUnAssignedOnlySICLeads($filters);
-        $totalUnAssignedOnlySICLeadsReceived = count($totalUnAssignedOnlySICLeads);
-        $totalUnAssignedOnlyPaidSICLeads = $this->dashboardService->getTotalUnAssignedOnlySICLeads($filters, true);
-        $totalUnAssignedOnlyPaidSICLeadsReceived = count($totalUnAssignedOnlyPaidSICLeads);
-        $totalUnAssignedLeadsReceivedEcommerce = count($totalUnAssignedLeads->where('is_ecommerce', 1));
-        $totalUnAssignedRevivalLeads = count($totalUnAssignedLeads->where('source', LeadSourceEnum::REVIVAL));
+        $totalUnAssignedOnlySICLeadsReceived = $totalUnAssignedOnlySICLeads->count();
+        $totalUnAssignedOnlyPaidSICLeadsReceived = $totalUnAssignedOnlySICLeads->where('payment_status_id', PaymentStatusEnum::AUTHORISED)->count();
 
         $leadsCountByTier = $this->dashboardService->getLeadsCountByTier($filters);
         $unAssignedLeadsByTier = $this->dashboardService->getUnAssignedLeadsCountByTier($filters);
@@ -137,8 +137,17 @@ class DashboardController extends Controller
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         if (isset($request->range) && $request->range != null) {
             $date = explode(',', $request->range);
-            $startDate = Carbon::parse($date[0])->startOfDay()->format($dateFormat);
-            $endDate = Carbon::parse($date[1])->endOfDay()->format($dateFormat);
+            $startDate = Carbon::parse($date[0])->startOfDay();
+            $endDate = Carbon::parse($date[1])->endOfDay();
+
+            // Ensure that the date range does not exceed 31 days
+            if ($startDate->diffInDays($endDate) > 31) {
+                $endDate = $startDate->copy()->addDays(30)->endOfDay(); // Set end date to 31 days max
+            }
+
+            // Format dates as per the $dateFormat
+            $startDate = $startDate->format($dateFormat);
+            $endDate = $endDate->format($dateFormat);
         } else {
             $startDate = now()->startOfDay()->format($dateFormat);
             $endDate = now()->endOfDay()->format($dateFormat);
@@ -159,14 +168,16 @@ class DashboardController extends Controller
 
         $totalLeadsReceived = count($todaysLeads);
         $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
+
         $totalUnAssignedLeads = $this->dashboardService->getTotalUnAssignedLeads($filters);
-        $totalUnAssignedLeadsReceived = count($totalUnAssignedLeads);
+        $totalUnAssignedLeadsReceived = $totalUnAssignedLeads->count();
+        $totalUnAssignedLeadsReceivedEcommerce = $totalUnAssignedLeads->where('is_ecommerce', 1)->count();
+        $totalUnAssignedRevivalLeads = $totalUnAssignedLeads->where('source', LeadSourceEnum::REVIVAL)->count();
+
         $totalUnAssignedOnlySICLeads = $this->dashboardService->getTotalUnAssignedOnlySICLeads($filters);
-        $totalUnAssignedOnlySICLeadsReceived = count($totalUnAssignedOnlySICLeads);
-        $totalUnAssignedOnlyPaidSICLeads = $this->dashboardService->getTotalUnAssignedOnlySICLeads($filters, true);
-        $totalUnAssignedOnlyPaidSICLeadsReceived = count($totalUnAssignedOnlyPaidSICLeads);
-        $totalUnAssignedLeadsReceivedEcommerce = count($totalUnAssignedLeads->where('is_ecommerce', 1));
-        $totalUnAssignedRevivalLeads = count($totalUnAssignedLeads->where('source', LeadSourceEnum::REVIVAL));
+        $totalUnAssignedOnlySICLeadsReceived = $totalUnAssignedOnlySICLeads->count();
+        $totalUnAssignedOnlyPaidSICLeadsReceived = $totalUnAssignedOnlySICLeads->where('payment_status_id', PaymentStatusEnum::AUTHORISED)->count();
+
         $leadsCountByTier = $this->dashboardService->getLeadsCountByTier($filters);
         $revivalLeadsCount = $this->dashboardService->getLeadsCountRevival($filters);
         $unAssignedLeadsByTier = $this->dashboardService->getUnAssignedLeadsCountByTier($filters);
