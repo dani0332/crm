@@ -291,7 +291,7 @@ const isIntegerColumn = key => {
     <template #item-commmission_percentage="{ commmission_percentage }">
       {{ commmission_percentage ?? 'N/A' }}
     </template>
-      <template #item-source="{ source }">
+    <template #item-source="{ source }">
       {{ source }}
     </template>
     <template #body-append>
