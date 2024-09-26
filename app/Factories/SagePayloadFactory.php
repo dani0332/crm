@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CollectionTypeEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
@@ -1140,24 +1141,11 @@ class SagePayloadFactory
 
     public static function createAppliedReceiptsAdjustments($quote, $sageCustomerNumber, $paymentRecord, $splitPaymentRecords, $isPaymentsSplit)
     {
-        $receiptsAndAdjustmentsData = [];
         if ($isPaymentsSplit) {
-            foreach ($splitPaymentRecords as $index => $splitPaymentRecord) {
-                [$singleReceiptData, $singlePrePaymentData, $discountData] = self::createReceiptData($splitPaymentRecord, $sageCustomerNumber, $paymentRecord, $index + 1);
-                $receiptsAndAdjustmentsData[] = $singleReceiptData;
-                $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
-                if ($discountData) {
-                    $receiptsAndAdjustmentsData[] = $discountData;
-                }
-            }
+            $receiptsAndAdjustmentsData = self::createAppliedReceiptsAdjustmentsForSplitPayments($splitPaymentRecords, $sageCustomerNumber, $paymentRecord);
         } else {
             $firstSplitPaymentRecord = $splitPaymentRecords[0];
-            [$singleReceiptData, $singlePrePaymentData , $discountData] = self::createReceiptData($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord);
-            $receiptsAndAdjustmentsData[] = $singleReceiptData;
-            $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
-            if ($discountData) {
-                $receiptsAndAdjustmentsData[] = $discountData;
-            }
+            $receiptsAndAdjustmentsData = self::createAppliedReceiptsAdjustmentsForNonSplitPayments($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord);
         }
 
         return $receiptsAndAdjustmentsData;
@@ -1336,5 +1324,42 @@ class SagePayloadFactory
     private static function getTermsCode($splitPaymentsCount)
     {
         return $splitPaymentsCount >= 10 ? 'SPLI'.$splitPaymentsCount : 'SPLIT'.$splitPaymentsCount;
+    }
+
+    private static function createAppliedReceiptsAdjustmentsForSplitPayments($splitPaymentRecords, $sageCustomerNumber, $paymentRecord)
+    {
+        $receiptsAndAdjustmentsData = [];
+        foreach ($splitPaymentRecords as $index => $splitPaymentRecord) {
+            if (self::isPaymentProcessed($splitPaymentRecord->payment_status_id)) {
+                [$singleReceiptData, $singlePrePaymentData, $discountData] = self::createReceiptData($splitPaymentRecord, $sageCustomerNumber, $paymentRecord, $index + 1);
+                $receiptsAndAdjustmentsData[] = $singleReceiptData;
+                $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
+                if ($discountData) {
+                    $receiptsAndAdjustmentsData[] = $discountData;
+                }
+            }
+
+        }
+
+        return $receiptsAndAdjustmentsData;
+    }
+    private static function createAppliedReceiptsAdjustmentsForNonSplitPayments($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord)
+    {
+        $receiptsAndAdjustmentsData = [];
+        if (self::isPaymentProcessed($firstSplitPaymentRecord->payment_status_id)) {
+            [$singleReceiptData, $singlePrePaymentData , $discountData] = self::createReceiptData($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord);
+            $receiptsAndAdjustmentsData[] = $singleReceiptData;
+            $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
+            if ($discountData) {
+                $receiptsAndAdjustmentsData[] = $discountData;
+            }
+        }
+
+        return $receiptsAndAdjustmentsData;
+    }
+
+    private static function isPaymentProcessed($paymentStatusId)
+    {
+        return in_array($paymentStatusId, [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
     }
 }

@@ -166,7 +166,7 @@ class SendUpdateLogController extends Controller
                 $paymentInvoices = array_merge($paymentInvoices->toArray(), $sendUpdateLogInvoices->toArray());
             }
         }
-        $bookingDetails = $this->sendUpdateLogService->getInvoiceDescription($sendUpdateLog, $realQuote, $quoteType, $payments);
+        $bookingDetails = $this->sendUpdateLogService->getInvoiceDescription($sendUpdateLog, $realQuote, $quoteType, $payments, true);
 
         $uploadedDocuments = $this->sendUpdateLogService->getUploadedDocuments($sendUpdateLog);
         // payment related work.
@@ -196,7 +196,6 @@ class SendUpdateLogController extends Controller
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
         $linkedQuoteDetails = $this->sendUpdateLogService->linkedQuoteDetails($quoteType, $quote);
         $isEditDisabledForQueuedBooking = $this->sendUpdateLogService->isEditDisabledForQueuedBooking($sendUpdateLog);
-
 
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
