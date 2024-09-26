@@ -3,11 +3,11 @@
 namespace App\Services;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\TiersEnum;
-use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
@@ -71,8 +71,6 @@ class DashboardService extends BaseService
             ->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']])
             ->groupBy('tiers.id');
 
-        info(self::class." - getLeadsCountByTier - Query: {$query->toRawSql()}");
-
         return $query->get();
     }
 
@@ -99,11 +97,8 @@ class DashboardService extends BaseService
         if ($filters['applyUnAssignedLeadsCountByTierDateFilter'] == true && $filters['startDate'] != now()->startOfDay()->toDateTimeString()) {
             $query->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']]);
         } else {
-            $from = ApplicationStorage::where('key_name', 'CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS')->first()->value;
-            $query->whereBetween('car_quote_request.created_at', [$from, now()->endOfDay()]);
+            $query->whereBetween('car_quote_request.created_at', [now()->subWeeks(2)->startOfDay(), now()->endOfDay()]);
         }
-
-        info(self::class." - getUnAssignedLeadsCountByTier - Query: {$query->toRawSql()}");
 
         return $query->get();
     }
@@ -119,8 +114,6 @@ class DashboardService extends BaseService
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO]);
 
-        info(self::class." - getLeadsCountRevival - Query: {$query->toRawSql()}");
-
         return $query->get();
     }
 
@@ -134,8 +127,6 @@ class DashboardService extends BaseService
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO])
             ->groupBy('source');
-
-        info(self::class." - getAssignedLeadsCountBySource - Query: {$query->toRawSql()}");
 
         return $query->get();
     }
@@ -162,8 +153,6 @@ class DashboardService extends BaseService
         if (isset($filters['teamIds'])) {
             $query->whereIn('teams.id', $filters['teamIds']);
         }
-
-        info(self::class." - getAdvisorLeadAssignedData - Query: {$query->toRawSql()}");
 
         return $query->get();
     }
@@ -215,8 +204,6 @@ class DashboardService extends BaseService
             return $query;
         }
 
-        info(self::class." - getTotalUnAssignedLeads - Query: {$query->toRawSql()}");
-
         return $query->get();
     }
 
@@ -238,8 +225,47 @@ class DashboardService extends BaseService
             return $query;
         }
 
-        info(self::class." - getTotalUnAssignedOnlySICLeads - Query: {$query->toRawSql()}");
-
         return $query->get();
+    }
+
+    public function getStatCounts(array $filters)
+    {
+        $teamWiseLeadsAssignedAverage = $this->getTeamWiseLeadStats($filters);
+
+        $totalLeadsQuery = CarQuote::whereBetween('created_at', [$filters['startDate'], $filters['endDate']])
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO]);
+
+        $totalLeadsReceived = $totalLeadsQuery->count();
+        $totalLeadsReceivedEcommerce = $totalLeadsQuery->where('is_ecommerce', 1)->count();
+
+        $totalUnAssignedLeadsQuery = $this->getTotalUnAssignedLeads($filters, true);
+        $totalUnAssignedLeadsReceived = $totalUnAssignedLeadsQuery->count();
+        $totalUnAssignedLeadsReceivedEcommerce = $totalUnAssignedLeadsQuery->where('is_ecommerce', 1)->count();
+        $totalUnAssignedRevivalLeads = $totalUnAssignedLeadsQuery->where('source', LeadSourceEnum::REVIVAL)->count();
+
+        $totalUnAssignedOnlySICLeadsQuery = $this->getTotalUnAssignedOnlySICLeads($filters, true);
+        $totalUnAssignedOnlySICLeadsReceived = $totalUnAssignedOnlySICLeadsQuery->count();
+        $totalUnAssignedOnlyPaidSICLeadsReceived = $totalUnAssignedOnlySICLeadsQuery->where('payment_status_id', PaymentStatusEnum::AUTHORISED)->count();
+
+        $leadsCountByTier = $this->getLeadsCountByTier($filters);
+        $revivalLeadsCount = $this->getLeadsCountRevival($filters);
+        $unAssignedLeadsByTier = $this->getUnAssignedLeadsCountByTier($filters);
+        $advisorLeadsAssignedData = $this->getAdvisorLeadAssignedData($filters);
+
+        return [
+            'teamWiseLeadsAssignedAverage' => $teamWiseLeadsAssignedAverage,
+            'totalLeadsReceived' => $totalLeadsReceived,
+            'totalLeadsReceivedEcommerce' => $totalLeadsReceivedEcommerce,
+            'totalUnassignedLeadsReceived' => $totalUnAssignedLeadsReceived,
+            'totalUnassignedLeadsReceivedEcommerce' => $totalUnAssignedLeadsReceivedEcommerce,
+            'totalUnassignedRevivalLeads' => $totalUnAssignedRevivalLeads,
+            'totalUnAssignedOnlySICLeadsReceived' => $totalUnAssignedOnlySICLeadsReceived,
+            'totalUnAssignedOnlyPaidSICLeadsReceived' => $totalUnAssignedOnlyPaidSICLeadsReceived,
+            'leadsCountByTier' => $leadsCountByTier,
+            'revivalLeadsCount' => $revivalLeadsCount,
+            'unAssignedLeadsByTier' => $unAssignedLeadsByTier,
+            'advisorLeadsAssignedData' => $advisorLeadsAssignedData,
+        ];
     }
 }
