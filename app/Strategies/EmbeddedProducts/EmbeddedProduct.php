@@ -233,11 +233,11 @@ class EmbeddedProduct
                 $path = $item->path;
                 $pwDoc = $path !== '' ? $websiteURL . $path : '';
                 if (!empty($path)) {
-
                     $epDocuments[] = [
                         'document_type' => 'Policy wordings',
                         'document_number' => 'Not Applicatble',
                         'url' => $pwDoc,
+                        'path'=> $item->path,
                         'can_view' => true,
                     ];
                 }
@@ -281,6 +281,7 @@ class EmbeddedProduct
                 'document_type' => $document->document_type_text,
                 'document_number' => $documentNumber,
                 'url' => $document->doc_url !== '' ? $websiteURL . $document->doc_url : '',
+                'path' => $document->doc_url,
                 'can_view' => true,
             ];
         })->toArray();

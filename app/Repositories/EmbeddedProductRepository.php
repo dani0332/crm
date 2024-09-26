@@ -800,11 +800,16 @@ class EmbeddedProductRepository extends BaseRepository
 
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($data['modelType']));
         $documentType = DocumentType::where('code', QuoteDocumentsEnum::EP)->where('quote_type_id', $quoteTypeId)->first();
+        $canAddDocument = false;
+        if($transaction->isNotEmpty()) {
+            $canAddDocument = in_array($transaction->first()->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PAID]);
+        }
 
         return [
             'ep' => $ep,
             'documents' => $epDocuments,
             'document_type' => $documentType,
+            'can_add_document' => $canAddDocument,
         ];
     }
 

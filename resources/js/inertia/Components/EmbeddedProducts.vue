@@ -99,7 +99,7 @@ const syncDocument = id => {
     });
 };
 
-const downloadDcoument = id => {
+const downloadDcoument = item => {
   downloadLoader.value = true;
   axios
     .post(
@@ -107,7 +107,7 @@ const downloadDcoument = id => {
       {
         quoteId: props.quote.id,
         modelType: props.modelType,
-        epId: id,
+        epId: item.ep_id,
         isInertia: true,
       },
       {
@@ -200,6 +200,11 @@ const downloadFile = download => {
       '/embedded-products/download/force?path=' +
       download.path; // so that it opens new tab for IE11
   }
+
+  downloadLoader.value = true;
+  setTimeout(() => {
+    downloadLoader.value = false;
+  }, 1300);
 };
 
 const viewDocument = id => {
@@ -280,6 +285,7 @@ const epDocuments = reactive({
     {
       text: 'Actions',
       value: 'actions',
+      width: 100,
     },
   ],
 });
@@ -421,7 +427,7 @@ onMounted(() => {
 
 const executeAction = item => {
   if (item.action === 'downloadDocument') {
-    downloadDcoument(item.ep_id);
+    downloadDcoument(item);
   }
 };
 
@@ -681,9 +687,12 @@ const onAddDocumentSubmit = event => {
             <div class="mt-2 mb-5 text-center">
               <x-button
                 size="xs"
-                color="#ff5e00"
+                class="border-0 shadow-none"
+                style="box-shadow: none;"
                 @click.prevent="addEpDocument(documentsReactive.ep.id)"
+                v-if="documentsReactive.can_add_document"
               >
+              <span class="bg-primary color-white leading-5 mr-1 rounded-full h-[20px] w-[20px] inline-block">+</span>
                 Click to add document(s)
               </x-button>
             </div>
@@ -698,23 +707,25 @@ const onAddDocumentSubmit = event => {
             :loading="viewDocumentLoader"
           >
             <template #item-actions="item">
-              <div class="flex flex-col gap-1">
+              <div class="flex flex-row gap-3">
                 <x-button
                   size="xs"
-                  color="#ff5e00"
+                  color="primary"
+                  outlined
                   :href="item.url"
                   target="_blank"
-                  v-if="item.can_view"
+                  v-if="item.url"
                 >
                   View
                 </x-button>
+                
                 <x-button
-                  v-if="item.action"
                   size="xs"
-                  color="#ff5e00"
-                  :disabled="!item.can_send"
+                  color="emerald"
+                  outlined
+                  :disabled="!item.url && !item.can_send"
                   :loading="downloadLoader"
-                  @click.prevent="executeAction(item)"
+                  @click.prevent="item.url ? downloadFile(item) : executeAction(item)"
                 >
                   Download
                 </x-button>
