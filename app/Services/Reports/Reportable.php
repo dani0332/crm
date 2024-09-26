@@ -4,6 +4,7 @@ namespace App\Services\Reports;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Services\ApplicationStorageService;
 use Carbon\Carbon;
@@ -68,6 +69,13 @@ trait Reportable
         return [
             QuoteStatusEnum::Duplicate,
             QuoteStatusEnum::Fake,
+        ];
+    }
+
+    public function getPaidStatuses()
+    {
+        return [
+            PaymentStatusEnum::CAPTURED,
         ];
     }
 }

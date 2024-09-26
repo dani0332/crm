@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
@@ -26,6 +27,7 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Models\PolicyIssuanceStatus;
 use App\Repositories\PaymentRepository;
+use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
 use App\Services\LeadsCountService;
 use App\Services\SplitPaymentService;
@@ -101,6 +103,7 @@ class HandleInertiaRequests extends Middleware
             'paymentMethodsEnum' => PaymentMethodsEnum::asArray(),
             'sendUpdateLogStatusEnum' => SendUpdateLogStatusEnum::asArray(),
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+            'amlStatusEnum' => AMLStatusCode::asArray(),
             'totalQuotesCount' => LeadsCountService::getLeadCount(),
             'im_logo' => getIMLogo(),
             'authorisePaymentCount' => app(PaymentRepository::class)->getAuthorisePaymentCount($userId = null),
@@ -116,6 +119,7 @@ class HandleInertiaRequests extends Middleware
             'kycEnums' => Kyc::asArray(),
             'documentTypeCodeEnum' => DocumentTypeCode::asArray(),
             'paymentFrequencyEnum' => PaymentFrequency::asArray(),
+            'pendingActivityCount' => app(ActivitiesService::class)->getPendingActivityCount(),
         ];
     }
 
@@ -217,6 +221,12 @@ class HandleInertiaRequests extends Middleware
                         'Car',
                         route('car-lead-allocation.index'),
                         fn ($s) => $s->attributes(['icon' => 'car'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::TRAVEL_SIC_ALLOCATION),
+                        'Travel',
+                        route('travel-lead-allocation.index'),
+                        fn ($s) => $s->attributes(['icon' => 'travel'])
                     );
             });
         }

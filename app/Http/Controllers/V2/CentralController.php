@@ -190,9 +190,9 @@ class CentralController extends Controller
 
     public function updateBookingPolicy(BookPolicyRequest $bookPolicyRequest)
     {
-        info('fn: updateBookingPolicy called');
 
         $validatedData = $bookPolicyRequest->validated();
+        info('Quote Code: '.$validatedData['payment_code'].' fn: updateBookingPolicy called');
 
         $paymentInformation = [
             'insurer_tax_number' => $validatedData['insurer_tax_invoice_number'],
@@ -212,11 +212,10 @@ class CentralController extends Controller
             return back()->with('message', 'Payment record not found');
         }
         $payment->update($paymentInformation);
-        $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
-        info('Book policy details update successfully for : '.$quote->uuid);
+        info('Quote Code: '.$validatedData['payment_code'].' Book policy details update successfully');
 
         (new SplitPaymentService)->updateCommissionSchedule($payment);
-        info('Commission Schedule updated successfully for : '.$quote->uuid);
+        info('Quote Code: '.$validatedData['payment_code'].' Commission Schedule updated successfully');
 
         return redirect()->back()->with('success', 'Booking details has been updated.');
     }
@@ -226,7 +225,7 @@ class CentralController extends Controller
         $request = (object) $sendBookPolicyRequest->validated();
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
-        info('fn: sendBookingPolicy called for '.$quote->uuid.' policy type '.$request->send_policy_type);
+        info('Quote Code: '.$quote->code.' fn: sendBookingPolicy called policy type '.$request->send_policy_type);
 
         if ($request->send_policy_type == SendPolicyTypeEnum::CUSTOMER) {
             dispatch(new SendBookPolicyDocumentsJob($request, $quote->code));
@@ -236,7 +235,7 @@ class CentralController extends Controller
                 'quote_status_date' => now(),
             ]);
 
-            info('Policy send to customer for '.$quote->uuid);
+            info('Quote Code: '.$quote->code.' Policy send to customer');
 
             return response()->json(['message' => 'Policy sent to customer'], 200);
         }
@@ -247,7 +246,16 @@ class CentralController extends Controller
                 ]], 403);
             }
             $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
+            $isDuplicateOrCIRLead = ! empty($quote['parent_duplicate_quote_id']);
             $payment = Payment::where('code', $quote['code'])->mainLeadPayment()->with('paymentSplits')->first();
+
+            if ($isDuplicateOrCIRLead && empty($payment)) {
+                $payment = Payment::where([
+                    'paymentable_id' => $quote->id,
+                    'paymentable_type' => $quote->getMorphClass(),
+                ])->mainLeadPayment()->with('paymentSplits')->first();
+            }
+
             $payment->update([
                 'broker_invoice_number' => (new PaymentRepository)->generateBrokerInvoiceNumber($payment, $request->model_type),
             ]);
@@ -280,7 +288,7 @@ class CentralController extends Controller
 
             $this->updatePaymentAllocationStatus($quote);
 
-            info('Payment allocation && Transaction payment status update & policy send to customer for '.$quote->uuid);
+            info('Quote Code: '.$quote->code.' Payment allocation && Transaction payment status update & policy send to customer');
 
             return response()->json(['message' => $response['message']], 200);
         }

@@ -50,10 +50,6 @@ const props = defineProps({
     type: Array,
     required: false,
   },
-  isAmlClearedForPayment: {
-    type: Boolean,
-    default: false,
-  },
   eCommercePriceWithLP: {
     type: [String, Number],
     default: '0',
@@ -2554,9 +2550,8 @@ const getCaptureValidation = computed(() => {
     if (
       props.payments.length > 0 &&
       totalPriceRounded === calculatedTotal &&
-      (((props.isAmlClearedForPayment ||
-        props.quoteRequest.quote_status_id ===
-          page.props.quoteStatusEnum.AMLScreeningCleared ||
+      (((props.quoteRequest.aml_status ===
+        page.props.amlStatusEnum.AMLScreeningCleared ||
         props.quoteRequest.quote_status_id ===
           page.props.quoteStatusEnum.TransactionDeclined ||
         props.quoteRequest.quote_status_id ===
@@ -3528,6 +3523,23 @@ const splitPaymentTotalPrice = (
                               "
                               outlined
                               >Copy Payment Link</x-button
+                            >
+                            <x-button
+                              v-if="
+                                can(permissionEnum.ReApprovePayments) &&
+                                splitPayment.process_job?.status === 'failed'
+                              "
+                              size="xs"
+                              color="red"
+                              class="ml-2"
+                              @click="
+                                retrySplitPaymentModal(
+                                  splitPayment.process_job?.id,
+                                  splitPayment.process_job?.message,
+                                )
+                              "
+                              outlined
+                              >Retry</x-button
                             >
                           </div>
                         </td>

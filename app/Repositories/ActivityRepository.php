@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\LeadSourceEnum;
 use App\Models\Activities;
 use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
@@ -72,6 +73,7 @@ class ActivityRepository extends BaseRepository
             'due_date' => $data['due_date'],
             'description' => $data['description'],
             'title' => $data['title'],
+            'source' => LeadSourceEnum::IMCRM,
         ];
 
         if (isset($data['quote_id'])) {

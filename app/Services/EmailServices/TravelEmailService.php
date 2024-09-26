@@ -247,6 +247,7 @@ class TravelEmailService extends BaseService
                 'plan_ids' => collect($plans->all)->take(5)->pluck('id')->toArray(),
                 'quote_uuid' => $lead->uuid,
             ];
+            info(self::class." - Going to generate PDF for uuid: {$lead->uuid}");
             $pdf = $this->travelQuoteService->exportPlansPdf(quoteTypeCode::Travel, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $plans->all], 'isDataSorted' => true])));
             if (isset($pdf['error'])) {
                 info(self::class." - Failed to generate PDF for UUID: {$lead->uuid} Error: {$pdf['error']}");
@@ -262,6 +263,8 @@ class TravelEmailService extends BaseService
         }
 
         if ($lead->advisor_id) {
+            info(self::class." - Going to Send Intro Email for uuid: {$lead->uuid}");
+
             return $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email', QuoteTypes::TRAVEL);
         }
 
