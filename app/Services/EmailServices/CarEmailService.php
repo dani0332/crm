@@ -366,10 +366,10 @@ class CarEmailService extends BaseService
     public function buildNBMotorFollowupEmailData($lead, $advisor)
     {
         return (object) [
-            'quoteUID' => $lead->code,
+            'quoteUID' => $lead->uuid,
             'customerEmail' => $lead->email,
             'uuid' => $lead->uuid,
-            'refID' => $lead->uuid,
+            'refID' => $lead->code,
             'customerName' => $lead->first_name.' '.$lead->last_name,
             'advisorId' => $advisor->id ?? null,
             'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
