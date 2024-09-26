@@ -1850,7 +1850,6 @@ class SagePayloadFactory
         return $splitPaymentsCount >= 10 ? 'SPLI'.$splitPaymentsCount : 'SPLIT'.$splitPaymentsCount;
     }
 
-
     private static function createAppliedReceiptsAdjustmentsForSplitPayments($splitPaymentRecords, $sageCustomerNumber, $paymentRecord)
     {
         $receiptsAndAdjustmentsData = [];
