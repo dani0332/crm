@@ -12,7 +12,10 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamNameEnum;
 use App\Enums\TeamTypeEnum;
+use App\Models\CarQuote;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\PersonalQuote;
+use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteType;
 use App\Models\Team;
 use App\Services\Reports\Reportable;
@@ -32,12 +35,23 @@ class ConversionAsAtReportService extends BaseService
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
 
         if ($request->lob && $request->startEndDate && $request->asAtDate) {
-            $saleLeadsCountQuery = strtr('
+
+            if ($request->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Car)) {
+                $model = app(CarQuote::class);
+                $detailModel = app(CarQuoteRequestDetail::class);
+            } else {
+                $model = app(PersonalQuote::class);
+                $detailModel = app(PersonalQuoteDetail::class);
+            }
+
+            $alias = $model->getTable();
+
+            $saleLeadsCountQuery = strtr("
                 SUM(
                     CASE WHEN (
-                        ((personal_quotes.payment_status_id in (:paidStatuses) OR personal_quotes.quote_status_id in (:approvedStatuses)) and personal_quotes.transaction_approved_at is NULL) OR
-                        (personal_quotes.quote_status_id in (:approvedStatuses) and personal_quotes.transaction_approved_at <= ":asAtDate")
-                    ) THEN 1 ELSE 0 END) as sale_leads',
+                        (({$alias}.payment_status_id in (:paidStatuses) OR {$alias}.quote_status_id in (:approvedStatuses)) and {$alias}.transaction_approved_at is NULL) OR
+                        ({$alias}.quote_status_id in (:approvedStatuses) and {$alias}.transaction_approved_at <= ':asAtDate')
+                    ) THEN 1 ELSE 0 END) as sale_leads",
                 [
                     ':approvedStatuses' => implode(',', [
                         QuoteStatusEnum::TransactionApproved,
@@ -49,22 +63,22 @@ class ConversionAsAtReportService extends BaseService
                     ':paidStatuses' => implode(',', $this->getPaidStatuses()),
                 ]);
 
-            $query = PersonalQuote::query()
+            $query = $model::query()
                 ->select(
                     DB::raw('COUNT(*) as total_leads'),
-                    DB::raw('SUM(CASE WHEN
-                        personal_quotes.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.')
+                    DB::raw("SUM(CASE WHEN
+                        {$alias}.quote_status_id in (".QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.')
                         THEN 1 ELSE 0 END) as bad_leads'),
                     DB::raw($saleLeadsCountQuery),
                 )
-                ->join('personal_quote_details as pqd', 'personal_quotes.id', 'pqd.personal_quote_id')
-                ->whereNotIn('personal_quotes.source', [
+                ->join("{$detailModel->getTable()} as pqd", "{$alias}.id", "pqd.{$model->getForeignKey()}")
+                ->join('quote_batches', 'quote_batches.id', "{$alias}.quote_batch_id")
+                ->whereNotIn("{$alias}.source", [
                     LeadSourceEnum::IMCRM,
-                    LeadSourceEnum::RENEWAL_UPLOAD,
                     LeadSourceEnum::INSLY,
+                    LeadSourceEnum::RENEWAL_UPLOAD,
                     LeadSourceEnum::SAPGO,
                     LeadSourceEnum::SAPJO,
-                    LeadSourceEnum::CAR_24,
                 ]);
 
             $filters = [
@@ -75,7 +89,7 @@ class ConversionAsAtReportService extends BaseService
                 'page' => $request->page,
             ];
 
-            $query = $this->applyFilters($query, $filters);
+            $query = $this->applyFilters($query, $filters, $alias);
 
             $query = $query->get();
 
@@ -120,7 +134,7 @@ class ConversionAsAtReportService extends BaseService
         ];
     }
 
-    public function applyFilters($query, $filters)
+    public function applyFilters($query, $filters, $alias)
     {
         $filters = (object) $filters;
 
@@ -145,8 +159,8 @@ class ConversionAsAtReportService extends BaseService
             } elseif ($filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::GroupMedical)) {
                 $query->join('business_quote_request', 'business_quote_request.uuid', 'personal_quotes.uuid');
                 $query->where('business_quote_request.business_type_of_insurance_id', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
-            } else {
-                $query->where('personal_quotes.quote_type_id', $filters->lob);
+            } elseif ($filters->lob != QuoteTypes::getIdFromValue(quoteTypeCode::Car)) {
+                $query->where("{$alias}.quote_type_id", $filters->lob);
             }
         }
         if (isset($filters->tag)) {
