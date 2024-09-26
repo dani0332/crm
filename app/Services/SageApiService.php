@@ -212,6 +212,7 @@ class SageApiService
         $preparedData = (new SendUpdateLogService)->preparedDetailsForEndorsement($request, $mainQuote, $sendUpdateLog);
 
         $preparedData['quoteDetails'] = $quoteModelObject::where('id', $request->quoteRefId)->first();
+        $sendUpdateLog->userId = $sageRequestPayload->userId;
         $preparedData['sendUpdateLog'] = $sendUpdateLog;
 
         if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD && ! empty($reversalInvoiceLogs)) {
