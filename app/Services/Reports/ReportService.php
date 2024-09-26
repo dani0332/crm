@@ -592,6 +592,7 @@ class ReportService extends BaseService
     {
 
         $user = Auth::user();
+
         $userTeams = $user->getUserTeams($user->id);
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
         $expiryDays = $authorizedDays->value;
@@ -658,9 +659,14 @@ class ReportService extends BaseService
                 ->leftJoin('payments as py', 'py.code', '=', $details['table'] . '.code')
                 ->join('users', 'users.id', $details['table'] . '.advisor_id');
 
-            $query->join('user_team', 'user_team.user_id', 'users.id')
-                ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                ->whereIn('teams.name', $userTeams);
+            if ($user->isAdvisor()) {
+                $query->where($details['table'] . '.advisor_id', $user->id);
+            } else {
+                $query->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                    ->whereIn('teams.name', $userTeams);
+            }
+
             $query->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
                 ->groupBy('users.id', 'users.name')
                 ->orderBy('total_leads', 'desc');
