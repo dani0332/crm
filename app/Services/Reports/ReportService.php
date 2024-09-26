@@ -247,8 +247,6 @@ class ReportService extends BaseService
             QuoteTypes::PET,
             QuoteTypes::CYCLE,
             QuoteTypes::JETSKI,
-            QuoteTypes::CORPLINE,
-            QuoteTypes::GROUP_MEDICAL,
         ];
 
         $allowedLOBs = [];
