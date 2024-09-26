@@ -138,6 +138,8 @@ const isDiscountAllowed = ref(true);
 const isRetryModalOpen = ref(false);
 const retryProcessJobId = ref(0);
 const retryPaymentErrorMessage = ref('');
+const isPaidEditable = ref(false);
+const paidPaymentsEditable = ref([]);
 
 const modal2Ref = ref(null);
 
@@ -209,6 +211,36 @@ const calculateTotalAmount = () => {
   }
   calculatePaymentBreakup(false);
 };
+
+
+const verifyPaidEditable = computed(() => {
+
+  return payment => {
+    console.log('paymentMethodsForm.frequency',payment.frequency);  
+    
+    if (props.payments.length > 0) {
+      
+      if(payment.frequency === 'split_payments'){
+        let isAllPaid = payment.payment_splits.filter(
+          item => item.payment_status_id === props.paymentStatusEnum.PAID,
+        );
+
+        if (isAllPaid.length === payment.payment_splits.length && 
+            payment.total_price < (payment.total_amount + payment.discount_value) 
+        ) {
+          isPaidEditable.value = true;
+          return true;
+        }
+       
+      }     
+    }
+    isPaidEditable.value = false;
+    return false;
+  };
+});
+
+
+
 
 // Define a computed property to deduct insure now pay later
 const isInsureNowPayLaterAllowed = computed(() => {
@@ -1616,10 +1648,12 @@ const editPaymentModal = (
   sr_no,
   capture_approval,
 ) => {
+  console.log('here',isPaidEditable.value);
   if (
     sr_no === 0 &&
     payment.payment_status.id === props.paymentStatusEnum.PAID &&
-    capture_approval === 0
+    capture_approval === 0 &&
+    isPaidEditable.value === false
   ) {
     notification.error({
       title: 'No further actions allowed to paid payments',
@@ -1841,6 +1875,15 @@ const editPaymentModal = (
     } else {
       isFieldReadonly.value = false;
     }
+
+    if (isPaidEditable.value === true) {
+      for (let i = 1; i <= payment.total_payments; i++) {
+        paidPaymentsEditable.value[i] = true;
+      }
+    }
+    
+
+
   }
   if (paymentMethodsForm.status == 'view') {
     totalPrice.value = payment.total_price;
@@ -3348,7 +3391,7 @@ const splitPaymentTotalPrice = (
                       </td>
                       <td>
                         <div class="flex gap-2">
-                          <template v-if="is_lacking_payment">
+                          <template v-if="is_lacking_payment || verifyPaidEditable(item)">
                             <x-tooltip placement="left">
                               <x-badge
                                 size="xs"
@@ -4805,7 +4848,7 @@ const splitPaymentTotalPrice = (
                       </template>
                     </div>
                     <div class="w-1/5 px-2">
-                      <template v-if="readOnlyPayments[count]">
+                      <template v-if="readOnlyPayments[count] && !isPaidEditable">
                         {{ formatAmount(splitAmountModels[count]) }}
                       </template>
                       <template v-else>
