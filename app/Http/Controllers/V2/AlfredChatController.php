@@ -21,6 +21,10 @@ class AlfredChatController extends Controller
     public function __construct()
     {
         $this->middleware('permission:'.PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS, ['only' => ['logs']]);
+
+        $this->middleware('permission:'.PermissionsEnum::DATA_EXTRACTION, ['only' => ['exportChat']]);
+
+        $this->middleware('readonly_db');
     }
 
     /**
