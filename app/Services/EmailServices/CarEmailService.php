@@ -332,7 +332,7 @@ class CarEmailService extends BaseService
     {
         try{
         info('Sending NBMotorWorkFlow followups email for lead: '.$lead->uuid.' | Time: '.now());
-        if (! $lead->nb_flow_enabled) {
+        if (empty($lead->nb_flow_executed_at)) {
             $advisor = User::where('id', $lead->advisor_id)->first();
             $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor);
             $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
@@ -340,7 +340,7 @@ class CarEmailService extends BaseService
                 $response =app(BirdService::class)->triggerWebHookRequest($birdMotorEventNB->value, $emailData);
                 info("NBMotorWorkFlow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
                 info("NBMotorWorkFlow response: {$response->status_code} | Ref-ID: {$lead->uuid} |Time: ".now());
-                $lead->nb_flow_enabled = true;
+                $lead->nb_flow_executed_at = now();
                 info("NBMotorWorkFlow lead ref-id: {$lead->uuid}| Quote StatusID: {$lead->quote_status_id} | Time: ".now());
                 $lead->quote_status_id = QuoteStatusEnum::FollowedUp;
                 $lead->save();
@@ -352,7 +352,7 @@ class CarEmailService extends BaseService
                 info("NBMotorWorkFlow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
             }
         } else {
-            info("NBMotorWorkFlow already enabled for lead Ref-ID: {$lead->uuid} | Time: ".now());
+            info("NBMotorWorkFlow already executed: {$lead->nb_flow_executed_at}  for lead Ref-ID: {$lead->uuid} | Time: ".now());
         }
 
         return $response ?? null;
