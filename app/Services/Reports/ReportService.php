@@ -709,14 +709,17 @@ class ReportService extends BaseService
             ];
         });
 
-        $result = collect($items)->groupBy('advisor_id')->flatten(1);
+        $collection = collect($items)->groupBy('advisor_id')->flatten(1);
+        $sorted = $collection->sortByDesc('total_leads');
+
+        $result = $sorted->values()->all();
 
         $perPage = 5;
         $currentPage = (int) $request->input('page', 1);
         $total = count($result);
         $lastPage = ceil($total / $perPage);
 
-        $paginatedData = array_slice($result->toArray(), ($currentPage - 1) * $perPage, $perPage);
+        $paginatedData = array_slice($result, ($currentPage - 1) * $perPage, $perPage);
 
         $path = $request->url();
 
