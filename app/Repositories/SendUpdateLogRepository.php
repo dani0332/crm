@@ -271,7 +271,6 @@ class SendUpdateLogRepository extends BaseRepository
                 if ($endorsementResponse['status'] && ! empty($endorsementResponse['sageRequestPayload'])) {
                     $request['dispatchSageCall'] = true;
                     $request['sageRequestPayload'] = $endorsementResponse['sageRequestPayload'];
-                    $request['preparedDetailsForEndorsement'] = $endorsementResponse['preparedDetailsForEndorsement'];
                     $response[] = ['status' => 200, 'message' => $endorsementResponse['message']];
                 }
             }
