@@ -47,9 +47,9 @@ class ReportService extends BaseService
         while ($startDate < now()) {
             $currentDate = $startDate->toDateString();
             $nextWeek = $startDate->addDays(7)->toDateString();
-            $key = $currentDate . ',' . $nextWeek;
-            $value = 'Batch - ' . $count . ' -(' . $currentDate . 'to' . $nextWeek . ')';
-            array_push($batchArray, $key . '|' . $value);
+            $key = $currentDate.','.$nextWeek;
+            $value = 'Batch - '.$count.' -('.$currentDate.'to'.$nextWeek.')';
+            array_push($batchArray, $key.'|'.$value);
             $count++;
         }
 
@@ -67,8 +67,8 @@ class ReportService extends BaseService
             }
 
             $quoteTypeCode = QuoteType::where('id', '=', $request->quote_type_id)->value('code');
-            $model = 'App\Models\\' . $quoteTypeCode . 'Quote';
-            $quoteRequestTable = strtolower($quoteTypeCode) . '_quote_request';
+            $model = 'App\Models\\'.$quoteTypeCode.'Quote';
+            $quoteRequestTable = strtolower($quoteTypeCode).'_quote_request';
 
             $groupByOne = $request->group_by_one;
             $groupByTwo = $request->group_by_two;
@@ -82,14 +82,14 @@ class ReportService extends BaseService
                 'utm_source',
                 'utm_medium',
                 'utm_campaign',
-                DB::raw('COUNT(' . $quoteRequestTable . '_detail.id) as leads_count'),
-                DB::raw('COUNT(CASE  WHEN payment_status_id = ' . PaymentStatusEnum::AUTHORISED . ' THEN 1 ELSE NULL END) as authorized'),
-                DB::raw('COUNT(CASE  WHEN payment_status_id = ' . PaymentStatusEnum::CAPTURED . ' THEN 1 ELSE NULL END) as captured'),
-                DB::raw('sum(CASE WHEN payment_status_id = ' . PaymentStatusEnum::AUTHORISED . ' THEN premium  ELSE 0 END) as authorized_sum'),
-                DB::raw('sum(CASE WHEN payment_status_id = ' . PaymentStatusEnum::CAPTURED . ' THEN premium  ELSE 0 END) as captured_sum'),
+                DB::raw('COUNT('.$quoteRequestTable.'_detail.id) as leads_count'),
+                DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::AUTHORISED.' THEN 1 ELSE NULL END) as authorized'),
+                DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN 1 ELSE NULL END) as captured'),
+                DB::raw('sum(CASE WHEN payment_status_id = '.PaymentStatusEnum::AUTHORISED.' THEN premium  ELSE 0 END) as authorized_sum'),
+                DB::raw('sum(CASE WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN premium  ELSE 0 END) as captured_sum'),
             )
-                ->join($quoteRequestTable . '_detail', $quoteRequestTable . '.id', $quoteRequestTable . '_detail.' . $quoteRequestTable . '_id')->groupBy($groupBy)
-                ->whereNotIn($quoteRequestTable . '.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+                ->join($quoteRequestTable.'_detail', $quoteRequestTable.'.id', $quoteRequestTable.'_detail.'.$quoteRequestTable.'_id')->groupBy($groupBy)
+                ->whereNotIn($quoteRequestTable.'.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
 
             if ($isGroupMedical) {
                 $query->where('business_type_of_insurance_id', QuoteTypeId::Business);
@@ -104,7 +104,7 @@ class ReportService extends BaseService
                 $dateFrom = date('Y-m-d 00:00:00', strtotime($dateRange[0]));
                 $dateTo = date('Y-m-d 23:59:59', strtotime($dateRange[1]));
 
-                $query->whereBetween($quoteRequestTable . '.created_at', [$dateFrom, $dateTo]);
+                $query->whereBetween($quoteRequestTable.'.created_at', [$dateFrom, $dateTo]);
             }
             $records = $query->get();
 
@@ -190,12 +190,12 @@ class ReportService extends BaseService
         }
 
         if (isset($filters->tiers) && count($filters->tiers) > 0) {
-            info('tiersFilter are : ' . json_encode($filters->tiers));
+            info('tiersFilter are : '.json_encode($filters->tiers));
             $query->whereIn('car_quote_request.tier_id', $filters->tiers);
         }
 
         if (isset($filters->teams) && count($filters->teams) > 0) {
-            info('teamsFilter are : ' . json_encode($filters->teams));
+            info('teamsFilter are : '.json_encode($filters->teams));
             $value = $filters->teams;
             $query->whereIn('users.id', function ($query) use ($value) {
                 $query->distinct()
@@ -208,28 +208,27 @@ class ReportService extends BaseService
         }
 
         if (isset($filters->tiersFilter) && count($filters->tiersFilter) > 0) {
-            info('tiersFilter are : ' . json_encode($filters->tiersFilter));
+            info('tiersFilter are : '.json_encode($filters->tiersFilter));
             $query->whereIn('car_quote_request.tier_id', $filters->tiersFilter);
         }
 
         if (isset($filters->leadSourceFilter) && count($filters->leadSourceFilter) > 0) {
-            info('leadSourceFilter are : ' . json_encode($filters->leadSourceFilter));
+            info('leadSourceFilter are : '.json_encode($filters->leadSourceFilter));
             $query->whereIn('car_quote_request.source', $filters->leadSourceFilter);
         }
 
         if (isset($filters->paymentStatus) && count($filters->paymentStatus) > 0) {
-            info('paymentStatus are : ' . json_encode($filters->paymentStatus));
+            info('paymentStatus are : '.json_encode($filters->paymentStatus));
             $query->whereIn('car_quote_request.payment_status_id', $filters->paymentStatus);
         }
 
         if (isset($filters->ecommerceFilter) && $filters->ecommerceFilter != 'All') {
-            info('ecommerceFilter are : ' . json_encode($filters->ecommerceFilter));
+            info('ecommerceFilter are : '.json_encode($filters->ecommerceFilter));
             $query->where('car_quote_request.is_ecommerce', $filters->ecommerceFilter == 'Yes' ? 1 : 0);
         }
 
         return $query;
     }
-
 
     public function authorizedPaymentSummaryFilters()
     {
@@ -254,7 +253,7 @@ class ReportService extends BaseService
 
         $allowedLOBs = [];
         foreach ($quoteTypes as $quoteType) {
-            if (in_array($quoteType->name . '_ADVISOR', $userRoles) || in_array($quoteType->name . '_MANAGER', $userRoles)) {
+            if (in_array($quoteType->name.'_ADVISOR', $userRoles) || in_array($quoteType->name.'_MANAGER', $userRoles)) {
                 $allowedLOBs[] = QuoteTypeRepository::where('code', $quoteType->value)->first();
             } elseif (in_array(RolesEnum::Admin, $userRoles)) {
                 $allowedLOBs[] = QuoteTypeRepository::where('code', $quoteType->value)->first();
@@ -271,7 +270,7 @@ class ReportService extends BaseService
             ->where('is_active', 1)
             ->get()
             ->keyBy('id')
-            ->map(fn($users) => $users->name)
+            ->map(fn ($users) => $users->name)
             ->toArray();
 
         return [
@@ -290,7 +289,7 @@ class ReportService extends BaseService
             ->where('is_active', 1)
             ->get()
             ->keyBy('id')
-            ->map(fn($users) => $users->name)
+            ->map(fn ($users) => $users->name)
             ->toArray();
         $tiers = Tier::query()
             ->select('name', 'id')
@@ -298,21 +297,21 @@ class ReportService extends BaseService
             ->where('is_active', 1)
             ->get()
             ->keyBy('id')
-            ->map(fn($users) => $users->name)
+            ->map(fn ($users) => $users->name)
             ->toArray();
         $leadSource = LeadSource::query()
             ->orderBy('name')
             ->where('is_active', 1)
             ->get()
             ->keyBy('id')
-            ->map(fn($source) => $source->name)
+            ->map(fn ($source) => $source->name)
             ->toArray();
         $paymentStatus = PaymentStatus::query()
             ->orderBy('text')
             ->where('is_active', 1)
             ->get()
             ->keyBy('id')
-            ->map(fn($paymentStatus) => $paymentStatus->text)
+            ->map(fn ($paymentStatus) => $paymentStatus->text)
             ->toArray();
 
         $dateFormat = config('constants.DATE_FORMAT_ONLY');
@@ -394,17 +393,17 @@ class ReportService extends BaseService
 
             $priceSum = $totalOp ? 'q.premium' : '1';
 
-            $query = DB::table($tableName . ' AS q')
+            $query = DB::table($tableName.' AS q')
                 ->select(
                     'u.name AS team',
                     DB::raw(
                         '
-                            SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::NewLead . ' THEN ' . $priceSum . ' ELSE 0 END) AS new_lead,
-                            SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::Allocated . ' THEN ' . $priceSum . ' ELSE 0 END) AS allocated,
-                            SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::Quoted . ' THEN ' . $priceSum . ' ELSE 0 END) AS quoted,
-                            SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::FollowedUp . ' THEN ' . $priceSum . ' ELSE 0 END) AS followed_up,
-                            SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::InNegotiation . ' THEN ' . $priceSum . ' ELSE 0 END) AS in_negotiation,
-                            SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::PaymentPending . ' THEN ' . $priceSum . ' ELSE 0 END) AS payment_pending
+                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN '.$priceSum.' ELSE 0 END) AS new_lead,
+                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Allocated.' THEN '.$priceSum.' ELSE 0 END) AS allocated,
+                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Quoted.' THEN '.$priceSum.' ELSE 0 END) AS quoted,
+                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::FollowedUp.' THEN '.$priceSum.' ELSE 0 END) AS followed_up,
+                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::InNegotiation.' THEN '.$priceSum.' ELSE 0 END) AS in_negotiation,
+                            SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::PaymentPending.' THEN '.$priceSum.' ELSE 0 END) AS payment_pending
                         '
                     ),
                 )
@@ -417,9 +416,9 @@ class ReportService extends BaseService
                 ->whereBetween('q.created_at', [$start, $end])
                 ->groupBy('q.advisor_id');
         } else {
-            $tableName = $lob === QuoteTypes::CORPLINE->value ? 'business_quote_request' : strtolower($lob) . '_quote_request';
+            $tableName = $lob === QuoteTypes::CORPLINE->value ? 'business_quote_request' : strtolower($lob).'_quote_request';
 
-            $query = DB::table($tableName . ' AS q')
+            $query = DB::table($tableName.' AS q')
                 ->leftJoin('users AS u', 'u.id', '=', 'q.advisor_id')
                 ->leftJoin('user_team AS ut', 'ut.user_id', '=', 'u.id')
                 ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
@@ -435,16 +434,16 @@ class ReportService extends BaseService
                     $hasTeam ? 'u.name AS team' : 'q.health_team_type AS team',
                     DB::raw(
                         '
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::NewLead . ' THEN ' . $priceSum . ' ELSE 0 END) AS new_lead,
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::Allocated . ' THEN ' . $priceSum . ' ELSE 0 END) AS allocated,
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::Quoted . ' THEN ' . $priceSum . ' ELSE 0 END) AS quoted,
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::FollowedUp . ' THEN ' . $priceSum . ' ELSE 0 END) AS followed_up,
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::InNegotiation . ' THEN ' . $priceSum . ' ELSE 0 END) AS in_negotiation,
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::PaymentPending . ' THEN ' . $priceSum . ' ELSE 0 END) AS payment_pending,
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::RenewalTermsReceived . ' THEN ' . $priceSum . ' ELSE 0 END) AS renewal_terms_recevied,
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::ApplicationPending . ' THEN ' . $priceSum . ' ELSE 0 END) AS application_pending,
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::ApplicationSubmitted . ' THEN ' . $priceSum . ' ELSE 0 END) AS application_submitted,
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::MissingDocumentsRequested . ' THEN ' . $priceSum . ' ELSE 0 END) AS missing_documents
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN '.$priceSum.' ELSE 0 END) AS new_lead,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Allocated.' THEN '.$priceSum.' ELSE 0 END) AS allocated,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Quoted.' THEN '.$priceSum.' ELSE 0 END) AS quoted,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::FollowedUp.' THEN '.$priceSum.' ELSE 0 END) AS followed_up,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::InNegotiation.' THEN '.$priceSum.' ELSE 0 END) AS in_negotiation,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::PaymentPending.' THEN '.$priceSum.' ELSE 0 END) AS payment_pending,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::RenewalTermsReceived.' THEN '.$priceSum.' ELSE 0 END) AS renewal_terms_recevied,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::ApplicationPending.' THEN '.$priceSum.' ELSE 0 END) AS application_pending,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::ApplicationSubmitted.' THEN '.$priceSum.' ELSE 0 END) AS application_submitted,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::MissingDocumentsRequested.' THEN '.$priceSum.' ELSE 0 END) AS missing_documents
                         '
                     )
                 )
@@ -460,12 +459,12 @@ class ReportService extends BaseService
                     'u.name AS team',
                     DB::raw(
                         '
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::NewLead . ' THEN ' . $priceSum . ' ELSE 0 END) AS new_lead,
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::Allocated . ' THEN ' . $priceSum . ' ELSE 0 END) AS allocated,
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::Quoted . ' THEN ' . $priceSum . ' ELSE 0 END) AS quoted,
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::FollowedUp . ' THEN ' . $priceSum . ' ELSE 0 END) AS followed_up,
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::InNegotiation . ' THEN ' . $priceSum . ' ELSE 0 END) AS in_negotiation,
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::PaymentPending . ' THEN ' . $priceSum . ' ELSE 0 END) AS payment_pending
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN '.$priceSum.' ELSE 0 END) AS new_lead,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Allocated.' THEN '.$priceSum.' ELSE 0 END) AS allocated,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Quoted.' THEN '.$priceSum.' ELSE 0 END) AS quoted,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::FollowedUp.' THEN '.$priceSum.' ELSE 0 END) AS followed_up,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::InNegotiation.' THEN '.$priceSum.' ELSE 0 END) AS in_negotiation,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::PaymentPending.' THEN '.$priceSum.' ELSE 0 END) AS payment_pending
                         '
                     )
                 )
@@ -479,16 +478,16 @@ class ReportService extends BaseService
                     'u.name AS team',
                     DB::raw(
                         '
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::NewLead . ' THEN ' . $priceSum . ' ELSE 0 END) AS new_lead,
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::Allocated . ' THEN ' . $priceSum . ' ELSE 0 END) AS allocated,
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::ProposalFormRequested . ' THEN ' . $priceSum . ' ELSE 0 END) AS proposal_form_requested,
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::ProposalFormReceived . ' THEN ' . $priceSum . ' ELSE 0 END) AS proposal_form_received,
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::PendingRenewalInformation . ' THEN ' . $priceSum . ' ELSE 0 END) AS pending_renewal_information,
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::AdditionalInformationRequested . ' THEN ' . $priceSum . ' ELSE 0 END) AS additional_information_requested,
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::QuoteRequested . ' THEN ' . $priceSum . ' ELSE 0 END) AS quotes_requested,
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::Quoted . ' THEN ' . $priceSum . ' ELSE 0 END) AS quoted,
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::FollowedUp . ' THEN ' . $priceSum . ' ELSE 0 END) AS followed_up,
-                        SUM(CASE WHEN q.quote_status_id = ' . QuoteStatusEnum::FinalizingTerms . ' THEN ' . $priceSum . ' ELSE 0 END) AS finalizing_terms
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN '.$priceSum.' ELSE 0 END) AS new_lead,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Allocated.' THEN '.$priceSum.' ELSE 0 END) AS allocated,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::ProposalFormRequested.' THEN '.$priceSum.' ELSE 0 END) AS proposal_form_requested,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::ProposalFormReceived.' THEN '.$priceSum.' ELSE 0 END) AS proposal_form_received,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::PendingRenewalInformation.' THEN '.$priceSum.' ELSE 0 END) AS pending_renewal_information,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::AdditionalInformationRequested.' THEN '.$priceSum.' ELSE 0 END) AS additional_information_requested,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::QuoteRequested.' THEN '.$priceSum.' ELSE 0 END) AS quotes_requested,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::Quoted.' THEN '.$priceSum.' ELSE 0 END) AS quoted,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::FollowedUp.' THEN '.$priceSum.' ELSE 0 END) AS followed_up,
+                        SUM(CASE WHEN q.quote_status_id = '.QuoteStatusEnum::FinalizingTerms.' THEN '.$priceSum.' ELSE 0 END) AS finalizing_terms
                         '
                     )
                 )
@@ -529,7 +528,7 @@ class ReportService extends BaseService
             ->where('is_active', 1)
             ->get()
             ->keyBy('id')
-            ->map(fn($users) => $users->name)
+            ->map(fn ($users) => $users->name)
             ->toArray();
         $lobs = QuoteTypeRepository::whereIn('code', [quoteTypeCode::Car, quoteTypeCode::Home, quoteTypeCode::Health, quoteTypeCode::Travel, quoteTypeCode::Life, quoteTypeCode::Pet, quoteTypeCode::Business])->get();
 
@@ -583,7 +582,7 @@ class ReportService extends BaseService
         $result = $totalPremiumQuery->get();
         $endTime = microtime(true);
 
-        info('totalPremiumQuery took ' . number_format($endTime - $startTime, 4) . ' seconds to run');
+        info('totalPremiumQuery took '.number_format($endTime - $startTime, 4).' seconds to run');
 
         //dd($totalPremiumQuery->toSql(), $totalPremiumQuery->getBindings());
         // Execute the query and return the result
@@ -607,7 +606,7 @@ class ReportService extends BaseService
             quoteTypeCode::Pet => ['table' => 'personal_quotes'],
             quoteTypeCode::Yacht => ['table' => 'personal_quotes'],
             quoteTypeCode::Bike => ['table' => 'personal_quotes'],
-            quoteTypeCode::Cycle => ['table' => 'personal_quotes',],
+            quoteTypeCode::Cycle => ['table' => 'personal_quotes'],
             quoteTypeCode::Jetski => ['table' => 'personal_quotes'],
         ];
 
@@ -632,7 +631,7 @@ class ReportService extends BaseService
         } else {
             $userRoles = auth()->user()?->getRoleNames()->toArray() ?? [];
             foreach ($quoteTypes as $quoteType) {
-                if (in_array($quoteType->name . '_ADVISOR', $userRoles) || in_array($quoteType->name . '_MANAGER', $userRoles)) {
+                if (in_array($quoteType->name.'_ADVISOR', $userRoles) || in_array($quoteType->name.'_MANAGER', $userRoles)) {
                     $allowedLOBs[] = $lobTable[$quoteType->value];
                 } elseif (in_array(RolesEnum::Admin, $userRoles)) {
                     $allowedLOBs[] = $lobTable[$quoteType->value];
@@ -644,7 +643,7 @@ class ReportService extends BaseService
         $dataCollection = collect();
         foreach ($allowedLOBs as $details) {
 
-            $premiumColumn = $details['table'] . '.premium';
+            $premiumColumn = $details['table'].'.premium';
 
             $query = DB::table($details['table'])
                 ->select(
@@ -652,12 +651,12 @@ class ReportService extends BaseService
                     'users.name as advisor_name',
                     'quote_status_id',
                     DB::raw('COUNT(*) as total_leads'),
-                    DB::raw('SUM(' . $premiumColumn . ') as total_premium'),
+                    DB::raw('SUM('.$premiumColumn.') as total_premium'),
                     DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
                     DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW()) as expiry_days")
                 )
-                ->leftJoin('payments as py', 'py.code', '=', $details['table'] . '.code')
-                ->join('users', 'users.id', $details['table'] . '.advisor_id');
+                ->leftJoin('payments as py', 'py.code', '=', $details['table'].'.code')
+                ->join('users', 'users.id', $details['table'].'.advisor_id');
 
             $query->join('user_team', 'user_team.user_id', 'users.id')
                 ->join('teams', 'teams.id', '=', 'user_team.team_id')
@@ -675,7 +674,7 @@ class ReportService extends BaseService
 
             if (isset($request->expireDate)) {
                 $expireDate = Carbon::parse($request->expireDate)->startOfDay();
-                $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL ' . $expiryDays . ' DAY)'), '<=', $expireDate);
+                $query->whereDate(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), '<=', $expireDate);
             }
 
             if (isset($request->todayDate)) {
@@ -689,15 +688,14 @@ class ReportService extends BaseService
             if (isset($request->thisWeek)) {
                 $startOfWeek = Carbon::parse($request->thisWeek[0])->startOfDay();
                 $endOfWeek = Carbon::parse($request->thisWeek[1])->endOfDay();
-                $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL ' . $expiryDays . ' DAY)'), [$startOfWeek, $endOfWeek]);
+                $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startOfWeek, $endOfWeek]);
             }
 
             if (isset($request->customDate)) {
                 $startDate = Carbon::parse($request->customDate[0])->startOfDay();
                 $endDate = Carbon::parse($request->customDate[1])->endOfDay();
-                $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL ' . $expiryDays . ' DAY)'), [$startDate, $endDate]);
+                $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startDate, $endDate]);
             }
-
 
             $dataCollection = $dataCollection->merge($query->get());
         }
@@ -713,18 +711,16 @@ class ReportService extends BaseService
 
         $data = collect($items)->groupBy('advisor_id')->flatten(1);
 
-
         // Custom Pagination
         $currentPage = $request->input('page', 1);
         $perPage = 5; // Items per page
         $offset = ($currentPage - 1) * $perPage;
-        $pagedItems =  $data->slice($offset, $perPage)->values(); // Slice the collection
+        $pagedItems = $data->slice($offset, $perPage)->values(); // Slice the collection
 
         $paginator = new Paginator($pagedItems, $perPage, $currentPage, [
             'path' => Paginator::resolveCurrentPath(),
         ]);
 
-
-        return  $paginator;
+        return $paginator;
     }
 }
