@@ -40,6 +40,7 @@ use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Http\Requests\UpdatePolicyDetailRequest;
 use App\Jobs\CarRenewalEmailJob;
+use App\Jobs\DispatchAMLMigration;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
@@ -102,7 +103,6 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
@@ -2078,7 +2078,7 @@ class CRUDController extends Controller
 
     public function updateAmlStatus()
     {
-        Artisan::queue('update-aml-status:cron')->onQueue('renewals');
+        DispatchAMLMigration::dispatch();
 
         return response()->json(['message' => 'UpdateAMLStatus Command has been executed']);
     }
