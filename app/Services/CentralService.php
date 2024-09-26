@@ -355,32 +355,6 @@ class CentralService
         return $response;
     }
 
-    //check if aml cleared from log
-    public function amlClearedFromLog($quoteId, $quoteType)
-    {
-        $quoteType = strtolower($quoteType);
-        $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId($quoteType);
-        $isAmlClearedForPayment = false;
-        $quoteStatusLog = QuoteStatusLog::where('quote_request_id', $quoteId)
-            ->where('quote_type_id', $quoteTypeId)
-            ->where(function ($q) {
-                $q->where('current_quote_status_id', QuoteStatusEnum::AMLScreeningCleared);
-                $q->orWhere('previous_quote_status_id', QuoteStatusEnum::AMLScreeningCleared);
-            })->orderBy('id', 'desc')->first();
-        if ($quoteStatusLog) {
-            $amlScreenFailed = QuoteStatusLog::where('quote_request_id', $quoteId)
-                ->where('quote_type_id', $quoteTypeId)
-                ->where('current_quote_status_id', QuoteStatusEnum::AMLScreeningFailed)
-                ->where('id', '>', $quoteStatusLog->id)
-                ->first();
-            if (! $amlScreenFailed) {
-                $isAmlClearedForPayment = true;
-            }
-        }
-
-        return $isAmlClearedForPayment;
-    }
-
     public function getQuoteWiseProviderPlans($quoteType, $providerId, $plandId = null): object
     {
         $planModel = 'App\\Models\\'.ucfirst($quoteType).'Plan';
@@ -456,7 +430,11 @@ class CentralService
         $quote = $this->getQuoteObject($modelType, $quote_uuid);
         if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
             $payment = Payment::where('code', $quote->code)->with('paymentSplits')->first();
-            $this->straightforwardPayments($payment, $payment->paymentSplits, $quote);
+            if ($payment && $payment->paymentSplits->isNotEmpty()) {
+                $this->straightforwardPayments($payment, $payment->paymentSplits, $quote);
+            } else {
+                info('Quote Code: '.$quote->code.' updatePaymentAllocation no payment found');
+            }
         }
     }
 
@@ -468,11 +446,10 @@ class CentralService
      */
     public function straightforwardPayments($payment, $paymentSplits, $quote)
     {
-        info('fn: straightforwardPayments for: '.$payment->code);
+        info('Quote Code: '.$quote->code.' fn: straightforwardPayments');
 
         if ($payment) {
             $paymentSplit = $paymentSplits->first();
-            info('Sage Receipt Id : '.$paymentSplit->sage_reciept_id);
             $this->updatePaymentAllocationStatus($payment, $quote, $paymentSplit);
             if (in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SEMI_ANNUAL, PaymentFrequency::QUARTERLY, PaymentFrequency::MONTHLY, PaymentFrequency::CUSTOM])) {
                 $this->firstSplitAllocationStatus($payment, $paymentSplit, $quote);
@@ -504,31 +481,31 @@ class CentralService
     {
         $collectionAmount = $paymentSplit ? $paymentSplit->collection_amount : $payment->captured_amount;
         $priceWithVat = $quote->price_with_vat;
-        info('fn: calculateAllocationStatus code : '.$payment->code.'  sage_reciept_id: '.$paymentSplit->sage_reciept_id.' payment status id: '.$paymentSplit->payment_status_id.' payment_methods_code: '.$payment->payment_methods_code.' Split Payment method '.$paymentSplit->payment_method);
+        info('Quote Code: '.$quote->code.' fn: calculateAllocationStatus sage_reciept_id: '.$paymentSplit->sage_reciept_id.' payment status id: '.$paymentSplit->payment_status_id.' payment_methods_code: '.$payment->payment_methods_code.' Split Payment method '.$paymentSplit->payment_method);
 
         switch (true) {
             case $paymentSplit && $paymentSplit->sage_reciept_id == null:
-                info('Condition: Payment split sage_reciept_id is set to null');
+                info('Quote Code: '.$quote->code.' Condition: Payment split sage_reciept_id is set to null');
 
                 return PaymentAllocationStatus::NOT_ALLOCATED;
             case in_array($payment->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::NEW]):
-                info('Condition: Payment status is PENDING, CREDIT_APPROVED, or NEW');
+                info('Quote Code: '.$quote->code.' Condition: Payment status is PENDING, CREDIT_APPROVED, or NEW');
 
                 return null;
             case $paymentSplit && in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED]):
-                info('Condition: Payment split status is PENDING or CREDIT_APPROVED');
+                info('Quote Code: '.$quote->code.' Condition: Payment split status is PENDING or CREDIT_APPROVED');
 
                 return PaymentAllocationStatus::NOT_ALLOCATED;
             case $collectionAmount <= 0:
-                info('Condition: Collection amount is less than or equal to 0');
+                info('Quote Code: '.$quote->code.' Condition: Collection amount is less than or equal to 0');
 
                 return PaymentAllocationStatus::UNPAID;
             case $collectionAmount <= $priceWithVat:
-                info('Condition: Collection amount is less than or equal to price with VAT');
+                info('Quote Code: '.$quote->code.' Condition: Collection amount is less than or equal to price with VAT');
 
                 return PaymentAllocationStatus::FULLY_ALLOCATED;
             default:
-                info('Condition: Default case, partially allocated');
+                info('Quote Code: '.$quote->code.' Condition: Default case, partially allocated');
 
                 return PaymentAllocationStatus::PARTIALLY_ALLOCATED;
         }
@@ -734,6 +711,7 @@ class CentralService
                 'quote_uuid' => $quoteDetails->uuid,
                 'quote_status_id' => $quoteDetails->quote_status_id,
                 'activity_schedule_id' => $getActivitySchedule->id,
+                'source' => LeadSourceEnum::IMCRM,
             ]);
 
             return $activity;

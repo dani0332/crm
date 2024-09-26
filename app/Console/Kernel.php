@@ -109,7 +109,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('DttHealth')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
         // $schedule->command('alfred:followupEmails')->timezone('Asia/Dubai')->weekly()->mondays()->at('11:00')->onOneServer()->withoutOverlapping();
 
-        // $schedule->command('CorplineDataMigration:cron')->timezone('Asia/Dubai')->dailyAt('12:20')
+        // $schedule->command('CorplineDataMigration:cron')->timezone('Asia/Dubai')->dailyAt('10:50')
         //     ->onOneServer()
         //     ->withoutOverlapping()
         //     ->onSuccess(function (Stringable $output) {

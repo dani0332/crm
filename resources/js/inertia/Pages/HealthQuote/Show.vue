@@ -52,7 +52,7 @@ const props = defineProps({
   storageUrl: String,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
-  isAmlClearedForPayment: Boolean,
+  amlStatusName: String,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -1578,7 +1578,7 @@ const handlePlanSelected = plan => {
   selectedProviderPlan.value.planName = plan.planName;
   selectedProviderPlan.value.providerName = plan.providerName;
   selectedProviderPlan.value.premium = plan.premium;
-  selectedProviderPlan.value.planType = checkPlanType(plan.planTypeId);
+  selectedProviderPlan.value.planType = plan.planType;
   router.reload({
     preserveState: true,
     preserveScroll: true,
@@ -1983,6 +1983,10 @@ const onAddUpdate = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
                 <dd>{{ quote.customer_type }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
@@ -3563,7 +3567,6 @@ const onAddUpdate = () => {
       "
       :storageUrl="storageUrl"
       :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
-      :isAmlClearedForPayment="isAmlClearedForPayment"
       :eCommercePriceWithLP="
         ecomDetails.priceWithLP ? ecomDetails.priceWithLP : 0
       "

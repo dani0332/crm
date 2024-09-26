@@ -328,12 +328,12 @@ class InslyDetailRepository extends BaseRepository
         if ($dataArr['email'] == null) {
             $dataArr['email'] = $policy['customer']['contact_person_email'] ?? null;
         }
-        $insurer = $policy['policy']['insurer'] ?? null;
-        if ($insurer == 'Tokio Marine Nichido') {
-            $insurer = 'Tokio Marine & Nichido Fire Insurance Co';
-        }
-        $insuredWith = InsuranceProviderRepository::where('code', 'like', '%'.$insurer.'%')
-            ->orWhere('text', 'like', '%'.$insurer.'%')->first();
+
+        $dataArr['policy_number'] = $policy['policy_no'] ?? null;
+        $dataArr['policy_start_date'] = isset($policy['policy']['start_date']) ? $this->formatDate($policy['policy']['start_date']) : null;
+        $dataArr['policy_expiry_date'] = isset($policy['policy']['end_date']) ? $this->formatDate($policy['policy']['end_date']) : null;
+        $dataArr['insurance_provider_id'] = null;
+        $dataArr['policy_issuance_date'] = now()->format('Y-m-d');
 
         $previousPolicyStartDate = $policy['policy']['end_date'] ?? null;
         if ($previousPolicyStartDate) {

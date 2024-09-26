@@ -12,4 +12,6 @@ use BenSampo\Enum\Enum;
 final class QuoteStatusId extends Enum
 {
     const Lost = 34;
+    const AMLScreeningCleared = 6;
+    const AMLScreeningFailed = 7;
 }
