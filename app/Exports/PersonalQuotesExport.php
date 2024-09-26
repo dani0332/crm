@@ -9,6 +9,7 @@ use App\Repositories\JetskiQuoteRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\YachtQuoteRepository;
 use App\Traits\ExcelExportable;
+use App\Repositories\HomeQuoteRepository;
 
 class PersonalQuotesExport
 {
@@ -26,6 +27,7 @@ class PersonalQuotesExport
             QuoteTypes::PET->value,
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
+            QuoteTypes::HOME->value,
         ];
     }
 
@@ -46,6 +48,9 @@ class PersonalQuotesExport
 
             case QuoteTypes::JETSKI->value:
                 return JetskiQuoteRepository::getData(true);
+
+            case QuoteTypes::HOME->value:
+                return HomeQuoteRepository::getData(true);
 
             default:
                 return abort(404);
@@ -154,6 +159,22 @@ class PersonalQuotesExport
                     'TRANSACTION APPROVED DATE',
                     'BOOKING DATE',
                 ];
+
+            case QuoteTypes::HOME->value:
+                return [
+                    'REF-ID',
+                    'FIRST NAME',
+                    'LAST NAME',
+                    'LEAD STATUS',
+                    'ADVISOR',
+                    'CREATED DATE',
+                    'LAST MODIFIED DATE',
+                    'TRANSAPP CODE',
+                    'SOURCE',
+                    'LOST REASON',
+                    'PREMIUM',
+                    'POLICY NUMBER',
+                ];
         }
     }
 
@@ -257,6 +278,22 @@ class PersonalQuotesExport
                     $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
                     $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
                     $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
+                ];
+
+            case QuoteTypes::HOME->value:
+                return [
+                    $quote->code,
+                    $quote->first_name,
+                    $quote->last_name,
+                    $quote?->quoteStatus?->text,
+                    $quote?->advisor?->name,
+                    date(config('constants.datetime_format'), strtotime($quote->created_at)),
+                    date(config('constants.datetime_format'), strtotime($quote->updated_at)),
+                    $quote?->homeQuote?->homeQuoteRequestDetail?->transapp_code,
+                    $quote->source,
+                    $quote?->homeQuote?->homeQuoteRequestDetail?->lostReason?->text,
+                    $quote->premium,
+                    $quote->policy_number,
                 ];
         }
     }

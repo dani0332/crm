@@ -150,7 +150,7 @@ function onSubmit(isValid) {
 
     filtersCount.value = Object.keys(filtersCleaned).length;
 
-    router.visit(route('home.index'), {
+    router.visit(route('home-quotes-list'), {
       method: 'get',
       data: {
         ...filtersCleaned,
@@ -168,7 +168,7 @@ function onSubmit(isValid) {
 
 function onReset() {
   removedSavedParams();
-  router.visit(route('home.index'), {
+  router.visit(route('home-quotes-list'), {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -388,7 +388,7 @@ const formatDate = dateString =>
           @toggleFilters="showFilters = !showFilters"
         />
 
-        <Link :href="route('home-cardView')">
+        <Link :href="route('home-quotes-card')">
           <x-button
             size="sm"
             color="#1d83bc"
@@ -399,7 +399,7 @@ const formatDate = dateString =>
           </x-button>
         </Link>
 
-        <Link :href="route('home.create')">
+        <Link :href="route('home-quotes-create')">
           <x-button
             size="sm"
             color="#ff5e00"
@@ -666,7 +666,7 @@ const formatDate = dateString =>
     >
       <template #item-code="{ code, uuid, stale_at, price_with_vat }">
         <Link
-          :href="route('home.show', uuid)"
+          :href="route('home-quotes-show', uuid)"
           class="text-primary-500 hover:underline flex items-center space-x-1"
         >
           <span>{{ code }}</span>

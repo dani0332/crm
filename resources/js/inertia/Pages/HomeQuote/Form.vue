@@ -19,16 +19,16 @@ const quoteForm = useForm({
   mobile_no: props.quote?.mobile_no || null,
   premium: props.quote?.premium || null,
   policy_number: props.quote?.policy_number || null,
-  iam_possesion_type_id: props.quote?.iam_possesion_type_id || null,
+  iam_possesion_type_id: props.quote?.home_quote?.iam_possesion_type_id || null,
   ilivein_accommodation_type_id:
-    props.quote?.ilivein_accommodation_type_id || null,
-  address: props.quote?.address || null,
-  has_contents: props.quote?.has_contents || null,
-  has_building: props.quote?.has_building || null,
-  has_personal_belongings: props.quote?.has_personal_belongings || null,
-  contents_aed: props.quote?.contents_aed || null,
-  building_aed: props.quote?.building_aed || null,
-  personal_belongings_aed: props.quote?.personal_belongings_aed || null,
+    props.quote?.home_quote?.ilivein_accommodation_type_id || null,
+  address: props.quote?.home_quote?.address || null,
+  has_contents: props.quote?.home_quote?.has_contents || null,
+  has_building: props.quote?.home_quote?.has_building || null,
+  has_personal_belongings: props.quote?.home_quote?.has_personal_belongings || null,
+  contents_aed: props.quote?.home_quote?.contents_aed || null,
+  building_aed: props.quote?.home_quote?.building_aed || null,
+  personal_belongings_aed: props.quote?.home_quote?.personal_belongings_aed || null,
 });
 const isEdit = computed(() => {
   return route().current().includes('edit');
@@ -62,7 +62,7 @@ function successResponse() {
     position: 'top',
   });
   if (isEdit.value) {
-    router.get(route('home.show', page.props?.quote?.uuid));
+    router.get(route('home-quotes-show', page.props?.quote?.uuid));
   } else {
     quoteForm.reset();
   }
@@ -80,14 +80,14 @@ function onSubmit(isValid) {
               : false,
             has_building: data.has_building ? true : false,
           }))
-          .put(route('home.update', props.quote.uuid), {
+          .put(route('home-quotes-update', props.quote.uuid), {
             onError: errors => {
               console.log(errors);
             },
             onSuccess: () => {},
           });
       } else {
-        quoteForm.post(route('home.store'), {
+        quoteForm.post(route('home-quotes-store'), {
           onError: errors => {
             quoteForm.setError(errors);
           },
@@ -115,7 +115,7 @@ function onSubmit(isValid) {
         >
           <x-button size="sm" tag="div"> Cancel </x-button>
         </Link>
-        <Link :href="route('home.index')">
+        <Link :href="route('home-quotes-list')">
           <x-button size="sm" color="#ff5e00" tag="div"> Home List </x-button>
         </Link>
       </div>

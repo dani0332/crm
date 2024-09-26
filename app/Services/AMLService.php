@@ -51,6 +51,7 @@ class AMLService
             (int) QuoteTypes::PET->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
             (int) QuoteTypes::CYCLE->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
             (int) QuoteTypes::JETSKI->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
+            (int) QuoteTypes::HOME->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
         };
 
         return Carbon::createFromFormat(
@@ -66,7 +67,8 @@ class AMLService
             QuoteTypes::CYCLE->id() => $quoteRequestId,
             QuoteTypes::JETSKI->id() => $quoteRequestId,
             QuoteTypes::PET->id() => PetQuote::where('id', $quoteRequestId)->firstOrFail()->personal_quote_id,
-            QuoteTypes::YACHT->id() => $quoteRequestId
+            QuoteTypes::YACHT->id() => $quoteRequestId,
+            QuoteTypes::HOME->id() => $quoteRequestId,
         };
     }
 
@@ -80,7 +82,8 @@ class AMLService
             QuoteTypes::CYCLE->id() => CycleQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::JETSKI->id() => JetskiQuote::where($filterColumn, $quoteRequestId)->touch(),
             QuoteTypes::PET->id() => PetQuote::where($filterColumn, $quoteRequestId)->update($updateData),
-            QuoteTypes::YACHT->id() => YachtQuote::where($filterColumn, $quoteRequestId)->update($updateData)
+            QuoteTypes::YACHT->id() => YachtQuote::where($filterColumn, $quoteRequestId)->update($updateData),
+            QuoteTypes::HOME->id() => HomeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
         };
     }
 
@@ -102,14 +105,15 @@ class AMLService
                 'nationality',
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::HOME->id()) {
-            $quoteRequestDetails = HomeQuote::with([
+            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::HOME->id())->with([
+                'homeQuote',
+                'homeQuote.possessionType',
+                'homeQuote.accommodationType',
+                'customer.detail',
                 'quoteStatus',
                 'payments.paymentMethod',
                 'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
-                'customer.detail',
-                'possessionType',
-                'accommodationType',
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::HEALTH->id()) {
             $quoteRequestDetails = HealthQuote::with([
@@ -213,7 +217,7 @@ class AMLService
         $emailSystem = config('constants.APP_ENV');
         $errorEmailRecipients = explode(',', config('constants.ERROR_EMAIL_RECIPIENTS'));
 
-        $subject = $emailSystem.' BRIDGER SEARCH API ERROR | '.\Request::url().' | '.date(config('constants.DB_DATE_FORMAT_MATCH'));
+        $subject = $emailSystem . ' BRIDGER SEARCH API ERROR | ' . \Request::url() . ' | ' . date(config('constants.DB_DATE_FORMAT_MATCH'));
         MailService::sendEmail('AmlErrorMail', [
             'amlUrl' => $amlQuoteUrl,
             'emailAmlData' => $amlDataForEmail,
@@ -239,11 +243,11 @@ class AMLService
         if (strtolower($emailSystem) == EnvEnum::PRODUCTION) {
             $fromEmail = config('constants.MAIL_FROM_ADDRESS_AML');
             $fromName = config('constants.MAIL_FROM_NAME_AML');
-            $emailSubject = 'IMCRM | New AML Matches Found for Ref-ID : '.$quoteRefId;
+            $emailSubject = 'IMCRM | New AML Matches Found for Ref-ID : ' . $quoteRefId;
         } else {
             $fromEmail = config('constants.MAIL_FROM_ADDRESS');
             $fromName = config('constants.MAIL_FROM_NAME');
-            $emailSubject = $emailSystem.' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteRefId;
+            $emailSubject = $emailSystem . ' | IMCRM | New AML Matches Found for Ref-ID : ' . $quoteRefId;
         }
 
         self::sendAmlComplianceMail($amlQuoteUrl, $amlResultCount, $customerOrEntityName, $quoteType, $quoteRefId, $emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser);
@@ -296,10 +300,10 @@ class AMLService
             );
 
             $responseCode = $clientRequest->getStatusCode();
-            info('sendAmlComplianceMail ---- Received Code : '.$responseCode);
+            info('sendAmlComplianceMail ---- Received Code : ' . $responseCode);
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $responseDetail = 'sendAmlComplianceMail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+            $responseDetail = 'sendAmlComplianceMail: Code/Message: ' . $responseCode . '/' . $ex->getMessage();
         }
     }
 
@@ -412,13 +416,13 @@ class AMLService
 
         $emailL_sys = config('constants.APP_ENV');
         if ($emailL_sys == EnvEnum::PRODUCTION) {
-            $emailSubject = 'IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
+            $emailSubject = 'IMCRM | New AML Matches Found for Ref-ID : ' . $quoteCdbId;
         } else {
-            $emailSubject = $emailL_sys.' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
+            $emailSubject = $emailL_sys . ' | IMCRM | New AML Matches Found for Ref-ID : ' . $quoteCdbId;
         }
 
         $appUrl = config('constants.APP_URL');
-        $amlUrl = $appUrl.'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
+        $amlUrl = $appUrl . '/kyc/aml/' . $quoteTypeId . '/details/' . $quoteRequestId;
 
         $this->amlQuoteStatusUpdateMail('AmlQuoteStatusUpdateMail', [
             'amlUrl' => $amlUrl,

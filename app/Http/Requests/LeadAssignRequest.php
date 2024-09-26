@@ -37,10 +37,10 @@ class LeadAssignRequest extends FormRequest
 
         $validator->after(function ($validator) {
             $leadsIds = array_map('intval', explode(',', request()->assigned_lead_id));
-            $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski];
+            $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski, quoteTypeCode::Home];
 
             $model = (in_array(ucfirst(request()->modelType), $personalQuotes) && in_array(ucfirst(request()->modelType), newUi())) ?
-                PersonalQuote::class : (ucfirst(request()->modelType).'Quote');
+                PersonalQuote::class : (ucfirst(request()->modelType) . 'Quote');
 
             /**
              * check if the lead status is transaction approved.
@@ -48,7 +48,7 @@ class LeadAssignRequest extends FormRequest
             foreach ($leadsIds as $leadId) {
                 $getQuoteLead = $model::find($leadId);
                 if (! $getQuoteLead) {
-                    $validator->errors()->add('assigned_lead_id', 'Manual Lead Assignment Failed for '.ucfirst(request()->modelType).', selected id was '.$leadId);
+                    $validator->errors()->add('assigned_lead_id', 'Manual Lead Assignment Failed for ' . ucfirst(request()->modelType) . ', selected id was ' . $leadId);
                     break;
                 }
 
@@ -56,7 +56,6 @@ class LeadAssignRequest extends FormRequest
                     $validator->errors()->add('assigned_lead_id', 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.');
                     break;
                 }
-
             }
         });
     }
