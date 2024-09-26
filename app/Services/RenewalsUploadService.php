@@ -1715,12 +1715,6 @@ class RenewalsUploadService
                                         }
                                     }
                                 }
-
-                                if($leadData->renewal_batch) {
-                                    $batchRef = RenewalBatch::where([['id', $leadData->renewal_batch], ['quote_type_id', QuoteTypeId::Car]])->first();
-                                    !$batchRef && $leadValidationErrors->push('Invalid Renewal Batch Provided');
-                                }
-
                             }
                             if (! empty($leadData->registration_location) && ! Emirate::where('text', $leadData->registration_location)->first()) {
                                 $leadValidationErrors->push('Invalid Registration Location');
@@ -1728,6 +1722,10 @@ class RenewalsUploadService
                             if ($leadData->previous_advisor && ! User::where('email', $leadData->previous_advisor)->first()) {
                                 $leadValidationErrors->push('Invalid Previous Advisor Email');
                             }
+                        }
+                        if ($leadData->renewal_batch) {
+                            $batchRef = RenewalBatch::where([['id', $leadData->renewal_batch], ['quote_type_id', QuoteTypeId::Car]])->first();
+                            !$batchRef && $leadValidationErrors->push('Invalid Renewal Batch Provided');
                         }
                         break;
                     default:
