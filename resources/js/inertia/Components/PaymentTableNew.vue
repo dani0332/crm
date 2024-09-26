@@ -139,7 +139,8 @@ const isRetryModalOpen = ref(false);
 const retryProcessJobId = ref(0);
 const retryPaymentErrorMessage = ref('');
 const isPaidEditable = ref(false);
-const paidPaymentsEditable = ref([]);
+const isSplitAmountInvalid = ref([]);
+const isSplitAmountInvalidError = ref([]);
 
 const modal2Ref = ref(null);
 
@@ -1875,15 +1876,6 @@ const editPaymentModal = (
     } else {
       isFieldReadonly.value = false;
     }
-
-    if (isPaidEditable.value === true) {
-      for (let i = 1; i <= payment.total_payments; i++) {
-        paidPaymentsEditable.value[i] = true;
-      }
-    }
-    
-
-
   }
   if (paymentMethodsForm.status == 'view') {
     totalPrice.value = payment.total_price;
@@ -2051,6 +2043,26 @@ const validateCapturePayment = isValid => {
   return false;
 };
 
+const validatePaymentAmount = isValid => {
+    
+  for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
+    isSplitAmountInvalid.value[i] = false;
+    if (
+          parseFloat(splitAmountModels.value[i])  >
+          parseFloat(collectionAmountModels.value[i]) 
+            
+          ) {
+            isSplitAmountInvalid.value[i] = true;
+            isSplitAmountInvalidError.value[i] =
+              'Amount should not exceed '+collectionAmountModels.value[i]+' AED';
+          }
+  }
+  if (isSplitAmountInvalid.value.includes(true)) {
+      return true;
+    }
+  return false;
+};
+
 const addPayment = isValid => {
   if (
     !props.sendUpdate?.insurance_provider_id &&
@@ -2068,8 +2080,12 @@ const addPayment = isValid => {
     if (validateViewPayment(isValid)) return;
   } else if (paymentMethodsForm.status !== 'view') {
     if (validatePaymentOption()) return;
+    if(isPaidEditable.value === true){
+      if (validatePaymentAmount()) return;
+    }
   }
   if (!isValid) return;
+
   //define main payment method
   let mainPaymentMethod = paymentMethodsModels.value[0]
     ? paymentMethodsModels.value[0]
@@ -2258,6 +2274,7 @@ const addPayment = isValid => {
       trashedFilesModal: trashedFilesModal.value,
       isPaymentLocked: isPaymentLocked.value,
       isPolicyIssuanceDiscount: isPolicyIssuanceDiscount.value,
+      isPaidEditable: isPaidEditable.value,
     };
     paymentMethodsForm
       .transform(data => editData)
@@ -4858,6 +4875,11 @@ const splitPaymentTotalPrice = (
                           :rules="[rules.isRequired]"
                           :disabled="isPaymentLocked"
                         />
+                        <sup
+                          v-if="isSplitAmountInvalid[count]"
+                          class="text-sm text-red-500 dark:text-red-400"
+                          >{{ isSplitAmountInvalidError[count] }}</sup
+                        >
                       </template>
                     </div>
                     <div class="w-1/5 px-2" v-if="isCreditApprovalView">
