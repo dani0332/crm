@@ -40,7 +40,6 @@ use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Http\Requests\UpdatePolicyDetailRequest;
 use App\Jobs\CarRenewalEmailJob;
-use App\Jobs\DispatchAMLMigration;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
@@ -2074,12 +2073,5 @@ class CRUDController extends Controller
         $response = $this->crudService->scoreBreakdown($quoteModel, $quoteType);
 
         return $response;
-    }
-
-    public function updateAmlStatus()
-    {
-        DispatchAMLMigration::dispatch();
-
-        return response()->json(['message' => 'UpdateAMLStatus Command has been executed']);
     }
 }
