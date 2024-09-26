@@ -2078,7 +2078,7 @@ class CRUDController extends Controller
 
     public function updateAmlStatus()
     {
-        dispatch(new DispatchAMLMigration);
+        DispatchAMLMigration::dispatch();
 
         return response()->json(['message' => 'UpdateAMLStatus Command has been executed']);
     }
