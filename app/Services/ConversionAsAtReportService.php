@@ -15,6 +15,7 @@ use App\Enums\TeamTypeEnum;
 use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Models\Team;
+use App\Services\Reports\Reportable;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -23,6 +24,7 @@ use Illuminate\Support\Facades\DB;
 class ConversionAsAtReportService extends BaseService
 {
     use GetUserTreeTrait;
+    use Reportable;
     use TeamHierarchyTrait;
 
     public function getReportData($request)
@@ -30,21 +32,30 @@ class ConversionAsAtReportService extends BaseService
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
 
         if ($request->lob && $request->startEndDate && $request->asAtDate) {
+            $saleLeadsCountQuery = strtr('
+                SUM(
+                    CASE WHEN (
+                        ((personal_quotes.payment_status_id in (:paidStatuses) OR personal_quotes.quote_status_id in (:approvedStatuses)) and personal_quotes.transaction_approved_at is NULL) OR
+                        (personal_quotes.quote_status_id in (:approvedStatuses) and personal_quotes.transaction_approved_at <= ":asAtDate")
+                    ) THEN 1 ELSE 0 END) as sale_leads',
+                [
+                    ':approvedStatuses' => implode(',', [
+                        QuoteStatusEnum::TransactionApproved,
+                        QuoteStatusEnum::PolicyIssued,
+                        QuoteStatusEnum::PolicyBooked,
+                        QuoteStatusEnum::PolicySentToCustomer,
+                    ]),
+                    ':asAtDate' => Carbon::parse($request->asAtDate)->endOfDay()->format($dateFormat),
+                    ':paidStatuses' => implode(',', $this->getPaidStatuses()),
+                ]);
+
             $query = PersonalQuote::query()
                 ->select(
                     DB::raw('COUNT(*) as total_leads'),
                     DB::raw('SUM(CASE WHEN
                         personal_quotes.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.')
                         THEN 1 ELSE 0 END) as bad_leads'),
-                    DB::raw(
-                        'SUM(
-                            CASE WHEN (
-                                ( personal_quotes.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.','.QuoteStatusEnum::PolicyBooked.','.QuoteStatusEnum::PolicySentToCustomer.')
-                                and personal_quotes.transaction_approved_at <= "'.Carbon::parse($request->asAtDate)->endOfDay()->format($dateFormat).'"
-                                )
-                            )
-                          THEN 1 ELSE 0 END) as sale_leads'
-                    ),
+                    DB::raw($saleLeadsCountQuery),
                 )
                 ->join('personal_quote_details as pqd', 'personal_quotes.id', 'pqd.personal_quote_id')
                 ->whereNotIn('personal_quotes.source', [
@@ -69,9 +80,7 @@ class ConversionAsAtReportService extends BaseService
             $query = $query->get();
 
             // map operation to calculate gross and net conversions of records
-            $mappedData = $this->mapConversionData($query, $request);
-
-            return $mappedData;
+            return $this->mapConversionData($query, $request);
         }
     }
 
