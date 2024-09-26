@@ -30,17 +30,19 @@ defineProps({
   permissions: Object,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
-  isAmlClearedForPayment: Boolean,
+
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
+  amlStatusName: String,
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
 const leadSource = page.props.leadSource;
+const modelClass = 'App\\Models\\LifeQuote';
 const hasRole = role => useHasRole(role);
 
 const modals = reactive({
@@ -276,13 +278,6 @@ const industryTypeOptions = computed(() => {
   return page.props.industryType.map(indType => ({
     value: indType.code,
     label: indType.text,
-  }));
-});
-
-const quoteStatusOptions = computed(() => {
-  return page.props.quoteStatuses.map(status => ({
-    value: status.id,
-    label: status.text,
   }));
 });
 
@@ -641,7 +636,6 @@ const onAddUpdate = () => {
         </x-button>
       </template>
     </x-modal>
-
     <div class="p-4 rounded shadow mb-6 mt-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -673,6 +667,10 @@ const onAddUpdate = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
                 <dd>{{ quote.customer_type }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ADVISOR</dt>
@@ -1172,7 +1170,6 @@ const onAddUpdate = () => {
       :canAddBatchNumber="canAddBatchNumber"
       :expanded="sectionExpanded"
     />
-
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -1235,7 +1232,7 @@ const onAddUpdate = () => {
                 <x-field label="Transaction Type">
                   <x-input
                     type="text"
-                    :value="quote.transaction_type_text"
+                    v-model="quote.transaction_type_text"
                     class="w-full"
                     :disabled="true"
                   />
@@ -1311,7 +1308,6 @@ const onAddUpdate = () => {
         })
       "
       :storageUrl="storageUrl"
-      :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
     />
@@ -1357,6 +1353,7 @@ const onAddUpdate = () => {
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+      :modelClass="modelClass"
     />
 
     <SendUpdates
@@ -1565,10 +1562,15 @@ const onAddUpdate = () => {
       </Collapsible>
     </div>
     <AuditLogs
-      :type="'App\\Models\\LifeQuote'"
+      :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
       :expanded="sectionExpanded"
     />
+
+    <lead-raw-data
+      :modelType="'Life'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

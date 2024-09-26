@@ -47,7 +47,7 @@ defineProps({
   websiteURL: String,
   linkedQuoteDetails: Object,
   vatPercentage: Number,
-  isAmlClearedForPayment: Boolean,
+
   permissions: Object,
   enums: Object,
   payments: Array,
@@ -57,15 +57,17 @@ defineProps({
   hasPolicyIssuedStatus: Boolean,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
+  amlStatusName: String,
 });
 
 const assumptionState = reactive({
   isEditing: false,
-  isAmlClearedForPayment: Boolean,
 });
 
 const page = usePage();
 const { isRequired } = useRules();
+
+const modelClass = 'App\\Models\\PersonalQuote';
 
 const can = permission => useCan(permission);
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -437,9 +439,14 @@ const fetchUpdatedQuote = async () => {
             <dt class="font-medium">PRICE</dt>
             <dd>{{ quote?.premium ?? '' }}</dd>
           </div>
+
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
             <dd>{{ quote?.paid_at ?? '' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">AML STATUS</dt>
+            <dd>{{ amlStatusName ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>
@@ -1276,7 +1283,6 @@ const fetchUpdatedQuote = async () => {
         })
       "
       :storageUrl="storageUrl"
-      :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
     />
 
@@ -1322,6 +1328,7 @@ const fetchUpdatedQuote = async () => {
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
+      :modelClass="modelClass"
     />
 
     <EmailStatus :emailStatuses="emailStatuses" />
@@ -1341,7 +1348,13 @@ const fetchUpdatedQuote = async () => {
       :quoteCode="$page.props.quote.code"
     />
 
-    <ApiLogs :type="'App\\Models\\PersonalQuote'" :id="$page.props.quote.id" />
+    <ApiLogs :type="modelClass" :id="$page.props.quote.id" />
+
     <LeadHistory :quote="$page.props.quote" />
+
+    <lead-raw-data
+      :modelType="'Bike'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

@@ -1,0 +1,11 @@
+trigger:
+  - none
+
+pool:
+  vmImage: 'Ubuntu 20.04'
+steps:
+  - checkout: self
+    fetchDepth: 1
+    fetchTags: false
+  - publish: '$(System.DefaultWorkingDirectory)'
+    artifact: '$(imcrmdev)'

@@ -195,4 +195,13 @@ enum QuoteTypes: string
             self::GROUP_MEDICAL => checkPersonalQuotes($this->value) ? route('gm-quotes-show', $uuid) : route('amt.show', $uuid),
         };
     }
+
+    public function quoteLink(string $uuid, array $queryParams = [])
+    {
+        $queryParamsStr = http_build_query($queryParams);
+
+        return match ($this) {
+            self::TRAVEL,self::CAR,self::HEALTH => "{$this->ecomUrl()}{$uuid}".($queryParamsStr ? "?{$queryParamsStr}" : ''),
+        };
+    }
 }

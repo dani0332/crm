@@ -51,6 +51,10 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
+  modelClass: {
+    type: String,
+    default: '',
+  },
 });
 
 const state = reactive({
@@ -64,6 +68,7 @@ const sendUpdateStatusEnum = page.props.sendUpdateStatusEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const vat = page.props.vatValue;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+const permissionsEnum = page.props.permissionsEnum;
 
 const dateToYMD = date => {
   if (date) {
@@ -317,7 +322,10 @@ const calculatePriceDetailsForATIB = () => {
     return false;
   }
 
-  if (bookingDetailsForm.price_vat_applicable > 0) {
+  if (
+    bookingDetailsForm.price_vat_applicable > 0 ||
+    bookingDetailsForm.price_vat_not_applicable > 0
+  ) {
     // in this calculation, number 5 is not VAT amount, we need to * the price_vat and price_not_vat with 5% to get the total VAT amount.
     let total_price_with_vat_and_not_vat_applicable =
       Number(bookingDetailsForm.price_vat_applicable) +
@@ -2096,6 +2104,12 @@ watch(
           </div>
           <x-divider class="my-4 mt-10" />
           <div class="flex justify-end gap-2">
+            <SageAPILogs
+              :quoteType="props.quoteType"
+              :record="props.sendUpdateLog"
+              :modelClass="props.modelClass"
+              :permissionsEnum="page.props.permissionsEnum"
+            />
             <template v-if="!state.isEdit">
               <x-button size="sm" @click="checkSectionTwoEdit"> Edit </x-button>
               <template v-if="isLackingPayment">

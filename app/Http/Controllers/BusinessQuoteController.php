@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
@@ -37,7 +38,6 @@ use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentRepository;
 use App\Repositories\QuoteNoteRepository;
 use App\Repositories\SendUpdateLogRepository;
-use App\Services\AMLService;
 use App\Services\BusinessQuoteService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
@@ -213,12 +213,10 @@ class BusinessQuoteController extends Controller
             })->values();
         }
 
-        $dropdownSource['quote_status_id'] = app(CentralService::class)->lockTransactionStatus($record->id, self::TYPE_ID, $dropdownSource['quote_status_id']);
-        if (AMLService::checkAMLStatusFailed(self::TYPE_ID, $record->id)) {
-            $dropdownSource['quote_status_id'] = collect($dropdownSource['quote_status_id'])->filter(function ($value) {
-                return $value['id'] != QuoteStatusEnum::TransactionApproved;
-            })->values();
-        }
+        $quoteStatuses = collect($dropdownSource['quote_status_id'])->filter(function ($value) {
+            return ! in_array($value['id'], [QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed]);
+        })->values();
+        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($record, self::TYPE_ID, $quoteStatuses);
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Business);
         $companyType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
@@ -226,8 +224,6 @@ class BusinessQuoteController extends Controller
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
         $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
-
-        $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($record->id, QuoteTypes::BUSINESS->name);
 
         $filteredInsuranceProviders = [];
         if (! empty($insuranceProviders)) {
@@ -299,6 +295,7 @@ class BusinessQuoteController extends Controller
 
         $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::BUSINESS->value, $payments, $quoteDocuments);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
+        $amlStatusName = AMLStatusCode::getName($record->aml_status);
 
         return inertia('CorpLineQuote/Show', [
             'storageUrl' => storageUrl(),
@@ -311,11 +308,12 @@ class BusinessQuoteController extends Controller
             'issuanceAuthorities' => $issuanceAuthorities,
             'quoteType' => quoteTypeCode::Business,
             'quote' => $record,
+            'amlStatusName' => $amlStatusName,
             'quoteDetails' => $quoteDetails,
             'modelType' => $this->genericModel->modelType,
             'quoteTypeId' => QuoteTypeId::Business,
             'dropdownSource' => $dropdownSource,
-            'leadStatuses' => $dropdownSource['quote_status_id'],
+            'leadStatuses' => $quoteStatuses,
             'advisors' => $advisors,
             'renewalAdvisors' => $renewalAdvisors,
             'allowedDuplicateLOB' => $allowedDuplicateLOB,
@@ -365,7 +363,6 @@ class BusinessQuoteController extends Controller
             'vatPercentage' => $vatPercentage,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'isNewPaymentStructure' => $isNewPaymentStructure,
-            'isAmlClearedForPayment' => $isAmlClearedForPayment,
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'sendUpdateEnum' => $sendUpdateEnum,

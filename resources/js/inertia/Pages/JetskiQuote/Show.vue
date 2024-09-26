@@ -28,12 +28,14 @@ defineProps({
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
   lockLeadSectionsDetails: Object,
+  amlStatusName: String,
 });
 
 const page = usePage();
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const modelClass = 'App\\Models\\PersonalQuote';
 const readOnlyMode = reactive({
   isDisable: true,
 });
@@ -57,7 +59,6 @@ const dateFormat = date =>
 <template>
   <div>
     <Head title="Jetski Quotes" />
-
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
@@ -141,7 +142,10 @@ const dateFormat = date =>
                 <dt class="font-medium">ADVISOR</dt>
                 <dd class="break-words">{{ quote.advisor?.email }}</dd>
               </div>
-
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">SOURCE</dt>
                 <dd>{{ quote.source }}</dd>
@@ -377,5 +381,10 @@ const dateFormat = date =>
     />
 
     <LeadHistory :quote="$page.props.quote" :expanded="sectionExpanded" />
+
+    <lead-raw-data
+      :modelType="'Jetski'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>
