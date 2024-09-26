@@ -4,6 +4,7 @@ namespace App\Services\Reports;
 
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
+use App\Exports\Reports\ActivePoliciesReportExport;
 use App\Models\PersonalQuote;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
@@ -37,53 +38,23 @@ class ActivePoliciesReportService extends ManagementReport
             ->join('quote_type', 'quote_type.id', '=', 'quote_type_id')
             ->join('insurance_provider as ip', 'ip.id', '=', 'p.insurance_provider_id')
             ->leftJoin('users as u', 'personal_quotes.advisor_id', '=', 'u.id')
-            ->leftJoin('user_team', 'u.id', '=', 'user_team.user_id')
-            ->leftJoin('teams as t', 'user_team.team_id', '=', 't.id')
             ->groupBy('ip.text', 'personal_quotes.quote_type_id');
 
-        $this->applyFilters($query, $request);
+        $this->applyFilters($query, $request, isSSR: true);
 
         if ($request->export == 1) {
             $data = $query->get();
 
-            // Columns that are not integar and should not be summed
-            $nonIntegarIndexes = [0, 1];
-
-            return $this->download(
-                'Active Policies Report '.$this->reportDateRange,
-                $data,
-                $this->headings(),
-                $nonIntegarIndexes
-            );
+            return (new ActivePoliciesReportExport($data))->download("Active Policies Report {$this->reportDateRange}.xlsx");
         } else {
             return $query->simplePaginate(100)->withQueryString();
         }
     }
 
-    public function headings(): array
-    {
-        return [
-            'Insurer',
-            'Line of Business',
-            'Active Policy Count',
-            'Price (VAT applicable)',
-            'Price (VAT not applicable)',
-        ];
-    }
-
-    public function map($quote): array
-    {
-        return [
-            $quote->insurer ?? 'N/A',
-            $quote->line_of_business ?? 'N/A',
-            $quote->active_policy_count ?? 0,
-            $quote->price_with_vat ?? '0.00',
-            $quote->price_without_vat ?? '0.00',
-        ];
-    }
-
     public function getDefaultFilters()
     {
-        // implementation goes here
+        return [
+            'reportCategory' => ManagementReportCategoriesEnum::ACTIVE_POLICIES,
+        ];
     }
 }

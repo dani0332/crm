@@ -18,8 +18,6 @@ class Payment extends Model implements Auditable
         'updated',
     ];
     protected $table = 'payments';
-    protected $primaryKey = 'code';
-    public $incrementing = false;
     protected $keyType = 'string';
     protected $fillable = [
         'code', 'payment_status_id', 'plan_id', 'captured_amount',

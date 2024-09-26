@@ -3,8 +3,10 @@
 namespace App\Listeners;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteTypes;
 use App\Events\CarQuoteAdvisorUpdated;
 use App\Jobs\OCB\SendCarOCBIntroEmailJob;
+use App\Jobs\SendFTCEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\Customer;
 use App\Models\User;
@@ -46,6 +48,10 @@ class HandleCarAdvisorUpdated
         info('inside handle car update advisor');
 
         $lead = $event->lead;
+
+        if ($lead) {
+            SendFTCEmailJob::dispatch($lead->uuid, QuoteTypes::CAR)->delay(now()->addSeconds(5));
+        }
 
         $skippableSources = [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY];
         if (in_array($lead->source, $skippableSources)) {

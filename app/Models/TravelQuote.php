@@ -3,9 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
-use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Enums\TravelQuoteEnum;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
@@ -43,6 +41,25 @@ class TravelQuote extends Model implements AuditableContract
         'updated' => QuoteEmailUpdated::class,
     ];
 
+    protected static function booted()
+    {
+        static::updating(function ($model) {
+            $skipBookingDateUpdateForNonCPD = true;
+            if (isset(request()->sendUpdateId)) {
+                $travelQuote = new TravelQuote;
+                $endorsmentDetails = $travelQuote->isCPDEndorsment(request()->sendUpdateId);
+                if ($endorsmentDetails['isCPDEndorsment']) {
+                    info('Book Update - Policy Booking Date update is allowed for CPD Endorsment. Old PBD ('.$model->getOriginal('policy_booking_date').') - New PBD ('.$model->policy_booking_date.'). QuoteType: '.request()->quoteType.' - QuoteUUID: '.request()->quoteUuid.' - SendUpdateUUID: '.$endorsmentDetails['sendUpdateUUID']);
+                    $skipBookingDateUpdateForNonCPD = false;
+                }
+            }
+
+            if ($model->isDirty('policy_booking_date') && $model->getOriginal('policy_booking_date') && $skipBookingDateUpdateForNonCPD) {
+                info($model->code.' updating the value of policy_booking_date is skipped. tried to change policy_booking_date from '.$model->getOriginal('policy_booking_date').' to '.$model->policy_booking_date);
+                unset($model->policy_booking_date); // lock the policy booking date field
+            }
+        });
+    }
     public function quoteStatus()
     {
         return $this->belongsTo(QuoteStatus::class);
@@ -195,17 +212,6 @@ class TravelQuote extends Model implements AuditableContract
     public function embeddedTransaction()
     {
         return $this->hasOne(EmbeddedTransaction::class, 'code', 'code');
-    }
-
-    public function scopeIsSICLead($q, QuoteTypes $quoteType)
-    {
-        $q->whereIn('uuid', function ($query) use ($quoteType) {
-            $query->distinct()
-                ->select('quote_uuid')
-                ->from('quote_tags')
-                ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
-                ->where('quote_tags.quote_type_id', $quoteType->id());
-        });
     }
 
     public function isMultiTrip()

@@ -137,9 +137,16 @@ class InslyDetailRepository extends BaseRepository
                 $dateFrom = Carbon::createFromFormat('Y-m-d', $inslyPolicyIssueDate)->addMonths(-1)->startOfDay();
                 $dateTo = Carbon::createFromFormat('Y-m-d', $inslyPolicyIssueDate)->addMonths(1)->endOfDay();
 
-                $quote = $model::whereHas('payments', function ($query) use ($dateFrom, $dateTo) {
-                    return $query->whereBetween('captured_at', [$dateFrom, $dateTo]);
-                })->where('email', $email)->get();
+                $modelClassName = app($model);
+                $tableName = $modelClassName->getTable();
+
+                $quote = $model::leftJoin('payments as py', function ($join) use ($modelClassName, $tableName) {
+                    $join->on('py.paymentable_id', '=', $tableName.'.id')
+                        ->where('py.paymentable_type', '=', $modelClassName::class);
+                })
+                    ->where($tableName.'.email', $email)
+                    ->whereBetween('py.captured_at', [$dateFrom, $dateTo])
+                    ->get();
 
                 // quote against email and in between two month of payment captured
                 if (! $quote->isEmpty() && $validateAll) {
@@ -284,7 +291,10 @@ class InslyDetailRepository extends BaseRepository
                     $policy->code = $obj->code;
                     $policy->save();
                 }
-                $data[] = $this->where('policy_no', $policyNumber)->first()->toArray();
+                $inslyPolicy = $this->where('policy_no', $policyNumber)->first();
+                if ($inslyPolicy) {
+                    $data[] = $inslyPolicy->toArray();
+                }
 
                 return [
                     'status' => 201,
@@ -318,12 +328,13 @@ class InslyDetailRepository extends BaseRepository
         if ($dataArr['email'] == null) {
             $dataArr['email'] = $policy['customer']['contact_person_email'] ?? null;
         }
-        $insurer = $policy['policy']['insurer'] ?? null;
-        if ($insurer == 'Tokio Marine Nichido') {
-            $insurer = 'Tokio Marine & Nichido Fire Insurance Co';
-        }
-        $insuredWith = InsuranceProviderRepository::where('code', 'like', '%'.$insurer.'%')
-            ->orWhere('text', 'like', '%'.$insurer.'%')->first();
+
+        $dataArr['policy_number'] = $policy['policy_no'] ?? null;
+        $dataArr['policy_start_date'] = isset($policy['policy']['start_date']) ? $this->formatDate($policy['policy']['start_date']) : null;
+        $dataArr['policy_expiry_date'] = isset($policy['policy']['end_date']) ? $this->formatDate($policy['policy']['end_date']) : null;
+        // commented this because its value is null so no need to assign.
+        /* $dataArr['insurance_provider_id'] = null; */
+        $dataArr['policy_issuance_date'] = now()->format('Y-m-d');
 
         $previousPolicyStartDate = $policy['policy']['end_date'] ?? null;
         if ($previousPolicyStartDate) {

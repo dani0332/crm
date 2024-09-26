@@ -673,7 +673,7 @@ class LeadAllocationService extends BaseService
 
     public function getCarUnallocatedLeads()
     {
-        $from = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS');
+        $from = now()->subWeeks(2)->startOfDay();
 
         $to = now()->subMinutes(2)->toDateTimeString();
 
@@ -763,17 +763,17 @@ class LeadAllocationService extends BaseService
 
         info('car lead allocation renewal date from : '.$dateFrom.' and date to : '.$dateTo);
 
-        $renewalQuote = CarQuote::where('source', LeadSourceEnum::RENEWAL_UPLOAD)
+        $renewalQuotesCount = CarQuote::select('id')->where('source', LeadSourceEnum::RENEWAL_UPLOAD)
             ->whereBetween('previous_policy_expiry_date', [$dateFrom, $dateTo])
             ->where(function ($query) use ($lead) {
                 $query->where('email', $lead->email)
                     ->orWhere('mobile_no', 'like', '%'.substr($lead->mobile_no, -7));
             })
             ->where('car_make_id', $lead->car_make_id)
-            ->where('car_model_id', $lead->car_model_id)->get();
+            ->where('car_model_id', $lead->car_model_id)->count();
 
-        if (count($renewalQuote) > 0) {
-            info('car lead allocation found a renewal quote with uuid : '.$renewalQuote->first()->uuid.' for car quote with uuid : '.$lead->uuid);
+        if ($renewalQuotesCount > 0) {
+            info('car lead allocation found '.$renewalQuotesCount.' renewal quote(s) for car quote with uuid : '.$lead->uuid);
 
             return true;
         } else {
@@ -1005,11 +1005,6 @@ class LeadAllocationService extends BaseService
             );
     }
 
-    public function getUnAssignedHealthQuotes($teamType)
-    {
-        return HealthQuote::whereNull('advisor_id')->where('health_team_type', $teamType)->count() ?? 0;
-    }
-
     public function getAllocationLeads($quoteTypeIds)
     {
         try {
@@ -1072,5 +1067,4 @@ class LeadAllocationService extends BaseService
 
         return $isCommercial;
     }
-
 }

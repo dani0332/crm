@@ -7,6 +7,7 @@ const props = defineProps({
   quoteTypes: Object,
   displayByColumn: String,
   quoteTypeCodes: Object,
+  quoteTypeIdEnum: Object,
 });
 
 const notification = useToast();
@@ -30,6 +31,7 @@ const sortBy = ref('net_conversion');
 const sortType = ref('desc');
 const showTable = ref(true);
 
+const quoteTypeIdEnum = page.props.quoteTypeIdEnum;
 const {
   currentPageFirstIndex,
   currentPageLastIndex,
@@ -136,6 +138,7 @@ const filters = reactive({
   startEndDate: [],
   lob: '',
   asAtDate: '',
+  tag: '',
   displayBy: props.displayByColumn || '',
   page: 1,
 });
@@ -354,6 +357,19 @@ const minDate = computed(() => {
           placeholder="Search by Group"
           label="Display by"
           :options="displayBy"
+          class="w-full"
+          :single="true"
+        />
+        <ComboBox
+          v-if="filters.lob == props.quoteTypeIdEnum.Car"
+          v-model="filters.tag"
+          placeholder="SIC/PUA"
+          label="SIC/PUA"
+          :options="[
+            { value: '', label: 'All' },
+            { value: 'sic', label: 'SIC' },
+            { value: 'non-sic', label: 'PUA' },
+          ]"
           class="w-full"
           :single="true"
         />

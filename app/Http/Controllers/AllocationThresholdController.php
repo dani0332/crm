@@ -28,7 +28,7 @@ class AllocationThresholdController extends Controller
             $index = array_search($team['name'], $customSequence);
 
             return $index === false ? PHP_INT_MAX : $index;
-        });
+        })->values();
         $teams = $sortedTeams;
 
         return inertia('Admin/AllocationConfig/AllocationThreshold', [

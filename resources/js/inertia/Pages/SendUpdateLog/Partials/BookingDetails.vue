@@ -51,6 +51,10 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
+  modelClass: {
+    type: String,
+    default: '',
+  },
 });
 
 const state = reactive({
@@ -64,6 +68,7 @@ const sendUpdateStatusEnum = page.props.sendUpdateStatusEnum;
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const vat = page.props.vatValue;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+const permissionsEnum = page.props.permissionsEnum;
 
 const dateToYMD = date => {
   if (date) {
@@ -317,7 +322,10 @@ const calculatePriceDetailsForATIB = () => {
     return false;
   }
 
-  if (bookingDetailsForm.price_vat_applicable > 0) {
+  if (
+    bookingDetailsForm.price_vat_applicable > 0 ||
+    bookingDetailsForm.price_vat_not_applicable > 0
+  ) {
     // in this calculation, number 5 is not VAT amount, we need to * the price_vat and price_not_vat with 5% to get the total VAT amount.
     let total_price_with_vat_and_not_vat_applicable =
       Number(bookingDetailsForm.price_vat_applicable) +
@@ -333,6 +341,7 @@ const calculatePriceDetailsForATIB = () => {
 };
 
 const calculateCommission = () => {
+  ignoreCheckDiscount.value = false;
   if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ACB) {
     calculateCommisionDetailsForACB();
   } else if (props.sendUpdateLog?.option?.code == sendUpdateStatusEnum.ATIB) {
@@ -616,7 +625,10 @@ onMounted(() => {
   }
 });
 
+const ignoreCheckDiscount = ref(false);
+
 const onUpdateReversal = () => {
+  ignoreCheckDiscount.value = true;
   state.reversalSectionEdit = !state.reversalSectionEdit;
   bookingDetailsForm.transaction_payment_status = 'N/A';
   bookingDetailsForm.invoice_date = reversalEntry.invoice_date || '';
@@ -642,6 +654,7 @@ const onUpdateReversal = () => {
   bookingDetailsForm.total_vat_amount =
     reversalEntry.total_vat_amount || '0.00';
   bookingDetailsForm.price_with_vat = reversalEntry.price_with_vat;
+  bookingDetailsForm.discount = null;
 };
 
 function convertToNumber(value) {
@@ -957,7 +970,9 @@ const onReversalEdit = () => {
 const checkDiscount = (newPrice, oldPrice) => {
   let paymentTotalPrice = Number(props?.payments[0]?.total_price);
   let paymentTotalAmount = Number(props?.payments[0]?.total_amount);
-  let savedPriceWithVat = Number(props.sendUpdateLog?.price_with_vat);
+  let savedPriceWithVat = isCPD.value
+    ? Number(reversalEntry.price_with_vat)
+    : Number(props.sendUpdateLog?.price_with_vat);
   let savedDiscount =
     Number(props?.payments[0]?.discount_value) ||
     Number(props.sendUpdateLog.discount) ||
@@ -1007,6 +1022,8 @@ watch(
   (newValue, oldValue) => {
     bookingDetailsForm.broker_invoice_number =
       props.bookingDetails.broker_invoice_number;
+    bookingDetailsForm.invoice_description =
+      props.bookingDetails.invoice_description;
   },
 );
 
@@ -1020,7 +1037,7 @@ const noDiscountType = computed(() => {
     sendUpdateStatusEnum.ED,
   ];
 
-  return !(
+  return (
     noDiscountTypeOptions.includes(props.sendUpdateLog?.option?.code) ||
     isCIOrCIR.value
   );
@@ -1029,7 +1046,7 @@ const noDiscountType = computed(() => {
 watch(
   () => bookingDetailsForm.price_with_vat,
   (newValue, oldValue) => {
-    if (noDiscountType.value) {
+    if (!(noDiscountType.value || ignoreCheckDiscount.value)) {
       checkDiscount(newValue, oldValue);
     }
   },
@@ -2087,6 +2104,12 @@ watch(
           </div>
           <x-divider class="my-4 mt-10" />
           <div class="flex justify-end gap-2">
+            <SageAPILogs
+              :quoteType="props.quoteType"
+              :record="props.sendUpdateLog"
+              :modelClass="props.modelClass"
+              :permissionsEnum="page.props.permissionsEnum"
+            />
             <template v-if="!state.isEdit">
               <x-button size="sm" @click="checkSectionTwoEdit"> Edit </x-button>
               <template v-if="isLackingPayment">
