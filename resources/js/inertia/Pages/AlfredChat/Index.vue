@@ -334,6 +334,7 @@ const downloadReport = () => {
           :options="[
             { value: null, label: 'All' },
             { value: 'WHATSAPP', label: 'Whatsapp' },
+            { value: 'EMAIL', label: 'Email' },
             { value: 'WEBSITE', label: 'Website' },
           ]"
           placeholder="Search by Message channel"
