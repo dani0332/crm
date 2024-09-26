@@ -3,11 +3,11 @@
 namespace App\Services;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\TiersEnum;
-use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
@@ -97,8 +97,7 @@ class DashboardService extends BaseService
         if ($filters['applyUnAssignedLeadsCountByTierDateFilter'] == true && $filters['startDate'] != now()->startOfDay()->toDateTimeString()) {
             $query->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']]);
         } else {
-            $from = ApplicationStorage::where('key_name', 'CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS')->first()->value;
-            $query->whereBetween('car_quote_request.created_at', [$from, now()->endOfDay()]);
+            $query->whereBetween('car_quote_request.created_at', [now()->subWeeks(2)->startOfDay(), now()->endOfDay()]);
         }
 
         return $query->get();
@@ -185,7 +184,7 @@ class DashboardService extends BaseService
         return $teamWiseLeadsAssignedAverage;
     }
 
-    public function getTotalUnAssignedLeads($filters)
+    public function getTotalUnAssignedLeads($filters, bool $getQuery = false)
     {
         $query = CarQuote::select('is_ecommerce', 'source')
             ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
@@ -201,10 +200,14 @@ class DashboardService extends BaseService
             $query->whereBetween('car_quote_request.created_at', [now()->subWeeks(2)->startOfDay(), now()->endOfDay()]);
         }
 
+        if ($getQuery) {
+            return $query;
+        }
+
         return $query->get();
     }
 
-    public function getTotalUnAssignedOnlySICLeads($filters)
+    public function getTotalUnAssignedOnlySICLeads($filters, bool $getQuery = false)
     {
         $query = CarQuote::select('payment_status_id')
             ->isSICLead(QuoteTypes::CAR)
@@ -218,6 +221,51 @@ class DashboardService extends BaseService
             $query->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()]);
         }
 
+        if ($getQuery) {
+            return $query;
+        }
+
         return $query->get();
+    }
+
+    public function getStatCounts(array $filters)
+    {
+        $teamWiseLeadsAssignedAverage = $this->getTeamWiseLeadStats($filters);
+
+        $totalLeadsQuery = CarQuote::whereBetween('created_at', [$filters['startDate'], $filters['endDate']])
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO]);
+
+        $totalLeadsReceived = $totalLeadsQuery->count();
+        $totalLeadsReceivedEcommerce = $totalLeadsQuery->where('is_ecommerce', 1)->count();
+
+        $totalUnAssignedLeadsQuery = $this->getTotalUnAssignedLeads($filters, true);
+        $totalUnAssignedLeadsReceived = $totalUnAssignedLeadsQuery->count();
+        $totalUnAssignedLeadsReceivedEcommerce = $totalUnAssignedLeadsQuery->where('is_ecommerce', 1)->count();
+        $totalUnAssignedRevivalLeads = $totalUnAssignedLeadsQuery->where('source', LeadSourceEnum::REVIVAL)->count();
+
+        $totalUnAssignedOnlySICLeadsQuery = $this->getTotalUnAssignedOnlySICLeads($filters, true);
+        $totalUnAssignedOnlySICLeadsReceived = $totalUnAssignedOnlySICLeadsQuery->count();
+        $totalUnAssignedOnlyPaidSICLeadsReceived = $totalUnAssignedOnlySICLeadsQuery->where('payment_status_id', PaymentStatusEnum::AUTHORISED)->count();
+
+        $leadsCountByTier = $this->getLeadsCountByTier($filters);
+        $revivalLeadsCount = $this->getLeadsCountRevival($filters);
+        $unAssignedLeadsByTier = $this->getUnAssignedLeadsCountByTier($filters);
+        $advisorLeadsAssignedData = $this->getAdvisorLeadAssignedData($filters);
+
+        return [
+            'teamWiseLeadsAssignedAverage' => $teamWiseLeadsAssignedAverage,
+            'totalLeadsReceived' => $totalLeadsReceived,
+            'totalLeadsReceivedEcommerce' => $totalLeadsReceivedEcommerce,
+            'totalUnassignedLeadsReceived' => $totalUnAssignedLeadsReceived,
+            'totalUnassignedLeadsReceivedEcommerce' => $totalUnAssignedLeadsReceivedEcommerce,
+            'totalUnassignedRevivalLeads' => $totalUnAssignedRevivalLeads,
+            'totalUnAssignedOnlySICLeadsReceived' => $totalUnAssignedOnlySICLeadsReceived,
+            'totalUnAssignedOnlyPaidSICLeadsReceived' => $totalUnAssignedOnlyPaidSICLeadsReceived,
+            'leadsCountByTier' => $leadsCountByTier,
+            'revivalLeadsCount' => $revivalLeadsCount,
+            'unAssignedLeadsByTier' => $unAssignedLeadsByTier,
+            'advisorLeadsAssignedData' => $advisorLeadsAssignedData,
+        ];
     }
 }

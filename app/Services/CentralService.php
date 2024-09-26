@@ -363,6 +363,9 @@ class CentralService
 
     public function getQuoteWiseProviderPlans($quoteType, $providerId, $plandId = null): object
     {
+        if ($quoteType == QuoteTypes::BIKE->value) {
+            $quoteType = 'Car';
+        }
         $planModel = 'App\\Models\\' . ucfirst($quoteType) . 'Plan';
 
         if ($plandId) {

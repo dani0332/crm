@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Enums\AMLStatusCode;
-use App\Enums\QuoteStatusId;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Models\QuoteStatusLog;
 use App\Traits\GenericQueriesAllLobs;
@@ -25,7 +25,9 @@ class UpdateAMLStatus extends Command
      * @var string
      */
     protected $description = 'Get latest AML Status from Quote Status Logs and update into Quote Request Table';
+
     use GenericQueriesAllLobs;
+
     /**
      * Create a new command instance.
      *
@@ -44,13 +46,13 @@ class UpdateAMLStatus extends Command
     public function handle()
     {
         info('Cmd:UpdateAMLStatus - AML status update command started');
-        $getQuoteStatuses = QuoteStatusLog::whereIn('current_quote_status_id', [QuoteStatusId::AMLScreeningCleared, QuoteStatusId::AMLScreeningFailed])
+        $getQuoteStatuses = QuoteStatusLog::whereIn('current_quote_status_id', [QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed])
             ->whereNotNull('quote_type_id')
             ->whereNotNull('quote_request_id')
             ->where('created_at', '>=', Carbon::create(2024, 01, 01))
             ->chunkById(2000, function ($quoteStatusLogs) {
                 foreach ($quoteStatusLogs as $quoteStatusLog) {
-                    $amlStatus = $quoteStatusLog->current_quote_status_id === QuoteStatusId::AMLScreeningCleared ? AMLStatusCode::AMLScreeningCleared : AMLStatusCode::AMLScreeningFailed;
+                    $amlStatus = $quoteStatusLog->current_quote_status_id === QuoteStatusEnum::AMLScreeningCleared ? AMLStatusCode::AMLScreeningCleared : AMLStatusCode::AMLScreeningFailed;
                     $quoteType = QuoteTypes::getName($quoteStatusLog->quote_type_id)->value ?? null;
                     $getQuoteObject = $this->getModelObject($quoteType);
                     if (class_exists($getQuoteObject)) {

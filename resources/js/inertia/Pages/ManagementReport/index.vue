@@ -500,7 +500,7 @@ watch(
           v-model="filters.leadSources"
           placeholder="Search by Lead Source"
           :options="leadSource"
-          :maxLimit="3"
+          :maxLimit="10"
           deselect-all
         />
       </div>
