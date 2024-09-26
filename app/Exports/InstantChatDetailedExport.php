@@ -2,25 +2,28 @@
 
 namespace App\Exports;
 
+use App\Services\InstantAlfredService;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromArray;
+use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class InstantChatDetailedExport implements FromArray, WithHeadings, WithMapping
+class InstantChatDetailedExport implements FromCollection, WithHeadings, WithMapping
 {
     use Exportable;
 
     protected $chat;
 
-    public function __construct(array $data)
+    protected $request;
+
+    public function __construct($request)
     {
-        $this->chat = $data;
+        $this->request = $request;
     }
 
-    public function array(): array
-    {
-        return $this->chat;
+    public function collection(){
+        return app(InstantAlfredService::class)->generateChatDetailedReport($this->request);
     }
 
     public function headings(): array
@@ -45,19 +48,19 @@ class InstantChatDetailedExport implements FromArray, WithHeadings, WithMapping
     public function map($chat): array
     {
         return [
-            $chat['quote_type'],
-            $chat['quote_id'],
-            $chat['created_at'],
-            $chat['msg'],
-            $chat['role'],
-            isset($chat['employee_flag']) ? $chat['employee_flag'] : 'N/A',
-            // isset($chat['email']) ? $chat['email'] : 'N/A',
-            isset($chat['user_system']) ? $chat['user_system'] : 'N/A',
-            isset($chat['user_ip_address']) ? $chat['user_ip_address'] : 'N/A',
-            $this->formatCommunicationChannel($chat['communication_channel']),
-            isset($chat['input_tokens_usage']) ? $chat['input_tokens_usage'] : 'N/A',
-            isset($chat['completion_tokens']) ? $chat['completion_tokens'] : 'N/A',
-            isset($chat['total_tokens']) ? $chat['total_tokens'] : 'N/A',
+            $chat->quote_type,
+            $chat->quote_id,
+            $chat->created_at,
+            $chat->msg,
+            $chat->role,
+            isset($chat->employee_flag) ? $chat->employee_flag : 'N/A',
+            // isset($chat->email) ? $chat->email : 'N/A',
+            isset($chat->user_system) ? $chat->user_system : 'N/A',
+            isset($chat->user_ip_address) ? $chat->user_ip_address : 'N/A',
+            $this->formatCommunicationChannel($chat->communication_channel),
+            isset($chat->input_tokens_usage) ? $chat->input_tokens_usage : 'N/A',
+            isset($chat->completion_tokens) ? $chat->completion_tokens : 'N/A',
+            isset($chat->total_tokens) ? $chat->total_tokens : 'N/A',
         ];
     }
 

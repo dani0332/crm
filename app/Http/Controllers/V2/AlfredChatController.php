@@ -125,14 +125,13 @@ class AlfredChatController extends Controller
 
     public function processMongoDBChatFilters(Request $request, $data)
     {
-
         if (isset($request->fallback) && $request->fallback != '' || isset($request->channel) && $request->channel != '') {
 
             $dataArray = json_decode(json_encode($data), true);
 
             $itemIds = array_column($dataArray, 'uuid');
 
-            $chatPipeline = $this->createPipeline($request, $itemIds, 'chat');
+            $chatPipeline = app(InstantAlfredService::class)->processMongoDBChatFilters($request,  $itemIds, 'chat');
 
             $mongoResults = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline))->toArray();
 
@@ -201,113 +200,15 @@ class AlfredChatController extends Controller
 
         $fileName = $request->report . ' ' . Carbon::now()->format('Y-m-d_H-i-s') . '.xlsx';
         
-        // $modelType = $request->quoteType ?? 'Car';
-        
-        // $data = app(InstantAlfredService::class)->processSqlChatFilters($request, $modelType);
-        
-        // $mongoResults = [];
-        
         if ($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
             
             return (new InstantChatConsolidatedExport($request))->download($fileName);
         }
 
         if ($request->report == InstantChatReportsEnum::DETAILED_REPORT) {
-            
 
-            return Excel::download(new InstantChatDetailedExport($mongoResults), $fileName.'.xlsx');
+            return (new InstantChatDetailedExport($request))->download($fileName);
         }
-    }
-
-    public function createPipeline(Request $request, $itemIds, $type)
-    {
-        $pipeline[] = [
-            '$match' => [
-                'quote_id' => ['$in' => $itemIds],
-            ],
-        ];
-
-        if ($type === 'chat') {
-            $pipeline[] = [
-                '$group' => [
-                    '_id' => '$quote_id',
-                    'created_at' => ['$first' => '$created_at'],
-                    'communication_channels' => ['$addToSet' => [
-                        '$cond' => [
-                            ['$ifNull' => ['$channel', false]],
-                            '$channel',
-                            '$$REMOVE',
-                        ],
-                    ]],
-                    'fallback' => ['$first' => '$fallback'],
-                ],
-            ];
-        } elseif ($request->report == InstantChatReportsEnum::DETAILED_REPORT) {
-            $pipeline[] = [
-                '$project' => [
-                    'created_at' => 1,
-                    'role' => 1,
-                    'msg' => 1,
-                    'quote_id' => 1,
-                    'quote_type' => 1,
-                    'employee_flag' => '$who_chatted.is_employee',
-                    'email' => '$who_chatted.email',
-                    'user_system' => '$who_chatted.user_agent',
-                    'user_ip_address' => '$who_chatted.ip',
-                    'communication_channel' => '$channel',
-                    'input_tokens_usage' => '$response.usage.prompt_tokens',
-                    'completion_tokens' => '$response.usage.completion_tokens',
-                    'total_tokens' => '$response.usage.total_tokens',
-                ],
-            ];
-        } elseif ($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
-            $pipeline[] = [
-                '$group' => [
-                    '_id' => '$quote_id',
-                    'quote_type' => ['$last' => '$quote_type'],
-                    'date_of_first_interaction' => ['$min' => '$created_at'],
-                    'communication_channels' => ['$addToSet' => [
-                        '$cond' => [
-                            ['$ifNull' => ['$channel', false]],
-                            '$channel',
-                            '$$REMOVE',
-                        ],
-                    ]],
-                    'customer_interactions' => [
-                        '$sum' => [
-                            '$cond' => [
-                                ['$eq' => ['$role', 'USER']],
-                                1,
-                                0,
-                            ],
-                        ],
-                    ],
-                    'ai_interactions' => [
-                        '$sum' => [
-                            '$cond' => [
-                                ['$eq' => ['$role', 'AI']],
-                                1,
-                                0,
-                            ],
-                        ],
-                    ],
-                    'total_ai_interactions' => [
-                        '$sum' => [
-                            '$cond' => [
-                                ['$in' => ['$role', ['AI', 'USER']]],
-                                1,
-                                0,
-                            ],
-                        ],
-                    ],
-                    'fallbacks' => [
-                        '$sum' => ['$cond' => [['$ifNull' => ['$fallback', false]], 1, 0]],
-                    ],
-                ],
-            ];
-        }
-
-        return $pipeline;
     }
 
 }
