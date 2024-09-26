@@ -273,7 +273,7 @@ const quoteTypes = page.props.quoteTypes;
 function onLobChange(updateDisplayFilter = true) {
   if (updateDisplayFilter) filters.displayBy = '';
   canExportReport.value = false;
-  
+
   const quote = quoteTypes[filters.lob];
   const displayOptions = {
     [props.quoteTypeCodes.Car]: ['team', 'sub_team', 'tiers', 'nationality'],
@@ -282,16 +282,19 @@ function onLobChange(updateDisplayFilter = true) {
     [props.quoteTypeCodes.GroupMedical.replace(/ /g, '')]: ['sub_team'],
     [props.quoteTypeCodes.Bike]: ['tiers', 'nationality'],
     [props.quoteTypeCodes.Travel]: ['team', 'nationality'],
-    [props.quoteTypeCodes.Life]: ['team', 'nationality']
+    [props.quoteTypeCodes.Life]: ['team', 'nationality'],
   };
 
-  displayBy.value = displayBy.value.filter(item => 
-    !['sub_team', 'tiers', 'nationality', 'team'].includes(item.value)
+  displayBy.value = displayBy.value.filter(
+    item => !['sub_team', 'tiers', 'nationality', 'team'].includes(item.value),
   );
 
   const optionsToAdd = displayOptions[quote] || [];
   optionsToAdd.forEach(option => {
-    displayBy.value.push({ label: option.charAt(0).toUpperCase() + option.slice(1), value: option });
+    displayBy.value.push({
+      label: option.charAt(0).toUpperCase() + option.slice(1),
+      value: option,
+    });
   });
 }
 
