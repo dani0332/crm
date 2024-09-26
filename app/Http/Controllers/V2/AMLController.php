@@ -81,7 +81,7 @@ class AMLController extends Controller
         if ($request->ajax()) {
             if (isset($request->quoteType) && ! empty($request->quoteType)) {
                 $quoteTypeId = $quoteTypes->where('code', $request->quoteType)->first()?->id;
-                $quoteRequestTable = strtolower($request->quoteType) . '_quote_request';
+                $quoteRequestTable = strtolower($request->quoteType).'_quote_request';
 
                 if (in_array($quoteTypeId, [
                     QuoteTypes::BIKE->id(),
@@ -104,32 +104,32 @@ class AMLController extends Controller
                                 $request->searchType == 'id' ? AML::where($searchType, $request->searchField)->firstOrFail()->created_at :
                                 PersonalQuote::where($searchType, $request->searchField)->firstOrFail()->created_at;
 
-                            $quoteRequestTable = AMLService::isDataMigrated($quoteTypeId, '', $createdDate) ? 'personal_quotes' : strtolower($request->quoteType) . '_quote_request';
+                            $quoteRequestTable = AMLService::isDataMigrated($quoteTypeId, '', $createdDate) ? 'personal_quotes' : strtolower($request->quoteType).'_quote_request';
                         }
                     }
                 }
 
                 $dataAml = DB::table($quoteRequestTable);
-                if ($quoteRequestTable == strtolower(quoteTypeCode::Pet) . '_quote_request') {
-                    $dataAml = $dataAml->select($quoteRequestTable . '.*', $quoteRequestTable . '.personal_quote_id as id', DB::raw('"' . $request->quoteType . ' Insurance" as quote_type_text, "' . $quoteTypeId . '" as quote_type_id'), $quoteRequestTable . '.code as cdb_id');
+                if ($quoteRequestTable == strtolower(quoteTypeCode::Pet).'_quote_request') {
+                    $dataAml = $dataAml->select($quoteRequestTable.'.*', $quoteRequestTable.'.personal_quote_id as id', DB::raw('"'.$request->quoteType.' Insurance" as quote_type_text, "'.$quoteTypeId.'" as quote_type_id'), $quoteRequestTable.'.code as cdb_id');
                 } else {
-                    $dataAml = $dataAml->select($quoteRequestTable . '.*', DB::raw('"' . $request->quoteType . ' Insurance" as quote_type_text, "' . $quoteTypeId . '" as quote_type_id'), $quoteRequestTable . '.code as cdb_id');
+                    $dataAml = $dataAml->select($quoteRequestTable.'.*', DB::raw('"'.$request->quoteType.' Insurance" as quote_type_text, "'.$quoteTypeId.'" as quote_type_id'), $quoteRequestTable.'.code as cdb_id');
                 }
 
-                $dataAml = $dataAml->orderBy($quoteRequestTable . '.created_at', 'desc');
+                $dataAml = $dataAml->orderBy($quoteRequestTable.'.created_at', 'desc');
                 if ($quoteRequestTable == 'personal_quotes') {
-                    $dataAml->where($quoteRequestTable . '.quote_type_id', $quoteTypeId);
+                    $dataAml->where($quoteRequestTable.'.quote_type_id', $quoteTypeId);
                 }
                 if (
                     isset($request->searchType) && ! empty($request->searchType) &&
                     isset($request->searchField) && ! empty($request->searchField)
                 ) {
                     if ($request->searchType == 'cdbId') {
-                        $dataAml->where($quoteRequestTable . '.code', $request->searchField);
+                        $dataAml->where($quoteRequestTable.'.code', $request->searchField);
                     }
 
                     if ($request->searchType == 'customerEmail') {
-                        $dataAml->where($quoteRequestTable . '.email', $request->searchField);
+                        $dataAml->where($quoteRequestTable.'.email', $request->searchField);
                     }
                 }
                 if (isset($request->matchFound)) {
@@ -144,7 +144,7 @@ class AMLController extends Controller
                     isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate) &&
                     isset($request->amlCreatedEndDate) && ! empty($request->amlCreatedEndDate)
                 ) {
-                    $dataAml->whereBetween($quoteRequestTable . '.created_at', dateQueryFilter($request->amlCreatedStartDate, $request->amlCreatedEndDate));
+                    $dataAml->whereBetween($quoteRequestTable.'.created_at', dateQueryFilter($request->amlCreatedStartDate, $request->amlCreatedEndDate));
                 }
 
                 $quotes = $dataAml->simplePaginate(10)->withQueryString();
@@ -297,7 +297,7 @@ class AMLController extends Controller
                     app(AMLService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
                 }
 
-                $response = ['status' => $response['status'], 'message' => $response['message'] . ' and ' . $responseMessage['message']];
+                $response = ['status' => $response['status'], 'message' => $response['message'].' and '.$responseMessage['message']];
             } else {
                 $response = ['status' => $response['status'], 'message' => $response['message']];
             }
@@ -374,7 +374,7 @@ class AMLController extends Controller
                         'last_name' => $customer->insured_last_name,
                         'dob' => Carbon::parse($customer->dob)->format(config('constants.DATE_FORMAT_ONLY')),
                         'nationality' => $customer->nationality->toArray() ?? [],
-                        'code' => CustomerTypeEnum::IndividualShort . '-' . $customer->id,
+                        'code' => CustomerTypeEnum::IndividualShort.'-'.$customer->id,
                     ];
                 }
 
@@ -404,14 +404,14 @@ class AMLController extends Controller
                     ]);
                     $entity->refresh();
                     $entityId = $entity->id;
-                    $entity->update(['code' => CustomerTypeEnum::EntityShort . '-' . $entityId]);
+                    $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entityId]);
 
                     QuoteRequestEntityMapping::updateOrCreate([
                         'quote_type_id' => $quoteType->id,
                         'quote_request_id' => $quoteRequestId,
                     ], ['entity_id' => $entityId, 'entity_type_code' => $AMLCheckRequest->entity_type_code]);
 
-                    $entityDetailsForApi = ['company_name' => $entity->company_name, 'code' => CustomerTypeEnum::EntityShort . '-' . $entity->id];
+                    $entityDetailsForApi = ['company_name' => $entity->company_name, 'code' => CustomerTypeEnum::EntityShort.'-'.$entity->id];
                     BridgerAMLJob::dispatchSync($bridgerAPIToken, $entityDetailsForApi, $updateQuote, $quoteTypeId, CustomerTypeEnum::Entity, auth()->user()->email);
                 } else {
                     $fetchEntity->trade_license_no = $AMLCheckRequest->trade_license_no;
@@ -450,12 +450,12 @@ class AMLController extends Controller
 
     public function sanctionListHistory(Request $request, SanctionListDownloads $sanctionListDownloads, DataTables $datatables)
     {
-        $url = env('AZURE_RYU_STORAGE_URL') . env('AZURE_AML_HISTORY');
+        $url = env('AZURE_RYU_STORAGE_URL').env('AZURE_AML_HISTORY');
 
         $sanctionListDownloads = $sanctionListDownloads->newQuery();
 
         if ($request->file_name != '') {
-            $sanctionListDownloads = $sanctionListDownloads->where('file_name', 'like', '%' . $request->file_name . '%');
+            $sanctionListDownloads = $sanctionListDownloads->where('file_name', 'like', '%'.$request->file_name.'%');
         }
         if ($request->is_processed == '0' || $request->is_processed == '1') {
             $value = $request->is_processed == '1';
@@ -492,7 +492,7 @@ class AMLController extends Controller
         }
 
         $fileNameOriginal = $request->file_name->getClientOriginalName();
-        $fileNameAzure = date('d-m-Y') . '_' . $fileNameOriginal;
+        $fileNameAzure = date('d-m-Y').'_'.$fileNameOriginal;
         $request->file('file_name')->storeAs('/', $fileNameAzure, 'azureForRyu');
 
         $newUpload = UAEAMLListUploads::where('id', '=', 1)->get()->first();
@@ -533,7 +533,7 @@ class AMLController extends Controller
                 'quoteRequestEntityMapping' => function ($mappedEntity) use ($request) {
                     $mappedEntity->where(['quote_type_id' => $request->quote_type_id, 'quote_request_id' => $request->quote_request_id]);
                 },
-                'quoteMember'
+                'quoteMember',
             ]
         )->where('id', $request->entity_id)->first();
 
@@ -574,12 +574,12 @@ class AMLController extends Controller
         $kycLog->results = json_encode($bridgerResponse);
         $kycLog->save();
 
-        $infoLog = 'AML Screening Bridger - AML Logs decision changed. Quote Ref-ID: ' . $request['quote_ref_id'] . ' - Old Decision: ' . $oldDecision . ' - New Decision: ' . $newDecision;
+        $infoLog = 'AML Screening Bridger - AML Logs decision changed. Quote Ref-ID: '.$request['quote_ref_id'].' - Old Decision: '.$oldDecision.' - New Decision: '.$newDecision;
 
         if ($request->bridger_decision_type == AMLDecisionStatusEnum::TRUE_MATCH) {
             $infoLog .= ' - Email triggered to Compliance Super User';
             AMLService::sendAMLMatchedEmailtoComplianceTeam(
-                config('constants.APP_URL') . $request['aml_quote_url'],
+                config('constants.APP_URL').$request['aml_quote_url'],
                 $request['quote_ref_id'],
                 $request['bridger_response'],
                 $request['customer_entity_name'],
@@ -590,7 +590,7 @@ class AMLController extends Controller
             $response['status'] = 'success';
             $response['message'] = 'Email Triggered to Compliance Super User';
         }
-        info($infoLog . ' - Triggered By: ' . auth()->user()->email);
+        info($infoLog.' - Triggered By: '.auth()->user()->email);
 
         return response()->json($response);
     }
@@ -656,7 +656,7 @@ class AMLController extends Controller
             'quote_id' => 'required',
         ]);
 
-        $model = '\\App\\Models\\' . ucwords($request->modelType) . 'Quote';
+        $model = '\\App\\Models\\'.ucwords($request->modelType).'Quote';
         if (checkPersonalQuotes(ucwords($request->modelType))) {
             $model = '\\App\\Models\\PersonalQuote';
         }
@@ -689,7 +689,7 @@ class AMLController extends Controller
                 'directLine' => $quote->advisor->landline_no,
                 'whatsapp' => $quote->advisor->mobile_no,
             ] : [],
-            'uploadDocsPage' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL') . $quote->uuid . '/thankyou/' . $directionCode,
+            'uploadDocsPage' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL').$quote->uuid.'/thankyou/'.$directionCode,
         ];
     }
 

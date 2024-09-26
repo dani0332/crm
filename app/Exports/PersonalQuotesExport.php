@@ -5,11 +5,11 @@ namespace App\Exports;
 use App\Enums\QuoteTypes;
 use App\Repositories\BikeQuoteRepository;
 use App\Repositories\CycleQuoteRepository;
+use App\Repositories\HomeQuoteRepository;
 use App\Repositories\JetskiQuoteRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\YachtQuoteRepository;
 use App\Traits\ExcelExportable;
-use App\Repositories\HomeQuoteRepository;
 
 class PersonalQuotesExport
 {

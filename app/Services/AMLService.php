@@ -217,7 +217,7 @@ class AMLService
         $emailSystem = config('constants.APP_ENV');
         $errorEmailRecipients = explode(',', config('constants.ERROR_EMAIL_RECIPIENTS'));
 
-        $subject = $emailSystem . ' BRIDGER SEARCH API ERROR | ' . \Request::url() . ' | ' . date(config('constants.DB_DATE_FORMAT_MATCH'));
+        $subject = $emailSystem.' BRIDGER SEARCH API ERROR | '.\Request::url().' | '.date(config('constants.DB_DATE_FORMAT_MATCH'));
         MailService::sendEmail('AmlErrorMail', [
             'amlUrl' => $amlQuoteUrl,
             'emailAmlData' => $amlDataForEmail,
@@ -243,11 +243,11 @@ class AMLService
         if (strtolower($emailSystem) == EnvEnum::PRODUCTION) {
             $fromEmail = config('constants.MAIL_FROM_ADDRESS_AML');
             $fromName = config('constants.MAIL_FROM_NAME_AML');
-            $emailSubject = 'IMCRM | New AML Matches Found for Ref-ID : ' . $quoteRefId;
+            $emailSubject = 'IMCRM | New AML Matches Found for Ref-ID : '.$quoteRefId;
         } else {
             $fromEmail = config('constants.MAIL_FROM_ADDRESS');
             $fromName = config('constants.MAIL_FROM_NAME');
-            $emailSubject = $emailSystem . ' | IMCRM | New AML Matches Found for Ref-ID : ' . $quoteRefId;
+            $emailSubject = $emailSystem.' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteRefId;
         }
 
         self::sendAmlComplianceMail($amlQuoteUrl, $amlResultCount, $customerOrEntityName, $quoteType, $quoteRefId, $emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser);
@@ -300,10 +300,10 @@ class AMLService
             );
 
             $responseCode = $clientRequest->getStatusCode();
-            info('sendAmlComplianceMail ---- Received Code : ' . $responseCode);
+            info('sendAmlComplianceMail ---- Received Code : '.$responseCode);
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $responseDetail = 'sendAmlComplianceMail: Code/Message: ' . $responseCode . '/' . $ex->getMessage();
+            $responseDetail = 'sendAmlComplianceMail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
         }
     }
 
@@ -416,13 +416,13 @@ class AMLService
 
         $emailL_sys = config('constants.APP_ENV');
         if ($emailL_sys == EnvEnum::PRODUCTION) {
-            $emailSubject = 'IMCRM | New AML Matches Found for Ref-ID : ' . $quoteCdbId;
+            $emailSubject = 'IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
         } else {
-            $emailSubject = $emailL_sys . ' | IMCRM | New AML Matches Found for Ref-ID : ' . $quoteCdbId;
+            $emailSubject = $emailL_sys.' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
         }
 
         $appUrl = config('constants.APP_URL');
-        $amlUrl = $appUrl . '/kyc/aml/' . $quoteTypeId . '/details/' . $quoteRequestId;
+        $amlUrl = $appUrl.'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
 
         $this->amlQuoteStatusUpdateMail('AmlQuoteStatusUpdateMail', [
             'amlUrl' => $amlUrl,
