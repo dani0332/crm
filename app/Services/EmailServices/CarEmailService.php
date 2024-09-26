@@ -370,7 +370,7 @@ class CarEmailService extends BaseService
             'customerEmail' => $lead->email,
             'uuid' => $lead->uuid,
             'refID' => $lead->code,
-            'customerName' => $lead->first_name.' '.$lead->last_name,
+            'customerFullName' => $lead->first_name.' '.$lead->last_name,
             'advisorId' => $advisor->id ?? null,
             'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
