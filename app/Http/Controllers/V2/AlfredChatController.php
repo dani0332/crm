@@ -197,18 +197,19 @@ class AlfredChatController extends Controller
 
     public function exportChat(Request $request)
     {
-
         $fileName = $request->report . ' ' . Carbon::now()->format('Y-m-d_H-i-s') . '.xlsx';
         
-        if ($request->report == InstantChatReportsEnum::CONSOLIDATED_REPORT) {
-            
-            return (new InstantChatConsolidatedExport($request))->download($fileName);
+        switch ($request->report) {
+            case InstantChatReportsEnum::CONSOLIDATED_REPORT:
+                return (new InstantChatConsolidatedExport($request))->download($fileName);
+    
+            case InstantChatReportsEnum::DETAILED_REPORT:
+                return (new InstantChatDetailedExport($request))->download($fileName);
+    
+            default:
+                abort(400, 'Invalid report type requested.');
         }
-
-        if ($request->report == InstantChatReportsEnum::DETAILED_REPORT) {
-
-            return (new InstantChatDetailedExport($request))->download($fileName);
-        }
+    
     }
 
 }
