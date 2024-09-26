@@ -62,6 +62,7 @@ final class quoteBusinessTypeCode extends Enum
             quoteBusinessTypeCode::proIndemnity => 8,
             quoteBusinessTypeCode::carFleet => 9,
             quoteBusinessTypeCode::marineCargo => 10,
+            quoteBusinessTypeCode::marineCargoIndividual => 10,
             quoteBusinessTypeCode::marineHull => 11,
             quoteBusinessTypeCode::businessInterruption => 12,
             quoteBusinessTypeCode::machineryBreakdown => 13,

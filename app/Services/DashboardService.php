@@ -69,7 +69,7 @@ class DashboardService extends BaseService
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO])
             ->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']])
-            ->groupBy('tiers.name');
+            ->groupBy('tiers.id');
 
         return $query->get();
     }
@@ -93,7 +93,7 @@ class DashboardService extends BaseService
                     ->where('quote_tags.name', 'SIC')
                     ->where('quote_type.code', quoteTypeCode::Car);
             })
-            ->groupBy('tiers.name');
+            ->groupBy('tiers.id');
         if ($filters['applyUnAssignedLeadsCountByTierDateFilter'] == true && $filters['startDate'] != now()->startOfDay()->toDateTimeString()) {
             $query->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']]);
         } else {
@@ -145,7 +145,7 @@ class DashboardService extends BaseService
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO])
             ->where('users.is_active', true)
-            ->groupBy('users.name');
+            ->groupBy('users.id');
 
         if (isset($filters['startDate']) && isset($filters['endDate'])) {
 

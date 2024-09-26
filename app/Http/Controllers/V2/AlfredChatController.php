@@ -111,7 +111,7 @@ class AlfredChatController extends Controller
         }
 
         // Apply date range filter if provided
-        if ($request->has('start_date') && $request->has('end_date')) {
+        if ($request->has('start_date') && $request->has('end_date') && ($request->quoteId == '' || $request->quoteId == null)) {
             $start_date = Carbon::createFromFormat('Y-m-d', $request->start_date)->startOfDay()->toIso8601String();
             $end_date = Carbon::createFromFormat('Y-m-d', $request->end_date)->endOfDay()->toIso8601String();
             $chatPipeline[] = [
@@ -119,6 +119,18 @@ class AlfredChatController extends Controller
                     'created_at' => ['$gte' => $start_date, '$lte' => $end_date],
                 ],
             ];
+        } elseif ($request->quoteId == '' || $request->quoteId == null) {
+            // If dates are not provided, use the current day as default for both
+
+            $start_date = Carbon::now()->startOfDay()->toIso8601String();
+            $end_date = Carbon::now()->endOfDay()->toIso8601String();
+
+            $chatPipeline[] = [
+                '$match' => [
+                    'created_at' => ['$gte' => $start_date, '$lte' => $end_date],
+                ],
+            ];
+
         }
 
         // Add $group, $sort, $skip, and $limit stages for pagination
@@ -172,5 +184,4 @@ class AlfredChatController extends Controller
         // Now you can pass these variables to your pagination component
         return inertia('AlfredChat/Index', ['logs' => $pagination]);
     }
-
 }
