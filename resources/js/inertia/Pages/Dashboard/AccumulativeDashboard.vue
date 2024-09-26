@@ -290,6 +290,8 @@ onUnmounted(() => (isActive.value = false));
         multi-calendars
         size="sm"
         v-model="filters.range"
+        :max-range="30"
+        :maxDate="new Date()"
         model-type="yyyy-MM-dd"
         @update:modelValue="fetchData()"
       />

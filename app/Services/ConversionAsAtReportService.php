@@ -53,6 +53,7 @@ class ConversionAsAtReportService extends BaseService
                     LeadSourceEnum::INSLY,
                     LeadSourceEnum::SAPGO,
                     LeadSourceEnum::SAPJO,
+                    LeadSourceEnum::CAR_24,
                 ]);
 
             $filters = [

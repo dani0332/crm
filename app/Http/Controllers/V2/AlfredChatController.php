@@ -211,5 +211,4 @@ class AlfredChatController extends Controller
         }
     
     }
-
 }

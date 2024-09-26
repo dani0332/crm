@@ -117,11 +117,18 @@ const isQuoteTypeSelected = computed(() => {
 });
 
 function onSubmit() {
-  if (filters.start_date) {
-    filters.start_date = filters.start_date.split('T')[0];
+  let diff = calculateDaysDifference(filters.start_date, filters.end_date);
+  if (diff > 30) {
+    notification.error({
+      message: 'Maximum of 30 days  are allowed',
+      position: 'top',
+    });
+    return;
   }
-  if (filters.end_date) {
-    filters.end_date = filters.end_date.split('T')[0];
+
+  if (filters.start_date && filters.end_date) {
+    filters.start_date = useDateFormat(filters.start_date, 'YYYY-MM-DD').value;
+    filters.end_date = useDateFormat(filters.end_date, 'YYYY-MM-DD').value;
   }
 
   filters.page = 1;
