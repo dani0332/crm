@@ -15,15 +15,8 @@ class InstantChatDetailedExport implements FromCollection, WithHeadings, WithMap
 
     protected $chat;
 
-    protected $request;
-
-    public function __construct($request)
-    {
-        $this->request = $request;
-    }
-
     public function collection(){
-        return app(InstantAlfredService::class)->generateChatDetailedReport($this->request);
+        return app(InstantAlfredService::class)->generateChatDetailedReport();
     }
 
     public function headings(): array

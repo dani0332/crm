@@ -15,15 +15,8 @@ class InstantChatConsolidatedExport implements FromCollection, WithHeadings, Wit
 {
     use Exportable;
 
-    protected $request;
-
-    public function __construct($request)
-    {
-        $this->request = $request;
-    }
-
     public function collection(){
-        return app(InstantAlfredService::class)->generateChatConsolidateReport($this->request);
+        return app(InstantAlfredService::class)->generateChatConsolidateReport();
     }
 
     public function headings(): array

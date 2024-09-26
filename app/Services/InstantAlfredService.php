@@ -300,7 +300,9 @@ class InstantAlfredService extends BaseService
         return $partialQuery->get();
     }
 
-    public function generateChatConsolidateReport(Request $request){
+    public function generateChatConsolidateReport(){
+
+        $request = request();
 
         $modelType = $request->quoteType ?? 'Car';
 
@@ -334,7 +336,9 @@ class InstantAlfredService extends BaseService
         return $data;
     }
 
-    public function generateChatDetailedReport(Request $request){
+    public function generateChatDetailedReport(){
+        $request = request();
+
         $modelType = $request->quoteType ?? 'Car';
 
         $data = app(InstantAlfredService::class)->processSqlChatFilters($request, $modelType);
