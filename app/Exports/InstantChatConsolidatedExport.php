@@ -9,12 +9,12 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-
 class InstantChatConsolidatedExport implements FromCollection, WithHeadings, WithMapping
 {
     use Exportable;
 
-    public function collection(){
+    public function collection()
+    {
         return app(InstantAlfredService::class)->generateChatConsolidateReport();
     }
 

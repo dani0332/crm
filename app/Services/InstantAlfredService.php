@@ -299,7 +299,8 @@ class InstantAlfredService extends BaseService
         return $partialQuery->get();
     }
 
-    public function generateChatConsolidateReport(){
+    public function generateChatConsolidateReport()
+    {
 
         $request = request();
 
@@ -335,7 +336,8 @@ class InstantAlfredService extends BaseService
         return $data;
     }
 
-    public function generateChatDetailedReport(){
+    public function generateChatDetailedReport()
+    {
         $request = request();
 
         $modelType = $request->quoteType ?? 'Car';
@@ -348,14 +350,14 @@ class InstantAlfredService extends BaseService
 
         $uuidChunks = array_chunk($uuids, $chunkSize);
 
-        $mongoResults = collect(); 
+        $mongoResults = collect();
 
         foreach ($uuidChunks as $chunk) {
 
             $mongoPipeline = $this->createPipeline($request, $chunk, $request->report);
-        
+
             $chunkResults = AlfredChat::raw(fn ($collection) => $collection->aggregate($mongoPipeline));
-        
+
             $mongoResults = $mongoResults->merge(collect($chunkResults));
         }
 
