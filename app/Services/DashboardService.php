@@ -71,6 +71,8 @@ class DashboardService extends BaseService
             ->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']])
             ->groupBy('tiers.id');
 
+        info(self::class." - getLeadsCountByTier - Query: {$query->toRawSql()}");
+
         return $query->get();
     }
 
@@ -101,6 +103,8 @@ class DashboardService extends BaseService
             $query->whereBetween('car_quote_request.created_at', [$from, now()->endOfDay()]);
         }
 
+        info(self::class." - getUnAssignedLeadsCountByTier - Query: {$query->toRawSql()}");
+
         return $query->get();
     }
 
@@ -115,6 +119,8 @@ class DashboardService extends BaseService
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO]);
 
+        info(self::class." - getLeadsCountRevival - Query: {$query->toRawSql()}");
+
         return $query->get();
     }
 
@@ -128,6 +134,8 @@ class DashboardService extends BaseService
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO])
             ->groupBy('source');
+
+        info(self::class." - getAssignedLeadsCountBySource - Query: {$query->toRawSql()}");
 
         return $query->get();
     }
@@ -154,6 +162,8 @@ class DashboardService extends BaseService
         if (isset($filters['teamIds'])) {
             $query->whereIn('teams.id', $filters['teamIds']);
         }
+
+        info(self::class." - getAdvisorLeadAssignedData - Query: {$query->toRawSql()}");
 
         return $query->get();
     }
@@ -185,7 +195,7 @@ class DashboardService extends BaseService
         return $teamWiseLeadsAssignedAverage;
     }
 
-    public function getTotalUnAssignedLeads($filters)
+    public function getTotalUnAssignedLeads($filters, bool $getQuery = false)
     {
         $query = CarQuote::select('is_ecommerce', 'source')
             ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
@@ -201,10 +211,16 @@ class DashboardService extends BaseService
             $query->whereBetween('car_quote_request.created_at', [now()->subWeeks(2)->startOfDay(), now()->endOfDay()]);
         }
 
+        if ($getQuery) {
+            return $query;
+        }
+
+        info(self::class." - getTotalUnAssignedLeads - Query: {$query->toRawSql()}");
+
         return $query->get();
     }
 
-    public function getTotalUnAssignedOnlySICLeads($filters)
+    public function getTotalUnAssignedOnlySICLeads($filters, bool $getQuery = false)
     {
         $query = CarQuote::select('payment_status_id')
             ->isSICLead(QuoteTypes::CAR)
@@ -217,6 +233,12 @@ class DashboardService extends BaseService
         } else {
             $query->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()]);
         }
+
+        if ($getQuery) {
+            return $query;
+        }
+
+        info(self::class." - getTotalUnAssignedOnlySICLeads - Query: {$query->toRawSql()}");
 
         return $query->get();
     }
