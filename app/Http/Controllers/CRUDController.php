@@ -2078,7 +2078,7 @@ class CRUDController extends Controller
 
     public function updateAmlStatus()
     {
-        Artisan::call('update-aml-status:cron');
+        Artisan::queue('update-aml-status:cron')->onQueue('renewals');
 
         return response()->json(['message' => 'UpdateAMLStatus Command has been executed']);
     }
