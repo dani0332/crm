@@ -448,7 +448,7 @@ class SendUpdateLogService
         return false;
     }
 
-    public function getInvoiceDescription($sendUpdateLog, $quote, $quoteType, $payments): array
+    public function getInvoiceDescription($sendUpdateLog, $quote, $quoteType, $payments)
     {
         if ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::CPD || empty($payments)) {
             $insuranceProviderId = $sendUpdateLog->insurance_provider_id;
@@ -470,6 +470,9 @@ class SendUpdateLogService
         $insuranceProvider = InsuranceProviderRepository::find($insuranceProviderId);
         if ($insuranceProvider) {
             $brokerInvoiceNumber = $this->generateBrokerInvoiceNumber($sendUpdateLog, $insuranceProvider);
+            if (! $brokerInvoiceNumber) {
+                return false;
+            }
             info('fn: getInvoiceDescription - BrokerInvoiceNumber: '.$brokerInvoiceNumber);
         }
 
@@ -1071,7 +1074,9 @@ class SendUpdateLogService
         }
 
         if ($attempts >= 25) {
-            vAbort('Send Update Log Broker Invoice Number generation failed.');
+            info('Send Update Log Broker Invoice Number generation failed, SendUpdateUuid -> '.$sendUpdateLog->uuid);
+
+            return false;
         }
 
         return $brokerInvoiceNumber;
@@ -1082,6 +1087,9 @@ class SendUpdateLogService
         if (empty($sendUpdateLog->broker_invoice_number)) {
             $insuranceProviderLeadCount = Payment::where('insurance_provider_id', $insuranceProvider->id)->count();
             $brokerInvoiceNumber = $this->generateUniqueBrokerInvoiceNumber($insuranceProvider->code, $insuranceProviderLeadCount, $sendUpdateLog);
+            if (! $brokerInvoiceNumber) {
+                return false;
+            }
         } else {
             $brokerInvoiceNumber = $sendUpdateLog->broker_invoice_number;
         }

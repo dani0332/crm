@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
@@ -70,7 +71,6 @@ use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
 use App\Services\ActivitiesService;
 use App\Services\AllocationService;
-use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
 use App\Services\BusinessQuoteService;
 use App\Services\CarQuoteService;
@@ -102,6 +102,7 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
@@ -197,19 +198,7 @@ class CRUDController extends Controller
         $isNewBusinessUser = false;
         $isManualAllocationAllowed = false;
         $showDeadlineAlert = false;
-        $userMaxCap = 0;
-        $todayAutoCount = 0;
-        $todayManualCount = 0;
-        $yesterdayAutoCount = 0;
-        $yesterdayManualCount = 0;
 
-        $todaysAllocationData = $this->allocationService->getTodayCounts(auth()->user()->id);
-        $userMaxCap = $todaysAllocationData['max_capacity'];
-        $todayAutoCount = $todaysAllocationData['auto_assignment_count'];
-        $todayManualCount = $todaysAllocationData['manual_assignment_count'];
-        $yesterdayAllocationData = $this->allocationService->getYesterdayCounts(auth()->user()->id);
-        $yesterdayAutoCount = $yesterdayAllocationData['auto_assignment_count'];
-        $yesterdayManualCount = $yesterdayAllocationData['manual_assignment_count'];
         $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
 
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
@@ -333,6 +322,20 @@ class CRUDController extends Controller
 
         if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
+
+            $userMaxCap = 0;
+            $todayAutoCount = 0;
+            $todayManualCount = 0;
+            $yesterdayAutoCount = 0;
+            $yesterdayManualCount = 0;
+
+            $todaysAllocationData = $this->allocationService->getTodayCounts(auth()->user()->id);
+            $userMaxCap = $todaysAllocationData['max_capacity'];
+            $todayAutoCount = $todaysAllocationData['auto_assignment_count'];
+            $todayManualCount = $todaysAllocationData['manual_assignment_count'];
+            $yesterdayAllocationData = $this->allocationService->getYesterdayCounts(auth()->user()->id);
+            $yesterdayAutoCount = $yesterdayAllocationData['auto_assignment_count'];
+            $yesterdayManualCount = $yesterdayAllocationData['manual_assignment_count'];
 
             $dateFormat = config('constants.DATE_FORMAT_ONLY');
             $createdAtStart = Carbon::parse(now())->startOfDay()->format($dateFormat);
@@ -550,7 +553,6 @@ class CRUDController extends Controller
         /* End - Temporarily adding for correcting historic data  */
 
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails($this->genericModel->modelType, $record);
-        $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($record->id, $quoteType);
 
         $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id && $autoAllocationDisabled == '1') {
@@ -594,13 +596,10 @@ class CRUDController extends Controller
             $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
         }
         $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', $quoteTypeId);
-
+        $leadStatuses = collect($leadStatuses)->filter(function ($value) {
+            return ! in_array($value['id'], [QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed]);
+        })->values();
         $leadStatuses = app(CentralService::class)->lockTransactionStatus($record, $quoteTypeId, $leadStatuses);
-        if (AMLService::checkAMLStatusFailed($quoteTypeId, $record->id)) {
-            $leadStatuses = collect($leadStatuses)->filter(function ($value) {
-                return $value['id'] != QuoteStatusEnum::TransactionApproved;
-            })->values();
-        }
 
         $lostReasons = $this->lookupService->getLostReasons();
         $selectedLostReasonId = '';
@@ -761,9 +760,10 @@ class CRUDController extends Controller
             $commercialRules = $this->leadAllocationService->isCommercialVehicles($record);
             $clientInquiryLogs = $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [];
             $bookPolicyDetails = $this->bookPolicyPayload($record, $quoteType, $payments, $quoteDocuments);
+            $amlStatusName = AMLStatusCode::getName($record->aml_status);
 
             return inertia('PersonalQuote/Car/Show', compact([
-                'record', 'sendUpdateOptions', 'sendUpdateLogs', 'quote', 'model', 'customTitles', 'customTableList', 'leadSourceEnum', 'isBetaUser', 'sendUpdateEnum',
+                'record', 'amlStatusName', 'sendUpdateOptions', 'sendUpdateLogs', 'quote', 'model', 'customTitles', 'customTableList', 'leadSourceEnum', 'isBetaUser', 'sendUpdateEnum',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'docUploadURL', 'isPlanUpdateActive', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'websiteURL', 'insuranceProviders', 'leadDocsStoragePath',
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses', 'carPlanAddonsCodeEnum', 'tiersExceptTierR', 'isTierRAssigned',
@@ -772,7 +772,7 @@ class CRUDController extends Controller
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities', 'paymentTooltipEnum',
                 'isCommercialVehicles', 'carInsuranceProviders', 'isNewPaymentStructure', 'hasPolicyIssuedStatus', 'insuranceProvidersByQuoteType',
-                'vatPercentage', 'commercialRules', 'isAmlClearedForPayment', 'clientInquiryLogs', 'policyIssuanceStatus', 'bookPolicyDetails', 'linkedQuoteDetails', 'puaTypeEnum',
+                'vatPercentage', 'commercialRules', 'clientInquiryLogs', 'policyIssuanceStatus', 'bookPolicyDetails', 'linkedQuoteDetails', 'puaTypeEnum',
                 'lockLeadSectionsDetails', 'paymentDocument',
             ]));
         }
@@ -846,11 +846,13 @@ class CRUDController extends Controller
             $bookPolicyDetails = $this->bookPolicyPayload($record, QuoteTypes::HOME->value, $payments, $quoteDocument);
             $noteDocumentType = DocumentType::where('code', DocumentTypeCode::OD)->first();
             $quoteNotes = QuoteNoteRepository::getBy($record->id, QuoteTypes::HOME->name);
+            $amlStatusName = AMLStatusCode::getName($record->aml_status);
 
             return inertia('HomeQuote/Show', [
                 'storageUrl' => storageUrl(),
                 'quoteDocuments' => $quoteDocuments,
                 'quote' => $record,
+                'amlStatusName' => $amlStatusName,
                 'record' => $record,
                 'sendUpdateOptions' => $sendUpdateOptions,
                 'sendUpdateLogs' => $sendUpdateLogs,
@@ -899,7 +901,6 @@ class CRUDController extends Controller
                 'quoteNotes' => $quoteNotes,
                 'vatPercentage' => $vatPercentage,
                 'isNewPaymentStructure' => $isNewPaymentStructure,
-                'isAmlClearedForPayment' => $isAmlClearedForPayment,
                 'sendUpdateEnum' => $sendUpdateEnum,
                 'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
                 'linkedQuoteDetails' => $linkedQuoteDetails,
@@ -981,11 +982,13 @@ class CRUDController extends Controller
             $teams = $this->crudService->getUserTeams(Auth::user()->id);
 
             $record->payment_status_text = app(SplitPaymentService::class)->mapQuotePaymentStatus($record->payment_status_id, $record->payment_status_text);
+            $amlStatusName = AMLStatusCode::getName($record->aml_status);
 
             return inertia('HealthQuote/Show', [
                 'paymentLink' => $paymentLink,
                 'emailStatuses' => $emailStatuses,
                 'quote' => $record,
+                'amlStatusName' => $amlStatusName,
                 'sendUpdateOptions' => $sendUpdateOptions,
                 'sendUpdateLogs' => $sendUpdateLogs,
                 'genderOptions' => $this->crudService->getGenderOptions(),
@@ -1055,7 +1058,6 @@ class CRUDController extends Controller
                 'clientInquiryLogs' => $this->crudService->getInquiryLogs($this->genericModel->modelType, $record->uuid) ?? [],
                 'isNewPaymentStructure' => $isNewPaymentStructure,
                 'linkedQuoteDetails' => $linkedQuoteDetails,
-                'isAmlClearedForPayment' => $isAmlClearedForPayment,
                 'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
                 'clientInquiryLogs' => $clientInquiryLogs,
                 'paymentDocument' => $paymentDocument,
@@ -2061,8 +2063,6 @@ class CRUDController extends Controller
      * @param  \App\Models\ClaimsStatus  $claimsStatus
      * @return \Illuminate\Http\Response
      */
-    public function destroy() {}
-
     private function getCarMakeDropdown()
     {
         return CarMake::select('id', 'text', 'code')->where('is_active', true)->get();
@@ -2076,4 +2076,10 @@ class CRUDController extends Controller
         return $response;
     }
 
+    public function updateAmlStatus()
+    {
+        Artisan::call('update-aml-status:cron');
+
+        return response()->json(['message' => 'UpdateAMLStatus Command has been executed']);
+    }
 }
