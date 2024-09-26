@@ -1,6 +1,5 @@
 <script setup>
 import NProgress from 'nprogress';
-import { useClipboard } from '@vueuse/core';
 const { copy, copied } = useClipboard();
 const props = defineProps({
   quoteType: {
