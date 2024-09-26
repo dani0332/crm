@@ -932,7 +932,6 @@ class CarQuoteService extends BaseService
             $dateTo = $this->parseDate($request['next_followup_date_end'], false);
             $this->query->whereBetween('cqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
-
         if (! $request->code && ! $request->email && ! $request->mobile_no && ! $request->created_at && ! $request->payment_due_date && ! $request->booking_date && ! $request->previous_quote_policy_number && ! $request->renewal_batch) {
             $this->query->whereBetween('cqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
@@ -1017,6 +1016,11 @@ class CarQuoteService extends BaseService
                     }
                 }
             }
+        }
+
+        $wheres = collect($this->query->wheres)->pluck('', 'column')->toArray();
+        if (! array_key_exists('cqr.created_at', $wheres) && ! $request->hasAny(['code', 'email', 'mobile_no', 'created_at', 'payment_due_date', 'booking_date', 'previous_quote_policy_number', 'renewal_batch'])) {
+            $this->query->whereBetween('cqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
