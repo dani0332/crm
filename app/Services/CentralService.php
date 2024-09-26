@@ -383,6 +383,9 @@ class CentralService
 
     public function getQuoteWiseProviderPlans($quoteType, $providerId, $plandId = null): object
     {
+        if ($quoteType == QuoteTypes::BIKE->value) {
+            $quoteType = 'Car';
+        }
         $planModel = 'App\\Models\\'.ucfirst($quoteType).'Plan';
 
         if ($plandId) {
@@ -813,7 +816,8 @@ class CentralService
                 $plansApiEndPoint,
                 [
                     'headers' => [
-                        'Content-Type' => 'application/json', 'Accept' => 'application/json',
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
                         'x-api-token' => $plansApiToken,
                         'Authorization' => 'Basic '.$authBasic,
                     ],
@@ -846,9 +850,15 @@ class CentralService
             return $quoteStatuses;
         }
 
-        $lockedQuotesStatuses = [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued,
-            QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked,
-            QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued,
+        $lockedQuotesStatuses = [
+            QuoteStatusEnum::TransactionApproved,
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::TransactionDeclined,
+            QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued,
         ];
 
         $isTransactionApproved = QuoteStatusLog::where('quote_type_id', $quoteTypeId)
