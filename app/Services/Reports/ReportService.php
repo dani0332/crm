@@ -659,12 +659,11 @@ class ReportService extends BaseService
                 ->leftJoin('payments as py', 'py.code', '=', $details['table'] . '.code')
                 ->join('users', 'users.id', $details['table'] . '.advisor_id');
 
+            $query->join('user_team', 'user_team.user_id', 'users.id')
+                ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                ->whereIn('teams.name', $userTeams);
             if ($user->isAdvisor()) {
                 $query->where($details['table'] . '.advisor_id', $user->id);
-            } else {
-                $query->join('user_team', 'user_team.user_id', 'users.id')
-                    ->join('teams', 'teams.id', '=', 'user_team.team_id')
-                    ->whereIn('teams.name', $userTeams);
             }
 
             $query->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
@@ -727,13 +726,18 @@ class ReportService extends BaseService
 
         $paginatedData = array_slice($result, ($currentPage - 1) * $perPage, $perPage);
 
-        $path = $request->url();
+        $path = $request->fullUrl();
+
+
+        $key = 'page';
+        // Remove specific parameter from query string
+        $path = preg_replace('~(\?|&)' . $key . '=[^&]*~', '$1', $path);
 
         $nextPageUrl = $currentPage < $lastPage
-            ? $path . '?page=' . ($currentPage + 1) : null;
+            ? $path . '?&page=' . ($currentPage + 1) : null;
 
         $prevPageUrl = $currentPage > 1
-            ? $path . '?page=' . ($currentPage - 1) : null;
+            ? $path . '?&page=' . ($currentPage - 1) : null;
 
         $pagination = [
             'data' => $paginatedData,
