@@ -12,7 +12,8 @@ class InstantChatDetailedExport implements FromCollection, WithHeadings, WithMap
 {
     use Exportable;
 
-    public function collection(){
+    public function collection()
+    {
         return app(InstantAlfredService::class)->generateChatDetailedReport();
     }
 

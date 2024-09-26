@@ -10,13 +10,11 @@ use App\Exports\InstantChatDetailedExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AlfredChatRequest;
 use App\Models\AlfredChat;
-use App\Models\CarQuote;
 use App\Models\QuoteBatches;
 use App\Models\QuoteStatus;
 use App\Services\InstantAlfredService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Maatwebsite\Excel\Facades\Excel;
 
 class AlfredChatController extends Controller
 {
@@ -131,7 +129,7 @@ class AlfredChatController extends Controller
 
             $itemIds = array_column($dataArray, 'uuid');
 
-            $chatPipeline = app(InstantAlfredService::class)->processMongoDBChatFilters($request,  $itemIds, 'chat');
+            $chatPipeline = app(InstantAlfredService::class)->processMongoDBChatFilters($request, $itemIds, 'chat');
 
             $mongoResults = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline))->toArray();
 
@@ -197,18 +195,18 @@ class AlfredChatController extends Controller
 
     public function exportChat(Request $request)
     {
-        $fileName = $request->report . ' ' . Carbon::now()->format('Y-m-d_H-i-s') . '.xlsx';
-        
+        $fileName = $request->report.' '.Carbon::now()->format('Y-m-d_H-i-s').'.xlsx';
+
         switch ($request->report) {
             case InstantChatReportsEnum::CONSOLIDATED_REPORT:
-                return (new InstantChatConsolidatedExport())->download($fileName);
-    
+                return (new InstantChatConsolidatedExport)->download($fileName);
+
             case InstantChatReportsEnum::DETAILED_REPORT:
-                return (new InstantChatDetailedExport())->download($fileName);
-    
+                return (new InstantChatDetailedExport)->download($fileName);
+
             default:
                 abort(400, 'Invalid report type requested.');
         }
-    
+
     }
 }
