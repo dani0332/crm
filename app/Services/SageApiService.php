@@ -512,6 +512,9 @@ class SageApiService
 
         $this->updateAndLogQuoteStatus($quote, $sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, $sageRequest->userId);
 
+        (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
+        info('Policy Book : postBookPolicyToSage : scheduleSageProcesses triggered for Insurer - '.$sageRequest->insurerID.' - Finished');
+
         return ['status' => true, 'message' => 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!'];
     }
 
@@ -1913,34 +1916,40 @@ class SageApiService
         return str_contains($sageErrorMessage, 'Processing conflict') || str_contains($sageErrorMessage, 'Post in Progress');
     }
 
-    public function scheduleSageProcesses()
+    public function scheduleSageProcesses($insurerId = null)
     {
-        $insuranceProvidersProcessingStatus = SageProcess::where('status', SageEnum::SAGE_PROCESS_PROCESSING_STATUS)->pluck('insurance_provider_id')->toArray();
-
         $insuranceProviders = SageProcess::where('status', SageEnum::SAGE_PROCESS_PENDING_STATUS)
-            ->whereNotIn('insurance_provider_id', $insuranceProvidersProcessingStatus)
+            ->whereNotIn('insurance_provider_id', function ($query) {
+                $query->select('insurance_provider_id')
+                    ->from('sage_processes')
+                    ->where('status', SageEnum::SAGE_PROCESS_PROCESSING_STATUS);
+            })->when($insurerId, function ($query) use ($insurerId) {
+                $query->where('insurance_provider_id', $insurerId);
+            })->orderBy('created_at')
             ->distinct()
-            ->pluck('insurance_provider_id')->toArray();
+            ->pluck('insurance_provider_id')
+            ->toArray();
 
         if (count($insuranceProviders) > 0) {
-            foreach ($insuranceProviders as $insuranceProvider) {
-                $sageProcess = SageProcess::where('insurance_provider_id', $insuranceProvider)
-                    ->where('status', SageEnum::SAGE_PROCESS_PENDING_STATUS)
-                    ->orderBy('created_at')
-                    ->first();
+            $sageProcesses = SageProcess::whereIn('insurance_provider_id', $insuranceProviders)
+                ->where('status', SageEnum::SAGE_PROCESS_PENDING_STATUS)
+                ->orderBy('created_at')
+                ->get()
+                ->groupBy('insurance_provider_id');
 
-                info('cmd:SageProcessesCommand - Processing Sage Process ID: '.$sageProcess->id.' for Insurance Provider ID: '.$insuranceProvider);
+            foreach ($sageProcesses as $processes) {
+                $sageProcess = $processes->first();
+
+                info('cmd:SageProcessesCommand - Processing Sage Process ID: '.$sageProcess->id.' for Insurance Provider ID: '.$sageProcess->insurance_provider_id);
                 $sageProcessRequest = json_decode($sageProcess->request);
                 $sageRequest = $sageProcessRequest->sagePayload;
                 $request = $sageProcessRequest->requestPayload;
 
-                if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST) {
-                    $quote = $sageProcess->model;
-                    BookPolicyOnSageJob::dispatch($sageRequest, $quote, $request, $sageProcess)->onQueue('insly');
-                }
+                $quote = $sageProcess->model;
 
-                if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_SEND_UPDATE_REQUEST) {
-                    $quote = $sageProcess->model;
+                if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST) {
+                    BookPolicyOnSageJob::dispatch($sageRequest, $quote, $request, $sageProcess)->onQueue('insly');
+                }elseif ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_SEND_UPDATE_REQUEST) {
                     SendUpdateSageJob::dispatch($request, $quote, $sageRequest, $sageProcess)->onQueue('insly');
                 }
             }

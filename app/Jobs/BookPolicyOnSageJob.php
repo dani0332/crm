@@ -63,6 +63,9 @@ class BookPolicyOnSageJob implements ShouldQueue
 
         info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Response : '.json_encode($response));
         info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Finished');
+
+        (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
+        info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses triggered for Insurer - '.$this->sageRequest->insurerID.' - Finished');
     }
 
     public function failed(Throwable $exception)
@@ -70,6 +73,9 @@ class BookPolicyOnSageJob implements ShouldQueue
         (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $exception->getMessage());
 
         (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, $this->sageRequest->userId);
+
+        (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
+        info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses triggered for Insurer - '.$this->sageRequest->insurerID.' - Finished');
 
         Log::error('Policy Book : BookPolicyOnSageJob : '.$this->quote->code.' Error : '.$exception->getMessage());
     }
