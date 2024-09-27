@@ -61,6 +61,9 @@ class SendUpdateSageJob implements ShouldQueue
 
         info('job:SendUpdateSageJob - Response: '.json_encode($response).' - QuoteType: '.$this->requestPayload->quoteType.' - QuoteUUID: '.$this->requestPayload->quoteUuid.' - SendUpdateUUID: '.$this->sendUpdateLog->uuid);
         info('job:SendUpdateSageJob - Process Completed - QuoteType: '.$this->requestPayload->quoteType.' - QuoteUUID: '.$this->requestPayload->quoteUuid.' - SendUpdateUUID: '.$this->sendUpdateLog->uuid);
+
+        (new SageApiService)->scheduleSageProcesses($this->requestPayload->insurerID);
+        info('job:SendUpdateSageJob - fn:ScheduleSageProcesses triggered for Insurer:'.$this->requestPayload->insurerID);
     }
 
     private function setResponses($response, $sageProcess, $sendUpdateLog): void
@@ -82,8 +85,10 @@ class SendUpdateSageJob implements ShouldQueue
     {
         (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $exception->getMessage());
         $this->sendUpdateLog->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED]);
-
         info('job:SendUpdateSageJob - SendUpdateUUID: '.$this->sendUpdateLog->uuid.' - Error : '.$exception->getMessage());
+
+        (new SageApiService)->scheduleSageProcesses($this->requestPayload->insurerID);
+        info('job:SendUpdateSageJob - fn:ScheduleSageProcesses triggered for Insurer:'.$this->requestPayload->insurerID);
     }
 
     public function middleware(): array
