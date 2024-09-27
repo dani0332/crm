@@ -178,7 +178,7 @@ const createQueryParams = item => {
 const showChat = item => {
   loader.view = true;
   axios
-    .post('/instant-alfred/get-alfred-chat-by-date', {
+    .post('/instant-alfred/get-alfred-chat', {
       ...createQueryParams(item),
     })
     .then(response => {

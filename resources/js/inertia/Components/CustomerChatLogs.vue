@@ -59,7 +59,7 @@ const getAllChat = () => {
 const showChat = item => {
   loader.value = true;
   axios
-    .post('/instant-alfred/get-alfred-chat-by-date', {
+    .post('/instant-alfred/get-alfred-chat', {
       quoteId: props.quoteId,
       quoteType: props.quoteType,
       created_at: item._id,

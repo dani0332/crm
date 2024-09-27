@@ -120,7 +120,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('instant-alfred/logs', [AlfredChatController::class, 'logs'])->name('instant-alfred.logs');
 
     Route::post('instant-alfred/get-alfred-chat', [AlfredChatController::class, 'index']);
-    Route::post('instant-alfred/get-alfred-chat-by-date', [AlfredChatController::class, 'getChatByDate'])->name('getChatByDate');
     Route::get('instant-alfred/export', [AlfredChatController::class, 'exportChat'])->name('exportChatData');
 
     Route::post('personal-quotes/{quoteType}/{code}/update-selected-plan', [CentralController::class, 'updateSelectedPlan'])->name('update-selected-plan');

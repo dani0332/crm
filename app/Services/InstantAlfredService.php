@@ -20,9 +20,17 @@ class InstantAlfredService extends BaseService
     protected $healthQuery;
     protected $travelQuery;
 
-    public function __construct()
+    private function buildQueryByModel($modelType)
     {
-        $this->carQuery = DB::table('car_quote_request as cqr')
+        $modelType = $request->quoteType ?? 'Car';
+        $nameSpace = 'App\\Models\\';
+        $modelType = (in_array(ucwords($modelType), newUi()) &&
+        checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
+
+        $aliases = [];
+
+        if($modelType == CarQuote::class){
+            $this->carQuery = DB::table('car_quote_request as cqr')
             ->select(
                 'cqr.uuid',
                 'cqr.id',
@@ -86,140 +94,142 @@ class InstantAlfredService extends BaseService
             ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id')
             ->groupBy('cqr.id');
 
-        $this->healthQuery = DB::table('health_quote_request as hqr')->select(
-            'hqr.id',
-            'hqr.uuid',
-            'hqr.code',
-            'hqr.payment_status_id',
-            'hqr.email',
-            'hqr.mobile_no',
-            'hqr.quote_status_id',
-            'hqr.plan_id',
-            'hqr.quote_batch_id',
-            'hqr.currently_insured_with_id',
-            'hqr.health_plan_type_id',
-            'hqrd.chat_initiated_at',
-            'qs.text as quote_status_id_text',
-            'hp.plan_type_id as plan_type_id',
-            'qb.name as quote_batch_id_text',
-            'lu.text as transaction_type_text',
-            'qt.name as segment',
-            'ps.text AS payment_status',
-            'ihp.text as provider_name',
-            'hpt.text as plan_type',
-            'hp.text as plan_name',
-            'py.total_price',
-            // 'ps.created_at AS payment_created_at',
-            DB::raw('DATE_FORMAT(hqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
-            DB::raw('DATE_FORMAT(hqr.payment_paid_at, "%d-%m-%Y %H:%i:%s") as payment_paid_at'),
-            'ep.display_name',
+            $aliases = [CarQuote::class => ['query' => $this->carQuery, 'alias' => 'cqr']];
+           
+        }else if($modelType == HealthQuote::class){
+            $this->healthQuery = DB::table('health_quote_request as hqr')->select(
+                'hqr.id',
+                'hqr.uuid',
+                'hqr.code',
+                'hqr.payment_status_id',
+                'hqr.email',
+                'hqr.mobile_no',
+                'hqr.quote_status_id',
+                'hqr.plan_id',
+                'hqr.quote_batch_id',
+                'hqr.currently_insured_with_id',
+                'hqr.health_plan_type_id',
+                'hqrd.chat_initiated_at',
+                'qs.text as quote_status_id_text',
+                'hp.plan_type_id as plan_type_id',
+                'qb.name as quote_batch_id_text',
+                'lu.text as transaction_type_text',
+                'qt.name as segment',
+                'ps.text AS payment_status',
+                'ihp.text as provider_name',
+                'hpt.text as plan_type',
+                'hp.text as plan_name',
+                'py.total_price',
+                // 'ps.created_at AS payment_created_at',
+                DB::raw('DATE_FORMAT(hqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
+                DB::raw('DATE_FORMAT(hqr.payment_paid_at, "%d-%m-%Y %H:%i:%s") as payment_paid_at'),
+                'ep.display_name',
+    
+            )
+                ->leftJoin('payments as py', function ($join) {
+                    $join->on('py.paymentable_id', '=', 'hqr.id')
+                        ->where('py.paymentable_type', '=', HealthQuote::class);
+                })
+                ->leftJoin('quote_tags as qt', function ($join) {
+                    $join->on('qt.quote_uuid', '=', 'hqr.uuid')
+                        ->where(function ($query) {
+                            $query->where('qt.name', QuoteSegmentEnum::SIC->tag())
+                                ->orWhere('qt.name', QuoteSegmentEnum::SIC_REVIVAL->tag())
+                                ->orWhere('qt.name', QuoteSegmentEnum::NON_SIC->tag());
+                        })
+                        ->where('qt.quote_type_id', '=', QuoteTypeId::Health);
+                })
+                ->leftJoin('health_plan_type as hpt', 'hpt.id', '=', 'hqr.health_plan_type_id')
+                ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
+                ->leftJoin('lookups as lu', 'lu.id', '=', 'hqr.transaction_type_id')
+                ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
+                ->leftJoin('quote_batches as qb', 'qb.id', '=', 'hqr.quote_batch_id')
+                ->leftJoin('health_plan as hp', 'hp.id', '=', 'hqr.plan_id')
+                ->leftJoin('insurance_provider as ihp', 'ihp.id', '=', 'hp.provider_id')
+                // ->leftJoin('insurance_provider as ins_provider', 'ins_provider.id', '=', 'hqr.currently_insured_with_id')
+                ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
+                ->leftJoin('embedded_transactions as e', function ($join) {
+                    $join->on('hqr.id', '=', 'e.quote_request_id')
+                        ->where('e.quote_request_type', '=', HealthQuote::class);
+                })
+                ->leftJoin('embedded_product_options as po', 'po.id', '=', 'e.product_id')
+                ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id')
+                ->groupBy('hqr.id');
+    
+                $aliases = [HealthQuote::class => ['query' => $this->healthQuery, 'alias' => 'hqr']];
+                
+        }else if($modelType == TravelQuote::class){
+            $this->travelQuery = TravelQuote::as('tqr')->select(
+                'tqr.id',
+                'tqr.uuid',
+                'tqr.code',
+                'tqr.email',
+                'tqr.quote_batch_id',
+                'tqrd.chat_initiated_at',
+                'qs.id as quote_status_id',
+                'qs.text as quote_status_id_text',
+                'tqr.payment_status_id',
+                'tqr.plan_id',
+                'tp.text AS plan_id_text',
+                'tpip.text AS travel_plan_provider_text',
+                'qb.name as quote_batch_id_text',
+                'lu.text as transaction_type_text',
+                'qt.name as segment',
+                'ps.text AS payment_status',
+                'tqpd.provider_name',
+                // missing plan_type
+                'tqpd.plan_name',
+                'py.total_price',
+                'tqr.paid_at',
+                'tqr.payment_paid_at',
+                // 'ps.created_at AS payment_created_at',
+                'ep.display_name',
+    
+            )
+                ->leftJoin('payments as py', function ($join) {
+                    $join->on('py.paymentable_id', '=', 'tqr.id')
+                        ->where('py.paymentable_type', '=', TravelQuote::class);
+                })
+                ->leftJoin('quote_tags as qt', function ($join) {
+                    $join->on('qt.quote_uuid', '=', 'tqr.uuid')
+                        ->where(function ($query) {
+                            $query->where('qt.name', QuoteSegmentEnum::SIC->tag())
+                                ->orWhere('qt.name', QuoteSegmentEnum::SIC_REVIVAL->tag())
+                                ->orWhere('qt.name', QuoteSegmentEnum::NON_SIC->tag());
+                        })
+                        ->where('qt.quote_type_id', '=', QuoteTypeId::Travel);
+                })
+                ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
+                ->leftJoin('lookups as lu', 'lu.id', '=', 'tqr.transaction_type_id')
+                ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
+                ->leftJoin('quote_batches as qb', 'qb.id', '=', 'tqr.quote_batch_id')
+                ->leftJoin('travel_plan as tp', 'tp.id', '=', 'tqr.plan_id')
+                ->leftJoin('insurance_provider as tpip', 'tpip.id', '=', 'tp.provider_id')
+                ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id')
+                ->leftJoin('embedded_transactions as e', function ($join) {
+                    $join->on('tqr.id', '=', 'e.quote_request_id')
+                        ->where('e.quote_request_type', '=', TravelQuote::class);
+                })
+                ->leftJoin('travel_quote_plan_details as tqpd', function ($join) {
+                    $join->on('tqr.uuid', '=', 'tqpd.quote_uuid')
+                        ->whereColumn('tqr.plan_id', '=', 'tqpd.plan_id');
+                })
+                ->leftJoin('embedded_product_options as po', 'po.id', '=', 'e.product_id')
+                ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id')
+                ->groupBy('tqr.id');
 
-        )
-            ->leftJoin('payments as py', function ($join) {
-                $join->on('py.paymentable_id', '=', 'hqr.id')
-                    ->where('py.paymentable_type', '=', HealthQuote::class);
-            })
-            ->leftJoin('quote_tags as qt', function ($join) {
-                $join->on('qt.quote_uuid', '=', 'hqr.uuid')
-                    ->where(function ($query) {
-                        $query->where('qt.name', QuoteSegmentEnum::SIC->tag())
-                            ->orWhere('qt.name', QuoteSegmentEnum::SIC_REVIVAL->tag())
-                            ->orWhere('qt.name', QuoteSegmentEnum::NON_SIC->tag());
-                    })
-                    ->where('qt.quote_type_id', '=', QuoteTypeId::Health);
-            })
-            ->leftJoin('health_plan_type as hpt', 'hpt.id', '=', 'hqr.health_plan_type_id')
-            ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
-            ->leftJoin('lookups as lu', 'lu.id', '=', 'hqr.transaction_type_id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
-            ->leftJoin('quote_batches as qb', 'qb.id', '=', 'hqr.quote_batch_id')
-            ->leftJoin('health_plan as hp', 'hp.id', '=', 'hqr.plan_id')
-            ->leftJoin('insurance_provider as ihp', 'ihp.id', '=', 'hp.provider_id')
-            // ->leftJoin('insurance_provider as ins_provider', 'ins_provider.id', '=', 'hqr.currently_insured_with_id')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
-            ->leftJoin('embedded_transactions as e', function ($join) {
-                $join->on('hqr.id', '=', 'e.quote_request_id')
-                    ->where('e.quote_request_type', '=', HealthQuote::class);
-            })
-            ->leftJoin('embedded_product_options as po', 'po.id', '=', 'e.product_id')
-            ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id')
-            ->groupBy('hqr.id');
-
-        $this->travelQuery = TravelQuote::as('tqr')->select(
-            'tqr.id',
-            'tqr.uuid',
-            'tqr.code',
-            'tqr.email',
-            'tqr.quote_batch_id',
-            'tqrd.chat_initiated_at',
-            'qs.id as quote_status_id',
-            'qs.text as quote_status_id_text',
-            'tqr.payment_status_id',
-            'tqr.plan_id',
-            'tp.text AS plan_id_text',
-            'tpip.text AS travel_plan_provider_text',
-            'qb.name as quote_batch_id_text',
-            'lu.text as transaction_type_text',
-            'qt.name as segment',
-            'ps.text AS payment_status',
-            'tqpd.provider_name',
-            // missing plan_type
-            'tqpd.plan_name',
-            'py.total_price',
-            'tqr.paid_at',
-            'tqr.payment_paid_at',
-            // 'ps.created_at AS payment_created_at',
-            'ep.display_name',
-
-        )
-            ->leftJoin('payments as py', function ($join) {
-                $join->on('py.paymentable_id', '=', 'tqr.id')
-                    ->where('py.paymentable_type', '=', TravelQuote::class);
-            })
-            ->leftJoin('quote_tags as qt', function ($join) {
-                $join->on('qt.quote_uuid', '=', 'tqr.uuid')
-                    ->where(function ($query) {
-                        $query->where('qt.name', QuoteSegmentEnum::SIC->tag())
-                            ->orWhere('qt.name', QuoteSegmentEnum::SIC_REVIVAL->tag())
-                            ->orWhere('qt.name', QuoteSegmentEnum::NON_SIC->tag());
-                    })
-                    ->where('qt.quote_type_id', '=', QuoteTypeId::Travel);
-            })
-            ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
-            ->leftJoin('lookups as lu', 'lu.id', '=', 'tqr.transaction_type_id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
-            ->leftJoin('quote_batches as qb', 'qb.id', '=', 'tqr.quote_batch_id')
-            ->leftJoin('travel_plan as tp', 'tp.id', '=', 'tqr.plan_id')
-            ->leftJoin('insurance_provider as tpip', 'tpip.id', '=', 'tp.provider_id')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id')
-            ->leftJoin('embedded_transactions as e', function ($join) {
-                $join->on('tqr.id', '=', 'e.quote_request_id')
-                    ->where('e.quote_request_type', '=', TravelQuote::class);
-            })
-            ->leftJoin('travel_quote_plan_details as tqpd', function ($join) {
-                $join->on('tqr.uuid', '=', 'tqpd.quote_uuid')
-                    ->whereColumn('tqr.plan_id', '=', 'tqpd.plan_id');
-            })
-            ->leftJoin('embedded_product_options as po', 'po.id', '=', 'e.product_id')
-            ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id')
-            ->groupBy('tqr.id');
+                $aliases = [TravelQuote::class => ['query' => $this->travelQuery, 'alias' => 'tqr']];
+        }
+        
+        return $aliases;
     }
 
     public function processSqlChatFilters(Request $request, $modelType)
     {
-        $modelType = $request->quoteType ?? 'Car';
-        $nameSpace = 'App\\Models\\';
-        $modelType = (in_array(ucwords($modelType), newUi()) &&
-        checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
-
-        $aliases = [
-            CarQuote::class => ['query' => $this->carQuery, 'alias' => 'cqr'],
-            HealthQuote::class => ['query' => $this->healthQuery, 'alias' => 'hqr'],
-            TravelQuote::class => ['query' => $this->travelQuery, 'alias' => 'tqr'],
-        ];
-
+        $aliases = $this->buildQueryByModel($modelType);
+        
         $modelData = $aliases[$modelType] ?? $aliases[CarQuote::class];
-        $alias = $modelData['alias'];
+        $alias = $modelData['alias']; 
 
         $partialQuery = $modelData['query'];
 
