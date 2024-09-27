@@ -128,7 +128,7 @@ class AlfredChatController extends Controller
 
             $itemIds = array_column($dataArray, 'uuid');
 
-            $chatPipeline = app(InstantAlfredService::class)->processMongoDBChatFilters($request, $itemIds, 'chat');
+            $chatPipeline = app(InstantAlfredService::class)->createPipeline($request, $itemIds, 'chat');
 
             $mongoResults = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline))->toArray();
 
