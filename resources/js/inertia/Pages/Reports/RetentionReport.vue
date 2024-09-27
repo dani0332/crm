@@ -422,6 +422,10 @@ const totalLeads = reactive({
       text: 'Price',
       value: 'price',
     },
+    {
+      text: 'Renewal batch id',
+      value: 'renewal_batch_id',
+    }
   ],
 });
 

@@ -36,8 +36,7 @@ class ExportValidationRequest extends FormRequest
                 $rules = [
                     'lob' => 'required',
                     'displayBy' => 'required',
-                    'month' => ['required_if:displayBy,'.RetentionReportEnum::MONTHLY],
-                    'policyExpiryDate.*' => ['required_if:displayBy,'.RetentionReportEnum::BATCH.'|date'],
+                    'policyExpiryDate.*' => 'required|date',
                 ];
             } else {
                 $rules = [
@@ -59,7 +58,7 @@ class ExportValidationRequest extends FormRequest
                 $exportTye = $this->route('exportTye');
                 $quoteType = $this->route('quoteType');
 
-                if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
+                if ((ucfirst($quoteType) == QuoteTypes::CAR->value) || $quoteType == RetentionReportEnum::RETENTION) {
                     $diffInDays = 31;
                 }
 
@@ -80,16 +79,21 @@ class ExportValidationRequest extends FormRequest
                         $start = Carbon::parse($this->input('created_at_start'));
                         $end = Carbon::parse($this->input('created_at_end'));
                         $error_fields = 'created date';
-                    }
-                    if ($quoteType !== RetentionReportEnum::RETENTION){
-                        $diff = $start->diffInDays($end);
-                        if ($diff > $diffInDays) {
-                            $validator->errors()->add('flash', 'Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.');
+                    } elseif ($quoteType == RetentionReportEnum::RETENTION) {
+                        if ($this->input('policyExpiryDate')) {
+                            $diffInDays = 92;
+                            $start = Carbon::parse($this->input('policyExpiryDate')[0])->startOfDay();
+                            $end = Carbon::parse($this->input('policyExpiryDate')[1])->endOfDay();
+                            $error_fields = 'start & end date';
                         }
                     }
+                    $diff = $start->diffInDays($end);
+                    if ($diff > $diffInDays) {
+                        $validator->errors()->add('flash', 'Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.');
+                    }
+                } else {
+                    $validator->errors()->add('flash', 'Valid dates are required to export.');
                 }
-            } else {
-                $validator->errors()->add('flash', 'Valid dates are required to export.');
             }
         });
     }

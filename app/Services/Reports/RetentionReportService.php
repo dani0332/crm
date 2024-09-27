@@ -36,7 +36,6 @@ class RetentionReportService extends BaseService
     {
         $this->dateFormat = config('constants.DATE_FORMAT_ONLY');
         $this->policyExpiryColumnName = 'personal_quotes.previous_policy_expiry_date';
-
         if (request()['displayBy'] === RetentionReportEnum::MONTHLY) {
             $this->monthColumnName = $this->policyExpiryColumnName;
         } else {
@@ -130,7 +129,7 @@ class RetentionReportService extends BaseService
         // Apply general filters to the query based on the request parameters
         $this->applyFilters($query, $request);
         // Group the query results by advisor name
-        $query->groupBy('users.id');
+        $query->groupBy('users.id', 'month');
 
         // Sort the results in chronological order by month
         $months = implode("', '", MonthNameEnum::all());
@@ -492,9 +491,10 @@ class RetentionReportService extends BaseService
         // Instantiate the table name
         $tableName = 'personal_quotes';
 
+        // Will remove renewal_batch_id from select statement once will push on prod as it is not required
         // Construct the query to retrieve retention leads data
         $query = PersonalQuote::query()
-            ->selectRaw("{$tableName}.uuid, {$tableName}.code, CONCAT({$tableName}.first_name, ' ', {$tableName}.last_name) as fullName, quote_status.text as quoteStatusName, price_with_vat as price, {$this->policyExpiryColumnName} as  previous_policy_expiry_date ")
+            ->selectRaw("{$tableName}.uuid, {$tableName}.code, CONCAT({$tableName}.first_name, ' ', {$tableName}.last_name) as fullName, quote_status.text as quoteStatusName, price_with_vat as price, {$this->policyExpiryColumnName} as  previous_policy_expiry_date, renewal_batch_id")
             ->join('users', 'advisor_id', '=', 'users.id')
             ->join('quote_status', 'quote_status.id', "{$tableName}.quote_status_id");
 
