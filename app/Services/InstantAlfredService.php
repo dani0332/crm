@@ -227,7 +227,7 @@ class InstantAlfredService extends BaseService
     public function processSqlChatFilters(Request $request, $modelType)
     {
         $aliases = $this->buildQueryByModel($modelType);
-        
+
         $modelData = $aliases[$modelType] ?? $aliases[CarQuote::class];
         $alias = $modelData['alias']; 
 
@@ -283,7 +283,7 @@ class InstantAlfredService extends BaseService
         }
 
         if (isset($request->payment_status_id) && $request->payment_status_id != '') {
-            $partialQuery->where("{$alias}.payment_status_id", $request->payment_status_id);
+            $partialQuery->whereIn("{$alias}.payment_status_id", $request->payment_status_id);
         }
 
         if (in_array($modelType, [HealthQuote::class, CarQuote::class]) && isset($request->assigment_type) && $request->assigment_type != '') {
