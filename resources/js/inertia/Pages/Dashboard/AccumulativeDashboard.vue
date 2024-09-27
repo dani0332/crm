@@ -65,6 +65,7 @@ const filters = reactive({
 });
 
 async function fetchData() {
+  if (!filters.range) return;
   let response = await axios.get(
     `/get-recent-daily-stats?range=${filters.range}&teamFilter[]=${filters.teamFilter}`,
   );

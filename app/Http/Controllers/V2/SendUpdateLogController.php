@@ -110,12 +110,9 @@ class SendUpdateLogController extends Controller
      */
     public function show($uuid)
     {
-        info('Send Update Log Show - UUID: '.$uuid);
         $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
-        info('Send Update Log Show - UUID: '.$uuid.' - SendUpdateLog:ID '.$sendUpdateLog->id);
 
         // we don't need to push this on production, need to remove this before production.
-        info('Send Update Log Show - UUID: '.$uuid.' - CategoryID: '.$sendUpdateLog->category_id.' - OptionID: '.$sendUpdateLog->option_id);
         if (! SendUpdateLogRepository::isCategoryOrOptionAvailable($sendUpdateLog->category_id, $sendUpdateLog->option_id)) {
             logger()->error('Send Update Log Show - UUID: '.$uuid.' - CategoryID: '.$sendUpdateLog->category_id.' - OptionID: '.$sendUpdateLog->option_id.' - Category or Option not available.');
 
@@ -132,7 +129,6 @@ class SendUpdateLogController extends Controller
         }
         $quoteTypeId = $sendUpdateLog->quote_type_id;
         $quoteType = QuoteTypeRepository::where('id', $quoteTypeId)->value('code');
-        info('Send Update Log Show - UUID: '.$uuid.' - QuoteType: '.$quoteType);
 
         if ($quoteType == quoteTypeCode::Car) {
             if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::AOCOV, SendUpdateLogStatusEnum::COE, SendUpdateLogStatusEnum::COE_NFI])) {
@@ -142,11 +138,9 @@ class SendUpdateLogController extends Controller
         }
 
         $quote = PersonalQuoteRepository::getById($sendUpdateLog->personal_quote_id);
-        info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id);
 
         if (in_array($quoteType, [QuoteTypes::CAR, QuoteTypes::HEALTH, QuoteTypes::TRAVEL])) {
             $quote->load('plan.insuranceProvider');
-            info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - QuotePlan: '.$quote->plan?->id);
         }
 
         $categoryCode = $sendUpdateLog->category?->code;
@@ -161,15 +155,12 @@ class SendUpdateLogController extends Controller
             $quoteServiceFile = app(getServiceObject($quoteType));
             $realQuote = $quoteServiceFile->getEntity($quote->uuid);
         }
-        info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - RealQuote: '.$realQuote->id);
 
         // the business_type_of_insurance_id is only on business quotes.
         $sendUpdateOptions = SendUpdateLogRepository::sendUpdateOptions($quoteTypeId, $sendUpdateLog->category_id, $sendUpdateLog->category->code, $realQuote->business_type_of_insurance_id ?? null);
-        info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - SendUpdateOptions: '.json_encode($sendUpdateOptions));
 
         // booking details section.
         $payments = $this->sendUpdateLogService->getPayments($realQuote->id, $realQuote->uuid, $quoteType);
-        info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - Is Payment Exist: '.empty($payments));
 
         if ($categoryCode == SendUpdateLogStatusEnum::CPD) {
             // it will get all invoice_descriptions for booking details
@@ -179,14 +170,7 @@ class SendUpdateLogController extends Controller
                 $paymentInvoices = array_merge($paymentInvoices->toArray(), $sendUpdateLogInvoices->toArray());
             }
         }
-        $bookingDetails = $this->sendUpdateLogService->getInvoiceDescription($sendUpdateLog, $realQuote, $quoteType, $payments);
-        if ((! $bookingDetails) && in_array($categoryCode, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR, SendUpdateLogStatusEnum::CPD])) {
-            $redirectUrl = checkPersonalQuotes($quoteType)
-                ? 'personal-quotes/'.strtolower($quoteType).'/'.$sendUpdateLog->quote_uuid
-                : 'quotes/'.strtolower($quoteType).'/'.$sendUpdateLog->quote_uuid;
-
-            return redirect($redirectUrl)->with(['error' => 'Broker Invoice Number Generation failed.']);
-        }
+        $bookingDetails = $this->sendUpdateLogService->getInvoiceDescription($sendUpdateLog, $realQuote, $quoteType, $payments, true);
         info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - BookingDetails: '.json_encode($bookingDetails));
 
         $uploadedDocuments = $this->sendUpdateLogService->getUploadedDocuments($sendUpdateLog);
@@ -202,26 +186,21 @@ class SendUpdateLogController extends Controller
 
         if (! checkPersonalQuotes($quoteType)) {
             $paymentEntityModel = app($serviceFile)->getEntityPlain($realQuote->id);
-            info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - PaymentEntityModel: '.$paymentEntityModel->id);
         }
 
         $sendUpdatePayments = $this->sendUpdateLogService->getSendUpdatePayments($sendUpdateLog, $quoteType);
 
         if (in_array($quoteType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
             $paymentEntityModel->load(['plan']);
-            info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - PaymentEntityModel: '.$paymentEntityModel->id);
 
         } else {
             checkPersonalQuotes($quoteType) ? $realQuote->load(['insuranceProvider']) : $paymentEntityModel->load(['insuranceProvider']);
-            info('Send Update Log Show - checkPersonalQuote: '.checkPersonalQuotes($quoteType).' - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - PaymentEntityModel: '.($paymentEntityModel->id ?? null));
         }
 
         // quote type business only has 2 providers, but as per business lead detail page it's getting providers via Corpline.
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
         info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - InsuranceProviders Exists');
         $linkedQuoteDetails = $this->sendUpdateLogService->linkedQuoteDetails($quoteType, $quote);
-
-        info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - Page Loaded Successfully.');
 
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,

@@ -150,7 +150,7 @@ trait TeamHierarchyTrait
 
     public function getCurrentUserTeamsAndSubTeams($userId)
     {
-        $teams = collect(DB::select("
+        return collect(DB::select("
         WITH RECURSIVE team_hierarchy
                 AS (
                     SELECT id,
@@ -161,7 +161,7 @@ trait TeamHierarchyTrait
                             SELECT teams.name
                             FROM user_team
                             INNER JOIN teams ON teams.id = user_team.team_id
-                            WHERE user_id = '".auth()->user()->id."'
+                            WHERE user_id = '{$userId}'
                             ) -- Replace with the list of team names
 
                     UNION ALL
@@ -176,8 +176,6 @@ trait TeamHierarchyTrait
                     name,
                     parent_team_id
                 FROM team_hierarchy;"));
-
-        return $teams;
     }
 
     public function getAdvisorsByTeamId($teamId)
