@@ -34,12 +34,12 @@ class AlfredChatController extends Controller
      */
     public function index(AlfredChatRequest $request)
     {
-        if(isset($request->created_at) && $request->created_at != ''){
+        if (isset($request->created_at) && $request->created_at != '') {
             $chat = AlfredChat::where('quote_id', $request->quoteId)
                 ->where('quote_type', $request->quoteType)
                 ->select('quote_id', 'quote_type', 'role', 'msg', 'created_at', 'channel', 'whatsapp_request')
                 ->get();
-        }else {
+        } else {
             $chat = AlfredChat::raw(function ($collection) use ($request) {
                 return $collection->aggregate([
                     [
@@ -68,7 +68,6 @@ class AlfredChatController extends Controller
                 ]);
             });
         }
-  
 
         if ($chat->isEmpty()) {
             return response()->json(['message' => 'No chat available']);
@@ -76,7 +75,6 @@ class AlfredChatController extends Controller
 
         return response()->json(['data' => $chat]);
     }
-
 
     public function logs(Request $request)
     {
