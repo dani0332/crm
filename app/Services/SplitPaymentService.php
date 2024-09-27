@@ -1036,6 +1036,8 @@ class SplitPaymentService
                         $masterPayment->total_amount = $firstSplitPayment->payment_amount;
                         $masterPayment->total_price = $firstSplitPayment->payment_amount;
                         $masterPayment->payment_status_id = PaymentStatusEnum::AUTHORISED;
+                        $masterPayment->price_vat_applicable = $firstSplitPayment->price_vat_applicable;
+                        $masterPayment->price_vat = $firstSplitPayment->price_vat;
                     }
                     
                 } else {
