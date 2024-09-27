@@ -66,6 +66,14 @@ const tableHeader = ref([
     value: 'as_at_date',
   },
   {
+    text: 'Total Leads',
+    value: 'total_leads',
+  },
+  {
+    text: 'Sale Leads',
+    value: 'sale_leads',
+  },
+  {
     text: 'Gross Conversion',
     value: 'gross_conversion',
     sortable: true,
@@ -132,6 +140,22 @@ function calculateTotalGrossConversion(data) {
   return denominator > 0
     ? ((numerator / denominator) * 100).toFixed(2) + ' %'
     : 'NaN';
+}
+
+function calculateTotalLeads(data) {
+  let totalLeads = 0;
+  data.forEach(row => {
+    totalLeads += Number(row.total_leads);
+  });
+  return totalLeads;
+}
+
+function calculateTotalSaleLeads(data) {
+  let saleLeads = 0;
+  data.forEach(row => {
+    saleLeads += Number(row.sale_leads);
+  });
+  return saleLeads;
 }
 
 const filters = reactive({
@@ -247,51 +271,31 @@ const cleanFilters = filters => {
 const quoteTypes = page.props.quoteTypes;
 
 function onLobChange(updateDisplayFilter = true) {
-  if (updateDisplayFilter) {
-    filters.displayBy = '';
-  }
+  if (updateDisplayFilter) filters.displayBy = '';
   canExportReport.value = false;
-  let quote = quoteTypes[filters.lob];
+
+  const quote = quoteTypes[filters.lob];
+  const displayOptions = {
+    [props.quoteTypeCodes.Car]: ['team', 'sub_team', 'tiers', 'nationality'],
+    [props.quoteTypeCodes.Health]: ['team'],
+    [props.quoteTypeCodes.CORPLINE.toLowerCase()]: ['sub_team'],
+    [props.quoteTypeCodes.GroupMedical.replace(/ /g, '')]: ['sub_team'],
+    [props.quoteTypeCodes.Bike]: ['tiers', 'nationality'],
+    [props.quoteTypeCodes.Travel]: ['nationality'],
+    [props.quoteTypeCodes.Life]: ['team', 'nationality'],
+  };
 
   displayBy.value = displayBy.value.filter(
-    item =>
-      item.value !== 'sub_team' &&
-      item.value !== 'tiers' &&
-      item.value !== 'nationality' &&
-      item.value !== 'team',
+    item => !['sub_team', 'tiers', 'nationality', 'team'].includes(item.value),
   );
 
-  if (quote == props.quoteTypeCodes.Car) {
-    displayBy.value.push({ label: 'Team', value: 'team' });
-    displayBy.value.push({ label: 'Sub Team', value: 'sub_team' });
-    displayBy.value.push({ label: 'Tiers', value: 'tiers' });
-    displayBy.value.push({ label: 'Nationality', value: 'nationality' });
-  }
-
-  if (quote == props.quoteTypeCodes.Health) {
-    displayBy.value.push({ label: 'Team', value: 'team' });
-  }
-
-  if (
-    (quote &&
-      quote.toLowerCase() == props.quoteTypeCodes.CORPLINE.toLowerCase()) ||
-    quote == props.quoteTypeCodes.GroupMedical.replace(/ /g, '')
-  ) {
-    displayBy.value.push({ label: 'Sub Team', value: 'sub_team' });
-  }
-
-  if (quote == props.quoteTypeCodes.Bike) {
-    displayBy.value.push({ label: 'Tiers', value: 'tiers' });
-    displayBy.value.push({ label: 'Nationality', value: 'nationality' });
-  }
-
-  if (
-    quote == props.quoteTypeCodes.Travel ||
-    quote == props.quoteTypeCodes.Health ||
-    quote == props.quoteTypeCodes.Life
-  ) {
-    displayBy.value.push({ label: 'Nationality', value: 'nationality' });
-  }
+  const optionsToAdd = displayOptions[quote] || [];
+  optionsToAdd.forEach(option => {
+    displayBy.value.push({
+      label: option.charAt(0).toUpperCase() + option.slice(1),
+      value: option,
+    });
+  });
 }
 
 const minDate = computed(() => {
@@ -304,7 +308,7 @@ const minDate = computed(() => {
 
 <template>
   <div>
-    <Head title="Advisor Conversion Report" />
+    <Head title="Conversion As At Report" />
     <h1 class="text-2xl font-bold text-center text-primary-500 mb-4">
       Conversion As At Report
     </h1>
@@ -412,8 +416,6 @@ const minDate = computed(() => {
       :rows-per-page="50"
       :empty-message="'No Records Available'"
       hide-footer
-      :sort-by="sortBy"
-      :sort-type="sortType"
     >
       <template #item-gross_conversion="item">
         <p v-if="item.gross_conversion == 0">NaN</p>
@@ -423,15 +425,18 @@ const minDate = computed(() => {
         <p v-if="item.net_conversion == 0">NaN</p>
         <p v-else>{{ item.net_conversion }} %</p>
       </template>
-      <template #item-total_leads="item">
-        <p v-if="item.total_leads == 0">{{ item.total_leads }}</p>
-      </template>
       <template #body-append>
         <tr v-if="reportData && reportData?.length > 0" class="total-row">
           <td class="direction-left">Total</td>
           <td></td>
           <td></td>
           <td v-if="displayByActive"></td>
+          <td class="direction-center">
+            {{ calculateTotalLeads(reportData) }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSaleLeads(reportData) }}
+          </td>
           <td class="direction-center">
             {{ calculateTotalGrossConversion(reportData) }}
           </td>

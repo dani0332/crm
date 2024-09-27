@@ -51,6 +51,11 @@ class CarQuote extends BaseModel
         'updated' => QuoteEmailUpdated::class,
     ];
 
+    public function getForeignKey()
+    {
+        return 'car_quote_request_id';
+    }
+
     protected static function booted()
     {
         static::updating(function ($model) {
