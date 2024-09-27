@@ -673,7 +673,7 @@ class LeadAllocationService extends BaseService
 
     public function getCarUnallocatedLeads()
     {
-        $from = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS');
+        $from = now()->subWeeks(2)->startOfDay();
 
         $to = now()->subMinutes(2)->toDateTimeString();
 
