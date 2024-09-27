@@ -102,7 +102,6 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
@@ -2074,12 +2073,5 @@ class CRUDController extends Controller
         $response = $this->crudService->scoreBreakdown($quoteModel, $quoteType);
 
         return $response;
-    }
-
-    public function updateAmlStatus()
-    {
-        Artisan::queue('update-aml-status:cron')->onQueue('renewals');
-
-        return response()->json(['message' => 'UpdateAMLStatus Command has been executed']);
     }
 }
