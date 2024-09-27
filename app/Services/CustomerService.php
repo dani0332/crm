@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\Customer;
-use Illuminate\Support\Arr;
 use App\Enums\GenericRequestEnum;
+use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
+use Illuminate\Support\Arr;
 
 class CustomerService extends BaseService
 {

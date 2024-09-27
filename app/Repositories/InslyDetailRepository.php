@@ -2,26 +2,26 @@
 
 namespace App\Repositories;
 
-use Carbon\Carbon;
-use MongoDB\BSON\Regex;
-use App\Enums\RolesEnum;
-use App\Models\PetQuote;
-use App\Enums\QuoteTypes;
-use App\Models\BikeQuote;
-use App\Models\QuoteType;
-use App\Models\CycleQuote;
-use App\Models\YachtQuote;
-use App\Models\InslyDetail;
-use Illuminate\Support\Arr;
 use App\Enums\LeadSourceEnum;
-use MongoDB\BSON\UTCDateTime;
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
+use App\Models\BikeQuote;
+use App\Models\CycleQuote;
+use App\Models\InslyDetail;
+use App\Models\PetQuote;
+use App\Models\QuoteType;
+use App\Models\YachtQuote;
+use App\Services\CapiRequestService;
 use App\Services\CustomerService;
 use App\Services\InslyDataService;
-use App\Enums\quoteBusinessTypeCode;
-use App\Services\CapiRequestService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
+use Carbon\Carbon;
+use Illuminate\Support\Arr;
+use MongoDB\BSON\Regex;
+use MongoDB\BSON\UTCDateTime;
 
 class InslyDetailRepository extends BaseRepository
 {
