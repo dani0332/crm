@@ -227,6 +227,7 @@ class SageApiService
             return $response;
         }
 
+        unset($sendUpdateLog->userId);
         $response = app(SendUpdateLogService::class)->updatesMoveToLead([$request, $sendUpdateLog, $preparedData]);
         if (! $response['status']) {
             return $response;

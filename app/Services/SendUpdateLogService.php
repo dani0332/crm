@@ -843,7 +843,7 @@ class SendUpdateLogService
     {
         $response = false;
         $sageProcessData = [
-            'user_id' => auth()->id(),
+            'user_id' => $sageRequestPayload->userId,
             'insurance_provider_id' => $sageRequestPayload->insurerID,
             'request' => json_encode([
                 'sagePayload' => $sageRequestPayload,
