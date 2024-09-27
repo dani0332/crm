@@ -25,10 +25,24 @@ const quoteForm = useForm({
   address: props.quote?.home_quote?.address || null,
   has_contents: props.quote?.home_quote?.has_contents || null,
   has_building: props.quote?.home_quote?.has_building || null,
-  has_personal_belongings: props.quote?.home_quote?.has_personal_belongings || null,
+  has_personal_belongings:
+    props.quote?.home_quote?.has_personal_belongings || null,
   contents_aed: props.quote?.home_quote?.contents_aed || null,
   building_aed: props.quote?.home_quote?.building_aed || null,
-  personal_belongings_aed: props.quote?.home_quote?.personal_belongings_aed || null,
+  personal_belongings_aed:
+    props.quote?.home_quote?.personal_belongings_aed || null,
+  location_area: props.quote?.home_quote?.location_area || null,
+  addressObj: {
+    address_type: page.props.customerAddressData?.type || null,
+    villa_apartment_office_no:
+      page.props.customerAddressData?.office_number || null,
+    floor_no: page.props.customerAddressData?.floor_number || null,
+    villa_building_name: page.props.customerAddressData?.building_name || null,
+    street_name: page.props.customerAddressData?.street || null,
+    area: page.props.customerAddressData?.area || null,
+    city: page.props.customerAddressData?.city || null,
+    landmark: page.props.customerAddressData?.landmark || null,
+  },
 });
 const isEdit = computed(() => {
   return route().current().includes('edit');
@@ -68,6 +82,11 @@ function successResponse() {
   }
 }
 function onSubmit(isValid) {
+  if (quoteForm.location_area == null || quoteForm.location_area == '') {
+    formFieldReq.location_area = true;
+  } else {
+    formFieldReq.location_area = false;
+  }
   if (quoteForm.has_contents || quoteForm.has_building) {
     if (isValid) {
       if (isEdit.value) {
@@ -99,6 +118,17 @@ function onSubmit(isValid) {
     hasContentOrBuilding.value = false;
   }
 }
+
+const formFieldReq = reactive({
+  location_area: false,
+});
+
+const locationAreaOptions = computed(() => {
+  return [
+    { value: 'option1', label: 'Option 1' },
+    { value: 'option2', label: 'Option 2' },
+  ];
+});
 </script>
 
 <template>
@@ -275,6 +305,79 @@ function onSubmit(isValid) {
             :rules="[isRequired]"
           />
         </x-field>
+        <x-field label="Location Area" required>
+          <ComboBox
+            v-model="quoteForm.location_area"
+            :rules="[isRequired]"
+            :single="true"
+            :options="locationAreaOptions"
+            class="w-full"
+            :hasError="formFieldReq.location_area"
+            :error="quoteForm.errors.location_area"
+          />
+        </x-field>
+
+        <x-field label="ADDRESS">
+            <div class="flex flex-wrap -mx-2">
+              <div class="w-1/2 px-2">
+                <x-input
+                  type="text"
+                  v-model="quoteForm.addressObj.villa_apartment_office_no"
+                  placeholder="Villa/Apartment/Office No."
+                  class="w-full"
+                />
+              </div>
+              <div class="w-1/2 px-2">
+                <x-input
+                  type="text"
+                  v-model="quoteForm.addressObj.floor_no"
+                  placeholder="Floor No."
+                  class="w-full"
+                />
+              </div>
+              <div class="w-1/2 px-2">
+                <x-input
+                  type="text"
+                  v-model="quoteForm.addressObj.villa_building_name"
+                  placeholder="Villa/Building Name"
+                  class="w-full"
+                />
+              </div>
+              <div class="w-1/2 px-2">
+                <x-input
+                  type="text"
+                  v-model="quoteForm.addressObj.street_name"
+                  placeholder="Street"
+                  class="w-full"
+                />
+              </div>
+              <div class="w-1/2 px-2">
+                <x-input
+                  type="text"
+                  v-model="quoteForm.addressObj.area"
+                  placeholder="Area"
+                  class="w-full"
+                />
+              </div>
+              <div class="w-1/2 px-2">
+                <x-input
+                  type="text"
+                  v-model="quoteForm.addressObj.city"
+                  placeholder="City"
+                  class="w-full"
+                />
+              </div>
+              <div class="w-1/2 px-2">
+                <x-input
+                  type="text"
+                  v-model="quoteForm.addressObj.landmark"
+                  placeholder="Landmark"
+                  class="w-full"
+                />
+              </div>
+            </div>
+          </x-field>
+
       </div>
       <x-divider class="my-4" />
       <div class="flex justify-end gap-3 mb-4">
