@@ -7,8 +7,10 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\TiersEnum;
 use App\Models\CarQuote;
+use App\Models\User;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -159,15 +161,25 @@ class DashboardService extends BaseService
 
     public function getTeamWiseLeadStats($filters)
     {
-        $todaysLeads = CarQuote::join('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'car_quote_request.id')
+        $todaysLeads = CarQuote::select('car_quote_request.id', 'car_quote_request.advisor_id')
+            ->join('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'car_quote_request.id')
             ->whereNotNull('car_quote_request.advisor_id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO])
             ->whereBetween('cqrd.advisor_assigned_date', [$filters['startDate'], $filters['endDate']])->get();
 
         $teamWiseLeadsAssignedAverage = [];
+
+        $users = User::join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
+            ->select('users.id', 'users.name', 'ut.team_id as u_team_id')
+            ->join('roles as r', 'r.id', '=', 'mr.role_id')
+            ->join('user_team as ut', 'ut.user_id', '=', 'users.id')
+            ->where('users.is_active', 1)
+            ->where('r.name', RolesEnum::CarAdvisor)
+            ->get();
+
         foreach ($filters['teams'] as $team) {
-            $teamUserIds = $this->getAdvisorsByTeamId($team->id)->pluck('id');
+            $teamUserIds = $users->filter(fn ($user) => $user->u_team_id == $team->id)->pluck('id');
             $usersCount = count($teamUserIds);
 
             $leadsCount = $todaysLeads->whereIn('advisor_id', array_unique($teamUserIds->toArray()))->count();
