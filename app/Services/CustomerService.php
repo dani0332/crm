@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
 use App\Models\CustomerAddress;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Arr;
 
 class CustomerService extends BaseService
 {
@@ -171,7 +172,7 @@ class CustomerService extends BaseService
             $customer = null;
             $previousEmail = $lead->email;
             if ($lead->customer && ! $this->getCustomerByEmail($value)) {
-                info('Customer additional contact primary email updated. Previous Email: '.$lead->email.' New Email: '.$value);
+                info('Customer additional contact primary email updated. Previous Email: ' . $lead->email . ' New Email: ' . $value);
                 $customerArray = [
                     'first_name' => $lead->first_name,
                     'last_name' => $lead->last_name,
@@ -180,7 +181,7 @@ class CustomerService extends BaseService
                     'dob' => $lead->dob,
                 ];
                 $customer = Customer::create($customerArray);
-                $customer->update(['code' => 'IND-'.$customer->id]);
+                $customer->update(['code' => 'IND-' . $customer->id]);
                 $email = trim($lead->email);
 
                 if (str_ends_with($email, '@insurancemarket.ae') || str_ends_with($email, '@afia.ae')) {
@@ -191,7 +192,6 @@ class CustomerService extends BaseService
                     if (isset($removeEmail->id)) {
                         $removeEmail->delete();
                     }
-
                 } else {
 
                     $getCustomerAdditionalContact = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
@@ -303,7 +303,7 @@ class CustomerService extends BaseService
             }
             $lead->update(['mobile_no' => $value]);
             if ($lead->customer) {
-                info('Customer additional contact primary mobile_no updated. Previous Mobile_No: '.$lead->mobile_no.' New Mobile_No: '.$value);
+                info('Customer additional contact primary mobile_no updated. Previous Mobile_No: ' . $lead->mobile_no . ' New Mobile_No: ' . $value);
                 $lead->customer->update(['mobile_no' => $value]);
             }
         }
@@ -354,6 +354,42 @@ class CustomerService extends BaseService
             ]);
 
             return null;
+        }
+    }
+
+    public function createCustomerIfNotExists($customerData)
+    {
+        $existingCustomer = CustomerService::getCustomerByEmail($customerData['email']);
+
+        if (! $existingCustomer) {
+            $customer = Customer::create(Arr::only($customerData, ['first_name', 'last_name', 'email', 'mobile_no']));
+        }
+
+        return $customer ?? $existingCustomer;
+    }
+
+    public function addAdditionalContactsIfNotExists($customer, $additionalContacts)
+    {
+        // add additional emails
+        if (isset($additionalContacts['additional_emails']) && count($additionalContacts['additional_emails'])) {
+            foreach ($additionalContacts['additional_emails'] as $additionalEmail) {
+                $isExistEmail = CustomerAdditionalContact::where('customer_id', $customer->id)
+                    ->where('value', $additionalEmail)->where('key', GenericRequestEnum::EMAIL)->first();
+                if (! $isExistEmail) {
+                    $customer->additionalContactInfo()->create(['key' => 'email', 'value' => $additionalEmail]);
+                }
+            }
+        }
+
+        // add additional mobile numbers
+        if (isset($additionalContacts['additional_mobiles']) && count($additionalContacts['additional_mobiles'])) {
+            foreach ($additionalContacts['additional_mobiles'] as $additionalMobile) {
+                $isExistMobile = CustomerAdditionalContact::where('customer_id', $customer->id)
+                    ->where('value', $additionalMobile)->where('key', GenericRequestEnum::MOBILE_NO)->first();
+                if (! $isExistMobile) {
+                    $customer->additionalContactInfo()->create(['key' => 'mobile_no', 'value' => $additionalMobile]);
+                }
+            }
         }
     }
 }

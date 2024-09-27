@@ -300,18 +300,6 @@ onMounted(() => {
   <div class="mt-5 mb-5">
     <h2 class="text-lg font-semibold">Unassigned Leads Count</h2>
     <div class="grid grid-cols-2 md:grid-cols-4 w-full gap-5">
-      <div class="labox border-[#e46122]">
-        <h3>Good</h3>
-        <p>{{ unAssignedGood ?? 0 }}</p>
-      </div>
-      <div class="labox border-[#db8b1d]">
-        <h3>Best</h3>
-        <p>{{ unAssignedBest ?? 0 }}</p>
-      </div>
-      <div class="labox border-[#d80ca8]">
-        <h3>Entry Level</h3>
-        <p>{{ unAssignedEntryLevel ?? 0 }}</p>
-      </div>
       <TransitionGroup name="fade">
         <div v-if="isCapChanged" class="col-span-2">
           <x-alert type="info" light>For Unlimited Capactiy Add ( -1 )</x-alert>

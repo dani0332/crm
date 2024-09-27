@@ -23,6 +23,7 @@ use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Benchmark;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -54,18 +55,13 @@ class DashboardController extends Controller
         return view('dashboard');
     }
 
-    public function renderMainDashboard(Request $request)
+    public function renderMainDashboard()
     {
         $loggedInUserId = auth()->user()->id;
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $startDate = now()->startOfDay()->format($dateFormat);
         $endDate = now()->endOfDay()->format($dateFormat);
 
-        $todaysLeads = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])
-            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
-            ->get();
-        $car = $this->getProductByName(quoteTypeCode::Car);
         $teams = $this->getCurrentUserTeamsAndSubTeams($loggedInUserId);
         $teamIds = DB::table('user_team')->where('user_id', $loggedInUserId)->get()->pluck('team_id');
         $carAdvisors = $this->getUsersByTeamId(count($teamIds->toArray()) > 0 ? $teamIds->toArray() : []);
@@ -73,28 +69,28 @@ class DashboardController extends Controller
         $filters = [
             'startDate' => $startDate,
             'endDate' => $endDate,
-            'teams' => $this->getCurrentUserTeamsAndSubTeams($loggedInUserId),
+            'teams' => $teams,
             'teamIds' => $teamIds,
             'applyUnAssignedLeadsCountByTierDateFilter' => false,
             'applyTotalUnAssignedLeadsDateFilter' => false,
         ];
-        $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($filters);
-        $totalLeadsReceived = count($todaysLeads);
-        $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
-        $totalUnAssignedLeads = $this->dashboardService->getTotalUnAssignedLeads($filters);
-        $totalUnAssignedLeadsReceived = count($totalUnAssignedLeads);
-        $totalUnAssignedOnlySICLeads = $this->dashboardService->getTotalUnAssignedOnlySICLeads($filters);
-        $totalUnAssignedOnlySICLeadsReceived = count($totalUnAssignedOnlySICLeads);
-        $totalUnAssignedOnlyPaidSICLeads = $this->dashboardService->getTotalUnAssignedOnlySICLeads($filters, true);
-        $totalUnAssignedOnlyPaidSICLeadsReceived = count($totalUnAssignedOnlyPaidSICLeads);
-        $totalUnAssignedLeadsReceivedEcommerce = count($totalUnAssignedLeads->where('is_ecommerce', 1));
-        $totalUnAssignedRevivalLeads = count($totalUnAssignedLeads->where('source', LeadSourceEnum::REVIVAL));
 
-        $leadsCountByTier = $this->dashboardService->getLeadsCountByTier($filters);
-        $unAssignedLeadsByTier = $this->dashboardService->getUnAssignedLeadsCountByTier($filters);
-        $revivalLeadsCount = $this->dashboardService->getLeadsCountRevival($filters);
         $assignedLeadsBySource = $this->dashboardService->getAssignedLeadsCountBySource($filters);
-        $advisorLeadsAssignedData = $this->dashboardService->getAdvisorLeadAssignedData($filters);
+
+        [
+            'teamWiseLeadsAssignedAverage' => $teamWiseLeadsAssignedAverage,
+            'totalLeadsReceived' => $totalLeadsReceived,
+            'totalLeadsReceivedEcommerce' => $totalLeadsReceivedEcommerce,
+            'totalUnassignedLeadsReceived' => $totalUnAssignedLeadsReceived,
+            'totalUnassignedLeadsReceivedEcommerce' => $totalUnAssignedLeadsReceivedEcommerce,
+            'totalUnassignedRevivalLeads' => $totalUnAssignedRevivalLeads,
+            'totalUnAssignedOnlySICLeadsReceived' => $totalUnAssignedOnlySICLeadsReceived,
+            'totalUnAssignedOnlyPaidSICLeadsReceived' => $totalUnAssignedOnlyPaidSICLeadsReceived,
+            'leadsCountByTier' => $leadsCountByTier,
+            'revivalLeadsCount' => $revivalLeadsCount,
+            'unAssignedLeadsByTier' => $unAssignedLeadsByTier,
+            'advisorLeadsAssignedData' => $advisorLeadsAssignedData
+        ] = $this->dashboardService->getStatCounts($filters);
 
         $leadReceivedSummaryBySource = CarQuote::query()
             ->select(
@@ -137,12 +133,22 @@ class DashboardController extends Controller
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         if (isset($request->range) && $request->range != null) {
             $date = explode(',', $request->range);
-            $startDate = Carbon::parse($date[0])->startOfDay()->format($dateFormat);
-            $endDate = Carbon::parse($date[1])->endOfDay()->format($dateFormat);
+            $startDate = Carbon::parse($date[0])->startOfDay();
+            $endDate = Carbon::parse($date[1])->endOfDay();
+
+            // Ensure that the date range does not exceed 31 days
+            if ($startDate->diffInDays($endDate) > 31) {
+                $endDate = $startDate->copy()->addDays(30)->endOfDay(); // Set end date to 31 days max
+            }
+
+            // Format dates as per the $dateFormat
+            $startDate = $startDate->format($dateFormat);
+            $endDate = $endDate->format($dateFormat);
         } else {
             $startDate = now()->startOfDay()->format($dateFormat);
             $endDate = now()->endOfDay()->format($dateFormat);
         }
+
         $filters = [
             'startDate' => $startDate,
             'endDate' => $endDate,
@@ -150,27 +156,56 @@ class DashboardController extends Controller
             'applyUnAssignedLeadsCountByTierDateFilter' => true,
             'applyTotalUnAssignedLeadsDateFilter' => true,
         ];
-        $todaysLeads = CarQuote::whereBetween('created_at', [$startDate, $endDate])
-            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO])
-            ->get();
 
-        $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($filters);
+        if ($request->benchmark === '1') {
+            $todaysLeads = CarQuote::whereBetween('created_at', [$startDate, $endDate])
+                ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+                ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO]);
 
-        $totalLeadsReceived = count($todaysLeads);
-        $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
-        $totalUnAssignedLeads = $this->dashboardService->getTotalUnAssignedLeads($filters);
-        $totalUnAssignedLeadsReceived = count($totalUnAssignedLeads);
-        $totalUnAssignedOnlySICLeads = $this->dashboardService->getTotalUnAssignedOnlySICLeads($filters);
-        $totalUnAssignedOnlySICLeadsReceived = count($totalUnAssignedOnlySICLeads);
-        $totalUnAssignedOnlyPaidSICLeads = $this->dashboardService->getTotalUnAssignedOnlySICLeads($filters, true);
-        $totalUnAssignedOnlyPaidSICLeadsReceived = count($totalUnAssignedOnlyPaidSICLeads);
-        $totalUnAssignedLeadsReceivedEcommerce = count($totalUnAssignedLeads->where('is_ecommerce', 1));
-        $totalUnAssignedRevivalLeads = count($totalUnAssignedLeads->where('source', LeadSourceEnum::REVIVAL));
-        $leadsCountByTier = $this->dashboardService->getLeadsCountByTier($filters);
-        $revivalLeadsCount = $this->dashboardService->getLeadsCountRevival($filters);
-        $unAssignedLeadsByTier = $this->dashboardService->getUnAssignedLeadsCountByTier($filters);
-        $advisorLeadsAssignedData = $this->dashboardService->getAdvisorLeadAssignedData($filters);
+            $currentLogic = Benchmark::measure([
+                '$filters[teams]' => fn () => $this->getCurrentUserTeamsAndSubTeams(auth()->user()->id),
+                '$teamWiseLeadsAssignedAverage' => fn () => $this->dashboardService->getTeamWiseLeadStats($filters),
+                '$totalLeads' => fn () => $todaysLeads->get(),
+                '$totalUnAssignedLeads' => fn () => $this->dashboardService->getTotalUnAssignedLeads($filters),
+                '$totalUnAssignedOnlySICLeads' => fn () => $this->dashboardService->getTotalUnAssignedOnlySICLeads($filters),
+                '$leadsCountByTier' => fn () => $this->dashboardService->getLeadsCountByTier($filters),
+                '$revivalLeadsCount' => fn () => $this->dashboardService->getLeadsCountRevival($filters),
+                '$unAssignedLeadsByTier' => fn () => $this->dashboardService->getUnAssignedLeadsCountByTier($filters),
+                '$advisorLeadsAssignedData' => fn () => $this->dashboardService->getAdvisorLeadAssignedData($filters),
+            ], (int) ($request->iterations ?? 1));
+
+            $updatedLogic = Benchmark::measure([
+                '$totalLeadsReceived' => fn () => $todaysLeads->count(),
+                '$totalLeadsReceivedEcommerce' => fn () => $todaysLeads->where('is_ecommerce', 1)->count(),
+                '$totalUnAssignedLeadsReceived' => fn () => $this->dashboardService->getTotalUnAssignedLeads($filters, true)->count(),
+                '$totalUnAssignedLeadsReceivedEcommerce' => fn () => $this->dashboardService->getTotalUnAssignedLeads($filters, true)->where('is_ecommerce', 1)->count(),
+                '$totalUnAssignedRevivalLeads' => fn () => $this->dashboardService->getTotalUnAssignedLeads($filters, true)->where('source', LeadSourceEnum::REVIVAL)->count(),
+                '$totalUnAssignedOnlySICLeadsReceived' => fn () => $this->dashboardService->getTotalUnAssignedOnlySICLeads($filters, true)->count(),
+                '$totalUnAssignedOnlyPaidSICLeadsReceived' => fn () => $this->dashboardService->getTotalUnAssignedOnlySICLeads($filters, true)->where('payment_status_id', PaymentStatusEnum::AUTHORISED)->count(),
+            ], (int) ($request->iterations ?? 1));
+
+            dd([
+                'current logic' => collect($currentLogic)->map(fn ($average) => number_format($average, 3).'ms')->toArray(),
+                'total time taken in current logic' => array_sum($currentLogic),
+                'updated logic' => collect($updatedLogic)->map(fn ($average) => number_format($average, 3).'ms')->toArray(),
+                'total time taken in updated logic' => array_sum($updatedLogic),
+            ]);
+        }
+
+        [
+            'teamWiseLeadsAssignedAverage' => $teamWiseLeadsAssignedAverage,
+            'totalLeadsReceived' => $totalLeadsReceived,
+            'totalLeadsReceivedEcommerce' => $totalLeadsReceivedEcommerce,
+            'totalUnassignedLeadsReceived' => $totalUnAssignedLeadsReceived,
+            'totalUnassignedLeadsReceivedEcommerce' => $totalUnAssignedLeadsReceivedEcommerce,
+            'totalUnassignedRevivalLeads' => $totalUnAssignedRevivalLeads,
+            'totalUnAssignedOnlySICLeadsReceived' => $totalUnAssignedOnlySICLeadsReceived,
+            'totalUnAssignedOnlyPaidSICLeadsReceived' => $totalUnAssignedOnlyPaidSICLeadsReceived,
+            'leadsCountByTier' => $leadsCountByTier,
+            'revivalLeadsCount' => $revivalLeadsCount,
+            'unAssignedLeadsByTier' => $unAssignedLeadsByTier,
+            'advisorLeadsAssignedData' => $advisorLeadsAssignedData
+        ] = $this->dashboardService->getStatCounts($filters);
 
         return [
             'totalLeadsReceived' => $totalLeadsReceived, 'totalLeadsReceivedEcommerce' => $totalLeadsReceivedEcommerce, 'totalUnAssignedLeadsReceived' => $totalUnAssignedLeadsReceived,

@@ -85,7 +85,7 @@ defineProps({
   isNewPaymentStructure: Boolean,
   vatPercentage: Number,
   commercialRules: Boolean,
-  isAmlClearedForPayment: Boolean,
+
   clientInquiryLogs: Array,
   puaTypeEnum: Object,
   sendUpdateOptions: Array,
@@ -95,6 +95,7 @@ defineProps({
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
   customerAddressData: Object,
+  amlStatusName: String,
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -503,6 +504,7 @@ const leadStatusOptions = computed(() => {
   const statuses = Array.isArray(page.props.leadStatuses)
     ? page.props.leadStatuses
     : Object.values(page.props.leadStatuses);
+
   const filteredLeadStatuses = statuses?.map(status => {
     if (
       (!isLeadPool &&
@@ -1783,7 +1785,6 @@ const fullAddress = computed(() => {
         </template>
       </Collapsible>
     </div>
-
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -1811,6 +1812,10 @@ const fullAddress = computed(() => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
                 <dd>{{ quote.customer_type }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">BATCH</dt>
@@ -3585,7 +3590,6 @@ const fullAddress = computed(() => {
         })
       "
       :storageUrl="storageUrl"
-      :isAmlClearedForPayment="isAmlClearedForPayment"
       :isPlanDetailEnabled="isPlanDetailEnabled"
       :expanded="sectionExpanded"
     />
