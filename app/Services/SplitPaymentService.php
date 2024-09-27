@@ -1021,7 +1021,7 @@ class SplitPaymentService
          $maxRetries = 2;
          $this->handleWithDeadlockRetries(function () use ($splitPaymentId) {
             $paymentSplit = PaymentSplits::find($splitPaymentId);
-            $masterPayment = $paymentSplit->payment;
+            $masterPayment = $paymentSplit->payment;            
 
             if ($masterPayment->frequency != PaymentFrequency::UPFRONT){
                 if ($masterPayment->total_payments == 2 ) {
@@ -1029,6 +1029,13 @@ class SplitPaymentService
                     $masterPayment->frequency = PaymentFrequency::UPFRONT;   
                     if( $paymentSplit->payment_method == PaymentMethodsEnum::CreditCard) {
                         $masterPayment->payment_methods_code = PaymentMethodsEnum::CreditCard;
+                    }
+                    //if first split payment is athurized than update total price and total amount to first split payment
+                    $firstSplitPayment = $masterPayment->paymentSplits()->where(['code' => $masterPayment->code, 'sr_no' => '1'])->first();
+                    if(isset($firstSplitPayment) && $firstSplitPayment->payment_status_id == PaymentStatusEnum::AUTHORISED){
+                        $masterPayment->total_amount = $firstSplitPayment->payment_amount;
+                        $masterPayment->total_price = $firstSplitPayment->payment_amount;
+                        $masterPayment->payment_status_id = PaymentStatusEnum::AUTHORISED;
                     }
                     
                 } else {
