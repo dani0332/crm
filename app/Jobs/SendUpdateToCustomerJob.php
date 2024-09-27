@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
+use App\Services\SageApiService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
@@ -69,6 +70,9 @@ class SendUpdateToCustomerJob implements ShouldQueue
             $sageRequestPayload = $this->payload['sageRequestPayload'];
             unset($this->payload['sageRequestPayload']);
             $sendUpdateLogServices->updateSageProcessForDispatching($this->payload, $sendUpdateLog, $sageRequestPayload);
+
+            app(SageApiService::class)->scheduleSageProcesses($sageRequestPayload->insurerID);
+            info('job:SendUpdateToCustomerJob - fn:scheduleSageProcesses triggered for Insurer - '.$sageRequestPayload->insurerID);
         }
 
         info('job:SendUpdateToCustomerJob - Job completed - Send Update UUID: '.$sendUpdateLog->uuid);
