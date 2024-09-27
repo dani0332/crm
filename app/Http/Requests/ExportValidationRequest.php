@@ -81,10 +81,11 @@ class ExportValidationRequest extends FormRequest
                         $end = Carbon::parse($this->input('created_at_end'));
                         $error_fields = 'created date';
                     }
-
-                    $diff = $start->diffInDays($end);
-                    if ($diff > $diffInDays) {
-                        $validator->errors()->add('flash', 'Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.');
+                    if ($quoteType !== RetentionReportEnum::RETENTION){
+                        $diff = $start->diffInDays($end);
+                        if ($diff > $diffInDays) {
+                            $validator->errors()->add('flash', 'Maximum of '.$diffInDays.' days ('.$error_fields.') are allowed to be exported.');
+                        }
                     }
                 }
             } else {

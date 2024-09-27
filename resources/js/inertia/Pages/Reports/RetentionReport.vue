@@ -57,6 +57,7 @@ const getFiltersObject = () => {
     advisor_id: '',
     quote_batch_id: '',
     batch: [],
+    renewal_batch_id: ''
   }
 };
 
@@ -396,6 +397,7 @@ const totalLeads = reactive({
     leadType: '',
     quote_batch_id: null,
     advisorId: null,
+    renewal_batch_id: null,
   },
   data: {},
   current: '',
@@ -423,13 +425,13 @@ const totalLeads = reactive({
   ],
 });
 
-function onFetchLeadsInfo(advisor_id, quote_batch_id ,type, page=1){
+function onFetchLeadsInfo(advisor_id, renewal_batch_id ,type, page=1){
   totalLeads.data = [];
   totalLeads.modal = true;
   totalLeads.loader = true;
   filters.type = type;
   filters.page = page;
-  filters.quote_batch_id = quote_batch_id
+  filters.renewal_batch_id = renewal_batch_id
   filters.advisor_id = advisor_id;
   // Deep copy filters to payload
   let payload = JSON.parse(JSON.stringify(filters));
@@ -459,7 +461,7 @@ function onFetchLeadsInfo(advisor_id, quote_batch_id ,type, page=1){
 }
 
 const setPageTable = page => {
-  onFetchLeadsInfo(filters.advisor_id, filters.quote_batch_id ,filters.type ,page);
+  onFetchLeadsInfo(filters.advisor_id, filters.renewal_batch_id ,filters.type ,page);
 };
 
 const getRetentionReportHeaders = () => {
@@ -488,7 +490,11 @@ watch(
   () => filters,
   () => {
     if ((filters.lob && filters.displayBy) && (filters.policyExpiryDate || filters.month)) {
-      canExport.value = true;
+      if (filters.displayBy == RetentionReportEnum.BATCH && filters.batch.length == 0) {
+        canExport.value = false;
+      } else{
+        canExport.value = true;
+      }
     } else {
       canExport.value = false;
     }
@@ -657,7 +663,7 @@ function handleDateChange(dateRange) {
             </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Select LOB and select view by and select month or select expiry date
+                Select LOB and select view by and select month or select expiry date and batch to export
               </span>
             </template>
           </x-tooltip>
@@ -678,7 +684,7 @@ function handleDateChange(dateRange) {
           <p v-if="item.total == 0">{{ item.total }}</p>
           <button
             v-else
-            @click="onFetchLeadsInfo(item.advisor_id, item.quote_batch_id , RetentionReportEnum.TOTAL)"
+            @click="onFetchLeadsInfo(item.advisor_id, item.renewal_batch_id , RetentionReportEnum.TOTAL)"
             class="text-primary underline"
           >
             {{ item.total }}
@@ -695,7 +701,7 @@ function handleDateChange(dateRange) {
           <p v-if="item.lost == 0">{{ item.lost }}</p>
           <button
             v-else
-            @click="onFetchLeadsInfo(item.advisor_id, item.quote_batch_id , RetentionReportEnum.LOST)"
+            @click="onFetchLeadsInfo(item.advisor_id, item.renewal_batch_id , RetentionReportEnum.LOST)"
             class="text-primary underline"
           >
             {{ item.lost }}
@@ -712,7 +718,7 @@ function handleDateChange(dateRange) {
           <p v-if="item.invalid == 0">{{ item.invalid }}</p>
           <button
             v-else
-            @click="onFetchLeadsInfo(item.advisor_id, item.quote_batch_id, RetentionReportEnum.INVALID)"
+            @click="onFetchLeadsInfo(item.advisor_id, item.renewal_batch_id, RetentionReportEnum.INVALID)"
             class="text-primary underline"
           >
             {{ item.invalid }}
@@ -729,7 +735,7 @@ function handleDateChange(dateRange) {
           <p v-if="item.sales == 0">{{ item.sales }}</p>
           <button
             v-else
-            @click="onFetchLeadsInfo(item.advisor_id, item.quote_batch_id ,RetentionReportEnum.SALES)"
+            @click="onFetchLeadsInfo(item.advisor_id, item.renewal_batch_id ,RetentionReportEnum.SALES)"
             class="text-primary underline"
           >
             {{ item.sales }}

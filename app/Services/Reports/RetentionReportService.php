@@ -24,8 +24,6 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
-use function Ramsey\Uuid\v1;
-
 class RetentionReportService extends BaseService
 {
     use GenericQueriesAllLobs, GetUserTreeTrait, TeamHierarchyTrait;
@@ -121,7 +119,7 @@ class RetentionReportService extends BaseService
     {
         // Initialize the query with the necessary select statements and joins
         $query = PersonalQuote::query()
-            ->selectRaw("renewal_batch, MONTHNAME({$this->monthColumnName}) as `month`,
+            ->selectRaw("renewal_batch_id, renewal_batch, MONTHNAME({$this->monthColumnName}) as `month`,
                 users.name as `advisor_name`,
                 count(*) as total,
                 SUM(CASE WHEN quote_status_id = ".QuoteStatusEnum::Lost.' THEN 1 ELSE 0 END) as lost,
@@ -198,8 +196,7 @@ class RetentionReportService extends BaseService
         $lobId = QuoteTypeRepository::where('code', $lob)->first();
         $query->where('personal_quotes.quote_type_id', $lobId->id);
 
-        // Uncomment when move to stage or when we have renewel_upload data
-        // $query->where('source', LeadSourceEnum::RENEWAL_UPLOAD);
+        $query->where('source', LeadSourceEnum::RENEWAL_UPLOAD);
         if (in_array($quoteType, [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE])) {
             if ($quoteType == quoteTypeCode::GroupMedical) {
                 $query->where('business_type_of_insurance_id', '=', quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical));
@@ -222,8 +219,8 @@ class RetentionReportService extends BaseService
             $query->where('advisor_id', $filters->advisor_id);
         }
 
-        if (($filters->displayBy == null || $filters->displayBy == RetentionReportEnum::BATCH) && $filters->quote_batch_id) {
-            $query->where('renewal_batch', $filters->quote_batch_id);
+        if (($filters->displayBy == null || $filters->displayBy == RetentionReportEnum::BATCH) && $filters->renewal_batch_id) {
+            $query->where('renewal_batch_id', $filters->renewal_batch_id);
         }
 
         // Apply type-based filters if the type is set in the filters object
@@ -371,7 +368,7 @@ class RetentionReportService extends BaseService
     {
         // Select batch name, start date, and end date from the renewal_batches table
         $query->selectRaw('renewal_batches.id, renewal_batches.name as batch, renewal_batches.start_date, renewal_batches.end_date')
-            ->join('renewal_batches', 'renewal_batch', '=', 'renewal_batches.id');
+            ->join('renewal_batches', 'renewal_batch_id', '=', 'renewal_batches.id');
 
         // Check if 'policyExpiryDate' parameter is set in the request
         if (isset($request['policyExpiryDate'])) {
@@ -401,11 +398,11 @@ class RetentionReportService extends BaseService
     {
         // Select batch name, start date, and end date from the renewal_batches table
         $query->selectRaw('renewal_batches.id, renewal_batches.name as batch, renewal_batches.start_date, renewal_batches.end_date')
-            ->join('renewal_batches', 'renewal_batch', '=', 'renewal_batches.id');
+            ->join('renewal_batches', 'renewal_batch_id', '=', 'renewal_batches.id');
 
         // Check if 'policyExpiryDate' parameter is set in the request
         if (isset($request['batch'])) {
-            $query->whereIn('id', $request['batch']);
+            $query->whereIn('renewal_batches.id', $request['batch']);
         }
 
         if (! $isDetailsFilter) {
@@ -742,8 +739,8 @@ class RetentionReportService extends BaseService
     
             // Return an associative array with the batch 'name' and 'id'
             return [
+                    'id' => $batch->id,
                     'name' => $batch->name.'-('.$start_date.' to '.$end_date.')',
-                    'id' => $batch->id
                 ];
             })
             ->toArray();
