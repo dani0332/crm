@@ -369,9 +369,9 @@ trait GenericQueriesAllLobs
                 if ($isAllRequiredDocumentAreUploaded) {
                     if(in_array($type,[quoteTypeCode::Health , quoteTypeCode::Yacht, quoteTypeCode::Home, quoteTypeCode::Business,
                     quoteTypeCode::Cycle, quoteTypeCode::CORPLINE, quoteTypeCode::Pet])){
-                        $quote->stale_at = null;
+                        $quote['stale_at'] = null;
                     }
-
+                    
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
                         'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,

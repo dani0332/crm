@@ -234,7 +234,7 @@ class CentralController extends Controller
             
             if(in_array($request->model_type,[quoteTypeCode::Health , quoteTypeCode::Yacht, quoteTypeCode::Home, quoteTypeCode::Business,
             quoteTypeCode::Cycle, quoteTypeCode::CORPLINE, quoteTypeCode::Pet])){
-                $quote->stale_at = null;
+                $quote['stale_at'] = null;
             }
 
             $quote->update([
@@ -278,7 +278,7 @@ class CentralController extends Controller
 
             if(in_array($request->model_type,[quoteTypeCode::Health , quoteTypeCode::Yacht, quoteTypeCode::Home, quoteTypeCode::Business,
             quoteTypeCode::Cycle, quoteTypeCode::CORPLINE, quoteTypeCode::Pet])){
-                $quote->stale_at = null;
+                $quote['stale_at'] = null;
             }
 
             $quote->update([
