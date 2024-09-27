@@ -177,7 +177,7 @@ trait TeamHierarchyTrait
                 FROM team_hierarchy;"));
     }
 
-    public function getAdvisorsWithTeamId($role)
+    public function getAdvisorsByRole($role)
     {
         return User::join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
             ->select('users.id', 'users.name', 'ut.team_id as u_team_id')

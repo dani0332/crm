@@ -169,7 +169,7 @@ class DashboardService extends BaseService
 
         $teamWiseLeadsAssignedAverage = [];
 
-        $advisors = $this->getAdvisorsWithTeamId(RolesEnum::CarAdvisor);
+        $advisors = $this->getAdvisorsByRole(RolesEnum::CarAdvisor);
 
         foreach ($filters['teams'] as $team) {
             $teamUserIds = $advisors->filter(fn ($user) => $user->u_team_id == $team->id)->pluck('id');
