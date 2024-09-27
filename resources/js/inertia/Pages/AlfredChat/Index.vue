@@ -349,6 +349,18 @@ const downloadReport = () => {
           class="w-full"
         />
       </x-field>
+      <x-field label="Report">
+        <x-select
+          v-model="filters.report"
+          :options="[
+            { value: null, label: 'All' },
+            { value: 'Consolidated Report', label: 'Consolidated Report' },
+            { value: 'Detailed Report', label: 'Detailed Report' },
+          ]"
+          placeholder="Select the Report type"
+          class="w-full"
+        />
+      </x-field>
       <x-field label="Email">
         <x-input
           v-model="filters.email"
@@ -360,18 +372,6 @@ const downloadReport = () => {
         <x-input
           v-model="filters.mobile_no"
           placeholder="Search by Mobile number"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="Report">
-        <x-select
-          v-model="filters.report"
-          :options="[
-            { value: null, label: 'All' },
-            { value: 'Consolidated Report', label: 'Consolidated Report' },
-            { value: 'Detailed Report', label: 'Detailed Report' },
-          ]"
-          placeholder="Select the Report type"
           class="w-full"
         />
       </x-field>
