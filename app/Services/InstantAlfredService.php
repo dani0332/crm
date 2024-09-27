@@ -16,9 +16,9 @@ use Illuminate\Support\Facades\DB;
 
 class InstantAlfredService extends BaseService
 {
-    protected $carQuery;
-    protected $healthQuery;
-    protected $travelQuery;
+    private $carQuery;
+    private $healthQuery;
+    private $travelQuery;
 
     private function buildQueryByModel($modelType)
     {
