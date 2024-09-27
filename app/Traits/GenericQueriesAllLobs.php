@@ -367,6 +367,11 @@ trait GenericQueriesAllLobs
                 $isAllRequiredDocumentAreUploaded = $this->isAllRequiredDocumentAreUploaded($quoteDocuments, $type, $quote);
                 info('Is all required documens filled for  : '.$quote->uuid.' '.$isAllRequiredDocumentAreUploaded);
                 if ($isAllRequiredDocumentAreUploaded) {
+                    if(in_array($type,[quoteTypeCode::Health , quoteTypeCode::Yacht, quoteTypeCode::Home, quoteTypeCode::Business,
+                    quoteTypeCode::Cycle, quoteTypeCode::CORPLINE, quoteTypeCode::Pet])){
+                        $quote->stale_at = null;
+                    }
+
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
                         'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,

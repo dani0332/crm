@@ -8,6 +8,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendPolicyTypeEnum;
@@ -230,11 +231,15 @@ class CentralController extends Controller
 
         if ($request->send_policy_type == SendPolicyTypeEnum::CUSTOMER) {
             dispatch(new SendBookPolicyDocumentsJob($request, $quote->code));
+            
+            if(in_array($request->model_type,[quoteTypeCode::Health , quoteTypeCode::Yacht, quoteTypeCode::Home, quoteTypeCode::Business,
+            quoteTypeCode::Cycle, quoteTypeCode::CORPLINE, quoteTypeCode::Pet])){
+                $quote->stale_at = null;
+            }
 
             $quote->update([
                 'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
                 'quote_status_date' => now(),
-                'stale_at' => null,
             ]);
 
             info('Policy send to customer for '.$quote->uuid);
@@ -271,11 +276,15 @@ class CentralController extends Controller
                 dispatch(new SendBookPolicyDocumentsJob($request, $quote->code));
             }
 
+            if(in_array($request->model_type,[quoteTypeCode::Health , quoteTypeCode::Yacht, quoteTypeCode::Home, quoteTypeCode::Business,
+            quoteTypeCode::Cycle, quoteTypeCode::CORPLINE, quoteTypeCode::Pet])){
+                $quote->stale_at = null;
+            }
+
             $quote->update([
                 'quote_status_id' => QuoteStatusEnum::PolicyBooked,
                 'policy_booking_date' => Carbon::now(),
                 'quote_status_date' => now(),
-                'stale_at' => null,
             ]);
 
             (new CentralService)->straightforwardPayments($payment, $paymentSplits, $quote);
