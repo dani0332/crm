@@ -58,7 +58,7 @@ class InstantAlfredService extends BaseService
                 'ps.created_at AS payment_created_at',
                 'cqr.paid_at',
                 'cqr.payment_paid_at',
-                'ep.display_name',
+                // 'ep.display_name',
             )
             ->leftJoin('payments as py', function ($join) {
                 $join->on('py.paymentable_id', '=', 'cqr.id')
@@ -90,8 +90,8 @@ class InstantAlfredService extends BaseService
                 $join->on('e.quote_request_id', '=', 'cqr.id')
                     ->where('e.quote_request_type', '=', CarQuote::class);
             })
-            ->leftJoin('embedded_product_options as po', 'po.id', '=', 'e.product_id')
-            ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id')
+            // ->leftJoin('embedded_product_options as po', 'po.id', '=', 'e.product_id')
+            // ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id')
             ->groupBy('cqr.id');
 
             $aliases = [CarQuote::class => ['query' => $this->carQuery, 'alias' => 'cqr']];
@@ -123,7 +123,7 @@ class InstantAlfredService extends BaseService
                 // 'ps.created_at AS payment_created_at',
                 DB::raw('DATE_FORMAT(hqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
                 DB::raw('DATE_FORMAT(hqr.payment_paid_at, "%d-%m-%Y %H:%i:%s") as payment_paid_at'),
-                'ep.display_name',
+                // 'ep.display_name',
     
             )
                 ->leftJoin('payments as py', function ($join) {
@@ -152,8 +152,8 @@ class InstantAlfredService extends BaseService
                     $join->on('hqr.id', '=', 'e.quote_request_id')
                         ->where('e.quote_request_type', '=', HealthQuote::class);
                 })
-                ->leftJoin('embedded_product_options as po', 'po.id', '=', 'e.product_id')
-                ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id')
+                // ->leftJoin('embedded_product_options as po', 'po.id', '=', 'e.product_id')
+                // ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id')
                 ->groupBy('hqr.id');
     
                 $aliases = [HealthQuote::class => ['query' => $this->healthQuery, 'alias' => 'hqr']];
@@ -183,7 +183,7 @@ class InstantAlfredService extends BaseService
                 'tqr.paid_at',
                 'tqr.payment_paid_at',
                 // 'ps.created_at AS payment_created_at',
-                'ep.display_name',
+                // 'ep.display_name',
     
             )
                 ->leftJoin('payments as py', function ($join) {
@@ -214,8 +214,8 @@ class InstantAlfredService extends BaseService
                     $join->on('tqr.uuid', '=', 'tqpd.quote_uuid')
                         ->whereColumn('tqr.plan_id', '=', 'tqpd.plan_id');
                 })
-                ->leftJoin('embedded_product_options as po', 'po.id', '=', 'e.product_id')
-                ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id')
+                // ->leftJoin('embedded_product_options as po', 'po.id', '=', 'e.product_id')
+                // ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id')
                 ->groupBy('tqr.id');
 
                 $aliases = [TravelQuote::class => ['query' => $this->travelQuery, 'alias' => 'tqr']];
@@ -255,16 +255,16 @@ class InstantAlfredService extends BaseService
             $partialQuery->where('mobile_no', $request->mobile_no);
         }
 
-        if (! empty($request->start_date) && ! empty($request->end_date)) {
-            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['start_date']));
-            $dateTo = date('Y-m-d 23:59:59', strtotime($request['end_date']));
+        if (! empty($request->chat_initiated_at) && $request->email == null && $request->mobile_no == null && $quoteId == null) {
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($request->chat_initiated_at[0]));
+            $dateTo = date('Y-m-d 23:59:59', strtotime($request->chat_initiated_at[1]));
 
             $partialQuery->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
         }
 
-        if ($request->email == null && $request->mobile_no == null && $quoteId == null && empty($request->start_date) && empty($request->end_date)) {
+        if ($request->email == null && $request->mobile_no == null && $quoteId == null && empty($request->chat_initiated_at)) {
             // Default to last 30 days if no dates are provided
-            $dateFrom = now()->subDays(30)->startOfDay();
+            $dateFrom = now()->startOfDay();
             $dateTo = now()->endOfDay();
 
             $partialQuery->whereBetween('chat_initiated_at', [$dateFrom, $dateTo]);
@@ -306,7 +306,7 @@ class InstantAlfredService extends BaseService
             $modelType::applySegmentFilter($partialQuery, $request->segment_filter, $query, $quoteTypeId);
         }
 
-        return $partialQuery->get();
+        return $partialQuery;
     }
 
     public function generateChatConsolidateReport()
@@ -316,7 +316,7 @@ class InstantAlfredService extends BaseService
 
         $modelType = $request->quoteType ?? 'Car';
 
-        $data = app(InstantAlfredService::class)->processSqlChatFilters($request, $modelType);
+        $data = app(InstantAlfredService::class)->processSqlChatFilters($request, $modelType)->get();
 
         $data->chunk(1000)->each(function ($sqlBatch) use ($request) {
             $uuids = $sqlBatch->pluck('uuid')->toArray();
@@ -352,7 +352,7 @@ class InstantAlfredService extends BaseService
 
         $modelType = $request->quoteType ?? 'Car';
 
-        $data = app(InstantAlfredService::class)->processSqlChatFilters($request, $modelType);
+        $data = app(InstantAlfredService::class)->processSqlChatFilters($request, $modelType)->get();
 
         $uuids = array_column($data->toArray(), 'uuid');
 

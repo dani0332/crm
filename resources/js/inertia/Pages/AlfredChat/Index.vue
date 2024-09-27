@@ -20,8 +20,10 @@ const cleanObj = obj => useCleanObj(obj);
 const filters = reactive({
   quoteId: null,
   quoteType: 'Car',
-  start_date: useDateFormat(getPreviousDate(), 'YYYY-MM-DD').value,
-  end_date: useDateFormat(useNow(), 'YYYY-MM-DD').value,
+  chat_initiated_at: [
+    useDateFormat(new Date(), 'YYYY-MM-DD').value,
+    useDateFormat(new Date(), 'YYYY-MM-DD').value,
+  ],
   page: 1,
   transaction_type_id: [],
   quote_batch_id: [],
@@ -33,6 +35,7 @@ const filters = reactive({
   segment: null,
   mobile_no: null,
   report: null,
+  email: null,
 });
 
 const params = useUrlSearchParams('history');
@@ -46,7 +49,7 @@ const reportButtonCon = computed(() => {
     data.disable = true;
     data.msg = 'Please select the report type';
   } else if (
-    (filters.start_date == null || filters.end_date == null) &&
+    filters.chat_initiated_at.length == 0 &&
     (filters.report == 'Detailed Report' ||
       filters.report == 'Consolidated Report')
   ) {
@@ -117,18 +120,8 @@ const isQuoteTypeSelected = computed(() => {
 });
 
 function onSubmit() {
-  let diff = calculateDaysDifference(filters.start_date, filters.end_date);
-  if (diff > 30) {
-    notification.error({
-      message: 'Maximum of 30 days  are allowed',
-      position: 'top',
-    });
-    return;
-  }
-
-  if (filters.start_date && filters.end_date) {
-    filters.start_date = useDateFormat(filters.start_date, 'YYYY-MM-DD').value;
-    filters.end_date = useDateFormat(filters.end_date, 'YYYY-MM-DD').value;
+  if (filters.quoteId || filters.email || filters.mobile_no) {
+    filters.chat_initiated_at = [];
   }
 
   filters.page = 1;
@@ -198,16 +191,6 @@ onMounted(() => {
 });
 
 const downloadReport = () => {
-  let diff = calculateDaysDifference(filters.start_date, filters.end_date);
-
-  if (diff > 30) {
-    notification.error({
-      message: 'Maximum of 30 days (created date) are allowed to be exported.',
-      position: 'top',
-    });
-    return;
-  }
-
   const data = useObjToUrl(useCleanObj(filters));
   const url = route('exportChatData');
   window.open(url + '?' + new URLSearchParams(data).toString());
@@ -245,7 +228,49 @@ const downloadReport = () => {
         >
         </combo-box>
       </x-field>
+      <!-- <ToolTip
+        :title="'Select Start & End Date'"
+        :tooltip="'Maximum 30 days are allowed'"
+      >
+      </ToolTip>
       <DatePicker
+        class="py-1"
+        v-model="filters.chat_initiated_at"
+        placeholder="Select Start & End Date"
+        range
+        :max-range="31"
+        size="sm"
+        model-type="yyyy-MM-dd"
+        :rules="[isRequired]"
+        :onlySelect="true"
+      /> -->
+      <div>
+        <x-tooltip position="top">
+          <label
+            class="font-medium text-gray-800 text-sm decoration-primary-600"
+          >
+            Select Start & End Date <span class="text-red-500">*</span>
+          </label>
+          <template #tooltip> Maximum 30 days are allowed </template>
+        </x-tooltip>
+        <DatePicker
+          class="py-1"
+          v-model="filters.chat_initiated_at"
+          placeholder="Select Start & End Date"
+          range
+          :max-range="31"
+          size="md"
+          model-type="yyyy-MM-dd"
+          :rules="
+            filters.quoteId || filters.email || filters.mobile_no
+              ? []
+              : [isRequired]
+          "
+          :onlySelect="true"
+        />
+      </div>
+
+      <!-- <DatePicker
         label="Start Date"
         :rules="
           filters.quoteId || filters.email || filters.mobile_no
@@ -254,8 +279,8 @@ const downloadReport = () => {
         "
         v-model="filters.start_date"
         class="w-full"
-      />
-      <DatePicker
+      /> -->
+      <!-- <DatePicker
         label="End Date"
         :rules="
           filters.quoteId || filters.email || filters.mobile_no
@@ -264,7 +289,7 @@ const downloadReport = () => {
         "
         v-model="filters.end_date"
         class="w-full"
-      />
+      /> -->
       <x-field label="Transaction Type">
         <combo-box
           v-model="filters.transaction_type_id"
@@ -316,7 +341,7 @@ const downloadReport = () => {
           class="w-full"
         />
       </x-field>
-      <x-field label="Fallback">
+      <!-- <x-field label="Fallback">
         <x-select
           v-model="filters.fallback"
           :options="[
@@ -327,8 +352,8 @@ const downloadReport = () => {
           placeholder="Search by Fallback"
           class="w-full"
         />
-      </x-field>
-      <x-field label=" Message channel">
+      </x-field> -->
+      <!-- <x-field label=" Message channel">
         <x-select
           v-model="filters.channel"
           :options="[
@@ -340,7 +365,7 @@ const downloadReport = () => {
           placeholder="Search by Message channel"
           class="w-full"
         />
-      </x-field>
+      </x-field> -->
       <x-field label="Segment">
         <x-select
           v-model="filters.segment"
@@ -380,8 +405,6 @@ const downloadReport = () => {
     <div class="flex justify-between gap-3">
       <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
         <x-tooltip v-if="reportButtonCon.disable" position="right">
-          <!-- :disabled="reportButtonCon.disable" -->
-          <!-- @click.prevent="downloadReport" -->
           <x-button size="sm" color="emerald">Export Excel</x-button>
           <template #tooltip v-if="reportButtonCon.msg">
             <span class="font-medium">
@@ -419,7 +442,7 @@ const downloadReport = () => {
     table-class-name="tablefixed mt-3"
     :loading="loader.table"
     :headers="tableHeader"
-    :items="logs || []"
+    :items="logs.data || []"
     border-cell
     hide-rows-per-page
     hide-footer
@@ -444,11 +467,21 @@ const downloadReport = () => {
 
   <Pagination
     :links="{
+      next: logs.next_page_url,
+      prev: logs.prev_page_url,
+      current: logs.current_page,
+      from: logs.from,
+      to: logs.to,
+    }"
+  />
+
+  <!-- <Pagination
+    :links="{
       next: pagination.next_page_url,
       prev: pagination.prev_page_url,
       current: Number(pagination.current_page),
       from: pagination.from,
       to: pagination.to,
     }"
-  />
+  /> -->
 </template>

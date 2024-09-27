@@ -41,7 +41,7 @@ class InstantChatConsolidatedExport implements FromCollection, WithHeadings, Wit
             'PAYMENT DATE',
             'AUTHORISED AT',
             'PAID AT',
-            'EP PURCHASED',
+            // 'EP PURCHASED',
         ];
     }
 
@@ -71,7 +71,7 @@ class InstantChatConsolidatedExport implements FromCollection, WithHeadings, Wit
             $chat->total_price ?? 'N/A', // 'PRICE'
             $chat->paid_at ?? 'N/A',
             $chat->payment_paid_at ?? 'N/A',
-            $chat->display_name ?? 'N/A', // 'EP PURCHASED'
+            // $chat->display_name ?? 'N/A', // 'EP PURCHASED'
         ];
     }
 

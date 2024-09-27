@@ -85,38 +85,40 @@ class AlfredChatController extends Controller
         $modelType = (in_array(ucwords($modelType), newUi()) && checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
 
         $data = app(InstantAlfredService::class)->processSqlChatFilters($request, $modelType);
+        // $data->paginate(15);
+        // $result = $this->processMongoDBChatFilters($request, $data);
 
-        $result = $this->processMongoDBChatFilters($request, $data);
+        // dd($data->paginate(15));
+        // $perPage = $request->input('per_page', 15);
+        // $currentPage = $request->input('page', 1);
+        // $total = count($data);
+        // $lastPage = ceil($total / $perPage);
 
-        $perPage = $request->input('per_page', 15);
-        $currentPage = $request->input('page', 1);
-        $total = count($data);
-        $lastPage = ceil($total / $perPage);
+        // $paginatedData = array_slice($result === false ? $data->toArray() : $result, ($currentPage - 1) * $perPage, $perPage);
+        // $paginatedData = array_slice($data->toArray(), ($currentPage - 1) * $perPage, $perPage);
 
-        $paginatedData = array_slice($result === false ? $data->toArray() : $result, ($currentPage - 1) * $perPage, $perPage);
+        // $path = $request->url();
 
-        $path = $request->url();
+        // $nextPageUrl = $currentPage < $lastPage
+        //     ? $path.'?page='.($currentPage + 1).'&per_page='.$perPage
+        //     : null;
 
-        $nextPageUrl = $currentPage < $lastPage
-            ? $path.'?page='.($currentPage + 1).'&per_page='.$perPage
-            : null;
+        // $prevPageUrl = $currentPage > 1
+        //     ? $path.'?page='.($currentPage - 1).'&per_page='.$perPage
+        //     : null;
 
-        $prevPageUrl = $currentPage > 1
-            ? $path.'?page='.($currentPage - 1).'&per_page='.$perPage
-            : null;
+        // $pagination = [
+        //     'current_page' => $currentPage,
+        //     'per_page' => $perPage,
+        //     'total' => $total,
+        //     'last_page' => ceil($total / $perPage),
+        //     'from' => ($currentPage - 1) * $perPage + 1,
+        //     'to' => min($currentPage * $perPage, $total),
+        //     'next_page_url' => $nextPageUrl,
+        //     'prev_page_url' => $prevPageUrl,
+        // ];
 
-        $pagination = [
-            'current_page' => $currentPage,
-            'per_page' => $perPage,
-            'total' => $total,
-            'last_page' => ceil($total / $perPage),
-            'from' => ($currentPage - 1) * $perPage + 1,
-            'to' => min($currentPage * $perPage, $total),
-            'next_page_url' => $nextPageUrl,
-            'prev_page_url' => $prevPageUrl,
-        ];
-
-        return inertia('AlfredChat/Index', ['logs' => $paginatedData, 'pagination' => $pagination,   'leadStatuses' => QuoteStatus::all(), 'batches' => QuoteBatches::all()]);
+        return inertia('AlfredChat/Index', ['logs' => $data->paginate(15),  'leadStatuses' => QuoteStatus::all(), 'batches' => QuoteBatches::all()]);
 
     }
 
