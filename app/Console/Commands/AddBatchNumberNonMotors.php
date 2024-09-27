@@ -42,34 +42,34 @@ class AddBatchNumberNonMotors extends Command
     public function handle()
     {
         try {
-            info('today date for batch job is : '.json_encode(now()->toDateString()));
+            info('today date for non motor batch job is : '.json_encode(now()->toDateString()));
             $lastBatch = RenewalBatch::whereNull('quote_type_id')->orderBy('id', 'desc')->first();
             info('last batch : '.json_encode($lastBatch));
             if ($lastBatch == null) {
-                info('inside creating batches from scratch');
+                info('inside creating non motor batches from scratch');
                 $batches = $this->generateBatchNumbers(Carbon::parse('2024-07-29'));
                 if (count($batches) > 0) {
                     foreach ($batches as $batch) {
                         $this->insertQuoteBatch($batch);
                     }
-                    info('batches created');
+                    info('non motor batches created');
                 }
             } elseif (! (now()->startOfDay() >= Carbon::parse($lastBatch->start_date)->startOfDay() && now()->endOfDay() <= Carbon::parse($lastBatch->end_date)->endOfDay())) {
-                info('inside creating batch of current week');
+                info('inside creating non motor batch of current week');
                 $batches = $this->generateBatchNumbers(Carbon::parse($lastBatch->end_date)->addDays(1));
                 if (count($batches) > 0) {
                     foreach ($batches as $batch) {
                         $this->insertQuoteBatch($batch);
                     }
-                    info('batches created');
+                    info('non motor batches created');
                 }
             } else {
-                info('batches are update to date');
+                info('non motor batches are update to date');
 
                 return true;
             }
         } catch (\Exception $e) {
-            info('Add Batch Number Failed');
+            info('Add Non Motor Batch Number Failed');
             info('message: '.$e->getMessage());
         }
     }
