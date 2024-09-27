@@ -35,11 +35,11 @@ class SageProcessesCommand extends Command
      */
     public function handle()
     {
-        info('cmd:SageProcessesCommand - Policy Booking Command Started');
+        info('cmd:SageProcessesCommand - Sage Policy or Endorsements Booking Command Started');
 
         (new SageApiService)->scheduleSageProcesses();
 
-        info('cmd:SageProcessesCommand - Sage Policy Booking Command Ended');
+        info('cmd:SageProcessesCommand - Sage Policy or Endorsements Booking Command Ended');
     }
 
 }

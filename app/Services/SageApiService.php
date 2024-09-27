@@ -1916,7 +1916,7 @@ class SageApiService
         return str_contains($sageErrorMessage, 'Processing conflict') || str_contains($sageErrorMessage, 'Post in Progress');
     }
 
-    public function scheduleSageProcesses($insurerId = null)
+    public function scheduleSageProcesses($insurerId = null): void
     {
         $insuranceProviders = SageProcess::where('status', SageEnum::SAGE_PROCESS_PENDING_STATUS)
             ->whereNotIn('insurance_provider_id', function ($query) {
@@ -1949,7 +1949,7 @@ class SageApiService
 
                 if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST) {
                     BookPolicyOnSageJob::dispatch($sageRequest, $quote, $request, $sageProcess)->onQueue('insly');
-                }elseif ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_SEND_UPDATE_REQUEST) {
+                } elseif ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_SEND_UPDATE_REQUEST) {
                     SendUpdateSageJob::dispatch($request, $quote, $sageRequest, $sageProcess)->onQueue('insly');
                 }
             }
