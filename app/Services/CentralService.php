@@ -258,6 +258,14 @@ class CentralService
                 $paymentData['payment_status_id'] = PaymentStatusEnum::PARTIALLY_PAID;
             }
 
+            if( $payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::AUTHORISED) {
+                if( $payment->premium_authorized>0 && $priceWithVat <= $payment->premium_authorized) {
+                    $paymentData['total_amount'] = $priceWithVat;
+                    // update total amount of first split payment
+                    $payment->paymentSplits()->first()->update(['payment_amount' => $priceWithVat]);
+                }                
+            }
+
             $payment->update($paymentData);
 
             info('fn: updateQuotePayment payment updated for quote uuid: '.$quote->uuid);
