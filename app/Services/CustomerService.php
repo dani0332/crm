@@ -6,8 +6,8 @@ use App\Enums\GenericRequestEnum;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
 use App\Models\CustomerAddress;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 
 class CustomerService extends BaseService
 {
@@ -172,7 +172,7 @@ class CustomerService extends BaseService
             $customer = null;
             $previousEmail = $lead->email;
             if ($lead->customer && ! $this->getCustomerByEmail($value)) {
-                info('Customer additional contact primary email updated. Previous Email: ' . $lead->email . ' New Email: ' . $value);
+                info('Customer additional contact primary email updated. Previous Email: '.$lead->email.' New Email: '.$value);
                 $customerArray = [
                     'first_name' => $lead->first_name,
                     'last_name' => $lead->last_name,
@@ -181,7 +181,7 @@ class CustomerService extends BaseService
                     'dob' => $lead->dob,
                 ];
                 $customer = Customer::create($customerArray);
-                $customer->update(['code' => 'IND-' . $customer->id]);
+                $customer->update(['code' => 'IND-'.$customer->id]);
                 $email = trim($lead->email);
 
                 if (str_ends_with($email, '@insurancemarket.ae') || str_ends_with($email, '@afia.ae')) {
@@ -303,7 +303,7 @@ class CustomerService extends BaseService
             }
             $lead->update(['mobile_no' => $value]);
             if ($lead->customer) {
-                info('Customer additional contact primary mobile_no updated. Previous Mobile_No: ' . $lead->mobile_no . ' New Mobile_No: ' . $value);
+                info('Customer additional contact primary mobile_no updated. Previous Mobile_No: '.$lead->mobile_no.' New Mobile_No: '.$value);
                 $lead->customer->update(['mobile_no' => $value]);
             }
         }
