@@ -281,7 +281,7 @@ function onLobChange(updateDisplayFilter = true) {
     [props.quoteTypeCodes.CORPLINE.toLowerCase()]: ['sub_team'],
     [props.quoteTypeCodes.GroupMedical.replace(/ /g, '')]: ['sub_team'],
     [props.quoteTypeCodes.Bike]: ['tiers', 'nationality'],
-    [props.quoteTypeCodes.Travel]: ['team', 'nationality'],
+    [props.quoteTypeCodes.Travel]: ['nationality'],
     [props.quoteTypeCodes.Life]: ['team', 'nationality'],
   };
 

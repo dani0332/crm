@@ -14,6 +14,7 @@ use App\Models\PetQuote;
 use App\Models\QuoteType;
 use App\Models\YachtQuote;
 use App\Services\CapiRequestService;
+use App\Services\CustomerService;
 use App\Services\InslyDataService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -324,10 +325,7 @@ class InslyDetailRepository extends BaseRepository
         $dataArr = [];
         $coverage = $policy['policy']['coverage'];
         $dataArr['previous_quote_policy_number'] = $policy['policy_no'] ?? null;
-        $dataArr['email'] = $policy['customer']['email'] ?? null;
-        if ($dataArr['email'] == null) {
-            $dataArr['email'] = $policy['customer']['contact_person_email'] ?? null;
-        }
+        [$dataArr['email'], $additionalEmails] = $this->getPrimaryAndAdditionalEmails($policy);
 
         $dataArr['policy_number'] = $policy['policy_no'] ?? null;
         $dataArr['policy_start_date'] = isset($policy['policy']['start_date']) ? $this->formatDate($policy['policy']['start_date']) : null;
@@ -347,7 +345,10 @@ class InslyDetailRepository extends BaseRepository
         array_shift($arr);
 
         $dataArr['last_name'] = implode(' ', $arr);
-        $dataArr['mobile_no'] = $policy['customer']['mobile_phone'] ?? '0552244556';
+
+        [$dataArr['mobile_no'], $additionalMobiles] = $this->getPrimaryAndAdditionalMobileNumbers($policy);
+
+        $dataArr['mobile_no'] = $dataArr['mobile_no'] ?? '0552244556';
 
         $premium = null;
         $data = $policy->toArray();
@@ -356,7 +357,13 @@ class InslyDetailRepository extends BaseRepository
         }
         $quoteTypeData = QuoteType::where('code', $quoteType)->first();
         if ($dataArr['email'] != null) {
-            $customer = $this->getCustomer($dataArr);
+            $customerService = new CustomerService;
+            $customer = $customerService->createCustomerIfNotExists($dataArr);
+
+            $customerService->addAdditionalContactsIfNotExists($customer, [
+                'additional_emails' => $additionalEmails,
+                'additional_mobiles' => $additionalMobiles,
+            ]);
             $dataArr['customer_id'] = $customer->id ?? null;
         } else {
             $dataArr['customer_id'] = null;
@@ -476,5 +483,78 @@ class InslyDetailRepository extends BaseRepository
         }
 
         return $businessTypeOfInsurance ? quoteBusinessTypeCode::getId($businessTypeOfInsurance) : null;
+    }
+
+    private function getPrimaryAndAdditionalEmails($policy)
+    {
+        // Handling multiple emails in comma separated format
+        $primaryEmail = null;
+        $emails = [];
+
+        if (isset($policy['customer']['email'])) {
+            $emails = $this->splitAndFilterValues($policy['customer']['email']);
+            if (count($emails) > 0) {
+                $primaryEmail = $emails[0];
+                unset($emails[0]);
+            }
+        }
+
+        if (isset($policy['customer']['contact_person_email'])) {
+            $contactEmails = $this->splitAndFilterValues($policy['customer']['contact_person_email']);
+            // If there's already an email set, ensure it's not duplicated
+            if ($primaryEmail !== null) {
+                $contactEmails = array_diff($contactEmails, [$primaryEmail]);
+            }
+            $emails = array_merge($emails, $contactEmails);
+            if ($primaryEmail === null && count($emails) > 0) {
+                $primaryEmail = $emails[0];
+                unset($emails[0]);
+            }
+        }
+
+        // Remove duplicates
+        $additionalEmails = array_unique($emails);
+
+        return [$primaryEmail, $additionalEmails];
+    }
+
+    private function getPrimaryAndAdditionalMobileNumbers($policy)
+    {
+        // Handling multiple phone numbers in comma separated format
+        $primaryPhone = null;
+        $phones = [];
+
+        if (isset($policy['customer']['mobile_phone'])) {
+            $phones = $this->splitAndFilterValues($policy['customer']['mobile_phone']);
+            if (count($phones) > 0) {
+                $primaryPhone = $phones[0];
+                unset($phones[0]);
+            }
+        }
+
+        if (isset($policy['customer']['phone'])) {
+            $contactPhones = $this->splitAndFilterValues($policy['customer']['phone']);
+            // If there's already a phone set, ensure it's not duplicated
+            if ($primaryPhone !== null) {
+                $contactPhones = array_diff($contactPhones, [$primaryPhone]);
+            }
+            $phones = array_merge($phones, $contactPhones);
+            if ($primaryPhone === null && count($phones) > 0) {
+                $primaryPhone = $phones[0];
+                unset($phones[0]);
+            }
+        }
+
+        // Remove duplicates
+        $additionalPhones = array_unique($phones);
+
+        return [$primaryPhone, $additionalPhones];
+    }
+
+    private function splitAndFilterValues($inputString)
+    {
+        return array_filter(array_map('trim', preg_split('/[;,]/', $inputString)), function ($value) {
+            return ! empty($value);
+        });
     }
 }

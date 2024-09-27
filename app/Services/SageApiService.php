@@ -512,8 +512,8 @@ class SageApiService
 
         $this->updateAndLogQuoteStatus($quote, $sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, $sageRequest->userId);
 
-        (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
-        info('Policy Book : postBookPolicyToSage : scheduleSageProcesses triggered for Insurer - '.$sageRequest->insurerID.' - Finished');
+        $this->scheduleSageProcesses($sageRequest->insurerID);
+        info('Policy Book : postBookPolicyToSage : scheduleSageProcesses triggered for Insurer - '.$sageRequest->insurerID);
 
         return ['status' => true, 'message' => 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!'];
     }
@@ -1918,7 +1918,7 @@ class SageApiService
 
     public function scheduleSageProcesses($insurerId = null): void
     {
-        $insuranceProviders = SageProcess::where('status', SageEnum::SAGE_PROCESS_PENDING_STATUS)
+        $sageProcesses = SageProcess::where('status', SageEnum::SAGE_PROCESS_PENDING_STATUS)
             ->whereNotIn('insurance_provider_id', function ($query) {
                 $query->select('insurance_provider_id')
                     ->from('sage_processes')
@@ -1926,19 +1926,11 @@ class SageApiService
             })->when($insurerId, function ($query) use ($insurerId) {
                 $query->where('insurance_provider_id', $insurerId);
             })->orderBy('created_at')
-            ->distinct()
-            ->pluck('insurance_provider_id')
-            ->toArray();
+            ->groupBy('insurance_provider_id')
+            ->get();
 
-        if (count($insuranceProviders) > 0) {
-            $sageProcesses = SageProcess::whereIn('insurance_provider_id', $insuranceProviders)
-                ->where('status', SageEnum::SAGE_PROCESS_PENDING_STATUS)
-                ->orderBy('created_at')
-                ->get()
-                ->groupBy('insurance_provider_id');
-
-            foreach ($sageProcesses as $processes) {
-                $sageProcess = $processes->first();
+        if (count($sageProcesses) > 0) {
+            foreach ($sageProcesses as $sageProcess) {
 
                 info('cmd:SageProcessesCommand - Processing Sage Process ID: '.$sageProcess->id.' for Insurance Provider ID: '.$sageProcess->insurance_provider_id);
                 $sageProcessRequest = json_decode($sageProcess->request);

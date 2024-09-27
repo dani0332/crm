@@ -2,10 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\SageEnum;
-use App\Jobs\BookPolicyOnSageJob;
-use App\Jobs\SendUpdateSageJob;
-use App\Models\SageProcess;
 use App\Services\SageApiService;
 use Illuminate\Console\Command;
 
