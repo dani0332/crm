@@ -660,6 +660,4 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/health-quote-delete-member', [HealthQuoteController::class, 'healthQuoteDeleteMember']);
     Route::post('followups/emails/events', [FollowupController::class, 'getEmailEvents']);
     Route::post('/update-user-status', [UserController::class, 'updateUserStatus']);
-
-    Route::get('/update-aml-status', [CRUDController::class, 'updateAmlStatus']);
 });

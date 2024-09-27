@@ -1213,9 +1213,20 @@ class SendUpdateLogService
         return $array;
     }
 
-    private function generateUniqueBrokerInvoiceNumber($insuranceProviderCode, $insuranceProviderLeadCount, $sendUpdateLog, $isBrokerInvoiceShowOnly = false)
+    private function generateUniqueBrokerInvoiceNumber($insuranceProvider, $sendUpdateLog, $isBrokerInvoiceShowOnly = false)
     {
-        $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
+        $lastBrokerInvoiceNumber = SendUpdateLog::where('insurance_provider_id', $insuranceProvider->id)
+            ->whereNotNull('broker_invoice_number')
+            ->latest('id')
+            ->value('broker_invoice_number');
+
+        if ($lastBrokerInvoiceNumber) {
+            $value = (int) explode('.', $lastBrokerInvoiceNumber)[1];
+        } else {
+            $value = Payment::where('insurance_provider_id', $insuranceProvider->id)->count();
+        }
+        $brokerInvoiceNumber = $insuranceProvider->code.'.'.(++$value);
+
         if ($isBrokerInvoiceShowOnly) {
             return $brokerInvoiceNumber;
         }
@@ -1225,7 +1236,7 @@ class SendUpdateLogService
         while (SendUpdateLog::where('broker_invoice_number', $brokerInvoiceNumber)
             ->whereNot('uuid', $sendUpdateLog->uuid)
             ->exists() && $attempts < 25) {
-            $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
+            $brokerInvoiceNumber = $insuranceProvider->code.'.'.(++$value);
             $attempts++;
         }
 
@@ -1241,8 +1252,7 @@ class SendUpdateLogService
     public function generateBrokerInvoiceNumber($sendUpdateLog, $insuranceProvider, $isBrokerInvoiceShowOnly = false): string
     {
         if (empty($sendUpdateLog->broker_invoice_number)) {
-            $insuranceProviderLeadCount = Payment::where('insurance_provider_id', $insuranceProvider->id)->count();
-            $brokerInvoiceNumber = $this->generateUniqueBrokerInvoiceNumber($insuranceProvider->code, $insuranceProviderLeadCount, $sendUpdateLog, $isBrokerInvoiceShowOnly);
+            $brokerInvoiceNumber = $this->generateUniqueBrokerInvoiceNumber($insuranceProvider, $sendUpdateLog, $isBrokerInvoiceShowOnly);
             if (! $brokerInvoiceNumber) {
                 return false;
             }
