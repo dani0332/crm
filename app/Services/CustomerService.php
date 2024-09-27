@@ -2,8 +2,9 @@
 
 namespace App\Services;
 
-use App\Enums\GenericRequestEnum;
 use App\Models\Customer;
+use Illuminate\Support\Arr;
+use App\Enums\GenericRequestEnum;
 use App\Models\CustomerAdditionalContact;
 
 class CustomerService extends BaseService
@@ -306,5 +307,41 @@ class CustomerService extends BaseService
     public function getCustomerCampaignFollowups($id)
     {
         return Customer::select('id', 'email', 'campaign_followups', 'last_followup_sent_at')->where('id', $id)->first();
+    }
+
+    public function createCustomerIfNotExists($customerData)
+    {
+        $existingCustomer = CustomerService::getCustomerByEmail($customerData['email']);
+
+        if (! $existingCustomer) {
+            $customer = Customer::create(Arr::only($customerData, ['first_name', 'last_name', 'email', 'mobile_no']));
+        }
+
+        return $customer ?? $existingCustomer;
+    }
+
+    public function addAdditionalContactsIfNotExists($customer, $additionalContacts)
+    {
+        // add additional emails
+        if (isset($additionalContacts['additional_emails']) && count($additionalContacts['additional_emails'])) {
+            foreach ($additionalContacts['additional_emails'] as $additionalEmail) {
+                $isExistEmail = CustomerAdditionalContact::where('customer_id', $customer->id)
+                    ->where('value', $additionalEmail)->where('key', GenericRequestEnum::EMAIL)->first();
+                if (! $isExistEmail) {
+                    $customer->additionalContactInfo()->create(['key' => 'email', 'value' => $additionalEmail]);
+                }
+            }
+        }
+
+        // add additional mobile numbers
+        if (isset($additionalContacts['additional_mobiles']) && count($additionalContacts['additional_mobiles'])) {
+            foreach ($additionalContacts['additional_mobiles'] as $additionalMobile) {
+                $isExistMobile = CustomerAdditionalContact::where('customer_id', $customer->id)
+                    ->where('value', $additionalMobile)->where('key', GenericRequestEnum::MOBILE_NO)->first();
+                if (! $isExistMobile) {
+                    $customer->additionalContactInfo()->create(['key' => 'mobile_no', 'value' => $additionalMobile]);
+                }
+            }
+        }
     }
 }
