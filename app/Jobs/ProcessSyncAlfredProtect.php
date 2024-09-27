@@ -28,7 +28,6 @@ class ProcessSyncAlfredProtect implements ShouldQueue
     {
         $lead = $lead->load('embeddedTransactions', 'embeddedTransactions.product', 'embeddedTransactions.product.embeddedProduct', 'emirate', 'customer');
         $this->quoteObject = $lead;
-        $this->onQueue('renewals');
     }
 
     /**
