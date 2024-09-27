@@ -512,7 +512,7 @@ class SageApiService
 
         $this->updateAndLogQuoteStatus($quote, $sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, $sageRequest->userId);
 
-        (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
+        $this->scheduleSageProcesses($sageRequest->insurerID);
         info('Policy Book : postBookPolicyToSage : scheduleSageProcesses triggered for Insurer - '.$sageRequest->insurerID );
 
         return ['status' => true, 'message' => 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!'];
