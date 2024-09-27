@@ -10,7 +10,6 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TiersEnum;
 use App\Models\CarQuote;
-use App\Models\User;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -170,16 +169,10 @@ class DashboardService extends BaseService
 
         $teamWiseLeadsAssignedAverage = [];
 
-        $users = User::join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
-            ->select('users.id', 'users.name', 'ut.team_id as u_team_id')
-            ->join('roles as r', 'r.id', '=', 'mr.role_id')
-            ->join('user_team as ut', 'ut.user_id', '=', 'users.id')
-            ->where('users.is_active', 1)
-            ->where('r.name', RolesEnum::CarAdvisor)
-            ->get();
+        $advisors = $this->getAdvisorsWithTeamId(RolesEnum::CarAdvisor);
 
         foreach ($filters['teams'] as $team) {
-            $teamUserIds = $users->filter(fn ($user) => $user->u_team_id == $team->id)->pluck('id');
+            $teamUserIds = $advisors->filter(fn ($user) => $user->u_team_id == $team->id)->pluck('id');
             $usersCount = count($teamUserIds);
 
             $leadsCount = $todaysLeads->whereIn('advisor_id', array_unique($teamUserIds->toArray()))->count();
