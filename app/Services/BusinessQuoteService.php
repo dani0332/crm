@@ -370,7 +370,7 @@ class BusinessQuoteService extends BaseService
         }
 
         foreach ($searchProperties as $item) {
-            if (! empty($request[$item]) && $item != 'created_at') {
+            if (! empty($request[$item]) && $item != 'created_at' && $item != 'company_name') {
                 if ($request[$item] == 'null') {
                     $this->query->whereNull($item);
                 } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
