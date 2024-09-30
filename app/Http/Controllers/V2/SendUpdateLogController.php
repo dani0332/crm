@@ -412,7 +412,7 @@ class SendUpdateLogController extends Controller
         }
 
         info('fn:sendUpdate - Calling updateSageProcessForDispatching function through sendUpdate - Send Update UUID: '.$sendUpdateLog->uuid);
-        app(SendUpdateLogService::class)->updateSageProcessForDispatching($sendUpdateRequest, $sendUpdateLog, $endorsementResponse['sageRequestPayload']);
+        app(SendUpdateLogService::class)->updateSageProcessForDispatching($sendUpdateRequest->toArray(), $sendUpdateLog, $endorsementResponse['sageRequestPayload']);
 
         app(SageApiService::class)->scheduleSageProcesses($endorsementResponse['sageRequestPayload']->insurerID);
         info('fn:sendUpdate - fn:scheduleSageProcesses triggered for Insurer - '.$endorsementResponse['sageRequestPayload']->insurerID);
