@@ -217,11 +217,10 @@ const calculateTotalAmount = () => {
 const verifyPaidEditable = computed(() => {
 
   return payment => {
-    console.log('paymentMethodsForm.frequency',payment.frequency);  
-    
+       
     if (props.payments.length > 0) {
       
-      if(payment.frequency === 'split_payments'){
+      if(payment.frequency === page.props.paymentFrequencyEnum.SPLIT_PAYMENTS){
         let isAllPaid = payment.payment_splits.filter(
           item => item.payment_status_id === props.paymentStatusEnum.PAID,
         );
@@ -1607,7 +1606,6 @@ const addPaymentModal = () => {
 };
 
 const retrySplitPaymentModal = (process_job_id, message) => {
-  console.log('retrySplitPaymentModal', process_job_id, message);
   retryProcessJobId.value = process_job_id;
   retryPaymentErrorMessage.value = message;
   isRetryModalOpen.value = true;
@@ -1649,7 +1647,6 @@ const editPaymentModal = (
   sr_no,
   capture_approval,
 ) => {
-  console.log('here',isPaidEditable.value);
   if (
     sr_no === 0 &&
     payment.payment_status.id === props.paymentStatusEnum.PAID &&
