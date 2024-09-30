@@ -74,6 +74,8 @@ class ConversionAsAtReportService extends BaseService
                 )
                 ->join("{$detailAlias} as pqd", "{$alias}.id", "pqd.{$model->getForeignKey()}")
                 ->join('quote_batches', 'quote_batches.id', "{$alias}.quote_batch_id")
+                ->join('users', 'users.id', "{$alias}.advisor_id")
+                ->where('users.is_active', true)
                 ->whereNotIn("{$alias}.source", [
                     LeadSourceEnum::IMCRM,
                     LeadSourceEnum::INSLY,
@@ -169,7 +171,6 @@ class ConversionAsAtReportService extends BaseService
             if ($filters->tag == QuoteSegmentEnum::SIC->value) {
                 $query->where('quote_tags.name', ucwords(QuoteSegmentEnum::SIC->value));
             } else {
-
                 $query->whereIn('quote_tags.name', ['APUA', 'SPUA']);
             }
         }
