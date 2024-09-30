@@ -465,15 +465,46 @@
                     ->toJson(),
             );
 
-            // $quotePlan->addons = isset($addons) ? $addons[$quotePlan->id] : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
+            $quotePlan->addons = (isset($addons[$quotePlan->id])) ? json_decode(json_encode($addons[$quotePlan->id])) : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
+
+            foreach ($quotePlan->addons as &$addon) {
+
+                $addon = (object) $addon;
+                //set default value to excluded
+                $addon->value = "Excluded";
+
+                //set default values
+                $addon->price = 0;
+                $addon->vat = 0;
+
+                if(sizeof($addon->travelAddonOption))
+                {
+                    //replace exclude with selected value if found
+
+                    foreach ($addon->travelAddonOption as $index =>  $travelAddonOption) {
+
+                        $travelAddonOption = (object) $travelAddonOption;
+
+                        if($travelAddonOption->isSelected) {
+                            $addon->value = 'Included';
+                            $addonsPrice += $travelAddonOption->price;
+                            $addonsVat += $travelAddonOption->vat;
+                            $addon->price = $travelAddonOption->price;
+                            $addon->vat   = $travelAddonOption->vat;
+                            break;//only one value will be selected
+                        }
+                    }
+                }
+            }
+
             $discountPremium = $vat = [];
 
             // Discount Premium and VAT new Implementation
 
-            $quotePlan->vat = $quotePlan->vat;
+            $quotePlan->vat += $addonsVat;
             //$quotePlan->vat = 100;
-            $quotePlan->total = $quotePlan->actualPremium + $quotePlan->vat;
-            $quotePlan->discountPremium = $quotePlan->discountPremium;
+            $quotePlan->discountPremium += $addonsPrice;
+            $quotePlan->total = $quotePlan->discountPremium + $quotePlan->vat;
 
             foreach ($quotePlan->benefits as &$benefit) {
                 $benefit = (object) $benefit;
@@ -576,6 +607,66 @@
                 'code' => 'travelTreatmentTestedPositive',
                 'title' => 'Treatment if tested positive - hospitalized for more than 24 hrs',
                 'type' => 'covid19',
+            ],
+            [
+                "code" => "heading",
+                "title" => "Optional Covers",
+                "type" => ""
+            ],
+            [
+                "code" => "hazardousActivitiesCover",
+                "title" => "Hazardous Activities Cover",
+                "type" => "addons"
+            ],
+            [
+                "code" => "adventureSportsCover",
+                "title" => "Adventure Sports Cover",
+                "type" => "addons"
+            ],
+            [
+                "code" => "winterSportsCover",
+                "title" => "Winter Sports Cover",
+                "type" => "addons"
+            ],
+            [
+                "code" => "waterSportsCover",
+                "title" => "Water Sports Cover",
+                "type" => "addons"
+            ],
+            [
+                "code" => "businessCover",
+                "title" => "Business Cover",
+                "type" => "addons"
+            ],
+            [
+                "code" => "golfCover",
+                "title" => "Golf Cover",
+                "type" => "addons"
+            ],
+            [
+                "code" => "terrorismCover",
+                "title" => "Terrorism Cover",
+                "type" => "addons"
+            ],
+            [
+                "code" => "excessWaiver",
+                "title" => "Excess Waiver",
+                "type" => "addons"
+            ],
+            [
+                "code" => "rentalCarExcess",
+                "title" => "Rental Car Excess",
+                "type" => "addons"
+            ],
+            [
+                "code" => "trekkingGIG",
+                "title" => "Trekking (GIG)",
+                "type" => "addons"
+            ],
+            [
+                "code" => "safariGIG",
+                "title" => "Safari (GIG)",
+                "type" => "addons"
             ],
             [
                 'code' => 'actualPremium',
