@@ -233,6 +233,8 @@ class InstantAlfredService extends BaseService
 
         $partialQuery = $modelData['query'];
 
+        $partialQuery->whereNotNull('chat_initiated_at');
+        
         $quoteId = null;
         if ($request->has('quoteId') && $request->quoteId != null) {
             if (strpos($request->quoteId, '-') !== false) {
