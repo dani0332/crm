@@ -25,7 +25,6 @@ class CycleQuoteObserver
             $dirty = [...$dirty, 'transaction_approved_at' => $cycleQuote->transaction_approved_at];
         }
 
-
         if (
             $cycleQuote->isDirty('quote_status_id') &&
             in_array($cycleQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])

@@ -53,7 +53,6 @@ class LifeQuoteObserver
             $this->syncLeadEntries($lifeQuote->uuid);
         }
 
-
         if (
             $lifeQuote->isDirty('quote_status_id') &&
             in_array($lifeQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])

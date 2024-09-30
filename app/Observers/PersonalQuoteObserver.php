@@ -4,7 +4,6 @@ namespace App\Observers;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Events\BikeQuoteAdvisorUpdated;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
