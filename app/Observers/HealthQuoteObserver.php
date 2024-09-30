@@ -58,6 +58,12 @@ class HealthQuoteObserver
 
         if (isset($dirty['quote_status_id']) && $healthQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             $this->syncLeadEntries($healthQuote->uuid);
+        }
+
+        if (
+            $healthQuote->isDirty('quote_status_id') &&
+            in_array($healthQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
+        ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Health, 'quoteUID' => $healthQuote->uuid]);
         }
     }

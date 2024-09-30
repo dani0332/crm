@@ -27,7 +27,7 @@ class YachtQuoteObserver
 
         if (
             $yachtQuote->isDirty('quote_status_id') &&
-            $yachtQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
+            in_array($yachtQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Yacht, 'quoteUID' => $yachtQuote->uuid]);
         }

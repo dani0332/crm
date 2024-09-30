@@ -25,9 +25,10 @@ class CycleQuoteObserver
             $dirty = [...$dirty, 'transaction_approved_at' => $cycleQuote->transaction_approved_at];
         }
 
+
         if (
             $cycleQuote->isDirty('quote_status_id') &&
-            $cycleQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
+            in_array($cycleQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Cycle, 'quoteUID' => $cycleQuote->uuid]);
         }

@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Events\BikeQuoteAdvisorUpdated;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
@@ -71,9 +72,10 @@ class PersonalQuoteObserver
                 Log::error('PersonalQuoteObserver Error: '.$e->getMessage());
             }
         }
+
         if (
             $personalQuote->isDirty('quote_status_id') &&
-            $personalQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
+            in_array($personalQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => $personalQuote->quote_type_id, 'quoteUID' => $personalQuote->uuid]);
         }

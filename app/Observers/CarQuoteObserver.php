@@ -65,6 +65,12 @@ class CarQuoteObserver
 
         if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             $this->syncLeadEntries($lead->uuid);
+        }
+
+        if (
+            $lead->isDirty('quote_status_id') &&
+            in_array($lead->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
+        ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Car, 'quoteUID' => $lead->uuid]);
         }
     }

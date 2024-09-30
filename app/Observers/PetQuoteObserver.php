@@ -27,7 +27,7 @@ class PetQuoteObserver
 
         if (
             $petQuote->isDirty('quote_status_id') &&
-            $petQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
+            in_array($petQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Pet, 'quoteUID' => $petQuote->uuid]);
         }

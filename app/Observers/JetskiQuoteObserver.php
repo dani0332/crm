@@ -27,7 +27,7 @@ class JetskiQuoteObserver
 
         if (
             $jetskiQuote->isDirty('quote_status_id') &&
-            $jetskiQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
+            in_array($jetskiQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Jetski, 'quoteUID' => $jetskiQuote->uuid]);
         }

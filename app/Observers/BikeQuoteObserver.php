@@ -27,7 +27,7 @@ class BikeQuoteObserver
 
         if (
             $bikeQuote->isDirty('quote_status_id') &&
-            $bikeQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
+            in_array($bikeQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Bike, 'quoteUID' => $bikeQuote->uuid]);
         }
