@@ -278,7 +278,7 @@ class SageApiService
 
     public function bookReversalEndorsementOnSage($request, $preparedData, $sageRequestPayload, $sageLogsArray, $reversalInvoiceLogs, $sendUpdateLog): array
     {
-        info('fn bookReversalEndorsementOnSage - Non Up-front Endorsement Booking Start on Sage');
+        info('fn bookReversalEndorsementOnSage - Reversal and Correction Endorsement Booking Start on Sage');
         info('fn bookReversalEndorsementOnSage - Payment frequency : '.$preparedData['payment']->frequency);
 
         $isOnlyDiscountReversal = false;
@@ -354,6 +354,7 @@ class SageApiService
                 if ($isOnlyDiscountReversal && $cpdInvoiceType == SageEnum::SCT_REVERSAL) {
                     // Create AR Discount Invoice
                     $extraDetails['sage_request_type'] = SageEnum::SRT_CREATE_AR_DISC_INV;
+                    $extraDetails['is_reversal_discount'] = true;
                     $createARInvoiceDis = $this->createARInvoiceDis([$sageRequestPayload, $preparedData['sendUpdateLog'], $sageLogsArray, $extraDetails]);
                     if (! $createARInvoiceDis['status']) {
                         return $createARInvoiceDis;
@@ -373,7 +374,7 @@ class SageApiService
             }
         }
 
-        info('fn bookReversalEndorsementOnSage - Non Up-front Endorsement Booking Completed on Sage');
+        info('fn bookReversalEndorsementOnSage - Reversal and Correction Endorsement Booking Completed on Sage');
 
         return ['status' => true, 'message' => 'Non Up-front Endorsement Booking Completed on Sage'];
     }
@@ -1274,6 +1275,7 @@ class SageApiService
         $sageRequestDataArray = array_pad($sageRequestDataArray, 4, []);
         [$sageRequest, $quote, $sageLogArray, $extraDetails] = $sageRequestDataArray;
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
+        $isReversalDiscount = isset($extraDetails['is_reversal_discount']) ?? false;
         $isDiscountApplied = $sageRequest->discount > 0;
 
         $sageEntryType = $extraDetails['sage_entry_type'] ?? SageEnum::SCT_STRAIGHT;
@@ -1294,7 +1296,7 @@ class SageApiService
         }
 
         /* createARInvoiceDis */
-        if ($isDiscountApplied) {
+        if ($isDiscountApplied || $isReversalDiscount) {
             info('########## Start createARInvoiceDis for : '.$quote->code.' ##########');
             $isLiveApiCallStep10 = true;
             if (isset($sageLogArray[$stepsMapping['step_1']]) && $sageLogArray[$stepsMapping['step_1']]['status'] == SageEnum::STATUS_SUCCESS) {
