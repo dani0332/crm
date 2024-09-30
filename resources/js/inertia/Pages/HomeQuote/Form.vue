@@ -19,9 +19,9 @@ const quoteForm = useForm({
   mobile_no: props.quote?.mobile_no || null,
   premium: props.quote?.premium || null,
   policy_number: props.quote?.policy_number || null,
-  iam_possesion_type_id: props.quote?.home_quote?.iam_possesion_type_id || null,
-  ilivein_accommodation_type_id:
-    props.quote?.home_quote?.ilivein_accommodation_type_id || null,
+  ownership_status_possesion_type_id: props.quote?.home_quote?.ownership_status_possesion_type_id || null,
+  type_of_property_accommodation_type_id:
+    props.quote?.home_quote?.type_of_property_accommodation_type_id || null,
   address: props.quote?.home_quote?.address || null,
   has_contents: props.quote?.home_quote?.has_contents || null,
   has_building: props.quote?.home_quote?.has_building || null,
@@ -51,7 +51,7 @@ const { isRequired, isEmail, isMobileNo } = useRules();
 
 const handleConditionalFields = () => {
   if (
-    quoteForm.iam_possesion_type_id !== props.homePossessionTypeEnum.LANDLORD
+    quoteForm.ownership_status_possesion_type_id !== props.homePossessionTypeEnum.LANDLORD
   ) {
     quoteForm.has_building = false;
   }
@@ -204,12 +204,12 @@ const locationAreaOptions = computed(() => {
             class="w-full"
           />
         </x-field>
-        <x-field label="I AM" required>
+        <x-field label="OWNERSHIP STATUS" required>
           <x-select
-            v-model="quoteForm.iam_possesion_type_id"
+            v-model="quoteForm.ownership_status_possesion_type_id"
             :rules="[isRequired]"
             :options="
-              dropdownSource.iam_possesion_type_id.map(item => ({
+              dropdownSource.ownership_status_possesion_type_id.map(item => ({
                 value: item.id,
                 label: item.text,
               }))
@@ -218,12 +218,12 @@ const locationAreaOptions = computed(() => {
             class="w-full"
           />
         </x-field>
-        <x-field label="I LIVE IN" required>
+        <x-field label="TYPE OF PROPERTY" required>
           <x-select
-            v-model="quoteForm.ilivein_accommodation_type_id"
+            v-model="quoteForm.type_of_property_accommodation_type_id"
             :rules="[isRequired]"
             :options="
-              dropdownSource.ilivein_accommodation_type_id.map(item => ({
+              dropdownSource.type_of_property_accommodation_type_id.map(item => ({
                 value: item.id,
                 label: item.text,
               }))
@@ -262,7 +262,7 @@ const locationAreaOptions = computed(() => {
           <x-field
             label="HAS BUILDING"
             v-if="
-              quoteForm.iam_possesion_type_id == homePossessionTypeEnum.LANDLORD
+              quoteForm.ownership_status_possesion_type_id == homePossessionTypeEnum.LANDLORD
             "
           >
             <x-checkbox
