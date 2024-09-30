@@ -24,6 +24,7 @@ use App\Models\QuoteFlowDetails;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteFlowType;
 use App\Enums\QuoteStatusEnum;
+use App\Jobs\NBMotorFollowupEmailJob;
 
 class CarEmailService extends BaseService
 {
@@ -82,7 +83,8 @@ class CarEmailService extends BaseService
         if (! $triggerOnlyWorkflow) {
             if ($lead->advisor_id) {
                 $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
-                $this->sendNBMotorWorkFlow( $lead);
+                NBMotorFollowupEmailJob::dispatch($lead->uuid)->delay(Carbon::now()->addMinutes(2));
+                info('NBMotorFollowupEmailJob - Dispatched - Ref ID:'.$lead->uuid.' | Time: '.now());
             } else {
                 info('sendCarOCBIntroEmail - sendNonAdvisorIntroEmail - Ref ID:'.$lead->uuid.' Time: '.now());
                 $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId);
@@ -342,7 +344,6 @@ class CarEmailService extends BaseService
                 info("NBMotorWorkFlow response: {$response->status_code} | Ref-ID: {$lead->uuid} |Time: ".now());
                 $lead->nb_flow_executed_at = now();
                 info("NBMotorWorkFlow lead ref-id: {$lead->uuid}| Quote StatusID: {$lead->quote_status_id} | Time: ".now());
-                $lead->quote_status_id = QuoteStatusEnum::FollowedUp;
                 $lead->save();
 
                 if(!empty($response->headers['Run-Id'])) {

@@ -10,6 +10,7 @@ use Illuminate\Queue\SerializesModels;
 use App\Models\CarQuote;
 use App\Enums\QuoteStatusEnum;
 use App\Services\EmailServices\CarEmailService;
+use App\Enums\LeadSourceEnum;
 
 class NBMotorFollowupEmailJob implements ShouldQueue
 {
@@ -42,13 +43,15 @@ class NBMotorFollowupEmailJob implements ShouldQueue
                 return;
             }
 
-            $eligibleStatuses = [QuoteStatusEnum::Quoted];
-            if (in_array($carLead->quote_status_id, $eligibleStatuses)) {
+            $eligibleStatuses = [QuoteStatusEnum::Quoted,QuoteStatusEnum::NewLead];
+            $leadSources = [LeadSourceEnum::REVIVAL,LeadSourceEnum::REVIVAL_PAID,LeadSourceEnum::REVIVAL_REPLIED];
+            if (in_array($carLead->quote_status_id, $eligibleStatuses) && !in_array($carLead->source,$leadSources)) {
                 info("Sending NB motor email follow-ups for Ref-ID: {$carLead->uuid}, Lead Status ID: {$carLead->quote_status_id} | Time: ".now());
-                $carEmailService->triggerNBMotorWorkFlow($carLead);
+                $carEmailService->sendNBMotorWorkFlow($carLead);
                 $carLead->quote_status_id = QuoteStatusEnum::FollowedUp;
                 $carLead->save();
             } else {
+                info("NBMotorFollowupEmailJob - Car Lead did not trigger NB motor WorkFlow due to ineligible source (Source: {$carLead->source}) - Ref ID: {$carLead->uuid} | Time: ".now());
                 info("NBMotorFollowupEmailJob - Car Lead did not trigger OCA WorkFlow due to ineligible status (Status ID: {$carLead->quote_status_id}) - Ref ID: {$carLead->uuid} | Time: ".now());
             }
         } catch (\Throwable $th) {
