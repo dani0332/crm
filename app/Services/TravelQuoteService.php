@@ -852,21 +852,21 @@ class TravelQuoteService extends BaseService
                                 "id" => 103,
                                 "value" => "Included",
                                 "description" => null,
-                                "price" => 0,
+                                "price" => 500,
                                 "vat" =>  0,
-                                "isSelected" => false
+                                "isSelected" => true
                             ]
                         ]
                     ],
                 ];
 
-                if (isset($getdecodeContents->quotes->plans['adult'])) {
+                if (isset($getdecodeContents->quotes->plans->adult)) {
                     //for Travel OCB Intro Email
-                    foreach ($getdecodeContents->quotes->plans['adult'] as $adultPlan) {
-                        $adultPlan['addons'] = $addons;
+                    foreach ($getdecodeContents->quotes->plans->adult as $adultPlan) {
+                        $adultPlan->addons = $addons;
                     }
-                    foreach ($getdecodeContents->quotes->plans['senior'] as $seniorPlan) {
-                        $seniorPlan['addons'] = $addons;
+                    foreach ($getdecodeContents->quotes->plans->senior as $seniorPlan) {
+                        $seniorPlan->addons = $addons;
                     }
                 } else if (! is_array($getdecodeContents)) {
                     foreach ($getdecodeContents?->quotes?->plans as $plan) {
