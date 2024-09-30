@@ -3,6 +3,8 @@
 namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
+use App\Jobs\CourtesyEmailRequestJob;
 use App\Models\JetskiQuote;
 
 class JetskiQuoteObserver
@@ -21,6 +23,13 @@ class JetskiQuoteObserver
                 $jetskiQuote->update(['transaction_approved_at' => now()]);
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $jetskiQuote->transaction_approved_at];
+        }
+
+        if (
+            $jetskiQuote->isDirty('quote_status_id') &&
+            $jetskiQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
+        ) {
+            CourtesyEmailRequestJob::dispatch(['quoteTypeId' => QuoteTypeId::Jetski, 'quoteUID' => $jetskiQuote->uuid]);
         }
     }
 }

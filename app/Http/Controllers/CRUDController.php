@@ -1611,8 +1611,8 @@ class CRUDController extends Controller
         }
 
         // courtesy email
-        $lobs = [quoteTypeCode::Business];
-        if ($oldEntity->quote_status_id != $entity->quote_status_id && $entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! in_array($request->modelType, $lobs)) {
+        /*$lobs = [quoteTypeCode::Business];*/
+       /* if ($oldEntity->quote_status_id != $entity->quote_status_id && $entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! in_array($request->modelType, $lobs)) {
             $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($request->modelType));
             $quoteData['quoteTypeId'] = $quoteTypeId;
             $quoteData['quoteUID'] = $request->quote_uuid;
@@ -1620,7 +1620,8 @@ class CRUDController extends Controller
             $response = Capi::request('/api/v1-trigger-courtesy-email-sib-workflow', 'post', $quoteData);
 
             info('Courtesy Email CAPI Response - : '.json_encode($response));
-        }
+        }*/
+
         // Update payment allocation status
         app(CentralService::class)->updatePaymentAllocation($request->modelType, $request->quote_uuid);
         if ($entity->health_team_type != null && $entity->quote_status_id == QuoteStatusEnum::Qualified) {

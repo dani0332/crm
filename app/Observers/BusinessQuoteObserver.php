@@ -4,6 +4,8 @@ namespace App\Observers;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
+use App\Jobs\CourtesyEmailRequestJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\BusinessQuote;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -48,6 +50,7 @@ class BusinessQuoteObserver
 
         if (isset($dirty['quote_status_id']) && $businessQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             $this->syncLeadEntries($businessQuote->uuid);
+            CourtesyEmailRequestJob::dispatch(['quoteTypeId' => QuoteTypeId::Business, 'quoteUID' => $businessQuote->uuid]);
         }
     }
 }
