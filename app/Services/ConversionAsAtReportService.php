@@ -235,8 +235,6 @@ class ConversionAsAtReportService extends BaseService
                 'users.id as advisorId',
                 'users.name as advisor_name'
             )
-            ->join('users', 'users.id', "{$alias}.advisor_id")
-            ->where('users.is_active', true)
             ->whereNotNull("{$alias}.advisor_id")
             ->orderBy('advisor_name', 'asc')
             ->groupBy('advisorId');
@@ -255,7 +253,6 @@ class ConversionAsAtReportService extends BaseService
                 'teams.id as sub_team_id',
                 'teams.name as sub_team'
             )
-            ->join('users', 'users.id', "{$alias}.advisor_id")
             ->join('teams', 'users.sub_team_id', '=', 'teams.id')
             ->where('teams.type', TeamTypeEnum::SUB_TEAM)
             ->whereNotNull("{$alias}.advisor_id")
@@ -352,7 +349,6 @@ class ConversionAsAtReportService extends BaseService
             ->join('teams', 'teams.id', '=', 'user_team.team_id')
             ->where('teams.type', TeamTypeEnum::TEAM)
             ->where('teams.parent_team_id', $teamType)
-            ->where('is_active', 1)
             ->whereNotNull("{$alias}.advisor_id")
             ->orderBy('team', 'asc')
             ->groupBy('team_id');
