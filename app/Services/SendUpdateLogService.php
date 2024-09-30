@@ -921,10 +921,10 @@ class SendUpdateLogService
             $update = quoteStatusCode::POLICY_CANCELLED;
         }
 
-        if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business])) {
             $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
                 DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE])->toArray();
-        } elseif (in_array($quoteTypeId, [QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
+        } elseif ($quoteTypeId == QuoteTypeId::Business) {
             if ($action == SendUpdateLogStatusEnum::ACTION_SNBU) {
                 $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
                     DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE])->toArray();
