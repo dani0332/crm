@@ -228,6 +228,7 @@ class TravelController extends Controller
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
         $isAmlClearedForQuote = $record->aml_status === AMLStatusCode::AMLScreeningCleared;
         $amlStatusName = AMLStatusCode::getName($record->aml_status);
+        $access = $this->travelQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
 
         return inertia('TravelQuote/Show', [
             'quote' => $record,
@@ -305,6 +306,7 @@ class TravelController extends Controller
             'linkedQuoteDetails' => $linkedQuoteDetails,
             'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
             'paymentDocument' => $paymentDocument,
+            'access' => $access,
         ]);
     }
 
@@ -474,6 +476,8 @@ class TravelController extends Controller
                 $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
                 $listQuotePlanBenefitsCovid19 = $listQuotePlan->benefits->covid19;
                 $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
+                $addons = $listQuotePlan->addons;
+                $vat = $listQuotePlan->vat;
 
                 foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
                     $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
@@ -498,6 +502,9 @@ class TravelController extends Controller
             'listQuotePlansMembers' => $listQuotePlansMembers,
             'listQuotePlanBenefitstravelInconvenienceCover' => $listQuotePlanBenefitstravelInconvenienceCover,
             'listQuotePlanBenefitsemergencyMedicalCover' => $listQuotePlanBenefitsemergencyMedicalCover,
+            'addons' => $addons,
+            'id' => $planId,
+            'vat' => $vat
         ];
 
         return response()->json($data, 200);
@@ -536,5 +543,27 @@ class TravelController extends Controller
     public function renewalsUploadCreate(TravelRenewalsUploadRequest $request)
     {
         return $this->renewalQuoteService->travelRenewalsUploadCreate($request->validated());
+    }
+
+    public function travelPlanUpdateManualProcess(Request $request)
+    {
+        $response = app(TravelQuoteService::class)->travelPlanModify($request);
+
+        $message = 'Travel Plan has not been updated';
+
+        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
+            $message = 'Plan has been updated';
+
+            return redirect()->back()->with('message', $message);
+        } else {
+            if (isset($response->message)) {
+                $responseMessage = $response->message;
+            } else {
+                $responseMessage = $response;
+            }
+            $message = 'Travel Plan has not been updated '.$responseMessage;
+        }
+
+        return redirect()->back()->with('error', $message);
     }
 }

@@ -31,19 +31,24 @@ use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use PDF;
+use App\Models\ApplicationStorage;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\PaymentStatusEnum;
 
 class TravelQuoteService extends BaseService
 {
     protected $query;
     protected $leadAllocationService;
+    protected $httpService;
 
     use AddPremiumAllLobs;
     use GenericQueriesAllLobs;
     use RolePermissionConditions;
 
-    public function __construct(LeadAllocationService $leadAllocationService)
+    public function __construct(LeadAllocationService $leadAllocationService, HttpRequestService $httpService)
     {
         $this->leadAllocationService = $leadAllocationService;
+        $this->httpService = $httpService;
         $this->query = TravelQuote::as('tqr')->select(
             'tqr.id',
             'tqr.uuid',
@@ -817,6 +822,66 @@ class TravelQuoteService extends BaseService
                 $getContents = $kenRequest->getBody();
                 $getdecodeContents = json_decode($getContents);
 
+                //Todo - To remove - Addons testing purposes
+                $addons = [
+                    [
+                        "id" => 100,
+                        "code" => "hazardousActivitiesCover",
+                        "text" => "Hazardous Activities Cover",
+                        "description" => "This cover provides protection for high-risk leisure activities typically not covered under standard travel insurance policies, such as extreme sports, bungee jumping, scuba diving, and mountain climbing, paragliding, weightlifting, martial arts, shark diving, lacrosse, rugby, mountain biking off-road, rock climbing, trekking between 4k-5.5k meters etc.",
+                        "type" => "checkbox",
+                        "travelAddonOption" => [
+                            [
+                                "id" => 101,
+                                "value" => "Included",
+                                "description" => null,
+                                "price" => 0,
+                                "vat" =>  0,
+                                "isSelected" => false
+                            ]
+                        ]
+                    ],
+                    [
+                        "id" => 102,
+                        "code" => "adventureSportsCover",
+                        "text" => "Adventure Sports Cover",
+                        "description" => "Extending cover to include adventure and high-risk leisure activities including bungee jumping, cliff diving, coasteering, expeditions to remote areas, American football, rugby, heli-skiing, solo climbing, freestyle climbing, offshore sailing, yachting, winter and water sports, trekking, safari, etc.",
+                        "type" => "checkbox",
+                        "travelAddonOption" => [
+                            [
+                                "id" => 103,
+                                "value" => "Included",
+                                "description" => null,
+                                "price" => 0,
+                                "vat" =>  0,
+                                "isSelected" => false
+                            ]
+                        ]
+                    ],
+                ];
+
+                if (isset($getdecodeContents->quotes->plans['adult'])) {
+                    //for Travel OCB Intro Email
+                    foreach ($getdecodeContents->quotes->plans['adult'] as $adultPlan) {
+                        $adultPlan['addons'] = $addons;
+                    }
+                    foreach ($getdecodeContents->quotes->plans['senior'] as $seniorPlan) {
+                        $seniorPlan['addons'] = $addons;
+                    }
+                } else if (! is_array($getdecodeContents)) {
+                    foreach ($getdecodeContents?->quotes?->plans as $plan) {
+                        $plan->addons = $addons;
+                    }
+                } else {
+                    //for Travel OCB Intro Email
+                    foreach ($getdecodeContents['adult'] as $adultPlan) {
+                        $adultPlan['addons'] = $addons;
+                    }
+                    foreach ($getdecodeContents['senior'] as $seniorPlan) {
+                        $seniorPlan['addons'] = $addons;
+                    }
+                }
+
                 return $getdecodeContents;
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
@@ -1061,5 +1126,168 @@ class TravelQuoteService extends BaseService
             ->first();
 
         return $transactionApprovedAudit;
+    }
+
+    public function travelPlanModify($request)
+    {
+        if (($response = $this->isPlanModifyAllowed($request->all())) === true) {
+            $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-travel-quote-plan';
+            $apiToken = config('constants.KEN_API_TOKEN');
+            $apiTimeout = config('constants.KEN_API_TIMEOUT');
+            $apiUserName = config('constants.KEN_API_USER');
+            $apiPassword = config('constants.KEN_API_PWD');
+
+            if (isset($request->is_create)) {
+                if ($request->is_create == 1) {
+                    $discountedPremium = $request->actual_premium;
+                    $isUpdate = false;
+                } else {
+                    $discountedPremium = $request->discounted_premium;
+                    $isUpdate = true;
+                }
+            } else {
+                $discountedPremium = $request->actual_premium;
+            }
+
+            $addons = [];
+            if ($request->addons != null && count($request->addons) > 0) {
+                $addons = $request->addons;
+            } else {
+                $addons = [];
+            }
+
+            $travelPlanData = [
+                'quoteUID' => $request->travel_quote_uuid,
+                'update' => $isUpdate,
+                'url' => strval($request->current_url),
+                'ipAddress' => request()->ip(),
+                'userAgent' => request()->header('User-Agent'),
+                'userId' => strval(auth()->id()),
+                'plans' => [
+                    [
+                        'planId' => (int) $request->travel_plan_id,
+                        'actualPremium' => (float) $request->actual_premium,
+                        'discountPremium' => (float) $discountedPremium,
+                        'addons' => $addons,
+                    ],
+                ],
+            ];
+
+            $apiCreds = [
+                'apiEndPoint' => $apiEndPoint,
+                'apiToken' => $apiToken,
+                'apiTimeout' => $apiTimeout,
+                'apiUserName' => $apiUserName,
+                'apiPassword' => $apiPassword,
+            ];
+
+            // $response = $this->httpService->processRequest($travelPlanData, $apiCreds);
+        }
+
+        return $response;
+    }
+
+    public function isPlanModifyAllowed($data)
+    {
+        if ($enablePlanValidation = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_PLAN_MODIFY_VALIDATION)->first()) {
+            if (! $enablePlanValidation->value) {
+                info('plan modification validation is disabled from backend');
+
+                return true;
+            }
+        }
+
+        $logPrefix = 'fn: isPlanModifyAllowed ';
+        $quote = TravelQuote::where('uuid', $data['travel_quote_uuid'])->with('paymentStatus')->first();
+        $paymentStatuses = [
+            PaymentStatusEnum::NEW,
+            PaymentStatusEnum::PENDING,
+            PaymentStatusEnum::DECLINED,
+            PaymentStatusEnum::AUTHORISED,
+            PaymentStatusEnum::PAID,
+            PaymentStatusEnum::PARTIALLY_PAID,
+            PaymentStatusEnum::OVERDUE,
+            PaymentStatusEnum::CREDIT_APPROVED,
+            PaymentStatusEnum::CANCELLED,
+            PaymentStatusEnum::REFUNDED,
+            PaymentStatusEnum::DISPUTED,
+            PaymentStatusEnum::FAILED,
+            PaymentStatusEnum::DRAFT,
+        ];
+
+        if (in_array($quote->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
+            if (auth()->user()->hasRole(RolesEnum::TravelAdvisor) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
+                info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
+
+                return true;
+            } elseif (auth()->user()->hasRole(RolesEnum::TravelManager) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
+                info($logPrefix.' plan modify allowed to travel manager for uuid '.$quote->uuid);
+
+                return true;
+            }
+        }
+
+        if (auth()->user()->hasAnyRole([RolesEnum::TravelManager, RolesEnum::TravelAdvisor]) && $quote->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
+            if (in_array($quote->payment_status_id, $paymentStatuses) || $quote->payment_status_id == '' || $quote->payment_status_id == null) {
+                info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
+
+                return true;
+            }
+        }
+
+        info($logPrefix.' plan modification is not allowed for uuid '.$quote->uuid);
+
+        return 'Plan Modification is not allowed';
+    }
+
+    public function updatedAccessAgainstPaymentStatus($record)
+    {
+        $paymentStatuses = [
+            PaymentStatusEnum::NEW,
+            PaymentStatusEnum::PENDING,
+            PaymentStatusEnum::DECLINED,
+            PaymentStatusEnum::AUTHORISED,
+            PaymentStatusEnum::PAID,
+            PaymentStatusEnum::PARTIALLY_PAID,
+            PaymentStatusEnum::OVERDUE,
+            PaymentStatusEnum::CREDIT_APPROVED,
+            PaymentStatusEnum::CANCELLED,
+            PaymentStatusEnum::REFUNDED,
+            PaymentStatusEnum::DISPUTED,
+            PaymentStatusEnum::FAILED,
+            PaymentStatusEnum::DRAFT,
+        ];
+
+        $access['travelAdvisorCanEdit'] = false;
+        $access['travelManagerCanEdit'] = false;
+
+        // Travel Advisor Validations
+        if (auth()->user()->hasRole(RolesEnum::TravelAdvisor) && ! empty($record->payment_status_id)) {
+            if (
+                in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) &&
+                $record->quote_status_id !== QuoteStatusEnum::PolicyIssued
+            ) {
+                $access['travelAdvisorCanEdit'] = true;
+            }
+        }
+
+        // Travel Manager Validations
+        if (auth()->user()->hasRole(RolesEnum::TravelManager) && ! empty($record->payment_status_id)) {
+            if (
+                in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) &&
+                $record->quote_status_id !== QuoteStatusEnum::PolicyIssued
+            ) {
+                $access['travelManagerCanEdit'] = true;
+            }
+        }
+
+        if (auth()->user()->hasAnyRole([RolesEnum::TravelManager, RolesEnum::TravelAdvisor]) && $record->quote_status_id !== QuoteStatusEnum::PolicyIssued) {
+            if ((! empty($record->payment_status_id) && in_array($record->payment_status_id, $paymentStatuses)) || $record->payment_status_id == '' || $record->payment_status_id == null) {
+                $access['travelAdvisorCanEdit'] = true;
+                $access['travelManagerCanEdit'] = true;
+            }
+        }
+
+        return $access;
     }
 }

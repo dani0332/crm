@@ -63,6 +63,7 @@ defineProps({
   travelDestinations: Object,
   isAmlClearedForQuote: Boolean,
   amlStatusName: String,
+  access: Object,
 });
 
 const modelClass = 'App\\Models\\TravelQuote';
@@ -802,12 +803,12 @@ const availablePlansTable = reactive({
       value: 'travelType',
     },
     {
-      text: 'Actual Price',
+      text: 'Price',
       value: 'actualPremium',
     },
     {
-      text: 'Price with VAT',
-      value: 'discountPremium',
+      text: 'Total Price',
+      value: 'premiumWithVat',
     },
     {
       text: 'Action',
@@ -832,12 +833,12 @@ const availableSeniorPlansTable = reactive({
       value: 'travelType',
     },
     {
-      text: 'Actual Price',
+      text: 'Price',
       value: 'actualPremium',
     },
     {
-      text: 'Price with VAT',
-      value: 'discountPremium',
+      text: 'Total Price',
+      value: 'premiumWithVat',
     },
     {
       text: 'Action',
@@ -1061,6 +1062,18 @@ const onCopyText = text => {
       title: 'Link copied to clipboard',
       position: 'top',
     });
+};
+
+const getAddonVat = item => {
+  let addonVat = 0;
+  item.addons.forEach(addon => {
+    addon.travelAddonOption.forEach(option => {
+      if (option.isSelected && option.price != 0) {
+        addonVat += parseInt(option.price) + option.vat;
+      }
+    });
+  });
+  return addonVat;
 };
 
 const isProfileUpdateAllow = computed(() => {
@@ -2906,10 +2919,12 @@ const onAddUpdate = () => {
               <template #item-name="item">
                 <span class="text-primary-600 uppercase">{{ item.name }}</span>
               </template>
-              <template #item-discountPremium="item">
-                <span class="text-primary-600">
-                  {{ item.discountPremium + item.vat }}
-                </span>
+              <template #item-premiumWithVat="item">
+                {{
+                  parseFloat(
+                    item.discountPremium + item.vat + getAddonVat(item),
+                  ).toFixed(2)
+                }}
               </template>
               <template #item-action="item">
                 <div class="flex gap-2">
@@ -2989,10 +3004,12 @@ const onAddUpdate = () => {
                     item.name
                   }}</span>
                 </template>
-                <template #item-discountPremium="item">
-                  <span class="text-primary-600">
-                    {{ item.discountPremium + item.vat }}
-                  </span>
+                <template #item-premiumWithVat="item">
+                  {{
+                    parseFloat(
+                      item.discountPremium + item.vat + getAddonVat(item),
+                    ).toFixed(2)
+                  }}
                 </template>
                 <template #item-action="item">
                   <div class="flex gap-2">
@@ -3042,7 +3059,12 @@ const onAddUpdate = () => {
             show-close
             backdrop
           >
-            <LazyAvailablePlan :plan="planDetails" />
+            <LazyAvailablePlan
+              :plan="planDetails"
+              :quote="quote"
+              :access="access"
+              @onLoadAvailablePlansData="onLoadAvailablePlansData"
+            />
           </x-modal>
         </template>
       </Collapsible>
