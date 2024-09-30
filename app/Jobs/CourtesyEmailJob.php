@@ -33,6 +33,6 @@ class CourtesyEmailJob implements ShouldQueue
     {
         $response = Capi::request('/api/v1-trigger-courtesy-email-sib-workflow', 'post', $this->quoteData);
 
-        info('Courtesy Email CAPI - Payload  : '.json_encode($this->quoteData) .' - Response - : '.json_encode($response));
+        info('Courtesy Email CAPI - Payload  : '.json_encode($this->quoteData).' - Response - : '.json_encode($response));
     }
 }
