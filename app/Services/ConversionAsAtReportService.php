@@ -333,11 +333,11 @@ class ConversionAsAtReportService extends BaseService
 
     public function getByTeamQuery($query, $filters, $alias)
     {
-        $teamType = null;
+        $parentTeamIds = [];
         if ($filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Car)) {
-            $teamType = Team::where('name', TeamNameEnum::CAR)->where('type', TeamTypeEnum::PRODUCT)->first()->id;
+            $parentTeamIds = Team::where('name', TeamNameEnum::CAR)->where('type', TeamTypeEnum::PRODUCT)->pluck('id')->toArray();
         } elseif ($filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Health)) {
-            $teamType = Team::where('name', TeamNameEnum::HEALTH)->where('type', TeamTypeEnum::PRODUCT)->first()->id;
+            $parentTeamIds = Team::whereIn('name', [TeamNameEnum::HEALTH, TeamNameEnum::CAR])->where('type', TeamTypeEnum::PRODUCT)->pluck('id')->toArray();
         }
 
         return $query
@@ -348,7 +348,8 @@ class ConversionAsAtReportService extends BaseService
             ->join('user_team', 'user_team.user_id', "{$alias}.advisor_id")
             ->join('teams', 'teams.id', '=', 'user_team.team_id')
             ->where('teams.type', TeamTypeEnum::TEAM)
-            ->where('teams.parent_team_id', $teamType)
+            ->whereNot('teams.name', 'like', '%'.TeamNameEnum::RENEWALS.'%')
+            ->whereIn('teams.parent_team_id', $parentTeamIds)
             ->whereNotNull("{$alias}.advisor_id")
             ->orderBy('team', 'asc')
             ->groupBy('team_id');
