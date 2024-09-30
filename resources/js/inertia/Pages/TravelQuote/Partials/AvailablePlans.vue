@@ -15,11 +15,11 @@ const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 const tabs = ref([
   { index: 0, label: 'General Info' },
   { index: 1, label: 'Addons' },
-  { index: 1, label: 'Members' },
-  { index: 2, label: 'Inclusions' },
-  { index: 3, label: 'Exclusions' },
-  { index: 4, label: 'COVID-19 Cover' },
-  { index: 5, label: 'Policy Details' },
+  { index: 2, label: 'Members' },
+  { index: 3, label: 'Inclusions' },
+  { index: 4, label: 'Exclusions' },
+  { index: 5, label: 'COVID-19 Cover' },
+  { index: 6, label: 'Policy Details' },
 ]);
 
 const planForm = useForm({
