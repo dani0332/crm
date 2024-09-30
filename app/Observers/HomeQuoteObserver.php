@@ -5,7 +5,7 @@ namespace App\Observers;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Jobs\CourtesyEmailRequestJob;
+use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\HomeQuote;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -51,7 +51,7 @@ class HomeQuoteObserver
 
         if (isset($dirty['quote_status_id']) && $homeQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             $this->syncLeadEntries($homeQuote->uuid);
-            CourtesyEmailRequestJob::dispatch(['quoteTypeId' => QuoteTypeId::Home, 'quoteUID' => $homeQuote->uuid]);
+            CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Home, 'quoteUID' => $homeQuote->uuid]);
         }
     }
 }

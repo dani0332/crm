@@ -5,7 +5,7 @@ namespace App\Observers;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
 use App\Events\BikeQuoteAdvisorUpdated;
-use App\Jobs\CourtesyEmailRequestJob;
+use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\PersonalQuote;
 use Exception;
@@ -75,7 +75,7 @@ class PersonalQuoteObserver
             $personalQuote->isDirty('quote_status_id') &&
             $personalQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
         ) {
-            CourtesyEmailRequestJob::dispatch(['quoteTypeId' => $personalQuote->quote_type_id, 'quoteUID' => $personalQuote->uuid]);
+            CourtesyEmailJob::dispatch(['quoteTypeId' => $personalQuote->quote_type_id, 'quoteUID' => $personalQuote->uuid]);
         }
     }
 }

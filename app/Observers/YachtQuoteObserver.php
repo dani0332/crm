@@ -4,7 +4,7 @@ namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Jobs\CourtesyEmailRequestJob;
+use App\Jobs\CourtesyEmailJob;
 use App\Models\YachtQuote;
 
 class YachtQuoteObserver
@@ -29,7 +29,7 @@ class YachtQuoteObserver
             $yachtQuote->isDirty('quote_status_id') &&
             $yachtQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
         ) {
-            CourtesyEmailRequestJob::dispatch(['quoteTypeId' => QuoteTypeId::Yacht, 'quoteUID' => $yachtQuote->uuid]);
+            CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Yacht, 'quoteUID' => $yachtQuote->uuid]);
         }
     }
 }

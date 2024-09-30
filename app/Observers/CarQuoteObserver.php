@@ -6,7 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Events\CarQuoteAdvisorUpdated;
-use App\Jobs\CourtesyEmailRequestJob;
+use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\CarQuote;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -65,7 +65,7 @@ class CarQuoteObserver
 
         if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             $this->syncLeadEntries($lead->uuid);
-            CourtesyEmailRequestJob::dispatch(['quoteTypeId' => QuoteTypeId::Car, 'quoteUID' => $lead->uuid]);
+            CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Car, 'quoteUID' => $lead->uuid]);
         }
     }
 }

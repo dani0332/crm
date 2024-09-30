@@ -4,7 +4,7 @@ namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Jobs\CourtesyEmailRequestJob;
+use App\Jobs\CourtesyEmailJob;
 use App\Models\JetskiQuote;
 
 class JetskiQuoteObserver
@@ -29,7 +29,7 @@ class JetskiQuoteObserver
             $jetskiQuote->isDirty('quote_status_id') &&
             $jetskiQuote->quote_status_id === QuoteStatusEnum::PolicyBooked
         ) {
-            CourtesyEmailRequestJob::dispatch(['quoteTypeId' => QuoteTypeId::Jetski, 'quoteUID' => $jetskiQuote->uuid]);
+            CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Jetski, 'quoteUID' => $jetskiQuote->uuid]);
         }
     }
 }
