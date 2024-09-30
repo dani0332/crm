@@ -48,10 +48,11 @@ const reportButtonCon = computed(() => {
   if (filters.report == null) {
     data.disable = true;
     data.msg = 'Please select the report type';
+  } else if (filters.quoteId || filters.email || filters.mobile_no) {
+    data.disable = false;
   } else if (
-    filters.chat_initiated_at.length == 0 &&
-    (filters.report == 'Detailed Report' ||
-      filters.report == 'Consolidated Report')
+    filters.chat_initiated_at == null ||
+    filters.chat_initiated_at == []
   ) {
     data.disable = true;
     data.msg = 'Please select the Start Date and End Date ';
