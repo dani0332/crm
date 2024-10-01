@@ -191,14 +191,14 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(auth()->user()->can(PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW), 'Lead Distribution', route('lead-distribution-report-view'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::REVIVAL_CONVERSION_REPORT_VIEW), 'Revival Conversion', route('revival-conversion-report-view'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::UtmLeadsSalesReport), 'UTM Report', route('utm-leads-sales-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->addIf(auth()->user()->can(PermissionsEnum::RENEWAL_BATCH_REPORT), 'Daily Renewal Report', route('renewal-batch-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::RENEWAL_BATCH_REPORT), 'Motor Retention report', route('renewal-batch-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::MANAGER_AUTHORISED_PAYMENT_SUMMARY), 'Authorised Payment Summary', route('authorized-payment-summary', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::MANAGEMENT_REPORT), 'Management Report', route('management-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(app(UserService::class)->isAllowedToShowLeadListReport(), 'Lead List Report', route('lead-list-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::STALE_LEADS_REPORT), 'Stale Leads Report', route('stale-leads-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::PIPELINE_REPORT), 'Pipeline Report', route('pipeline-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::TOTAL_PREMIUM_LEADS_SALES_REPORT), 'Total Premium Report', route('total-premium-leads-sales-report'), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->addIf(true, 'Retention Report', route('retentionn-report'), fn ($s) => $s->attributes(['icon' => 'bar']));
+                    ->addIf(true, 'Non Motor Retention Report', route('retentionn-report'), fn ($s) => $s->attributes(['icon' => 'bar']));
             });
         }
 
