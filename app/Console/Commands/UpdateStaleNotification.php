@@ -24,7 +24,7 @@ class UpdateStaleNotification extends Command
      *
      * @var string
      */
-    protected $signature = 'UpdateStaleLeadsNotification:cron';
+    protected $signature = 'UpdateStaleNotification:cron';
 
     /**
      * The console command description.
@@ -57,11 +57,11 @@ class UpdateStaleNotification extends Command
             QuoteStatusEnum::PolicyCancelledReissued,
         ];
 
-        info('------------------- Update Stale Leads Command Started At: '.now().' -------------------');
+        info('------------------- Update Stale Leads Notification Command Started At: '.now().' -------------------');
 
         foreach ($eligibleQuoteTypes as $eligibleQuoteType) {
 
-            info('------------------- Update Stale Leads Command - Updating - '.now().' : '.$eligibleQuoteType.' -------------------');
+            info('------------------- Update Stale Leads Notification Command - Updating - '.now().' : '.$eligibleQuoteType.' -------------------');
             $eligibleQuoteType::whereIn('quote_status_id', $statusToInclude)
                 ->whereNotNull('stale_at')
                 ->when($eligibleQuoteType == BusinessQuote::class, function ($businessQuote) {
@@ -71,6 +71,7 @@ class UpdateStaleNotification extends Command
                     $personalQuote->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle]);
                 })->chunkById(1000, function ($quoteDetails) {
                     foreach ($quoteDetails as $quoteDetail) {
+                        dd($quoteDetail);
                         if (isset($quoteDetail->stale_at)) {
                             $quoteDetail->update([
                                 'stale_at' => null,
@@ -78,10 +79,10 @@ class UpdateStaleNotification extends Command
                         }
                     }
                 });
-            info('------------------- Update Stale Leads Command - Updated - '.now().' : '.$eligibleQuoteType.' -------------------');
+            info('------------------- Update Stale Leads Notification Command - Updated - '.now().' : '.$eligibleQuoteType.' -------------------');
 
         }
 
-        info('------------------- Update Stale Leads Command Finished for '.now().' -------------------');
+        info('------------------- Update Stale Leads Notification Command Finished for '.now().' -------------------');
     }
 }
