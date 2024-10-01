@@ -38,13 +38,14 @@ class HomeQuoteController extends Controller
 
     public function store(HomeQuoteRequest $request)
     {
-        $response = HomeQuoteRepository::create($request->validated());
+        dd($request->all());
+        // $response = HomeQuoteRepository::create($request->validated());
 
-        if (! empty($response->errors) || ! empty($response->msg)) {
-            vAbort($response->msg);
-        }
+        // if (! empty($response->errors) || ! empty($response->msg)) {
+        //     vAbort($response->msg);
+        // }
 
-        return redirect('personal-quotes/home/' . $response->quoteUID)->with('message', 'Quote created successfully');
+        // return redirect('personal-quotes/home/' . $response->quoteUID)->with('message', 'Quote created successfully');
     }
 
     public function show($uuid)
