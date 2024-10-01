@@ -17,19 +17,15 @@ class HomeQuoteController extends Controller
         $homeQuotes = HomeQuoteRepository::getData();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::HOME->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::HOME->id())->get();
-        $userRoles = auth()->user()->usersroles->pluck('name')->map(fn ($item) => strtolower($item));
-        $isManager = $userRoles->contains(fn ($role) => str_contains($role, 'manager') && ! str_contains($role, 'deputy'));
-        $isManualAllocationAllowed = auth()->user()->isAdmin() ?: $isManager;
 
-        $count = $homeQuotes->count();
-        $hasOtherFilters = count(array_diff_key(request()->all(), ['page' => ''])) > 0;
+        $user = auth()->user();
+        $isManualAllocationAllowed = $user->isAdmin() || $user->isManagerOrDeputy();
 
         return inertia('HomeQuote/Index', [
             'quotes' => $homeQuotes,
             'leadStatuses' => $quoteStatuses,
             'advisors' => $advisors,
             'isManualAllocationAllowed' => $isManualAllocationAllowed,
-            'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $count : HomeQuoteRepository::getData(true, true),
         ]);
     }
 
@@ -48,7 +44,7 @@ class HomeQuoteController extends Controller
             vAbort($response->msg);
         }
 
-        return redirect('personal-quotes/home/'.$response->quoteUID)->with('message', 'Quote created successfully');
+        return redirect('personal-quotes/home/' . $response->quoteUID)->with('message', 'Quote created successfully');
     }
 
     public function show($uuid)
@@ -77,7 +73,7 @@ class HomeQuoteController extends Controller
     {
         HomeQuoteRepository::update($uuid, $request->validated());
 
-        return redirect('personal-quotes/home/'.$uuid)->with('message', 'Quote updated successfully');
+        return redirect('personal-quotes/home/' . $uuid)->with('message', 'Quote updated successfully');
     }
 
     public function cardsView(Request $request)
