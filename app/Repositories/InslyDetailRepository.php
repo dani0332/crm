@@ -572,14 +572,14 @@ class InslyDetailRepository extends BaseRepository
 
         $emailArray = preg_split('/[;,]\s*/', $emails);
 
-        $maskedEmails = array_map(function($email) {
+        $maskedEmails = array_map(function ($email) {
             $trimmedEmail = trim($email);
-            list($localPart, $domainPart) = explode('@', $trimmedEmail);
+            [$localPart, $domainPart] = explode('@', $trimmedEmail);
 
             $halfLength = ceil(strlen($localPart) / 2);
-            $maskedLocalPart = substr($localPart, 0, $halfLength) . str_repeat('*', strlen($localPart) - $halfLength);
+            $maskedLocalPart = substr($localPart, 0, $halfLength).str_repeat('*', strlen($localPart) - $halfLength);
 
-            return $maskedLocalPart . '@' . $domainPart;
+            return $maskedLocalPart.'@'.$domainPart;
         }, $emailArray);
 
         return implode(', ', $maskedEmails);
@@ -593,7 +593,7 @@ class InslyDetailRepository extends BaseRepository
 
         $numbers = preg_split('/[\s,;]+/', $mobileNumbers);
 
-        $maskedNumbers = array_map(function($number) {
+        $maskedNumbers = array_map(function ($number) {
             if (strlen($number) < 10) {
                 return $number;
             }
