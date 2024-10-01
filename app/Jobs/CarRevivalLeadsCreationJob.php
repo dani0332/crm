@@ -106,14 +106,9 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
             $carQuoteExists = CarQuote::where([
                 'email' =>  $this->lead->email,
-                'mobile_no' => $this->lead->mobile_no,
                 'car_make_id' => $this->lead->car_make_id,
                 'car_model_id' => $this->lead->car_model_id,
-                'year_of_manufacture' => $this->lead->year_of_manufacture,
                 'vehicle_type_id' => $this->lead->vehicle_type_id,
-                'premium' => $this->lead->premium,
-                'cylinder' => $this->lead->cylinder,
-                'currently_insured_with' => $this->lead->currently_insured_with,
                 'source' => LeadSourceEnum::REVIVAL,
             ])->first();
 
@@ -123,10 +118,20 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 return false;
             }
 
+            $this->lead->refresh();
+            if ($this->lead->is_revived) {
+                info($logPrefix . $this->lead->uuid . ' - Lead Already Revived');
+
+                return false;
+            }
+
             $capiResponse = Capi::request('/api/v1-save-car-quote', 'post', $dataArr);
 
             if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
                 info($logPrefix . $this->lead->uuid . '- childLeadCreated - ' . $capiResponse->quoteUID);
+
+
+                CarQuote::find($this->lead->id)->update(['is_revived' => true]);
 
                 $payload = [
                     'quoteUID' => $capiResponse->quoteUID,
@@ -192,8 +197,6 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                         'revival_quote_batch_id' => $quoteBatch->id,
                         'email_sent' => true,
                     ]);
-
-                    CarQuote::find($this->lead->id)->update(['is_revived' => true]);
                 } else {
                     info($logPrefix . 'carRevivalParentLead -' . $this->lead->uuid . '- childLead - ' . $capiResponse->quoteUID . 'emailIsNotSent - ' . $emailData->customerEmail);
                 }
