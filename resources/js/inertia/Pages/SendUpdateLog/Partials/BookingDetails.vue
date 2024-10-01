@@ -180,9 +180,9 @@ const checkSectionToEdit = () => {
       return;
     }
   }
-    if (props.bookingDetails?.is_non_self_billing_enabled) {
-        insCommTaxInvNumState.value = true;
-    }
+  if (props.bookingDetails?.is_non_self_billing_enabled) {
+    insCommTaxInvNumState.value = true;
+  }
   state.isEdit = !state.isEdit;
 };
 
@@ -229,7 +229,7 @@ function isNotZero(value) {
 }
 
 const isNonSelfBillingEnabled = computed(() => {
-    return props.bookingDetails?.is_non_self_billing_enabled ?? false;
+  return props.bookingDetails?.is_non_self_billing_enabled ?? false;
 });
 
 const bookingDetailsForm = useForm({
@@ -252,10 +252,12 @@ const bookingDetailsForm = useForm({
     props?.payments[0]?.discount_value ||
     props.sendUpdateLog?.discount ||
     '0.00',
-  insurer_commission_invoice_number: (props.bookingDetails?.is_non_self_billing_enabled) ? (props.bookingDetails?.broker_invoice_number ?? '') : (
-    props.sendUpdateLog?.insurer_commission_invoice_number ||
-    props?.payments[0]?.insurer_commmission_invoice_number ||
-    ''),
+  insurer_commission_invoice_number: props.bookingDetails
+    ?.is_non_self_billing_enabled
+    ? (props.bookingDetails?.broker_invoice_number ?? '')
+    : props.sendUpdateLog?.insurer_commission_invoice_number ||
+      props?.payments[0]?.insurer_commmission_invoice_number ||
+      '',
   commission_percentage:
     props.sendUpdateLog?.commission_percentage ||
     props?.payments[0]?.commmission_percentage ||
@@ -501,7 +503,8 @@ const paymentInvoiceNumberOptions = computed(() => {
 const reversalEntry = reactive({
   booking_date: null,
   invoice_description: props.bookingDetails?.reversal_invoice_description || '',
-  broker_invoice_number: props.sendUpdateLog?.reversal_broker_invoice_number ?? null,
+  broker_invoice_number:
+    props.sendUpdateLog?.reversal_broker_invoice_number ?? null,
   transaction_payment_status: null,
   invoice_date: null,
   insurer_tax_invoice_number: null,
@@ -587,7 +590,8 @@ function updateReversalEntries(payment, sendUpdate) {
   reversalEntry.insurer_tax_invoice_number = payment?.insurer_tax_number
     ? payment.insurer_tax_number + '-REV'
     : sendUpdate.insurer_tax_invoice_number + '-REV';
-  reversalEntry.broker_invoice_number = props.sendUpdateLog?.reversal_broker_invoice_number ?? null;
+  reversalEntry.broker_invoice_number =
+    props.sendUpdateLog?.reversal_broker_invoice_number ?? null;
   reversalEntry.insurer_commission_invoice_number =
     payment?.insurer_commmission_invoice_number
       ? payment.insurer_commmission_invoice_number + '-REV'
@@ -641,8 +645,15 @@ const onUpdateReversal = () => {
   bookingDetailsForm.invoice_date = reversalEntry.invoice_date || '';
   bookingDetailsForm.insurer_tax_invoice_number =
     reversalEntry.insurer_tax_invoice_number.replace('REV', 'NEW');
-  bookingDetailsForm.broker_invoice_number = props.sendUpdateLog?.broker_invoice_number ?? '';
-  bookingDetailsForm.insurer_commission_invoice_number = ((isNonSelfBillingEnabled.value) ? (props.sendUpdateLog?.broker_invoice_number ?? '') : reversalEntry.insurer_commission_invoice_number.replace('REV', 'NEW')) || '';
+  bookingDetailsForm.broker_invoice_number =
+    props.sendUpdateLog?.broker_invoice_number ?? '';
+  bookingDetailsForm.insurer_commission_invoice_number =
+    (isNonSelfBillingEnabled.value
+      ? (props.sendUpdateLog?.broker_invoice_number ?? '')
+      : reversalEntry.insurer_commission_invoice_number.replace(
+          'REV',
+          'NEW',
+        )) || '';
   bookingDetailsForm.price_vat_applicable =
     Math.abs(reversalEntry.price_vat_applicable) || '0.00';
   bookingDetailsForm.commission_percentage =
@@ -925,9 +936,9 @@ const onCancel = () => {
   bookingDetailsForm.commission_vat_applicable =
     props.bookingDetails?.commission_vat_applicable || '';
 
-  if (! props.bookingDetails?.is_non_self_billing_enabled) {
-      bookingDetailsForm.insurer_commission_invoice_number =
-          props.bookingDetails?.insurer_commission_invoice_number || '';
+  if (!props.bookingDetails?.is_non_self_billing_enabled) {
+    bookingDetailsForm.insurer_commission_invoice_number =
+      props.bookingDetails?.insurer_commission_invoice_number || '';
   }
 };
 
@@ -1274,11 +1285,11 @@ watch(
                     INSURER COMMISSION TAX INVOICE NUMBER
                   </label>
                   <template #tooltip>
-                      {{
-                          isNonSelfBillingEnabled
-                              ? productionProcessTooltipEnum.NON_SELF_BILLING_INSURER_COM_TAX_INVOICE_NUMBER_TOOLTIP
-                              : productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
-                      }}
+                    {{
+                      isNonSelfBillingEnabled
+                        ? productionProcessTooltipEnum.NON_SELF_BILLING_INSURER_COM_TAX_INVOICE_NUMBER_TOOLTIP
+                        : productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                    }}
                   </template>
                 </x-tooltip>
               </div>
@@ -1772,11 +1783,11 @@ watch(
                       INSURER COMMISSION TAX INVOICE NUMBER
                     </label>
                     <template #tooltip>
-                        {{
-                            isNonSelfBillingEnabled
-                                ? productionProcessTooltipEnum.NON_SELF_BILLING_INSURER_COM_TAX_INVOICE_NUMBER_TOOLTIP
-                                : productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
-                        }}
+                      {{
+                        isNonSelfBillingEnabled
+                          ? productionProcessTooltipEnum.NON_SELF_BILLING_INSURER_COM_TAX_INVOICE_NUMBER_TOOLTIP
+                          : productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                      }}
                     </template>
                   </x-tooltip>
                 </div>
