@@ -430,15 +430,15 @@ const formatDate = dateString =>
             placeholder="Search by Mobile Number"
           />
         </x-field>
-          <x-field label="Company Name">
-              <x-input
-                  v-model="filters.company_name"
-                  type="search"
-                  name="company_name"
-                  class="w-full"
-                  placeholder="Search by Company Name"
-              />
-          </x-field>
+        <x-field label="Company Name">
+          <x-input
+            v-model="filters.company_name"
+            type="search"
+            name="company_name"
+            class="w-full"
+            placeholder="Search by Company Name"
+          />
+        </x-field>
         <x-field label="Created Date Start">
           <DatePicker
             v-model="filters.created_at_start"
