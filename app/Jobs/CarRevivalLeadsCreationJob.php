@@ -130,15 +130,6 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
             if ($revivalCarQuoteUUID && ! $this->lead->is_revived) {
 
-                $payload = [
-                    'quoteUID' => $revivalCarQuoteUUID,
-                    'callSource' => 'imcrm',
-                ];
-
-                $response = Ken::request('/send-ocb-whatsapp-revival', 'post', $payload);
-
-                info($logPrefix.' - send-ocb-whatsapp-revival -'.$revivalCarQuoteUUID.' - '.json_encode($response));
-
                 $carQuote = $this->getQuoteObject(QuoteTypes::CAR->value, $revivalCarQuoteUUID);
 
                 $listQuotePlans = app(CarQuoteService::class)->getPlans($revivalCarQuoteUUID, true, true);
@@ -194,6 +185,14 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                         'revival_quote_batch_id' => $quoteBatch->id,
                         'email_sent' => true,
                     ]);
+
+                    $response = Ken::request('/send-ocb-whatsapp-revival', 'post', [
+                        'quoteUID' => $revivalCarQuoteUUID,
+                        'callSource' => 'imcrm',
+                    ]);
+
+                    info($logPrefix.' - send-ocb-whatsapp-revival -'.$revivalCarQuoteUUID.' - '.json_encode($response));
+
                     CarQuote::find($this->lead->id)->update(['is_revived' => true]);
                 } else {
                     info($logPrefix.'carRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$revivalCarQuoteUUID.'emailIsNotSent - '.$emailData->customerEmail);
