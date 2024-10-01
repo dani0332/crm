@@ -388,7 +388,7 @@ class CarEmailService extends BaseService
             'workflowType' => WorkflowTypeEnum::NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS,
             'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
             'instantAlfredLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
-
+            'createdAt' => $lead->created_at,
         ];
     }
 
