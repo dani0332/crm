@@ -67,6 +67,7 @@ class UpdateStaleLeads extends Command
             QuoteStatusEnum::Duplicate,
             QuoteStatusEnum::CancellationPending,
             QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued
         ];
 
         info('------------------- Update Stale Leads Command Started At: '.now().' -------------------');
