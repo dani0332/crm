@@ -56,11 +56,11 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
     public function handle()
     {
 
-        $logPrefix = 'CarRevivalLeadsCreationJob -';
+        $logPrefix = 'CarRevivalLeadsCreationJob - ';
 
         $dttEnabled = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::DTT_ENABLED)->value('value');
         if ($dttEnabled == 0) {
-            info($logPrefix.' - Dtt is not enabled from cms');
+            info($logPrefix.'Dtt is not enabled from cms');
 
             return false;
         }
@@ -113,9 +113,13 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
             if (! $carQuoteExists) {
                 $capiResponse = Capi::request('/api/v1-save-car-quote', 'post', $dataArr);
-                if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
+                if (isset($capiResponse->errors) && empty($capiResponse->quoteUID)) {
                     $revivalCarQuoteUUID = $capiResponse->quoteUID;
                     info($logPrefix.$this->lead->uuid.'- childLeadCreated - '.$revivalCarQuoteUUID);
+                } else {
+                    info($logPrefix.'Error Creating Revival Lead '.$this->lead->uuid);
+
+                    return false;
                 }
             } else {
                 $revivalCarQuoteUUID = $carQuoteExists->uuid;
