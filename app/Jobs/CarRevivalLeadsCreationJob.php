@@ -104,7 +104,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             ];
 
 
-            $carQuoteCount = CarQuote::where([
+            $carQuoteExists = CarQuote::where([
                 'email' =>  $this->lead->email,
                 'mobile_no' => $this->lead->mobile_no,
                 'car_make_id' => $this->lead->car_make_id,
@@ -115,9 +115,9 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 'cylinder' => $this->lead->cylinder,
                 'currently_insured_with' => $this->lead->currently_insured_with,
                 'source' => LeadSourceEnum::REVIVAL,
-            ])->count();
+            ])->first();
 
-            if ($carQuoteCount > 0) {
+            if ($carQuoteExists) {
                 info($logPrefix . $this->lead->uuid . ' - Child Quote Already Existed against this parent lead');
 
                 return false;
