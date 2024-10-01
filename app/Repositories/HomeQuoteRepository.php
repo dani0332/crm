@@ -68,16 +68,16 @@ class HomeQuoteRepository extends BaseRepository
             ->when(auth()->user()->hasRole(RolesEnum::HomeAdvisor), function ($query) {
                 $query->where('advisor_id', auth()->id());
             })
-            ->when(request()->filled('advisors'), fn($q) => $q->whereIn('advisor_id', (array) request('advisors')))
-            ->when(request('is_renewal') === quoteTypeCode::yesText, fn($q) => $q->whereNotNull('previous_quote_policy_number'))
-            ->when(request('is_renewal') === quoteTypeCode::noText, fn($q) => $q->whereNull('previous_quote_policy_number'))
+            ->when(request()->filled('advisors'), fn ($q) => $q->whereIn('advisor_id', (array) request('advisors')))
+            ->when(request('is_renewal') === quoteTypeCode::yesText, fn ($q) => $q->whereNotNull('previous_quote_policy_number'))
+            ->when(request('is_renewal') === quoteTypeCode::noText, fn ($q) => $q->whereNull('previous_quote_policy_number'))
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->orderBy('created_at', 'desc')
             ->when(
                 $forTotalLeadsCount,
-                fn($q) => $q->count(),
-                fn($query) => $query->when($forExport, fn($q) => $q->get(), fn($q) => $q->simplePaginate())
+                fn ($q) => $q->count(),
+                fn ($query) => $query->when($forExport, fn ($q) => $q->get(), fn ($q) => $q->simplePaginate())
             );
     }
 
@@ -121,7 +121,7 @@ class HomeQuoteRepository extends BaseRepository
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->id() : null,
         ];
 
-        info('Home Quote Create :' . json_encode($quoteData));
+        info('Home Quote Create :'.json_encode($quoteData));
 
         $response = Capi::request('/api/v1-save-home-quote', 'post', $quoteData);
 
@@ -179,12 +179,12 @@ class HomeQuoteRepository extends BaseRepository
                 },
             ])
             ->select([
-                $this->getTable() . '.*',
+                $this->getTable().'.*',
                 DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
-                    WHERE quote_type_id = ' . QuoteTypeId::Home . ' AND quote_request_id = ' . $this->getTable() . '.id),
-                    "' . CustomerTypeEnum::Entity . '", "' . CustomerTypeEnum::Individual . '")
+                    WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = '.$this->getTable().'.id),
+                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
                 as customer_type'),
             ])
             ->firstOrFail();
@@ -207,7 +207,7 @@ class HomeQuoteRepository extends BaseRepository
         ])->with('assignee')->orderBy('created_at', 'desc')->get();
 
         if (AMLService::checkAMLStatusFailed(QuoteTypes::HOME->id(), $quote->id)) {
-            $quoteStatuses = collect($quoteStatuses)->filter(fn($value) => $value['id'] != QuoteStatusEnum::TransactionApproved)->values();
+            $quoteStatuses = collect($quoteStatuses)->filter(fn ($value) => $value['id'] != QuoteStatusEnum::TransactionApproved)->values();
         }
         $quoteNotes = QuoteNoteRepository::getBy($quote->id, quoteTypeCode::Home);
 
@@ -261,7 +261,7 @@ class HomeQuoteRepository extends BaseRepository
             'isAmlClearedForPayment' => app(CentralService::class)->amlClearedFromLog($quote->id, QuoteTypes::HOME->value),
             'leadSource' => LeadSourceEnum::asArray(),
             'quoteNotes' => $quoteNotes,
-            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/',
+            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'noteDocumentType' => DocumentType::where('code', DocumentTypeCode::OD)->first(),
             'sendUpdateOptions' => $sendUpdateOptions,
@@ -275,7 +275,7 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchCreateDuplicate(array $dataArr): object
     {
-        return Capi::request('/api/v1-save-' . strtolower(QuoteTypes::HOME->value) . '-quote', 'post', $dataArr);
+        return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::HOME->value).'-quote', 'post', $dataArr);
     }
 
     public function fetchUpdate($uuid, $data)

@@ -74,7 +74,7 @@ class HomeQuoteController extends Controller
     {
         HomeQuoteRepository::update($uuid, $request->validated());
 
-        return redirect('personal-quotes/home/' . $uuid)->with('message', 'Quote updated successfully');
+        return redirect('personal-quotes/home/'.$uuid)->with('message', 'Quote updated successfully');
     }
 
     public function cardsView(Request $request)
