@@ -310,13 +310,6 @@ use App\Enums\PermissionsEnum;
                     @endcan
                 </ul>
 
-
-                {{--<ul class="nav side-menu">
-                    @can(PermissionsEnum::VIEW_BULK_POLICY_BOOKING_LIST)
-                        <li><a href="{{ route('sage-process.index') }}"><i></i>Sage Process</a>
-                    @endcan
-                </ul>--}}
-
                 {{-- @if (auth()->check() && auth()->user()->isAdmin())
                 <ul class="nav side-menu">
                     <li><a href="{{ url('assignOE') }}"><i></i> Assign OE </a>

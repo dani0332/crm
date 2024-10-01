@@ -648,9 +648,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('quotes/update-booking-policy', [CentralController::class, 'updateBookingPolicy'])->name('update-booking-policy')->middleware('permission:'.PermissionsEnum::BOOK_POLICY_DETAILS_ADD);
     Route::post('quotes/send-booking-policy', [CentralController::class, 'sendBookingPolicy'])->name('send-booking-policy')->middleware('permission:'.PermissionsEnum::SEND_POLICY_TO_CUSTOMER_BUTTON.'|'.PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON.'|'.PermissionsEnum::BOOK_POLICY_BUTTON);
 
-    /*Route::get('sage-process',[ SageProcessController::class, 'index'])->name('sage-process.index')->middleware('permission:'.PermissionsEnum::VIEW_BULK_POLICY_BOOKING_LIST);
-    Route::post('sage-process/book-policies', [SageProcessController::class, 'sendPoliciesForSageBulkBooking'])->name('sage-process.book-policies')->middleware('permission:'.PermissionsEnum::BOOK_BULK_POLICY_ON_SAGE);*/
-
     //todo: commented for later use
     //Route::get('schedule-non-motor-aml', [RenewalsUploadController::class, 'scheduleNonMotorAml']);
 
