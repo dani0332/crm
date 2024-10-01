@@ -67,7 +67,7 @@ class UpdateStaleLeads extends Command
             QuoteStatusEnum::Duplicate,
             QuoteStatusEnum::CancellationPending,
             QuoteStatusEnum::PolicyCancelled,
-            QuoteStatusEnum::PolicyCancelledReissued
+            QuoteStatusEnum::PolicyCancelledReissued,
         ];
 
         $skipStatusInLost = [
@@ -78,7 +78,7 @@ class UpdateStaleLeads extends Command
             QuoteStatusEnum::PolicyBooked,
             QuoteStatusEnum::CancellationPending,
             QuoteStatusEnum::PolicyCancelled,
-            QuoteStatusEnum::PolicyCancelledReissued
+            QuoteStatusEnum::PolicyCancelledReissued,
         ];
 
         info('------------------- Update Stale Leads Command Started At: '.now().' -------------------');

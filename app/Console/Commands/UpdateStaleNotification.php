@@ -6,16 +6,10 @@ use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\BusinessQuote;
-use App\Models\BusinessQuoteRequestDetail;
 use App\Models\HealthQuote;
-use App\Models\HealthQuoteRequestDetail;
 use App\Models\HomeQuote;
-use App\Models\HomeQuoteRequestDetail;
 use App\Models\PersonalQuote;
-use App\Models\PersonalQuoteDetail;
-use Carbon\Carbon;
 use Illuminate\Console\Command;
-use OwenIt\Auditing\Models\Audit;
 
 class UpdateStaleNotification extends Command
 {
