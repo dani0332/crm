@@ -1,4 +1,6 @@
 <script setup>
+import DownloadDocuments from './DownloadDocuments.vue';
+
 defineProps({
   quote: Object,
   quoteDocuments: Object,
@@ -16,10 +18,14 @@ defineProps({
   },
   inslyId: String,
   sendPolicy: Boolean,
-  paymentStatusEnum: Object,
+  bookPolicyDetails: Array,
 });
 
-const emit = defineEmits(['copyUploadURL', 'sendPolicyToClient']);
+const emit = defineEmits([
+  'copyUploadURL',
+  'sendPolicyToClient',
+  'verifyDocuments',
+]);
 
 const page = usePage();
 const selectedTab = ref(0);
@@ -27,7 +33,11 @@ const uploadingStatus = ref({});
 const errorMsg = ref({});
 const successStatus = ref({});
 const can = permission => useCan(permission);
+const hasAnyRole = roles => useHasAnyRole(roles);
+const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
+const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
+
 const quoteDocumentsTable = reactive({
   isLoading: false,
   columns: [
@@ -50,7 +60,7 @@ const quoteDocumentsTable = reactive({
     {
       text: 'Action',
       value: 'action',
-    }
+    },
   ],
 });
 
@@ -71,7 +81,7 @@ const docForm = reactive({
 
 const uploadFile = (doc, filesWithInfo) => {
   successStatus.value[doc.id] = false;
-  errorMsg.value[doc.id] ='';
+  errorMsg.value[doc.id] = '';
   const { files, rejectReason } = filesWithInfo;
   if (files.length == 0) {
     notification.error({
@@ -84,6 +94,7 @@ const uploadFile = (doc, filesWithInfo) => {
 
   const url = '/personal-quotes/' + docForm.quote_id + '/documents';
   const formData = new FormData();
+  formData.append('quote_id', docForm.quote_id);
   formData.append('quote_type_id', doc.quote_type_id);
   formData.append('document_type_code', doc.code);
   formData.append('folder_path', doc.folder_path);
@@ -120,6 +131,10 @@ const copyUploadURL = () => {
 
 const sendPolicyToClient = () => {
   emit('sendPolicyToClient');
+};
+
+const updateDocumentValidate = () => {
+  emit('verifyDocuments', true);
 };
 
 const onDocDelete = name => {
@@ -160,7 +175,37 @@ const uploadDocumentModal = () => {
   modals.doc = true;
   successStatus.value = {};
   errorMsg.value = {};
-}
+};
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
+
+const getS3TempUrl = async docURL => {
+  try {
+    const response = await axios.post('/quotes/documents/get-s3-temp-url', {
+      docURL,
+    });
+    // Check if the request was successful and the response contains the URL
+    if (response.status === 200 && response.data.url) {
+      // Open the URL in a new tab
+      window.open(response.data.url, '_blank');
+    } else {
+      notification.error({
+        title: response.data.error,
+        position: 'top',
+      });
+    }
+  } catch (error) {
+    notification.error({
+      title: error,
+      position: 'top',
+    });
+    console.error('An error occurred:', error);
+  }
+};
 </script>
 
 <template>
@@ -177,7 +222,17 @@ const uploadDocumentModal = () => {
       <template #body>
         <x-divider class="my-4" />
 
-        <div class="flex gap-2 mb-4 justify-end">
+        <div
+          class="flex gap-2 mb-4 justify-end"
+          v-if="readOnlyMode.isDisable === true"
+        >
+          <DownloadDocuments
+            v-if="can(permissionEnum.DOWNLOAD_ALL_DOCUMENTS)"
+            :quote="page.props.quote"
+            :quoteDocuments="
+              page.props.quote.documents ?? page.props.quoteDocuments
+            "
+          />
           <Link
             v-if="inslyId && can(permissionEnum.VIEW_LEGACY_DETAILS)"
             :href="`/legacy-policy/${inslyId}`"
@@ -199,7 +254,34 @@ const uploadDocumentModal = () => {
           >
             Copy upload Link
           </x-button>
-          <x-button @click.prevent="uploadDocumentModal" size="sm" color="orange">
+          <x-tooltip placement="top">
+            <x-button
+              @click.prevent="updateDocumentValidate"
+              v-if="
+                (can(permissionEnum.DOCUMENT_VERIFY) ||
+                  hasAnyRole([
+                    rolesEnum.Admin,
+                    rolesEnum.Engineering,
+                    rolesEnum.TravelHapex,
+                  ])) &&
+                quoteType == 'Travel'
+              "
+              size="sm"
+              color="green"
+            >
+              Verify Documents
+            </x-button>
+            <template #tooltip>
+              Verify Documents: Clicking this button confirms that all submitted
+              documents are accurate and valid.</template
+            >
+          </x-tooltip>
+
+          <x-button
+            @click.prevent="uploadDocumentModal"
+            size="sm"
+            color="orange"
+          >
             Upload Documents
           </x-button>
           <x-button
@@ -222,20 +304,47 @@ const uploadDocumentModal = () => {
         >
           <template #item-original_name="item">
             <a
-              :href="storageUrl + item.doc_url"
+              v-if="hasAnyRole([rolesEnum.BetaUser])"
+              @click.prevent="getS3TempUrl(item.doc_url)"
+              class="text-primary-600 cursor-pointer"
+            >
+              {{ item.original_name }}
+            </a>
+
+            <a
+              v-else
+              :href="storageUrl + encodeURIComponent(item.doc_url)"
               target="_blank"
               class="text-primary-600"
             >
               {{ item.original_name }}
             </a>
           </template>
-          <template v-if="can(permissionEnum.DOCUMENT_DELETE)" #item-action="{ doc_name }">
+          <template
+            v-if="can(permissionEnum.DOCUMENT_DELETE)"
+            #item-action="{ doc_name }"
+          >
             <div>
+              <x-tooltip
+                placement="left"
+                v-if="bookPolicyDetails.isEnableUploadDocument === false"
+              >
+                <x-button size="xs" color="error" outlined disabled="true">
+                  Delete
+                </x-button>
+                <template #tooltip>
+                  This lead is now locked as the policy has been booked. If
+                  changes are needed, go to 'Send Update', select 'Add Update',
+                  and choose 'Correction of Policy Upload'
+                </template>
+              </x-tooltip>
+
               <x-button
                 size="xs"
                 color="error"
                 outlined
                 @click.prevent="onDocDelete(doc_name)"
+                v-else-if="readOnlyMode.isDisable === true"
               >
                 Delete
               </x-button>
@@ -245,10 +354,14 @@ const uploadDocumentModal = () => {
       </template>
     </Collapsible>
 
-    <x-modal v-model="modals.doc" size="xl" show-close backdrop>
-      <template #header> Upload Documents </template>
-
-      <x-tab-group v-model="selectedTab" class="pb-10" variant="block">
+    <x-modal
+      v-model="modals.doc"
+      size="xl"
+      title="Upload Documents"
+      show-close
+      backdrop
+    >
+      <x-tab-group v-model="selectedTab" variant="block">
         <x-tab
           :value="index"
           :label="key.replace(/_/g, ' ')"
@@ -299,6 +412,11 @@ const uploadDocumentModal = () => {
                 :max-files="documentType.max_files"
                 :max-size="documentType.max_size"
                 :loading="uploadingStatus[documentType.id]"
+                :document-type-code="documentType.code"
+                :isDisabled="
+                  documentType.code == documentTypeCodeEnum.AUDIT &&
+                  !can(permissionEnum.AUDITDOCUMENT_UPLOAD)
+                "
                 @change="uploadFile(documentType, $event)"
               />
 
@@ -309,7 +427,15 @@ const uploadDocumentModal = () => {
                 :key="quoteDocument.id"
               >
                 <a
-                  :href="storageUrl + quoteDocument.doc_url"
+                  v-if="hasAnyRole([rolesEnum.BetaUser])"
+                  @click.prevent="getS3TempUrl(quoteDocument.doc_url)"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
+                >
+                  {{ quoteDocument.original_name || quoteDocument.doc_name }}
+                </a>
+                <a
+                  v-else
+                  :href="storageUrl + encodeURIComponent(quoteDocument.doc_url)"
                   target="_blank"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
                 >
@@ -321,8 +447,12 @@ const uploadDocumentModal = () => {
         </x-tab>
       </x-tab-group>
     </x-modal>
-    <x-modal v-model="modals.docConfirm" show-close backdrop>
-      <template #header> Delete Document </template>
+    <x-modal
+      v-model="modals.docConfirm"
+      title="Delete Document"
+      show-close
+      backdrop
+    >
       <p>Are you sure you want to delete this document?</p>
       <template #actions>
         <div class="text-right space-x-4">

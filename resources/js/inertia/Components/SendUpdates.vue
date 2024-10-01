@@ -1,6 +1,4 @@
 <script setup>
-import { computed } from 'vue';
-
 const props = defineProps({
   reportable: {
     type: Object,
@@ -40,19 +38,19 @@ const sendUpdatesTable = reactive({
     },
     {
       text: 'Type',
-      value: 'type',
+      value: 'category.text',
       tooltip:
         'The type of "Send Update" request, categorizing the nature of the action being taken.',
     },
     {
       text: 'Sub Type',
-      value: 'sub_type',
+      value: 'option.text',
       tooltip:
         'A further classification of the "Send Update" request, providing additional context or details.',
     },
     {
       text: 'Status',
-      value: 'status',
+      value: 'display_status',
       tooltip:
         'The current status of the "Send Update" request, indicating whether it is pending, transaction approved, or declined, among other possible states.',
     },
@@ -109,84 +107,51 @@ onMounted(() => {
   // fetchLogs();
 });
 
-const authenticatedSendUpdateOptions = computed(() => {
-  let filteredOptions = props.options;
-
-  if (
-    !(
-      can(permissionsEnum.SEND_UPDATE_ENDO_FIN_ADD) ||
-      can(permissionsEnum.SEND_UPDATE_ENDO_NON_FIN_ADD)
-    )
-  ) {
-    // it will remove the main Button.
-    filteredOptions = filteredOptions.filter((option, index) => index !== 0);
-  } else {
-    if (!can(permissionsEnum.SEND_UPDATE_ENDO_FIN_ADD)) {
-      // it will remove only sub button.
-      filteredOptions[0].childs = filteredOptions[0]?.childs.filter(
-        (option, index) => index !== 0,
-      );
-    }
-    if (!can(permissionsEnum.SEND_UPDATE_ENDO_NON_FIN_ADD)) {
-      // it will remove only sub button.
-      filteredOptions[0].childs = filteredOptions[0]?.childs.filter(
-        (option, index) => index !== 1,
-      );
-    }
-  }
-
-  if (
-    !(
-      can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD) ||
-      can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD)
-    )
-  ) {
-    filteredOptions = filteredOptions.filter((option, index) => index !== 1);
-  } else {
-    if (!can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD)) {
-      filteredOptions[1].childs = filteredOptions[1]?.childs.filter(
-        (option, index) => index !== 0,
-      );
-    }
-    if (
-      !can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD)
-    ) {
-      filteredOptions[1].childs = filteredOptions[1]?.childs.filter(
-        (option, index) => index !== 1,
-      );
-    }
-  }
-
-  if (
-    !(
-      can(permissionsEnum.SEND_UPDATE_CORRECT_POLICY_UPLOAD_ADD) ||
-      can(permissionsEnum.SEND_UPDATE_CORRECT_POLICY_DETAILS_ADD)
-    )
-  ) {
-    filteredOptions = filteredOptions.filter((option, index) => index !== 2);
-  } else {
-    if (!can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_ADD)) {
-      filteredOptions[2].childs = filteredOptions[2]?.childs.filter(
-        (option, index) => index !== 0,
-      );
-    }
-    if (
-      !can(permissionsEnum.SEND_UPDATE_CANCEL_FROM_INCEPTION_AND_REISSUE_ADD)
-    ) {
-      filteredOptions[2].childs = filteredOptions[2]?.childs.filter(
-        (option, index) => index !== 1,
-      );
-    }
-  }
-
-  return filteredOptions;
-});
-
 // const fetchLogs = () => {
 //   axios.get(route('send-update.get-by-id', { id: props.reportableId }))
 //     .then(res => sendUpdatesTable.data = res.data.logs)
 //     .catch(err => console.log('err', err))
 // }
+
+const optionLoader = ref(false);
+const addButtonLoader = ref(false);
+const parentId = ref();
+
+const sendUpdateOptions = ref([]);
+
+const getSendUpdateOptions = () => {
+  optionLoader.value = true;
+  axios
+    .post(route('send-update.get-options'), {
+      quoteTypeId: props.quote_type_id,
+      parentId: parentId.value,
+      businessInsuranceTypeId:
+        props.reportable?.business_type_of_insurance_id || null,
+      status: form.childCategory?.slug || null,
+    })
+    .then(response => {
+      if (response.status == 200) {
+        sendUpdateOptions.value = response.data.options;
+        modals.step = 'step3';
+      }
+    })
+    .catch(function (errors) {
+      console.error(errors);
+      if (errors.response.data.errors.error) {
+        let responseError = errors.response.data.errors.error;
+        Object.keys(responseError).forEach(function (key) {
+          notification.error({
+            title: responseError[key],
+            position: 'top',
+          });
+        });
+      }
+    })
+    .finally(() => {
+      optionLoader.value = false;
+      addButtonLoader.value = false;
+    });
+};
 
 const setOption = (next_step, value) => {
   switch (next_step) {
@@ -199,8 +164,9 @@ const setOption = (next_step, value) => {
       modals.step = next_step;
       break;
     case 'step3':
+      parentId.value = value.id;
       form.childCategory = value;
-      modals.step = next_step;
+      getSendUpdateOptions();
 
       if (['CPD', 'CPU'].includes(form.childCategory.slug)) {
         modals.step = 'step1';
@@ -249,6 +215,7 @@ const confirmOrAddUpdate = autoSubmit => {
   }
 };
 
+const emit = defineEmits(['onAddUpdate']);
 const onAddUpdate = autoSubmit => {
   if (!autoSubmit) {
     if (form.option === null) {
@@ -256,15 +223,17 @@ const onAddUpdate = autoSubmit => {
       return;
     }
   }
-
+  addButtonLoader.value = true;
   optionError.value = false;
-
+  emit('onAddUpdate');
   form
     .transform(data => {
       let childCatgeory = { ...data.childCategory };
-      let option = childCatgeory.childs.find(item => item.id === data.option);
+      let option = sendUpdateOptions.value.find(
+        item => item.id === data.option,
+      );
       childCatgeory.option = option || null;
-      delete childCatgeory.childs;
+      delete sendUpdateOptions.value;
 
       return {
         quote_type_id: props.quote_type_id,
@@ -289,6 +258,9 @@ const onAddUpdate = autoSubmit => {
         // resetForm()
         // sendUpdatesTable.data = [...sendUpdatesTable.data, form.data]
       },
+    })
+    .finally(() => {
+      addButtonLoader.value = false;
     });
 };
 
@@ -351,7 +323,7 @@ const findOption = (item, key) => {
           :hide-footer="sendUpdatesTable.data.length <= 10"
         >
           <template #header-code="{ text, tooltip }">
-            <x-tooltip align="left" position="right">
+            <x-tooltip placement="left">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
                 <span
@@ -364,7 +336,7 @@ const findOption = (item, key) => {
             </x-tooltip>
           </template>
           <template #header-type="{ text, tooltip }">
-            <x-tooltip align="left" position="right">
+            <x-tooltip placement="left">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
                 <span class="whitespace-break-spaces !normal-case">
@@ -374,7 +346,7 @@ const findOption = (item, key) => {
             </x-tooltip>
           </template>
           <template #header-sub_type="{ text, tooltip }">
-            <x-tooltip align="left" position="right">
+            <x-tooltip placement="left">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
                 <span class="whitespace-break-spaces !normal-case">
@@ -384,7 +356,7 @@ const findOption = (item, key) => {
             </x-tooltip>
           </template>
           <template #header-status="{ text, tooltip }">
-            <x-tooltip align="left" position="right">
+            <x-tooltip placement="left">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
                 <span class="whitespace-break-spaces !normal-case">
@@ -394,7 +366,7 @@ const findOption = (item, key) => {
             </x-tooltip>
           </template>
           <template #header-created_at="{ text, tooltip }">
-            <x-tooltip align="left" position="bottom">
+            <x-tooltip placement="left">
               <span class="underline decoration-dotted">{{ text }}</span>
               <template #tooltip>
                 <span class="whitespace-break-spaces !normal-case">
@@ -456,11 +428,8 @@ const findOption = (item, key) => {
         class="w-full flex flex-wrap gap-5 justify-center text-center my-10 mb-20 items-stretch !h-100"
         v-if="modals.step === 'step1'"
       >
-        <template
-          v-for="option in authenticatedSendUpdateOptions"
-          :key="option.title"
-        >
-          <x-tooltip align="left" position="bottom" class="arrow-t">
+        <template v-for="option in props.options" :key="option.title">
+          <x-tooltip placement="left">
             <x-button
               color="primary"
               class="py-8 px-6 rounded-xl min-h-[150px] w-[200px] whitespace-break-spaces underline decoration-dotted !h-100"
@@ -486,11 +455,12 @@ const findOption = (item, key) => {
           v-for="category in form.parentCategory?.childs"
           :key="category.title"
         >
-          <x-tooltip position="bottom" class="arrow-t">
+          <x-tooltip placement="bottom">
             <x-button
               color="primary"
               class="py-8 px-6 rounded-xl w-[200px] min-h-[150px] whitespace-break-spaces underline decoration-dotted"
               @click="setOption('step3', category)"
+              :loading="optionLoader"
             >
               {{ category.title }}
             </x-button>
@@ -504,9 +474,7 @@ const findOption = (item, key) => {
       <!-- modal 3 -->
       <div
         class="w-full flex gap-5 mb-10"
-        v-else-if="
-          modals.step === 'step3' && form.childCategory?.childs?.length > 0
-        "
+        v-else-if="modals.step === 'step3' && sendUpdateOptions"
       >
         <div class="flex flex-col gap-2 flex-grow w-75">
           <x-field :label="form.childCategory.title" required>
@@ -515,7 +483,7 @@ const findOption = (item, key) => {
               :single="true"
               :hasError="optionError"
               :options="
-                form.childCategory.childs.map(item => ({
+                sendUpdateOptions.map(item => ({
                   label: item.title,
                   value: item.id,
                   tooltip: item.description,
@@ -542,6 +510,7 @@ const findOption = (item, key) => {
               size="sm"
               color="primary"
               @click="confirmOrAddUpdate(false)"
+              :loading="addButtonLoader"
             >
               Add
             </x-button>

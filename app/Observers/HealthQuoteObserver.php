@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Jobs\MAWelcomeJob;
+use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
 use App\Services\HealthQuoteService;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -13,6 +14,13 @@ use App\Traits\PersonalQuoteSyncTrait;
 class HealthQuoteObserver
 {
     use PersonalQuoteSyncTrait;
+
+    public function updating(HealthQuote $quote): void
+    {
+        if ($quote->isDirty('quote_status_id') && ! $quote->isDirty('quote_status_date')) {
+            $quote->quote_status_date = now();
+        }
+    }
 
     /**
      * Handle the HealthQuote "updated" event.
@@ -37,12 +45,17 @@ class HealthQuoteObserver
                 $healthQuote->update(['transaction_approved_at' => now()]);
             });
 
-            if ($healthQuote->source === LeadSourceEnum::IMCRM) {
+            $ecommerceSource = ApplicationStorage::where('key_name', ApplicationStorageEnums::LEAD_SOURCE_ECOMMERCE)->value('value');
+            if ($healthQuote->source === LeadSourceEnum::IMCRM || strpos($healthQuote->source, $ecommerceSource) !== false) {
                 app(HealthQuoteService::class)->assignRenewalBatch($healthQuote->id);
             }
             $dirty = [...$dirty, 'transaction_approved_at' => $healthQuote->transaction_approved_at];
         }
 
         $this->syncQuote($healthQuote, $dirty);
+
+        if (isset($dirty['quote_status_id']) && $healthQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
+            $this->syncLeadEntries($healthQuote->uuid);
+        }
     }
 }

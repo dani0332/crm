@@ -40,8 +40,8 @@ class MAWelcomeJob implements ShouldQueue
 
     public function handle(SendEmailCustomerService $sendEmailCustomerService, SendSmsCustomerService $sendSmsCustomerService)
     {
-        if (! $this->email) {
-            info('MAWelcomeJob - Error - Empty Customer email.');
+        if (! $this->email || ! isValidEmail($this->email)) {
+            info('MAWelcomeJob - Error - Empty/Invalid Customer email.');
 
             return false;
         }
@@ -63,11 +63,15 @@ class MAWelcomeJob implements ShouldQueue
                     DB::transaction(function () use ($customer) {
                         $myAlfredUser = MyAlFredUser::where('customer_id', $customer->id)->first();
                         if (! $myAlfredUser) {
-                            MyAlFredUser::create([
-                                'signup_url' => null,
-                                'customer_id' => $customer->id,
-                                'source' => $this->source,
-                            ]);
+                            try {
+                                MyAlFredUser::create([
+                                    'signup_url' => null,
+                                    'customer_id' => $customer->id,
+                                    'source' => $this->source,
+                                ]);
+                            } catch (Exception $e) {
+                                info("MAWelcomeJob - MyAlFredUser customer {$customer->id} already created.");
+                            }
                         }
                     }, 5);
                 }

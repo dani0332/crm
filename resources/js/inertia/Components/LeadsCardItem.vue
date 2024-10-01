@@ -1,7 +1,5 @@
 <script setup>
-import { router } from '@inertiajs/vue3';
 import { useSortable } from '@vueuse/integrations/useSortable';
-import axios from 'axios';
 
 const page = usePage();
 
@@ -156,6 +154,39 @@ const handleConfirmation = result => {
 };
 
 const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
+const formatDate = date => {
+  if (!date) return '';
+  let parsedDate;
+  const dateTimeRegex = /(\d{2})-(\w{3})-(\d{4}) (\d{2}):(\d{2})(am|pm)/i;
+  if (dateTimeRegex.test(date)) {
+    const [, day, month, year, hours, minutes, period] =
+      date.match(dateTimeRegex);
+    const monthNames = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    const monthIndex = monthNames.indexOf(month);
+    let hour = parseInt(hours, 10);
+    if (period.toLowerCase() === 'pm' && hour !== 12) hour += 12;
+    if (period.toLowerCase() === 'am' && hour === 12) hour = 0;
+    parsedDate = new Date(year, monthIndex, day, hour, minutes);
+  } else {
+    // Assume it's in the format "YYYY-MM-DD"
+    parsedDate = new Date(date);
+  }
+  const options = { year: 'numeric', month: 'short', day: 'numeric' };
+  return useDateFormat(date, 'DD-MMM-YYYY').value;
+};
 </script>
 <template>
   <div
@@ -178,10 +209,12 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
         health_cover_for,
         business_type_of_insurance,
         stale_at,
+        previous_policy_expiry_date,
       } in leads"
       :key="id"
       :href="getUrl(uuid, quoteTypeId)"
       target="_blank"
+      rel="noopener"
       :id="id"
       class="block p-3 mt-2 border space-y-2 hover:transition hover:border-primary-500 rounded"
       :class="[
@@ -202,7 +235,7 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
         v-if="quoteTypeId == 3 || quoteTypeId == 5"
         class="flex items-center gap-2"
       >
-        <x-tooltip align="left">
+        <x-tooltip placement="left">
           <x-icon icon="person" size="sm" class="text-primary-400" />
           <template #tooltip>
             <div class="max-w-[194px] text-xs">
@@ -225,11 +258,16 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
       </div>
 
       <div class="flex items-center gap-2">
-        <x-tooltip align="left">
+        <x-tooltip placement="left">
           <x-icon icon="money" size="sm" class="text-primary-400" />
           <template #tooltip>
             <div class="max-w-[194px] text-xs">
-              <span v-if="quoteType == 'Health'">
+              <span
+                v-if="
+                  (quoteType == 'Health' && title === 'Quoted') ||
+                  (quoteType == 'Health' && title === 'FollowedUp')
+                "
+              >
                 'Price Starting from' represents the lowest premium amount that
                 a client can pay to initiate insurance coverage, giving you an
                 overview of the potential business to close.
@@ -251,7 +289,7 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
       </div>
 
       <div class="flex items-center gap-2">
-        <x-tooltip align="left">
+        <x-tooltip placement="left">
           <x-icon icon="calendar" size="sm" class="text-primary-400" />
           <template #tooltip>
             <div class="max-w-[194px] text-xs">
@@ -262,35 +300,64 @@ const getUrl = (url, quoteTypeId) => useGetShowPageRoute(url, quoteTypeId);
         </x-tooltip>
         <p class="text-xs">{{ updated_at }}</p>
       </div>
+      <div class="flex items-center gap-2">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="1em"
+          height="1em"
+          viewBox="0 0 24 24"
+        >
+          <g
+            fill="none"
+            stroke="#5594c4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+          >
+            <path d="M20.986 12.502a9 9 0 1 0-5.973 7.98" />
+            <path d="M12 7v5l3 3m4 1v3m0 3v.01" />
+          </g>
+        </svg>
+        <p class="text-xs">
+          {{
+            previous_policy_expiry_date
+              ? formatDate(previous_policy_expiry_date)
+              : 'N/A'
+          }}
+        </p>
+      </div>
     </a>
   </div>
 
   <x-modal
     v-model="showModal"
+    title="Kinldy choose a reason for marking as 'Lost' "
     showClose
     backdrop
     @update:modelValue="handleConfirmation(false)"
+    is-form
+    @submit="onSubmit"
   >
-    <template #header>
-      <span>Kinldy choose a reason for marking as 'Lost' </span>
+    <x-field label="Lost Reason" required>
+      <x-select
+        v-model="leadForm.lostreason"
+        :options="lostReasonsOptions"
+        placeholder="Lost Reason is required"
+        class="w-full"
+        :rules="[isRequired]"
+      />
+    </x-field>
+    <template #secondary-action>
+      <x-button
+        tabindex="-1"
+        color="orange"
+        @click.prevent="handleConfirmation(false)"
+      >
+        Go Back
+      </x-button>
     </template>
-
-    <x-form @submit="onSubmit" :auto-focus="false">
-      <x-field label="Lost Reason" required>
-        <x-select
-          v-model="leadForm.lostreason"
-          :options="lostReasonsOptions"
-          placeholder="Lost Reason is required"
-          class="w-full"
-          :rules="[isRequired]"
-        />
-      </x-field>
-      <div class="text-right space-x-4 mt-4">
-        <x-button type="submit" :loading="loader">Continue</x-button>
-        <x-button color="orange" @click.prevent="handleConfirmation(false)">
-          Go Back
-        </x-button>
-      </div>
-    </x-form>
+    <template #primary-action>
+      <x-button type="submit" :loading="loader">Continue</x-button>
+    </template>
   </x-modal>
 </template>

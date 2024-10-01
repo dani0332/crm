@@ -8,8 +8,8 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SendBookPolicyRequest extends FormRequest
@@ -52,14 +52,27 @@ class SendBookPolicyRequest extends FormRequest
             $validator->after(function ($validator) {
                 //check for quote records if exists
                 $quote = $this->getQuoteObject(request()->model_type, request()->quote_id);
+
                 if ($quote) {
+                    $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
                     $payment = Payment::where('code', $quote->code)->whereNull('send_update_log_id')->first();
-                    $paymentSplit = PaymentSplits::where('code', $quote->code)->first();
-                    $splits = PaymentSplits::where('code', $quote->code)->get();
+                    $getPaymentAgainstCode = $quote->code;
+
+                    if ($isDuplicateOrCIRLead && empty($payment)) {
+                        $payment = Payment::where([
+                            'paymentable_id' => $quote->id,
+                            'paymentable_type' => $quote->getMorphClass(),
+                        ])->whereNull('send_update_log_id')->first();
+                        $getPaymentAgainstCode = $payment->code;
+                    }
+
+                    $payment = Payment::where('code', $getPaymentAgainstCode)->whereNull('send_update_log_id')->first();
+                    $paymentSplit = PaymentSplits::where('code', $getPaymentAgainstCode)->first();
+                    $splits = PaymentSplits::where('code', $getPaymentAgainstCode)->get();
 
                     // Blow code is for checking if payment and payment split record exists or not which is required for sage
 
-                    if ($payment->first() && $paymentSplit->first()) {
+                    if ($payment && $paymentSplit) {
                         if (empty($payment->insurer_invoice_date)) {
                             $validator->errors()->add('value', 'Insurer Invoice date is required');
                         }
@@ -67,47 +80,43 @@ class SendBookPolicyRequest extends FormRequest
                             $validator->errors()->add('value', 'Insurer tax invoice number is required');
                         }
                         if (empty($payment->insurer_commmission_invoice_number)) {
-                            $validator->errors()->add('value', 'Insurer Commmission Invoice Number is required');
+                            $validator->errors()->add('value', 'Insurer Commission Invoice Number is required');
                         }
                         if (empty($payment->commission_vat_not_applicable) && empty($payment->commission_vat_applicable)) {
-                            $validator->errors()->add('value', 'Commmission (VAT NOT APPLICABLE) OR Commmission (VAT APPLICABLE) is required');
+                            $validator->errors()->add('value', 'Commission (VAT NOT APPLICABLE) OR Commission (VAT APPLICABLE) is required');
                         }
 
                         $isPaymentNotUpfrontOrSplit = ! in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]);
                         $isPaymentPaidOrCaptured = in_array($splits[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
                         $isPaymentUpfrontOrSplitAndPaidOrCaptured = $isPaymentNotUpfrontOrSplit && $isPaymentPaidOrCaptured;
-                        if ($isPaymentUpfrontOrSplitAndPaidOrCaptured) {
-                            if (! empty($splits)) {
-                                $isSageReceiptIdEmpty = empty($splits[0]->sage_reciept_id);
-                                if ($isSageReceiptIdEmpty) {
-                                    $validator->errors()->add('value', 'Payment sage reciept id can not be null');
-                                }
-                            }
-                        }
-
-                        if (strtolower($payment->invoicePaymentStatus) == PaymentFrequency::PAID && in_array($payment->frequency, [PaymentFrequency::SPLIT_PAYMENTS, PaymentFrequency::PAID])) {
-                            if (! empty($splits)) {
-                                foreach ($splits as $item) {
-                                    if (empty($item->sage_reciept_id)) {
+                        $isQuoteFallUnderSkippableCriteria = (new SageApiService)->skipApplyPrepaymentsForSpecificLeads($quote, $payment, $splits);
+                        if (! $isQuoteFallUnderSkippableCriteria['status']) {
+                            if ($isPaymentUpfrontOrSplitAndPaidOrCaptured) {
+                                if (! empty($splits)) {
+                                    $isSageReceiptIdEmpty = empty($splits[0]->sage_reciept_id);
+                                    if ($isSageReceiptIdEmpty) {
                                         $validator->errors()->add('value', 'Payment sage reciept id can not be null');
                                     }
                                 }
                             }
-                        }
-                        if (! empty($payment->insurer_invoice_date) && ! empty($paymentSplit->due_date)) {
-                            $invoiceDate = Carbon::parse($payment->insurer_invoice_date)->startOfDay();
-                            $paymentDueDate = Carbon::parse($paymentSplit->due_date)->startOfDay();
 
-                            if ($invoiceDate->gt($paymentDueDate)) {
-                                $validator->errors()->add('value', 'Payment Due date cannot be earlier than Insurer Invoice date');
+                            if (strtolower($payment->invoicePaymentStatus) == PaymentFrequency::PAID && in_array($payment->frequency, [PaymentFrequency::SPLIT_PAYMENTS, PaymentFrequency::PAID])) {
+                                if (! empty($splits)) {
+                                    foreach ($splits as $item) {
+                                        if (empty($item->sage_reciept_id)) {
+                                            $validator->errors()->add('value', 'Payment sage reciept id can not be null');
+                                        }
+                                    }
+                                }
                             }
                         }
+
                     } else {
                         $validator->errors()->add('value', 'Payment Not found');
                     }
 
                     // Check parent Lead Status not in Cancellation Pending state.
-                    $parentQuoteCode = count(explode('-', $quote->code)) > 2 ? $quote->parent_duplicate_quote_id : false;
+                    $parentQuoteCode = count(explode('-', $getPaymentAgainstCode)) > 2 ? $quote->parent_duplicate_quote_id : false;
                     if ($parentQuoteCode) {
                         $parentQuote = $this->getQuoteObjectBy(request()->model_type, $parentQuoteCode, 'code');
                         if ($parentQuote) {

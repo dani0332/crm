@@ -6,21 +6,21 @@ use BenSampo\Enum\Enum;
 
 final class SendUpdateLogStatusEnum extends Enum
 {
-    const NEW_REQUEST = 'New Request';
-    const REQUEST_IN_PROGRESS = 'Request in progress';
+    const NEW_REQUEST = 'NEW_REQUEST';
+    const REQUEST_IN_PROGRESS = 'REQUEST_IN_PROGRESS';
 
     // const PAYMENT_PENDING = 'Payment Pending';
     // const PAYMENT_AUTHORIZED = 'Payment Authorized';
     // const SENT_FOR_TRANSACTION_APPROVAL = 'Sent for Transaction Approval';
-    const TRANSACTION_DECLINE = 'Transaction Declined';
-    const TRANSACTION_APPROVED = 'Transaction Approved';
+    const TRANSACTION_DECLINE = 'TRANSACTION_DECLINED';
+    const TRANSACTION_APPROVED = 'TRANSACTION_APPROVED';
     const UNPAID = 'Unpaid';
     const PARTIALLY_PAID = 'Partially paid';
     const FULL_PAID = 'Fully paid';
 
     // const STALE_REQUEST = 'Stale Request';
-    const UPDATE_SENT_TO_CUSTOMER = 'Update Sent to Customer';
-    const UPDATE_BOOKED = 'Update Booked';
+    const UPDATE_SENT_TO_CUSTOMER = 'UPDATE_SENT_TO_CUSTOMER';
+    const UPDATE_BOOKED = 'UPDATE_BOOKED';
     const SEND_UPDATE = 'SEND_UPDATE';
     const EF = 'EF';    // Endorsement Financial
     const EN = 'EN';    // Endorsement Non Financial
@@ -49,6 +49,9 @@ final class SendUpdateLogStatusEnum extends Enum
     const SUC = 'Send update to customer'; // send update to customer.
     const SU = 'Book Update'; // send update.
     const SNBU = 'Send and Book Update'; // send and book update.
+    const ACTION_SNBU = 'SNBU';
+    const ACTION_SUC = 'SUC';
+    const ACTION_SU = 'SU';
     const PPE = 'PPE'; // Policy Period Extension
     const BOOKING_FILLED = 1;
     const IS_SEND_UPDATE = 1;
@@ -63,8 +66,8 @@ final class SendUpdateLogStatusEnum extends Enum
     const AL = 'AL'; // Additional location
     const EA = 'EA'; // Employee addition
     const EFMP = 'EFMP'; // Extension for maintenance period
-    const ICOLOIALOLR = 'I/COLOIALOLR'; // Increase / Change of limit of indemnity and limit of liability required
-    const IIEAFT = 'IIEAF/T'; // Increase in estimated annual fees / turnover
+    const I_CLILLR = 'I_CLILLR'; // Increase / Change of limit of indemnity and limit of liability required
+    const IEAF_T = 'IEAF_T'; // Increase in estimated annual fees / turnover
     const IISI = 'IISI'; // Increase in sum Insured
     const RFTC = 'RFTC'; // Request for travel certificate
     const AAI = 'AAI'; // Add additional insured
@@ -73,7 +76,15 @@ final class SendUpdateLogStatusEnum extends Enum
     const AOCOV = 'AOCOV'; // Add optional cover, it's for car lob
     const COE = 'COE'; // Change of Emirate
     const CISC = 'CISC'; // Change in seating capacity
-    const CISC_NFI = 'CISC(NFI'; // Change in seating capacity (with no financial impact)
-    const COE_NFI = 'COE(NFI'; // Change of Emirates (with no financial impact)
+    const CISC_NFI = 'CISC_NFI'; // Change in seating capacity (with no financial impact)
+    const COE_NFI = 'COE_NFI'; // Change of Emirates (with no financial impact)
     const ADD_OPTIONAL_COVER = 'Add optional cover';
+    const CIED_EOP = 'CIED_EOP'; // Change in expiry date / Extension of policy
+    const RF_SOAC = 'RF_SOAC'; // Request for statement of account (SOA)
+    const MSC_NFI = 'MSC_NFI'; // Marital status change (with no financial impact)
+    const CTD_NFI = 'CTD_NFI'; // Change travel dates (with no financial impact)
+    const DTSI = 'DTSI'; // Decrease the sum insured
+    const DOV = 'DOV'; // Deletion of vehicle
+    const ACB = 'ACB'; // Additional commission booking
+    const ATIB = 'ATIB'; // Additional tax invoice booking
 }

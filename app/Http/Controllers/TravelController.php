@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AMLStatusCode;
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
@@ -20,14 +22,16 @@ use App\Enums\TravelQuoteEnum;
 use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\TravelRenewalsUploadRequest;
 use App\Http\Requests\UpdateTravelRequest;
+use App\Models\ApplicationStorage;
 use App\Models\Emirate;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
+use App\Repositories\PaymentRepository;
 use App\Repositories\SendUpdateLogRepository;
-use App\Services\AMLService;
+use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
@@ -83,6 +87,7 @@ class TravelController extends Controller
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
         $isManager = auth()->user()->isManagerOrDeputy();
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManager;
+        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
 
         return inertia('TravelQuote/Index', [
             'quotes' => $quotes,
@@ -96,6 +101,7 @@ class TravelController extends Controller
                 'isLeadPool' => auth()->user()->isLeadPool(),
                 'isManagerORDeputy' => $isManager,
             ],
+            'authorizedDays' => intval($authorizedDays->value),
         ]);
     }
 
@@ -109,6 +115,11 @@ class TravelController extends Controller
         $quoteType = strtolower($this->genericModel->modelType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         abort_if(! $record, 404);
+
+        /* Start - Temporarily adding for correcting historic data  */
+        (new PaymentRepository)->updatePriceVatApplicableAndVat($record, $this->genericModel->modelType);
+        /* End - Temporarily adding for correcting historic data  */
+
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::TRAVEL->value, $record);
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($quoteType, $record->code);
         $dropdownSource = $this->travelQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
@@ -131,12 +142,11 @@ class TravelController extends Controller
                 ];
             })->values();
         }
-        /* // Will skip KYC and AML check , required by BA for payments
-        if (AMLService::checkAMLStatusFailed(self::TYPE_ID, $record->id)) {
-            $dropdownSource['quote_status_id'] = collect($dropdownSource['quote_status_id'])->filter(function ($value) {
-                return $value['id'] != QuoteStatusEnum::TransactionApproved;
-            })->values();
-        }*/
+
+        $leadStatuses = collect($dropdownSource['quote_status_id'])->filter(function ($value) {
+            return ! in_array($value['id'], [QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed]);
+        })->values();
+        $leadStatuses = app(CentralService::class)->lockTransactionStatus($record, self::TYPE_ID, $leadStatuses);
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel);
         $filteredInsuranceProviders = [];
@@ -164,23 +174,25 @@ class TravelController extends Controller
         $renewalAdvisors = $this->travelQuoteService->getRenewalAdvisors();
         $this->travelQuoteService->fillData();
         $nationalities = NationalityRepository::withActive()->get();
+        $record->payment_status_id_text = app(SplitPaymentService::class)->mapQuotePaymentStatus($record->payment_status_id, $record->payment_status_id_text);
 
         $ecomDetails = [
             'premium' => $record->premium,
-            'paidAt' => ($record->paid_at) ? Carbon::parse($record->paid_at)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '',
+            'paidAt' => ($record->paid_at) ? Carbon::parse($record->paid_at)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : 'N/A',
             'paymentStatus' => $record->payment_status_id_text,
             'planName' => $record->plan_id_text,
             'providerName' => $record->travel_plan_provider_text,
+            'paidAtPayment' => ($record->payment_paid_at) ? Carbon::parse($record->payment_paid_at)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : 'N/A',
         ];
 
         $assignmentTypes = [GenericRequestEnum::ASSIGN_WITHOUT_EMAIL => 'Without Email', GenericRequestEnum::ASSIGN_WITH_EMAIL => 'With Email'];
         $isQuoteDocumentEnabled = $this->travelQuoteService->quoteDocumentEnabled($this->genericModel->modelType);
-        $quoteDocuments = (new QuoteDocumentService())->getQuoteDocuments($this->genericModel->modelType, $record->id);
+        $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments($this->genericModel->modelType, $record->id);
         $displaySendPolicyButton = $this->travelQuoteService->displaySendPolicyButton($record, $quoteDocuments, self::TYPE_ID);
         $documentTypes = $documentType = $this->travelQuoteService->getQuoteDocumentsForUpload(self::TYPE_ID);
         $documentTypes = collect($documentTypes)->groupBy('category');
 
-        @[$documentTypes, $documentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Travel);
+        @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Travel);
 
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $activities = $this->travelQuoteService->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
@@ -188,6 +200,7 @@ class TravelController extends Controller
         $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $fields = $this->travelQuoteService->fieldsToDisplay($this->travelQuoteService->getFieldsToShow(), $record);
+        $travelDestinations = $this->travelQuoteService->getTravelDestinations($record->id);
         if (! auth()->user()->hasRole(RolesEnum::Engineering)) {
             unset($fields['id']);
         }
@@ -212,19 +225,24 @@ class TravelController extends Controller
             $sendUpdateLogs = SendUpdateLogRepository::findByQuoteUuid($record->uuid);
             $sendUpdateEnum = SendUpdateLogStatusEnum::asArray();
         }
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($record);
+        $isAmlClearedForQuote = $record->aml_status === AMLStatusCode::AMLScreeningCleared;
+        $amlStatusName = AMLStatusCode::getName($record->aml_status);
 
         return inertia('TravelQuote/Show', [
-            'record' => $record,
             'quote' => $record,
+            'isAmlClearedForQuote' => $isAmlClearedForQuote,
+            'amlStatusName' => $amlStatusName,
             'fieldsToDisplay' => $fields,
             'modelType' => $this->genericModel->modelType,
             'quoteTypeId' => QuoteTypeId::Travel,
             'dropdownSource' => $dropdownSource,
-            'leadStatuses' => $dropdownSource['quote_status_id'],
+            'leadStatuses' => $leadStatuses,
             'advisors' => $advisors,
             'renewalAdvisors' => $renewalAdvisors,
             'allowedDuplicateLOB' => $allowedDuplicateLOB,
             'assignmentTypes' => $assignmentTypes,
+            'travelDestinations' => $travelDestinations,
             'genderOptions' => $this->crudService->getGenderOptions(),
             'lostReasons' => $this->lookupService->getLostReasons(),
             'travelers' => CustomerMembersRepository::getBy($record->id, QuoteTypes::TRAVEL->name),
@@ -284,8 +302,9 @@ class TravelController extends Controller
             'sendUpdateOptions' => $sendUpdateOptions,
             'sendUpdateLogs' => $sendUpdateLogs,
             'hasPolicyIssuedStatus' => $hasPolicyIssuedStatus,
-            'documentTypeCodes' => $documentTypeCodes,
             'linkedQuoteDetails' => $linkedQuoteDetails,
+            'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
+            'paymentDocument' => $paymentDocument,
         ]);
     }
 
@@ -398,6 +417,7 @@ class TravelController extends Controller
         $fields['email']['disabled'] = true;
         $fields['mobile_no']['disabled'] = true;
         $quotePlans = $this->travelQuoteService->listTravelQuotePlans($record->id);
+        $travelDestinations = $this->travelQuoteService->getTravelDestinations($record->id);
 
         return inertia('TravelQuote/Form', [
             'quote' => $record,
@@ -406,6 +426,7 @@ class TravelController extends Controller
             'modelType' => $this->genericModel->modelType,
             'genderOptions' => $this->crudService->getGenderOptions(),
             'dropdownSource' => $dropdownSource,
+            'travelDestinations' => $travelDestinations,
             'model' => json_encode($this->genericModel->properties),
             'fields' => $fields,
         ]);

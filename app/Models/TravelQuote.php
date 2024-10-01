@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\FilterTypes;
 use App\Enums\QuoteTypeId;
+use App\Enums\TravelQuoteEnum;
+use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Config;
@@ -33,14 +35,35 @@ class TravelQuote extends Model implements AuditableContract
         'advisor_id' => FilterTypes::IN,
         'policy_number' => FilterTypes::EXACT,
         'source' => FilterTypes::EXACT,
-        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'policy_expiry_date' => FilterTypes::DATE_BETWEEN,
+    ];
+    protected $dispatchesEvents = [
+        'updated' => QuoteEmailUpdated::class,
     ];
 
+    protected static function booted()
+    {
+        static::updating(function ($model) {
+            $skipBookingDateUpdateForNonCPD = true;
+            if (isset(request()->sendUpdateId)) {
+                $travelQuote = new TravelQuote;
+                $endorsmentDetails = $travelQuote->isCPDEndorsment(request()->sendUpdateId);
+                if ($endorsmentDetails['isCPDEndorsment']) {
+                    info('Book Update - Policy Booking Date update is allowed for CPD Endorsment. Old PBD ('.$model->getOriginal('policy_booking_date').') - New PBD ('.$model->policy_booking_date.'). QuoteType: '.request()->quoteType.' - QuoteUUID: '.request()->quoteUuid.' - SendUpdateUUID: '.$endorsmentDetails['sendUpdateUUID']);
+                    $skipBookingDateUpdateForNonCPD = false;
+                }
+            }
+
+            if ($model->isDirty('policy_booking_date') && $model->getOriginal('policy_booking_date') && $skipBookingDateUpdateForNonCPD) {
+                info($model->code.' updating the value of policy_booking_date is skipped. tried to change policy_booking_date from '.$model->getOriginal('policy_booking_date').' to '.$model->policy_booking_date);
+                unset($model->policy_booking_date); // lock the policy booking date field
+            }
+        });
+    }
     public function quoteStatus()
     {
         return $this->belongsTo(QuoteStatus::class);
     }
-
     public function travelQuoteRequestDetail()
     {
         return $this->hasOne(TravelQuoteRequestDetail::class, 'travel_quote_request_id', 'id');
@@ -63,12 +86,12 @@ class TravelQuote extends Model implements AuditableContract
 
     public function parent()
     {
-        return $this->belongsTo(TravelQuote::class, 'parent_id');
+        return $this->belongsTo(self::class, 'parent_id');
     }
 
     public function child()
     {
-        return $this->hasOne(TravelQuote::class, 'parent_id');
+        return $this->hasOne(self::class, 'parent_id');
     }
 
     public function quotePlan()
@@ -127,6 +150,7 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id')->select(['id', 'text']);
     }
+
     /**
      * get data by personal quote type.
      *
@@ -157,11 +181,11 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->morphMany(SageApiLog::class, 'section');
     }
+
     public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Activities::class, 'quote_request_id')
             ->where('quote_type_id', QuoteTypeId::Travel);
-
     }
 
     public function customerMembers()
@@ -172,5 +196,31 @@ class TravelQuote extends Model implements AuditableContract
     public function transactionType()
     {
         return $this->belongsTo(Lookup::class, 'transaction_type_id', 'id');
+    }
+
+    public function policyWording()
+    {
+        return $this->hasMany(TravelPlanPolicyWording::class, 'plan_id', 'plan_id');
+    }
+
+    public function TravelDestinations()
+    {
+        return $this->hasMany(TravelDestination::class, 'quote_id', 'id');
+    }
+
+    public function embeddedTransaction()
+    {
+        return $this->hasOne(EmbeddedTransaction::class, 'code', 'code');
+    }
+
+    public function isMultiTrip()
+    {
+        return $this->coverage_code === TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP;
+    }
+
+    public function scopeFilterBySegment($query, $alias = 'tqr')
+    {
+        $segmentFilter = request()->input('segment_filter');
+        self::applySegmentFilter($query, $segmentFilter, $alias, QuoteTypeId::Travel);
     }
 }

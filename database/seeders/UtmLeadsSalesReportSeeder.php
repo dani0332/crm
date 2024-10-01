@@ -18,7 +18,7 @@ class UtmLeadsSalesReportSeeder extends Seeder
     {
 
         $role = Role::firstOrCreate([
-            'name' => 'Senior Management',
+            'name' => 'SENIOR_MANAGEMENT',
             'guard_name' => 'web',
         ], [
             'created_at' => now(),

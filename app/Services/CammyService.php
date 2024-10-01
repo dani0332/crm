@@ -109,7 +109,7 @@ class CammyService
         }
 
         try {
-            $client = new \GuzzleHttp\Client();
+            $client = new \GuzzleHttp\Client;
             $cammyRequest = $client->post(
                 $apiEndPoint,
                 [

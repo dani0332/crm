@@ -4,6 +4,10 @@ const props = defineProps({
   quoteType: String,
   uuid: String,
   hasChildLead: Boolean,
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
   extraDetails: {
     type: Object,
     default: {},
@@ -106,6 +110,7 @@ const updateSelectedPlan = () => {
           providerName: props.plan.providerName,
           planName: props.plan.name,
           premium: premium.toFixed(2),
+          planType: props.plan.plan_type,
         });
       }
       notification.success({
@@ -139,18 +144,39 @@ watch(() => {
       can(permissionEnum.AVAILABLE_PLANS_SELECT_BUTTON);
   }
 });
+const [SelectPlanButtonTemplate, SelectPlanButtonReuseTemplate] =
+  createReusableTemplate();
 </script>
 
 <template>
-  <x-button
-    size="xs"
-    color="success"
-    outlined
-    :loading="isLoading"
-    v-if="isPlanSelectionEnable"
-    :disabled="hasChildLead"
-    @click.prevent="updateSelectedPlan()"
+  <SelectPlanButtonTemplate v-slot="{ isDisabled }">
+    <x-button
+      v-if="isPlanSelectionEnable"
+      size="xs"
+      color="success"
+      outlined
+      :loading="isLoading"
+      :disabled="isDisabled"
+      @click.prevent="updateSelectedPlan()"
+    >
+      Select
+    </x-button>
+  </SelectPlanButtonTemplate>
+
+  <x-tooltip
+    v-if="page.props.lockLeadSectionsDetails.plan_selection"
+    position="left"
+    align="center"
+    class="yoyo-tip"
   >
-    Select
-  </x-button>
+    <SelectPlanButtonReuseTemplate :isDisabled="true" />
+    <template #tooltip>
+      <div class="whitespace-normal text-xs">
+        No further actions can be taken on an issued policy. For changes, such
+        as a change in insurer, go to 'Send Update', select 'Add Update', and
+        choose 'Cancellation from inception and reissuance.
+      </div>
+    </template>
+  </x-tooltip>
+  <SelectPlanButtonReuseTemplate v-else :isDisabled="hasChildLead" />
 </template>

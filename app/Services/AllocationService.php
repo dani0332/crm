@@ -55,7 +55,7 @@ class AllocationService
         $apiToken = config('constants.KEN_API_TOKEN');
         $apiTimeout = config('constants.KEN_API_TIMEOUT');
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client;
         $request = $client->post(
             $apiEndPoint,
             [
@@ -112,22 +112,15 @@ class AllocationService
         }
     }
 
-    public function updateExistingQuoteDetail($quoteDetail, $uuid): void
+    public function upsertQuoteDetail($leadId, $quoteModel, $keyColumn): void
     {
-        $quoteDetail->advisor_assigned_date = now();
-        $quoteDetail->advisor_assigned_by_id = auth()->id();
-        $quoteDetail->save();
-    }
-
-    public function createNewQuoteDetail($leadId, $quoteModel, $keyColumn): void
-    {
-        $quoteModel::create([
-            $keyColumn => $leadId,
-            'advisor_assigned_date' => now(),
-            'advisor_assigned_by_id' => auth()->id(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $quoteModel::updateOrCreate(
+            [$keyColumn => $leadId],
+            [
+                'advisor_assigned_date' => now(),
+                'advisor_assigned_by_id' => auth()->id(),
+            ]
+        );
     }
 
     public function getAssignmentTypeText($assignmentType)
@@ -242,7 +235,7 @@ class AllocationService
         $allocationCount = LeadAllocation::where('user_id', $userId)->select('auto_assignment_count', 'manual_assignment_count', 'max_capacity')
             ->first();
 
-        $leads = CarQuote::join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
+        $leads = CarQuote::select('assignment_type')->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->whereBetween('car_quote_request_detail.advisor_assigned_date', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()])
@@ -337,5 +330,4 @@ class AllocationService
         }
 
     }
-
 }

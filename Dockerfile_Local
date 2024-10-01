@@ -59,6 +59,9 @@ USER www
 # Grant execute permissions to the script
 RUN chmod +x /var/www/docker-local/entrypoint.sh
 
+# file has Windows-style line endings (CRLF) instead of Unix-style line endings (LF). This can cause issues when running scripts in a Unix-like environment Alternatively, you can use sed to remove the ^M characters:
+RUN sed -i 's/\r//' /var/www/docker-local/entrypoint.sh
+
 # Expose port 9000 and start php-fpm server
 EXPOSE 9000
 # Set the script as the entrypoint

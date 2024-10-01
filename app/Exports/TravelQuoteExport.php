@@ -35,6 +35,12 @@ class TravelQuoteExport
             'EXPIRY DATE',
             'IS ECOMMERCE',
             'PAYMENT STATUS',
+            'RENEWAL BATCH',
+            'PREVIOUS POLICY EXPIRY DATE',
+            'TRAVEL TYPE',
+            'TRAVEL COVERAGE',
+            'TRANSACTION APPROVED DATE',
+            'BOOKING DATE',
         ];
     }
 
@@ -48,7 +54,7 @@ class TravelQuoteExport
             optional($quote->advisor)->name,
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
-            $quote->dob,
+            date(config('constants.datetime_format'), strtotime($quote->dob)),
             optional($quote->travelQuoteRequestDetail)->transapp_code,
             optional($quote->travelQuoteRequestDetail)->lostReason?->text,
             $quote->source,
@@ -56,9 +62,15 @@ class TravelQuoteExport
             $quote->policy_number,
             optional($quote->destination)->text,
             optional($quote->currentlyLocatedIn)->text,
-            $quote->expiry_date,
+            date(config('constants.DATE_FORMAT'), strtotime($quote->expiry_date)),
             $quote->is_ecommerce ? 'Yes' : 'No',
             optional($quote->paymentStatus)->text,
+            $quote->renewal_batch,
+            $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
+            $quote->direction_code,
+            $quote->coverage_code,
+            $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
+            $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
         ];
     }
 }

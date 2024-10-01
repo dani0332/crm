@@ -126,7 +126,7 @@ const isIntegerColumn = key => {
 <template>
   <DataTable
     class="mt-4"
-    table-class-name=""
+    table-class-name="table-fixed"
     :loading="loader"
     :headers="tableHeader"
     :items="props.reportData.data || []"
@@ -135,6 +135,7 @@ const isIntegerColumn = key => {
     :sort-by="'net_conversion'"
     :sort-type="'desc'"
     hide-footer
+    :rows-per-page="100"
   >
     <template #item-customer_name="{ customer_name }">
       {{ customer_name ?? 'N/A' }}
@@ -155,34 +156,36 @@ const isIntegerColumn = key => {
       {{ policy_expiry_date ?? 'N/A' }}
     </template>
     <template #item-collected_amount="{ collected_amount }">
-      {{ collected_amount ? collected_amount : 0.00 }}
+      {{ collected_amount ? collected_amount : 0.0 }}
     </template>
     <template #item-price_with_vat="{ price_with_vat }">
-      {{ price_with_vat ? price_with_vat : 0.00 }}
+      {{ price_with_vat ? price_with_vat : 0.0 }}
     </template>
     <template #item-total_vat="{ total_vat }">
-      {{ total_vat ? total_vat : 0.00 }}
+      {{ total_vat ? total_vat : 0.0 }}
     </template>
     <template #item-price_without_vat="{ price_without_vat }">
-      {{ price_without_vat ? price_without_vat : 0.00 }}
+      {{ price_without_vat ? price_without_vat : 0.0 }}
     </template>
     <template #item-discount="{ discount }">
-      {{ discount ? discount : 0.00 }}
+      {{ discount ? discount : 0.0 }}
     </template>
     <template #item-total_price="{ total_price }">
-      {{ total_price ? total_price : 0.00 }}
+      {{ total_price ? total_price : 0.0 }}
     </template>
     <template #item-pending_balance="{ pending_balance }">
-      {{ pending_balance ? pending_balance : 0.00 }}
+      {{ pending_balance ? pending_balance : 0.0 }}
     </template>
     <template #item-commission_vat_applicable="{ commission_vat_applicable }">
-      {{ commission_vat_applicable ? commission_vat_applicable : 0.00 }}
+      {{ commission_vat_applicable ? commission_vat_applicable : 0.0 }}
     </template>
     <template #item-vat_on_commission="{ vat_on_commission }">
-      {{ vat_on_commission ? (vat_on_commission) : 0.00 }}
+      {{ vat_on_commission ? vat_on_commission : 0.0 }}
     </template>
-    <template #item-commission_vat_not_applicable="{ commission_vat_not_applicable }">
-      {{ commission_vat_not_applicable ? (commission_vat_not_applicable) : 0.00 }}
+    <template
+      #item-commission_vat_not_applicable="{ commission_vat_not_applicable }"
+    >
+      {{ commission_vat_not_applicable ? commission_vat_not_applicable : 0.0 }}
     </template>
     <template #item-policy_issuer="{ policy_issuer }">
       {{ policy_issuer ?? 'N/A' }}
@@ -197,7 +200,7 @@ const isIntegerColumn = key => {
       {{ notes ?? 'N/A' }}
     </template>
     <template #body-append>
-      <tr v-if="reportData.data.length > 0" class="total-row">
+      <tr v-if="reportData.data.length > 0" class="total-row sticky bottom-0">
         <td class="direction-left">Total</td>
         <td
           v-for="header in tableHeader.slice(1, tableHeader.length)"
@@ -206,7 +209,10 @@ const isIntegerColumn = key => {
         >
           {{
             isIntegerColumn(header.value)
-              ? priceFormat(calculateTotalSum(reportData.data, header.value), true)
+              ? priceFormat(
+                  calculateTotalSum(reportData.data, header.value),
+                  true,
+                )
               : 'N/A'
           }}
         </td>

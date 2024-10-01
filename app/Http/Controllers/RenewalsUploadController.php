@@ -16,7 +16,6 @@ use App\Http\Requests\ScheduleRenewalsOcbRequest;
 use App\Imports\RenewalsImport;
 use App\Imports\RenewalsImportUpdate;
 use App\Jobs\Renewals\FetchRenewalsPlansJob;
-use App\Jobs\Renewals\RenewalsQuoteAmlJob;
 use App\Jobs\ScheduleRenewalOcbEmails;
 use App\Models\AML;
 use App\Models\CarQuote;
@@ -30,7 +29,6 @@ use App\Services\RenewalsUploadService;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
-use Sammyjo20\LaravelHaystack\Models\Haystack;
 use Yajra\Datatables\Datatables;
 
 class RenewalsUploadController extends Controller
@@ -196,7 +194,7 @@ class RenewalsUploadController extends Controller
         $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
         $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
 
-        $renewalsUploadLead = new RenewalsUploadLeads();
+        $renewalsUploadLead = new RenewalsUploadLeads;
         $renewalsUploadLead->file_name = $fileName;
         $renewalsUploadLead->file_path = $azureStorageUrl.$azureStorageContainer.'/'.$filePathAzure;
         $renewalsUploadLead->status = ProcessStatusCode::IN_PROGRESS;
@@ -231,6 +229,7 @@ class RenewalsUploadController extends Controller
             'renewals_upload_leads.file_name as file_name',
             'renewals_upload_leads.total_records as total_records',
             'renewals_upload_leads.good as good',
+            'renewals_upload_leads.is_sic as is_sic',
             'renewals_upload_leads.cannot_upload as cannot_upload',
             'renewals_upload_leads.status as status',
             'renewals_upload_leads.created_at as created_at',
@@ -281,7 +280,7 @@ class RenewalsUploadController extends Controller
             $query->where('batch', $request->batch);
         }
 
-        $renewalQuotes = $query->groupBy('batch')
+        $renewalQuotes = $query->distinct()
             ->simplePaginate();
 
         return inertia('Renewals/Batches', [
@@ -413,56 +412,6 @@ class RenewalsUploadController extends Controller
                 return abort(404);
                 break;
         }
-    }
-
-    /**
-     * schedule AML check for non-motor uploaded through renewals process
-     *
-     * @return void
-     *
-     * @throws \Laravel\SerializableClosure\Exceptions\PhpVersionNotSupportedException
-     */
-    public function scheduleNonMotorAml()
-    {
-        $logPrefix = 'Renewals AML - fn: scheduleNonMotorAml';
-        $jobs = [];
-
-        $jobNo = 1;
-
-        RenewalQuoteProcess::where([
-            'type' => RenewalsUploadType::CREATE_LEADS,
-            'status' => RenewalProcessStatuses::PROCESSED,
-        ])->whereIn('quote_type', QuoteType::where('short_code', '<>', QuoteTypeShortCode::CAR)->get()->pluck('short_code')->toArray())
-            ->whereNotNull('quote_id')
-            ->groupBy('quote_id')
-            ->chunkById(50, function ($leads) use (&$jobs, &$jobNo) {
-                foreach ($leads as $lead) {
-                    $jobs[] = new RenewalsQuoteAmlJob($lead, $jobNo);
-                    $jobNo++;
-                }
-            });
-
-        info($logPrefix.' totalJobs: '.count($jobs));
-
-        if ($jobs != null && count($jobs)) {
-            Haystack::build()
-                ->onQueue('renewals')
-                ->addJobs($jobs)
-                ->then(function () use ($logPrefix) {
-                    info($logPrefix.' all jobs completed successfully');
-                })
-                ->catch(function () use ($logPrefix) {
-                    info($logPrefix.' one of batch is failed. ');
-                })
-                ->finally(function () use ($logPrefix) {
-                    info($logPrefix.' everything done');
-                })
-                ->allowFailures()
-                ->withDelay(2)
-                ->dispatch();
-        }
-
-        return redirect('/');
     }
 
     /**

@@ -1,11 +1,11 @@
 <?php
 
+use App\Http\Controllers\API\ActivityController;
 use App\Http\Controllers\API\ApiController;
 use App\Http\Controllers\API\V1\CarQuoteController;
 use App\Http\Controllers\API\V1\EmbeddedProductController;
 use App\Http\Controllers\API\V1\GenericLobController;
 use App\Http\Controllers\API\V1\QuoteDocumentController;
-use App\Http\Controllers\V2\CarRevivalQuoteController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -26,13 +26,13 @@ Route::middleware(['basicAuth'])->group(function () {
 Route::prefix('v1')->middleware(['basicAuth'])->group(function () {
     Route::post('/imcrm/evaluate-tier', [ApiController::class, 'evaluateTier'])->name('evaluateTier');
     Route::post('/imcrm/trigger-sic-workflow', [ApiController::class, 'triggerSICWorkflow'])->name('triggerSICWorkflow');
+    // Route::post('/imcrm/fix-quote-status-date', [ApiController::class, 'fixQuoteStatusDate']);
 });
 Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
+Route::post('/imcrm/zero-plans-email', [ApiController::class, 'handleZeroPlansEmail']);
 Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuoteCallBack']);
 
-//postmark inbound hook url
-
-Route::post('/car-revival/update', [CarRevivalQuoteController::class, 'updateQuote']);
+Route::post('/inbound-emails-hook', [ApiController::class, 'inboundEmailsHook']);
 
 Route::prefix('v1')->group(function () {
 
@@ -53,4 +53,7 @@ Route::prefix('v1')->group(function () {
 
     Route::get('quotes/car/{uuid}', [CarQuoteController::class, 'show']);
     Route::post('quotes/send-ep-certificate', [EmbeddedProductController::class, 'sendDocument'])->name('sendDocument');
+    Route::post('activities/create', [ActivityController::class, 'createActivity'])->name('createActivity');
+    Route::get('activities', [ActivityController::class, 'getActivity'])->name('getActivity');
 });
+Route::post('/payments/update-payment-status', [ApiController::class, 'quotePaymentStatusUpdated']);

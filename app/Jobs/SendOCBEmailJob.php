@@ -5,9 +5,9 @@ namespace App\Jobs;
 use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
-use App\Services\CarEmailService;
 use App\Services\CarQuoteService;
 use App\Services\CRUDService;
+use App\Services\EmailServices\CarEmailService;
 use App\Services\LookupService;
 use App\Services\RenewalsUploadService;
 use App\Services\SendEmailCustomerService;
@@ -33,8 +33,8 @@ class SendOCBEmailJob implements ShouldQueue
     protected $lookupService;
     protected $sendEmailCustomerService;
     public $tries = 3;
-    public $timeout = 60;
-    public $backoff = 10;
+    public $timeout = 90;
+    public $backoff = 30;
 
     /**
      * Create a new job instance.

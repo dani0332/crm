@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <title>Proforma Payment Request</title>
 
@@ -210,7 +211,7 @@
         table.tbl-footer tr td, table.tbl-footer tr td a {
             color: #ffffff;
             border: none;
-            font-size: 15px;
+            font-size: 12px !important;
         }
 
         table.tbl-disclaimer {
@@ -366,46 +367,54 @@
 <body>
 
 @php
+    use App\Enums\ApplicationStorageEnums;
     use App\Enums\PaymentCollectionTypeEnum;
     use App\Enums\PaymentStatusEnum;
     use App\Enums\QuoteTypeShortCode;
+    use App\Models\ApplicationStorage;
+    use App\Models\QuoteType;
 
     $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
 
     $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
 
     $quoteType = $quote->quoteType;
-    $insuranceProvider = $quote->insuranceProvider;
+    if(!$quoteType && $quoteTypeId){
+        $quoteType = QuoteType::find($quoteTypeId);
+    }
+    $insuranceProvider = $proformaPaymentRequest->insuranceProvider;
     $advisor = $quote->advisor;
     $invoiceDate = Carbon\Carbon::parse($proformaPaymentRequest->collection_date)->format($dateFormat);
     $customer = $quote->customer;
-    $customerName =  ucwords($customer->first_name .' '. $customer->last_name);
+    $customerName =  ucwords($customer->insured_first_name .' '. $customer->insured_last_name);
     $customerDetail =  $customer->detail;
     $vat = 0;
+    $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()?->value;
     $entity = null;
 
     if($isRequestFromSendUpdateLogPage){
         $sendUpdateLog = $proformaPaymentRequest->sendUpdateLog;
-        $subTotal =  $sendUpdateLog->price_with_vat ?? $sendUpdateLog->price_without_vat;
-        $totalAmount =  $proformaPaymentRequest->total_price;
-        $vat =  $sendUpdateLog->price_with_vat ? $totalAmount - $subTotal : 0; // if price with vat then vat = total - subTotal else 0
+        $subTotal =  $proformaPaymentRequest->price_vat_applicable;
+        $vat =  $proformaPaymentRequest->price_vat;
+        $totalAmount =   $subTotal + $vat;
+
     }else{
-        $paidPayments = $quote->payments()->where('payment_status_id', PaymentStatusEnum::PAID)->get();
+
         if(explode('-', $quote->code)[0] == QuoteTypeShortCode::CAR){
             $carQuoteDetails = $quote->carQuoteRequestDetail;
             $subTotal =  $carQuoteDetails->actual_premium;
             $vat =  $carQuoteDetails->premium_vat;
             $totalAmount =  $subTotal + $vat;
         }else{
-            $subTotal =  $quote->price_vat_applicable ?? $quote->price_vat_not_applicable;
-            $totalAmount =  $quote->price_with_vat ?? $quote->price_without_vat;
-            $vat =  $quote->vat ?: ($quote->price_with_vat ? $totalAmount - $subTotal : 0); // if amount with vat then vat = total - subTotal else 0
+            $subTotal =  $proformaPaymentRequest->price_vat_applicable;
+            $vat =  $proformaPaymentRequest->price_vat;
+            $totalAmount =  $subTotal + $vat;
         }
         if(explode('-', $quote->code)[0] == QuoteTypeShortCode::BUS){
             $entity = $quote?->quoteRequestEntityMapping?->entity;
         }
-    }
 
+    }
 
 @endphp
 
@@ -444,7 +453,7 @@
                 <tr>
                     <th></th>
                     <td class="payment-heading">
-                        Discount:
+                        DISCOUNT:
                     </td>
                     <td class="amount">
                         - {{ number_format( $proformaPaymentRequest->discount_value, 2, '.', ',') }}
@@ -487,8 +496,7 @@
     <table class="tbl-disclaimer">
         <tr>
             <td class="text-left">
-                This document is issued for the sole purpose of collection of premium on behalf of Oriental Insurance
-                Company LTD, and should not be construed as an Official Tax Invoice compliant with FTA regulations. To
+                This document is issued for the sole purpose of collection of premium on behalf of {{ $insuranceProvider?->text }}, and should not be construed as an Official Tax Invoice compliant with FTA regulations. To
                 receive Tax Invoice and avail Input Vat credit, please reach out to your contact in AFIA who will obtain
                 the document from the Insurer and send it across to you.
             </td>
@@ -508,34 +516,35 @@
             </td>
         </tr>
         <tr>
-            <td class="text-left">UAE Central Bank Registration number 85</td>
+            <td class="text-left left-column">UAE Central Bank Registration number 85</td>
             <td class="text-right">Insurance Advisor: {{ $advisor?->name }}</td>
             <td class="text-right advisor-image" rowspan="4">
                 @if($advisor?->profile_photo_path)
-                    <img class="im-logo" src="{{'data:image/png;base64,'.base64_encode(file_get_contents($advisor?->profile_photo_path))}}" />
+                    <img class="im-logo"
+                         src="{{'data:image/png;base64,'.base64_encode(file_get_contents($advisor?->profile_photo_path))}}" />
                 @endif
 
             </td>
         </tr>
         <tr>
-            <td class="text-left">Registered member of the Emirates Insurance Association</td>
+            <td class="text-left left-column">Registered member of the Emirates Insurance Association</td>
             <td class="text-right">Email: <a href="mailto:{{ $advisor?->email }}">{{ $advisor?->email }} </a>
             </td>
         </tr>
         <tr>
-            <td class="text-left">Department of Economy & Tourism in Dubai Trade License number 238534</td>
+            <td class="text-left left-column">Department of Economy & Tourism in Dubai Trade License number 238534</td>
             <td class="text-right">Mobile Number: <a
                     href="tel:{{ $advisor?->mobile_no }}">{{ $advisor?->mobile_no }}</a></td>
         </tr>
         <tr>
-            <td class="text-left">Holder of Health Insurance Intermediary Permit ID Number BRK-00003 from Dubai Health
-                Authority
+            <td class="text-left left-column">Holder of Health Insurance Intermediary Permit ID Number BRK-00003 from
+                Dubai Health Authority
             </td>
             <td class="text-right">Direct Line: <a href="tel:048185663">048185663</a></td>
         </tr>
         <tr>
-            <td class="text-left">Registered member of the Insurance Business Group under the Dubai Chamber of Commerce
-                and Industry.
+            <td class="text-left left-column">Registered member of the Insurance Business Group under the Dubai Chamber
+                of Commerce and Industry.
             </td>
         </tr>
     </table>
@@ -589,7 +598,7 @@
                 <td class="customer">
                     @if($entity)
                         {{ $entity?->company_name }} </br>
-                        {{ $entity?->company_address }} </br>
+                    {{ $entity?->company_address }} </br>
                     @elseif(explode('-', $quote->code)[0] == QuoteTypeShortCode::BUS)
                         {{ $quote?->company_name }} </br>
                     @else
@@ -637,9 +646,7 @@
                     @else
                         {{ $quoteType?->text }} <br />
                     @endif
-
-                    {{ $insuranceProvider?->text }}
-
+                    ({{ $insuranceProvider?->text }})
                 </td>
                 <td>
                     {{ number_format($subTotal, 2 , '.', ',') }}

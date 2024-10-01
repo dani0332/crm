@@ -251,6 +251,7 @@ final class PermissionsEnum extends Enum
     public const EXPORT_MAKES_MODELS = 'export-makes-models';
     public const VIEW_INSLY_BOOK_POLICY = 'view-insly-book-policy';
     public const SEND_INSLY_BOOK_POLICY = 'send-insly-book-policy';
+    public const MIGRATE_INSLY_LEAD = 'migrate-insly-lead';
     public const LEAD_CARD_SEARCH = 'lead-card-search';
     public const HEALTH_QUOTES_MANAGER_ACCESS = 'health-quotes-manager-access';
     public const HEALTH_QUOTES_ACCESS = 'health-quotes-access';
@@ -344,7 +345,29 @@ final class PermissionsEnum extends Enum
     public const YACHT_DISTRIBUTION_REPORT = 'yacht-distribution-report';
     public const CORPLINE_DISTRIBUTION_REPORT = 'corpline-distribution-report';
     public const GROUPMEDICAL_DISTRIBUTION_REPORT = 'groupmedicals-distribution-report';
+    public const ADD_MANUAL_HEALTH_PLAN = 'add-manual-health-plan';
     public const DOCUMENT_DELETE = 'document-delete';
+    public const SEND_UPDATE_ADD_BOOKING = 'send-update-add-booking';
+    public const PAYMENTS_DISCOUNT_EDIT = 'payments-discount-edit';
+    public const EXTRACT_REPORT = 'extract-report';
+    public const SIC_HEALTH_CONFIG = 'sic-health-config';
+    public const INPL_USER = 'inpl-user';
+    public const INPL_APPROVER = 'inpl-approver';
+    public const DOCUMENT_VERIFY = 'document-verify';
+    public const DEPARTMENT_CREATE = 'department-create';
+    public const DEPARTMENT_UPDATE = 'department-update';
+    public const DEPARTMENT_LIST = 'department-list';
+    public const AUDITDOCUMENT_UPLOAD = 'auditdocument-upload';
+    public const DOWNLOAD_ALL_DOCUMENTS = 'download-all-documents';
+    public const TRAVEL_HAPEX = 'travel-hapex';
+    public const All_QUOTES_VIEWONLY_ACCESS = 'all-quotes-view-only-access';
+    public const CUSTOMER_RISKRRATING_OVERRIDE = 'customer-riskrrating-override';
+    public const QUOTE_RAW_DATA = 'quote-raw-data';
+    public const MANAGER_AUTHORISED_PAYMENT_SUMMARY = 'manager-authorised-payment-summary';
+    public const VIEW_SAGE_API_LOGS = 'view-sage-api-logs';
+    public const TRAVEL_SIC_ALLOCATION = 'travel-sic-allocation';
+    public const SUPER_LEAD_STATUS_CHANGE = 'super-lead-status-change';
+    public const ReApprovePayments = 'reapprove-payment';
 
     public static function getAdvisorConversionReportPermissions()
     {

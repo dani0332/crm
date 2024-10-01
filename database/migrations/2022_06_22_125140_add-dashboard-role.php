@@ -12,11 +12,11 @@ class AddDashboardRole extends Migration
     public function up()
     {
         $datetime = date('Y-m-d H:i:s');
-        $role = DB::table('roles')->where('name', 'ROLE_SM_DASHBOARD')->first();
+        $role = DB::table('roles')->where('name', 'SENIOR_MANAGEMENT')->first();
         if ($role === null) {
             DB::table('roles')->insert(
                 [
-                    'name' => 'ROLE_SM_DASHBOARD',
+                    'name' => 'SENIOR_MANAGEMENT',
                     'guard_name' => 'web',
                     'created_at' => $datetime,
                     'updated_at' => $datetime,

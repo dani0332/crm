@@ -4,8 +4,8 @@ const props = defineProps({
 });
 const filters = reactive({
   quoteId: null,
-  start_date: null,
-  end_date: null,
+  start_date: useDateFormat(getPreviousDate(1), 'YYYY-MM-DD').value,
+  end_date: useDateFormat(useNow(), 'YYYY-MM-DD').value,
   page: 1,
 });
 
@@ -16,6 +16,9 @@ const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 const { isRequired } = useRules();
 const isError = ref(false);
 const page = usePage();
+
+const notification = useNotifications('toast');
+
 const loader = reactive({
   table: false,
   view: false,
@@ -47,11 +50,18 @@ const isQuoteTypeSelected = computed(() => {
 });
 
 function onSubmit() {
-  if (filters.start_date) {
-    filters.start_date = filters.start_date.split('T')[0];
+  let diff = calculateDaysDifference(filters.start_date, filters.end_date);
+  if (diff > 30) {
+    notification.error({
+      message: 'Maximum of 30 days  are allowed',
+      position: 'top',
+    });
+    return;
   }
-  if (filters.end_date) {
-    filters.end_date = filters.end_date.split('T')[0];
+
+  if (filters.start_date && filters.end_date) {
+    filters.start_date = useDateFormat(filters.start_date, 'YYYY-MM-DD').value;
+    filters.end_date = useDateFormat(filters.end_date, 'YYYY-MM-DD').value;
   }
 
   filters.page = 1;
@@ -140,7 +150,6 @@ onMounted(() => {
           placeholder="Select a Quote Type"
           class="w-full"
           single
-          deselectAll
         >
         </combo-box>
       </x-field>
@@ -174,11 +183,13 @@ onMounted(() => {
     border-cell
     hide-rows-per-page
     hide-footer
-    fixed-checkbox
   >
     <template #item-quote_id="{ quote_id, quote_type }">
       <span v-if="quote_type.toLowerCase().includes('hea')">
         {{ 'HEA' + '-' + quote_id }}
+      </span>
+      <span v-else-if="quote_type.toLowerCase().includes('travel')">
+        {{ 'TRA' + '-' + quote_id }}
       </span>
       <span v-else>
         {{ quote_type + '-' + quote_id }}

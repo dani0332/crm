@@ -47,7 +47,7 @@ class CustomersImport implements OnEachRow
 
         $email = $row[1];
 
-        if ($email != null) {
+        if ($email != null && isValidEmail($email)) {
             $customerId = 0;
             $myalfredExpiryDate = date('Y-m-d H:i:s', strtotime(str_replace('"', '', $this->myalfredExpiryDate)));
             $customerName = explode(' ', $row[0], 2);
@@ -84,10 +84,10 @@ class CustomersImport implements OnEachRow
                 $customerId = $newCustomer->id;
             }
 
-            $responseExtend = $this->berlinService->extendCustomerSubscription($customerId, $email, 'CORPORATE', 'corporate-myalfred-we');
+            $responseExtend = $this->berlinService->extendCustomerSubscription($customerId, $email, 'CORPORATE', 'corporate-myalfred-we', true);
             info('CustomersImport responseExtend: '.$responseExtend);
 
-            $newQuoteCustomer = new QuoteCustomer();
+            $newQuoteCustomer = new QuoteCustomer;
             $newQuoteCustomer->cdb_id = $this->CDBId;
             $newQuoteCustomer->customer_id = $customerId;
             $newQuoteCustomer->save();

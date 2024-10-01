@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\GenericRequestEnum;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
+use Illuminate\Support\Arr;
 
 class CustomerService extends BaseService
 {
@@ -106,7 +107,7 @@ class CustomerService extends BaseService
         $customer = $this->getCustomerById($customerId);
         $additionalContacts = CustomerAdditionalContact::where('customer_id', $customerId)->orderBy('created_at', 'desc')->get();
 
-        if (isset($customer) && $quoteMobileNo != $customer->mobile_no) {
+        if (isset($customer) && $quoteMobileNo != $customer->mobile_no && $additionalContacts->where('key', 'mobile_no')->where('value', $customer->mobile_no)->isEmpty()) {
             $customerMobileNo = (object) [
                 'key' => 'mobile_no',
                 'value' => isset($customer->mobile_no) ? $customer->mobile_no : '',
@@ -118,14 +119,14 @@ class CustomerService extends BaseService
         return $additionalContacts;
     }
 
-    public function checkAdditionalEmailExist($quoteObject, $newAdditionalEmail)
+    public function checkAdditionalEmailExist($lead, $newAdditionalEmail)
     {
         $newAdditionalEmail = strtolower($newAdditionalEmail);
         $customer = $this->getCustomerByEmail($newAdditionalEmail);
         $additionalEmail = CustomerAdditionalContact::where(['key' => GenericRequestEnum::EMAIL, 'value' => $newAdditionalEmail])
             ->first();
 
-        if ($newAdditionalEmail == strtolower($quoteObject->email)
+        if ($newAdditionalEmail == strtolower($lead->email)
             || $customer && $newAdditionalEmail == strtolower($customer->email)
             || $additionalEmail && $newAdditionalEmail == strtolower($additionalEmail->value)) {
             return true;
@@ -134,13 +135,13 @@ class CustomerService extends BaseService
         }
     }
 
-    public function checkAdditionalMobileNoExist($quoteObject, $newAdditionalMobileNo)
+    public function checkAdditionalMobileNoExist($lead, $newAdditionalMobileNo)
     {
         $customer = $this->getUniqueCustomerByMobileNo($newAdditionalMobileNo);
         $additionalMobileNo = CustomerAdditionalContact::where(['key' => GenericRequestEnum::MOBILE_NO, 'value' => $newAdditionalMobileNo])
             ->first();
 
-        if ($newAdditionalMobileNo == $quoteObject->mobile_no
+        if ($newAdditionalMobileNo == $lead->mobile_no
         || $customer && $newAdditionalMobileNo == $customer->mobile_no
         || $additionalMobileNo && $newAdditionalMobileNo == $additionalMobileNo->value) {
             return true;
@@ -157,5 +158,190 @@ class CustomerService extends BaseService
     public static function getCustomerByUuid($uuid)
     {
         return Customer::where('uuid', $uuid)->first();
+    }
+
+    public function makeAdditionalContactPrimary($lead, $key, $value)
+    {
+        if ($key == GenericRequestEnum::EMAIL) {
+            $customer = null;
+            $previousEmail = $lead->email;
+            if ($lead->customer && ! $this->getCustomerByEmail($value)) {
+                info('Customer additional contact primary email updated. Previous Email: '.$lead->email.' New Email: '.$value);
+                $customerArray = [
+                    'first_name' => $lead->first_name,
+                    'last_name' => $lead->last_name,
+                    'mobile_no' => $lead->mobile_no,
+                    'email' => $value,
+                    'dob' => $lead->dob,
+                ];
+                $customer = Customer::create($customerArray);
+                $customer->update(['code' => 'IND-'.$customer->id]);
+                $email = trim($lead->email);
+
+                if (str_ends_with($email, '@insurancemarket.ae') || str_ends_with($email, '@afia.ae')) {
+                    $removeEmail = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
+                        ->where('value', $value)
+                        ->where('key', 'email')
+                        ->first();
+                    if (isset($removeEmail->id)) {
+                        $removeEmail->delete();
+                    }
+
+                } else {
+
+                    $getCustomerAdditionalContact = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
+                        ->get();
+                    foreach ($getCustomerAdditionalContact as $contact) {
+                        CustomerAdditionalContact::create([
+                            'customer_id' => $customer->id,
+                            'key' => $contact->key,
+                            'value' => $contact->value,
+                        ]);
+                    }
+
+                    $isExist = CustomerAdditionalContact::where('key', 'email')
+                        ->where('customer_id', $lead->customer_id)
+                        ->where('value', $email)
+                        ->exists();
+
+                    if (! $isExist) {
+                        CustomerAdditionalContact::create([
+                            'customer_id' => $customer->id,
+                            'key' => 'email',
+                            'value' => $email,
+                        ]);
+                    }
+                }
+
+                $lead->update(['customer_id' => $customer->id, 'email' => $value]);
+
+                // REMOVE EMAIL TO MAKE PRIMARY IN ADDITIONAL CONTACT
+                $removeEmail = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
+                    ->where('value', $lead->email)
+                    ->where('key', 'email')
+                    ->first();
+                if (isset($removeEmail->id)) {
+                    $removeEmail->delete();
+                }
+                //ADD PRIMARY EMAIL IN ADDITIONAL CONTACT
+                $removeAdvisorEmail = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
+                    ->where('key', 'email')
+                    ->where(function ($query) {
+                        $query->where('value', 'like', '%@insurancemarket.ae')
+                            ->orWhere('value', 'like', '%@afia.ae');
+                    })
+                    ->first();
+                if (isset($removeAdvisorEmail->id)) {
+                    $removeAdvisorEmail->delete();
+                }
+            } else {
+                // REMOVE EMAIL TO MAKE PRIMARY IN ADDITIONAL CONTACT
+                $removeEmail = CustomerAdditionalContact::where('value', $value)
+                    ->where('customer_id', $lead->customer_id)
+                    ->where('key', 'email')
+                    ->first();
+                if (isset($removeEmail->id)) {
+                    $removeEmail->delete();
+                }
+                $customer = $this->getCustomerByEmail($value);
+                $email = trim($lead->email);
+                if (! str_ends_with($email, '@insurancemarket.ae') && ! str_ends_with($email, '@afia.ae')) {
+                    CustomerAdditionalContact::firstOrCreate([
+                        'customer_id' => $customer->id,
+                        'key' => GenericRequestEnum::EMAIL,
+                        'value' => trim($lead->email),
+                    ]);
+
+                    $getCustomerAdditionalContact = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
+                        ->get();
+                    foreach ($getCustomerAdditionalContact as $contact) {
+                        CustomerAdditionalContact::firstOrCreate([
+                            'customer_id' => $customer->id,
+                            'key' => $contact->key,
+                            'value' => trim($contact->value),
+                        ]);
+                    }
+                }
+                $lead->update(['customer_id' => $customer->id, 'email' => $value]);
+                //Remove @insurancemarket.ae and @afia.ae Domain Email From Additional Contact
+                $removeAdvisorEmail = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
+                    ->where('key', 'email')
+                    ->where(function ($query) {
+                        $query->where('value', 'like', '%@insurancemarket.ae')
+                            ->orWhere('value', 'like', '%@afia.ae');
+                    })
+                    ->first();
+                if (isset($removeAdvisorEmail->id)) {
+                    $removeAdvisorEmail->delete();
+                }
+            }
+        } elseif ($key == GenericRequestEnum::MOBILE_NO) {
+            // REMOVE Mobile Number TO MAKE PRIMARY IN ADDITIONAL CONTACT
+            $removeMobileNumber = CustomerAdditionalContact::where('customer_id', $lead->customer_id)
+                ->where('value', $value)
+                ->where('key', 'mobile_no')
+                ->first();
+            if (isset($removeMobileNumber->id)) {
+                $removeMobileNumber->delete();
+            }
+            $isExist = CustomerAdditionalContact::where('key', 'mobile_no')
+                ->where('customer_id', $lead->customer_id)
+                ->where('value', $lead->mobile_no)
+                ->exists();
+
+            if (! $isExist) {
+                CustomerAdditionalContact::create([
+                    'customer_id' => $lead->customer_id,
+                    'key' => 'mobile_no',
+                    'value' => $lead->mobile_no,
+                ]);
+            }
+            $lead->update(['mobile_no' => $value]);
+            if ($lead->customer) {
+                info('Customer additional contact primary mobile_no updated. Previous Mobile_No: '.$lead->mobile_no.' New Mobile_No: '.$value);
+                $lead->customer->update(['mobile_no' => $value]);
+            }
+        }
+    }
+
+    public function getCustomerCampaignFollowups($id)
+    {
+        return Customer::select('id', 'email', 'campaign_followups', 'last_followup_sent_at')->where('id', $id)->first();
+    }
+
+    public function createCustomerIfNotExists($customerData)
+    {
+        $existingCustomer = CustomerService::getCustomerByEmail($customerData['email']);
+
+        if (! $existingCustomer) {
+            $customer = Customer::create(Arr::only($customerData, ['first_name', 'last_name', 'email', 'mobile_no']));
+        }
+
+        return $customer ?? $existingCustomer;
+    }
+
+    public function addAdditionalContactsIfNotExists($customer, $additionalContacts)
+    {
+        // add additional emails
+        if (isset($additionalContacts['additional_emails']) && count($additionalContacts['additional_emails'])) {
+            foreach ($additionalContacts['additional_emails'] as $additionalEmail) {
+                $isExistEmail = CustomerAdditionalContact::where('customer_id', $customer->id)
+                    ->where('value', $additionalEmail)->where('key', GenericRequestEnum::EMAIL)->first();
+                if (! $isExistEmail) {
+                    $customer->additionalContactInfo()->create(['key' => 'email', 'value' => $additionalEmail]);
+                }
+            }
+        }
+
+        // add additional mobile numbers
+        if (isset($additionalContacts['additional_mobiles']) && count($additionalContacts['additional_mobiles'])) {
+            foreach ($additionalContacts['additional_mobiles'] as $additionalMobile) {
+                $isExistMobile = CustomerAdditionalContact::where('customer_id', $customer->id)
+                    ->where('value', $additionalMobile)->where('key', GenericRequestEnum::MOBILE_NO)->first();
+                if (! $isExistMobile) {
+                    $customer->additionalContactInfo()->create(['key' => 'mobile_no', 'value' => $additionalMobile]);
+                }
+            }
+        }
     }
 }

@@ -35,9 +35,7 @@ class KyoService
 
         $response = $this->client->withBody(json_encode($data))
             ->send($method, $url)
-            ->onError(function ($response) {
-
-            });
+            ->onError(function ($response) {});
 
         return $response->object();
     }
