@@ -22,6 +22,10 @@ const props = defineProps({
     type: Boolean,
     required: true,
   },
+  isEditingBlocked: {
+    type: Boolean,
+  },
+  isEditDisabledForQueuedBooking: Boolean,
 });
 
 const page = usePage();
@@ -352,9 +356,25 @@ onMounted(() => {
           class="flex justify-end gap-2"
           v-if="readOnlyMode.isDisable === true"
         >
-          <x-button size="sm" @click="onEdit" v-if="!state.isEdit">
-            Edit
-          </x-button>
+          <template v-if="!state.isEdit">
+            <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
+              <x-button
+                size="sm"
+                @click="onEdit"
+                :disabled="props.isEditDisabledForQueuedBooking"
+              >
+                Edit
+              </x-button>
+              <template #tooltip>
+                <span class="custom-tooltip-content">
+                  No further action can be taken on Update Booking Queued or
+                  Failed status.
+                </span>
+              </template>
+            </x-tooltip>
+            <x-button v-else size="sm" @click="onEdit"> Edit </x-button>
+          </template>
+
           <template v-else>
             <x-button
               size="sm"
