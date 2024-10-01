@@ -304,6 +304,12 @@ const minDate = computed(() => {
   }
   return null;
 });
+
+onMounted(() => {
+  document.querySelectorAll('[title]').forEach(element => {
+    element.removeAttribute('title');
+  });
+});
 </script>
 
 <template>
@@ -335,8 +341,8 @@ const minDate = computed(() => {
 
         <DatePicker
           v-model="filters.startEndDate"
-          label="Date Range Selection*"
-          placeholder="Specify Start & End Date"
+          label="Advisor Assigned Date*"
+          placeholder="Specify Advisor Assigned Date*"
           range
           :max-range="30"
           :maxDate="new Date()"
@@ -348,7 +354,8 @@ const minDate = computed(() => {
           v-model="filters.asAtDate"
           :disabled="!filters.startEndDate || filters.startEndDate.length === 0"
           label="As At Date*"
-          placeholder="Select 'As At' Date"
+          placeholder="Specify As At Date"
+          tooltip="Specify Transaction Approved At Date"
           size="sm"
           :rules="[isRequired]"
           model-type="yyyy-MM-dd"

@@ -1067,6 +1067,8 @@ const noDiscountType = computed(() => {
     sendUpdateStatusEnum.DTSI,
     sendUpdateStatusEnum.DOV,
     sendUpdateStatusEnum.ED,
+    sendUpdateStatusEnum.ATIB,
+    sendUpdateStatusEnum.ACB,
   ];
 
   return (
