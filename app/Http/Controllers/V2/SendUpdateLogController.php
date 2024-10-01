@@ -8,6 +8,7 @@ use App\Enums\PaymentTooltip;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Http\Controllers\Controller;
@@ -309,6 +310,19 @@ class SendUpdateLogController extends Controller
                         // TODO: send it to sage, need to confirm what the sage is.
                     }
                     break;
+            }
+        }
+
+        if (in_array($quoteTypeId, [QuoteTypeId::Home, QuoteTypeId::Health, QuoteTypeId::Business, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Yacht])
+            && in_array($selectedType, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
+            if (checkPersonalQuotes($quoteTypeId)) {
+                $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
+                    'stale_at' => null,
+                ]);
+            } else {
+                $quoteService = app(getServiceObject(QuoteTypes::getName($quoteTypeId)->value));
+                $quote = $quoteService->getEntity($quoteUuid);
+                $quote->stale_at = null;
             }
         }
     }
