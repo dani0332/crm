@@ -579,8 +579,9 @@ class InslyDetailRepository extends BaseRepository
             if ($type === 'email') {
                 [$localPart, $domainPart] = explode('@', $item);
                 $halfLength = ceil(strlen($localPart) / 2);
-                $maskedLocalPart = substr($localPart, 0, $halfLength) . str_repeat('*', strlen($localPart) - $halfLength);
-                return $maskedLocalPart . '@' . $domainPart;
+                $maskedLocalPart = substr($localPart, 0, $halfLength).str_repeat('*', strlen($localPart) - $halfLength);
+
+                return $maskedLocalPart.'@'.$domainPart;
             } elseif ($type === 'phone') {
 
                 $cleanedNumber = preg_replace('/\D/', '', $item);
@@ -590,6 +591,7 @@ class InslyDetailRepository extends BaseRepository
 
                 $prefix = substr($cleanedNumber, 0, 3);
                 $suffix = substr($cleanedNumber, -3);
+
                 return "{$prefix}****{$suffix}";
             }
         }, $dataArray);
