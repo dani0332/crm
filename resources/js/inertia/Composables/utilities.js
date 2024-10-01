@@ -267,15 +267,17 @@ export const maskPhone = mobile_no => {
 
   const numbers = mobile_no.split(/[\s,;]+/);
 
-  return numbers.map(number => {
-    if (number.length < 10) return number;
+  return numbers
+    .map(number => {
+      if (number.length < 10) return number;
 
-    const prefix = number.slice(0, 3);
-    const suffix = number.slice(-3);
-    const masked = `${prefix}****${suffix}`;
+      const prefix = number.slice(0, 3);
+      const suffix = number.slice(-3);
+      const masked = `${prefix}****${suffix}`;
 
-    return masked;
-  }).join(', ');
+      return masked;
+    })
+    .join(', ');
 };
 
 export const parseDate = dateString => {
