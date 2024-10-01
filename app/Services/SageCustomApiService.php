@@ -176,7 +176,7 @@ class SageCustomApiService
                 if (! $quoteType) {
                     $quoteType = str_replace('Quote', '', class_basename($modelClass));
                 }
-                $sageRequest = (new SageApiService)->sagePayLoad($quoteType, $payment, $quote, $paymentSplits);
+                $sageRequest = app(SagePayloadFactory::class)->sagePayLoad($quoteType, $payment, $quote, $paymentSplits);
                 $sageLogArray = $quote->sageApiLogs->keyBy('step')->toArray();
 
                 // createAPInvoicePrem

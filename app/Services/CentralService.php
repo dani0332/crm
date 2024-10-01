@@ -839,6 +839,7 @@ class CentralService
             QuoteStatusEnum::CancellationPending,
             QuoteStatusEnum::PolicyCancelled,
             QuoteStatusEnum::PolicyCancelledReissued,
+            QuoteStatusEnum::POLICY_BOOKING_QUEUED, QuoteStatusEnum::POLICY_BOOKING_FAILED,
         ];
 
         $isTransactionApproved = QuoteStatusLog::where('quote_type_id', $quoteTypeId)

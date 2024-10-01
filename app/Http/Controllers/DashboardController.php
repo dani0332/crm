@@ -165,9 +165,6 @@ class DashboardController extends Controller
             $currentLogic = Benchmark::measure([
                 '$filters[teams]' => fn () => $this->getCurrentUserTeamsAndSubTeams(auth()->user()->id),
                 '$teamWiseLeadsAssignedAverage' => fn () => $this->dashboardService->getTeamWiseLeadStats($filters),
-                '$totalLeads' => fn () => $todaysLeads->get(),
-                '$totalUnAssignedLeads' => fn () => $this->dashboardService->getTotalUnAssignedLeads($filters),
-                '$totalUnAssignedOnlySICLeads' => fn () => $this->dashboardService->getTotalUnAssignedOnlySICLeads($filters),
                 '$leadsCountByTier' => fn () => $this->dashboardService->getLeadsCountByTier($filters),
                 '$revivalLeadsCount' => fn () => $this->dashboardService->getLeadsCountRevival($filters),
                 '$unAssignedLeadsByTier' => fn () => $this->dashboardService->getUnAssignedLeadsCountByTier($filters),
