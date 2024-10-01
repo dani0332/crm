@@ -71,7 +71,6 @@ class UpdateStaleNotification extends Command
                     $personalQuote->whereIn('quote_type_id', [QuoteTypeId::Yacht, QuoteTypeId::Pet, QuoteTypeId::Cycle]);
                 })->chunkById(1000, function ($quoteDetails) {
                     foreach ($quoteDetails as $quoteDetail) {
-                        dd($quoteDetail);
                         if (isset($quoteDetail->stale_at)) {
                             $quoteDetail->update([
                                 'stale_at' => null,
