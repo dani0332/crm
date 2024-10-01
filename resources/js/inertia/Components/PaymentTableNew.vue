@@ -2952,6 +2952,13 @@ watch(
   },
 );
 
+watch(
+  () => page.props?.bookPolicyDetails?.isPaidEditable,
+  newVal => {
+    isPaidEditable.value = newVal || false;
+  },
+);
+
 const discountTypeLabel = computed(() => {
   let systemAplliedDiscount = '';
   if (
