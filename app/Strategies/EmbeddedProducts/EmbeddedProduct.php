@@ -175,7 +175,7 @@ class EmbeddedProduct
                 $query->whereHas('quoteRequest', function ($query) use ($filters) {
                     $startDate = Carbon::parse($filters['date_of_purchase'][0])->startOfDay();
                     $endDate = Carbon::parse($filters['date_of_purchase'][1])->endOfDay();
-                    $query->whereBetween('policy_issuance_date', [$startDate, $endDate]);
+                    $query->whereBetween('payments.captured_at', [$startDate, $endDate]);
                 });
             });
 
