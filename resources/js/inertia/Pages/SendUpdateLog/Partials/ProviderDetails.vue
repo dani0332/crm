@@ -12,6 +12,7 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  isEditDisabledForQueuedBooking: Boolean,
 });
 
 const state = reactive({
@@ -106,9 +107,26 @@ const onCancel = () => {
         </div>
         <x-divider class="my-4 mt-10" />
         <div class="flex justify-end gap-2">
-          <x-button size="sm" @click="state.isEdit = true" v-if="!state.isEdit">
-            Edit
-          </x-button>
+          <template v-if="!state.edit">
+            <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
+              <x-button
+                size="sm"
+                @click="state.isEdit = true"
+                :disabled="props.isEditDisabledForQueuedBooking"
+              >
+                Edit
+              </x-button>
+              <template #tooltip>
+                <span class="custom-tooltip-content">
+                  No further action can be taken on Update Booking Queued or
+                  Failed status.
+                </span>
+              </template>
+            </x-tooltip>
+            <x-button v-else size="sm" @click="state.isEdit = true">
+              Edit
+            </x-button>
+          </template>
           <template v-else>
             <x-button
               size="sm"

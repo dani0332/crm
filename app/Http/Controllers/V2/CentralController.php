@@ -64,7 +64,6 @@ use App\Services\SplitPaymentService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class CentralController extends Controller
@@ -228,20 +227,25 @@ class CentralController extends Controller
     {
         $request = (object) $sendBookPolicyRequest->validated();
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
+        $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
 
         info('Quote Code: '.$quote->code.' fn: sendBookingPolicy called policy type '.$request->send_policy_type);
 
         if ($request->send_policy_type == SendPolicyTypeEnum::CUSTOMER) {
-            dispatch(new SendBookPolicyDocumentsJob($request, $quote->code));
+            dispatch(new SendBookPolicyDocumentsJob($request, $quote->code))->onQueue('insly');
 
-            $quote->update([
+            $quoteData = [
                 'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
                 'quote_status_date' => now(),
-            ]);
+            ];
+            if (in_array($quoteTypeId, [QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Business])) {
+                $quoteData['stale_at'] = null;
+            }
+            $quote->update($quoteData);
 
             info('Quote Code: '.$quote->code.' Policy send to customer');
 
-            return response()->json(['message' => 'Policy sent to customer'], 200);
+            return response()->json(['message' => 'Quote status updated to Policy Sent To Customer. Documents are being sent to the customer in background.'], 200);
         }
         if ($request->send_policy_type == SendPolicyTypeEnum::SAGE) {
             if (! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
@@ -249,50 +253,8 @@ class CentralController extends Controller
                     'message' => 'You are not authorized to perform this action',
                 ]], 403);
             }
-            $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
-            $isDuplicateOrCIRLead = ! empty($quote['parent_duplicate_quote_id']);
-            $payment = Payment::where('code', $quote['code'])->mainLeadPayment()->with('paymentSplits')->first();
 
-            if ($isDuplicateOrCIRLead && empty($payment)) {
-                $payment = Payment::where([
-                    'paymentable_id' => $quote->id,
-                    'paymentable_type' => $quote->getMorphClass(),
-                ])->mainLeadPayment()->with('paymentSplits')->first();
-            }
-
-            $payment->update([
-                'broker_invoice_number' => (new PaymentRepository)->generateBrokerInvoiceNumber($payment, $request->model_type),
-            ]);
-            $paymentSplits = $payment->paymentSplits;
-            $data['quoteTypeId'] = $quoteTypeId;
-            $data['id'] = $quote->id;
-
-            $sageService = new SageApiService;
-            $response = $sageService->postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data);
-
-            if ($response['status'] === false) {
-                return response()->json(['errors' => [
-                    'message' => $response['message'],
-                    'sageError' => isset($response['error']) ? 'SAGE API : '.$response['error'] : null,
-                ]], 500);
-            }
-
-            if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
-                // dispatch job to send email
-                dispatch(new SendBookPolicyDocumentsJob($request, $quote->code));
-            }
-
-            $quote->update([
-                'quote_status_id' => QuoteStatusEnum::PolicyBooked,
-                'policy_booking_date' => Carbon::now(),
-                'quote_status_date' => now(),
-            ]);
-
-            (new CentralService)->straightforwardPayments($payment, $paymentSplits, $quote);
-
-            $this->updatePaymentAllocationStatus($quote);
-
-            info('Quote Code: '.$quote->code.' Payment allocation && Transaction payment status update & policy send to customer');
+            $response = (new SageApiService)->postBookPolicyToSage($request, $quote);
 
             return response()->json(['message' => $response['message']], 200);
         }

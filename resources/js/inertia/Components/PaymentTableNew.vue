@@ -392,19 +392,29 @@ const rules = {
 };
 
 const isPaymentLocked = computed(() => {
-  if (
-    paymentMethodsForm.status == 'edit' &&
-    !props.sendUpdate &&
-    (props.quoteRequest.quote_status_id ===
-      page.props.quoteStatusEnum.CancellationPending ||
-      props.quoteRequest.quote_status_id ===
-        page.props.quoteStatusEnum.PolicyCancelled ||
-      props.quoteRequest.quote_status_id ===
-        page.props.quoteStatusEnum.PolicyBooked ||
-      props.quoteRequest.quote_status_id ===
-        page.props.quoteStatusEnum.PolicyCancelledReissued)
-  ) {
-    return true;
+  const { status } = paymentMethodsForm;
+  const { quote_status_id } = props.quoteRequest;
+  const { quoteStatusEnum } = page.props;
+  const lockedStatuses = new Set([
+    quoteStatusEnum.CancellationPending,
+    quoteStatusEnum.PolicyCancelled,
+    quoteStatusEnum.PolicyBooked,
+    quoteStatusEnum.PolicyCancelledReissued,
+    quoteStatusEnum.POLICY_BOOKING_QUEUED,
+  ]);
+
+  if (status === 'edit') {
+    if (props.sendUpdate && can(permissionEnum.BOOKING_FAILED_EDIT)) {
+      return false;
+    }
+    if (
+      !props.sendUpdate &&
+      (lockedStatuses.has(quote_status_id) ||
+        (quote_status_id === quoteStatusEnum.POLICY_BOOKING_FAILED &&
+          !can(permissionEnum.BOOKING_FAILED_EDIT)))
+    ) {
+      return true;
+    }
   }
   return false;
 });
