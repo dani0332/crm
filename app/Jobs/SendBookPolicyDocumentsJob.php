@@ -62,9 +62,9 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             'quote_uuid' => $quote->uuid,
             'name' => QuoteTagEnums::POLICY_SENT_TO_CUSTOMER,
             'value' => 1,
-        ])->count();
+        ])->first();
 
-        if ($isDocumentEmailSentToCustomer > 0) {
+        if ($isDocumentEmailSentToCustomer) {
             info('job: SendBookPolicyDocumentsJob skipped for: '.$this->code.' as email already sent');
 
             return;

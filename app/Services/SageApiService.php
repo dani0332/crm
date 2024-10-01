@@ -572,7 +572,7 @@ class SageApiService
             'quote_uuid' => $quote->uuid,
             'name' => QuoteTagEnums::POLICY_BOOKED_ON_SAGE,
             'value' => 1,
-        ])->count();
+        ])->first();
 
         info('################################## Sage Book Policy started for : '.$quote->code.' ##################################');
 
