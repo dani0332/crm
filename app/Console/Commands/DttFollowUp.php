@@ -81,14 +81,14 @@ class DttFollowUp extends Command
         $logPrefix = 'carRevivalFollowUpEmailJob -';
         $paymentStatusArray = [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::AUTHORISED];
         $leadSourceArray = [LeadSourceEnum::REVIVAL_PAID];
-        $leadStatusArray = [QuoteStatusEnum::Duplicate,QuoteStatusEnum::Fake];
+        $leadStatusArray = [QuoteStatusEnum::Duplicate, QuoteStatusEnum::Fake];
         foreach ($unreplied as $item) {
             $created_at = $item->created_at;
             $lead = CarQuote::where('uuid', $item->uuid)->first();
 
             //Follow-up emails will not dispatched if the payment status is either Authorised, Captured, Partial Captured
             //or if the source is Revival Paid or if the lead is assigned to an advisor
-            if (! empty($created_at) &&  ! in_array($lead->quote_status_id, $leadStatusArray) && ! in_array($lead->payment_status_id, $paymentStatusArray) && ! in_array($lead->source, $leadSourceArray) && empty($lead->advisor_id)) {
+            if (! empty($created_at) && ! in_array($lead->quote_status_id, $leadStatusArray) && ! in_array($lead->payment_status_id, $paymentStatusArray) && ! in_array($lead->source, $leadSourceArray) && empty($lead->advisor_id)) {
                 $afterTwoDays = Carbon::parse($created_at)->addDays(2)->startOfDay();
                 $afterSevenDays = Carbon::parse($created_at)->addDays(7)->startOfDay();
                 $aftertThirteenDays = Carbon::parse($created_at)->addDays(13)->startOfDay();
