@@ -221,7 +221,7 @@ class CentralController extends Controller
 
     public function sendBookingPolicy(SendBookPolicyRequest $sendBookPolicyRequest)
     {
-        $request = $sendBookPolicyRequest->safe();
+        $request = (object) $sendBookPolicyRequest->validated();
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
         $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
 
