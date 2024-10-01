@@ -448,22 +448,32 @@ class SendUpdateLogService
         return false;
     }
 
-    public function getInvoiceDescription($sendUpdateLog, $quote, $quoteType, $payments): array
+    public function getInvoiceDescription($sendUpdateLog, $quote, $quoteType, $payments, $isBrokerInvoiceShowOnly = false)
     {
         if ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::CPD || empty($payments)) {
             $insuranceProviderId = $sendUpdateLog->insurance_provider_id;
+            info('fn: getInvoiceDescription - CPD - InsuranceProviderId: '.$insuranceProviderId);
         } else {
             if ($quote->insly_id || $quote->insly_migrated) {
                 $insuranceProviderId = empty($sendUpdateLog->insurance_provider_id) ? null : $sendUpdateLog->insurance_provider_id;
+                info('fn: getInvoiceDescription - Insly Lead - InsuranceProviderId: '.$insuranceProviderId);
             } else {
                 @[$insuranceProviderId, $planId] = $this->getProviderDetails($quote, QuoteTypes::getIdFromValue($quoteType), false);
             }
         }
+
+        info('fn: getInvoiceDescription - InsuranceProviderId: '.$insuranceProviderId.' - PlanId: '.($planId ?? null));
+
         $sendUpdateLogCategory = LookupRepository::where('id', $sendUpdateLog->category_id)->value('code');
+        info('fn: getInvoiceDescription - SendUpdateLogCategory: '.$sendUpdateLogCategory);
 
         $insuranceProvider = InsuranceProviderRepository::find($insuranceProviderId);
         if ($insuranceProvider) {
-            $brokerInvoiceNumber = $this->generateBrokerInvoiceNumber($sendUpdateLog, $insuranceProvider);
+            $brokerInvoiceNumber = $this->generateBrokerInvoiceNumber($sendUpdateLog, $insuranceProvider, $isBrokerInvoiceShowOnly);
+            if (! $brokerInvoiceNumber) {
+                return false;
+            }
+            info('fn: getInvoiceDescription - BrokerInvoiceNumber: '.$brokerInvoiceNumber);
         }
 
         if (empty($sendUpdateLog->invoice_description) && $insuranceProvider) {
@@ -481,8 +491,10 @@ class SendUpdateLogService
                 $reversalInvoiceDescription = 'R.'.$invoiceDescription;
                 $invoiceDescription = 'C.'.$invoiceDescription;
             }
+            info('fn: getInvoiceDescription - InvoiceDescription: '.$invoiceDescription);
         } else {
             $invoiceDescription = $sendUpdateLog->invoice_description;
+            info('fn: getInvoiceDescription - InvoiceDescription: '.$invoiceDescription);
         }
 
         $response = [
@@ -491,6 +503,8 @@ class SendUpdateLogService
             'invoice_description' => $invoiceDescription ?? '',
             'reversal_invoice_description' => $reversalInvoiceDescription ?? '',
         ];
+
+        info('fn: getInvoiceDescription - Response: '.json_encode($response));
 
         $payment = Payment::where('send_update_log_id', $sendUpdateLog->id)->first();
 
@@ -795,7 +809,7 @@ class SendUpdateLogService
                         'policy_number' => $endorsementDetails->policy_number,
                         'policy_start_date' => $endorsementDetails->start_date,
                         'policy_expiry_date' => $endorsementDetails->expiry_date,
-                        'policy_booking_date' => $currentDate,
+                        //                        'policy_booking_date' => $currentDate, // Booking Date should not be updated Task:86eqajbyv
                     ]);
                     info('Book Update - After Policy Details updated on Main Lead - PolicyNumber: '.$sendUpdateLog->policy_number.' - PolicyStartDate: '.$sendUpdateLog->start_date.' - PolicyExpiryDate: '.$sendUpdateLog->expiry_date.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
                 }
@@ -1047,30 +1061,49 @@ class SendUpdateLogService
         return $array;
     }
 
-    private function generateUniqueBrokerInvoiceNumber($insuranceProviderCode, $insuranceProviderLeadCount, $sendUpdateLog)
+    private function generateUniqueBrokerInvoiceNumber($insuranceProvider, $sendUpdateLog, $isBrokerInvoiceShowOnly = false)
     {
-        $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
+        $lastBrokerInvoiceNumber = SendUpdateLog::where('insurance_provider_id', $insuranceProvider->id)
+            ->whereNotNull('broker_invoice_number')
+            ->latest('id')
+            ->value('broker_invoice_number');
+
+        if ($lastBrokerInvoiceNumber) {
+            $value = (int) explode('.', $lastBrokerInvoiceNumber)[1];
+        } else {
+            $value = Payment::where('insurance_provider_id', $insuranceProvider->id)->count();
+        }
+        $brokerInvoiceNumber = $insuranceProvider->code.'.'.(++$value);
+
+        if ($isBrokerInvoiceShowOnly) {
+            return $brokerInvoiceNumber;
+        }
+
         $attempts = 0;
 
         while (SendUpdateLog::where('broker_invoice_number', $brokerInvoiceNumber)
             ->whereNot('uuid', $sendUpdateLog->uuid)
             ->exists() && $attempts < 25) {
-            $brokerInvoiceNumber = $insuranceProviderCode.'.'.(++$insuranceProviderLeadCount);
+            $brokerInvoiceNumber = $insuranceProvider->code.'.'.(++$value);
             $attempts++;
         }
 
         if ($attempts >= 25) {
-            vAbort('Send Update Log Broker Invoice Number generation failed.');
+            info('Send Update Log Broker Invoice Number generation failed, SendUpdateUuid -> '.$sendUpdateLog->uuid);
+
+            return false;
         }
 
         return $brokerInvoiceNumber;
     }
 
-    public function generateBrokerInvoiceNumber($sendUpdateLog, $insuranceProvider): string
+    public function generateBrokerInvoiceNumber($sendUpdateLog, $insuranceProvider, $isBrokerInvoiceShowOnly = false): string
     {
         if (empty($sendUpdateLog->broker_invoice_number)) {
-            $insuranceProviderLeadCount = Payment::where('insurance_provider_id', $insuranceProvider->id)->count();
-            $brokerInvoiceNumber = $this->generateUniqueBrokerInvoiceNumber($insuranceProvider->code, $insuranceProviderLeadCount, $sendUpdateLog);
+            $brokerInvoiceNumber = $this->generateUniqueBrokerInvoiceNumber($insuranceProvider, $sendUpdateLog, $isBrokerInvoiceShowOnly);
+            if (! $brokerInvoiceNumber) {
+                return false;
+            }
         } else {
             $brokerInvoiceNumber = $sendUpdateLog->broker_invoice_number;
         }
@@ -1082,22 +1115,29 @@ class SendUpdateLogService
     {
         $insuranceProviderId = $plan_id = null;
         if ($forSendUpdateCreation && ($quote->insly_id || $quote->insly_migrated)) {
+            info('fn: getProviderDetails - InsuranceProviderID: '.$quote->insurance_provider_id.' - PlanID: '.$quote->plan_id);
+
             return [$insuranceProviderId, $plan_id];
         }
         if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
+            info('fn: getProviderDetails - QuoteType: '.$quoteTypeId);
             $quoteType = QuoteTypes::getName($quoteTypeId)->value;
             $quoteServiceFile = getServiceObject($quoteType);
             $quoteModel = app($quoteServiceFile)->getEntityPlain($quote->id)->load(['payments', 'plan']);
             $payment = $quoteModel->payments()->mainLeadPayment()->first();
 
             $planRelationName = strtolower($quoteType).'Plan';
+            info('fn: getProviderDetails - PlanRelationName: '.$planRelationName);
             $payment->load($planRelationName);
-            $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
+            $insuranceProvider = $payment->{$planRelationName}?->insuranceProvider;
+            info('fn: getProviderDetails - InsuranceProvider: '.$insuranceProvider->id ?? null);
             $insuranceProviderId = $insuranceProvider->id ?? null;
             $plan_id = $quoteModel->plan?->id ?? null;
         } else {
             $insuranceProviderId = $quote->insurance_provider_id ?? null;
         }
+
+        info('fn: getProviderDetails Final Response - InsuranceProviderID: '.$insuranceProviderId.' - PlanID: '.$plan_id);
 
         return [$insuranceProviderId, $plan_id];
     }
