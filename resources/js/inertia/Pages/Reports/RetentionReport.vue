@@ -189,9 +189,7 @@ const onLobChange = (e, isOnMounted = false) => {
     filters.insurance_type="";
   }
 
-  if([quoteTypeCodeEnum.Health,
-      quoteTypeCodeEnum.CORPLINE
-  ].includes(filters.lob)) {
+  if(quoteTypeCodeEnum.CORPLINE == filters.lob) {
     loadTeams(e);
   } else {
     loadAdvisorsByLob(e);
@@ -215,9 +213,7 @@ const isDisabled = (element) => {
 
 const getAdvisorLabel = () => {
   let label = 'Advisors'
-  if ([quoteTypeCodeEnum.Health,
-      quoteTypeCodeEnum.CORPLINE].includes(filters.lob) &&
-  (!filters.teams || filters.teams.length == 0)) {
+  if (quoteTypeCodeEnum.CORPLINE== filters.lob && (!filters.teams || filters.teams.length == 0)) {
       label = 'Advisors (select teams first)';
   }
 
@@ -267,9 +263,7 @@ onMounted(() => {
     filters.displayBy = RetentionReportEnum.BATCH
     filters.lob = props.productName
   }
-  if([quoteTypeCodeEnum.Health,
-      quoteTypeCodeEnum.CORPLINE
-  ].includes(filters.lob)) {
+  if(filters.lob == quoteTypeCodeEnum.CORPLINE) {
     loadTeams(filters.lob);
   } else {
     loadAdvisorsByLob(filters.lob);
@@ -591,7 +585,7 @@ function handleDateChange(dateRange) {
           v-model="filters.displayBy"
           placeholder="Search by Group"
           label="View by"
-          :options="displayBy"
+          :options="displayBy"  
           class="w-full"
           :single="true"
         />
@@ -600,7 +594,7 @@ function handleDateChange(dateRange) {
           v-if=" filters.displayBy === RetentionReportEnum.MONTHLY || filters.displayBy === RetentionReportEnum.BATCH"
           v-model="filters.policyExpiryDate"
           label="Select start and end date"
-          placeholder="Select Start & End Date"
+          placeholder="Select start and end date"
           range
           size="sm"
           model-type="yyyy-MM-dd"

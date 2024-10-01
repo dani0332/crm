@@ -673,7 +673,6 @@ class RetentionReportService extends BaseService
             'teams' => [
                 'can_view' => $canView,
                 'lobs' => [
-                    quoteTypeCode::Health,
                     quoteTypeCode::CORPLINE,
                 ],
             ],
