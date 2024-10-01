@@ -322,7 +322,10 @@ const calculatePriceDetailsForATIB = () => {
     return false;
   }
 
-  if (bookingDetailsForm.price_vat_applicable > 0) {
+  if (
+    bookingDetailsForm.price_vat_applicable > 0 ||
+    bookingDetailsForm.price_vat_not_applicable > 0
+  ) {
     // in this calculation, number 5 is not VAT amount, we need to * the price_vat and price_not_vat with 5% to get the total VAT amount.
     let total_price_with_vat_and_not_vat_applicable =
       Number(bookingDetailsForm.price_vat_applicable) +
@@ -1032,6 +1035,8 @@ const noDiscountType = computed(() => {
     sendUpdateStatusEnum.DTSI,
     sendUpdateStatusEnum.DOV,
     sendUpdateStatusEnum.ED,
+    sendUpdateStatusEnum.ATIB,
+    sendUpdateStatusEnum.ACB,
   ];
 
   return (

@@ -110,6 +110,7 @@ class BusinessQuoteService extends BaseService
                 'ps.text AS payment_status_id_text',
                 'bqr.payment_status_id',
                 'bqr.insly_migrated',
+                'bqr.aml_status',
             )
             ->leftJoin('payments as py', 'py.code', '=', 'bqr.code')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'bqr.payment_status_id')
