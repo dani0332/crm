@@ -103,9 +103,8 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 'whatsappConsent' => true,
             ];
 
-
             $carQuoteExists = CarQuote::where([
-                'email' =>  $this->lead->email,
+                'email' => $this->lead->email,
                 'car_make_id' => $this->lead->car_make_id,
                 'car_model_id' => $this->lead->car_model_id,
                 'vehicle_type_id' => $this->lead->vehicle_type_id,
@@ -113,14 +112,14 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             ])->first();
 
             if ($carQuoteExists) {
-                info($logPrefix . $this->lead->uuid . ' - Child Quote Already Existed against this parent lead');
+                info($logPrefix.$this->lead->uuid.' - Child Quote Already Existed against this parent lead');
 
                 return false;
             }
 
             $this->lead->refresh();
             if ($this->lead->is_revived) {
-                info($logPrefix . $this->lead->uuid . ' - Lead Already Revived');
+                info($logPrefix.$this->lead->uuid.' - Lead Already Revived');
 
                 return false;
             }
@@ -129,7 +128,6 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
             if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
                 info($logPrefix.$this->lead->uuid.'- childLeadCreated - '.$capiResponse->quoteUID);
-
 
                 CarQuote::find($this->lead->id)->update(['is_revived' => true]);
 
