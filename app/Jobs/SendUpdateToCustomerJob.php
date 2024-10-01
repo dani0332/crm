@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
+use App\Services\SageApiService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
@@ -39,35 +40,47 @@ class SendUpdateToCustomerJob implements ShouldQueue
      */
     public function handle(SendEmailCustomerService $sendEmailCustomerService, SendUpdateLogService $sendUpdateLogServices)
     {
-        info('job: SendUpdateToCustomerJob started');
+        $sendUpdateLog = SendUpdateLog::find($this->sendUpdate->id);
+        info('job:SendUpdateToCustomerJob - Job started - Send Update UUID: '.$sendUpdateLog->uuid);
 
-        @[$templateId, $emailData, $tag, $quoteTypeId] = $sendUpdateLogServices->sendUpdateToCustomerEmailData($this->sendUpdate, $this->payload['action']);
+        if ($sendUpdateLog->is_email_sent) {
+            info('job:SendUpdateToCustomerJob - Email process skipped - Email already sent to Send Update UUID: '.$sendUpdateLog->uuid);
+        } else {
+            @[$templateId, $emailData, $tag, $quoteTypeId] = $sendUpdateLogServices->sendUpdateToCustomerEmailData($this->sendUpdate, $this->payload['action']);
+            if (! empty($templateId)) {
+                info('job:SendUpdateToCustomerJob - Send Update UUID: '.$sendUpdateLog->uuid.' - Job Email Data '.json_encode($emailData));
+                $response = $sendEmailCustomerService->sendUpdateToCustomerEmail($templateId, $emailData, $tag, $quoteTypeId);
+                info('job: SendUpdateToCustomerJob - Send Update UUID: '.$sendUpdateLog->uuid.' - Job Response '.json_encode($response));
 
-        if (! empty($templateId)) {
-            info('Send Update to Customer Job Email Data '.json_encode($emailData));
-            $response = $sendEmailCustomerService->sendUpdateToCustomerEmail($templateId, $emailData, $tag, $quoteTypeId);
-            info('Send Update to Customer Job Response '.json_encode($response));
-
-            if ($response == 201) {
-                SendUpdateLog::find($this->sendUpdate->id)->update([
-                    'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
-                    // 'is_email_sent' => true,
-                ]);
-
-                /*if ($this->payload['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
-                    $sendUpdateRequest = new SendUpdateRequest();
-                    app(SendUpdateLogController::class)->sendUpdate($sendUpdateRequest->merge($this->payload));
-                }*/
-                info('Send Update to Customer Job success, send update id -> '.$this->sendUpdate->id);
-            } else {
-                info('Send Update to Customer Job failed, send update id -> '.$this->sendUpdate->id);
+                if ($response == 201) {
+                    info('job:SendUpdateToCustomerJob - Updating status to: '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER.' - Send Update UUID: '.$sendUpdateLog->uuid);
+                    $sendUpdateLog->update([
+                        'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
+                        'is_email_sent' => true,
+                    ]);
+                    $sendUpdateLog->refresh();
+                } else {
+                    info('job:SendUpdateToCustomerJob - Send Update UUID: '.$sendUpdateLog->uuid.' - Job failed - Send Update UUID: '.$sendUpdateLog->uuid);
+                }
             }
         }
+
+        if ($this->payload['action'] == SendUpdateLogStatusEnum::ACTION_SNBU && isset($this->payload['dispatchSageCall'])) {
+            info('job:SendUpdateToCustomerJob - Calling updateSageProcessForDispatching function through sendUpdateToCustomer - Send Update UUID: '.$sendUpdateLog->uuid);
+            $sageRequestPayload = $this->payload['sageRequestPayload'];
+            unset($this->payload['sageRequestPayload']);
+            $sendUpdateLogServices->updateSageProcessForDispatching($this->payload, $sendUpdateLog, $sageRequestPayload);
+
+            app(SageApiService::class)->scheduleSageProcesses($sageRequestPayload->insurerID);
+            info('job:SendUpdateToCustomerJob - fn:scheduleSageProcesses triggered for Insurer - '.$sageRequestPayload->insurerID);
+        }
+
+        info('job:SendUpdateToCustomerJob - Job completed - Send Update UUID: '.$sendUpdateLog->uuid);
     }
 
     public function failed(Throwable $exception)
     {
-        info('SendUpdateToCustomerJob -: '.$this->sendUpdate->id.' Error: '.$exception->getMessage());
+        info('job:SendUpdateToCustomerJob - Send Update UUID: '.$this->sendUpdate->uuid.' Error: '.$exception->getMessage());
     }
 
     public function middleware()
