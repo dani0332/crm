@@ -189,7 +189,9 @@ const onLobChange = (e, isOnMounted = false) => {
     filters.insurance_type="";
   }
 
-  if(quoteTypeCodeEnum.CORPLINE == filters.lob) {
+  if([quoteTypeCodeEnum.Health,
+      quoteTypeCodeEnum.CORPLINE
+  ].includes(filters.lob)) {
     loadTeams(e);
   } else {
     loadAdvisorsByLob(e);
@@ -213,7 +215,9 @@ const isDisabled = (element) => {
 
 const getAdvisorLabel = () => {
   let label = 'Advisors'
-  if (quoteTypeCodeEnum.CORPLINE== filters.lob && (!filters.teams || filters.teams.length == 0)) {
+  if ([quoteTypeCodeEnum.Health,
+      quoteTypeCodeEnum.CORPLINE].includes(filters.lob) &&
+  (!filters.teams || filters.teams.length == 0)) {
       label = 'Advisors (select teams first)';
   }
 
@@ -263,7 +267,9 @@ onMounted(() => {
     filters.displayBy = RetentionReportEnum.BATCH
     filters.lob = props.productName
   }
-  if(filters.lob == quoteTypeCodeEnum.CORPLINE) {
+  if([quoteTypeCodeEnum.Health,
+      quoteTypeCodeEnum.CORPLINE
+  ].includes(filters.lob)) {
     loadTeams(filters.lob);
   } else {
     loadAdvisorsByLob(filters.lob);
@@ -501,6 +507,7 @@ watch(
 );
 
 function buildQuoteURL() {
+  const lob = filters.lob.replace(/\s+/g, '');
   // Define the mapping of quote types to their corresponding paths
   const quoteTypePaths = {
     Car: 'car.show',
@@ -513,10 +520,10 @@ function buildQuoteURL() {
     Life: 'life-quotes-show',
     Home: 'home.show',
     GroupMedical: 'amt.show',
-    CORPLINE: 'business.show'
+    CorpLine: 'business.show'
   };
   // Return the path corresponding to the quote type, or null if not found
-  return quoteTypePaths[filters.lob] || null;
+  return quoteTypePaths[lob] || null;
 }
 
 
@@ -585,7 +592,7 @@ function handleDateChange(dateRange) {
           v-model="filters.displayBy"
           placeholder="Search by Group"
           label="View by"
-          :options="displayBy"  
+          :options="displayBy"
           class="w-full"
           :single="true"
         />
@@ -594,7 +601,7 @@ function handleDateChange(dateRange) {
           v-if=" filters.displayBy === RetentionReportEnum.MONTHLY || filters.displayBy === RetentionReportEnum.BATCH"
           v-model="filters.policyExpiryDate"
           label="Select start and end date"
-          placeholder="Select start and end date"
+          placeholder="Select Start & End Date"
           range
           size="sm"
           model-type="yyyy-MM-dd"
