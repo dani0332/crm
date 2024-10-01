@@ -1,8 +1,7 @@
 <script setup>
-import LazyAvailablePlan from './Partials/AvailablePlans.vue';
-import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 import { computed } from 'vue';
-import DownloadDocuments from '../../Components/DownloadDocuments.vue';
+import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 
 const page = usePage();
@@ -2006,6 +2005,10 @@ const onAddUpdate = () => {
                       :disabled="!isProfileUpdateAllow"
                     />
                   </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                  <dd>{{}}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>

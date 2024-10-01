@@ -2213,6 +2213,10 @@ const onAddUpdate = () => {
                   <dd>{{ quote.dob }}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                  <dd>{{}}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID NUMBER</dt>
                   <dd>
                     <x-input

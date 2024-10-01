@@ -1,7 +1,6 @@
 <script setup>
-import QuoteDocuments from '@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue';
-import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 import MigratePayment from '../../Components/MigratePayment.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue';
 
 const props = defineProps({
   quote: Object,
@@ -922,6 +921,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMAIL</dt>
                   <dd class="break-words">{{ quote.email }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                  <dd>{{}}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">COMPANY NAME</dt>

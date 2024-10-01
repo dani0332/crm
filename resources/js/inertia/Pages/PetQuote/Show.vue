@@ -1,11 +1,10 @@
 <script setup>
-import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
-import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
-import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
+import { reactive } from 'vue';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
-import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
-import { reactive } from 'vue';
+import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
+import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
+import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 
 const props = defineProps({
   quote: Object,
@@ -703,6 +702,10 @@ const onAddUpdate = () => {
                       :disabled="!isProfileUpdateAllow"
                     />
                   </dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                  <dd>{{}}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>

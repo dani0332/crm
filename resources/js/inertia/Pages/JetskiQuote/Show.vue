@@ -1,11 +1,10 @@
 <script setup>
-import LeadStatus from '../PersonalQuote/Partials/QuoteStatus';
-import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
-import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
-import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
-import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
-import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
+import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
+import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
+import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
+import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
+import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 
 defineProps({
   quote: Object,
@@ -280,6 +279,10 @@ const dateFormat = date =>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">DATE OF BIRTH</dt>
                 <dd>{{ quote.dob }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                <dd>{{}}</dd>
               </div>
               <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
             </dl>

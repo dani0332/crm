@@ -3,7 +3,6 @@ import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
-import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 
 const props = defineProps({
@@ -708,6 +707,10 @@ const onAddUpdate = () => {
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">DATE OF BIRTH</dt>
                   <dd>{{ quote.dob }}</dd>
+                </div>
+                <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
+                  <dd>{{}}</dd>
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">EMIRATES ID NUMBER</dt>
