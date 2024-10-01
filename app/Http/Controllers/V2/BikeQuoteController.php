@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
@@ -40,7 +41,6 @@ use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Repositories\UserRepository;
-use App\Services\AMLService;
 use App\Services\BikeEmailService;
 use App\Services\BikeQuoteService;
 use App\Services\CentralService;
@@ -75,11 +75,13 @@ class BikeQuoteController extends Controller
         $personalQuotes = BikeQuoteRepository::getData();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::BIKE->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
+        $authorizedDays = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::PAYMENT_AUTHORISED_DAYS)->first();
 
         return inertia('BikeQuote/Index', [
             'quotes' => $personalQuotes,
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
+            'authorizedDays' => intval($authorizedDays->value),
         ]);
     }
 
@@ -134,12 +136,16 @@ class BikeQuoteController extends Controller
     {
         /* Start - Temporarily adding for correcting historic data  */
         $quote = BikeQuoteRepository::where('uuid', $uuid)->first();
+        abort_if(! $quote, 404);
         (new PaymentRepository)->updatePriceVatApplicableAndVat($quote, QuoteTypes::BIKE->value);
         /* End - Temporarily adding for correcting historic data  */
 
         $quote = BikeQuoteRepository::getBy('uuid', $uuid);
         $linkedQuoteDetails = app(SendUpdateLogService::class)->linkedQuoteDetails(QuoteTypes::BIKE->value, $quote);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
+        $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
+            return ! in_array($value['id'], [QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::AMLScreeningFailed]);
+        })->values();
         $membersDetail = CustomerMembersRepository::getBy($quote->id, QuoteTypes::BIKE->name);
         @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Bike);
 
@@ -161,13 +167,7 @@ class BikeQuoteController extends Controller
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
-        $isAmlClearedForPayment = app(CentralService::class)->amlClearedFromLog($quote->id, QuoteTypes::BIKE->name);
-
-        if (AMLService::checkAMLStatusFailed(QuoteTypes::BIKE->id(), $quote->id)) {
-            $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
-                return $value['id'] != QuoteStatusEnum::TransactionApproved;
-            })->values();
-        }
+        $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::BIKE->id(), $quoteStatuses);
 
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
@@ -197,11 +197,13 @@ class BikeQuoteController extends Controller
         $planURL = $ecomBikeInsuranceQuoteUrl.$quote->uuid;
         $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
+        $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
         return inertia('BikeQuote/Show', [
             'quoteType' => QuoteTypes::BIKE,
             'quote' => $quote,
             'record' => $quote,
+            'amlStatusName' => $amlStatusName,
             'activities' => $activities,
             'lostReasons' => $lostReasons,
             'quoteTypeId' => QuoteTypes::BIKE->id(),
@@ -226,7 +228,6 @@ class BikeQuoteController extends Controller
             'vatPercentage' => $vatPercentage,
             'paymentTooltipEnum' => PaymentTooltip::asArray(),
             'isNewPaymentStructure' => app(SplitPaymentService::class)->isNewPaymentStructure($quote->payments),
-            'isAmlClearedForPayment' => $isAmlClearedForPayment,
             'permissions' => [
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],
@@ -357,9 +358,9 @@ class BikeQuoteController extends Controller
         $response = $this->bikeQuoteService->bikePlanModify($request);
 
         if ($response == 200 || $response == 201) {
-            return redirect()->back()->with('success', $response);
+            return redirect()->back()->with('success', 'Bike Quote Plan created successfully');
         } else {
-            return redirect()->back()->with('error', $response);
+            return redirect()->back()->with('error', 'Plan Modification is not allowed');
         }
     }
 
@@ -389,5 +390,12 @@ class BikeQuoteController extends Controller
         $response = BikeQuoteRepository::changeInsurer($request->validated());
 
         return response()->json($response);
+    }
+
+    public function getBikeQuote($uuid)
+    {
+        $quote = BikeQuoteRepository::getBy('uuid', $uuid);
+
+        return response()->json($quote);
     }
 }

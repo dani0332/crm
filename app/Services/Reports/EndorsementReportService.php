@@ -5,6 +5,7 @@ namespace App\Services\Reports;
 use App\Enums\EndorsementStatusEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
+use App\Exports\Reports\EndorsementReportExport;
 use App\Models\Lookup;
 use App\Models\SendUpdateLog;
 use App\Strategies\ManagementReport;
@@ -94,7 +95,7 @@ class EndorsementReportService extends ManagementReport
                     IFNULL( IFNULL(ps.price_vat, send_update_logs.total_vat_amount) , 0 )) - IFNULL( IFNULL(ps.discount_value, send_update_logs.discount) , 0 )) -
                     IFNULL( IFNULL(ps.collection_amount, send_update_logs.price_with_vat), 0) as pending_balance'),
                 'pq.collection_type as collects',
-                'ip.text as insurer',
+                DB::raw('CASE WHEN l.code="CII" OR ip.text is null THEN ip2.text ELSE ip.text END as insurer'),
                 'quote_type.text as line_of_business',
                 'personal_quotes.first_name',
                 'personal_quotes.last_name',
@@ -110,6 +111,10 @@ class EndorsementReportService extends ManagementReport
                 'btoi.text as sub_type_line_of_business',
                 'l.text as endorsement_sub_type',
                 'send_update_logs.booking_date',
+                DB::raw('IFNULL(send_update_logs.insurer_commission_invoice_number, p.insurer_commmission_invoice_number) as insurer_commmission_invoice_number'),
+                DB::raw('CASE WHEN ps.sr_no is NULL OR ps.sr_no=1 THEN IFNULL(send_update_logs.commission_percentage, p.commmission_percentage) ELSE 0 END as commmission_percentage'),
+                DB::raw("'Endorsement' as transaction_type"),
+                'personal_quotes.source'
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -121,6 +126,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
+            ->leftJoin('insurance_provider as ip2', 'ip2.id', '=', 'send_update_logs.insurance_provider_id')
             ->leftJoin('payment_methods as pm', 'pm.code', '=', 'ps.payment_method')
             ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'ps.payment_gateway_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
@@ -128,6 +134,7 @@ class EndorsementReportService extends ManagementReport
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
         $this->getUtmGroup($request, $query);
+        $this->applyFilters($query, $request);
 
         $reversalQuery = SendUpdateLog::query()
             ->select(
@@ -166,7 +173,7 @@ class EndorsementReportService extends ManagementReport
                 DB::raw("'N/A' as payment_date"),
                 DB::raw("'0.00' as pending_balance"),
                 'pq.collection_type as collects',
-                'ip.text as insurer',
+                DB::raw('CASE WHEN l.code="CII" OR ip.text is null THEN ip2.text ELSE ip.text END as insurer'),
                 'quote_type.text as line_of_business',
                 'personal_quotes.first_name',
                 'personal_quotes.last_name',
@@ -182,6 +189,10 @@ class EndorsementReportService extends ManagementReport
                 'btoi.text as sub_type_line_of_business',
                 'l.text as endorsement_sub_type',
                 'send_update_logs.booking_date',
+                DB::raw('IFNULL(CONCAT(p.insurer_commmission_invoice_number, "-REV"), IFNULL(CONCAT(send_update_logs.insurer_commission_invoice_number, "-REV"), null)) as insurer_commmission_invoice_number'),
+                DB::raw('-1 * IFNULL(send_update_logs.commission_percentage, IFNULL(p.commmission_percentage, 0)) as commmission_percentage'),
+                DB::raw("'Endorsement' as transaction_type"),
+                'personal_quotes.source'
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -193,6 +204,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('departments as dp', 'dp.id', '=', 'u.department_id')
             ->leftJoin('personal_quote_details as pqd', 'personal_quotes.id', '=', 'pqd.personal_quote_id')
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'pq.insurance_provider_id')
+            ->leftJoin('insurance_provider as ip2', 'ip2.id', '=', 'send_update_logs.insurance_provider_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
@@ -200,24 +212,24 @@ class EndorsementReportService extends ManagementReport
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
         $this->getUtmGroup($request, $reversalQuery);
 
-        $query = $query->union($reversalQuery);
-        $query = $query->orderBy('id', 'desc');
+        if ($request['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
+            $distinctPaymentSplits = DB::table('payment_splits as dps')
+                ->select('dps.code', 'due_date')
+                ->groupBy('dps.code');
+            $reversalQuery->leftJoinSub($distinctPaymentSplits, 'ps', function ($join) {
+                $join->on('p.code', '=', 'ps.code');
+            });
+        }
+        $this->applyFilters($reversalQuery, $request);
 
-        $this->applyFilters($query, $request);
+        $query = $query->unionAll($reversalQuery);
+        $query = $query->orderBy('id', 'desc');
 
         if ($request->export == 1) {
             $data = $query->get();
             $this->formatData($data);
 
-            // Columns that are not integar and should not be summed
-            $nonIntegarIndexes = [0, 1, 2, 3, 13, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29];
-
-            return $this->download(
-                'Endorsement Report '.$this->reportDateRange,
-                $data,
-                $this->headings(),
-                $nonIntegarIndexes
-            );
+            return (new EndorsementReportExport($data))->download("Endorsement Report {$this->reportDateRange}.xlsx");
         } else {
             $data = $query->simplePaginate(100)->withQueryString();
             $data->map(function ($item) {
@@ -243,6 +255,7 @@ class EndorsementReportService extends ManagementReport
             $item->pending_balance = number_format($item->pending_balance, 2);
             $item->collects = strtoupper($item->collects);
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
+            $item->commmission_percentage = number_format($item->commmission_percentage, 2);
         });
     }
 
@@ -268,84 +281,6 @@ class EndorsementReportService extends ManagementReport
             'paymentDueDate' => $defaultDate,
             'reportCategory' => ManagementReportCategoriesEnum::ENDORSEMENT,
             'reportType' => ManagementReportTypeEnum::BOOKED_POLICIES,
-        ];
-    }
-
-    public function headings(): array
-    {
-        return [
-            'Ref-ID',
-            'Department',
-            'Policy Number',
-            'Transactions',
-            'Policy Start Date',
-            'Payment Due Date',
-            'Price (VAT applicable)',
-            'Total VAT',
-            'Price (VAT not applicable)',
-            'Discount',
-            'Total Price',
-            'Commission (VAT applicable)',
-            'VAT on Commission',
-            'Commission (VAT not applicable)',
-            'Collected Amount',
-            'Payment Date',
-            'Unpaid',
-            'Collects',
-            'Insurer',
-            'Line Of Business',
-            'Sub-Type',
-            'Customer Name',
-            'Advisor',
-            'Policy Issuer',
-            'Invoice Description',
-            'Payment Method',
-            'Payment Gateway',
-            'Insurer Invoice No.',
-            'Insurer Invoice Date',
-            'Broker Invoice No',
-            'Booking Date',
-            'Endorsement Sub-Type',
-            'SU Ref-ID',
-        ];
-    }
-
-    public function map($quote): array
-    {
-        return [
-            $quote->main_lead_code ?? 'N/A',
-            $quote->department ?? 'N/A',
-            $quote->policy_number ? '="'.$quote->policy_number.'"' : ('="'.$quote->main_lead_policy_number.'"' ?? 'N/A'),
-            $quote->transactions ? $quote->transactions : 'N/A',
-            $quote->policy_start_date ? $quote->policy_start_date : ($quote->main_lead_policy_start_date ?? 'N/A'),
-            $quote->payment_due_date ? $quote->payment_due_date : ($quote->due_date ?? 'N/A'),
-            $quote->price_vat_applicable ?? '0.00',
-            $quote->vat ?? '0.00',
-            $quote->price_vat_not_applicable ?? '0.00',
-            $quote->discount ?? '0.00',
-            $quote->total_price ?? '0.00',
-            $quote->commission_vat_applicable ?? '0.00',
-            $quote->commission_vat ?? '0.00',
-            $quote->commission_vat_not_applicable ?? '0.00',
-            $quote->collected_amount ?? '0.00',
-            $quote->payment_date ?? 'N/A',
-            $quote->pending_balance ?? '0.00',
-            $quote->collects ?? 'N/A',
-            $quote->insurer ?? 'N/A',
-            $quote->line_of_business ?? 'N/A',
-            $quote->sub_type_line_of_business ?? 'N/A',
-            $quote->customer_name ?? 'N/A',
-            $quote->advisor ?? 'N/A',
-            $quote->policy_issuer ?? 'N/A',
-            $quote->invoice_description ?? 'N/A',
-            $quote->payment_method ?? 'N/A',
-            $quote->payment_gateway ?? 'N/A',
-            $quote->insurer_invoice_number ?? 'N/A',
-            $quote->insurer_tax_invoice_date ?? 'N/A',
-            $quote->broker_invoice_number ?? 'N/A',
-            $quote->booking_date ?? 'N/A',
-            $quote->endorsement_sub_type ?? 'N/A',
-            $quote->code ?? 'N/A',
         ];
     }
 }

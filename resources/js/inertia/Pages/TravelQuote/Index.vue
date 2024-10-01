@@ -4,6 +4,7 @@ defineProps({
   dropdownSource: Object,
   permissions: Object,
   advisors: Object,
+  authorizedDays: Number,
 });
 
 const rules = {
@@ -36,8 +37,8 @@ const filters = reactive({
   last_name: '',
   email: '',
   mobile_no: '',
-  created_at_start: '',
-  created_at_end: '',
+  created_at_start: new Date() || '',
+  created_at_end: new Date() || '',
   quote_status_id: [],
   advisor_id: [],
   is_ecommerce: '',
@@ -50,6 +51,9 @@ const filters = reactive({
   payment_due_date: '',
   booking_date: '',
   segment_filter: '',
+  policy_expiry_date: '',
+  policy_expiry_date_end: '',
+  transaction_approved_dates: page.props.transaction_approved_dates || '',
 });
 
 const loader = reactive({
@@ -69,12 +73,19 @@ const tableHeader = [
   { text: 'Ref-ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
+  { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
+  { text: 'PAYMENT EXPIRY', value: 'expiry_dates' },
   { text: 'Travel Type', value: 'direction_code' },
   { text: 'Travel Coverage', value: 'coverage_code' },
   { text: 'LEAD STATUS', value: 'quote_status_id_text' },
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
+  {
+    text: 'POLICY EXPIRY DATE',
+    value: 'previous_policy_expiry_date',
+    sortable: true,
+  },
   { text: 'DATE OF BIRTH', value: 'dob' },
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'SOURCE', value: 'source' },
@@ -99,12 +110,19 @@ const paymentStatusOptions = computed(() => {
 });
 
 const advisorsOptions = computed(() => {
-  return page.props.dropdownSource.advisor_id.map(item => {
+  const advisors = page.props.dropdownSource.advisor_id.map(item => {
     return {
       value: item.id,
       label: item.name,
     };
   });
+  return [
+    ...advisors,
+    {
+      value: -1,
+      label: 'UnAssigned',
+    },
+  ];
 });
 
 const leadsStatusOptions = computed(() => {
@@ -123,6 +141,14 @@ const subTeamOptions = [
 
 function onSubmit(isValid) {
   if (!isValid) {
+    return;
+  }
+  if (validateDateRange()) {
+    notification.error({
+      title:
+        'The selected date range exceeds one month. Please select a range within one month.',
+      position: 'top',
+    });
     return;
   }
   for (const key in filters) {
@@ -222,10 +248,59 @@ const permissionsEnum = page.props.permissionsEnum;
 const travelQuoteEnum = page.props.travelQuoteEnum;
 
 const onDataExport = () => {
+  filters.created_at_start = useDateFormat(
+    filters.created_at_start,
+    'YYYY-MM-DD',
+  ).value;
+
+  filters.created_at_end = useDateFormat(
+    filters.created_at_end,
+    'YYYY-MM-DD',
+  ).value;
+
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'travel');
   window.open(url + '?' + new URLSearchParams(data).toString());
 };
+
+function daysAgoFromAuthorizedDate(authorizedDate) {
+  if (!authorizedDate) {
+    return;
+  }
+  const [day, month, year] = authorizedDate.split('-').map(Number);
+  const parsedDate = new Date(year, month - 1, day);
+
+  if (isNaN(parsedDate.getTime())) {
+    return 'Invalid date';
+  }
+
+  // Reset time to 00:00:00 to consider only the date
+  parsedDate.setHours(0, 0, 0, 0);
+
+  // Add `page.props.authorizedDays` to the parsed date
+  const authorizedDays = page.props.authorizedDays || 8; // Default to 8 if not defined
+  const newDate = new Date(parsedDate);
+  newDate.setDate(parsedDate.getDate() + authorizedDays);
+
+  // Reset time for newDate as well
+  newDate.setHours(0, 0, 0, 0);
+
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0); // Reset time for current date
+
+  // Calculate the difference in days
+  const differenceInTime = newDate.getTime() - currentDate.getTime();
+  const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+
+  // Return appropriate message
+  if (differenceInDays <= 0) {
+    return 'Expired';
+  }
+
+  return differenceInDays === 1
+    ? `${differenceInDays} day`
+    : `${differenceInDays} days`;
+}
 
 watch(
   () => filters,
@@ -281,6 +356,31 @@ const resetDateFilters = filterName => {
     },
   );
 });
+const validateDateRange = () => {
+  const { policy_expiry_date, policy_expiry_date_end } = filters;
+  if (policy_expiry_date && policy_expiry_date_end) {
+    const startDate = new Date(policy_expiry_date);
+    const endDate = new Date(policy_expiry_date_end);
+    const oneMonthLater = new Date(startDate);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    // Adjust for months with fewer than 31 days
+    if (oneMonthLater.getDate() < startDate.getDate()) {
+      oneMonthLater.setDate(0);
+    }
+    if (endDate > oneMonthLater) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const formatDate = date => {
+  if (!date) return '';
+  const [datePart] = date.split(' ');
+  const [day, month, year] = datePart.split('-');
+  const parsedDate = new Date(`${year}-${month}-${day}`);
+  return useDateFormat(parsedDate, 'DD-MMM-YYYY').value;
+};
 </script>
 
 <template>
@@ -393,6 +493,18 @@ const resetDateFilters = filterName => {
             :options="leadsStatusOptions"
           />
         </x-field>
+        <x-field label="Policy Expiry Start Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date"
+            name="policy_expiry_date"
+          />
+        </x-field>
+        <x-field label="Policy Expiry End Date">
+          <DatePicker
+            v-model="filters.policy_expiry_date_end"
+            name="policy_expiry_date_end"
+          />
+        </x-field>
         <x-field label="Advisor" v-if="!permissions.travelAdvisor">
           <ComboBox
             v-model="filters.advisor_id"
@@ -400,6 +512,15 @@ const resetDateFilters = filterName => {
             :options="advisorsOptions"
           />
         </x-field>
+        <DatePicker
+          v-model="filters.transaction_approved_dates"
+          label="Transaction Approved Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+          max-range="30"
+        />
         <x-field label="Ecommerce">
           <x-select
             v-model="filters.is_ecommerce"
@@ -565,7 +686,6 @@ const resetDateFilters = filterName => {
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-code="{ code, uuid }">
         <a
@@ -575,10 +695,32 @@ const resetDateFilters = filterName => {
           {{ code }}
         </a>
       </template>
+      <template #item-authorized_at="item">
+        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
+          {{ item.authorized_at }}
+        </p>
+      </template>
+      <template #item-expiry_dates="item">
+        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
+          {{ daysAgoFromAuthorizedDate(item.authorized_at) }}
+        </p>
+      </template>
       <template #item-dob="{ dob }">
         <div class="text-center">
           {{ dob == '00-00-0000' ? '' : dob }}
         </div>
+      </template>
+      <template
+        #item-previous_policy_expiry_date="{
+          previous_policy_expiry_date,
+          source,
+        }"
+      >
+        {{
+          source === 'Renewal_upload'
+            ? formatDate(previous_policy_expiry_date)
+            : ''
+        }}
       </template>
 
       <template #item-is_ecommerce="{ is_ecommerce }">
@@ -588,16 +730,18 @@ const resetDateFilters = filterName => {
           </x-tag>
         </div>
       </template>
-      <template #item-coverage_code="{ coverage_code, days_cover_for }">
+      <template #item-coverage_code="{ coverage_code, days_cover_for, source }">
         <div class="text-center">
           {{
-            coverage_code != null
-              ? coverage_code
-              : days_cover_for <= 92
-                ? travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
-                : travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
-                  '/' +
-                  travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
+            source == $page.props.leadSource.RENEWAL_UPLOAD
+              ? travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
+              : coverage_code != null
+                ? coverage_code
+                : days_cover_for <= 92
+                  ? travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
+                  : travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
+                    '/' +
+                    travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
           }}
         </div>
       </template>

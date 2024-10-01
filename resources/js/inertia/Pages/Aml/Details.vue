@@ -1,8 +1,8 @@
 <script setup>
-import IndividualModel from './Partials/IndividualModel.vue';
-import EntityModel from './Partials/EntityModel.vue';
 import { ref } from 'vue';
 import { formatDate } from '../../Composables/utilities.js';
+import EntityModel from './Partials/EntityModel.vue';
+import IndividualModel from './Partials/IndividualModel.vue';
 
 const props = defineProps({
   quoteType: Object,
@@ -22,6 +22,7 @@ const props = defineProps({
   amlDecisionStatusEnum: Object,
   lookups: Object,
   cardHolderName: Object,
+  amlStatusName: String,
 });
 
 const page = usePage();
@@ -160,6 +161,10 @@ onMounted(() => {
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">QUOTE STATUS</dt>
             <dd>{{ quoteRequest?.quote_status?.text ?? '' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">AML STATUS</dt>
+            <dd>{{ amlStatusName ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PHONE NUMBER</dt>
@@ -712,7 +717,6 @@ onMounted(() => {
         :items="kycLogs || []"
         border-cell
         :rows-per-page="40"
-        fixed-checkbox
         :hide-footer="kycLogs.length < 40"
       >
         <template #item-insurance_type="{ quotetype }">

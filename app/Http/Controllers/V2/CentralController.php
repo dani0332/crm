@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -55,6 +56,7 @@ use App\Repositories\PaymentRepository;
 use App\Services\ActivitiesService;
 use App\Services\CentralService;
 use App\Services\HealthQuoteService;
+use App\Services\NotificationService;
 use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
 use App\Services\SendEmailCustomerService;
@@ -134,6 +136,14 @@ class CentralController extends Controller
     {
         (new CentralService)->assignLeadToAdvisor($leadAssignRequest);
 
+        $quoteIds = explode(',', $leadAssignRequest->selectTmLeadId);
+        foreach ($quoteIds as $id) {
+            $quoteData = $this->getQuoteObject($leadAssignRequest->modelType, $id);
+            if ($quoteData && $quoteData->payment_status_id === PaymentStatusEnum::AUTHORISED) {
+                app(NotificationService::class)->paymentStatusUpdate($leadAssignRequest->modelType, $quoteData->uuid);
+            }
+        }
+
         return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType).' Leads has been Assigned');
     }
 
@@ -180,9 +190,9 @@ class CentralController extends Controller
 
     public function updateBookingPolicy(BookPolicyRequest $bookPolicyRequest)
     {
-        info('fn: updateBookingPolicy called');
 
         $validatedData = $bookPolicyRequest->validated();
+        info('Quote Code: '.$validatedData['payment_code'].' fn: updateBookingPolicy called');
 
         $paymentInformation = [
             'insurer_tax_number' => $validatedData['insurer_tax_invoice_number'],
@@ -202,11 +212,10 @@ class CentralController extends Controller
             return back()->with('message', 'Payment record not found');
         }
         $payment->update($paymentInformation);
-        $quote = $this->getQuoteObject($validatedData['model_type'], $validatedData['quote_id']);
-        info('Book policy details update successfully for : '.$quote->uuid);
+        info('Quote Code: '.$validatedData['payment_code'].' Book policy details update successfully');
 
         (new SplitPaymentService)->updateCommissionSchedule($payment);
-        info('Commission Schedule updated successfully for : '.$quote->uuid);
+        info('Quote Code: '.$validatedData['payment_code'].' Commission Schedule updated successfully');
 
         return redirect()->back()->with('success', 'Booking details has been updated.');
     }
@@ -216,16 +225,17 @@ class CentralController extends Controller
         $request = (object) $sendBookPolicyRequest->validated();
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
-        info('fn: sendBookingPolicy called for '.$quote->uuid.' policy type '.$request->send_policy_type);
+        info('Quote Code: '.$quote->code.' fn: sendBookingPolicy called policy type '.$request->send_policy_type);
 
         if ($request->send_policy_type == SendPolicyTypeEnum::CUSTOMER) {
-            dispatch(new SendBookPolicyDocumentsJob($request));
+            dispatch(new SendBookPolicyDocumentsJob($request, $quote->code));
 
             $quote->update([
                 'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
+                'quote_status_date' => now(),
             ]);
 
-            info('Policy send to customer for '.$quote->uuid);
+            info('Quote Code: '.$quote->code.' Policy send to customer');
 
             return response()->json(['message' => 'Policy sent to customer'], 200);
         }
@@ -236,9 +246,18 @@ class CentralController extends Controller
                 ]], 403);
             }
             $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
+            $isDuplicateOrCIRLead = ! empty($quote['parent_duplicate_quote_id']);
             $payment = Payment::where('code', $quote['code'])->mainLeadPayment()->with('paymentSplits')->first();
+
+            if ($isDuplicateOrCIRLead && empty($payment)) {
+                $payment = Payment::where([
+                    'paymentable_id' => $quote->id,
+                    'paymentable_type' => $quote->getMorphClass(),
+                ])->mainLeadPayment()->with('paymentSplits')->first();
+            }
+
             $payment->update([
-                'broker_invoice_number' => (new PaymentRepository)->generateBrokerInvoiceNumber($payment),
+                'broker_invoice_number' => (new PaymentRepository)->generateBrokerInvoiceNumber($payment, $request->model_type),
             ]);
             $paymentSplits = $payment->paymentSplits;
             $data['quoteTypeId'] = $quoteTypeId;
@@ -256,19 +275,20 @@ class CentralController extends Controller
 
             if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
                 // dispatch job to send email
-                dispatch(new SendBookPolicyDocumentsJob($request));
+                dispatch(new SendBookPolicyDocumentsJob($request, $quote->code));
             }
 
             $quote->update([
                 'quote_status_id' => QuoteStatusEnum::PolicyBooked,
                 'policy_booking_date' => Carbon::now(),
+                'quote_status_date' => now(),
             ]);
 
             (new CentralService)->straightforwardPayments($payment, $paymentSplits, $quote);
 
             $this->updatePaymentAllocationStatus($quote);
 
-            info('Payment allocation && Transaction payment status update & policy send to customer for '.$quote->uuid);
+            info('Quote Code: '.$quote->code.' Payment allocation && Transaction payment status update & policy send to customer');
 
             return response()->json(['message' => $response['message']], 200);
         }
@@ -535,6 +555,7 @@ class CentralController extends Controller
         if ($responseCode == 201) {
             if (isset($healthQuote)) {
                 $healthQuote->quote_status_id = QuoteStatusEnum::Quoted;
+                $healthQuote->quote_status_date = now();
                 $healthQuote->save();
             }
             info('sendHealthEmailOneClickBuy - OCB Email Sent & Quote Status Changed to "QUOTED" for quote uuid: '.$request->quote_uuid);
@@ -546,5 +567,4 @@ class CentralController extends Controller
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
         }
     }
-
 }

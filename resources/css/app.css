@@ -45,7 +45,8 @@ label {
 
 /* Table container */
 .vue3-easy-data-table__main {
-  @apply overflow-x-auto;
+  @apply overflow-x-auto flex flex-col;
+  min-height: 160px;
 }
 
 .overflow-hidden-table {
@@ -57,7 +58,7 @@ label {
 }
 /* Scrollbar styles */
 .vue3-easy-data-table__main::-webkit-scrollbar {
-  @apply h-1.5 bg-transparent cursor-pointer;
+  @apply h-1.5 w-1.5 bg-transparent cursor-pointer;
 }
 
 .vue3-easy-data-table__main::-webkit-scrollbar-track {
@@ -94,8 +95,14 @@ label {
 }
 
 /* Fixed header */
-.vue3-easy-data-table__main.fixed-header.show-shadow.table-fixed .shadow {
-  @apply bg-primary-50 border-r;
+
+.table-fixed .vue3-easy-data-table__main {
+  max-height: 80dvh;
+  thead tr {
+    position: sticky;
+    top: 0;
+    z-index: 9;
+  }
 }
 
 /* Table body td tag */
@@ -357,7 +364,7 @@ transition duration-300 cursor-pointer;
 
 /* Table message */
 .vue3-easy-data-table__message {
-  @apply text-center py-10;
+  @apply grid place-content-center p-4 h-full w-full flex-auto;
 }
 
 /* Table default loader */

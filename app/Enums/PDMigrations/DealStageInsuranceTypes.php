@@ -45,4 +45,11 @@ class DealStageInsuranceTypes extends Enum
     const MARINE_OPEN_COVER = 'Marine -Open Cover';
     const HOLIDAY_HOMES = 'Holiday Homes';
     const I_NEED_SEVERAL_INSURANCES_FOR_MY_BUSINESS = 'I need several insurances for my business';
+    const GROUP_TRAVEL = 'Group Travel';
+    const PERSONAL_ACCIDENT = 'Personal Accident';
+    const EMPLOYERS_LIABILITY = 'Employer\'s Liability';
+    const TRAVEL_ISURANCE = 'Travel Insurance';
+    const MEDICAL_INSURANCE = 'Medical Insurance';
+    const WORKSMEN = 'Workmens Compensation & Employers Liability';
+    const PHOTOGRAPHER = 'Photographers Insurance';
 }

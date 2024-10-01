@@ -18,8 +18,6 @@ class Payment extends Model implements Auditable
         'updated',
     ];
     protected $table = 'payments';
-    protected $primaryKey = 'code';
-    public $incrementing = false;
     protected $keyType = 'string';
     protected $fillable = [
         'code', 'payment_status_id', 'plan_id', 'captured_amount',
@@ -167,6 +165,16 @@ class Payment extends Model implements Auditable
     public function healthPlan()
     {
         return $this->belongsTo(HealthPlan::class, 'plan_id');
+    }
+
+    public function carPlan()
+    {
+        return $this->belongsTo(CarPlan::class, 'plan_id');
+    }
+
+    public function bikePlan()
+    {
+        return $this->belongsTo(CarPlan::class, 'plan_id');
     }
 
     // Should be removed because it's already declared above paymentStatusLogs()

@@ -29,9 +29,14 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
      * Create a new job instance.
      */
     private $data = null;
-    public function __construct($payload)
+
+    private $code = null;
+
+    public function __construct($payload, $code)
     {
+        info('Quote Code: '.$code.' job: SendBookPolicyDocumentsJob constructor called ');
         $this->data = $payload;
+        $this->code = $code;
     }
 
     /**
@@ -39,11 +44,9 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
      */
     public function handle(SendEmailCustomerService $sendEmailCustomerService, QuoteDocumentService $quoteDocumentService)
     {
+        info('Quote Code: '.$this->code.' job: SendBookPolicyDocumentsJob started');
         $insuranceType = '';
         $planName = '';
-
-        info('job: SendBookPolicyDocumentsJob started');
-
         // In case of Group Medical & Corpline, modelType is used & for rest of the LOBs model_type is used
         // Basically we are different to identify the template which will send to customer after policy booking
         $modelType = ucfirst(! empty($this->data->modelType) ? $this->data->modelType : $this->data->model_type);
@@ -55,14 +58,12 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             // This will give handbook document from relevant policy wording table only for mentioned LOB's
             if (in_array($modelType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
                 $handBookDocuments = app(QuoteDocumentService::class)->getHandBookDocuments($quote);
-                info('Handbook documents retrieved: '.json_encode($handBookDocuments));
             }
             // First Retrieve document types marked for sending to the customer, then fetch the corresponding uploaded documents
             $documentTypeCodes = DocumentTypeRepository::quoteDocumentsSentToCustomerCode($this->data->model_type, $quote);
             $docs = app(QuoteDocumentService::class)->getQuoteDocuments($this->data->model_type, $this->data->quote_id, $documentTypeCodes);
-            info('Quote documents which need to send to customer through email retrieved: '.json_encode($docs));
         } catch (Exception $ex) {
-            Log::error('Send BookPolicy Documents Job Error '.$ex->getMessage());
+            Log::error('Send BookPolicy Documents Job Error for:  '.$quote->code.' '.$ex->getMessage());
             $docs = [];
         }
 
@@ -96,6 +97,8 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->googleMeet = '';
             $emailData->insuranceType = $insuranceType;
             $emailData->planName = $planName;
+            $emailData->currentInsurer = '';
+            $emailData->profilePicture = '';
             if (! empty($quote->advisor)) {
                 $emailData->advisorName = $quote->advisor->name;
                 $emailData->advisorEmail = $quote->advisor->email;
@@ -103,6 +106,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
                 $emailData->advisorMobileNo = str_replace('+', '', $advisorMobileNo);
                 $emailData->advisorLandlineNo = $quote->advisor->landline_no;
                 $emailData->googleMeet = $quote->advisor->calendar_link;
+                $emailData->profilePicture = $quote->advisor->profile_photo_path;
             }
             if (in_array(ucfirst($this->data->model_type), [quoteTypeCode::Car, quoteTypeCode::Health, quoteTypeCode::Travel])) {
                 if (isset($quote->plan) && isset($quote->plan->insuranceProvider)) {
@@ -120,15 +124,14 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             $emailData->handBookDocuments = $handBookDocuments;
             $emailData->roadsideAssistance = $roadsideAssistance;
             $emailData->appDownloadLink = app(QuoteDocumentService::class)->getAppDownloadLink($modelType, $quote);
-            info('Send Book Policy Documents Job Email Data '.json_encode($emailData));
             $response = $sendEmailCustomerService->sendBookPolicyDocumentsEmail($emailData, 'book-policy-document');
-            info('Send Book Policy Documents Job Response '.json_encode($response));
+            info('Quote Code: '.$quote->code.' Send Book Policy Documents Job Response '.json_encode($response));
         }
     }
 
     public function failed(Throwable $exception)
     {
-        info('SendBookPolicyDocumentsJob -: '.$this->data->quote_id.' Error: '.$exception->getMessage());
+        info('Quote Code: '.$this->code.' SendBookPolicyDocumentsJob Error: '.$exception->getMessage());
     }
 
     public function middleware()

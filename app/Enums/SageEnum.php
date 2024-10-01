@@ -22,7 +22,8 @@ final class SageEnum extends Enum
     const END_POINT_AR_CUSTOMER = 'AR/ARCustomers';
 
     // Error Codes
-    const ERROR_RECORD_DUPLICATE = 'RecordDuplicate';
+    // const ERROR_RECORD_DUPLICATE = 'RecordDuplicate';
+    const ERROR_RECORD_NOT_FOUND = 'RecordNotFound';
 
     // Status
     const STATUS_SUCCESS = 'success';

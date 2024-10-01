@@ -42,10 +42,6 @@ const tableHeader = reactive([
     value: 'payment_due_date',
   },
   {
-    text: 'Source',
-    value: 'source',
-  },
-  {
     text: 'Team',
     value: 'team',
   },
@@ -138,6 +134,22 @@ const tableHeader = reactive([
     text: 'Policy Issuer ',
     value: 'policy_issuer',
   },
+  {
+    text: 'Commission Tax Invoice Number',
+    value: 'insurer_commmission_invoice_number',
+  },
+  {
+    text: 'Commission Percentage',
+    value: 'commmission_percentage',
+  },
+  {
+    text: 'Transaction Type',
+    value: 'transaction_type',
+  },
+  {
+    text: 'Lead Source',
+    value: 'source',
+  },
 ]);
 
 const calculateTotalSum = useCalculateTotalSum;
@@ -163,7 +175,7 @@ const isIntegerColumn = key => {
 <template>
   <DataTable
     class="mt-4"
-    table-class-name=""
+    table-class-name="table-fixed"
     :loading="loader"
     :headers="tableHeader"
     :items="props.reportData.data || []"
@@ -194,9 +206,6 @@ const isIntegerColumn = key => {
     </template>
     <template #item-payment_due_date="{ payment_due_date, due_date }">
       {{ payment_due_date ? payment_due_date : due_date ? due_date : 'N/A' }}
-    </template>
-    <template #item-source="{ source }">
-      {{ source }}
     </template>
     <template #item-team="{ team }">
       {{ team }}
@@ -269,8 +278,24 @@ const isIntegerColumn = key => {
     <template #item-policy_issuer="{ policy_issuer }">
       {{ policy_issuer ?? 'N/A' }}
     </template>
+    <template
+      #item-insurer_commmission_invoice_number="{
+        insurer_commmission_invoice_number,
+      }"
+    >
+      {{ insurer_commmission_invoice_number ?? 'N/A' }}
+    </template>
+    <template #item-transaction_type="{ transaction_type }">
+      {{ transaction_type ?? 'N/A' }}
+    </template>
+    <template #item-commmission_percentage="{ commmission_percentage }">
+      {{ commmission_percentage ?? 'N/A' }}
+    </template>
+    <template #item-source="{ source }">
+      {{ source }}
+    </template>
     <template #body-append>
-      <tr v-if="reportData.data.length > 0" class="total-row">
+      <tr v-if="reportData.data.length > 0" class="total-row sticky bottom-0">
         <td class="direction-left">Total</td>
         <td
           v-for="header in tableHeader.slice(1, tableHeader.length)"

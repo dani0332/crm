@@ -110,6 +110,7 @@ const updateSelectedPlan = () => {
           providerName: props.plan.providerName,
           planName: props.plan.name,
           premium: premium.toFixed(2),
+          planType: props.plan.plan_type,
         });
       }
       notification.success({

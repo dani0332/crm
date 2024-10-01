@@ -37,6 +37,10 @@ class TravelQuoteExport
             'PAYMENT STATUS',
             'RENEWAL BATCH',
             'PREVIOUS POLICY EXPIRY DATE',
+            'TRAVEL TYPE',
+            'TRAVEL COVERAGE',
+            'TRANSACTION APPROVED DATE',
+            'BOOKING DATE',
         ];
     }
 
@@ -63,6 +67,10 @@ class TravelQuoteExport
             optional($quote->paymentStatus)->text,
             $quote->renewal_batch,
             $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
+            $quote->direction_code,
+            $quote->coverage_code,
+            $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
+            $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
         ];
     }
 }
