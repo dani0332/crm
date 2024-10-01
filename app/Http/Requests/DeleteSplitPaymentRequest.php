@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-use App\Traits\GenericQueriesAllLobs;
 use App\Enums\PaymentStatusEnum;
+use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Foundation\Http\FormRequest;
 
 class DeleteSplitPaymentRequest extends FormRequest
 {
@@ -33,7 +33,7 @@ class DeleteSplitPaymentRequest extends FormRequest
     }
 
     /**
-     * validate quote record 
+     * validate quote record
      */
     public function withValidator($validator)
     {
@@ -42,7 +42,7 @@ class DeleteSplitPaymentRequest extends FormRequest
             if (! $quoteModel) {
                 $validator->errors()->add('quote_id', 'Quote does not exist.');
             }
-            
+
             $paidStatuses = [
                 PaymentStatusEnum::PAID,
                 PaymentStatusEnum::PARTIALLY_PAID,
