@@ -69,6 +69,12 @@ class InslyDetailRepository extends BaseRepository
         $policy->quoteType = $this->getQuoteTypeFromCoverage($data['policy']['coverage']);
         $policy->imcrm_link = $this->replaceStoredAppURLWithCurrentAppURL($policy->imcrm_link);
 
+        $data['customer']['email'] = $this->maskEmail($data['customer']['email']);
+        $data['customer']['mobile_phone'] = $this->maskPhone($data['customer']['mobile_phone']);
+        $data['customer']['phone'] = $this->maskPhone($data['customer']['phone']);
+
+        $policy->customer = $data['customer'];
+
         if (! empty($data['installments'])) {
             $policy->premium = collect($data['installments'])->sum('gross_premium');
         }
@@ -556,5 +562,49 @@ class InslyDetailRepository extends BaseRepository
         return array_filter(array_map('trim', preg_split('/[;,]/', $inputString)), function ($value) {
             return ! empty($value);
         });
+    }
+
+    private function maskEmail($emails)
+    {
+        if (empty($emails)) {
+            return null;
+        }
+
+        $emailArray = preg_split('/[;,]\s*/', $emails);
+
+        $maskedEmails = array_map(function($email) {
+            $trimmedEmail = trim($email);
+            list($localPart, $domainPart) = explode('@', $trimmedEmail);
+
+            $halfLength = ceil(strlen($localPart) / 2);
+            $maskedLocalPart = substr($localPart, 0, $halfLength) . str_repeat('*', strlen($localPart) - $halfLength);
+
+            return $maskedLocalPart . '@' . $domainPart;
+        }, $emailArray);
+
+        return implode(', ', $maskedEmails);
+    }
+
+    private function maskPhone($mobileNumbers)
+    {
+        if (empty($mobileNumbers)) {
+            return null;
+        }
+
+        $numbers = preg_split('/[\s,;]+/', $mobileNumbers);
+
+        $maskedNumbers = array_map(function($number) {
+            if (strlen($number) < 10) {
+                return $number;
+            }
+
+            $prefix = substr($number, 0, 3);
+            $suffix = substr($number, -3);
+            $masked = "{$prefix}****{$suffix}";
+
+            return $masked;
+        }, $numbers);
+
+        return implode(', ', $maskedNumbers);
     }
 }
