@@ -1623,8 +1623,7 @@ const handleRetryPayment = async () => {
     });
 };
 
-
-const deleteSplitPaymentModal = (payment_split_id,payment_status_id) => {
+const deleteSplitPaymentModal = (payment_split_id, payment_status_id) => {
   console.log('deleteSplitPaymentModal', payment_split_id);
   deleteSplitPaymentId.value = payment_split_id;
   deleteSplitPaymentStatus.value = payment_status_id;
@@ -1883,13 +1882,12 @@ const editPaymentModal = (
       payment.total_price <= payment.total_amount + payment.discount_value
     ) {
       //FOR EDIT
-      if(is_lacking_payment.value){
+      if (is_lacking_payment.value) {
         isFieldReadonly.value = false;
         isTotalPriceUpdated.value = true;
       } else {
         isFieldReadonly.value = true;
       }
-      
     } else if (
       payment.total_price >
       payment.total_amount + payment.discount_value
@@ -3072,20 +3070,18 @@ const splitPaymentTotalPrice = (
   return formatAmount(total);
 };
 
-
 // verifiy if split payment deletion is enabled
 const isSplitDeleteEnabled = computed(() => {
   if (
     paymentMethodsForm.frequency != paymentFrequencyEnum.UPFRONT &&
     can(permissionEnum.PaymentsEdit) &&
-    props.quoteRequest.quote_status_id != page.props.quoteStatusEnum.PolicyBooked
-
+    props.quoteRequest.quote_status_id !=
+      page.props.quoteStatusEnum.PolicyBooked
   ) {
     return true;
   }
   return false;
 });
-
 </script>
 
 <template>
@@ -3501,7 +3497,9 @@ const isSplitDeleteEnabled = computed(() => {
                     </tr>
                     <template v-if="isExpandedSplitPayments[index]">
                       <tr
-                        v-for="(splitPayment, splitIndex) in item.payment_splits"
+                        v-for="(
+                          splitPayment, splitIndex
+                        ) in item.payment_splits"
                         :key="splitPayment.id"
                       >
                         <td class="text-center">{{ splitPayment.sr_no }}</td>
@@ -3601,12 +3599,20 @@ const isSplitDeleteEnabled = computed(() => {
                               outlined
                               >Copy Payment Link</x-button
                             >
-                          <x-button
-                            v-if="isSplitDeleteEnabled && item.total_payments == (splitIndex + 1) &&
-                                  ![paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED, paymentStatusEnum.AUTHORISED, 
-                                    paymentStatusEnum.REFUNDED, paymentStatusEnum.PARTIAL_CAPTURED, 
-                                    paymentStatusEnum.PARTIALLY_PAID].includes(splitPayment.payment_status_id) &&
-                                  splitPayment.sr_no > 1"
+                            <x-button
+                              v-if="
+                                isSplitDeleteEnabled &&
+                                item.total_payments == splitIndex + 1 &&
+                                ![
+                                  paymentStatusEnum.PAID,
+                                  paymentStatusEnum.CAPTURED,
+                                  paymentStatusEnum.AUTHORISED,
+                                  paymentStatusEnum.REFUNDED,
+                                  paymentStatusEnum.PARTIAL_CAPTURED,
+                                  paymentStatusEnum.PARTIALLY_PAID,
+                                ].includes(splitPayment.payment_status_id) &&
+                                splitPayment.sr_no > 1
+                              "
                               size="xs"
                               color="red"
                               class="ml-2"
@@ -3617,7 +3623,8 @@ const isSplitDeleteEnabled = computed(() => {
                                 )
                               "
                               outlined
-                              >Delete</x-button>
+                              >Delete</x-button
+                            >
                             <x-button
                               v-if="
                                 can(permissionEnum.ReApprovePayments) &&
@@ -5788,8 +5795,6 @@ const isSplitDeleteEnabled = computed(() => {
           </div>
         </div>
 
-        
-        
         <div
           class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
           v-if="isDeleteModalOpen"
@@ -5852,9 +5857,6 @@ const isSplitDeleteEnabled = computed(() => {
             </x-form>
           </div>
         </div>
-
-
-
       </template>
     </Collapsible>
   </div>
