@@ -9,6 +9,10 @@ const props = defineProps({
 });
 const page = usePage();
 const hasContentOrBuilding = ref(true);
+const typeOfOwnerOccupancyField = ref(false);
+const showBuildingField = ref(false);
+const showContentsField = ref(false);
+const showPersonalBelongingsField = ref(false);
 
 const quoteForm = useForm({
   modelType: '"Home"',
@@ -17,9 +21,8 @@ const quoteForm = useForm({
   last_name: props.quote?.last_name || null,
   email: props.quote?.email || null,
   mobile_no: props.quote?.mobile_no || null,
-  premium: props.quote?.premium || null,
-  policy_number: props.quote?.policy_number || null,
-  ownership_status_possesion_type_id: props.quote?.home_quote?.ownership_status_possesion_type_id || null,
+  ownership_status_possesion_type_id:
+    props.quote?.home_quote?.ownership_status_possesion_type_id || null,
   type_of_property_accommodation_type_id:
     props.quote?.home_quote?.type_of_property_accommodation_type_id || null,
   address: props.quote?.home_quote?.address || null,
@@ -43,32 +46,15 @@ const quoteForm = useForm({
     city: page.props.customerAddressData?.city || null,
     landmark: page.props.customerAddressData?.landmark || null,
   },
+  type_of_owner_occupancy:
+    props.quote?.home_quote?.type_of_owner_occupancy || null,
+  type_of_coverage_you_need:
+    props.quote?.home_quote?.type_of_coverage_you_need || null,
 });
 const isEdit = computed(() => {
   return route().current().includes('edit');
 });
 const { isRequired, isEmail, isMobileNo } = useRules();
-
-const handleConditionalFields = () => {
-  if (
-    quoteForm.ownership_status_possesion_type_id !== props.homePossessionTypeEnum.LANDLORD
-  ) {
-    quoteForm.has_building = false;
-  }
-  if (!Boolean(quoteForm.has_building)) {
-    quoteForm.building_aed = null;
-  }
-  if (!Boolean(quoteForm.has_contents)) {
-    quoteForm.contents_aed = null;
-    quoteForm.has_personal_belongings = false;
-  }
-  if (!Boolean(quoteForm.has_personal_belongings)) {
-    quoteForm.personal_belongings_aed = null;
-  }
-  if (quoteForm.has_contents || quoteForm.has_building) {
-    hasContentOrBuilding.value = true;
-  }
-};
 
 function successResponse() {
   notification.success({
@@ -81,43 +67,108 @@ function successResponse() {
     quoteForm.reset();
   }
 }
+// function onSubmit(isValid) {
+//   if (quoteForm.location_area == null || quoteForm.location_area == '') {
+//     formFieldReq.location_area = true;
+//   } else {
+//     formFieldReq.location_area = false;
+//   }
+//   if (quoteForm.has_contents || quoteForm.has_building) {
+//     if (isValid) {
+//       if (isEdit.value) {
+//         quoteForm
+//           .transform(data => ({
+//             ...data,
+//             has_contents: data.has_contents ? true : false,
+//             has_personal_belongings: data.has_personal_belongings
+//               ? true
+//               : false,
+//             has_building: data.has_building ? true : false,
+//           }))
+//           .put(route('home-quotes-update', props.quote.uuid), {
+//             onError: errors => {
+//               console.log(errors);
+//             },
+//             onSuccess: () => {},
+//           });
+//       } else {
+//         quoteForm.post(route('home-quotes-store'), {
+//           onError: errors => {
+//             quoteForm.setError(errors);
+//           },
+//           onSuccess: () => {},
+//         });
+//       }
+//     }
+//   } else {
+//     hasContentOrBuilding.value = false;
+//   }
+// }
+
 function onSubmit(isValid) {
-  if (quoteForm.location_area == null || quoteForm.location_area == '') {
-    formFieldReq.location_area = true;
-  } else {
-    formFieldReq.location_area = false;
-  }
-  if (quoteForm.has_contents || quoteForm.has_building) {
-    if (isValid) {
-      if (isEdit.value) {
-        quoteForm
-          .transform(data => ({
-            ...data,
-            has_contents: data.has_contents ? true : false,
-            has_personal_belongings: data.has_personal_belongings
-              ? true
-              : false,
-            has_building: data.has_building ? true : false,
-          }))
-          .put(route('home-quotes-update', props.quote.uuid), {
-            onError: errors => {
-              console.log(errors);
-            },
-            onSuccess: () => {},
-          });
-      } else {
-        quoteForm.post(route('home-quotes-store'), {
-          onError: errors => {
-            quoteForm.setError(errors);
-          },
-          onSuccess: () => {},
-        });
-      }
+  try {
+    if (!isFormValid() || !isValid) {
+      console.info('Form validation failed.');
+      return;
     }
-  } else {
-    hasContentOrBuilding.value = false;
+
+    console.log('Form validation passed.');
+    console.log('Submitting form data:', quoteForm);
+
+    const action = isEdit.value
+      ? route('home-quotes-update', props.quote.id)
+      : route('home-quotes-store');
+
+    if (!action) {
+      console.error('Form action is undefined.');
+      return;
+    }
+
+    const submitMethod = isEdit.value ? quoteForm.put : quoteForm.post;
+
+    submitMethod.call(quoteForm, action, {
+      onError: (errors) => {
+        handleError(errors);
+      },
+      onSuccess: () => {
+        handleSuccess();
+      },
+      onFinish: () => {
+        handleFinish();
+      },
+    });
+  } catch (error) {
+    console.error('An unexpected error occurred during form submission:', error);
   }
 }
+
+function handleSuccess() {
+  console.log('Form submitted successfully.');
+  // Additional logic on successful submission
+}
+
+function handleError(errors) {
+  console.error('Form submission failed with errors:', errors);
+  // Display errors or set them on form fields
+  quoteForm.setError(errors);
+}
+
+function handleFinish() {
+  console.log('Form submission process completed.');
+  // Cleanup actions if needed
+}
+
+function isFormValid() {
+  if (quoteForm.location_area == null || quoteForm.location_area === '') {
+    formFieldReq.location_area = true;
+    return false;
+  }
+  formFieldReq.location_area = false;
+  return true;
+}
+
+
+
 
 const formFieldReq = reactive({
   location_area: false,
@@ -129,6 +180,126 @@ const locationAreaOptions = computed(() => {
     { value: 'option2', label: 'Option 2' },
   ];
 });
+const typeOfOwnerOccupancyOptions = computed(() => {
+  return [
+    { value: '1', label: 'Owner renting out (annually)' },
+    { value: '2', label: 'Owner renting out short term/Holiday home' },
+  ];
+});
+const typeOfCoverageYouNeedOptions = computed(() => {
+  if (!quoteForm.ownership_status_possesion_type_id) {
+    return [
+      { value: '', label: 'CHOOSE OWNERSHIP STATUS FIRST', disabled: true },
+    ];
+  }
+  switch (quoteForm.ownership_status_possesion_type_id) {
+    case 1: // Homeowner living in the property
+      return [
+        { value: 'landlord_living_building', label: 'Building only' },
+        { value: 'landlord_living_contents', label: 'Contents only' },
+        {
+          value: 'landlord_living_building_contents',
+          label: 'Building and Contents',
+        },
+        {
+          value: 'landlord_living_building_contents_personal',
+          label: 'Building, Contents and Personal Belongings',
+        },
+        {
+          value: 'landlord_living_contents_personal',
+          label: 'Contents and Personal Belongings',
+        },
+      ];
+    case 2: // Homeowner renting out property
+      return [
+        { value: 'landlord_renting_building', label: 'Building only' },
+        {
+          value: 'landlord_renting_building_contents',
+          label: 'Building and Contents',
+        },
+      ];
+    case 3: // Tenant renting home
+      return [
+        { value: 'tenant_renting_contents', label: 'Contents only' },
+        {
+          value: 'tenant_renting_contents_personal',
+          label: 'Contents and Personal Belongings',
+        },
+      ];
+    default:
+      return [];
+  }
+});
+const contentValueInAEDOptions = computed(() => {
+  return [
+    { value: '1', label: 'AED 1 - 50,000' },
+    { value: '2', label: 'AED 50,001 - 100,000' },
+    { value: '3', label: 'AED 100,001 - 150,000' },
+    { value: '4', label: 'AED 150,001 - 200,000' },
+    { value: '5', label: 'AED 200,001 - 250,000' },
+    { value: '6', label: 'AED 250,001 - 300,000' },
+    { value: '7', label: 'AED 300,001 - 400,000' },
+  ];
+});
+const personalBelongingsInAEDOptions = computed(() => {
+  return [
+    { value: '1', label: 'AED 1-25,000' },
+    { value: '2', label: 'AED 25,001 - 50,000' },
+    { value: '3', label: 'AED 50,001 - 100,000' },
+    { value: '4', label: 'AED 100,001 - 150,000' },
+    { value: '5', label: 'AED 150,001 and above' },
+  ];
+});
+const claimOptions = computed(() => {
+  return [
+    { value: '1', label: 'Yes' },
+    { value: '2', label: 'No' },
+  ];
+});
+const showTypeOfOwnerOccupancy = computed(() => {
+  return quoteForm.ownership_status_possesion_type_id === 2;
+});
+
+const handleConditionalFields = () => {
+  // Reset all AED fields visibility to false
+  showBuildingField.value = false;
+  showContentsField.value = false;
+  showPersonalBelongingsField.value = false;
+};
+
+const handleCoverageChange = () => {
+  // Reset all AED fields visibility to false
+  showBuildingField.value = false;
+  showContentsField.value = false;
+  showPersonalBelongingsField.value = false;
+
+  //   Update field visibility based on the selected coverage
+  switch (quoteForm.type_of_coverage_you_need) {
+    case 'landlord_living_building':
+    case 'landlord_renting_building':
+      showBuildingField.value = true;
+      break;
+    case 'landlord_living_contents':
+    case 'tenant_renting_contents':
+      showContentsField.value = true;
+      break;
+    case 'landlord_living_building_contents':
+    case 'landlord_renting_building_contents':
+      showBuildingField.value = true;
+      showContentsField.value = true;
+      break;
+    case 'landlord_living_building_contents_personal':
+      showBuildingField.value = true;
+      showContentsField.value = true;
+      showPersonalBelongingsField.value = true;
+      break;
+    case 'landlord_living_contents_personal':
+    case 'tenant_renting_contents_personal':
+      showContentsField.value = true;
+      showPersonalBelongingsField.value = true;
+      break;
+  }
+};
 </script>
 
 <template>
@@ -193,119 +364,7 @@ const locationAreaOptions = computed(() => {
             :error="quoteForm?.errors?.mobile_no"
           />
         </x-field>
-        <x-field label="PRICE">
-          <x-input v-model="quoteForm.premium" type="text" class="w-full" />
-        </x-field>
-        <x-field label="POLICY NUMBER">
-          <x-input
-            v-model="quoteForm.policy_number"
-            type="text"
-            maxLength="100"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="OWNERSHIP STATUS" required>
-          <x-select
-            v-model="quoteForm.ownership_status_possesion_type_id"
-            :rules="[isRequired]"
-            :options="
-              dropdownSource.ownership_status_possesion_type_id.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            @change="handleConditionalFields"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="TYPE OF PROPERTY" required>
-          <x-select
-            v-model="quoteForm.type_of_property_accommodation_type_id"
-            :rules="[isRequired]"
-            :options="
-              dropdownSource.type_of_property_accommodation_type_id.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="ADDRESS" required>
-          <x-textarea
-            v-model="quoteForm.address"
-            type="text"
-            maxLength="2000"
-            class="w-full"
-          />
-        </x-field>
-
-        <div class="grid grid-cols-2 gap-2">
-          <x-field label="HAS CONTENTS" required>
-            <x-checkbox
-              v-model="quoteForm.has_contents"
-              color="primary"
-              @change="handleConditionalFields"
-            />
-          </x-field>
-          <x-field
-            label="HAS PERSONAL BELONGINGS"
-            v-if="quoteForm.has_contents"
-          >
-            <x-checkbox
-              v-model="quoteForm.has_personal_belongings"
-              label=""
-              color="primary"
-              @change="handleConditionalFields"
-            />
-          </x-field>
-          <x-field
-            label="HAS BUILDING"
-            v-if="
-              quoteForm.ownership_status_possesion_type_id == homePossessionTypeEnum.LANDLORD
-            "
-          >
-            <x-checkbox
-              v-model="quoteForm.has_building"
-              color="primary"
-              @change="handleConditionalFields"
-            />
-          </x-field>
-
-          <p v-if="!hasContentOrBuilding" class="text-sm text-red-500">
-            Must be selected at least one of the above
-          </p>
-        </div>
-        <x-field label="CONTENTS AED" v-if="quoteForm.has_contents" required>
-          <x-input
-            v-if="quoteForm.has_contents"
-            v-model="quoteForm.contents_aed"
-            type="number"
-            class="w-full"
-            :rules="[isRequired]"
-          />
-        </x-field>
-        <x-field
-          label="PERSONAL BELONGINGS AED"
-          v-if="quoteForm.has_personal_belongings"
-          required
-        >
-          <x-input
-            v-model="quoteForm.personal_belongings_aed"
-            type="number"
-            class="w-full"
-            :rules="[isRequired]"
-          />
-        </x-field>
-        <x-field label="BUILDING AED" v-if="quoteForm.has_building" required>
-          <x-input
-            v-model="quoteForm.building_aed"
-            type="number"
-            class="w-full"
-            :rules="[isRequired]"
-          />
-        </x-field>
-        <x-field label="Location Area" required>
+        <x-field label="LOCATION AREA" required>
           <ComboBox
             v-model="quoteForm.location_area"
             :rules="[isRequired]"
@@ -318,66 +377,126 @@ const locationAreaOptions = computed(() => {
         </x-field>
 
         <x-field label="ADDRESS">
-            <div class="flex flex-wrap -mx-2">
-              <div class="w-1/2 px-2">
-                <x-input
-                  type="text"
-                  v-model="quoteForm.addressObj.villa_apartment_office_no"
-                  placeholder="Villa/Apartment/Office No."
-                  class="w-full"
-                />
-              </div>
-              <div class="w-1/2 px-2">
-                <x-input
-                  type="text"
-                  v-model="quoteForm.addressObj.floor_no"
-                  placeholder="Floor No."
-                  class="w-full"
-                />
-              </div>
-              <div class="w-1/2 px-2">
-                <x-input
-                  type="text"
-                  v-model="quoteForm.addressObj.villa_building_name"
-                  placeholder="Villa/Building Name"
-                  class="w-full"
-                />
-              </div>
-              <div class="w-1/2 px-2">
-                <x-input
-                  type="text"
-                  v-model="quoteForm.addressObj.street_name"
-                  placeholder="Street"
-                  class="w-full"
-                />
-              </div>
-              <div class="w-1/2 px-2">
-                <x-input
-                  type="text"
-                  v-model="quoteForm.addressObj.area"
-                  placeholder="Area"
-                  class="w-full"
-                />
-              </div>
-              <div class="w-1/2 px-2">
-                <x-input
-                  type="text"
-                  v-model="quoteForm.addressObj.city"
-                  placeholder="City"
-                  class="w-full"
-                />
-              </div>
-              <div class="w-1/2 px-2">
-                <x-input
-                  type="text"
-                  v-model="quoteForm.addressObj.landmark"
-                  placeholder="Landmark"
-                  class="w-full"
-                />
-              </div>
+          <div class="flex flex-wrap -mx-2">
+            <div class="w-1/2 px-2">
+              <x-input
+                type="text"
+                v-model="quoteForm.addressObj.villa_apartment_office_no"
+                placeholder="Villa/Apartment/Office No."
+                class="w-full"
+              />
             </div>
-          </x-field>
-
+            <div class="w-1/2 px-2">
+              <x-input
+                type="text"
+                v-model="quoteForm.addressObj.villa_building_name"
+                placeholder="Villa/Building Name"
+                class="w-full"
+              />
+            </div>
+            <div class="w-1/2 px-2">
+              <x-input
+                type="text"
+                v-model="quoteForm.addressObj.street_name"
+                placeholder="Street Name"
+                class="w-full"
+              />
+            </div>
+          </div>
+        </x-field>
+        <x-field label="OWNERSHIP STATUS" required>
+          <x-select
+            v-model="quoteForm.ownership_status_possesion_type_id"
+            :rules="[isRequired]"
+            :options="
+              dropdownSource.ownership_status_possesion_type_id.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            @update:modelValue="handleConditionalFields"
+            class="w-full"
+          />
+        </x-field>
+        <x-field label="TYPE OF PROPERTY" required>
+          <x-select
+            v-model="quoteForm.type_of_property_accommodation_type_id"
+            :rules="[isRequired]"
+            :options="
+              dropdownSource.type_of_property_accommodation_type_id.map(
+                item => ({
+                  value: item.id,
+                  label: item.text,
+                }),
+              )
+            "
+            class="w-full"
+          />
+        </x-field>
+        <x-field
+          label="TYPE OF OWNER'S OCCUPANCY"
+          required
+          v-if="showTypeOfOwnerOccupancy"
+        >
+          <x-select
+            v-model="quoteForm.type_of_owner_occupancy"
+            :rules="[isRequired]"
+            :options="typeOfOwnerOccupancyOptions"
+            class="w-full"
+          />
+        </x-field>
+        <x-field label="TYPE OF COVERAGE YOU NEED" required>
+          <x-select
+            v-model="quoteForm.type_of_coverage_you_need"
+            :rules="[isRequired]"
+            :options="typeOfCoverageYouNeedOptions"
+            @update:modelValue="handleCoverageChange"
+            class="w-full"
+          />
+        </x-field>
+        <x-field label="BUILDING AED" required v-if="showBuildingField">
+          <x-input
+            v-model="quoteForm.building_aed"
+            type="number"
+            class="w-full"
+            :rules="[isRequired]"
+          />
+        </x-field>
+        <x-field
+          label="CONTENTS VALUE IN AED"
+          required
+          v-if="showContentsField"
+        >
+          <x-select
+            v-model="quoteForm.contents_aed"
+            :rules="[isRequired]"
+            :options="contentValueInAEDOptions"
+            class="w-full"
+          />
+        </x-field>
+        <x-field
+          label="PERSONAL BELONGINGS IN AED"
+          required
+          v-if="showPersonalBelongingsField"
+        >
+          <x-select
+            v-model="quoteForm.personal_belongings_aed"
+            :rules="[isRequired]"
+            :options="personalBelongingsInAEDOptions"
+            class="w-full"
+          />
+        </x-field>
+        <x-field
+          label="Have you made any claims or experienced any losses in the past 5 years?"
+          required
+        >
+          <x-select
+            v-model="quoteForm.claims"
+            :rules="[isRequired]"
+            :options="claimOptions"
+            class="w-full"
+          />
+        </x-field>
       </div>
       <x-divider class="my-4" />
       <div class="flex justify-end gap-3 mb-4">

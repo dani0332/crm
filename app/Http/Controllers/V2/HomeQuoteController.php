@@ -17,8 +17,8 @@ class HomeQuoteController extends Controller
         $homeQuotes = HomeQuoteRepository::getData();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::HOME->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::HOME->id())->get();
-        $userRoles = auth()->user()->usersroles->pluck('name')->map(fn ($item) => strtolower($item));
-        $isManager = $userRoles->contains(fn ($role) => str_contains($role, 'manager') && ! str_contains($role, 'deputy'));
+        $userRoles = auth()->user()->usersroles->pluck('name')->map(fn($item) => strtolower($item));
+        $isManager = $userRoles->contains(fn($role) => str_contains($role, 'manager') && ! str_contains($role, 'deputy'));
         $isManualAllocationAllowed = auth()->user()->isAdmin() ?: $isManager;
 
         $count = $homeQuotes->count();
@@ -42,13 +42,14 @@ class HomeQuoteController extends Controller
 
     public function store(HomeQuoteRequest $request)
     {
-        $response = HomeQuoteRepository::create($request->validated());
+        dd($request->all());
+        // $response = HomeQuoteRepository::create($request->validated());
 
-        if (! empty($response->errors) || ! empty($response->msg)) {
-            vAbort($response->msg);
-        }
+        // if (! empty($response->errors) || ! empty($response->msg)) {
+        //     vAbort($response->msg);
+        // }
 
-        return redirect('personal-quotes/home/'.$response->quoteUID)->with('message', 'Quote created successfully');
+        // return redirect('personal-quotes/home/' . $response->quoteUID)->with('message', 'Quote created successfully');
     }
 
     public function show($uuid)
@@ -77,7 +78,7 @@ class HomeQuoteController extends Controller
     {
         HomeQuoteRepository::update($uuid, $request->validated());
 
-        return redirect('personal-quotes/home/'.$uuid)->with('message', 'Quote updated successfully');
+        return redirect('personal-quotes/home/' . $uuid)->with('message', 'Quote updated successfully');
     }
 
     public function cardsView(Request $request)
