@@ -43,6 +43,7 @@ class SaleDetailReportExport extends BaseReportsExport
             'Commission Percentage',
             'Transaction Type',
             'Lead Source',
+            'Booking Date',
         ];
     }
 
@@ -83,6 +84,7 @@ class SaleDetailReportExport extends BaseReportsExport
             $quote->commmission_percentage ?? 'N/A',
             $quote->transaction_type ?? 'N/A',
             $quote->source ?? 'N/A',
+            $quote->policy_booking_date ?? 'N/A',
         ];
     }
 
