@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EnvEnum;
 use App\Models\ApplicationStorage;
+use Illuminate\Console\Application;
 use Illuminate\Database\Seeder;
 
 class ApplicationStorageSeeder extends Seeder
@@ -637,6 +638,16 @@ class ApplicationStorageSeeder extends Seeder
     }
     private function seedBirdWorkflowUrls()
     {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_SIC_CAR_WORKFLOW],
+            [
+                'value' => 'https://capture.eu-west-1.nest.messagebird.com/webhooks/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/bacb7771-99ee-4afc-9157-7a2311e2d4f1',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL],
             [
