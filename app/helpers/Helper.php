@@ -600,7 +600,7 @@ if (! function_exists('formatMobileNoWithoutPlus')) {
         }
 
         // If the number does not match any pattern, add 971 as default
-        return '971' . ltrim($mobile, '+');
+        return '971'.ltrim($mobile, '+');
     }
 }
 
