@@ -501,7 +501,7 @@ const paymentInvoiceNumberOptions = computed(() => {
 const reversalEntry = reactive({
   booking_date: null,
   invoice_description: props.bookingDetails?.reversal_invoice_description || '',
-  broker_invoice_number: null,
+  broker_invoice_number: props.sendUpdateLog?.reversal_broker_invoice_number ?? null,
   transaction_payment_status: null,
   invoice_date: null,
   insurer_tax_invoice_number: null,
@@ -587,9 +587,7 @@ function updateReversalEntries(payment, sendUpdate) {
   reversalEntry.insurer_tax_invoice_number = payment?.insurer_tax_number
     ? payment.insurer_tax_number + '-REV'
     : sendUpdate.insurer_tax_invoice_number + '-REV';
-  reversalEntry.broker_invoice_number = payment?.broker_invoice_number
-    ? payment.broker_invoice_number + '-REV'
-    : sendUpdate.broker_invoice_number + '-REV';
+  reversalEntry.broker_invoice_number = props.sendUpdateLog?.reversal_broker_invoice_number ?? null;
   reversalEntry.insurer_commission_invoice_number =
     payment?.insurer_commmission_invoice_number
       ? payment.insurer_commmission_invoice_number + '-REV'
@@ -643,10 +641,8 @@ const onUpdateReversal = () => {
   bookingDetailsForm.invoice_date = reversalEntry.invoice_date || '';
   bookingDetailsForm.insurer_tax_invoice_number =
     reversalEntry.insurer_tax_invoice_number.replace('REV', 'NEW');
-  bookingDetailsForm.broker_invoice_number =
-    reversalEntry.broker_invoice_number.replace('REV', 'NEW') || '';
-  bookingDetailsForm.insurer_commission_invoice_number =
-    reversalEntry.insurer_commission_invoice_number.replace('REV', 'NEW') || '';
+  bookingDetailsForm.broker_invoice_number = props.sendUpdateLog?.broker_invoice_number ?? '';
+  bookingDetailsForm.insurer_commission_invoice_number = ((isNonSelfBillingEnabled.value) ? (props.sendUpdateLog?.broker_invoice_number ?? '') : reversalEntry.insurer_commission_invoice_number.replace('REV', 'NEW')) || '';
   bookingDetailsForm.price_vat_applicable =
     Math.abs(reversalEntry.price_vat_applicable) || '0.00';
   bookingDetailsForm.commission_percentage =
