@@ -247,38 +247,6 @@ export const getSavedQueryParams = () => {
   }
   return false;
 };
-export const maskEmail = emails => {
-  if (!emails) return null;
-  return emails
-    .split(/[,;]\s*/)
-    .map(email => {
-      const trimmedEmail = email.trim();
-      const [localPart, domainPart] = trimmedEmail.split('@');
-      const maskedLocalPart =
-        localPart.substring(0, Math.ceil(localPart.length / 2)) +
-        '*'.repeat(localPart.length - Math.ceil(localPart.length / 2));
-      return `${maskedLocalPart}@${domainPart}`;
-    })
-    .join(', ');
-};
-
-export const maskPhone = mobile_no => {
-  if (!mobile_no) return null;
-
-  const numbers = mobile_no.split(/[\s,;]+/);
-
-  return numbers
-    .map(number => {
-      if (number.length < 10) return number;
-
-      const prefix = number.slice(0, 3);
-      const suffix = number.slice(-3);
-      const masked = `${prefix}****${suffix}`;
-
-      return masked;
-    })
-    .join(', ');
-};
 
 export const parseDate = dateString => {
   // Preliminary check for the DD-MM-YYYY format

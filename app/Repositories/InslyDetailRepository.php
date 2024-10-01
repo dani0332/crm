@@ -69,9 +69,9 @@ class InslyDetailRepository extends BaseRepository
         $policy->quoteType = $this->getQuoteTypeFromCoverage($data['policy']['coverage']);
         $policy->imcrm_link = $this->replaceStoredAppURLWithCurrentAppURL($policy->imcrm_link);
 
-        $data['customer']['email'] = $this->maskEmail($data['customer']['email']);
-        $data['customer']['mobile_phone'] = $this->maskPhone($data['customer']['mobile_phone']);
-        $data['customer']['phone'] = $this->maskPhone($data['customer']['phone']);
+        $data['customer']['email'] = $this->maskData($data['customer']['email'], 'email');
+        $data['customer']['mobile_phone'] = $this->maskData($data['customer']['mobile_phone'], 'phone');
+        $data['customer']['phone'] = $this->maskData($data['customer']['phone'], 'phone');
 
         $policy->customer = $data['customer'];
 
@@ -564,47 +564,36 @@ class InslyDetailRepository extends BaseRepository
         });
     }
 
-    private function maskEmail($emails)
+    private function maskData($data, $type)
     {
-        if (empty($emails)) {
+        if (empty($data)) {
             return null;
         }
 
-        $emailArray = preg_split('/[;,]\s*/', $emails);
+        $dataArray = ($type === 'email')
+            ? preg_split('/[;,]\s*/', $data)
+            : preg_split('/[;,]+/', $data);
 
-        $maskedEmails = array_map(function ($email) {
-            $trimmedEmail = trim($email);
-            [$localPart, $domainPart] = explode('@', $trimmedEmail);
+        $maskedData = array_map(function ($item) use ($type) {
+            $item = trim($item);
+            if ($type === 'email') {
+                [$localPart, $domainPart] = explode('@', $item);
+                $halfLength = ceil(strlen($localPart) / 2);
+                $maskedLocalPart = substr($localPart, 0, $halfLength) . str_repeat('*', strlen($localPart) - $halfLength);
+                return $maskedLocalPart . '@' . $domainPart;
+            } elseif ($type === 'phone') {
 
-            $halfLength = ceil(strlen($localPart) / 2);
-            $maskedLocalPart = substr($localPart, 0, $halfLength).str_repeat('*', strlen($localPart) - $halfLength);
+                $cleanedNumber = preg_replace('/\D/', '', $item);
+                if (strlen($cleanedNumber) < 7) {
+                    return $item;
+                }
 
-            return $maskedLocalPart.'@'.$domainPart;
-        }, $emailArray);
-
-        return implode(', ', $maskedEmails);
-    }
-
-    private function maskPhone($mobileNumbers)
-    {
-        if (empty($mobileNumbers)) {
-            return null;
-        }
-
-        $numbers = preg_split('/[\s,;]+/', $mobileNumbers);
-
-        $maskedNumbers = array_map(function ($number) {
-            if (strlen($number) < 10) {
-                return $number;
+                $prefix = substr($cleanedNumber, 0, 3);
+                $suffix = substr($cleanedNumber, -3);
+                return "{$prefix}****{$suffix}";
             }
+        }, $dataArray);
 
-            $prefix = substr($number, 0, 3);
-            $suffix = substr($number, -3);
-            $masked = "{$prefix}****{$suffix}";
-
-            return $masked;
-        }, $numbers);
-
-        return implode(', ', $maskedNumbers);
+        return implode(', ', array_filter($maskedData));
     }
 }
