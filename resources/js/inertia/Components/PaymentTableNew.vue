@@ -1,6 +1,6 @@
 <script setup>
 import ToolTip from './../Components/ToolTip.vue';
-import { onMounted, reactive } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import moment from 'moment';
 import NProgress from 'nprogress';
 import { computed } from 'vue';
@@ -138,7 +138,6 @@ const isDiscountAllowed = ref(true);
 const isRetryModalOpen = ref(false);
 const retryProcessJobId = ref(0);
 const retryPaymentErrorMessage = ref('');
-const isPaidEditable = ref(false);
 const isSplitAmountInvalid = ref([]);
 const isSplitAmountInvalidError = ref([]);
 
@@ -212,35 +211,6 @@ const calculateTotalAmount = () => {
   }
   calculatePaymentBreakup(false);
 };
-
-
-const verifyPaidEditable = computed(() => {
-
-  return payment => {
-       
-    if (props.payments.length > 0) {
-      
-      if(payment.frequency === page.props.paymentFrequencyEnum.SPLIT_PAYMENTS){
-        let isAllPaid = payment.payment_splits.filter(
-          item => item.payment_status_id === props.paymentStatusEnum.PAID,
-        );
-
-        if (isAllPaid.length === payment.payment_splits.length && 
-            payment.total_price < (payment.total_amount + payment.discount_value) 
-        ) {
-          isPaidEditable.value = true;
-          return true;
-        }
-       
-      }     
-    }
-    isPaidEditable.value = false;
-    return false;
-  };
-});
-
-
-
 
 // Define a computed property to deduct insure now pay later
 const isInsureNowPayLaterAllowed = computed(() => {
@@ -2257,7 +2227,8 @@ const addPayment = isValid => {
   if (paymentMethodsForm.status === 'edit') {
     if (
       totalPaidAmount.value == paymentMethodsForm.payment_no &&
-      isPolicyIssuanceDiscount.value === false
+      isPolicyIssuanceDiscount.value === false &&
+      isPaidEditable.value === false
     ) {
       notification.error({
         title: 'No further actions allowed to paid payments',
@@ -2968,15 +2939,14 @@ let is_lacking_payment = ref(
     false,
 );
 
-watch(
-  () => page.props?.bookPolicyDetails?.isLackingOfPayment,
-  newVal => {
-    is_lacking_payment.value = newVal || false;
-  },
+const isPaidEditable = ref(
+  page.props?.bookPolicyDetails?.isPaidEditable ||
+    page.props?.bookingDetails?.isPaidEditable ||
+    false,
 );
 
 watch(
-  () => page.props?.bookingDetails?.isLackingOfPayment,
+  () => page.props?.bookPolicyDetails?.isLackingOfPayment,
   newVal => {
     is_lacking_payment.value = newVal || false;
   },
@@ -3405,7 +3375,7 @@ const splitPaymentTotalPrice = (
                       </td>
                       <td>
                         <div class="flex gap-2">
-                          <template v-if="is_lacking_payment || verifyPaidEditable(item)">
+                          <template v-if="is_lacking_payment">
                             <x-tooltip placement="left">
                               <x-badge
                                 size="xs"

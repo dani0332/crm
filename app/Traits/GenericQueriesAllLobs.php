@@ -265,6 +265,7 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['isPolicyCancelledOrPending'] = $this->isPolicyCancelledOrPending($record);
         $bookPolicyDetails['isPolicyCancelledOrPendingToolTtip'] = ProductionProcessTooltipEnum::POLICY_DETAILS_LOCKED_TOOL_TIP;
         $bookPolicyDetails['isEnableUploadDocument'] = app(QuoteDocumentService::class)->isEnableUploadDocument($record->quote_status_id);
+        $bookPolicyDetails['isPaidEditable'] =  $this->isSplitPaymentFullyPaid($payment);
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($isFilledPolicyDetails) {
             if (! empty($quoteDocuments)) {
@@ -558,6 +559,10 @@ trait GenericQueriesAllLobs
      */
     private function isLackingPayment($payment)
     {
+        if ($this->isSplitPaymentFullyPaid($payment)){
+            return true;
+        }
+        
         if ($payment) {
             $paymentTotalPrice = round($payment->total_price, 2);
             $sumOfSplitPayment = round(($payment->paymentSplits()->sum('payment_amount') + $payment->discount_value), 2);
@@ -862,5 +867,36 @@ trait GenericQueriesAllLobs
         }
 
         return null;
+    }
+
+   /**
+     * Check if the payment is split and all payment splits are paid.
+     * This method checks if the given payment has a frequency of split payments
+     * and verifies if all associated payment splits have a payment status of 'paid'.
+     *
+     * @return bool 
+     */
+    private function isSplitPaymentFullyPaid($payment)
+    {
+        // Check if the payment exists and has a frequency of split payments
+        if ($payment && $payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+            // Get the payment splits associated with the payment
+            $paymentSplits = $payment->paymentSplits;
+
+            // Check if the payment splits are not empty and all have a payment status of 'paid'
+            if (!$paymentSplits->isEmpty() && $paymentSplits->every(function ($split) {
+                return $split->payment_status_id == PaymentStatusEnum::PAID;
+            })) {
+
+                $totalPrice = round($payment->total_price, 2);
+                $totalAmount = round($payment->total_amount, 2);
+                $discountValue = round($payment->discount_value, 2);
+
+                // Check if the total price is less than the sum of the total amount and discount value
+                return $totalPrice < ($totalAmount + $discountValue);
+            }
+        }
+
+        return false;
     }
 }
