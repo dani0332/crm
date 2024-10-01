@@ -27,6 +27,7 @@ class Kernel extends ConsoleKernel
         Commands\ResetLeadAllocationCounts::class,
         Commands\QuoteSyncUpdateCommand::class,
         Commands\UpdateStaleLeads::class,
+        Commands\UpdateStaleNotification::class,
         Commands\AutomateActivitiesCommand::class,
         Commands\PaymentOverdueStatus::class,
         Commands\AlfredFollowUpSchedulerCommand::class,
@@ -101,6 +102,14 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping(1);
 
         $schedule->command('UpdateStaleLeads:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
+
+        $schedule->command('UpdateStaleNotification:cron')->timezone('Asia/Dubai')->dailyAt('18:25')->onOneServer()->withoutOverlapping()->onSuccess(function (Stringable $output) {
+            info('----------- UpdateStaleNotification Completed -----------'.$output);
+        })
+            ->onFailure(function (Stringable $output) {
+                info('----------- UpdateStaleNotification Failed -----------'.$output);
+            });
+
         $schedule->command('ActivitiesAutomate:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
 
         $schedule->command('Dtt')->timezone('Asia/Dubai')->dailyAt('09:00')->onOneServer()->withoutOverlapping();
