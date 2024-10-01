@@ -111,6 +111,7 @@ class SendUpdateLogController extends Controller
     public function show($uuid)
     {
         $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
+
         // we don't need to push this on production, need to remove this before production.
         if (! SendUpdateLogRepository::isCategoryOrOptionAvailable($sendUpdateLog->category_id, $sendUpdateLog->option_id)) {
             return redirect()->back()->with('error', 'Send update log not found');

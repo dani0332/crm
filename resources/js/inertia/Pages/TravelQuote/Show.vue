@@ -62,6 +62,7 @@ defineProps({
   paymentDocument: Array,
   travelDestinations: Object,
   isAmlClearedForQuote: Boolean,
+  amlStatusName: String,
 });
 
 const modelClass = 'App\\Models\\TravelQuote';
@@ -1586,6 +1587,10 @@ const onAddUpdate = () => {
                 </div>
                 <dt v-else class="font-medium uppercase">{{ field.title }}</dt>
                 <dd>{{ field?.value }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium uppercase">AML STATUS</dt>
+                <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
 
               <div class="grid sm:grid-cols-2">
