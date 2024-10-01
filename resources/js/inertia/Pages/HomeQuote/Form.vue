@@ -50,6 +50,7 @@ const quoteForm = useForm({
     props.quote?.home_quote?.type_of_owner_occupancy || null,
   type_of_coverage_you_need:
     props.quote?.home_quote?.type_of_coverage_you_need || null,
+  claims: props.quote?.home_quote?.claims || null,
 });
 const isEdit = computed(() => {
   return route().current().includes('edit');
@@ -127,7 +128,7 @@ function onSubmit(isValid) {
     const submitMethod = isEdit.value ? quoteForm.put : quoteForm.post;
 
     submitMethod.call(quoteForm, action, {
-      onError: (errors) => {
+      onError: errors => {
         handleError(errors);
       },
       onSuccess: () => {
@@ -138,7 +139,10 @@ function onSubmit(isValid) {
       },
     });
   } catch (error) {
-    console.error('An unexpected error occurred during form submission:', error);
+    console.error(
+      'An unexpected error occurred during form submission:',
+      error,
+    );
   }
 }
 
@@ -166,9 +170,6 @@ function isFormValid() {
   formFieldReq.location_area = false;
   return true;
 }
-
-
-
 
 const formFieldReq = reactive({
   location_area: false,
@@ -253,7 +254,7 @@ const personalBelongingsInAEDOptions = computed(() => {
 const claimOptions = computed(() => {
   return [
     { value: '1', label: 'Yes' },
-    { value: '2', label: 'No' },
+    { value: '0', label: 'No' },
   ];
 });
 const showTypeOfOwnerOccupancy = computed(() => {

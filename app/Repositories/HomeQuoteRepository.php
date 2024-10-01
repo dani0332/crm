@@ -101,29 +101,31 @@ class HomeQuoteRepository extends BaseRepository
             'email' => $data['email'],
             'mobileNo' => $data['mobile_no'],
             'lang' => 'EN',
-
-            'premium' => $data['premium'],
-            'policyNumber' => $data['policy_number'],
-            'iamPossesionTypeId' => $data['ownership_status_possesion_type_id'],
-            'iliveinAccommodationTypeId' => $data['type_of_property_accommodation_type_id'],
-            'address' => $data['address'],
-            'hasContents' => $data['has_contents'],
-            'hasBuilding' => $data['has_building'],
-            'hasPersonalBelongings' => $data['has_personal_belongings'],
+            // 'iamPossesionTypeId' => $data['ownership_status_possesion_type_id'],
+            // 'iliveinAccommodationTypeId' => $data['type_of_property_accommodation_type_id'],
             'contentsAed' => $data['contents_aed'],
             'buildingAed' => $data['building_aed'],
             'personalBelongingsAed' => $data['personal_belongings_aed'],
-
             'device' => 'DESKTOP',
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => URL::current(),
             'createdById' => auth()->id(),
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->id() : null,
+            'ownership_status_possesion_type_id' => $data['ownership_status_possesion_type_id'],
+            'type_of_property_accommodation_type_id' => $data['type_of_property_accommodation_type_id'],
+            'location_area' => $data['location_area'],
+            'type_of_owner_occupancy' => $data['type_of_owner_occupancy'],
+            'type_of_coverage_you_need' => $data['type_of_coverage_you_need'],
+            'claims' => $data['claims'],
+            'villa_apartment_office_no' => $data['addressObj']['villa_apartment_office_no'],
+            'villa_building_name' => $data['addressObj']['villa_building_name'],
+            'street_name' => $data['addressObj']['street_name'],
         ];
 
         info('Home Quote Create :' . json_encode($quoteData));
 
-        dd($quoteData);
+        // Integrate with CAPI to create a home quote once API is ready.
+        // Ask for Possession Home and Accommodation Type Table Values.
 
         // $response = Capi::request('/api/v1-save-home-quote', 'post', $quoteData);
 

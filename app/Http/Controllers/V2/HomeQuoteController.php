@@ -38,14 +38,15 @@ class HomeQuoteController extends Controller
 
     public function store(HomeQuoteRequest $request)
     {
-        dd($request->all());
-        // $response = HomeQuoteRepository::create($request->validated());
+        $response = HomeQuoteRepository::create($request->validated());
 
-        // if (! empty($response->errors) || ! empty($response->msg)) {
-        //     vAbort($response->msg);
-        // }
+        if (! empty($response->errors) || ! empty($response->msg)) {
+            dd($response->errors, $response->msg);
+            vAbort($response->msg);
+        }
+        dd('Done');
 
-        // return redirect('personal-quotes/home/' . $response->quoteUID)->with('message', 'Quote created successfully');
+        return redirect('personal-quotes/home/' . $response->quoteUID)->with('message', 'Quote created successfully');
     }
 
     public function show($uuid)
@@ -74,7 +75,7 @@ class HomeQuoteController extends Controller
     {
         HomeQuoteRepository::update($uuid, $request->validated());
 
-        return redirect('personal-quotes/home/'.$uuid)->with('message', 'Quote updated successfully');
+        return redirect('personal-quotes/home/' . $uuid)->with('message', 'Quote updated successfully');
     }
 
     public function cardsView(Request $request)
