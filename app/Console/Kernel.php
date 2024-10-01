@@ -103,12 +103,12 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('UpdateStaleLeads:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
 
-        // $schedule->command('UpdateStaleNotification:cron')->timezone('Asia/Dubai')->dailyAt('16:30')->onOneServer()->withoutOverlapping()->onSuccess(function (Stringable $output) {
-        //     info('----------- UpdateStaleNotification Completed -----------'.$output);
-        // })
-        // ->onFailure(function (Stringable $output) {
-        //     info('----------- UpdateStaleNotification Failed -----------'.$output);
-        // });;
+        $schedule->command('UpdateStaleNotification:cron')->timezone('Asia/Dubai')->dailyAt('18:25')->onOneServer()->withoutOverlapping()->onSuccess(function (Stringable $output) {
+            info('----------- UpdateStaleNotification Completed -----------'.$output);
+        })
+            ->onFailure(function (Stringable $output) {
+                info('----------- UpdateStaleNotification Failed -----------'.$output);
+            });
 
         $schedule->command('ActivitiesAutomate:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
 
