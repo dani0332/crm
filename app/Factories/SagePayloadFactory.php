@@ -670,7 +670,7 @@ class SagePayloadFactory
         } else {
             $payLoad = [
                 'CustomerNumber' => 'P'.$customer->id,
-                'CustomerName' => $customer->first_name.' '.$customer->last_name,
+                'CustomerName' => $customer->insured_first_name.' '.$customer->insured_last_name,
                 'GroupCode' => 'PHI',
             ];
         }

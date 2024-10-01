@@ -33,6 +33,7 @@ use App\Repositories\SendUpdateLogRepository;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
+use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -440,6 +441,7 @@ class SendUpdateLogController extends Controller
         if ($payment) {
             $isPaymentFetchedFromMainLead = false;
             $paymentDetailsUpdate = $this->sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate, true);
+            app(SplitPaymentService::class)->updateCommissionSchedule($payment);
         }
 
         if ($paymentDetailsUpdate || $isPaymentFetchedFromMainLead) {
