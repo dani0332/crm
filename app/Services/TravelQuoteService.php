@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -12,6 +14,7 @@ use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Facades\Ken;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
+use App\Models\ApplicationStorage;
 use App\Models\CustomerMembers;
 use App\Models\InsuranceProvider;
 use App\Models\Payment;
@@ -31,9 +34,6 @@ use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use PDF;
-use App\Models\ApplicationStorage;
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\PaymentStatusEnum;
 
 class TravelQuoteService extends BaseService
 {
@@ -825,38 +825,38 @@ class TravelQuoteService extends BaseService
                 //Todo - To remove - Addons testing purposes
                 $addons = [
                     [
-                        "id" => 100,
-                        "code" => "hazardousActivitiesCover",
-                        "text" => "Hazardous Activities Cover",
-                        "description" => "This cover provides protection for high-risk leisure activities typically not covered under standard travel insurance policies, such as extreme sports, bungee jumping, scuba diving, and mountain climbing, paragliding, weightlifting, martial arts, shark diving, lacrosse, rugby, mountain biking off-road, rock climbing, trekking between 4k-5.5k meters etc.",
-                        "type" => "checkbox",
-                        "travelAddonOption" => [
+                        'id' => 100,
+                        'code' => 'hazardousActivitiesCover',
+                        'text' => 'Hazardous Activities Cover',
+                        'description' => 'This cover provides protection for high-risk leisure activities typically not covered under standard travel insurance policies, such as extreme sports, bungee jumping, scuba diving, and mountain climbing, paragliding, weightlifting, martial arts, shark diving, lacrosse, rugby, mountain biking off-road, rock climbing, trekking between 4k-5.5k meters etc.',
+                        'type' => 'checkbox',
+                        'travelAddonOption' => [
                             [
-                                "id" => 101,
-                                "value" => "Included",
-                                "description" => null,
-                                "price" => 0,
-                                "vat" =>  0,
-                                "isSelected" => false
-                            ]
-                        ]
+                                'id' => 101,
+                                'value' => 'Included',
+                                'description' => null,
+                                'price' => 0,
+                                'vat' => 0,
+                                'isSelected' => false,
+                            ],
+                        ],
                     ],
                     [
-                        "id" => 102,
-                        "code" => "adventureSportsCover",
-                        "text" => "Adventure Sports Cover",
-                        "description" => "Extending cover to include adventure and high-risk leisure activities including bungee jumping, cliff diving, coasteering, expeditions to remote areas, American football, rugby, heli-skiing, solo climbing, freestyle climbing, offshore sailing, yachting, winter and water sports, trekking, safari, etc.",
-                        "type" => "checkbox",
-                        "travelAddonOption" => [
+                        'id' => 102,
+                        'code' => 'adventureSportsCover',
+                        'text' => 'Adventure Sports Cover',
+                        'description' => 'Extending cover to include adventure and high-risk leisure activities including bungee jumping, cliff diving, coasteering, expeditions to remote areas, American football, rugby, heli-skiing, solo climbing, freestyle climbing, offshore sailing, yachting, winter and water sports, trekking, safari, etc.',
+                        'type' => 'checkbox',
+                        'travelAddonOption' => [
                             [
-                                "id" => 103,
-                                "value" => "Included",
-                                "description" => null,
-                                "price" => 500,
-                                "vat" =>  0,
-                                "isSelected" => true
-                            ]
-                        ]
+                                'id' => 103,
+                                'value' => 'Included',
+                                'description' => null,
+                                'price' => 500,
+                                'vat' => 0,
+                                'isSelected' => true,
+                            ],
+                        ],
                     ],
                 ];
 
@@ -868,7 +868,7 @@ class TravelQuoteService extends BaseService
                     foreach ($getdecodeContents->quotes->plans->senior as $seniorPlan) {
                         $seniorPlan->addons = $addons;
                     }
-                } else if (! is_array($getdecodeContents)) {
+                } elseif (! is_array($getdecodeContents)) {
                     foreach ($getdecodeContents?->quotes?->plans as $plan) {
                         $plan->addons = $addons;
                     }

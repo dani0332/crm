@@ -504,7 +504,7 @@ class TravelController extends Controller
             'listQuotePlanBenefitsemergencyMedicalCover' => $listQuotePlanBenefitsemergencyMedicalCover,
             'addons' => $addons,
             'id' => $planId,
-            'vat' => $vat
+            'vat' => $vat,
         ];
 
         return response()->json($data, 200);
