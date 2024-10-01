@@ -335,7 +335,7 @@ watch(
           v-model="userForm.department_id"
           placeholder="Select Department"
           :options="computedDepartments"
-          :single="true"
+           :multiple="true"
         />
       </x-field>
 
