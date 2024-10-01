@@ -105,6 +105,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
             $carQuoteExists = CarQuote::select('uuid')->where([
                 'email' => $this->lead->email,
+                'mobile_no' => $this->lead->mobile_no,
                 'car_make_id' => $this->lead->car_make_id,
                 'car_model_id' => $this->lead->car_model_id,
                 'vehicle_type_id' => $this->lead->vehicle_type_id,
