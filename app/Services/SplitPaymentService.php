@@ -1017,49 +1017,49 @@ class SplitPaymentService
 
     // function to delete split payment
     public function deleteSplitPayment($splitPaymentId)
-    {   
+    {
         $maxRetries = 2;
         $this->handleWithDeadlockRetries(function () use ($splitPaymentId) {
-          $paymentSplit = PaymentSplits::find($splitPaymentId);
-          $masterPayment = $paymentSplit->payment;            
+            $paymentSplit = PaymentSplits::find($splitPaymentId);
+            $masterPayment = $paymentSplit->payment;
 
-          if ($masterPayment->frequency != PaymentFrequency::UPFRONT){
-             if ($masterPayment->total_payments == 2 ) {
-                $masterPayment->total_payments = 1;
-                $masterPayment->frequency = PaymentFrequency::UPFRONT;   
-                
-                //if first split payment is authorized then update total price and total amount to first split payment
-                $firstSplitPayment = $masterPayment->paymentSplits()->where(['code' => $masterPayment->code, 'sr_no' => '1'])->first();
-                if(isset($firstSplitPayment)){
-                    $masterPayment->payment_methods_code = $firstSplitPayment->payment_method;
-                    $masterPayment->payment_status_id = $firstSplitPayment->payment_status_id;                    
-                }                  
-                
-             } else {
-                $masterPayment->total_payments = $masterPayment->total_payments - 1;
-                if( $masterPayment->frequency != PaymentFrequency::SPLIT_PAYMENTS){
-                    $masterPayment->frequency = PaymentFrequency::CUSTOM;                    
+            if ($masterPayment->frequency != PaymentFrequency::UPFRONT) {
+                if ($masterPayment->total_payments == 2) {
+                    $masterPayment->total_payments = 1;
+                    $masterPayment->frequency = PaymentFrequency::UPFRONT;
+
+                    //if first split payment is authorized then update total price and total amount to first split payment
+                    $firstSplitPayment = $masterPayment->paymentSplits()->where(['code' => $masterPayment->code, 'sr_no' => '1'])->first();
+                    if (isset($firstSplitPayment)) {
+                        $masterPayment->payment_methods_code = $firstSplitPayment->payment_method;
+                        $masterPayment->payment_status_id = $firstSplitPayment->payment_status_id;
+                    }
+
+                } else {
+                    $masterPayment->total_payments = $masterPayment->total_payments - 1;
+                    if ($masterPayment->frequency != PaymentFrequency::SPLIT_PAYMENTS) {
+                        $masterPayment->frequency = PaymentFrequency::CUSTOM;
+                    }
+
                 }
-             
-             }             
-             
-             // Delete QuoteDocuments referencing the payment split
-             $paymentSplit->documents()->forceDelete();
-             info('Deleted QuoteDocuments for Payment Split ID: '.$paymentSplit->id);
-             
-             // Delete the payment split
-             $paymentSplit->delete();
-             info('Deleted Payment Split For Code: '.$paymentSplit->code.' Split Payment: '.$paymentSplit->id.'-'. $paymentSplit->sr_no);      
 
-             //get the sum of all the split payments to update the total amount in master payment
-             $masterPayment->total_amount = $masterPayment->paymentSplits()->sum('payment_amount');
+                // Delete QuoteDocuments referencing the payment split
+                $paymentSplit->documents()->forceDelete();
+                info('Deleted QuoteDocuments for Payment Split ID: '.$paymentSplit->id);
 
-             $masterPayment->saveQuietly();
-             
-             info('Updated Master Payment For Code: '.$masterPayment->code.' with new total payments: '.$masterPayment->total_payments.' and frequency: '.$masterPayment->frequency);
-             
-          }
-       }, $maxRetries);        
-    } 
+                // Delete the payment split
+                $paymentSplit->delete();
+                info('Deleted Payment Split For Code: '.$paymentSplit->code.' Split Payment: '.$paymentSplit->id.'-'.$paymentSplit->sr_no);
+
+                //get the sum of all the split payments to update the total amount in master payment
+                $masterPayment->total_amount = $masterPayment->paymentSplits()->sum('payment_amount');
+
+                $masterPayment->saveQuietly();
+
+                info('Updated Master Payment For Code: '.$masterPayment->code.' with new total payments: '.$masterPayment->total_payments.' and frequency: '.$masterPayment->frequency);
+
+            }
+        }, $maxRetries);
+    }
 
 }
