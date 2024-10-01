@@ -77,45 +77,9 @@ class AlfredChatController extends Controller
     }
 
     public function logs(Request $request)
-    {
-        $modelType = $request->quoteType ?? 'Car';
-        $nameSpace = 'App\\Models\\';
-        $modelType = (in_array(ucwords($modelType), newUi()) && checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
-
-        $data = app(InstantAlfredService::class)->processSqlChatFilters($request, $modelType);
-        // $data->paginate(15);
-        // $result = $this->processMongoDBChatFilters($request, $data);
-
-        // dd($data->paginate(15));
-        // $perPage = $request->input('per_page', 15);
-        // $currentPage = $request->input('page', 1);
-        // $total = count($data);
-        // $lastPage = ceil($total / $perPage);
-
-        // $paginatedData = array_slice($result === false ? $data->toArray() : $result, ($currentPage - 1) * $perPage, $perPage);
-        // $paginatedData = array_slice($data->toArray(), ($currentPage - 1) * $perPage, $perPage);
-
-        // $path = $request->url();
-
-        // $nextPageUrl = $currentPage < $lastPage
-        //     ? $path.'?page='.($currentPage + 1).'&per_page='.$perPage
-        //     : null;
-
-        // $prevPageUrl = $currentPage > 1
-        //     ? $path.'?page='.($currentPage - 1).'&per_page='.$perPage
-        //     : null;
-
-        // $pagination = [
-        //     'current_page' => $currentPage,
-        //     'per_page' => $perPage,
-        //     'total' => $total,
-        //     'last_page' => ceil($total / $perPage),
-        //     'from' => ($currentPage - 1) * $perPage + 1,
-        //     'to' => min($currentPage * $perPage, $total),
-        //     'next_page_url' => $nextPageUrl,
-        //     'prev_page_url' => $prevPageUrl,
-        // ];
-
+    {   
+        $data = app(InstantAlfredService::class)->processSqlChatFilters($request);
+     
         return inertia('AlfredChat/Index', ['logs' => $data->paginate(15),  'leadStatuses' => QuoteStatus::all(), 'batches' => QuoteBatches::all()]);
 
     }

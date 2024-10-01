@@ -69,8 +69,8 @@ class InstantChatConsolidatedExport implements FromCollection, WithHeadings, Wit
             $chat->plan_type ?? 'N/A', // 'PLAN TYPE'
             $chat->plan_name ?? 'N/A', // 'PLAN NAME'
             $chat->total_price ?? 'N/A', // 'PRICE'
-            $chat->paid_at ?? 'N/A',
             $chat->payment_paid_at ?? 'N/A',
+            $chat->paid_at ?? 'N/A',
             // $chat->display_name ?? 'N/A', // 'EP PURCHASED'
         ];
     }

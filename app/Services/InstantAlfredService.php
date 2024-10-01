@@ -22,13 +22,7 @@ class InstantAlfredService extends BaseService
 
     private function buildQueryByModel($modelType)
     {
-        $modelType = $request->quoteType ?? 'Car';
-        $nameSpace = 'App\\Models\\';
-        $modelType = (in_array(ucwords($modelType), newUi()) &&
-        checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
-
         $aliases = [];
-
         if ($modelType == CarQuote::class) {
             $this->carQuery = DB::table('car_quote_request as cqr')
                 ->select(
@@ -51,10 +45,10 @@ class InstantAlfredService extends BaseService
                     'lu.text as transaction_type_text',
                     'qt.name as segment',
                     'ps.text AS payment_status_id_text',
-                    'cqpd.provider_name',
+                    'cpip.text as provider_name',
                     'cti.text as plan_type',
-                    'cqpd.plan_name',
-                    'cqpd.actual_premium as total_price',
+                    'cp.text as plan_name',
+                    'cqr.price_with_vat as total_price',
                     'ps.created_at AS payment_created_at',
                     'cqr.paid_at',
                     'cqr.payment_paid_at',
@@ -78,7 +72,6 @@ class InstantAlfredService extends BaseService
                 ->leftJoin('lookups as lu', 'lu.id', '=', 'cqr.transaction_type_id')
                 ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
                 ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
-                ->leftJoin('insurance_provider as cpdip', 'cpdip.id', '=', 'cqr.insurance_provider_id')
                 ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
                 ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
                 ->leftJoin('quote_batches as qb', 'qb.id', '=', 'cqr.quote_batch_id')
@@ -224,11 +217,17 @@ class InstantAlfredService extends BaseService
         return $aliases;
     }
 
-    public function processSqlChatFilters(Request $request, $modelType)
-    {
+    public function processSqlChatFilters(Request $request)
+    {   
+
+        $modelType = $request->quoteType ?? 'Car';
+        $nameSpace = 'App\\Models\\';
+        $modelType = (in_array(ucwords($modelType), newUi()) && checkPersonalQuotes(ucwords($modelType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($modelType).'Quote';
+
         $aliases = $this->buildQueryByModel($modelType);
 
         $modelData = $aliases[$modelType] ?? $aliases[CarQuote::class];
+
         $alias = $modelData['alias'];
 
         $partialQuery = $modelData['query'];
@@ -316,9 +315,7 @@ class InstantAlfredService extends BaseService
 
         $request = request();
 
-        $modelType = $request->quoteType ?? 'Car';
-
-        $data = app(InstantAlfredService::class)->processSqlChatFilters($request, $modelType)->get();
+        $data = app(InstantAlfredService::class)->processSqlChatFilters($request)->get();
 
         $data->chunk(1000)->each(function ($sqlBatch) use ($request) {
             $uuids = $sqlBatch->pluck('uuid')->toArray();
@@ -352,9 +349,7 @@ class InstantAlfredService extends BaseService
     {
         $request = request();
 
-        $modelType = $request->quoteType ?? 'Car';
-
-        $data = app(InstantAlfredService::class)->processSqlChatFilters($request, $modelType)->get();
+        $data = app(InstantAlfredService::class)->processSqlChatFilters($request)->get();
 
         $uuids = array_column($data->toArray(), 'uuid');
 
