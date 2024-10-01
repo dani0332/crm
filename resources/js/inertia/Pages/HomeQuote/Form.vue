@@ -187,6 +187,36 @@ const typeOfOwnerOccupancyOptions = computed(() => {
     { value: '2', label: 'Owner renting out short term/Holiday home' },
   ];
 });
+const contentValueInAEDOptions = computed(() => {
+  return [
+    { value: '1', label: 'AED 1 - 50,000' },
+    { value: '2', label: 'AED 50,001 - 100,000' },
+    { value: '3', label: 'AED 100,001 - 150,000' },
+    { value: '4', label: 'AED 150,001 - 200,000' },
+    { value: '5', label: 'AED 200,001 - 250,000' },
+    { value: '6', label: 'AED 250,001 - 300,000' },
+    { value: '7', label: 'AED 300,001 - 400,000' },
+  ];
+});
+const personalBelongingsInAEDOptions = computed(() => {
+  return [
+    { value: '1', label: 'AED 1-25,000' },
+    { value: '2', label: 'AED 25,001 - 50,000' },
+    { value: '3', label: 'AED 50,001 - 100,000' },
+    { value: '4', label: 'AED 100,001 - 150,000' },
+    { value: '5', label: 'AED 150,001 and above' },
+  ];
+});
+const claimOptions = computed(() => {
+  return [
+    { value: '1', label: 'Yes' },
+    { value: '0', label: 'No' },
+  ];
+});
+const showTypeOfOwnerOccupancy = computed(() => {
+  return quoteForm.ownership_status_possesion_type_id === 2;
+});
+
 const typeOfCoverageYouNeedOptions = computed(() => {
   if (!quoteForm.ownership_status_possesion_type_id) {
     return [
@@ -230,35 +260,6 @@ const typeOfCoverageYouNeedOptions = computed(() => {
     default:
       return [];
   }
-});
-const contentValueInAEDOptions = computed(() => {
-  return [
-    { value: '1', label: 'AED 1 - 50,000' },
-    { value: '2', label: 'AED 50,001 - 100,000' },
-    { value: '3', label: 'AED 100,001 - 150,000' },
-    { value: '4', label: 'AED 150,001 - 200,000' },
-    { value: '5', label: 'AED 200,001 - 250,000' },
-    { value: '6', label: 'AED 250,001 - 300,000' },
-    { value: '7', label: 'AED 300,001 - 400,000' },
-  ];
-});
-const personalBelongingsInAEDOptions = computed(() => {
-  return [
-    { value: '1', label: 'AED 1-25,000' },
-    { value: '2', label: 'AED 25,001 - 50,000' },
-    { value: '3', label: 'AED 50,001 - 100,000' },
-    { value: '4', label: 'AED 100,001 - 150,000' },
-    { value: '5', label: 'AED 150,001 and above' },
-  ];
-});
-const claimOptions = computed(() => {
-  return [
-    { value: '1', label: 'Yes' },
-    { value: '0', label: 'No' },
-  ];
-});
-const showTypeOfOwnerOccupancy = computed(() => {
-  return quoteForm.ownership_status_possesion_type_id === 2;
 });
 
 const handleConditionalFields = () => {
