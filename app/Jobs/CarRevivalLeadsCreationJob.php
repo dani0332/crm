@@ -103,7 +103,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 'whatsappConsent' => true,
             ];
 
-            $carQuoteExists = CarQuote::where([
+            $carQuoteExists = CarQuote::select('uuid')->where([
                 'email' => $this->lead->email,
                 'car_make_id' => $this->lead->car_make_id,
                 'car_model_id' => $this->lead->car_model_id,
@@ -111,38 +111,32 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 'source' => LeadSourceEnum::REVIVAL,
             ])->first();
 
-            if ($carQuoteExists) {
-                info($logPrefix.$this->lead->uuid.' - Child Quote Already Existed against this parent lead');
-
-                return false;
+            if (! $carQuoteExists) {
+                $capiResponse = Capi::request('/api/v1-save-car-quote', 'post', $dataArr);
+                if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
+                    $revivalCarQuoteUUID = $capiResponse->quoteUID;
+                    info($logPrefix.$this->lead->uuid.'- childLeadCreated - '.$revivalCarQuoteUUID);
+                }
+            } else {
+                $revivalCarQuoteUUID = $carQuoteExists->uuid;
             }
 
             $this->lead->refresh();
-            if ($this->lead->is_revived) {
-                info($logPrefix.$this->lead->uuid.' - Lead Already Revived');
 
-                return false;
-            }
-
-            $capiResponse = Capi::request('/api/v1-save-car-quote', 'post', $dataArr);
-
-            if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
-                info($logPrefix.$this->lead->uuid.'- childLeadCreated - '.$capiResponse->quoteUID);
-
-                CarQuote::find($this->lead->id)->update(['is_revived' => true]);
+            if ($revivalCarQuoteUUID && ! $this->lead->is_revived) {
 
                 $payload = [
-                    'quoteUID' => $capiResponse->quoteUID,
+                    'quoteUID' => $revivalCarQuoteUUID,
                     'callSource' => 'imcrm',
                 ];
 
                 $response = Ken::request('/send-ocb-whatsapp-revival', 'post', $payload);
 
-                info($logPrefix.' - send-ocb-whatsapp-revival -'.$capiResponse->quoteUID.' - '.json_encode($response));
+                info($logPrefix.' - send-ocb-whatsapp-revival -'.$revivalCarQuoteUUID.' - '.json_encode($response));
 
-                $carQuote = $this->getQuoteObject(QuoteTypes::CAR->value, $capiResponse->quoteUID);
+                $carQuote = $this->getQuoteObject(QuoteTypes::CAR->value, $revivalCarQuoteUUID);
 
-                $listQuotePlans = app(CarQuoteService::class)->getPlans($capiResponse->quoteUID, true, true);
+                $listQuotePlans = app(CarQuoteService::class)->getPlans($revivalCarQuoteUUID, true, true);
 
                 $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
 
@@ -183,7 +177,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
 
                 if ($response == 201) {
-                    info($logPrefix.'carRevivalParentLead -'.$this->lead->uuid.'-childLead - '.$capiResponse->quoteUID.'- emailSent -- '.$emailData->customerEmail);
+                    info($logPrefix.'carRevivalParentLead - '.$revivalCarQuoteUUID.' - Email Sent');
 
                     // Get the latest quote batch and assign it to the lead.
                     $quoteBatch = QuoteBatches::latest()->first();
@@ -191,15 +185,14 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                     DttRevival::create([
                         'quote_type_id' => QuoteTypes::CAR->id(),
                         'quote_id' => $carQuote->id,
-                        'uuid' => $capiResponse->quoteUID,
+                        'uuid' => $revivalCarQuoteUUID,
                         'revival_quote_batch_id' => $quoteBatch->id,
                         'email_sent' => true,
                     ]);
+                    $revivalCarQuoteUUID->update(['is_revived' => true]);
                 } else {
-                    info($logPrefix.'carRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$capiResponse->quoteUID.'emailIsNotSent - '.$emailData->customerEmail);
+                    info($logPrefix.'carRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$revivalCarQuoteUUID.'emailIsNotSent - '.$emailData->customerEmail);
                 }
-            } else {
-                info($logPrefix.'carRevivalParentLead -'.$this->lead->uuid.'- capiResponseError - '.json_encode($capiResponse));
             }
         } catch (\Exception $exception) {
             Log::error($logPrefix.'DTT Exception - '.$this->lead->id.' - Exception:'.$exception->getMessage());
