@@ -566,6 +566,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('/send-update-customer-validation', 'sendUpdateCustomerValidation')->name('send-update-customer-validation');
         Route::post('/send-update-to-customer', 'sendUpdateToCustomer')->name('send-update-to-customer');
         Route::post('/save-provider-details', 'saveProviderDetails')->name('save-provider-details');
+        Route::post('/book-update-validation', 'sendUpdateValidation')->name('book-update-validation');
         Route::post('book-update', 'sendUpdate')->name('book-update');
     });
     Route::get('get-plans/{quoteType}/{providerId}/{planId?}', [CentralController::class, 'getQuoteWisePlans'])->name('get-quote-wise-plans');

@@ -1032,15 +1032,7 @@ class SplitPaymentService
                 $firstSplitPayment = $masterPayment->paymentSplits()->where(['code' => $masterPayment->code, 'sr_no' => '1'])->first();
                 if(isset($firstSplitPayment)){
                     $masterPayment->payment_methods_code = $firstSplitPayment->payment_method;
-                    $masterPayment->payment_status_id = $firstSplitPayment->payment_status_id;
-
-                    /*if( $firstSplitPayment->payment_status_id == PaymentStatusEnum::AUTHORISED ){
-                       $masterPayment->total_amount = $firstSplitPayment->payment_amount;
-                       $masterPayment->total_price = $firstSplitPayment->payment_amount;
-                       $masterPayment->payment_status_id = PaymentStatusEnum::AUTHORISED;
-                       $masterPayment->price_vat_applicable = $firstSplitPayment->price_vat_applicable;
-                       $masterPayment->price_vat = $firstSplitPayment->price_vat;                            
-                    }*/
+                    $masterPayment->payment_status_id = $firstSplitPayment->payment_status_id;                    
                 }                  
                 
              } else {
@@ -1049,8 +1041,7 @@ class SplitPaymentService
                     $masterPayment->frequency = PaymentFrequency::CUSTOM;                    
                 }
              
-             }
-             
+             }             
              
              // Delete QuoteDocuments referencing the payment split
              $paymentSplit->documents()->forceDelete();

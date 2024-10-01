@@ -74,6 +74,8 @@ class ConversionAsAtReportService extends BaseService
                 )
                 ->join("{$detailAlias} as pqd", "{$alias}.id", "pqd.{$model->getForeignKey()}")
                 ->join('quote_batches', 'quote_batches.id', "{$alias}.quote_batch_id")
+                ->join('users', 'users.id', "{$alias}.advisor_id")
+                ->where('users.is_active', true)
                 ->whereNotIn("{$alias}.source", [
                     LeadSourceEnum::IMCRM,
                     LeadSourceEnum::INSLY,
@@ -169,7 +171,6 @@ class ConversionAsAtReportService extends BaseService
             if ($filters->tag == QuoteSegmentEnum::SIC->value) {
                 $query->where('quote_tags.name', ucwords(QuoteSegmentEnum::SIC->value));
             } else {
-
                 $query->whereIn('quote_tags.name', ['APUA', 'SPUA']);
             }
         }
@@ -234,8 +235,6 @@ class ConversionAsAtReportService extends BaseService
                 'users.id as advisorId',
                 'users.name as advisor_name'
             )
-            ->join('users', 'users.id', "{$alias}.advisor_id")
-            ->where('users.is_active', true)
             ->whereNotNull("{$alias}.advisor_id")
             ->orderBy('advisor_name', 'asc')
             ->groupBy('advisorId');
@@ -254,7 +253,6 @@ class ConversionAsAtReportService extends BaseService
                 'teams.id as sub_team_id',
                 'teams.name as sub_team'
             )
-            ->join('users', 'users.id', "{$alias}.advisor_id")
             ->join('teams', 'users.sub_team_id', '=', 'teams.id')
             ->where('teams.type', TeamTypeEnum::SUB_TEAM)
             ->whereNotNull("{$alias}.advisor_id")
@@ -335,11 +333,11 @@ class ConversionAsAtReportService extends BaseService
 
     public function getByTeamQuery($query, $filters, $alias)
     {
-        $teamType = null;
+        $parentTeamIds = [];
         if ($filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Car)) {
-            $teamType = Team::where('name', TeamNameEnum::CAR)->where('type', TeamTypeEnum::PRODUCT)->first()->id;
+            $parentTeamIds = Team::where('name', TeamNameEnum::CAR)->where('type', TeamTypeEnum::PRODUCT)->pluck('id')->toArray();
         } elseif ($filters->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Health)) {
-            $teamType = Team::where('name', TeamNameEnum::HEALTH)->where('type', TeamTypeEnum::PRODUCT)->first()->id;
+            $parentTeamIds = Team::whereIn('name', [TeamNameEnum::HEALTH, TeamNameEnum::CAR])->where('type', TeamTypeEnum::PRODUCT)->pluck('id')->toArray();
         }
 
         return $query
@@ -350,8 +348,8 @@ class ConversionAsAtReportService extends BaseService
             ->join('user_team', 'user_team.user_id', "{$alias}.advisor_id")
             ->join('teams', 'teams.id', '=', 'user_team.team_id')
             ->where('teams.type', TeamTypeEnum::TEAM)
-            ->where('teams.parent_team_id', $teamType)
-            ->where('is_active', 1)
+            ->whereNot('teams.name', 'like', '%'.TeamNameEnum::RENEWALS.'%')
+            ->whereIn('teams.parent_team_id', $parentTeamIds)
             ->whereNotNull("{$alias}.advisor_id")
             ->orderBy('team', 'asc')
             ->groupBy('team_id');
