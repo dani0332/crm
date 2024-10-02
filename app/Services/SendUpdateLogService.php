@@ -379,6 +379,7 @@ class SendUpdateLogService
                 'quote_status_id' => QuoteStatusEnum::NewLead,
                 'parent_duplicate_quote_id' => $quoteObject->code,
                 'quote_link' => implode('/', $explodeQuoteLink),
+                'renewal_batch' => $quoteObject->renewal_batch ?? null,
             ])->save();
 
             foreach ($getRelations as $relation => $relationObject) {
