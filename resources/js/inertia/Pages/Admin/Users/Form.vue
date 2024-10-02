@@ -354,8 +354,8 @@ watch(
           :loading="loader.subTeamLoader"
         />
       </x-field>
- 
-      <x-field label="Department">
+
+      <x-field label="Departments">
         <ComboBox
           v-model="userForm.department_ids"
             :loading="loader.departLoader"
