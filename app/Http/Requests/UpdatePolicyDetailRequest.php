@@ -4,6 +4,8 @@ namespace App\Http\Requests;
 
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
+use App\Models\PersonalQuote;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -67,10 +69,39 @@ class UpdatePolicyDetailRequest extends FormRequest
                 $validator->errors()->add('value', 'No further editing is required as the policy has been booked');
             }
             $pattern = '/^[\w,\/\\| -]+$/';
-            $quote_policy_number = request()->quote_policy_number;
+            $quote_policy_number = trim(request()->quote_policy_number);
             if (! preg_match($pattern, $quote_policy_number)) {
                 $validator->errors()->add('value', 'Invalid format for policy number');
             }
+
+            $modelType = ucwords(ucfirst(request()->modelType));
+            $model = $this->getModelObject(request()->modelType);
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search($modelType);
+            
+            // Check if a policy with the same number and expiry date already exists, excluding the current quote
+            $isExists = $model::where('policy_number', $quote_policy_number)
+            ->where('policy_expiry_date', request()->quote_policy_expiry_date)
+            ->where('code', '!=', $quoteModel->code);
+
+            // Apply additional filters based on quote type
+            if (checkPersonalQuotes($modelType) || $quoteTypeId == QuoteTypeId::GroupMedical) {
+                // Filter by quote type ID for personal quotes or group medical quotes
+                $isExists->where('quote_type_id', $quoteTypeId);
+            }
+
+            if ($quoteTypeId == QuoteTypeId::GroupMedical) {
+                // Further filter by business type of insurance ID for group medical quotes
+                $isExists->where('business_type_of_insurance_id', $quoteModel->business_type_of_insurance_id);
+            }
+
+            // Check if any records match the criteria
+            $isExists = $isExists->exists();
+
+            if ($isExists) {
+                // Add an error to the validator if a matching policy is found
+                $validator->errors()->add('quote_policy_number', 'Policy number already exists for this line of business with the same expiry date.');
+            }
+
             $quote = $this->getQuoteObject(request()->modelType, request()->quote_id);
             if ($quote && $quote->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
                 $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
