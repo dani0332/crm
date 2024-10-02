@@ -1735,8 +1735,8 @@ class RenewalsUploadService
                         break;
                     default:
                         if ($leadData->batch) {
-                            $batchRef = RenewalBatch::where([['name', $leadData->batch], ['quote_type_id', null]])->first();
-                            !$batchRef && $leadValidationErrors->push('Invalid Renewal Batch Provided');
+                            $checkBatch = $this->validateBatch($leadData->batch, $leadData->end_date);
+                            !$checkBatch && $leadValidationErrors->push('Invalid Renewal Batch Provided');
                         }
                         break;
                 }
@@ -1759,6 +1759,45 @@ class RenewalsUploadService
         }, $column = 'id');
 
         return true;
+    }
+
+    /**
+     * This function use to validate batch for non motors only
+     *
+     * @param string $batchName
+     * @param string $endDate
+     * @return void
+     */
+    private function validateBatch($batchName, $endDate)
+    {
+        info('Validating batch: '.$batchName.' with end date: '.$endDate);
+        // Extract year from endDate
+        $year = date('Y', strtotime($endDate));
+
+        // Extract week number from endDate and remove leading zero if present
+        $weekNumber = 'W'.ltrim(date('W', strtotime($endDate)), '0');
+
+        info('Validating year: ' . $year . ' with week number: ' . $weekNumber);
+
+        // Validate batch name by checking if it contains the week number
+        if (strpos($batchName, $weekNumber) === false || $batchName != $weekNumber) {
+            info('Batch name does not contain week number');
+            return false;
+        }
+
+        // Check if the batch exists in the table with the extracted year and week number
+        $batch = RenewalBatch::where([
+            ['name', $batchName],
+            ['year', $year],
+            ['quote_type_id', null]
+        ])->first();
+
+        if ($batch) {
+            info('Batch found');
+            return true;
+        }
+        info('Batch not found with year: ' . $year . ' and batch name: ' . $batchName);
+        return false;
     }
 
     private function validateDate($date, $format = 'd/m/Y')
