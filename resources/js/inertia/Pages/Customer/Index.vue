@@ -39,7 +39,7 @@ const tableHeader = [
   { text: 'POLICY END DATE', value: 'policy_expiry_date' },
   { text: 'TYPE OF POLICY', value: 'quote_type_id' },
   { text: 'ADVISOR', value: 'advisor' },
-  { text: 'RECEIVE MARKETING', value: 'advisor' },
+  { text: 'RECEIVE MARKETING', value: 'receive_marketing_updates' },
 ];
 
 function onSubmit(isValid) {
