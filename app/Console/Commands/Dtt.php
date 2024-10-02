@@ -111,7 +111,7 @@ class Dtt extends Command
             ->whereNull('renewal_batch')
             ->whereNull('previous_quote_policy_number')
 
-            ->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved,QuoteStatusEnum::Fake,QuoteStatusEnum::Duplicate])
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
 
             ->where('payment_status_id', '!=', PaymentStatusEnum::CAPTURED)
 
