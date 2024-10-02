@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\InstantChatReportsEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -43,7 +44,7 @@ class InstantAlfredService extends BaseService
                     'cqrd.chat_initiated_at',
                     'qb.name as quote_batch_id_text',
                     'lu.text as transaction_type_text',
-                    'qt.name as segment',
+                    // 'qt.name as segment',
                     'ps.text AS payment_status_id_text',
                     'cpip.text as provider_name',
                     'cti.text as plan_type',
@@ -61,11 +62,11 @@ class InstantAlfredService extends BaseService
                 ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
                 ->leftJoin('quote_tags as qt', function ($join) {
                     $join->on('qt.quote_uuid', '=', 'cqr.uuid')
-                        ->where(function ($query) {
-                            $query->where('qt.name', QuoteSegmentEnum::SIC->tag())
-                                ->orWhere('qt.name', QuoteSegmentEnum::SIC_REVIVAL->tag())
-                                ->orWhere('qt.name', QuoteSegmentEnum::NON_SIC->tag());
-                        })
+                        // ->where(function ($query) {
+                        //     $query->where('qt.name', QuoteSegmentEnum::SIC->tag())
+                        //         ->orWhere('qt.name', QuoteSegmentEnum::SIC_REVIVAL->tag())
+                        //         ->orWhere('qt.name', QuoteSegmentEnum::NON_SIC->tag());
+                        // })
                         ->where('qt.quote_type_id', '=', QuoteTypeId::Car);
                 })
                 ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
@@ -83,6 +84,18 @@ class InstantAlfredService extends BaseService
                     $join->on('e.quote_request_id', '=', 'cqr.id')
                         ->where('e.quote_request_type', '=', CarQuote::class);
                 })
+                ->addSelect([
+                    DB::raw("
+                        CASE 
+                        WHEN qt.name = '" . QuoteSegmentEnum::SIC->tag() . "' THEN 'SIC'
+                        WHEN qt.name = '" . QuoteSegmentEnum::SIC->tag() . "' 
+                            AND cqr.source IN ('" . LeadSourceEnum::REVIVAL . "') 
+                            THEN 'SIC REVIVAL'
+                        WHEN qt.name != '" . QuoteSegmentEnum::SIC->tag() . "' THEN 'NON SIC'
+                        ELSE 'N/A'
+                        END as segment
+                    ")
+                ])
             // ->leftJoin('embedded_product_options as po', 'po.id', '=', 'e.product_id')
             // ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id')
                 ->groupBy('cqr.id');
@@ -107,7 +120,7 @@ class InstantAlfredService extends BaseService
                 'hp.plan_type_id as plan_type_id',
                 'qb.name as quote_batch_id_text',
                 'lu.text as transaction_type_text',
-                'qt.name as segment',
+                // 'qt.name as segment',
                 'ps.text AS payment_status',
                 'ihp.text as provider_name',
                 'hpt.text as plan_type',
@@ -125,11 +138,11 @@ class InstantAlfredService extends BaseService
                 })
                 ->leftJoin('quote_tags as qt', function ($join) {
                     $join->on('qt.quote_uuid', '=', 'hqr.uuid')
-                        ->where(function ($query) {
-                            $query->where('qt.name', QuoteSegmentEnum::SIC->tag())
-                                ->orWhere('qt.name', QuoteSegmentEnum::SIC_REVIVAL->tag())
-                                ->orWhere('qt.name', QuoteSegmentEnum::NON_SIC->tag());
-                        })
+                        // ->where(function ($query) {
+                        //     $query->where('qt.name', QuoteSegmentEnum::SIC->tag())
+                        //         ->orWhere('qt.name', QuoteSegmentEnum::SIC_REVIVAL->tag())
+                        //         ->orWhere('qt.name', QuoteSegmentEnum::NON_SIC->tag());
+                        // })
                         ->where('qt.quote_type_id', '=', QuoteTypeId::Health);
                 })
                 ->leftJoin('health_plan_type as hpt', 'hpt.id', '=', 'hqr.health_plan_type_id')
@@ -145,6 +158,18 @@ class InstantAlfredService extends BaseService
                     $join->on('hqr.id', '=', 'e.quote_request_id')
                         ->where('e.quote_request_type', '=', HealthQuote::class);
                 })
+                ->addSelect([
+                    DB::raw("
+                        CASE 
+                        WHEN qt.name = '" . QuoteSegmentEnum::SIC->tag() . "' THEN 'SIC'
+                        WHEN qt.name = '" . QuoteSegmentEnum::SIC->tag() . "' 
+                            AND hqr.source IN ('" . LeadSourceEnum::REVIVAL . "') 
+                            THEN 'SIC REVIVAL'
+                        WHEN qt.name != '" . QuoteSegmentEnum::SIC->tag() . "' THEN 'NON SIC'
+                        ELSE 'N/A'
+                        END as segment
+                    ")
+                ])
                 // ->leftJoin('embedded_product_options as po', 'po.id', '=', 'e.product_id')
                 // ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id')
                 ->groupBy('hqr.id');
@@ -167,7 +192,7 @@ class InstantAlfredService extends BaseService
                 'tpip.text AS travel_plan_provider_text',
                 'qb.name as quote_batch_id_text',
                 'lu.text as transaction_type_text',
-                'qt.name as segment',
+                // 'qt.name as segment',
                 'ps.text AS payment_status',
                 'tqpd.provider_name',
                 // missing plan_type
@@ -185,11 +210,11 @@ class InstantAlfredService extends BaseService
                 })
                 ->leftJoin('quote_tags as qt', function ($join) {
                     $join->on('qt.quote_uuid', '=', 'tqr.uuid')
-                        ->where(function ($query) {
-                            $query->where('qt.name', QuoteSegmentEnum::SIC->tag())
-                                ->orWhere('qt.name', QuoteSegmentEnum::SIC_REVIVAL->tag())
-                                ->orWhere('qt.name', QuoteSegmentEnum::NON_SIC->tag());
-                        })
+                        // ->where(function ($query) {
+                        //     $query->where('qt.name', QuoteSegmentEnum::SIC->tag())
+                        //         ->orWhere('qt.name', QuoteSegmentEnum::SIC_REVIVAL->tag())
+                        //         ->orWhere('qt.name', QuoteSegmentEnum::NON_SIC->tag());
+                        // })
                         ->where('qt.quote_type_id', '=', QuoteTypeId::Travel);
                 })
                 ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
@@ -207,6 +232,18 @@ class InstantAlfredService extends BaseService
                     $join->on('tqr.uuid', '=', 'tqpd.quote_uuid')
                         ->whereColumn('tqr.plan_id', '=', 'tqpd.plan_id');
                 })
+                ->addSelect([
+                    DB::raw("
+                        CASE 
+                        WHEN qt.name = '" . QuoteSegmentEnum::SIC->tag() . "' THEN 'SIC'
+                        WHEN qt.name = '" . QuoteSegmentEnum::SIC->tag() . "' 
+                            AND tqr.source IN ('" . LeadSourceEnum::REVIVAL . "') 
+                            THEN 'SIC REVIVAL'
+                        WHEN qt.name != '" . QuoteSegmentEnum::SIC->tag() . "' THEN 'NON SIC'
+                        ELSE 'N/A'
+                        END as segment
+                    ")
+                ])
                 // ->leftJoin('embedded_product_options as po', 'po.id', '=', 'e.product_id')
                 // ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id')
                 ->groupBy('tqr.id');
