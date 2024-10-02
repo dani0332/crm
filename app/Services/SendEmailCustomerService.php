@@ -1192,6 +1192,7 @@ class SendEmailCustomerService extends BaseService
             'refID' => $emailData->carQuoteId,
             'requestAdvisorLink' => $emailData->requestAdvisorLink,
             'uuid' => $lead->uuid,
+            'sicCase' => true,
             'tag' => ThirdPartyTagEnum::BIRD_SIC_MOTOR_DEDICATED_FOLLOWUP,
         ];
 
