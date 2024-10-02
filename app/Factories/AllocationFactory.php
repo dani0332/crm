@@ -2,10 +2,14 @@
 
 namespace App\Factories;
 
+use App\Enums\ProcessTracker\ProcessTrackerTypeEnum;
+use App\Enums\ProcessTracker\StepsEnums\ProcessTrackerAllocationEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Services\BikeAllocationService;
 use App\Services\CarAllocationService;
 use App\Services\HealthAllocationService;
+use App\Services\ProcessTracker\ProcessTrackerService;
 use App\Services\TravelAllocationService;
 use App\Strategies\Allocations\BikeAllocation;
 use App\Strategies\Allocations\CarAllocation;
@@ -24,7 +28,8 @@ class AllocationFactory
         } elseif ($allocationType == QuoteTypeId::Bike) {
             $strategy = new BikeAllocation(new BikeAllocationService, $allocationId);
         } elseif ($allocationType == QuoteTypeId::Travel) {
-            $strategy = new TravelAllocation(new TravelAllocationService, $allocationId, $teamId);
+            $tracker = self::generateTrackerService(ProcessTrackerTypeEnum::TRAVEL_ALLOCATION, QuoteTypes::TRAVEL, $allocationId, $teamId);
+            $strategy = new TravelAllocation(new TravelAllocationService, $tracker, $allocationId, $teamId);
         }
 
         return $strategy;
@@ -38,5 +43,14 @@ class AllocationFactory
             $tierId != 0 && 'tierId' => $tierId,
             'status' => $status,
         ];
+    }
+
+    private static function generateTrackerService(ProcessTrackerTypeEnum $processType, QuoteTypes $quoteType, string $uuid, $teamId)
+    {
+        return (new ProcessTrackerService)->initQuoteProcess($processType, $quoteType, $uuid)
+            ->addStep(
+                ProcessTrackerAllocationEnum::REQUEST_DETAILS,
+                ['teamId' => ($teamId ?: null), 'requestParams' => request()->all()],
+            );
     }
 }
