@@ -545,7 +545,7 @@ watch(
 );
 
 function handleDateChange(dateRange) {
-  if (filters.displayBy == RetentionReportEnum.BATCH && filters.policyExpiryDate.length == 2) {
+  if (filters.displayBy == RetentionReportEnum.BATCH && filters.policyExpiryDate && filters.policyExpiryDate?.length == 2) {
     loaders.batchOption = true;
     axios
       .post(`/reports/fetch-batch-by-date`, {
@@ -610,7 +610,7 @@ function handleDateChange(dateRange) {
         />
 
         <ComboBox
-          v-if="filters.displayBy === RetentionReportEnum.BATCH && filters.policyExpiryDate.length == 2"
+          v-if="filters.displayBy === RetentionReportEnum.BATCH && filters.policyExpiryDate && filters.policyExpiryDate?.length == 2"
           v-model="filters.batch"
           label="Batch"
           placeholder="Search by Batch"
