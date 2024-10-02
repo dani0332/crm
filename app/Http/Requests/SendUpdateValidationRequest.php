@@ -140,22 +140,19 @@ class SendUpdateValidationRequest extends FormRequest
                 }
 
                 $bypassStatuses = [
-                    SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
-                    SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
                     SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED,
                     SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED,
                 ];
 
                 if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF &&
+                    ! in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) &&
                     ! in_array($sendUpdateLog->status, $bypassStatuses) &&
-                    ! in_array($categorySubType, [
+                    in_array($categorySubType, [
                         SendUpdateLogStatusEnum::MPC,
                         SendUpdateLogStatusEnum::MDOM,
                         SendUpdateLogStatusEnum::MDOV,
                         SendUpdateLogStatusEnum::ED,
                         SendUpdateLogStatusEnum::DM,
-                        SendUpdateLogStatusEnum::ACB, // TODO:: Need to verify, This is for Additional commission approve where Transaction approval not required
-                        SendUpdateLogStatusEnum::ATIB, // TODO:: Need to verify, This is for Additional commission approve where Transaction approval not required
                     ])) {
                     $validator->errors()->add('error', 'Transaction approval is required');
                 }
