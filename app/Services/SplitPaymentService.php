@@ -1026,7 +1026,7 @@ class SplitPaymentService
             if ($masterPayment->frequency != PaymentFrequency::UPFRONT) {
                 $this->updateMasterPayment($masterPayment);
                 $this->deletePaymentSplit($paymentSplit);
-            }
+            } 
         }, $maxRetries);
     }
 
