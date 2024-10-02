@@ -130,11 +130,14 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                     'quote_type_id' => QuoteTypes::CAR->id(),
                     'uuid' => $revivalCarQuoteUUID
                 ])->first();
+                if ($record) {
+                    CarQuote::find($this->lead->id)->update(['is_revived' => true]);
+                }
             }
 
             $this->lead->refresh();
 
-            if ($revivalCarQuoteUUID && ! $this->lead->is_revived && !$record) {
+            if ($revivalCarQuoteUUID  && ! $record) {
 
                 $payload = [
                     'quoteUID' => $revivalCarQuoteUUID,
