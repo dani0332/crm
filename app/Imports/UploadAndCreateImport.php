@@ -139,8 +139,7 @@ class UploadAndCreateImport implements OnEachRow, SkipsOnFailure, WithChunkReadi
             'premium' => ['index' => 17, 'title' => 'Gross Premium', 'rules' => 'nullable|numeric'],
             'source' => ['index' => 18, 'title' => 'Sales Channel', 'rules' => 'max:100'],
             'notes' => ['index' => 19, 'title' => 'Notes', 'rules' => 'max:500'],
-            'plan_name' => ['index' => 20, 'title' => 'Plan Name', 'rules' => 'max:100'],
-            'renewal_batch' => ['index' => 21, 'title' => 'Renewal Batch Ref', 'rules' => 'max:50'],
+            'plan_name' => ['index' => 20, 'title' => 'Plan Name', 'rules' => 'max:100']
         ];
     }
 

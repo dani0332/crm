@@ -752,6 +752,9 @@ class RenewalsUploadService
 
             $customer = $this->getCustomer($customerData);
 
+            $quoteTypeVal = $quoteType->id == QuoteTypeId::Car ? 1:null;
+            $batch = RenewalBatch::where([['name', $data['batch'], ['quote_type_id', $quoteTypeVal]]])->first() ?? null;
+
             $quoteData = [
                 'customer_id' => $customer->id,
                 'first_name' => $customerData['first_name'],
@@ -763,7 +766,7 @@ class RenewalsUploadService
                 'source' => LeadSourceEnum::RENEWAL_UPLOAD,
                 'advisor_id' => $advisorId,
                 'renewal_batch' => $data['batch'],
-                'renewal_batch_id' => $data['renewal_batch'] ?? null,
+                'renewal_batch_id' => $batch->id,
                 'quote_status_id' => $transApprovedId,
                 'renewal_import_code' => $renewalUploadLead->renewal_import_code,
                 'previous_quote_policy_number' => $data['policy_number'],
@@ -974,6 +977,8 @@ class RenewalsUploadService
             }
 
             $this->updateCustomer($quote, $customerData);
+            $quoteTypeVal = $quoteType->id == QuoteTypeId::Car ? 1 : null;
+            $batch = RenewalBatch::where([['name', $data['batch'], ['quote_type_id', $quoteTypeVal]]])->first() ?? null;
 
             $quoteData = $this->getNonEmptyValues([
                 'first_name' => $customerData['first_name'],
@@ -991,7 +996,7 @@ class RenewalsUploadService
                 'previous_policy_expiry_date' => (! empty($data['end_date'])) ? $this->formatDate($data['end_date']) : null,
                 'advisor_id' => $advisorId,
                 'renewal_batch' => $data['batch'],
-                'renewal_batch_id' => $data['renewal_batch'] ?? null,
+                'renewal_batch_id' => $batch->id,
                 'additional_notes' => $data['notes'],
                 'car_make_id' => $carMake->id ?? null,
                 'car_model_id' => $carModel->id ?? null,
@@ -1723,14 +1728,14 @@ class RenewalsUploadService
                                 $leadValidationErrors->push('Invalid Previous Advisor Email');
                             }
                         }
-                        if ($leadData->renewal_batch) {
-                            $batchRef = RenewalBatch::where([['id', $leadData->renewal_batch], ['quote_type_id', QuoteTypeId::Car]])->first();
+                        if ($leadData->batch) {
+                            $batchRef = RenewalBatch::where([['name', $leadData->batch], ['quote_type_id', QuoteTypeId::Car]])->first();
                             !$batchRef && $leadValidationErrors->push('Invalid Renewal Batch Provided');
                         }
                         break;
                     default:
-                        if ($leadData->renewal_batch) {
-                            $batchRef = RenewalBatch::where([['id', $leadData->renewal_batch], ['quote_type_id', null]])->first();
+                        if ($leadData->batch) {
+                            $batchRef = RenewalBatch::where([['name', $leadData->batch], ['quote_type_id', null]])->first();
                             !$batchRef && $leadValidationErrors->push('Invalid Renewal Batch Provided');
                         }
                         break;

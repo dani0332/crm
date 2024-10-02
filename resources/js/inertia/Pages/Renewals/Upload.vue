@@ -312,13 +312,6 @@ const can = permission => useCan(permission);
                 <td>No</td>
                 <td>200</td>
               </tr>
-              <tr>
-                <td>22</td>
-                <td>Renewal Batch REF</td>
-                <td>Renewal Batch REF</td>
-                <td>No</td>
-                <td>50</td>
-              </tr>
             </tbody>
           </table>
         </div>
