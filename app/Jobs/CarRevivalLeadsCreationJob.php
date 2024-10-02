@@ -112,6 +112,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 'source' => LeadSourceEnum::REVIVAL,
             ])->first();
 
+            $flag = false;
             if (! $carQuoteExists) {
                 $capiResponse = Capi::request('/api/v1-save-car-quote', 'post', $dataArr);
                 if (isset($capiResponse->errors) && empty($capiResponse->quoteUID)) {
@@ -123,6 +124,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                     info($logPrefix . $this->lead->uuid . '- childLeadCreated - ' . $revivalCarQuoteUUID);
                 }
             } else {
+                $flag = true;
                 $revivalCarQuoteUUID = $carQuoteExists->uuid;
             }
 
@@ -187,13 +189,15 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                     // Get the latest quote batch and assign it to the lead.
                     $quoteBatch = QuoteBatches::latest()->first();
 
-                    DttRevival::create([
-                        'quote_type_id' => QuoteTypes::CAR->id(),
-                        'quote_id' => $carQuote->id,
-                        'uuid' => $revivalCarQuoteUUID,
-                        'revival_quote_batch_id' => $quoteBatch->id,
-                        'email_sent' => true,
-                    ]);
+                    if (!$flag) {
+                        DttRevival::create([
+                            'quote_type_id' => QuoteTypes::CAR->id(),
+                            'quote_id' => $carQuote->id,
+                            'uuid' => $revivalCarQuoteUUID,
+                            'revival_quote_batch_id' => $quoteBatch->id,
+                            'email_sent' => true,
+                        ]);
+                    }
                     CarQuote::find($this->lead->id)->update(['is_revived' => true]);
                 } else {
                     info($logPrefix . 'carRevivalParentLead -' . $this->lead->uuid . '- childLead - ' . $revivalCarQuoteUUID . 'emailIsNotSent - ' . $emailData->customerEmail);
