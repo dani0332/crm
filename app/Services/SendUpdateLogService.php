@@ -474,7 +474,7 @@ class SendUpdateLogService
         return [$insuranceProviderId, $planId];
     }
 
-    public function getInvoiceDescription($sendUpdateLog, $quote, $quoteType, $payments, $updateBrokerInvoiceNumber = false): array
+    public function getInvoiceDescription($sendUpdateLog, $quote, $quoteType): array
     {
         [$insuranceProviderId, $planId] = $this->getEndorsementProviderDetails($sendUpdateLog);
         $sendUpdateLogCategory = LookupRepository::where('id', $sendUpdateLog->category_id)->value('code');
@@ -706,7 +706,7 @@ class SendUpdateLogService
     {
         $paymentBeforeUpdate = Payment::where('send_update_log_id', $sendUpdateRequest->sendUpdateId)->first();
 
-        if (empty($sendUpdateLog->broker_invoice_number) && empty($sendUpdateLog->invoice_description)) {
+        if (empty($sendUpdateLog->invoice_description)) {
             $this->updateInsurerDetails($sendUpdateRequest, $sendUpdateLog);
         }
 
@@ -1365,7 +1365,7 @@ class SendUpdateLogService
             @[$insuranceProviderId, $planId] = $this->getProviderDetails($quote, QuoteTypes::getIdFromValue($request->quoteType));
         }
 
-        $bookingDetails = $this->getInvoiceDescription($sendUpdate, $quote, $request->quoteType, $quote->payments()->mainLeadPayment()->first(), true);
+        $bookingDetails = $this->getInvoiceDescription($sendUpdate, $quote, $request->quoteType);
 
         $bookingDetails = array_merge($bookingDetails, [
             'insurance_provider_id' => $insuranceProviderId,
