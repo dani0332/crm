@@ -29,7 +29,6 @@ class UserService extends BaseService
         $user->landline_no = $request->landline_no;
         $user->calendar_link = $request->calendar_link;
         $user->phone_calendar_link = $request->phone_calendar_link;
-        $user->department_id = $request->department_id ?? null;
         $user->password = bcrypt($request->password);
         $user->is_active = true;
         if ((! empty($request->additionalTeams) && $request->sub_team_id != '0')) {
@@ -42,7 +41,13 @@ class UserService extends BaseService
                 $user->additional_team_ids = $request->additionalTeams[0];
             }
         }
+
         $user->save();
+
+        if($request->department_ids != null) {
+            app(DepartmentService::class)->saveUserDepartments($user,$request->department_ids);
+        }
+        
         if ($request->manager != '0' && isset($request->manager)) {
             DB::table('user_manager')->where('user_id', $user->id)->delete();
             foreach ($request->manager as $managerId) {

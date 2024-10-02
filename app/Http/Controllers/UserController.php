@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use App\Services\DepartmentService;
 
 class UserController extends Controller
 {
@@ -84,7 +85,7 @@ class UserController extends Controller
         $teams = [];
         $subTeams = [];
         $permissions = Permission::orderBy('name')->get();
-        $departments = $this->userService->getDepartmentsList();
+        $departments = [];
 
         return inertia('Admin/Users/Form', [
             'roles' => $roles,
@@ -173,7 +174,8 @@ class UserController extends Controller
         $productName = implode(',', $this->getUserProducts($user->id)->pluck('name')->toArray());
         $user->roles = $user->roles->pluck('name')->toArray();
         $user->permissions = $user->permissions->pluck('name')->toArray();
-        $user->department = $user->department ?? '';
+        $departments = implode(',',  $user->departments->pluck('name')->toArray()) ?? '';
+
         if ($user->additional_team_ids != '') {
             $additionalTeamNamesArray = Team::whereIn('id', explode(',', $user->additional_team_ids))->where('type', TeamTypeEnum::PRODUCT)->pluck('name')->toArray();
             $additionalTeamNames = implode(', ', $additionalTeamNamesArray);
@@ -186,6 +188,7 @@ class UserController extends Controller
             'user' => $user,
             'teamName' => $teamName,
             'subTeamName' => $subTeamName,
+            'departments' => $departments,
             'additionalTeamNames' => $additionalTeamNames,
             'managerName' => $managerName,
             'productName' => $productName,
@@ -218,14 +221,15 @@ class UserController extends Controller
         $userManagerIds = $this->getUserManagers($user->id)->pluck('id')->toArray();
         $permissions = Permission::orderBy('name')->get();
         $userPermissions = $user->getDirectPermissions()->pluck('id')->toArray();
+        $departmentIds = $this->getUserDepartments($user->id)->pluck('department_id')->toArray();
         $departments = $this->userService->getDepartmentsList();
-
         return inertia('Admin/Users/Form', [
             'user' => $user,
             'roles' => $roles,
             'userRole' => $userRole,
             'selectedAdditionalTeams' => $selectedAdditionalTeams,
             'subTeams' => $subTeams,
+            'department_ids' => $departmentIds,
             'departments' => $departments,
             'products' => $products,
             'userProductIds' => $userProductIds,
@@ -265,12 +269,14 @@ class UserController extends Controller
         $user->landline_no = $request->landline_no;
         $user->calendar_link = $request->calendar_link;
         $user->phone_calendar_link = $request->phone_calendar_link;
-        $user->department_id = $request->department_id ?? null;
         if (isset($request->password)) {
             $user->password = bcrypt($request->password);
         }
         $user->is_active = $request->is_active ? 1 : 0;
 
+        if($request->department_ids != null) {
+            app(DepartmentService::class)->syncUserDepartments($user,$request->department_ids);
+        }
         /*
          * temp fix: health lead allocation is using team_id to target health product
          * this needs to be updated with new team/product structure
@@ -367,6 +373,10 @@ class UserController extends Controller
     public function getProductTeams(Request $request)
     {
         return $this->getTeamsByProductIds($request->productIds);
+    }
+
+    public function getTeamDepartments(Request $request){
+        return $this->getDepartmentsByTeamIds($request->teamIds);
     }
 
     public function getSubTeams(Request $request)
