@@ -112,7 +112,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 'source' => LeadSourceEnum::REVIVAL,
             ])->first();
 
-            $record = null;
+            $revivedLead = null;
             if (! $carQuoteExists) {
                 $capiResponse = Capi::request('/api/v1-save-car-quote', 'post', $dataArr);
                 if (isset($capiResponse->errors) && empty($capiResponse->quoteUID)) {
@@ -126,18 +126,18 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             } else {
                 $revivalCarQuoteUUID = $carQuoteExists->uuid;
 
-                $record = DttRevival::where([
+                $revivedLead = DttRevival::where([
                     'quote_type_id' => QuoteTypes::CAR->id(),
                     'uuid' => $revivalCarQuoteUUID,
                 ])->first();
-                if ($record) {
+                if ($revivedLead) {
                     CarQuote::find($this->lead->id)->update(['is_revived' => true]);
                 }
             }
 
             $this->lead->refresh();
 
-            if ($revivalCarQuoteUUID && ! $record) {
+            if ($revivalCarQuoteUUID && ! $revivedLead) {
 
                 $carQuote = $this->getQuoteObject(QuoteTypes::CAR->value, $revivalCarQuoteUUID);
 
