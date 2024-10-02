@@ -31,16 +31,6 @@ class LifeQuoteObserver
             $lifeQuote->isDirty('quote_status_id') &&
             $lifeQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
         ) {
-            MAWelcomeJob::dispatchIf(
-                isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)) && $lifeQuote->customer,
-                $lifeQuote->customer?->first_name,
-                $lifeQuote->customer?->last_name,
-                $lifeQuote->customer?->email,
-                $lifeQuote->customer?->mobile_no,
-                'CUSTOMER_UPDATE',
-                'customer-update-myalfred-we'
-            );
-
             LifeQuote::withoutEvents(function () use ($lifeQuote) {
                 $lifeQuote->update(['transaction_approved_at' => now()]);
             });
@@ -58,6 +48,15 @@ class LifeQuoteObserver
             in_array($lifeQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Life, 'quoteUID' => $lifeQuote->uuid]);
+            MAWelcomeJob::dispatchIf(
+                isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)) && $lifeQuote->customer,
+                $lifeQuote->customer?->first_name,
+                $lifeQuote->customer?->last_name,
+                $lifeQuote->customer?->email,
+                $lifeQuote->customer?->mobile_no,
+                'CUSTOMER_UPDATE',
+                'customer-update-myalfred-we'
+            );
         }
     }
 }

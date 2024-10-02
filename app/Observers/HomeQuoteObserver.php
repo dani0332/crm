@@ -31,16 +31,6 @@ class HomeQuoteObserver
             $homeQuote->isDirty('quote_status_id') &&
             $homeQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
         ) {
-            MAWelcomeJob::dispatchIf(
-                isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)) && $homeQuote->customer,
-                $homeQuote->customer?->first_name,
-                $homeQuote->customer?->last_name,
-                $homeQuote->customer?->email,
-                $homeQuote->customer?->mobile_no,
-                'CUSTOMER_UPDATE',
-                'customer-update-myalfred-we'
-            );
-
             HomeQuote::withoutEvents(function () use ($homeQuote) {
                 $homeQuote->update(['transaction_approved_at' => now()]);
             });
@@ -58,6 +48,15 @@ class HomeQuoteObserver
             in_array($homeQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Home, 'quoteUID' => $homeQuote->uuid]);
+            MAWelcomeJob::dispatchIf(
+                isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)) && $homeQuote->customer,
+                $homeQuote->customer?->first_name,
+                $homeQuote->customer?->last_name,
+                $homeQuote->customer?->email,
+                $homeQuote->customer?->mobile_no,
+                'CUSTOMER_UPDATE',
+                'customer-update-myalfred-we'
+            );
         }
     }
 }
