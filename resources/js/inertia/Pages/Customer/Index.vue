@@ -183,6 +183,17 @@ function onReset() {
       <template #item-advisor="{ advisor }">
         {{ advisor?.name }}
       </template>
+
+      <template #item-receive_marketing_updates="{ receive_marketing_updates }">
+        <div class="text-center">
+          <x-tag
+            size="sm"
+            :color="receive_marketing_updates ? 'success' : 'error'"
+          >
+            {{ receive_marketing_updates ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
+      </template>
     </DataTable>
 
     <Pagination
