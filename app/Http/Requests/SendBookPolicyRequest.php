@@ -54,6 +54,9 @@ class SendBookPolicyRequest extends FormRequest
                 $quote = $this->getQuoteObject(request()->model_type, request()->quote_id);
 
                 if ($quote) {
+                    if ($quote->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
+                        $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
+                    }
                     $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
                     $payment = Payment::where('code', $quote->code)->whereNull('send_update_log_id')->first();
                     $getPaymentAgainstCode = $quote->code;

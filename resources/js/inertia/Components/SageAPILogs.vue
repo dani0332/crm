@@ -152,10 +152,10 @@ const copyToClipboard = item => {
         :hide-footer="sageAPILogs.data?.length < 15"
       >
         <template #item-user="{ user }">
-          {{ user.name }}
+          {{ user?.name }}
         </template>
         <template #item-sage_request_type="{ sage_request_type }">
-          {{ sage_request_type.substr(0, 10) }}
+          {{ sage_request_type?.substr(0, 10) }}
           <x-icon
             v-if="sage_request_type"
             @click.prevent="copyToClipboard(sage_request_type)"
@@ -165,7 +165,7 @@ const copyToClipboard = item => {
           />
         </template>
         <template #item-sage_end_point="{ sage_end_point }">
-          {{ sage_end_point.substr(0, 10) }}
+          {{ sage_end_point?.substr(0, 10) }}
           <x-icon
             v-if="sage_end_point"
             @click.prevent="copyToClipboard(sage_end_point)"
@@ -175,7 +175,7 @@ const copyToClipboard = item => {
           />
         </template>
         <template #item-sage_payload="{ sage_payload }">
-          {{ sage_payload.substr(0, 20) }}
+          {{ sage_payload?.substr(0, 20) }}
           <x-icon
             @click.prevent="copyToClipboard(sage_payload)"
             icon="copy"
@@ -184,7 +184,7 @@ const copyToClipboard = item => {
           />
         </template>
         <template #item-response="{ response }">
-          {{ response.substr(0, 20) }}
+          {{ response?.substr(0, 20) }}
           <x-icon
             @click.prevent="copyToClipboard(response)"
             icon="copy"
@@ -193,10 +193,10 @@ const copyToClipboard = item => {
           />
         </template>
         <template #item-created_at="{ created_at }">
-          {{ dateFormat(created_at).value }}
+          {{ dateFormat(created_at)?.value }}
         </template>
         <template #item-updated_at="{ updated_at }">
-          {{ dateFormat(updated_at).value }}
+          {{ dateFormat(updated_at)?.value }}
         </template>
       </DataTable>
     </x-modal>
