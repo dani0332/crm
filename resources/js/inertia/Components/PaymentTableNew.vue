@@ -1679,6 +1679,21 @@ const editPaymentModal = (
     });
     return false;
   }
+
+  resetPaymentForm();
+  initializePaymentForm(payment, split_payment_id, sr_no, capture_approval);
+  handleCollectionTypeChange();
+  handleFrequencyChange(false);
+  handleApprovalReasonChange();
+  handleDiscountChange();
+  handleDeclinedReasonChange();
+  calculateTotalAmount();
+  applyPermissions();
+  processPaymentSplits(payment);
+  finalizePaymentForm(payment, capture_approval);
+};
+
+const resetPaymentForm = () => {
   paymentMethodsForm.reset();
   splitPaymentNo.value = 0;
   isFieldReadonly.value = false;
@@ -1719,6 +1734,9 @@ const editPaymentModal = (
   authorizedPayments.value = [];
   isApproveConfirmed.value = false;
   isApproveNotChecked.value = true;
+};
+
+const initializePaymentForm = (payment, split_payment_id, sr_no, capture_approval) => {
   if (sr_no > 0) {
     splitPaymentNo.value = sr_no;
     isFieldReadonly.value = true;
@@ -1735,9 +1753,7 @@ const editPaymentModal = (
       payment.system_adjusted_discount;
   }
 
-  //paymentMethodsForm.masterPaymentStatus = payment.
   masterPaymentStatus.value = payment.payment_status.text;
-
   paymentMethodsForm.paymentCode = payment.code;
   paymentMethodsForm.insurance_provider_id = payment.insurance_provider_id;
   paymentMethodsForm.collection_type = payment.collection_type;
@@ -1751,13 +1767,6 @@ const editPaymentModal = (
   if (payment.discount_reason !== null && payment.discount_type !== null) {
     resetDiscountReason.value = payment.discount_reason;
   }
-
-  /*
-  if (payment.discount_type=='' || payment.discount_type==null) {
-    paymentMethodsForm.discount= payment.discount_type;
-  } else {
-    paymentMethodsForm.discount= payment.discount_type;
-  }*/
 
   paymentMethodsForm.custom_reason = payment.custom_reason;
   paymentMethodsForm.discount_custom_reason = payment.discount_custom_reason;
@@ -1778,16 +1787,9 @@ const editPaymentModal = (
     paymentMethodsForm.discount =
       payment.discount_type !== null ? payment.discount_type : '';
   }
+};
 
-  handleCollectionTypeChange();
-  handleFrequencyChange(false);
-  handleApprovalReasonChange();
-  handleDiscountChange();
-  handleDeclinedReasonChange();
-  calculateTotalAmount();
-  applyPermissions();
-  var isAnyPaid = false;
-
+const processPaymentSplits = (payment) => {
   const paidStatusIds = [
     props.paymentStatusEnum.PAID,
     props.paymentStatusEnum.PARTIALLY_PAID,
@@ -1797,142 +1799,82 @@ const editPaymentModal = (
   ];
 
   for (let i = 1; i <= payment.total_payments; i++) {
-    if (
-      paidStatusIds.includes(payment.payment_splits[i - 1].payment_status_id)
-    ) {
-      readOnlyPayments.value[i] = true;
+    const split = payment.payment_splits[i - 1];
+    readOnlyPayments.value[i] = paidStatusIds.includes(split.payment_status_id);
+    if (readOnlyPayments.value[i]) {
       totalPaidAmount.value++;
-      paidAmountSum.value =
-        parseFloat(paidAmountSum.value) +
-        parseFloat(payment.payment_splits[i - 1].payment_amount);
-      isAnyPaid = true;
-    } else {
-      readOnlyPayments.value[i] = false;
+      paidAmountSum.value += parseFloat(split.payment_amount);
     }
-    if (
-      payment.payment_splits[i - 1].payment_status_id ===
-      props.paymentStatusEnum.AUTHORISED
-    ) {
-      authorizedPayments.value[i] = true;
-    } else {
-      authorizedPayments.value[i] = false;
-    }
-
+    authorizedPayments.value[i] = split.payment_status_id === props.paymentStatusEnum.AUTHORISED;
     fileUploadModels.value[i] = [];
-    paymentMethodsModels.value[i] =
-      payment.payment_splits[i - 1].payment_method.code;
-    splitAmountModels.value[i] = payment.payment_splits[i - 1].payment_amount;
+    paymentMethodsModels.value[i] = split.payment_method.code;
+    splitAmountModels.value[i] = split.payment_amount;
+    dueDateModels.value[i] = split.due_date ? moment(split.due_date).format('YYYY-MM-DD') : '';
+    collectionAmountModels.value[i] = split.collection_amount;
 
-    const dueDate = payment.payment_splits[i - 1].due_date;
-    dueDateModels.value[i] = dueDate
-      ? moment(dueDate).format('YYYY-MM-DD')
-      : '';
-
-    collectionAmountModels.value[i] =
-      payment.payment_splits[i - 1].collection_amount;
-
-    if (
-      payment.payment_splits[i - 1].payment_method.code === 'CHQ' ||
-      payment.payment_splits[i - 1].payment_method.code === 'PDC'
-    ) {
+    if (['CHQ', 'PDC'].includes(split.payment_method.code)) {
       isCheckDetailsEnabled.value[i] = true;
-      checkDetailModels.value[i] = payment.payment_splits[i - 1].check_detail;
+      checkDetailModels.value[i] = split.check_detail;
     }
-    if (payment.payment_splits[i - 1].documents.length > 0) {
-      for (let doc in payment.payment_splits[i - 1].documents) {
-        /*if (!fileUploadModels.value[i]) {
-            fileUploadModels.value[i] = [];
-          }
-        fileUploadModels.value[i].push(payment.payment_splits[i-1].documents[doc]); */
-        if (
-          payment.payment_splits[i - 1].documents[doc].payment_split_type ===
-          'discount'
-        ) {
+
+    if (split.documents.length > 0) {
+      split.documents.forEach(doc => {
+        if (doc.payment_split_type === 'discount') {
           if (!discountDocumentModel.value[0]) {
             discountDocumentModel.value[0] = [];
           }
-          discountDocumentModel.value[0].push(
-            payment.payment_splits[i - 1].documents[doc],
-          );
+          discountDocumentModel.value[0].push(doc);
         } else {
           if (!fileUploadModels.value[i]) {
             fileUploadModels.value[i] = [];
           }
-          fileUploadModels.value[i].push(
-            payment.payment_splits[i - 1].documents[doc],
-          );
+          fileUploadModels.value[i].push(doc);
         }
-      }
+      });
     }
   }
-  // Assign the first document to the approve document model for insurer
-  if (
-    paymentMethodsForm.status == 'view' &&
-    paymentMethodsForm.collection_type === 'insurer'
-  ) {
+
+  if (paymentMethodsForm.status == 'view' && paymentMethodsForm.collection_type === 'insurer') {
     approvedDocumentModel.value = fileUploadModels.value.slice();
   }
+};
+
+const finalizePaymentForm = (payment, capture_approval) => {
   if (paymentMethodsForm.status == 'edit') {
     totalPrice.value = payment.total_price;
     totalAmount.value = payment.total_price - payment.discount_value;
 
     if (isPaymentLocked.value) {
       isFieldReadonly.value = true;
-    } else if (
-      isAnyPaid &&
-      payment.total_price <= payment.total_amount + payment.discount_value
-    ) {
-      //FOR EDIT
-      if(is_lacking_payment.value){
+    } else if (isAnyPaid(payment) && payment.total_price <= payment.total_amount + payment.discount_value) {
+      if (is_lacking_payment.value) {
         isFieldReadonly.value = false;
         isTotalPriceUpdated.value = true;
       } else {
         isFieldReadonly.value = true;
       }
-      
-    } else if (
-      payment.total_price >
-      payment.total_amount + payment.discount_value
-    ) {
+    } else if (payment.total_price > payment.total_amount + payment.discount_value) {
       isFieldReadonly.value = false;
       isTotalPriceUpdated.value = true;
     } else {
       isFieldReadonly.value = false;
     }
   }
+
   if (paymentMethodsForm.status == 'view') {
     totalPrice.value = payment.total_price;
     totalAmount.value = payment.total_price - payment.discount_value;
   }
-  if (
-    (payment.discount_type === 'family_employee_discount' ||
-      payment.discount_type === 'employee_discount') &&
-    payment.discount_value > 0
-  ) {
+
+  if (['family_employee_discount', 'employee_discount'].includes(payment.discount_type) && payment.discount_value > 0) {
     discountValue.value = payment.discount_value;
     calculatedDiscount.value = payment.discount_value;
-  } //Assign plan for Travel
-  if (
-    props.quoteType === 'Travel' &&
-    (paymentMethodsForm.status == 'edit' || paymentMethodsForm.status == 'view')
-  ) {
-    planDetail.value = payment.travel_plan;
-
-    if (!(props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
-      planDetail.value['insurance_provider'] =
-        payment.travel_plan.insurance_provider;
-    }
   }
 
-  //Assign plan for Travel
-  if (
-    props.quoteType === 'Travel' &&
-    (paymentMethodsForm.status == 'edit' || paymentMethodsForm.status == 'view')
-  ) {
+  if (props.quoteType === 'Travel' && ['edit', 'view'].includes(paymentMethodsForm.status)) {
     planDetail.value = payment.travel_plan;
     if (!(props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
-      planDetail.value['insurance_provider'] =
-        payment.travel_plan.insurance_provider;
+      planDetail.value['insurance_provider'] = payment.travel_plan.insurance_provider;
     }
   }
 
@@ -1949,6 +1891,18 @@ const editPaymentModal = (
     isVerificationAllowed.value = true;
   }
   createPaymentModal.value = true;
+};
+
+const isAnyPaid = (payment) => {
+  const paidStatusIds = [
+    props.paymentStatusEnum.PAID,
+    props.paymentStatusEnum.PARTIALLY_PAID,
+    props.paymentStatusEnum.AUTHORISED,
+    props.paymentStatusEnum.CAPTURED,
+    props.paymentStatusEnum.PARTIAL_CAPTURED,
+  ];
+
+  return payment.payment_splits.some(split => paidStatusIds.includes(split.payment_status_id));
 };
 
 const paymentMethodsForm = useForm({
@@ -3075,15 +3029,11 @@ const splitPaymentTotalPrice = (
 
 // verifiy if split payment deletion is enabled
 const isSplitDeleteEnabled = computed(() => {
-  if (
+  return (
     paymentMethodsForm.frequency != paymentFrequencyEnum.UPFRONT &&
     can(permissionEnum.PaymentsEdit) &&
     props.quoteRequest.quote_status_id != page.props.quoteStatusEnum.PolicyBooked
-
-  ) {
-    return true;
-  }
-  return false;
+  );
 });
 
 </script>
@@ -5747,7 +5697,6 @@ const isSplitDeleteEnabled = computed(() => {
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
-                      tabindex="0"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
                       class="w-4 h-4 text-gray-800"
