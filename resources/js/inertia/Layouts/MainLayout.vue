@@ -219,7 +219,7 @@ const urls = computed(() => {
                 </div>
               </x-button>
 
-              <x-popover align="right" block>
+              <x-popover placement="bottom-end" block>
                 <x-button size="sm" ghost>
                   <div class="flex gap-3 items-center">
                     <x-avatar
@@ -249,7 +249,7 @@ const urls = computed(() => {
                 <template #content>
                   <x-popover-container class="p-2">
                     <button
-                      class="flex gap-2 items-center px-2 group w-full"
+                      class="flex gap-2 items-center px-2 group"
                       @click="onLogout"
                     >
                       <svg
@@ -285,11 +285,11 @@ const urls = computed(() => {
             v-if="bannerInfo.total_count > 0"
             class="w-full h-10 rounded bg-error-50 border border-error-500 mb-3 flex items-center justify-center text-sm max-[500px]:h-auto"
           >
-            <span class="text-red-600"
-              >You have
-              <Link :href="bannerInfo.quote_route" class="underline">{{
-                bannerInfo.total_count
-              }}</Link>
+            <span class="text-red-600">
+              You have
+              <Link :href="bannerInfo.quote_route" class="underline">
+                {{ bannerInfo.total_count }}
+              </Link>
               stale leads, follow up with client and update the lead status
               accordingly</span
             >
