@@ -89,10 +89,11 @@ class UpdatePolicyDetailRequest extends FormRequest
                 $isExists->where('quote_type_id', $quoteTypeId);
             }
 
-            if ($quoteTypeId == QuoteTypeId::GroupMedical) {
-                // Further filter by business type of insurance ID for group medical quotes
-                $isExists->where('business_type_of_insurance_id', $quoteModel->business_type_of_insurance_id);
-            }
+            // if ($quoteTypeId == QuoteTypeId::Business) {
+            //     // Further filter by business type of insurance ID for group medical quotes
+            //     $isExists->where('business_type_of_insurance_id', $quoteModel->business_type_of_insurance_id);
+            // }
+
 
             // Check if any records match the criteria
             $isExists = $isExists->exists();
