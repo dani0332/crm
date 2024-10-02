@@ -1845,21 +1845,29 @@ const finalizePaymentForm = (payment, capture_approval) => {
 
     if (isPaymentLocked.value) {
       isFieldReadonly.value = true;
+<<<<<<< HEAD
+    } else if (isAnyPaid(payment) && payment.total_price <= payment.total_amount + payment.discount_value) {
+=======
     } else if (
       isAnyPaid &&
       payment.total_price <= payment.total_amount + payment.discount_value
     ) {
       //FOR EDIT
+>>>>>>> 473c959f07aa6bb879f9dc49c0bb43be0fe813e9
       if (is_lacking_payment.value) {
         isFieldReadonly.value = false;
         isTotalPriceUpdated.value = true;
       } else {
         isFieldReadonly.value = true;
       }
+<<<<<<< HEAD
+    } else if (payment.total_price > payment.total_amount + payment.discount_value) {
+=======
     } else if (
       payment.total_price >
       payment.total_amount + payment.discount_value
     ) {
+>>>>>>> 473c959f07aa6bb879f9dc49c0bb43be0fe813e9
       isFieldReadonly.value = false;
       isTotalPriceUpdated.value = true;
     } else {
@@ -3037,8 +3045,17 @@ const isSplitDeleteEnabled = computed(() => {
   return (
     paymentMethodsForm.frequency != paymentFrequencyEnum.UPFRONT &&
     can(permissionEnum.PaymentsEdit) &&
+<<<<<<< HEAD
     props.quoteRequest.quote_status_id != page.props.quoteStatusEnum.PolicyBooked
   );
+=======
+    props.quoteRequest.quote_status_id !=
+      page.props.quoteStatusEnum.PolicyBooked
+  ) {
+    return true;
+  }
+  return false;
+>>>>>>> 473c959f07aa6bb879f9dc49c0bb43be0fe813e9
 });
 </script>
 

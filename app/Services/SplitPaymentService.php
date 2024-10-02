@@ -1032,9 +1032,9 @@ class SplitPaymentService
                     $firstSplitPayment = $masterPayment->paymentSplits()->where(['code' => $masterPayment->code, 'sr_no' => '1'])->first();
                     if (isset($firstSplitPayment)) {
                         $masterPayment->payment_methods_code = $firstSplitPayment->payment_method;
-                        if($firstSplitPayment->payment_status_id != PaymentStatusEnum::PAID){
+                        if ($firstSplitPayment->payment_status_id != PaymentStatusEnum::PAID) {
                             $masterPayment->payment_status_id = $firstSplitPayment->payment_status_id;
-                        }                        
+                        }
                     }
 
                 } else {
