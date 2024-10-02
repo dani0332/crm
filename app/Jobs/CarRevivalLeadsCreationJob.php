@@ -121,7 +121,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                     return false;
                 } else {
                     $revivalCarQuoteUUID = $capiResponse->quoteUID;
-                    info($logPrefix.$this->lead->uuid.'- childLeadCreated - '.$revivalCarQuoteUUID);
+                    info($logPrefix.$this->lead->uuid.' - childLeadCreated - '.$revivalCarQuoteUUID);
                 }
             } else {
                 $revivalCarQuoteUUID = $carQuoteExists->uuid;
@@ -200,11 +200,11 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                         'callSource' => 'imcrm',
                     ]);
 
-                    info($logPrefix.' - send-ocb-whatsapp-revival -'.$revivalCarQuoteUUID.' - '.json_encode($response));
+                    info($logPrefix.'send-ocb-whatsapp-revival - '.$revivalCarQuoteUUID.' - '.json_encode($response));
 
                     CarQuote::find($this->lead->id)->update(['is_revived' => true]);
                 } else {
-                    info($logPrefix.'carRevivalParentLead -'.$this->lead->uuid.'- childLead - '.$revivalCarQuoteUUID.'emailIsNotSent - '.$emailData->customerEmail);
+                    info($logPrefix.'carRevivalParentLead - '.$this->lead->uuid.' - childLead - '.$revivalCarQuoteUUID.'emailIsNotSent - '.$emailData->customerEmail);
                 }
             }
         } catch (\Exception $exception) {
