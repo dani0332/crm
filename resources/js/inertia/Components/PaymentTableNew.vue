@@ -1859,10 +1859,16 @@ const finalizePaymentForm = (payment, capture_approval) => {
     updateTotalValues();
     if (isPaymentLocked.value) {
       isFieldReadonly.value = true;
-    } else if (isAnyPaid && payment.total_price <= payment.total_amount + payment.discount_value) {
+    } else if (
+      isAnyPaid &&
+      payment.total_price <= payment.total_amount + payment.discount_value
+    ) {
       isFieldReadonly.value = is_lacking_payment.value ? false : true;
       isTotalPriceUpdated.value = is_lacking_payment.value;
-    } else if (payment.total_price > payment.total_amount + payment.discount_value) {
+    } else if (
+      payment.total_price >
+      payment.total_amount + payment.discount_value
+    ) {
       isFieldReadonly.value = false;
       isTotalPriceUpdated.value = true;
     } else {
@@ -1875,17 +1881,26 @@ const finalizePaymentForm = (payment, capture_approval) => {
   };
 
   const handleDiscount = () => {
-    if (['family_employee_discount', 'employee_discount'].includes(payment.discount_type) && payment.discount_value > 0) {
+    if (
+      ['family_employee_discount', 'employee_discount'].includes(
+        payment.discount_type,
+      ) &&
+      payment.discount_value > 0
+    ) {
       discountValue.value = payment.discount_value;
       calculatedDiscount.value = payment.discount_value;
     }
   };
 
   const handleTravelQuoteType = () => {
-    if (props.quoteType === 'Travel' && ['edit', 'view'].includes(paymentMethodsForm.status)) {
+    if (
+      props.quoteType === 'Travel' &&
+      ['edit', 'view'].includes(paymentMethodsForm.status)
+    ) {
       planDetail.value = payment.travel_plan;
       if (!(props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
-        planDetail.value['insurance_provider'] = payment.travel_plan.insurance_provider;
+        planDetail.value['insurance_provider'] =
+          payment.travel_plan.insurance_provider;
       }
     }
   };
