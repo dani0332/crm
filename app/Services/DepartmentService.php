@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Department;
 use App\Models\DepartmentTeams;
 use App\Models\Team;
-use App\Models\User;
 
 class DepartmentService extends BaseService
 {
@@ -76,7 +75,8 @@ class DepartmentService extends BaseService
         return Team::all();
     }
 
-    public function syncUserDepartments($user,$departmentIds){
+    public function syncUserDepartments($user, $departmentIds)
+    {
         $user->departments()->sync($departmentIds);  // Sync the department IDs
     }
 

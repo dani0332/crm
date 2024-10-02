@@ -3,10 +3,10 @@
 namespace App\Traits;
 
 use App\Enums\TeamTypeEnum;
+use App\Models\Department;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use App\Models\Department;
 
 trait TeamHierarchyTrait
 {
@@ -198,12 +198,13 @@ trait TeamHierarchyTrait
 
     public function getDepartmentsByTeamIds($ids)
     {
-       return Department::whereHas('teams', function ($query) use ($ids) {
+        return Department::whereHas('teams', function ($query) use ($ids) {
             $query->whereIn('team_id', $ids);
         })->get();
     }
 
-    public function getUserDepartments($userId){
+    public function getUserDepartments($userId)
+    {
         return DB::table('user_departments')->where('user_id', $userId)->get();
     }
 }

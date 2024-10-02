@@ -9,6 +9,7 @@ use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\DepartmentService;
 use App\Services\LeadAllocationService;
 use App\Services\UserService;
 use App\Traits\TeamHierarchyTrait;
@@ -18,7 +19,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
-use App\Services\DepartmentService;
 
 class UserController extends Controller
 {
@@ -174,7 +174,7 @@ class UserController extends Controller
         $productName = implode(',', $this->getUserProducts($user->id)->pluck('name')->toArray());
         $user->roles = $user->roles->pluck('name')->toArray();
         $user->permissions = $user->permissions->pluck('name')->toArray();
-        $departments = implode(',',  $user->departments->pluck('name')->toArray()) ?? '';
+        $departments = implode(',', $user->departments->pluck('name')->toArray()) ?? '';
 
         if ($user->additional_team_ids != '') {
             $additionalTeamNamesArray = Team::whereIn('id', explode(',', $user->additional_team_ids))->where('type', TeamTypeEnum::PRODUCT)->pluck('name')->toArray();
@@ -223,6 +223,7 @@ class UserController extends Controller
         $userPermissions = $user->getDirectPermissions()->pluck('id')->toArray();
         $departmentIds = $this->getUserDepartments($user->id)->pluck('department_id')->toArray();
         $departments = $this->userService->getDepartmentsList();
+
         return inertia('Admin/Users/Form', [
             'user' => $user,
             'roles' => $roles,
@@ -274,8 +275,8 @@ class UserController extends Controller
         }
         $user->is_active = $request->is_active ? 1 : 0;
 
-        if($request->department_ids != null) {
-            app(DepartmentService::class)->syncUserDepartments($user,$request->department_ids);
+        if ($request->department_ids != null) {
+            app(DepartmentService::class)->syncUserDepartments($user, $request->department_ids);
         }
         /*
          * temp fix: health lead allocation is using team_id to target health product
@@ -375,7 +376,8 @@ class UserController extends Controller
         return $this->getTeamsByProductIds($request->productIds);
     }
 
-    public function getTeamDepartments(Request $request){
+    public function getTeamDepartments(Request $request)
+    {
         return $this->getDepartmentsByTeamIds($request->teamIds);
     }
 
