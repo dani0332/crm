@@ -1024,13 +1024,13 @@ class SplitPaymentService
             $masterPayment = $paymentSplit->payment;
 
             if ($masterPayment->frequency != PaymentFrequency::UPFRONT) {
-                $this->updateMasterPayment($masterPayment, $paymentSplit);
+                $this->updateMasterPayment($masterPayment);
                 $this->deletePaymentSplit($paymentSplit);
             }
         }, $maxRetries);
     }
 
-    private function updateMasterPayment($masterPayment, $paymentSplit)
+    private function updateMasterPayment($masterPayment)
     {
         if ($masterPayment->total_payments == 2) {
             $this->updateMasterPaymentForTwoSplits($masterPayment);
