@@ -282,7 +282,7 @@ const dateFormat = date =>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">RECEIVE MARKETING UPDATES</dt>
-                <dd>{{ quote.receive_marketing_updates ? 'YES' : 'NO' }}</dd>
+                <dd>{{ quote.receive_marketing_updates ? 'Yes' : 'No' }}</dd>
               </div>
               <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
             </dl>
