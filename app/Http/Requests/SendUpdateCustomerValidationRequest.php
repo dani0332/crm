@@ -94,7 +94,7 @@ class SendUpdateCustomerValidationRequest extends FormRequest
 
             switch ($category) {
                 case SendUpdateLogStatusEnum::CPD:
-                    if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED && ! $checkTransactionApprovedAuditLogs && ! in_array($this->sendUpdate->status, $bypassStatuses)) {
+                    if (($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED && ! $checkTransactionApprovedAuditLogs) && ! in_array($this->sendUpdate->status, $bypassStatuses)) {
                         $validator->errors()->add('error', 'Transaction approval is required. ');
                     }
                     break;
