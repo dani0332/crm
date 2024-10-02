@@ -2942,6 +2942,7 @@ let is_lacking_payment = ref(
 const isPaidEditable = ref(
   page.props?.bookPolicyDetails?.isPaidEditable ||
     page.props?.bookingDetails?.isPaidEditable ||
+    page.props?.isPaidEditable ||
     false,
 );
 
@@ -2953,10 +2954,24 @@ watch(
 );
 
 watch(
+    () => page.props?.bookingDetails?.isLackingOfPayment,
+    newVal => {
+      is_lacking_payment.value = newVal || false;
+    },
+);
+
+watch(
   () => page.props?.bookPolicyDetails?.isPaidEditable,
   newVal => {
     isPaidEditable.value = newVal || false;
   },
+);
+
+watch(
+    () => page.props?.isPaidEditable,
+    newVal => {
+      isPaidEditable.value = newVal || false;
+    },
 );
 
 const discountTypeLabel = computed(() => {
