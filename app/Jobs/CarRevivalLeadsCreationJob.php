@@ -128,7 +128,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
                 $record = DttRevival::where([
                     'quote_type_id' => QuoteTypes::CAR->id(),
-                    'uuid' => $revivalCarQuoteUUID
+                    'uuid' => $revivalCarQuoteUUID,
                 ])->first();
                 if ($record) {
                     CarQuote::find($this->lead->id)->update(['is_revived' => true]);
@@ -137,7 +137,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
             $this->lead->refresh();
 
-            if ($revivalCarQuoteUUID  && ! $record) {
+            if ($revivalCarQuoteUUID && ! $record) {
 
                 $carQuote = $this->getQuoteObject(QuoteTypes::CAR->value, $revivalCarQuoteUUID);
 
@@ -186,7 +186,6 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
                     // Get the latest quote batch and assign it to the lead.
                     $quoteBatch = QuoteBatches::latest()->first();
-
 
                     DttRevival::create([
                         'quote_type_id' => QuoteTypes::CAR->id(),
