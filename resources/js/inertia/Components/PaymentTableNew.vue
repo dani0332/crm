@@ -1856,8 +1856,8 @@ const finalizePaymentForm = (payment, capture_approval) => {
   };
 
   const handleEditStatus = () => {
-     updateTotalValues();
-     if (isPaymentLocked.value) {
+    updateTotalValues();
+    if (isPaymentLocked.value) {
       isFieldReadonly.value = true;
     } else if (
       isAnyPaid(payment) &&
@@ -1871,7 +1871,7 @@ const finalizePaymentForm = (payment, capture_approval) => {
     ) {
       isFieldReadonly.value = false;
       isTotalPriceUpdated.value = true;
-    } else {      
+    } else {
       isFieldReadonly.value = false;
     }
   };
