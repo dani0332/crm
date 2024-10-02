@@ -1735,7 +1735,12 @@ const resetPaymentForm = () => {
   isApproveNotChecked.value = true;
 };
 
-const initializePaymentForm = (payment, split_payment_id, sr_no, capture_approval) => {
+const initializePaymentForm = (
+  payment,
+  split_payment_id,
+  sr_no,
+  capture_approval,
+) => {
   if (sr_no > 0) {
     splitPaymentNo.value = sr_no;
     isFieldReadonly.value = true;
@@ -1788,7 +1793,7 @@ const initializePaymentForm = (payment, split_payment_id, sr_no, capture_approva
   }
 };
 
-const processPaymentSplits = (payment) => {
+const processPaymentSplits = payment => {
   const paidStatusIds = [
     props.paymentStatusEnum.PAID,
     props.paymentStatusEnum.PARTIALLY_PAID,
@@ -1804,11 +1809,14 @@ const processPaymentSplits = (payment) => {
       totalPaidAmount.value++;
       paidAmountSum.value += parseFloat(split.payment_amount);
     }
-    authorizedPayments.value[i] = split.payment_status_id === props.paymentStatusEnum.AUTHORISED;
+    authorizedPayments.value[i] =
+      split.payment_status_id === props.paymentStatusEnum.AUTHORISED;
     fileUploadModels.value[i] = [];
     paymentMethodsModels.value[i] = split.payment_method.code;
     splitAmountModels.value[i] = split.payment_amount;
-    dueDateModels.value[i] = split.due_date ? moment(split.due_date).format('YYYY-MM-DD') : '';
+    dueDateModels.value[i] = split.due_date
+      ? moment(split.due_date).format('YYYY-MM-DD')
+      : '';
     collectionAmountModels.value[i] = split.collection_amount;
 
     if (['CHQ', 'PDC'].includes(split.payment_method.code)) {
@@ -1833,7 +1841,10 @@ const processPaymentSplits = (payment) => {
     }
   }
 
-  if (paymentMethodsForm.status == 'view' && paymentMethodsForm.collection_type === 'insurer') {
+  if (
+    paymentMethodsForm.status == 'view' &&
+    paymentMethodsForm.collection_type === 'insurer'
+  ) {
     approvedDocumentModel.value = fileUploadModels.value.slice();
   }
 };
@@ -1872,15 +1883,24 @@ const finalizePaymentForm = (payment, capture_approval) => {
     totalAmount.value = payment.total_price - payment.discount_value;
   }
 
-  if (['family_employee_discount', 'employee_discount'].includes(payment.discount_type) && payment.discount_value > 0) {
+  if (
+    ['family_employee_discount', 'employee_discount'].includes(
+      payment.discount_type,
+    ) &&
+    payment.discount_value > 0
+  ) {
     discountValue.value = payment.discount_value;
     calculatedDiscount.value = payment.discount_value;
   }
 
-  if (props.quoteType === 'Travel' && ['edit', 'view'].includes(paymentMethodsForm.status)) {
+  if (
+    props.quoteType === 'Travel' &&
+    ['edit', 'view'].includes(paymentMethodsForm.status)
+  ) {
     planDetail.value = payment.travel_plan;
     if (!(props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
-      planDetail.value['insurance_provider'] = payment.travel_plan.insurance_provider;
+      planDetail.value['insurance_provider'] =
+        payment.travel_plan.insurance_provider;
     }
   }
 
@@ -1899,7 +1919,7 @@ const finalizePaymentForm = (payment, capture_approval) => {
   createPaymentModal.value = true;
 };
 
-const isAnyPaid = (payment) => {
+const isAnyPaid = payment => {
   const paidStatusIds = [
     props.paymentStatusEnum.PAID,
     props.paymentStatusEnum.PARTIALLY_PAID,
@@ -1908,7 +1928,9 @@ const isAnyPaid = (payment) => {
     props.paymentStatusEnum.PARTIAL_CAPTURED,
   ];
 
-  return payment.payment_splits.some(split => paidStatusIds.includes(split.payment_status_id));
+  return payment.payment_splits.some(split =>
+    paidStatusIds.includes(split.payment_status_id),
+  );
 };
 
 const paymentMethodsForm = useForm({
@@ -3037,7 +3059,8 @@ const isSplitDeleteEnabled = computed(() => {
   return (
     paymentMethodsForm.frequency != paymentFrequencyEnum.UPFRONT &&
     can(permissionEnum.PaymentsEdit) &&
-    props.quoteRequest.quote_status_id != page.props.quoteStatusEnum.PolicyBooked
+    props.quoteRequest.quote_status_id !=
+      page.props.quoteStatusEnum.PolicyBooked
   );
 });
 </script>
