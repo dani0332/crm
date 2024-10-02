@@ -712,6 +712,7 @@ class SendUpdateLogService
 
         if ($paymentBeforeUpdate) {
             $this->updatePaymentDetails($paymentBeforeUpdate, $sendUpdateLog, true);
+            app(SplitPaymentService::class)->updateCommissionSchedule($paymentBeforeUpdate);
         }
 
         $payment = Payment::with('paymentSplits')->where(['send_update_log_id' => $sendUpdateRequest->sendUpdateId])->first();
