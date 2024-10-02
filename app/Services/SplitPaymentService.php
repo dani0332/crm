@@ -1023,8 +1023,8 @@ class SplitPaymentService
             $paymentSplit = PaymentSplits::find($splitPaymentId);
             $masterPayment = $paymentSplit->payment;
             if ($masterPayment->frequency != PaymentFrequency::UPFRONT) {
-                $this->updateMasterPayment($masterPayment);
                 $this->deletePaymentSplit($paymentSplit);
+                $this->updateMasterPayment($masterPayment);
             }
         }, $maxRetries);
     }

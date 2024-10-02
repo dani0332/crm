@@ -1856,11 +1856,11 @@ const finalizePaymentForm = (payment, capture_approval) => {
   };
 
   const handleEditStatus = () => {
-    updateTotalValues();
-    if (isPaymentLocked.value) {
+     updateTotalValues();
+     if (isPaymentLocked.value) {
       isFieldReadonly.value = true;
     } else if (
-      isAnyPaid &&
+      isAnyPaid(payment) &&
       payment.total_price <= payment.total_amount + payment.discount_value
     ) {
       isFieldReadonly.value = !is_lacking_payment.value;
@@ -1871,7 +1871,7 @@ const finalizePaymentForm = (payment, capture_approval) => {
     ) {
       isFieldReadonly.value = false;
       isTotalPriceUpdated.value = true;
-    } else {
+    } else {      
       isFieldReadonly.value = false;
     }
   };
@@ -1934,6 +1934,7 @@ const finalizePaymentForm = (payment, capture_approval) => {
 };
 
 const isAnyPaid = payment => {
+  console.log('isAnyPaid', payment);
   const paidStatusIds = [
     props.paymentStatusEnum.PAID,
     props.paymentStatusEnum.PARTIALLY_PAID,
