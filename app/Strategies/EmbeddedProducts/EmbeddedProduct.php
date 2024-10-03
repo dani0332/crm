@@ -209,13 +209,9 @@ class EmbeddedProduct
         return in_array($product, EmbeddedProductEnum::getAlfredProtectCodes());
     }
 
-    public function getDocumentList($ep, $transaction, $quoteObject, $canSendDocuments)
+    public function getDocumentList($ep, $transaction)
     {
         $epDocuments = $this->getPolicyWordings($ep);
-        $certificate = $this->getCertificate($ep, $transaction, $canSendDocuments);
-        if(!empty($certificate)) {
-            $epDocuments[] = $certificate;
-        }
         $epDocuments = array_merge($epDocuments, $this->getadditionalDocuments($transaction));
 
         return $epDocuments;
@@ -238,18 +234,12 @@ class EmbeddedProduct
                         'document_number' => 'Not Applicatble',
                         'url' => $pwDoc,
                         'path'=> $item->path,
-                        'can_view' => true,
                     ];
                 }
             }
         }
 
         return $epDocuments;
-    }
-
-    protected function getCertificate($ep, $transaction, $canSendDocuments)
-    {
-        return [];
     }
     
     protected function getadditionalDocuments($transaction)
@@ -282,7 +272,6 @@ class EmbeddedProduct
                 'document_number' => $documentNumber,
                 'url' => $document->doc_url !== '' ? $websiteURL . $document->doc_url : '',
                 'path' => $document->doc_url,
-                'can_view' => true,
             ];
         })->toArray();
 

@@ -37571,7 +37571,7 @@ class DocumentTypeSeeder extends Seeder
             'code' => QuoteDocumentsEnum::CAR_TAX_CREDIT,
             'category' => DocumentTypeCode::ISSUING_DOCUMENTS,
         ]), [
-            'text' => 'Car Tax Credit Note',
+            'text' => 'Tax Credit Note',
             'is_active' => 1,
             'quote_type_id' => 1,
             'folder_path' => 'car',
@@ -37587,7 +37587,7 @@ class DocumentTypeSeeder extends Seeder
             'code' => QuoteDocumentsEnum::CAR_TAX_INVOICE,
             'category' => DocumentTypeCode::ISSUING_DOCUMENTS,
         ]), [
-            'text' => 'Car Tax Invoice',
+            'text' => 'Tax Invoice',
             'is_active' => 1,
             'quote_type_id' => 1,
             'folder_path' => 'car',
@@ -37603,7 +37603,7 @@ class DocumentTypeSeeder extends Seeder
             'code' => QuoteDocumentsEnum::CAR_TAX_CREDIT_RAISE_BY_BUYER,
             'category' => DocumentTypeCode::ISSUING_DOCUMENTS,
         ]), [
-            'text' => 'Car Tax Credit Note Raise By Buyer',
+            'text' => 'Tax Credit Note Raise By Buyer',
             'is_active' => 1,
             'quote_type_id' => 1,
             'folder_path' => 'car',
@@ -37639,6 +37639,22 @@ class DocumentTypeSeeder extends Seeder
             'is_active' => 1,
             'quote_type_id' => 1,
             'folder_path' => 'car',
+            'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
+            'max_files' => 1,
+            'max_size' => 25,
+            'is_required' => 1,
+            'category' => DocumentTypeCode::EP,
+            'sort_order' => 14,
+        ]);
+
+        DocumentType::firstOrCreate(([
+            'code' => QuoteDocumentsEnum::EP,
+            'category' => DocumentTypeCode::EP,
+        ]), [
+            'text' => 'Embedded product document uploaded by Advisor',
+            'is_active' => 1,
+            'quote_type_id' => 6,
+            'folder_path' => 'bike',
             'accepted_files' => '.pdf,.xlsx,.xls,.docx,.doc,.jpeg,.jpg,.png',
             'max_files' => 1,
             'max_size' => 25,

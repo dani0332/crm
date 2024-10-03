@@ -34,6 +34,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PDF;
 use App\Models\DocumentType;
+use Illuminate\Support\Facades\Storage;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -137,56 +138,6 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         return $query->simplePaginate();
-    }
-
-    /**
-     * @return mixed
-     */
-    public function fetchDownloadCertificate($data)
-    {
-        $quoteId = $data['quoteId'];
-        $modelType = $data['modelType'];
-        $epId = $data['epId'];
-
-        $quoteObject = $this->getQuoteObject($modelType, $quoteId);
-
-        $ep = $this->where('id', $epId)->first();
-        $premium = '';
-        $optionsIds = [];
-        if ($ep->prices) {
-            $optionsIds = $ep->prices->pluck('id');
-        }
-
-        // certificate generation
-        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        $transaction = EmbeddedTransaction::where([
-            ['quote_type_id', '=', $quoteTypeId],
-            ['quote_request_id',  '=', $quoteId],
-            ['is_selected',  '=', true],
-        ])->whereIn('product_id', $optionsIds)->get();
-
-        $certificate_number = '';
-        $capturedAt = null;
-
-        if ($transaction->isNotEmpty()) {
-            $isAlfredProtect = EmbeddedProductStrategy::checkAlfredProtect($ep->short_code);
-            if ($isAlfredProtect) {
-                $strategy = $this->createStrategy($ep->short_code, $isAlfredProtect);
-                $attachments = $strategy->getCertificateDocument($ep, $transaction[0], $quoteObject);
-
-                return response()->json(
-                    ['attachments' => $attachments]
-                );
-            } else {
-                $certificate_number = $transaction[0]['certificate_number'];
-                $premium = $transaction[0]['price_with_vat'];
-                $capturedAt = $transaction[0]['payment_status_date'];
-            }
-        }
-        $short_code = $ep->short_code;
-        $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium, $capturedAt);
-
-        return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->stream()), 'name' => 'Salama_Certificate']);
     }
 
     /**
@@ -379,14 +330,10 @@ class EmbeddedProductRepository extends BaseRepository
             return 'Documents cannot be sent';
         }
 
-        $certificate_number = $transaction->isNotEmpty() ? $transaction[0]['certificate_number'] : '';
-        $premium = $transaction->isNotEmpty() ? $transaction[0]['price_with_vat'] : '';
-        $capturedAt = $transaction->isNotEmpty() ? $transaction[0]['payment_status_date'] : null;
-
         if ($isAlfredProtect) {
             return $this->sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData);
         } else {
-            return $this->sendMedexEmail($short_code, $quoteObject, $certificate_number, $premium, $capturedAt, $attachments, $advisorData, $ep);
+            return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $modelType, $attachments, $advisorData, $ep);
         }
     }
 
@@ -484,12 +431,17 @@ class EmbeddedProductRepository extends BaseRepository
         }
     }
 
-    private function sendMedexEmail($short_code, $quoteObject, $certificate_number, $premium, $capturedAt, $attachments, $advisorData, $ep)
+    private function sendMedexEmail($short_code, $quoteObject, $transaction, $modelType, $attachments, $advisorData, $ep)
     {
-        $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium, $capturedAt);
+        $pdf = $this->getPDF($short_code, $quoteObject, $transaction, $modelType);
+
         if ($pdf) {
+
+            $websiteURL = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
+            $url = $websiteURL . $pdf->doc_url;
+            $file = file_get_contents($url);
             $attachments[] = [
-                'Content' => base64_encode($pdf->output()),
+                'Content' => base64_encode($file),
                 'Name' => 'Salama_Certificate.pdf',
                 'ContentType' => 'application/pdf',
             ];
@@ -532,26 +484,35 @@ class EmbeddedProductRepository extends BaseRepository
 
     /**
      * Retrieves the PDF certificate for a specific product.
-     *
-     * @param  string  $short_code
-     * @param  object  $quoteObject
-     * @param  string  $certificate_number
-     * @param  float  $premium
-     * @param  null|Carbon  capturedAt
-     * @return PDF|null The PDF document or null if the short code is not defined in config.
+     * 
+     * @param mixed $short_code
+     * @param mixed $quoteObject
+     * @param mixed $transaction
+     * @param mixed $modelType
+     * @throws \Exception
+     * @return mixed
      */
     private function getPDF(
         $short_code,
         $quoteObject,
-        $certificate_number,
-        $premium,
-        $capturedAt
+        $transaction,
+        $modelType
     ) {
-        $pdf = null;
-        $epMdxV2From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V2_FROM)->first();
-        $epMdxV3From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V3_FROM)->first();
+        
+        $certificateDocument = null;
+        $certificate_number = $transaction->certificate_number;
+        $premium = $transaction->price_with_vat;
+        $capturedAt = $transaction->payment_status_date;
+
+        $certificateDocument = $transaction->documents->where('document_type_code', QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE)->first();
+        if($certificateDocument) {
+            return $certificateDocument;
+        }
+
         $certificatesConfig = config('embedded-products.certificates');
         if (isset($certificatesConfig[$short_code])) {
+            $epMdxV2From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V2_FROM)->first();
+            $epMdxV3From = ApplicationStorage::where('key_name', ApplicationStorageEnums::EP_MDX_V3_FROM)->first();
             $viewFile = $certificatesConfig[$short_code]['view_file'];
 
             if ($epMdxV3From && ! empty($capturedAt)
@@ -572,9 +533,33 @@ class EmbeddedProductRepository extends BaseRepository
                 ]
             )
                 ->loadView($viewFile, compact('viewData'));
+
+            $pdfContent = $pdf->output();
+            $docUuid = uniqid();
+            $title = "{$docUuid}_PolicyContract-{$certificate_number}.pdf";
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+            $documentType = DocumentType::where('code', QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE)->where('quote_type_id', $quoteTypeId)->first();
+            $filePathAzure = 'documents/' . $documentType->folder_path . '/' . $title;
+            Storage::disk('azureIM')->put($filePathAzure, $pdfContent);
+            if (!Storage::disk('azureIM')->exists($filePathAzure)) {
+                throw new Exception('Error uploading document');
+            }
+
+            $documentData = [
+                'doc_name' => $title,
+                'original_name' => $title,
+                'doc_url' => $filePathAzure,
+                'doc_mime_type' => 'application/pdf',
+                'document_type_code' => $documentType->code,
+                'document_type_text' => $documentType->text,
+                'doc_uuid' => $docUuid,
+                'created_by_id' => null,
+            ];
+
+            $certificateDocument = $transaction->documents()->create($documentData);
         }
 
-        return $pdf;
+        return $certificateDocument;
     }
 
     /**
@@ -796,7 +781,11 @@ class EmbeddedProductRepository extends BaseRepository
         $strategy = $this->createStrategy($ep->short_code, $isAlfredProtect);
 
         $canSendDocuments = $this->canSendDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
-        $epDocuments = $strategy->getDocumentList($ep, $transaction, $quoteObject, $canSendDocuments);
+        if($canSendDocuments) {
+            $this->getPDF($ep->short_code, $quoteObject, $transaction->first(), $data['modelType']);
+        }
+
+        $epDocuments = $strategy->getDocumentList($ep, $transaction);
 
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($data['modelType']));
         $documentType = DocumentType::where('code', QuoteDocumentsEnum::EP)->where('quote_type_id', $quoteTypeId)->first();

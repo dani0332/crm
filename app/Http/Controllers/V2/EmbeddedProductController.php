@@ -18,9 +18,9 @@ class EmbeddedProductController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_CONFIG, ['except' => ['sendDocument', 'downloadDocument', 'cancelPayment', 'getDocuments', 'uploadQuoteDocument', 'force']]);
+        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_CONFIG, ['except' => ['sendDocument', 'cancelPayment', 'getDocuments', 'uploadQuoteDocument', 'force']]);
         $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_PAYMENT_CANCEL, ['only' => ['cancelPayment']]);
-        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_VIEW, ['only' => ['sendDocument', 'downloadDocument', 'getDocuments', 'uploadQuoteDocument', 'force']]);
+        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_VIEW, ['only' => ['sendDocument', 'getDocuments', 'uploadQuoteDocument', 'force']]);
     }
 
     /**
@@ -135,11 +135,6 @@ class EmbeddedProductController extends Controller
         EmbeddedProductRepository::syncDocument($request->validated());
 
         return redirect()->back()->with('success', 'Re-gerating resquest processing');
-    }
-
-    public function downloadDocument(EmbeddedProducDocumentRequest $request)
-    {
-        return EmbeddedProductRepository::downloadCertificate($request->validated());
     }
 
     /**

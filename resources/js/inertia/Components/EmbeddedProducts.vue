@@ -99,40 +99,6 @@ const syncDocument = id => {
     });
 };
 
-const downloadDcoument = item => {
-  downloadLoader.value = true;
-  axios
-    .post(
-      '/embedded-products/download-document',
-      {
-        quoteId: props.quote.id,
-        modelType: props.modelType,
-        epId: item.ep_id,
-        isInertia: true,
-      },
-      {
-        responseType: 'json',
-      },
-    )
-    .then(response => {
-      const link = document.createElement('a');
-      let fileName = response.data.name;
-      link.href = response.data.data;
-      link.setAttribute('download', fileName);
-      document.body.appendChild(link);
-      link.click();
-      notification.success({
-        title: 'Certificate Downloaded',
-        position: 'top',
-      });
-    })
-    .catch(error => {
-      console.log(error);
-    })
-    .finally(() => {
-      downloadLoader.value = false;
-    });
-};
 const sendDcoument = id => {
   sendDocumentLoader.value = true;
   sendDocumentForm
@@ -148,33 +114,6 @@ const sendDcoument = id => {
       onError: () => {
         sendDocumentLoader.value = false;
       },
-    });
-};
-
-/**
- * this function use download embedded transaction documents issue from insurance provider
- */
-const downloadDocument = async id => {
-  downloadDocumentLoader.value = true;
-  const formData = {
-    quoteId: props.quote.id,
-    modelType: props.modelType,
-    epId: id,
-  };
-
-  axios
-    .post('/embedded-products/download-document', formData)
-    .then(response => {
-      if (response.data.attachments.length > 0) {
-        response.data.attachments.forEach(attachment => {
-          downloadFile(attachment);
-        });
-      }
-
-      downloadDocumentLoader.value = false;
-    })
-    .catch(error => {
-      downloadDocumentLoader.value = false;
     });
 };
 
@@ -424,12 +363,6 @@ const readOnlyMode = reactive({
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
-
-const executeAction = item => {
-  if (item.action === 'downloadDocument') {
-    downloadDcoument(item);
-  }
-};
 
 const addEpDocument = id => {
   modals.viewDocuments = false;
@@ -714,7 +647,6 @@ const onAddDocumentSubmit = event => {
                   outlined
                   :href="item.url"
                   target="_blank"
-                  v-if="item.url"
                 >
                   View
                 </x-button>
@@ -723,9 +655,8 @@ const onAddDocumentSubmit = event => {
                   size="xs"
                   color="emerald"
                   outlined
-                  :disabled="!item.url && !item.can_send"
                   :loading="downloadLoader"
-                  @click.prevent="item.url ? downloadFile(item) : executeAction(item)"
+                  @click.prevent="downloadFile(item)"
                 >
                   Download
                 </x-button>
