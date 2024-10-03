@@ -665,7 +665,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             ->orderByRaw("CAST(REGEXP_REPLACE(broker_invoice_number, '[^0-9]', '') AS UNSIGNED) DESC")
             ->first()->broker_invoice_number;
 
-
         $insuranceProviderLeadCount = ((int) $latestBINByInsurer) + 1;
 
         return $insuranceProviderCode.$insuranceProviderLeadCount;
