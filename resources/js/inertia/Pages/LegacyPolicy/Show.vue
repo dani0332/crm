@@ -13,21 +13,6 @@ const moveToImcrmModal = ref(false);
 const can = permission => useCan(permission);
 const itemCount = ref(false);
 
-const maskedEmail = computed(() => {
-  let emails = props.policy?.customer?.email;
-  if (emails) {
-    return maskEmail(emails);
-  }
-  return '';
-});
-
-const maskedMobileNumber = phone => {
-  if (phone) {
-    return maskPhone(phone);
-  }
-  return '';
-};
-
 const getS3TempUrl = async file => {
   try {
     const response = await axios.post('/legacy-policy/get-s3-temp-url', {
@@ -448,18 +433,18 @@ const dateFormat = date => {
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Email</dt>
-            <dd>{{ maskedEmail }}</dd>
+            <dd>{{ policy?.customer?.email }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Mobile Number</dt>
             <dd>
-              {{ maskedMobileNumber(policy?.customer?.mobile_phone) }}
+              {{ policy?.customer?.mobile_phone }}
             </dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Phone Number</dt>
             <dd>
-              {{ maskedMobileNumber(policy?.customer?.phone) }}
+              {{ policy?.customer?.phone }}
             </dd>
           </div>
           <div v-for="profile_data in kycDetails">
