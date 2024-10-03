@@ -24,19 +24,12 @@ class MAWelcomeJob implements ShouldQueue
     private $customer;
     private $source;
     private $tag;
-    private $berlinEndpoint;
-    private $berlinUserName;
-    private $berlinAuthPassword;
 
     public function __construct($customer, $source, $tag)
     {
         $this->customer = $customer;
         $this->source = $source;
         $this->tag = $tag;
-
-        $this->berlinEndpoint = config('constants.BERLIN_API_ENDPOINT');
-        $this->berlinUserName = config('constants.BERLIN_BASIC_AUTH_USER_NAME');
-        $this->berlinAuthPassword = config('constants.BERLIN_BASIC_AUTH_PASSWORD');
     }
 
     public function handle()
@@ -71,12 +64,12 @@ class MAWelcomeJob implements ShouldQueue
 
         $customerDataArr['email'] = $this->customer->email;
         $customerDataJson = json_encode($customerDataArr);
-        $magicUrlGeneratauthBasic = base64_encode($this->berlinUserName.':'.$this->berlinAuthPassword);
+        $magicUrlGeneratauthBasic = base64_encode(config('constants.BERLIN_BASIC_AUTH_USER_NAME').':'.config('constants.BERLIN_BASIC_AUTH_PASSWORD'));
         $clientExtendSubscription = new \GuzzleHttp\Client;
 
         try {
             $requestExtendSubscription = $clientExtendSubscription->post(
-                $this->berlinEndpoint.'/internal/extend-subscription',
+                config('constants.BERLIN_API_ENDPOINT').'/internal/extend-subscription',
                 [
                     'headers' => [
                         'Content-Type' => 'application/json',
