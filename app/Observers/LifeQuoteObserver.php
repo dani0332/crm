@@ -2,7 +2,6 @@
 
 namespace App\Observers;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Jobs\CourtesyEmailJob;
@@ -48,14 +47,10 @@ class LifeQuoteObserver
             in_array($lifeQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Life, 'quoteUID' => $lifeQuote->uuid]);
-            MAWelcomeJob::dispatchIf(
-                isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)) && $lifeQuote->customer,
-                $lifeQuote->customer?->first_name,
-                $lifeQuote->customer?->last_name,
-                $lifeQuote->customer?->email,
-                $lifeQuote->customer?->mobile_no,
-                'CUSTOMER_UPDATE',
-                'customer-update-myalfred-we'
+            MAWelcomeJob::dispatch(
+                $lifeQuote->customer,
+                'LEAD_STATUS_UPDATE',
+                'lead-status-update-myalfred-we'
             );
         }
     }

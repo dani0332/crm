@@ -71,6 +71,7 @@ class SplitPaymentService
             }
         }
     }
+
     // function to get the payment status of the child payment
     public function getChildPaymentStatus($splitPayment)
     {
@@ -589,6 +590,7 @@ class SplitPaymentService
 
         }
     }
+
     // function to get the payment lookups
     public function getPaymentLookups()
     {
@@ -820,14 +822,6 @@ class SplitPaymentService
 
                 $canCaptureEp = true;
 
-                // Log for Berlin Service - Extend Customer Subscription
-                $customerData = app(CustomerService::class)->getCustomerById($quoteModel->customer_id);
-                if ($customerData) {
-                    $quoteOptions = QuoteTypeId::getOptions();
-                    $responseExtend = app(BerlinService::class)->extendCustomerSubscription($customerData->id, $customerData->email, strtoupper($quoteOptions[$quoteTypeId]).'-QUOTE', strtolower($quoteOptions[$quoteTypeId]).'-quote-myalfred-we');
-                    info('Transaction Approved and subscription extended for Quote Code: '.$quoteModel->code.'. Response: '.$responseExtend);
-                }
-
                 // Log for creating duplicate lead for TRAVEL
                 if ($quoteTypeId == QuoteTypeId::Travel && $quoteModel->payments()->count() > 1 && ! $sendUpdateId) {
                     if (app(TravelQuoteService::class)->createDuplicateLead($quoteModel)) {
@@ -1014,5 +1008,4 @@ class SplitPaymentService
 
         return [$priceWithoutVat, $vat];
     }
-
 }
