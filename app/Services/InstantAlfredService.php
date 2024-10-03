@@ -145,12 +145,12 @@ class InstantAlfredService extends BaseService
                         // })
                         ->where('qt.quote_type_id', '=', QuoteTypeId::Health);
                 })
-                ->leftJoin('health_plan_type as hpt', 'hpt.id', '=', 'hqr.health_plan_type_id')
                 ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
                 ->leftJoin('lookups as lu', 'lu.id', '=', 'hqr.transaction_type_id')
                 ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
                 ->leftJoin('quote_batches as qb', 'qb.id', '=', 'hqr.quote_batch_id')
                 ->leftJoin('health_plan as hp', 'hp.id', '=', 'hqr.plan_id')
+                ->leftJoin('health_plan_type as hpt', 'hpt.id', '=', 'hp.plan_type_id')
                 ->leftJoin('insurance_provider as ihp', 'ihp.id', '=', 'hp.provider_id')
                 // ->leftJoin('insurance_provider as ins_provider', 'ins_provider.id', '=', 'hqr.currently_insured_with_id')
                 ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
