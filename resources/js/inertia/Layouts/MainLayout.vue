@@ -261,9 +261,8 @@ const activitiesUrl = computed(() => {
                     </x-tag> -->
                     <template #tooltip>
                       <div class="font-bold">
-                        InstantAlfred needs your help! ({{
-                          pendingActivityCount.pendingWhatsapp
-                        }}
+                        InstantAlfred needs your help! (
+                        {{ pendingActivityCount.pendingWhatsapp }}
                         ) customers are waiting for your WhatsApp message. Don't
                         forget to mark your activity as DONE
                       </div>
