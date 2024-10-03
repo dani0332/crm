@@ -91,7 +91,7 @@ class SendUpdateCustomerValidationRequest extends FormRequest
                     }
                     break;
                 case SendUpdateLogStatusEnum::EF:
-                    if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED) {
+                    if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED && ! in_array($this->sendUpdate->status, $bypassStatuses)) {
                         if (! in_array(
                             $option,
                             [
