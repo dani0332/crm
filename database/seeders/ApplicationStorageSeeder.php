@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EnvEnum;
 use App\Models\ApplicationStorage;
-use Illuminate\Console\Application;
 use Illuminate\Database\Seeder;
 
 class ApplicationStorageSeeder extends Seeder
