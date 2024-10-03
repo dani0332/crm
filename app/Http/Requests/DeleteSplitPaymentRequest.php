@@ -5,6 +5,8 @@ namespace App\Http\Requests;
 use App\Enums\PaymentStatusEnum;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Models\PaymentSplits;
+use App\Enums\PaymentFrequency;
 
 class DeleteSplitPaymentRequest extends FormRequest
 {
@@ -52,6 +54,11 @@ class DeleteSplitPaymentRequest extends FormRequest
                 PaymentStatusEnum::REFUNDED,
             ];
             if (in_array($this->input('payment_status_id'), $paidStatuses)) {
+                $validator->errors()->add('payment_status_id', 'Payment deletion not allowed.');
+            }
+
+            $paymentSplit = PaymentSplits::find($this->input('payment_split_id'));
+            if ($paymentSplit->payment->frequency == PaymentFrequency::UPFRONT) {
                 $validator->errors()->add('payment_status_id', 'Payment deletion not allowed.');
             }
         });

@@ -1022,10 +1022,8 @@ class SplitPaymentService
         $this->handleWithDeadlockRetries(function () use ($splitPaymentId) {
             $paymentSplit = PaymentSplits::find($splitPaymentId);
             $masterPayment = $paymentSplit->payment;
-            if ($masterPayment->frequency != PaymentFrequency::UPFRONT) {
-                $this->deletePaymentSplit($paymentSplit);
-                $this->updateMasterPayment($masterPayment);
-            }
+            $this->deletePaymentSplit($paymentSplit);
+            $this->updateMasterPayment($masterPayment);            
         }, $maxRetries);
     }
 
