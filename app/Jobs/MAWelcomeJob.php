@@ -129,15 +129,15 @@ class MAWelcomeJob implements ShouldQueue
                             }
                         }
                     }, 5);
+                    if ($this->customer->mobile_no) {
+                        app(SendSmsCustomerService::class)->sendMAInviteSMS($this->customer->email, $this->customer->mobile_no);
+                    }
                 }
             } else {
                 info('MAWelcomeJob - Email not sent to customer: '.$this->customer->email.' getStatusCode: '.$statusCode);
             }
         } catch (Exception $e) {
             Log::error('MAWelcomeJob - Error - Customer Email: '.$this->customer->email.' Message: '.$e->getMessage());
-        }
-        if ($this->customer->mobile_no) {
-            app(SendSmsCustomerService::class)->sendMAInviteSMS($this->customer->email, $this->customer->mobile_no);
         }
     }
 }
