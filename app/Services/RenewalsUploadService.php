@@ -1772,10 +1772,11 @@ class RenewalsUploadService
     {
         info('Validating batch: '.$batchName.' with end date: '.$endDate);
         // Extract year from endDate
-        $year = date('Y', strtotime($endDate));
+        $endDate = Carbon::createFromFormat('d/m/Y', $endDate);
+        $year = $endDate->format('Y');
 
         // Extract week number from endDate and remove leading zero if present
-        $weekNumber = 'W'.ltrim(date('W', strtotime($endDate)), '0');
+        $weekNumber = 'W'. $endDate->weekOfYear;
 
         info('Validating year: ' . $year . ' with week number: ' . $weekNumber);
 
