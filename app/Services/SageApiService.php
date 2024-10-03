@@ -240,7 +240,7 @@ class SageApiService
         info('fn bookStraightEndorsementOnSage - Payment frequency : '.$preparedData['payment']->frequency);
 
         $extraDetails = ['sage_request_type' => ($preparedData['payment']->frequency == PaymentFrequency::UPFRONT) ? SageEnum::SRT_CREATE_AR_PREM_COMM_INV : SageEnum::SRT_CREATE_AR_SPPAY_INV];
-        $extraDetails['userId'] = $sageRequestPayload->userId;
+        $extraDetails['userId'] = $sageRequestPayload->userId  ?? null;
 
         if (isset($preparedData['mainLeadDetails'])) {
             $extraDetails['mainLeadDetails'] = $preparedData['mainLeadDetails'];
@@ -304,7 +304,7 @@ class SageApiService
         ];
 
         $extraDetails = ['sage_request_type' => SageEnum::SRT_REV_CORR_AR_PREM_COMM_INV];
-        $extraDetails['userId'] = $sageRequestPayload->userId;
+        $extraDetails['userId'] = $sageRequestPayload->userId  ?? null;
 
         if (isset($preparedData['mainLeadDetails'])) {
             $extraDetails['mainLeadDetails'] = $preparedData['mainLeadDetails'];
@@ -385,7 +385,7 @@ class SageApiService
     {
         [$reversalInvoiceDetails, $sendUpdateLog, $getRequestType, $sageLogArray, $extraDetails] = $reversalInvoiceDetails;
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
-        $userId = $extraDetails['userId'];
+        $userId = $extraDetails['userId']  ?? null;
 
         $sageEntryTypes = [
             SageEnum::SRT_CREATE_AR_PREM_COMM_INV => SageEnum::SRT_GET_AR_INVOICE,
@@ -776,7 +776,7 @@ class SageApiService
 
         $sageEntryType = $extraDetails['sage_entry_type'] ?? SageEnum::SCT_STRAIGHT;
         $reverseInvoiceDetails = $extraDetails['sageReversalInvoice'] ?? '';
-        $userId = $extraDetails['userId'];
+        $userId = $extraDetails['userId']  ?? null;
 
         $totalSteps = 13;
         $stepsMapping = ['step_1' => 2, 'step_2' => 3, 'step_3' => 4, 'step_4' => 5];
@@ -981,7 +981,7 @@ class SageApiService
 
         $sageEntryType = $extraDetails['sage_entry_type'] ?? SageEnum::SCT_STRAIGHT;
         $reverseInvoiceDetails = $extraDetails['sageReversalInvoice'] ?? '';
-        $userId = $extraDetails['userId'];
+        $userId = $extraDetails['userId'] ?? null;
 
         $totalSteps = 13;
         $stepsMapping = ['step_1' => 5, 'step_2' => 6, 'step_3' => 7];
@@ -1105,7 +1105,7 @@ class SageApiService
 
         $sageEntryType = $extraDetails['sage_entry_type'] ?? SageEnum::SCT_STRAIGHT;
         $reverseInvoiceDetails = $extraDetails['sageReversalInvoice'] ?? '';
-        $userId = $extraDetails['userId'];
+        $userId = $extraDetails['userId']  ?? null;
 
         $totalSteps = 15;
         $stepsMapping = ['step_1' => 6, 'step_2' => 7, 'step_3' => 8, 'step_4' => 9];
@@ -1283,7 +1283,7 @@ class SageApiService
         [$sageRequest, $quote, $sageLogArray, $extraDetails] = $sageRequestDataArray;
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
         $isReversalDiscount = isset($extraDetails['is_reversal_discount']) ?? false;
-        $userId = $extraDetails['userId'];
+        $userId = $extraDetails['userId']  ?? null;
         $isDiscountApplied = $sageRequest->discount > 0;
 
         $sageEntryType = $extraDetails['sage_entry_type'] ?? SageEnum::SCT_STRAIGHT;
