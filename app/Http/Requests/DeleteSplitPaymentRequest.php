@@ -29,7 +29,7 @@ class DeleteSplitPaymentRequest extends FormRequest
         return [
             'model_type' => 'required|string',
             'quote_id' => 'required|integer',
-            'payment_split_id' => 'required|integer|exists:payment_splits,id',
+            'payment_split_id' => 'required|integer',
             'payment_status_id' => 'required|integer',
         ];
     }
@@ -58,8 +58,10 @@ class DeleteSplitPaymentRequest extends FormRequest
             }
 
             $paymentSplit = PaymentSplits::find($this->input('payment_split_id'));
-            if ($paymentSplit->payment->frequency == PaymentFrequency::UPFRONT) {
-                $validator->errors()->add('payment_status_id', 'Payment deletion not allowed.');
+            if (!$paymentSplit) {
+                $validator->errors()->add('payment_split_id', 'Payment split does not exist.');
+            } elseif ($paymentSplit->payment->frequency == PaymentFrequency::UPFRONT) {
+                $validator->errors()->add('payment_status_id', 'Payment deletion not allowed for upfront payments.');
             }
         });
     }
