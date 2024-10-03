@@ -45,7 +45,7 @@ class InstantAlfredService extends BaseService
                     'qb.name as quote_batch_id_text',
                     'lu.text as transaction_type_text',
                     // 'qt.name as segment',
-                    'ps.text AS payment_status_id_text',
+                    'ps.text AS payment_status',
                     'cpip.text as provider_name',
                     'cti.text as plan_type',
                     'cp.text as plan_name',
