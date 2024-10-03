@@ -147,20 +147,23 @@ onMounted(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <div>
+              <x-tooltip placement="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Ref-ID
+                </label>
+                <template #tooltip> Reference ID</template>
+              </x-tooltip>
+            </div>
+            <div>
               <Link
                 :href="quoteRequest?.quote_link"
-              >
-                <x-tooltip placement="bottom">
-                  <label
-                    class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700 cursor-pointer"
-                  >
-                    Ref-ID
-                  </label>
-                  <template #tooltip> Reference ID</template>
-                </x-tooltip>
+                class="text-primary-500 hover:underline"
+                >
+                {{ quoteRequest.code }}
               </Link>
             </div>
-            <div>{{ quoteRequest.code }}</div>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">QUOTE STATUS</dt>
