@@ -89,7 +89,7 @@ class InstantAlfredService extends BaseService
                         CASE 
                         WHEN qt.name = '" . QuoteSegmentEnum::SIC->tag() . "' THEN 'SIC'
                         WHEN qt.name = '" . QuoteSegmentEnum::SIC->tag() . "' 
-                            AND cqr.source IN ('" . LeadSourceEnum::REVIVAL . "') 
+                            AND cqr.source IN ('" . LeadSourceEnum::REVIVAL . "', '" . LeadSourceEnum::REVIVAL_REPLIED . "', '" . LeadSourceEnum::REVIVAL_PAID . "') 
                             THEN 'SIC REVIVAL'
                         WHEN qt.name != '" . QuoteSegmentEnum::SIC->tag() . "' THEN 'NON SIC'
                         ELSE 'N/A'
