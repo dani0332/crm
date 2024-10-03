@@ -128,7 +128,7 @@ class DttHealth extends Command
                     info($logPrefix.' everything done');
                 })
                 ->allowFailures()
-                ->withDelay(5)
+                ->withDelay(30)
                 ->dispatch();
         } else {
             info($logPrefix.'------No lead Found------');

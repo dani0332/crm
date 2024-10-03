@@ -2,7 +2,10 @@
 
 namespace App\Jobs;
 
+use App\Enums\QuoteStatusEnum;
 use App\Models\DttRevival;
+use App\Models\HealthQuote;
+use App\Models\QuoteStatus;
 use App\Services\SendEmailCustomerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -35,10 +38,12 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
     {
         $response = app(SendEmailCustomerService::class)->sendDttEmail($this->data);
         if ($response == 201) {
+
+            HealthQuote::where('uuid', $this->data->uuid)->update(['quote_status_id' => QuoteStatusEnum::FollowedUp]);
             DttRevival::where('id', $this->data->id)->increment('follow_up_email_count');
-            info('healthRevivalFollowUp email is sent  -'.$this->data->customerEmail);
+            info('healthRevivalFollowUp email is sent  -' . $this->data->customerEmail);
         } else {
-            info('healthRevivalFollowUp email is not sent -'.$this->data->customerEmail);
+            info('healthRevivalFollowUp email is not sent -' . $this->data->customerEmail);
         }
     }
 }
