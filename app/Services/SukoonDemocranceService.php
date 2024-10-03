@@ -218,7 +218,7 @@ class SukoonDemocranceService
             // Handle the case where the content is empty or contains the specific response message
             if (empty($content) || preg_match($pattern, $content)) {
                 $message = 'Document is not available on democrance';
-                $this->logFailure($message.' ' . $templateId . ' doc_code : ' . $docCode, $message, ['quote' => $quote, 'embeddedTransaction' => $embeddedTransaction]);
+                $this->logFailure($message.' '.$templateId.' doc_code : '.$docCode, $message, ['quote' => $quote, 'embeddedTransaction' => $embeddedTransaction]);
             }
 
             $headers = $result->toPsrResponse()->getHeader('Content-Disposition');
@@ -267,7 +267,7 @@ class SukoonDemocranceService
                 }
             } else {
                 $message = 'Unable to determine filename from the response headers.';
-                $this->logFailure($message . ' ' . $templateId . ' doc_code : ' . $docCode, $message, ['quote' => $quote, 'embeddedTransaction' => $embeddedTransaction]);
+                $this->logFailure($message.' '.$templateId.' doc_code : '.$docCode, $message, ['quote' => $quote, 'embeddedTransaction' => $embeddedTransaction]);
             }
         } catch (Exception $e) {
             $this->logFailure('Get Document template_id : '.$templateId.' doc_code : '.$docCode, $e->getMessage(), ['quote' => $quote, 'embeddedTransaction' => $embeddedTransaction]);
@@ -577,7 +577,7 @@ class SukoonDemocranceService
             file_put_contents($responseFilePath, $response);
             $response = 'Response too large, saved to: '.$responseFilePath;
         }
-        // This below unsetRelation is used to avoid the long response data in the log 
+        // This below unsetRelation is used to avoid the long response data in the log
         if ($this->currentQuote->relationLoaded('embeddedTransactions')) {
             foreach ($this->currentQuote->embeddedTransactions as $transaction) {
                 if ($transaction->relationLoaded('product')) {
@@ -588,7 +588,7 @@ class SukoonDemocranceService
                 }
             }
         }
-        
+
         if ($this->currentQuote->relationLoaded('emirate')) {
             $this->currentQuote->unsetRelation('emirate');
         }
