@@ -616,9 +616,27 @@ class ApplicationStorageSeeder extends Seeder
         );
 
         ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_SIC_MOTOR_RENEWAL_WORKFLOW],
+            [
+                'value' => 'https://capture.eu-west-1.nest.messagebird.com/webhooks/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/85a0a2b6-51b9-4ac5-9319-a6ada510025b',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CAR_EMAIL_REPLY_TO],
+            [
+                'value' => 'instant@alfred.insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::TRAVEL_EMAIL_REPLY_TO],
             [
-                'value' => 'travel@insurancemarket.ae',
+                'value' => 'instant@alfred.insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
@@ -626,9 +644,19 @@ class ApplicationStorageSeeder extends Seeder
         );
 
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_SIC_MOTOR_RENEWAL_WORKFLOW],
+            ['key_name' => ApplicationStorageEnums::TRAVEL_DISPLAY_NAME],
             [
-                'value' => 'https://capture.eu-west-1.nest.messagebird.com/webhooks/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/85a0a2b6-51b9-4ac5-9319-a6ada510025b',
+                'value' => 'InsuranceMarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CAR_DISPLAY_NAME],
+            [
+                'value' => 'InsuranceMarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
