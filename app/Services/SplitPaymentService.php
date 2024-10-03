@@ -1023,7 +1023,7 @@ class SplitPaymentService
             $paymentSplit = PaymentSplits::find($splitPaymentId);
             $masterPayment = $paymentSplit->payment;
             $this->deletePaymentSplit($paymentSplit);
-            $this->updateMasterPayment($masterPayment);            
+            $this->updateMasterPayment($masterPayment);
         }, $maxRetries);
     }
 

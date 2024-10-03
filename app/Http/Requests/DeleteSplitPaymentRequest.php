@@ -2,11 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PaymentFrequency;
 use App\Enums\PaymentStatusEnum;
+use App\Models\PaymentSplits;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
-use App\Models\PaymentSplits;
-use App\Enums\PaymentFrequency;
 
 class DeleteSplitPaymentRequest extends FormRequest
 {
