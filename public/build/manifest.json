@@ -1,18 +1,6 @@
 {
   "resources/js/inertia/inertia.js": {
-<<<<<<< HEAD
-    "file": "assets/inertia-B_M0NB79.js",
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-    "file": "assets/inertia-CfBYn7g5.js",
-=======
-    "file": "assets/inertia-DvZIvXIf.js",
->>>>>>> d4a5ec3de7c5a8683a66d33c94e8b710daf23447
-=======
-    "file": "assets/inertia-DxZCDKs7.js",
->>>>>>> 19b79f262436926d5acd58ba7bbf86109b31c517
->>>>>>> 65ef4eb35f7fd2abc09730ed57b2032f68ebbf37
+    "file": "assets/inertia-CiWM-n4o.js",
     "name": "inertia",
     "src": "resources/js/inertia/inertia.js",
     "isEntry": true,
