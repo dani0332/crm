@@ -612,12 +612,12 @@ const formatDate = dateString =>
       hide-footer
     >
       <template #item-code="{ code, uuid }">
-        <a
+        <Link
           :href="route('amt.show', uuid)"
           class="text-primary-500 hover:underline"
         >
           {{ code }}
-        </a>
+        </Link>
       </template>
       <template #item-authorized_at="item">
         <p v-if="item.payment_status_id_text === 'AUTHORISED'">
