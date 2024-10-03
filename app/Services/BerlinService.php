@@ -2,9 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Jobs\MAWelcomeJob;
-use App\Models\MyAlFredUser;
 use Illuminate\Support\Facades\Log;
 
 class BerlinService extends BaseService
@@ -98,76 +95,5 @@ class BerlinService extends BaseService
         }
 
         return $apiResponse;
-    }
-
-    public function extendCustomerSubscription($customerId, $customerEmail, $source, $tag, $isImport = false)
-    {
-        $customer = MyAlFredUser::select('signup_url', 'code')->where('customer_id', $customerId)->latest()->first();
-
-        if (! $customer) {
-            $customer = $this->customerService->getCustomerById($customerId);
-            $customer->code = null;
-        }
-
-        if (! $customer) {
-            Log::error('Berlin Service - extendCustomerSubscription Error: MyAlFredUser not found - Customer ID: '.$customerId);
-
-            return false;
-        }
-
-        $isToken = strlen($customer->code) > 8;
-        $hasToken = ! is_null($customer->code);
-
-        $customerDataArr = [];
-
-        if ($hasToken) {
-            $customerDataArr[$isToken ? 'token' : 'otp'] = $customer->code;
-        }
-
-        $customerDataArr['email'] = $customerEmail;
-        $customerDataJson = json_encode($customerDataArr);
-        $magicUrlGeneratauthBasic = base64_encode($this->berlinUserName.':'.$this->berlinAuthPassword);
-        $clientExtendSubscription = new \GuzzleHttp\Client;
-
-        try {
-            $requestExtendSubscription = $clientExtendSubscription->post(
-                $this->berlinEndpoint.'/internal/extend-subscription',
-                [
-                    'headers' => [
-                        'Content-Type' => 'application/json',
-                        'Accept' => 'application/json',
-                        'Authorization' => 'Basic '.$magicUrlGeneratauthBasic,
-                    ],
-                    'body' => $customerDataJson,
-                    'timeout' => 20,
-                ]
-            );
-
-            $statusCode = $requestExtendSubscription->getStatusCode();
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            $statusCode = $e->getResponse()->getStatusCode();
-
-            $errorData = json_decode($e->getResponse()->getBody()->getContents(), true);
-
-            if (isset($errorData['code']) && $errorData['code'] == 'CUSTOMER_NOT_FOUND') {
-                $customer = $this->customerService->getCustomerByEmail($customerEmail);
-                Log::warning('Berlin Service - extendCustomerSubscription - Success - Customer ID: '.$customerId.' - Sending MA Welcome Email. API Message: '.$errorData['message']);
-                MAWelcomeJob::dispatchIf(
-                    $isImport || ! isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)),
-                    $customer->first_name,
-                    $customer->last_name,
-                    $customer->email,
-                    $customer->mobile_no,
-                    $source,
-                    $tag
-                );
-
-                $statusCode = 201;
-            } else {
-                Log::error('Berlin Service - extendCustomerSubscription - Fail - Customer ID: '.$customerId.' Status Code: '.$statusCode.' - Message: '.$e->getMessage());
-            }
-        }
-
-        return $statusCode;
     }
 }
