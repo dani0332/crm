@@ -50,9 +50,9 @@ class InstantAlfredService extends BaseService
                     'cti.text as plan_type',
                     'cp.text as plan_name',
                     'cqr.price_with_vat as total_price',
-                    'ps.created_at AS payment_created_at',
-                    'cqr.paid_at',
-                    'cqr.payment_paid_at',
+                    // 'ps.created_at AS payment_created_at',
+                    DB::raw('DATE_FORMAT(cqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
+                    DB::raw('DATE_FORMAT(cqr.payment_paid_at, "%d-%m-%Y %H:%i:%s") as payment_paid_at'),
                     // 'ep.display_name',
                 )
                 ->leftJoin('payments as py', function ($join) {
@@ -198,8 +198,8 @@ class InstantAlfredService extends BaseService
                 // missing plan_type
                 'tqpd.plan_name',
                 'py.total_price',
-                'tqr.paid_at',
-                'tqr.payment_paid_at',
+                DB::raw('DATE_FORMAT(tqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
+                DB::raw('DATE_FORMAT(tqr.payment_paid_at, "%d-%m-%Y %H:%i:%s") as payment_paid_at'),
                 // 'ps.created_at AS payment_created_at',
                 // 'ep.display_name',
 

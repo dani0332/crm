@@ -38,9 +38,9 @@ class InstantChatConsolidatedExport implements FromCollection, WithHeadings, Wit
             'PLAN TYPE',
             'PLAN NAME',
             'PRICE',
-            'PAYMENT DATE',
-            'AUTHORISED AT',
-            'PAID AT',
+            'PAID DATE',
+            'AUTHORISED DATE',
+            // 'PAID AT',
             // 'EP PURCHASED',
         ];
     }
