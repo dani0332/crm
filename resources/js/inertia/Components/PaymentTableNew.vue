@@ -2395,6 +2395,15 @@ const applyPermissions = () => {
       isVerificationAllowed.value = true;
     }
   }
+
+  if (
+    paymentMethodsForm.status === 'view' &&
+    can(permissionEnum.INPL_APPROVER) &&
+    splitPaymentRecord.value.payment_method.code === page.props.paymentMethodsEnum?.InsureNowPayLater
+  ) {
+    isVerificationAllowed.value = true;
+  } 
+
 };
 
 const documentForm = useForm({
@@ -5335,7 +5344,7 @@ const isSplitDeleteEnabled = computed(() => {
                       paymentStatusEnum.PAID &&
                       (can(permissionEnum.ApprovePayments) ||
                         (can(permissionEnum.INPL_APPROVER) &&
-                          splitPaymentRecord.payment_methods_code ==
+                          splitPaymentRecord.payment_method.code ==
                             paymentMethodsEnum?.InsureNowPayLater)))
                   "
                   class="w-full flex justify-end"
