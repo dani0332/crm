@@ -214,7 +214,6 @@ class SageApiService
         $preparedData = (new SendUpdateLogService)->preparedDetailsForEndorsement($request, $mainQuote, $sendUpdateLog);
 
         $preparedData['quoteDetails'] = $quoteModelObject::where('id', $request->quoteRefId)->first();
-        $sendUpdateLog->userId = $sageRequestPayload->userId;
         $preparedData['sendUpdateLog'] = $sendUpdateLog;
 
         if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD && ! empty($reversalInvoiceLogs)) {
@@ -227,7 +226,6 @@ class SageApiService
             return $response;
         }
 
-        unset($sendUpdateLog->userId);
         $response = app(SendUpdateLogService::class)->updatesMoveToLead([$request, $sendUpdateLog, $preparedData]);
         if (! $response['status']) {
             return $response;
@@ -241,6 +239,7 @@ class SageApiService
         info('fn bookStraightEndorsementOnSage - Upfront Endorsement Booking Start on Sage');
         info('fn bookStraightEndorsementOnSage - Payment frequency : '.$preparedData['payment']->frequency);
 
+        $preparedData['sendUpdateLog']->userId = $sageRequestPayload->userId;
         $extraDetails = ['sage_request_type' => ($preparedData['payment']->frequency == PaymentFrequency::UPFRONT) ? SageEnum::SRT_CREATE_AR_PREM_COMM_INV : SageEnum::SRT_CREATE_AR_SPPAY_INV];
         if (isset($preparedData['mainLeadDetails'])) {
             $extraDetails['mainLeadDetails'] = $preparedData['mainLeadDetails'];
@@ -280,6 +279,9 @@ class SageApiService
     {
         info('fn bookReversalEndorsementOnSage - Reversal and Correction Endorsement Booking Start on Sage');
         info('fn bookReversalEndorsementOnSage - Payment frequency : '.$preparedData['payment']->frequency);
+
+        $sendUpdateLog->userId = $sageRequestPayload->userId;
+        $preparedData['sendUpdateLog']->userId = $sageRequestPayload->userId;
 
         $isOnlyDiscountReversal = false;
         $isOnlyDiscount = false;
