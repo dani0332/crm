@@ -658,8 +658,15 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
 
         $insuranceProviderCode = $insuranceProvider?->code;
-        $latestBINByInsurer = Payment::whereNotNull('broker_invoice_number')->where('insurance_provider_id', $insuranceProvider->id)->orderBy('broker_invoice_number', 'desc')->first()?->broker_invoice_number;
-        $insuranceProviderLeadCount = (int) str_replace($insuranceProviderCode, '', $latestBINByInsurer) + 1;
+        $latestBINByInsurer = Payment::selectRaw("REGEXP_REPLACE(broker_invoice_number, '[^0-9]', '') as broker_invoice_number")
+            ->whereNotNull('broker_invoice_number')
+            ->whereNull('send_update_log_id')
+            ->where('insurance_provider_id', $insuranceProvider->id)
+            ->orderByRaw("CAST(REGEXP_REPLACE(broker_invoice_number, '[^0-9]', '') AS UNSIGNED) DESC")
+            ->first()->broker_invoice_number;
+
+
+        $insuranceProviderLeadCount = ((int) $latestBINByInsurer) + 1;
 
         return $insuranceProviderCode.$insuranceProviderLeadCount;
     }
