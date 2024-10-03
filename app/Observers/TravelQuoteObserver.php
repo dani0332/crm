@@ -2,7 +2,6 @@
 
 namespace App\Observers;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Events\TravelQuoteAdvisorUpdated;
@@ -65,14 +64,10 @@ class TravelQuoteObserver
             in_array($travelQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Travel, 'quoteUID' => $travelQuote->uuid]);
-            MAWelcomeJob::dispatchIf(
-                isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)) && $travelQuote->customer,
-                $travelQuote->customer?->first_name,
-                $travelQuote->customer?->last_name,
-                $travelQuote->customer?->email,
-                $travelQuote->customer?->mobile_no,
-                'CUSTOMER_UPDATE',
-                'customer-update-myalfred-we'
+            MAWelcomeJob::dispatch(
+                $travelQuote->customer,
+                'LEAD_STATUS_UPDATE',
+                'lead-status-update-myalfred-we'
             );
         }
     }
