@@ -2,7 +2,6 @@
 
 namespace App\Traits;
 
-use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
 use App\Models\Team;
 use App\Models\User;
@@ -178,25 +177,15 @@ trait TeamHierarchyTrait
                 FROM team_hierarchy;"));
     }
 
-    public function getAdvisorsByTeamId($teamId)
+    public function getAdvisorsByRole($role)
     {
-        $userIds = User::join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
+        return User::join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
+            ->select('users.id', 'users.name', 'ut.team_id as u_team_id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
-            ->where(function ($query) use ($teamId) {
-                $query->whereIn('users.id', function ($subQuery) use ($teamId) {
-                    $subQuery->select('user_id')
-                        ->from('user_team')
-                        ->whereIn('team_id', (array) $teamId);
-                })->orWhereIn('sub_team_id', (array) $teamId);
-            })->where('users.is_active', 1)->where('r.name', RolesEnum::CarAdvisor)
-            ->pluck('users.id')
-            ->toArray();
-
-        $users = User::whereIn('id', $userIds)
-            ->select('id', 'name')
+            ->join('user_team as ut', 'ut.user_id', '=', 'users.id')
+            ->where('users.is_active', 1)
+            ->where('r.name', $role)
             ->get();
-
-        return $users;
     }
 
     public function userHaveProduct($userId, $productId)
