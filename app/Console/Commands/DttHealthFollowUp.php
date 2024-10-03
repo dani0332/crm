@@ -12,7 +12,6 @@ use App\Jobs\HealthRevivalFollowUpEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\DttRevival;
 use App\Models\HealthQuote;
-use App\Models\PaymentStatus;
 use App\Services\ApplicationStorageService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -73,14 +72,11 @@ class DttHealthFollowUp extends Command
             $q->orWhereDate('created_at', '=', $twentyDaysBefore);
         })->where('reply_received', 0)->where('quote_type_id', QuoteTypeId::Health)->where('previous_health_plan_type', 1)->get();
 
-
-
         $unrepliedWithoutPreviousPlantype = DttRevival::where(function ($q) use ($twoDaysBefore, $fourDaysBefore, $sixDaysBefore) {
             $q->whereDate('created_at', '=', $twoDaysBefore);
             $q->orWhereDate('created_at', '=', $fourDaysBefore);
             $q->orWhereDate('created_at', '=', $sixDaysBefore);
         })->where('reply_received', 0)->where('quote_type_id', QuoteTypeId::Health)->where('previous_health_plan_type', 0)->get();
-
 
         $paymentStatusArray = [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::AUTHORISED];
         $leadStatusArray = [QuoteStatusEnum::ApplicationPending, QuoteStatusEnum::Stale, QuoteStatusEnum::Lost];
@@ -91,10 +87,11 @@ class DttHealthFollowUp extends Command
 
             if ($today->isWeekend()) {
 
-                info($logPrefix . '-todayIsWeekendCreatedAtUpdated-' . $item->uuid);
+                info($logPrefix.'-todayIsWeekendCreatedAtUpdated-'.$item->uuid);
 
                 $created_at = Carbon::parse($item->created_at)->addDays(1);
                 DttRevival::where('uuid', $item->uuid)->update(['created_at' => $created_at]);
+
                 return false;
             }
 
@@ -114,13 +111,13 @@ class DttHealthFollowUp extends Command
 
             if (! in_array($healthQuote->payment_status_id, $paymentStatusArray) && ! in_array($healthQuote->source, $leadSourceArray) && ! in_array($healthQuote->quote_status_id, $leadStatusArray) && empty($healthQuote->advisor_id)) {
 
-                $customerName = $healthQuote->first_name . ' ' . $healthQuote->last_name;
+                $customerName = $healthQuote->first_name.' '.$healthQuote->last_name;
                 $response = Ken::request('/get-health-quote-plans-order-priority', 'post', [
                     'quoteUID' => $healthQuote->uuid,
                 ]);
 
                 if (empty($response['quote']['plans'])) {
-                    info($logPrefix . 'noPlansReturned-' . $healthQuote->uuid);
+                    info($logPrefix.'noPlansReturned-'.$healthQuote->uuid);
 
                     continue;
                 }
@@ -150,11 +147,11 @@ class DttHealthFollowUp extends Command
 
                 $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
 
-                $emailData->quotePlanLink = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL') . $healthQuote->uuid;
+                $emailData->quotePlanLink = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid;
 
                 $emailData->plans = $plansArray;
 
-                $emailData->subject = $customerName . "'s" . ' Health Insurance with Alfred ' . $healthQuote->code;
+                $emailData->subject = $customerName."'s".' Health Insurance with Alfred '.$healthQuote->code;
                 $emailData->customerName = $customerName;
                 $emailData->customerEmail = $healthQuote->email;
                 $emailData->templateId = (int) $emailTemplateId;
@@ -163,7 +160,7 @@ class DttHealthFollowUp extends Command
 
                 // after two days
                 if ($today->eq($afterTwoDays)) {
-                    $emailData->subject = 'Urgent: Renew your health insurance today! ' . $healthQuote->code;
+                    $emailData->subject = 'Urgent: Renew your health insurance today! '.$healthQuote->code;
                     $emailData->tag = 'health-revival-followup1-email';
                     $emailData->templateType = 'revivalHealthFU1';
                     if ($item->follow_up_email_count == 0) {
@@ -172,7 +169,7 @@ class DttHealthFollowUp extends Command
                 }
                 // after five days
                 if ($today->eq($afterFiveDays)) {
-                    $emailData->subject = 'Unlock your tailored health insurance quotes and renew now! ' . $healthQuote->code;
+                    $emailData->subject = 'Unlock your tailored health insurance quotes and renew now! '.$healthQuote->code;
                     $emailData->tag = 'health-revival-followup2-email';
                     $emailData->templateType = 'revivalHealthFU2';
                     if ($item->follow_up_email_count == 1) {
@@ -180,7 +177,7 @@ class DttHealthFollowUp extends Command
                     }
                 }  // after eight days
                 if ($today->eq($afterEightDays)) {
-                    $emailData->subject = 'Renew the coverage you need to protect your health today! ' . $healthQuote->code;
+                    $emailData->subject = 'Renew the coverage you need to protect your health today! '.$healthQuote->code;
                     $emailData->tag = 'health-revival-followup3-email';
                     $emailData->templateType = 'revivalHealthFU3';
                     if ($item->follow_up_email_count == 2) {
@@ -188,7 +185,7 @@ class DttHealthFollowUp extends Command
                     }
                 } // after twelve days
                 if ($today->eq($afterTwelveDays)) {
-                    $emailData->subject = 'Your health insurance renewal options await! ' . $healthQuote->code;
+                    $emailData->subject = 'Your health insurance renewal options await! '.$healthQuote->code;
                     $emailData->tag = 'health-revival-followup4-email';
                     $emailData->templateType = 'revivalHealthFU4';
                     if ($item->follow_up_email_count == 3) {
@@ -196,7 +193,7 @@ class DttHealthFollowUp extends Command
                     }
                 } // after sixteen days
                 if ($today->eq($afterSixteenDays)) {
-                    $emailData->subject = 'Explore your health coverage renewal options now! ' . $healthQuote->code;
+                    $emailData->subject = 'Explore your health coverage renewal options now! '.$healthQuote->code;
                     $emailData->tag = 'health-revival-followup5-email';
                     $emailData->templateType = 'revivalHealthFU5';
                     if ($item->follow_up_email_count == 4) {
@@ -204,7 +201,7 @@ class DttHealthFollowUp extends Command
                     }
                 } // after twenty days
                 if ($today->eq($afterTwentyDays)) {
-                    $emailData->subject = 'Your next step for seamless health coverage renewal awaits' . $healthQuote->code;
+                    $emailData->subject = 'Your next step for seamless health coverage renewal awaits'.$healthQuote->code;
                     $emailData->tag = 'health-revival-followup6-email';
                     $emailData->templateType = 'revivalHealthFU6';
                     if ($item->follow_up_email_count == 5) {
@@ -214,7 +211,6 @@ class DttHealthFollowUp extends Command
             }
         }
 
-
         // email payload without previous health plan type
         foreach ($unrepliedWithoutPreviousPlantype as $item) {
 
@@ -223,10 +219,11 @@ class DttHealthFollowUp extends Command
 
             if ($today->isWeekend()) {
 
-                info($logPrefix . '-todayIsWeekendCreatedAtUpdated-' . $item->uuid);
+                info($logPrefix.'-todayIsWeekendCreatedAtUpdated-'.$item->uuid);
 
                 $created_at = Carbon::parse($item->created_at)->addDays(1);
                 DttRevival::where('uuid', $item->uuid)->update(['created_at' => $created_at]);
+
                 return false;
             }
             $afterTwoDays = Carbon::parse($created_at)->addDays(2)->startOfDay();
@@ -235,11 +232,10 @@ class DttHealthFollowUp extends Command
 
             $lead = HealthQuote::where('uuid', $item->uuid)->first();
 
-
             //Follow-up emails will not dispatched if the payment status is either Authorised, Captured, Partial Captured
             //or if the source is Revival Paid or if the lead is assigned to an advisor
             if (! in_array($lead->payment_status_id, $paymentStatusArray) && ! in_array($lead->source, $leadSourceArray) && ! in_array($lead->quote_status_id, $leadStatusArray) && empty($lead->advisor_id)) {
-                $customerName = $lead->first_name . ' ' . $lead->last_name;
+                $customerName = $lead->first_name.' '.$lead->last_name;
                 $emailData->customerName = $customerName;
                 $emailData->customerEmail = $lead->email;
                 $response = Ken::request('/get-health-cheapest-plans', 'post', [
@@ -248,7 +244,7 @@ class DttHealthFollowUp extends Command
                 ]);
 
                 if (empty($response['planTypes'])) {
-                    info($logPrefix . 'noPlansTypesReturned-' . $lead->uuid);
+                    info($logPrefix.'noPlansTypesReturned-'.$lead->uuid);
 
                     continue;
                 }
@@ -260,8 +256,8 @@ class DttHealthFollowUp extends Command
                     $emailData->id = $item->id;
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
                     $emailData->templateId = (int) $emailTemplateId;
-                    $emailData->subject = 'Seize the opportunity to renew your health insurance today ' . $lead->code;
-                    $emailData->tag = 'first-follow-up-email-' . $lead->code;
+                    $emailData->subject = 'Seize the opportunity to renew your health insurance today '.$lead->code;
+                    $emailData->tag = 'first-follow-up-email-'.$lead->code;
 
                     $emailData->planTypes = $response['planTypes'];
                     if ($item->follow_up_email_count == 0) {
@@ -275,8 +271,8 @@ class DttHealthFollowUp extends Command
                     $emailData->id = $item->id;
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
                     $emailData->templateId = (int) $emailTemplateId;
-                    $emailData->subject = 'Act now: Renew your health insurance policy ' . $lead->code;
-                    $emailData->tag = 'first-follow-up-email-' . $lead->code;
+                    $emailData->subject = 'Act now: Renew your health insurance policy '.$lead->code;
+                    $emailData->tag = 'first-follow-up-email-'.$lead->code;
 
                     $emailData->planTypes = $response['planTypes'];
                     if ($item->follow_up_email_count == 1) {
@@ -289,8 +285,8 @@ class DttHealthFollowUp extends Command
                     $emailData->id = $item->id;
                     $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
                     $emailData->templateId = (int) $emailTemplateId;
-                    $emailData->subject = 'Last chance: Renew your health insurance today ' . $lead->code;
-                    $emailData->tag = 'first-follow-up-email-' . $lead->code;
+                    $emailData->subject = 'Last chance: Renew your health insurance today '.$lead->code;
+                    $emailData->tag = 'first-follow-up-email-'.$lead->code;
 
                     $emailData->planTypes = $response['planTypes'];
                     if ($item->follow_up_email_count == 2) {
@@ -300,11 +296,11 @@ class DttHealthFollowUp extends Command
             }
         }
 
-        info($logPrefix . 'count-' . count($leads) . '-leads-' . json_encode(array_column($leads, 'uuid')));
+        info($logPrefix.'count-'.count($leads).'-leads-'.json_encode(array_column($leads, 'uuid')));
 
         $jobs = [];
         foreach ($leads as $item) {
-            info($logPrefix . '-' . $item->uuid . '-email-' . $item->customerEmail);
+            info($logPrefix.'-'.$item->uuid.'-email-'.$item->customerEmail);
             $jobs[] = new HealthRevivalFollowUpEmailJob($item);
         }
 
@@ -313,19 +309,19 @@ class DttHealthFollowUp extends Command
                 ->addJobs($jobs)
 
                 ->then(function () use ($logPrefix) {
-                    info($logPrefix . ' all jobs completed successfully');
+                    info($logPrefix.' all jobs completed successfully');
                 })
                 ->catch(function () use ($logPrefix) {
-                    info($logPrefix . ' one of batch is failed.');
+                    info($logPrefix.' one of batch is failed.');
                 })
                 ->finally(function () use ($logPrefix) {
-                    info($logPrefix . ' everything done');
+                    info($logPrefix.' everything done');
                 })
                 ->allowFailures()
                 ->withDelay(30)
                 ->dispatch();
         } else {
-            info($logPrefix . 'No lead Found');
+            info($logPrefix.'No lead Found');
         }
     }
 
