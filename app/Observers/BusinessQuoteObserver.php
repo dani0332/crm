@@ -3,8 +3,6 @@
 namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
-use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\BusinessQuote;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -46,7 +44,6 @@ class BusinessQuoteObserver
             $businessQuote->isDirty('quote_status_id') &&
             in_array($businessQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
-            CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Business, 'quoteUID' => $businessQuote->uuid]);
             MAWelcomeJob::dispatch(
                 $businessQuote->customer,
                 'LEAD_STATUS_UPDATE',
