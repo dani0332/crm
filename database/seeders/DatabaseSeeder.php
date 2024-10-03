@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             ImcrmUsersRolesCleaner::class,
             RolePermissionSeeder::class,
             AddSuperLeadStatusChangePermission::class,
+            QuoteStatusSeeder::class,
             AddReApprovePaymentPermission::class,
         ]);
     }
