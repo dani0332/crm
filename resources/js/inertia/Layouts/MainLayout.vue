@@ -233,8 +233,9 @@ const activitiesUrl = computed(() => {
                     </x-tag> -->
                     <template #tooltip>
                       <div class="font-bold">
-                        {{ pendingActivityCount.pendingCallback }} customers are
-                        waiting for your callback. Don't forget to mark your
+                        InstantAlfred needs your help! (
+                        {{ pendingActivityCount.pendingCallback }} ) customers
+                        are waiting for your callback. Don't forget to mark your
                         activity as DONE
                       </div>
                     </template>
@@ -247,7 +248,7 @@ const activitiesUrl = computed(() => {
                           v-bind:href="activitiesUrl"
                           style="text-decoration: underline dotted"
                         >
-                          Pending Whatsapp:
+                          Pending WhatsApp requests:
                           {{ pendingActivityCount.pendingWhatsapp }}
                         </Link>
                       </div>
@@ -260,9 +261,11 @@ const activitiesUrl = computed(() => {
                     </x-tag> -->
                     <template #tooltip>
                       <div class="font-bold">
-                        {{ pendingActivityCount.pendingWhatsapp }} customers are
-                        waiting for your WhatsApp message. Don't forget to mark
-                        your activity as DONE
+                        InstantAlfred needs your help! ({{
+                          pendingActivityCount.pendingWhatsapp
+                        }}
+                        ) customers are waiting for your WhatsApp message. Don't
+                        forget to mark your activity as DONE
                       </div>
                     </template>
                   </x-tooltip>
