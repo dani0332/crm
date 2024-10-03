@@ -211,6 +211,16 @@ class SukoonDemocranceService
             $data = ['template' => $templateId];
             $result = $this->request('/policy/'.$this->documentPolicyNumber.'/coi/', 'post', $data, ['x-session-id' => $this->sessionId]);
             $content = $result->body();
+
+            // Regular expression to match the specific response message with any policy number
+            $pattern = '/Policy AP\d+ is not cancelled, cannot generate credit note/';
+
+            // Handle the case where the content is empty or contains the specific response message
+            if (empty($content) || preg_match($pattern, $content)) {
+                $message = 'Document is not available on democrance';
+                $this->logFailure($message.' ' . $templateId . ' doc_code : ' . $docCode, $message, ['quote' => $quote, 'embeddedTransaction' => $embeddedTransaction]);
+            }
+
             $headers = $result->toPsrResponse()->getHeader('Content-Disposition');
             $filename = '';
 
@@ -221,7 +231,7 @@ class SukoonDemocranceService
                 }
             }
 
-            if ($filename) {
+            if ($filename != '') {
                 $originalName = $filename;
                 $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
                 $documentType = DocumentType::where('code', $docCode)->where('quote_type_id', QuoteTypeId::Car)->first();
@@ -256,7 +266,8 @@ class SukoonDemocranceService
                     $embeddedTransaction->documents()->create($documentData);
                 }
             } else {
-                throw new Exception('Unable to determine filename from the response headers.');
+                $message = 'Unable to determine filename from the response headers.';
+                $this->logFailure($message . ' ' . $templateId . ' doc_code : ' . $docCode, $message, ['quote' => $quote, 'embeddedTransaction' => $embeddedTransaction]);
             }
         } catch (Exception $e) {
             $this->logFailure('Get Document template_id : '.$templateId.' doc_code : '.$docCode, $e->getMessage(), ['quote' => $quote, 'embeddedTransaction' => $embeddedTransaction]);
@@ -566,6 +577,30 @@ class SukoonDemocranceService
             file_put_contents($responseFilePath, $response);
             $response = 'Response too large, saved to: '.$responseFilePath;
         }
+        // This below unsetRelation is used to avoid the long response data in the log 
+        if ($this->currentQuote->relationLoaded('embeddedTransactions')) {
+            foreach ($this->currentQuote->embeddedTransactions as $transaction) {
+                if ($transaction->relationLoaded('product')) {
+                    if ($transaction->product->relationLoaded('embeddedProduct')) {
+                        $transaction->product->unsetRelation('embeddedProduct');
+                    }
+                    $transaction->unsetRelation('product');
+                }
+            }
+        }
+        
+        if ($this->currentQuote->relationLoaded('emirate')) {
+            $this->currentQuote->unsetRelation('emirate');
+        }
+
+        if ($this->currentQuote->relationLoaded('customer')) {
+            $this->currentQuote->unsetRelation('customer');
+        }
+
+        if ($this->currentQuote->relationLoaded('quoteRequestEntityMapping')) {
+            $this->currentQuote->unsetRelation('quoteRequestEntityMapping');
+        }
+
         $logData = [
             'status' => $status,
             'request' => is_array($data) ? json_encode($data) : $data,
