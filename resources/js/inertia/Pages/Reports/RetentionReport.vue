@@ -349,7 +349,7 @@ function onSubmit(isValid=true) {
     }
     if (filters.policyExpiryDate.length == 0){
       notification.error({
-        title: 'Please select start and end date',
+        title: 'Please select Start & End Date',
         position: 'top',
       });
       return
@@ -600,7 +600,7 @@ function handleDateChange(dateRange) {
         <DatePicker
           v-if=" filters.displayBy === RetentionReportEnum.MONTHLY || filters.displayBy === RetentionReportEnum.BATCH"
           v-model="filters.policyExpiryDate"
-          label="Select start and end date"
+          label="Select Start & End Date"
           placeholder="Select Start & End Date"
           range
           size="sm"
