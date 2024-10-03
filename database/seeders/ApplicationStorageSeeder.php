@@ -639,16 +639,6 @@ class ApplicationStorageSeeder extends Seeder
     private function seedBirdWorkflowUrls()
     {
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::BIRD_SIC_CAR_WORKFLOW],
-            [
-                'value' => 'https://capture.eu-west-1.nest.messagebird.com/webhooks/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/bacb7771-99ee-4afc-9157-7a2311e2d4f1',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-
-        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL],
             [
                 'value' => 'https://capture.eu-west-1.nest.messagebird.com/webhooks/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/7f5bd31b-6387-4e3e-826f-0f464badb2cd',

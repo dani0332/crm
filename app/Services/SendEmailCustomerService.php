@@ -1177,32 +1177,6 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    /**
-     * This function use to send email after 24 hours of lead created, lead assginment and time condition are implemented in bird webhook0
-     *
-     * @return void
-     */
-    public function sendDedicatedEmailForCarFollowUp($lead, $emailData) {
-        $webhookUrl = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_SIC_CAR_WORKFLOW);
-        $birdEmailData = [
-            'customerEmail' => $emailData->customerEmail,
-            'phone' => formatMobileNoWithoutPlus($lead->mobile_no),
-            'customerName' => $emailData->customerName,
-            'instantAlfredLink' => $emailData->quoteLink . '?IA=true',
-            'refID' => $emailData->carQuoteId,
-            'requestAdvisorLink' => $emailData->requestAdvisorLink,
-            'uuid' => $lead->uuid,
-            'sicCase' => true,
-            'tag' => ThirdPartyTagEnum::BIRD_SIC_MOTOR_DEDICATED_FOLLOWUP,
-        ];
-
-
-        if ($webhookUrl) {
-            app(BirdService::class)->triggerWebHookRequest($webhookUrl, $birdEmailData);
-        }
-    }
-
-
     public function sendSICFollowupEmail($lead, ?QuoteTypes $quoteType = null, array $extraParams = [])
     {
         if ($quoteType === null) {
