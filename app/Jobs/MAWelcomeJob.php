@@ -39,6 +39,9 @@ class MAWelcomeJob implements ShouldQueue
 
             return false;
         }
+        if ($this->customer->is_we_sent) {
+            return false;
+        }
         if (! $this->extendCustomerSubscription()) {
             $this->sendMAWelcomeEmail();
         }
