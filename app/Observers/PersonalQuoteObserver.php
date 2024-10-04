@@ -2,9 +2,10 @@
 
 namespace App\Observers;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Events\BikeQuoteAdvisorUpdated;
+use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\PersonalQuote;
 use Exception;
@@ -26,16 +27,6 @@ class PersonalQuoteObserver
             $personalQuote->quote_status_id === QuoteStatusEnum::TransactionApproved &&
             checkPersonalQuotes($personalQuote->quoteType?->code)
         ) {
-            MAWelcomeJob::dispatchIf(
-                isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)) && $personalQuote->customer,
-                $personalQuote->customer?->first_name,
-                $personalQuote->customer?->last_name,
-                $personalQuote->customer?->email,
-                $personalQuote->customer?->mobile_no,
-                'CUSTOMER_UPDATE',
-                'customer-update-myalfred-we'
-            );
-
             PersonalQuote::withoutEvents(function () use ($personalQuote) {
                 $personalQuote->update(['transaction_approved_at' => now()]);
             });
@@ -69,6 +60,19 @@ class PersonalQuoteObserver
             } catch (Exception $e) {
                 Log::error('PersonalQuoteObserver Error: '.$e->getMessage());
             }
+        }
+
+        if (
+            $personalQuote->isDirty('quote_status_id') &&
+            in_array($personalQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked]) &&
+            in_array($personalQuote->quote_type_id, [QuoteTypeId::Pet, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Jetski])
+        ) {
+            CourtesyEmailJob::dispatch(['quoteTypeId' => $personalQuote->quote_type_id, 'quoteUID' => $personalQuote->uuid]);
+            MAWelcomeJob::dispatch(
+                $personalQuote->customer,
+                'LEAD_STATUS_UPDATE',
+                'lead-status-update-myalfred-we'
+            );
         }
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteTypeId;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerAdditionalContactRequest;
@@ -72,12 +71,8 @@ class CustomerController extends Controller
         $customer->update($customerRequest->validated());
 
         if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && ! $customer->is_we_sent) {
-            MAWelcomeJob::dispatchUnless(
-                isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)),
-                $customer->first_name,
-                $customer->last_name,
-                $customer->email,
-                $customer->mobile_no,
+            MAWelcomeJob::dispatch(
+                $customer,
                 'CUSTOMER_UPDATE',
                 'customer-update-myalfred-we'
             );
@@ -109,5 +104,4 @@ class CustomerController extends Controller
 
         return redirect('customer-upload')->with('success', 'Upload customers records has been stored');
     }
-
 }
