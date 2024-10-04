@@ -405,8 +405,8 @@ class SendUpdateLogController extends Controller
         $sendUpdateLog = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
         $endorsementResponse = app(SendUpdateLogService::class)->preparedDataForEndorsement($sendUpdateRequest);
 
-        if (! $endorsementResponse['status'] || empty($endorsementResponse['sageRequestPayload'])) {
-            $responseMessage = empty($endorsementResponse['sageRequestPayload']) ? 'Something went wrong' : $endorsementResponse['message'];
+        if (! $endorsementResponse['status'] || ! isset($endorsementResponse['sageRequestPayload'])) {
+            $responseMessage = (! isset($endorsementResponse['sageRequestPayload']) && empty($endorsementResponse['message'])) ? 'Something went wrong' : $endorsementResponse['message'];
 
             return response()->json(['message' => $responseMessage], 500);
         }
