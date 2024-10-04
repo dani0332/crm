@@ -106,9 +106,11 @@ class Kernel extends ConsoleKernel
         $schedule->command('ActivitiesAutomate:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
 
         $schedule->command('Dtt')->timezone('Asia/Dubai')->dailyAt('09:00')->onOneServer()->withoutOverlapping();
-
         $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->dailyAt('11:45')->onOneServer()->withoutOverlapping();
+
         $schedule->command('DttHealth')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
+        $schedule->command('DttHealthFollowUp')->timezone('Asia/Dubai')->dailyAt('11:45')->onOneServer()->withoutOverlapping(1);
+
         $schedule->command('sage-processes:run')->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping();
 
         // $schedule->command('alfred:followupEmails')->timezone('Asia/Dubai')->weekly()->mondays()->at('11:00')->onOneServer()->withoutOverlapping();
