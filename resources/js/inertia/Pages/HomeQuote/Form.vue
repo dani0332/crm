@@ -21,8 +21,8 @@ const quoteForm = useForm({
   last_name: props.quote?.last_name || null,
   email: props.quote?.email || null,
   mobile_no: props.quote?.mobile_no || null,
-  ownership_status_possesion_type_id:
-    props.quote?.home_quote?.ownership_status_possesion_type_id || null,
+  ownership_status_possession_type_id:
+    props.quote?.home_quote?.ownership_status_possession_type_id || null,
   type_of_property_accommodation_type_id:
     props.quote?.home_quote?.type_of_property_accommodation_type_id || null,
   address: props.quote?.home_quote?.address || null,
@@ -214,16 +214,16 @@ const claimOptions = computed(() => {
   ];
 });
 const showTypeOfOwnerOccupancy = computed(() => {
-  return quoteForm.ownership_status_possesion_type_id === 2;
+  return quoteForm.ownership_status_possession_type_id === 2;
 });
 
 const typeOfCoverageYouNeedOptions = computed(() => {
-  if (!quoteForm.ownership_status_possesion_type_id) {
+  if (!quoteForm.ownership_status_possession_type_id) {
     return [
       { value: '', label: 'CHOOSE OWNERSHIP STATUS FIRST', disabled: true },
     ];
   }
-  switch (quoteForm.ownership_status_possesion_type_id) {
+  switch (quoteForm.ownership_status_possession_type_id) {
     case 1: // Homeowner living in the property
       return [
         { value: 'landlord_living_building', label: 'Building only' },
@@ -408,10 +408,10 @@ const handleCoverageChange = () => {
         </x-field>
         <x-field label="OWNERSHIP STATUS" required>
           <x-select
-            v-model="quoteForm.ownership_status_possesion_type_id"
+            v-model="quoteForm.ownership_status_possession_type_id"
             :rules="[isRequired]"
             :options="
-              dropdownSource.ownership_status_possesion_type_id.map(item => ({
+              dropdownSource.ownership_status_possession_type_id.map(item => ({
                 value: item.id,
                 label: item.text,
               }))

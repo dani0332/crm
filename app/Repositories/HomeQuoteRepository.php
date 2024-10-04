@@ -83,7 +83,7 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchGetFormOptions()
     {
-        $dropdownSource['ownership_status_possesion_type_id'] = app(DropdownSourceService::class)->getDropdownSource('ownership_status_possesion_type_id');
+        $dropdownSource['ownership_status_possession_type_id'] = app(DropdownSourceService::class)->getDropdownSource('ownership_status_possession_type_id');
         $dropdownSource['type_of_property_accommodation_type_id'] = app(DropdownSourceService::class)->getDropdownSource('type_of_property_accommodation_type_id');
 
         return [
@@ -101,7 +101,7 @@ class HomeQuoteRepository extends BaseRepository
             'email' => $data['email'],
             'mobileNo' => $data['mobile_no'],
             'lang' => 'EN',
-            // 'iamPossesionTypeId' => $data['ownership_status_possesion_type_id'],
+            // 'iamPossesionTypeId' => $data['ownership_status_possession_type_id'],
             // 'iliveinAccommodationTypeId' => $data['type_of_property_accommodation_type_id'],
             'contentsAed' => $data['contents_aed'],
             'buildingAed' => $data['building_aed'],
@@ -111,7 +111,7 @@ class HomeQuoteRepository extends BaseRepository
             'referenceUrl' => URL::current(),
             'createdById' => auth()->id(),
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->id() : null,
-            'ownership_status_possesion_type_id' => $data['ownership_status_possesion_type_id'],
+            'ownership_status_possession_type_id' => $data['ownership_status_possession_type_id'],
             'type_of_property_accommodation_type_id' => $data['type_of_property_accommodation_type_id'],
             'location_area' => $data['location_area'],
             'type_of_owner_occupancy' => $data['type_of_owner_occupancy'],
