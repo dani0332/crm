@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\PermissionsEnum;
-use Illuminate\Foundation\Http\FormRequest;
-use App\Models\PaymentSplits;
 use App\Enums\PaymentMethodsEnum;
+use App\Enums\PermissionsEnum;
+use App\Models\PaymentSplits;
+use Illuminate\Foundation\Http\FormRequest;
 
 class SplitPaymentUpdateRequest extends FormRequest
 {
@@ -55,12 +55,12 @@ class SplitPaymentUpdateRequest extends FormRequest
             if ($request->is_approved === true && $user->can(PermissionsEnum::INPL_APPROVER)) {
                 $paymentSplit = PaymentSplits::find($request->splitPaymentId);
             }
-            
+
             // Check if payment method is INPL
             if ($paymentSplit && $paymentSplit->payment_method === PaymentMethodsEnum::InsureNowPayLater) {
                 return;
             }
-            
+
             // Check authorization for broker
             if ($request->collection_type === 'broker' && $request->is_approved === true && $user->cannot(PermissionsEnum::PAYMENT_VERIFICATION_COLLECTED_BY_BROKER)) {
                 $validator->errors()->add('value', 'You are not authorized to approve this payment');
