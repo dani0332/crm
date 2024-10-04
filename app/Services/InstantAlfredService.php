@@ -195,6 +195,7 @@ class InstantAlfredService extends BaseService
                 // 'qt.name as segment',
                 'ps.text AS payment_status',
                 'tqpd.provider_name',
+                'tp.travel_type as plan_type',
                 // missing plan_type
                 'tqpd.plan_name',
                 'py.total_price',
