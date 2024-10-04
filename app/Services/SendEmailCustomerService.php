@@ -1205,6 +1205,7 @@ class SendEmailCustomerService extends BaseService
                     'email' => $lead->email,
                     'name' => "{$lead->first_name} {$lead->last_name}",
                 ]],
+                'replyTo' => ['name' => getAppStorageValueByKey(ApplicationStorageEnums::CAR_DISPLAY_NAME), 'email' => getAppStorageValueByKey(ApplicationStorageEnums::CAR_EMAIL_REPLY_TO)],
                 'templateId' => (int) $emailTemplateId,
                 'params' => [
                     'requestAdvisorLink' => $quoteType?->ecomUrl().$lead->uuid.'/?assignAdvisor=true',
