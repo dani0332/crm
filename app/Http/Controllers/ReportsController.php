@@ -361,7 +361,7 @@ class ReportsController extends Controller
             $qry->orderBy('id', 'desc');
         }, 'teams' => function ($qry) {
             $qry->whereIn('name', RenewalBatch::RENEWAL_BATCH_TEAMS_LIST);
-        }])->get();
+        }])->where('quote_type_id', QuoteTypeId::Car)->get();
 
         $renewalBatches = $renewalBatches->map(function ($renewalBatch) {
             $renewalBatch->slabs = $renewalBatch->slabs->map(function ($slab) {
