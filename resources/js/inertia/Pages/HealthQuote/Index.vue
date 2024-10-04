@@ -133,8 +133,8 @@ const filters = reactive({
   last_name: '',
   email: '',
   mobile_no: '',
-  created_at_start: new Date || '',
-  created_at_end: new Date || '',
+  created_at_start: new Date() || '',
+  created_at_end: new Date() || '',
   sub_team: '',
   quote_status: [],
   advisors: [],
@@ -512,14 +512,15 @@ const validateDateRange = () => {
 const formatDate = dateString =>
   useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY').value;
 
-watch(
-    () => {
-        if(filters.transaction_approved_dates && filters.transaction_approved_dates_end){
-            filters.created_at_start = '';
-            filters.created_at_end = '';
-        }
-    },
-);
+watch(() => {
+  if (
+    filters.transaction_approved_dates &&
+    filters.transaction_approved_dates_end
+  ) {
+    filters.created_at_start = '';
+    filters.created_at_end = '';
+  }
+});
 </script>
 
 <template>
