@@ -108,12 +108,6 @@ class SendEmailCustomerService extends BaseService
             $response = Http::withHeaders($headers)
                 ->beforeSending(function () use ($fnName, $body) {
                     info("{$fnName} ---- Mail Request is Sending");
-                    $sender = $body['sender'] ?? null;
-                    $replyTo = $body['replyTo'] ?? null;
-                    $to = $body['to'] ?? null;
-                    info('Mail Request sender details ----- '.json_encode($sender));
-                    info('Mail Request replyTo details ----- '.json_encode($replyTo));
-                    info('Mail Request to details ----- '.json_encode($to));
                 })
                 ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
                 ->retry(3, 90000)
