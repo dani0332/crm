@@ -169,6 +169,7 @@ class AdvisorConversionReportService extends BaseService
             ':notInterestedStatuses' => implode(',', $this->getNotInterestedStatuses()),
             ':newLead' => QuoteStatusEnum::NewLead,
             ':inProgressStatuses' => implode(',', $this->getInProgressStatuses()),
+            ':paidStatuses' => implode(',', $this->getPaidStatuses()),
         ];
     }
 
@@ -176,6 +177,7 @@ class AdvisorConversionReportService extends BaseService
     {
         $getSaleLeadsQuery = function ($sourceCondition, $as) use ($table) {
             return strtr('SUM(CASE WHEN (
+                            ((:table.payment_status_id in (:paidStatuses) OR :table.quote_status_id in (:approvedStatuses)) and :table.transaction_approved_at is NULL) OR
                             (:table.quote_status_id in (:approvedStatuses) and :table.transaction_approved_at < ":quoteStatusDate") OR
                             (:table.quote_status_id = :policyBookedStatus and :table.transaction_approved_at >= ":quoteStatusDate")
                         ) and :table.source '.$sourceCondition.' (:excludedSources) THEN 1 ELSE 0 END
@@ -531,9 +533,16 @@ class AdvisorConversionReportService extends BaseService
             $subQuery->when(! empty($quoteStatuses), fn ($q) => $q->whereIn("{$table}.quote_status_id", $quoteStatuses))
                 ->when(in_array($filters->leadType, [ReportsLeadTypeEnum::SALE_LEAD, ReportsLeadTypeEnum::CREATED_SALE_LEAD]), function ($q) use ($table) {
                     $q->where(function ($sq) use ($table) {
-                        $sq->where("{$table}.transaction_approved_at", '<', $this->getAdvisorConversionQuoteStatusDate())->whereIn("{$table}.quote_status_id", $this->getApprovedStatuses());
-                    })->orWhere(function ($sq) use ($table) {
-                        $sq->where("{$table}.transaction_approved_at", '>=', $this->getAdvisorConversionQuoteStatusDate())->where("{$table}.quote_status_id", QuoteStatusEnum::PolicyBooked);
+                        $sq->where(function ($nsq) use ($table) {
+                            $nsq->whereNull("{$table}.transaction_approved_at")->where(function ($nssq) use ($table) {
+                                $nssq->whereIn("{$table}.payment_status_id", $this->getPaidStatuses());
+                                $nssq->orWhereIn("{$table}.quote_status_id", $this->getApprovedStatuses());
+                            });
+                        })->orWhere(function ($nsq) use ($table) {
+                            $nsq->where("{$table}.transaction_approved_at", '<', $this->getAdvisorConversionQuoteStatusDate())->whereIn("{$table}.quote_status_id", $this->getApprovedStatuses());
+                        })->orWhere(function ($nsq) use ($table) {
+                            $nsq->where("{$table}.transaction_approved_at", '>=', $this->getAdvisorConversionQuoteStatusDate())->where("{$table}.quote_status_id", QuoteStatusEnum::PolicyBooked);
+                        });
                     });
                 })
                 ->when(in_array($filters->leadType, [ReportsLeadTypeEnum::MANUAL_CREATED, ReportsLeadTypeEnum::CREATED_SALE_LEAD]),

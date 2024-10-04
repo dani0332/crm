@@ -13,13 +13,10 @@ class SageApiLogRepository extends BaseRepository
 
     public function fetchGetInvoiceResponse($request)
     {
-        $batchNumber = json_decode($request['reverseInvoiceDetails']['response'])->BatchNumber ?? null;
-        $invoiceResponse = $this->where([
+        return $this->where([
             'section_type' => $request['quoteTypeObject'],
             'section_id' => $request['quoteTypeId'],
             'sage_request_type' => $request['invoiceType'],
-        ])->where('sage_end_point', 'LIKE', '%'.$batchNumber.'%')->first()?->response;
-
-        return $invoiceResponse;
+        ])->first()?->response;
     }
 }

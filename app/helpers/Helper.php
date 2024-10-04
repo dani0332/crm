@@ -16,6 +16,7 @@ use App\Models\CustomerAdditionalInfo;
 use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
+use App\Models\QuoteAdditionalDetail;
 use App\Models\QuoteTag;
 use App\Models\Team;
 use App\Models\TravelQuote;
@@ -579,6 +580,27 @@ if (! function_exists('formatMobileNo')) {
     function formatMobileNo($mobile)
     {
         return preg_replace('/^(?:\+?971|0)?/', '+971', str_replace(' ', '', $mobile));
+    }
+}
+
+if (! function_exists('formatMobileNoWithoutPlus')) {
+    function formatMobileNoWithoutPlus($mobile)
+    {
+        // Remove spaces from the mobile number
+        $mobile = str_replace(' ', '', $mobile);
+
+        // If the number starts with +971, 971, 92, or 91, return it as is
+        if (preg_match('/^(?:\+?971|92|91)/', $mobile)) {
+            return ltrim($mobile, '+'); // Remove '+' if present, but keep the number unchanged
+        }
+
+        // If the number starts with +0 or 0, replace it with 971
+        if (preg_match('/^\+?0/', $mobile)) {
+            return preg_replace('/^\+?0/', '971', $mobile);
+        }
+
+        // If the number does not match any pattern, add 971 as default
+        return '971'.ltrim($mobile, '+');
     }
 }
 
@@ -1282,5 +1304,21 @@ if (! function_exists('isLeadSic')) {
 
             return false;
         }
+    }
+}
+if (! function_exists('getWhatsappConsent')) {
+    function getWhatsappConsent(QuoteTypes $quoteType, string $uuid): bool
+    {
+        $whatsappConsent = false;
+        $quoteAdditionalDetail = QuoteAdditionalDetail::where('quote_uuid', $uuid)->where(function ($q) use ($quoteType) {
+            $q->where('quote_type_id', (int) $quoteType?->id());
+            $q->orWhere('quote_type_id', $quoteType?->id());
+        })->first();
+
+        if ($quoteAdditionalDetail) {
+            $whatsappConsent = isset($quoteAdditionalDetail->flags['whatsapp_consent']) ? $quoteAdditionalDetail->flags['whatsapp_consent'] : false;
+        }
+
+        return $whatsappConsent;
     }
 }

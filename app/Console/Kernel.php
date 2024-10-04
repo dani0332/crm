@@ -31,6 +31,7 @@ class Kernel extends ConsoleKernel
         Commands\PaymentOverdueStatus::class,
         Commands\AlfredFollowUpSchedulerCommand::class,
         Commands\ProcessCCPaymentsCommand::class,
+        Commands\SageProcessesCommand::class,
     ];
 
     /**
@@ -60,6 +61,8 @@ class Kernel extends ConsoleKernel
         ->fridays()
         ->withoutOverlapping(1)->onOneServer()
         ->at('9:00');*/
+
+        $schedule->command('InstantAlfredNotification:cron')->everyMinute()->onOneServer()->withoutOverlapping();
 
         //send leads which are resubmitted for car sold approval yesterday
         $schedule->job((new CarSoldResubmissions))
@@ -99,14 +102,17 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping(1);
 
         $schedule->command('UpdateStaleLeads:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
+
         $schedule->command('ActivitiesAutomate:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
 
         $schedule->command('Dtt')->timezone('Asia/Dubai')->dailyAt('09:00')->onOneServer()->withoutOverlapping();
 
         $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->dailyAt('11:45')->onOneServer()->withoutOverlapping();
+        $schedule->command('sage-processes:run')->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping();
+
         // $schedule->command('alfred:followupEmails')->timezone('Asia/Dubai')->weekly()->mondays()->at('11:00')->onOneServer()->withoutOverlapping();
 
-        // $schedule->command('CorplineDataMigration:cron')->timezone('Asia/Dubai')->dailyAt('11:05')
+        // $schedule->command('CorplineDataMigration:cron')->timezone('Asia/Dubai')->dailyAt('10:50')
         //     ->onOneServer()
         //     ->withoutOverlapping()
         //     ->onSuccess(function (Stringable $output) {

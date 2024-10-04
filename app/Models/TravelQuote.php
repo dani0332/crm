@@ -3,9 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
-use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Enums\TravelQuoteEnum;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
@@ -73,7 +71,6 @@ class TravelQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(QuoteStatus::class);
     }
-
     public function travelQuoteRequestDetail()
     {
         return $this->hasOne(TravelQuoteRequestDetail::class, 'travel_quote_request_id', 'id');
@@ -221,17 +218,6 @@ class TravelQuote extends Model implements AuditableContract
     public function embeddedTransaction()
     {
         return $this->hasOne(EmbeddedTransaction::class, 'code', 'code');
-    }
-
-    public function scopeIsSICLead($q, QuoteTypes $quoteType)
-    {
-        $q->whereIn('uuid', function ($query) use ($quoteType) {
-            $query->distinct()
-                ->select('quote_uuid')
-                ->from('quote_tags')
-                ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
-                ->where('quote_tags.quote_type_id', $quoteType->id());
-        });
     }
 
     public function isMultiTrip()

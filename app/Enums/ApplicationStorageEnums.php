@@ -125,6 +125,12 @@ final class ApplicationStorageEnums extends Enum
     public const DIS_INBOX_EMAIL_BCC = 'DIS_INBOX_EMAIL_BCC';
     public const BIRD_SIC_HEALTH_WORKFLOW = 'BIRD_SIC_HEALTH_WORKFLOW';
 
+    // MOTOR RENEWAL SIC 3.0
+    public const BIRD_SIC_MOTOR_RENEWAL_WORKFLOW = 'BIRD_SIC_MOTOR_RENEWAL_WORKFLOW';
+
+    // whatsapp number for instant alfred
+    public const INSTANT_ALFRED_WHATSAPP_NUMBER = 'INSTANT_ALFRED_WHATSAPP_NUMBER';
+
     // Health Plan Insurer Provider For Send & Book Policy
     public const BUP_HEALTH_DOC = 'BUP_HEALTH_DOC';
     public const OIC_HEALTH_DOC = 'OIC_HEALTH_DOC';
@@ -142,4 +148,5 @@ final class ApplicationStorageEnums extends Enum
     public const ENABLE_PAYMENT_NOTIFICATION = 'ENABLE_PAYMENT_NOTIFICATION';
     public const PAYMENT_AUTHORISED_DAYS = 'PAYMENT_AUTHORISED_DAYS';
     public const ADVISOR_CONVERSION_QUOTE_STATUS_DATE = 'ADVISOR_CONVERSION_QUOTE_STATUS_DATE';
+    public const BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL = 'BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL';
 }

@@ -2,19 +2,25 @@
 
 namespace App\Factories;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CollectionTypeEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteStatusCode;
+use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SagePaymentMethodsEnum;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\ApplicationStorage;
 use App\Models\BusinessInsuranceType;
 use App\Models\InsuranceProvider;
 use App\Models\Lookup;
+use App\Models\Payment;
 use App\Models\User;
 use App\Repositories\SendUpdateLogRepository;
 use Carbon\Carbon;
+use stdClass;
 
 class SagePayloadFactory
 {
@@ -44,7 +50,7 @@ class SagePayloadFactory
             strtolower($request->invoicePaymentStatus) == 'paid' &&
             $leadStatus == quoteStatusCode::PolicyBooked
         ) {
-            return self::createPaymontRecieptOneInvoice($request); // Ignore this error because it's not being used anywhere in the codebase
+            return self::createPaymentReceiptOneInvoice($request); // Ignore this error because it's not being used anywhere in the codebase
         } elseif (
             $request->discount > 0 &&
             $leadStatus == quoteStatusCode::PolicyBooked &&
@@ -58,7 +64,7 @@ class SagePayloadFactory
         }
     }
 
-    public static function createPaymontRecieptOneInvoice($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment = false)
+    public static function createPaymentReceiptOneInvoice($quote, $sage_customer_number, $payment, $splitPayments, $isPosAllSplitPayment = false)
     {
         $entryType = SageEnum::SCT_STRAIGHT;
         $payLoad = [
@@ -104,16 +110,16 @@ class SagePayloadFactory
                     'TaxGroup' => 'VAT', // alway will be VAT discussed with denber
                     'TaxClass1' => 5,
                     'TaxAmount1' => 0.000,
-                    'DocumentTotalBeforeTaxes' => roundNumber($request->totalAmount),
-                    'DocumentTotalIncludingTax' => roundNumber($request->totalAmount),
+                    'DocumentTotalBeforeTaxes' => roundNumber($request->totalPrice),
+                    'DocumentTotalIncludingTax' => roundNumber($request->totalPrice),
                     'PostingDate' => Carbon::parse($request->bookingDate)->format(self::instanceData()->sage_api_date_format), // Add date format because caught an error while calling sage for Send update
                     'InvoiceDetails' => [
                         [
                             'DistributionDescription' => $premiumDescription,
                             'TaxClass1' => 5,
                             'GLAccount' => $request->insurerGlLiaiblityAccount,
-                            'DistributedAmount' => roundNumber($request->totalAmount),
-                            'DistributedAmountBeforeTaxes' => roundNumber($request->totalAmount),
+                            'DistributedAmount' => roundNumber($request->totalPrice),
+                            'DistributedAmountBeforeTaxes' => roundNumber($request->totalPrice),
                         ],
                     ],
                     'InvoicePaymentSchedules' => [
@@ -438,7 +444,7 @@ class SagePayloadFactory
         $sageRequestType = SageEnum::SRT_CREATE_AR_PREM_COMM_INV;
         $entryType = SageEnum::SCT_STRAIGHT;
 
-        // Payload uppdate logic for reversal and correction scenario
+        // Payload update logic for reversal and correction scenario
         if (in_array($type, [SageEnum::SCT_REVERSAL, SageEnum::SCT_CORRECTION]) && ! empty($reversalDetails)) {
             $entryType = $type;
             $reversePayLoad = json_decode($reversalDetails);
@@ -634,9 +640,12 @@ class SagePayloadFactory
 
     public static function createPaymentSchedules($splitPayments, $insurerInvoiceDate)
     {
-
         $data = [];
         foreach ($splitPayments as $key => $item) {
+            if (! isset($item->payment)) {
+                $item->payment = Payment::where('code', $item->code)->first();
+            }
+
             $payment = $item->payment;
             if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                 $dueDate = $insurerInvoiceDate;
@@ -669,7 +678,7 @@ class SagePayloadFactory
         } else {
             $payLoad = [
                 'CustomerNumber' => 'P'.$customer->id,
-                'CustomerName' => $customer->first_name.' '.$customer->last_name,
+                'CustomerName' => $customer->insured_first_name.' '.$customer->insured_last_name,
                 'GroupCode' => 'PHI',
             ];
         }
@@ -1132,108 +1141,141 @@ class SagePayloadFactory
 
     public static function createAppliedReceiptsAdjustments($quote, $sageCustomerNumber, $paymentRecord, $splitPaymentRecords, $isPaymentsSplit)
     {
-        $receiptsAndAdjustmentsData = [];
         if ($isPaymentsSplit) {
-            foreach ($splitPaymentRecords as $index => $splitPaymentRecord) {
-                [$singleReceiptData, $singlePrePaymentData, $discountData] = self::createReceiptData($splitPaymentRecord, $sageCustomerNumber, $paymentRecord, $index + 1);
-                $receiptsAndAdjustmentsData[] = $singleReceiptData;
-                $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
-                if ($discountData) {
-                    $receiptsAndAdjustmentsData[] = $discountData;
-                }
-            }
+            $receiptsAndAdjustmentsData = self::createAppliedReceiptsAdjustmentsForSplitPayments($splitPaymentRecords, $sageCustomerNumber, $paymentRecord);
         } else {
             $firstSplitPaymentRecord = $splitPaymentRecords[0];
-            [$singleReceiptData, $singlePrePaymentData , $discountData] = self::createReceiptData($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord);
-            $receiptsAndAdjustmentsData[] = $singleReceiptData;
-            $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
-            if ($discountData) {
-                $receiptsAndAdjustmentsData[] = $discountData;
-            }
+            $receiptsAndAdjustmentsData = self::createAppliedReceiptsAdjustmentsForNonSplitPayments($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord);
         }
 
         return $receiptsAndAdjustmentsData;
     }
 
-    public static function sagePayLoad($quoteType, $quote, $payment, $splitPayments)
+    public static function sagePayLoad($modelType, $payment, $quote, $paymentSplits): object
     {
-        $quoteDetails = is_array($quote) ? $quote : $quote->toArray();
-        $firstChildPayment = $splitPayments->first();
+        $firstChildPayment = $paymentSplits->first();
         $insuredFullName = isset($quote->customer_id) ? $quote?->customer?->insured_first_name.' '.$quote?->customer?->insured_last_name : '';
+        $latestEndorsementCode = '';
+        if (isset($quote->personal_quote_id) && $quote?->personal_quote_id) {
+            $latestEndorsement = SendUpdateLogRepository::endorsementsByPersonalQuoteId($quote->personal_quote_id)->first();
+            $latestEndorsementCode = $latestEndorsement?->code;
+        }
 
-        if ($quoteDetails['insly_migrated']) {
-            $insuranceProviderDetails = InsuranceProvider::where('id', $quoteDetails['insurance_provider_id'])->first();
-            $insurerGlLiaiblityAccount = $insuranceProviderDetails?->gl_liaiblity_account;
-            $sageVenderId = $insuranceProviderDetails?->sage_vendor_id;
-            $sageInsurerCustomerId = $insuranceProviderDetails?->sage_insurer_customer_id;
-            $insurerName = $payment->insuranceProvider?->text;
+        $businessTypeOfInsuranceCode = '';
+        if (isset($quote->business_type_of_insurance_id) && $quote?->business_type_of_insurance_id) {
+            $businessTypeOfInsurance = BusinessInsuranceType::find($quote->business_type_of_insurance_id);
+            $businessTypeOfInsuranceCode = $businessTypeOfInsurance->code;
+        }
+
+        if ($quote?->insly_migrated) {
             $premiumCollectedBy = ucfirst(CollectionTypeEnum::BROKER);
-            $policyIssuer = $quoteDetails['booking_filled_by'];
-
+            $policyIssuer = $quote->booking_filled_by;
         } else {
-            $insurerGlLiaiblityAccount = $payment->insuranceProvider?->gl_liaiblity_account;
-            $sageVenderId = $payment->insuranceProvider?->sage_vendor_id;
-            $insurerName = $payment->insuranceProvider?->text;
-            $sageInsurerCustomerId = $payment->insuranceProvider?->sage_insurer_customer_id;
             $premiumCollectedBy = ucfirst($payment->collection_type);
             $policyIssuer = $payment->policyIssuer?->name ?? '';
         }
 
-        $response = [
-            'discount' => floatval($payment->discount_value),
-            'invoiceDescription' => $payment->invoice_description,
-            'bookingDate' => $quoteDetails['policy_booking_date'] ? date('Y-m-d', strtotime($quote['policy_booking_date'])) : Carbon::now()->format(env('DATE_FORMAT_ONLY')),
-            'policyBookingDate' => $quoteDetails['policy_booking_date'] ? date('Ymd', strtotime($quoteDetails['policy_booking_date'])) : Carbon::now()->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT')),
-            'policyExpiryDate' => date('Ymd', strtotime($quote['policy_expiry_date'])),
-            'insurerInvoiceDate' => date('Y-m-d', strtotime($payment->insurer_invoice_date)),
-            'mainClassInsurance' => $quoteType,
-            'policyNumber' => substr($quoteDetails['policy_number'], 60),
-            'originalPolicyNumber' => $quoteDetails['policy_number'],
-            'policyIssuer' => $policyIssuer,
-            'requestType' => Lookup::where('id', $quoteDetails['transaction_type_id'] ?? '')->first()->text ?? '',
-            'subClass' => BusinessInsuranceType::where('id', $quoteDetails['business_type_of_insurance_id'] ?? '')->value('code') ?? '',
-            'ccCode' => $firstChildPayment->cc_payment_id ?? '',
-            'isPostDatedCheck' => ($firstChildPayment->payment_method == PaymentMethodsEnum::PostDatedCheque) ? 'Yes' : 'No',
-            'checkDetails' => $firstChildPayment->check_detail ?? '',
-            'endorsementNumber' => isset($quoteDetails['personal_quote_id']) ? SendUpdateLogRepository::endorsementsByPersonalQuoteId($quoteDetails['personal_quote_id'])->first()->code : '',
-            'insured' => $insuredFullName,
-            'policyHolder' => $insuredFullName,
-            'premiumCollectedBy' => $premiumCollectedBy,
-            'invoicePaymentStatus' => $payment->payment_status_id ?? null,
-            'advisorName' => ! empty($quoteDetails['advisor_id']) ? User::where('id', $quoteDetails['advisor_id'])->value('name') : '',
-            'manager' => implode(',', getManagersByUser(User::where('id', ($quoteDetails['advisor_id'] ?? ''))->value('id'))->pluck('name')->toArray()),
-            'vatOnPremium' => isset($quoteDetails['vat']) ?: (isset($quoteDetails['price_with_vat']) ? (floatval($quoteDetails['price_with_vat']) - floatval($quoteDetails['price_vat_applicable'] ?? 0)) : 0),
-            'premiumWithoutTax' => floatval($quoteDetails['price_vat_applicable'] ?? 0) + floatval($quoteDetails['price_vat_not_applicable'] ?? 0),
-            'premiumWithTax' => floatval($quoteDetails['price_with_vat']),
-            'vatOnCommission' => floatval($payment->commission_vat),
-            'totalAmount' => roundNumber(floatval($payment->total_amount)),
-            'totalPrice' => floatval($payment->total_price),
-            'commission' => roundNumber(floatval($payment->commission)),
-            'commissionIncludingVat' => roundNumber(floatval($payment->commission_vat_applicable)),
-            'commissionWithOutVat' => $payment->commission_vat_not_applicable ? roundNumber(floatval($payment->commission_vat_not_applicable)) : roundNumber(floatval($payment->commission_without_vat)),
-            'commissionPercentage' => strval($payment->commmission_percentage),
-            'insurerPremiumNumber' => (string) substr($payment['insurer_tax_number'], -18),
-            'insurerCommissionNumber' => (string) substr($payment['insurer_commmission_invoice_number'], -18),
-            'originalInsurerPremiumNumber' => (string) $payment['insurer_tax_number'],
-            'originalInsurerCommissionNumber' => (string) $payment['insurer_commmission_invoice_number'],
-            'insurerGlLiaiblityAccount' => $insurerGlLiaiblityAccount,
-            'sageVenderId' => $sageVenderId,
-            'sageInsurerCustomerId' => $sageInsurerCustomerId,
-            'insurerName' => $insurerName,
-        ];
+        $sageRequest = new stdClass;
 
-        if (! empty($splitPayments)) {
-            $response['paymentDueDate'] = date('Y-m-d', strtotime($splitPayments[0]['due_date']));
+        $sageRequest->userId = auth()->id();
+        $sageRequest->discount = floatval($payment->discount_value);
+        $sageRequest->invoiceDescription = $payment->invoice_description;
+        //        TODO:: Need to check with Ali Array to Std
+        $sageRequest->bookingDate = $quote?->policy_booking_date ? date(env('DATE_FORMAT_ONLY'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
+        $sageRequest->policyBookingDate = $quote?->policy_booking_date ? date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote?->policy_booking_date)) : Carbon::now()->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
+        $sageRequest->policyExpiryDate = date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote?->policy_expiry_date));
+        $sageRequest->insurerInvoiceDate = date(env('DATE_FORMAT_ONLY'), strtotime($payment->insurer_invoice_date));
+
+        if (! empty($paymentSplits)) {
+            $sageRequest->paymentDueDate = date(env('DATE_FORMAT_ONLY'), strtotime($firstChildPayment->due_date));
         }
 
-        if (count($splitPayments) == 1) {
-            $response['sage_reciept_id'] = $splitPayments[0]['sage_reciept_id'] ?? null;
-            $response['collection_amount'] = roundNumber($splitPayments[0]['collection_amount']) + $response['discount'];
+        $sageRequest->mainClassInsurance = $modelType;
+        $sageRequest->policyNumber = substr($quote->policy_number, 60);
+        $sageRequest->originalPolicyNumber = $quote->policy_number;
+        $sageRequest->policyIssuer = $policyIssuer;
+        $sageRequest->requestType = Lookup::where('id', $quote->transaction_type_id)->first()->text ?? '';
+        $sageRequest->subClass = $businessTypeOfInsuranceCode;
+        $sageRequest->ccCode = $firstChildPayment->cc_payment_id ?? '';
+        $sageRequest->isPostDatedCheck = $firstChildPayment->payment_method == PaymentMethodsEnum::PostDatedCheque ? 'Yes' : 'No';
+        $sageRequest->checkDetails = $firstChildPayment->check_detail ?? '';
+        $sageRequest->endorsementNumber = $latestEndorsementCode;
+        $sageRequest->insured = $insuredFullName;
+        $sageRequest->policyHolder = $insuredFullName;
+        $sageRequest->premiumCollectedBy = $premiumCollectedBy;
+
+        $sageRequest->invoicePaymentStatus = $payment->payment_status_id;
+        $advisorName = '';
+        $managerName = '';
+        if (! empty($quote->advisor_id)) {
+            $advisor = User::where('id', $quote->advisor_id)->first();
+            $advisorName = $advisor->name;
+            $managerName = implode(',', getManagersByUser($advisor->id)->pluck('name')->toArray());
+        }
+        $sageRequest->advisorName = $advisorName;
+        $sageRequest->manager = $managerName;
+
+        //calculate vat
+        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()?->value;
+        $sageRequest->vatOnPremium = $vatPercentage && $quote->price_vat_applicable ? (($quote->price_vat_applicable * $vatPercentage) / 100) : 0;
+        //        $sageRequest->vatOnPremium = isset($quote->vat) ?: (isset($quote->price_with_vat) ? (floatval($quote->price_with_vat) - floatval($quote->price_vat_applicable ?? 0)) : 0); TODO:: This was added previous endorsement function, need to verify
+
+        $sageRequest->premiumWithoutTax = floatval($quote->price_vat_applicable ?? 0) + floatval($quote->price_vat_not_applicable ?? 0);
+        $sageRequest->premiumWithTax = floatval($quote->price_with_vat);
+        $sageRequest->vatOnCommission = floatval($payment->commission_vat);
+        $sageRequest->totalAmount = floatval($payment->total_amount);
+        $sageRequest->totalPrice = floatval($payment->total_price);
+        $sageRequest->commission = floatval($payment->commission);
+        $sageRequest->commissionIncludingVat = floatval($payment->commission_vat_applicable);
+        $sageRequest->commissionWithOutVat = $payment->commission_vat_not_applicable ? floatval($payment->commission_vat_not_applicable) : floatval($payment->commission_without_vat);
+        $sageRequest->commissionPercentage = strval($payment->commmission_percentage);
+
+        // Slice the last 18 characters from the string to avoid sage document number length issue and store the original values in optional fields
+        $sageRequest->insurerPremiumNumber = (string) substr($payment->insurer_tax_number, -18);
+        $sageRequest->insurerCommissionNumber = (string) substr($payment->insurer_commmission_invoice_number, -18);
+        $sageRequest->originalInsurerPremiumNumber = (string) $payment->insurer_tax_number;
+        $sageRequest->originalInsurerCommissionNumber = (string) $payment->insurer_commmission_invoice_number;
+
+        if (count($paymentSplits) == 1) {
+            $sageRequest->sage_reciept_id = $firstChildPayment->sage_reciept_id;
+            $sageRequest->collection_amount = $firstChildPayment->collection_amount + $sageRequest->discount;
         } else {
-            $response['invoicePaymentStatus'] = $splitPayments[0]['payment_status_id'];
+            $sageRequest->invoicePaymentStatus = $firstChildPayment->payment_status_id;
         }
 
-        return (object) $response;
+        $insuranceProvider = null;
+
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
+        if (in_array(ucfirst($modelType), $allowedQuoteTypes)) {
+            $planRelationName = strtolower($modelType).'Plan';
+            $payment->load($planRelationName);
+            $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
+        }
+
+        if (! $insuranceProvider) {
+            $insuranceProvider = $payment->insuranceProvider;
+        }
+
+        if ($quote?->insly_migrated && ! empty($payment->send_update_log_id)) {
+            $insuranceProviderDetails = InsuranceProvider::where('id', $quote->insurance_provider_id)->first();
+            $sageVenderId = $insuranceProviderDetails?->sage_vendor_id;
+            $sageInsurerCustomerId = $insuranceProviderDetails?->sage_insurer_customer_id;
+            $insurerGlLiaiblityAccount = $insuranceProviderDetails?->gl_liaiblity_account;
+
+        } else {
+            $sageVenderId = $insuranceProvider?->sage_vendor_id;
+            $sageInsurerCustomerId = $insuranceProvider?->sage_insurer_customer_id;
+            $insurerGlLiaiblityAccount = $insuranceProvider?->gl_liaiblity_account;
+        }
+
+        //Insurer GL Account and Vendor Number
+        $sageRequest->insurerGlLiaiblityAccount = $insurerGlLiaiblityAccount;
+        $sageRequest->sageVenderId = $sageVenderId;
+        $sageRequest->sageInsurerCustomerId = $sageInsurerCustomerId;
+        $sageRequest->insurerName = $insuranceProvider?->text;
+        $sageRequest->insurerID = $insuranceProvider?->id;
+
+        return $sageRequest;
     }
 
     public static function getInvoiceDetails($invoiceType, $batchNumber)
@@ -1245,584 +1287,6 @@ class SagePayloadFactory
             'sage_request_type' => $invoiceType,
             'entry_type' => $invoiceType,
         ];
-    }
-
-    public static function handleSageAPIsParms($apiType, $useFor = SageEnum::SCT_STRAIGHT)
-    {
-        $response = [];
-        $message = self::getErrorMessages();
-
-        switch ($apiType) {
-
-            // Sage Calls for Upfront Cases
-            case SageEnum::SRT_CREATE_AR_PREM_COMM_INV:
-                $response = [
-                    'steps' => 3,
-                    'recursiveCalls' => [
-                        'createARInvoicePremAndComm',
-                        'readyToPostInvoiceAr',
-                        'aRPostInvoices',
-                    ],
-                    'extraDetails' => [
-                        'createARInvoicePremAndComm' => [
-                            'requestParms' => 'payload',
-                            'nextCondition' => 'BatchNumber',
-                            'errorMessage' => 'AR Invoice & prem failed from Sage',
-                        ],
-                        'readyToPostInvoiceAr' => [
-                            'requestParms' => 'BatchNumber',
-                            'verb' => 'PATCH',
-                            'logResponse' => true,
-                            'conditionChecks' => ['type' => 'Not Empty', 'condtion_to_check' => ''],
-                            'errorMessage' => 'Error while making AR Invoice & prem ready to post to Sage',
-                        ],
-                        'aRPostInvoices' => [
-                            'requestParms' => 'BatchNumber',
-                            'logResponse' => true,
-                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
-                            'errorMessage' => 'Error while making AR Invoice & prem Posted to Sage',
-                        ],
-                    ],
-                ];
-                break;
-
-            case SageEnum::SRT_CREATE_AP_PREM_INV:
-                $response = [
-                    'steps' => 3,
-                    'recursiveCalls' => [
-                        'createAPInvoicePrem',
-                        'readyToPostInvoiceAP',
-                        'aPPostInvoices',
-                    ],
-                    'extraDetails' => [
-                        'createAPInvoicePrem' => [
-                            'requestParms' => 'payload',
-                            'nextCondition' => 'BatchNumber',
-                            'errorMessage' => 'AP Invoice prem failed from Sage',
-                        ],
-                        'readyToPostInvoiceAP' => [
-                            'requestParms' => 'BatchNumber',
-                            'verb' => 'PATCH',
-                            'logResponse' => true,
-                            'conditionChecks' => ['type' => 'Not Empty', 'condtion_to_check' => ''],
-                            'errorMessage' => 'Error while making AP Invoice ready to post to Sage',
-                        ],
-                        'aPPostInvoices' => [
-                            'requestParms' => 'BatchNumber',
-                            'logResponse' => true,
-                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
-                            'errorMessage' => 'Error while making AP Invoice posted to Sage',
-                        ],
-                    ],
-                ];
-                break;
-
-            case SageEnum::SRT_CREATE_AR_DISC_INV:
-                $response = [
-                    'steps' => 3,
-                    'recursiveCalls' => [
-                        'createARInvoiceDis',
-                        'readyToPostInvoiceAr',
-                        'aRPostInvoices',
-                    ],
-                    'extraDetails' => [
-                        'createARInvoiceDis' => [
-                            'requestParms' => 'payload',
-                            'nextCondition' => 'BatchNumber',
-                            'errorMessage' => 'AR discount Invoice failed from Sage',
-                        ],
-                        'readyToPostInvoiceAr' => [
-                            'requestParms' => 'BatchNumber',
-                            'verb' => 'PATCH',
-                            'logResponse' => true,
-                            'conditionChecks' => ['type' => 'Not Empty', 'condtion_to_check' => ''],
-                            'errorMessage' => 'Error while making AR discount Invoice ready to post to Sage',
-                        ],
-                        'aRPostInvoices' => [
-                            'requestParms' => 'BatchNumber',
-                            'logResponse' => true,
-                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
-                            'errorMessage' => 'Error while making AR discount Invoice posted to Sage',
-                        ],
-                    ],
-                ];
-                break;
-
-                // Sage Call for Non-Upfront Cases
-            case SageEnum::SRT_CREATE_AR_SPPAY_INV:
-                $response = [
-                    'recursiveCalls' => [
-                        'readyToPostInvoiceAr',
-                        'aRPostInvoices',
-                    ],
-                    'extraDetails' => [
-                        'readyToPostInvoiceAr' => [
-                            'requestParms' => 'BatchNumber',
-                            'verb' => 'PATCH',
-                            'logResponse' => true,
-                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
-                            'errorMessage' => 'Error while making AR Split payment ready to post to sage',
-                        ],
-                        'aRPostInvoices' => [
-                            'requestParms' => 'BatchNumber',
-                            'logResponse' => true,
-                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
-                            'errorMessage' => 'Error while making AR Split payment posted to sage',
-                        ],
-                    ],
-                ];
-                break;
-
-            case SageEnum::SRT_CREATE_AP_SPPAY_INV:
-                $response = [
-                    'recursiveCalls' => [
-                        'readyToPostInvoiceAP',
-                        'aPPostInvoices',
-                    ],
-                    'extraDetails' => [
-                        'readyToPostInvoiceAP' => [
-                            'requestParms' => 'BatchNumber',
-                            'verb' => 'PATCH',
-                            'logResponse' => true,
-                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
-                            'errorMessage' => 'Error while making AP Split payment ready to post to sage',
-                        ],
-                        'aPPostInvoices' => [
-                            'requestParms' => 'BatchNumber',
-                            'logResponse' => true,
-                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
-                            'errorMessage' => 'Error while making AP Split payment posted to sage',
-                        ],
-                    ],
-                ];
-                break;
-
-                // Sage Calls for Reversal Cases with Upfront Correction
-            case SageEnum::SRT_REV_CORR_AR_PREM_COMM_INV:
-                $response = [
-                    'recursiveCalls' => [
-                        'getInvoiceDetails',
-                        'createARInvoicePremAndComm',
-                        'readyToPostInvoiceAr',
-                        'aRPostInvoices',
-                    ],
-                    'extraDetails' => [
-                        'getInvoiceDetails' => [
-                            'verb' => 'GET',
-                            'errorMessage' => 'Error while getting AR Invoice prem & comm details from Sage',
-                        ],
-                        'createARInvoicePremAndComm' => [
-                            'requestParms' => 'payload',
-                            'nextCondition' => 'BatchNumber',
-                            'errorMessage' => $message[$apiType][$useFor]['createARInvoicePremAndComm']['error'],
-                        ],
-                        'readyToPostInvoiceAr' => [
-                            'requestParms' => 'BatchNumber',
-                            'verb' => 'PATCH',
-                            'logResponse' => true,
-                            'conditionChecks' => ['type' => 'Not Empty', 'condtion_to_check' => ''],
-                            'errorMessage' => $message[$apiType][$useFor]['readyToPostInvoiceAr']['error'],
-                        ],
-                        'aRPostInvoices' => [
-                            'requestParms' => 'BatchNumber',
-                            'logResponse' => true,
-                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
-                            'errorMessage' => $message[$apiType][$useFor]['aRPostInvoices']['error'],
-                        ],
-                    ],
-                ];
-                break;
-
-            case SageEnum::SRT_REV_CORR_AP_PREM_INV:
-                $response = [
-                    'recursiveCalls' => [
-                        'getInvoiceDetails',
-                        'createAPInvoicePrem',
-                        'readyToPostInvoiceAP',
-                        'aPPostInvoices',
-                    ],
-                    'extraDetails' => [
-                        'getInvoiceDetails' => [
-                            'verb' => 'GET',
-                        ],
-                        'createAPInvoicePrem' => [
-                            'requestParms' => 'payload',
-                            'nextCondition' => 'BatchNumber',
-                            'errorMessage' => $message[$apiType][$useFor]['createAPInvoicePrem']['error'],
-                        ],
-                        'readyToPostInvoiceAP' => [
-                            'requestParms' => 'BatchNumber',
-                            'verb' => 'PATCH',
-                            'logResponse' => true,
-                            'conditionChecks' => ['type' => 'Not Empty', 'condtion_to_check' => ''],
-                            'errorMessage' => $message[$apiType][$useFor]['readyToPostInvoiceAP']['error'],
-                        ],
-                        'aPPostInvoices' => [
-                            'requestParms' => 'BatchNumber',
-                            'logResponse' => true,
-                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
-                            'errorMessage' => $message[$apiType][$useFor]['aPPostInvoices']['error'],
-                        ],
-                    ],
-                ];
-                break;
-
-                // Sage Calls for Reversal Cases with Non-Upfront Correction
-            case SageEnum::SRT_REV_CORR_AR_SPPAY_INV:
-                $response = [
-                    'recursiveCalls' => [
-                        'getInvoiceDetails',
-                        'createARInvoicePremAndComm',
-                        'readyToPostInvoiceAr',
-                        'aRPostInvoices',
-                    ],
-                    'extraDetails' => [
-                        'getInvoiceDetails' => [
-                            'verb' => 'GET',
-                            'errorMessage' => 'Error while getting AR Invoice prem & comm details from Sage',
-                        ],
-                        'createARInvoicePremAndComm' => [
-                            'requestParms' => 'payload',
-                            'nextCondition' => 'BatchNumber',
-                            'errorMessage' => $message[$apiType][$useFor]['createARInvoicePremAndComm']['error'],
-                        ],
-                        'readyToPostInvoiceAr' => [
-                            'requestParms' => 'BatchNumber',
-                            'verb' => 'PATCH',
-                            'logResponse' => true,
-                            'conditionChecks' => ['type' => 'Not Empty', 'condtion_to_check' => ''],
-                            'errorMessage' => $message[$apiType][$useFor]['readyToPostInvoiceAr']['error'],
-                        ],
-                        'aRPostInvoices' => [
-                            'requestParms' => 'BatchNumber',
-                            'logResponse' => true,
-                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
-                            'errorMessage' => $message[$apiType][$useFor]['aRPostInvoices']['error'],
-                        ],
-                    ],
-                ];
-                break;
-
-            case SageEnum::SRT_REV_CORR_AP_SPPAY_INV:
-                $response = [
-                    'recursiveCalls' => [
-                        'getInvoiceDetails',
-                        'createAPInvoicePrem',
-                        'readyToPostInvoiceAP',
-                        'aPPostInvoices',
-                        'readyToPostInvoiceAP',
-                        'aPPostInvoices',
-                    ],
-                    'extraDetails' => [
-                        'getInvoiceDetails' => [
-                            'verb' => 'GET',
-                        ],
-                        'createAPInvoicePrem' => [
-                            'requestParms' => 'payload',
-                            'nextCondition' => 'BatchNumber',
-                            'errorMessage' => $message[$apiType][$useFor]['createAPInvoicePrem']['error'],
-                        ],
-                        'readyToPostInvoiceAP' => [
-                            'requestParms' => 'BatchNumber',
-                            'verb' => 'PATCH',
-                            'logResponse' => true,
-                            'conditionChecks' => ['type' => 'Not Empty', 'condtion_to_check' => ''],
-                            'errorMessage' => $message[$apiType][$useFor]['readyToPostInvoiceAP']['error'],
-                        ],
-                        'aPPostInvoices' => [
-                            'requestParms' => 'BatchNumber',
-                            'logResponse' => true,
-                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
-                            'errorMessage' => $message[$apiType][$useFor]['aPPostInvoices']['error'],
-                        ],
-                    ],
-                ];
-                break;
-
-                // Sage Calls for Reversal Cases with Upfront/Non-Upfront Correction
-            case SageEnum::SRT_REV_CORR_AR_DIS_INV:
-                $response = [
-                    'recursiveCalls' => [
-                        'getInvoiceDetails',
-                        'createARInvoiceDis',
-                        'readyToPostInvoiceAr',
-                        'aRPostInvoices',
-                    ],
-                    'extraDetails' => [
-                        'getInvoiceDetails' => [
-                            'verb' => 'GET',
-                        ],
-                        'createARInvoiceDis' => [
-                            'requestParms' => 'payload',
-                            'nextCondition' => 'BatchNumber',
-                            'errorMessage' => $message[$apiType][$useFor]['createARInvoiceDis']['error'],
-                        ],
-                        'readyToPostInvoiceAr' => [
-                            'requestParms' => 'BatchNumber',
-                            'verb' => 'PATCH',
-                            'logResponse' => true,
-                            'conditionChecks' => ['type' => 'Not Empty', 'condtion_to_check' => ''],
-                            'errorMessage' => $message[$apiType][$useFor]['readyToPostInvoiceAr']['error'],
-                        ],
-                        'aRPostInvoices' => [
-                            'requestParms' => 'BatchNumber',
-                            'logResponse' => true,
-                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
-                            'errorMessage' => $message[$apiType][$useFor]['aRPostInvoices']['error'],
-                        ],
-                    ],
-                ];
-                break;
-
-                // Apply Payment and Receipts Invoices
-            case SageEnum::SRT_CREATE_PAY_REC_ONE_INV:
-                $response = [
-                    'recursiveCalls' => [
-                        'createPaymontRecieptOneInvoice',
-                        'readyToPostReceiptAr',
-                        'aRPostReceipts',
-                    ],
-                    'extraDetails' => [
-                        'createPaymontRecieptOneInvoice' => [
-                            'requestParms' => 'payload',
-                            'nextCondition' => 'BatchNumber',
-                            'errorMessage' => 'Error while making Split Pre-Payments to sage',
-                        ],
-                        'readyToPostReceiptAr' => [
-                            'requestParms' => 'BatchNumber',
-                            'verb' => 'PATCH',
-                            'logResponse' => true,
-                            'conditionChecks' => ['type' => 'Not Empty', 'condtion_to_check' => ''],
-                            'errorMessage' => 'Error while making Apply payment ready to post to sage',
-                        ],
-                        'aRPostReceipts' => [
-                            'requestParms' => 'BatchNumber',
-                            'logResponse' => true,
-                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
-                            'errorMessage' => 'Error while making Apply payment posted to sage',
-                        ],
-                    ],
-                ];
-                break;
-
-            case SageEnum::SRT_CREATE_AR_SP_PRE_PAYMENT:
-                $response = [
-                    'recursiveCalls' => [
-                        'arSplitPrepaymentPayload',
-                        'readyToPostReceiptAr',
-                        'aRPostReceipts',
-                    ],
-                    'extraDetails' => [
-                        'arSplitPrepaymentPayload' => [
-                            'requestParms' => 'payload',
-                            'nextCondition' => 'BatchNumber',
-                            'errorMessage' => 'Error while making apply Split Pre-Payments to sage',
-                        ],
-                        'readyToPostReceiptAr' => [
-                            'requestParms' => 'BatchNumber',
-                            'logResponse' => true,
-                            'verb' => 'PATCH',
-                            'conditionChecks' => ['type' => 'Not Empty', 'condtion_to_check' => ''],
-                            'errorMessage' => 'Error while making Apply payment ready to post to sage',
-                        ],
-                        'aRPostReceipts' => [
-                            'requestParms' => 'BatchNumber',
-                            'logResponse' => true,
-                            'conditionChecks' => ['type' => 'isset', 'condtion_to_check' => 'error'],
-                            'errorMessage' => 'Error while making Apply payment Posted to sage',
-                        ],
-                    ],
-                ];
-                break;
-
-        }
-
-        return $response;
-    }
-
-    public static function getErrorMessages()
-    {
-        $message = [
-            SageEnum::SRT_REV_CORR_AR_PREM_COMM_INV => [
-                SageEnum::SCT_STRAIGHT => [
-                    'createARInvoicePremAndComm' => [
-                        'error' => 'AR Invoice & prem failed from Sage',
-                    ],
-                    'readyToPostInvoiceAr' => [
-                        'error' => 'Error while making AR Invoice & prem ready to post to Sage',
-                    ],
-                    'aRPostInvoices' => [
-                        'error' => 'Error while making AR Invoice & prem Posted to Sage',
-                    ],
-                ],
-                SageEnum::SCT_REVERSAL => [
-                    'createARInvoicePremAndComm' => [
-                        'error' => 'AR Invoice & prem reversal failed from Sage',
-                    ],
-                    'readyToPostInvoiceAr' => [
-                        'error' => 'Error while making AR Invoice & prem reversal ready to post to Sage',
-                    ],
-                    'aRPostInvoices' => [
-                        'error' => 'Error while making AR Invoice & prem reversal Posted to Sage',
-                    ],
-                ],
-                SageEnum::SCT_CORRECTION => [
-                    'createARInvoicePremAndComm' => [
-                        'error' => 'AR Invoice & prem correction failed from Sage',
-                    ],
-                    'readyToPostInvoiceAr' => [
-                        'error' => 'Error while making AR Invoice & prem correction ready to post to Sage',
-                    ],
-                    'aRPostInvoices' => [
-                        'error' => 'Error while making AR Invoice & prem correction Posted to Sage',
-                    ],
-                ],
-            ],
-            // Need to update messaages
-            SageEnum::SRT_REV_CORR_AR_SPPAY_INV => [
-                SageEnum::SCT_STRAIGHT => [
-                    'createARInvoicePremAndComm' => [
-                        'error' => 'AR Invoice & prem failed from Sage',
-                    ],
-                    'readyToPostInvoiceAr' => [
-                        'error' => 'Error while making AR Invoice & prem ready to post to Sage',
-                    ],
-                    'aRPostInvoices' => [
-                        'error' => 'Error while making AR Invoice & prem Posted to Sage',
-                    ],
-                ],
-                SageEnum::SCT_REVERSAL => [
-                    'createARInvoicePremAndComm' => [
-                        'error' => 'AR Invoice & prem reversal failed from Sage',
-                    ],
-                    'readyToPostInvoiceAr' => [
-                        'error' => 'Error while making AR Invoice & prem reversal ready to post to Sage',
-                    ],
-                    'aRPostInvoices' => [
-                        'error' => 'Error while making AR Invoice & prem reversal Posted to Sage',
-                    ],
-                ],
-                SageEnum::SCT_CORRECTION => [
-                    'createARInvoicePremAndComm' => [
-                        'error' => 'AR Invoice & prem correction failed from Sage',
-                    ],
-                    'readyToPostInvoiceAr' => [
-                        'error' => 'Error while making AR Invoice & prem correction ready to post to Sage',
-                    ],
-                    'aRPostInvoices' => [
-                        'error' => 'Error while making AR Invoice & prem correction Posted to Sage',
-                    ],
-                ],
-            ],
-            SageEnum::SRT_REV_CORR_AP_PREM_INV => [
-                SageEnum::SCT_STRAIGHT => [
-                    'createAPInvoicePrem' => [
-                        'error' => 'AP Invoice prem failed from Sage',
-                    ],
-                    'readyToPostInvoiceAP' => [
-                        'error' => 'Error while making AP Invoice ready to post to Sage',
-                    ],
-                    'aPPostInvoices' => [
-                        'error' => 'Error while making AP Invoice posted to Sage',
-                    ],
-                ],
-                SageEnum::SCT_REVERSAL => [
-                    'createAPInvoicePrem' => [
-                        'error' => 'AP Invoice prem reversal failed from Sage',
-                    ],
-                    'readyToPostInvoiceAP' => [
-                        'error' => 'Error while making AP Invoice reversal ready to post to Sage',
-                    ],
-                    'aPPostInvoices' => [
-                        'error' => 'Error while making AP Invoice reversal posted to Sage',
-                    ],
-                ],
-                SageEnum::SCT_CORRECTION => [
-                    'createAPInvoicePrem' => [
-                        'error' => 'AP Invoice prem correction failed from Sage',
-                    ],
-                    'readyToPostInvoiceAP' => [
-                        'error' => 'Error while making AP Invoice correction ready to post to Sage',
-                    ],
-                    'aPPostInvoices' => [
-                        'error' => 'Error while making AP Invoice correction posted to Sage',
-                    ],
-                ],
-            ],
-            // Need to update messaages
-            SageEnum::SRT_REV_CORR_AP_SPPAY_INV => [
-                SageEnum::SCT_STRAIGHT => [
-                    'createAPInvoicePrem' => [
-                        'error' => 'AP Invoice & prem failed from Sage',
-                    ],
-                    'readyToPostInvoiceAP' => [
-                        'error' => 'Error while making AP Invoice & prem ready to post to Sage',
-                    ],
-                    'aPPostInvoices' => [
-                        'error' => 'Error while making AP Invoice & prem Posted to Sage',
-                    ],
-                ],
-                SageEnum::SCT_REVERSAL => [
-                    'createAPInvoicePrem' => [
-                        'error' => 'AR Invoice & prem reversal failed from Sage',
-                    ],
-                    'readyToPostInvoiceAP' => [
-                        'error' => 'Error while making AP Invoice & prem reversal ready to post to Sage',
-                    ],
-                    'aPPostInvoices' => [
-                        'error' => 'Error while making AP Invoice & prem reversal Posted to Sage',
-                    ],
-                ],
-                SageEnum::SCT_CORRECTION => [
-                    'createAPInvoicePrem' => [
-                        'error' => 'AR Invoice & prem correction failed from Sage',
-                    ],
-                    'readyToPostInvoiceAP' => [
-                        'error' => 'Error while making AP Invoice & prem correction ready to post to Sage',
-                    ],
-                    'aPPostInvoices' => [
-                        'error' => 'Error while making AP Invoice & prem correction Posted to Sage',
-                    ],
-                ],
-            ],
-            SageEnum::SRT_REV_CORR_AR_DIS_INV => [
-                SageEnum::SCT_STRAIGHT => [
-                    'createARInvoiceDis' => [
-                        'error' => 'AR discount Invoice failed from Sage',
-                    ],
-                    'readyToPostInvoiceAr' => [
-                        'error' => 'Error while making AR discount Invoice ready to post to Sage',
-                    ],
-                    'aRPostInvoices' => [
-                        'error' => 'Error while making AR discount Invoice posted to Sage',
-                    ],
-                ],
-                SageEnum::SCT_REVERSAL => [
-                    'createARInvoiceDis' => [
-                        'error' => 'AR discount Invoice reversal failed from Sage',
-                    ],
-                    'readyToPostInvoiceAr' => [
-                        'error' => 'Error while making AR discount Invoice reversal ready to post to Sage',
-                    ],
-                    'aRPostInvoices' => [
-                        'error' => 'Error while making AR discount Invoice reversal posted to Sage',
-                    ],
-                ],
-                SageEnum::SCT_CORRECTION => [
-                    'createARInvoiceDis' => [
-                        'error' => 'AR discount Invoice correction failed from Sage',
-                    ],
-                    'readyToPostInvoiceAr' => [
-                        'error' => 'Error while making AR discount Invoice correction ready to post to Sage',
-                    ],
-                    'aRPostInvoices' => [
-                        'error' => 'Error while making AR discount Invoice correction posted to Sage',
-                    ],
-                ],
-            ],
-        ];
-
-        return $message;
     }
 
     // Payment code mapping
@@ -1860,5 +1324,42 @@ class SagePayloadFactory
     private static function getTermsCode($splitPaymentsCount)
     {
         return $splitPaymentsCount >= 10 ? 'SPLI'.$splitPaymentsCount : 'SPLIT'.$splitPaymentsCount;
+    }
+
+    private static function createAppliedReceiptsAdjustmentsForSplitPayments($splitPaymentRecords, $sageCustomerNumber, $paymentRecord)
+    {
+        $receiptsAndAdjustmentsData = [];
+        foreach ($splitPaymentRecords as $index => $splitPaymentRecord) {
+            if (self::isPaymentProcessed($splitPaymentRecord->payment_status_id)) {
+                [$singleReceiptData, $singlePrePaymentData, $discountData] = self::createReceiptData($splitPaymentRecord, $sageCustomerNumber, $paymentRecord, $index + 1);
+                $receiptsAndAdjustmentsData[] = $singleReceiptData;
+                $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
+                if ($discountData) {
+                    $receiptsAndAdjustmentsData[] = $discountData;
+                }
+            }
+
+        }
+
+        return $receiptsAndAdjustmentsData;
+    }
+    private static function createAppliedReceiptsAdjustmentsForNonSplitPayments($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord)
+    {
+        $receiptsAndAdjustmentsData = [];
+        if (self::isPaymentProcessed($firstSplitPaymentRecord->payment_status_id)) {
+            [$singleReceiptData, $singlePrePaymentData , $discountData] = self::createReceiptData($firstSplitPaymentRecord, $sageCustomerNumber, $paymentRecord);
+            $receiptsAndAdjustmentsData[] = $singleReceiptData;
+            $receiptsAndAdjustmentsData[] = $singlePrePaymentData;
+            if ($discountData) {
+                $receiptsAndAdjustmentsData[] = $discountData;
+            }
+        }
+
+        return $receiptsAndAdjustmentsData;
+    }
+
+    private static function isPaymentProcessed($paymentStatusId)
+    {
+        return in_array($paymentStatusId, [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
     }
 }

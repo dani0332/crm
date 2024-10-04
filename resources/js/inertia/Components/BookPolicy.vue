@@ -1,6 +1,9 @@
 <script setup>
+import { useRoundIt } from '../Composables/utilities';
 const page = usePage();
 const notification = useNotifications('toast');
+import SageAPILogs from '@/inertia/Components/SageAPILogs.vue';
+import NProgress from 'nprogress';
 const { isRequired } = useRules();
 
 const props = defineProps({
@@ -17,6 +20,10 @@ const props = defineProps({
     default: '',
   },
   modelType: {
+    type: String,
+    default: '',
+  },
+  modelClass: {
     type: String,
     default: '',
   },
@@ -358,18 +365,27 @@ const disableCommissionVatApplicable = computed(() => {
 });
 const showSendAndBookPolicyButtonBlock = computed(() => {
   const { quote_status_id } = props.quote;
-  const { TransactionApproved, PolicyIssued, AMLScreeningCleared } =
-    page.props.quoteStatusEnum;
+  const {
+    TransactionApproved,
+    PolicyIssued,
+    POLICY_BOOKING_FAILED,
+    AMLScreeningCleared,
+  } = page.props.quoteStatusEnum;
 
   const isQuoteTypeTravel = page.props.quoteType == quoteTypeCodeEnum.Travel;
 
   if (isQuoteTypeTravel) {
-    return [TransactionApproved, PolicyIssued, AMLScreeningCleared].includes(
-      quote_status_id,
-    );
+    return [
+      TransactionApproved,
+      PolicyIssued,
+      POLICY_BOOKING_FAILED,
+      AMLScreeningCleared,
+    ].includes(quote_status_id);
   }
 
-  return [TransactionApproved, PolicyIssued].includes(quote_status_id);
+  return [TransactionApproved, POLICY_BOOKING_FAILED, PolicyIssued].includes(
+    quote_status_id,
+  );
 });
 
 const showSendAndBookPolicyButton = computed(() => {
@@ -394,6 +410,7 @@ const disableSendAndBookPolicyButton = computed(() => {
   return (
     !props.bookPolicyDetails?.sendButton &&
     !isPolicyStatusCancellationPending &&
+    disableIfPolicyFailedAndNoBookingFailedEditPermission &&
     !can(permission)
   );
 });
@@ -402,9 +419,41 @@ const disableBookPolicyButton = computed(() => {
   return (
     !props.bookPolicyDetails?.bookButton ||
     bp.isEditing ||
+    disableIfPolicyFailedAndNoBookingFailedEditPermission.value ||
     !can(permissionsEnum.BOOK_POLICY_BUTTON)
   );
 });
+
+const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
+  let isPolicyBookingFailed =
+    props.quote.quote_status_id ==
+    page.props.quoteStatusEnum.POLICY_BOOKING_FAILED;
+  if (isPolicyBookingFailed) {
+    let hasBookingFailedEditPermission = can(
+      permissionsEnum.BOOKING_FAILED_EDIT,
+    );
+    if (!hasBookingFailedEditPermission) {
+      return true;
+    }
+    return false;
+  }
+  return false;
+});
+
+const showBookingFailedAlert = () => {
+  console.log(
+    'showBookingFailedAlert',
+    disableIfPolicyFailedAndNoBookingFailedEditPermission.value,
+  );
+  if (disableIfPolicyFailedAndNoBookingFailedEditPermission.value) {
+    notification.error({
+      title:
+        'Policy Booking Failed! Please contact finance for correction of details',
+      position: 'top',
+      timeout: 30000,
+    });
+  }
+};
 
 const isTravelQuoteAndAMLNotCleared = () => {
   const bookPolicyButtonLabel = props.bookPolicyDetails?.text;
@@ -477,6 +526,7 @@ const showInsufficientPaymentAlert = () => {
     });
   }
 };
+
 const [EditBookPolicyBtnTemplate, EditBookPolicyBtnResuseTemplate] =
   createReusableTemplate();
 
@@ -490,6 +540,7 @@ const isShowingTransactionPaymentStatus = computed(() => {
   return policyStatuses.includes(props.quote.quote_status_id);
 });
 onBeforeMount(() => {
+  showBookingFailedAlert();
   isTravelQuoteAndAMLNotCleared();
 });
 const readOnlyMode = reactive({
@@ -942,7 +993,10 @@ onMounted(() => {
                 color="emerald"
                 size="sm"
                 @click.prevent="bp.isEditing = true"
-                :disabled="isDisabled"
+                :disabled="
+                  isDisabled ||
+                  disableIfPolicyFailedAndNoBookingFailedEditPermission
+                "
                 v-if="readOnlyMode.isDisable === true"
               >
                 Edit
@@ -969,6 +1023,14 @@ onMounted(() => {
             </div>
 
             <div v-if="showActionButtons" class="flex justify-end">
+              <div class="mt-5 mr-2">
+                <SageAPILogs
+                  :quoteType="props.quoteType"
+                  :record="props.quote"
+                  :modelClass="props.modelClass"
+                  :permissionsEnum="page.props.permissionsEnum"
+                />
+              </div>
               <template v-if="showSendAndBookPolicyButtonBlock">
                 <x-button
                   v-if="bp.isEditing"
@@ -1021,6 +1083,9 @@ onMounted(() => {
                       props.bookPolicyDetails?.editButton &&
                       can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
                     "
+                    :isDisabled="
+                      disableIfPolicyFailedAndNoBookingFailedEditPermission
+                    "
                   />
                 </template>
                 <x-tooltip>
@@ -1044,7 +1109,11 @@ onMounted(() => {
                       color="orange"
                       class="mt-4"
                       @click.prevent="confirmSendPolicy"
-                      :disabled="bp.isEditing || is_lacking_payment"
+                      :disabled="
+                        bp.isEditing ||
+                        is_lacking_payment ||
+                        disableIfPolicyFailedAndNoBookingFailedEditPermission
+                      "
                       v-if="showSendAndBookPolicyButton"
                     >
                       {{ props.bookPolicyDetails?.text }}
@@ -1066,7 +1135,8 @@ onMounted(() => {
                     :disabled="
                       bp.isEditing ||
                       is_lacking_payment ||
-                      isAMLNotClearedForTravelQuote
+                      isAMLNotClearedForTravelQuote ||
+                      disableIfPolicyFailedAndNoBookingFailedEditPermission
                     "
                     v-if="showSendAndBookPolicyButton"
                   >
@@ -1166,7 +1236,10 @@ onMounted(() => {
                         props.bookPolicyDetails?.editButton &&
                         can(permissionsEnum.BOOK_POLICY_DETAILS_ADD)
                       "
-                      :isDisabled="!props.bookPolicyDetails?.editButton"
+                      :isDisabled="
+                        !props.bookPolicyDetails?.editButton ||
+                        disableIfPolicyFailedAndNoBookingFailedEditPermission
+                      "
                     />
                   </template>
 
@@ -1184,7 +1257,8 @@ onMounted(() => {
                         color="orange"
                         :disabled="
                           disableBookPolicyButton ||
-                          isAMLNotClearedForTravelQuote
+                          isAMLNotClearedForTravelQuote ||
+                          disableIfPolicyFailedAndNoBookingFailedEditPermission
                         "
                         @click.prevent="confirmSendPolicy"
                       >
@@ -1205,7 +1279,9 @@ onMounted(() => {
                       class="mt-4 mr-2"
                       color="orange"
                       :disabled="
-                        disableBookPolicyButton || isAMLNotClearedForTravelQuote
+                        disableBookPolicyButton ||
+                        isAMLNotClearedForTravelQuote ||
+                        disableIfPolicyFailedAndNoBookingFailedEditPermission
                       "
                       @click.prevent="confirmSendPolicy"
                     >
@@ -1240,6 +1316,7 @@ onMounted(() => {
         </x-form>
       </template>
     </Collapsible>
+
     <x-modal
       v-model="modals.sendPolicyConfirm"
       size="lg"

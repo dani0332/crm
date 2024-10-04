@@ -27,7 +27,6 @@ const props = defineProps({
   customerDetails: Object,
   kycLogs: Array,
 });
-
 const rules = {
   isEmail: v =>
     /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
@@ -42,7 +41,16 @@ const rules = {
     if (v == null || v == '') return true;
     return pattern.test(v) || 'Special characters are not allowed in Name';
   },
+  isEmiratesId: v => {
+    const pattern = /^\d{3}-\d{4}-\d{7}-\d{1}$/;
+    if (kycForm.id_type === 'emiratesId') {
+      return pattern.test(v) || 'Enter the correct EID number format';
+    } else {
+      return true;
+    }
+  },
 };
+
 const kycLogsValue = computed(() => {
   if (props.kycLogs) {
     const logsStatus = props.kycLogs.filter(val => {
@@ -424,8 +432,10 @@ onMounted(() => {
       <x-input
         v-model="kycForm.id_number"
         label="ID number"
-        placeholder="ID number"
-        :rules="[isRequired]"
+        :placeholder="
+          kycForm.id_type === 'emiratesId' ? 'xxx-xxxx-xxxxxxx-x' : 'ID number'
+        "
+        :rules="[isRequired, rules.isEmiratesId]"
       />
 
       <DatePicker
