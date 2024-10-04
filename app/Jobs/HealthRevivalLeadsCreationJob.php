@@ -80,6 +80,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 'hasWorldwideCover' => $this->lead->has_worldwide_cover == 'on' ? true : false,
                 'hasHome' => $this->lead->has_home == 'on' ? true : false,
                 'currentlyInsuredWithId' => $this->lead->currently_insured_with_id,
+                'healthTeamType' => $this->lead->health_team_type,
                 'healthPlanTypeId' => $this->lead->health_plan_type_id,
             ];
             $dataArr['memberDetails'][] = [
