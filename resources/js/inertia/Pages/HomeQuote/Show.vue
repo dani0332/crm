@@ -1343,10 +1343,10 @@ const onAddUpdate = () => {
       "
       :quote="quote"
       quoteType="home"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
-      :modelClass="modelClass"
     />
 
     <SendUpdates

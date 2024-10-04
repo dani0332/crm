@@ -980,9 +980,9 @@ const onAddUpdate = () => {
       "
       :quote="quote"
       quoteType="Yacht"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
-      :modelClass="modelClass"
     />
 
     <SendUpdates

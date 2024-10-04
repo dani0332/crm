@@ -327,7 +327,7 @@ const getS3TempUrl = async docURL => {
             <div>
               <x-tooltip
                 placement="left"
-                v-if="bookPolicyDetails.isEnableUploadDocument === false"
+                v-if="bookPolicyDetails?.isEnableUploadDocument === false"
               >
                 <x-button size="xs" color="error" outlined disabled="true">
                   Delete

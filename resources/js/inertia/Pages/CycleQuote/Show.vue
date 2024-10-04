@@ -61,8 +61,9 @@ const canAny = permissions => useCanAny(permissions);
 const modals = reactive({
   duplicate: false,
 });
-const quoteStatusEnum = page.props.quoteStatusEnum;
 const modelClass = 'App\\Models\\PersonalQuote';
+
+const quoteStatusEnum = page.props.quoteStatusEnum;
 
 const countDays = useDaysSinceStale(
   props.quoteRequest?.stale_at ?? props.quote?.stale_at,
@@ -1071,10 +1072,10 @@ const onAddUpdate = () => {
       "
       :quote="quote"
       quoteType="Cycle"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
-      :modelClass="modelClass"
     />
 
     <SendUpdates

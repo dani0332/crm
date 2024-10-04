@@ -3140,11 +3140,11 @@ const onAddUpdate = () => {
       "
       :quote="quote"
       quoteType="travel"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
       :isAmlClearedForQuote="isAmlClearedForQuote"
-      :modelClass="modelClass"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

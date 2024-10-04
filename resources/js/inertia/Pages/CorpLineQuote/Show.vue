@@ -1333,10 +1333,10 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :quote="quote"
       quoteType="Business"
       modelType="Corpline"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
-      :modelClass="modelClass"
     />
 
     <SendUpdates

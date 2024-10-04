@@ -480,7 +480,6 @@ const fetchUpdatedQuote = async () => {
             <dd>{{ quote?.payments[0]?.code ?? '' }}</dd>
           </div>
         </dl>
-
         <AddOn
           v-if="bikeQuotePlanAddons.length > 0"
           :quotePlanAddons="bikeQuotePlanAddons"
@@ -1330,10 +1329,10 @@ const fetchUpdatedQuote = async () => {
       "
       :quote="quote"
       quoteType="Bike"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
-      :modelClass="modelClass"
     />
 
     <EmailStatus :emailStatuses="emailStatuses" />
