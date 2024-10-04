@@ -165,7 +165,9 @@ watch(
     if (
       (filters.created_at_start && filters.created_at_end) ||
       filters.payment_due_date ||
-      filters.booking_date || (filters.transaction_approved_dates && filters.transaction_approved_dates_end)
+      filters.booking_date ||
+      (filters.transaction_approved_dates &&
+        filters.transaction_approved_dates_end)
     ) {
       canExport.value = true;
     } else {
@@ -354,26 +356,29 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
 const onDataExport = () => {
-    if(filters.created_at_start &&  filters.created_at_end){
-        filters.created_at_start = useDateFormat(
-            filters.created_at_start,
-            'YYYY-MM-DD',
-        ).value;
+  if (filters.created_at_start && filters.created_at_end) {
+    filters.created_at_start = useDateFormat(
+      filters.created_at_start,
+      'YYYY-MM-DD',
+    ).value;
 
-        filters.created_at_end = useDateFormat(
-            filters.created_at_end,
-            'YYYY-MM-DD',
-        ).value;
-    } else if(filters.transaction_approved_dates &&  filters.transaction_approved_dates_end ){
-        filters.transaction_approved_dates = useDateFormat(
-            filters.transaction_approved_dates,
-            'YYYY-MM-DD',
-        ).value;
-        filters.transaction_approved_dates_end = useDateFormat(
-            filters.transaction_approved_dates_end,
-            'YYYY-MM-DD',
-        ).value;
-    }
+    filters.created_at_end = useDateFormat(
+      filters.created_at_end,
+      'YYYY-MM-DD',
+    ).value;
+  } else if (
+    filters.transaction_approved_dates &&
+    filters.transaction_approved_dates_end
+  ) {
+    filters.transaction_approved_dates = useDateFormat(
+      filters.transaction_approved_dates,
+      'YYYY-MM-DD',
+    ).value;
+    filters.transaction_approved_dates_end = useDateFormat(
+      filters.transaction_approved_dates_end,
+      'YYYY-MM-DD',
+    ).value;
+  }
 
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'health');
@@ -760,16 +765,16 @@ const formatDate = dateString =>
           :options="quoteSegments"
           :single="true"
         />
-          <DatePicker
-              v-model="filters.transaction_approved_dates"
-              name="transaction_approved_dates"
-              label="Transaction Approved Start"
-          />
-          <DatePicker
-              v-model="filters.transaction_approved_dates_end"
-              name="transaction_approved_dates_end"
-              label="Transaction Approved End"
-          />
+        <DatePicker
+          v-model="filters.transaction_approved_dates"
+          name="transaction_approved_dates"
+          label="Transaction Approved Start"
+        />
+        <DatePicker
+          v-model="filters.transaction_approved_dates_end"
+          name="transaction_approved_dates_end"
+          label="Transaction Approved End"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -786,8 +791,8 @@ const formatDate = dateString =>
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date or transaction approve date are required
-                to export data.
+                Created dates or payment due date or booking date or transaction
+                approve date are required to export data.
               </span>
             </template>
           </x-tooltip>
