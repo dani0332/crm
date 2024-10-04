@@ -154,11 +154,11 @@ class HealthQuoteService extends BaseService
             'qrem.entity_id',
             'ent.code as entity_code',
             'ent.trade_license_no',
-            'ent.company_name',
-            'ent.company_address',
+            //            'ent.company_name',
+            //            'ent.company_address',
             'qrem.entity_type_code',
-            'ent.industry_type_code',
-            'ent.emirate_of_registration_id',
+            //            'ent.industry_type_code',
+            //            'ent.emirate_of_registration_id',
             DB::raw('(CASE
             WHEN hqr.assignment_type = 1 THEN "System Assigned"
             WHEN hqr.assignment_type = 2 THEN "System ReAssigned"
@@ -168,7 +168,7 @@ class HealthQuoteService extends BaseService
             'ihp.code as plan_provider_code',
             'hqr.health_plan_co_payment_id',
             'hp.text as health_plan_name_text',
-            'hp.plan_type_id as plan_type_id',
+            //            'hp.plan_type_id as plan_type_id',
             'ihp.text as plan_provider_name_text',
             'hqr.health_plan_type_id',
             'hqr.price_vat_not_applicable',
@@ -348,7 +348,13 @@ class HealthQuoteService extends BaseService
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
             $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
-        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date) && ! isset($request->renewal_batch) && ! isset($request->previous_quote_policy_number)) {
+        if (isset($request->transaction_approved_dates) && isset($request->transaction_approved_dates_end)) {
+            $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+            $startDate = Carbon::parse($request->transaction_approved_dates)->startOfDay()->format($dateFormat);
+            $endDate = Carbon::parse($request->transaction_approved_dates_end)->endOfDay()->format($dateFormat);
+            $this->query->whereBetween('hqr.transaction_approved_at', [$startDate, $endDate]);
+        }
+        if (! isset($request->transaction_approved_dates) && ! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date) && ! isset($request->renewal_batch) && ! isset($request->previous_quote_policy_number)) {
             $this->query->whereBetween('hqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {

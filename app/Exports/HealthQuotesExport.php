@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\ParentTeamIdEnum;
 use App\Enums\QuoteTypeId;
 use App\Services\CRUDService;
 use App\Services\HealthQuoteService;
@@ -29,6 +30,7 @@ class HealthQuotesExport
             'hqr.last_name',
             'qs.text as quote_status_id_text',
             'u.name as advisor_id_text',
+            'u.email as advisor_email',
             'wcu.name as wcu_id_text',
             'hqr.created_at',
             'hqr.updated_at',
@@ -60,7 +62,18 @@ class HealthQuotesExport
             'hqr.renewal_batch',
             'hqr.previous_policy_expiry_date',
             'hqr.transaction_approved_at',
-            'hqr.policy_booking_date'
+            'hqr.policy_booking_date',
+            'payment_status.text as payment_status_text',
+            DB::raw('(SELECT GROUP_CONCAT(DISTINCT t1.name SEPARATOR ", ")
+              FROM teams t1
+              WHERE t1.parent_team_id = '.ParentTeamIdEnum::CAR.'
+              AND t1.name IN (
+                  SELECT t2.name
+                  FROM teams t2
+                  JOIN user_team ut2 ON t2.id = ut2.team_id
+                  WHERE ut2.user_id = u.id)
+             ) AS CarTeams')
+
         )->get();
     }
 
@@ -72,6 +85,7 @@ class HealthQuotesExport
             'LAST NAME',
             'LEAD STATUS',
             'ADVISOR',
+            'ADVISOR EMAIL',
             'WC ADVISOR',
             'CREATED DATE',
             'LAST MODIFIED DATE',
@@ -99,6 +113,8 @@ class HealthQuotesExport
             'PREVIOUS POLICY EXPIRY DATE',
             'TRANSACTION APPROVED DATE',
             'BOOKING DATE',
+            'PAYMENT STATUS',
+            'ADVISOR CAR TEAM(s)',
         ];
     }
 
@@ -110,6 +126,7 @@ class HealthQuotesExport
             $quote->last_name,
             $quote->quote_status_id_text,
             $quote->advisor_id_text,
+            $quote->advisor_email,
             $quote->wcu_id_text,
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
@@ -137,6 +154,8 @@ class HealthQuotesExport
             $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
             $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
             $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
+            $quote->payment_status_text ?? 'N/A',
+            $quote->CarTeams ?? 'N/A',
         ];
     }
 }
