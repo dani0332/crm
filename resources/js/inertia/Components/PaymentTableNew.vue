@@ -2399,11 +2399,11 @@ const applyPermissions = () => {
   if (
     paymentMethodsForm.status === 'view' &&
     can(permissionEnum.INPL_APPROVER) &&
-    splitPaymentRecord.value.payment_method.code === page.props.paymentMethodsEnum?.InsureNowPayLater
+    splitPaymentRecord.value.payment_method.code ===
+      page.props.paymentMethodsEnum?.InsureNowPayLater
   ) {
     isVerificationAllowed.value = true;
-  } 
-
+  }
 };
 
 const documentForm = useForm({
