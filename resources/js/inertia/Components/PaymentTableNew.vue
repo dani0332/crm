@@ -2307,103 +2307,74 @@ const addPayment = isValid => {
 };
 
 const applyPermissions = () => {
-  frequencyTypes.value = paymentLookups.paymentFrequencyTypes.map(item => ({
-    value: item.code,
-    label: item.text,
-    tooltip: item.description,
-  }));
-  if (
-    paymentMethodsForm.status === 'create' &&
-    paymentMethodsForm.frequency === ''
-  ) {
-    paymentMethodsForm.frequency = '';
-  }
-  //PAYMENTS-DISCOUNT-ADD
-  can(permissionEnum.PAYMENTS_DISCOUNT_ADD)
-    ? (isDiscountAllowed.value = true)
-    : (isDiscountAllowed.value = false);
+  const setFrequencyTypes = () => {
+    frequencyTypes.value = paymentLookups.paymentFrequencyTypes.map(item => ({
+      value: item.code,
+      label: item.text,
+      tooltip: item.description,
+    }));
+  };
 
-  //PAYMENTS-CREDIT-APPROVAL-ADD
-  can(permissionEnum.PAYMENTS_CREDIT_APPROVAL_ADD)
-    ? (isCreditApprovalAllowed.value = true)
-    : (isCreditApprovalAllowed.value = false);
+  const setDiscountAndCreditApprovalPermissions = () => {
+    isDiscountAllowed.value = can(permissionEnum.PAYMENTS_DISCOUNT_ADD);
+    isCreditApprovalAllowed.value = can(permissionEnum.PAYMENTS_CREDIT_APPROVAL_ADD);
+  };
 
-  //Set permission for broker
-  if (paymentMethodsForm.collection_type === 'broker') {
-    //PAYMENTS-FREQUENCY-UPRONT-SPLIT-COLLECTED-BY-BROKER-ADD
-    const hasPermissionToBroker = can(
-      permissionEnum.PAYMENTS_FREQUENCY_UPRONT_SPLIT_COLLECTED_BY_BROKER_ADD,
-    );
-    const hasPermissionToTermFrequencies = can(
-      permissionEnum.PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_BROKER_ADD,
-    );
+  const setBrokerPermissions = () => {
+    const hasPermissionToBroker = can(permissionEnum.PAYMENTS_FREQUENCY_UPRONT_SPLIT_COLLECTED_BY_BROKER_ADD);
+    const hasPermissionToTermFrequencies = can(permissionEnum.PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_BROKER_ADD);
+
     if (!hasPermissionToBroker) {
       frequencyTypes.value = frequencyTypes.value.filter(
         item => item.value !== 'upfront' && item.value !== 'split_payments',
       );
-    } else if (
-      paymentMethodsForm.status === 'create' &&
-      paymentMethodsForm.frequency === ''
-    ) {
+    } else if (paymentMethodsForm.status === 'create' && paymentMethodsForm.frequency === '') {
       paymentMethodsForm.frequency = 'upfront';
     }
 
     if (!hasPermissionToTermFrequencies) {
       frequencyTypes.value = frequencyTypes.value.filter(
-        item =>
-          item.value !== 'custom' &&
-          item.value !== 'monthly' &&
-          item.value !== 'quarterly' &&
-          item.value !== 'semi_annual',
+        item => !['custom', 'monthly', 'quarterly', 'semi_annual'].includes(item.value),
       );
     }
-    // Set verification allowed if the payment is in view mode and the user has the permission
-    isVerificationAllowed.value = false;
-    if (
-      paymentMethodsForm.status === 'view' &&
-      can(permissionEnum.PAYMENT_VERIFICATION_COLLECTED_BY_BROKER)
-    ) {
-      isVerificationAllowed.value = true;
-    }
-  }
 
-  // Set permission for insurer
-  if (paymentMethodsForm.collection_type === 'insurer') {
-    if (
-      !can(permissionEnum.PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_INSURER_ADD)
-    ) {
+    isVerificationAllowed.value = paymentMethodsForm.status === 'view' && can(permissionEnum.PAYMENT_VERIFICATION_COLLECTED_BY_BROKER);
+  };
+
+  const setInsurerPermissions = () => {
+    if (!can(permissionEnum.PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_INSURER_ADD)) {
       frequencyTypes.value = frequencyTypes.value.filter(
-        item =>
-          item.value !== 'custom' &&
-          item.value !== 'monthly' &&
-          item.value !== 'quarterly' &&
-          item.value !== 'semi_annual',
+        item => !['custom', 'monthly', 'quarterly', 'semi_annual'].includes(item.value),
       );
     }
-    if (
-      paymentMethodsForm.status === 'create' &&
-      paymentMethodsForm.frequency === ''
-    ) {
+
+    if (paymentMethodsForm.status === 'create' && paymentMethodsForm.frequency === '') {
       paymentMethodsForm.frequency = 'upfront';
     }
-    // Set verification allowed if the payment is in view mode and the user has the permission
-    isVerificationAllowed.value = false;
+
+    isVerificationAllowed.value = paymentMethodsForm.status === 'view' && can(permissionEnum.PAYMENT_VERIFICATION_COLLECTED_BY_INSURER);
+  };
+
+  const setInplApproverPermission = () => {
     if (
       paymentMethodsForm.status === 'view' &&
-      can(permissionEnum.PAYMENT_VERIFICATION_COLLECTED_BY_INSURER)
+      can(permissionEnum.INPL_APPROVER) &&
+      splitPaymentRecord.value.payment_method.code === page.props.paymentMethodsEnum?.InsureNowPayLater
     ) {
       isVerificationAllowed.value = true;
     }
+  };
+
+  setFrequencyTypes();
+  setDiscountAndCreditApprovalPermissions();
+
+  if (paymentMethodsForm.collection_type === 'broker') {
+    setBrokerPermissions();
+  } else if (paymentMethodsForm.collection_type === 'insurer') {
+    setInsurerPermissions();
   }
 
-  if (
-    paymentMethodsForm.status === 'view' &&
-    can(permissionEnum.INPL_APPROVER) &&
-    splitPaymentRecord.value.payment_method.code === page.props.paymentMethodsEnum?.InsureNowPayLater
-  ) {
-    isVerificationAllowed.value = true;
-  } 
-
+  setInplApproverPermission();
 };
 
 const documentForm = useForm({
