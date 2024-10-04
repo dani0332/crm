@@ -154,11 +154,11 @@ class HealthQuoteService extends BaseService
             'qrem.entity_id',
             'ent.code as entity_code',
             'ent.trade_license_no',
-            //            'ent.company_name',
-            //            'ent.company_address',
+            'ent.company_name',
+            'ent.company_address',
             'qrem.entity_type_code',
-            //            'ent.industry_type_code',
-            //            'ent.emirate_of_registration_id',
+            'ent.industry_type_code',
+            'ent.emirate_of_registration_id',
             DB::raw('(CASE
             WHEN hqr.assignment_type = 1 THEN "System Assigned"
             WHEN hqr.assignment_type = 2 THEN "System ReAssigned"
@@ -168,7 +168,7 @@ class HealthQuoteService extends BaseService
             'ihp.code as plan_provider_code',
             'hqr.health_plan_co_payment_id',
             'hp.text as health_plan_name_text',
-            //            'hp.plan_type_id as plan_type_id',
+            'hp.plan_type_id as plan_type_id',
             'ihp.text as plan_provider_name_text',
             'hqr.health_plan_type_id',
             'hqr.price_vat_not_applicable',
