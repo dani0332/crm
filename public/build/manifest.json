@@ -3,6 +3,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     "file": "assets/inertia-CfBYn7g5.js",
 =======
     "file": "assets/inertia-DvZIvXIf.js",
@@ -13,15 +14,22 @@
 =======
     "file": "assets/inertia-CCNhZQAj.js",
 >>>>>>> 6e60903c5b67f52f30f0360bfd26ee4302696875
+=======
+    "file": "assets/inertia-DdcD2-bf.js",
+>>>>>>> bf921f3ad17c39ddc8cd7334d76e6c50f1e4175e
     "name": "inertia",
     "src": "resources/js/inertia/inertia.js",
     "isEntry": true,
     "css": [
 <<<<<<< HEAD
+<<<<<<< HEAD
       "assets/inertia-D0QDP9JL.css"
 =======
       "assets/inertia-BQp9-ZY2.css"
 >>>>>>> 6e60903c5b67f52f30f0360bfd26ee4302696875
+=======
+      "assets/inertia-DmR0SVLe.css"
+>>>>>>> bf921f3ad17c39ddc8cd7334d76e6c50f1e4175e
     ]
   }
 }
