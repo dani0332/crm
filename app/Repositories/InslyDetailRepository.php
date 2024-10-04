@@ -113,10 +113,10 @@ class InslyDetailRepository extends BaseRepository
 
         $advisorName = $policy['policy']['renewer_person'] ?? null;
         $appUrl = config('constants.APP_URL');
-        
+
         $advisorId = optional(InslyAdvisor::where('name', $advisorName)->first())->user_id;
 
-        if ($advisorId == null){
+        if ($advisorId == null) {
             return [
                 'status' => 400,
                 'message' => 'Advisor not found.',
