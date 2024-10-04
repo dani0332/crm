@@ -9,7 +9,6 @@ use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
 use App\Http\Requests\InslyAdvisorRequest;
 use App\Models\InslyAdvisor;
-use App\Models\RenewalBatch;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\LeadAllocationService;
@@ -459,7 +458,7 @@ class UserController extends Controller
     {
         // Remove existing advisors associated with the user
         $user->advisors()->delete();
-        
+
         // Iterate over the advisors from the request
         foreach ($request->advisors as $advisorData) {
             // Create or find the advisor in the database
