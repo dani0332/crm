@@ -9,6 +9,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\BikeQuote;
 use App\Models\CycleQuote;
+use App\Models\InslyAdvisor;
 use App\Models\InslyDetail;
 use App\Models\PetQuote;
 use App\Models\QuoteType;
@@ -329,6 +330,7 @@ class InslyDetailRepository extends BaseRepository
     {
 
         $dataArr = [];
+        $advisorName = $policy['policy']['renewer_person'] ?? null;
         $coverage = $policy['policy']['coverage'];
         $dataArr['previous_quote_policy_number'] = $policy['policy_no'] ?? null;
         [$dataArr['email'], $additionalEmails] = $this->getPrimaryAndAdditionalEmails($policy);
@@ -390,6 +392,14 @@ class InslyDetailRepository extends BaseRepository
         }
         if (ucfirst($quoteType) == QuoteTypes::BUSINESS->value) {
             $dataArr['business_type_of_insurance_id'] = $coverage ? $this->getBusinessTypeOfInsuranceIDFromCoverage(strtolower($coverage)) : null;
+        }
+
+        $dataArr['advisor_id'] = null;
+        if ($advisorName) {
+            $inslyAdvisor = InslyAdvisor::where('name', $advisorName)->first();
+            if ($inslyAdvisor) {
+                $dataArr['advisor_id'] = $inslyAdvisor->user_id;
+            }
         }
 
         return $dataArr;

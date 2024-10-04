@@ -7,6 +7,8 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
+use App\Http\Requests\InslyAdvisorRequest;
+use App\Models\InslyAdvisor;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\LeadAllocationService;
@@ -182,6 +184,12 @@ class UserController extends Controller
             $subTeamName = Team::find($user->sub_team_id)->name;
         }
 
+        $user->load([
+            'advisors' => function ($advisor) {
+                $advisor->select('user_id', 'name');
+            },
+        ]);
+
         return inertia('Admin/Users/Show', [
             'user' => $user,
             'teamName' => $teamName,
@@ -189,6 +197,7 @@ class UserController extends Controller
             'additionalTeamNames' => $additionalTeamNames,
             'managerName' => $managerName,
             'productName' => $productName,
+            'userAdvisors' => $user->advisors,
         ]);
     }
 
@@ -438,5 +447,27 @@ class UserController extends Controller
             // Current time is outside the specified range or it's not a weekday or weekend
             echo "Current time is outside the specified range or it's not a weekday or weekend.";
         }
+    }
+
+    /**
+     * Add Insly Advisors to the user.
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function addInslyAdvisor(InslyAdvisorRequest $request, User $user)
+    {
+        // Remove existing advisors associated with the user
+        $user->advisors()->delete();
+
+        // Iterate over the advisors from the request
+        foreach ($request->advisors as $advisorData) {
+            // Create or find the advisor in the database
+            InslyAdvisor::firstOrCreate(
+                ['name' => $advisorData['name'], 'user_id' => $advisorData['user_id']],
+            );
+        }
+
+        // Redirect back with a success message
+        return redirect()->back()->with('success', 'Advisors added successfully');
     }
 }

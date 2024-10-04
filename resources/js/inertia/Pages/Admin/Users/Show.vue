@@ -1,4 +1,5 @@
 <script setup>
+
 const props = defineProps({
   user: Object,
   teamName: String,
@@ -6,21 +7,91 @@ const props = defineProps({
   additionalTeamNames: String,
   managerName: String,
   productName: String,
+  userAdvisors: Array,
 });
 
 const user = ref(props.user);
 const page = usePage();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const notification = useNotifications('toast');
+const hasRole = role => useHasRole(role);
+const rolesEnum = page.props.rolesEnum;
+
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
 };
+
+const { isRequired } = useRules();
+
+const form = useForm({
+  advisors: [],
+  processing: false,
+  user_id: props.user.id,
+});
+
+const advisors = ref(props.userAdvisors);
 
 const userRoles = computed(() => {
   if (props.user && props.user?.roles.length > 0) {
     return props.user.roles.map(x => x.name).toString();
   } else return null;
 });
+
+const addAdvisor = () => {
+  advisors.value.push({
+    name: '',
+    user_id: props.user.id,
+  });
+};
+onMounted(() => {
+  if (props.userAdvisors.length === 0) {
+    addAdvisor();
+  }
+});
+
+const deleteAdvisor = index => {
+  advisors.value.splice(index, 1);
+};
+
+// Function to handle form submission
+function onSubmit(isValid) {
+  if (isValid) {
+    form.processing = true;
+    form.advisors = [];
+    
+    advisors.value.forEach(advisor => {
+      // Check if the name already exists in the form.advisors array
+      if (!form.advisors.some(existingAdvisor => existingAdvisor.name === advisor.name)) {
+        form.advisors.push({
+          user_id: advisor.user_id,
+          name: advisor.name
+        });
+      }
+    });
+
+    form.post(`/admin/add-insly-advisor/${props.user.id}`, {
+      preserveScroll: true,
+      onSuccess: () => {
+        advisors.value = props.userAdvisors
+      },
+
+      onError: errors => {
+        Object.keys(errors).forEach(function (key) {
+          notification.error({
+            title: errors[key],
+            position: 'top',
+          });
+        });
+      },
+
+      onFinish: () => {
+        form.processing = false;
+      },
+    });
+  }
+}
+
 </script>
 <template>
   <Head title="User Detail" />
@@ -183,6 +254,62 @@ const userRoles = computed(() => {
         </div>
       </dl>
     </div>
+  </div>
+
+  <div class="p-4 rounded shadow mb-6 bg-white" v-if="hasRole(rolesEnum.Admin)">
+    <Collapsible :expanded="expanded">
+      <template #header>
+        <div>
+          <h3 class="font-semibold text-primary-800 text-lg">Insly Advisors</h3>
+        </div>
+      </template>
+      <template #body>
+        <x-divider class="my-4" />
+        <x-form @submit="onSubmit" :auto-focus="false">
+            <template v-for="(advisor, index) in advisors" :key="index">
+              <div class="grid sm:grid-cols-2 gap-4">
+                <x-field label="Name" class="flex-1" required>
+                  <x-input
+                    v-model="advisor.name"
+                    type="text"
+                    class="w-full"
+                    placeholder="Name"
+                    :rules="[isRequired]"
+                  />
+                </x-field>
+                
+                <div class="mt-[23px]">
+                  <x-button
+                    :disabled="advisors.length == 1"
+                    @click="deleteAdvisor(index)"
+                    ghost
+                    color="error"
+                    icon="xc"
+                  />
+                </div>
+              </div>
+            </template>
+
+            <div class="w-full mt-3">
+              <x-button size="sm" outlined color="primary" @click="addAdvisor">
+                Add Advisor
+              </x-button>
+            </div>
+
+            <div class="flex justify-end gap-3 my-4">
+              <x-button
+                size="md"
+                color="emerald"
+                type="submit"
+                class="px-6"
+                :loading="form.processing"
+              >
+               Save
+              </x-button>
+            </div>
+          </x-form>
+      </template>
+    </Collapsible>
   </div>
 
   <AuditLogs
