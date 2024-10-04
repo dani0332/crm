@@ -456,6 +456,7 @@ class UserController extends Controller
      */
     public function addInslyAdvisor(InslyAdvisorRequest $request, User $user)
     {
+        $user->load(['advisors']);
         // Remove existing advisors associated with the user
         $user->advisors()->delete();
 

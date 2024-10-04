@@ -111,7 +111,18 @@ class InslyDetailRepository extends BaseRepository
             $inslyPolicyIssueDate = $this->formatDate($inslyPolicyIssueDate);
         }
 
+        $advisorName = $policy['policy']['renewer_person'] ?? null;
         $appUrl = config('constants.APP_URL');
+        
+        $advisorId = optional(InslyAdvisor::where('name', $advisorName)->first())->user_id;
+
+        if ($advisorId == null){
+            return [
+                'status' => 400,
+                'message' => 'Advisor not found.',
+                'data' => '',
+            ];
+        }
 
         if (! empty($policy)) {
             $policyNumber = $policy['policy']['policy_no'];
@@ -196,7 +207,7 @@ class InslyDetailRepository extends BaseRepository
 
                 // create lead in case no record found
                 $payLoad = $this->prePareData($policy, $quoteType, $isPersonalQuote);
-
+                $payLoad['advisor_id'] = $advisorId;
                 info('InslyLead - Payload: '.json_encode($payLoad));
                 $id = $model::create($payLoad)->id;
                 info('InslyLead - created Lead Id : '.json_encode($id));
@@ -330,7 +341,6 @@ class InslyDetailRepository extends BaseRepository
     {
 
         $dataArr = [];
-        $advisorName = $policy['policy']['renewer_person'] ?? null;
         $coverage = $policy['policy']['coverage'];
         $dataArr['previous_quote_policy_number'] = $policy['policy_no'] ?? null;
         [$dataArr['email'], $additionalEmails] = $this->getPrimaryAndAdditionalEmails($policy);
@@ -392,14 +402,6 @@ class InslyDetailRepository extends BaseRepository
         }
         if (ucfirst($quoteType) == QuoteTypes::BUSINESS->value) {
             $dataArr['business_type_of_insurance_id'] = $coverage ? $this->getBusinessTypeOfInsuranceIDFromCoverage(strtolower($coverage)) : null;
-        }
-
-        $dataArr['advisor_id'] = null;
-        if ($advisorName) {
-            $inslyAdvisor = InslyAdvisor::where('name', $advisorName)->first();
-            if ($inslyAdvisor) {
-                $dataArr['advisor_id'] = $inslyAdvisor->user_id;
-            }
         }
 
         return $dataArr;
