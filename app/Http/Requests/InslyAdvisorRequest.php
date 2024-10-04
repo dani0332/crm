@@ -27,7 +27,7 @@ class InslyAdvisorRequest extends FormRequest
             'advisors.*.name' => [
                 'required',
                 'string',
-                Rule::unique('insly_advisors', 'name')->ignore(request()->id, 'user_id'),
+                Rule::unique('insly_advisors', 'name')->ignore(request()->user_id, 'user_id'),
             ],
         ];
     }
