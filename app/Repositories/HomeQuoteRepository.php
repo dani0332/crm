@@ -83,8 +83,8 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchGetFormOptions()
     {
-        $dropdownSource['ownership_status_possession_type_id'] = app(DropdownSourceService::class)->getDropdownSource('ownership_status_possession_type_id');
-        $dropdownSource['type_of_property_accommodation_type_id'] = app(DropdownSourceService::class)->getDropdownSource('type_of_property_accommodation_type_id');
+        $dropdownSource['iam_possesion_type_id'] = app(DropdownSourceService::class)->getDropdownSource('iam_possesion_type_id');
+        $dropdownSource['ilivein_accommodation_type_id'] = app(DropdownSourceService::class)->getDropdownSource('ilivein_accommodation_type_id');
 
         return [
             'dropdownSource' => $dropdownSource,
@@ -95,31 +95,28 @@ class HomeQuoteRepository extends BaseRepository
     public function fetchCreate($data)
     {
         $quoteData = [
+            'hasContents' => $data['has_contents'],
+            'hasBuilding' => $data['has_building'],
+            'haveClaimedLosses' => $data['have_claimed_losses'],
+            'buildingAed' => $data['building_aed'],
+            'hasPersonalBelongings' => $data['has_personal_belongings'],
+            'isPropertyRentedHolidayHome' => $data['is_property_rented_holiday_home'],
+            'iliveinAccommodationTypeId' => $data['ilivein_accommodation_type_id'],
+            'iamPossesionTypeId' => $data['iam_possesion_type_id'],
+            'subAreaId' => $data['location_area'],
+            'contentsAed' => $data['contents_aed'],
+            'personalBelongingsAed' => $data['personal_belongings_aed'],
             'quoteTypeId' => intval(QuoteTypes::HOME->id()),
             'firstName' => $data['first_name'],
             'lastName' => $data['last_name'],
             'email' => $data['email'],
             'mobileNo' => $data['mobile_no'],
             'lang' => 'EN',
-            // 'iamPossesionTypeId' => $data['ownership_status_possession_type_id'],
-            // 'iliveinAccommodationTypeId' => $data['type_of_property_accommodation_type_id'],
-            'contentsAed' => $data['contents_aed'],
-            'buildingAed' => $data['building_aed'],
-            'personalBelongingsAed' => $data['personal_belongings_aed'],
             'device' => 'DESKTOP',
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => URL::current(),
             'createdById' => auth()->id(),
             'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->id() : null,
-            'ownership_status_possession_type_id' => $data['ownership_status_possession_type_id'],
-            'type_of_property_accommodation_type_id' => $data['type_of_property_accommodation_type_id'],
-            'location_area' => $data['location_area'],
-            'type_of_owner_occupancy' => $data['type_of_owner_occupancy'],
-            'type_of_coverage_you_need' => $data['type_of_coverage_you_need'],
-            'claims' => $data['claims'],
-            'villa_apartment_office_no' => $data['addressObj']['villa_apartment_office_no'],
-            'villa_building_name' => $data['addressObj']['villa_building_name'],
-            'street_name' => $data['addressObj']['street_name'],
         ];
 
         info('Home Quote Create :' . json_encode($quoteData));
@@ -127,7 +124,9 @@ class HomeQuoteRepository extends BaseRepository
         // Integrate with CAPI to create a home quote once API is ready.
         // Ask for Possession Home and Accommodation Type Table Values.
 
-        // $response = Capi::request('/api/v1-save-home-quote', 'post', $quoteData);
+        // $response = Capi::request('/api/v2-save-home-quote-test', 'post', $quoteData);
+
+        // dd('Quote Data', $quoteData, 'Response', $response);
 
         // if (isset($response->quoteUID)) {
         //     $this->savePremium(quoteTypeCode::HomeQuote, (object) $data, $response);

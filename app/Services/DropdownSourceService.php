@@ -214,35 +214,11 @@ class DropdownSourceService extends BaseService
                     }
                 }
                 break;
-            case 'ownership_status_possession_type_id':
-                // $data = HomePossessionType::select('id', 'text')->where('is_active', true)->get();
-                $data = [
-                    [
-                        'id' => 1,
-                        'text' => "I'm a homeowner living in my property",
-                    ],
-                    [
-                        'id' => 2,
-                        'text' => "I'm a homeowner renting out my property",
-                    ],
-                    [
-                        'id' => 3,
-                        'text' => "I'm a tenant renting my home",
-                    ],
-                ];
+            case 'iam_possesion_type_id':
+                $data = HomePossessionType::select('id', 'text')->where('is_active', true)->get();
                 break;
-            case 'type_of_property_accommodation_type_id':
-                // $data = HomeAccomodationType::select('id', 'text')->where('is_active', true)->get();
-                $data = [
-                    [
-                        'id' => 1,
-                        'text' => 'Apartment',
-                    ],
-                    [
-                        'id' => 2,
-                        'text' => 'Villa',
-                    ],
-                ];
+            case 'ilivein_accommodation_type_id':
+                $data = HomeAccomodationType::select('id', 'text')->where('is_active', true)->get();
                 break;
             case 'business_type_of_insurance_id':
                 $data = BusinessInsuranceType::select('id', 'text')->where('is_active', true)->get();

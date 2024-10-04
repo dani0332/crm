@@ -26,18 +26,69 @@ class HomeQuoteRequest extends FormRequest
             'last_name' => 'required|between:1,50',
             'email' => 'required|email:rfc,dns|max:150',
             'mobile_no' => 'required|regex:/(0)[0-9]/|not_regex:/[a-z]/|min:7|max:20',
-            'contents_aed' => 'sometimes|required',
-            'building_aed' => 'sometimes|required|numeric',
-            'personal_belongings_aed' => 'sometimes|required',
+            'has_contents' => 'sometimes|boolean',
+            'has_building' => 'sometimes|boolean',
+            'has_personal_belongings' => 'sometimes|boolean',
+            // Conditionally required fields
+            'contents_aed' => 'nullable|required_if:has_contents,true',
+            'building_aed' => 'nullable|required_if:has_building,true|numeric',
+            'personal_belongings_aed' => 'nullable|required_if:has_personal_belongings,true',
             'location_area' => 'required',
-            'ownership_status_possession_type_id' => 'required',
-            'type_of_property_accommodation_type_id' => 'required',
             'type_of_coverage_you_need' => 'required',
-            'type_of_owner_occupancy' => 'required_if:ownership_status_possession_type_id,2',
-            'claims' => 'required|boolean',
-            'addressObj' => 'sometimes',
-            // 'ilivein_accommodation_type_id' => 'required|exists:home_accommodation_type,id',
-            // 'iam_possesion_type_id' => 'required|exists:home_possession_type,id',
+            'have_claimed_losses' => 'required|boolean',
+            'ilivein_accommodation_type_id' => 'required|exists:home_accommodation_type,id',
+            'iam_possesion_type_id' => 'required|exists:home_possession_type,id',
+            'is_property_rented_holiday_home' => 'required_if:iam_possesion_type_id,2',
+        ];
+    }
+
+    /**
+     * Custom messages for validation errors.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'first_name.required' => 'The first name is required.',
+            'first_name.between' => 'The first name must be between 1 and 20 characters.',
+
+            'last_name.required' => 'The last name is required.',
+            'last_name.between' => 'The last name must be between 1 and 50 characters.',
+
+            'email.required' => 'The email address is required.',
+            'email.email' => 'Please provide a valid email address.',
+            'email.max' => 'The email address cannot exceed 150 characters.',
+
+            'mobile_no.required' => 'The mobile number is required.',
+            'mobile_no.regex' => 'The mobile number must start with 0 and contain only numbers.',
+            'mobile_no.not_regex' => 'The mobile number cannot contain letters.',
+            'mobile_no.min' => 'The mobile number must be at least 7 digits.',
+            'mobile_no.max' => 'The mobile number cannot exceed 20 digits.',
+
+            'has_contents.boolean' => 'The contents field must be true or false.',
+            'has_building.boolean' => 'The building field must be true or false.',
+            'has_personal_belongings.boolean' => 'The personal belongings field must be true or false.',
+
+            'contents_aed.required_if' => 'The contents AED field is required when you have selected contents coverage.',
+            'building_aed.required_if' => 'The building AED field is required when you have selected building coverage.',
+            'building_aed.numeric' => 'The building AED field must be a valid number.',
+            'personal_belongings_aed.required_if' => 'The personal belongings AED field is required when you have selected personal belongings coverage.',
+
+            'location_area.required' => 'The location area is required.',
+
+            'type_of_coverage_you_need.required' => 'You must select the type of coverage you need.',
+
+            'have_claimed_losses.required' => 'You must indicate if there are any claims.',
+            'have_claimed_losses.boolean' => 'The claims field must be true or false.',
+
+            'ilivein_accommodation_type_id.required' => 'You must select the type of property you live in.',
+            'ilivein_accommodation_type_id.exists' => 'The selected property type is invalid.',
+
+            'iam_possesion_type_id.required' => 'You must select your ownership status.',
+            'iam_possesion_type_id.exists' => 'The selected ownership status is invalid.',
+
+            'is_property_rented_holiday_home.required_if' => 'The owner occupancy type is required if you are renting out your property.',
         ];
     }
 }

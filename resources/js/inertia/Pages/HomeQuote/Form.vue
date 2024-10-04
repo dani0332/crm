@@ -21,11 +21,10 @@ const quoteForm = useForm({
   last_name: props.quote?.last_name || null,
   email: props.quote?.email || null,
   mobile_no: props.quote?.mobile_no || null,
-  ownership_status_possession_type_id:
-    props.quote?.home_quote?.ownership_status_possession_type_id || null,
-  type_of_property_accommodation_type_id:
-    props.quote?.home_quote?.type_of_property_accommodation_type_id || null,
-  address: props.quote?.home_quote?.address || null,
+  iam_possesion_type_id:
+    props.quote?.home_quote?.iam_possesion_type_id || null,
+  ilivein_accommodation_type_id:
+    props.quote?.home_quote?.ilivein_accommodation_type_id || null,
   has_contents: props.quote?.home_quote?.has_contents || null,
   has_building: props.quote?.home_quote?.has_building || null,
   has_personal_belongings:
@@ -35,22 +34,11 @@ const quoteForm = useForm({
   personal_belongings_aed:
     props.quote?.home_quote?.personal_belongings_aed || null,
   location_area: props.quote?.home_quote?.location_area || null,
-  addressObj: {
-    address_type: page.props.customerAddressData?.type || null,
-    villa_apartment_office_no:
-      page.props.customerAddressData?.office_number || null,
-    floor_no: page.props.customerAddressData?.floor_number || null,
-    villa_building_name: page.props.customerAddressData?.building_name || null,
-    street_name: page.props.customerAddressData?.street || null,
-    area: page.props.customerAddressData?.area || null,
-    city: page.props.customerAddressData?.city || null,
-    landmark: page.props.customerAddressData?.landmark || null,
-  },
-  type_of_owner_occupancy:
-    props.quote?.home_quote?.type_of_owner_occupancy || null,
+  is_property_rented_holiday_home:
+    props.quote?.home_quote?.is_property_rented_holiday_home || null,
   type_of_coverage_you_need:
     props.quote?.home_quote?.type_of_coverage_you_need || null,
-  claims: props.quote?.home_quote?.claims || null,
+  have_claimed_losses: props.quote?.home_quote?.have_claimed_losses || null,
 });
 const isEdit = computed(() => {
   return route().current().includes('edit');
@@ -113,6 +101,12 @@ function onSubmit(isValid) {
       return;
     }
 
+    // Ensure fields are included in the payload with true/false values
+    // Set boolean values based on AED fields
+    quoteForm.has_contents = !!quoteForm.contents_aed;
+    quoteForm.has_personal_belongings = !!quoteForm.personal_belongings_aed;
+    quoteForm.has_building = !!quoteForm.building_aed;
+
     console.log('Form validation passed.');
     console.log('Submitting form data:', quoteForm);
 
@@ -153,8 +147,22 @@ function handleSuccess() {
 
 function handleError(errors) {
   console.error('Form submission failed with errors:', errors);
+
   // Display errors or set them on form fields
   quoteForm.setError(errors);
+
+  // Loop through each error and show a toast notification
+  Object.keys(errors).forEach(field => {
+    // Assuming the error message is an array of messages for each field
+    const errorMessage = errors[field];
+    if (Array.isArray(errorMessage)) {
+      errorMessage.forEach(msg => {
+        showToast('error', 'Error: ', msg);
+      });
+    } else {
+      showToast('error', 'Error: ', errorMessage);
+    }
+  });
 }
 
 function handleFinish() {
@@ -177,34 +185,34 @@ const formFieldReq = reactive({
 
 const locationAreaOptions = computed(() => {
   return [
-    { value: 'option1', label: 'Option 1' },
-    { value: 'option2', label: 'Option 2' },
+    { value: '1', label: 'AL SHARAQI' },
+    { value: '2', label: 'AL DANAH' },
   ];
 });
 const typeOfOwnerOccupancyOptions = computed(() => {
   return [
-    { value: '1', label: 'Owner renting out (annually)' },
-    { value: '2', label: 'Owner renting out short term/Holiday home' },
+    { value: '0', label: 'Owner renting out (annually)' },
+    { value: '1', label: 'Owner renting out short term/Holiday home' },
   ];
 });
 const contentValueInAEDOptions = computed(() => {
   return [
-    { value: '1', label: 'AED 1 - 50,000' },
-    { value: '2', label: 'AED 50,001 - 100,000' },
-    { value: '3', label: 'AED 100,001 - 150,000' },
-    { value: '4', label: 'AED 150,001 - 200,000' },
-    { value: '5', label: 'AED 200,001 - 250,000' },
-    { value: '6', label: 'AED 250,001 - 300,000' },
-    { value: '7', label: 'AED 300,001 - 400,000' },
+    { value: '1 - 50,000', label: 'AED 1 - 50,000' },
+    { value: '50,001 - 100,000', label: 'AED 50,001 - 100,000' },
+    { value: '100,001 - 150,000', label: 'AED 100,001 - 150,000' },
+    { value: '150,001 - 200,000', label: 'AED 150,001 - 200,000' },
+    { value: '200,001 - 250,000', label: 'AED 200,001 - 250,000' },
+    { value: '250,001 - 300,000', label: 'AED 250,001 - 300,000' },
+    { value: '300,001 - 400,000', label: 'AED 300,001 - 400,000' },
   ];
 });
 const personalBelongingsInAEDOptions = computed(() => {
   return [
-    { value: '1', label: 'AED 1-25,000' },
-    { value: '2', label: 'AED 25,001 - 50,000' },
-    { value: '3', label: 'AED 50,001 - 100,000' },
-    { value: '4', label: 'AED 100,001 - 150,000' },
-    { value: '5', label: 'AED 150,001 and above' },
+    { value: '1-25,000', label: 'AED 1-25,000' },
+    { value: '25,001 - 50,000', label: 'AED 25,001 - 50,000' },
+    { value: '50,001 - 100,000', label: 'AED 50,001 - 100,000' },
+    { value: '100,001 - 150,000', label: 'AED 100,001 - 150,000' },
+    { value: '150,001 and above', label: 'AED 150,001 and above' },
   ];
 });
 const claimOptions = computed(() => {
@@ -214,16 +222,16 @@ const claimOptions = computed(() => {
   ];
 });
 const showTypeOfOwnerOccupancy = computed(() => {
-  return quoteForm.ownership_status_possession_type_id === 2;
+  return quoteForm.iam_possesion_type_id === 2;
 });
 
 const typeOfCoverageYouNeedOptions = computed(() => {
-  if (!quoteForm.ownership_status_possession_type_id) {
+  if (!quoteForm.iam_possesion_type_id) {
     return [
       { value: '', label: 'CHOOSE OWNERSHIP STATUS FIRST', disabled: true },
     ];
   }
-  switch (quoteForm.ownership_status_possession_type_id) {
+  switch (quoteForm.iam_possesion_type_id) {
     case 1: // Homeowner living in the property
       return [
         { value: 'landlord_living_building', label: 'Building only' },
@@ -302,6 +310,14 @@ const handleCoverageChange = () => {
       break;
   }
 };
+
+function showToast(type, title, message) {
+  notification[type]({
+    title: title || (type === 'success' ? 'Success' : 'Error'),
+    message: message,
+    position: 'top',
+  });
+}
 </script>
 
 <template>
@@ -378,40 +394,12 @@ const handleCoverageChange = () => {
           />
         </x-field>
 
-        <x-field label="ADDRESS">
-          <div class="flex flex-wrap -mx-2">
-            <div class="w-1/2 px-2">
-              <x-input
-                type="text"
-                v-model="quoteForm.addressObj.villa_apartment_office_no"
-                placeholder="Villa/Apartment/Office No."
-                class="w-full"
-              />
-            </div>
-            <div class="w-1/2 px-2">
-              <x-input
-                type="text"
-                v-model="quoteForm.addressObj.villa_building_name"
-                placeholder="Villa/Building Name"
-                class="w-full"
-              />
-            </div>
-            <div class="w-1/2 px-2">
-              <x-input
-                type="text"
-                v-model="quoteForm.addressObj.street_name"
-                placeholder="Street Name"
-                class="w-full"
-              />
-            </div>
-          </div>
-        </x-field>
         <x-field label="OWNERSHIP STATUS" required>
           <x-select
-            v-model="quoteForm.ownership_status_possession_type_id"
+            v-model="quoteForm.iam_possesion_type_id"
             :rules="[isRequired]"
             :options="
-              dropdownSource.ownership_status_possession_type_id.map(item => ({
+              dropdownSource.iam_possesion_type_id.map(item => ({
                 value: item.id,
                 label: item.text,
               }))
@@ -422,15 +410,13 @@ const handleCoverageChange = () => {
         </x-field>
         <x-field label="TYPE OF PROPERTY" required>
           <x-select
-            v-model="quoteForm.type_of_property_accommodation_type_id"
+            v-model="quoteForm.ilivein_accommodation_type_id"
             :rules="[isRequired]"
             :options="
-              dropdownSource.type_of_property_accommodation_type_id.map(
-                item => ({
-                  value: item.id,
-                  label: item.text,
-                }),
-              )
+              dropdownSource.ilivein_accommodation_type_id.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
             "
             class="w-full"
           />
@@ -441,7 +427,7 @@ const handleCoverageChange = () => {
           v-if="showTypeOfOwnerOccupancy"
         >
           <x-select
-            v-model="quoteForm.type_of_owner_occupancy"
+            v-model="quoteForm.is_property_rented_holiday_home"
             :rules="[isRequired]"
             :options="typeOfOwnerOccupancyOptions"
             class="w-full"
@@ -493,7 +479,7 @@ const handleCoverageChange = () => {
           required
         >
           <x-select
-            v-model="quoteForm.claims"
+            v-model="quoteForm.have_claimed_losses"
             :rules="[isRequired]"
             :options="claimOptions"
             class="w-full"
