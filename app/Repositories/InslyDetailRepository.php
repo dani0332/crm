@@ -577,7 +577,9 @@ class InslyDetailRepository extends BaseRepository
         $maskedData = array_map(function ($item) use ($type) {
             $item = trim($item);
             if ($type === 'email') {
-                if (! isValidEmail($item)) return $item;
+                if (! isValidEmail($item)) {
+                    return $item;
+                }
 
                 [$localPart, $domainPart] = explode('@', $item);
                 $halfLength = ceil(strlen($localPart) / 2);
