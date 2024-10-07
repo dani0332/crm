@@ -343,6 +343,13 @@ const validateDateRange = () => {
 };
 const formatDate = dateString =>
   useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY').value;
+
+watch(() => {
+    if (filters.company_name) {
+        filters.created_at_start = '';
+        filters.created_at_end = '';
+    }
+});
 </script>
 
 <template>
