@@ -37,7 +37,7 @@ class HomeQuoteObserver
             $dirty = [...$dirty, 'transaction_approved_at' => $homeQuote->transaction_approved_at];
         }
 
-        if ($homeQuote->isDirty('quote_status_id') && $this->markLeadStale($homeQuote->quote_status_id)) {
+        if ($homeQuote->isDirty('quote_status_id') && $this->removeStaleFromLead($homeQuote->quote_status_id)) {
             $homeQuote->update(['stale_at' => null]);
         }
 

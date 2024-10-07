@@ -864,7 +864,7 @@ trait GenericQueriesAllLobs
         return null;
     }
 
-    public function markLeadStale($lead_status_id)
+    public function removeStaleFromLead($lead_status_id)
     {
         $skipStatus = [
             QuoteStatusEnum::TransactionApproved,
