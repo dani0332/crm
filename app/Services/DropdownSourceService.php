@@ -32,6 +32,7 @@ use App\Models\QuoteStatus;
 use App\Models\Regions;
 use App\Models\RuleDetail;
 use App\Models\RuleType;
+use App\Models\SubArea;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Models\TravelCoverFor;
@@ -51,12 +52,12 @@ class DropdownSourceService extends BaseService
             case 'team_managers':
                 $data = DB::select('select u.id, u.name as names from users u
                                     inner join user_team tm on tm.manager_id is null
-                                    where tm.team_id = '.$id.' and tm.user_id = u.id');
+                                    where tm.team_id = ' . $id . ' and tm.user_id = u.id');
                 break;
             case 'team_users':
                 $data = DB::select('select u.id, u.name from users u
                 inner join user_team ut on ut.user_id = u.id
-                where ut.team_id ='.$id);
+                where ut.team_id =' . $id);
                 break;
             case 'tier_users':
                 $data = DB::table('tiers as t')
@@ -67,7 +68,7 @@ class DropdownSourceService extends BaseService
                     ->groupBy('t.id')->get();
                 break;
             case 'quad_tiers':
-                $query = 'select t.id, t.name from quadrants q inner join tiers t on t.quad_id = q.id where q.id = '.$id.' group by t.id';
+                $query = 'select t.id, t.name from quadrants q inner join tiers t on t.quad_id = q.id where q.id = ' . $id . ' group by t.id';
                 $data = DB::select($query);
                 break;
             default:
@@ -84,12 +85,12 @@ class DropdownSourceService extends BaseService
             case 'team_managers':
                 $data = DB::select('select group_concat(u.name) as names from users u
                                     inner join user_team tm on tm.manager_id is null
-                                    where tm.team_id = '.$id.' and tm.user_id = u.id');
+                                    where tm.team_id = ' . $id . ' and tm.user_id = u.id');
                 break;
             case 'team_users':
                 $data = DB::select('select group_concat(u.name) as names from users u
                 inner join user_team ut on ut.user_id = u.id
-                where ut.team_id ='.$id);
+                where ut.team_id =' . $id);
                 break;
             default:
                 break;
@@ -188,10 +189,10 @@ class DropdownSourceService extends BaseService
             case 'advisor_id':
                 $advisorType = strtoupper(explode('/', request()->path())[1]);
                 if (Auth::user()->isRenewalUser() || Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor()) {
-                    $advisorType = $advisorType.'_RENEWAL';
+                    $advisorType = $advisorType . '_RENEWAL';
                 }
                 if (Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor()) {
-                    $advisorType = $advisorType.'_NEW_BUSINESS_';
+                    $advisorType = $advisorType . '_NEW_BUSINESS_';
                 }
                 if (strtolower($advisorType) == strtolower(quoteTypeCode::Health)) {
                     $data = DB::table('users as u')->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))
@@ -208,7 +209,7 @@ class DropdownSourceService extends BaseService
                         $data = DB::table('users as u')->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))
                             ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
                             ->join('roles as r', 'mhr.role_id', '=', 'r.id')
-                            ->whereIn('r.name', [$advisorType.'_ADVISOR', $advisorType.'_NEW_BUSINESS_ADVISOR', $advisorType.'_RENEWAL_ADVISOR', $advisorType.'_DEPUTY_MANAGER'])->get();
+                            ->whereIn('r.name', [$advisorType . '_ADVISOR', $advisorType . '_NEW_BUSINESS_ADVISOR', $advisorType . '_RENEWAL_ADVISOR', $advisorType . '_DEPUTY_MANAGER'])->get();
                     } else {
                         $data = User::select('id', 'name')->get();
                     }
@@ -339,6 +340,9 @@ class DropdownSourceService extends BaseService
                 break;
             case 'line_of_business':
                 $data = Team::where('is_active', true)->get();
+                break;
+            case 'sub_area_id':
+                $data = SubArea::select('id', 'text', 'description', 'emirates_id')->get();
                 break;
             default:
                 break;

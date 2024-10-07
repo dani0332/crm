@@ -18,7 +18,7 @@ class HomeQuote extends Model implements AuditableContract
 
     protected $table = 'home_quote_request';
     protected $fillable = [];
-    public $allowedColumns = ['iam_possesion_type_id', 'ilivein_accommodation_type_id', 'address', 'has_contents', 'has_building', 'has_personal_belongings', 'contents_aed', 'building_aed', 'personal_belongings_aed'];
+    public $allowedColumns = ['iam_possesion_type_id', 'ilivein_accommodation_type_id', 'address', 'has_contents', 'has_building', 'has_personal_belongings', 'contents_aed', 'building_aed', 'personal_belongings_aed', 'have_claimed_losses', 'is_property_rented_holiday_home', 'sub_area_id'];
     protected $guarded = [];
     public $filterables = [
         'first_name' => FilterTypes::FREE,
@@ -46,13 +46,13 @@ class HomeQuote extends Model implements AuditableContract
                 $homeQuote = new HomeQuote;
                 $endorsmentDetails = $homeQuote->isCPDEndorsment(request()->sendUpdateId);
                 if ($endorsmentDetails['isCPDEndorsment']) {
-                    info('Book Update - Policy Booking Date update is allowed for CPD Endorsment. Old PBD ('.$model->getOriginal('policy_booking_date').') - New PBD ('.$model->policy_booking_date.'). QuoteType: '.request()->quoteType.' - QuoteUUID: '.request()->quoteUuid.' - SendUpdateUUID: '.$endorsmentDetails['sendUpdateUUID']);
+                    info('Book Update - Policy Booking Date update is allowed for CPD Endorsment. Old PBD (' . $model->getOriginal('policy_booking_date') . ') - New PBD (' . $model->policy_booking_date . '). QuoteType: ' . request()->quoteType . ' - QuoteUUID: ' . request()->quoteUuid . ' - SendUpdateUUID: ' . $endorsmentDetails['sendUpdateUUID']);
                     $skipBookingDateUpdateForNonCPD = false;
                 }
             }
 
             if ($model->isDirty('policy_booking_date') && $model->getOriginal('policy_booking_date') && $skipBookingDateUpdateForNonCPD) {
-                info($model->code.' updating the value of policy_booking_date is skipped. tried to change policy_booking_date from '.$model->getOriginal('policy_booking_date').' to '.$model->policy_booking_date);
+                info($model->code . ' updating the value of policy_booking_date is skipped. tried to change policy_booking_date from ' . $model->getOriginal('policy_booking_date') . ' to ' . $model->policy_booking_date);
                 unset($model->policy_booking_date); // lock the policy booking date field
             }
         });

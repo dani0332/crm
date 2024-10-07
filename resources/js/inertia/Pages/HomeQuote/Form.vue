@@ -14,6 +14,8 @@ const showBuildingField = ref(false);
 const showContentsField = ref(false);
 const showPersonalBelongingsField = ref(false);
 
+console.log('PROPS: ', page.props);
+
 const quoteForm = useForm({
   modelType: '"Home"',
   model: props.model,
@@ -21,8 +23,7 @@ const quoteForm = useForm({
   last_name: props.quote?.last_name || null,
   email: props.quote?.email || null,
   mobile_no: props.quote?.mobile_no || null,
-  iam_possesion_type_id:
-    props.quote?.home_quote?.iam_possesion_type_id || null,
+  iam_possesion_type_id: props.quote?.home_quote?.iam_possesion_type_id || null,
   ilivein_accommodation_type_id:
     props.quote?.home_quote?.ilivein_accommodation_type_id || null,
   has_contents: props.quote?.home_quote?.has_contents || null,
@@ -33,12 +34,15 @@ const quoteForm = useForm({
   building_aed: props.quote?.home_quote?.building_aed || null,
   personal_belongings_aed:
     props.quote?.home_quote?.personal_belongings_aed || null,
-  location_area: props.quote?.home_quote?.location_area || null,
+  sub_area_id: props.quote?.home_quote?.sub_area_id || null,
   is_property_rented_holiday_home:
     props.quote?.home_quote?.is_property_rented_holiday_home || null,
   type_of_coverage_you_need:
     props.quote?.home_quote?.type_of_coverage_you_need || null,
-  have_claimed_losses: props.quote?.home_quote?.have_claimed_losses || null,
+  have_claimed_losses:
+    props.quote?.home_quote?.have_claimed_losses !== undefined
+      ? String(props.quote.home_quote.have_claimed_losses)
+      : null,
 });
 const isEdit = computed(() => {
   return route().current().includes('edit');
@@ -57,10 +61,10 @@ function successResponse() {
   }
 }
 // function onSubmit(isValid) {
-//   if (quoteForm.location_area == null || quoteForm.location_area == '') {
-//     formFieldReq.location_area = true;
+//   if (quoteForm.sub_area_id == null || quoteForm.sub_area_id == '') {
+//     formFieldReq.sub_area_id = true;
 //   } else {
-//     formFieldReq.location_area = false;
+//     formFieldReq.sub_area_id = false;
 //   }
 //   if (quoteForm.has_contents || quoteForm.has_building) {
 //     if (isValid) {
@@ -110,8 +114,11 @@ function onSubmit(isValid) {
     console.log('Form validation passed.');
     console.log('Submitting form data:', quoteForm);
 
+    console.log('Is edit mode:', isEdit.value);
+    console.log('URL:', route('home-quotes-update', props.quote.uuid));
+
     const action = isEdit.value
-      ? route('home-quotes-update', props.quote.id)
+      ? route('home-quotes-update', props.quote.uuid)
       : route('home-quotes-store');
 
     if (!action) {
@@ -171,24 +178,18 @@ function handleFinish() {
 }
 
 function isFormValid() {
-  if (quoteForm.location_area == null || quoteForm.location_area === '') {
-    formFieldReq.location_area = true;
+  if (quoteForm.sub_area_id == null || quoteForm.sub_area_id === '') {
+    formFieldReq.sub_area_id = true;
     return false;
   }
-  formFieldReq.location_area = false;
+  formFieldReq.sub_area_id = false;
   return true;
 }
 
 const formFieldReq = reactive({
-  location_area: false,
+  sub_area_id: false,
 });
 
-const locationAreaOptions = computed(() => {
-  return [
-    { value: '1', label: 'AL SHARAQI' },
-    { value: '2', label: 'AL DANAH' },
-  ];
-});
 const typeOfOwnerOccupancyOptions = computed(() => {
   return [
     { value: '0', label: 'Owner renting out (annually)' },
@@ -197,22 +198,22 @@ const typeOfOwnerOccupancyOptions = computed(() => {
 });
 const contentValueInAEDOptions = computed(() => {
   return [
-    { value: '1 - 50,000', label: 'AED 1 - 50,000' },
-    { value: '50,001 - 100,000', label: 'AED 50,001 - 100,000' },
-    { value: '100,001 - 150,000', label: 'AED 100,001 - 150,000' },
-    { value: '150,001 - 200,000', label: 'AED 150,001 - 200,000' },
-    { value: '200,001 - 250,000', label: 'AED 200,001 - 250,000' },
-    { value: '250,001 - 300,000', label: 'AED 250,001 - 300,000' },
-    { value: '300,001 - 400,000', label: 'AED 300,001 - 400,000' },
+    { value: '50000', label: 'AED 1 - 50,000' },
+    { value: '100000', label: 'AED 50,001 - 100,000' },
+    { value: '150000.00', label: 'AED 100,001 - 150,000' },
+    { value: '200000', label: 'AED 150,001 - 200,000' },
+    { value: '250000', label: 'AED 200,001 - 250,000' },
+    { value: '300000', label: 'AED 250,001 - 300,000' },
+    { value: '400000', label: 'AED 300,001 - 400,000' },
   ];
 });
 const personalBelongingsInAEDOptions = computed(() => {
   return [
-    { value: '1-25,000', label: 'AED 1-25,000' },
-    { value: '25,001 - 50,000', label: 'AED 25,001 - 50,000' },
-    { value: '50,001 - 100,000', label: 'AED 50,001 - 100,000' },
-    { value: '100,001 - 150,000', label: 'AED 100,001 - 150,000' },
-    { value: '150,001 and above', label: 'AED 150,001 and above' },
+    { value: '25000', label: 'AED 1-25,000' },
+    { value: '50000', label: 'AED 25,001 - 50,000' },
+    { value: '100000', label: 'AED 50,001 - 100,000' },
+    { value: '150000', label: 'AED 100,001 - 150,000' },
+    { value: '150001', label: 'AED 150,001 and above' },
   ];
 });
 const claimOptions = computed(() => {
@@ -384,13 +385,18 @@ function showToast(type, title, message) {
         </x-field>
         <x-field label="LOCATION AREA" required>
           <ComboBox
-            v-model="quoteForm.location_area"
+            v-model="quoteForm.sub_area_id"
             :rules="[isRequired]"
             :single="true"
-            :options="locationAreaOptions"
+            :options="
+              dropdownSource.sub_area_id.map(item => ({
+                value: item.id,
+                label: item.description,
+              }))
+            "
             class="w-full"
-            :hasError="formFieldReq.location_area"
-            :error="quoteForm.errors.location_area"
+            :hasError="formFieldReq.sub_area_id"
+            :error="quoteForm.errors.sub_area_id"
           />
         </x-field>
 

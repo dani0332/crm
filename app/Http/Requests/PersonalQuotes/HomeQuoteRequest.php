@@ -33,7 +33,7 @@ class HomeQuoteRequest extends FormRequest
             'contents_aed' => 'nullable|required_if:has_contents,true',
             'building_aed' => 'nullable|required_if:has_building,true|numeric',
             'personal_belongings_aed' => 'nullable|required_if:has_personal_belongings,true',
-            'location_area' => 'required',
+            'sub_area_id' => 'required',
             'type_of_coverage_you_need' => 'required',
             'have_claimed_losses' => 'required|boolean',
             'ilivein_accommodation_type_id' => 'required|exists:home_accommodation_type,id',
@@ -75,7 +75,7 @@ class HomeQuoteRequest extends FormRequest
             'building_aed.numeric' => 'The building AED field must be a valid number.',
             'personal_belongings_aed.required_if' => 'The personal belongings AED field is required when you have selected personal belongings coverage.',
 
-            'location_area.required' => 'The location area is required.',
+            'sub_area_id.required' => 'The location area is required.',
 
             'type_of_coverage_you_need.required' => 'You must select the type of coverage you need.',
 
