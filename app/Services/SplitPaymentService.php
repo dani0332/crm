@@ -19,21 +19,16 @@ use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Factories\SagePayloadFactory;
-use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\CcPaymentProcess;
-use App\Models\CycleQuote;
 use App\Models\HealthQuote;
-use App\Models\HomeQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
-use App\Models\PetQuote;
 use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
-use App\Models\YachtQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
@@ -809,11 +804,11 @@ class SplitPaymentService
                     $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quoteModel);
                     if (! $lockLeadSectionsDetails['lead_status'] || $quoteModel->quote_status_id == QuoteStatusEnum::TransactionDeclined) {
                         $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
-                        if(in_array($modelType,[quoteTypeCode::Health , quoteTypeCode::Yacht, quoteTypeCode::Home, quoteTypeCode::Business,
-                        quoteTypeCode::Cycle, quoteTypeCode::CORPLINE, quoteTypeCode::Pet])){
+                        if (in_array($modelType, [quoteTypeCode::Health, quoteTypeCode::Yacht, quoteTypeCode::Home, quoteTypeCode::Business,
+                            quoteTypeCode::Cycle, quoteTypeCode::CORPLINE, quoteTypeCode::Pet])) {
                             $quoteModel->stale_at = null;
                         }
-                        
+
                         app(CRUDService::class)->calculateScore($quoteModel, $modelType);
                         info('Transaction Score Calculated: '.$quoteModel->code);
                     }
