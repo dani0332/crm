@@ -5,6 +5,7 @@ namespace App\Exports;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\ParentTeamIdEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\TeamNameEnum;
 use App\Services\CRUDService;
 use App\Services\HealthQuoteService;
 use App\Traits\ExcelExportable;
@@ -66,7 +67,7 @@ class HealthQuotesExport
             'payment_status.text as payment_status_text',
             DB::raw('(SELECT GROUP_CONCAT(DISTINCT t1.name SEPARATOR ", ")
               FROM teams t1
-              WHERE t1.parent_team_id = '.ParentTeamIdEnum::CAR.'
+              WHERE t1.parent_team_id = '.TeamNameEnum::Car_Parent_Team_ID.'
               AND t1.name IN (
                   SELECT t2.name
                   FROM teams t2

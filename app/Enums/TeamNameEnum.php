@@ -41,4 +41,5 @@ final class TeamNameEnum extends Enum
     public const CORPLINE_NEW = 'Corpline - Team';
     public const BIKE = 'Bike';
     public const Bike_Team = 'Bike - Team';
+    public const Car_Parent_Team_ID = 2;
 }
