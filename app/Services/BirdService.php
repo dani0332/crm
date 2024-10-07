@@ -53,7 +53,7 @@ class BirdService extends BaseService
 
             return false;
         }
-        $cancelFlowRunUrl = "{$this->baseUrl}/workspaces/{$birdWorkSpaceId}/flows/{$channelId}/runs";
+        $cancelFlowRunUrl = "{$this->baseUrl}/workspaces/{$birdWorkSpaceId->value}/flows/{$channelId->value}/runs";
         info('Bird Webhook Cancel Flow Run Request initiated', ['Ref-ID' => $workflow->quote_uuid, 'URL' => $cancelFlowRunUrl, 'Method' => 'patch']);
 
         return $this->triggerWebHookRequest($cancelFlowRunUrl, ['action' => 'cancel', 'ids' => [$workflow->flow_id]], 'patch');
