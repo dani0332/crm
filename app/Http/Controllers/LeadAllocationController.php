@@ -20,7 +20,6 @@ use App\Services\LeadAllocationService;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Log;
 
 class LeadAllocationController extends Controller
 {
@@ -146,7 +145,7 @@ class LeadAllocationController extends Controller
                 $leadAllocationUser = LeadAllocation::where('user_id', $item['userId'])->where('quote_type_id', $quoteTypeId)->where('id', $item['id'])->first();
                 if (isset($item['reason'])) {
                     if ($item['reason'] != UserStatusEnum::OFFLINE && $item['reason'] != UserStatusEnum::ONLINE) {
-                        Log::info('User status is going to change to : '.UserStatusEnum::getUserStatusText($item['reason']));
+                        info('User status is going to change to : ' . UserStatusEnum::getUserStatusText($item['reason']));
                         $car = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Car)->first();
                         $health = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Health)->first();
                         if ($this->userHaveProduct($item['userId'], $car->id)) {
@@ -162,24 +161,24 @@ class LeadAllocationController extends Controller
                     $user = User::where('id', $item['userId'])->first();
                     if ($user) {
                         $user->status = $item['reason'];
-                        info('user status is going to change on id : '.$user->id.' and status : '.$user->status);
+                        info('user status is going to change on id : ' . $user->id . ' and status : ' . $user->status);
                         event(new UserStatusChanged($user->id, $user->status, $user->name));
                         $user->save();
                     }
                 }
 
                 if (isset($item['is_available'])) {
-                    $updateLogString = $updateLogString.' is_available to : '.$item['is_available'];
+                    $updateLogString = $updateLogString . ' is_available to : ' . $item['is_available'];
                     $leadAllocationUser->is_available = $item['is_available'];
                 }
 
                 if ($quoteTypeId && isset($item['max_cap'])) {
-                    $updateLogString = $updateLogString.' max_cap to : '.$item['max_cap'];
+                    $updateLogString = $updateLogString . ' max_cap to : ' . $item['max_cap'];
                     $leadAllocationUser->max_capacity = (int) $item['max_cap'];
                 }
 
                 $leadAllocationUser->save();
-                $updateLogString = $updateLogString.' for user : '.$item['userId'].' and by user : '.auth()->user()->id.' ----- ';
+                $updateLogString = $updateLogString . ' for user : ' . $item['userId'] . ' and by user : ' . auth()->user()->id . ' ----- ';
                 info($updateLogString);
             }
         }
@@ -195,7 +194,7 @@ class LeadAllocationController extends Controller
                         $leadAllocationObj = LeadAllocation::with(['leadAllocationUser'])->where('quote_type_id', $quoteTypeId)->where('user_id', $item['userId'])->first();
                         $leadAllocationObj->max_capacity = (int) $item['maxCap'];
                         $leadAllocationObj->save();
-                        info('Updated max cap of user : '.$leadAllocationObj->leadAllocationUser->email.' to '.(int) $item['maxCap']);
+                        info('Updated max cap of user : ' . $leadAllocationObj->leadAllocationUser->email . ' to ' . (int) $item['maxCap']);
                     }
                 }
             }
@@ -216,7 +215,7 @@ class LeadAllocationController extends Controller
             $leadAllocationObj = $leadAllocationObj->first();
             $leadAllocationObj->reset_cap = (int) $request->resetCap;
             $leadAllocationObj->save();
-            info('Updated reset cap flag of user : '.$leadAllocationObj->leadAllocationUser->email.' to '.(int) $request->resetCap.' by user : '.auth()->user()->email);
+            info('Updated reset cap flag of user : ' . $leadAllocationObj->leadAllocationUser->email . ' to ' . (int) $request->resetCap . ' by user : ' . auth()->user()->email);
         }
     }
 
