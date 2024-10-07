@@ -581,7 +581,7 @@
             <tr>
 
                 <td class="customer">
-                    @if(! $entity)
+                    @if($quote->code != 'BUS-AD8GZJ6Y')
                         {{ $customerName }} </br>
                     @endif
 
