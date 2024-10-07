@@ -25,6 +25,7 @@ use App\Exports\TravelQuoteExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookPolicyRequest;
 use App\Http\Requests\CustomerProfileRequest;
+use App\Http\Requests\DeleteSplitPaymentRequest;
 use App\Http\Requests\DragAndDropUpdateLeadStatusRequest;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\ExportValidationRequest;
@@ -327,6 +328,13 @@ class CentralController extends Controller
         $successMessage = app(SplitPaymentService::class)->processSplitPaymentApprove($paymentProcessJob->quote_type, $paymentProcessJob->quoteable_id, $paymentProcessJob->payment_splits_id, $paymentProcessJob->amount_captured, true);
 
         return $successMessage;
+    }
+
+    // Delete split payment
+    public function deleteSplitPayment(DeleteSplitPaymentRequest $request)
+    {
+        return app(SplitPaymentService::class)->deleteSplitPayment($request->payment_split_id);
+
     }
 
     // Store new payment
