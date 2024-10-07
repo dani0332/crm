@@ -5,6 +5,8 @@ namespace App\Observers;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
+use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
@@ -32,15 +34,6 @@ class HealthQuoteObserver
             $healthQuote->isDirty('quote_status_id') &&
             $healthQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
         ) {
-            MAWelcomeJob::dispatchIf(
-                isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)) && $healthQuote->customer,
-                $healthQuote->customer?->first_name,
-                $healthQuote->customer?->last_name,
-                $healthQuote->customer?->email,
-                $healthQuote->customer?->mobile_no,
-                'CUSTOMER_UPDATE',
-                'customer-update-myalfred-we'
-            );
             HealthQuote::withoutEvents(function () use ($healthQuote) {
                 $healthQuote->update(['transaction_approved_at' => now()]);
             });
@@ -56,6 +49,18 @@ class HealthQuoteObserver
 
         if (isset($dirty['quote_status_id']) && $healthQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             $this->syncLeadEntries($healthQuote->uuid);
+        }
+
+        if (
+            $healthQuote->isDirty('quote_status_id') &&
+            in_array($healthQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
+        ) {
+            CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Health, 'quoteUID' => $healthQuote->uuid]);
+            MAWelcomeJob::dispatch(
+                $healthQuote->customer,
+                'LEAD_STATUS_UPDATE',
+                'lead-status-update-myalfred-we'
+            );
         }
     }
 }
