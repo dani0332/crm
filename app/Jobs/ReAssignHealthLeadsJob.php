@@ -30,8 +30,8 @@ class ReAssignHealthLeadsJob implements ShouldQueue
 
     public function handle()
     {
-        info('-------- Reassignment health job started at : ' . now() . ' ---------');
-        if (! $this->healthAllocationService->shouldProceed()  && ! now()->isWeekend()) {
+        info('-------- Reassignment health job started at : '.now().' ---------');
+        if (! $this->healthAllocationService->shouldProceed() && ! now()->isWeekend()) {
             info('Reassignment job is not proceeding as per business timings');
 
             return false;
@@ -41,17 +41,17 @@ class ReAssignHealthLeadsJob implements ShouldQueue
 
         if (count($leads) == 0) {
             info('No health lead found or either lead is not under assignment criteria');
-            info('-------- Reassignment health job ended at : ' . now() . ' ---------');
+            info('-------- Reassignment health job ended at : '.now().' ---------');
 
             return false; // when lead is not on criteria or not found
         }
 
         foreach ($leads as $lead) {
-            info('-------- Reassignment of lead : ' . $lead->uuid . ' started ---------');
+            info('-------- Reassignment of lead : '.$lead->uuid.' started ---------');
             $this->assignTeamBasedOnPrices($lead);
 
             if (! $lead->health_team_type) {
-                info('No health team found against lead : ' . $lead->uuid);
+                info('No health team found against lead : '.$lead->uuid);
 
                 return false; // when system is not able to identify sub team based on price
             }
@@ -59,15 +59,15 @@ class ReAssignHealthLeadsJob implements ShouldQueue
             $advisor = $this->fetchAvailableAdvisor($lead->health_team_type);
 
             if (! $advisor) {
-                info('No advisors found against lead : ' . $lead->uuid);
+                info('No advisors found against lead : '.$lead->uuid);
 
                 return false; // when no advisor is found
             }
 
             $this->assignLead($lead, $advisor); // Assign the lead to the advisor
-            info('-------- Reassignment of lead : ' . $lead->uuid . ' ended ---------');
+            info('-------- Reassignment of lead : '.$lead->uuid.' ended ---------');
         }
-        info('-------- Reassignment health job ended at : ' . now() . ' ---------');
+        info('-------- Reassignment health job ended at : '.now().' ---------');
     }
 
     private function fetchLead()
