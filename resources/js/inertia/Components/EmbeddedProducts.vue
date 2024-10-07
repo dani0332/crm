@@ -687,7 +687,7 @@ const onAddDocumentSubmit = event => {
 
             <x-input
               v-model="addDocumentForm.title"
-              label="Title / Serial Number"
+              label="Document serial number/ title"
               :rules="[isRequired]"
               class="w-full"
             />
