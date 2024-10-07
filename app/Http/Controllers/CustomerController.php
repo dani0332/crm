@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
 use App\Jobs\MAWelcomeJob;
 use App\Models\Customer;
@@ -126,12 +125,8 @@ class CustomerController extends Controller
         $customer->save();
 
         if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && ! $customer->is_we_sent) {
-            MAWelcomeJob::dispatchUnless(
-                isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)),
-                $customer->first_name,
-                $customer->last_name,
-                $customer->email,
-                $customer->mobile_no,
+            MAWelcomeJob::dispatch(
+                $customer,
                 'CUSTOMER_UPDATE',
                 'customer-update-myalfred-we'
             );
