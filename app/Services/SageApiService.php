@@ -622,7 +622,6 @@ class SageApiService
 
         // Check if a record exists in the QuoteStatusLog table where the quote_request_id matches the current quote's ID
         // and either the previous_quote_status_id or current_quote_status_id matches the target status ID
-        info('################################## Current code status: ' .$quote->quote_status_id. ' for : '.$quote->code.' ##################################');
 
         $isQuoteStatusLogExists= QuoteStatusLog::where('quote_request_id', $quote->id)
         ->where(function($query){
