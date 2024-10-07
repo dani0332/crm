@@ -151,7 +151,12 @@ const isNonSelfBillingEnabledForInsuranceProvider = computed(() => {
   if (!insuranceProvider) {
     // If insurance_provider is not available, use insurance_provider_details
     insuranceProvider = page.props.quote?.insurance_provider_details;
+    // If insurance_provider_details is not available, use insurer from payment
+    if (!insuranceProvider) {
+      insuranceProvider = props.payments[0]?.insurance_provider;
+    }
   }
+
   return insuranceProvider?.non_self_billing == 1;
 });
 // use Broker Invoice Number as Insurer Commission Tax Invoice Number for specific insurance providers
