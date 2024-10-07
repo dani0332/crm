@@ -84,6 +84,11 @@ const activitiesUrl = computed(() => {
   filters.due_date_time_end = useDateFormat(lastDayOfWeek, 'DD-MM-YYYY').value;
   return `/activities?due_date_time_start=${filters.due_date_time_start}&due_date_time_end=${filters.due_date_time_end}&page=1&isCustom=false&status=0&redirect=1`;
 });
+
+const getHTML = (buttonText, data) => {
+  return `<a target="_self" class="text-primary-500 hover:underline flex items-center space-x-1" href="${activitiesUrl.value}"> ${buttonText}
+    ${data}</a>`;
+};
 </script>
 
 <template>
@@ -211,26 +216,16 @@ const activitiesUrl = computed(() => {
                   <x-tooltip position="top">
                     <x-button class="w-full" size="sm">
                       <div class="items-center">
-                        <Link
-                          v-bind:href="activitiesUrl"
-                          style="text-decoration: underline dotted"
-                        >
-                          Pending Callbacks:
-                          {{ pendingActivityCount.pendingCallback }}
-                        </Link>
+                        <SanitizeHtml
+                          :html="
+                            getHTML(
+                              'Pending Callbacks: ',
+                              pendingActivityCount.pendingCallback,
+                            )
+                          "
+                        />
                       </div>
                     </x-button>
-                    <!-- <x-tag
-                      size="xs"
-                      class="border-gray-200"
-                      outlined
-                      @click="visitactivitiespage()"
-                    >
-                      Pending Callbacks:
-                      <strong class="pl-1">
-                        {{ pendingActivityCount.pendingCallback }}
-                      </strong>
-                    </x-tag> -->
                     <template #tooltip>
                       <div class="font-bold">
                         InstantAlfred needs your help! (
@@ -244,21 +239,16 @@ const activitiesUrl = computed(() => {
                   <x-tooltip position="top">
                     <x-button class="w-full" size="sm">
                       <div class="items-center">
-                        <Link
-                          v-bind:href="activitiesUrl"
-                          style="text-decoration: underline dotted"
-                        >
-                          Pending WhatsApp requests:
-                          {{ pendingActivityCount.pendingWhatsapp }}
-                        </Link>
+                        <SanitizeHtml
+                          :html="
+                            getHTML(
+                              'Pending WhatsApp requests: ',
+                              pendingActivityCount.pendingWhatsapp,
+                            )
+                          "
+                        />
                       </div>
                     </x-button>
-                    <!-- <x-tag size="xs" class="border-gray-200" outlined>
-                      Pending Whatsapp:
-                      <strong class="pl-1">
-                        {{ pendingActivityCount.pendingWhatsapp }}
-                      </strong>
-                    </x-tag> -->
                     <template #tooltip>
                       <div class="font-bold">
                         InstantAlfred needs your help! (
