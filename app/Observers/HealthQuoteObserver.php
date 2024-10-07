@@ -11,11 +11,12 @@ use App\Jobs\MAWelcomeJob;
 use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
 use App\Services\HealthQuoteService;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 
 class HealthQuoteObserver
 {
-    use PersonalQuoteSyncTrait;
+    use GenericQueriesAllLobs, PersonalQuoteSyncTrait;
 
     public function updating(HealthQuote $quote): void
     {
@@ -43,6 +44,10 @@ class HealthQuoteObserver
                 app(HealthQuoteService::class)->assignRenewalBatch($healthQuote->id);
             }
             $dirty = [...$dirty, 'transaction_approved_at' => $healthQuote->transaction_approved_at];
+        }
+
+        if ($healthQuote->isDirty('quote_status_id') && $this->markLeadStale($healthQuote->quote_status_id)) {
+            $healthQuote->update(['stale_at' => null]);
         }
 
         $this->syncQuote($healthQuote, $dirty);

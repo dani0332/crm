@@ -367,10 +367,6 @@ trait GenericQueriesAllLobs
                 $isAllRequiredDocumentAreUploaded = $this->isAllRequiredDocumentAreUploaded($quoteDocuments, $type, $quote);
                 info('Quote Code: '.$quote->code.' Is all required documents filled for '.$isAllRequiredDocumentAreUploaded);
                 if ($isAllRequiredDocumentAreUploaded) {
-                    if (in_array(ucfirst($type), [quoteTypeCode::Health, quoteTypeCode::Yacht, quoteTypeCode::Home, quoteTypeCode::Business,
-                        quoteTypeCode::Cycle, quoteTypeCode::CORPLINE, quoteTypeCode::Pet])) {
-                        $quote['stale_at'] = null;
-                    }
                     $quote->update([
                         'quote_status_id' => QuoteStatusEnum::PolicyIssued,
                         'policy_issuance_status_id' => PolicyIssuanceStatusEnum::PolicyIssued,
@@ -866,5 +862,24 @@ trait GenericQueriesAllLobs
         }
 
         return null;
+    }
+
+    public function markLeadStale($lead_status_id)
+    {
+        $skipStatus = [
+            QuoteStatusEnum::TransactionApproved,
+            QuoteStatusEnum::PolicyDocumentsPending,
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::Lost,
+            QuoteStatusEnum::Fake,
+            QuoteStatusEnum::Duplicate,
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued,
+        ];
+
+        return in_array($lead_status_id, $skipStatus);
     }
 }
