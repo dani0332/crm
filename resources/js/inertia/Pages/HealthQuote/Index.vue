@@ -777,7 +777,7 @@ watch(() => {
           range
           multi-calendars
           multi-calendars-solo
-          max-range="30"
+          max-range="120"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
