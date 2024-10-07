@@ -31,7 +31,7 @@ class ReAssignCarLeadsJob implements ShouldQueue
 
     public function handle()
     {
-        info('-------- Reassignment car job started at : ' . now() . ' ---------');
+        info('-------- Reassignment car job started at : '.now().' ---------');
         if (! $this->shouldProceed() && ! now()->isWeekend()) {
             info('Reassignment job is not proceeding as per business timings');
 
@@ -41,12 +41,12 @@ class ReAssignCarLeadsJob implements ShouldQueue
         $leads = $this->fetchLeads();
         if (count($leads) == 0) {
             info('No car lead found or either lead is not under assignment criteria');
-            info('-------- Reassignment car job ended at : ' . now() . ' ---------');
+            info('-------- Reassignment car job ended at : '.now().' ---------');
 
             return false; // when lead is not on criteria or not found
         }
         foreach ($leads as $lead) {
-            info('--------------- ReAssignment processing current lead : ' . $lead->uuid . ' ---------------');
+            info('--------------- ReAssignment processing current lead : '.$lead->uuid.' ---------------');
             // Find the appropriate tier for the lead
             $tier = $this->findTier($lead);
 
@@ -77,13 +77,13 @@ class ReAssignCarLeadsJob implements ShouldQueue
                 }
             } else {
                 // Log that tier was not found for the lead and skip processing
-                info('Tier not found for lead: ' . $lead->uuid . '. Skipping for now.');
+                info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
             }
 
-            info('--------------- ReAssignment processing ended for current lead : ' . $lead->uuid . ' ---------------');
+            info('--------------- ReAssignment processing ended for current lead : '.$lead->uuid.' ---------------');
         }
 
-        info('-------- Reassignment car job ended at : ' . now() . ' ---------');
+        info('-------- Reassignment car job ended at : '.now().' ---------');
     }
 
     protected function shouldProceed(): bool
