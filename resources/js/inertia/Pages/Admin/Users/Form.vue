@@ -5,7 +5,7 @@ const props = defineProps({
   teams: Array,
   subTeams: Array,
   departments: Array,
-  departmentIds:Array,
+  departmentIds: Array,
   user: Object,
   userRole: Object,
   selectedAdditionalTeams: Array,
@@ -99,7 +99,7 @@ const computedSubTeams = computed(() => {
 });
 
 const computedDepartments = computed(() => {
-    console.log('departments',departments.value);
+  console.log('departments', departments.value);
   if (departments.value?.length > 0)
     return departments.value?.map(item => ({
       value: item.id,
@@ -146,8 +146,7 @@ const loadDepartmentsByTeam = async e => {
       teamIds: userForm.teams,
     });
     if (response.data.length > 0) {
-
-        departments.value = response.data;
+      departments.value = response.data;
     }
 
     loader.departLoader = false;
@@ -155,8 +154,6 @@ const loadDepartmentsByTeam = async e => {
     loader.departLoader = false;
   }
 };
-
-
 
 const loadManagerByTeam = async () => {
   loader.managers = true;
@@ -358,7 +355,7 @@ watch(
       <x-field label="Departments">
         <ComboBox
           v-model="userForm.department_ids"
-            :loading="loader.departLoader"
+          :loading="loader.departLoader"
           placeholder="Select Department"
           :options="computedDepartments"
           :multiple="true"

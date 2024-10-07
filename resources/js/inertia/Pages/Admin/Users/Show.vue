@@ -97,16 +97,16 @@ const userRoles = computed(() => {
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Departments</dt>
           <dd class="break-words flex flex-wrap gap-1">
-          <x-tag
-          size="sm"
-          color="success"
-          v-for="department in departments.split(',')"
-          :key="department"
-          class="text-xs"
-        >
-          {{ department.trim() }}
-        </x-tag>
-        </dd>
+            <x-tag
+              size="sm"
+              color="success"
+              v-for="department in departments.split(',')"
+              :key="department"
+              class="text-xs"
+            >
+              {{ department.trim() }}
+            </x-tag>
+          </dd>
         </div>
 
         <div class="grid sm:grid-cols-2">
