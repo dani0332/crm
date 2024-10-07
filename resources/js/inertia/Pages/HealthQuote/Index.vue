@@ -155,7 +155,6 @@ const filters = reactive({
   policy_expiry_date_end: '',
   segment_filter: '',
   transaction_approved_dates: '',
-  transaction_approved_dates_end: '',
 });
 
 const canExport = ref(false);
@@ -166,8 +165,7 @@ watch(
       (filters.created_at_start && filters.created_at_end) ||
       filters.payment_due_date ||
       filters.booking_date ||
-      (filters.transaction_approved_dates &&
-        filters.transaction_approved_dates_end)
+      filters.transaction_approved_dates
     ) {
       canExport.value = true;
     } else {
@@ -367,15 +365,14 @@ const onDataExport = () => {
       'YYYY-MM-DD',
     ).value;
   } else if (
-    filters.transaction_approved_dates &&
-    filters.transaction_approved_dates_end
+      filters.transaction_approved_dates[0] && filters.transaction_approved_dates[1]
   ) {
-    filters.transaction_approved_dates = useDateFormat(
-      filters.transaction_approved_dates,
+      filters.transaction_approved_dates[0] = useDateFormat(
+          filters.transaction_approved_dates[0],
       'YYYY-MM-DD',
     ).value;
-    filters.transaction_approved_dates_end = useDateFormat(
-      filters.transaction_approved_dates_end,
+      filters.transaction_approved_dates[1] = useDateFormat(
+          filters.transaction_approved_dates[1],
       'YYYY-MM-DD',
     ).value;
   }
@@ -514,8 +511,7 @@ const formatDate = dateString =>
 
 watch(() => {
   if (
-    filters.transaction_approved_dates &&
-    filters.transaction_approved_dates_end
+    filters.transaction_approved_dates
   ) {
     filters.created_at_start = '';
     filters.created_at_end = '';
@@ -775,16 +771,15 @@ watch(() => {
           :options="quoteSegments"
           :single="true"
         />
-        <DatePicker
-          v-model="filters.transaction_approved_dates"
-          name="transaction_approved_dates"
-          label="Transaction Approved Start"
-        />
-        <DatePicker
-          v-model="filters.transaction_approved_dates_end"
-          name="transaction_approved_dates_end"
-          label="Transaction Approved End"
-        />
+          <DatePicker
+              v-model="filters.transaction_approved_dates"
+              label="Transaction Approved Date"
+              class="w-full"
+              range
+              multi-calendars
+              multi-calendars-solo
+              max-range="30"
+          />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -801,8 +796,7 @@ watch(() => {
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date or transaction
-                approve date are required to export data.
+                Created dates or Transaction Approved dates or payment due date or booking date are required to export data.
               </span>
             </template>
           </x-tooltip>

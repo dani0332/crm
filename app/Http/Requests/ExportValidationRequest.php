@@ -30,11 +30,8 @@ class ExportValidationRequest extends FormRequest
                 $rules['payment_due_date.*'] = 'required|date';
             } elseif ($this->has('booking_date')) {
                 $rules['booking_date.*'] = 'required|date';
-            } elseif ($this->has('transaction_approved_dates') && $this->has('transaction_approved_dates_end')) {
-                $rules = [
-                    'transaction_approved_dates' => 'required|date',
-                    'transaction_approved_dates_end' => 'required|date',
-                ];
+            } elseif ($this->has('transaction_approved_dates')) {
+                $rules['transaction_approved_dates.*'] = 'required|date';
             } else {
                 $rules = [
                     'created_at_start' => 'required|date',
@@ -76,9 +73,9 @@ class ExportValidationRequest extends FormRequest
                         $start = Carbon::parse($this->input('created_at_start'));
                         $end = Carbon::parse($this->input('created_at_end'));
                         $error_fields = 'created date';
-                    } elseif ($this->has('transaction_approved_dates') && $this->has('transaction_approved_dates_end')) {
-                        $start = Carbon::parse($this->input('transaction_approved_dates'));
-                        $end = Carbon::parse($this->input('transaction_approved_dates_end'));
+                    } elseif ($this->has('transaction_approved_dates')) {
+                        $start = Carbon::parse($this->input('transaction_approved_dates')[0])->startOfDay();
+                        $end = Carbon::parse($this->input('transaction_approved_dates')[1])->endOfDay();
                         $error_fields = 'transaction approved dates';
                     }
 
