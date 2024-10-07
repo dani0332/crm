@@ -66,7 +66,7 @@ class HealthQuotesExport
             'payment_status.text as payment_status_text',
             DB::raw('(SELECT GROUP_CONCAT(DISTINCT t1.name SEPARATOR ", ")
               FROM teams t1
-              WHERE t1.parent_team_id = '.TeamNameEnum::Car_Parent_Team_ID.'
+              WHERE t1.parent_team_id = '.TeamNameEnum::getTeamID(TeamNameEnum::CAR).'
               AND t1.name IN (
                   SELECT t2.name
                   FROM teams t2
