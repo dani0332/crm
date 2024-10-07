@@ -827,8 +827,6 @@ class SendUpdateLogService
             ($sendUpdateLog?->category?->code == SendUpdateLogStatusEnum::CPD ? 21 : 13)
         );
 
-        dd($sageRequestPayload);
-
         $checkRequiredSageValidations = app(SageApiService::class)->checkRequiredSageIds($sageRequestPayload);
         if (! $checkRequiredSageValidations['status']) {
             info('fn:preparedDataForEndorsement - Sage Validation Failed - '.$checkRequiredSageValidations['message'].' - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
