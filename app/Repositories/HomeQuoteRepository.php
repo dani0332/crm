@@ -146,7 +146,7 @@ class HomeQuoteRepository extends BaseRepository
                 'quoteStatus',
                 'advisor',
                 'nationality',
-                'plan',
+                'plans',
                 'homeQuote',
                 'homeQuote.nationality',
                 'homeQuote.possessionType',
