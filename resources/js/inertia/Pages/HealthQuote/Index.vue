@@ -365,14 +365,15 @@ const onDataExport = () => {
       'YYYY-MM-DD',
     ).value;
   } else if (
-      filters.transaction_approved_dates[0] && filters.transaction_approved_dates[1]
+    filters.transaction_approved_dates[0] &&
+    filters.transaction_approved_dates[1]
   ) {
-      filters.transaction_approved_dates[0] = useDateFormat(
-          filters.transaction_approved_dates[0],
+    filters.transaction_approved_dates[0] = useDateFormat(
+      filters.transaction_approved_dates[0],
       'YYYY-MM-DD',
     ).value;
-      filters.transaction_approved_dates[1] = useDateFormat(
-          filters.transaction_approved_dates[1],
+    filters.transaction_approved_dates[1] = useDateFormat(
+      filters.transaction_approved_dates[1],
       'YYYY-MM-DD',
     ).value;
   }
@@ -510,9 +511,7 @@ const formatDate = dateString =>
   useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY').value;
 
 watch(() => {
-  if (
-    filters.transaction_approved_dates
-  ) {
+  if (filters.transaction_approved_dates) {
     filters.created_at_start = '';
     filters.created_at_end = '';
   }
@@ -771,15 +770,15 @@ watch(() => {
           :options="quoteSegments"
           :single="true"
         />
-          <DatePicker
-              v-model="filters.transaction_approved_dates"
-              label="Transaction Approved Date"
-              class="w-full"
-              range
-              multi-calendars
-              multi-calendars-solo
-              max-range="30"
-          />
+        <DatePicker
+          v-model="filters.transaction_approved_dates"
+          label="Transaction Approved Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+          max-range="30"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -796,7 +795,8 @@ watch(() => {
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or Transaction Approved dates or payment due date or booking date are required to export data.
+                Created dates or Transaction Approved dates or payment due date
+                or booking date are required to export data.
               </span>
             </template>
           </x-tooltip>
