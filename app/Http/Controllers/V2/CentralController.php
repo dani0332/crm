@@ -21,6 +21,7 @@ use App\Exports\HealthQuotesExport;
 use App\Exports\HomeQuoteExport;
 use App\Exports\LifeQuotesExport;
 use App\Exports\PersonalQuotesExport;
+use App\Exports\PUAQuoteExport;
 use App\Exports\TravelQuoteExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookPolicyRequest;
@@ -536,5 +537,10 @@ class CentralController extends Controller
 
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
         }
+    }
+
+    public function exportPUAUpdates()
+    {
+        return app(PUAQuoteExport::class)->download('PUA-List');
     }
 }
