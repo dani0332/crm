@@ -217,6 +217,7 @@ const getHTML = (buttonText, data) => {
                     <x-button class="w-full" size="sm">
                       <div class="items-center">
                         <SanitizeHtml
+                          style="text-decoration: dotted underline"
                           :html="
                             getHTML(
                               'Pending Callbacks: ',
@@ -240,6 +241,7 @@ const getHTML = (buttonText, data) => {
                     <x-button class="w-full" size="sm">
                       <div class="items-center">
                         <SanitizeHtml
+                          style="text-decoration: dotted underline"
                           :html="
                             getHTML(
                               'Pending WhatsApp requests: ',

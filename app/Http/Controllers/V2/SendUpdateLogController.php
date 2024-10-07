@@ -320,6 +320,7 @@ class SendUpdateLogController extends Controller
                     break;
             }
         }
+
     }
 
     public function savePriceDetails(Request $request)
