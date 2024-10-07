@@ -55,8 +55,8 @@ const filters = reactive({
   last_name: '',
   email: '',
   mobile_no: '',
-  created_at_start: new Date() || '',
-  created_at_end: new Date() || '',
+  created_at_start: new Date().toISOString() || '',
+  created_at_end: new Date().toISOString() || '',
   quote_status_id: [],
   advisor_id: [],
   business_type_of_insurance_id: [],
@@ -625,7 +625,8 @@ const formatDate = dateString =>
               filters.email ||
               filters.renewal_batch ||
               filters.payment_due_date ||
-              filters.booking_date
+              filters.booking_date ||
+              filters.company_name
                 ? []
                 : [isRequired]
             "
@@ -641,7 +642,8 @@ const formatDate = dateString =>
               filters.email ||
               filters.renewal_batch ||
               filters.payment_due_date ||
-              filters.booking_date
+              filters.booking_date ||
+              filters.company_name
                 ? []
                 : [isRequired]
             "
