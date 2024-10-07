@@ -250,7 +250,6 @@ class BusinessQuoteService extends BaseService
 
     public function getGridData($model, $request)
     {
-
         $searchProperties = [];
         $isRenewalUser = Auth::user()->isRenewalUser();
         $isRenewalAdvisor = Auth::user()->isRenewalAdvisor();
@@ -265,7 +264,7 @@ class BusinessQuoteService extends BaseService
             $searchProperties = $model->searchProperties;
         }
 
-        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date)) {
+        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date) && ! isset($request->company_name)) {
             $this->query->whereBetween('bqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         // if ($request->ajax()) {
@@ -284,6 +283,9 @@ class BusinessQuoteService extends BaseService
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
             $this->query->whereBetween('bqrd.next_followup_date', [$dateFrom, $dateTo]);
+        }
+        if (isset($request->company_name)) {
+            $this->query->where('ent.company_name', 'like', '%'.$request->company_name.'%');
         }
 
         if (
@@ -369,7 +371,7 @@ class BusinessQuoteService extends BaseService
         }
 
         foreach ($searchProperties as $item) {
-            if (! empty($request[$item]) && $item != 'created_at') {
+            if (! empty($request[$item]) && $item != 'created_at' && $item != 'company_name') {
                 if ($request[$item] == 'null') {
                     $this->query->whereNull($item);
                 } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
