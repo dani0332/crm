@@ -18,6 +18,7 @@ use App\Jobs\SendUpdateSageJob;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\QuoteRequestEntityMapping;
+use App\Models\QuoteStatus;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteTag;
 use App\Models\SageApiLog;
@@ -619,7 +620,18 @@ class SageApiService
             info('################################## Sage Policy Booked Already for : '.$quote->code.' ##################################');
         }
 
-        if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
+        // Check if a record exists in the QuoteStatusLog table where the quote_request_id matches the current quote's ID
+        // and either the previous_quote_status_id or current_quote_status_id matches the target status ID
+        info('################################## Current code status: ' .$quote->quote_status_id. ' for : '.$quote->code.' ##################################');
+
+        $isQuoteStatusLogExists= QuoteStatusLog::where('quote_request_id', $quote->id)
+        ->where(function($query){
+            $query->where('previous_quote_status_id', QuoteStatusEnum::PolicySentToCustomer)
+                  ->orWhere('current_quote_status_id', QuoteStatusEnum::PolicySentToCustomer);
+        })
+        ->exists();
+
+        if (!$isQuoteStatusLogExists) {
             info('################################## Send Customer Documents to customer after booking of : '.$quote->code.' ##################################');
             // dispath job to send email
             dispatch(new SendBookPolicyDocumentsJob($request, $quote->code))->onQueue('insly');
