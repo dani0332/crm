@@ -8,12 +8,11 @@ use App\Events\CarQuoteAdvisorUpdated;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\CarQuote;
-use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 
 class CarQuoteObserver
 {
-    use GenericQueriesAllLobs, PersonalQuoteSyncTrait;
+    use PersonalQuoteSyncTrait;
 
     public function updating(CarQuote $quote): void
     {
@@ -49,10 +48,6 @@ class CarQuoteObserver
                 ]);
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $lead->transaction_approved_at];
-        }
-
-        if ($lead->isDirty('quote_status_id') && $this->markLeadStale($lead->quote_status_id)) {
-            $lead->update(['stale_at' => null]);
         }
 
         $this->syncQuote($lead, $dirty);

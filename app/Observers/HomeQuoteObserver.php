@@ -7,11 +7,12 @@ use App\Enums\QuoteTypeId;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\HomeQuote;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 
 class HomeQuoteObserver
 {
-    use PersonalQuoteSyncTrait;
+    use GenericQueriesAllLobs, PersonalQuoteSyncTrait;
 
     public function updating(HomeQuote $quote): void
     {
@@ -34,6 +35,10 @@ class HomeQuoteObserver
                 $homeQuote->update(['transaction_approved_at' => now()]);
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $homeQuote->transaction_approved_at];
+        }
+
+        if ($homeQuote->isDirty('quote_status_id') && $this->markLeadStale($homeQuote->quote_status_id)) {
+            $homeQuote->update(['stale_at' => null]);
         }
 
         $this->syncQuote($homeQuote, $dirty);
