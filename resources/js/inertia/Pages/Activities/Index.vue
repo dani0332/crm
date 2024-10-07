@@ -108,7 +108,6 @@ function resetFilters() {
 }
 
 function setQueryFilters() {
-  console.log(router.page.url);
   let query = router.page.url.split('?')[1];
   if (query) {
     query = query.split('&');
@@ -275,10 +274,6 @@ const onSubmit = isValid => {
 
 // Component hooks
 watch(() => filters, { deep: true, immediate: true });
-
-// onBeforeMount(() => {
-//   resetDates('today');
-// });
 
 onMounted(() => {
   setQueryFilters();
