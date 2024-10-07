@@ -4,6 +4,7 @@ namespace App\Services\Reports;
 
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
+use App\Exports\Reports\ActivePoliciesReportExport;
 use App\Models\PersonalQuote;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
@@ -44,40 +45,10 @@ class ActivePoliciesReportService extends ManagementReport
         if ($request->export == 1) {
             $data = $query->get();
 
-            // Columns that are not integar and should not be summed
-            $nonIntegarIndexes = [0, 1];
-
-            return $this->download(
-                'Active Policies Report '.$this->reportDateRange,
-                $data,
-                $this->headings(),
-                $nonIntegarIndexes
-            );
+            return (new ActivePoliciesReportExport($data))->download("Active Policies Report {$this->reportDateRange}.xlsx");
         } else {
             return $query->simplePaginate(100)->withQueryString();
         }
-    }
-
-    public function headings(): array
-    {
-        return [
-            'Insurer',
-            'Line of Business',
-            'Active Policy Count',
-            'Price (VAT applicable)',
-            'Price (VAT not applicable)',
-        ];
-    }
-
-    public function map($quote): array
-    {
-        return [
-            $quote->insurer ?? 'N/A',
-            $quote->line_of_business ?? 'N/A',
-            $quote->active_policy_count ?? 0,
-            $quote->price_with_vat ?? '0.00',
-            $quote->price_without_vat ?? '0.00',
-        ];
     }
 
     public function getDefaultFilters()

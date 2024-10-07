@@ -55,4 +55,6 @@ final class quoteStatusCode extends Enum
     const POLICY_BOOKED = 'Policy Booked';
     const POLICY_CANCELLED = 'Policy Cancelled';
     const POLICY_ISSUED = 'Policy Issued';
+    const POLICY_BOOKING_QUEUED = 'Policy Booking Queued';
+    const POLICY_BOOKING_FAILED = 'Policy Booking Failed';
 }

@@ -2,7 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Enums\QuoteStatusEnum;
 use App\Models\QuoteStatus;
+use App\Models\QuoteStatusMap;
+use App\Models\QuoteType;
 use Illuminate\Database\Seeder;
 
 class QuoteStatusSeeder extends Seeder
@@ -96,6 +99,32 @@ class QuoteStatusSeeder extends Seeder
                 'created_by' => 'bilal.saeed@insurancemarket.ae',
                 'updated_by' => 'bilal.saeed@insurancemarket.ae',
             ],
+            [
+                'code' => 'PolicyBookingQueued',
+                'text' => 'Policy Booking Queued',
+                'text_ar' => 'Policy Booking Queued',
+                'is_active' => 1,
+                'sort_order' => 86,
+                'is_deleted' => 0,
+                'created_at' => '2024-09-09 16:48:52',
+                'updated_at' => '2024-09-09 16:48:52',
+                'deleted_at' => null,
+                'created_by' => 'muhammad.ali@insurancemarket.ae',
+                'updated_by' => 'muhammad.ali@insurancemarket.ae',
+            ],
+            [
+                'code' => 'PolicyBookingFailed',
+                'text' => 'Policy Booking Failed',
+                'text_ar' => 'Policy Booking Failed',
+                'is_active' => 1,
+                'sort_order' => 87,
+                'is_deleted' => 0,
+                'created_at' => '2024-09-09 16:48:52',
+                'updated_at' => '2024-09-09 16:48:52',
+                'deleted_at' => null,
+                'created_by' => 'muhammad.ali@insurancemarket.ae',
+                'updated_by' => 'muhammad.ali@insurancemarket.ae',
+            ],
         ];
 
         foreach ($quoteStatusSeeder as $quoteStatus) {
@@ -103,6 +132,33 @@ class QuoteStatusSeeder extends Seeder
                 'code' => $quoteStatus['code'],
             ];
             QuoteStatus::firstOrCreate($conditions, $quoteStatus);
+        }
+        $quoteTypes = QuoteType::all();
+        foreach ($quoteTypes as $quoteType) {
+            QuoteStatusMap::firstOrCreate([
+                'quote_type_id' => $quoteType->id,
+                'quote_status_id' => QuoteStatusEnum::POLICY_BOOKING_QUEUED,
+            ], [
+                'quote_type_id' => $quoteType->id,
+                'quote_status_id' => QuoteStatusEnum::POLICY_BOOKING_QUEUED,
+                'sort_order' => 22,
+                'created_by' => 'muhammad.ali@insurancemarket.ae',
+                'updated_by' => 'muhammad.ali@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            QuoteStatusMap::firstOrCreate([
+                'quote_type_id' => $quoteType->id,
+                'quote_status_id' => QuoteStatusEnum::POLICY_BOOKING_FAILED,
+            ], [
+                'quote_type_id' => $quoteType->id,
+                'quote_status_id' => QuoteStatusEnum::POLICY_BOOKING_FAILED,
+                'sort_order' => 22,
+                'created_by' => 'muhammad.ali@insurancemarket.ae',
+                'updated_by' => 'muhammad.ali@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
         }
     }
 }
