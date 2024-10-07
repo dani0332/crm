@@ -229,10 +229,10 @@ const getHTML = (buttonText, data) => {
                     </x-button>
                     <template #tooltip>
                       <div class="font-bold">
-                        InstantAlfred needs your help! (
-                        {{ pendingActivityCount.pendingCallback }} ) customers
-                        are waiting for your callback. Don't forget to mark your
-                        activity as DONE
+                        InstantAlfred needs your help!
+                        {{ pendingActivityCount.pendingCallback }} customers are
+                        waiting for your callback. Don't forget to mark your
+                        activity as DONE.
                       </div>
                     </template>
                   </x-tooltip>
@@ -253,10 +253,10 @@ const getHTML = (buttonText, data) => {
                     </x-button>
                     <template #tooltip>
                       <div class="font-bold">
-                        InstantAlfred needs your help! (
+                        InstantAlfred needs your help!
                         {{ pendingActivityCount.pendingWhatsapp }}
-                        ) customers are waiting for your WhatsApp message. Don't
-                        forget to mark your activity as DONE
+                        customers are waiting for your WhatsApp message. Don't
+                        forget to mark your activity as DONE.
                       </div>
                     </template>
                   </x-tooltip>
@@ -284,8 +284,8 @@ const getHTML = (buttonText, data) => {
                 </x-button>
                 <template #tooltip>
                   <div class="font-bold">
-                    {{ authorisePaymentCount }} Customers are waiting for their
-                    policies - you're one step away from a sale
+                    {{ authorisePaymentCount }} customers are waiting for their
+                    policies - you're one step away from a sale.
                   </div>
                 </template>
               </x-tooltip>

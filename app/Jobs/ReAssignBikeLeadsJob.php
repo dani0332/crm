@@ -38,7 +38,7 @@ class ReAssignBikeLeadsJob implements ShouldQueue
     public function handle()
     {
         info('-------- Reassignment bike job started at : '.now().' ---------');
-        if (! $this->shouldProceed()) {
+        if (! $this->shouldProceed() && ! now()->isWeekend()) {
             info('Reassignment job is not proceeding as per business timings');
 
             return false;

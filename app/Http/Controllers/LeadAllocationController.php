@@ -145,6 +145,7 @@ class LeadAllocationController extends Controller
                 $leadAllocationUser = LeadAllocation::where('user_id', $item['userId'])->where('quote_type_id', $quoteTypeId)->where('id', $item['id'])->first();
                 if (isset($item['reason'])) {
                     if ($item['reason'] != UserStatusEnum::OFFLINE && $item['reason'] != UserStatusEnum::ONLINE) {
+                        info('User status is going to change to : '.UserStatusEnum::getUserStatusText($item['reason']));
                         $car = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Car)->first();
                         $health = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Health)->first();
                         if ($this->userHaveProduct($item['userId'], $car->id)) {
@@ -242,5 +243,4 @@ class LeadAllocationController extends Controller
     {
         return $this->leadAllocationService->getTierUsersWithLeadAllocationRecord($tierId);
     }
-
 }
