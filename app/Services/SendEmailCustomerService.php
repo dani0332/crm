@@ -1428,7 +1428,7 @@ class SendEmailCustomerService extends BaseService
         return str_replace($fileName, $encodedFileName, $url);
     }
 
-    public function sendApplyNowEmail($emailData, bool $sendToAdvisor = false)
+    public function sendApplyNowEmail($emailData, bool $sendToAdvisorOnly = false)
     {
         $body = [
             'to' => [[
@@ -1441,14 +1441,18 @@ class SendEmailCustomerService extends BaseService
         ];
 
         if (property_exists($emailData, 'advisorDetails')) {
-            $body['replyTo'] = ['name' => $emailData->advisorDetails['name'], 'email' => $emailData->advisorDetails['email']];
-        }
-
-        if ($sendToAdvisor && property_exists($emailData, 'advisorDetails')) {
-            $body['to'] = [[
-                'email' => $emailData->advisorDetails['email'],
-                'name' => $emailData->advisorDetails['name'],
-            ]];
+            if ($sendToAdvisorOnly) {
+                $body['to'] = [[
+                    'email' => $emailData->advisorDetails['email'],
+                    'name' => $emailData->advisorDetails['name'],
+                ]];
+            } else {
+                $body['replyTo'] = ['name' => $emailData->advisorDetails['name'], 'email' => $emailData->advisorDetails['email']];
+                $body['cc'] = [[
+                    'email' => $emailData->advisorDetails['email'],
+                    'name' => $emailData->advisorDetails['name'],
+                ]];
+            }
         }
 
         ['code' => $responseCode, 'response' => $response, 'sent' => $isEmailSent] = $this->sendMail($body);
