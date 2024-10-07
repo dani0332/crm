@@ -581,7 +581,10 @@
             <tr>
 
                 <td class="customer">
-                    {{ $customerName }} </br>
+                    @if(! $entity)
+                        {{ $customerName }} </br>
+                    @endif
+
                 </td>
 
                 <th class="date">
