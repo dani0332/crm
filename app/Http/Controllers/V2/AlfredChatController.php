@@ -80,7 +80,7 @@ class AlfredChatController extends Controller
     {   
         $data = app(InstantAlfredService::class)->processSqlChatFilters($request);
      
-        return inertia('AlfredChat/Index', ['logs' => $data->paginate(15),  'leadStatuses' => QuoteStatus::all(), 'batches' => QuoteBatches::all()]);
+        return inertia('AlfredChat/Index', ['logs' => $data->simplePaginate(15)->withQueryString(),  'leadStatuses' => QuoteStatus::all(), 'batches' => QuoteBatches::all()]);
 
     }
 
