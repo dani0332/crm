@@ -581,6 +581,7 @@
             <tr>
 
                 <td class="customer">
+                    {{--   temp code to be removed in next deployment --}}
                     @if($quote->code != 'BUS-AD8GZJ6Y')
                         {{ $customerName }} </br>
                     @endif
