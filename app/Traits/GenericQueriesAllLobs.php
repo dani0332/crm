@@ -367,8 +367,8 @@ trait GenericQueriesAllLobs
                 $isAllRequiredDocumentAreUploaded = $this->isAllRequiredDocumentAreUploaded($quoteDocuments, $type, $quote);
                 info('Quote Code: '.$quote->code.' Is all required documents filled for '.$isAllRequiredDocumentAreUploaded);
                 if ($isAllRequiredDocumentAreUploaded) {
-                    if(in_array(ucfirst($type),[quoteTypeCode::Health , quoteTypeCode::Yacht, quoteTypeCode::Home, quoteTypeCode::Business,
-                    quoteTypeCode::Cycle, quoteTypeCode::CORPLINE, quoteTypeCode::Pet])){
+                    if (in_array(ucfirst($type), [quoteTypeCode::Health, quoteTypeCode::Yacht, quoteTypeCode::Home, quoteTypeCode::Business,
+                        quoteTypeCode::Cycle, quoteTypeCode::CORPLINE, quoteTypeCode::Pet])) {
                         $quote['stale_at'] = null;
                     }
                     $quote->update([

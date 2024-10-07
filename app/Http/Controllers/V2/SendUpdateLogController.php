@@ -324,18 +324,18 @@ class SendUpdateLogController extends Controller
 
         if (in_array($quoteTypeId, [QuoteTypeId::Home, QuoteTypeId::Health, QuoteTypeId::Business, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Yacht])
         && in_array($selectedType, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
-        if (checkPersonalQuotes($quoteTypeId)) {
-            $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
-                'stale_at' => null,
-            ]);
-        } else {
-            $model = 'App\\Models\\'.QuoteTypes::getName($quoteTypeId)->value.'Quote';
-            $quote = $model::where('uuid', $quoteUuid)->first();
-            $quote->update([
-                'stale_at' => null,
-            ]);
+            if (checkPersonalQuotes($quoteTypeId)) {
+                $model::where(['uuid' => $quoteUuid, 'quote_type_id' => $quoteTypeId])->update([
+                    'stale_at' => null,
+                ]);
+            } else {
+                $model = 'App\\Models\\'.QuoteTypes::getName($quoteTypeId)->value.'Quote';
+                $quote = $model::where('uuid', $quoteUuid)->first();
+                $quote->update([
+                    'stale_at' => null,
+                ]);
+            }
         }
-    }
     }
 
     public function savePriceDetails(Request $request)
