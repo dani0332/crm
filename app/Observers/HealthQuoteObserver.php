@@ -10,6 +10,8 @@ use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
 use App\Services\HealthQuoteService;
 use App\Traits\PersonalQuoteSyncTrait;
+use App\Jobs\IntroEmailJob;
+use App\Enums\quoteTypeCode;
 
 class HealthQuoteObserver
 {
@@ -45,6 +47,8 @@ class HealthQuoteObserver
                 $healthQuote->update(['transaction_approved_at' => now()]);
             });
 
+
+
             $ecommerceSource = ApplicationStorage::where('key_name', ApplicationStorageEnums::LEAD_SOURCE_ECOMMERCE)->value('value');
             if ($healthQuote->source === LeadSourceEnum::IMCRM || strpos($healthQuote->source, $ecommerceSource) !== false) {
                 app(HealthQuoteService::class)->assignRenewalBatch($healthQuote->id);
@@ -56,6 +60,11 @@ class HealthQuoteObserver
 
         if (isset($dirty['quote_status_id']) && $healthQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             $this->syncLeadEntries($healthQuote->uuid);
+        }
+
+        if (isset($dirty['quote_status_id']) &&  $healthQuote->quote_status_id === QuoteStatusEnum::Qualified && $healthQuote->advisor_id) {
+            info("Quote status changed to {$healthQuote->quote_status_id} | Ref-ID: {$healthQuote->uuid} | Time: ".now());
+            IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $healthQuote->uuid, 'send-rm-intro-email', null, false);
         }
     }
 }
