@@ -803,10 +803,6 @@ class SplitPaymentService
                     $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quoteModel);
                     if (! $lockLeadSectionsDetails['lead_status'] || $quoteModel->quote_status_id == QuoteStatusEnum::TransactionDeclined) {
                         $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
-                        if (in_array($modelType, [quoteTypeCode::Health, quoteTypeCode::Yacht, quoteTypeCode::Home, quoteTypeCode::Business,
-                            quoteTypeCode::Cycle, quoteTypeCode::CORPLINE, quoteTypeCode::Pet])) {
-                            $quoteModel->stale_at = null;
-                        }
 
                         app(CRUDService::class)->calculateScore($quoteModel, $modelType);
                         info('Transaction Score Calculated: '.$quoteModel->code);
