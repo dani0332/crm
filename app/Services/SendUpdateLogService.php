@@ -822,10 +822,12 @@ class SendUpdateLogService
         $sageRequestPayload = SagePayloadFactory::sagePayLoad($sendUpdateRequest->quoteType, $preparedDetailsForEndorsement['payment'], (object) $sendUpdateLogDetails, $preparedDetailsForEndorsement['splitPayments']);
         $sageRequestPayload->customerId = app(SageApiService::class)->verifySageCustomer(
             $quoteDetails->customer_id,
-            ['quoteTypeId' => $sendUpdateRequest->quoteType, 'id' => $quoteDetails->id],
+            ['quoteTypeId' => QuoteTypes::getIdFromValue($sendUpdateRequest->quoteType), 'id' => $quoteDetails->id],
             $quoteDetails,
             ($sendUpdateLog?->category?->code == SendUpdateLogStatusEnum::CPD ? 21 : 13)
         );
+
+        dd($sageRequestPayload);
 
         $checkRequiredSageValidations = app(SageApiService::class)->checkRequiredSageIds($sageRequestPayload);
         if (! $checkRequiredSageValidations['status']) {
