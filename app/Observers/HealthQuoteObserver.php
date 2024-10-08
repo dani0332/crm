@@ -48,7 +48,6 @@ class HealthQuoteObserver
 
         if (isset($dirty['quote_status_id']) && $this->removeStaleFromLead($healthQuote->quote_status_id)) {
             $healthQuote->update(['stale_at' => null]);
-            $dirty = [...$dirty, 'stale_at' => null];
         }
 
         $this->syncQuote($healthQuote, $dirty);
