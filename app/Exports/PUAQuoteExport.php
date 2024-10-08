@@ -32,12 +32,12 @@ class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping
             'cmk.text as make',
             'cmd.text as model',
             'u.email as assignedadvisoremail'
-        )->get();
+        )->distinct()->get();
 
         $teamCounts = $this->data[1]->select(
             't.name as Team',
             DB::raw('COUNT(*) as Total')
-        )->get();
+        )->distinct()->get();
 
         $exportData = collect();
 
@@ -46,6 +46,9 @@ class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping
         }
 
         if ($teamCounts->isNotEmpty()) {
+            $exportData->push((object) [' ' => ' ']);
+            $exportData->push((object) [' ' => ' ']);
+            $exportData->push((object) [' ' => ' ']);
             $exportData->push((object) ['Teams' => '']);
             $exportData->push((object) ['Total' => '']);
 

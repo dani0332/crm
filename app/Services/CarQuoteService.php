@@ -2158,4 +2158,25 @@ class CarQuoteService extends BaseService
 
         return [$puaAuthUpdate, $puaAuthTeamUpdate];
     }
+    public function exportPUAUpdates()
+    {
+        $startDate = Carbon::now()->subDay()->startOfDay();
+        $endDate = Carbon::now()->subDay()->endOfDay();
+
+        return DB::table('car_quote_plan_details as cqp')
+            ->join('car_quote_request as cqr', 'cqp.quote_uuid', '=', 'cqr.uuid')
+            ->join('car_make as cmk', 'cqr.car_make_id', '=', 'cmk.id')
+            ->join('car_model as cmd', 'cqr.car_model_id', '=', 'cmd.id')
+            ->join('nationality as n', 'cqr.nationality_id', '=', 'n.id')
+            ->join('payment_status as ps', 'cqr.payment_status_id', '=', 'ps.id')
+            ->join('quote_status as qs', 'cqr.quote_status_id', '=', 'qs.id')
+            ->join('vehicle_type as vt', 'cqr.vehicle_type_id', '=', 'vt.id')
+            ->leftJoin('car_plan as cp', 'cqr.plan_id', '=', 'cp.id')
+            ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
+            ->whereNotNull('cqp.pua_premium')
+            ->whereBetween('cqr.payment_status_date', [$startDate, $endDate])
+            ->whereNotNull('cqr.paid_at')
+            ->whereIn('cqr.payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PARTIALLY_PAID])
+            ->whereColumn('cqp.plan_id', 'cqr.plan_id');
+    }
 }
