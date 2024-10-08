@@ -219,6 +219,7 @@ class SukoonDemocranceService
             if (empty($content) || preg_match($pattern, $content)) {
                 $message = 'Document is not available on democrance';
                 $this->logFailure($message.' '.$templateId.' doc_code : '.$docCode, $message, ['quote' => $quote, 'embeddedTransaction' => $embeddedTransaction]);
+                return false;
             }
 
             $headers = $result->toPsrResponse()->getHeader('Content-Disposition');
