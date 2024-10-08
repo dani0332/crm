@@ -46,7 +46,7 @@ class HealthQuoteObserver
             $dirty = [...$dirty, 'transaction_approved_at' => $healthQuote->transaction_approved_at];
         }
 
-        if ($healthQuote->isDirty('quote_status_id') && $this->removeStaleFromLead($healthQuote->quote_status_id)) {
+        if (isset($dirty['quote_status_id']) && $this->removeStaleFromLead($healthQuote->quote_status_id)) {
             $healthQuote->update(['stale_at' => null]);
         }
 
