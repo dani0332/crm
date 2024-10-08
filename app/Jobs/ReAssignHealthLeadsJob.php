@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Log;
 
 class ReAssignHealthLeadsJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue , Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable;
 
     public $tries = 2;
     public $timeout = 15;
@@ -31,7 +31,7 @@ class ReAssignHealthLeadsJob implements ShouldQueue
     public function handle()
     {
         info('-------- Reassignment health job started at : '.now().' ---------');
-        if (! $this->healthAllocationService->shouldProceed()) {
+        if (! $this->healthAllocationService->shouldProceed() && ! now()->isWeekend()) {
             info('Reassignment job is not proceeding as per business timings');
 
             return false;
