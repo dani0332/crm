@@ -35,7 +35,7 @@ class BusinessQuoteObserver
             $dirty = [...$dirty, 'transaction_approved_at' => $businessQuote->transaction_approved_at];
         }
 
-        if ($businessQuote->isDirty('quote_status_id') && $this->removeStaleFromLead($businessQuote->quote_status_id)) {
+        if (isset($dirty['quote_status_id']) && $this->removeStaleFromLead($businessQuote->quote_status_id)) {
             $businessQuote->update(['stale_at' => null]);
         }
 
