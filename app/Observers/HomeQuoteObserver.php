@@ -39,6 +39,7 @@ class HomeQuoteObserver
 
         if (isset($dirty['quote_status_id']) && $this->removeStaleFromLead($homeQuote->quote_status_id)) {
             $homeQuote->update(['stale_at' => null]);
+            $dirty = [...$dirty, 'stale_at' => null];
         }
 
         $this->syncQuote($homeQuote, $dirty);
