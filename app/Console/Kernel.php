@@ -110,7 +110,6 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->dailyAt('11:45')->onOneServer()->withoutOverlapping();
 
-
         $schedule->command('sage-processes:run')->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping();
         $schedule->command('sage-process:cleanup')->timezone('Asia/Dubai')->dailyAt('00:30')->onOneServer()->withoutOverlapping();
 
