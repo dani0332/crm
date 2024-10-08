@@ -145,10 +145,7 @@ function onSubmit(isValid) {
     isValid = false;
   }
 
-  if (
-    isValid &&
-    form.placements.every(placement => placement.quote_type_id)
-  ) {
+  if (isValid && form.placements.every(placement => placement.quote_type_id)) {
     const method = isEdit.value ? 'put' : 'post';
 
     const url = isEdit.value
