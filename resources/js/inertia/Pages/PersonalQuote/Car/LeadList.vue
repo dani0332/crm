@@ -867,10 +867,18 @@ const formatDate = dateString =>
             <x-button
                 size="sm"
                 color="emerald"
-                :href="'/pua-leads-export'"
+                :href="'/pua/pua-leads-export'"
                 class="justify-self-start mr-3"
             >
                 Export PUA Updates
+            </x-button>
+            <x-button
+                size="sm"
+                color="emerald"
+                :href="'/non-pua/pua-leads-export'"
+                class="justify-self-start mr-3"
+            >
+                Export NON PUA Updates
             </x-button>
         </div>
         <div class="flex justify-self-end gap-3">

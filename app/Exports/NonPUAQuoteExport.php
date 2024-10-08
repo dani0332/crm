@@ -9,7 +9,7 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping
+class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping
 {
     use Exportable;
 
@@ -17,7 +17,7 @@ class PUAQuoteExport implements FromCollection, WithHeadings, WithMapping
 
     public function __construct()
     {
-        $this->data = app(CarQuoteService::class)->exportPUAAuthorized();
+        $this->data = app(CarQuoteService::class)->exportnonPUAAuthorized();
     }
 
     public function collection()

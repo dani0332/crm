@@ -14,6 +14,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TeamNameEnum;
 use App\Facades\Ken;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
@@ -2068,5 +2069,93 @@ class CarQuoteService extends BaseService
         } elseif (Auth::user()->hasRole(RolesEnum::CarAdvisor)) {
             $this->exportQuery->where('cqr.advisor_id', Auth::user()->id);
         }
+    }
+    public function exportnonPUAAuthorized()
+    {
+        $nonPUAAuthLead = DB::table('car_quote_request as q')
+            ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
+            ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
+            ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
+            ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
+            ->join('teams as t', 'ut.team_id', '=', 't.id')
+            ->join('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')
+            ->where('q.payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
+            ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
+            ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
+            ->where('t.parent_team_id', TeamNameEnum::getTeamID(TeamNameEnum::CAR))
+            ->whereNotIn('q.uuid', function ($query) {
+                $query->select('q.uuid')
+                    ->from('car_quote_plan_details as cqp')
+                    ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
+                    ->leftJoin('car_plan as cp', 'q.plan_id', '=', 'cp.id')
+                    ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
+                    ->where('q.payment_status_id', PaymentStatusEnum::AUTHORISED)
+                    ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
+                    ->whereNotNull('cqp.pua_premium')
+                    ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
+                    ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
+                    ->where('cqp.plan_id', '=', 'q.plan_id');
+            })
+            ->orderBy('q.paid_at', 'desc');
+
+        $nonPUAAuthTeamCount = DB::table('car_quote_request as q')
+            ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
+            ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
+            ->join('teams as t', 'ut.team_id', '=', 't.id')
+            ->where('q.payment_status_id', PaymentStatusEnum::AUTHORISED)
+            ->where('t.parent_team_id', TeamNameEnum::getTeamID(TeamNameEnum::CAR))
+            ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
+            ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
+            ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
+            ->whereNotIn('q.uuid', function ($query) {
+                $query->select('q.uuid')
+                    ->from('car_quote_plan_details as cqp')
+                    ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
+                    ->whereNotNull('cqp.pua_premium')
+                    ->whereColumn('cqp.plan_id', '=', 'q.plan_id');
+            })
+            ->groupBy('t.name');
+
+        return [$nonPUAAuthLead, $nonPUAAuthTeamCount];
+
+    }
+
+    public function exportPUAAuthorized()
+    {
+        $puaAuthUpdate = DB::table('car_quote_plan_details as cqp')
+            ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
+            ->leftJoin('car_plan as cp', 'q.plan_id', '=', 'cp.id')
+            ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
+            ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
+            ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
+            ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
+            ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
+            ->join('teams as t', 'ut.team_id', '=', 't.id')
+            ->join('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')
+            ->where('q.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
+            ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
+            ->whereNotNull('cqp.pua_premium')
+            ->where('q.paid_at', '<=', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR'))
+            ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'))
+            ->where('cqp.plan_id', '=', DB::raw('q.plan_id'))
+            ->where('t.parent_team_id', '=', TeamNameEnum::getTeamID(TeamNameEnum::CAR))
+            ->orderBy('q.paid_at', 'desc');
+
+        $puaAuthTeamUpdate = DB::table('car_quote_plan_details as cqp')
+            ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
+            ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
+            ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
+            ->join('teams as t', 'ut.team_id', '=', 't.id')
+            ->where('q.payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
+            ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
+            ->whereNotNull('cqp.pua_premium')
+            ->where('q.paid_at', '<=', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR'))
+            ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'))
+            ->where('cqp.plan_id', '=', DB::raw('q.plan_id'))
+            ->where('t.parent_team_id', '=', TeamNameEnum::getTeamID(TeamNameEnum::CAR))
+            ->groupBy('t.name');
+
+        return [$puaAuthUpdate, $puaAuthTeamUpdate];
     }
 }

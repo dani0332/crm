@@ -20,6 +20,7 @@ use App\Exports\CarQuoteExportWithPlans;
 use App\Exports\HealthQuotesExport;
 use App\Exports\HomeQuoteExport;
 use App\Exports\LifeQuotesExport;
+use App\Exports\NonPUAQuoteExport;
 use App\Exports\PersonalQuotesExport;
 use App\Exports\PUAQuoteExport;
 use App\Exports\TravelQuoteExport;
@@ -539,8 +540,16 @@ class CentralController extends Controller
         }
     }
 
-    public function exportPUAUpdates()
+    public function exportPUAUpdates($exportType)
     {
-        return app(PUAQuoteExport::class)->download('PUA-List');
+        if ($exportType === 'pua') {
+            return app(PUAQuoteExport::class)->download('PUA-UPDATES.xlsx');
+
+        } else {
+            return app(NonPUAQuoteExport::class)->download('NON-PUA-UPDATES.xlsx');
+
+        }
+
     }
+
 }
