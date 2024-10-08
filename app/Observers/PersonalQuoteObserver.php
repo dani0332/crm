@@ -24,7 +24,7 @@ class PersonalQuoteObserver
     }
 
     public function updated(PersonalQuote $personalQuote): void
-    {   
+    {
         $dirty = $personalQuote->getDirty();
         if (
             $personalQuote->isDirty('quote_status_id') &&
