@@ -90,7 +90,11 @@ const insuranceProvidersOptions = computed(() => {
 
 const providerName = computed(() => {
   let provider;
-  let insuranceProviderId = props.sendUpdateLog?.insurance_provider_id || props.quote?.insurance_provider_id || props.quote?.car_plan_provider_id || null;
+  let insuranceProviderId =
+    props.sendUpdateLog?.insurance_provider_id ||
+    props.quote?.insurance_provider_id ||
+    props.quote?.car_plan_provider_id ||
+    null;
   if (insuranceProviderId) {
     provider = props?.insuranceProviders?.find(
       provider => provider.id === insuranceProviderId,
