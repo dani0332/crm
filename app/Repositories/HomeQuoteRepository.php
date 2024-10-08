@@ -262,7 +262,7 @@ class HomeQuoteRepository extends BaseRepository
             'payments' => $quote->payments,
             'insuranceProviders' => InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::HOME->id()),
             'vatPercentage' => ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()?->value ?? 0,
-            'isAmlClearedForPayment' => app(CentralService::class)->amlClearedFromLog($quote->id, QuoteTypes::HOME->value),
+            // 'isAmlClearedForPayment' => app(CentralService::class)->amlClearedFromLog($quote->id, QuoteTypes::HOME->value),
             'leadSource' => LeadSourceEnum::asArray(),
             'quoteNotes' => $quoteNotes,
             'cdnPath' => config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/',
