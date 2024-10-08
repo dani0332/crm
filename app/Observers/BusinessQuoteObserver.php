@@ -37,7 +37,6 @@ class BusinessQuoteObserver
 
         if (isset($dirty['quote_status_id']) && $this->removeStaleFromLead($businessQuote->quote_status_id)) {
             $businessQuote->update(['stale_at' => null]);
-            $dirty = [...$dirty, 'stale_at' => null];
         }
 
         $this->syncQuote($businessQuote, $dirty);
