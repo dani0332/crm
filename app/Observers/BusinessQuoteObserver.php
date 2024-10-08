@@ -46,7 +46,7 @@ class BusinessQuoteObserver
         }
 
         if (
-            $businessQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             in_array($businessQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             MAWelcomeJob::dispatch(

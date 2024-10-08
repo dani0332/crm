@@ -67,7 +67,7 @@ class PersonalQuoteObserver
         }
 
         if (
-            $personalQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             in_array($personalQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked]) &&
             in_array($personalQuote->quote_type_id, [QuoteTypeId::Pet, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Jetski])
         ) {
