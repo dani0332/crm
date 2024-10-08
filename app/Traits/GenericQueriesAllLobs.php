@@ -265,7 +265,7 @@ trait GenericQueriesAllLobs
         $bookPolicyDetails['isPolicyCancelledOrPending'] = $this->isPolicyCancelledOrPending($record);
         $bookPolicyDetails['isPolicyCancelledOrPendingToolTtip'] = ProductionProcessTooltipEnum::POLICY_DETAILS_LOCKED_TOOL_TIP;
         $bookPolicyDetails['isEnableUploadDocument'] = app(QuoteDocumentService::class)->isEnableUploadDocument($record->quote_status_id);
-        $bookPolicyDetails['isPaidEditable'] =  $this->isSplitPaymentFullyPaid($payment);
+        $bookPolicyDetails['isPaidEditable'] = $this->isSplitPaymentFullyPaid($payment);
         // check if policy details are filled & all required documents are uploaded then show send policy button to customer & show edit button &  send policy to sage
         if ($isFilledPolicyDetails) {
             if (! empty($quoteDocuments)) {
@@ -559,10 +559,10 @@ trait GenericQueriesAllLobs
      */
     private function isLackingPayment($payment)
     {
-        if ($this->isSplitPaymentFullyPaid($payment)){
+        if ($this->isSplitPaymentFullyPaid($payment)) {
             return true;
         }
-        
+
         if ($payment) {
             $paymentTotalPrice = round($payment->total_price, 2);
             $sumOfSplitPayment = round(($payment->paymentSplits()->sum('payment_amount') + $payment->discount_value), 2);
@@ -869,12 +869,12 @@ trait GenericQueriesAllLobs
         return null;
     }
 
-   /**
+    /**
      * Check if the payment is split and all payment splits are paid.
      * This method checks if the given payment has a frequency of split payments
      * and verifies if all associated payment splits have a payment status of 'paid'.
      *
-     * @return bool 
+     * @return bool
      */
     private function isSplitPaymentFullyPaid($payment)
     {
@@ -884,7 +884,7 @@ trait GenericQueriesAllLobs
             $paymentSplits = $payment->paymentSplits;
 
             // Check if the payment splits are not empty and all have a payment status of 'paid'
-            if (!$paymentSplits->isEmpty() && $paymentSplits->every(function ($split) {
+            if (! $paymentSplits->isEmpty() && $paymentSplits->every(function ($split) {
                 return $split->payment_status_id == PaymentStatusEnum::PAID;
             })) {
 
@@ -899,7 +899,7 @@ trait GenericQueriesAllLobs
 
         return false;
     }
-    
+
     public function removeStaleFromLead($lead_status_id)
     {
         $skipStatus = [
