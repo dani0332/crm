@@ -58,7 +58,7 @@ class HealthQuoteObserver implements ShouldHandleEventsAfterCommit
         }
 
         if (
-            $healthQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             in_array($healthQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Health, 'quoteUID' => $healthQuote->uuid]);
