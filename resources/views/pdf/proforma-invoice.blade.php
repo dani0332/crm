@@ -581,7 +581,11 @@
             <tr>
 
                 <td class="customer">
-                    {{ $customerName }} </br>
+                    {{--   temp code to be removed in next deployment --}}
+                    @if($quote->code != 'BUS-AD8GZJ6Y')
+                        {{ $customerName }} </br>
+                    @endif
+
                 </td>
 
                 <th class="date">

@@ -67,5 +67,6 @@ class CarQuoteObserver
                 'lead-status-update-myalfred-we'
             );
         }
+
     }
 }

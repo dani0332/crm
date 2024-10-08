@@ -863,4 +863,20 @@ trait GenericQueriesAllLobs
 
         return null;
     }
+
+    public function removeStaleFromLead($lead_status_id)
+    {
+        $skipStatus = [
+            QuoteStatusEnum::TransactionApproved,
+            QuoteStatusEnum::PolicyDocumentsPending,
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued,
+        ];
+
+        return in_array($lead_status_id, $skipStatus);
+    }
 }
