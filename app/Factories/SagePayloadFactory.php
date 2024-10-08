@@ -156,10 +156,7 @@ class SagePayloadFactory
             }
 
             if ($type == SageEnum::SCT_CORRECTION) {
-
-                $payLoad['Invoices'][0]['DocumentNumber'] = $payLoad['Invoices'][0]['DocumentNumber'];
                 $payLoad['Invoices'][0]['InvoiceDescription'] = $payLoad['Invoices'][0]['InvoiceDescription'].' - NEW';
-
                 $sageRequestType = SageEnum::SRT_CREATE_AP_PREM_CORR_INV;
             }
 
@@ -240,9 +237,7 @@ class SagePayloadFactory
             }
 
             if ($type == SageEnum::SCT_CORRECTION) {
-                $payLoad['Invoices'][0]['DocumentNumber'] = $payLoad['Invoices'][0]['DocumentNumber'];
                 $payLoad['Invoices'][0]['InvoiceDescription'] = $payLoad['Invoices'][0]['InvoiceDescription'].' - NEW';
-
                 $payLoad['Invoices'][0]['InvoiceDetails'][0]['DistributionDescription'] = $payLoad['Invoices'][0]['InvoiceDescription'].' - NEW';
                 $sageRequestType = SageEnum::SRT_CREATE_AP_SPPAY_CORR_INV;
             }
@@ -305,7 +300,7 @@ class SagePayloadFactory
         $sageRequestType = SageEnum::SRT_CREATE_AR_DISC_INV;
         $entryType = SageEnum::SCT_STRAIGHT;
 
-        // Payload uppdate logic for reversal and correction scenario
+        // Payload update logic for reversal and correction scenario
         if (in_array($type, [SageEnum::SCT_REVERSAL, SageEnum::SCT_CORRECTION]) && ! empty($reversalDetails)) {
             $entryType = $type;
             $reversePayLoad = json_decode($reversalDetails);
@@ -466,15 +461,11 @@ class SagePayloadFactory
 
             if ($type == SageEnum::SCT_CORRECTION) {
 
-                $payLoad['Invoices'][0]['DocumentNumber'] = $payLoad['Invoices'][0]['DocumentNumber'];
                 $payLoad['Invoices'][0]['InvoiceDescription'] = $payLoad['Invoices'][0]['InvoiceDescription'].' - NEW';
-
                 $payLoad['Invoices'][0]['InvoiceDetails'][0]['Description'] = $payLoad['Invoices'][0]['InvoiceDescription'];
 
                 // Commision Invoice Correction
-                $payLoad['Invoices'][1]['DocumentNumber'] = $payLoad['Invoices'][1]['DocumentNumber'];
                 $payLoad['Invoices'][1]['InvoiceDescription'] = $payLoad['Invoices'][1]['InvoiceDescription'].' - NEW';
-
                 $payLoad['Invoices'][1]['InvoiceDetails'][0]['Description'] = $payLoad['Invoices'][1]['InvoiceDescription'];
 
                 $sageRequestType = SageEnum::SRT_CREATE_AR_PREM_COMM_CORR_INV;
@@ -614,14 +605,11 @@ class SagePayloadFactory
 
             if ($type == SageEnum::SCT_CORRECTION) {
 
-                $payLoad['Invoices'][0]['DocumentNumber'] = $payLoad['Invoices'][0]['DocumentNumber'];
                 $payLoad['Invoices'][0]['InvoiceDescription'] = $payLoad['Invoices'][0]['InvoiceDescription'].' - NEW';
                 $payLoad['Invoices'][0]['InvoiceDetails'][0]['Description'] = $payLoad['Invoices'][0]['InvoiceDescription'];
 
                 // Commision Invoice Correction
-                $payLoad['Invoices'][1]['DocumentNumber'] = $payLoad['Invoices'][1]['DocumentNumber'];
                 $payLoad['Invoices'][1]['InvoiceDescription'] = $payLoad['Invoices'][1]['InvoiceDescription'].' - NEW';
-
                 $payLoad['Invoices'][1]['InvoiceDetails'][0]['Description'] = $payLoad['Invoices'][1]['InvoiceDescription'];
 
                 $sageRequestType = SageEnum::SRT_CREATE_AR_SPPAY_CORR_INV;
