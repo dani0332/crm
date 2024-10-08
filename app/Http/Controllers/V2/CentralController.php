@@ -25,6 +25,7 @@ use App\Exports\TravelQuoteExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookPolicyRequest;
 use App\Http\Requests\CustomerProfileRequest;
+use App\Http\Requests\DeleteSplitPaymentRequest;
 use App\Http\Requests\DragAndDropUpdateLeadStatusRequest;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\ExportValidationRequest;
@@ -234,9 +235,6 @@ class CentralController extends Controller
                 'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
                 'quote_status_date' => now(),
             ];
-            if (in_array($quoteTypeId, [QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Business])) {
-                $quoteData['stale_at'] = null;
-            }
             $quote->update($quoteData);
 
             info('Quote Code: '.$quote->code.' Policy send to customer');
@@ -327,6 +325,13 @@ class CentralController extends Controller
         $successMessage = app(SplitPaymentService::class)->processSplitPaymentApprove($paymentProcessJob->quote_type, $paymentProcessJob->quoteable_id, $paymentProcessJob->payment_splits_id, $paymentProcessJob->amount_captured, true);
 
         return $successMessage;
+    }
+
+    // Delete split payment
+    public function deleteSplitPayment(DeleteSplitPaymentRequest $request)
+    {
+        return app(SplitPaymentService::class)->deleteSplitPayment($request->payment_split_id);
+
     }
 
     // Store new payment
@@ -436,7 +441,7 @@ class CentralController extends Controller
                 $previousStatusIdChanged = true;
             }
 
-            $repository->update(['quote_status_id' => $dataTo['quote_status_id'], 'quote_status_date' => now(), 'stale_at' => null]);
+            $repository->update(['quote_status_id' => $dataTo['quote_status_id'], 'quote_status_date' => now()]);
 
             if ($dataTo['quote_status_id'] == QuoteStatusEnum::Lost && $dataFrom['quoteTypeId'] == QuoteTypeId::Health) {
                 HealthQuoteRequestDetail::updateOrCreate(['health_quote_request_id' => $repository->id], ['lost_reason_id' => $dragAndDropUpdateLeadStatusRequest->get('data')['to']['lost_reason']]);
