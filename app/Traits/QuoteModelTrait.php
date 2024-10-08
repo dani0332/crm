@@ -9,6 +9,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Payment;
+use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
 use Illuminate\Support\Facades\Config;
 
@@ -54,7 +55,7 @@ trait QuoteModelTrait
 
     public function isPaymentAuthorized()
     {
-        return $this->payments->count() > 0 && $this->payments->every(fn (Payment $payment) => $payment->isPaymentAuthorized());
+        return $this->payments->count() > 0 && $this->payments->every(fn(Payment $payment) => $payment->isPaymentAuthorized());
     }
 
     public function scopeAs($q, string $as)
@@ -125,5 +126,15 @@ trait QuoteModelTrait
     public function scopeIsNonSICLead($q, QuoteTypes $quoteType)
     {
         $q->isSICLead($quoteType, true);
+    }
+
+    public function isSIC(QuoteTypes $quoteType): bool
+    {
+        return QuoteTag::where('quote_uuid', $this->uuid)->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())->where('quote_tags.quote_type_id', $quoteType->id())->exists();
+    }
+
+    public function isNonSIC(QuoteTypes $quoteType): bool
+    {
+        return ! $this->isSIC($quoteType);
     }
 }
