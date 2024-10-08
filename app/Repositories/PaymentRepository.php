@@ -680,6 +680,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                     ->first();
 
                 if (! $invoiceBrokerSequence) {
+                    info('Monthly sequence created for Insurance Provider ID '.$insuranceProvider->id);
                     $invoiceBrokerSequence = BrokerInvoiceNumber::create([
                         'insurance_provider_id' => $insuranceProvider->id,
                         'date' => $currentDate->format('Y-m'),
