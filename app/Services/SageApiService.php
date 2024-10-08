@@ -622,7 +622,7 @@ class SageApiService
         if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
             info('################################## Send Customer Documents to customer after booking of : '.$quote->code.' ##################################');
             // dispath job to send email
-            dispatch(new SendBookPolicyDocumentsJob($request, $quote->code))->onQueue('insly');
+            SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
         }
 
         info('################################## Policy Book : mark status as policy booked for : '.$quote->code.' ##################################');
@@ -974,6 +974,7 @@ class SageApiService
             return $this->createNonUpfrontAPInvoicePrem([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails]);
         }
     }
+
     private function createUpfrontAPInvoicePrem($sageRequestDataArray)
     {
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails] = $sageRequestDataArray;
@@ -1399,6 +1400,7 @@ class SageApiService
 
         return $returnMessage;
     }
+
     public function applyPaymentInvoices($sageRequestDataArray)
     {
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
@@ -1545,6 +1547,7 @@ class SageApiService
 
         return $returnMessage;
     }
+
     private function applySplitPaymentInvoices($sageRequestDataArray)
     {
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
@@ -1655,6 +1658,7 @@ class SageApiService
 
         return $returnMessage;
     }
+
     private function applyNonSplitNonUpfrontPaymentInvoices($sageRequestDataArray)
     {
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
@@ -1763,6 +1767,7 @@ class SageApiService
 
         return $returnMessage;
     }
+
     private function logErrorAndReturn($logDataArray, $storeSageApiLog = true): array
     {
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
@@ -1787,6 +1792,7 @@ class SageApiService
 
         return $returnMessage;
     }
+
     public function convertResponseToArray($response)
     {
         if (is_array($response)) {
@@ -1958,5 +1964,4 @@ class SageApiService
             info('cmd:SageProcessesCommand - No Sage Process meet the selection criteria / already sage processes are being processed against all insurance providers');
         }
     }
-
 }
