@@ -90,8 +90,8 @@ class InstantAlfredService extends BaseService
                         WHEN qt.name = '" . QuoteSegmentEnum::SIC->tag() . "' THEN 'SIC'
                         WHEN qt.name = '" . QuoteSegmentEnum::SIC->tag() . "' 
                             AND cqr.source IN ('" . LeadSourceEnum::REVIVAL . "', '" . LeadSourceEnum::REVIVAL_REPLIED . "', '" . LeadSourceEnum::REVIVAL_PAID . "') 
-                            THEN 'SIC REVIVAL'
-                        WHEN qt.name != '" . QuoteSegmentEnum::SIC->tag() . "' THEN 'NON SIC'
+                            THEN 'SIC-REVIVAL'
+                        WHEN qt.name != '" . QuoteSegmentEnum::SIC->tag() . "' THEN 'NON-SIC'
                         ELSE 'N/A'
                         END as segment
                     ")
@@ -164,8 +164,8 @@ class InstantAlfredService extends BaseService
                         WHEN qt.name = '" . QuoteSegmentEnum::SIC->tag() . "' THEN 'SIC'
                         WHEN qt.name = '" . QuoteSegmentEnum::SIC->tag() . "' 
                             AND hqr.source IN ('" . LeadSourceEnum::REVIVAL . "', '" . LeadSourceEnum::REVIVAL_REPLIED . "', '" . LeadSourceEnum::REVIVAL_PAID . "') 
-                            THEN 'SIC REVIVAL'
-                        WHEN qt.name != '" . QuoteSegmentEnum::SIC->tag() . "' THEN 'NON SIC'
+                            THEN 'SIC-REVIVAL'
+                        WHEN qt.name != '" . QuoteSegmentEnum::SIC->tag() . "' THEN 'NON-SIC'
                         ELSE 'N/A'
                         END as segment
                     ")
@@ -239,8 +239,8 @@ class InstantAlfredService extends BaseService
                         WHEN qt.name = '" . QuoteSegmentEnum::SIC->tag() . "' THEN 'SIC'
                         WHEN qt.name = '" . QuoteSegmentEnum::SIC->tag() . "' 
                             AND tqr.source IN ('" . LeadSourceEnum::REVIVAL . "', '" . LeadSourceEnum::REVIVAL_REPLIED . "', '" . LeadSourceEnum::REVIVAL_PAID . "') 
-                            THEN 'SIC REVIVAL'
-                        WHEN qt.name != '" . QuoteSegmentEnum::SIC->tag() . "' THEN 'NON SIC'
+                            THEN 'SIC-REVIVAL'
+                        WHEN qt.name != '" . QuoteSegmentEnum::SIC->tag() . "' THEN 'NON-SIC'
                         ELSE 'N/A'
                         END as segment
                     ")
@@ -338,11 +338,11 @@ class InstantAlfredService extends BaseService
             }
         }
 
-        if (isset($request->segment_filter) && $request->segment_filter != '') {
+        if (isset($request->segment) && $request->segment != 'all' && $request->segment != '') {
             $query = $modelType == HealthQuote::class ? 'hqr' : ($modelType == CarQuote::class ? 'cqr' : 'tqr');
             $quoteTypeId = $modelType == HealthQuote::class ? QuoteTypeId::Health : ($modelType == CarQuote::class ? QuoteTypeId::Car : QuoteTypeId::Travel);
-
-            $modelType::applySegmentFilter($partialQuery, $request->segment_filter, $query, $quoteTypeId);
+            $partialQuery->having('segment', '=', $request->segment);
+            // $modelType::applySegmentFilter($partialQuery, $request->segment_filter, $query, $quoteTypeId);
         }
 
         return $partialQuery;
