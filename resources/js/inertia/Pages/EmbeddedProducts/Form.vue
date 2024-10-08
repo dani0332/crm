@@ -141,10 +141,12 @@ function onSubmit(isValid) {
   });
 
   isInsuranceProviderIdEmpty.value = !form.insurance_provider_id;
+  if (form.product_type == 'insurance' && !form.insurance_provider_id) {
+    isValid = false;
+  }
 
   if (
     isValid &&
-    form.insurance_provider_id &&
     form.placements.every(placement => placement.quote_type_id)
   ) {
     const method = isEdit.value ? 'put' : 'post';
