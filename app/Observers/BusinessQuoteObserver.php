@@ -2,15 +2,15 @@
 
 namespace App\Observers;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
 use App\Jobs\MAWelcomeJob;
 use App\Models\BusinessQuote;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 
 class BusinessQuoteObserver
 {
-    use PersonalQuoteSyncTrait;
+    use GenericQueriesAllLobs, PersonalQuoteSyncTrait;
 
     public function updating(BusinessQuote $quote): void
     {
@@ -30,24 +30,30 @@ class BusinessQuoteObserver
             $businessQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
         ) {
             BusinessQuote::withoutEvents(function () use ($businessQuote) {
-                MAWelcomeJob::dispatchIf(
-                    isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)) && $businessQuote->customer,
-                    $businessQuote->customer?->first_name,
-                    $businessQuote->customer?->last_name,
-                    $businessQuote->customer?->email,
-                    $businessQuote->customer?->mobile_no,
-                    'CUSTOMER_UPDATE',
-                    'customer-update-myalfred-we'
-                );
                 $businessQuote->update(['transaction_approved_at' => now()]);
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $businessQuote->transaction_approved_at];
+        }
+
+        if ($businessQuote->isDirty('quote_status_id') && $this->removeStaleFromLead($businessQuote->quote_status_id)) {
+            $businessQuote->update(['stale_at' => null]);
         }
 
         $this->syncQuote($businessQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $businessQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             $this->syncLeadEntries($businessQuote->uuid);
+        }
+
+        if (
+            $businessQuote->isDirty('quote_status_id') &&
+            in_array($businessQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
+        ) {
+            MAWelcomeJob::dispatch(
+                $businessQuote->customer,
+                'LEAD_STATUS_UPDATE',
+                'lead-status-update-myalfred-we'
+            );
         }
     }
 }

@@ -255,44 +255,54 @@ class SendUpdateLogRepository extends BaseRepository
         return $result;
     }
 
-    public function fetchSendUpdateToCustomer($data)
+    public function fetchSendUpdateToCustomer($request)
     {
-        $sendUpdateLog = $this->find($data['sendUpdateId']);
+        $sendUpdateLog = $this->find($request['sendUpdateId']);
+        info('fn:SendUpdateToCustomer - Process Start - Send Update UUID: '.$sendUpdateLog->uuid);
+
         try {
-            if ($data['quoteType'] == quoteTypeCode::Car && $sendUpdateLog->category->code == SendUpdateLogStatusEnum::EN) {
+            if (isset($request['action']) && $request['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
+                $endorsementResponse = app(SendUpdateLogService::class)->preparedDataForEndorsement((object) $request);
+                if ($endorsementResponse['status'] && isset($endorsementResponse['skipSageCalls'])) {
+                    $response[] = ['status' => 200, 'message' => $endorsementResponse['message']];
+                }
+
+                if (! $endorsementResponse['status']) {
+                    $response[] = ['status' => 500, 'message' => $endorsementResponse['message']];
+                }
+
+                if ($endorsementResponse['status'] && ! empty($endorsementResponse['sageRequestPayload'])) {
+                    $request['dispatchSageCall'] = true;
+                    $request['sageRequestPayload'] = $endorsementResponse['sageRequestPayload'];
+                    $response[] = ['status' => 200, 'message' => $endorsementResponse['message']];
+                }
+            }
+
+            if ($request['quoteType'] == quoteTypeCode::Car && $sendUpdateLog->category->code == SendUpdateLogStatusEnum::EN) {
                 $quote = CarQuote::where('uuid', $sendUpdateLog->quote_uuid)->first();
-                if (! empty($sendUpdateLog->emirates_id)) { // will work on Change of Emirates (with no financial impact).
+                if (! empty($sendUpdateLog->emirates_id)) {
+                    info('fn:SendUpdateToCustomer - Updating Emirates ID - Send Update UUID: '.$sendUpdateLog->uuid.' - Emirates ID: '.$sendUpdateLog->emirates_id);
                     $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_id]);
-                } elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0) { // will work on Change in seating capacity (with no financial impact).
+                } elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0) {
+                    info('fn:SendUpdateToCustomer - Updating Seating Capacity - Send Update UUID: '.$sendUpdateLog->uuid.' - Seating Capacity: '.$sendUpdateLog->seating_capacity);
                     $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
                 }
             }
 
-            dispatch(new SendUpdateToCustomerJob($sendUpdateLog, $data));
-
-            /*$sendUpdateLog->update([
-                'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
-            ]);*/
-
-            // temporary comments.
-            /*if (! $sendUpdateLog->is_email_sent) {
-                dispatch(new SendUpdateToCustomerJob($sendUpdateLog, $data));
+            if ($sendUpdateLog->is_email_sent) {
+                $response[] = ['status' => 200, 'message' => 'Email already sent to customer'];
             } else {
-                $sendUpdateLog->update([
-                    'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
-                ]);
-            }*/
-            info('Send update to Customer - Send Update Code: '.$sendUpdateLog->code.' - Status update to: '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
-            $result = true;
-        } catch (\Exception $ex) {
-            logger()->error('Send Update to Customer - Failed - Send Update Code: '.$sendUpdateLog->code.' - Error : '.$ex->getMessage());
+                $response[] = ['status' => 200, 'message' => 'Send Update to customer email is being scheduled'];
+            }
 
-            $result = (object) [
-                'message' => $ex->getMessage(),
-            ];
+            SendUpdateToCustomerJob::dispatch($sendUpdateLog, $request)->onQueue('insly');
+            info('fn:SendUpdateToCustomer - Process End - Send Update UUID: '.$sendUpdateLog->uuid.' - Status updating to '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
+        } catch (\Exception $ex) {
+            logger()->error('fn:SendUpdateToCustomer - Failed - Send Update UUID: '.$sendUpdateLog->uuid.' - Error : '.json_encode($ex->getMessage()));
+            $response = ['status' => 500, 'message' => 'Something went wrong, please try again later'];
         }
 
-        return $result;
+        return $response;
     }
 
     public function fetchSaveBookingDetails($data)
@@ -326,6 +336,10 @@ class SendUpdateLogRepository extends BaseRepository
                 $bookingDetails['reversal_invoice'] = $data['reversal_invoice'];
             }
 
+            $result = $sendUpdate->update($bookingDetails);
+            $sendUpdate->save(); // This save is used because sometime object not refresh properly
+            $sendUpdate->refresh();
+
             $payment = Payment::where('send_update_log_id', $data['id'])->first();
             if ($payment) {
                 $sendUpdateLogService = app(SendUpdateLogService::class);
@@ -338,8 +352,6 @@ class SendUpdateLogRepository extends BaseRepository
                 $sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate, true);
                 app(SplitPaymentService::class)->updateCommissionSchedule($payment);
             }
-
-            $result = $sendUpdate->update($bookingDetails);
 
         } catch (\Exception $ex) {
             $result = (object) [
