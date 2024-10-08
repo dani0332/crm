@@ -1865,7 +1865,7 @@ const finalizePaymentForm = (payment, capture_approval) => {
       isAnyPaid(payment) &&
       payment.total_price <= payment.total_amount + payment.discount_value
     ) {
-      isFieldReadonly.value = !is_lacking_payment.value;
+      isFieldReadonly.value = true;
       isTotalPriceUpdated.value = is_lacking_payment.value;
     } else if (
       payment.total_price >
