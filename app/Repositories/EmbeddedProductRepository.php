@@ -385,7 +385,7 @@ class EmbeddedProductRepository extends BaseRepository
 
         if ($isAlfredProtect) {
             return $this->sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData);
-        } else {
+        } else if(in_array($short_code, [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX])) {
             return $this->sendMedexEmail($short_code, $quoteObject, $certificate_number, $premium, $capturedAt, $attachments, $advisorData, $ep);
         }
     }
