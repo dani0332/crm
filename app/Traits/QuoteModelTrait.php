@@ -55,7 +55,7 @@ trait QuoteModelTrait
 
     public function isPaymentAuthorized()
     {
-        return $this->payments->count() > 0 && $this->payments->every(fn(Payment $payment) => $payment->isPaymentAuthorized());
+        return $this->payments->count() > 0 && $this->payments->every(fn (Payment $payment) => $payment->isPaymentAuthorized());
     }
 
     public function scopeAs($q, string $as)
