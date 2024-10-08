@@ -35,8 +35,9 @@ class BusinessQuoteObserver
             $dirty = [...$dirty, 'transaction_approved_at' => $businessQuote->transaction_approved_at];
         }
 
-        if ($businessQuote->isDirty('quote_status_id') && $this->removeStaleFromLead($businessQuote->quote_status_id)) {
+        if (isset($dirty['quote_status_id']) && $this->removeStaleFromLead($businessQuote->quote_status_id)) {
             $businessQuote->update(['stale_at' => null]);
+            $dirty = [...$dirty, 'stale_at' => null];
         }
 
         $this->syncQuote($businessQuote, $dirty);
@@ -46,7 +47,7 @@ class BusinessQuoteObserver
         }
 
         if (
-            $businessQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             in_array($businessQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             MAWelcomeJob::dispatch(
