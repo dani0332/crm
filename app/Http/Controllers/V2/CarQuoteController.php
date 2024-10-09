@@ -16,6 +16,7 @@ use App\Services\CarPlanService;
 use App\Services\CarQuoteService;
 use Illuminate\Http\Request;
 use App\Jobs\NBEventFollowup;
+use Carbon\Carbon;
 
 class CarQuoteController extends Controller
 {
@@ -217,7 +218,7 @@ class CarQuoteController extends Controller
            return back()->with('error','No UUID provided');
 
         foreach ($request->uuids as  $uuid) {
-            NBEventFollowup::dispatch($uuid, $request->followup_type)->onQueue('event-followup');
+            NBEventFollowup::dispatch($uuid, $request->followup_type)->delay(Carbon::now()->addMinutes(2));
            usleep(200);
         }
 
