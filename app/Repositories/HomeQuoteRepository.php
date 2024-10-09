@@ -56,7 +56,25 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchGetData($forExport = false, $forTotalLeadsCount = false)
     {
-        return $this->byQuoteTypeCode(QuoteTypes::HOME)->with([
+        // dd('fetchGetData', request()->all());
+
+        // by default add the created_at check
+        $addCreatedDateCheck = true;
+        if (
+            // check if any of the filters are applied, only then don't add the created_at check
+            request()->filled('email') ||
+            request()->filled('mobile_no') ||
+            request()->filled('code') ||
+            request()->filled('created_at_start') ||
+            request()->filled('created_at_end') ||
+            request()->filled('renewal_batch') ||
+            request()->filled('previous_quote_policy_number') ||
+            request()->filled('payment_due_date') ||
+            request()->filled('booking_date')
+        ) {
+            $addCreatedDateCheck = false;
+        }
+        $homeQuery = $this->byQuoteTypeCode(QuoteTypes::HOME)->with([
             'quoteDetail.lostReason',
             'quoteStatus',
             'advisor',
@@ -69,8 +87,16 @@ class HomeQuoteRepository extends BaseRepository
                 $query->where('advisor_id', auth()->id());
             })
             ->when(request()->filled('advisors'), fn($q) => $q->whereIn('advisor_id', (array) request('advisors')))
-            ->when(request('is_renewal') === quoteTypeCode::yesText, fn($q) => $q->whereNotNull('previous_quote_policy_number'))
-            ->when(request('is_renewal') === quoteTypeCode::noText, fn($q) => $q->whereNull('previous_quote_policy_number'))
+            ->when(request()->has('is_renewal'), function ($query) {
+                if (request('is_renewal') === quoteTypeCode::yesText) {
+                    $query->whereNotNull('previous_quote_policy_number');
+                } elseif (request('is_renewal') === quoteTypeCode::noText) {
+                    $query->whereNull('previous_quote_policy_number');
+                }
+            })
+            ->when($addCreatedDateCheck, function ($query) {
+                $query->whereBetween('created_at', $this->getDateRange());
+            })
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount)
             ->orderBy('created_at', 'desc')
@@ -79,6 +105,8 @@ class HomeQuoteRepository extends BaseRepository
                 fn($q) => $q->count(),
                 fn($query) => $query->when($forExport, fn($q) => $q->get(), fn($q) => $q->simplePaginate())
             );
+
+        return $homeQuery;
     }
 
     public function fetchGetFormOptions()
@@ -218,7 +246,7 @@ class HomeQuoteRepository extends BaseRepository
         $sendUpdateOptions = [];
         $sendUpdateLogs = [];
         $sendUpdateEnum = (object) [];
-        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote->id);
+        $hasPolicyIssuedStatus = app(CRUDService::class)->hasAtleastOneStatusPolicyIssued($quote);
 
         if ($hasPolicyIssuedStatus) {
             $sendUpdateOptions = (new LookupService)->getSendUpdateOptions(QuoteTypes::HOME->id());
@@ -355,5 +383,12 @@ class HomeQuoteRepository extends BaseRepository
             'quoteType' => QuoteTypes::HOME->value,
             'totalCount' => count(request()->all()) > 1 || $hasOtherFilters ? $totalLeads : self::fetchGetData(true, true),
         ]);
+    }
+    public function getDateRange()
+    {
+        $from = now()->startOfDay()->toDateTimeString(); // default from date
+        $to = now()->endOfDay()->toDateTimeString(); // default to date
+
+        return [$from, $to];
     }
 }
