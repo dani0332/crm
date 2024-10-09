@@ -5,11 +5,12 @@ namespace App\Observers;
 use App\Enums\QuoteStatusEnum;
 use App\Jobs\MAWelcomeJob;
 use App\Models\BusinessQuote;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 
 class BusinessQuoteObserver
 {
-    use PersonalQuoteSyncTrait;
+    use GenericQueriesAllLobs, PersonalQuoteSyncTrait;
 
     public function updating(BusinessQuote $quote): void
     {
@@ -34,6 +35,10 @@ class BusinessQuoteObserver
             $dirty = [...$dirty, 'transaction_approved_at' => $businessQuote->transaction_approved_at];
         }
 
+        if (isset($dirty['quote_status_id']) && $this->removeStaleFromLead($businessQuote->quote_status_id)) {
+            $businessQuote->update(['stale_at' => null]);
+        }
+
         $this->syncQuote($businessQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $businessQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
@@ -41,7 +46,7 @@ class BusinessQuoteObserver
         }
 
         if (
-            $businessQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             in_array($businessQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             MAWelcomeJob::dispatch(
