@@ -81,9 +81,7 @@ class CarEmailService extends BaseService
                 $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'lms-intro-email', $emailTemplateId);
                 if ($responseCode) {
                     $this->sendEmailCustomerService->sendSICFollowupEmail($lead, QuoteTypes::CAR);
-                    // Dispatch the job with a 24 hours delay
-                    SICFollowupEmailJob::dispatch($lead->uuid, QuoteTypes::CAR)->delay(Carbon::now()->addHours(24));
-                    info('sendCarOCBIntroEmail - SICFollowupEmailJob Dispatched - Ref ID:'.$lead->uuid.' Time: '.now());
+                    // after 24 hour email is being triggered from KEN api using bird flow
                 }
             }
         }
