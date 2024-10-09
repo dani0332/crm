@@ -229,7 +229,7 @@ class CentralController extends Controller
         info('Quote Code: '.$quote->code.' fn: sendBookingPolicy called policy type '.$request->send_policy_type);
 
         if ($request->send_policy_type == SendPolicyTypeEnum::CUSTOMER) {
-            dispatch(new SendBookPolicyDocumentsJob($request, $quote->code))->onQueue('insly');
+            SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
 
             $quoteData = [
                 'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
