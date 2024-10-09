@@ -55,6 +55,7 @@ class HealthEmailService extends BaseService
             'advisorDetails' => $advisor ?? null,
             'quotePlanLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid,
             'requestAdvisorLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
+            'docUploadLink'=> config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/thankyou',
             'quotePlanApiLink' => config('constants.KEN_API_ENDPOINT').'/get-health-quote-plans-order-priority?'.$lead->uuid.'&lang=en&isModified=true',
             'ApiToken' => config('constants.KEN_API_TOKEN'),
             'basicAuth' => 'Basic '.base64_encode(config('constants.KEN_API_USER').':'.config('constants.KEN_API_PWD')),
