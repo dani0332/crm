@@ -15,6 +15,7 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping
 
     protected $paymentStatusCounts;
     protected $totalPremiumCaptured;
+    protected $totalLeads;
     protected $formatDate;
 
     public function __construct()
@@ -39,6 +40,11 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping
         $this->totalPremiumCaptured = app(CarQuoteService::class)
             ->exportPUAUpdates()
             ->sum('cqr.premium_captured');
+        $this->totalLeads = app(CarQuoteService::class)
+            ->exportPUAUpdates()
+            ->selectRaw('COUNT(*) as lead_count')
+            ->pluck('lead_count')
+            ->first();
     }
 
     public function collection()
@@ -72,6 +78,7 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping
             (object) ['PaymentStatus' => 'PARTIAL CAPTURED', 'Count' => $this->paymentStatusCounts[12] ?? 0],
             (object) ['PaymentStatus' => 'PARTIALLY PAID', 'Count' => $this->paymentStatusCounts[17] ?? 0],
             (object) ['PaymentStatus' => 'TPC', 'Count' => number_format($this->totalPremiumCaptured, 2)],
+            (object) ['PaymentStatus' => 'Total', 'Count' => $this->totalLeads],
         ]);
 
         return $quotes->merge($summary);
