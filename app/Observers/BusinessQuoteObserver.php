@@ -6,8 +6,8 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Jobs\MAWelcomeJob;
 use App\Models\BusinessQuote;
-use App\Traits\GenericQueriesAllLobs;
 use App\Repositories\PaymentRepository;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 
 class BusinessQuoteObserver
