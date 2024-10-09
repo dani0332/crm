@@ -81,7 +81,10 @@ class PersonalQuoteObserver
 
         if (isset($dirty['quote_status_id']) && $this->removeStaleFromLead($personalQuote->quote_status_id)
             && in_array($personalQuote->quote_type_id, [QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Yacht])) {
-            $personalQuote->update(['stale_at' => null]);
+            PersonalQuote::withoutEvents(function () use ($personalQuote) {
+                $personalQuote->update(['stale_at' => null]);
+            });
+            $dirty = [...$dirty, 'stale_at' => $personalQuote->stale_at];
         }
     }
 }
