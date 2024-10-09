@@ -14,6 +14,7 @@ use Illuminate\Support\Carbon;
 class SageProcessesMarkFailedCommand extends Command
 {
     use GenericQueriesAllLobs;
+
     /**
      * The name and signature of the console command.
      *
@@ -39,8 +40,6 @@ class SageProcessesMarkFailedCommand extends Command
         $sageProcesses = SageProcess::where('updated_at', '<', $fiveMinutesAgo)->where('status', SageEnum::SAGE_PROCESS_PROCESSING_STATUS)->get();
         info('cmd:SageProcessesMarkFailedCommand Sage processes to update to failed status.', ['updated before' => $fiveMinutesAgo, 'Sage Processes Count' => $sageProcesses->count()]);
         foreach ($sageProcesses as $sageProcess) {
-
-
 
             (new SageApiService)->updateSageProcessStatus($sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS);
 

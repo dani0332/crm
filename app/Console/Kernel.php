@@ -34,7 +34,7 @@ class Kernel extends ConsoleKernel
         Commands\ProcessCCPaymentsCommand::class,
         Commands\SageProcessesCommand::class,
         Commands\SageProcessDataCleanUpCommand::class,
-        SageProcessesMarkFailedCommand::class
+        SageProcessesMarkFailedCommand::class,
     ];
 
     /**
