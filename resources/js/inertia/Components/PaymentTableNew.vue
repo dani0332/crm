@@ -1737,6 +1737,7 @@ const resetPaymentForm = () => {
   authorizedPayments.value = [];
   isApproveConfirmed.value = false;
   isApproveNotChecked.value = true;
+  isAmlApprovalRequired.value = false;
 };
 
 const initializePaymentForm = (
@@ -5622,13 +5623,12 @@ const isSplitDeleteEnabled = computed(() => {
                     </div>
                   </div>
                   <Link
-                    :href="`/kyc/aml/${page.props.quoteTypeId}/details/${props.quoteRequest.id}`"
+                    :href="`/kyc/aml/${page.props.quoteTypeId ?? props.sendUpdate.quote_type_id}/details/${props.quoteRequest.id}`"
                   >
                     <x-tooltip>
                         <x-button
                             v-if="can(permissionEnum.AMLList)"
                             size="lg"
-                            type="submit"
                             color="orange"
                             class="px-4 py-4 mt-4"
                             :loading="paymentMethodsForm.processing"
