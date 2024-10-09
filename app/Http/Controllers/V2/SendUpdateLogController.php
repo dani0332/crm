@@ -143,7 +143,6 @@ class SendUpdateLogController extends Controller
         $categoryCode = $sendUpdateLog->category?->code;
         $optionCode = $sendUpdateLog->option?->code ?? null;
         $documentTypes = $this->sendUpdateLogService->getSendUpdateDocuments($categoryCode);
-        $quoteDocuments = $sendUpdateLog->documents;
         $issuanceStatuses = PolicyIssuanceStatusRepository::getColumns(['id', 'text']);
         if (checkPersonalQuotes($quoteType)) {
             $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
@@ -173,6 +172,7 @@ class SendUpdateLogController extends Controller
         $uploadedDocuments = $this->sendUpdateLogService->getUploadedDocuments($sendUpdateLog);
         // payment related work.
         $this->quoteDocumentService = app(QuoteDocumentService::class);
+        $quoteDocuments = $this->quoteDocumentService->getQuoteDocuments($quoteType, $sendUpdateLog->id, null, true);
         $paymentDocumentTypesOptions = $this->quoteDocumentService->paymentDocumentTypesOptions($quoteTypeId);
         $paymentDocumentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload($quoteTypeId, $paymentDocumentTypesOptions);
 
@@ -320,6 +320,7 @@ class SendUpdateLogController extends Controller
                     break;
             }
         }
+
     }
 
     public function savePriceDetails(Request $request)
@@ -405,8 +406,8 @@ class SendUpdateLogController extends Controller
         $sendUpdateLog = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
         $endorsementResponse = app(SendUpdateLogService::class)->preparedDataForEndorsement($sendUpdateRequest);
 
-        if (! $endorsementResponse['status'] || empty($endorsementResponse['sageRequestPayload'])) {
-            $responseMessage = empty($endorsementResponse['sageRequestPayload']) ? 'Something went wrong' : $endorsementResponse['message'];
+        if (! $endorsementResponse['status'] || ! isset($endorsementResponse['sageRequestPayload'])) {
+            $responseMessage = (! isset($endorsementResponse['sageRequestPayload']) && empty($endorsementResponse['message'])) ? 'Something went wrong' : $endorsementResponse['message'];
 
             return response()->json(['message' => $responseMessage], 500);
         }

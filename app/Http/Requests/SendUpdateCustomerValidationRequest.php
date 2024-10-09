@@ -99,7 +99,7 @@ class SendUpdateCustomerValidationRequest extends FormRequest
                     }
                     break;
                 case SendUpdateLogStatusEnum::EF:
-                    if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED && ! $checkTransactionApprovedAuditLogs) {
+                    if (($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED && ! $checkTransactionApprovedAuditLogs) && ! in_array($this->sendUpdate->status, $bypassStatuses)) {
                         if (! in_array(
                             $option,
                             [
@@ -110,6 +110,8 @@ class SendUpdateCustomerValidationRequest extends FormRequest
                                 SendUpdateLogStatusEnum::DM,
                                 SendUpdateLogStatusEnum::DTSI,
                                 SendUpdateLogStatusEnum::DOV,
+                                SendUpdateLogStatusEnum::ATIB,
+                                SendUpdateLogStatusEnum::ACB,
                             ]
                         )) {
                             $validator->errors()->add('error', 'Transaction approval is required. ');

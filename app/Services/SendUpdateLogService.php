@@ -755,6 +755,7 @@ class SendUpdateLogService
                 'policy_expiry_date' => $sendUpdateLog->expiry_date,
                 'broker_invoice_number' => $sendUpdateLog->broker_invoice_number,
                 'frequency' => PaymentFrequency::UPFRONT,
+                'insurance_provider_id' => ($checkInslyMigratedLead) ? $sendUpdateLog->insurance_provider_id : $payment->insurance_provider_id,
             ]);
 
             $splitPayments->first()->fill([
@@ -834,7 +835,7 @@ class SendUpdateLogService
         $sageRequestPayload = SagePayloadFactory::sagePayLoad($sendUpdateRequest->quoteType, $preparedDetailsForEndorsement['payment'], (object) $sendUpdateLogDetails, $preparedDetailsForEndorsement['splitPayments']);
         $sageRequestPayload->customerId = app(SageApiService::class)->verifySageCustomer(
             $quoteDetails->customer_id,
-            ['quoteTypeId' => $sendUpdateRequest->quoteType, 'id' => $quoteDetails->id],
+            ['quoteTypeId' => QuoteTypes::getIdFromValue($sendUpdateRequest->quoteType), 'id' => $quoteDetails->id],
             $quoteDetails,
             ($sendUpdateLog?->category?->code == SendUpdateLogStatusEnum::CPD ? 21 : 13)
         );

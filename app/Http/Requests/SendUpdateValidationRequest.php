@@ -152,16 +152,19 @@ class SendUpdateValidationRequest extends FormRequest
                     'status'
                 );
 
-                if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF &&
-                    ($sendUpdateLog->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED && ! $checkTransactionApprovedAuditLogs) &&
-                    ! in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) &&
+                if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF && ! $checkTransactionApprovedAuditLogs &&
+                    ! in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) &&
                     ! in_array($sendUpdateLog->status, $bypassStatuses) &&
-                    in_array($categorySubType, [
+                    ! in_array($categorySubType, [
                         SendUpdateLogStatusEnum::MPC,
                         SendUpdateLogStatusEnum::MDOM,
                         SendUpdateLogStatusEnum::MDOV,
                         SendUpdateLogStatusEnum::ED,
                         SendUpdateLogStatusEnum::DM,
+                        SendUpdateLogStatusEnum::DTSI,
+                        SendUpdateLogStatusEnum::DOV,
+                        SendUpdateLogStatusEnum::ATIB,
+                        SendUpdateLogStatusEnum::ACB,
                     ])) {
                     $validator->errors()->add('error', 'Transaction approval is required');
                 }

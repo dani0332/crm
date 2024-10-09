@@ -2,10 +2,11 @@
 
 namespace App\Observers;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Events\TravelQuoteAdvisorUpdated;
+use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\TravelQuote;
 use App\Repositories\PaymentRepository;
@@ -48,15 +49,6 @@ class TravelQuoteObserver
             $travelQuote->isDirty('quote_status_id') &&
             $travelQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
         ) {
-            MAWelcomeJob::dispatchIf(
-                isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)) && $travelQuote->customer,
-                $travelQuote->customer?->first_name,
-                $travelQuote->customer?->last_name,
-                $travelQuote->customer?->email,
-                $travelQuote->customer?->mobile_no,
-                'CUSTOMER_UPDATE',
-                'customer-update-myalfred-we'
-            );
             TravelQuote::withoutEvents(function () use ($travelQuote) {
                 $travelQuote->update(['transaction_approved_at' => now()]);
             });
@@ -67,6 +59,18 @@ class TravelQuoteObserver
 
         if (isset($dirty['quote_status_id']) && $travelQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             $this->syncLeadEntries($travelQuote->uuid);
+        }
+
+        if (
+            $travelQuote->isDirty('quote_status_id') &&
+            in_array($travelQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
+        ) {
+            CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Travel, 'quoteUID' => $travelQuote->uuid]);
+            MAWelcomeJob::dispatch(
+                $travelQuote->customer,
+                'LEAD_STATUS_UPDATE',
+                'lead-status-update-myalfred-we'
+            );
         }
 
         if (

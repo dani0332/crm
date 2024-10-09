@@ -426,8 +426,8 @@ final class PermissionsEnum extends Enum
     public static function getBulkPolicyBookingOnSagePermissions()
     {
         return [
-            self::VIEW_BULK_POLICY_BOOKING_LIST,
-            self::BOOK_BULK_POLICY_ON_SAGE,
+            /*self::VIEW_BULK_POLICY_BOOKING_LIST,
+            self::BOOK_BULK_POLICY_ON_SAGE,*/
             self::BOOKING_FAILED_EDIT,
         ];
     }
