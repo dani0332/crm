@@ -20,7 +20,7 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping
 
     public function __construct()
     {
-        $currentDate = new \DateTime();
+        $currentDate = new \DateTime;
         $pastDate = $currentDate->modify('-1 day');
         $this->formatDate = $pastDate->format('j M Y');
 
