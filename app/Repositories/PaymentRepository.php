@@ -663,7 +663,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             ->whereNull('send_update_log_id')
             ->where('insurance_provider_id', $insuranceProvider->id)
             ->orderByRaw("CAST(REGEXP_REPLACE(broker_invoice_number, '[^0-9]', '') AS UNSIGNED) DESC")
-            ->first()->broker_invoice_number;
+            ->first()?->broker_invoice_number ?? 0; //get latest broker invoice number for insurer
 
         $insuranceProviderLeadCount = ((int) $latestBINByInsurer) + 1;
 
