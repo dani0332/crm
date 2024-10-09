@@ -8,7 +8,6 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
-use App\Jobs\SICFollowupEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarModel;
