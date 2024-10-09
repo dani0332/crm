@@ -59,4 +59,7 @@ class NBMotorFollowupEmailJob implements ShouldQueue
             throw $th;
         }
     }
+
+   
+
 }

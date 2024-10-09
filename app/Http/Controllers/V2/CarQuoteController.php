@@ -15,6 +15,7 @@ use App\Repositories\UserRepository;
 use App\Services\CarPlanService;
 use App\Services\CarQuoteService;
 use Illuminate\Http\Request;
+use App\Jobs\NBEventFollowup;
 
 class CarQuoteController extends Controller
 {
@@ -208,5 +209,18 @@ class CarQuoteController extends Controller
         $carPlans = app(CarPlanService::class)->getNonQuotedCarPlans($insuranceProviderId, $quotePlanId);
 
         return response()->json($carPlans);
+    }
+
+    public function sendNBEventFollowup(Request $request){
+
+        if(count($request->uuids) < 1)
+           return back()->with('error','No UUID provided');
+
+        foreach ($request->uuids as  $uuid) {
+            NBEventFollowup::dispatch($uuid, $request->followup_type)->onQueue('event-followup');
+           usleep(200);
+        }
+
+     return back()->with('success','Event Followup sending successful');
     }
 }

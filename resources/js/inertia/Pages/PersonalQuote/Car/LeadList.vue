@@ -400,9 +400,7 @@ const onConfirmCreateLead = () => {
   createLead.modal = false;
 };
 const sendFollowupLead = () => {
-
-    router.get(route('sendfollowup'));
-
+  router.post(route('event-followups-new-business'),{'followup_type':followupLead.type,'uuids':quotesSelected.value.map(e => e.uuid)});
   followupLead.modal = false;
 };
 
@@ -903,7 +901,7 @@ const nbFollowupTemplates = [
       <div class="flex gap-3 mt-4 mb-4">
         <div class="ml-auto" v-if="quotesSelected.length > 0">
           <x-button size="sm" color="#ff5e00" @click.prevent="openFollowupModal">
-            Send Followup Emails
+            Send Followup Email
           </x-button>
         </div>
       </div>
@@ -1049,7 +1047,7 @@ const nbFollowupTemplates = [
     <x-modal
       v-model="followupLead.modal"
       size="md"
-      title="Followup Lead"
+      title="Send Followup Lead"
       show-close
       backdrop
     >
