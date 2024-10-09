@@ -22,8 +22,6 @@ use App\Facades\Ken;
 use App\Facades\Marshall;
 use App\Jobs\CammyJob;
 use App\Jobs\CarLost\CarLostStatusRejected;
-use App\Jobs\IntroEmailJob;
-use App\Jobs\SyncSIBContactJob;
 use App\Models\AML;
 use App\Models\ApplicationStorage;
 use App\Models\CarLostQuoteLog;
