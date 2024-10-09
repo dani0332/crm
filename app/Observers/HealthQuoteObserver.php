@@ -48,7 +48,10 @@ class HealthQuoteObserver implements ShouldHandleEventsAfterCommit
         }
 
         if (isset($dirty['quote_status_id']) && $this->removeStaleFromLead($healthQuote->quote_status_id)) {
-            $healthQuote->update(['stale_at' => null]);
+            HealthQuote::withoutEvents(function () use ($healthQuote) {
+                $healthQuote->update(['stale_at' => null]);
+            });
+            $dirty = [...$dirty, 'stale_at' => $healthQuote->stale_at];
         }
 
         $this->syncQuote($healthQuote, $dirty);
