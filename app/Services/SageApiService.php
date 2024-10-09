@@ -240,11 +240,11 @@ class SageApiService
         info('fn bookStraightEndorsementOnSage - Payment frequency : '.$preparedData['payment']->frequency);
 
         $extraDetails = ['sage_request_type' => ($preparedData['payment']->frequency == PaymentFrequency::UPFRONT) ? SageEnum::SRT_CREATE_AR_PREM_COMM_INV : SageEnum::SRT_CREATE_AR_SPPAY_INV];
+        $extraDetails['extras']['option_id'] = $preparedData['sendUpdateLog']?->option?->code ?? null;
         $extraDetails['userId'] = $sageRequestPayload->userId ?? null;
 
         if (isset($preparedData['mainLeadDetails'])) {
             $extraDetails['mainLeadDetails'] = $preparedData['mainLeadDetails'];
-            $extraDetails['extras']['option_id'] = $preparedData['sendUpdateLog']?->option?->code ?? null;
         }
 
         //Create AR Commission and Premium Invoice
