@@ -11,12 +11,13 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class MAWelcomeJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
     public $timeout = 45;
@@ -39,8 +40,16 @@ class MAWelcomeJob implements ShouldQueue
 
             return false;
         }
+
         if (! $this->extendCustomerSubscription()) {
-            $this->sendMAWelcomeEmail();
+            if ($this->customer->is_we_sent) {
+                info('MAWelcomeJob - Invite already sent - Customer ID: '.$this->customer->id);
+
+                return false;
+            } else {
+                $this->sendMAWelcomeEmail();
+            }
+
         }
     }
 
@@ -110,7 +119,7 @@ class MAWelcomeJob implements ShouldQueue
             $statusCode = app(SendEmailCustomerService::class)->sendMyAlfredWelcomeEmail($data, $this->tag, $this->source);
 
             if ($statusCode == 201) {
-                info('MAWelcomeJob - Email Sent to customer: '.$this->customer->email);
+                info('MAWelcomeJob - Email Sent to customer ID: '.$this->customer->id);
                 $customer = CustomerService::getCustomerByEmail($this->customer->email);
                 if ($customer) {
                     $customer->is_we_sent = true;
@@ -134,10 +143,10 @@ class MAWelcomeJob implements ShouldQueue
                     }
                 }
             } else {
-                info('MAWelcomeJob - Email not sent to customer: '.$this->customer->email.' getStatusCode: '.$statusCode);
+                info('MAWelcomeJob - Email not sent to customer ID: '.$this->customer->id.' getStatusCode: '.$statusCode);
             }
         } catch (Exception $e) {
-            Log::error('MAWelcomeJob - Error - Customer Email: '.$this->customer->email.' Message: '.$e->getMessage());
+            Log::error('MAWelcomeJob - Error - Customer ID: '.$this->customer->id.' Message: '.$e->getMessage());
         }
     }
 }

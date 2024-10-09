@@ -3,8 +3,6 @@
 namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
-use App\Jobs\CourtesyEmailJob;
 use App\Models\PetQuote;
 
 class PetQuoteObserver
@@ -23,13 +21,6 @@ class PetQuoteObserver
                 $petQuote->update(['transaction_approved_at' => now()]);
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $petQuote->transaction_approved_at];
-        }
-
-        if (
-            $petQuote->isDirty('quote_status_id') &&
-            in_array($petQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
-        ) {
-            CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Pet, 'quoteUID' => $petQuote->uuid]);
         }
     }
 }
