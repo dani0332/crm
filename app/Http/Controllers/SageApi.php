@@ -14,7 +14,9 @@ class SageApi extends Controller
         $this->sageApiService = $sageApi;
     }
 
-    public function index() {}
+    public function index()
+    {
+    }
 
     private function processRequest($request, $leadStatus)
     {

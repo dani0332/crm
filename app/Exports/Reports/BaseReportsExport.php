@@ -22,7 +22,9 @@ abstract class BaseReportsExport implements FromCollection, ShouldAutoSize, With
 
     abstract public function headings(): array;
 
-    public function __construct(public Collection $data) {}
+    public function __construct(public Collection $data)
+    {
+    }
 
     public function collection()
     {
