@@ -3085,7 +3085,10 @@ const isAmlVerified = () => {
     return true;
   }
 
-  return props.quoteRequest.aml_status === page.props.amlStatusEnum.AMLScreeningCleared
+  return (
+    props.quoteRequest.aml_status ===
+    page.props.amlStatusEnum.AMLScreeningCleared
+  );
 };
 
 const openAmlVerificationModal = () => {
@@ -5426,7 +5429,11 @@ const isSplitDeleteEnabled = computed(() => {
                       class="mr-2 focus:outline-black"
                       size="sm"
                       color="#ff5e00"
-                      @click="isAmlVerified() ? isApproveClicked = !isApproveClicked : openAmlVerificationModal()"
+                      @click="
+                        isAmlVerified()
+                          ? (isApproveClicked = !isApproveClicked)
+                          : openAmlVerificationModal()
+                      "
                       tabindex="0"
                     >
                       Approve
@@ -5623,28 +5630,27 @@ const isSplitDeleteEnabled = computed(() => {
                     class="text-lg font-bold px-6 flex justify-between items-start"
                   >
                     <div class="text-left">
-                      <span>Please complete the AML screening to proceed.</span
-                      >
+                      <span>Please complete the AML screening to proceed.</span>
                     </div>
                   </div>
                   <Link
                     :href="`/kyc/aml/${page.props.quoteTypeId ?? props.sendUpdate.quote_type_id}/details/${props.quoteRequest.id}`"
                   >
                     <x-tooltip>
-                        <x-button
-                            v-if="can(permissionEnum.AMLList)"
-                            size="lg"
-                            color="orange"
-                            class="px-4 py-4 mt-4"
-                            :loading="paymentMethodsForm.processing"
-                        >
-                            <span>Go to AML & KYC page</span></x-button
-                        >
-                        <template #tooltip>
+                      <x-button
+                        v-if="can(permissionEnum.AMLList)"
+                        size="lg"
+                        color="orange"
+                        class="px-4 py-4 mt-4"
+                        :loading="paymentMethodsForm.processing"
+                      >
+                        <span>Go to AML & KYC page</span></x-button
+                      >
+                      <template #tooltip>
                         <span>{{
-                            paymentTooltipEnum.GOTO_AML_AND_KYC_PAGE
+                          paymentTooltipEnum.GOTO_AML_AND_KYC_PAGE
                         }}</span>
-                        </template>
+                      </template>
                     </x-tooltip>
                   </Link>
                 </div>

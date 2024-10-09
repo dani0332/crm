@@ -160,7 +160,7 @@ onMounted(() => {
               <Link
                 :href="quoteRequest?.quote_link"
                 class="text-primary-500 hover:underline"
-                >
+              >
                 {{ quoteRequest.code }}
               </Link>
             </div>
