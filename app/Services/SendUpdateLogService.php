@@ -454,14 +454,14 @@ class SendUpdateLogService
 
     public function getInvoiceDescription($sendUpdateLog, $quote, $quoteType, $payments, $isBrokerInvoiceShowOnly = false)
     {
-        if ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::CPD || empty($payments)) {
-            $insuranceProviderId = $sendUpdateLog->insurance_provider_id;
-        } else {
+        if (! $sendUpdateLog->insurance_provider_id) {
             if ($quote->insly_id || $quote->insly_migrated) {
                 $insuranceProviderId = empty($sendUpdateLog->insurance_provider_id) ? null : $sendUpdateLog->insurance_provider_id;
             } else {
                 @[$insuranceProviderId, $planId] = $this->getProviderDetails($quote, QuoteTypes::getIdFromValue($quoteType), false);
             }
+        } else {
+            $insuranceProviderId = $sendUpdateLog->insurance_provider_id;
         }
 
         $sendUpdateLogCategory = LookupRepository::where('id', $sendUpdateLog->category_id)->value('code');
@@ -470,9 +470,11 @@ class SendUpdateLogService
         if ($insuranceProvider) {
             $brokerInvoiceNumber = $this->generateBrokerInvoiceNumber($sendUpdateLog, $insuranceProvider, $isBrokerInvoiceShowOnly);
             if (! $brokerInvoiceNumber) {
+                info('fn: generateBrokerInvoiceNumber failed - BrokerInvoiceNumber not generated for Send Update uuid -> '.$sendUpdateLog->uuid);
+
                 return false;
             }
-            info('fn: getInvoiceDescription - BrokerInvoiceNumber: '.$brokerInvoiceNumber);
+            info('fn: generateBrokerInvoiceNumber - BrokerInvoiceNumber: '.$brokerInvoiceNumber);
         }
 
         if (empty($sendUpdateLog->invoice_description) && $insuranceProvider) {
@@ -1256,6 +1258,8 @@ class SendUpdateLogService
         if (empty($sendUpdateLog->broker_invoice_number)) {
             $brokerInvoiceNumber = $this->generateUniqueBrokerInvoiceNumber($insuranceProvider, $sendUpdateLog, $isBrokerInvoiceShowOnly);
             if (! $brokerInvoiceNumber) {
+                info('fn: generateUniqueBrokerInvoiceNumber failed - BrokerInvoiceNumber not generated for Send Update uuid -> '.$sendUpdateLog->uuid);
+
                 return false;
             }
         } else {
