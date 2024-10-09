@@ -1963,16 +1963,17 @@ class SageApiService
             foreach ($sageProcesses as $sageProcess) {
 
                 info('cmd:SageProcessesCommand - Processing Sage Process ID: '.$sageProcess->id.' for Insurance Provider ID: '.$sageProcess->insurance_provider_id);
+
                 $sageProcessRequest = json_decode($sageProcess->request);
                 $sageRequest = $sageProcessRequest->sagePayload;
                 $request = $sageProcessRequest->requestPayload;
 
-                $quote = $sageProcess->model;
-
                 if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST) {
+                    $quote = $this->getQuoteObject($request->model_type, $sageProcess->model_id);
                     BookPolicyOnSageJob::dispatch($sageRequest, $quote, $request, $sageProcess)->onQueue('insly');
                 } elseif ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_SEND_UPDATE_REQUEST) {
-                    SendUpdateSageJob::dispatch($request, $quote, $sageRequest, $sageProcess)->onQueue('insly');
+                    $model = $sageProcess->model;
+                    SendUpdateSageJob::dispatch($request, $model, $sageRequest, $sageProcess)->onQueue('insly');
                 }
             }
         } else {
