@@ -1,6 +1,10 @@
 {
   "resources/js/inertia/inertia.js": {
+<<<<<<< HEAD
     "file": "assets/inertia-DWGGSyjq.js",
+=======
+    "file": "assets/inertia-PHsX4eCB.js",
+>>>>>>> cab9cd20f293f9f828ff9bb40dd582a09ee74f11
     "name": "inertia",
     "src": "resources/js/inertia/inertia.js",
     "isEntry": true,
