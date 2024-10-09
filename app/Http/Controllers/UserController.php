@@ -85,7 +85,7 @@ class UserController extends Controller
         $teams = [];
         $subTeams = [];
         $permissions = Permission::orderBy('name')->get();
-        $departments = [];
+        $departments = $this->userService->getDepartmentsList();
 
         return inertia('Admin/Users/Form', [
             'roles' => $roles,
@@ -174,6 +174,7 @@ class UserController extends Controller
         $productName = implode(',', $this->getUserProducts($user->id)->pluck('name')->toArray());
         $user->roles = $user->roles->pluck('name')->toArray();
         $user->permissions = $user->permissions->pluck('name')->toArray();
+        $user->department = $user->department ?? '';
         $departments = implode(',', $user->departments->pluck('name')->toArray()) ?? '';
 
         if ($user->additional_team_ids != '') {
@@ -270,6 +271,7 @@ class UserController extends Controller
         $user->landline_no = $request->landline_no;
         $user->calendar_link = $request->calendar_link;
         $user->phone_calendar_link = $request->phone_calendar_link;
+        $user->department_id = $request->department_id ?? null;
         if (isset($request->password)) {
             $user->password = bcrypt($request->password);
         }

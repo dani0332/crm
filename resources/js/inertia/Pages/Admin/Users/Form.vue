@@ -67,6 +67,7 @@ const userForm = useForm({
   permissions: props?.userPermissions ?? null,
   calendar_link: props.user?.calendar_link ?? null,
   phone_calendar_link: props.user?.phone_calendar_link ?? null,
+  department_id: props.user?.department_id ?? null,
   department_ids: props.department_ids?.length > 0 ? props.department_ids : [],
 });
 
@@ -99,9 +100,8 @@ const computedSubTeams = computed(() => {
 });
 
 const computedDepartments = computed(() => {
-  console.log('departments', departments.value);
-  if (departments.value?.length > 0)
-    return departments.value?.map(item => ({
+    if (page.props.departments?.length > 0)
+    return page.props.departments?.map(item => ({
       value: item.id,
       label: item.name,
     }));
@@ -339,7 +339,7 @@ watch(
           :rules="[isRequired]"
           :hasError="validTeams"
           autocomplete
-          @update:modelValue="loadDepartmentsByTeam"
+
         />
       </x-field>
       <x-field label="SUB TEAM">
@@ -351,8 +351,15 @@ watch(
           :loading="loader.subTeamLoader"
         />
       </x-field>
-
-      <x-field label="Departments">
+      <x-field label="DEPARTMENT">
+        <ComboBox
+          v-model="userForm.department_id"
+          placeholder="Select Department"
+          :options="computedDepartments"
+          :single="true"
+        />
+      </x-field>
+      <x-field label="DEPARTMENTS VISIBILITY">
         <ComboBox
           v-model="userForm.department_ids"
           :loading="loader.departLoader"

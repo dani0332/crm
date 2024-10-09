@@ -95,7 +95,20 @@ const userRoles = computed(() => {
           <dd>{{ subTeamName ?? 'N/A' }}</dd>
         </div>
         <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">Departments</dt>
+            <dt class="font-medium">DEPARTMENT</dt>
+            <dd>
+                <x-tag
+                size="sm"
+                color="success"
+
+                class="text-xs"
+              >
+              {{ user?.department?.name ?? 'N/A' }}
+              </x-tag>
+            </dd>
+          </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">DEPARTMENTS VISIBILITY</dt>
           <dd class="break-words flex flex-wrap gap-1">
             <x-tag
               size="sm"
