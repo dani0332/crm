@@ -70,7 +70,7 @@ class TravelQuoteObserver
         }
 
         if (
-            $travelQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             $travelQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             $payment = $travelQuote->payments()->mainLeadPayment()->first();

@@ -53,7 +53,7 @@ class BusinessQuoteObserver
         }
 
         if (
-            $businessQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             $businessQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             $payment = $businessQuote->payments()->mainLeadPayment()->first();

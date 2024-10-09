@@ -26,7 +26,7 @@ class PetQuoteObserver
         }
 
         if (
-            $petQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             $petQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             $payment = $petQuote->payments()->mainLeadPayment()->first();

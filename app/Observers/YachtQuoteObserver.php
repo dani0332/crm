@@ -26,7 +26,7 @@ class YachtQuoteObserver
         }
 
         if (
-            $yachtQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             $yachtQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             $payment = $yachtQuote->payments()->mainLeadPayment()->first();

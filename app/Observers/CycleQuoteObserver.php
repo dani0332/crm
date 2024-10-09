@@ -26,7 +26,7 @@ class CycleQuoteObserver
         }
 
         if (
-            $cycleQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             $cycleQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             $payment = $cycleQuote->payments()->mainLeadPayment()->first();

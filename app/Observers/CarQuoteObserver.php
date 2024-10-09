@@ -68,7 +68,7 @@ class CarQuoteObserver
         }
 
         if (
-            $lead->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             $lead->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             $payment = $lead->payments()->mainLeadPayment()->first();

@@ -74,7 +74,7 @@ class PersonalQuoteObserver
         }
 
         if (
-            $personalQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             $personalQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             $payment = $personalQuote->payments()->mainLeadPayment()->first();

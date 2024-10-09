@@ -54,7 +54,7 @@ class HomeQuoteObserver
         }
 
         if (
-            $homeQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             $homeQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             $payment = $homeQuote->payments()->mainLeadPayment()->first();

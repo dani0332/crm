@@ -26,7 +26,7 @@ class JetskiQuoteObserver
         }
 
         if (
-            $jetskiQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             $jetskiQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             $payment = $jetskiQuote->payments()->mainLeadPayment()->first();

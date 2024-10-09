@@ -25,7 +25,7 @@ class BikeQuoteObserver
             $dirty = [...$dirty, 'transaction_approved_at' => $bikeQuote->transaction_approved_at];
         }
         if (
-            $bikeQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             $bikeQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             $payment = $bikeQuote->payments()->mainLeadPayment()->first();

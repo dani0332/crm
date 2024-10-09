@@ -61,7 +61,7 @@ class HealthQuoteObserver
         }
 
         if (
-            $healthQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             $healthQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             $payment = $healthQuote->payments()->mainLeadPayment()->first();
