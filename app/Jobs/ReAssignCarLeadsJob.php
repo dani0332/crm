@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Log;
 
 class ReAssignCarLeadsJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue , Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable;
 
     public $tries = 2;
     public $timeout = 15;
@@ -32,7 +32,7 @@ class ReAssignCarLeadsJob implements ShouldQueue
     public function handle()
     {
         info('-------- Reassignment car job started at : '.now().' ---------');
-        if (! $this->shouldProceed()) {
+        if (! $this->shouldProceed() && ! now()->isWeekend()) {
             info('Reassignment job is not proceeding as per business timings');
 
             return false;

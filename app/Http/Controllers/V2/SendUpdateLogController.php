@@ -17,6 +17,7 @@ use App\Http\Requests\SavePolicyDetailsRequest;
 use App\Http\Requests\SaveProviderDetailsRequest;
 use App\Http\Requests\SendUpdateCustomerValidationRequest;
 use App\Http\Requests\SendUpdateRequest;
+use App\Http\Requests\SendUpdateValidationRequest;
 use App\Http\Requests\UpdateToCustomerRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Lookup;
@@ -32,6 +33,7 @@ use App\Repositories\QuoteTypeRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
+use App\Services\SageApiService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
@@ -114,16 +116,12 @@ class SendUpdateLogController extends Controller
 
         // we don't need to push this on production, need to remove this before production.
         if (! SendUpdateLogRepository::isCategoryOrOptionAvailable($sendUpdateLog->category_id, $sendUpdateLog->option_id)) {
-            logger()->error('Send Update Log Show - UUID: '.$uuid.' - CategoryID: '.$sendUpdateLog->category_id.' - OptionID: '.$sendUpdateLog->option_id.' - Category or Option not available.');
-
             return redirect()->back()->with('error', 'Send update log not found');
         }
         $this->sendUpdateLogService = app(SendUpdateLogService::class);
         $isPlanDetailAvailable = $this->sendUpdateLogService->isPlanDetailAvailable($sendUpdateLog); // check Indicative Additional Price section.
-        info('Send Update Log Show - UUID: '.$uuid.' - PlanDetailAvailable: '.$isPlanDetailAvailable);
 
         if ($this->sendUpdateLogService->checkSendUpdatePermission($sendUpdateLog->category->code)) {
-            logger()->error('Send Update Log Show - UUID: '.$uuid.' - CategoryID: '.$sendUpdateLog->category_id.' - OptionID: '.$sendUpdateLog->option_id.' - User does not have permission.');
 
             return redirect()->back()->with('error', 'You don\'t have permission to this. ');
         }
@@ -133,7 +131,6 @@ class SendUpdateLogController extends Controller
         if ($quoteType == quoteTypeCode::Car) {
             if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::AOCOV, SendUpdateLogStatusEnum::COE, SendUpdateLogStatusEnum::COE_NFI])) {
                 $additionalField = $this->sendUpdateLogService->getAdditionalOptionsForCar($sendUpdateLog);
-                info('Send Update Log Show - UUID: '.$uuid.' - AdditionalField: '.json_encode($additionalField));
             }
         }
 
@@ -146,7 +143,6 @@ class SendUpdateLogController extends Controller
         $categoryCode = $sendUpdateLog->category?->code;
         $optionCode = $sendUpdateLog->option?->code ?? null;
         $documentTypes = $this->sendUpdateLogService->getSendUpdateDocuments($categoryCode);
-        $quoteDocuments = $sendUpdateLog->documents;
         $issuanceStatuses = PolicyIssuanceStatusRepository::getColumns(['id', 'text']);
         if (checkPersonalQuotes($quoteType)) {
             $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
@@ -171,11 +167,11 @@ class SendUpdateLogController extends Controller
             }
         }
         $bookingDetails = $this->sendUpdateLogService->getInvoiceDescription($sendUpdateLog, $realQuote, $quoteType, $payments, true);
-        info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - BookingDetails: '.json_encode($bookingDetails));
 
         $uploadedDocuments = $this->sendUpdateLogService->getUploadedDocuments($sendUpdateLog);
         // payment related work.
         $this->quoteDocumentService = app(QuoteDocumentService::class);
+        $quoteDocuments = $this->quoteDocumentService->getQuoteDocuments($quoteType, $sendUpdateLog->id, null, true);
         $paymentDocumentTypesOptions = $this->quoteDocumentService->paymentDocumentTypesOptions($quoteTypeId);
         $paymentDocumentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload($quoteTypeId, $paymentDocumentTypesOptions);
 
@@ -199,8 +195,8 @@ class SendUpdateLogController extends Controller
 
         // quote type business only has 2 providers, but as per business lead detail page it's getting providers via Corpline.
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
-        info('Send Update Log Show - UUID: '.$uuid.' - QuoteID: '.$quote->id.' - InsuranceProviders Exists');
         $linkedQuoteDetails = $this->sendUpdateLogService->linkedQuoteDetails($quoteType, $quote);
+        $isEditDisabledForQueuedBooking = $this->sendUpdateLogService->isEditDisabledForQueuedBooking($sendUpdateLog);
 
         return inertia('SendUpdateLog/Show', [
             'quote' => $quote,
@@ -235,6 +231,7 @@ class SendUpdateLogController extends Controller
             'issuanceStatuses' => $issuanceStatuses,
             'isPlanDetailAvailable' => $isPlanDetailAvailable,
             'vatValue' => ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0,
+            'isEditDisabledForQueuedBooking' => $isEditDisabledForQueuedBooking,
         ]);
     }
 
@@ -323,6 +320,7 @@ class SendUpdateLogController extends Controller
                     break;
             }
         }
+
     }
 
     public function savePriceDetails(Request $request)
@@ -355,114 +353,72 @@ class SendUpdateLogController extends Controller
         return response()->json($reversalEntries);
     }
 
-    public function sendUpdateCustomerValidation(SendUpdateCustomerValidationRequest $request)
+    public function sendUpdateCustomerValidation(SendUpdateCustomerValidationRequest $sendUpdateCustomerValidationRequest): \Illuminate\Http\JsonResponse
     {
-        $message = app(SendUpdateLogService::class)->getSendToCustomerValidation($request->validated());
+        $sendUpdateCustomerValidatedRequest = $sendUpdateCustomerValidationRequest->validated();
+        $message = app(SendUpdateLogService::class)->getSendToCustomerValidation($sendUpdateCustomerValidatedRequest);
+        $response = ['message' => $message];
 
-        return response()->json([
-            'message' => $message,
-        ]);
+        if (isset($sendUpdateCustomerValidationRequest->action) && $sendUpdateCustomerValidationRequest->action == SendUpdateLogStatusEnum::ACTION_SNBU) {
+            $sendUpdateValidation = $this->sendUpdateValidation(new SendUpdateValidationRequest($sendUpdateCustomerValidatedRequest));
+
+            $sendUpdateValidationResponse = array_merge(['action' => SendUpdateLogStatusEnum::ACTION_SNBU], json_decode($sendUpdateValidation->getContent(), true) ?? []);
+            $response = array_merge($response, $sendUpdateValidationResponse);
+        }
+
+        return response()->json($response);
     }
 
-    public function sendUpdateToCustomer(UpdateToCustomerRequest $updateToCustomerRequest)
+    public function sendUpdateToCustomer(UpdateToCustomerRequest $updateToCustomerRequest): \Illuminate\Http\JsonResponse
     {
-        $data = $updateToCustomerRequest->validated();
+        $suEmailProcess = SendUpdateLogRepository::sendUpdateToCustomer($updateToCustomerRequest->validated());
 
-        $log = SendUpdateLogRepository::sendUpdateToCustomer($data);
-
-        if (! empty($log?->message)) {
-            vAbort($log?->message);
+        if (isset($suEmailProcess['status']) && $suEmailProcess['status'] == 500) {
+            info('fn:sendUpdateToCustomer - Send Update to customer email failed');
+            vAbort('Send Update to customer email failed');
         }
 
-        if ($log) {
-            $message[] = 'Update Sent to Customer.';
-        } else {
-            $message[] = 'Email Not Sent.';
-        }
-
-        if ($log && isset($data['action']) && $data['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
-            $sendUpdateRequest = new SendUpdateRequest;
-
-            info('calling book update via send update to customer. ');
-            $sendUpdateResponse = $this->sendUpdate($sendUpdateRequest->merge($data));
-            if ($sendUpdateResponse->status() == 200) {
-                $message[] = SendUpdateLogStatusEnum::UPDATE_BOOKED;
-            } else {
-                $message[] = json_decode($sendUpdateResponse->getContent(), true)['message'] ?? 'Book Update failed.';
-            }
-        }
-
-        // temporary comments.
-        /*if ($data['isEmailSent']) {
-            $message[] = SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER;
-        } else {
-            $message[] = 'Send Update to customer email scheduled.';
-        }
-
-        if (isset($data['action']) && $data['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
-            $message[] = 'Book Update scheduled.';
-        }*/
-
-        return response()->json($message);
+        return response()->json($suEmailProcess);
     }
 
-    public function sendUpdate(SendUpdateRequest $sendUpdateRequest)
+    public function sendUpdateValidation(SendUpdateValidationRequest $sendUpdateValidationRequest)
     {
-        $sendUpdate = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
-        $payment = Payment::where('send_update_log_id', $sendUpdate->id)->first();
-        $paymentDetailsUpdate = false;
-        $isPaymentFetchedFromMainLead = true;
-
-        if (! isset($sendUpdateRequest->paymentValidated) && ! $sendUpdateRequest->inslyMigrated) {
-            // Add insuficient Payment Validations here
+        $sendUpdateFirstPayment = Payment::where('send_update_log_id', $sendUpdateValidationRequest->sendUpdateId)->first();
+        if (! isset($sendUpdateValidationRequest->paymentValidated)) {
             $insufficientPaymentCheck = false;
-            if ($payment && in_array($payment->payment_status_id, [PaymentStatusEnum::PARTIALLY_PAID, PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED])) {
+            if ($sendUpdateFirstPayment && ! $sendUpdateValidationRequest->inslyMigrated && in_array($sendUpdateFirstPayment?->payment_status_id, [
+                PaymentStatusEnum::PARTIALLY_PAID,
+                PaymentStatusEnum::PENDING,
+                PaymentStatusEnum::CREDIT_APPROVED,
+            ])) {
                 $insufficientPaymentCheck = true;
             }
 
             return response()->json([
                 'insufficientPaymentCheck' => $insufficientPaymentCheck,
-                'parentPaymentStatus' => $sendUpdate->payments->first()?->payment_status_id ?? null,
+                'parentPaymentStatus' => $sendUpdateFirstPayment?->payment_status_id ?? null,
             ]);
         }
+    }
 
-        info('Book Update Process Start - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
-        $this->sendUpdateLogService = app(SendUpdateLogService::class);
+    public function sendUpdate(SendUpdateRequest $sendUpdateRequest): \Illuminate\Http\JsonResponse
+    {
+        $sendUpdateLog = SendUpdateLog::find($sendUpdateRequest->sendUpdateId);
+        $endorsementResponse = app(SendUpdateLogService::class)->preparedDataForEndorsement($sendUpdateRequest);
 
-        if (empty($sendUpdate->broker_invoice_number) && empty($sendUpdate->invoice_description)) {
-            $response = $this->sendUpdateLogService->updateInsurerDetails($sendUpdateRequest, $sendUpdate);
+        if (! $endorsementResponse['status'] || ! isset($endorsementResponse['sageRequestPayload'])) {
+            $responseMessage = (! isset($endorsementResponse['sageRequestPayload']) && empty($endorsementResponse['message'])) ? 'Something went wrong' : $endorsementResponse['message'];
 
-            if (! $response) {
-                return response()->json(['message' => 'Error while saving Insurer details'], 500);
-            }
+            return response()->json(['message' => $responseMessage], 500);
         }
 
-        if ($payment) {
-            $isPaymentFetchedFromMainLead = false;
-            $paymentDetailsUpdate = $this->sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate, true);
-        }
+        info('fn:sendUpdate - Calling updateSageProcessForDispatching function through sendUpdate - Send Update UUID: '.$sendUpdateLog->uuid);
+        app(SendUpdateLogService::class)->updateSageProcessForDispatching($sendUpdateRequest->toArray(), $sendUpdateLog, $endorsementResponse['sageRequestPayload']);
 
-        if ($paymentDetailsUpdate || $isPaymentFetchedFromMainLead) {
-            $sageResponse = $this->sendUpdateLogService->sendUpdateToSage($sendUpdateRequest, $sendUpdate);
-            if ($sageResponse['status'] === false) {
+        app(SageApiService::class)->scheduleSageProcesses($endorsementResponse['sageRequestPayload']->insurerID);
+        info('fn:sendUpdate - fn:scheduleSageProcesses triggered for Insurer - '.$endorsementResponse['sageRequestPayload']->insurerID);
 
-                return response()->json(['message' => $sageResponse['message']], 500);
-            }
-        }
-
-        // Send Update Data move to main lead page as per Send update Type
-        info('Book Update - Moving Send Update impact to Main Lead Page. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
-        $response = $this->sendUpdateLogService->updatesMoveToLead($sendUpdateRequest, $sendUpdate);
-
-        if ($response['status']) {
-            info('Book Update - Process Completed Successfully. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
-
-            return response()->json(['message' => $response['message']]);
-        }
-
-        logger()->error('Book Update - Something went wrong - Response: '.$response['message'].' - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdate->uuid);
-
-        return response()->json(['message' => $response['message']], 500);
+        return response()->json(['message' => $endorsementResponse['message']], 200);
     }
 
     public function getOptions(Request $request)

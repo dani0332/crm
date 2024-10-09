@@ -6,28 +6,29 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTagEnums;
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Factories\SagePayloadFactory;
-use App\Models\ApplicationStorage;
-use App\Models\BusinessInsuranceType;
+use App\Jobs\BookPolicyOnSageJob;
+use App\Jobs\SendBookPolicyDocumentsJob;
+use App\Jobs\SendUpdateSageJob;
 use App\Models\Customer;
-use App\Models\Lookup;
 use App\Models\Payment;
-use App\Models\PaymentSplits;
 use App\Models\QuoteRequestEntityMapping;
+use App\Models\QuoteStatusLog;
+use App\Models\QuoteTag;
 use App\Models\SageApiLog;
-use App\Models\SendUpdateLog;
-use App\Models\User;
+use App\Models\SageProcess;
 use App\Repositories\PaymentRepository;
 use App\Repositories\SageApiLogRepository;
-use App\Repositories\SendUpdateLogRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -54,115 +55,9 @@ class SageApiService
         $this->recursiveCallStatus = SageEnum::STATUS_SUCCESS;
     }
 
-    // This payload moved to SagePayloadFactory
-    public static function sagePayLoad($modelType, $payment, $quote, $paymentSplits)
-    {
-        $firstChildPayment = $paymentSplits->first();
-        $insuredFullName = $quote?->customer?->insured_first_name.' '.$quote?->customer?->insured_last_name;
-        $latestEndorsementCode = '';
-        if ($quote->personal_quote_id) {
-            $latestEndorsement = SendUpdateLogRepository::endorsementsByPersonalQuoteId($quote->personal_quote_id)->first();
-            $latestEndorsementCode = $latestEndorsement?->code;
-        }
-
-        $businessTypeOfInsuranceCode = '';
-        if ($quote->business_type_of_insurance_id) {
-            $businessTypeOfInsurance = BusinessInsuranceType::find($quote->business_type_of_insurance_id);
-            $businessTypeOfInsuranceCode = $businessTypeOfInsurance->code;
-        }
-
-        $sageRequest = new \stdClass;
-
-        // $sageRequest->discount = 2;
-        $sageRequest->discount = floatval($payment->discount_value);
-        $sageRequest->invoiceDescription = $payment->invoice_description;
-        $sageRequest->bookingDate = $quote['policy_booking_date'] ? date(env('DATE_FORMAT_ONLY'), strtotime($quote['policy_booking_date'])) : Carbon::now()->format(env('DATE_FORMAT_ONLY'));
-        $sageRequest->policyBookingDate = $quote['policy_booking_date'] ? date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote['policy_booking_date'])) : Carbon::now()->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
-        $sageRequest->policyExpiryDate = date(env('SAGE_300_CUSTOM_API_DATE_FORMAT'), strtotime($quote['policy_expiry_date']));
-        $sageRequest->insurerInvoiceDate = date(env('DATE_FORMAT_ONLY'), strtotime($payment->insurer_invoice_date));
-
-        if (! empty($paymentSplits)) {
-            $sageRequest->paymentDueDate = date(env('DATE_FORMAT_ONLY'), strtotime($paymentSplits[0]['due_date']));
-        }
-
-        $sageRequest->mainClassInsurance = $modelType;
-        $sageRequest->policyNumber = substr($quote->policy_number, 60);
-        $sageRequest->originalPolicyNumber = $quote->policy_number;
-        $sageRequest->policyIssuer = $payment->policyIssuer?->name ?? '';
-        $sageRequest->requestType = Lookup::where('id', $quote->transaction_type_id)->first()->text ?? '';
-        $sageRequest->subClass = $businessTypeOfInsuranceCode;
-        $sageRequest->ccCode = $firstChildPayment->cc_payment_id ?? '';
-        $sageRequest->isPostDatedCheck = $firstChildPayment->payment_method == PaymentMethodsEnum::PostDatedCheque ? 'Yes' : 'No';
-        $sageRequest->checkDetails = $firstChildPayment->check_detail ?? '';
-        $sageRequest->endorsementNumber = $latestEndorsementCode;
-        $sageRequest->insured = $insuredFullName;
-        $sageRequest->policyHolder = $insuredFullName;
-        $sageRequest->premiumCollectedBy = ucfirst($payment->collection_type);
-
-        $sageRequest->invoicePaymentStatus = $payment->payment_status_id;
-        // $sageRequest->invoicePaymentStatus = 'paid';
-        $advisorName = '';
-        $managerName = '';
-        if (! empty($quote->advisor_id)) {
-            $advisor = User::where('id', $quote->advisor_id)->first();
-            $advisorName = $advisor->name;
-            $managerName = implode(',', getManagersByUser($advisor->id)->pluck('name')->toArray());
-        }
-        $sageRequest->advisorName = $advisorName;
-        $sageRequest->manager = $managerName;
-
-        //calculate vat
-        $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()?->value;
-        $sageRequest->vatOnPremium = $vatPercentage && $quote->price_vat_applicable ? (($quote->price_vat_applicable * $vatPercentage) / 100) : 0;
-
-        $sageRequest->premiumWithoutTax = floatval($quote->price_vat_applicable ?? 0) + floatval($quote->price_vat_not_applicable ?? 0);
-        $sageRequest->premiumWithTax = floatval($quote->price_with_vat);
-        $sageRequest->vatOnCommission = floatval($payment->commission_vat);
-        $sageRequest->totalAmount = floatval($payment->total_amount);
-        $sageRequest->totalPrice = floatval($payment->total_price);
-        $sageRequest->commission = floatval($payment->commission);
-        $sageRequest->commissionIncludingVat = floatval($payment->commission_vat_applicable);
-        $sageRequest->commissionWithOutVat = $payment->commission_vat_not_applicable ? floatval($payment->commission_vat_not_applicable) : floatval($payment->commission_without_vat);
-        $sageRequest->commissionPercentage = strval($payment->commmission_percentage);
-
-        // Slice the last 18 characters from the string to avoid sage document number length issue and store the original values in optional fields
-        $sageRequest->insurerPremiumNumber = (string) substr($payment['insurer_tax_number'], -18);
-        $sageRequest->insurerCommissionNumber = (string) substr($payment['insurer_commmission_invoice_number'], -18);
-        $sageRequest->originalInsurerPremiumNumber = (string) $payment['insurer_tax_number'];
-        $sageRequest->originalInsurerCommissionNumber = (string) $payment['insurer_commmission_invoice_number'];
-
-        if (count($paymentSplits) == 1) {
-            $sageRequest->sage_reciept_id = $paymentSplits[0]['sage_reciept_id'];
-            $sageRequest->collection_amount = $paymentSplits[0]['collection_amount'] + $sageRequest->discount;
-        } else {
-            $sageRequest->invoicePaymentStatus = $paymentSplits[0]['payment_status_id'];
-        }
-
-        $insuranceProvider = null;
-
-        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
-        if (in_array(ucfirst($modelType), $allowedQuoteTypes)) {
-            $planRelationName = strtolower($modelType).'Plan';
-            $payment->load($planRelationName);
-            $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
-        }
-
-        if (! $insuranceProvider) {
-            $insuranceProvider = $payment->insuranceProvider;
-        }
-
-        //Insurer GL Account and Vendor Number
-        $sageRequest->insurerGlLiaiblityAccount = $insuranceProvider?->gl_liaiblity_account;
-        $sageRequest->sageVenderId = $insuranceProvider?->sage_vendor_id;
-        $sageRequest->sageInsurerCustomerId = $insuranceProvider?->sage_insurer_customer_id;
-        $sageRequest->insurerName = $insuranceProvider?->text;
-
-        return $sageRequest;
-    }
-
     public function verifySageCustomer($customerId, $data = null, $logModal = null, $totalSteps = 4, $authUserId = null)
     {
-        info('Sage Customer verification - process start - Quote Type: '.$data['quoteTypeId'].' - Ref ID: '.$data['id']);
+        info('Sage Customer verification - Process start - Quote Type: '.$data['quoteTypeId'].' - Ref ID: '.$data['id']);
         $customer = Customer::find($customerId);
         $quoteEntityMapping = QuoteRequestEntityMapping::with('entity')->where(['quote_type_id' => $data['quoteTypeId'], 'quote_request_id' => $data['id']])->first();
         $quoteEntity = $quoteEntityMapping?->entity;
@@ -226,320 +121,20 @@ class SageApiService
             };
 
             return is_array($response->json()) ? json_encode($response->json()) : $response->body();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
+            Log::error('Sage API : '.$endPoint.' : '.$e->getMessage());
+
             return json_encode(['error' => ['message' => ['value' => $e->getMessage()]], 'code' => 500]);
         }
     }
 
-    /*
-     * this function is renamed and a new function is created with laravel http request for calling sage api
-     *
-     * will be removed once the 2nd function is matured.
-     * */
-    public function postToSage300Curl($endPoint, $payLoad, $verb = 'POST')
+    public function sendUpdateSageLogs($sendUpdateRequest, $sendUpdateLog): array
     {
-        // Create the payload data for the POST request
-        $sageEndPoint = $this->sageRequestUrl.$endPoint;
-        //Http facade not giving expected response,so have to use curl
-        $ch = curl_init($sageEndPoint);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-        if ($verb == 'PATCH') {
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PATCH');
-        } elseif ($verb == 'POST') {
-            curl_setopt($ch, CURLOPT_POST, true);
-        } else {
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
-        }
-
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payLoad));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-        ]);
-        // Add basic authentication
-        curl_setopt($ch, CURLOPT_USERPWD, "$this->sageLogin:$this->sagePassword");
-        $response = curl_exec($ch);
-
-        if ($response === false || $response == '') {
-            $errorResponse = curl_error($ch);
-            $errorResponse = json_decode($errorResponse, true);
-            // echo $errorResponse; exit;
-            if (is_array($errorResponse)) {
-                $httpCode = $errorResponse['error']['code'];
-
-                if (isset($errorResponse['error']['message']['value'])) {
-                    $errorMessage = $errorResponse['error']['message']['value'];
-                } else {
-                    $errorMessage = 'An error occurred';
-                }
-                $response = response()->json(['error' => $errorMessage, 'code' => $httpCode], $httpCode);
-            }
-            // else {
-            //     $httpCode = 401;
-            //     $response = response()->json(['error' => 'Verify sage api credentials', 'code' => $httpCode], $httpCode);
-            // }
-        }
-        curl_close($ch);
-
-        // Return response or handle errors
-        return $response;
-    }
-
-    public function handleDocumentsToSage($request, $quote, $extras = [])
-    {
-        $customerTotalSteps = 4;
-        $stepsAsPerType = [
-            SageEnum::SUT_NORMAL => 13,
-            SageEnum::SUT_REVE_CORR => 21,
-        ];
-
-        $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
-        if (! $isSageEnabled) {
-            info('Book Update - Sage300 is not enabled');
-
-            return ['status' => false, 'message' => 'Sage300 is not enabled'];
-        }
-
-        // PT_SEND_UPDATE : Process Type Send Update
-        if ($extras['type'] == SageEnum::PT_SEND_UPDATE) {
-            $customerTotalSteps = in_array($extras['send_update_type'], array_keys($stepsAsPerType)) ? $stepsAsPerType[$extras['send_update_type']] : 4;
-        }
-
-        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->quoteType));
-        $quoteModel = $this->getModelObject($request->quoteType);
-        $sageCustomerNumber = $this->verifySageCustomer(
-            $quote->customer_id,
-            ['quoteTypeId' => $quoteTypeId, 'id' => $quote->id],
-            $quote,
-            $customerTotalSteps
-        );
-        $quote->quoteTypeObject = $quoteModel;
-        $quoteDetails = $quote;
-
-        if ($sageCustomerNumber) {
-            info('Book Update - Customer found in Sage300 - Customer Number: '.$sageCustomerNumber.' - QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
-            $response = '';
-            $gettingPaymentDetails = $this->getPaymentDetails($request, $extras);
-
-            // Need to update this code after Mirza's Implemenntation
-            if ($extras['type'] == SageEnum::PT_SEND_UPDATE) {
-                $sendUpdateLog = SendUpdateLog::where('id', $request->sendUpdateId)->first();
-                $quoteDetails = [
-                    'policy_booking_date' => $sendUpdateLog->booking_date,
-                    'policy_expiry_date' => $sendUpdateLog->expiry_date,
-                    'policy_number' => $sendUpdateLog->policy_number,
-                    'transaction_type_id' => $quote->transaction_type_id,
-                    'advisor_id' => $sendUpdateLog->advisor_id,
-                    'price_vat_applicable' => abs($gettingPaymentDetails['payment']->total_price),
-                    'price_with_vat' => abs($sendUpdateLog->price_with_vat),
-                    'insly_migrated' => $quote->insly_migrated,
-                    'insurance_provider_id' => $sendUpdateLog->insurance_provider_id,
-                    'booking_filled_by' => $sendUpdateLog->booking_filled_by,
-                ];
-
-                if (isset($gettingPaymentDetails['mainLeadDetails'])) {
-                    $extras['mainLeadDetails'] = $gettingPaymentDetails['mainLeadDetails'];
-                }
-            }
-
-            $sageRequestPayload = SagePayloadFactory::sagePayLoad($request->quoteType, $quoteDetails, $gettingPaymentDetails['payment'], $gettingPaymentDetails['splitPayments']);
-            $sageRequestPayload->customerId = $sageCustomerNumber;
-
-            if (! $sageRequestPayload->insurerGlLiaiblityAccount || ! $sageRequestPayload->sageVenderId || ! $sageRequestPayload->sageInsurerCustomerId) {
-                info('Book Update - Sage Vendor ID or GL Account for Insurance Provider or Sage Insurer Customer ID not found. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
-
-                if (! $sageRequestPayload->insurerGlLiaiblityAccount && ! $sageRequestPayload->sageVenderId && ! $sageRequestPayload->sageInsurerCustomerId) {
-                    return ['status' => false, 'message' => 'Sage Vendor ID, Sage Insurer Customer ID and GL Account for Insurance Provider not found.'];
-                } elseif (! $sageRequestPayload->insurerGlLiaiblityAccount) {
-                    return ['status' => false, 'message' => 'GL Account for Insurance Provider not found.'];
-                } elseif (! $sageRequestPayload->sageVenderId) {
-                    return ['status' => false, 'message' => 'Sage Vendor ID for Insurance Provider not found.'];
-                } elseif (! $sageRequestPayload->sageInsurerCustomerId) {
-                    return ['status' => false, 'message' => 'Sage Insurer Customer ID for Insurance Provider not found.'];
-                }
-            }
-
-            switch ($extras['type']) {
-                case SageEnum::PT_SEND_UPDATE:
-                    if ($request->send_update_type == SageEnum::SUT_REVE_CORR) {
-                        $extras['reverse_invoice'] = $request->reversalInvoice;
-                    }
-                    $response = $this->handleSendUpdateCalls($quote, $sageRequestPayload, $gettingPaymentDetails['payment'], $gettingPaymentDetails['splitPayments'], $extras);
-                    break;
-            }
-
-            if (! empty($response)) {
-                return ['status' => $response['status'], 'message' => $response['message']];
-            }
-
-            logger()->error('Book Update - Something went wrong');
-
-            return ['status' => false, 'message' => 'Something went wrong'];
-        }
-
-        logger()->error('Book Update - Customer not found in Sage300. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
-
-        return ['status' => false, 'message' => 'Customer not found in Sage300'];
-    }
-
-    private function getPaymentDetails($request, $extras)
-    {
-        $paymentClause = ($extras['type'] == SageEnum::PT_SEND_UPDATE) ? ['send_update_log_id' => $request->sendUpdateId] : ['code' => $request->code];
-        $payment = Payment::where($paymentClause)->first();
-
-        if ($extras['type'] !== SageEnum::PT_SEND_UPDATE) {
-            $payment = Payment::where($paymentClause)->first();
-            $splitPayments = PaymentSplits::where('code', $payment->code)->get();
-
-            return ['payment' => $payment, 'splitPayments' => $splitPayments];
-        } else {
-            $payment = Payment::where($paymentClause)->first();
-            if ($payment) {
-                info('Book Update - Fetching Payment details from Send Update. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
-                $splitPayments = PaymentSplits::where('code', $payment->code)->get();
-
-                return ['payment' => $payment, 'splitPayments' => $splitPayments];
-            } else {
-                $getQuoteDetails = $this->getQuoteObjectBy($request->quoteType, $request->quoteUuid, 'uuid');
-                $checkInslyMigratedLead = $this->checkInslyMigratedLead($request);
-
-                if ($checkInslyMigratedLead) {
-                    info('Book Update - Creating payment details based on the send update - The lead originated from Insly. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
-                    $payment = new Payment;
-                    $splitPayments = collect([new PaymentSplits]);
-
-                } else {
-                    // If we don't have payment details then we fetched it from the Main Lead
-                    info('Book Update - Fetching Payment details from Main Lead. QuoteType: '.$request->quoteType.' - QuoteUUID: '.$request->quoteUuid.' - SendUpdateUUID: '.$extras['send_update_log']->uuid);
-
-                    $getQuoteDetails->load(['payments' => function ($query) {
-                        $query->whereNull('send_update_log_id');
-                    }, 'payments.paymentSplits']);
-
-                    $payment = $getQuoteDetails->payments->first();
-                    $splitPayments = $payment->paymentSplits;
-                }
-
-                $payment->fill([
-                    'discount_value' => $extras['send_update_log']->discount,
-                    'invoice_description' => $extras['send_update_log']->invoice_description,
-                    'insurer_invoice_date' => $extras['send_update_log']->invoice_date,
-                    'commission_vat' => abs($extras['send_update_log']->vat_on_commission),
-                    'total_price' => abs($extras['send_update_log']->price_with_vat),
-                    'total_amount' => abs($extras['send_update_log']->price_vat_applicable),
-                    'commission' => abs($extras['send_update_log']->total_commission),
-                    'commission_vat_applicable' => abs($extras['send_update_log']->commission_vat_applicable),
-                    'commission_vat_not_applicable' => abs($extras['send_update_log']->commission_vat_not_applicable),
-                    'commmission_percentage' => abs($extras['send_update_log']->commission_percentage),
-                    'insurer_tax_number' => $extras['send_update_log']->insurer_tax_invoice_number,
-                    'insurer_commmission_invoice_number' => $extras['send_update_log']->insurer_commission_invoice_number,
-                    'policy_expiry_date' => $extras['send_update_log']->expiry_date,
-                    'broker_invoice_number' => $extras['send_update_log']->broker_invoice_number,
-                    'frequency' => PaymentFrequency::UPFRONT,
-                ]);
-
-                $splitPayments->first()->fill([
-                    'due_date' => $extras['send_update_log']->invoice_date,
-                    'payment_amount' => abs($extras['send_update_log']->price_vat_applicable),
-                    'collection_amount' => abs($extras['send_update_log']->price_vat_applicable),
-                    'commission_vat_applicable' => ($payment->commission - $payment->commission_vat),
-                    'commission_vat' => $payment->commission_vat,
-                ]);
-
-                $mainLeadDetails = [
-                    'payment' => [
-                        'insurer_tax_number' => $payment->insurer_tax_number,
-                        'insurer_commmission_invoice_number' => $payment->insurer_commmission_invoice_number,
-                    ],
-                ];
-
-                $response = ['payment' => $payment, 'splitPayments' => $splitPayments, 'mainLeadDetails' => $mainLeadDetails];
-
-                // Reminder: price_vat_applicable > 0 => Debit Note, if negative then should be Credit Note
-                //                TODO:: Need to verify it should be price_with_vat (Total Price of Endorsement)
-                if ($checkInslyMigratedLead && ($extras['send_update_log']->price_vat_applicable > 0)) {
-                    unset($response['mainLeadDetails']);
-                }
-
-                return $response;
-            }
-        }
-    }
-
-    public function checkInslyMigratedLead($request)
-    {
-        $inslyMigrated = false;
-        if ($request->inslyMigrated) {
-            $inslyMigrated = true;
-        } else {
-            $getQuoteDetails = $this->getQuoteDetailObject($request->quoteType, $request->quoteRefId);
-            $inslyMigrated = ! empty($getQuoteDetails->insly_id) && $getQuoteDetails->insly_id != null;
-        }
-
-        return $inslyMigrated;
-    }
-
-    private function handleSendUpdateCalls($quote, $sageRequestPayload, $payment, $splitPayments, $extras)
-    {
-        $quoteModelObject = ! empty($extras['send_update_log']) ? $extras['send_update_log'] : $quote;
-
-        if ($extras['send_update_type'] == SageEnum::SUT_REVE_CORR) {
-            $getPaymentByInsurerInvoiceNumber = PaymentRepository::getPaymentByInsurerInvoiceNumber($quote, $extras['reverse_invoice']);
-            $isReverseAgainstCPD = false;
-            $getReverseInvoiceRelation = [];
-
-            if ($getPaymentByInsurerInvoiceNumber) {
-                if ($getPaymentByInsurerInvoiceNumber->send_update_log_id !== null) {
-                    $getReverseInvoiceRelation = [
-                        'section_type' => $quoteModelObject->getMorphClass(),
-                        'section_id' => $getPaymentByInsurerInvoiceNumber->send_update_log_id,
-                    ];
-                } else {
-                    $getReverseInvoiceRelation = [
-                        'section_type' => $getPaymentByInsurerInvoiceNumber->paymentable_type,
-                        'section_id' => $getPaymentByInsurerInvoiceNumber->paymentable_id,
-                    ];
-                }
-            } else {
-                $reverseSendUpdate = SendUpdateLog::where('insurer_tax_invoice_number', $extras['reverse_invoice'])->first();
-                $getReverseInvoiceRelation = (! empty($reverseSendUpdate)) ? [
-                    'section_type' => $quoteModelObject->getMorphClass(),
-                    'section_id' => $reverseSendUpdate->id,
-                ] : [];
-            }
-
-            if (empty($getReverseInvoiceRelation)) {
-                logger()->error('Book Update - Reverse Invoice not Found. SendUpdateUUID: '.$extras['send_update_log']->uuid.' - ReverseInvoice: '.$extras['reverse_invoice']);
-
-                return ['status' => false, 'message' => 'Reverse Invoice not found'];
-            }
-
-            if ($getReverseInvoiceRelation['section_type'] == SendUpdateLog::class) {
-                $getReversalEndorsDetails = SendUpdateLog::where('id', $getReverseInvoiceRelation['section_id'])->first();
-                if ($getReversalEndorsDetails?->category?->code == SendUpdateLogStatusEnum::CPD) {
-                    $isReverseAgainstCPD = true;
-                }
-            }
-
-            if ($isReverseAgainstCPD) {
-                $sageLogArray = SageApiLog::where($getReverseInvoiceRelation)
-                    ->whereNotIn('entry_type', [
-                        SageEnum::SRT_GET_AR_INVOICE,
-                        SageEnum::SRT_GET_AP_INVOICE,
-                        SageEnum::SCT_REVERSAL,
-                    ])->orderBy('step')->get()->toArray();
-            } else {
-                $sageLogArray = SageApiLog::where($getReverseInvoiceRelation)
-                    ->whereNotIn('entry_type', [
-                        SageEnum::SRT_GET_AR_INVOICE,
-                        SageEnum::SRT_GET_AP_INVOICE,
-                        SageEnum::SCT_REVERSAL,
-                        SageEnum::SCT_CORRECTION,
-                    ])->orderBy('step')->get()->toArray();
-            }
-
-        } else {
-            $sageLogArray = $quoteModelObject->sageApiLogs?->whereNotIn('entry_type', [
+        $sageLogsArray = $reversalInvoiceLogs = [];
+        $sendUpdateCategory = $sendUpdateLog?->category?->code;
+        if (in_array($sendUpdateCategory, [SendUpdateLogStatusEnum::EF, SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
+            info('fn:sendUpdateSageLogs - Fetching logs for non CPD Endorsement - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            $sageLogsArray = $sendUpdateLog->sageApiLogs?->whereNotIn('entry_type', [
                 SageEnum::SRT_GET_AR_INVOICE,
                 SageEnum::SRT_GET_AP_INVOICE,
                 SageEnum::SCT_REVERSAL,
@@ -547,740 +142,323 @@ class SageApiService
             ])->keyBy('step')->toArray();
         }
 
-        switch ($extras['send_update_type']) {
-            case SageEnum::SUT_NORMAL:
-                info('Book Update - Sage300 APIs calls start for Straight Forward cases');
-                $response = $this->handleSendUpdateNormalCalls($quote, $payment, $splitPayments, $sageRequestPayload, $sageLogArray, $extras);
-                break;
+        if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD) {
+            info('fn:sendUpdateSageLogs - Fetching logs for CPD Endorsement - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
 
-            case SageEnum::SUT_REVE_CORR:
-                info('Book Update - Sage300 APIs calls start for Reversal and Correction cases');
-                $extras['sageLogArray'] = $sageLogArray;
-                $sageRevCorrLogs = $quoteModelObject->sageApiLogs?->whereIn('entry_type', [
+            $quoteModelObject = $this->getModelObject($sendUpdateRequest->quoteType);
+            $quoteDetails = $quoteModelObject::where('id', $sendUpdateRequest->quoteRefId)->first();
+            $getPaymentByInsurerInvoiceNumber = PaymentRepository::getPaymentByInsurerInvoiceNumber($quoteDetails, $sendUpdateRequest->reversalInvoice);
+            if ($getPaymentByInsurerInvoiceNumber->send_update_log_id !== null) {
+                //                This case if the Reversal Invoice is Endorsement itself
+                $getReverseInvoiceRelation = [
+                    'section_type' => $sendUpdateLog->getMorphClass(),
+                    'section_id' => $getPaymentByInsurerInvoiceNumber->send_update_log_id,
+                ];
+            } else {
+                //                This case if the Reversal Invoice is Main Lead
+                $getReverseInvoiceRelation = [
+                    'section_type' => $getPaymentByInsurerInvoiceNumber->paymentable_type,
+                    'section_id' => $getPaymentByInsurerInvoiceNumber->paymentable_id,
+                ];
+            }
+
+            $getReverseInvoicesLogs = SageApiLog::where($getReverseInvoiceRelation)
+                ->whereNotIn('entry_type', [
                     SageEnum::SRT_GET_AR_INVOICE,
                     SageEnum::SRT_GET_AP_INVOICE,
                     SageEnum::SCT_REVERSAL,
                     SageEnum::SCT_CORRECTION,
-                ])->keyBy('step')->toArray();
-                $response = $this->handleSendUpdateRevCorrCalls($quote, $payment, $splitPayments, $sageRequestPayload, $sageRevCorrLogs, $extras);
-                break;
+                ])->orderBy('step')->get()->toArray();
+
+            info('fn:sendUpdateSageLogs - Fetching reversal invoice logs for reverse and correction');
+            $reversalInvoiceLogs = collect($getReverseInvoicesLogs)->filter(function ($sageApiLog) {
+                return in_array($sageApiLog['sage_request_type'], [
+                    SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
+                    SageEnum::SRT_CREATE_AR_SPPAY_INV,
+                    SageEnum::SRT_CREATE_AR_PREM_COMM_CORR_INV,
+                    SageEnum::SRT_CREATE_AR_SPPAY_CORR_INV,
+                    SageEnum::SRT_CREATE_AP_PREM_INV,
+                    SageEnum::SRT_CREATE_AP_SPPAY_INV,
+                    SageEnum::SRT_CREATE_AP_PREM_CORR_INV,
+                    SageEnum::SRT_CREATE_AP_SPPAY_CORR_INV,
+                    SageEnum::SRT_CREATE_AR_DISC_INV,
+                    SageEnum::SRT_CREATE_AR_DISC_CORR_INV,
+                ]) && $sageApiLog['status'] == SageEnum::STATUS_SUCCESS;
+            })->values()->toArray();
+
+            if (empty($reversalInvoiceLogs)) {
+                logger()->error('fn:sendUpdateSageLogs - Reversal invoice logs not found for reverse and correction');
+            }
+
+            $sageLogsArray = $sendUpdateLog->sageApiLogs?->whereIn('entry_type', [
+                SageEnum::SRT_GET_AR_INVOICE,
+                SageEnum::SRT_GET_AP_INVOICE,
+                SageEnum::SCT_REVERSAL,
+                SageEnum::SCT_CORRECTION,
+            ])->keyBy('step')->toArray();
+        }
+
+        return [$sageLogsArray, $reversalInvoiceLogs];
+    }
+
+    public function bookEndorsementOnSage($endorsementPreparedPayload)
+    {
+        [$request, $sendUpdateLog, $sageRequestPayload] = $endorsementPreparedPayload;
+
+        $response = ['status' => true, 'message' => 'Endorsement successfully booked'];
+        $sendUpdateCategory = $sendUpdateLog?->category?->code;
+        [$sageLogsArray, $reversalInvoiceLogs] = $this->sendUpdateSageLogs($request, $sendUpdateLog);
+
+        $quoteModelObject = $this->getModelObject($request->quoteType);
+        $mainQuote = $quoteModelObject::where('id', $request->quoteRefId)->first();
+        $preparedData = (new SendUpdateLogService)->preparedDetailsForEndorsement($request, $mainQuote, $sendUpdateLog);
+
+        $preparedData['quoteDetails'] = $quoteModelObject::where('id', $request->quoteRefId)->first();
+        $preparedData['sendUpdateLog'] = $sendUpdateLog;
+
+        if ($sendUpdateCategory == SendUpdateLogStatusEnum::CPD && ! empty($reversalInvoiceLogs)) {
+            $response = $this->bookReversalEndorsementOnSage($request, $preparedData, $sageRequestPayload, $sageLogsArray, $reversalInvoiceLogs, $sendUpdateLog);
+        } else {
+            $response = $this->bookStraightEndorsementOnSage($preparedData, $sageRequestPayload, $sageLogsArray);
+        }
+
+        if (! $response['status']) {
+            return $response;
+        }
+
+        $response = app(SendUpdateLogService::class)->updatesMoveToLead([$request, $sendUpdateLog, $preparedData]);
+        if (! $response['status']) {
+            return $response;
         }
 
         return $response;
     }
 
-    private function handleSendUpdateNormalCalls($quote, $payment, $splitPayments, $sageRequestPayload, $sageLogArray, $extras)
+    public function bookStraightEndorsementOnSage($preparedData, $sageRequestPayload, $sageLogsArray): array
     {
-        $startingStep = 2;
-        $totalSteps = 13;
+        info('fn bookStraightEndorsementOnSage - Upfront Endorsement Booking Start on Sage');
+        info('fn bookStraightEndorsementOnSage - Payment frequency : '.$preparedData['payment']->frequency);
 
-        if ($payment->frequency == PaymentFrequency::UPFRONT) {
-            info('Book Update - Creating AR Invoice and mark as posted');
-            $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-                'iterator' => 0,
-                'lastIteration' => 2,
-                'startingStep' => $startingStep,
-                'totalSteps' => $totalSteps,
-                'entryType' => SageEnum::SCT_STRAIGHT,
-                'requestType' => SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
-                'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
-                'extras' => [
-                    'option_id' => $extras['option'] ?? null,
-                    'authDetails' => $extras['authDetails'] ?? [],
+        $extraDetails = ['sage_request_type' => ($preparedData['payment']->frequency == PaymentFrequency::UPFRONT) ? SageEnum::SRT_CREATE_AR_PREM_COMM_INV : SageEnum::SRT_CREATE_AR_SPPAY_INV];
+        $extraDetails['userId'] = $sageRequestPayload->userId ?? null;
 
-                ],
-            ]);
+        if (isset($preparedData['mainLeadDetails'])) {
+            $extraDetails['mainLeadDetails'] = $preparedData['mainLeadDetails'];
+            $extraDetails['extras']['option_id'] = $preparedData['sendUpdateLog']?->option?->code ?? null;
+        }
 
-            if ($extras['option'] !== SendUpdateLogStatusEnum::ACB) {
-                info('Book Update - Creating AP Invoice and mark as posted');
-                $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-                    'iterator' => 0,
-                    'lastIteration' => 2,
-                    'startingStep' => ($startingStep + 3),
-                    'totalSteps' => $totalSteps,
-                    'entryType' => SageEnum::SCT_STRAIGHT,
-                    'requestType' => SageEnum::SRT_CREATE_AP_PREM_INV,
-                    'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                    'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
-                    'extras' => [
-                        'option_id' => $extras['option'] ?? null,
-                        'authDetails' => $extras['authDetails'] ?? [],
-                    ],
-                ]);
+        //Create AR Commission and Premium Invoice
+        $createARInvoicePremAndComm = $this->createARInvoicePremAndComm([$sageRequestPayload, $preparedData['sendUpdateLog'], $preparedData['payment'], $preparedData['splitPayments'], $sageLogsArray, $extraDetails]);
+        if (! $createARInvoicePremAndComm['status']) {
+            return $createARInvoicePremAndComm;
+        }
+
+        // Create AP Premium Invoice
+        $extraDetails = ['sage_request_type' => ($preparedData['payment']->frequency == PaymentFrequency::UPFRONT) ? SageEnum::SRT_CREATE_AP_PREM_INV : SageEnum::SRT_CREATE_AP_SPPAY_INV];
+        if ($preparedData['sendUpdateLog']?->option?->code !== SendUpdateLogStatusEnum::ACB) {
+            $createAPInvoicePrem = $this->createAPInvoicePrem([$sageRequestPayload, $preparedData['sendUpdateLog'], $preparedData['payment'], $preparedData['splitPayments'], $sageLogsArray, $extraDetails]);
+            if (! $createAPInvoicePrem['status']) {
+                return $createAPInvoicePrem;
             }
-
-            $startingStep = 8;
-            $totalSteps = 13;
-
-        } else {
-            info('Book Update - Creating AR Split Payment Invoice and mark as posted');
-            $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-                'iterator' => 0,
-                'lastIteration' => 2,
-                'startingStep' => $startingStep,
-                'totalSteps' => $totalSteps,
-                'entryType' => SageEnum::SCT_STRAIGHT,
-                'requestType' => SageEnum::SRT_CREATE_AR_SPPAY_INV,
-                'payment' => $payment,
-                'splitPayments' => $splitPayments,
-                'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
-                'extras' => [
-                    'option_id' => $extras['option'] ?? null,
-                    'authDetails' => $extras['authDetails'] ?? [],
-                ],
-            ]);
-
-            info('Book Update - Creating AP Split Payment Invoice and mark as posted');
-            $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-                'iterator' => 0,
-                'lastIteration' => 2,
-                'startingStep' => ($startingStep + 4),
-                'totalSteps' => $totalSteps,
-                'entryType' => SageEnum::SCT_STRAIGHT,
-                'requestType' => SageEnum::SRT_CREATE_AP_SPPAY_INV,
-                'payment' => $payment,
-                'splitPayments' => $splitPayments,
-                'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
-                'extras' => [
-                    'option_id' => $extras['option'] ?? null,
-                    'authDetails' => $extras['authDetails'] ?? [],
-                ],
-            ]);
-
-            $startingStep = 10;
         }
 
-        if ($sageRequestPayload->discount > 0 && ! in_array(($extras['option'] ?? ''), [SendUpdateLogStatusEnum::ATIB, SendUpdateLogStatusEnum::ACB])) {
-            info('Book Update - Creating AR Discount Invoice and mark as posted');
-            $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-                'iterator' => 0,
-                'lastIteration' => 2,
-                'startingStep' => $startingStep,
-                'totalSteps' => $totalSteps,
-                'entryType' => SageEnum::SCT_STRAIGHT,
-                'requestType' => SageEnum::SRT_CREATE_AR_DISC_INV,
-                'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
-                'extras' => [
-                    'authDetails' => $extras['authDetails'] ?? [],
-                ],
-            ]);
-
-            $totalSteps = $startingStep == 8 ? 13 : 15;
-            $startingStep = ($startingStep + 3);
+        // Create AR Discount Invoice
+        $extraDetails['sage_request_type'] = SageEnum::SRT_CREATE_AR_DISC_INV;
+        if ($sageRequestPayload->discount > 0 && ! in_array(($preparedData['sendUpdateLog']?->option?->code ?? ''), [SendUpdateLogStatusEnum::ATIB, SendUpdateLogStatusEnum::ACB])) {
+            $createARInvoiceDis = $this->createARInvoiceDis([$sageRequestPayload, $preparedData['sendUpdateLog'], $sageLogsArray, $extraDetails]);
+            if (! $createARInvoiceDis['status']) {
+                return $createARInvoiceDis;
+            }
         }
 
-        $response = ['status' => $_REQUEST['status'] ?? true, 'message' => $_REQUEST['message'] ?? 'Invoices created successfully'];
+        info('fn bookStraightEndorsementOnSage - Upfront Endorsement Booking Completed on Sage');
 
-        return ['status' => $response['status'], 'message' => $response['message']];
+        return ['status' => true, 'message' => 'Straight Forward Endorsement Booking Completed on Sage'];
     }
 
-    private function handleSendUpdateRevCorrCalls($quote, $payment, $splitPayments, $sageRequestPayload, $sageLogArray, $extras)
+    public function bookReversalEndorsementOnSage($request, $preparedData, $sageRequestPayload, $sageLogsArray, $reversalInvoiceLogs, $sendUpdateLog): array
     {
-        $sendUpdateLog = $extras['send_update_log'];
-        info('Book Update - Fetching Invoices for Reverse and Correction from Sage APIs Logs');
-        $invoicesForReverse = collect($extras['sageLogArray'])->filter(function ($sageApiLog) {
-            return in_array($sageApiLog['sage_request_type'], [
-                SageEnum::SRT_CREATE_AR_PREM_COMM_INV,
-                SageEnum::SRT_CREATE_AR_SPPAY_INV,
-                SageEnum::SRT_CREATE_AR_PREM_COMM_CORR_INV,
-                SageEnum::SRT_CREATE_AR_SPPAY_CORR_INV,
-                SageEnum::SRT_CREATE_AP_PREM_INV,
-                SageEnum::SRT_CREATE_AP_SPPAY_INV,
-                SageEnum::SRT_CREATE_AP_PREM_CORR_INV,
-                SageEnum::SRT_CREATE_AP_SPPAY_CORR_INV,
-                SageEnum::SRT_CREATE_AR_DISC_INV,
-                SageEnum::SRT_CREATE_AR_DISC_CORR_INV,
-            ]) && $sageApiLog['status'] == SageEnum::STATUS_SUCCESS;
-        })->values()->toArray();
-
-        if (empty($invoicesForReverse)) {
-            info('Book Update - No Invoices found for Reverse and Correction');
-
-            return ['status' => false, 'message' => 'No Invoices found for Reverse and Correction'];
-        }
-
-        $reverseSendUpdateTypes = collect($invoicesForReverse)->pluck('sage_request_type')->toArray();
-        $checkARInvoices = [SageEnum::SRT_CREATE_AR_PREM_COMM_INV, SageEnum::SRT_CREATE_AR_SPPAY_INV, SageEnum::SRT_CREATE_AR_PREM_COMM_CORR_INV, SageEnum::SRT_CREATE_AR_SPPAY_CORR_INV];
-        $checkAPInvoices = [SageEnum::SRT_CREATE_AP_PREM_INV, SageEnum::SRT_CREATE_AP_SPPAY_INV, SageEnum::SRT_CREATE_AP_PREM_CORR_INV, SageEnum::SRT_CREATE_AP_SPPAY_CORR_INV];
-        $checkARDiscountInvoices = [SageEnum::SRT_CREATE_AR_DISC_INV, SageEnum::SRT_CREATE_AR_DISC_CORR_INV];
+        info('fn bookReversalEndorsementOnSage - Reversal and Correction Endorsement Booking Start on Sage');
+        info('fn bookReversalEndorsementOnSage - Payment frequency : '.$preparedData['payment']->frequency);
 
         $isOnlyDiscountReversal = false;
         $isOnlyDiscount = false;
-        $upFrontTotalSteps = 21;
-        $nonUpFrontTotalSteps = 23;
+        $reverseSageRequestTypes = collect($reversalInvoiceLogs)->pluck('sage_request_type')->toArray();
 
-        if (! empty(array_intersect($checkARDiscountInvoices, $reverseSendUpdateTypes))) {
+        if (empty($reverseSageRequestTypes)) {
+            return ['status' => false, 'message' => 'Reversal invoice logs not found'];
+        }
+
+        $invoiceTypeForCPD = [SageEnum::SCT_REVERSAL, SageEnum::SCT_CORRECTION];
+        $getInvoiceTypes = [
+            SageEnum::SRT_CREATE_AR_PREM_COMM_INV => SageEnum::SRT_GET_AR_INVOICE,
+            SageEnum::SRT_CREATE_AR_SPPAY_INV => SageEnum::SRT_GET_AR_INVOICE,
+            SageEnum::SRT_CREATE_AR_PREM_COMM_CORR_INV => SageEnum::SRT_GET_AR_INVOICE,
+            SageEnum::SRT_CREATE_AR_SPPAY_CORR_INV => SageEnum::SRT_GET_AR_INVOICE,
+            SageEnum::SRT_CREATE_AP_PREM_INV => SageEnum::SRT_GET_AP_INVOICE,
+            SageEnum::SRT_CREATE_AP_SPPAY_INV => SageEnum::SRT_GET_AP_INVOICE,
+            SageEnum::SRT_CREATE_AP_PREM_CORR_INV => SageEnum::SRT_GET_AP_INVOICE,
+            SageEnum::SRT_CREATE_AP_SPPAY_CORR_INV => SageEnum::SRT_GET_AP_INVOICE,
+            SageEnum::SRT_CREATE_AR_DISC_INV => SageEnum::SRT_GET_AR_INVOICE,
+            SageEnum::SRT_CREATE_AR_DISC_CORR_INV => SageEnum::SRT_GET_AR_INVOICE,
+        ];
+
+        $extraDetails = ['sage_request_type' => SageEnum::SRT_REV_CORR_AR_PREM_COMM_INV];
+        $extraDetails['userId'] = $sageRequestPayload->userId ?? null;
+
+        if (isset($preparedData['mainLeadDetails'])) {
+            $extraDetails['mainLeadDetails'] = $preparedData['mainLeadDetails'];
+        }
+
+        if (in_array(SageEnum::SRT_CREATE_AR_DISC_INV, $reverseSageRequestTypes)) {
             $isOnlyDiscountReversal = $sendUpdateLog && (int) $sendUpdateLog->discount == 0;
-            $upFrontTotalSteps = ($isOnlyDiscountReversal) ? 18 : 21;
-            $nonUpFrontTotalSteps = ($isOnlyDiscountReversal) ? 20 : 23;
         } else {
             if ($sendUpdateLog->discount > 0) {
                 $isOnlyDiscount = true;
-                $upFrontTotalSteps = 17;
-                $nonUpFrontTotalSteps = 19;
             }
         }
 
-        foreach ($reverseSendUpdateTypes as $reverseSendUpdateTypeKey => $reverseSendUpdateType) {
-            $invoiceResponse = json_decode($invoicesForReverse[$reverseSendUpdateTypeKey]['response']);
+        foreach ($reverseSageRequestTypes as $reverseSageRequestTypeKey => $reverseSageRequestType) {
+            $reversalInvoiceDetails = [
+                'reversalInvoice' => $reversalInvoiceLogs[$reverseSageRequestTypeKey],
+                'sectionType' => $reversalInvoiceLogs[$reverseSageRequestTypeKey]['section_type'],
+                'sectionId' => $reversalInvoiceLogs[$reverseSageRequestTypeKey]['section_id'],
+                'sageRequestType' => $reversalInvoiceLogs[$reverseSageRequestTypeKey]['sage_request_type'],
+                'invoiceType' => $getInvoiceTypes[$reversalInvoiceLogs[$reverseSageRequestTypeKey]['sage_request_type']],
+            ];
 
-            if ($payment->frequency == SageEnum::SF_UPFRONT) {
-                if (in_array($reverseSendUpdateType, $checkARInvoices)) {
-                    info('Book Update - Creating AR Reverse and Correction Invoices and mark as posted');
-                    $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-                        'iterator' => 0,
-                        'lastIteration' => 6,
-                        'startingStep' => 1,
-                        'totalSteps' => $upFrontTotalSteps,
-                        'batchNumber' => $invoiceResponse->BatchNumber,
-                        'entryType' => SageEnum::SCT_STRAIGHT,
-                        'invoiceType' => SageEnum::SRT_GET_AR_INVOICE,
-                        'requestType' => SageEnum::SRT_REV_CORR_AR_PREM_COMM_INV,
-                        'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                        'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkARInvoices)->first() ?? [],
-                        'extras' => [
-                            'option_id' => $extras['option'] ?? null,
-                            'authDetails' => $extras['authDetails'] ?? [],
-                        ],
-                    ]);
-                }
-
-                if (in_array($reverseSendUpdateType, $checkAPInvoices)) {
-                    info('Book Update - Creating AP Reverse and Correction Invoices and mark as posted');
-                    $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-                        'iterator' => 0,
-                        'lastIteration' => 6,
-                        'startingStep' => 8,
-                        'totalSteps' => $upFrontTotalSteps,
-                        'batchNumber' => $invoiceResponse->BatchNumber,
-                        'entryType' => SageEnum::SCT_STRAIGHT,
-                        'invoiceType' => SageEnum::SRT_GET_AP_INVOICE,
-                        'requestType' => SageEnum::SRT_REV_CORR_AP_PREM_INV,
-                        'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                        'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkAPInvoices)->first() ?? [],
-                        'extras' => [
-                            'option_id' => $extras['option'] ?? null,
-                            'authDetails' => $extras['authDetails'] ?? [],
-                        ],
-                    ]);
-                }
-
-                $startingStep = 15;
-                $totalSteps = $upFrontTotalSteps;
-            } else {
-                if (in_array($reverseSendUpdateType, $checkARInvoices)) {
-                    info('Book Update - Creating AR Reverse and Correction Split Payment Invoices and mark as posted');
-                    $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-                        'iterator' => 0,
-                        'lastIteration' => 7,
-                        'startingStep' => 1,
-                        'totalSteps' => $nonUpFrontTotalSteps,
-                        'batchNumber' => $invoiceResponse->BatchNumber,
-                        'entryType' => SageEnum::SCT_STRAIGHT,
-                        'invoiceType' => SageEnum::SRT_GET_AR_INVOICE,
-                        'requestType' => SageEnum::SRT_REV_CORR_AR_SPPAY_INV,
-                        'payment' => $payment,
-                        'splitPayments' => $splitPayments,
-                        'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                        'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkARInvoices)->first() ?? [],
-                        'extras' => [
-                            'option_id' => $extras['option'] ?? null,
-                            'authDetails' => $extras['authDetails'] ?? [],
-                        ],
-                    ]);
-                }
-
-                if (in_array($reverseSendUpdateType, $checkAPInvoices)) {
-                    info('Book Update - Creating AP Reverse and Correction Split Payment Invoices and mark as posted');
-                    // This Split Invoice for Reverse and Correction need to be tested
-                    $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-                        'iterator' => 0,
-                        'lastIteration' => 7,
-                        'startingStep' => 9,
-                        'totalSteps' => $nonUpFrontTotalSteps,
-                        'batchNumber' => $invoiceResponse->BatchNumber,
-                        'entryType' => SageEnum::SCT_STRAIGHT,
-                        'invoiceType' => SageEnum::SRT_GET_AP_INVOICE,
-                        'requestType' => SageEnum::SRT_REV_CORR_AP_SPPAY_INV,
-                        'payment' => $payment,
-                        'splitPayments' => $splitPayments,
-                        'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                        'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkAPInvoices)->first() ?? [],
-                        'extras' => [
-                            'option_id' => $extras['option'] ?? null,
-                            'authDetails' => $extras['authDetails'] ?? [],
-                        ],
-                    ]);
-                }
-
-                $startingStep = 17;
-                $totalSteps = $nonUpFrontTotalSteps;
+            $getReversalInvoiceDetails = $this->getInvoiceDetailsForReversal([$reversalInvoiceDetails, $sendUpdateLog, $reversalInvoiceLogs[$reverseSageRequestTypeKey]['sage_request_type'], $sageLogsArray, $extraDetails]);
+            if (! $getReversalInvoiceDetails['status']) {
+                return $getReversalInvoiceDetails;
             }
 
-            if (in_array($reverseSendUpdateType, $checkARDiscountInvoices)) {
-                $lastIteration = $isOnlyDiscountReversal ? 3 : 6;
-                info('Book Update - Creating AR '.($isOnlyDiscountReversal ? 'Reversal Invoice' : 'Reversal and Correction Invoices').' for Discount and mark as posted');
-                $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-                    'iterator' => 0,
-                    'lastIteration' => $lastIteration,
-                    'startingStep' => $startingStep,
-                    'totalSteps' => $totalSteps,
-                    'batchNumber' => $invoiceResponse->BatchNumber,
-                    'entryType' => SageEnum::SCT_STRAIGHT,
-                    'invoiceType' => SageEnum::SRT_GET_AR_INVOICE,
-                    'requestType' => SageEnum::SRT_REV_CORR_AR_DIS_INV,
-                    'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                    'reversalInvoice' => collect($invoicesForReverse)->whereIn('sage_request_type', $checkARDiscountInvoices)->first() ?? [],
-                    'extras' => [
-                        'authDetails' => $extras['authDetails'] ?? [],
-                    ],
-                ]);
+            foreach ($invoiceTypeForCPD as $cpdInvoiceType) {
+                $extraDetails['sage_entry_type'] = $cpdInvoiceType;
+                $extraDetails['sageReversalInvoice'] = json_encode($getReversalInvoiceDetails['response']);
+
+                if (in_array($reverseSageRequestType, [SageEnum::SRT_CREATE_AR_PREM_COMM_INV, SageEnum::SRT_CREATE_AR_SPPAY_INV])) {
+                    $extraDetails['cpdEndorsement'] = true;
+                    // Create AR Commission and Premium Invoice (Reversal and Correction)
+                    $createARInvoicePremAndComm = $this->createARInvoicePremAndComm([$sageRequestPayload, $preparedData['sendUpdateLog'], $preparedData['payment'], $preparedData['splitPayments'], $sageLogsArray, $extraDetails]);
+                    if (! $createARInvoicePremAndComm['status']) {
+                        return $createARInvoicePremAndComm;
+                    }
+                }
+
+                if (in_array($reverseSageRequestType, [SageEnum::SRT_CREATE_AP_PREM_INV, SageEnum::SRT_CREATE_AP_SPPAY_INV])) {
+                    // Create AP Premium Invoice (Reversal and Correction)
+                    $createAPInvoicePrem = $this->createAPInvoicePrem([$sageRequestPayload, $preparedData['sendUpdateLog'], $preparedData['payment'], $preparedData['splitPayments'], $sageLogsArray, $extraDetails]);
+                    if (! $createAPInvoicePrem['status']) {
+                        return $createAPInvoicePrem;
+                    }
+                }
+
+                if ($isOnlyDiscountReversal && $cpdInvoiceType == SageEnum::SCT_REVERSAL) {
+                    // Create AR Discount Invoice
+                    $extraDetails['sage_request_type'] = SageEnum::SRT_CREATE_AR_DISC_INV;
+                    $extraDetails['is_reversal_discount'] = true;
+                    $createARInvoiceDis = $this->createARInvoiceDis([$sageRequestPayload, $preparedData['sendUpdateLog'], $sageLogsArray, $extraDetails]);
+                    if (! $createARInvoiceDis['status']) {
+                        return $createARInvoiceDis;
+                    }
+                }
             }
         }
 
         if ($isOnlyDiscount) {
-            info('Book Update - Creating AR Discount Invoice and mark as posted');
-            $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, [
-                'iterator' => 0,
-                'lastIteration' => 2,
-                'startingStep' => $startingStep,
-                'totalSteps' => $totalSteps,
-                'entryType' => SageEnum::SCT_STRAIGHT,
-                'requestType' => SageEnum::SRT_CREATE_AR_DISC_INV,
-                'sendUpdateLog' => $extras['send_update_log'] ?? [],
-                'reversalInvoice' => [],
-                'extras' => [
-                    'authDetails' => $extras['authDetails'] ?? [],
-                    'only_correction' => true,
-                ],
-            ]);
+            // Create AR Discount Invoice
+            $extraDetails['sage_entry_type'] = SageEnum::SCT_STRAIGHT;
+            $extraDetails['sage_request_type'] = SageEnum::SRT_CREATE_AR_DISC_INV;
+            unset($extraDetails['sageReversalInvoice']);
+            $createARInvoiceDis = $this->createARInvoiceDis([$sageRequestPayload, $preparedData['sendUpdateLog'], $sageLogsArray, $extraDetails]);
+            if (! $createARInvoiceDis['status']) {
+                return $createARInvoiceDis;
+            }
         }
 
-        $response = ['status' => $_REQUEST['status'] ?? true, 'message' => $_REQUEST['message'] ?? 'Invoices reversed and corrected successfully'];
-        info('Book Update - Response: '.$response['message']);
+        info('fn bookReversalEndorsementOnSage - Reversal and Correction Endorsement Booking Completed on Sage');
 
-        return ['status' => $response['status'], 'message' => $response['message']];
+        return ['status' => true, 'message' => 'Non Up-front Endorsement Booking Completed on Sage'];
     }
 
-    public function sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, $extraParams)
+    private function getInvoiceDetailsForReversal($reversalInvoiceDetails): array
     {
-        if ($this->recursiveCallStatus == SageEnum::STATUS_FAIL) {
-            return true;
-        }
+        [$reversalInvoiceDetails, $sendUpdateLog, $getRequestType, $sageLogArray, $extraDetails] = $reversalInvoiceDetails;
+        $returnMessage = ['status' => false, 'message' => null, 'error' => null];
+        $userId = $extraDetails['userId'] ?? null;
 
-        if ($extraParams['iterator'] > $extraParams['lastIteration']) {
-            return true;
-        }
+        $sageEntryTypes = [
+            SageEnum::SRT_CREATE_AR_PREM_COMM_INV => SageEnum::SRT_GET_AR_INVOICE,
+            SageEnum::SRT_CREATE_AR_SPPAY_INV => SageEnum::SRT_GET_AR_INVOICE,
+            SageEnum::SRT_CREATE_AR_PREM_COMM_CORR_INV => SageEnum::SRT_GET_AR_INVOICE,
+            SageEnum::SRT_CREATE_AR_SPPAY_CORR_INV => SageEnum::SRT_GET_AR_INVOICE,
+            SageEnum::SRT_CREATE_AP_PREM_INV => SageEnum::SRT_GET_AP_INVOICE,
+            SageEnum::SRT_CREATE_AP_SPPAY_INV => SageEnum::SRT_GET_AP_INVOICE,
+            SageEnum::SRT_CREATE_AP_PREM_CORR_INV => SageEnum::SRT_GET_AP_INVOICE,
+            SageEnum::SRT_CREATE_AP_SPPAY_CORR_INV => SageEnum::SRT_GET_AP_INVOICE,
+            SageEnum::SRT_CREATE_AR_DISC_INV => SageEnum::SRT_GET_AR_INVOICE,
+            SageEnum::SRT_CREATE_AR_DISC_CORR_INV => SageEnum::SRT_GET_AR_INVOICE,
+        ];
 
-        $sageInvResponse = [];
-        $isLiveApiCall = true;
-        $sageEntryType = $extraParams['entryType'];
-        $arrayKey = isset($extraParams['arrayKey']) ? $extraParams['arrayKey'] : 0;
-        $sageAPIsParams = SagePayloadFactory::handleSageAPIsParms($extraParams['requestType'], $sageEntryType);
+        $stepMapping = [
+            SageEnum::SRT_CREATE_AR_PREM_COMM_INV => 2,
+            SageEnum::SRT_CREATE_AR_SPPAY_INV => 2,
+            SageEnum::SRT_CREATE_AR_PREM_COMM_CORR_INV => 2,
+            SageEnum::SRT_CREATE_AR_SPPAY_CORR_INV => 2,
+            SageEnum::SRT_CREATE_AP_PREM_INV => 9,
+            SageEnum::SRT_CREATE_AP_SPPAY_INV => 9,
+            SageEnum::SRT_CREATE_AP_PREM_CORR_INV => 9,
+            SageEnum::SRT_CREATE_AP_SPPAY_CORR_INV => 9,
+            SageEnum::SRT_CREATE_AR_DISC_INV => 16,
+            SageEnum::SRT_CREATE_AR_DISC_CORR_INV => 16,
+        ];
 
-        if (! isset($extraParams['recursiveCall']) && ($extraParams['startingStep'] < array_key_first($sageLogArray))) {
-            $sageLogKey =
-            $extraParams['startingStep'] = array_key_first($sageLogArray);
+        $sageRequestType = $sageEntryType = $sageEntryTypes[$getRequestType];
+        $step = $stepMapping[$getRequestType] ?? null;
+
+        $sageInvResponse = SageApiLogRepository::getInvoiceResponse([
+            'quoteTypeObject' => $reversalInvoiceDetails['sectionType'],
+            'quoteTypeId' => $reversalInvoiceDetails['sectionId'],
+            'invoiceType' => $reversalInvoiceDetails['sageRequestType'],
+        ]);
+
+        $reverseInvoiceBatchNumber = json_decode($reversalInvoiceDetails['reversalInvoice']['response'])->BatchNumber;
+
+        $isLiveApiCallStep2 = true;
+        if (isset($sageLogArray[$step]) && $sageLogArray[$step]['status'] == SageEnum::STATUS_SUCCESS) {
+            info('SAGE API :  getInvoiceDetails for '.$reversalInvoiceDetails['invoiceType'].' Sent Already for '.$sendUpdateLog->code);
+            $isLiveApiCallStep2 = false;
+            $sageResponse = json_decode($sageLogArray[$step]['response'], true);
         } else {
-            $sageLogKey = $extraParams['startingStep'];
+            info('SAGE API :  Send getInvoiceDetails for '.$sendUpdateLog->code);
+            $payLoadOptions = SagePayloadFactory::getInvoiceDetails($reversalInvoiceDetails['invoiceType'], $reverseInvoiceBatchNumber);
+            $resp = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload'] ?? [], 'GET');
+            $sageResponse = json_decode($resp, true);
         }
 
-        $methodName = $sageAPIsParams['recursiveCalls'][$arrayKey];
-        $quoteObject = ! empty($extraParams['sendUpdateLog']) ? $extraParams['sendUpdateLog'] : $quote;
+        if (empty($sageResponse)) {
+            $errorMessage = 'Error while getting invoice from Sage for Reversal';
+            $message = 'getInvoiceDetails failed';
 
-        if (isset($extraParams['invoiceType'])) {
-            $sageInvResponse = SageApiLogRepository::getInvoiceResponse([
-                'reverseInvoiceDetails' => $extraParams['reversalInvoice'],
-                'quoteTypeObject' => $quoteObject->getMorphClass(),
-                'quoteTypeId' => $quoteObject->id,
-                'invoiceType' => $extraParams['invoiceType'],
-            ]);
-        }
-
-        // This case added for Split Payment patch
-        if (isset($extraParams['payment']) && $extraParams['payment']->total_payments > 1 &&
-            ((in_array($extraParams['requestType'], [SageEnum::SRT_CREATE_AR_SPPAY_INV, SageEnum::SRT_CREATE_AP_SPPAY_INV])) ||
-            (in_array($extraParams['requestType'], [SageEnum::SRT_REV_CORR_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AP_SPPAY_INV]) && ($extraParams['revCorrSplitPayment'] ?? false)))) {
-
-            // $invoiceType = in_array($extraParams['requestType'], [SageEnum::SRT_CREATE_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AR_SPPAY_INV]) ? SageEnum::AR_INVOICE : SageEnum::AP_INVOICE;
-            $splitPaymentResponse = $this->splitPaymentsPatch($quote, $sageRequestPayload, $sageLogArray, $extraParams, $sageInvResponse);
-
-            if (isset($splitPaymentResponse['status']) && $splitPaymentResponse['status'] == false) {
-                $_REQUEST['status'] = false;
-                $_REQUEST['message'] = $splitPaymentResponse['message'];
-                $this->recursiveCallStatus = SageEnum::STATUS_FAIL;
-
-                return $_REQUEST;
-            }
-
-            $sageLogKey =
-            $extraParams['startingStep'] = $extraParams['startingStep'] + 2;
-            $extraParams['iterator'] = $extraParams['iterator'] + 1;
-
-            if (in_array($extraParams['requestType'], [SageEnum::SRT_REV_CORR_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AP_SPPAY_INV]) && ($extraParams['revCorrSplitPayment'] ?? false)) {
-                $arrayKey = $arrayKey + 1;
-                $extraParams['iterator'] = $extraParams['iterator'] + 1;
-            }
-
-            $methodName = $sageAPIsParams['recursiveCalls'][$arrayKey];
-        }
-
-        if (method_exists(SagePayloadFactory::class, $methodName)) {
-            $requestParms = isset($sageAPIsParams['extraDetails'][$methodName]['requestParms']) &&
-                    $sageAPIsParams['extraDetails'][$methodName]['requestParms'] == 'payload' ? $sageRequestPayload : $this->sageBatchNumber;
-
-            switch ($methodName) {
-                case 'getInvoiceDetails':
-                    $payLoadOptions = SagePayloadFactory::{$methodName}($extraParams['invoiceType'], $extraParams['batchNumber']);
-                    break;
-
-                case 'createARInvoicePremAndComm':
-                case 'createAPInvoicePrem':
-                case 'createARInvoiceDis':
-                    $payLoadOptions = SagePayloadFactory::{$methodName}($requestParms, $sageEntryType, $sageInvResponse, [
-                        'mainLeadDetails' => $extraParams['mainLeadDetails'] ?? [],
-                        'extras' => $extraParams['extras'] ?? [],
-                    ]);
-                    break;
-
-                case 'arSplitPrepaymentPayload':
-                    $payLoadOptions = SagePayloadFactory::{$methodName}($quote, $sageRequestPayload->customerId, $extraParams['payment'], $extraParams['splitPayments'], true);
-                    break;
-
-                default:
-                    if (in_array($extraParams['requestType'], [SageEnum::SRT_CREATE_AR_DISC_INV, SageEnum::SRT_REV_CORR_AR_DIS_INV])) {
-                        $payLoadOptions = SagePayloadFactory::{$methodName}($requestParms, $sageEntryType, SageEnum::SCT_DISCOUNT, [
-                            'sage_request_type' => $extraParams['requestType'],
-                            'extras' => $extraParams['extras'] ?? [],
-                        ]);
-                    } else {
-                        if ($methodName == 'createPaymontRecieptOneInvoice') {
-                            $payLoadOptions = SagePayloadFactory::{$methodName}($quote, $sageRequestPayload->customerId, $extraParams['payment'], $extraParams['splitPayments'], true);
-                        } else {
-                            $payLoadOptions = SagePayloadFactory::{$methodName}($requestParms, $sageEntryType, SageEnum::SCT_STRAIGHT, [
-                                'sage_request_type' => $extraParams['requestType'],
-                                'extras' => $extraParams['extras'] ?? [],
-                            ]);
-                        }
-                    }
-                    break;
-            }
-
+            return $this->logErrorAndReturn([$sendUpdateLog, $message, $errorMessage, $payLoadOptions, $sageResponse, $step, 23, SageEnum::STATUS_FAIL, $userId]);
         } else {
-            $_REQUEST['status'] = false;
-            $_REQUEST['message'] = 'Something went wrong';
-            $this->recursiveCallStatus = SageEnum::STATUS_FAIL;
-            logger()->error('Book Update - Failed - Something went wrong');
+            info('SAGE API : '.$sendUpdateLog->code.' : getInvoiceDetails completed successfully');
+            if ($isLiveApiCallStep2) {
+                $payLoadOptions['entry_type'] = $sageEntryType;
+                $payLoadOptions['sage_request_type'] = $sageRequestType;
 
-            return $_REQUEST;
-        }
-
-        if (isset($sageLogArray[$sageLogKey]) && $sageLogArray[$sageLogKey]['status'] == SageEnum::STATUS_SUCCESS) {
-            $isLiveApiCall = false;
-            $resp = ($sageLogArray[$sageLogKey]['response'] == 'null') ? '' : $sageLogArray[$sageLogKey]['response'];
-            $sageResponse = json_decode($sageLogArray[$sageLogKey]['response'], true);
-            info('Book Update - Sage API Call - Method Name ('.$methodName.') Already called - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$extraParams['sendUpdateLog']->uuid);
-
-        } else {
-            // Reminder:: Retrigger Post Invoice if it's not already posted
-            $isPostingCall = false;
-            $batchStatus = SageEnum::SAGE_STATUS_OPEN;
-            if (isset($sageLogArray[$sageLogKey]) && $sageLogArray[$sageLogKey]['status'] == SageEnum::STATUS_FAIL && in_array($methodName, ['aRPostInvoices', 'aPPostInvoices'])) {
-                $urlForGetInvoice = ($methodName == 'aRPostInvoices') ? 'AR/ARInvoiceBatches('.$payLoadOptions['payload']['PostBatchFrom'].')' : 'AP/APInvoiceBatches('.$payLoadOptions['payload']['FromBatch'].')';
-                $invoiceResponse = json_decode($this->postToSage300($urlForGetInvoice, [], 'GET'), true);
-                $batchStatus = $invoiceResponse['BatchStatus'];
-                $isPostingCall = true;
-            }
-
-            if ($isPostingCall && $batchStatus == SageEnum::SAGE_STATUS_POSTED) {
-                $sageResponse = $payLoadOptions['payload'];
-                info('Book Update - Sage API Call By Pass (Status already '.SageEnum::SAGE_STATUS_POSTED.') - Method Name ('.$methodName.') - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$extraParams['sendUpdateLog']->uuid);
-            } else {
-                $resp = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload'] ?? [], $sageAPIsParams['extraDetails'][$methodName]['verb'] ?? 'POST');
-                $sageResponse = json_decode($resp, true);
-                info('Book Update - Sage API Call - Method Name ('.$methodName.') - QuoteUUID: '.$quote->uuid.' - SendUpdateUUID: '.$extraParams['sendUpdateLog']->uuid);
+                $this->logSageApiCall($payLoadOptions, $sageResponse, $sendUpdateLog, $step, 23, SageEnum::STATUS_SUCCESS, $userId);
             }
         }
 
-        if (in_array($methodName, ['createARInvoicePremAndComm', 'createAPInvoicePrem', 'createARInvoiceDis', 'createPaymontRecieptOneInvoice', 'arSplitPrepaymentPayload']) && isset($sageResponse['BatchNumber'])) {
-            $this->sageBatchNumber = $sageResponse['BatchNumber'];
-        }
+        $returnMessage['response'] = $sageResponse;
+        $returnMessage['status'] = true;
+        $returnMessage['message'] = 'Invoice Details fetched successfully';
 
-        $isLogResponse = isset($sageAPIsParams['extraDetails'][$methodName]['logResponse']);
-        if ($isLogResponse) {
-            $conditionCheck = $sageAPIsParams['extraDetails'][$methodName]['conditionChecks']['type'] == 'isset' ?
-                isset($sageResponse[$sageAPIsParams['extraDetails'][$methodName]['conditionChecks']['condtion_to_check']]) :
-                ($resp !== $sageAPIsParams['extraDetails'][$methodName]['conditionChecks']['condtion_to_check']);
-
-            $respParams = $sageAPIsParams['extraDetails'][$methodName]['conditionChecks']['type'] == 'isset' ?
-                $sageResponse : $resp;
-
-            if ($conditionCheck) {
-                $this->logSageApiCall($payLoadOptions, $respParams, $quoteObject, $extraParams['startingStep'], $extraParams['totalSteps'], SageEnum::STATUS_FAIL, $extraParams['extras']['authDetails']->id);
-
-                $responseMessage = isset($respParams['error']['message']['value']) ?
-                    $respParams['error']['message']['value'] : $sageAPIsParams['extraDetails'][$methodName]['errorMessage'];
-                $_REQUEST['status'] = false;
-                $_REQUEST['message'] = $responseMessage;
-                $this->recursiveCallStatus = SageEnum::STATUS_FAIL;
-                logger()->error('Book Update - Sage API Failed - Response: '.$responseMessage);
-
-                return $_REQUEST;
-            } else {
-                if ($isLiveApiCall) {
-                    $this->logSageApiCall($payLoadOptions, $respParams, $quoteObject, $extraParams['startingStep'], $extraParams['totalSteps'], SageEnum::STATUS_SUCCESS, $extraParams['extras']['authDetails']->id);
-                }
-            }
-        }
-
-        $extraParams['iterator'] = $extraParams['iterator'] + 1;
-        $arrayKey = $arrayKey + 1;
-
-        if ($methodName == 'getInvoiceDetails') {
-            if (isset($sageResponse['BatchNumber'])) {
-                $isFollowUpCondition = $sageResponse['BatchNumber'] == $extraParams['batchNumber'];
-            } else {
-                logger()->error('Book Update - Sage API Failed - Batch Number not found in response'.json_encode($sageResponse));
-            }
-        } else {
-            $isFollowUpCondition = isset($sageAPIsParams['extraDetails'][$methodName]['nextCondition']) ?
-                ! empty($sageResponse[$sageAPIsParams['extraDetails'][$methodName]['nextCondition']]) : true;
-        }
-
-        if ($isFollowUpCondition) {
-            if ($isLiveApiCall) {
-                $this->logSageApiCall($payLoadOptions, $sageResponse, $quoteObject, $extraParams['startingStep'], $extraParams['totalSteps'], SageEnum::STATUS_SUCCESS, $extraParams['extras']['authDetails']->id);
-            }
-
-            if (in_array($extraParams['requestType'], [
-                SageEnum::SRT_REV_CORR_AR_PREM_COMM_INV,
-                SageEnum::SRT_REV_CORR_AR_SPPAY_INV,
-                SageEnum::SRT_REV_CORR_AP_PREM_INV,
-                SageEnum::SRT_REV_CORR_AP_SPPAY_INV,
-                SageEnum::SRT_REV_CORR_AR_DIS_INV,
-            ])) {
-                $sageEntryType = $extraParams['iterator'] >= 4 ? SageEnum::SCT_CORRECTION : SageEnum::SCT_REVERSAL;
-                $arrayKey = ($extraParams['iterator'] == 4) ? 1 : $arrayKey;
-
-                if (in_array($extraParams['requestType'], [SageEnum::SRT_REV_CORR_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AP_SPPAY_INV])) {
-                    $extraParams['revCorrSplitPayment'] = ($sageEntryType == SageEnum::SCT_CORRECTION && $arrayKey == 1) ? true : false;
-                }
-            }
-
-            $paymentDetails = [
-                'payment' => $extraParams['payment'] ?? ($extraParams['paymentDetails']['payment'] ?? []),
-                'splitPayments' => $extraParams['splitPayments'] ?? ($extraParams['paymentDetails']['splitPayments'] ?? []),
-            ];
-
-            $recursiveCallData = [
-                'iterator' => $extraParams['iterator'],
-                'lastIteration' => $extraParams['lastIteration'],
-                'startingStep' => $extraParams['startingStep'] + 1,
-                'totalSteps' => $extraParams['totalSteps'],
-                'entryType' => $sageEntryType,
-                'arrayKey' => $arrayKey,
-                'requestType' => $extraParams['requestType'],
-                'sendUpdateLog' => $extraParams['sendUpdateLog'] ?? [],
-                'reversalInvoice' => $extraParams['reversalInvoice'] ?? [],
-                'recursiveCall' => true,
-                'revCorrSplitPayment' => $extraParams['revCorrSplitPayment'] ?? false,
-                'paymentDetails' => $paymentDetails ?? [],
-                'extras' => $extraParams['extras'] ?? [],
-            ];
-
-            if (isset($extraParams['batchNumber']) && isset($extraParams['invoiceType'])) {
-                $recursiveCallData = array_merge($recursiveCallData, [
-                    'batchNumber' => $extraParams['batchNumber'],
-                    'invoiceType' => $extraParams['invoiceType'],
-                ]);
-            }
-
-            if ($recursiveCallData['revCorrSplitPayment']) {
-                $recursiveCallData['payment'] = $paymentDetails['payment'];
-                $recursiveCallData['splitPayments'] = $paymentDetails['splitPayments'];
-            }
-
-            // Recursive call as per the next step
-            $this->sageRecursiveCalls($quote, $sageRequestPayload, $sageLogArray, $recursiveCallData);
-
-        } else {
-            $this->logSageApiCall($payLoadOptions, $sageResponse, $quoteObject, $extraParams['startingStep'], $extraParams['totalSteps'], SageEnum::STATUS_FAIL, $extraParams['extras']['authDetails']->id);
-
-            $responseMessage = isset($sageResponse['error']['message']['value']) ?
-                    $sageResponse['error']['message']['value'] : $sageAPIsParams['extraDetails'][$methodName]['errorMessage'];
-            $_REQUEST['status'] = false;
-            $_REQUEST['message'] = $responseMessage;
-            $this->recursiveCallStatus = SageEnum::STATUS_FAIL;
-            logger()->error('Book Update - Sage API Failed - Response: '.$responseMessage);
-
-            return $_REQUEST;
-        }
+        return $returnMessage;
     }
 
-    public function splitPaymentsPatch($quote, $sageRequestPayload, $sageLogArray, $extras, $reverseInvoiceResponse = [])
-    {
-        $isLiveApiCall = true;
-        $quoteObject = ! empty($extras['sendUpdateLog']) ? $extras['sendUpdateLog'] : $quote;
-        $isARInvoicesCalls = in_array($extras['requestType'], [SageEnum::SRT_CREATE_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AR_SPPAY_INV]);
-        $processDetails = (in_array($extras['requestType'], [SageEnum::SRT_CREATE_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AR_SPPAY_INV])) ?
-            ['methodName' => 'createARInvoiceSplitPayments', 'invoiceType' => SageEnum::AR_INVOICE, 'url' => 'AR/ARInvoiceBatches', 'requestType' => SageEnum::SRT_AR_SPPAY_PAY_SCDULE_PATCH, 'entryType' => ($extras['requestType'] == SageEnum::SRT_CREATE_AR_SPPAY_INV) ? SageEnum::SCT_STRAIGHT : $extras['entryType']] :
-            ['methodName' => 'createAPInvoiceSplitPayments', 'invoiceType' => SageEnum::AP_INVOICE, 'url' => 'AP/APInvoiceBatches', 'requestType' => SageEnum::SRT_AP_SPPAY_PAY_SCDULE_PATCH, 'entryType' => ($extras['requestType'] == SageEnum::SRT_CREATE_AP_SPPAY_INV) ? SageEnum::SCT_STRAIGHT : $extras['entryType']];
-
-        if (isset($sageLogArray[$extras['startingStep']]) && $sageLogArray[$extras['startingStep']]['status'] == SageEnum::STATUS_SUCCESS) {
-            $isLiveApiCall = false;
-            $postedResponse = json_decode($sageLogArray[$extras['startingStep']]['response'], true);
-            info('Book Update - Sage API Call - Method Name ('.$processDetails['methodName'].') Already called - '.(! empty($extras['sendUpdateLog']) ? 'SendUpdateUUID' : 'QuoteUUID').': '.$quoteObject->uuid);
-
-        } else {
-            ${$processDetails['methodName']} = SagePayloadFactory::{$processDetails['methodName']}(
-                $sageRequestPayload,
-                $extras['splitPayments'],
-                $extras['entryType'],
-                $reverseInvoiceResponse,
-                [
-                    'mainLeadDetails' => $extras['mainLeadDetails'] ?? [],
-                    'extras' => $extras['extras'] ?? [],
-                ]
-            );
-            $resp = $this->postToSage300(${$processDetails['methodName']}['endPoint'], ${$processDetails['methodName']}['payload']);
-            $postedResponse = json_decode($resp, true);
-        }
-
-        if (! empty($postedResponse['BatchNumber'])) {
-            $this->sageBatchNumber = $postedResponse['BatchNumber'];
-
-            if ($isLiveApiCall) {
-                $this->logSageApiCall(${$processDetails['methodName']}, $postedResponse, $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_SUCCESS, $extras['extras']['authDetails']->id);
-                info('Book Update - Sage API Call - Method Name ('.$processDetails['methodName'].') - '.(! empty($extras['sendUpdateLog']) ? 'SendUpdateUUID' : 'QuoteUUID').': '.$quoteObject->uuid);
-            }
-
-            $url = $processDetails['url'].'('.$this->sageBatchNumber.')';
-            if ($isARInvoicesCalls) {
-                $resp = $this->postToSage300($url, [], 'GET');
-                $postedResponse = json_decode($resp, true);
-            } else {
-                $postedResponse = (new SageCustomApiService)->getAPInvoicePaymentScheduleByBatchNumber($this->sageBatchNumber);
-            }
-
-            if (($isARInvoicesCalls && empty($postedResponse['Invoices'][0]['InvoicePaymentSchedules'])) || (! $isARInvoicesCalls && $postedResponse['status'] == false)) {
-                $returnMessage['status'] = false;
-                $returnMessage['message'] = 'Error while getting '.$processDetails['invoiceType'].' Split paymets from sage';
-                if (! $isARInvoicesCalls) {
-                    $returnMessage['error'] = $postedResponse['error'];
-                }
-                logger()->error('Book Update - Sage API Failed - Response: Error while getting '.$processDetails['invoiceType'].' Split paymets from sage');
-
-                return $returnMessage;
-
-            } else {
-                $extras['startingStep'] = $extras['startingStep'] + 1;
-
-                info('Book Update - Prepare Patch payload for Split Payments');
-                $invoicePaymentSchedules = ($isARInvoicesCalls) ? $postedResponse['Invoices'][0]['InvoicePaymentSchedules'] : $postedResponse['response'];
-                foreach ($invoicePaymentSchedules as $key => $invoicePaymentSchedule) {
-                    // Add discount value to the first installment of payment in sage for balancing the amount
-                    $amountDue = roundNumber($extras['splitPayments'][$key]['payment_amount'] + ($extras['splitPayments'][$key]['sr_no'] == 1 ? $extras['payment']->discount_value : 0));
-                    $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($extras['splitPayments'][$key]['due_date'])), $sageRequestPayload->insurerInvoiceDate);
-
-                    if ($extras['payment']->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
-                        $dueDate = $invoicePaymentSchedulesDueDate;
-                    } else {
-                        $dueDate = $extras['splitPayments'][$key]['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($extras['splitPayments'][$key]['due_date']));
-                    }
-
-                    if ($isARInvoicesCalls) {
-                        $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = $amountDue;
-                        $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
-                    } else {
-                        $invoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
-                        $invoicePaymentSchedule->amtdue = $amountDue;
-                        $invoicePaymentSchedule->amtduehc = $amountDue;
-                        $invoicePaymentSchedule->audtorg = $this->sageDBName;
-                    }
-                }
-
-                if (in_array($extras['requestType'], [SageEnum::SRT_CREATE_AR_SPPAY_INV, SageEnum::SRT_REV_CORR_AR_SPPAY_INV])) {
-                    info('Book Update - Prepare Patch payload for Commission Split Payments');
-
-                    foreach ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'] as $key => $value) {
-                        // Add vat on commission split payments to the first installment of commission in sage for balancing the amount
-                        $commissionSplit = floatval($extras['splitPayments'][$key]['commission_vat_applicable']);
-                        $vatOnCommission = floatval($extras['splitPayments'][$key]['commission_vat']);
-
-                        $dueCommissionSplitAmount = roundNumber(roundNumber($commissionSplit) + roundNumber($vatOnCommission));
-
-                        $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($extras['splitPayments'][$key]['due_date'])), $sageRequestPayload->insurerInvoiceDate);
-                        if ($extras['payment']->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
-                            $dueDate = $invoicePaymentSchedulesDueDate;
-                        } else {
-                            $dueDate = $extras['splitPayments'][$key]['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($extras['splitPayments'][$key]['due_date']));
-                        }
-
-                        $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueCommissionSplitAmount;
-                        $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
-                    }
-                }
-
-                if (isset($sageLogArray[$extras['startingStep']]) && $sageLogArray[$extras['startingStep']]['status'] == SageEnum::STATUS_SUCCESS) {
-                    $isLiveApiCall = false;
-                    $payLoadOptions =
-                    $postedResponse = json_decode($sageLogArray[$extras['startingStep']]['response'], true);
-                } else {
-                    $isLiveApiCall = true;
-                    if ($isARInvoicesCalls) {
-                        $payLoadOptions = $postedResponse;
-                        $resp = $this->postToSage300($url, $postedResponse, 'PATCH');
-                        $postedResponse = json_decode($resp, true);
-                    } else {
-                        $payLoadOptions = $invoicePaymentSchedules;
-                        $resp = (new SageCustomApiService)->updateAPInvoicePaymentSchedule($this->sageBatchNumber, $invoicePaymentSchedules);
-                        $postedResponse['response'] = $resp;
-                    }
-                }
-
-                $postedResponse = ($postedResponse == '') ? [] : $postedResponse;
-                $postedResponse['endPoint'] = ($isARInvoicesCalls) ? $url : $resp['url'];
-                $postedResponse['payload'] = $payLoadOptions;
-                $postedResponse['sage_request_type'] = $processDetails['requestType'];
-                $postedResponse['entry_type'] = $processDetails['entryType'];
-
-                if (($isARInvoicesCalls && isset($postedResponse['error'])) || (! $isARInvoicesCalls && $resp['status'] == false)) {
-                    $this->logSageApiCall($postedResponse, (($isARInvoicesCalls) ? $resp : $postedResponse), $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_FAIL, $extras['extras']['authDetails']->id);
-                    $responseMessage = ($isARInvoicesCalls && isset(json_decode($resp, true)['error']['message']['value'])) ?
-                        json_decode($resp, true)['error']['message']['value'] : 'Error while making '.$processDetails['invoiceType'].' Split payments patch to sage';
-                    $returnMessage['status'] = false;
-                    $returnMessage['message'] = $responseMessage;
-                    if (! $isARInvoicesCalls) {
-                        $returnMessage['error'] = $postedResponse['error'] ?? null;
-                    }
-                    logger()->error('Book Update - Sage API Failed - Response: '.$responseMessage);
-
-                    return $returnMessage;
-                }
-
-                if ($isLiveApiCall) {
-                    $this->logSageApiCall($postedResponse, (($isARInvoicesCalls) ? $resp : $postedResponse), $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_SUCCESS, $extras['extras']['authDetails']->id);
-                }
-            }
-
-        } else {
-            $this->logSageApiCall(${$processDetails['methodName']}, $postedResponse, $quoteObject, $extras['startingStep'], $extras['totalSteps'], SageEnum::STATUS_FAIL, $extras['extras']['authDetails']->id);
-
-            $responseMessage = isset($postedResponse['error']['message']['value']) ?
-                    $postedResponse['error']['message']['value'] : $processDetails['invoiceType'].' Split payment failed from Sage';
-            $returnMessage['message'] = $responseMessage;
-            $returnMessage['status'] = false;
-            logger()->error('Book Update - Sage API Failed - Response: '.$responseMessage);
-
-            return $returnMessage;
-        }
-    }
-
-    public function postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data)
+    public function postBookPolicyToSage($request, $quote)
     {
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
         // check sage is enabled or not
@@ -1291,6 +469,24 @@ class SageApiService
 
             return $returnMessage;
         }
+        $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
+
+        $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
+        $payment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
+
+        if ($isDuplicateOrCIRLead && empty($payment)) {
+            $payment = Payment::where([
+                'paymentable_id' => $quote->id,
+                'paymentable_type' => $quote->getMorphClass(),
+            ])->mainLeadPayment()->with('paymentSplits')->first();
+        }
+        $payment->update([
+            'broker_invoice_number' => (new PaymentRepository)->generateBrokerInvoiceNumber($payment, $request->model_type),
+        ]);
+        $paymentSplits = $payment->paymentSplits;
+
+        $data = ['id' => $quote->id, 'quoteTypeId' => $quoteTypeId];
+
         //Booking of Policies with zero price is only allowed for the policies having Credit Approval as Payment Method.
         $isPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
         $isPaymentMethodCreditApproved = $payment->payment_methods_code == PaymentMethodsEnum::CreditApproval;
@@ -1300,9 +496,10 @@ class SageApiService
         }
 
         // payload
-        $sageRequest = $this->sagePayLoad($request->model_type, $payment, $quote, $paymentSplits);
+        $sageRequest = app(SagePayloadFactory::class)->sagePayLoad($request->model_type, $payment, $quote, $paymentSplits);
+        $sageRequest->quoteTypeId = $quoteTypeId;
+        $sageRequest->sageProcessRequestType = SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST;
 
-        $sageLogArray = $quote->sageApiLogs->keyBy('step')->toArray();
         // sage customer number generation
         $sageRequest->customerId = $this->verifySageCustomer($quote->customer_id, $data, $quote, 13);
 
@@ -1312,11 +509,21 @@ class SageApiService
             return $checkRequiredSageIds;
         }
 
-        return $this->bookPolicyOnSage([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+        if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+            return ['status' => true, 'message' => 'Policy has been already booked!'];
+        }
 
+        $this->createSageProcess($quote, $sageRequest, $request);
+
+        $this->updateAndLogQuoteStatus($quote, $sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, $sageRequest->userId);
+
+        $this->scheduleSageProcesses($sageRequest->insurerID);
+        info('Policy Book : postBookPolicyToSage : scheduleSageProcesses triggered for Insurer - '.$sageRequest->insurerID);
+
+        return ['status' => true, 'message' => 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!'];
     }
 
-    private function checkRequiredSageIds($sageRequest): array
+    public function checkRequiredSageIds($sageRequest): array
     {
         $missingFields = [];
         if (empty($sageRequest->customerId)) {
@@ -1342,65 +549,144 @@ class SageApiService
         return ['status' => true, 'message' => ''];
     }
 
-    private function bookPolicyOnSage($sageRequestDataArray)
+    public function bookPolicyOnSage($sageRequestDataArray)
     {
-        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
-        info('################################## Sage Book Policy started for : '.$quote->code.'##################################');
-        info('Sage API : Payment frequency : '.$payment->frequency.' for '.$quote->code);
+        [$sageRequest, $quote,  $request] = $sageRequestDataArray;
+        $quoteTypeId = $sageRequest->quoteTypeId;
+        $userId = $sageRequest->userId;
 
-        //Create AR Commission and Premium Invoice
-        $createARInvoicePremAndComm = $this->createARInvoicePremAndComm([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
-        if (! $createARInvoicePremAndComm['status']) {
-            return $createARInvoicePremAndComm;
+        $sageLogArray = $quote->sageApiLogs->keyBy('step')->toArray();
+
+        $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
+        $payment = Payment::where('code', $quote->code)->mainLeadPayment()->with('paymentSplits')->first();
+
+        if ($isDuplicateOrCIRLead && empty($payment)) {
+            $payment = Payment::where([
+                'paymentable_id' => $quote->id,
+                'paymentable_type' => $quote->getMorphClass(),
+            ])->mainLeadPayment()->with('paymentSplits')->first();
         }
 
-        // Create AP Premium Invoice
-        $createAPInvoicePrem = $this->createAPInvoicePrem([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
-        if (! $createAPInvoicePrem['status']) {
-            return $createAPInvoicePrem;
+        $paymentSplits = $payment->paymentSplits;
+        $quote->userId = $sageRequest->userId;
+
+        $isPolicyBookedOnSage = QuoteTag::where([
+            'quote_type_id' => $quoteTypeId,
+            'quote_uuid' => $quote->uuid,
+            'name' => QuoteTagEnums::POLICY_BOOKED_ON_SAGE,
+            'value' => 1,
+        ])->first();
+
+        info('################################## Sage Book Policy started for : '.$quote->code.' ##################################');
+
+        if (! $isPolicyBookedOnSage) {
+
+            info('Sage API : Payment frequency : '.$payment->frequency.' for '.$quote->code);
+
+            //Create AR Commission and Premium Invoice
+            $createARInvoicePremAndComm = $this->createARInvoicePremAndComm([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+            if (! $createARInvoicePremAndComm['status']) {
+                return $createARInvoicePremAndComm;
+            }
+
+            // Create AP Premium Invoice
+            $createAPInvoicePrem = $this->createAPInvoicePrem([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+            if (! $createAPInvoicePrem['status']) {
+                return $createAPInvoicePrem;
+            }
+
+            // Create AR Discount Invoice
+            $createARInvoiceDis = $this->createARInvoiceDis([$sageRequest, $quote, $sageLogArray]);
+            if (! $createARInvoiceDis['status']) {
+                return $createARInvoiceDis;
+            }
+
+            // Apply Prepayments
+            $applyPaymentInvoices = $this->applyPaymentInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
+            if (! $applyPaymentInvoices['status']) {
+                return $applyPaymentInvoices;
+            }
+
+            QuoteTag::create([
+                'quote_type_id' => $quoteTypeId,
+                'quote_uuid' => $quote->uuid,
+                'name' => QuoteTagEnums::POLICY_BOOKED_ON_SAGE,
+                'value' => 1,
+            ]);
+
+            info('################################## Sage Policy Booked for : '.$quote->code.' ##################################');
+        } else {
+            info('################################## Sage Policy Booked Already for : '.$quote->code.' ##################################');
         }
 
-        // Create AR Discount Invoice
-        $createARInvoiceDis = $this->createARInvoiceDis([$sageRequest, $quote, $sageLogArray]);
-        if (! $createARInvoiceDis['status']) {
-            return $createARInvoiceDis;
+        if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
+            info('################################## Send Customer Documents to customer after booking of : '.$quote->code.' ##################################');
+            // dispath job to send email
+            SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
         }
 
-        // Apply Prepayments
-        $applyPaymentInvoices = $this->applyPaymentInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
-        if (! $applyPaymentInvoices['status']) {
-            return $applyPaymentInvoices;
-        }
+        info('################################## Policy Book : mark status as policy booked for : '.$quote->code.' ##################################');
 
-        info('################################## Sage Policy Booked for : '.$quote->code.'##################################');
+        $this->updateAndLogQuoteStatus($quote, $quoteTypeId, QuoteStatusEnum::PolicyBooked, $userId);
 
-        return ['status' => true, 'message' => 'Policy Booked'];
+        info('################################## Policy Book : Status updated to  : '.$quote->quote_status_id.' for '.$quote->code.' ##################################');
+
+        info('################################## Policy Book : straightforwardPayments for : '.$quote->code.' ##################################');
+        (new CentralService)->straightforwardPayments($payment, $paymentSplits, $quote);
+        info('################################## Policy Book : straightforwardPayments for : '.$quote->code.' done ##################################');
+
+        info('################################## Policy Book : updatePaymentAllocationStatus for : '.$quote->code.' ##################################');
+        $this->updatePaymentAllocationStatus($quote);
+        info('################################## Policy Book : updatePaymentAllocationStatus for : '.$quote->code.' done ##################################');
+
+        info('########## End of Policy Booked for : '.$quote->code.' ##########');
+
+        return ['status' => true, 'message' => 'Policy is Booked'];
     }
 
     private function createARInvoicePremAndComm($sageRequestDataArray)
     {
-        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
+        $sageRequestDataArray = array_pad($sageRequestDataArray, 6, []);
+        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails] = $sageRequestDataArray;
+
         $isPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
         if ($isPaymentFrequencyUpfront) {
-            return $this->createUpfrontARInvoicePremAndComm($sageRequestDataArray);
+            return $this->createUpfrontARInvoicePremAndComm([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails]);
         } else {
-            return $this->createNonUpfrontARInvoicePremAndComm($sageRequestDataArray);
+            return $this->createNonUpfrontARInvoicePremAndComm([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails]);
         }
 
     }
 
-    private function createUpfrontARInvoicePremAndComm($sageRequestDataArray)
+    private function createUpfrontARInvoicePremAndComm($sageRequestDataArray): array
     {
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
-        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
+        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails] = $sageRequestDataArray;
+        $sageEntryType = $extraDetails['sage_entry_type'] ?? SageEnum::SCT_STRAIGHT;
+        $reverseInvoiceDetails = $extraDetails['sageReversalInvoice'] ?? '';
+        $userId = $extraDetails['userId'] ?? null;
+        $totalSteps = 13;
+        $stepsMapping = ['step_1' => 2, 'step_2' => 3, 'step_3' => 4];
+
+        switch ($sageEntryType) {
+            case SageEnum::SCT_REVERSAL:
+                $totalSteps = 22;
+                $stepsMapping = ['step_1' => 3, 'step_2' => 4, 'step_3' => 5];
+                break;
+            case SageEnum::SCT_CORRECTION:
+                $totalSteps = 22;
+                $stepsMapping = ['step_1' => 6, 'step_2' => 7, 'step_3' => 8];
+                break;
+        }
+
         $isLiveApiCallStep2 = true;
-        if (isset($sageLogArray[2]) && $sageLogArray[2]['status'] == 'success') {
+        $payLoadOptions = SagePayloadFactory::createARInvoicePremAndComm(request: $sageRequest, type: $sageEntryType, reversalDetails: $reverseInvoiceDetails, extras: $extraDetails);
+        if (isset($sageLogArray[$stepsMapping['step_1']]) && $sageLogArray[$stepsMapping['step_1']]['status'] == SageEnum::STATUS_SUCCESS) {
             info('SAGE API :  createARInvoicePremAndComm  Sent Already for '.$quote->code);
             $isLiveApiCallStep2 = false;
-            $sageResponse = json_decode($sageLogArray[2]['response'], true);
+            $sageResponse = json_decode($sageLogArray[$stepsMapping['step_1']]['response'], true);
         } else {
             info('SAGE API :  Send createARInvoicePremAndComm  for '.$quote->code);
-            $payLoadOptions = SagePayloadFactory::createARInvoicePremAndComm($sageRequest);
             $resp = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
             $sageResponse = json_decode($resp, true);
         }
@@ -1408,16 +694,16 @@ class SageApiService
         if (! empty($sageResponse['BatchNumber'])) {
             info('SAGE API : '.$quote->code.' :  Batch Number - '.$sageResponse['BatchNumber'].' for createARInvoicePremAndComm');
             if ($isLiveApiCallStep2) {
-                $this->logSageApiCall($payLoadOptions, $sageResponse, $quote, 2, 13);
+                $this->logSageApiCall($payLoadOptions, $sageResponse, $quote, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
             }
             $isLiveApiCallStep3 = true;
-            if (isset($sageLogArray[3]) && $sageLogArray[3]['status'] == 'success') {
+            $readyToPostInvoiceAr = SagePayloadFactory::readyToPostInvoiceAr(batchNumber: $sageResponse['BatchNumber'], type: $sageEntryType, extras: $extraDetails);
+            if (isset($sageLogArray[$stepsMapping['step_2']]) && $sageLogArray[$stepsMapping['step_2']]['status'] == SageEnum::STATUS_SUCCESS) {
                 info('SAGE API :  readyToPostInvoiceAr  Sent Already for '.$quote->code);
                 $isLiveApiCallStep3 = false;
-                $readyToPostResponse = json_decode($sageLogArray[3]['response'], true);
+                $readyToPostResponse = json_decode($sageLogArray[$stepsMapping['step_2']]['response'], true);
             } else {
                 info('SAGE API :  Send readyToPostInvoiceAr  for '.$quote->code);
-                $readyToPostInvoiceAr = SagePayloadFactory::readyToPostInvoiceAr($sageResponse['BatchNumber']);
                 $readyToPostResponse = $this->postToSage300($readyToPostInvoiceAr['endPoint'], $readyToPostInvoiceAr['payload'], 'PATCH');
             }
 
@@ -1425,29 +711,29 @@ class SageApiService
                 $errorMessage = 'Error while making Ar invoice & prem ready to post to sage';
                 $message = 'readyToPostInvoiceAr - '.$sageResponse['BatchNumber'].' failed';
 
-                return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, 3, 13, 'fail']);
+                return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
             }
             info('SAGE API : '.$quote->code.' : readyToPostInvoiceAr - '.$sageResponse['BatchNumber'].' completed successfully');
             if ($isLiveApiCallStep3) {
-                $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $quote, 3, 13);
+                $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
             }
 
             $isLiveApiCallStep4 = true;
-            if (isset($sageLogArray[4]) && $sageLogArray[4]['status'] == 'success') {
+            $aRPostInvoices = SagePayloadFactory::aRPostInvoices(batchNumber: $sageResponse['BatchNumber'], type: $sageEntryType, extras: $extraDetails);
+            if (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_SUCCESS) {
                 info('SAGE API :  aRPostInvoices  Sent Already for '.$quote->code);
                 $isLiveApiCallStep4 = false;
-                $postedResponse = json_decode($sageLogArray[4]['response'], true);
+                $postedResponse = json_decode($sageLogArray[$stepsMapping['step_3']]['response'], true);
             } else {
-                $aRPostInvoices = SagePayloadFactory::aRPostInvoices($sageResponse['BatchNumber']);
-
                 $isAlreadyPosted = false;
-                if (isset($sageLogArray[4]) && $sageLogArray[4]['status'] == SageEnum::STATUS_FAIL) {
+                if (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_FAIL) {
                     info('SAGE API :  Check status of  AR invoice batch '.$sageResponse['BatchNumber'].'  for '.$quote->code);
                     $arInvoiceBatch = $this->postToSage300('AR/ARInvoiceBatches('.$sageResponse['BatchNumber'].')', [], 'GET');
-                    info('SAGE API :  Status of  AR invoice batch '.$arInvoiceBatch);
                     $arInvoiceBatch = json_decode($arInvoiceBatch, true);
+
+                    info('SAGE API :  Status of  AR invoice batch '.$sageResponse['BatchNumber'].'  for '.$quote->code.' is '.$arInvoiceBatch['BatchStatus']);
                     if ($arInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
-                        info('SAGE API : AR invoice bacth '.$sageResponse['BatchNumber'].' already posted for '.$quote->code);
+                        info('SAGE API : AR invoice batch '.$sageResponse['BatchNumber'].' already posted for '.$quote->code);
                         $postedResponse = $aRPostInvoices['payload'];
                         $isAlreadyPosted = true;
                     }
@@ -1458,43 +744,62 @@ class SageApiService
                     $resp = $this->postToSage300($aRPostInvoices['endPoint'], $aRPostInvoices['payload']);
                     $postedResponse = json_decode($resp, true);
                 }
-
             }
 
             if (isset($postedResponse['error'])) {
                 $errorMessage = 'Error while making Ar invoice & prem Posted to sage';
                 $message = 'aRPostInvoices - '.$sageResponse['BatchNumber'].' failed';
 
-                return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostInvoices, $postedResponse, 4, 13, 'fail']);
+                return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
             }
             info('SAGE API : '.$quote->code.' : aRPostInvoices - '.$sageResponse['BatchNumber'].' completed successfully');
             if ($isLiveApiCallStep4) {
-                $this->logSageApiCall($aRPostInvoices, $postedResponse, $quote, 4, 13);
+                //                TODO:: This need to be improve, posted response undefined if status not posted
+                $this->logSageApiCall($aRPostInvoices, $postedResponse, $quote, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
             }
         } else {
             $errorMessage = 'Ar invoice & prem failed from sage';
             $message = 'createARInvoicePremAndComm  failed';
 
-            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $payLoadOptions, $sageResponse, 2, 13, 'fail']);
+            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $payLoadOptions, $sageResponse, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
         }
         $returnMessage['status'] = true;
         $returnMessage['message'] = 'AR Premium and Commission invoice created on sage';
 
         return $returnMessage;
     }
+
     private function createNonUpfrontARInvoicePremAndComm($sageRequestDataArray)
     {
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
-        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
-        //2
+        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails] = $sageRequestDataArray;
+
+        $sageEntryType = $extraDetails['sage_entry_type'] ?? SageEnum::SCT_STRAIGHT;
+        $reverseInvoiceDetails = $extraDetails['sageReversalInvoice'] ?? '';
+        $userId = $extraDetails['userId'] ?? null;
+
+        $totalSteps = 13;
+        $stepsMapping = ['step_1' => 2, 'step_2' => 3, 'step_3' => 4, 'step_4' => 5];
+
+        switch ($sageEntryType) {
+            case SageEnum::SCT_REVERSAL:
+                $totalSteps = 25;
+                $stepsMapping = ['step_1' => 3, 'step_2' => 4, 'step_3' => 5, 'step_4' => 6];
+                break;
+            case SageEnum::SCT_CORRECTION:
+                $totalSteps = 25;
+                $stepsMapping = ['step_1' => 7, 'step_2' => 8, 'step_3' => 9, 'step_4' => 10];
+                break;
+        }
+
         $isLiveApiCallStep2 = true;
-        if (isset($sageLogArray[2]) && $sageLogArray[2]['status'] == 'success') {
+        $createARInvoiceSplitPayments = SagePayloadFactory::createARInvoiceSplitPayments($sageRequest, $paymentSplits);
+        if (isset($sageLogArray[$stepsMapping['step_1']]) && $sageLogArray[$stepsMapping['step_1']]['status'] == SageEnum::STATUS_SUCCESS) {
             info('SAGE API :  createARInvoiceSplitPayments  Sent Already for '.$quote->code);
             $isLiveApiCallStep2 = false;
-            $postedResponse = json_decode($sageLogArray[2]['response'], true);
+            $postedResponse = json_decode($sageLogArray[$stepsMapping['step_1']]['response'], true);
         } else {
             info('SAGE API :  Send createARInvoiceSplitPayments  for '.$quote->code);
-            $createARInvoiceSplitPayments = SagePayloadFactory::createARInvoiceSplitPayments($sageRequest, $paymentSplits);
             $resp = $this->postToSage300($createARInvoiceSplitPayments['endPoint'], $createARInvoiceSplitPayments['payload']);
             $postedResponse = json_decode($resp, true);
         }
@@ -1503,95 +808,101 @@ class SageApiService
             $errorMessage = 'ar split payment failed from sage';
             $message = 'createARInvoiceSplitPayments  failed';
 
-            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $createARInvoiceSplitPayments, $postedResponse, 2, 13, 'fail']);
+            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $createARInvoiceSplitPayments, $postedResponse, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
         }
         info('SAGE API : '.$quote->code.' : createARInvoiceSplitPayments - BatchNumber : '.$postedResponse['BatchNumber'].' completed successfully');
         $batchNumber = $postedResponse['BatchNumber'];
         if ($isLiveApiCallStep2) {
-            $this->logSageApiCall($createARInvoiceSplitPayments, $postedResponse, $quote, 2, 13);
+            $this->logSageApiCall($createARInvoiceSplitPayments, $postedResponse, $quote, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
         }
 
-        $url = 'AR/ARInvoiceBatches('.$batchNumber.')';
-        info('SAGE API :  Send Post AR/ARInvoiceBatches  for '.$quote->code);
-        $resp = $this->postToSage300($url, [], 'GET');
-        $postedResponse = json_decode($resp, true);
-
-        if (empty($postedResponse['Invoices'][0]['InvoicePaymentSchedules'])) {
-            $errorMessage = 'Error while get ar2 split paymets from sage';
-            $message = 'get AR/ARInvoiceBatches for batchNumber : '.$batchNumber.' failed';
-
-            return $this->logErrorAndReturn([$quote, $message, $errorMessage, [], $postedResponse, 2, 13, 'fail'], false);
-        }
-        info('SAGE API :  Prepare Patch payload for SpitPayments  for '.$quote->code);
-        foreach ($postedResponse['Invoices'][0]['InvoicePaymentSchedules'] as $key => $value) {
-            $paymentSplit = $paymentSplits[$key];
-            // add discount amount to amount due for the first child payment in sage for balancing the amount
-            $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplit['due_date'])), $sageRequest->insurerInvoiceDate);
-            $dueAmount = roundNumber($paymentSplit['payment_amount'] + ($paymentSplit['sr_no'] == 1 ? $payment->discount_value : 0));
-
-            if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
-                $dueDate = $invoicePaymentSchedulesDueDate;
-            } else {
-                $dueDate = $paymentSplit['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($paymentSplit['due_date']));
-            }
-
-            $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueAmount;
-            $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
-        }
-
-        info('SAGE API :  Prepare Patch payload for Commission Spits  for '.$quote->code);
-
-        foreach ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'] as $key => $value) {
-            $paymentSplit = $paymentSplits[$key];
-            $commissionSplit = $paymentSplit['commission_vat_applicable'];
-            $vatOnCommission = $paymentSplit['commission_vat'];
-
-            $dueCommissionSplitAmount = roundNumber(roundNumber($commissionSplit) + roundNumber($vatOnCommission));
-
-            $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplit['due_date'])), $sageRequest->insurerInvoiceDate);
-            // for upfront and split, due date should always be insurer invoice date for all child payment, for other frequencies, it should be the due date of the first child payment
-            if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
-                $dueDate = $invoicePaymentSchedulesDueDate;
-            } else {
-                $dueDate = $paymentSplit['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($paymentSplit['due_date']));
-            }
-            $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueCommissionSplitAmount;
-            $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
-        }
-        $patchPayload = $postedResponse;
-        //3
-        $isLiveApiCallStep3 = true;
-        if (isset($sageLogArray[3]) && $sageLogArray[3]['status'] == 'success') {
-            info('SAGE API :  Patch Request  Sent Already for '.$quote->code);
-            $isLiveApiCallStep3 = false;
-            $postedResponse = ! empty($sageLogArray[3]['response']) ? json_decode($sageLogArray[3]['response'], true) : [];
-        } else {
-            info('SAGE API :  Send Patch Request  for '.$quote->code);
-            $resp = $this->postToSage300($url, $postedResponse, 'PATCH');
+        if ($sageEntryType !== SageEnum::SCT_REVERSAL) {
+            $url = 'AR/ARInvoiceBatches('.$batchNumber.')';
+            info('SAGE API :  Send Post AR/ARInvoiceBatches  for '.$quote->code);
+            $resp = $this->postToSage300($url, [], 'GET');
             $postedResponse = json_decode($resp, true);
-        }
-        $postedResponse['endPoint'] = $url;
-        $postedResponse['payload'] = $patchPayload;
-        if (isset($postedResponse['error'])) {
-            info('SAGE API : '.$quote->code.' : AR Patch Request failed '.json_encode($postedResponse['error']));
-            $errorMessage = 'Error while making ar2 split payments patch to sage';
-            $message = 'AR Patch Request failed';
 
-            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $postedResponse, $postedResponse, 3, 13, 'fail']);
-        }
-        if ($isLiveApiCallStep3) {
-            $this->logSageApiCall($postedResponse, $postedResponse, $quote, 3, 13);
+            if (empty($postedResponse['Invoices'][0]['InvoicePaymentSchedules'])) {
+                $errorMessage = 'Error while get ar2 split payments from sage';
+                $message = 'get AR/ARInvoiceBatches for batchNumber : '.$batchNumber.' failed';
+
+                return $this->logErrorAndReturn([$quote, $message, $errorMessage, [], $postedResponse, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $userId], false);
+            }
+            info('SAGE API :  Prepare Patch payload for SpitPayments  for '.$quote->code);
+            foreach ($postedResponse['Invoices'][0]['InvoicePaymentSchedules'] as $key => $value) {
+                $paymentSplit = $paymentSplits[$key];
+                // add discount amount to amount due for the first child payment in sage for balancing the amount
+                $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplit['due_date'])), $sageRequest->insurerInvoiceDate);
+                $dueAmount = roundNumber($paymentSplit['payment_amount'] + ($paymentSplit['sr_no'] == 1 ? $payment->discount_value : 0));
+
+                if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+                    $dueDate = $invoicePaymentSchedulesDueDate;
+                } else {
+                    $dueDate = $paymentSplit['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($paymentSplit['due_date']));
+                }
+
+                $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueAmount;
+                $postedResponse['Invoices'][0]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
+            }
+
+            info('SAGE API :  Prepare Patch payload for Commission Spits  for '.$quote->code);
+
+            foreach ($postedResponse['Invoices'][1]['InvoicePaymentSchedules'] as $key => $value) {
+                $paymentSplit = $paymentSplits[$key];
+                $commissionSplit = $paymentSplit['commission_vat_applicable'];
+                $vatOnCommission = $paymentSplit['commission_vat'];
+
+                $dueCommissionSplitAmount = roundNumber(roundNumber($commissionSplit) + roundNumber($vatOnCommission));
+
+                $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplit['due_date'])), $sageRequest->insurerInvoiceDate);
+                // for upfront and split, due date should always be insurer invoice date for all child payment, for other frequencies, it should be the due date of the first child payment
+                if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+                    $dueDate = $invoicePaymentSchedulesDueDate;
+                } else {
+                    $dueDate = $paymentSplit['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($paymentSplit['due_date']));
+                }
+                $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['AmountDue'] = $dueCommissionSplitAmount;
+                $postedResponse['Invoices'][1]['InvoicePaymentSchedules'][$key]['DueDate'] = $dueDate;
+            }
+            $patchPayload = $postedResponse;
+            //3
+            $isLiveApiCallStep3 = true;
+            if (isset($sageLogArray[$stepsMapping['step_2']]) && $sageLogArray[$stepsMapping['step_2']]['status'] == SageEnum::STATUS_SUCCESS) {
+                info('SAGE API :  Patch Request Sent Already for '.$quote->code);
+                $isLiveApiCallStep3 = false;
+                $postedResponse = ! empty($sageLogArray[$stepsMapping['step_2']]['response']) ? json_decode($sageLogArray[$stepsMapping['step_2']]['response'], true) : [];
+            } else {
+                info('SAGE API :  Send Patch Request  for '.$quote->code);
+                $resp = $this->postToSage300($url, $postedResponse, 'PATCH');
+                $postedResponse = json_decode($resp, true);
+            }
+            $postedResponse['endPoint'] = $url;
+            $postedResponse['payload'] = $patchPayload;
+
+            if (isset($postedResponse['error'])) {
+                info('SAGE API : '.$quote->code.' : AR Patch Request failed '.json_encode($postedResponse['error']));
+                $errorMessage = 'Error while making ar2 split payments patch to sage';
+                $message = 'AR Patch Request failed';
+
+                return $this->logErrorAndReturn([$quote, $message, $errorMessage, $postedResponse, $postedResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
+            }
+            if ($isLiveApiCallStep3) {
+                $postedResponse['sage_request_type'] = SageEnum::SRT_AR_SPPAY_PAY_SCDULE_PATCH;
+                $postedResponse['entry_type'] = SageEnum::SCT_STRAIGHT;
+
+                $this->logSageApiCall($postedResponse, $postedResponse, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
+            }
         }
 
         // 4
         $isLiveApiCallStep4 = true;
-        if (isset($sageLogArray[4]) && $sageLogArray[4]['status'] == 'success') {
+        $readyToPostInvoiceAr = SagePayloadFactory::readyToPostInvoiceAr(batchNumber: $batchNumber, type: $sageEntryType, extras: $extraDetails);
+        if (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_SUCCESS) {
             info('SAGE API :  readyToPostInvoiceAr  Sent Already for '.$quote->code);
             $isLiveApiCallStep4 = false;
-            $readyToPostResponse = json_decode($sageLogArray[4]['response'], true);
+            $readyToPostResponse = json_decode($sageLogArray[$stepsMapping['step_3']]['response'], true);
         } else {
             info('SAGE API :  Send readyToPostInvoiceAr  for '.$quote->code);
-            $readyToPostInvoiceAr = SagePayloadFactory::readyToPostInvoiceAr($batchNumber);
             $readyToPostResponse = $this->postToSage300($readyToPostInvoiceAr['endPoint'], $readyToPostInvoiceAr['payload'], 'PATCH');
         }
 
@@ -1599,29 +910,28 @@ class SageApiService
             $errorMessage = 'Error while making ar2 Apply split payment ready to post to sage';
             $message = 'readyToPostInvoiceAr failed';
 
-            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, 4, 13, 'fail']);
+            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
         }
         if ($isLiveApiCallStep4) {
-            $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $quote, 4, 13);
+            $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $quote, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
         }
         info('SAGE API : '.$quote->code.' : readyToPostInvoiceAr completed successfully');
 
         // 5
         $isLiveApiCallStep5 = true;
-        if (isset($sageLogArray[5]) && $sageLogArray[5]['status'] == 'success') {
+        $aRPostInvoices = SagePayloadFactory::aRPostInvoices(batchNumber: $batchNumber, type: $sageEntryType, extras: $extraDetails);
+        if (isset($sageLogArray[$stepsMapping['step_4']]) && $sageLogArray[$stepsMapping['step_4']]['status'] == SageEnum::STATUS_SUCCESS) {
             info('SAGE API :  aRPostInvoices  Sent Already for '.$quote->code);
             $isLiveApiCallStep5 = false;
-            $postedResponse = json_decode($sageLogArray[5]['response'], true);
+            $postedResponse = json_decode($sageLogArray[$stepsMapping['step_4']]['response'], true);
         } else {
-            $aRPostInvoices = SagePayloadFactory::aRPostInvoices($batchNumber);
-
             $isAlreadyPosted = false;
-            if (isset($sageLogArray[5]) && $sageLogArray[5]['status'] == SageEnum::STATUS_FAIL) {
-                info('SAGE API :  Check status of  AR invoice bacth '.$batchNumber.'  for '.$quote->code);
+            if (isset($sageLogArray[$stepsMapping['step_4']]) && $sageLogArray[$stepsMapping['step_4']]['status'] == SageEnum::STATUS_FAIL) {
+                info('SAGE API :  Check status of  AR invoice batch '.$batchNumber.'  for '.$quote->code);
                 $arInvoiceBatch = $this->postToSage300('AR/ARInvoiceBatches('.$batchNumber.')', [], 'GET');
-                info('SAGE API :  Status of  AR invoice batch '.$arInvoiceBatch);
                 $arInvoiceBatch = json_decode($arInvoiceBatch, true);
 
+                info('SAGE API :  Status of  AR invoice batch('.$batchNumber.') : '.$arInvoiceBatch['BatchStatus']);
                 if ($arInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                     info('SAGE API : AR invoice batch '.$batchNumber.' already posted for '.$quote->code);
                     $postedResponse = $aRPostInvoices['payload'];
@@ -1635,15 +945,16 @@ class SageApiService
                 $postedResponse = json_decode($resp, true);
             }
         }
+
         if (isset($postedResponse['error'])) {
             $errorMessage = 'Error while making ar2 Apply split payment Posted to sage';
             $message = 'aRPostInvoices  failed';
 
-            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostInvoices, $postedResponse, 5, 13, 'fail']);
+            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostInvoices, $postedResponse, $stepsMapping['step_4'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
         } else {
             info('SAGE API : '.$quote->code.' : aRPostInvoices completed successfully');
             if ($isLiveApiCallStep5) {
-                $this->logSageApiCall($aRPostInvoices, $postedResponse, $quote, 5, 13);
+                $this->logSageApiCall($aRPostInvoices, $postedResponse, $quote, $stepsMapping['step_4'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
             }
         }
         $returnMessage['status'] = true;
@@ -1654,29 +965,50 @@ class SageApiService
 
     private function createAPInvoicePrem($sageRequestDataArray)
     {
-        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
+        $sageRequestDataArray = array_pad($sageRequestDataArray, 6, []);
+        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails] = $sageRequestDataArray;
         $isPaymentFrequencyUpfront = $payment->frequency == PaymentFrequency::UPFRONT;
         if ($isPaymentFrequencyUpfront) {
-            return $this->createUpfrontAPInvoicePrem($sageRequestDataArray);
+            return $this->createUpfrontAPInvoicePrem([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails]);
         } else {
-            return $this->createNonUpfrontAPInvoicePrem($sageRequestDataArray);
+            return $this->createNonUpfrontAPInvoicePrem([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails]);
         }
     }
+
     private function createUpfrontAPInvoicePrem($sageRequestDataArray)
     {
-        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
+        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails] = $sageRequestDataArray;
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
+
+        $sageEntryType = $extraDetails['sage_entry_type'] ?? SageEnum::SCT_STRAIGHT;
+        $reverseInvoiceDetails = $extraDetails['sageReversalInvoice'] ?? '';
+        $userId = $extraDetails['userId'] ?? null;
+
+        $totalSteps = 13;
+        $stepsMapping = ['step_1' => 5, 'step_2' => 6, 'step_3' => 7];
+
+        switch ($sageEntryType) {
+            case SageEnum::SCT_REVERSAL:
+                $totalSteps = 22;
+                $stepsMapping = ['step_1' => 10, 'step_2' => 11, 'step_3' => 12];
+                break;
+            case SageEnum::SCT_CORRECTION:
+                $totalSteps = 22;
+                $stepsMapping = ['step_1' => 13, 'step_2' => 14, 'step_3' => 15];
+                break;
+        }
+
         $isTotalPriceZero = $payment->total_price == 0;
         info('########## Start of Upfront createAPInvoicePrem for : '.$quote->code.' ##########');
         if (! $isTotalPriceZero) {
             $isLiveApiCallStep5 = true;
-            if (isset($sageLogArray[5]) && $sageLogArray[5]['status'] == 'success') {
+            $createAPInvoicePrem = SagePayloadFactory::createAPInvoicePrem(request: $sageRequest, type: $sageEntryType, reversalDetails: $reverseInvoiceDetails, extras: $extraDetails);
+            if (isset($sageLogArray[$stepsMapping['step_1']]) && $sageLogArray[$stepsMapping['step_1']]['status'] == SageEnum::STATUS_SUCCESS) {
                 info('SAGE API :  createAPInvoicePrem  Sent Already for '.$quote->code);
                 $isLiveApiCallStep5 = false;
-                $postedResponse = json_decode($sageLogArray[5]['response'], true);
+                $postedResponse = json_decode($sageLogArray[$stepsMapping['step_1']]['response'], true);
             } else {
                 info('SAGE API :  Send createAPInvoicePrem  for '.$quote->code);
-                $createAPInvoicePrem = SagePayloadFactory::createAPInvoicePrem($sageRequest);
                 $resp = $this->postToSage300($createAPInvoicePrem['endPoint'], $createAPInvoicePrem['payload']);
                 $postedResponse = json_decode($resp, true);
             }
@@ -1684,17 +1016,17 @@ class SageApiService
             if (! empty($postedResponse['BatchNumber'])) {
                 info('SAGE API : '.$quote->code.' : readyToPostInvoiceAr - '.$postedResponse['BatchNumber'].' completed successfully');
                 if ($isLiveApiCallStep5) {
-                    $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $quote, 5, 13);
+                    $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $quote, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
                 }
 
                 $isLiveApiCallStep6 = true;
-                if (isset($sageLogArray[6]) && $sageLogArray[6]['status'] == 'success') {
+                $readyToPostInvoiceAP = SagePayloadFactory::readyToPostInvoiceAP(batchNumber: $postedResponse['BatchNumber'], type: $sageEntryType);
+                if (isset($sageLogArray[$stepsMapping['step_2']]) && $sageLogArray[$stepsMapping['step_2']]['status'] == SageEnum::STATUS_SUCCESS) {
                     info('SAGE API :  readyToPostInvoiceAP  Sent Already for '.$quote->code);
                     $isLiveApiCallStep6 = false;
-                    $readyToPostResponse = json_decode($sageLogArray[6]['response'], true);
+                    $readyToPostResponse = json_decode($sageLogArray[$stepsMapping['step_2']]['response'], true);
                 } else {
                     info('SAGE API :  Send readyToPostInvoiceAP  for '.$quote->code);
-                    $readyToPostInvoiceAP = SagePayloadFactory::readyToPostInvoiceAP($postedResponse['BatchNumber']);
                     $readyToPostResponse = $this->postToSage300($readyToPostInvoiceAP['endPoint'], $readyToPostInvoiceAP['payload'], 'PATCH');
                 }
 
@@ -1702,28 +1034,28 @@ class SageApiService
                     $errorMessage = 'Error while making AP invoice ready to post to sage';
                     $message = 'readyToPostInvoiceAP - '.$postedResponse['BatchNumber'].' failed';
 
-                    return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, 6, 13, 'fail']);
+                    return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
                 } else {
                     info('SAGE API : '.$quote->code.' : readyToPostInvoiceAP - '.$postedResponse['BatchNumber'].' completed successfully');
                     if ($isLiveApiCallStep6) {
-                        $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $quote, 6, 13);
+                        $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
                     }
                 }
 
                 $isLiveApiCallStep7 = true;
-                if (isset($sageLogArray[7]) && $sageLogArray[7]['status'] == 'success') {
+                $aPPostInvoices = SagePayloadFactory::aPPostInvoices($postedResponse['BatchNumber'], type: $sageEntryType);
+                if (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_SUCCESS) {
                     info('SAGE API :  aPPostInvoices  Sent Already for '.$quote->code);
                     $isLiveApiCallStep7 = false;
-                    $postedResponse = json_decode($sageLogArray[7]['response'], true);
+                    $postedResponse = json_decode($sageLogArray[$stepsMapping['step_3']]['response'], true);
                 } else {
-                    $aPPostInvoices = SagePayloadFactory::aPPostInvoices($postedResponse['BatchNumber']);
-
                     $isAlreadyPosted = false;
-                    if (isset($sageLogArray[7]) && $sageLogArray[7]['status'] == SageEnum::STATUS_FAIL) {
+                    if (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_FAIL) {
                         info('SAGE API :  Check status of  AP invoice batch '.$postedResponse['BatchNumber'].'  for '.$quote->code);
                         $aPInvoiceBatch = $this->postToSage300('AP/APInvoiceBatches('.$postedResponse['BatchNumber'].')', [], 'GET');
-                        info('SAGE API :  Status of  AP invoice batch '.$aPInvoiceBatch);
                         $aPInvoiceBatch = json_decode($aPInvoiceBatch, true);
+
+                        info('SAGE API : Status of  AP invoice batch('.$postedResponse['BatchNumber'].'): '.$aPInvoiceBatch['BatchStatus']);
 
                         if ($aPInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                             info('SAGE API : AP invoice batch '.$postedResponse['BatchNumber'].' already posted for '.$quote->code);
@@ -1743,42 +1075,62 @@ class SageApiService
                     $errorMessage = 'Error while making AP invoices Posted to sage';
                     $message = 'aPPostInvoices failed';
 
-                    return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aPPostInvoices, $postedResponse, 7, 13, 'fail']);
+                    return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aPPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
                 } else {
                     info('SAGE API : '.$quote->code.' : aPPostInvoices completed successfully');
                     if ($isLiveApiCallStep7) {
-                        $this->logSageApiCall($aPPostInvoices, $postedResponse, $quote, 7, 13);
+                        $this->logSageApiCall($aPPostInvoices, $postedResponse, $quote, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
                     }
                 }
             } else {
                 $errorMessage = 'Ap invoice prem failed from sage';
                 $message = 'createAPInvoicePrem  failed';
 
-                return $this->logErrorAndReturn([$quote, $message, $errorMessage, $createAPInvoicePrem, $postedResponse, 5, 13, 'fail']);
+                return $this->logErrorAndReturn([$quote, $message, $errorMessage, $createAPInvoicePrem, $postedResponse, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
             }
         } else {
-            info('########## skipping of createAPInvoicePrem for : '.$quote->code.' dye to Zero Pricing ########## ');
+            info('########## skipping of createAPInvoicePrem for : '.$quote->code.' due to Zero Pricing ########## ');
         }
-        info('  ########## End of Upfront createAPInvoicePrem for : '.$quote->code.' ########## ');
+        info('########## End of Upfront createAPInvoicePrem for : '.$quote->code.' ##########');
 
         $returnMessage['status'] = true;
         $returnMessage['message'] = 'AP Premium invoice created on sage';
 
         return $returnMessage;
     }
+
     private function createNonUpfrontAPInvoicePrem($sageRequestDataArray)
     {
-        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
+        [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray, $extraDetails] = $sageRequestDataArray;
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
+
+        $sageEntryType = $extraDetails['sage_entry_type'] ?? SageEnum::SCT_STRAIGHT;
+        $reverseInvoiceDetails = $extraDetails['sageReversalInvoice'] ?? '';
+        $userId = $extraDetails['userId'] ?? null;
+
+        $totalSteps = 15;
+        $stepsMapping = ['step_1' => 6, 'step_2' => 7, 'step_3' => 8, 'step_4' => 9];
+
+        switch ($sageEntryType) {
+            case SageEnum::SCT_REVERSAL:
+                $totalSteps = 25;
+                $stepsMapping = ['step_1' => 10, 'step_2' => 11, 'step_3' => 12, 'step_4' => 13];
+                break;
+            case SageEnum::SCT_CORRECTION:
+                $totalSteps = 25;
+                $stepsMapping = ['step_1' => 14, 'step_2' => 15, 'step_3' => 16, 'step_4' => 17];
+                break;
+        }
+
         info('########## Start of NON Upfront createAPInvoicePrem for : '.$quote->code.' ########## ');
         $isLiveApiCallStep6 = true;
-        if (isset($sageLogArray[6]) && $sageLogArray[6]['status'] == 'success') {
+        $createAPInvoicePrem = SagePayloadFactory::createAPInvoiceSplitPayments($sageRequest, $paymentSplits);
+        if (isset($sageLogArray[$stepsMapping['step_1']]) && $sageLogArray[$stepsMapping['step_1']]['status'] == SageEnum::STATUS_SUCCESS) {
             info('SAGE API :  createAPInvoiceSplitPayments  Sent Already for '.$quote->code);
             $isLiveApiCallStep6 = false;
-            $postedResponse = json_decode($sageLogArray[6]['response'], true);
+            $postedResponse = json_decode($sageLogArray[$stepsMapping['step_1']]['response'], true);
         } else {
             info('SAGE API :  Send createAPInvoiceSplitPayments  for '.$quote->code);
-            $createAPInvoicePrem = SagePayloadFactory::createAPInvoiceSplitPayments($sageRequest, $paymentSplits);
             $resp = $this->postToSage300($createAPInvoicePrem['endPoint'], $createAPInvoicePrem['payload']);
             $postedResponse = json_decode($resp, true);
         }
@@ -1788,69 +1140,74 @@ class SageApiService
             $url = 'AP/APInvoiceBatches('.$apBatchNumber.')';
             info('SAGE API : '.$quote->code.' : createAPInvoiceSplitPayments - '.$apBatchNumber.' completed successfully');
             if ($isLiveApiCallStep6) {
-                $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $quote, 6, 15);
+                $this->logSageApiCall($createAPInvoicePrem, $postedResponse, $quote, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
             }
 
-            info('SAGE API :  Prepare Patch payload for SpitPayments  for '.$quote->code);
-            $aPInvoicePaymentsScheduleResponse = (new SageCustomApiService)->getAPInvoicePaymentScheduleByBatchNumber($postedResponse['BatchNumber']);
+            if ($sageEntryType != SageEnum::SCT_REVERSAL) {
+                info('SAGE API :  Prepare Patch payload for SpitPayments  for '.$quote->code);
+                $aPInvoicePaymentsScheduleResponse = (new SageCustomApiService)->getAPInvoicePaymentScheduleByBatchNumber($postedResponse['BatchNumber']);
 
-            if ($aPInvoicePaymentsScheduleResponse['status']) {
-                $aPInvoicePaymentsSchedule = $aPInvoicePaymentsScheduleResponse['response'];
-                foreach ($aPInvoicePaymentsSchedule as $key => $aPInvoicePaymentSchedule) {
-                    // add discount amount to amount due for the first child payment in sage for balancing the amount
-                    $dueAmount = roundNumber($paymentSplits[$key]['payment_amount'] + ($paymentSplits[$key]['sr_no'] == 1 ? $payment->discount_value : 0));
-                    $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplits[$key]['due_date'])), $sageRequest->insurerInvoiceDate);
-                    if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
-                        $dueDate = $invoicePaymentSchedulesDueDate;
-                    } else {
-                        $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
+                if ($aPInvoicePaymentsScheduleResponse['status']) {
+                    $aPInvoicePaymentsSchedule = $aPInvoicePaymentsScheduleResponse['response'];
+                    foreach ($aPInvoicePaymentsSchedule as $key => $aPInvoicePaymentSchedule) {
+                        // add discount amount to amount due for the first child payment in sage for balancing the amount
+                        $dueAmount = roundNumber($paymentSplits[$key]['payment_amount'] + ($paymentSplits[$key]['sr_no'] == 1 ? $payment->discount_value : 0));
+                        $invoicePaymentSchedulesDueDate = SagePayloadFactory::calculateDueDate(date('Y-m-d', strtotime($paymentSplits[$key]['due_date'])), $sageRequest->insurerInvoiceDate);
+                        if ($payment->frequency == PaymentFrequency::SPLIT_PAYMENTS) {
+                            $dueDate = $invoicePaymentSchedulesDueDate;
+                        } else {
+                            $dueDate = $paymentSplits[$key]['sr_no'] == 1 ? $invoicePaymentSchedulesDueDate : date('Y-m-d', strtotime($paymentSplits[$key]['due_date']));
+                        }
+
+                        $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
+                        $aPInvoicePaymentSchedule->amtdue = $dueAmount;
+                        $aPInvoicePaymentSchedule->amtduehc = $dueAmount;
+                        $aPInvoicePaymentSchedule->audtorg = $this->sageDBName;
                     }
+                } else {
+                    $errorMessage = 'Error while getting split payment schedule from sage';
+                    $message = $aPInvoicePaymentsScheduleResponse['error'];
 
-                    $aPInvoicePaymentSchedule->datedue = Carbon::parse($dueDate)->format(env('SAGE_300_CUSTOM_API_DATE_FORMAT'));
-                    $aPInvoicePaymentSchedule->amtdue = $dueAmount;
-                    $aPInvoicePaymentSchedule->amtduehc = $dueAmount;
-                    $aPInvoicePaymentSchedule->audtorg = $this->sageDBName;
+                    return $this->logErrorAndReturn([$quote, $message, $errorMessage, [], [], $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $userId], false);
                 }
-            } else {
-                $errorMessage = 'Error while getting split payment schedule from sage';
-                $message = $aPInvoicePaymentsScheduleResponse['error'];
+                //7
+                $isLiveApiCallStep7 = true;
+                if (isset($sageLogArray[$stepsMapping['step_2']]) && $sageLogArray[$stepsMapping['step_2']]['status'] == SageEnum::STATUS_SUCCESS) {
+                    info('SAGE API :  Patch Request  Sent Already for '.$quote->code);
+                    $isLiveApiCallStep7 = false;
+                    $postedResponse = ! empty($sageLogArray[$stepsMapping['step_2']]['response']) ? json_decode($sageLogArray[$stepsMapping['step_2']]['response'], true) : [];
+                } else {
+                    info('SAGE API :  Send Patch Request  for '.$quote->code);
+                    $resp = (new SageCustomApiService)->updateAPInvoicePaymentSchedule($postedResponse['BatchNumber'], $aPInvoicePaymentsSchedule);
+                    $postedResponse['response'] = $resp;
+                }
 
-                return $this->logErrorAndReturn([$quote, $message, $errorMessage, [], [], 6, 15, 'fail'], false);
-            }
-            //7
-            $isLiveApiCallStep7 = true;
-            if (isset($sageLogArray[7]) && $sageLogArray[7]['status'] == 'success') {
-                info('SAGE API :  Patch Request  Sent Already for '.$quote->code);
-                $isLiveApiCallStep7 = false;
-                $postedResponse = ! empty($sageLogArray[7]['response']) ? json_decode($sageLogArray[7]['response'], true) : [];
-            } else {
-                info('SAGE API :  Send Patch Request  for '.$quote->code);
-                $resp = (new SageCustomApiService)->updateAPInvoicePaymentSchedule($postedResponse['BatchNumber'], $aPInvoicePaymentsSchedule);
-                $postedResponse['response'] = $resp;
-            }
+                $postedResponse['endPoint'] = $resp['url'] ?? $postedResponse['endPoint'] ?? null;
+                $postedResponse['payload'] = $aPInvoicePaymentsSchedule;
+                if (! $postedResponse['response']['status']) {
+                    info('SAGE API : '.$quote->code.' : AP Patch Request failed '.json_encode($postedResponse['response']));
+                    $errorMessage = 'Error while making AP split payments patch to sage';
+                    $message = 'AP Patch Request failed';
 
-            $postedResponse['endPoint'] = $resp['url'] ?? $postedResponse['endPoint'] ?? null;
-            $postedResponse['payload'] = $aPInvoicePaymentsSchedule;
-            if (! $postedResponse['response']['status']) {
-                info('SAGE API : '.$quote->code.' : AP Patch Request failed '.json_encode($postedResponse['response']));
-                $errorMessage = 'Error while making AP split payments patch to sage';
-                $message = 'AP Patch Request failed';
+                    return $this->logErrorAndReturn([$quote, $message, $errorMessage, $postedResponse, $resp, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
+                }
+                info('SAGE API : '.$quote->code.' : Patch Request completed successfully');
+                if ($isLiveApiCallStep7) {
+                    $postedResponse['sage_request_type'] = SageEnum::SRT_AP_SPPAY_PAY_SCDULE_PATCH;
+                    $postedResponse['entry_type'] = SageEnum::SCT_STRAIGHT;
 
-                return $this->logErrorAndReturn([$quote, $message, $errorMessage, $postedResponse, $resp, 7, 15, 'fail']);
-            }
-            info('SAGE API : '.$quote->code.' : Patch Request completed successfully');
-            if ($isLiveApiCallStep7) {
-                $this->logSageApiCall($postedResponse, $postedResponse, $quote, 7, 15);
+                    $this->logSageApiCall($postedResponse, $postedResponse, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
+                }
             }
 
             $isLiveApiCallStep8 = true;
-            if (isset($sageLogArray[8]) && $sageLogArray[8]['status'] == 'success') {
+            $readyToPostInvoiceAP = SagePayloadFactory::readyToPostInvoiceAP(batchNumber: $apBatchNumber, type: $sageEntryType);
+            if (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_SUCCESS) {
                 info('SAGE API :  readyToPostInvoiceAP  Sent Already for '.$quote->code);
                 $isLiveApiCallStep8 = false;
-                $readyToPostResponse = json_decode($sageLogArray[8]['response'], true);
+                $readyToPostResponse = json_decode($sageLogArray[$stepsMapping['step_3']]['response'], true);
             } else {
                 info('SAGE API :  Send readyToPostInvoiceAP  for '.$quote->code);
-                $readyToPostInvoiceAP = SagePayloadFactory::readyToPostInvoiceAP($apBatchNumber);
                 $readyToPostResponse = $this->postToSage300($readyToPostInvoiceAP['endPoint'], $readyToPostInvoiceAP['payload'], 'PATCH');
             }
 
@@ -1858,29 +1215,28 @@ class SageApiService
                 $errorMessage = 'Error while making AP invoice ready to post to sage';
                 $message = 'readyToPostInvoiceAP - '.$postedResponse['BatchNumber'].' failed';
 
-                return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, 8, 15, 'fail']);
+                return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAP, $readyToPostResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
             } else {
                 info('SAGE API : '.$quote->code.' : readyToPostInvoiceAP - '.$postedResponse['BatchNumber'].' completed successfully');
                 if ($isLiveApiCallStep8) {
-                    $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $quote, 8, 15);
+                    $this->logSageApiCall($readyToPostInvoiceAP, $readyToPostResponse, $quote, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
                 }
             }
 
             $isLiveApiCallStep9 = true;
-            if (isset($sageLogArray[9]) && $sageLogArray[9]['status'] == 'success') {
+            $aPPostInvoices = SagePayloadFactory::aPPostInvoices(batchNumber: $postedResponse['BatchNumber'], type: $sageEntryType);
+            if (isset($sageLogArray[$stepsMapping['step_4']]) && $sageLogArray[$stepsMapping['step_4']]['status'] == SageEnum::STATUS_SUCCESS) {
                 info('SAGE API :  aPPostInvoices  Sent Already for '.$quote->code);
                 $isLiveApiCallStep9 = false;
-                $postedResponse = json_decode($sageLogArray[9]['response'], true);
+                $postedResponse = json_decode($sageLogArray[$stepsMapping['step_4']]['response'], true);
             } else {
-                $aPPostInvoices = SagePayloadFactory::aPPostInvoices($postedResponse['BatchNumber']);
-
                 $isAlreadyPosted = false;
-                if (isset($sageLogArray[9]) && $sageLogArray[9]['status'] == SageEnum::STATUS_FAIL) {
+                if (isset($sageLogArray[$stepsMapping['step_4']]) && $sageLogArray[$stepsMapping['step_4']]['status'] == SageEnum::STATUS_FAIL) {
                     info('SAGE API :  Check status of  AP invoice batch '.$postedResponse['BatchNumber'].'  for '.$quote->code);
                     $aPInvoiceBatch = $this->postToSage300('AP/APInvoiceBatches('.$postedResponse['BatchNumber'].')', [], 'GET');
-                    info('SAGE API :  Status of  AP invoice batch '.$aPInvoiceBatch);
                     $aPInvoiceBatch = json_decode($aPInvoiceBatch, true);
 
+                    info('SAGE API :  Status of  AP invoice batch('.$postedResponse['BatchNumber'].') : '.$aPInvoiceBatch['BatchStatus']);
                     if ($aPInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                         info('SAGE API : AP invoice batch '.$postedResponse['BatchNumber'].' already posted for '.$quote->code);
                         $postedResponse = $aPPostInvoices['payload'];
@@ -1899,11 +1255,11 @@ class SageApiService
                 $errorMessage = 'Error while making AP invoices Posted to sage';
                 $message = 'aPPostInvoices failed';
 
-                return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aPPostInvoices, $postedResponse, 9, 15, 'fail']);
+                return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aPPostInvoices, $postedResponse, $stepsMapping['step_4'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
             } else {
                 info('SAGE API : '.$quote->code.' : aPPostInvoices completed successfully');
                 if ($isLiveApiCallStep9) {
-                    $this->logSageApiCall($aPPostInvoices, $postedResponse, $quote, 9, 15);
+                    $this->logSageApiCall($aPPostInvoices, $postedResponse, $quote, $stepsMapping['step_4'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
                 }
             }
 
@@ -1911,7 +1267,7 @@ class SageApiService
             $errorMessage = 'Ap invoice prem failed from sage';
             $message = 'createAPInvoicePrem  failed';
 
-            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $createAPInvoicePrem, $postedResponse, 6, 15, 'fail']);
+            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $createAPInvoicePrem, $postedResponse, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
         }
         info('  ########## End of NON Upfront createAPInvoicePrem for : '.$quote->code.' ########## ');
 
@@ -1923,20 +1279,41 @@ class SageApiService
 
     public function createARInvoiceDis($sageRequestDataArray)
     {
-        [$sageRequest, $quote, $sageLogArray] = $sageRequestDataArray;
+        $sageRequestDataArray = array_pad($sageRequestDataArray, 4, []);
+        [$sageRequest, $quote, $sageLogArray, $extraDetails] = $sageRequestDataArray;
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
+        $isReversalDiscount = isset($extraDetails['is_reversal_discount']) ?? false;
+        $userId = $extraDetails['userId'] ?? null;
         $isDiscountApplied = $sageRequest->discount > 0;
+
+        $sageEntryType = $extraDetails['sage_entry_type'] ?? SageEnum::SCT_STRAIGHT;
+        $reverseInvoiceDetails = $extraDetails['sageReversalInvoice'] ?? '';
+
+        $totalSteps = 15;
+        $stepsMapping = ['step_1' => 10, 'step_2' => 11, 'step_3' => 12];
+
+        switch ($sageEntryType) {
+            case SageEnum::SCT_REVERSAL:
+                $totalSteps = 22;
+                $stepsMapping = ['step_1' => 17, 'step_2' => 18, 'step_3' => 19];
+                break;
+            case SageEnum::SCT_CORRECTION:
+                $totalSteps = 22;
+                $stepsMapping = ['step_1' => 20, 'step_2' => 21, 'step_3' => 22];
+                break;
+        }
+
         /* createARInvoiceDis */
-        if ($isDiscountApplied) {
+        if ($isDiscountApplied || $isReversalDiscount) {
             info('########## Start createARInvoiceDis for : '.$quote->code.' ##########');
             $isLiveApiCallStep10 = true;
-            if (isset($sageLogArray[10]) && $sageLogArray[10]['status'] == 'success') {
+            $createARInvoiceDis = SagePayloadFactory::createARInvoiceDis(request: $sageRequest, type: $sageEntryType, reversalDetails: $reverseInvoiceDetails, extras: $extraDetails);
+            if (isset($sageLogArray[$stepsMapping['step_1']]) && $sageLogArray[$stepsMapping['step_1']]['status'] == SageEnum::STATUS_SUCCESS) {
                 info('SAGE API:  createARInvoiceDis  Sent Already for '.$quote->code);
                 $isLiveApiCallStep10 = false;
-                $postedResponse = json_decode($sageLogArray[10]['response'], true);
+                $postedResponse = json_decode($sageLogArray[$stepsMapping['step_1']]['response'], true);
             } else {
                 info('SAGE API :  Send createARInvoiceDis  for '.$quote->code);
-                $createARInvoiceDis = SagePayloadFactory::createARInvoiceDis($sageRequest);
                 $resp = $this->postToSage300($createARInvoiceDis['endPoint'], $createARInvoiceDis['payload']);
                 $postedResponse = json_decode($resp, true);
             }
@@ -1944,17 +1321,17 @@ class SageApiService
             if (! empty($postedResponse['BatchNumber'])) {
                 info('SAGE API : '.$quote->code.' : createARInvoiceDis - BatchNumber : '.$postedResponse['BatchNumber'].' completed successfully');
                 if ($isLiveApiCallStep10) {
-                    $this->logSageApiCall($createARInvoiceDis, $postedResponse, $quote, 10, 15);
+                    $this->logSageApiCall($createARInvoiceDis, $postedResponse, $quote, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
                 }
 
                 $isLiveApiCallStep11 = true;
-                if (isset($sageLogArray[11]) && $sageLogArray[11]['status'] == 'success') {
+                $readyToPostInvoiceAr = SagePayloadFactory::readyToPostInvoiceAr(batchNumber: $postedResponse['BatchNumber'], type: $sageEntryType, extras: $extraDetails);
+                if (isset($sageLogArray[$stepsMapping['step_2']]) && $sageLogArray[$stepsMapping['step_2']]['status'] == SageEnum::STATUS_SUCCESS) {
                     info('SAGE API :  readyToPostInvoiceAr  Sent Already for '.$quote->code);
                     $isLiveApiCallStep11 = false;
-                    $readyToPostResponse = json_decode($sageLogArray[11]['response'], true);
+                    $readyToPostResponse = json_decode($sageLogArray[$stepsMapping['step_2']]['response'], true);
                 } else {
                     info('SAGE API :  Send readyToPostInvoiceAr  for '.$quote->code);
-                    $readyToPostInvoiceAr = SagePayloadFactory::readyToPostInvoiceAr($postedResponse['BatchNumber']);
                     $readyToPostResponse = $this->postToSage300($readyToPostInvoiceAr['endPoint'], $readyToPostInvoiceAr['payload'], 'PATCH');
                 }
 
@@ -1962,29 +1339,28 @@ class SageApiService
                     $errorMessage = 'Error while making Ar discount invoice ready to post to sage';
                     $message = 'readyToPostInvoiceAr failed';
 
-                    return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, 11, 15, 'fail']);
+                    return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostInvoiceAr, $readyToPostResponse, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
                 } else {
                     info('SAGE API : '.$quote->code.' : readyToPostInvoiceAr completed successfully');
                     if ($isLiveApiCallStep11) {
-                        $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $quote, 11, 15);
+                        $this->logSageApiCall($readyToPostInvoiceAr, $readyToPostResponse, $quote, $stepsMapping['step_2'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
                     }
                 }
 
                 $isLiveApiCallStep12 = true;
-                if (isset($sageLogArray[12]) && $sageLogArray[12]['status'] == 'success') {
+                $aRPostInvoices = SagePayloadFactory::aRPostInvoices(batchNumber: $postedResponse['BatchNumber'], type: $sageEntryType, extras: $extraDetails);
+                if (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_SUCCESS) {
                     info('SAGE API :  aRPostInvoices  Sent Already for '.$quote->code);
                     $isLiveApiCallStep12 = false;
-                    $postedResponse = json_decode($sageLogArray[12]['response'], true);
+                    $postedResponse = json_decode($sageLogArray[$stepsMapping['step_3']]['response'], true);
                 } else {
-                    $aRPostInvoices = SagePayloadFactory::aRPostInvoices($postedResponse['BatchNumber']);
-
                     $isAlreadyPosted = false;
-                    if (isset($sageLogArray[12]) && $sageLogArray[12]['status'] == SageEnum::STATUS_FAIL) {
+                    if (isset($sageLogArray[$stepsMapping['step_3']]) && $sageLogArray[$stepsMapping['step_3']]['status'] == SageEnum::STATUS_FAIL) {
                         info('SAGE API :  Check status of  AR invoice batch '.$postedResponse['BatchNumber'].'  for '.$quote->code);
                         $arInvoiceBatch = $this->postToSage300('AR/ARInvoiceBatches('.$postedResponse['BatchNumber'].')', [], 'GET');
-                        info('SAGE API :  Status of  AR invoice batch '.$arInvoiceBatch);
                         $arInvoiceBatch = json_decode($arInvoiceBatch, true);
 
+                        info('SAGE API :  Status of  AR invoice batch('.$postedResponse['BatchNumber'].') : '.$arInvoiceBatch['BatchStatus']);
                         if ($arInvoiceBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                             info('SAGE API : AR invoice batch '.$postedResponse['BatchNumber'].' already posted for '.$quote->code);
                             $postedResponse = $aRPostInvoices['payload'];
@@ -2003,18 +1379,18 @@ class SageApiService
                     $errorMessage = 'Error while making Ar discount invoice Posted to sage';
                     $message = ' aRPostInvoices failed';
 
-                    return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostInvoices, $postedResponse, 12, 15, 'fail']);
+                    return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostInvoices, $postedResponse, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
                 } else {
                     info('SAGE API : '.$quote->code.' : aRPostInvoices  completed successfully');
                     if ($isLiveApiCallStep12) {
-                        $this->logSageApiCall($aRPostInvoices, $postedResponse, $quote, 12, 15);
+                        $this->logSageApiCall($aRPostInvoices, $postedResponse, $quote, $stepsMapping['step_3'], $totalSteps, SageEnum::STATUS_SUCCESS, $userId);
                     }
                 }
             } else {
                 $errorMessage = 'Ar discount invoice failed from sage';
                 $message = ' createARInvoiceDis failed';
 
-                return $this->logErrorAndReturn([$quote, $message, $errorMessage, $createARInvoiceDis, $postedResponse, 10, 15, 'fail']);
+                return $this->logErrorAndReturn([$quote, $message, $errorMessage, $createARInvoiceDis, $postedResponse, $stepsMapping['step_1'], $totalSteps, SageEnum::STATUS_FAIL, $userId]);
             }
             info('  ########## End createARInvoiceDis for : '.$quote->code.' ########## ');
         }
@@ -2024,6 +1400,7 @@ class SageApiService
 
         return $returnMessage;
     }
+
     public function applyPaymentInvoices($sageRequestDataArray)
     {
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
@@ -2041,7 +1418,7 @@ class SageApiService
         $isTransactionPaidAndFrequencyUpfront = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::UPFRONT;
 
         if ($isTransactionPaidAndFrequencyUpfront && ! $isTotalPriceZero) {
-            return $this->applyUpfrontPaymentInvoices($sageRequestDataArray);
+            return $this->applyUpfrontPaymentInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
         } elseif ($isTotalPriceZero) {
             info('########## applyUpfrontPaymentInvoices skipped  for : '.$quote->code.' due to zero price ########## ');
         }
@@ -2049,13 +1426,13 @@ class SageApiService
         $isFrequencySplitAndFirstChildPaymentPaid = $sageRequest->invoicePaymentStatus == PaymentStatusEnum::PAID && $payment->frequency == PaymentFrequency::SPLIT_PAYMENTS;
 
         if ($isFrequencySplitAndFirstChildPaymentPaid) {
-            return $this->applySplitPaymentInvoices($sageRequestDataArray);
+            return $this->applySplitPaymentInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
         }
 
         $isFrequencyUpfrontOrSplit = in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SPLIT_PAYMENTS]);
         $isFirstPaymentPaidOrCaptured = in_array($paymentSplits[0]['payment_status_id'], [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED]);
         if (! $isFrequencyUpfrontOrSplit && $isFirstPaymentPaidOrCaptured) {
-            return $this->applyNonSplitNonUpfrontPaymentInvoices($sageRequestDataArray);
+            return $this->applyNonSplitNonUpfrontPaymentInvoices([$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray]);
         }
 
         $returnMessage['status'] = true;
@@ -2074,13 +1451,14 @@ class SageApiService
         //13
         $currentStep = 13;
         $isLiveApiCallStep13 = true;
-        if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == 'success') {
-            info('SAGE API : createPaymontRecieptOneInvoice  Sent Already for '.$quote->code);
+        if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
+            info('SAGE API : createPaymentReceiptOneInvoice  Sent Already for '.$quote->code);
             $isLiveApiCallStep13 = false;
             $postedResponse = json_decode($sageLogArray[$currentStep]['response'], true);
         } else {
-            info('SAGE API :  Send createPaymontRecieptOneInvoice  for '.$quote->code);
-            $payLoadOptions = SagePayloadFactory::createPaymontRecieptOneInvoice($quote, $sageRequest->customerId, $payment, $paymentSplits, true);
+            info('SAGE API :  Send createPaymentReceiptOneInvoice  for '.$quote->code);
+            //            TODO:: This need to be defined in top but isPostAllSplitPayment (Last param) need to be handled
+            $payLoadOptions = SagePayloadFactory::createPaymentReceiptOneInvoice($quote, $sageRequest->customerId, $payment, $paymentSplits, true);
             $resp = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
             $postedResponse = json_decode($resp, true);
         }
@@ -2091,23 +1469,23 @@ class SageApiService
 
         if (isset($postedResponse['error'])) {
             $errorMessage = 'Error while making split prepayments to sage';
-            $message = 'createPaymontRecieptOneInvoice failed';
+            $message = 'createPaymentReceiptOneInvoice failed';
 
-            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $payLoadOptions, $postedResponse, $currentStep, $totalSteps, 'fail']);
+            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $payLoadOptions, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL]);
         }
 
         $batchNumber = $postedResponse['BatchNumber'];
-        info('SAGE API : '.$quote->code.' : createPaymontRecieptOneInvoice - BatchNumber : '.$batchNumber.' completed successfully');
+        info('SAGE API : '.$quote->code.' : createPaymentReceiptOneInvoice  - BatchNumber : '.$batchNumber.' completed successfully');
         //14
         $currentStep = 14;
         $isLiveApiCallStep14 = true;
-        if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == 'success') {
+        $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptAr($batchNumber);
+        if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
             info('SAGE API :  readyToPostReceiptAr  Sent Already for '.$quote->code);
             $isLiveApiCallStep14 = false;
             $readyToPostResponse = json_decode($sageLogArray[$currentStep]['response'], true);
         } else {
             info('SAGE API :  Send readyToPostReceiptAr  for '.$quote->code);
-            $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptAr($batchNumber);
             $readyToPostResponse = $this->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
         }
 
@@ -2115,7 +1493,7 @@ class SageApiService
             $errorMessage = 'Error while making Apply payment ready to post to sage';
             $message = 'readyToPostReceiptAr failed';
 
-            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostReceiptAr, $readyToPostResponse, $currentStep, $totalSteps, 'fail']);
+            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostReceiptAr, $readyToPostResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL]);
         } else {
             info('SAGE API : '.$quote->code.' : readyToPostReceiptAr completed successfully');
             if ($isLiveApiCallStep14) {
@@ -2126,20 +1504,19 @@ class SageApiService
         //15
         $currentStep = 15;
         $isLiveApiCallStep15 = true;
-        if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == 'success') {
+        $aRPostReceipts = SagePayloadFactory::aRPostReceipts($batchNumber);
+        if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
             info('SAGE API :  aRPostReceipts  Sent Already for '.$quote->code);
             $isLiveApiCallStep15 = false;
             $postedResponse = json_decode($sageLogArray[$currentStep]['response'], true);
         } else {
-            $aRPostReceipts = SagePayloadFactory::aRPostReceipts($batchNumber);
-
             $isAlreadyPosted = false;
             if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_FAIL) {
                 info('SAGE API :  Check status of  AR Prepayment Receipts batch '.$batchNumber.'  for '.$quote->code);
                 $aRReceiptBatch = $this->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$batchNumber.')', [], 'GET');
-                info('SAGE API :  Status of  AR Prepayment Receipts batch '.$aRReceiptBatch);
                 $aRReceiptBatch = json_decode($aRReceiptBatch, true);
 
+                info('SAGE API :  Status of  AR Prepayment Receipts batch('.$batchNumber.') : '.$aRReceiptBatch['BatchStatus']);
                 if ($aRReceiptBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                     info('SAGE API : AR Prepayment Receipts batch '.$batchNumber.' already posted for '.$quote->code);
                     $postedResponse = $aRPostReceipts['payload'];
@@ -2152,44 +1529,44 @@ class SageApiService
                 $resp = $this->postToSage300($aRPostReceipts['endPoint'], $aRPostReceipts['payload']);
                 $postedResponse = json_decode($resp, true);
             }
-
         }
 
         if (isset($postedResponse['error'])) {
             $errorMessage = 'Error while making Apply payment Posted to sage';
             $message = 'aRPostReceipts failed';
 
-            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostReceipts, $postedResponse, $currentStep, $totalSteps, 'fail']);
+            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostReceipts, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL]);
         }
         info('SAGE API : '.$quote->code.' : aRPostReceipts completed successfully');
         if ($isLiveApiCallStep15) {
             $this->logSageApiCall($aRPostReceipts, $postedResponse, $quote, $currentStep, $totalSteps);
         }
-        info('  ########## End applypaymentInvoices for : '.$quote->code.' ########## ');
+        info('########## End applypaymentInvoices for : '.$quote->code.' ##########');
         $returnMessage['status'] = true;
         $returnMessage['message'] = 'Prepayments applied on sage';
 
         return $returnMessage;
     }
+
     private function applySplitPaymentInvoices($sageRequestDataArray)
     {
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
 
-        info('########## Start arSplitPrepaymentPayload for : '.$quote->code.'##########');
+        info('########## Start arSplitPrepaymentPayload for : '.$quote->code.' ##########');
         $totalSteps = 15;
 
         //12
         $currentStep = 13;
         $isLiveApiCallStep13 = true;
-        if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == 'success') {
+        if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
             info('SAGE API :  arSplitPrepaymentPayload  Sent Already for '.$quote->code);
             $isLiveApiCallStep13 = false;
             $response = json_decode($sageLogArray[$currentStep]['response'], true);
         } else {
             info('SAGE API :  Send arSplitPrepaymentPayload  for '.$quote->code);
+            //            TODO:: This need to be defined in top but isPostAllSplitPayment (Last param) need to be handled
             $readyToPostReceiptAr = SagePayloadFactory::arSplitPrepaymentPayload($quote, $sageRequest->customerId, $payment, $paymentSplits, true);
-
             $resp = $this->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'POST');
             $response = json_decode($resp, true);
         }
@@ -2198,7 +1575,7 @@ class SageApiService
             $errorMessage = 'Error while making Apply split prepayments to sage';
             $message = ' arSplitPrepaymentPayload failed';
 
-            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostReceiptAr, $response, $currentStep, $totalSteps, 'fail']);
+            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostReceiptAr, $response, $currentStep, $totalSteps, SageEnum::STATUS_FAIL]);
         }
 
         if ($isLiveApiCallStep13) {
@@ -2210,13 +1587,13 @@ class SageApiService
         //14
         $currentStep = 14;
         $isLiveApiCallStep14 = true;
-        if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == 'success') {
+        $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptAr($batchNumber);
+        if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
             info('SAGE API :  readyToPostReceiptAr  Sent Already for '.$quote->code);
             $isLiveApiCallStep14 = false;
             $readyToPostResponse = json_decode($sageLogArray[$currentStep]['response'], true);
         } else {
             info('SAGE API :  Send readyToPostReceiptAr  for '.$quote->code);
-            $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptAr($batchNumber);
             $readyToPostResponse = $this->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
         }
 
@@ -2224,7 +1601,7 @@ class SageApiService
             $errorMessage = 'Error while making Apply payment ready to post to sage';
             $message = ' readyToPostReceiptAr - BatchNumber : '.$batchNumber.' failed';
 
-            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostReceiptAr, $readyToPostResponse, $currentStep, $totalSteps, 'fail']);
+            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostReceiptAr, $readyToPostResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL]);
         } else {
             info('SAGE API : '.$quote->code.' :  readyToPostReceiptAr - BatchNumber : '.$batchNumber.' completed successfully');
             if ($isLiveApiCallStep14) {
@@ -2235,20 +1612,20 @@ class SageApiService
         //15
         $currentStep = 15;
         $isLiveApiCallStep15 = true;
-        if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == 'success') {
+        $aRPostReceipts = SagePayloadFactory::aRPostReceipts($batchNumber);
+        if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
             info('SAGE API : aRPostReceipts  Sent Already for '.$quote->code);
             $isLiveApiCallStep15 = false;
             $postedResponse = json_decode($sageLogArray[$currentStep]['response'], true);
         } else {
-            $aRPostReceipts = SagePayloadFactory::aRPostReceipts($batchNumber);
 
             $isAlreadyPosted = false;
             if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_FAIL) {
                 info('SAGE API :  Check status of  AR Prepayment Receipts batch '.$batchNumber.'  for '.$quote->code);
                 $aRReceiptBatch = $this->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$batchNumber.')', [], 'GET');
-                info('SAGE API :  Status of  AR Prepayment Receipts batch '.$aRReceiptBatch);
                 $aRReceiptBatch = json_decode($aRReceiptBatch, true);
 
+                info('SAGE API :  Status of  AR Prepayment Receipts batch('.$batchNumber.') : '.$aRReceiptBatch['BatchStatus']);
                 if ($aRReceiptBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                     info('SAGE API : AP Prepayment Receipts batch '.$batchNumber.' already posted for '.$quote->code);
                     $postedResponse = $aRPostReceipts['payload'];
@@ -2267,9 +1644,10 @@ class SageApiService
             $errorMessage = 'Error while making Apply payment Posted to sage';
             $message = ' aRPostReceipts failed';
 
-            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostReceipts, $postedResponse, $currentStep, $totalSteps, 'fail']);
+            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostReceipts, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL]);
         }
         info('SAGE API : '.$quote->code.' : aRPostReceipts completed successfully');
+        //            TODO:: This undefined variable need to defined properly
         if ($isLiveApiCallStep15) {
             $this->logSageApiCall($aRPostReceipts, $postedResponse, $quote, $currentStep, $totalSteps);
         }
@@ -2280,25 +1658,25 @@ class SageApiService
 
         return $returnMessage;
     }
+
     private function applyNonSplitNonUpfrontPaymentInvoices($sageRequestDataArray)
     {
         [$sageRequest, $quote, $payment, $paymentSplits, $sageLogArray] = $sageRequestDataArray;
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
 
-        info('########## Start arSplitPrepaymentPayload for : '.$quote->code.'##########');
+        info('########## Start arSplitPrepaymentPayload for : '.$quote->code.' ##########');
         $totalSteps = 18;
 
         //15
         $currentStep = 16;
         $isLiveApiCallStep16 = true;
-        if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == 'success') {
+        if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
             info('SAGE API : arSplitPrepaymentPayload  Sent Already for '.$quote->code);
             $isLiveApiCallStep16 = false;
             $response = json_decode($sageLogArray[$currentStep]['response'], true);
         } else {
             info('SAGE API : Send arSplitPrepaymentPayload  for '.$quote->code);
             $readyToPostReceiptAr = SagePayloadFactory::arSplitPrepaymentPayload($quote, $sageRequest->customerId, $payment, $paymentSplits, false);
-
             $resp = $this->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'POST');
             $response = json_decode($resp, true);
         }
@@ -2307,7 +1685,7 @@ class SageApiService
             $errorMessage = 'Error while making Apply split prepayments to sage';
             $message = 'arSplitPrepaymentPayload failed';
 
-            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostReceiptAr, $response, $currentStep, $totalSteps, 'fail']);
+            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostReceiptAr, $response, $currentStep, $totalSteps, SageEnum::STATUS_FAIL]);
         }
         if ($isLiveApiCallStep16) {
             $this->logSageApiCall($readyToPostReceiptAr, $response, $quote, $currentStep, $totalSteps);
@@ -2318,13 +1696,13 @@ class SageApiService
         //16
         $currentStep = 17;
         $isLiveApiCallStep17 = true;
-        if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == 'success') {
+        $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptAr($batchNumber);
+        if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
             info('SAGE API :  readyToPostReceiptAr  Sent Already for '.$quote->code);
             $isLiveApiCallStep17 = false;
             $readyToPostResponse = json_decode($sageLogArray[$currentStep]['response'], true);
         } else {
             info('SAGE API :  Send readyToPostReceiptAr  for '.$quote->code);
-            $readyToPostReceiptAr = SagePayloadFactory::readyToPostReceiptAr($batchNumber);
             $readyToPostResponse = $this->postToSage300($readyToPostReceiptAr['endPoint'], $readyToPostReceiptAr['payload'], 'PATCH');
         }
 
@@ -2332,7 +1710,7 @@ class SageApiService
             $errorMessage = 'Error while making Apply payment ready to post to sage';
             $message = 'readyToPostReceiptAr  failed';
 
-            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostReceiptAr, $readyToPostResponse, $currentStep, $totalSteps, 'fail']);
+            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $readyToPostReceiptAr, $readyToPostResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL]);
         } else {
             info('SAGE API : '.$quote->code.' : readyToPostReceiptAr completed successfully');
             if ($isLiveApiCallStep17) {
@@ -2343,20 +1721,19 @@ class SageApiService
         //17
         $currentStep = 18;
         $isLiveApiCallStep18 = true;
-        if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == 'success') {
+        $aRPostReceipts = SagePayloadFactory::aRPostReceipts($batchNumber);
+        if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_SUCCESS) {
             info('SAGE API :  aRPostReceipts  Sent Already for '.$quote->code);
             $isLiveApiCallStep18 = false;
             $postedResponse = json_decode($sageLogArray[$currentStep]['response'], true);
         } else {
-            $aRPostReceipts = SagePayloadFactory::aRPostReceipts($batchNumber);
-
             $isAlreadyPosted = false;
             if (isset($sageLogArray[$currentStep]) && $sageLogArray[$currentStep]['status'] == SageEnum::STATUS_FAIL) {
                 info('SAGE API :  Check status of  AR Prepayment Receipts batch '.$batchNumber.'  for '.$quote->code);
                 $aRReceiptBatch = $this->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$batchNumber.')', [], 'GET');
-                info('SAGE API :  Status of  AR Prepayment Receipts batch '.$aRReceiptBatch);
                 $aRReceiptBatch = json_decode($aRReceiptBatch, true);
 
+                info('SAGE API :  Status of  AR Prepayment Receipts batch('.$batchNumber.') '.$aRReceiptBatch['BatchStatus']);
                 if ($aRReceiptBatch['BatchStatus'] == SageEnum::SAGE_STATUS_POSTED) {
                     info('SAGE API : AP Prepayment Receipts batch '.$batchNumber.' already posted for '.$quote->code);
                     $postedResponse = $aRPostReceipts['payload'];
@@ -2376,9 +1753,10 @@ class SageApiService
             $errorMessage = 'Error while making Apply payment Posted to sage';
             $message = 'aRPostReceipts - BatchNumber '.$batchNumber.' failed';
 
-            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostReceipts, $postedResponse, $currentStep, $totalSteps, 'fail']);
+            return $this->logErrorAndReturn([$quote, $message, $errorMessage, $aRPostReceipts, $postedResponse, $currentStep, $totalSteps, SageEnum::STATUS_FAIL]);
         }
         if ($isLiveApiCallStep18) {
+            //            TODO:: $postedResponse need to defined properly
             $this->logSageApiCall($aRPostReceipts, $postedResponse, $quote, $currentStep, $totalSteps);
         }
         info('SAGE API : '.$quote->code.' : aRPostReceipts - BatchNumber '.$batchNumber.' completed successfully');
@@ -2389,29 +1767,32 @@ class SageApiService
 
         return $returnMessage;
     }
+
     private function logErrorAndReturn($logDataArray, $storeSageApiLog = true): array
     {
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
-        [$quote, $message, $errorMessage, $payload, $response, $currentStep, $totalSteps, $status] = $logDataArray;
+        $logDataArray = array_pad($logDataArray, 9, null);
+        [$quote, $message, $errorMessage, $payload, $response, $currentStep, $totalSteps, $status, $userId] = $logDataArray;
 
-        Log::error("SAGE API : $quote->code : $message");
-        Log::error("SAGE API : $quote->code : $errorMessage");
+        info("SAGE API : $quote->code : $message");
+        info("SAGE API : $quote->code : $errorMessage");
 
         $returnMessage['message'] = $errorMessage;
         $responseArray = $this->convertResponseToArray($response);
         $sageErrorMessage = $responseArray['error']['message']['value'] ?? $responseArray['error'] ?? null;
-        Log::error("SAGE API : $quote->code  : ".json_encode($sageErrorMessage));
+        info("SAGE API : $quote->code  : ".json_encode($sageErrorMessage));
         $returnMessage['error'] = $sageErrorMessage;
-        if (str_contains($sageErrorMessage, 'Processing conflict')) {
-            $returnMessage['message'] = 'Please wait for 1 minute before booking again.';
+        if ($this->sageHasProcessingConflict($sageErrorMessage)) {
+            $returnMessage['message'] = SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE;
         }
 
         if ($storeSageApiLog) {
-            $this->logSageApiCall($payload, $response, $quote, $currentStep, $totalSteps, $status);
+            $this->logSageApiCall($payload, $response, $quote, $currentStep, $totalSteps, $status, $userId);
         }
 
         return $returnMessage;
     }
+
     public function convertResponseToArray($response)
     {
         if (is_array($response)) {
@@ -2459,5 +1840,128 @@ class SageApiService
         }
 
         return $returnMessage;
+    }
+
+    public function updateSageProcessStatus($sageProcess, $status, $message = null, $logFor = 'Policy Book')
+    {
+        $sageProcessData['status'] = $status;
+        if ($message) {
+            $sageProcessData['message'] = json_encode(['message' => $message]);
+        }
+
+        $sageProcess->update($sageProcessData);
+        info($logFor.' : updateSageProcessStatus - ID : '.$sageProcess->id.' - Status : '.$status);
+    }
+
+    public function updateAndLogQuoteStatus($quote, $quoteTypeId, $quoteStatusId, $userId)
+    {
+        $latestQuoteStatusLog = QuoteStatusLog::where([
+            'quote_type_id' => $quoteTypeId,
+            'quote_request_id' => $quote->id,
+        ])->latest()->first();
+
+        unset($quote->userId);
+
+        $previousQuoteStatusId = $quote->quote_status_id;
+        $newQuoteStatusId = $quoteStatusId;
+
+        $quoteData = [
+            'quote_status_id' => $newQuoteStatusId,
+            'quote_status_date' => now(),
+        ];
+
+        if (in_array($quoteTypeId, [QuoteTypeId::Health, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Business])) {
+            $quoteData['stale_at'] = null;
+        }
+        if ($newQuoteStatusId == QuoteStatusEnum::PolicyBooked) {
+            $quoteData['policy_booking_date'] = Carbon::now();
+        }
+
+        $quote->update($quoteData);
+
+        info('Policy Book : updateAndLogQuoteStatus - Status : '.$quote->code.', - Status : '.$newQuoteStatusId);
+
+        $quoteLogData = [
+            'quote_type_id' => $quoteTypeId,
+            'quote_request_id' => $quote->id,
+            'current_quote_status_id' => $newQuoteStatusId,
+            'previous_quote_status_id' => $previousQuoteStatusId,
+            'created_by' => $userId,
+        ];
+
+        $isQuoteLogSameAsBefore = $latestQuoteStatusLog->current_quote_status_id == QuoteStatusEnum::PolicyBooked && $latestQuoteStatusLog->previous_quote_status_id = $previousQuoteStatusId;
+        //check if the last quote log status is same as new status then update the same log
+        if ($latestQuoteStatusLog && $isQuoteLogSameAsBefore) {
+            $latestQuoteStatusLog->update($quoteLogData);
+        } else {
+            QuoteStatusLog::create($quoteLogData);
+        }
+    }
+
+    public function createSageProcess($quote, $sageRequest, $request)
+    {
+        $sageProcessData = [
+            'user_id' => $sageRequest->userId,
+            'insurance_provider_id' => $sageRequest->insurerID,
+            'request' => json_encode([
+                'sagePayload' => $sageRequest,
+                'requestPayload' => $request,
+            ]),
+            'status' => SageEnum::SAGE_PROCESS_PENDING_STATUS,
+        ];
+
+        $sageProcess = SageProcess::where([
+            'model_type' => $quote::class,
+            'model_id' => $quote->id,
+        ])->first();
+
+        if ($sageProcess) {
+            if ($sageProcess->status == SageEnum::SAGE_PROCESS_FAILED_STATUS) {
+                $sageProcess->update($sageProcessData);
+            }
+        } else {
+            $sageProcessData['model_type'] = $quote::class;
+            $sageProcessData['model_id'] = $quote->id;
+            SageProcess::create($sageProcessData);
+        }
+    }
+
+    public function sageHasProcessingConflict($sageErrorMessage)
+    {
+        return str_contains($sageErrorMessage, 'Processing conflict') || str_contains($sageErrorMessage, 'Post in Progress');
+    }
+
+    public function scheduleSageProcesses($insurerId = null): void
+    {
+        $sageProcesses = SageProcess::where('status', SageEnum::SAGE_PROCESS_PENDING_STATUS)
+            ->whereNotIn('insurance_provider_id', function ($query) {
+                $query->select('insurance_provider_id')
+                    ->from('sage_processes')
+                    ->where('status', SageEnum::SAGE_PROCESS_PROCESSING_STATUS);
+            })->when($insurerId, function ($query) use ($insurerId) {
+                $query->where('insurance_provider_id', $insurerId);
+            })->orderBy('created_at')
+            ->groupBy('insurance_provider_id')
+            ->get();
+
+        if (count($sageProcesses) > 0) {
+            foreach ($sageProcesses as $sageProcess) {
+
+                info('cmd:SageProcessesCommand - Processing Sage Process ID: '.$sageProcess->id.' for Insurance Provider ID: '.$sageProcess->insurance_provider_id);
+                $sageProcessRequest = json_decode($sageProcess->request);
+                $sageRequest = $sageProcessRequest->sagePayload;
+                $request = $sageProcessRequest->requestPayload;
+
+                $quote = $sageProcess->model;
+
+                if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST) {
+                    BookPolicyOnSageJob::dispatch($sageRequest, $quote, $request, $sageProcess)->onQueue('insly');
+                } elseif ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_SEND_UPDATE_REQUEST) {
+                    SendUpdateSageJob::dispatch($request, $quote, $sageRequest, $sageProcess)->onQueue('insly');
+                }
+            }
+        } else {
+            info('cmd:SageProcessesCommand - No Sage Process meet the selection criteria / already sage processes are being processed against all insurance providers');
+        }
     }
 }
