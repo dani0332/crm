@@ -864,14 +864,14 @@ const formatDate = dateString =>
           >
             Extract makes models trims
           </x-button>
-            <x-button
-                size="sm"
-                color="emerald"
-                :href="'/pua-leads-export'"
-                class="justify-self-start mr-3"
-            >
-                Export PUA Updates
-            </x-button>
+          <x-button
+            size="sm"
+            color="emerald"
+            :href="'/pua-leads-export'"
+            class="justify-self-start mr-3"
+          >
+            Export PUA Updates
+          </x-button>
         </div>
         <div class="flex justify-self-end gap-3">
           <x-button type="submit" size="sm" color="#ff5e00">Search</x-button>
