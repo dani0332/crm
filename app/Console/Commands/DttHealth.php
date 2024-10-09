@@ -109,7 +109,7 @@ class DttHealth extends Command
         });
 
         info($logPrefix.' count - '.count($filteredLeads).' - '.json_encode($filteredLeads->pluck('uuid')->toArray()));
-
+        $jobs = [];
         foreach ($filteredLeads as $item) {
             $jobs[] = new HealthRevivalLeadsCreationJob($item);
         }
