@@ -22,6 +22,7 @@ const { isRequired } = useRules();
 const notification = useNotifications('toast');
 const params = useUrlSearchParams('history');
 const hasRole = role => useHasRole(role);
+const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
@@ -899,8 +900,8 @@ const nbFollowupTemplates = [
 
       </div>
       <div class="flex gap-3 mt-4 mb-4">
-        <div class="ml-auto" v-if="quotesSelected.length > 0">
-          <x-button size="sm" color="#ff5e00" @click.prevent="openFollowupModal">
+        <div class="ml-auto" v-if="quotesSelected.length > 0 && hasAnyRole([rolesEnum.CarManager,rolesEnum.Admin,rolesEnum.Engineering])">
+          <x-button size="sm" color="#ff5e00" @click.prevent="openFollowupModal" >
             Send Followup Email
           </x-button>
         </div>
