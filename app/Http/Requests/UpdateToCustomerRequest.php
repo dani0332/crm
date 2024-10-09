@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\SendUpdateLogStatusEnum;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateToCustomerRequest extends FormRequest
@@ -21,7 +22,7 @@ class UpdateToCustomerRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'sendUpdateId' => 'required|exists:send_update_logs,id',
             'quoteType' => 'string',
             'action' => 'string',
@@ -31,5 +32,26 @@ class UpdateToCustomerRequest extends FormRequest
             'inslyMigrated' => 'boolean',
             'isEmailSent' => 'boolean',
         ];
+
+        if (isset($this->action) && $this->action == SendUpdateLogStatusEnum::ACTION_SNBU) {
+            $sendUpdateValidationRequest = new SendUpdateValidationRequest;
+
+            $rules = array_merge(
+                $rules,
+                $sendUpdateValidationRequest->rules(),
+            );
+        }
+
+        return $rules;
+    }
+
+    /**
+     * @return void
+     */
+    public function withValidator($validator)
+    {
+        if (isset($this->action) && $this->action == SendUpdateLogStatusEnum::ACTION_SNBU) {
+            (new SendUpdateValidationRequest)->withValidator($validator);
+        }
     }
 }

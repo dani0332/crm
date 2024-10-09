@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Models\KycLog;
 use App\Models\QuoteStatus;
@@ -38,13 +39,15 @@ class QuoteStatusService
             $kycLog = $fetchKycLog->first();
             $updateQuote = $this->getQuoteObject($quoteType->code, $quoteRequestId);
             $quoteStatusID = (AMLService::checkAMLStatusFailed($kycLog->quote_type_id, $kycLog->quote_request_id)) ? QuoteStatusEnum::AMLScreeningFailed : $quoteStatus->id;
-            $updateQuote->quote_status_id = $quoteStatusID;
+
+            $updateQuote->aml_status = AMLStatusCode::AMLScreeningCleared;
 
             $previousStatusId = $updateQuote->quote_status_id;
             $currentStatusId = $quoteStatusID;
         } else {
             $updateQuote = $this->getQuoteObject($quoteType->code, $quoteRequestId);
-            $updateQuote->quote_status_id = $quoteStatus->id;
+
+            $updateQuote->aml_status = AMLStatusCode::AMLScreeningFailed;
 
             $previousStatusId = $updateQuote->quote_status_id;
             $currentStatusId = $quoteStatus->id;
