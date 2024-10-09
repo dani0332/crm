@@ -84,7 +84,6 @@ class PersonalQuoteObserver
             PersonalQuote::withoutEvents(function () use ($personalQuote) {
                 $personalQuote->update(['stale_at' => null]);
             });
-            $dirty = [...$dirty, 'stale_at' => $personalQuote->stale_at];
         }
     }
 }
