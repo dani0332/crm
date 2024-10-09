@@ -29,6 +29,7 @@ const sageAPILogs = reactive({
   data: [],
   loader: false,
   table: [
+    { text: 'ID', value: 'id' },
     { text: 'user', value: 'user' },
     { text: 'Request Type', value: 'sage_request_type' },
     { text: 'API End Point', value: 'sage_end_point' },
