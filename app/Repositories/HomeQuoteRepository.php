@@ -258,6 +258,9 @@ class HomeQuoteRepository extends BaseRepository
         $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::HOME->value, $quote->payments, $quoteDocuments);
 
         @[$documentTypes, $documentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Home);
+        $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
+        $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::HOME->value);
+        $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Home);
 
         return [
             'documentTypes' => $documentTypes,
@@ -302,6 +305,11 @@ class HomeQuoteRepository extends BaseRepository
             'sendUpdateEnum' => $sendUpdateEnum,
             'linkedQuoteDetails' => $linkedQuoteDetails,
             'bookPolicyDetails' => $bookPolicyDetails,
+            'lockLeadSectionsDetails' => $lockLeadSectionsDetails,
+            'permissions' => [
+                'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
+            ],
+            'leadStatuses' => $leadStatuses,
         ];
     }
 
