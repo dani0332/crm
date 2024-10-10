@@ -59,7 +59,7 @@ class QuoteAllocation extends Command
         if ($quoteAllocationSwitch == 1 && $masterSwitchConfigValue == 1) {
             $to = now()->subMinutes(5)->toDateTimeString();
             $chunkSize = 200;
-            info('start and end dates are : ' . $allocationStartDate . ' and ' . $to);
+            info('start and end dates are : '.$allocationStartDate.' and '.$to);
             $this->executeCarAllocation(QuoteTypeId::Car, $to, $chunkSize, $allocationStartDate, $applicationStorageService);
             $this->executeHealthAllocation(QuoteTypeId::Health, $to, $chunkSize, $allocationStartDate);
             $this->executeBikeAllocation(QuoteTypeId::Bike, $to, $chunkSize, $allocationStartDate, $applicationStorageService);
@@ -96,17 +96,16 @@ class QuoteAllocation extends Command
             })
             ->take($chunkSize);
 
-        info('leads fetch query is : ' . $leads->toSql() . ' with params : ' . json_encode($leads->getBindings()));
+        info('leads fetch query is : '.$leads->toSql().' with params : '.json_encode($leads->getBindings()));
 
         // Get the teamId once before the loop
         $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
-
 
         foreach ($leads->get() as $lead) {
             if ($lead->tier_id == TiersIdEnum::TIER_R) {
                 continue;
             }
-            info('Processing record for Quote Allocation with uuid: ' . $lead->uuid);
+            info('Processing record for Quote Allocation with uuid: '.$lead->uuid);
 
             // Only apply teamId if the payment status is AUTHORIZED
             $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;
@@ -114,7 +113,7 @@ class QuoteAllocation extends Command
             $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid, $currentTeamId);
             $allocationStrategy->executeSteps();
             $processedRecords++;
-            info('Processed record for Quote Allocation with uuid: ' . $lead->uuid);
+            info('Processed record for Quote Allocation with uuid: '.$lead->uuid);
         }
 
         $this->logProcessedRecords($processedRecords, $quoteType);
@@ -138,11 +137,11 @@ class QuoteAllocation extends Command
                     });
             })->take($chunkSize);
         foreach ($leads->get() as $lead) {
-            info('Processing Health record for Quote Allocation with uuid: ' . $lead->uuid);
+            info('Processing Health record for Quote Allocation with uuid: '.$lead->uuid);
             $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
             $allocationStrategy->executeSteps();
             $processedRecords++;
-            info('Processed Health record for Quote Allocation with uuid: ' . $lead->uuid);
+            info('Processed Health record for Quote Allocation with uuid: '.$lead->uuid);
         }
 
         $this->logProcessedRecords($processedRecords, $quoteType);
@@ -163,7 +162,7 @@ class QuoteAllocation extends Command
         $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
 
         foreach ($leads->get() as $lead) {
-            info('Processing Travel record for Quote Allocation with uuid: ' . $lead->uuid);
+            info('Processing Travel record for Quote Allocation with uuid: '.$lead->uuid);
 
             // Only apply teamId if the payment status is AUTHORIZED
             $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;
@@ -171,7 +170,7 @@ class QuoteAllocation extends Command
             $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid, $currentTeamId);
             $allocationStrategy->executeSteps();
             $processedRecords++;
-            info('Processed Travel record for Quote Allocation with uuid: ' . $lead->uuid);
+            info('Processed Travel record for Quote Allocation with uuid: '.$lead->uuid);
         }
 
         $this->logProcessedRecords($processedRecords, $quoteType);
@@ -180,7 +179,7 @@ class QuoteAllocation extends Command
     private function logProcessedRecords($processedRecords, $quoteType)
     {
         if ($processedRecords === 0) {
-            info('No records found for ' . QuoteTypeId::getDescription($quoteType));
+            info('No records found for '.QuoteTypeId::getDescription($quoteType));
         }
     }
 
@@ -203,17 +202,17 @@ class QuoteAllocation extends Command
             ->where('quote_type_id', QuoteTypeId::Bike)
             ->take($chunkSize);
 
-        info('For Bike - leads fetch query is : ' . $leads->toSql() . ' with params : ' . json_encode($leads->getBindings()));
+        info('For Bike - leads fetch query is : '.$leads->toSql().' with params : '.json_encode($leads->getBindings()));
 
         foreach ($leads->get() as $lead) {
             if ($lead->tier_id == TiersIdEnum::TIER_R) {
                 continue;
             }
-            info('Processing record for Bike Quote Allocation with uuid: ' . $lead->uuid);
+            info('Processing record for Bike Quote Allocation with uuid: '.$lead->uuid);
             $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
             $allocationStrategy->executeSteps();
             $processedRecords++;
-            info('Processed record for Bike Quote Allocation with uuid: ' . $lead->uuid);
+            info('Processed record for Bike Quote Allocation with uuid: '.$lead->uuid);
         }
         $this->logProcessedRecords($processedRecords, $quoteType);
     }
