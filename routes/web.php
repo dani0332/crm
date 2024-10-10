@@ -363,7 +363,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('rates', [RatesCoveragesUploadController::class, 'uploadRates'])->name('upload-rates');
         Route::post('upload-rates', [RatesCoveragesUploadController::class, 'rateUploadCreate'])->name('upload-rates-create');
 
-
     });
 
     Route::post('/get-tpl-filter-stats', [DashboardController::class, 'getTPLDashboardStats']);
