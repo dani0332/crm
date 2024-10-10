@@ -15,6 +15,7 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use App\Enums\PermissionsEnum;
 
 class ManagementReport
 {
@@ -28,14 +29,27 @@ class ManagementReport
 
     public function getFilterOptions()
     {
-
+        $user = auth()->user();
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+        if($user->can(PermissionsEnum::DEPARTMENT_MANAGER)) {
+            $user->load('departments.teams');
+            $teamIds = $user->departments->reduce(function ($carry, $department) {
+                return $carry->merge(
+                    $department->teams->pluck('team_id')
+                );
+            }, collect());
 
-        $loginUserId = auth()->user()->id;
+            $teamIds = $teamIds->all();
+            $departments = $user->departments;
+        } else {
+            $teamIds = $this->getUserTeams($user->id)->pluck('id');
+            $departments = DB::table('departments')
+                ->where('is_active', 1)
+                ->orderBy('name')
+                ->get();
+        }
 
-        $teamIds = $this->getUserTeams($loginUserId);
-
-        $teams = Team::whereIn('id', $teamIds->pluck('id'))
+        $teams = Team::whereIn('id', $teamIds)
             ->select('name', 'id')
             ->orderBy('name')
             ->where('is_active', 1)
@@ -67,11 +81,6 @@ class ManagementReport
             ->map(fn ($users) => $users->name)
             ->toArray();
 
-        $departments = DB::table('departments')
-            ->where('is_active', 1)
-            ->orderBy('name')
-            ->get();
-
         return [
             'maxDays' => $maxDays,
             'leadSources' => $leadSources,
@@ -97,7 +106,16 @@ class ManagementReport
             }
         }
 
-        $query = $this->filterTeams($query, $request['teams'] ?? [], $isSSR);
+        $teams = $request['teams'] ?? [];
+        $user = auth()->user();
+        if ($user->can(PermissionsEnum::DEPARTMENT_MANAGER) && empty($teams)) {
+            $user->load('departments.teams');
+            $teamIds = $user->departments->flatMap(function ($department) {
+                return $department->teams->pluck('team_id');
+            });
+            $teams = $teamIds->isEmpty() ? [] : $teamIds->all();
+        }
+        $query = $this->filterTeams($query, $teams, $isSSR);
 
         if (isset($request['subTeams']) && ! empty($request['subTeams'])) {
             $query->whereIn('u.sub_team_id', $request['subTeams']);
@@ -114,9 +132,15 @@ class ManagementReport
             $query->whereIn('personal_quotes.source', $request['leadSources']);
         }
 
-        if (! empty($request['department_id'])) {
-            $department = is_array($request['department_id']) ? $request['department_id'] : [$request['department_id']];
-            $query->whereIn('u.department_id', $department);
+        $departments = $request['department_id'] ?? [];
+        $departments = is_array($departments) ? $request['department_id'] : [$departments];
+        $user = auth()->user();
+        if ($user->can(PermissionsEnum::DEPARTMENT_MANAGER) && empty($departments)) {
+            $departments = $user->departments->pluck('id');
+        }
+
+        if (! empty($departments) || $user->can(PermissionsEnum::DEPARTMENT_MANAGER)) {    
+            $query->whereIn('u.department_id', $departments);
         }
 
         if (isset($request['includeCancelledPolicies']) && ! empty($request['includeCancelledPolicies']) && $request['includeCancelledPolicies'] == 'No') {
@@ -232,15 +256,14 @@ class ManagementReport
         }
 
         if (! $isSSR) {
-            if (! empty($teams) && count($teams) > 0) {
-                $value = $teams;
-                $query->whereIn('t.id', $value);
+            if ((! empty($teams) && count($teams) > 0) || auth()->user()->can(PermissionsEnum::DEPARTMENT_MANAGER)) {
+                $query->whereIn('t.id', $teams);
             }
 
             return $query;
         }
 
-        if (! empty($teams) && count($teams) > 0) {
+        if ((! empty($teams) && count($teams) > 0) || auth()->user()->can(PermissionsEnum::DEPARTMENT_MANAGER)) {
             $query->whereIn('u.id', function ($query) use ($teams) {
                 $query->select('user_team.user_id')
                     ->from('user_team')

@@ -12,6 +12,7 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Enums\PermissionsEnum;
 
 class InstallmentReportService extends ManagementReport
 {
@@ -130,7 +131,7 @@ class InstallmentReportService extends ManagementReport
 
     protected function filterTeams($query, $teamIds, $isSSR = false)
     {
-        if (! empty($teamIds)) {
+        if (! empty($teamIds) || auth()->user()->can(PermissionsEnum::DEPARTMENT_MANAGER)) {
             $userIds = $this->getUsersByTeamIds($teamIds)->pluck('id')->toArray();
             $query->whereIn('personal_quotes.advisor_id', $userIds);
         }
