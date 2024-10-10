@@ -109,8 +109,9 @@ class ApiController extends Controller
 
     public function logFollowUpEvent(EmailEventsRequest $request)
     {
-            $response = app(EmailStatusService::class)->addBirdEmailStatus($request);
-            return apiResponse([], Response::HTTP_OK, $response->message);
+        $response = app(EmailStatusService::class)->addBirdEmailStatus($request);
+
+        return apiResponse([], Response::HTTP_OK, $response->message);
     }
 
     public function stopFollowUpEvent()
