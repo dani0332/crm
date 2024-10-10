@@ -27,7 +27,7 @@ class SageProcessesMarkFailedCommand extends Command
      *
      * @var string
      */
-    protected $description = 'update sage process marked failed have are not update after 5 minutes';
+    protected $description = 'Mark the Sage process as failed, as it has been stuck in processing status for the last five minutes';
 
     /**
      * Execute the console command.
@@ -35,10 +35,12 @@ class SageProcessesMarkFailedCommand extends Command
     public function handle()
     {
         info('cmd:SageProcessesMarkFailedCommand Started');
-        $fiveMinutesAgo = Carbon::now()->subMinutes(5);
 
+        $fiveMinutesAgo = Carbon::now()->subMinutes(5);
         $sageProcesses = SageProcess::where('updated_at', '<', $fiveMinutesAgo)->where('status', SageEnum::SAGE_PROCESS_PROCESSING_STATUS)->get();
+        
         info('cmd:SageProcessesMarkFailedCommand Sage processes to update to failed status.', ['updated before' => $fiveMinutesAgo, 'Sage Processes Count' => $sageProcesses->count()]);
+        
         foreach ($sageProcesses as $sageProcess) {
 
             (new SageApiService)->updateSageProcessStatus($sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS);
