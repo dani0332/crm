@@ -305,7 +305,7 @@ trait GenericQueriesAllLobs
             $bookPolicyDetails['text'] = 'Book Policy';
         }
         info($infoMessage);
-        info('Quote Code: '.$record->code.' Book Policy Details: ', $bookPolicyDetails);
+        info('Quote Code: '.$record->code.' Policy Booking Details: ', $bookPolicyDetails);
 
         return $bookPolicyDetails;
     }
@@ -503,7 +503,7 @@ trait GenericQueriesAllLobs
      */
     private function isFilledPolicyDetails($type, $quote)
     {
-        info('Quote Code: '.$quote->code.' Logging filled policy details ', [
+        info('Quote Code: '.$quote->code.' is Policy Details Filled ', [
             'policy_number' => $quote->policy_number,
             'policy_issuance_date' => $quote->policy_issuance_date,
             'policy_start_date' => $quote->policy_start_date,
@@ -862,5 +862,21 @@ trait GenericQueriesAllLobs
         }
 
         return null;
+    }
+
+    public function removeStaleFromLead($lead_status_id)
+    {
+        $skipStatus = [
+            QuoteStatusEnum::TransactionApproved,
+            QuoteStatusEnum::PolicyDocumentsPending,
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued,
+        ];
+
+        return in_array($lead_status_id, $skipStatus);
     }
 }

@@ -65,6 +65,7 @@ const filters = reactive({
 });
 
 async function fetchData() {
+  if (!filters.range) return;
   let response = await axios.get(
     `/get-recent-daily-stats?range=${filters.range}&teamFilter[]=${filters.teamFilter}`,
   );
@@ -290,6 +291,8 @@ onUnmounted(() => (isActive.value = false));
         multi-calendars
         size="sm"
         v-model="filters.range"
+        :max-range="30"
+        :maxDate="new Date()"
         model-type="yyyy-MM-dd"
         @update:modelValue="fetchData()"
       />

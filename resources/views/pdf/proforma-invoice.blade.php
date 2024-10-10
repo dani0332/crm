@@ -394,9 +394,10 @@
 
     if($isRequestFromSendUpdateLogPage){
         $sendUpdateLog = $proformaPaymentRequest->sendUpdateLog;
-        $subTotal =  $sendUpdateLog->price_with_vat ?? $sendUpdateLog->price_without_vat;
-        $totalAmount =  $proformaPaymentRequest->total_price;
-        $vat =  $sendUpdateLog->price_with_vat ? $totalAmount - $subTotal : 0; // if price with vat then vat = total - subTotal else 0
+        $subTotal =  $proformaPaymentRequest->price_vat_applicable;
+        $vat =  $proformaPaymentRequest->price_vat;
+        $totalAmount =   $subTotal + $vat;
+
     }else{
 
         if(explode('-', $quote->code)[0] == QuoteTypeShortCode::CAR){
@@ -580,7 +581,11 @@
             <tr>
 
                 <td class="customer">
-                    {{ $customerName }} </br>
+                    {{--   temp code to be removed in next deployment --}}
+                    @if($quote->code != 'BUS-AD8GZJ6Y')
+                        {{ $customerName }} </br>
+                    @endif
+
                 </td>
 
                 <th class="date">
