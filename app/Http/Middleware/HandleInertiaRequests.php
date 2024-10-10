@@ -320,7 +320,28 @@ class HandleInertiaRequests extends Middleware
                     );
             });
         }
-
+        $nav = $nav->add('Upload Rates & Coverages', '', function (Section $section) {
+            $section
+                ->addIf(
+                    'true',
+                    'Health',
+                    route('upload-rates'),
+                    fn ($s) => $s
+                        ->attributes(['icon' => 'health'])
+                        ->addIf(
+                            'true',
+                            'Rates',
+                            route('upload-rates'),
+                            fn ($s) => $s->attributes(['icon' => 'health'])
+                        )
+                        ->addIf(
+                            'true',
+                            'Coverages',
+                            route('upload-coverages'),
+                            fn ($s) => $s->attributes(['icon' => 'health'])
+                        ),
+                );
+        });
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::GMQuotesList,
             PermissionsEnum::CorpLineQuotesList,

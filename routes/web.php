@@ -29,6 +29,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MembersDetailController;
 use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\QuoteDocumentController;
+use App\Http\Controllers\RatesCoveragesUploadController;
 use App\Http\Controllers\RawQueryController;
 use App\Http\Controllers\ReasonController;
 use App\Http\Controllers\RenewalBatchController;
@@ -354,6 +355,15 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('uploaded-leads/{id}/validation-passed', [RenewalsUploadController::class, 'validationPassed']);
         Route::get('uploaded-leads/{id}/validation-passed/quote-redirect/{leadId}', [RenewalsUploadController::class, 'viewQuoteRedirect'])->name('viewQuoteRedirect');
         Route::post('upload-process', [RenewalsUploadController::class, 'renewalsUploadProcess']);
+    });
+
+    Route::group(['prefix' => 'rates-coverages'], function () {
+        Route::get('coverages', [RatesCoveragesUploadController::class, 'uploadCoverages'])->name('upload-coverages');
+        Route::post('upload-coverages', [RatesCoveragesUploadController::class, 'coveragesUploadCreate'])->name('upload-coverages-create');
+        Route::get('rates', [RatesCoveragesUploadController::class, 'uploadRates'])->name('upload-rates');
+        Route::post('upload-rates', [RatesCoveragesUploadController::class, 'rateUploadCreate'])->name('upload-rates-create');
+
+
     });
 
     Route::post('/get-tpl-filter-stats', [DashboardController::class, 'getTPLDashboardStats']);
