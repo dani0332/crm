@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Models\QuoteStatusLog;
 use App\Models\SageProcess;
 use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
@@ -49,15 +50,26 @@ class SageProcessesMarkFailedCommand extends Command
 
             if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST) {
                 $quote = $this->getQuoteObject($request->model_type, $sageProcess->model_id);
+
+                $previousQuoteStatusId = $quote->quote_status_id;
+                $newQuoteStatusId = QuoteStatusEnum::POLICY_BOOKING_FAILED;
+
                 $quote->update([
-                    'quote_status_id' => QuoteStatusEnum::POLICY_BOOKING_FAILED,
+                    'quote_status_id' => $newQuoteStatusId,
                     'quote_status_date' => now(),
+                ]);
+
+                QuoteStatusLog::create([
+                    'quote_type_id' => $sageRequest->quoteTypeId,
+                    'quote_request_id' => $quote->id,
+                    'current_quote_status_id' => $newQuoteStatusId,
+                    'previous_quote_status_id' => $previousQuoteStatusId,
                 ]);
                 info('cmd:SageProcessesMarkFailedCommand : updated quote status to ', ['Quote Code' => $quote->code, 'quote_status_id' => QuoteStatusEnum::POLICY_BOOKING_FAILED]);
             } elseif ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_SEND_UPDATE_REQUEST) {
                 $model = $sageProcess->model;
                 $model->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED]);
-                info('cmd:SageProcessesMarkFailedCommand : updated SendUpdate status to ', ['Send Update ID' => $model->id, 'status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED]);
+                info('cmd:SageProcessesMarkFailedCommand : updated SendUpdate status to ', ['Send Update Code' => $model->code, 'status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED]);
             }
         }
 
