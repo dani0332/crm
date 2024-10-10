@@ -42,7 +42,7 @@ class SICFollowupEmailJob implements ShouldQueue
             'quoteType' => $this->quoteType,
         ]);
 
-        $this->quoteType = $this->quoteType ?: QuoteTypes::CAR;
+        $this->quoteType = $this->quoteType ?: QuoteTypes::TRAVEL;
 
         $lead = $this->quoteType?->model()::where('uuid', $this->uuid)->first();
         if ($lead) {
@@ -54,32 +54,11 @@ class SICFollowupEmailJob implements ShouldQueue
         }
 
         if (empty($lead->advisor_id)) {
-            if ($this->quoteType === QuoteTypes::CAR) {
-                $sendEmailCustomerService->sendSICFollowupEmail($lead, $this->quoteType);
-                $this->sendWhatsAppMessage();
-            } else {
+            if ($this->quoteType === QuoteTypes::TRAVEL) {
                 $sendEmailCustomerService->sendSICDedicatedEmail($lead, $this->quoteType);
             }
         } else {
             info('SICFollowupEmailJob - Lead Advisor Available - Ref ID: '.$lead->uuid.'- Time: '.now());
-        }
-    }
-
-    private function sendWhatsAppMessage()
-    {
-        try {
-            $response = Ken::request('/send-sic-dedicated-wa', 'post', [
-                'quoteUID' => $this->uuid,
-                'quoteTypeId' => $this->quoteType?->id(),
-            ]);
-            info('SICFollowupEmailJob - '.now().' - sendWhatsAppMessage: response from ken| '.json_encode($response));
-            if ($response) {
-                info('Whatsapp message sent successfully. UUID: '.$this->uuid.' | Time: '.now());
-            } else {
-                info('invalid response from ken| UUID: '.$this->uuid.' | Time: '.now());
-            }
-        } catch (\Throwable $th) {
-            Log::error('SICFollowupEmailJob - Error: '.$th->getMessage().' - UUID: '.$this->uuid.' - Time: '.now());
         }
     }
 }
