@@ -706,20 +706,20 @@ class SendUpdateLogService
 
         $payment = Payment::with('paymentSplits')->where(['send_update_log_id' => $sendUpdateRequest->sendUpdateId])->first();
         if ($payment) {
-            info('fn:preparedDetailsForEndorsement - Fetching Payment details from Send Update. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            info('fn:preparedDetailsForEndorsement - Fetching Payment details from Send Update. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
 
             return ['payment' => $payment, 'splitPayments' => $payment?->paymentSplits];
         } else {
             $checkInslyMigratedLead = $this->checkInslyMigratedLead($sendUpdateRequest, $quote);
 
             if ($checkInslyMigratedLead) {
-                info('fn:preparedDetailsForEndorsement - Creating payment details based on the send update - The lead originated from Insly. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+                info('fn:preparedDetailsForEndorsement - Creating payment details based on the send update - The lead originated from Insly. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
                 $payment = new Payment;
                 $splitPayments = collect([new PaymentSplits]);
 
             } else {
                 // If we don't have payment details then we fetched it from the Main Lead
-                info('fn:preparedDetailsForEndorsement - Fetching Payment details from Main Lead. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+                info('fn:preparedDetailsForEndorsement - Fetching Payment details from Main Lead. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
                 $quote->load(['payments' => function ($query) {
                     $query->whereNull('send_update_log_id');
                 }, 'payments.paymentSplits']);
@@ -786,11 +786,11 @@ class SendUpdateLogService
     public function preparedDataForEndorsement($sendUpdateRequest)
     {
         $sendUpdateLog = SendUpdateLog::with('category', 'sageApiLogs')->find($sendUpdateRequest->sendUpdateId);
-        info('fn:preparedDataForEndorsement - Preparing Data for Endorsement - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+        info('fn:preparedDataForEndorsement - Preparing Data for Endorsement - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
 
         $skipCategories = [SendUpdateLogStatusEnum::EN];
         if (in_array($sendUpdateLog?->category?->code, $skipCategories)) {
-            info('fn:preparedDataForEndorsement - Skipping Sage APIs for Endorsement - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            info('fn:preparedDataForEndorsement - Skipping Sage APIs for Endorsement - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
 
             return ['status' => true, 'skipSageCalls' => true, 'message' => 'Skipping Sage APIs for Non Financial Endorsement'];
         }
@@ -801,7 +801,7 @@ class SendUpdateLogService
 
         $paymentInsurerInvoiceNumber = ($preparedDetailsForEndorsement['payment']->insurer_tax_number ?? $preparedDetailsForEndorsement['payment']->insurer_commmission_invoice_number) ?? null;
         if (empty($paymentInsurerInvoiceNumber)) {
-            info('fn:preparedDataForEndorsement - Payment not successfully updated - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            info('fn:preparedDataForEndorsement - Payment not successfully updated - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
 
             return ['status' => false, 'message' => 'Payment not successfully updated'];
         }
@@ -820,7 +820,7 @@ class SendUpdateLogService
             'booking_filled_by' => $sendUpdateLog->booking_filled_by,
         ];
 
-        info('fn:preparedDataForEndorsement - Preparing Sage Payload for Endorsement - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+        info('fn:preparedDataForEndorsement - Preparing Sage Payload for Endorsement - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
         $sageRequestPayload = SagePayloadFactory::sagePayLoad($sendUpdateRequest->quoteType, $preparedDetailsForEndorsement['payment'], (object) $sendUpdateLogDetails, $preparedDetailsForEndorsement['splitPayments']);
         $sageRequestPayload->customerId = app(SageApiService::class)->verifySageCustomer(
             $quoteDetails->customer_id,
@@ -831,7 +831,7 @@ class SendUpdateLogService
 
         $checkRequiredSageValidations = app(SageApiService::class)->checkRequiredSageIds($sageRequestPayload);
         if (! $checkRequiredSageValidations['status']) {
-            info('fn:preparedDataForEndorsement - Sage Validation Failed - '.$checkRequiredSageValidations['message'].' - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            info('fn:preparedDataForEndorsement - Sage Validation Failed - '.$checkRequiredSageValidations['message'].' - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
 
             return $checkRequiredSageValidations;
         }

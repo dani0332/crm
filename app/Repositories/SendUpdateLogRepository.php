@@ -255,7 +255,7 @@ class SendUpdateLogRepository extends BaseRepository
     public function fetchSendUpdateToCustomer($request)
     {
         $sendUpdateLog = $this->find($request['sendUpdateId']);
-        info('fn:SendUpdateToCustomer - Process Start - Send Update UUID: '.$sendUpdateLog->uuid);
+        info('fn:SendUpdateToCustomer - Process Start - SendUpdateCode: '.$sendUpdateLog->code);
 
         try {
             if (isset($request['action']) && $request['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
@@ -278,10 +278,10 @@ class SendUpdateLogRepository extends BaseRepository
             if ($request['quoteType'] == quoteTypeCode::Car && $sendUpdateLog->category->code == SendUpdateLogStatusEnum::EN) {
                 $quote = CarQuote::where('uuid', $sendUpdateLog->quote_uuid)->first();
                 if (! empty($sendUpdateLog->emirates_id)) {
-                    info('fn:SendUpdateToCustomer - Updating Emirates ID - Send Update UUID: '.$sendUpdateLog->uuid.' - Emirates ID: '.$sendUpdateLog->emirates_id);
+                    info('fn:SendUpdateToCustomer - Updating Emirates ID - SendUpdateCode: '.$sendUpdateLog->code.' - Emirates ID: '.$sendUpdateLog->emirates_id);
                     $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_id]);
                 } elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0) {
-                    info('fn:SendUpdateToCustomer - Updating Seating Capacity - Send Update UUID: '.$sendUpdateLog->uuid.' - Seating Capacity: '.$sendUpdateLog->seating_capacity);
+                    info('fn:SendUpdateToCustomer - Updating Seating Capacity - SendUpdateCode: '.$sendUpdateLog->code.' - Seating Capacity: '.$sendUpdateLog->seating_capacity);
                     $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
                 }
             }
@@ -293,9 +293,9 @@ class SendUpdateLogRepository extends BaseRepository
             }
 
             SendUpdateToCustomerJob::dispatch($sendUpdateLog, $request)->onQueue('insly');
-            info('fn:SendUpdateToCustomer - Process End - Send Update UUID: '.$sendUpdateLog->uuid.' - Status updating to '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
+            info('fn:SendUpdateToCustomer - Process End - SendUpdateCode: '.$sendUpdateLog->code.' - Status updating to '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
         } catch (\Exception $ex) {
-            logger()->error('fn:SendUpdateToCustomer - Failed - Send Update UUID: '.$sendUpdateLog->uuid.' - Error : '.json_encode($ex->getMessage()));
+            logger()->error('fn:SendUpdateToCustomer - Failed - SendUpdateCode: '.$sendUpdateLog->code.' - Error : '.json_encode($ex->getMessage()));
             $response = ['status' => 500, 'message' => 'Something went wrong, please try again later'];
         }
 
@@ -340,7 +340,7 @@ class SendUpdateLogRepository extends BaseRepository
             $payment = Payment::where('send_update_log_id', $data['id'])->first();
             if ($payment) {
                 $sendUpdateLogService = app(SendUpdateLogService::class);
-                info('Send update - Updating Booking details and Commission Schedule in Payments - SendUpdateUUID: '.$sendUpdate->uuid);
+                info('Send update - Updating Booking details and Commission Schedule in Payments - SendUpdateCode: '.$sendUpdate->code);
                 $sendUpdateLogService->sendUpdatePriceAndDiscount($sendUpdate, $payment);
                 $sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate, true);
                 app(SplitPaymentService::class)->updateCommissionSchedule($payment);
@@ -350,7 +350,7 @@ class SendUpdateLogRepository extends BaseRepository
             $result = (object) [
                 'message' => $ex->getMessage(),
             ];
-            info('Unable to save Booking Details - SendUpdateUUID: '.$sendUpdate->uuid.' - Error: '.$ex->getMessage());
+            info('Unable to save Booking Details - SendUpdateCode: '.$sendUpdate->code.' - Error: '.$ex->getMessage());
         }
 
         return $result;
