@@ -121,6 +121,8 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
                     $emailData = new \stdClass;
                     $emailData->planTypes = $response['planTypes'];
+
+                    $emailData->subject = 'Renew your health insurance policy today!'.$healthQuote->code;
                 } else {
 
                     $response = Ken::request('/get-health-quote-plans-order-priority', 'post', [
@@ -161,12 +163,14 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                     $emailData->quotePlanLink = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid;
 
                     $emailData->plans = $plansArray;
-                }
+
                 $emailData->subject = $customerName."'s".' Health Insurance with Alfred '.$healthQuote->code;
+                }
                 $emailData->customerName = $customerName;
                 $emailData->customerEmail = $healthQuote->email;
                 $emailData->templateId = (int) $emailTemplateId;
 
+                $emailData->fromEmail = ApplicationStorageEnums::DTT_HEALTH_FOLLOWUP_FROM_EMAIL;
                 $emailData->tag = 'health-revival-initial-email';
                 $emailData->templateType = 'revivalHealthInitial';
 
