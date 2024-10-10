@@ -60,6 +60,8 @@ const quoteStatusEnum = page.props.quoteStatusEnum;
 const can = permission => useCan(permission);
 const modelClass = 'App\\Models\\HomeQuote';
 
+console.log('SHOW PROPS', page.props);
+
 const countDays = computed(() =>
   useDaysSinceStale(props.quoteRequest?.stale_at),
 );
@@ -1279,7 +1281,7 @@ const onAddUpdate = () => {
             page.props.paymentMethodsEnum.ProformaPaymentRequest,
         )
       "
-      :quoteRequest="quoteRequest"
+      :quoteRequest="quote"
       :paymentStatusEnum="paymentStatusEnum"
       :paymentTooltipEnum="paymentTooltipEnum"
       :paymentMethods="
@@ -1296,7 +1298,7 @@ const onAddUpdate = () => {
       :payments="payments"
       :can="can"
       :isBetaUser="isBetaUser"
-      :quoteRequest="quoteRequest"
+      :quoteRequest="quote"
       :paymentMethods="paymentMethods"
       :insuranceProviders="insuranceProviders"
       :quote="quote"

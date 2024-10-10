@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
@@ -257,14 +258,15 @@ class HomeQuoteRepository extends BaseRepository
         $quoteDocuments = (new QuoteDocumentService)->getQuoteDocuments(QuoteTypes::HOME->value, $quote->id);
         $bookPolicyDetails = $this->bookPolicyPayload($quote, QuoteTypes::HOME->value, $quote->payments, $quoteDocuments);
 
-        @[$documentTypes, $documentTypeCodes] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Home);
+        @[$documentTypes, $paymentDocument] = app(QuoteDocumentService::class)->getDocumentTypes(QuoteTypeId::Home);
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
         $isQuoteDocumentEnabled = app(QuoteDocumentService::class)->isEnabled(QuoteTypes::HOME->value);
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Home);
+        $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
         return [
             'documentTypes' => $documentTypes,
-            'documentTypeCodes' => $documentTypeCodes,
+            'paymentDocument' => $paymentDocument,
             'storageUrl' => storageUrl(),
             'quoteType' => QuoteTypes::HOME,
             'quoteTypeId' => QuoteTypeId::Home,
@@ -293,7 +295,7 @@ class HomeQuoteRepository extends BaseRepository
             'payments' => $quote->payments,
             'insuranceProviders' => InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::HOME->id()),
             'vatPercentage' => ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()?->value ?? 0,
-            // 'isAmlClearedForPayment' => app(CentralService::class)->amlClearedFromLog($quote->id, QuoteTypes::HOME->value),
+            'amlStatusName' => $amlStatusName,
             'leadSource' => LeadSourceEnum::asArray(),
             'quoteNotes' => $quoteNotes,
             'cdnPath' => config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/',
