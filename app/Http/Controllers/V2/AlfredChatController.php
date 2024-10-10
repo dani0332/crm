@@ -18,13 +18,16 @@ use Illuminate\Http\Request;
 
 class AlfredChatController extends Controller
 {
-    public function __construct()
+    private $instantAlfredService;
+    public function __construct(InstantAlfredService $instantAlfredService)
     {
+        $this->instantAlfredService = $instantAlfredService;
+        
         $this->middleware('permission:'.PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS, ['only' => ['logs']]);
 
         $this->middleware('permission:'.PermissionsEnum::DATA_EXTRACTION, ['only' => ['exportChat']]);
 
-        $this->middleware('readonly_db');
+        // $this->middleware('readonly_db');
     }
 
     /**
@@ -32,43 +35,14 @@ class AlfredChatController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(AlfredChatRequest $request)
+    public function chats(AlfredChatRequest $request)
     {
-        if (isset($request->created_at) && $request->created_at != '') {
-            $chat = AlfredChat::where('quote_id', $request->quoteId)
-                ->where('quote_type', $request->quoteType)
-                ->select('quote_id', 'quote_type', 'role', 'msg', 'created_at', 'channel', 'whatsapp_request')
-                ->get();
-        } else {
-            $chat = AlfredChat::raw(function ($collection) use ($request) {
-                return $collection->aggregate([
-                    [
-                        '$match' => [ // $match is a group operator to filter the records just like where clause in SQL
-                            'quote_id' => $request->quoteId,
-                            'quote_type' => $request->quoteType,
-                        ],
-                    ],
-                    [
-                        '$group' => [
-                            '_id' => [ // _id is a group operator to group the records
-                                '$dateToString' => [ // $dateToString is an aggregation operator to convert date to string
-                                    'timezone' => '+04:00',
-                                    'format' => '%Y-%m-%d', // format of the date
-                                    'date' => ['$toDate' => '$created_at'], // $toDate is an aggregation operator to convert string to date
-                                ],
-                            ],
-                            'role' => ['$first' => '$role'], //$first is used to add role field of the first occurrence of the group
-                            'msg' => ['$first' => '$msg'], //$first is used to add msg field  of the first occurrence of the group
-                            'count' => ['$sum' => 1], // $sum is used to count the number of records in the group
-                        ],
-                    ],
-                    [
-                        '$sort' => ['_id' => -1], // Sort by _id (date) in descending order
-                    ],
-                ]);
-            });
-        }
+        $chat = AlfredChat::where('quote_id', $request->quoteId)
+        ->where('quote_type', $request->quoteType)
+        ->select('quote_id', 'quote_type', 'role', 'msg', 'created_at', 'channel', 'whatsapp_request')
+        ->get();
 
+ 
         if ($chat->isEmpty()) {
             return response()->json(['message' => 'No chat available']);
         }
@@ -76,9 +50,9 @@ class AlfredChatController extends Controller
         return response()->json(['data' => $chat]);
     }
 
-    public function logs(Request $request)
+    public function index(Request $request)
     {   
-        $data = app(InstantAlfredService::class)->processSqlChatFilters($request);
+        $data = $this->instantAlfredService->processSqlChatFilters($request);
      
         return inertia('AlfredChat/Index', ['logs' => $data->simplePaginate(15)->withQueryString(),  'leadStatuses' => QuoteStatus::all(), 'batches' => QuoteBatches::all()]);
 
@@ -92,7 +66,7 @@ class AlfredChatController extends Controller
 
             $itemIds = array_column($dataArray, 'uuid');
 
-            $chatPipeline = app(InstantAlfredService::class)->createPipeline($request, $itemIds, 'chat');
+            $chatPipeline = $this->instantAlfredService->createPipeline($request, $itemIds, 'chat');
 
             $mongoResults = AlfredChat::raw(fn ($collection) => $collection->aggregate($chatPipeline))->toArray();
 
@@ -162,10 +136,10 @@ class AlfredChatController extends Controller
 
         switch ($request->report) {
             case InstantChatReportsEnum::CONSOLIDATED_REPORT:
-                return (new InstantChatConsolidatedExport)->download($fileName);
+                return (new InstantChatConsolidatedExport())->download($fileName);
 
             case InstantChatReportsEnum::DETAILED_REPORT:
-                return (new InstantChatDetailedExport)->download($fileName);
+                return (new InstantChatDetailedExport())->download($fileName);
 
             default:
                 abort(400, 'Invalid report type requested.');

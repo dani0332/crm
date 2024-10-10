@@ -126,7 +126,7 @@ function onSubmit() {
   }
 
   filters.page = 1;
-  router.visit(route('instant-alfred.logs'), {
+  router.visit(route('instant-alfred.index'), {
     method: 'get',
     data: useGenerateQueryString(filters),
     preserveState: true,
@@ -137,7 +137,7 @@ function onSubmit() {
 }
 
 function onReset() {
-  router.visit(route('instant-alfred.logs'), {
+  router.visit(route('instant-alfred.index'), {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -172,7 +172,7 @@ const createQueryParams = item => {
 const showChat = item => {
   loader.view = true;
   axios
-    .post('/instant-alfred/get-alfred-chat', {
+    .post('/instant-alfred/chats', {
       ...createQueryParams(item),
     })
     .then(response => {

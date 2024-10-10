@@ -18,6 +18,7 @@ const props = defineProps({
 });
 
 const showChatLogs = ref(false);
+const notification = useToast();
 
 const formatted = date => useDateFormat(date, 'hh:mm:ss A').value;
 const loader = ref(false);
@@ -42,7 +43,7 @@ const chatMessages = ref({
 const getAllChat = () => {
   loader.value = true;
   axios
-    .post('/instant-alfred/get-alfred-chat', {
+    .post('/instant-alfred/chats', {
       quoteId: props.quoteId,
       quoteType: props.quoteType,
     })
@@ -59,15 +60,21 @@ const getAllChat = () => {
 const showChat = item => {
   loader.value = true;
   axios
-    .post('/instant-alfred/get-alfred-chat', {
+    .post('/instant-alfred/chats', {
       quoteId: props.quoteId,
       quoteType: props.quoteType,
-      created_at: item._id,
     })
     .then(response => {
+      if (response.data.message) {
+        loader.value = false;
+        notification.error({
+          title: 'Chat not found',
+          position: 'top',
+        });
+        return;
+      }
       let { data } = { ...response.data };
       loader.value = false;
-      chatMessages.value.created_at = item._id;
       chatMessages.value.data = data;
       chatMessages.value.id = props.quoteType + '-' + props.quoteId;
       showChatLogs.value = true;
@@ -76,10 +83,6 @@ const showChat = item => {
       loader.value = false;
     });
 };
-
-onMounted(async () => {
-  await getAllChat();
-});
 </script>
 <template>
   <div>
@@ -94,26 +97,17 @@ onMounted(async () => {
         </template>
         <template #body>
           <x-divider class="mb-4 mt-1"></x-divider>
-          <DataTable
-            table-class-name="tablefixed compact"
-            :headers="tableHeaders"
-            :items="tableData || []"
-            border-cell
-            hide-rows-per-page
-            hide-footer
-          >
-            <template #item-action="item">
-              <x-button
-                size="xs"
-                color="primary"
-                outlined
-                @click="showChat(item)"
-                :loading="loader"
-              >
-                View
-              </x-button>
-            </template>
-          </DataTable>
+          <div class="text-center py-3">
+            <x-button
+              size="sm"
+              color="primary"
+              outlined
+              @click.prevent="showChat()"
+              :loading="loader"
+            >
+              Load Instant Chat
+            </x-button>
+          </div>
         </template>
       </Collapsible>
 
