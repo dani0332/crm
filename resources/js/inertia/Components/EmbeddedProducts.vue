@@ -256,13 +256,18 @@ const { copy, copied } = useClipboard();
 
 const onCopyText = () => {
   let providerCode = props.quote.plan_provider_code;
-  if (props.modelType.toLowerCase() == page.props.quoteTypeCodeEnum.Bike.toLowerCase()) {
+  if (
+    props.modelType.toLowerCase() ==
+    page.props.quoteTypeCodeEnum.Bike.toLowerCase()
+  ) {
     providerCode = props.quote.car_plan?.insurance_provider?.code;
   }
 
   let paymentLink =
     page.props.epLink +
-    '/' + props.modelType.toLowerCase() + '-insurance/quote/' +
+    '/' +
+    props.modelType.toLowerCase() +
+    '-insurance/quote/' +
     props.quote.uuid +
     '/payment?planId=' +
     props.quote.plan_id +
