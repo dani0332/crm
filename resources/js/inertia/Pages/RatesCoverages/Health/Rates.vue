@@ -42,9 +42,9 @@ function onSubmit(isValid) {
             })
             .catch(error => {
                 contactLoader.value = false;
-                uploadForm.setError(error.response.data.errors);
+                uploadForm.setError(error.response.data.error ||error.response.data.errors.file_name[0]);
                 notification.error({
-                    title: error.response.data.error,
+                    title: error.response.data.error ||error.response.data.errors.file_name[0],
                     position: 'top',
                 });
                 document.getElementById('file_name').value = '';
