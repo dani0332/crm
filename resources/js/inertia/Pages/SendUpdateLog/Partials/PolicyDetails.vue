@@ -90,13 +90,14 @@ const insuranceProvidersOptions = computed(() => {
 
 const providerName = computed(() => {
   let provider;
-  if (props.quote?.insurance_provider_id) {
+  let insuranceProviderId =
+    props.sendUpdateLog?.insurance_provider_id ||
+    props.quote?.insurance_provider_id ||
+    props.quote?.car_plan_provider_id ||
+    null;
+  if (insuranceProviderId) {
     provider = props?.insuranceProviders?.find(
-      provider => provider.id === props.quote?.insurance_provider_id,
-    );
-  } else if (props.quote?.car_plan_provider_id) {
-    provider = props?.insuranceProviders?.find(
-      provider => provider.id === props.quote?.car_plan_provider_id,
+      provider => provider.id === insuranceProviderId,
     );
   } else {
     return null;

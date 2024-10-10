@@ -13,8 +13,9 @@ use App\Models\HealthQuote;
 use App\Services\HealthQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
+use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
 
-class HealthQuoteObserver
+class HealthQuoteObserver implements ShouldHandleEventsAfterCommit
 {
     use GenericQueriesAllLobs, PersonalQuoteSyncTrait;
 
@@ -47,7 +48,10 @@ class HealthQuoteObserver
         }
 
         if (isset($dirty['quote_status_id']) && $this->removeStaleFromLead($healthQuote->quote_status_id)) {
-            $healthQuote->update(['stale_at' => null]);
+            HealthQuote::withoutEvents(function () use ($healthQuote) {
+                $healthQuote->update(['stale_at' => null]);
+            });
+            $dirty = [...$dirty, 'stale_at' => $healthQuote->stale_at];
         }
 
         $this->syncQuote($healthQuote, $dirty);
@@ -57,7 +61,7 @@ class HealthQuoteObserver
         }
 
         if (
-            $healthQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             in_array($healthQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Health, 'quoteUID' => $healthQuote->uuid]);
