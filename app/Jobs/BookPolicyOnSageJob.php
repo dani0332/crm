@@ -18,8 +18,8 @@ class BookPolicyOnSageJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    // 200 seconds
-    public $timeout = 70;
+    public $tries = 1;
+    public $timeout = 40;
     private $sageRequest;
     private $quote;
     private $request;
@@ -82,7 +82,8 @@ class BookPolicyOnSageJob implements ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->quote->code))->dontRelease()];
+        // release the WithoutOverlapping lock 4 minutes after the job has started processing
+        return [(new WithoutOverlapping($this->quote->code))->expireAfter((60 * 4))];
     }
 
 }
