@@ -38,9 +38,9 @@ class SageProcessesMarkFailedCommand extends Command
 
         $fiveMinutesAgo = Carbon::now()->subMinutes(5);
         $sageProcesses = SageProcess::where('updated_at', '<', $fiveMinutesAgo)->where('status', SageEnum::SAGE_PROCESS_PROCESSING_STATUS)->get();
-        
+
         info('cmd:SageProcessesMarkFailedCommand Sage processes to update to failed status.', ['updated before' => $fiveMinutesAgo, 'Sage Processes Count' => $sageProcesses->count()]);
-        
+
         foreach ($sageProcesses as $sageProcess) {
 
             (new SageApiService)->updateSageProcessStatus($sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS);
