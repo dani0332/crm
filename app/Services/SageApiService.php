@@ -240,11 +240,11 @@ class SageApiService
         info('fn bookStraightEndorsementOnSage - Payment frequency : '.$preparedData['payment']->frequency);
 
         $extraDetails = ['sage_request_type' => ($preparedData['payment']->frequency == PaymentFrequency::UPFRONT) ? SageEnum::SRT_CREATE_AR_PREM_COMM_INV : SageEnum::SRT_CREATE_AR_SPPAY_INV];
+        $extraDetails['extras']['option_id'] = $preparedData['sendUpdateLog']?->option?->code ?? null;
         $extraDetails['userId'] = $sageRequestPayload->userId ?? null;
 
         if (isset($preparedData['mainLeadDetails'])) {
             $extraDetails['mainLeadDetails'] = $preparedData['mainLeadDetails'];
-            $extraDetails['extras']['option_id'] = $preparedData['sendUpdateLog']?->option?->code ?? null;
         }
 
         //Create AR Commission and Premium Invoice
@@ -337,7 +337,6 @@ class SageApiService
                 $extraDetails['sageReversalInvoice'] = json_encode($getReversalInvoiceDetails['response']);
 
                 if (in_array($reverseSageRequestType, [SageEnum::SRT_CREATE_AR_PREM_COMM_INV, SageEnum::SRT_CREATE_AR_SPPAY_INV])) {
-                    $extraDetails['cpdEndorsement'] = true;
                     // Create AR Commission and Premium Invoice (Reversal and Correction)
                     $createARInvoicePremAndComm = $this->createARInvoicePremAndComm([$sageRequestPayload, $preparedData['sendUpdateLog'], $preparedData['payment'], $preparedData['splitPayments'], $sageLogsArray, $extraDetails]);
                     if (! $createARInvoicePremAndComm['status']) {
@@ -353,13 +352,22 @@ class SageApiService
                     }
                 }
 
-                if ($isOnlyDiscountReversal && $cpdInvoiceType == SageEnum::SCT_REVERSAL) {
-                    // Create AR Discount Invoice
-                    $extraDetails['sage_request_type'] = SageEnum::SRT_CREATE_AR_DISC_INV;
-                    $extraDetails['is_reversal_discount'] = true;
-                    $createARInvoiceDis = $this->createARInvoiceDis([$sageRequestPayload, $preparedData['sendUpdateLog'], $sageLogsArray, $extraDetails]);
-                    if (! $createARInvoiceDis['status']) {
-                        return $createARInvoiceDis;
+                if ($reverseSageRequestType == SageEnum::SRT_CREATE_AR_DISC_INV) {
+                    if ($cpdInvoiceType == SageEnum::SCT_REVERSAL && $isOnlyDiscountReversal) {
+                        // Create AR Discount Invoice (Reversal)
+                        $extraDetails['is_reversal_discount'] = true;
+                        $createARInvoiceDis = $this->createARInvoiceDis([$sageRequestPayload, $preparedData['sendUpdateLog'], $sageLogsArray, $extraDetails]);
+                        if (! $createARInvoiceDis['status']) {
+                            return $createARInvoiceDis;
+                        }
+                    }
+
+                    if ($cpdInvoiceType == SageEnum::SCT_CORRECTION && ! $isOnlyDiscountReversal) {
+                        // Create AR Discount Invoice (Correction)
+                        $createARInvoiceDis = $this->createARInvoiceDis([$sageRequestPayload, $preparedData['sendUpdateLog'], $sageLogsArray, $extraDetails]);
+                        if (! $createARInvoiceDis['status']) {
+                            return $createARInvoiceDis;
+                        }
                     }
                 }
             }
@@ -369,6 +377,7 @@ class SageApiService
             // Create AR Discount Invoice
             $extraDetails['sage_entry_type'] = SageEnum::SCT_STRAIGHT;
             $extraDetails['sage_request_type'] = SageEnum::SRT_CREATE_AR_DISC_INV;
+            $extraDetails['is_only_correction'] = true;
             unset($extraDetails['sageReversalInvoice']);
             $createARInvoiceDis = $this->createARInvoiceDis([$sageRequestPayload, $preparedData['sendUpdateLog'], $sageLogsArray, $extraDetails]);
             if (! $createARInvoiceDis['status']) {
@@ -442,7 +451,7 @@ class SageApiService
 
             return $this->logErrorAndReturn([$sendUpdateLog, $message, $errorMessage, $payLoadOptions, $sageResponse, $step, 23, SageEnum::STATUS_FAIL, $userId]);
         } else {
-            info('SAGE API : '.$sendUpdateLog->code.' : getInvoiceDetails completed successfully');
+            info('SAGE API : '.$sendUpdateLog->code.' : getInvoiceDetails completed successfully. Reversal Invoice Batch number: '.$sageResponse['BatchNumber'] ?? '');
             if ($isLiveApiCallStep2) {
                 $payLoadOptions['entry_type'] = $sageEntryType;
                 $payLoadOptions['sage_request_type'] = $sageRequestType;
@@ -1283,6 +1292,7 @@ class SageApiService
         [$sageRequest, $quote, $sageLogArray, $extraDetails] = $sageRequestDataArray;
         $returnMessage = ['status' => false, 'message' => null, 'error' => null];
         $isReversalDiscount = isset($extraDetails['is_reversal_discount']) ?? false;
+        $isOnlyCorrection = isset($extraDetails['is_only_correction']) ?? false;
         $userId = $extraDetails['userId'] ?? null;
         $isDiscountApplied = $sageRequest->discount > 0;
 
@@ -1303,17 +1313,22 @@ class SageApiService
                 break;
         }
 
+        if ($isOnlyCorrection) {
+            $totalSteps = 22;
+            $stepsMapping = ['step_1' => 17, 'step_2' => 18, 'step_3' => 19];
+        }
+
         /* createARInvoiceDis */
         if ($isDiscountApplied || $isReversalDiscount) {
             info('########## Start createARInvoiceDis for : '.$quote->code.' ##########');
             $isLiveApiCallStep10 = true;
             $createARInvoiceDis = SagePayloadFactory::createARInvoiceDis(request: $sageRequest, type: $sageEntryType, reversalDetails: $reverseInvoiceDetails, extras: $extraDetails);
             if (isset($sageLogArray[$stepsMapping['step_1']]) && $sageLogArray[$stepsMapping['step_1']]['status'] == SageEnum::STATUS_SUCCESS) {
-                info('SAGE API:  createARInvoiceDis  Sent Already for '.$quote->code);
+                info('SAGE API:  createARInvoiceDis Sent Already for '.$quote->code);
                 $isLiveApiCallStep10 = false;
                 $postedResponse = json_decode($sageLogArray[$stepsMapping['step_1']]['response'], true);
             } else {
-                info('SAGE API :  Send createARInvoiceDis  for '.$quote->code);
+                info('SAGE API : Send createARInvoiceDis for '.$quote->code);
                 $resp = $this->postToSage300($createARInvoiceDis['endPoint'], $createARInvoiceDis['payload']);
                 $postedResponse = json_decode($resp, true);
             }
