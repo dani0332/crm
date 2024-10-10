@@ -292,7 +292,7 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchSendDocumentsByLead($leadId, $modelType, $epId = null)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        if (!in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
             return false;
         }
 
@@ -385,7 +385,7 @@ class EmbeddedProductRepository extends BaseRepository
 
         if ($isAlfredProtect) {
             return $this->sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData);
-        } else if(in_array($short_code, [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX])) {
+        } elseif (in_array($short_code, [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX])) {
             return $this->sendMedexEmail($short_code, $quoteObject, $certificate_number, $premium, $capturedAt, $attachments, $advisorData, $ep);
         }
     }
@@ -548,15 +548,15 @@ class EmbeddedProductRepository extends BaseRepository
         $certificatesConfig = config('embedded-products.certificates');
         if (isset($certificatesConfig[$short_code])) {
             $viewFile = $certificatesConfig[$short_code]['view_file'];
-            if($short_code === EmbeddedProductEnum::MDX) {
+            if ($short_code === EmbeddedProductEnum::MDX) {
                 if (
-                    $epMdxV3From && !empty($capturedAt)
+                    $epMdxV3From && ! empty($capturedAt)
                     && Carbon::parse($capturedAt)->gte(Carbon::parse($epMdxV3From->value))
                 ) {
                     $viewFile = $certificatesConfig[$short_code]['view_file_v3'];
 
                 } elseif (
-                    $epMdxV2From && !empty($capturedAt)
+                    $epMdxV2From && ! empty($capturedAt)
                     && Carbon::parse($capturedAt)->gte(Carbon::parse($epMdxV2From->value))
                 ) {
                     $viewFile = $certificatesConfig[$short_code]['view_file_v2'];
@@ -723,7 +723,7 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchCapturePayment($leadId, $modelType)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        if (!in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
             return false;
         }
 

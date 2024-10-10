@@ -131,7 +131,7 @@ class EmbeddedProduct
         $item->lob = quoteTypeCode::getName($quoteObject::class) ?? '';
         $carMake = $quoteObject->carMake->text ?? '';
         $carModel = $quoteObject->carModel->text ?? '';
-        $item->vehicle = $carMake . ' ' . $carModel;
+        $item->vehicle = $carMake.' '.$carModel;
 
         return $item;
     }

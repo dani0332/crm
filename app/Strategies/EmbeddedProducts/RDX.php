@@ -25,7 +25,7 @@ class RDX extends MDX
         $item->lob = quoteTypeCode::Bike;
         $make = $quoteObject->bikeQuote->bikeMake->text ?? '';
         $model = $quoteObject->bikeQuote->bikeModel->text ?? '';
-        $item->vehicle = $make . ' ' . $model;
+        $item->vehicle = $make.' '.$model;
 
         return $item;
     }
