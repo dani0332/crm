@@ -27,27 +27,25 @@ class SageProcessesMarkFailedCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Mark the Sage process as failed, as it has been stuck in processing status for the last five minutes';
+    protected $description = 'mark sage processes as failed if they are processing for more than 5 minutes based on updated_at';
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
-        info('cmd:SageProcessesMarkFailedCommand Started');
+        info('cmd:SageProcessesMarkFailedCommand : Started');
 
         $fiveMinutesAgo = Carbon::now()->subMinutes(5);
         $sageProcesses = SageProcess::where('updated_at', '<', $fiveMinutesAgo)->where('status', SageEnum::SAGE_PROCESS_PROCESSING_STATUS)->get();
 
-        info('cmd:SageProcessesMarkFailedCommand Sage processes to update to failed status.', ['updated before' => $fiveMinutesAgo, 'Sage Processes Count' => $sageProcesses->count()]);
-
         foreach ($sageProcesses as $sageProcess) {
 
-            (new SageApiService)->updateSageProcessStatus($sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS);
+            (new SageApiService)->updateSageProcessStatus($sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, null, 'cmd:SageProcessesMarkFailedCommand');
 
             $sageProcessRequest = json_decode($sageProcess->request);
             $sageRequest = $sageProcessRequest->sagePayload;
-            $request = $sageProcessRequest->request;
+            $request = $sageProcessRequest->requestPayload;
 
             if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST) {
                 $quote = $this->getQuoteObject($request->model_type, $sageProcess->model_id);
@@ -55,15 +53,16 @@ class SageProcessesMarkFailedCommand extends Command
                     'quote_status_id' => QuoteStatusEnum::POLICY_BOOKING_FAILED,
                     'quote_status_date' => now(),
                 ]);
-                info('cmd:SageProcessesMarkFailedCommand updated quote status to failed', ['Quote Code' => $quote->code]);
+                info('cmd:SageProcessesMarkFailedCommand : updated quote status to ', ['Quote Code' => $quote->code, 'quote_status_id' => QuoteStatusEnum::POLICY_BOOKING_FAILED]);
             } elseif ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_SEND_UPDATE_REQUEST) {
                 $model = $sageProcess->model;
                 $model->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED]);
-                info('cmd:SageProcessesMarkFailedCommand updated SendUpdate status to failed', ['Send Update ID' => $model->id]);
+                info('cmd:SageProcessesMarkFailedCommand : updated SendUpdate status to ', ['Send Update ID' => $model->id, 'status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED]);
             }
-
         }
 
-        info('cmd:SageProcessesMarkFailedCommand ended');
+        info('cmd:SageProcessesMarkFailedCommand : Sage processes to update to failed status.', ['updated before' => $fiveMinutesAgo, 'Sage Processes Count' => $sageProcesses->count()]);
+
+        info('cmd:SageProcessesMarkFailedCommand : ended');
     }
 }
