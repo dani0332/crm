@@ -182,7 +182,6 @@ return [
         App\Providers\TelescopeServiceProvider::class,
         App\Providers\FortifyServiceProvider::class,
         App\Providers\JetstreamServiceProvider::class,
-        Matthewbdaly\LaravelAzureStorage\AzureStorageServiceProvider::class,
         Spatie\Permission\PermissionServiceProvider::class,
         OwenIt\Auditing\AuditingServiceProvider::class,
         Spatie\Fractal\FractalServiceProvider::class,
