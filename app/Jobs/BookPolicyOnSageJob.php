@@ -19,7 +19,6 @@ class BookPolicyOnSageJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 1;
-
     public $timeout = 40;
     private $sageRequest;
     private $quote;
