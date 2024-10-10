@@ -4,8 +4,10 @@ namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\TeamNameEnum;
 use App\Enums\TiersIdEnum;
 use App\Factories\AllocationFactory;
 use App\Models\CarQuote;
@@ -57,7 +59,7 @@ class QuoteAllocation extends Command
         if ($quoteAllocationSwitch == 1 && $masterSwitchConfigValue == 1) {
             $to = now()->subMinutes(5)->toDateTimeString();
             $chunkSize = 200;
-            info('start and end dates are : '.$allocationStartDate.' and '.$to);
+            info('start and end dates are : ' . $allocationStartDate . ' and ' . $to);
             $this->executeCarAllocation(QuoteTypeId::Car, $to, $chunkSize, $allocationStartDate, $applicationStorageService);
             $this->executeHealthAllocation(QuoteTypeId::Health, $to, $chunkSize, $allocationStartDate);
             $this->executeBikeAllocation(QuoteTypeId::Bike, $to, $chunkSize, $allocationStartDate, $applicationStorageService);
@@ -80,7 +82,7 @@ class QuoteAllocation extends Command
         }
 
         $leads = CarQuote::whereNull('advisor_id')
-            ->select('uuid')
+            ->select('uuid', 'payment_status_id')
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->orderBy('created_at', 'desc')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
@@ -94,17 +96,24 @@ class QuoteAllocation extends Command
             })
             ->take($chunkSize);
 
-        info('leads fetch query is : '.$leads->toSql().' with params : '.json_encode($leads->getBindings()));
+        info('leads fetch query is : ' . $leads->toSql() . ' with params : ' . json_encode($leads->getBindings()));
 
         foreach ($leads->get() as $lead) {
             if ($lead->tier_id == TiersIdEnum::TIER_R) {
                 continue;
             }
-            info('Processing record for Quote Allocation with uuid: '.$lead->uuid);
-            $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
+            info('Processing record for Quote Allocation with uuid: ' . $lead->uuid);
+            $teamId = false;
+            if ($lead->payment_status_id == PaymentStatusEnum::AUTHORISED) {
+                $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+                if ($teamId == 0) {
+                    $teamId = 63; // Unassisted 2.0 team Id on IMCRM on Production
+                }
+            }
+            $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid, $teamId);
             $allocationStrategy->executeSteps();
             $processedRecords++;
-            info('Processed record for Quote Allocation with uuid: '.$lead->uuid);
+            info('Processed record for Quote Allocation with uuid: ' . $lead->uuid);
         }
 
         $this->logProcessedRecords($processedRecords, $quoteType);
@@ -128,9 +137,11 @@ class QuoteAllocation extends Command
                     });
             })->take($chunkSize);
         foreach ($leads->get() as $lead) {
+            info('Processing Health record for Quote Allocation with uuid: ' . $lead->uuid);
             $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
             $allocationStrategy->executeSteps();
             $processedRecords++;
+            info('Processed Health record for Quote Allocation with uuid: ' . $lead->uuid);
         }
 
         $this->logProcessedRecords($processedRecords, $quoteType);
@@ -140,17 +151,27 @@ class QuoteAllocation extends Command
     {
         $processedRecords = 0;
         $leads = TravelQuote::whereNull('advisor_id')
-            ->select('uuid')
+            ->select('uuid', 'payment_status_id')
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->orderBy('created_at', 'desc')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->where('sic_flow_enabled', false)
             ->take($chunkSize);
 
+
         foreach ($leads->get() as $lead) {
-            $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
+            info('Processing Travel record for Quote Allocation with uuid: ' . $lead->uuid);
+            $teamId = false;
+            if ($lead->payment_status_id == PaymentStatusEnum::AUTHORISED) {
+                $teamId = getTeamId(TeamNameEnum::SIC_UNASSISTED);
+                if ($teamId == 0) {
+                    $teamId = 63; // Unassisted 2.0 team Id on IMCRM on Production
+                }
+            }
+            $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid, $teamId);
             $allocationStrategy->executeSteps();
             $processedRecords++;
+            info('Processed Travel record for Quote Allocation with uuid: ' . $lead->uuid);
         }
 
         $this->logProcessedRecords($processedRecords, $quoteType);
@@ -159,7 +180,7 @@ class QuoteAllocation extends Command
     private function logProcessedRecords($processedRecords, $quoteType)
     {
         if ($processedRecords === 0) {
-            info('No records found for '.QuoteTypeId::getDescription($quoteType));
+            info('No records found for ' . QuoteTypeId::getDescription($quoteType));
         }
     }
 
@@ -182,17 +203,17 @@ class QuoteAllocation extends Command
             ->where('quote_type_id', QuoteTypeId::Bike)
             ->take($chunkSize);
 
-        info('For Bike - leads fetch query is : '.$leads->toSql().' with params : '.json_encode($leads->getBindings()));
+        info('For Bike - leads fetch query is : ' . $leads->toSql() . ' with params : ' . json_encode($leads->getBindings()));
 
         foreach ($leads->get() as $lead) {
             if ($lead->tier_id == TiersIdEnum::TIER_R) {
                 continue;
             }
-            info('Processing record for Bike Quote Allocation with uuid: '.$lead->uuid);
+            info('Processing record for Bike Quote Allocation with uuid: ' . $lead->uuid);
             $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
             $allocationStrategy->executeSteps();
             $processedRecords++;
-            info('Processed record for Bike Quote Allocation with uuid: '.$lead->uuid);
+            info('Processed record for Bike Quote Allocation with uuid: ' . $lead->uuid);
         }
         $this->logProcessedRecords($processedRecords, $quoteType);
     }
