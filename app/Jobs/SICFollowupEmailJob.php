@@ -3,14 +3,12 @@
 namespace App\Jobs;
 
 use App\Enums\QuoteTypes;
-use App\Facades\Ken;
 use App\Services\SendEmailCustomerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 
 class SICFollowupEmailJob implements ShouldQueue
 {
