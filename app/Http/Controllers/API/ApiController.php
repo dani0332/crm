@@ -109,22 +109,8 @@ class ApiController extends Controller
 
     public function logFollowUpEvent(EmailEventsRequest $request)
     {
-        try {
             $response = app(EmailStatusService::class)->addBirdEmailStatus($request);
-            if ($response->status) {
-                return apiResponse([], Response::HTTP_OK, $response->message);
-            } else {
-                return apiResponse([], Response::HTTP_OK, $response->message);
-            }
-        } catch (\Throwable $th) {
-            Log::error('logFollowUpEvent - Exception occurred while processing follow-up event', [
-                'error_message' => $th->getMessage(),
-                'line' => $th->getLine(),
-                'file' => $th->getFile(),
-                'stack_trace' => $th->getTraceAsString(),
-            ]);
-            throw $th;
-        }
+            return apiResponse([], Response::HTTP_OK, $response->message);
     }
 
     public function stopFollowUpEvent()
