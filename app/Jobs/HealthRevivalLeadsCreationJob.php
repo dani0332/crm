@@ -122,7 +122,7 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                     $emailData = new \stdClass;
                     $emailData->planTypes = $response['planTypes'];
 
-                    $emailData->subject = 'Renew your health insurance policy today!'.$healthQuote->code;
+                    $emailData->subject = 'Renew your health insurance policy today! '.$healthQuote->code;
                 } else {
 
                     $response = Ken::request('/get-health-quote-plans-order-priority', 'post', [
