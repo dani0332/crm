@@ -22,18 +22,12 @@ const { isRequired } = useRules();
 const notification = useNotifications('toast');
 const params = useUrlSearchParams('history');
 const hasRole = role => useHasRole(role);
-const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const quoteSegments = page.props.quoteSegments;
 
 const createLead = reactive({
-  modal: false,
-  type: '',
-});
-
-const followupLead = reactive({
   modal: false,
   type: '',
 });
@@ -400,11 +394,6 @@ const onConfirmCreateLead = () => {
   }
   createLead.modal = false;
 };
-const sendFollowupLead = () => {
-  router.post(route('event-followups-new-business'),{'followup_type':followupLead.type,'uuids':quotesSelected.value.map(e => e.uuid)});
-  followupLead.modal = false;
-};
-
 
 function daysAgoFromAuthorizedDate(authorizedDate) {
   if (!authorizedDate) {
@@ -502,17 +491,6 @@ const validateDateRange = () => {
 
 const formatDate = dateString =>
   useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY').value;
-
-const openFollowupModal = ()=>{
-    followupLead.modal = true;
-}
-
-const nbFollowupTemplates = [
-  { value: 'nb_template_holiday', label: 'Holiday Template' },
-  { value: 'nb_template_followup_1', label: 'Follow up 1: Preview Text: Time-Sensitive: Secure Your Motor Insurance Today!' },
-  { value: 'nb_template_followup_2', label: 'Follow up 2: Preview Text: Complete Your Motor Insurance Today!' },
-  { value: 'nb_template_followup_3', label: "Follow up 3: Preview Text: Making Sure You Don't Miss Out on Motor Insurance Coverage" },
-];
 
 
 </script>
@@ -899,13 +877,6 @@ const nbFollowupTemplates = [
 
 
       </div>
-      <div class="flex gap-3 mt-4 mb-4">
-        <div class="ml-auto" v-if="quotesSelected.length > 0 && hasAnyRole([rolesEnum.CarManager,rolesEnum.Admin,rolesEnum.Engineering])">
-          <x-button size="sm" color="#ff5e00" @click.prevent="openFollowupModal" >
-            Send Followup Email
-          </x-button>
-        </div>
-      </div>
     </x-form>
 
 
@@ -1045,44 +1016,5 @@ const nbFollowupTemplates = [
       </template>
     </x-modal>
 
-    <x-modal
-      v-model="followupLead.modal"
-      size="md"
-      title="Send Followup Lead"
-      show-close
-      backdrop
-    >
-      <div class="w-full grid  gap-5 mb-4">
-        <p class="text-md font-bold text-gray-500">
-            Please select one of the templates provided below to use:
-        </p>
-      </div>
-      <div class="w-full grid  gap-5" v-for="item in nbFollowupTemplates" :key="item.value">
-        <x-form-group v-model="followupLead.type">
-            <x-radio :value="item.value" :label="item.label" />
-        </x-form-group>
-
-      </div>
-
-      <template #actions>
-        <x-button
-          ghost
-          tabindex="-1"
-          size="md"
-          type="button"
-          @click.prevent="followupLead.modal = false"
-        >
-          Cancel
-        </x-button>
-        <x-button
-          size="md"
-          color="emerald"
-          type="button"
-          @click.prevent="sendFollowupLead"
-        >
-          OK
-        </x-button>
-      </template>
-    </x-modal>
   </div>
 </template>
