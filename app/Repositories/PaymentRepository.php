@@ -22,6 +22,7 @@ use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Models\User;
 use App\Services\ApplicationStorageService;
+use App\Services\CentralService;
 use App\Services\PaymentLinkService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
@@ -398,6 +399,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'updated_by' => Auth::user()->id,
             ]);
             if ($request->send_update_id > 0) {
+                app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_DECLINE);
                 $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_DECLINE;
             } else {
                 $quoteModel->quote_status_id = QuoteStatusEnum::TransactionDeclined;

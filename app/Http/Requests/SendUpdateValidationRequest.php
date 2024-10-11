@@ -145,14 +145,9 @@ class SendUpdateValidationRequest extends FormRequest
                     SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED,
                 ];
 
-                $checkTransactionApprovedAuditLogs = app(CentralService::class)->checkStatusInAuditLogs(
-                    SendUpdateLog::class,
-                    $sendUpdateLog->id,
-                    SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
-                    'status'
-                );
+                $checkTransactionApprovedInSUStatusLogs = app(CentralService::class)->checkStatusSUStatusLogs($sendUpdateLog->id, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
 
-                if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF && ! $checkTransactionApprovedAuditLogs &&
+                if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF && ! $checkTransactionApprovedInSUStatusLogs &&
                     ! in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) &&
                     ! in_array($sendUpdateLog->status, $bypassStatuses) &&
                     ! in_array($categorySubType, [

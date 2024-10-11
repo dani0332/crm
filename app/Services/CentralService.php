@@ -33,6 +33,7 @@ use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
 use App\Models\QuoteBatches;
 use App\Models\QuoteStatusLog;
+use App\Models\SendUpdateStatusLogs;
 use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
@@ -862,23 +863,23 @@ class CentralService
         return $quoteStatuses;
     }
 
-    public function checkStatusInAuditLogs($auditableType, $auditAbleId, $quoteStatus, $filterColumn = 'quote_status_id'): bool
+    public function updateSendUpdateStatusLogs($sendUpdateLogId, $previousStatus, $currentStatus): void
     {
-        $auditLogs = Audit::where('auditable_type', $auditableType)
-            ->where('auditable_id', $auditAbleId)
-            ->where('event', 'updated')
-            ->where('new_values', 'like', '%'.$filterColumn.'%')
-            ->get();
+        SendUpdateStatusLogs::create([
+            'send_update_logs_id' => $sendUpdateLogId,
+            'previous_status' => $previousStatus,
+            'current_status' => $currentStatus,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ]);
+    }
 
-        $statusChanged = false;
+    public function checkStatusSUStatusLogs($sendUpdateId, $sendUpdateStatus): bool
+    {
+        $sendUpdateStatusCount = SendUpdateStatusLogs::where('send_update_logs_id', $sendUpdateId)
+            ->where('current_status', $sendUpdateStatus)
+            ->count();
 
-        foreach ($auditLogs as $auditLog) {
-            if (isset($auditLog->new_values[$filterColumn]) && $auditLog->new_values[$filterColumn] == $quoteStatus) {
-                $statusChanged = true;
-                break;
-            }
-        }
-
-        return $statusChanged;
+        return $sendUpdateStatusCount > 0;
     }
 }
