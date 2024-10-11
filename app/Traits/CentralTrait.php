@@ -25,8 +25,8 @@ trait CentralTrait
         $afiaWebDomain = config('constants.AFIA_WEBSITE_DOMAIN');
         switch ($quoteType->id()) {
             case QuoteTypes::BIKE->id():
-                $buyNowLink = $afiaWebDomain . '/bike-insurance/quote/' . $uuid . '/payment/?planId=' . $plan->id . '&providerCode=' . $plan->providerCode;
-                info('Generated Buy Now link for Bike quote: ' . $buyNowLink);
+                $buyNowLink = $afiaWebDomain.'/bike-insurance/quote/'.$uuid.'/payment/?planId='.$plan->id.'&providerCode='.$plan->providerCode;
+                info('Generated Buy Now link for Bike quote: '.$buyNowLink);
 
                 return $buyNowLink;
         }
@@ -47,8 +47,8 @@ trait CentralTrait
         $afiaWebDomain = config('constants.AFIA_WEBSITE_DOMAIN');
         switch ($quoteType->id()) {
             case QuoteTypes::BIKE->id():
-                $ecomQuoteLink = $afiaWebDomain . '/bike-insurance/quote/';
-                info('Generated Ecom link for Bike quote: ' . $ecomQuoteLink);
+                $ecomQuoteLink = $afiaWebDomain.'/bike-insurance/quote/';
+                info('Generated Ecom link for Bike quote: '.$ecomQuoteLink);
 
                 return $ecomQuoteLink;
         }
