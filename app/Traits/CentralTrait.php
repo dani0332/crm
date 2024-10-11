@@ -23,10 +23,10 @@ trait CentralTrait
             case QuoteTypes::BIKE->id():
                 if (! $plan) {
                     // if plan is not provided, then send ecom quote link
-                    $link = $afiaWebDomain . '/bike-insurance/quote/';
+                    $link = $afiaWebDomain.'/bike-insurance/quote/';
                 } else {
                     // if plan is provided, then send buy now link
-                    $link = $afiaWebDomain . '/bike-insurance/quote/' . $uuid . '/payment/?planId=' . $plan->id . '&providerCode=' . $plan->providerCode;
+                    $link = $afiaWebDomain.'/bike-insurance/quote/'.$uuid.'/payment/?planId='.$plan->id.'&providerCode='.$plan->providerCode;
                 }
 
                 return $link;
