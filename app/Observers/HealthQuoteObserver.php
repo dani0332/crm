@@ -55,6 +55,10 @@ class HealthQuoteObserver
             $dirty = [...$dirty, 'stale_at' => $healthQuote->stale_at];
         }
 
+        if ($healthQuote->isDirty('advisor_id')) {
+            $healthQuote->markLeadAllocationPassed();
+        }
+
         $this->syncQuote($healthQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $healthQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
