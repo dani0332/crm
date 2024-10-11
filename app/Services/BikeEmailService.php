@@ -5,16 +5,20 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanType;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
 use App\Models\User;
+use App\Traits\CentralTrait;
 use Carbon\Carbon;
 
 class BikeEmailService extends BaseService
 {
+    use CentralTrait;
+
     protected $sendEmailCustomerService;
 
     public function __construct(SendEmailCustomerService $sendEmailCustomerService)
@@ -81,7 +85,7 @@ class BikeEmailService extends BaseService
                 'planName' => $plan->name,
                 'providerCode' => strtolower($plan->providerCode),
                 'benefits' => $this->getPlanBenefits($plan),
-                'buyNowLink' => $this->getPlanBuyNowLink($plan, $lead->uuid),
+                'buyNowLink' => $this->getEcomQuoteLink(QuoteTypes::BIKE, $lead->uuid, $plan),
                 'isRenewal' => ($plan->isRenewal ?? false),
             ];
         }
@@ -124,7 +128,7 @@ class BikeEmailService extends BaseService
             'yearOfManufacture' => $lead->bikeQuote->year_of_manufacture,
             'vehicleName' => $this->getVehicleName($lead),
             'currentInsurer' => $lead->bikeQuote->currently_insured_with,
-            'quoteLink' => config('constants.ECOM_BIKE_INSURANCE_QUOTE_URL').$lead->uuid,
+            'quoteLink' => $this->getEcomQuoteLink(QuoteTypes::BIKE, $lead->uuid),
             'assignmentType' => $this->getAssignmentTypeText($lead->assignment_type),
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
             'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
@@ -177,13 +181,6 @@ class BikeEmailService extends BaseService
         }
 
         return $planAddons;
-    }
-
-    private function getPlanBuyNowLink($plan, $uuid)
-    {
-        $buyNowLink = config('constants.ECOM_BIKE_INSURANCE_QUOTE_URL').$uuid.'/payment/?planId='.$plan->id.'&providerCode='.$plan->providerCode;
-
-        return $buyNowLink;
     }
 
     private function getAppStorageValueByKey($keyName)
