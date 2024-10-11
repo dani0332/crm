@@ -24,13 +24,5 @@ class BikeQuoteObserver
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $bikeQuote->transaction_approved_at];
         }
-        if (
-            isset($dirty['quote_status_id']) &&
-            $bikeQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
-        ) {
-            $payment = $bikeQuote->payments()->mainLeadPayment()->first();
-            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::BIKE->value);
-
-        }
     }
 }

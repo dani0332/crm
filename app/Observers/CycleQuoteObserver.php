@@ -24,14 +24,5 @@ class CycleQuoteObserver
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $cycleQuote->transaction_approved_at];
         }
-
-        if (
-            isset($dirty['quote_status_id']) &&
-            $cycleQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
-        ) {
-            $payment = $cycleQuote->payments()->mainLeadPayment()->first();
-            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::CYCLE->value);
-
-        }
     }
 }

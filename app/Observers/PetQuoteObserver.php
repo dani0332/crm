@@ -24,14 +24,5 @@ class PetQuoteObserver
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $petQuote->transaction_approved_at];
         }
-
-        if (
-            isset($dirty['quote_status_id']) &&
-            $petQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
-        ) {
-            $payment = $petQuote->payments()->mainLeadPayment()->first();
-            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::PET->value);
-
-        }
     }
 }

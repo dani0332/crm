@@ -24,14 +24,5 @@ class JetskiQuoteObserver
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $jetskiQuote->transaction_approved_at];
         }
-
-        if (
-            isset($dirty['quote_status_id']) &&
-            $jetskiQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
-        ) {
-            $payment = $jetskiQuote->payments()->mainLeadPayment()->first();
-            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::JETSKI->value);
-
-        }
     }
 }

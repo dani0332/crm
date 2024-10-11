@@ -24,14 +24,5 @@ class YachtQuoteObserver
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $yachtQuote->transaction_approved_at];
         }
-
-        if (
-            isset($dirty['quote_status_id']) &&
-            $yachtQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
-        ) {
-            $payment = $yachtQuote->payments()->mainLeadPayment()->first();
-            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::YACHT->value);
-
-        }
     }
 }
