@@ -481,7 +481,6 @@ const fetchUpdatedQuote = async () => {
             <dd>{{ quote?.payments[0]?.code ?? '' }}</dd>
           </div>
         </dl>
-
         <AddOn
           v-if="bikeQuotePlanAddons.length > 0"
           :quotePlanAddons="bikeQuotePlanAddons"
@@ -1297,6 +1296,15 @@ const fetchUpdatedQuote = async () => {
       :personal-plans="personalPlans"
     />
 
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="record.uuid"
+      :code="record.code"
+      :quote="record"
+      :modelType="quoteType"
+      :expanded="sectionExpanded"
+    />
+
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :quote="quote"
@@ -1325,10 +1333,10 @@ const fetchUpdatedQuote = async () => {
       "
       :quote="quote"
       quoteType="Bike"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
-      :modelClass="modelClass"
     />
 
     <EmailStatus :emailStatuses="emailStatuses" />

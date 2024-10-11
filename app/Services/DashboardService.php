@@ -7,6 +7,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Traits\GetUserTreeTrait;
@@ -159,15 +160,19 @@ class DashboardService extends BaseService
 
     public function getTeamWiseLeadStats($filters)
     {
-        $todaysLeads = CarQuote::join('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'car_quote_request.id')
+        $todaysLeads = CarQuote::select('car_quote_request.id', 'car_quote_request.advisor_id')
+            ->join('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'car_quote_request.id')
             ->whereNotNull('car_quote_request.advisor_id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::SAPGO, LeadSourceEnum::SAPJO])
             ->whereBetween('cqrd.advisor_assigned_date', [$filters['startDate'], $filters['endDate']])->get();
 
         $teamWiseLeadsAssignedAverage = [];
+
+        $advisors = $this->getAdvisorsByRole(RolesEnum::CarAdvisor);
+
         foreach ($filters['teams'] as $team) {
-            $teamUserIds = $this->getAdvisorsByTeamId($team->id)->pluck('id');
+            $teamUserIds = $advisors->filter(fn ($user) => $user->u_team_id == $team->id)->pluck('id');
             $usersCount = count($teamUserIds);
 
             $leadsCount = $todaysLeads->whereIn('advisor_id', array_unique($teamUserIds->toArray()))->count();

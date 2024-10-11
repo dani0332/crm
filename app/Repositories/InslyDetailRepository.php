@@ -69,6 +69,12 @@ class InslyDetailRepository extends BaseRepository
         $policy->quoteType = $this->getQuoteTypeFromCoverage($data['policy']['coverage']);
         $policy->imcrm_link = $this->replaceStoredAppURLWithCurrentAppURL($policy->imcrm_link);
 
+        $data['customer']['email'] = $this->maskData($data['customer']['email'], 'email');
+        $data['customer']['mobile_phone'] = $this->maskData($data['customer']['mobile_phone'], 'phone');
+        $data['customer']['phone'] = $this->maskData($data['customer']['phone'], 'phone');
+
+        $policy->customer = $data['customer'];
+
         if (! empty($data['installments'])) {
             $policy->premium = collect($data['installments'])->sum('gross_premium');
         }
@@ -556,5 +562,44 @@ class InslyDetailRepository extends BaseRepository
         return array_filter(array_map('trim', preg_split('/[;,]/', $inputString)), function ($value) {
             return ! empty($value);
         });
+    }
+
+    private function maskData($data, $type)
+    {
+        if (empty($data)) {
+            return null;
+        }
+
+        $dataArray = ($type === 'email')
+            ? preg_split('/[;,]\s*/', $data)
+            : preg_split('/[;,]+/', $data);
+
+        $maskedData = array_map(function ($item) use ($type) {
+            $item = trim($item);
+            if ($type === 'email') {
+                if (! isValidEmail($item)) {
+                    return $item;
+                }
+
+                [$localPart, $domainPart] = explode('@', $item);
+                $halfLength = ceil(strlen($localPart) / 2);
+                $maskedLocalPart = substr($localPart, 0, $halfLength).str_repeat('*', strlen($localPart) - $halfLength);
+
+                return $maskedLocalPart.'@'.$domainPart;
+            } elseif ($type === 'phone') {
+
+                $cleanedNumber = preg_replace('/\D/', '', $item);
+                if (strlen($cleanedNumber) < 7) {
+                    return $item;
+                }
+
+                $prefix = substr($cleanedNumber, 0, 3);
+                $suffix = substr($cleanedNumber, -3);
+
+                return "{$prefix}****{$suffix}";
+            }
+        }, $dataArray);
+
+        return implode(', ', array_filter($maskedData));
     }
 }

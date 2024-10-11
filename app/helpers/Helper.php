@@ -591,11 +591,21 @@ if (! function_exists('formatMobileNo')) {
 if (! function_exists('formatMobileNoWithoutPlus')) {
     function formatMobileNoWithoutPlus($mobile)
     {
-        if (preg_match('/^971|92|91/', $mobile)) {
-            return $mobile;
+        // Remove spaces from the mobile number
+        $mobile = str_replace(' ', '', $mobile);
+
+        // If the number starts with +971, 971, 92, or 91, return it as is
+        if (preg_match('/^(?:\+?971|92|91)/', $mobile)) {
+            return ltrim($mobile, '+'); // Remove '+' if present, but keep the number unchanged
         }
 
-        return preg_replace('/^(?:\+?971|0)?/', '971', str_replace(' ', '', $mobile));
+        // If the number starts with +0 or 0, replace it with 971
+        if (preg_match('/^\+?0/', $mobile)) {
+            return preg_replace('/^\+?0/', '971', $mobile);
+        }
+
+        // If the number does not match any pattern, add 971 as default
+        return '971'.ltrim($mobile, '+');
     }
 }
 

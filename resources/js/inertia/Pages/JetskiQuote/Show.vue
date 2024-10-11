@@ -1,4 +1,5 @@
 <script setup>
+import QuoteDocuments from '@/inertia/Components/QuoteDocument.vue';
 import LeadStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
@@ -86,7 +87,7 @@ const dateFormat = date =>
               >
                 <x-button size="sm" tag="div">Edit</x-button>
               </Link>
-              <x-button v-else :disabled="isDisabled" size="sm" tag="div"
+              <x-button v-else:disabled="isDisabled" size="sm" tag="div"
                 >Edit</x-button
               >
             </LeadEditBtnTemplate>
@@ -110,7 +111,6 @@ const dateFormat = date =>
                 v-if="can(permissionsEnum.JetskiQuotesEdit)"
               />
             </template>
-
             <Link
               v-if="can(permissionsEnum.JetskiQuotesList)"
               :href="route('jetski-quotes-list')"

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\DocumentTypeCode;
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
@@ -32,6 +33,8 @@ class SendUpdateCustomerValidationRequest extends FormRequest
         return [
             'sendUpdateId' => 'required|exists:send_update_logs,id',
             'action' => 'required|string',
+            'inslyMigrated' => 'boolean',
+            'paymentValidated' => 'boolean',
         ];
     }
 
@@ -45,6 +48,14 @@ class SendUpdateCustomerValidationRequest extends FormRequest
             $this->sendUpdateDocuemnts = $this->sendUpdate?->documents()->pluck('document_type_code');
             $category = $this->sendUpdate?->category?->code;
             $option = $this->sendUpdate?->option?->code;
+
+            if ($this->sendUpdate->status == SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
+                $validator->errors()->add('error', 'Endorsement Booking Failed! Please contact finance');
+            }
+
+            if ($this->sendUpdate->status == SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED) {
+                return $validator->errors()->add('error', 'Update booking already in queued');
+            }
 
             if ($this->sendUpdate->status == SendUpdateLogStatusEnum::UPDATE_BOOKED) {
                 return $validator->errors()->add('error', 'Update already booked');
@@ -68,14 +79,19 @@ class SendUpdateCustomerValidationRequest extends FormRequest
                 return $validator->errors()->add('error', 'The expiry date field is required.');
             }
 
+            $bypassStatuses = [
+                SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED,
+                SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED,
+            ];
+
             switch ($category) {
                 case SendUpdateLogStatusEnum::CPD:
-                    if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED) {
+                    if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED && ! in_array($this->sendUpdate->status, $bypassStatuses)) {
                         $validator->errors()->add('error', 'Transaction approval is required. ');
                     }
                     break;
                 case SendUpdateLogStatusEnum::EF:
-                    if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED) {
+                    if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED && ! in_array($this->sendUpdate->status, $bypassStatuses)) {
                         if (! in_array(
                             $option,
                             [
@@ -86,6 +102,8 @@ class SendUpdateCustomerValidationRequest extends FormRequest
                                 SendUpdateLogStatusEnum::DM,
                                 SendUpdateLogStatusEnum::DTSI,
                                 SendUpdateLogStatusEnum::DOV,
+                                SendUpdateLogStatusEnum::ATIB,
+                                SendUpdateLogStatusEnum::ACB,
                             ]
                         )) {
                             $validator->errors()->add('error', 'Transaction approval is required. ');

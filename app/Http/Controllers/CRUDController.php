@@ -34,7 +34,6 @@ use App\Enums\TeamNameEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Events\LeadsCount;
-use App\Facades\Capi;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
@@ -1776,7 +1775,6 @@ class CRUDController extends Controller
             }
         }
 
-        $oldEntity = $this->crudService->getEntityByUUID($request->quote_uuid, $request->modelType);
         $result = $this->crudService->updateQuoteStatus($request);
         $entity = $result['entity'];
         if ($request->leadStatus == QuoteStatusEnum::TransactionApproved) {
@@ -1794,15 +1792,6 @@ class CRUDController extends Controller
 
         // courtesy email
         $lobs = [quoteTypeCode::Business];
-        if ($oldEntity->quote_status_id != $entity->quote_status_id && $entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! in_array($request->modelType, $lobs)) {
-            $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($request->modelType));
-            $quoteData['quoteTypeId'] = $quoteTypeId;
-            $quoteData['quoteUID'] = $request->quote_uuid;
-
-            $response = Capi::request('/api/v1-trigger-courtesy-email-sib-workflow', 'post', $quoteData);
-
-            info('Courtesy Email CAPI Response - : ' . json_encode($response));
-        }
         // Update payment allocation status
         app(CentralService::class)->updatePaymentAllocation($request->modelType, $request->quote_uuid);
         if ($entity->health_team_type != null && $entity->quote_status_id == QuoteStatusEnum::Qualified) {
@@ -2233,7 +2222,7 @@ class CRUDController extends Controller
 
     public function toggleEmbeddedProduct(Request $request)
     {
-        $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($this->genericModel->modelType));
+        $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower(ucfirst($request->modelType)));
 
         return $this->crudService->toggleSelection($request, $quoteTypeId);
     }

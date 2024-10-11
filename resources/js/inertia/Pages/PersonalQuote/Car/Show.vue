@@ -3593,7 +3593,6 @@ const fullAddress = computed(() => {
       :isPlanDetailEnabled="isPlanDetailEnabled"
       :expanded="sectionExpanded"
     />
-
     <PaymentTable
       v-else
       :payments="payments"
@@ -3717,9 +3716,9 @@ const fullAddress = computed(() => {
       "
       :quote="quote"
       :quoteType="quoteType"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
-      :modelClass="modelClass"
     />
 
     <SendUpdates

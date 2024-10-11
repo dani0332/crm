@@ -18,6 +18,16 @@ class RolePermissionSeeder extends Seeder
     public function run(): void
     {
         try {
+            $bookingFailedEditPermission = Permission::where('name', PermissionsEnum::BOOKING_FAILED_EDIT)->first();
+            if (! $bookingFailedEditPermission) {
+                Permission::create([
+                    'name' => PermissionsEnum::BOOKING_FAILED_EDIT,
+                    'guard_name' => 'web',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
             $quoteRawData = Permission::where('name', PermissionsEnum::QUOTE_RAW_DATA)->first();
             if (! $quoteRawData) {
                 Permission::create([

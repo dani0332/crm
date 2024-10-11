@@ -13,6 +13,8 @@ final class EmbeddedProductEnum extends Enum
     const AP3 = 'Platinum';
     const TRAVEL = 'TRA';
     const COURIER = 'COU';
+    const RDX = 'RDX';
+    const MDX = 'MDX';
 
     // used in report for source
     const SRC_CAR_EMBEDDED_PRODUCT = 'CAR EMBEDDED PRODUCT';
