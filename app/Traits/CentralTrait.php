@@ -8,14 +8,14 @@ trait CentralTrait
 {
     use GenericQueriesAllLobs;
 
-    public function getBuyNowLinkForQuote(QuoteTypes $quoteType, string $uuid, object $plan): string
+    public function getBuyNowLinkForQuote(QuoteTypes $quoteType, string $uuid, object $plan = null): string
     {
         info('Generating Buy Now link for quote.', [
             'quoteType' => $quoteType,
             'uuid' => $uuid,
         ]);
         if (! $quoteType || ! $uuid) {
-            info('Failed to generate Buy Now link for quote.', [
+            info('Failed to generate Buy Now/Ecom Quote link for quote.', [
                 'quoteType' => $quoteType,
                 'uuid' => $uuid,
             ]);
@@ -25,32 +25,17 @@ trait CentralTrait
         $afiaWebDomain = config('constants.AFIA_WEBSITE_DOMAIN');
         switch ($quoteType->id()) {
             case QuoteTypes::BIKE->id():
-                $buyNowLink = $afiaWebDomain.'/bike-insurance/quote/'.$uuid.'/payment/?planId='.$plan->id.'&providerCode='.$plan->providerCode;
-                info('Generated Buy Now link for Bike quote: '.$buyNowLink);
+                if (! $plan) {
+                    // if plan is not provided, then send ecom quote link
+                    $link = $afiaWebDomain . '/bike-insurance/quote/';
+                    info('Generated Ecom link for Bike quote: ' . $link);
+                } else {
+                    // if plan is provided, then send buy now link
+                    $link = $afiaWebDomain . '/bike-insurance/quote/' . $uuid . '/payment/?planId=' . $plan->id . '&providerCode=' . $plan->providerCode;
+                    info('Generated Buy Now link for Bike quote: ' . $link);
+                }
 
-                return $buyNowLink;
-        }
-    }
-
-    public function getEcomQuoteLink(QuoteTypes $quoteType): string
-    {
-        info('Generating Ecom Quote link for quote.', [
-            'quoteType' => $quoteType,
-        ]);
-        if (! $quoteType) {
-            info('Failed to generate Ecom Quote link for quote.', [
-                'quoteType' => $quoteType,
-            ]);
-
-            return '';
-        }
-        $afiaWebDomain = config('constants.AFIA_WEBSITE_DOMAIN');
-        switch ($quoteType->id()) {
-            case QuoteTypes::BIKE->id():
-                $ecomQuoteLink = $afiaWebDomain.'/bike-insurance/quote/';
-                info('Generated Ecom link for Bike quote: '.$ecomQuoteLink);
-
-                return $ecomQuoteLink;
+                return $link;
         }
     }
 }
