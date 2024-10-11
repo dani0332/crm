@@ -36,6 +36,7 @@ class CarQuoteObserver
         }
 
         if ($lead->isDirty('advisor_id')) {
+            $lead->markLeadAllocationPassed();
             $oldAdvisorId = $changes['advisor_id']['old'];
             event(new CarQuoteAdvisorUpdated($lead, $oldAdvisorId));
         }
