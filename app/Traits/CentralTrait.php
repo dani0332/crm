@@ -8,7 +8,7 @@ trait CentralTrait
 {
     use GenericQueriesAllLobs;
 
-    public function getBuyNowLinkForQuote(QuoteTypes $quoteType, string $uuid, object $plan = null): string
+    public function getBuyNowLinkForQuote(QuoteTypes $quoteType, string $uuid, ?object $plan = null): string
     {
         info('Generating Buy Now link for quote.', [
             'quoteType' => $quoteType,
@@ -27,12 +27,12 @@ trait CentralTrait
             case QuoteTypes::BIKE->id():
                 if (! $plan) {
                     // if plan is not provided, then send ecom quote link
-                    $link = $afiaWebDomain . '/bike-insurance/quote/';
-                    info('Generated Ecom link for Bike quote: ' . $link);
+                    $link = $afiaWebDomain.'/bike-insurance/quote/';
+                    info('Generated Ecom link for Bike quote: '.$link);
                 } else {
                     // if plan is provided, then send buy now link
-                    $link = $afiaWebDomain . '/bike-insurance/quote/' . $uuid . '/payment/?planId=' . $plan->id . '&providerCode=' . $plan->providerCode;
-                    info('Generated Buy Now link for Bike quote: ' . $link);
+                    $link = $afiaWebDomain.'/bike-insurance/quote/'.$uuid.'/payment/?planId='.$plan->id.'&providerCode='.$plan->providerCode;
+                    info('Generated Buy Now link for Bike quote: '.$link);
                 }
 
                 return $link;
