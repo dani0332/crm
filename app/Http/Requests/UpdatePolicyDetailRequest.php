@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\PersonalQuote;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\ValidationException;
 
 class UpdatePolicyDetailRequest extends FormRequest
 {
@@ -80,8 +83,8 @@ class UpdatePolicyDetailRequest extends FormRequest
             
             // Check if a policy with the same number and expiry date already exists, excluding the current quote
             $isExists = $model::where('policy_number', $quote_policy_number)
-            ->where('policy_expiry_date', request()->quote_policy_expiry_date)
-            ->where('code', '!=', $quoteModel->code);
+                ->where('policy_expiry_date', request()->quote_policy_expiry_date)
+                ->where('code', '!=', $quoteModel->code);
 
             // Apply additional filters based on quote type
             if (checkPersonalQuotes($modelType) || $quoteTypeId == QuoteTypeId::GroupMedical) {
@@ -89,16 +92,16 @@ class UpdatePolicyDetailRequest extends FormRequest
                 $isExists->where('quote_type_id', $quoteTypeId);
             }
 
-            // if ($quoteTypeId == QuoteTypeId::Business) {
-            //     // Further filter by business type of insurance ID for group medical quotes
-            //     $isExists->where('business_type_of_insurance_id', $quoteModel->business_type_of_insurance_id);
-            // }
+            if ($quoteTypeId == QuoteTypeId::Business) {
+                // Further filter by business type of insurance ID for group medical quotes
+                if ($quoteModel->business_type_of_insurance_id ==  BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL){
+                    $isExists->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+                } else {
+                    $isExists->where('business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+                }
+            }
 
-
-            // Check if any records match the criteria
-            $isExists = $isExists->exists();
-
-            if ($isExists) {
+            if ($isExists->exists()) {
                 // Add an error to the validator if a matching policy is found
                 $validator->errors()->add('quote_policy_number', 'Policy number already exists for this line of business with the same expiry date.');
             }
@@ -106,6 +109,11 @@ class UpdatePolicyDetailRequest extends FormRequest
             $quote = $this->getQuoteObject(request()->modelType, request()->quote_id);
             if ($quote && $quote->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
                 $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
+            }
+
+            // Check if there are any errors and throw a validation exception if there are
+            if ($validator->errors()->isNotEmpty()) {
+                throw new ValidationException($validator);
             }
         });
     }
@@ -117,7 +125,6 @@ class UpdatePolicyDetailRequest extends FormRequest
             'price_vat_notapplicable.between' => 'Price (VAT NOT APPLICABLE) must be less than 13 digits',
             'amount.between' => 'Price (VAT NOT APPLICABLE) must be less than 13 digits',
             'amount_with_vat.required' => 'Total price is required',
-
         ];
     }
 }
