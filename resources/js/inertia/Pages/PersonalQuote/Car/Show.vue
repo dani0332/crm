@@ -2204,7 +2204,7 @@ const fullAddress = computed(() => {
                     {{
                       !customerAddressData?.type ||
                       customerAddressData?.type === 'Home'
-                        ? 'RESIDENT ADDRESS'
+                        ? 'RESIDENCE ADDRESS'
                         : 'OFFICE ADDRESS'
                     }}
                   </dt>

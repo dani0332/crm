@@ -389,8 +389,8 @@ onMounted(() => {
     <div class="grid md:grid-cols-2">
       <x-input
         v-model="kycForm.residential_address"
-        label="Resident Address"
-        placeholder="Resident Address"
+        label="RESIDENCE ADDRESS"
+        placeholder="RESIDENCE ADDRESS"
         :rules="[isRequired]"
       />
     </div>
