@@ -147,6 +147,7 @@ class PersonalQuoteRepository extends BaseRepository
             return ['status' => true, 'message' => 'File Uploaded'];
         } catch (\Exception $exception) {
             logger()->error('Error while uploading document - Ref: '.$quote->code, ['error' => $exception->getMessage()]);
+
             return ['status' => false, 'message' => $exception->getMessage() ?? 'Error uploading file'];
         }
     }

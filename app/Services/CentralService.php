@@ -44,7 +44,6 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use OwenIt\Auditing\Models\Audit;
 
 class CentralService
 {
