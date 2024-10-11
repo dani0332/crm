@@ -15,9 +15,8 @@ use App\Repositories\PaymentRepository;
 use App\Services\HealthQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
-use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
 
-class HealthQuoteObserver implements ShouldHandleEventsAfterCommit
+class HealthQuoteObserver
 {
     use GenericQueriesAllLobs, PersonalQuoteSyncTrait;
 

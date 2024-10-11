@@ -374,7 +374,6 @@ class SendUpdateLogController extends Controller
         $suEmailProcess = SendUpdateLogRepository::sendUpdateToCustomer($updateToCustomerRequest->validated());
 
         if (isset($suEmailProcess['status']) && $suEmailProcess['status'] == 500) {
-            info('fn:sendUpdateToCustomer - Send Update to customer email failed');
             vAbort('Send Update to customer email failed');
         }
 
@@ -412,11 +411,11 @@ class SendUpdateLogController extends Controller
             return response()->json(['message' => $responseMessage], 500);
         }
 
-        info('fn:sendUpdate - Calling updateSageProcessForDispatching function through sendUpdate - Send Update UUID: '.$sendUpdateLog->uuid);
+        info('fn:sendUpdate - Calling updateSageProcessForDispatching function through sendUpdate - SendUpdateCode: '.$sendUpdateLog->code);
         app(SendUpdateLogService::class)->updateSageProcessForDispatching($sendUpdateRequest->toArray(), $sendUpdateLog, $endorsementResponse['sageRequestPayload']);
 
         app(SageApiService::class)->scheduleSageProcesses($endorsementResponse['sageRequestPayload']->insurerID);
-        info('fn:sendUpdate - fn:scheduleSageProcesses triggered for Insurer - '.$endorsementResponse['sageRequestPayload']->insurerID);
+        info('fn:sendUpdate - fn:scheduleSageProcesses triggered for Insurer - '.$endorsementResponse['sageRequestPayload']->insurerID.' - SendUpdateCode: '.$sendUpdateLog->code);
 
         return response()->json(['message' => $endorsementResponse['message']], 200);
     }
