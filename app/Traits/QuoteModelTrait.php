@@ -106,6 +106,28 @@ trait QuoteModelTrait
         return ['isCPDEndorsment' => $sendUpdateLog->category?->code == SendUpdateLogStatusEnum::CPD, 'sendUpdateUUID' => $sendUpdateLog->uuid];
     }
 
+    public function scopeIsSICLead($q, QuoteTypes $quoteType, bool $not = false)
+    {
+        $subQuery = function ($query) use ($quoteType) {
+            $query->distinct()
+                ->select('quote_uuid')
+                ->from('quote_tags')
+                ->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())
+                ->where('quote_tags.quote_type_id', $quoteType->id());
+        };
+
+        if ($not) {
+            $q->whereNotIn("{$q->getModel()->getTable()}.uuid", $subQuery);
+        } else {
+            $q->whereIn("{$q->getModel()->getTable()}.uuid", $subQuery);
+        }
+    }
+
+    public function scopeIsNonSICLead($q, QuoteTypes $quoteType)
+    {
+        $q->isSICLead($quoteType, true);
+    }
+
     public function isSIC(QuoteTypes $quoteType): bool
     {
         return QuoteTag::where('quote_uuid', $this->uuid)->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())->where('quote_tags.quote_type_id', $quoteType->id())->exists();

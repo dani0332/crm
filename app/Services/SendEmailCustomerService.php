@@ -84,7 +84,6 @@ class SendEmailCustomerService extends BaseService
         }
 
         return $attachments;
-
     }
 
     public function sendMail(
@@ -112,9 +111,9 @@ class SendEmailCustomerService extends BaseService
                     $sender = $body['sender'] ?? null;
                     $replyTo = $body['replyTo'] ?? null;
                     $to = $body['to'] ?? null;
-                    info('Mail Request sender details ----- '.json_encode($sender));
-                    info('Mail Request replyTo details ----- '.json_encode($replyTo));
-                    info('Mail Request to details ----- '.json_encode($to));
+                    $sender != null && info('Mail Request sender details ----- '.json_encode($sender));
+                    $replyTo != null && info('Mail Request replyTo details ----- '.json_encode($replyTo));
+                    $to != null && info('Mail Request to details ----- '.json_encode($to));
                 })
                 ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
                 ->retry(3, 90000)
@@ -516,8 +515,12 @@ class SendEmailCustomerService extends BaseService
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
             info("sendLMSIntroEmail ---- Tag : {$tag} for ID : {$quoteId}");
             $subjectEnvTag = $this->appEnv == EnvEnum::PRODUCTION ? '' : $this->appEnv.' - ';
-            $attachments = $this->getEmailAttachments($emailData, $quoteId);
+            if ($emailData->customerEmail === '0' || $emailData->customerEmail === 0) {
+                info("Customer email is missing or invalid for ID : {$quoteId}");
 
+                return false;
+            }
+            $attachments = $this->getEmailAttachments($emailData, $quoteId);
             $bcc = [];
             if ($emailData->advisorEmail) {
                 $bcc[] = [
@@ -659,6 +662,11 @@ class SendEmailCustomerService extends BaseService
 
             info("sendNonAdvisorIntroEmail  , emailTemplateId: {$emailTemplateId} with QuoteId: {$quoteId}");
             $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
+            if ($emailData->customerEmail === '0' || $emailData->customerEmail === 0) {
+                info("Customer email is missing or invalid for QuoteId: {$quoteId}");
+
+                return false;
+            }
             $attachments = $this->getEmailAttachments($emailData, $quoteId);
 
             $bccAdditional = [];
@@ -879,7 +887,7 @@ class SendEmailCustomerService extends BaseService
             $response = json_decode($clientResponse->getStatusCode().' '.$clientResponse->getBody()->getContents(), true);
             $responseCode = $clientResponse->getStatusCode();
             $isEmailSent = 1;
-            info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
+            info('Quote Code: '.$emailData->code.' sendBookPolicyDocumentsEmail ---- response object : '.json_encode($clientResponse->getBody()->getContents()));
             info('Quote Code: '.$emailData->code.' Email sent successfully to '.$emailData->customerEmail.' with template ID '.$emailData->emailTemplateId);
         } catch (Exception $ex) {
             $response = '';
@@ -1341,7 +1349,7 @@ class SendEmailCustomerService extends BaseService
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
             'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
             'healthQuoteId' => $healthQuote->code,
-            'quoteId' => $healthQuote->id,
+            'quoteId' => $healthQuote->code,
             'quoteTypeId' => QuoteTypeId::Health,
             'currentInsurer' => $currentInsurer ? $currentInsurer->text : null,
             'quotePlanLink' => url(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid.($isRevivalLead ? '?dla=true' : '')), // DLA = Disable Lead Assignment

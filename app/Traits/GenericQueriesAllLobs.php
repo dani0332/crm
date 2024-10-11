@@ -305,7 +305,7 @@ trait GenericQueriesAllLobs
             $bookPolicyDetails['text'] = 'Book Policy';
         }
         info($infoMessage);
-        info('Quote Code: '.$record->code.' Book Policy Details: ', $bookPolicyDetails);
+        info('Quote Code: '.$record->code.' Policy Booking Details: ', $bookPolicyDetails);
 
         return $bookPolicyDetails;
     }
@@ -503,7 +503,7 @@ trait GenericQueriesAllLobs
      */
     private function isFilledPolicyDetails($type, $quote)
     {
-        info('Quote Code: '.$quote->code.' Logging filled policy details ', [
+        info('Quote Code: '.$quote->code.' is Policy Details Filled ', [
             'policy_number' => $quote->policy_number,
             'policy_issuance_date' => $quote->policy_issuance_date,
             'policy_start_date' => $quote->policy_start_date,
@@ -783,15 +783,24 @@ trait GenericQueriesAllLobs
                 info('Quote Code: '.$payment->code.' Updating TA for Split Payment frequency is : '.$payment->frequency.' and payment_status_id: '.$payment->payment_status_id);
                 if ($payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::PAID) {
                     info('Quote Code: '.$payment->code.' Updating PA BTA: '.$paymentSplit->payment_amount.' WTA: '.$payment->total_amount);
-                    $paymentSplit->payment_amount = $payment->total_amount;
+                    if ($paymentSplit->payment_amount != $payment->total_amount) {
+                        $paymentSplit->payment_amount = $payment->total_amount;
+                        $paymentSplit->save();
+                    }
                 }
                 if (! ($paymentSplit->collection_amount == null || $paymentSplit->collection_amount == 0)) {
+                    $oldPaymentStatusId = $paymentSplit->payment_status_id;
+                    $newPaymentStatusId = null;
                     if ($paymentSplit->collection_amount >= $paymentSplit->payment_amount) {
-                        $paymentSplit->payment_status_id = PaymentStatusEnum::PAID;
+                        $newPaymentStatusId = PaymentStatusEnum::PAID;
                     } else {
-                        $paymentSplit->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
+                        $newPaymentStatusId = PaymentStatusEnum::PARTIALLY_PAID;
                     }
-                    $paymentSplit->save();
+                    if ($oldPaymentStatusId != $newPaymentStatusId) {
+                        $paymentSplit->payment_status_id = $newPaymentStatusId;
+                        $paymentSplit->save();
+                        info('Payment split status updated for: '.$paymentSplit->code.' from '.$oldPaymentStatusId.' to '.$newPaymentStatusId);
+                    }
                 }
             }
         }
@@ -853,5 +862,21 @@ trait GenericQueriesAllLobs
         }
 
         return null;
+    }
+
+    public function removeStaleFromLead($lead_status_id)
+    {
+        $skipStatus = [
+            QuoteStatusEnum::TransactionApproved,
+            QuoteStatusEnum::PolicyDocumentsPending,
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued,
+        ];
+
+        return in_array($lead_status_id, $skipStatus);
     }
 }

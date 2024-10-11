@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
@@ -106,9 +107,19 @@ class SaveBookingDetailsRequest extends FormRequest
                 SendUpdateLogStatusEnum::CIR,
             ]);
 
-            if ($validatedCatForPrices && in_array($this->sendUpdate->quote_type_id, [QuoteTypeId::Business, QuoteTypeId::Health]) &&
+            $isAdditionalCommission = $this->sendUpdate->option?->code == SendUpdateLogStatusEnum::ACB;
+
+            if ($validatedCatForPrices && ! $isAdditionalCommission && in_array($this->sendUpdate->quote_type_id, [QuoteTypeId::Business, QuoteTypeId::Health]) &&
                 request()->input('price_vat_applicable') == 0 && request()->input('price_vat_not_applicable') == 0) {
                 $validator->errors()->add('value', 'One of the fields, either "price vat applicable" or "price vat not applicable", must be greater than 0');
+            }
+
+            if ($this->sendUpdate->status == SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
+                $validator->errors()->add('error', 'Endorsement Booking Failed! Please contact finance');
+            }
+
+            if ($this->sendUpdate->status == SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED) {
+                return $validator->errors()->add('error', 'Update booking already in queued');
             }
         });
     }

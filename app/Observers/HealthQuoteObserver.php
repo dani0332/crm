@@ -5,16 +5,19 @@ namespace App\Observers;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Events\HealthQuoteAdvisorUpdated;
+use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
 use App\Services\HealthQuoteService;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 
 class HealthQuoteObserver
 {
-    use PersonalQuoteSyncTrait;
+    use GenericQueriesAllLobs, PersonalQuoteSyncTrait;
 
     public function updating(HealthQuote $quote): void
     {
@@ -30,7 +33,7 @@ class HealthQuoteObserver
     {
         $dirty = $healthQuote->getDirty();
 
-        if ($healthQuote->isDirty('advisor_id') && $healthQuote->advisor_id !== $healthQuote->getOriginal('advisor_id')) {
+        if ($healthQuote->isDirty('advisor_id')) {
             info(self::class." - Going to dispatch HealthQuoteAdvisorUpdated event for uuid {$healthQuote->uuid}", [
                 'current_advisor_id' => $healthQuote->advisor_id,
                 'original_advisor_id' => $healthQuote->getOriginal('advisor_id'),
@@ -42,15 +45,6 @@ class HealthQuoteObserver
             $healthQuote->isDirty('quote_status_id') &&
             $healthQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
         ) {
-            MAWelcomeJob::dispatchIf(
-                isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)) && $healthQuote->customer,
-                $healthQuote->customer?->first_name,
-                $healthQuote->customer?->last_name,
-                $healthQuote->customer?->email,
-                $healthQuote->customer?->mobile_no,
-                'CUSTOMER_UPDATE',
-                'customer-update-myalfred-we'
-            );
             HealthQuote::withoutEvents(function () use ($healthQuote) {
                 $healthQuote->update(['transaction_approved_at' => now()]);
             });
@@ -62,10 +56,29 @@ class HealthQuoteObserver
             $dirty = [...$dirty, 'transaction_approved_at' => $healthQuote->transaction_approved_at];
         }
 
+        if (isset($dirty['quote_status_id']) && $this->removeStaleFromLead($healthQuote->quote_status_id)) {
+            HealthQuote::withoutEvents(function () use ($healthQuote) {
+                $healthQuote->update(['stale_at' => null]);
+            });
+            $dirty = [...$dirty, 'stale_at' => $healthQuote->stale_at];
+        }
+
         $this->syncQuote($healthQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $healthQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             $this->syncLeadEntries($healthQuote->uuid);
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            in_array($healthQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
+        ) {
+            CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Health, 'quoteUID' => $healthQuote->uuid]);
+            MAWelcomeJob::dispatch(
+                $healthQuote->customer,
+                'LEAD_STATUS_UPDATE',
+                'lead-status-update-myalfred-we'
+            );
         }
     }
 }

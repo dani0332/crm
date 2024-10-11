@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Console\Commands\SageProcessesMarkFailedCommand;
 use App\Console\Commands\UpdateManualOffline;
 use App\Jobs\CarLost\CarSoldResubmissions;
 use Carbon\Carbon;
@@ -31,6 +32,9 @@ class Kernel extends ConsoleKernel
         Commands\PaymentOverdueStatus::class,
         Commands\AlfredFollowUpSchedulerCommand::class,
         Commands\ProcessCCPaymentsCommand::class,
+        Commands\SageProcessesCommand::class,
+        Commands\SageProcessDataCleanUpCommand::class,
+        SageProcessesMarkFailedCommand::class,
     ];
 
     /**
@@ -101,14 +105,20 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping(1);
 
         $schedule->command('UpdateStaleLeads:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
+
         $schedule->command('ActivitiesAutomate:cron')->timezone('Asia/Dubai')->dailyAt('00:01')->onOneServer()->withoutOverlapping();
 
         $schedule->command('Dtt')->timezone('Asia/Dubai')->dailyAt('09:00')->onOneServer()->withoutOverlapping();
 
         $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->dailyAt('11:45')->onOneServer()->withoutOverlapping();
+
+        $schedule->command('sage-processes:run')->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping();
+        $schedule->command('sage-process:cleanup')->timezone('Asia/Dubai')->dailyAt('00:30')->onOneServer()->withoutOverlapping();
+        $schedule->command('sage-processes:mark-failed')->timezone('Asia/Dubai')->everyFiveMinutes()->onOneServer()->withoutOverlapping();
+
         // $schedule->command('alfred:followupEmails')->timezone('Asia/Dubai')->weekly()->mondays()->at('11:00')->onOneServer()->withoutOverlapping();
 
-        // $schedule->command('CorplineDataMigration:cron')->timezone('Asia/Dubai')->dailyAt('12:50')
+        // $schedule->command('CorplineDataMigration:cron')->timezone('Asia/Dubai')->dailyAt('10:50')
         //     ->onOneServer()
         //     ->withoutOverlapping()
         //     ->onSuccess(function (Stringable $output) {
