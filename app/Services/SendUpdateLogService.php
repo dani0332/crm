@@ -1292,6 +1292,8 @@ class SendUpdateLogService
             });
 
             if ($sendUpdateLog?->category?->code == SendUpdateLogStatusEnum::CPD && ! $updateReversalBIN) {
+                info('InsuranceProvider - Generating Reversal Broker Invoice Number - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+                // Reminder:: commit this transaction because need to get incremented sequence number for reversal BIN with same insurer
                 DB::afterCommit(function () use ($sendUpdateLog, $insuranceProvider) {
                     $this->generateBrokerInvoiceNumberForSU($sendUpdateLog, $insuranceProvider->id, true);
                 });
