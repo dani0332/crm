@@ -321,9 +321,9 @@ class ApiService
 
         if (! $lead->isApplyNowEmailSent()) {
             app(HealthEmailService::class)->initiateApplyNowEmail($lead);
+
             return apiResponse(null, Response::HTTP_OK, 'Email Sent');
         }
-
 
         return apiResponse(null, Response::HTTP_OK, 'Email Already Sent!');
     }
