@@ -15,7 +15,8 @@ class SendUpdateLogObserver
             $sendUpdateLog->isDirty('status') &&
             $sendUpdateLog->status === SendUpdateLogStatusEnum::UPDATE_ISSUED
         ) {
-            app(SendUpdateLogService::class)->generateBrokerInvoiceNumberForSU($sendUpdateLog);
+            $response = app(SendUpdateLogService::class)->generateBrokerInvoiceNumberForSU($sendUpdateLog);
+            throw_if(! $response['status'], new \Exception($response['message']));
         }
     }
 }
