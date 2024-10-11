@@ -85,7 +85,7 @@ class BikeEmailService extends BaseService
                 'planName' => $plan->name,
                 'providerCode' => strtolower($plan->providerCode),
                 'benefits' => $this->getPlanBenefits($plan),
-                'buyNowLink' => $this->getBuyNowLinkForQuote(QuoteTypes::BIKE, $lead->uuid, $plan),
+                'buyNowLink' => $this->getEcomQuoteLink(QuoteTypes::BIKE, $lead->uuid, $plan),
                 'isRenewal' => ($plan->isRenewal ?? false),
             ];
         }
@@ -128,7 +128,7 @@ class BikeEmailService extends BaseService
             'yearOfManufacture' => $lead->bikeQuote->year_of_manufacture,
             'vehicleName' => $this->getVehicleName($lead),
             'currentInsurer' => $lead->bikeQuote->currently_insured_with,
-            'quoteLink' => $this->getBuyNowLinkForQuote(QuoteTypes::BIKE, $lead->uuid).$lead->uuid,
+            'quoteLink' => $this->getEcomQuoteLink(QuoteTypes::BIKE, $lead->uuid),
             'assignmentType' => $this->getAssignmentTypeText($lead->assignment_type),
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
             'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',

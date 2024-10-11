@@ -53,13 +53,12 @@ use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Services\UserService;
 use App\Traits\CentralTrait;
-use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class BikeQuoteController extends Controller
 {
-    use CentralTrait, GenericQueriesAllLobs;
+    use CentralTrait;
 
     private $bikeQuoteService;
 
@@ -194,7 +193,7 @@ class BikeQuoteController extends Controller
         $carPlanExclusionsCodeEnum = CarPlanExclusionsCode::asArray();
         $carPlanFeaturesCodeEnum = CarPlanFeaturesCode::asArray();
         $carPlanAddonsCodeEnum = CarPlanAddonsCode::asArray();
-        $ecomBikeInsuranceQuoteUrl = $this->getBuyNowLinkForQuote(QuoteTypes::BIKE, $uuid);
+        $ecomBikeInsuranceQuoteUrl = $this->getEcomQuoteLink(QuoteTypes::BIKE, $uuid);
         $planURL = $ecomBikeInsuranceQuoteUrl.$quote->uuid;
         $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
         $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quote);
