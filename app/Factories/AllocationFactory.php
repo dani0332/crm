@@ -9,6 +9,7 @@ use App\Services\HealthAllocationService;
 use App\Services\TravelAllocationService;
 use App\Strategies\Allocations\BikeAllocation;
 use App\Strategies\Allocations\CarAllocation;
+use App\Strategies\Allocations\CycleAllocation;
 use App\Strategies\Allocations\HealthAllocation;
 use App\Strategies\Allocations\TravelAllocation;
 
@@ -25,6 +26,8 @@ class AllocationFactory
             $strategy = new BikeAllocation(new BikeAllocationService, $allocationId);
         } elseif ($allocationType == QuoteTypeId::Travel) {
             $strategy = new TravelAllocation(new TravelAllocationService, $allocationId, $teamId);
+        } elseif ($allocationType == QuoteTypeId::Cycle) {
+            $strategy = new CycleAllocation($allocationId, $teamId);
         }
 
         return $strategy;

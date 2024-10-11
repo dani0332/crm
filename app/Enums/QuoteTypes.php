@@ -6,17 +6,27 @@ use App\Jobs\OCB\SendCarOCBIntroEmailJob;
 use App\Jobs\OCB\SendTravelOCBIntroEmailJob;
 use App\Jobs\SendHealthOCBIntroEmailJob;
 use App\Models\BikeQuote;
+use App\Models\BikeQuoteRequestDetail;
 use App\Models\BusinessQuote;
+use App\Models\BusinessQuoteRequestDetail;
 use App\Models\CarQuote;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\CycleQuote;
 use App\Models\HealthQuote;
+use App\Models\HealthQuoteRequestDetail;
 use App\Models\HomeQuote;
+use App\Models\HomeQuoteRequestDetail;
 use App\Models\JetskiQuote;
 use App\Models\LifeQuote;
+use App\Models\LifeQuoteRequestDetail;
 use App\Models\PersonalQuote;
+use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
+use App\Models\PetQuoteRequestDetail;
 use App\Models\TravelQuote;
+use App\Models\TravelQuoteRequestDetail;
 use App\Models\YachtQuote;
+use App\Models\YachtQuoteRequestDetail;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Route;
 
@@ -119,6 +129,24 @@ enum QuoteTypes: string
             self::CYCLE => checkPersonalQuotes($this->value) ? new PersonalQuote : new CycleQuote,
             self::JETSKI => checkPersonalQuotes($this->value) ? new PersonalQuote : new JetskiQuote,
             default => new PersonalQuote,
+        };
+    }
+
+    public function detailModel(): Model
+    {
+        return match ($this) {
+            self::CAR => checkPersonalQuotes($this->value) ? new PersonalQuoteDetail : new CarQuoteRequestDetail,
+            self::HOME => checkPersonalQuotes($this->value) ? new PersonalQuoteDetail : new HomeQuoteRequestDetail,
+            self::HEALTH => checkPersonalQuotes($this->value) ? new PersonalQuoteDetail : new HealthQuoteRequestDetail,
+            self::LIFE => checkPersonalQuotes($this->value) ? new PersonalQuoteDetail : new LifeQuoteRequestDetail,
+            self::BUSINESS, self::CORPLINE, self::GROUP_MEDICAL => checkPersonalQuotes($this->value) ? new PersonalQuoteDetail : new BusinessQuoteRequestDetail,
+            self::BIKE => checkPersonalQuotes($this->value) ? new PersonalQuoteDetail : new BikeQuoteRequestDetail,
+            self::YACHT => checkPersonalQuotes($this->value) ? new PersonalQuoteDetail : new YachtQuoteRequestDetail,
+            self::TRAVEL => checkPersonalQuotes($this->value) ? new PersonalQuoteDetail : new TravelQuoteRequestDetail,
+            self::PET => checkPersonalQuotes($this->value) ? new PersonalQuoteDetail : new PetQuoteRequestDetail,
+            self::CYCLE => new PersonalQuoteDetail,
+            self::JETSKI => new PersonalQuoteDetail,
+            default => new PersonalQuoteDetail,
         };
     }
 

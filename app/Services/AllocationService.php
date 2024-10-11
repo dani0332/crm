@@ -101,8 +101,8 @@ class AllocationService
     {
 
         $allocationRecord = $this->getLeadAllocationRecordByUserId($userId, $quoteTypeId);
-        info('Allocation Quote Type Id : '.$allocationRecord->quote_type_id.'  Quote Type Id : '.$quoteTypeId);
         if (! empty($allocationRecord)) {
+            info('Allocation Quote Type Id : '.$allocationRecord->quote_type_id.'  Quote Type Id : '.$quoteTypeId);
             $allocationRecord->auto_assignment_count = $allocationRecord->auto_assignment_count + 1;
             $allocationRecord->allocation_count = $allocationRecord->allocation_count + 1;
             $allocationRecord->updated_at = now();
