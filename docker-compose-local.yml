@@ -87,6 +87,20 @@ services:
     ports:
       - $MAIL_PORT:1025 # smtp server
       - $MAIL_UI_PORT:8025 # web ui
+  redisblanka:
+    image: 'redis:latest'
+    ports:
+      - '6379:6379'
+    networks:
+      - blanka-app-network
+  redis-commander-blanka:
+    image: rediscommander/redis-commander:latest
+    environment:
+      - REDIS_HOSTS=local:redisblanka:6379
+    ports:
+      - '8081:8081'
+    networks:
+      - blanka-app-network
 #Docker Networks
 networks:
   blanka-app-network:
