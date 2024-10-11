@@ -3,9 +3,7 @@
 namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypes;
 use App\Models\JetskiQuote;
-use App\Repositories\PaymentRepository;
 
 class JetskiQuoteObserver
 {
