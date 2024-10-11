@@ -671,9 +671,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             }
 
             $currentDate = Carbon::now();
-            if($attempts == 0){
-                throw new Exception('table locked', 40001);
-            }
             DB::transaction(function () use ($insuranceProvider, $currentDate, &$response, $payment) {
                 $invoiceBrokerSequence = BrokerInvoiceNumber::where([
                     'insurance_provider_id' => $insuranceProvider->id,
