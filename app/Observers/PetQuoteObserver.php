@@ -3,9 +3,7 @@
 namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypes;
 use App\Models\PetQuote;
-use App\Repositories\PaymentRepository;
 
 class PetQuoteObserver
 {
@@ -23,15 +21,6 @@ class PetQuoteObserver
                 $petQuote->update(['transaction_approved_at' => now()]);
             });
             $dirty = [...$dirty, 'transaction_approved_at' => $petQuote->transaction_approved_at];
-        }
-
-        if (
-            isset($dirty['quote_status_id']) &&
-            $petQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
-        ) {
-            $payment = $petQuote->payments()->mainLeadPayment()->first();
-            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::PET->value);
-
         }
     }
 }
