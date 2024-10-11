@@ -169,11 +169,14 @@ watch(
 
     <x-divider class="my-4" v-if="results.data.length > 0" />
 
-    <div class="text-center" v-if="loader.cards">
-      <x-loader label="Loading" status="active" />
+    <div class="text-center">
+      <h3 v-if="!loader.cards && results.data.length === 0">
+        No Records Available
+      </h3>
+      <x-loader v-if="loader.cards" label="Loading" status="active" />
     </div>
 
-    <div v-if="results.data.length > 0">
+    <div v-if="!loader.cards && results.data.length > 0">
       <x-card>
         <x-accordion>
           <x-accordion-item
@@ -183,7 +186,7 @@ watch(
           >
             <div class="flex items-center gap-2">
               <x-tag size="xs" color="orange">
-                {{ formatDate(itr.performedAt) }}
+                {{ formatDate(itr.created_at) }}
               </x-tag>
               <p class="line-clamp-1 flex-1 text-base" v-html="itr.summary"></p>
             </div>

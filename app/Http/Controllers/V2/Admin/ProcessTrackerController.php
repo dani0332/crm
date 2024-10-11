@@ -8,8 +8,10 @@ use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Models\ProcessTracker\Tracker;
 use App\Models\ProcessTracker\TrackerProcess;
+use App\Models\ProcessTracker\TrackerProcessIteration;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
 
 class ProcessTrackerController extends Controller
@@ -47,30 +49,27 @@ class ProcessTrackerController extends Controller
         $processType = ProcessTrackerTypeEnum::tryFrom(request('processType'));
         $quoteUuid = request('uuid');
 
-        $page = request()->get('page', 1);
-        $perPage = 20;
-
+        $trackerProcess = null;
         if ($quoteType && $processType && $quoteUuid) {
             $tracker = Tracker::whereQuoteType($quoteType)->whereQuoteUuid($quoteUuid)->first();
             if ($tracker) {
-                $trackerProcess = TrackerProcess::whereBelongsTo($tracker)->whereType($processType)->first();
+                $trackerProcess = $tracker->processes()->whereType($processType)->first();
                 if ($trackerProcess) {
-                    $iterations = $this->resolveProcessIterations($trackerProcess->iterations);
+                    $iterationsData = $this->resolveProcessIterations($trackerProcess);
 
-                    $totalCount = $iterations->count();
-                    $iterations = $this->mapIterations($iterations->forPage($page, $perPage));
-
-                    return [
-                        $trackerProcess,
-                        $this->getPaginator($iterations, $totalCount, $perPage, $page),
-                    ];
+                    return $this->response($trackerProcess, $iterationsData);
                 }
             }
         }
 
+        return $this->response($trackerProcess, $this->getPaginator(collect([]), 0, 20, 1));
+    }
+
+    private function response(?TrackerProcess $trackerProcess, Paginator|LengthAwarePaginator $iterationsData)
+    {
         return [
-            null,
-            $this->getPaginator(collect([]), 0, $perPage, $page),
+            $trackerProcess,
+            $iterationsData,
         ];
     }
 
@@ -85,51 +84,6 @@ class ProcessTrackerController extends Controller
         );
     }
 
-    private function resolveProcessIterations($iterations): Collection
-    {
-        $iterations = collect(($iterations ?? []))->map(function ($iteration) {
-            $iteration = collect($iteration);
-            $iteration->put('performedAt', Carbon::parse($iteration->get('performedAt', now())));
-
-            return $iteration;
-        })->sortByDesc('performedAt');
-
-        [$startDate, $endDate] = $this->getStartAndEndDate();
-        if ($startDate) {
-            $iterations = $iterations->where('performedAt', '>=', $startDate);
-        }
-        if ($endDate) {
-            $iterations = $iterations->where('performedAt', '<=', $endDate);
-        }
-
-        return $iterations;
-    }
-
-    private function mapIterations(Collection $iterations): Collection
-    {
-        return $iterations->map(function ($iteration) {
-            $steps = collect($iteration->get('steps'))->map(function ($step) {
-                $stepData = ($step['stepData'] ?? []);
-                $isDevOnlyStep = $stepData['devOnly'] ?? false;
-                $isDataDevOnly = $stepData['dataDevOnly'] ?? false;
-
-                $isHidden = ! auth()->user()->hasRole(RolesEnum::Engineering) && $isDevOnlyStep;
-                $isDataHidden = ! auth()->user()->hasRole(RolesEnum::Engineering) && $isDataDevOnly;
-                if ($isDataHidden) {
-                    unset($step['stepData'], $step['data']);
-                }
-
-                return collect([
-                    ...$step,
-                    'isHidden' => $isHidden,
-                ]);
-            })->filter(fn ($item) => ! $item->get('isHidden'))->values();
-            $iteration->put('steps', $steps);
-
-            return $iteration;
-        })->values();
-    }
-
     private function getStartAndEndDate()
     {
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
@@ -141,5 +95,47 @@ class ProcessTrackerController extends Controller
             Carbon::parse(request('startEndDate')[1])->endOfDay()->format($dateFormat) : null;
 
         return [$startDate, $endDate];
+    }
+
+    private function resolveProcessIterations(TrackerProcess $trackerProcess): Paginator
+    {
+        $iterations = $trackerProcess->iterations();
+
+        [$startDate, $endDate] = $this->getStartAndEndDate();
+        if ($startDate && $endDate) {
+            $iterations->whereDate('created_at', '>=', $startDate)->whereDate('created_at', '<=', $endDate);
+        }
+
+        $iterations = $iterations->simplePaginate(20)->withQueryString();
+
+        return $this->mapIterations($iterations);
+
+    }
+
+    private function mapIterations(Paginator $iterationsData): Paginator
+    {
+        $isEngineer = auth()->user()->hasRole(RolesEnum::Engineering);
+
+        $iterationsData->getCollection()->transform(function (TrackerProcessIteration $iteration) use ($isEngineer) {
+            $iteration->steps = collect($iteration?->steps ?? [])->map(function ($step) use ($isEngineer) {
+                $stepData = $step['stepData'] ?? [];
+
+                $isDevOnlyStep = $stepData['devOnly'] ?? false;
+                $isDataDevOnly = $stepData['dataDevOnly'] ?? false;
+
+                $isHidden = ! $isEngineer && $isDevOnlyStep;
+                $isDataHidden = ! $isEngineer && $isDataDevOnly;
+
+                if ($isDataHidden) {
+                    unset($step['stepData'], $step['data']);
+                }
+
+                return collect($step)->put('isHidden', $isHidden);
+            })->filter(fn ($item) => ! $item->get('isHidden'))->values();
+
+            return $iteration;
+        });
+
+        return $iterationsData;
     }
 }

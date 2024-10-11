@@ -105,20 +105,18 @@ class ProcessTrackerService
             $description = $summary ?: ($this->steps->last()['description'] ?? $step->data()?->description);
         }
 
-        return $this->saveProcess($isSuccess, ['summary' => $description, ...$details]);
+        return $this->saveIteration($isSuccess, $description, $details);
     }
 
-    private function saveProcess(bool $isSuccess, array $processAdditionalDetails = []): self
+    private function saveIteration(bool $isSuccess, string $summary, array $processAdditionalDetails = []): self
     {
-        $process = [
+        $this->process->iterations()->create([
             'isSuccess' => $isSuccess,
+            'summary' => $summary,
             'performedBy' => auth()->id() ?? null,
-            'performedAt' => now()->toIso8601String(),
             'steps' => $this->steps->toArray(),
             ...$processAdditionalDetails,
-        ];
-
-        $this->process->push('iterations', $process);
+        ]);
 
         return $this;
     }

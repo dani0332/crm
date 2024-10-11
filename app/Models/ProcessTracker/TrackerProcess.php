@@ -9,7 +9,6 @@ class TrackerProcess extends BaseMongoModel
 {
     protected $fillable = [
         'type',
-        'iterations',
     ];
     protected $casts = [
         'type' => ProcessTrackerTypeEnum::class,
@@ -18,5 +17,10 @@ class TrackerProcess extends BaseMongoModel
     public function tracker()
     {
         return $this->belongsTo(Tracker::class);
+    }
+
+    public function iterations()
+    {
+        return $this->hasMany(TrackerProcessIteration::class);
     }
 }
