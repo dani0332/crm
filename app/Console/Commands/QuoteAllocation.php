@@ -89,9 +89,11 @@ class QuoteAllocation extends Command
             ->whereNotIn('source', $exemptedLeadSources)
             ->where('is_renewal_tier_email_sent', 0)
             ->where(function ($query) {
-                $query->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)->where('sic_flow_enabled', 0)
-                    ->orWhere(function ($query) {
-                        $query->where('source', LeadSourceEnum::RENEWAL_UPLOAD)->where('sic_advisor_requested', 1)->where('sic_flow_enabled', 1);
+                $query->leadAllocationFailed()
+                    ->orWhere(function ($q) {
+                        $q->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)->sicFlowDisabled();
+                    })->orWhere(function ($query) {
+                        $query->where('source', LeadSourceEnum::RENEWAL_UPLOAD)->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
                     });
             })
             ->take($chunkSize);
@@ -129,13 +131,15 @@ class QuoteAllocation extends Command
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->where('health_quote_request.price_starting_from', '!=', null)
             ->where('health_quote_request.is_error_email_sent', 0)
-            ->where(function ($query) {
-                $query->where('sic_flow_enabled', 0)
+            ->where(function ($q) {
+                $q->leadAllocationFailed()
+                    ->orSicFlowDisabled()
                     ->orWhere(function ($subQuery) {
-                        $subQuery->where('sic_advisor_requested', 1)
-                            ->where('sic_flow_enabled', 1);
+                        $subQuery->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
                     });
-            })->take($chunkSize);
+            })
+            ->take($chunkSize);
+
         foreach ($leads->get() as $lead) {
             info('Processing Health record for Quote Allocation with uuid: '.$lead->uuid);
             $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
@@ -155,7 +159,13 @@ class QuoteAllocation extends Command
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->orderBy('created_at', 'desc')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
-            ->where('sic_flow_enabled', false)
+            ->where(function ($q) {
+                $q->leadAllocationFailed()
+                    ->orSicFlowDisabled()
+                    ->orWhere(function ($subQuery) {
+                        $subQuery->sicFlowEnabled()->requestedAdvisorOrPaymentAuthorized();
+                    });
+            })
             ->take($chunkSize);
 
         // Get the teamId once before the loop
