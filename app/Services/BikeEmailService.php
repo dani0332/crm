@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanType;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
@@ -33,17 +34,17 @@ class BikeEmailService extends BaseService
         $emailData = $this->buildEmailData($lead, $plans, $previousAdvisorId, $tierR->id);
         $quotePlansCount = is_countable($plans) ? count($plans) : 0;
         if ($quotePlansCount > 0) {
-            info('Inside plans of count: '.$lead->uuid.'    ');
+            info('Inside plans of count: ' . $lead->uuid . '    ');
             $pdfData = [
                 'plan_ids' => collect($plans)->take(5)->pluck('id')->toArray(),
                 'quote_uuid' => $lead->uuid,
             ];
             $pdf = $bikeQuoteService->exportPlansPdf(quoteTypeCode::Bike, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $plans], 'isDataSorted' => true])));
             if (isset($pdf['error'])) {
-                info('Failed to generate PDF for UUID in bike email service: '.$lead->uuid.' Error: '.$pdf['error']);
+                info('Failed to generate PDF for UUID in bike email service: ' . $lead->uuid . ' Error: ' . $pdf['error']);
             } else {
                 $emailData->pdfAttachment = (object) $pdf;
-                info('attaching pdf: '.$lead->uuid.'    ');
+                info('attaching pdf: ' . $lead->uuid . '    ');
             }
         }
 
@@ -81,7 +82,7 @@ class BikeEmailService extends BaseService
                 'planName' => $plan->name,
                 'providerCode' => strtolower($plan->providerCode),
                 'benefits' => $this->getPlanBenefits($plan),
-                'buyNowLink' => $this->getPlanBuyNowLink($plan, $lead->uuid),
+                'buyNowLink' => getBuyNowLinkForQuote(QuoteTypes::BIKE, $lead->uuid, $plan),
                 'isRenewal' => ($plan->isRenewal ?? false),
             ];
         }
@@ -109,8 +110,8 @@ class BikeEmailService extends BaseService
         $whatsAppNumber = ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
         $bikeQuoteId = $lead->code;
         $emailData = (object) [
-            'clientFullName' => $lead->first_name.' '.$lead->last_name,
-            'customerName' => $lead->first_name.' '.$lead->last_name,
+            'clientFullName' => $lead->first_name . ' ' . $lead->last_name,
+            'customerName' => $lead->first_name . ' ' . $lead->last_name,
             'customerEmail' => $lead->email,
             'mobilePhone' => (! empty($advisor->mobile_no) ? formatMobileNoDisplay($advisor->mobile_no) : ''),
             'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
@@ -124,7 +125,7 @@ class BikeEmailService extends BaseService
             'yearOfManufacture' => $lead->bikeQuote->year_of_manufacture,
             'vehicleName' => $this->getVehicleName($lead),
             'currentInsurer' => $lead->bikeQuote->currently_insured_with,
-            'quoteLink' => config('constants.ECOM_BIKE_INSURANCE_QUOTE_URL').$lead->uuid,
+            'quoteLink' => config('constants.ECOM_BIKE_INSURANCE_QUOTE_URL') . $lead->uuid,
             'assignmentType' => $this->getAssignmentTypeText($lead->assignment_type),
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
             'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
@@ -179,13 +180,6 @@ class BikeEmailService extends BaseService
         return $planAddons;
     }
 
-    private function getPlanBuyNowLink($plan, $uuid)
-    {
-        $buyNowLink = config('constants.ECOM_BIKE_INSURANCE_QUOTE_URL').$uuid.'/payment/?planId='.$plan->id.'&providerCode='.$plan->providerCode;
-
-        return $buyNowLink;
-    }
-
     private function getAppStorageValueByKey($keyName)
     {
         $query = ApplicationStorage::select('value')
@@ -215,7 +209,7 @@ class BikeEmailService extends BaseService
 
             if ($bikeModel) {
                 // Update $vehicleName with car model text
-                $vehicleName .= ' '.$bikeModel->text;
+                $vehicleName .= ' ' . $bikeModel->text;
             }
         }
         if ($lead->bikeQuote->model_detail_id != null) {
@@ -223,7 +217,7 @@ class BikeEmailService extends BaseService
 
             if ($bikeModelDetail) {
                 // Update $vehicleName with car model detail text
-                $vehicleName .= ' '.$bikeModelDetail->text;
+                $vehicleName .= ' ' . $bikeModelDetail->text;
             }
         }
 
@@ -253,17 +247,17 @@ class BikeEmailService extends BaseService
     {
         info('Getting Template Id for Bike OCB');
         if (count($plans) == 0) {
-            info('Zero Plan Template Id for Bike OCB against UUID: '.$lead->uuid.'and Template Id: '.$lead->tier_id == $tierR->id ? 492 : 626);
+            info('Zero Plan Template Id for Bike OCB against UUID: ' . $lead->uuid . 'and Template Id: ' . $lead->tier_id == $tierR->id ? 492 : 626);
 
             // No plans with available ratings, send a specific email template
             return $lead->tier_id == $tierR->id ? 492 : 626;
         } elseif (count($plans) == 1) {
-            info('One Plan Template Id for Bike OCB against UUID: '.$lead->uuid.'and Template Id: '.$lead->tier_id == $tierR->id ? 492 : 627);
+            info('One Plan Template Id for Bike OCB against UUID: ' . $lead->uuid . 'and Template Id: ' . $lead->tier_id == $tierR->id ? 492 : 627);
 
             return $lead->tier_id == $tierR->id ? 492 : 627;
         } else {
             // Plans with available ratings exist, send a different email template
-            info('Multiple Plan Template Id for Bike OCB against UUID: '.$lead->uuid.'and Template Id: '.$lead->tier_id == $tierR->id ? 491 : 628);
+            info('Multiple Plan Template Id for Bike OCB against UUID: ' . $lead->uuid . 'and Template Id: ' . $lead->tier_id == $tierR->id ? 491 : 628);
 
             return $lead->tier_id == $tierR->id ? 491 : 628;
         }
