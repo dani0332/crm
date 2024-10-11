@@ -38,12 +38,20 @@ class HealthRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
         $response = app(SendEmailCustomerService::class)->sendDttEmail($this->data);
         if ($response == 201) {
 
-            HealthQuote::where('uuid', $this->data->uuid)->update(['quote_status_id' => QuoteStatusEnum::FollowedUp]);
-            DttRevival::where('uuid', $this->data->uuid)->increment('follow_up_email_count');
+            $lead = HealthQuote::where('uuid', $this->data->uuid)->first();
+            if ($lead->quote_status_id != QuoteStatusEnum::FollowedUp) {
+                $lead->update(['quote_status_id' => QuoteStatusEnum::FollowedUp]);
+            }
+            $revivalRecord = DttRevival::where('uuid', $this->data->uuid)->first();
+            $revivalRecord->increment('follow_up_email_count');
+            if ($revivalRecord  && $revivalRecord->follow_up_email_count == 6) {
+                $lead->update(['quote_status_id' => QuoteStatusEnum::Stale]);
+                info('healthRevivalFollowUp-LeadStatueChangedTo-Stale'. $this->data->uuid);
+            }
 
-            info('healthRevivalFollowUp email is sent  -'.$this->data->customerEmail);
+            info('healthRevivalFollowUp email is sent  -' . $this->data->customerEmail);
         } else {
-            info('healthRevivalFollowUp email is not sent -'.$this->data->customerEmail);
+            info('healthRevivalFollowUp email is not sent -' . $this->data->customerEmail);
         }
     }
 }

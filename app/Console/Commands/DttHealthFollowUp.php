@@ -202,7 +202,7 @@ class DttHealthFollowUp extends Command
                     }
                 } // after twenty days
                 if ($today->eq($afterTwentyDays)) {
-                    $emailData->subject = 'Your next step for seamless health coverage renewal awaits' . $healthQuote->code;
+                    $emailData->subject = 'Your next step for seamless health coverage renewal awaits! ' . $healthQuote->code;
                     $emailData->tag = 'health-revival-followup6-email';
                     $emailData->templateType = 'revivalHealthFU6';
                     if ($item->follow_up_email_count == 5) {
