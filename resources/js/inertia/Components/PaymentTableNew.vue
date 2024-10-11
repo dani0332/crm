@@ -1870,9 +1870,11 @@ const finalizePaymentForm = (payment, capture_approval) => {
       payment.total_amount + payment.discount_value
     ) {
       isFieldReadonly.value = false;
-      isTotalPriceUpdated.value = true;
     } else {
       isFieldReadonly.value = false;
+    }
+    if ( payment.total_price > payment.total_amount + payment.discount_value){
+      isTotalPriceUpdated.value = false;
     }
   };
 
@@ -3734,14 +3736,14 @@ const isSplitDeleteEnabled = computed(() => {
                       ).label
                     }}
                   </span>
-                  <select
-                    v-if="!isFieldReadonly"
-                    class="custom-select"
-                    v-model="paymentMethodsForm.collection_type"
-                    :rules="[rules.isRequired]"
-                    @change="handleCollectionTypeChange"
-                    :disabled="isTotalPriceUpdated"
-                  >
+                    <select
+                      v-if="!isFieldReadonly"
+                      class="custom-select"
+                      v-model="paymentMethodsForm.collection_type"
+                      :rules="[rules.isRequired]"
+                      @change="handleCollectionTypeChange"
+                      :disabled="isTotalPriceUpdated"
+                    >
                     <template
                       v-for="option in collectionTypes"
                       :key="option.value"
