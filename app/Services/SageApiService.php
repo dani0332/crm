@@ -112,11 +112,11 @@ class SageApiService
         $verb = strtoupper($verb);
         try {
             $response = match ($verb) {
-                'PATCH' => Http::withBasicAuth($this->sageLogin, $this->sagePassword)
+                'PATCH' => Http::timeout(60)->withBasicAuth($this->sageLogin, $this->sagePassword)
                     ->patch($sageEndPoint, $payLoad),
-                'POST' => Http::withBasicAuth($this->sageLogin, $this->sagePassword)
+                'POST' => Http::timeout(60)->withBasicAuth($this->sageLogin, $this->sagePassword)
                     ->post($sageEndPoint, $payLoad),
-                default => Http::withBasicAuth($this->sageLogin, $this->sagePassword)
+                default => Http::timeout(60)->withBasicAuth($this->sageLogin, $this->sagePassword)
                     ->get($sageEndPoint, $payLoad),
             };
 
