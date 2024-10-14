@@ -25,6 +25,7 @@ class PersonalQuoteObserver
 
     public function updated(PersonalQuote $personalQuote): void
     {
+        $dirty = $personalQuote->getDirty();
         if (
             $personalQuote->isDirty('quote_status_id') &&
             $personalQuote->quote_status_id === QuoteStatusEnum::TransactionApproved &&
@@ -57,6 +58,7 @@ class PersonalQuoteObserver
                     $personalQuote->advisor_id !== null &&
                     $personalQuote->advisor_id !== 0
                 ) {
+                    $personalQuote->markLeadAllocationPassed();
                     $oldAdvisorId = $changes['advisor_id']['old'];
                     event(new BikeQuoteAdvisorUpdated($personalQuote, $oldAdvisorId));
                 }
@@ -66,7 +68,7 @@ class PersonalQuoteObserver
         }
 
         if (
-            $personalQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             in_array($personalQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked]) &&
             in_array($personalQuote->quote_type_id, [QuoteTypeId::Pet, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Jetski])
         ) {
@@ -78,9 +80,11 @@ class PersonalQuoteObserver
             );
         }
 
-        if ($personalQuote->isDirty('quote_status_id') && $this->removeStaleFromLead($personalQuote->quote_status_id)
+        if (isset($dirty['quote_status_id']) && $this->removeStaleFromLead($personalQuote->quote_status_id)
             && in_array($personalQuote->quote_type_id, [QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Yacht])) {
-            $personalQuote->update(['stale_at' => null]);
+            PersonalQuote::withoutEvents(function () use ($personalQuote) {
+                $personalQuote->update(['stale_at' => null]);
+            });
         }
     }
 }
