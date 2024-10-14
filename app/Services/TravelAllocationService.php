@@ -85,11 +85,10 @@ class TravelAllocationService extends AllocationService
             ->when($isSIC, function ($q) {
                 $q->where('la.is_hardstop', true); // fetch users only with hardstop as true as they are eligible for allocation
             })
-            ->orderBy('la.last_allocated', 'asc')
-            ->first();
+            ->orderBy('la.last_allocated', 'asc');
         info(self::class." - getAdvisorByStatus query: {$user->toSql()}, bindings: ".json_encode($user->getBindings()));
 
-        return $user;
+        return $user->first();
     }
 
     public function assignLead(TravelQuote $lead, User $advisor, $assignmentType)

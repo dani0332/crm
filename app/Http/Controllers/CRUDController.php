@@ -2033,7 +2033,7 @@ class CRUDController extends Controller
 
     public function toggleEmbeddedProduct(Request $request)
     {
-        $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($this->genericModel->modelType));
+        $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower(ucfirst($request->modelType)));
 
         return $this->crudService->toggleSelection($request, $quoteTypeId);
     }

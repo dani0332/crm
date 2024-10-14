@@ -84,7 +84,6 @@ class SendEmailCustomerService extends BaseService
         }
 
         return $attachments;
-
     }
 
     public function sendMail(
