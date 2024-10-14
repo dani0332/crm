@@ -11,6 +11,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class ProcessRenewalsUploadCreate implements ShouldQueue
@@ -40,7 +41,17 @@ class ProcessRenewalsUploadCreate implements ShouldQueue
      */
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
-        return $renewalsUploadService->processUploadCreate($this->renewalsUploadLead);
+        try {
+            return $renewalsUploadService->processUploadCreate($this->renewalsUploadLead);
+        } catch (Throwable $e) {
+            Log::error('Error in ProcessRenewalsUploadCreate job', [
+                'lead_id' => $this->renewalsUploadLead->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Optionally, rethrow the exception to mark the job as failed
+            throw $e;
+        }
     }
 
     /**

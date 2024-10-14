@@ -120,24 +120,7 @@ class UploadAndCreateImport implements OnEachRow, SkipsOnFailure, WithChunkReadi
             'product' => ['index' => 5, 'title' => 'Product', 'rules' => 'required|max:100'],
             'product_type' => ['index' => 6, 'title' => 'Product Type', 'rules' => 'max:100'],
             'advisor' => ['index' => 7, 'title' => 'Advisor Email', 'rules' => 'max:100'],
-            'policy_number' => [
-                'index' => 8,
-                'title' => 'Policy Number',
-                'rules' =>[
-                    'required',
-                    'max:100',
-                    function ($attribute, $value, $onFailure) {
-                        info('validate policy numbers: ',$this->policyNumbers);
-                        if (in_array($value, $this->policyNumbers)) {
-                            info('duplicate policy number: '.$value);
-                            $onFailure('The ' . $attribute . ' field contains duplicate policy numbers.');
-                        } else {
-                            info('add policy number: '.$value);
-                            $this->policyNumbers[] = $value;
-                        }
-                    }
-                ]
-            ],
+            'policy_number' => ['index' => 8, 'title' => 'Policy Number', 'rules' => 'required|max:100'],
             'start_date' => ['index' => 9, 'title' => 'Policy Start Date', 'rules' => ['max:10', function ($attribute, $value, $onFailure) {
                 if (! $this->validateDate($value)) {
                     $onFailure('Invalid value provided for '.$attribute);

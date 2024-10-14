@@ -109,6 +109,9 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->dailyAt('11:45')->onOneServer()->withoutOverlapping();
         $schedule->command('sage-processes:run')->timezone('Asia/Dubai')->everyMinute()->onOneServer()->withoutOverlapping();
+        
+        // need to experiment below command
+        // $schedule->command('haystacks:resume')->everyMinute();
 
         // $schedule->command('alfred:followupEmails')->timezone('Asia/Dubai')->weekly()->mondays()->at('11:00')->onOneServer()->withoutOverlapping();
 

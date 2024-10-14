@@ -535,6 +535,8 @@ class RenewalsUploadService
 
             $renewalsUploadLead = DB::transaction(function () use ($renewalsUploadLead) {
                 //start file import
+                info('Begin transaction for RenewalLeadId: ' . $renewalsUploadLead->id);
+
                 $renewalsUpload = new UploadAndUpdateImport($this, $renewalsUploadLead);
                 $renewalsUpload->import($renewalsUploadLead->file_path, 'azureIM');
 
@@ -547,6 +549,8 @@ class RenewalsUploadService
                     'good' => 0,
                     'total_records' => ($validRows + $failedRows),
                 ]);
+
+                info('End transaction for RenewalLeadId: ' . $renewalsUploadLead->id);
 
                 return $renewalsUploadLead;
             });
@@ -1949,7 +1953,9 @@ class RenewalsUploadService
             $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
             Log::error($logPrefix.'Process Failed. Error: '.$exception->getMessage());
 
-            return false;
+            // Optionally, rethrow the exception to mark the job as failed
+            throw $exception;
+            // return false;
         }
     }
 
