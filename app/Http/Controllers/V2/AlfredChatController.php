@@ -19,15 +19,16 @@ use Illuminate\Http\Request;
 class AlfredChatController extends Controller
 {
     private $instantAlfredService;
+
     public function __construct(InstantAlfredService $instantAlfredService)
     {
         $this->instantAlfredService = $instantAlfredService;
-        
+
         $this->middleware('permission:'.PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS, ['only' => ['logs']]);
 
         $this->middleware('permission:'.PermissionsEnum::DATA_EXTRACTION, ['only' => ['exportChat']]);
 
-        // $this->middleware('readonly_db');
+        $this->middleware('readonly_db');
     }
 
     /**
@@ -38,11 +39,10 @@ class AlfredChatController extends Controller
     public function chats(AlfredChatRequest $request)
     {
         $chat = AlfredChat::where('quote_id', $request->quoteId)
-        ->where('quote_type', $request->quoteType)
-        ->select('quote_id', 'quote_type', 'role', 'msg', 'created_at', 'channel', 'whatsapp_request')
-        ->get();
+            ->where('quote_type', $request->quoteType)
+            ->select('quote_id', 'quote_type', 'role', 'msg', 'created_at', 'channel', 'whatsapp_request')
+            ->get();
 
- 
         if ($chat->isEmpty()) {
             return response()->json(['message' => 'No chat available']);
         }
@@ -51,9 +51,9 @@ class AlfredChatController extends Controller
     }
 
     public function index(Request $request)
-    {   
+    {
         $data = $this->instantAlfredService->processSqlChatFilters($request);
-     
+
         return inertia('AlfredChat/Index', ['logs' => $data->simplePaginate(15)->withQueryString(),  'leadStatuses' => QuoteStatus::all(), 'batches' => QuoteBatches::all()]);
 
     }
