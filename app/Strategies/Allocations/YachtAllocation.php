@@ -6,7 +6,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Models\User;
 
-class CycleAllocation extends BaseAllocation
+class YachtAllocation extends BaseAllocation
 {
     protected function resolveLead(): void
     {
@@ -28,7 +28,7 @@ class CycleAllocation extends BaseAllocation
             ->where(function ($query) {
                 $query->whereRaw('la.allocation_count < la.max_capacity')->orWhere('la.max_capacity', -1);
             })
-            ->whereIn('r.name', [RolesEnum::CycleAdvisor])
+            ->whereIn('r.name', [RolesEnum::YachtAdvisor])
             ->where('la.quote_type_id', $this->quoteType->id())
             ->where('users.is_active', true)
             ->orderBy('la.last_allocated', 'asc')

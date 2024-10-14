@@ -36,6 +36,7 @@ use App\Strategies\Allocations\CarAllocation;
 use App\Strategies\Allocations\CycleAllocation;
 use App\Strategies\Allocations\HealthAllocation;
 use App\Strategies\Allocations\TravelAllocation;
+use App\Strategies\Allocations\YachtAllocation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Route;
 
@@ -251,6 +252,7 @@ enum QuoteTypes: string
             self::BIKE => new BikeAllocation(new BikeAllocationService, $uuid, overrideAdvisorId: $overrideAdvisorId),
             self::TRAVEL => new TravelAllocation(new TravelAllocationService, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
             self::CYCLE => new CycleAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
+            self::YACHT => new YachtAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
             default => null,
         };
 
