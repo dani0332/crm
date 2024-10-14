@@ -18,7 +18,7 @@ class SendUpdateSageJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 1;
-    public int $timeout = 60;
+    public int $timeout = 80;
     private $requestPayload;
     private $sendUpdateLog;
     private $sageRequestPayload;
