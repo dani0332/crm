@@ -63,6 +63,22 @@ abstract class BaseAllocation extends AllocationService
         return $response;
     }
 
+    protected function getAdvisorBaseQuery(int $onlineStatus, array $roles)
+    {
+        return User::select('users.id as user_id')
+            ->join('lead_allocation as la', 'la.user_id', '=', 'users.id')
+            ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
+            ->join('roles as r', 'r.id', '=', 'mhr.role_id')
+            ->where('users.status', $onlineStatus)
+            ->where(function ($query) {
+                $query->whereRaw('la.allocation_count < la.max_capacity')->orWhere('la.max_capacity', -1);
+            })
+            ->whereIn('r.name', $roles)
+            ->where('la.quote_type_id', $this->quoteType->id())
+            ->where('users.is_active', true)
+            ->orderBy('la.last_allocated', 'asc');
+    }
+
     protected function fetchAvailableAdvisor($isReassignmentJob = false)
     {
         info(self::class." - fetchAvailableAdvisor: {$isReassignmentJob} - {$this->teamId} - {$this->uuid}");
