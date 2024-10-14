@@ -6,7 +6,6 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Factories\AllocationFactory;
-use App\Http\Requests\BirdWebhookRequest;
 use App\Jobs\EmailStatusEventJob;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
@@ -138,21 +137,20 @@ class InboundEmailsHookService extends BaseService
                 return apiResponse([], Response::HTTP_BAD_REQUEST, 'Webhook Payload is empty!');
             }
             info('Webhook Payload: '.json_encode($payload));
-            $type =(isset($payload['results'])) ? collect($payload['results'])->first()['type'] : null;
-            if(!empty($type)){
-                 // Extract and filter the required fields
-                 $payload = collect($payload['results'])->first();
-                 if(empty($payload)) {
-                     info('Webhook Payload result is empty!');
-                     return apiResponse([], Response::HTTP_BAD_REQUEST, 'Webhook Payload is empty!');
-                 }
-                 $result = collect($payload)->only(['messageId', 'type'])
-                 ->filter();
+            $type = (isset($payload['results'])) ? collect($payload['results'])->first()['type'] : null;
+            if (! empty($type)) {
+                // Extract and filter the required fields
+                $payload = collect($payload['results'])->first();
+                if (empty($payload)) {
+                    info('Webhook Payload result is empty!');
+
+                    return apiResponse([], Response::HTTP_BAD_REQUEST, 'Webhook Payload is empty!');
+                }
+                $result = collect($payload)->only(['messageId', 'type'])
+                    ->filter();
                 $this->birdMessageInteractionsUpdate($result);
-            }
-            else
-            {
-                $identifierValue =isset($payload['receiver']['contacts']) ? collect($payload['receiver']['contacts'])->first()['identifierValue'] : null;
+            } else {
+                $identifierValue = isset($payload['receiver']['contacts']) ? collect($payload['receiver']['contacts'])->first()['identifierValue'] : null;
                 // Extract and filter therequired fields
                 $result = $payload->only(['id', 'status', 'reason'])
                     ->merge(['identifierValue' => $identifierValue])
@@ -167,7 +165,8 @@ class InboundEmailsHookService extends BaseService
         }
     }
 
-    public function birdMessageStatusUpdate($result, $identifierValue=null){
+    public function birdMessageStatusUpdate($result, $identifierValue = null)
+    {
         $result = (object) $result->all();
         info('Webhook birdMessageStatusUpdate Payload: '.json_encode($result));
         $messageId = $result->id ?? null;
@@ -187,7 +186,8 @@ class InboundEmailsHookService extends BaseService
             info($msg);
         }
     }
-    public function birdMessageInteractionsUpdate($result, $identifierValue=null){
+    public function birdMessageInteractionsUpdate($result, $identifierValue = null)
+    {
         $result = (object) $result->all();
         info('Webhook birdMessageInteractionsUpdate Payload: '.json_encode($result));
 
