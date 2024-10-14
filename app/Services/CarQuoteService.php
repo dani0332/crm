@@ -2173,10 +2173,12 @@ class CarQuoteService extends BaseService
             ->join('vehicle_type as vt', 'cqr.vehicle_type_id', '=', 'vt.id')
             ->leftJoin('car_plan as cp', 'cqr.plan_id', '=', 'cp.id')
             ->leftJoin('insurance_provider as ip', 'cp.provider_id', '=', 'ip.id')
+            ->leftJoin('quote_tags as qt', 'cqr.uuid', '=', 'qt.quote_uuid')
             ->whereNotNull('cqp.pua_premium')
             ->whereBetween('cqr.payment_status_date', [$startDate, $endDate])
             ->whereNotNull('cqr.paid_at')
             ->whereIn('cqr.payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PAID, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PARTIALLY_PAID])
-            ->whereColumn('cqp.plan_id', 'cqr.plan_id');
+            ->whereColumn('cqp.plan_id', 'cqr.plan_id')
+            ->whereIn('qt.name', ['SPUA', 'APUA', 'NPUA']);
     }
 }

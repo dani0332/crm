@@ -29,9 +29,7 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping
             ->select('cqr.payment_status_id')
             ->whereIn('cqr.payment_status_id', [
                 PaymentStatusEnum::CAPTURED,
-                PaymentStatusEnum::PAID,
                 PaymentStatusEnum::PARTIAL_CAPTURED,
-                PaymentStatusEnum::PARTIALLY_PAID,
             ])
             ->groupBy('cqr.payment_status_id')
             ->selectRaw('cqr.payment_status_id, COUNT(*) as total_count')
@@ -66,6 +64,7 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping
             'cqr.dob as dob',
             'cqr.car_value as carValue',
             'cqr.paid_at as paidAt',
+            'qt.name as PUAType',
             'cqr.created_at as createdAt',
         )->distinct()->get();
 
@@ -73,12 +72,10 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping
             (object) ['PaymentStatus' => ' ', 'Count' => ' '],
             (object) ['PaymentStatus' => ' ', 'Count' => ' '],
             (object) ['PaymentStatus' => ' ', 'Count' => ' '],
-            (object) ['PaymentStatus' => 'CAPTURED', 'Count' => $this->paymentStatusCounts[6] ?? 0],
-            (object) ['PaymentStatus' => 'PAID', 'Count' => $this->paymentStatusCounts[10] ?? 0],
-            (object) ['PaymentStatus' => 'PARTIAL CAPTURED', 'Count' => $this->paymentStatusCounts[12] ?? 0],
-            (object) ['PaymentStatus' => 'PARTIALLY PAID', 'Count' => $this->paymentStatusCounts[17] ?? 0],
-            (object) ['PaymentStatus' => 'TPC', 'Count' => number_format($this->totalPremiumCaptured, 2)],
-            (object) ['PaymentStatus' => 'Total', 'Count' => $this->totalLeads],
+            (object) ['PaymentStatus' => 'CAPTURED:', 'Count' => $this->paymentStatusCounts[6] ?? ''],
+            (object) ['PaymentStatus' => 'PARTIAL CAPTURED:', 'Count' => $this->paymentStatusCounts[12] ?? ''],
+            (object) ['PaymentStatus' => 'TPC:', 'Count' => number_format($this->totalPremiumCaptured, 2)],
+            (object) ['PaymentStatus' => 'Total:', 'Count' => $this->totalLeads],
         ]);
 
         return $quotes->merge($summary);
@@ -105,6 +102,7 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping
             'DOB',
             'Car Value',
             'Paid At',
+            'PUA Type',
             'Created At',
         ],
         ];
@@ -113,9 +111,11 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping
     public function map($row): array
     {
         if (! isset($row->RefId) && isset($row->PaymentStatus)) {
+            info($row->PaymentStatus);
+            info($row->Count);
             return [
                 'Payment Status' => $row->PaymentStatus,
-                'Count' => $row->Count,
+                'Count' => $row->Count ? $row->Count : number_format(0),
                 '', '', '', '', '', '', '', '', '', '', '', '', '', '',
             ];
         }
@@ -137,6 +137,7 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping
             $this->formatDate($row->dob),
             $row->carValue ?? 'N/A',
             $this->formatDate($row->paidAt),
+            $row->PUAType ?? 'N/A',
             $this->formatDate($row->createdAt),
         ];
     }

@@ -96,7 +96,7 @@ class NonPUAQuoteExport implements FromCollection, WithHeadings, WithMapping
         } elseif (isset($quote->Team)) {
             return [
                 $quote->Team,
-                $quote->Total,
+                $quote->Total ?? number_format(0),
             ];
         } elseif (isset($quote->{'Teams'})) {
             return [
