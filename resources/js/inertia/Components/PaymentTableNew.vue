@@ -2066,22 +2066,20 @@ const validateCapturePayment = isValid => {
 };
 
 const validatePaymentAmount = isValid => {
-    
   for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
     isSplitAmountInvalid.value[i] = false;
     if (
-          parseFloat(splitAmountModels.value[i])  >
-          parseFloat(collectionAmountModels.value[i]) 
-            
-          ) {
-            isSplitAmountInvalid.value[i] = true;
-            isSplitAmountInvalidError.value[i] =
-              'Amount should not exceed '+collectionAmountModels.value[i]+' AED';
-          }
+      parseFloat(splitAmountModels.value[i]) >
+      parseFloat(collectionAmountModels.value[i])
+    ) {
+      isSplitAmountInvalid.value[i] = true;
+      isSplitAmountInvalidError.value[i] =
+        'Amount should not exceed ' + collectionAmountModels.value[i] + ' AED';
+    }
   }
   if (isSplitAmountInvalid.value.includes(true)) {
-      return true;
-    }
+    return true;
+  }
   return false;
 };
 
@@ -2102,7 +2100,7 @@ const addPayment = isValid => {
     if (validateViewPayment(isValid)) return;
   } else if (paymentMethodsForm.status !== 'view') {
     if (validatePaymentOption()) return;
-    if(isPaidEditable.value === true){
+    if (isPaidEditable.value === true) {
       if (validatePaymentAmount()) return;
     }
   }
@@ -3018,10 +3016,10 @@ watch(
 );
 
 watch(
-    () => page.props?.bookingDetails?.isLackingOfPayment,
-    newVal => {
-      is_lacking_payment.value = newVal || false;
-    },
+  () => page.props?.bookingDetails?.isLackingOfPayment,
+  newVal => {
+    is_lacking_payment.value = newVal || false;
+  },
 );
 
 watch(
@@ -3032,10 +3030,10 @@ watch(
 );
 
 watch(
-    () => page.props?.isPaidEditable,
-    newVal => {
-      isPaidEditable.value = newVal || false;
-    },
+  () => page.props?.isPaidEditable,
+  newVal => {
+    isPaidEditable.value = newVal || false;
+  },
 );
 
 const discountTypeLabel = computed(() => {
@@ -4956,7 +4954,9 @@ const isSplitDeleteEnabled = computed(() => {
                       </template>
                     </div>
                     <div class="w-1/5 px-2">
-                      <template v-if="readOnlyPayments[count] && !isPaidEditable">
+                      <template
+                        v-if="readOnlyPayments[count] && !isPaidEditable"
+                      >
                         {{ formatAmount(splitAmountModels[count]) }}
                       </template>
                       <template v-else>
