@@ -6,15 +6,14 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Factories\AllocationFactory;
+use App\Http\Requests\BirdWebhookRequest;
 use App\Jobs\EmailStatusEventJob;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
-use App\Models\EmailStatus;
 use App\Models\TravelQuote;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Response;
-use App\Http\Requests\BirdWebhookRequest;
 
 class InboundEmailsHookService extends BaseService
 {
@@ -135,6 +134,7 @@ class InboundEmailsHookService extends BaseService
             $payload = collect($request);
             if (empty($payload)) {
                 info('Webhook Payload data is empty!');
+
                 return apiResponse([], Response::HTTP_BAD_REQUEST, 'Webhook Payload is empty!');
             }
             info('Webhook Payload: '.json_encode($payload));
@@ -155,10 +155,11 @@ class InboundEmailsHookService extends BaseService
                 $identifierValue =isset($payload['receiver']['contacts']) ? collect($payload['receiver']['contacts'])->first()['identifierValue'] : null;
                 // Extract and filter therequired fields
                 $result = $payload->only(['id', 'status', 'reason'])
-                ->merge(['identifierValue' => $identifierValue])
-                ->filter();
-                 $this->birdMessageStatusUpdate($result,$identifierValue);
+                    ->merge(['identifierValue' => $identifierValue])
+                    ->filter();
+                $this->birdMessageStatusUpdate($result, $identifierValue);
             }
+
             return apiResponse([], Response::HTTP_OK, 'Webhook Received Successfully!');
         } catch (\Throwable $th) {
             info("Bird Webhook Error: {$th->getMessage()} on line: {$th->getLine()} in file: {$th->getFile()} | ".PHP_EOL.$th->getTraceAsString());
