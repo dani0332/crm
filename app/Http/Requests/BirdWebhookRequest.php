@@ -24,14 +24,16 @@ class BirdWebhookRequest extends FormRequest
     public function rules()
     {
         return [
-            'results' => 'required |array',
-            'results.0' => 'required|array',
+            'results' => 'nullable |array',
+            'results.0' => 'nullable|array',
             'results.0.type' => 'nullable|string',
-            'results.0.receiver' => 'required|array',
+            'results.0.receiver' => 'nullable|array',
             'results.0.receiver.connector' => 'nullable|array',
             'results.0.receiver.connector.0.identifierValue' => 'nullable|string',
             'results.0.receiver.contacts' => 'nullable|array',
             'results.0.receiver.contacts.0.identifierValue' => 'nullable|string',
+            'receiver.contacts' => 'nullable|array',
+            'receiver.contacts.0.identifierValue' => 'nullable|string',
             'id' => 'nullable|string',
             'status' => 'nullable|string',
             'reason' => 'nullable|string',

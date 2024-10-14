@@ -25,6 +25,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use App\Http\Requests\BirdWebhookRequest;
 
 class ApiController extends Controller
 {
@@ -101,10 +102,9 @@ class ApiController extends Controller
         return $this->apiService->handleZeroPlansEmail($request);
     }
 
-    public function birdInboundEmailsHook()
+    public function birdInboundEmailsHook(BirdWebhookRequest $request)
     {
-
-        return $this->inboundEmailsHookService->handleBirdWebhook();
+        return $this->inboundEmailsHookService->handleBirdWebhook($request);
     }
 
     public function logFollowUpEvent(EmailEventsRequest $request)
