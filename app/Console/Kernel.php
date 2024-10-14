@@ -128,12 +128,6 @@ class Kernel extends ConsoleKernel
         //         info('----------- Business Data Migrations Failed -----------'.$output);
         //     });
 
-        $schedule->command('RemoveStaleFromLeads:cron')->timezone('Asia/Dubai')->dailyAt('09:55')->onOneServer()->withoutOverlapping()->onSuccess(function (Stringable $output) {
-            info('----------- RemoveStaleFromLeads Completed -----------'.$output);
-        })
-            ->onFailure(function (Stringable $output) {
-                info('----------- RemoveStaleFromLeads Failed -----------'.$output);
-            });
     }
 
     /**
