@@ -72,8 +72,8 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping
             (object) ['PaymentStatus' => ' ', 'Count' => ' '],
             (object) ['PaymentStatus' => ' ', 'Count' => ' '],
             (object) ['PaymentStatus' => ' ', 'Count' => ' '],
-            (object) ['PaymentStatus' => 'CAPTURED:', 'Count' => $this->paymentStatusCounts[6] ?? ''],
-            (object) ['PaymentStatus' => 'PARTIAL CAPTURED:', 'Count' => $this->paymentStatusCounts[12] ?? ''],
+            (object) ['PaymentStatus' => 'CAPTURED:', 'Count' => $this->paymentStatusCounts[PaymentStatusEnum::CAPTURED] ?? ''],
+            (object) ['PaymentStatus' => 'PARTIAL CAPTURED:', 'Count' => $this->paymentStatusCounts[PaymentStatusEnum::PARTIAL_CAPTURED] ?? ''],
             (object) ['PaymentStatus' => 'TPC:', 'Count' => number_format($this->totalPremiumCaptured, 2)],
             (object) ['PaymentStatus' => 'Total:', 'Count' => $this->totalLeads],
         ]);
