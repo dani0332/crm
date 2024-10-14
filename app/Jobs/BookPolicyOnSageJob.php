@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\SageEnum;
+use App\Models\SageProcess;
 use App\Services\SageApiService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -11,6 +12,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Carbon;
 use Log;
 use Throwable;
 
@@ -24,6 +26,7 @@ class BookPolicyOnSageJob implements ShouldQueue
     private $quote;
     private $request;
     private $sageProcess;
+    private $lockPostfix;
 
     /**
      * Create a new job instance.
@@ -34,6 +37,7 @@ class BookPolicyOnSageJob implements ShouldQueue
         $this->quote = $quote;
         $this->request = $request;
         $this->sageProcess = $sageProcess;
+        $this->lockPostfix = Carbon::parse($sageProcess->updated_at)->timestamp;
     }
 
     /**
@@ -43,26 +47,32 @@ class BookPolicyOnSageJob implements ShouldQueue
     {
         info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Started');
 
-        (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PROCESSING_STATUS);
+        $this->sageProcess = SageProcess::find($this->sageProcess->id);
 
-        $response = (new SageApiService)->bookPolicyOnSage([$this->sageRequest, $this->quote,  $this->request]);
+        if ($this->sageProcess->status === SageEnum::SAGE_PROCESS_PENDING_STATUS) {
+            (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PROCESSING_STATUS);
 
-        if (! $response['status']) {
-            $message = $response['message'];
-            if ($message == SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE) {
-                (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message);
+            $response = (new SageApiService)->bookPolicyOnSage([$this->sageRequest, $this->quote,  $this->request]);
+
+            if (! $response['status']) {
+                $message = $response['message'];
+                if ($message == SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE) {
+                    (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message);
+                } else {
+                    (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message);
+
+                    (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, $this->sageRequest->userId);
+                }
+
             } else {
-                (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message);
-
-                (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, $this->sageRequest->userId);
+                (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS);
             }
 
+            info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Response : '.json_encode($response));
+            info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Finished');
         } else {
-            (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS);
+            info('job:SendUpdateSageJob - Process Skipped - QuoteType: '.$this->sageProcess->id.' - Status : '.$this->sageProcess->status);
         }
-
-        info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Response : '.json_encode($response));
-        info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Finished');
 
         (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
         info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses triggered for Insurer - '.$this->sageRequest->insurerID);
@@ -83,7 +93,7 @@ class BookPolicyOnSageJob implements ShouldQueue
     public function middleware()
     {
         // release the WithoutOverlapping lock 5 minutes after the job has processed
-        return [(new WithoutOverlapping($this->quote->code))->releaseAfter(60 * 5)->dontRelease()];
+        return [(new WithoutOverlapping($this->quote->code.'-'.$this->lockPostfix))->dontRelease()];
     }
 
 }
