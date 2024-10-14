@@ -60,43 +60,6 @@ function successResponse() {
     quoteForm.reset();
   }
 }
-// function onSubmit(isValid) {
-//   if (quoteForm.sub_area_id == null || quoteForm.sub_area_id == '') {
-//     formFieldReq.sub_area_id = true;
-//   } else {
-//     formFieldReq.sub_area_id = false;
-//   }
-//   if (quoteForm.has_contents || quoteForm.has_building) {
-//     if (isValid) {
-//       if (isEdit.value) {
-//         quoteForm
-//           .transform(data => ({
-//             ...data,
-//             has_contents: data.has_contents ? true : false,
-//             has_personal_belongings: data.has_personal_belongings
-//               ? true
-//               : false,
-//             has_building: data.has_building ? true : false,
-//           }))
-//           .put(route('home-quotes-update', props.quote.uuid), {
-//             onError: errors => {
-//               console.log(errors);
-//             },
-//             onSuccess: () => {},
-//           });
-//       } else {
-//         quoteForm.post(route('home-quotes-store'), {
-//           onError: errors => {
-//             quoteForm.setError(errors);
-//           },
-//           onSuccess: () => {},
-//         });
-//       }
-//     }
-//   } else {
-//     hasContentOrBuilding.value = false;
-//   }
-// }
 
 function onSubmit(isValid) {
   try {
@@ -115,7 +78,6 @@ function onSubmit(isValid) {
     console.log('Submitting form data:', quoteForm);
 
     console.log('Is edit mode:', isEdit.value);
-    console.log('URL:', route('home-quotes-update', props.quote.uuid));
 
     const action = isEdit.value
       ? route('home-quotes-update', props.quote.uuid)
@@ -226,90 +188,11 @@ const showTypeOfOwnerOccupancy = computed(() => {
   return quoteForm.iam_possesion_type_id === 2;
 });
 
-const typeOfCoverageYouNeedOptions = computed(() => {
-  if (!quoteForm.iam_possesion_type_id) {
-    return [
-      { value: '', label: 'CHOOSE OWNERSHIP STATUS FIRST', disabled: true },
-    ];
-  }
-  switch (quoteForm.iam_possesion_type_id) {
-    case 1: // Homeowner living in the property
-      return [
-        { value: 'landlord_living_building', label: 'Building only' },
-        { value: 'landlord_living_contents', label: 'Contents only' },
-        {
-          value: 'landlord_living_building_contents',
-          label: 'Building and Contents',
-        },
-        {
-          value: 'landlord_living_building_contents_personal',
-          label: 'Building, Contents and Personal Belongings',
-        },
-        {
-          value: 'landlord_living_contents_personal',
-          label: 'Contents and Personal Belongings',
-        },
-      ];
-    case 2: // Homeowner renting out property
-      return [
-        { value: 'landlord_renting_building', label: 'Building only' },
-        {
-          value: 'landlord_renting_building_contents',
-          label: 'Building and Contents',
-        },
-      ];
-    case 3: // Tenant renting home
-      return [
-        { value: 'tenant_renting_contents', label: 'Contents only' },
-        {
-          value: 'tenant_renting_contents_personal',
-          label: 'Contents and Personal Belongings',
-        },
-      ];
-    default:
-      return [];
-  }
-});
-
 const handleConditionalFields = () => {
   // Reset all AED fields visibility to false
   showBuildingField.value = false;
   showContentsField.value = false;
   showPersonalBelongingsField.value = false;
-};
-
-const handleCoverageChange = () => {
-  // Reset all AED fields visibility to false
-  showBuildingField.value = false;
-  showContentsField.value = false;
-  showPersonalBelongingsField.value = false;
-
-  //   Update field visibility based on the selected coverage
-  switch (quoteForm.type_of_coverage_you_need) {
-    case 'landlord_living_building':
-    case 'landlord_renting_building':
-      showBuildingField.value = true;
-      break;
-    case 'landlord_living_contents':
-    case 'tenant_renting_contents':
-      showContentsField.value = true;
-      break;
-    case 'landlord_living_building_contents':
-    case 'landlord_renting_building_contents':
-      showBuildingField.value = true;
-      showContentsField.value = true;
-      break;
-    case 'landlord_living_building_contents_personal':
-      showBuildingField.value = true;
-      showContentsField.value = true;
-      showPersonalBelongingsField.value = true;
-      break;
-    case 'landlord_living_contents_personal':
-    case 'tenant_renting_contents_personal':
-      showContentsField.value = true;
-      showPersonalBelongingsField.value = true;
-      break;
-  }
 };
 
 function showToast(type, title, message) {
@@ -319,6 +202,170 @@ function showToast(type, title, message) {
     position: 'top',
   });
 }
+
+const coverageTypes = [
+  {
+    id: 1,
+    text: 'Building only',
+    applicableForPossessionTypes: [1, 2],
+  },
+  {
+    id: 2,
+    text: 'Contents only',
+    applicableForPossessionTypes: [1, 3],
+  },
+  {
+    id: 3,
+    text: 'Building and Contents',
+    applicableForPossessionTypes: [1, 2],
+  },
+  {
+    id: 4,
+    text: 'Building, Contents and Personal Belongings',
+    applicableForPossessionTypes: [1],
+  },
+  {
+    id: 5,
+    text: 'Contents and Personal Belongings',
+    applicableForPossessionTypes: [1, 3],
+  },
+];
+
+const typeOfCoverageYouNeedOptions = computed(() => {
+  if (!quoteForm.iam_possesion_type_id) {
+    return [
+      { value: '', label: 'CHOOSE OWNERSHIP STATUS FIRST', disabled: true },
+    ];
+  }
+
+  // Filter the coverage types based on the selected possession type
+  return coverageTypes
+    .filter(coverage =>
+      coverage.applicableForPossessionTypes.includes(
+        quoteForm.iam_possesion_type_id,
+      ),
+    )
+    .map(coverage => ({
+      value: `coverage_${coverage.id}`,
+      label: coverage.text,
+    }));
+});
+
+const handleCoverageChange = () => {
+  // Reset all AED fields visibility to false
+  showBuildingField.value = false;
+  showContentsField.value = false;
+  showPersonalBelongingsField.value = false;
+
+  //   Update field visibility based on the selected coverage
+  const selectedCoverage = coverageTypes.find(
+    coverage =>
+      `coverage_${coverage.id}` === quoteForm.type_of_coverage_you_need,
+  );
+
+  if (!selectedCoverage) return;
+
+  switch (selectedCoverage.id) {
+    case 1: // Building only
+      showBuildingField.value = true;
+      break;
+    case 2: // Contents only
+      showContentsField.value = true;
+      break;
+    case 3: // Building and Contents
+      showBuildingField.value = true;
+      showContentsField.value = true;
+      break;
+    case 4: // Building, Contents and Personal Belongings
+      showBuildingField.value = true;
+      showContentsField.value = true;
+      showPersonalBelongingsField.value = true;
+      break;
+    case 5: // Contents and Personal Belongings
+      showContentsField.value = true;
+      showPersonalBelongingsField.value = true;
+      break;
+  }
+};
+
+// onMounted(() => {
+//   console.log('Home Quote Form mounted');
+//   if (props.quote?.home_quote?.iam_possesion_type_id) {
+//     let types = coverageTypes
+//     .filter(coverage =>
+//       coverage.applicableForPossessionTypes.includes(
+//         quoteForm.iam_possesion_type_id
+//       )
+//     )
+//     .map(coverage => ({
+//       value: `coverage_${coverage.id}`,  // Customize the value format as needed
+//       label: coverage.text,  // Text to display in the dropdown
+//     }));
+
+//     console.log('Types:', types);
+//     quoteForm.type_of_coverage_you_need = types;
+//   }
+// });
+
+const setCoverageBasedOnBooleans = () => {
+  if (props.quote?.home_quote?.iam_possesion_type_id) {
+    const { has_building, has_contents, has_personal_belongings } =
+      props.quote?.home_quote || {};
+
+    let selectedCoverage = null;
+
+    coverageTypes.forEach(coverage => {
+      if (
+        isMatchingCoverage(
+          coverage,
+          has_building,
+          has_contents,
+          has_personal_belongings,
+        )
+      ) {
+        selectedCoverage = `coverage_${coverage.id}`;
+      }
+    });
+
+    console.log('Selected coverage:', selectedCoverage);
+
+    if (selectedCoverage) {
+      quoteForm.type_of_coverage_you_need = selectedCoverage;
+      handleCoverageChange();
+    }
+  }
+};
+
+const isMatchingCoverage = (
+  coverage,
+  has_building,
+  has_contents,
+  has_personal_belongings,
+) => {
+  switch (coverage.id) {
+    case 1: // Building only
+      return has_building && !has_contents && !has_personal_belongings;
+    case 2: // Contents only
+      return !has_building && has_contents && !has_personal_belongings;
+    case 3: // Building and Contents
+      return has_building && has_contents && !has_personal_belongings;
+    case 4: // Building, Contents and Personal Belongings
+      return has_building && has_contents && has_personal_belongings;
+    case 5: // Contents and Personal Belongings
+      return !has_building && has_contents && has_personal_belongings;
+    default:
+      return false;
+  }
+};
+
+watch(
+  () => quoteForm.iam_possesion_type_id,
+  newVal => {
+    console.log('iam_possesion_type_id:', newVal);
+    setCoverageBasedOnBooleans();
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
