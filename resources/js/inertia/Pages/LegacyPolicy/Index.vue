@@ -193,11 +193,11 @@ const productName = item => {
     >
       <template #item-_id="item">
         <Link
-          :href="`/legacy-policy/${item._id}`"
+          :href="`/legacy-policy/${item.id}`"
           :data="{ policy_oid: item.policy_oid }"
           class="text-primary-500 hover:underline"
         >
-          {{ item._id }}
+          {{ item.id }}
         </Link>
       </template>
       <template #item-product_name="item">
