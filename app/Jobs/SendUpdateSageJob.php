@@ -36,7 +36,7 @@ class SendUpdateSageJob implements ShouldQueue
         $this->sendUpdateLog = $sendUpdateLog;
         $this->sageRequestPayload = $sageRequestPayload;
         $this->sageProcess = $sageProcess;
-        $this->lockPostfix = Carbon::parse($sageProcess->updated_at)->timestamp;
+        $this->lockPostfix = Carbon::now()->timestamp;
     }
 
     /**

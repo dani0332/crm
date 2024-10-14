@@ -37,7 +37,7 @@ class BookPolicyOnSageJob implements ShouldQueue
         $this->quote = $quote;
         $this->request = $request;
         $this->sageProcess = $sageProcess;
-        $this->lockPostfix = Carbon::parse($sageProcess->updated_at)->timestamp;
+        $this->lockPostfix = Carbon::now()->timestamp;
     }
 
     /**
