@@ -13,7 +13,7 @@ WORKDIR /var/www
 COPY package*.json yarn.lock /var/www/
 RUN yarn install --pure-lockfile
 
-FROM php:8.1-fpm as build
+FROM php:8.2-fpm as build
 WORKDIR /app
 # Add docker php ext repo
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
@@ -53,7 +53,7 @@ COPY composer.json composer.json
 COPY composer.lock composer.lock
 RUN composer install --optimize-autoloader --no-dev
 
-FROM php:8.1-fpm
+FROM php:8.2-fpm
 COPY --from=dependencies /root/.doppler/.doppler.yaml /root/.doppler/.doppler.yaml
 COPY --from=dependencies remote_syslog/remote_syslog /usr/local/bin/remote_syslog
 COPY --from=dependencies /usr/bin/doppler /usr/bin/doppler
