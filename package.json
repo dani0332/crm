@@ -2,7 +2,7 @@
     "type": "module",
     "private": true,
     "scripts": {
-        "dev": "yarn && vite",
+        "dev": "doppler run -- yarn && vite",
         "prod": "yarn && vite build",
         "lint": "prettier . --write"
     },
