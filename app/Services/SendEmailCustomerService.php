@@ -83,7 +83,6 @@ class SendEmailCustomerService extends BaseService
         }
 
         return $attachments;
-
     }
 
     public function sendMail(
@@ -111,9 +110,9 @@ class SendEmailCustomerService extends BaseService
                     $sender = $body['sender'] ?? null;
                     $replyTo = $body['replyTo'] ?? null;
                     $to = $body['to'] ?? null;
-                    info('Mail Request sender details ----- '.json_encode($sender));
-                    info('Mail Request replyTo details ----- '.json_encode($replyTo));
-                    info('Mail Request to details ----- '.json_encode($to));
+                    $sender != null && info('Mail Request sender details ----- '.json_encode($sender));
+                    $replyTo != null && info('Mail Request replyTo details ----- '.json_encode($replyTo));
+                    $to != null && info('Mail Request to details ----- '.json_encode($to));
                 })
                 ->timeout(config('constants.LMS_EMAILS_TIMEOUT'))
                 ->retry(3, 90000)
@@ -1342,7 +1341,7 @@ class SendEmailCustomerService extends BaseService
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
             'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
             'healthQuoteId' => $healthQuote->code,
-            'quoteId' => $healthQuote->id,
+            'quoteId' => $healthQuote->code,
             'quoteTypeId' => QuoteTypeId::Health,
             'currentInsurer' => $currentInsurer ? $currentInsurer->text : null,
             'quotePlanLink' => url(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid.($isRevivalLead ? '?dla=true' : '')), // DLA = Disable Lead Assignment

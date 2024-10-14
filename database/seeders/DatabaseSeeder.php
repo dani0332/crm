@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             ApplicationStorageSeeder::class,
             RolePermissionSeeder::class,
             AddSuperLeadStatusChangePermission::class,
+            QuoteStatusSeeder::class,
             AddReApprovePaymentPermission::class,
             DocumentTypeSeeder::class,
         ]);

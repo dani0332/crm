@@ -4,6 +4,7 @@ namespace App\Services\Reports;
 
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
+use App\Exports\Reports\EndingPoliciesReportExport;
 use App\Models\PersonalQuote;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
@@ -77,15 +78,7 @@ class EndingPoliciesReportService extends ManagementReport
             $data = $query->get();
             $this->formatData($data);
 
-            //Columns that are not integar and should not be summed
-            $nonIntegarIndexes = [0, 1, 2, 3, 4, 5, 16, 17, 18, 19];
-
-            return $this->download(
-                'Ending Policies Report '.$this->reportDateRange,
-                $data,
-                $this->headings(),
-                $nonIntegarIndexes
-            );
+            return (new EndingPoliciesReportExport($data))->download("Ending Policies Report {$this->reportDateRange}.xlsx");
         } else {
             $data = $query->simplePaginate(100)->withQueryString();
             $this->formatData($data);
@@ -125,58 +118,6 @@ class EndingPoliciesReportService extends ManagementReport
             'policyExpiredDate' => $defaultDate,
             'reportCategory' => ManagementReportCategoriesEnum::ENDING_POLICIES,
             'reportType' => ManagementReportTypeEnum::EXPIRING_POLICIES,
-        ];
-    }
-
-    public function headings(): array
-    {
-        return [
-            'Customer Name',
-            'Policy Number',
-            'Insurer',
-            'Line Of Business',
-            'Policy Start Date',
-            'Policy Expiry Date',
-            'Collected Amount',
-            'Price (VAT applicable)',
-            'Total VAT',
-            'Price (VAT not applicable)',
-            'Discount',
-            'Total Price',
-            'Pending Balance',
-            'Commission (VAT applicable)',
-            'VAT on Commission',
-            'Commission (VAT not applicable)',
-            'Policy Issuer ',
-            'Advisor',
-            'Lead Source',
-            'Notes',
-        ];
-    }
-
-    public function map($quote): array
-    {
-        return [
-            $quote->customer_name ?? 'N/A',
-            $quote->policy_number ? '="'.$quote->policy_number.'"' : 'N/A',
-            $quote->insurer ?? 'N/A',
-            $quote->line_of_business ?? 'N/A',
-            $quote->policy_start_date ?? 'N/A',
-            $quote->policy_end_date ?? 'N/A',
-            $quote->collected_amount ?? '0.00',
-            $quote->price_vat_applicable ?? '0.00',
-            $quote->total_vat ?? '0.00',
-            $quote->price_vat_not_applicable ?? '0.00',
-            $quote->discount ?? '0.00',
-            $quote->total_price ?? '0.00',
-            $quote->pending_balance ?? '0.00',
-            $quote->commission_vat_applicable ?? '0.00',
-            $quote->commission_vat ?? '0.00',
-            $quote->commission_vat_not_applicable ?? '0.00',
-            $quote->policy_issuer ?? 'N/A',
-            $quote->advisor ?? 'N/A',
-            $quote->source ?? 'N/A',
-            $quote->notes ?? 'N/A',
         ];
     }
 }

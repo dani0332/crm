@@ -71,8 +71,6 @@ class EmbeddedProduct
             $quoteObject = $item->quoteRequest;
             $status = $quoteObject->quoteStatus->text ?? '';
             $customer = $quoteObject->customer ?? null;
-            $carMake = $quoteObject->carMake->text ?? '';
-            $carModel = $quoteObject->carModel->text ?? '';
             $advisorName = $quoteObject->advisor->name ?? '';
             $nationality = $quoteObject->customer->nationality->text ?? '';
 
@@ -103,7 +101,6 @@ class EmbeddedProduct
             $item->name = $firstName.' '.$lastName;
             $item->dob = isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format($dateFormat) : '';
             $item->age = $age;
-            $item->vehicle = $carMake.' '.$carModel;
             $item->contact_number = $quoteObject->mobile_no ?? '';
             $item->nationality = $nationality ?? '';
             $item->email = $quoteObject->email ?? '';
@@ -111,7 +108,6 @@ class EmbeddedProduct
             $item->status = $status;
             $item->policy_issuance_date = $quoteObject->policy_issuance_date ?? '';
             $item->emirates_id_number = $customer->emirates_id_number ?? '';
-            $item->lob = quoteTypeCode::getName($quoteObject::class) ?? '';
 
             if ($isAlfredProtect) {
                 $item->plan_type = EmbeddedProductEnum::{$item->product->embeddedProduct->short_code}()->value;
@@ -123,18 +119,27 @@ class EmbeddedProduct
                 $item->premium_with_vat = $item->contribution_amount;
             }
 
+            $item = $this->processReportRecord($quoteObject, $item);
+
             return $item;
         });
 
         return $dataset;
     }
 
-    public function filterReport($ep, $filters)
+    protected function processReportRecord($quoteObject, $item)
     {
-        $productTransaction = EmbeddedTransaction::whereHas('product.embeddedProduct', function ($query) use ($ep) {
-            $query->where('id', $ep->id);
-        });
-        $dataset = $productTransaction->with(
+        $item->lob = quoteTypeCode::getName($quoteObject::class) ?? '';
+        $carMake = $quoteObject->carMake->text ?? '';
+        $carModel = $quoteObject->carModel->text ?? '';
+        $item->vehicle = $carMake.' '.$carModel;
+
+        return $item;
+    }
+
+    protected function getReportRelations()
+    {
+        return [
             'product.embeddedProduct',
             'quoteRequest.customer',
             'quoteRequest.customer.nationality',
@@ -143,7 +148,15 @@ class EmbeddedProduct
             'quoteRequest.quoteStatus',
             'quoteRequest.advisor',
             'quoteRequest.quoteRequestEntityMapping',
-        )
+        ];
+    }
+
+    public function filterReport($ep, $filters)
+    {
+        $productTransaction = EmbeddedTransaction::whereHas('product.embeddedProduct', function ($query) use ($ep) {
+            $query->where('id', $ep->id);
+        });
+        $dataset = $productTransaction->with($this->getReportRelations())
             ->join('payments', function ($join) {
                 $join->on('embedded_transactions.id', '=', 'payments.paymentable_id')
                     ->where('payments.paymentable_type', '=', 'App\\Models\\EmbeddedTransaction');
@@ -176,7 +189,7 @@ class EmbeddedProduct
                 $query->whereHas('quoteRequest', function ($query) use ($filters) {
                     $startDate = Carbon::parse($filters['date_of_purchase'][0])->startOfDay();
                     $endDate = Carbon::parse($filters['date_of_purchase'][1])->endOfDay();
-                    $query->whereBetween('policy_issuance_date', [$startDate, $endDate]);
+                    $query->whereBetween('payments.captured_at', [$startDate, $endDate]);
                 });
             });
 

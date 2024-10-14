@@ -3,6 +3,7 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\QuoteTypes;
 use App\Factories\AllocationFactory;
 use App\Models\Tier;
 use App\Services\CarAllocationService;
@@ -45,9 +46,14 @@ class CarAllocation implements Allocation
                 $response = $this->processTier($lead, $tier, $evaluateTierOnly);
             } else {
                 info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
+
+                $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
+
                 $response = AllocationFactory::createResponse(0, 'Tier not found', Response::HTTP_NOT_FOUND);
             }
         } catch (\Throwable $th) {
+            $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
+
             $message = $th->getMessage() ?? '';
             info('exception occurred in car lead allocation with error : '.$message);
             info('exception occurred in car lead allocation with error stack as  : '.$th->getTraceAsString());
@@ -103,6 +109,8 @@ class CarAllocation implements Allocation
 
             return AllocationFactory::createResponse($advisorId, 'Advisor assigned successfully!', Response::HTTP_OK);
         } else {
+            $this->carAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::CAR);
+
             info('Advisor not found. Skipping for now.');
             $this->updateLeadTier($lead, $tier);
 

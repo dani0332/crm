@@ -165,6 +165,10 @@ const tableHeader = reactive([
     text: 'Transaction Type',
     value: 'transaction_type',
   },
+  {
+    text: 'Lead Source',
+    value: 'source',
+  },
 ]);
 const isIntegerColumn = key => {
   // Add logic to determine if the column contains an integer
@@ -328,6 +332,9 @@ const isIntegerColumn = key => {
     </template>
     <template #item-commmission_percentage="{ commmission_percentage }">
       {{ commmission_percentage ?? 'N/A' }}
+    </template>
+    <template #item-source="{ source }">
+      {{ source ?? 'N/A' }}
     </template>
     <template #body-append>
       <tr v-if="reportData.data.length > 0" class="total-row sticky bottom-0">
