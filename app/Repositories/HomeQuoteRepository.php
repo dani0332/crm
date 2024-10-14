@@ -24,6 +24,7 @@ use App\Models\DocumentType;
 use App\Models\Emirate;
 use App\Models\HomeQuote;
 use App\Models\PersonalQuote;
+use App\Models\SubArea;
 use App\Services\AMLService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
@@ -261,6 +262,12 @@ class HomeQuoteRepository extends BaseRepository
         $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Home);
         $amlStatusName = AMLStatusCode::getName($quote->aml_status);
 
+        // fetch sub area for the quote
+        $subArea = $this->getSubArea($quote->homeQuote->sub_area_id);
+        $quote->homeQuote->subArea = $subArea ?? null;
+
+        // dd($subArea, $quote->homeQuote->sub_area_id, $quote);
+
         return [
             'documentTypes' => $documentTypes,
             'paymentDocument' => $paymentDocument,
@@ -397,5 +404,10 @@ class HomeQuoteRepository extends BaseRepository
         $to = now()->endOfDay()->toDateTimeString(); // default to date
 
         return [$from, $to];
+    }
+
+    public function getSubArea($subAreaId)
+    {
+        return SubArea::select('id', 'text', 'description')->where('id', $subAreaId)->first();
     }
 }

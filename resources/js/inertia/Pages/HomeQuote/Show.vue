@@ -755,36 +755,36 @@ const onAddUpdate = () => {
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 break-words">
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">I AM</dt>
-                <dd>{{ quote.iam_possesion_type_id_text }}</dd>
+                <dt class="font-medium">POSSESSIONA TYPE</dt>
+                <dd>{{ quote?.home_quote?.possession_type?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">I LIVE IN</dt>
-                <dd>{{ quote.ilivein_accommodation_type_id_text }}</dd>
+                <dt class="font-medium">ACCOMMODATION TYPE</dt>
+                <dd>{{ quote?.home_quote?.accommodation_type?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">HAS CONTENTS</dt>
-                <dd>{{ quote.has_contents ? 'Yes' : 'No' }}</dd>
+                <dd>{{ quote?.home_quote?.has_contents ? 'Yes' : 'No' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CONTENTS AED</dt>
-                <dd>{{ quote.contents_aed }}</dd>
+                <dd>{{ quote?.home_quote?.contents_aed }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">HAS BUILDING</dt>
-                <dd>{{ quote.has_building ? 'Yes' : 'No' }}</dd>
+                <dd>{{ quote?.home_quote?.has_building ? 'Yes' : 'No' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">BUILDING AED</dt>
-                <dd>{{ quote.building_aed }}</dd>
+                <dd>{{ quote?.home_quote?.building_aed }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">HAS PERSONAL BELONGINGS</dt>
-                <dd>{{ quote.has_personal_belongings ? 'Yes' : 'No' }}</dd>
+                <dd>{{ quote?.home_quote?.has_personal_belongings ? 'Yes' : 'No' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PERSONAL BELONGINGS AED</dt>
-                <dd>{{ quote.personal_belongings_aed }}</dd>
+                <dd>{{ quote?.home_quote?.personal_belongings_aed }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CURRENTLY INSURED WITH</dt>
@@ -917,7 +917,7 @@ const onAddUpdate = () => {
                 </div>
                 <div class="grid sm:grid-cols-2">
                   <dt class="font-medium">ADDRESS</dt>
-                  <dd>{{ quote.address }}</dd>
+                  <dd>{{ quote?.home_quote?.subArea?.description }}</dd>
                 </div>
 
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
