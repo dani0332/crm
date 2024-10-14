@@ -87,14 +87,14 @@ class InstantAlfredService extends BaseService
                 ->addSelect([
                     DB::raw("
                         CASE 
-                        WHEN qt.name = '" . QuoteSegmentEnum::SIC->tag() . "' THEN 'SIC'
-                        WHEN qt.name = '" . QuoteSegmentEnum::SIC->tag() . "' 
-                            AND cqr.source IN ('" . LeadSourceEnum::REVIVAL . "', '" . LeadSourceEnum::REVIVAL_REPLIED . "', '" . LeadSourceEnum::REVIVAL_PAID . "') 
+                        WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' THEN 'SIC'
+                        WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' 
+                            AND cqr.source IN ('".LeadSourceEnum::REVIVAL."', '".LeadSourceEnum::REVIVAL_REPLIED."', '".LeadSourceEnum::REVIVAL_PAID."') 
                             THEN 'SIC-REVIVAL'
-                        WHEN qt.name != '" . QuoteSegmentEnum::SIC->tag() . "' THEN 'NON-SIC'
+                        WHEN qt.name != '".QuoteSegmentEnum::SIC->tag()."' THEN 'NON-SIC'
                         ELSE 'N/A'
                         END as segment
-                    ")
+                    "),
                 ])
             // ->leftJoin('embedded_product_options as po', 'po.id', '=', 'e.product_id')
             // ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id')
@@ -161,14 +161,14 @@ class InstantAlfredService extends BaseService
                 ->addSelect([
                     DB::raw("
                         CASE 
-                        WHEN qt.name = '" . QuoteSegmentEnum::SIC->tag() . "' THEN 'SIC'
-                        WHEN qt.name = '" . QuoteSegmentEnum::SIC->tag() . "' 
-                            AND hqr.source IN ('" . LeadSourceEnum::REVIVAL . "', '" . LeadSourceEnum::REVIVAL_REPLIED . "', '" . LeadSourceEnum::REVIVAL_PAID . "') 
+                        WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' THEN 'SIC'
+                        WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' 
+                            AND hqr.source IN ('".LeadSourceEnum::REVIVAL."', '".LeadSourceEnum::REVIVAL_REPLIED."', '".LeadSourceEnum::REVIVAL_PAID."') 
                             THEN 'SIC-REVIVAL'
-                        WHEN qt.name != '" . QuoteSegmentEnum::SIC->tag() . "' THEN 'NON-SIC'
+                        WHEN qt.name != '".QuoteSegmentEnum::SIC->tag()."' THEN 'NON-SIC'
                         ELSE 'N/A'
                         END as segment
-                    ")
+                    "),
                 ])
                 // ->leftJoin('embedded_product_options as po', 'po.id', '=', 'e.product_id')
                 // ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id')
@@ -236,14 +236,14 @@ class InstantAlfredService extends BaseService
                 ->addSelect([
                     DB::raw("
                         CASE 
-                        WHEN qt.name = '" . QuoteSegmentEnum::SIC->tag() . "' THEN 'SIC'
-                        WHEN qt.name = '" . QuoteSegmentEnum::SIC->tag() . "' 
-                            AND tqr.source IN ('" . LeadSourceEnum::REVIVAL . "', '" . LeadSourceEnum::REVIVAL_REPLIED . "', '" . LeadSourceEnum::REVIVAL_PAID . "') 
+                        WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' THEN 'SIC'
+                        WHEN qt.name = '".QuoteSegmentEnum::SIC->tag()."' 
+                            AND tqr.source IN ('".LeadSourceEnum::REVIVAL."', '".LeadSourceEnum::REVIVAL_REPLIED."', '".LeadSourceEnum::REVIVAL_PAID."') 
                             THEN 'SIC-REVIVAL'
-                        WHEN qt.name != '" . QuoteSegmentEnum::SIC->tag() . "' THEN 'NON-SIC'
+                        WHEN qt.name != '".QuoteSegmentEnum::SIC->tag()."' THEN 'NON-SIC'
                         ELSE 'N/A'
                         END as segment
-                    ")
+                    "),
                 ])
                 // ->leftJoin('embedded_product_options as po', 'po.id', '=', 'e.product_id')
                 // ->leftJoin('embedded_products as ep', 'ep.id', '=', 'po.embedded_product_id')
@@ -256,7 +256,7 @@ class InstantAlfredService extends BaseService
     }
 
     public function processSqlChatFilters(Request $request)
-    {   
+    {
 
         $modelType = $request->quoteType ?? 'Car';
         $nameSpace = 'App\\Models\\';

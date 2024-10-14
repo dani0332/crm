@@ -136,10 +136,10 @@ class AlfredChatController extends Controller
 
         switch ($request->report) {
             case InstantChatReportsEnum::CONSOLIDATED_REPORT:
-                return (new InstantChatConsolidatedExport())->download($fileName);
+                return (new InstantChatConsolidatedExport)->download($fileName);
 
             case InstantChatReportsEnum::DETAILED_REPORT:
-                return (new InstantChatDetailedExport())->download($fileName);
+                return (new InstantChatDetailedExport)->download($fileName);
 
             default:
                 abort(400, 'Invalid report type requested.');
