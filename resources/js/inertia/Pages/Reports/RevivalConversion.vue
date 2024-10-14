@@ -1,7 +1,13 @@
 <script setup>
 defineProps({
   reportsData: Array,
+  quoteTypeIdEnum: Array,
+  allowedLobs: Object,
 });
+
+const page = usePage();
+
+const quoteTypeIdEnum = page.props.quoteTypeIdEnum;
 const loader = reactive({
   table: false,
 });
@@ -9,6 +15,8 @@ let availableFilters = {
   date_assigned: '',
   car_type_insurance_id: '',
   lead_source: '',
+  lob: '',
+  type_of_plan: '',
 };
 
 const filters = reactive(availableFilters);
@@ -21,39 +29,63 @@ function onSubmit(isValid) {
         delete filters[key],
     );
 
-    router.visit('/reports/revival-conversion', {
-      method: 'get',
-      data: filters,
-      preserveState: true,
-      preserveScroll: true,
-      onBefore: () => (loader.table = true),
-      onSuccess: () => (loader.table = false),
-    });
+    if (filters.lob) {
+      router.visit('/reports/revival-conversion', {
+        method: 'get',
+        data: filters,
+        preserveState: true,
+        preserveScroll: true,
+        onBefore: () => (loader.table = true),
+        onSuccess: () => (loader.table = false),
+      });
+    }
   } else {
     console.log('Invalid');
   }
 }
-
-const tabs = ref([
+const tabsArray = ref([
   {
     index: 0,
     label: 'Conversion Rate',
     tooltip:
       'It indicates the effectiveness of revival mails which helps converting revival leads into customers with payment status captured',
+    lob: [quoteTypeIdEnum.Car],
   },
   {
     index: 1,
     label: 'Auth To Capture Rate',
     tooltip:
       'This rate offers insight into the efficiency of converting authorized transactions into completed payments',
+    lob: [quoteTypeIdEnum.Car],
   },
   {
     index: 2,
     label: 'Response Rate Of Customer',
     tooltip:
       'It offers insight into the effectiveness of your communication outreach efforts, reflecting the responsiveness of the customer',
+    lob: [quoteTypeIdEnum.Car, quoteTypeIdEnum.Health],
+  },
+  {
+    index: 3,
+    label: 'Transaction Approved Rate',
+    tooltip:
+      'It indicates the effectiveness of contacting revival leads as it is the percentage of customers who have been converted (lead transaction status as approved) from the number of revival leads (lead source as revived) contacted ',
+    lob: [quoteTypeIdEnum.Health],
   },
 ]);
+
+const tabs = computed(() => {
+  const data = tabsArray.value
+    .filter(item => item.lob.includes(parseInt(filters.lob)))
+    .map((item, index) => ({
+      ...item,
+      index: index,
+    }));
+
+  console.log('data', data);
+  return data;
+});
+
 function onReset() {
   router.visit('/reports/revival-conversion', {
     method: 'get',
@@ -140,6 +172,32 @@ const emailConversionReportTableHeader = [
     tooltip: '(Total number of replies /Total number of emails sent) x 100',
   },
 ];
+const transactionApprovedRateTableHeader = [
+  {
+    text: 'Batch',
+    value: 'quote_batch_id',
+    tooltip:
+      'Each batch contains set of leads receiving email quotes over a period of 7 days',
+  },
+  {
+    text: 'Total Number of Transations Approved',
+    value: 'transaction_approved',
+    tooltip:
+      'It refers to the total count of customers that have successfully paid and their payment is approved',
+  },
+  {
+    text: 'Total Number of revived',
+    value: 'email_sent_count',
+    tooltip:
+      'It indicates the count of responses (requested for an advisor or replied to the mail) received from the leads having lead source as revival',
+  },
+  {
+    text: 'Ratio',
+    value: 'ratio',
+    tooltip:
+      'Total number of transaction approved/ Total number of revived) * 100',
+  },
+];
 </script>
 
 <template>
@@ -147,6 +205,19 @@ const emailConversionReportTableHeader = [
     <Head title="Revival Conversion Report" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <ComboBox
+          v-model="filters.lob"
+          label="LOB"
+          placeholder="Select LOB"
+          :options="
+            Object.keys(allowedLobs).map(key => ({
+              value: key,
+              label: allowedLobs[key],
+            }))
+          "
+          class="w-full"
+          :single="true"
+        />
         <x-select
           v-model="filters.lead_source"
           label="Lead Source"
@@ -167,11 +238,25 @@ const emailConversionReportTableHeader = [
             { value: '2', label: 'TPL' },
           ]"
           class="w-full"
+          :disabled="filters.lob != 1"
         />
         <DatePicker
           v-model="filters.date_assigned"
           name="created_at"
           label="Date Assigned"
+          class="w-full"
+        />
+
+        <x-select
+          v-model="filters.type_of_plan"
+          label="Type Of Plan"
+          placeholder="Type Of Plan"
+          :options="[
+            { value: '1', label: 'Entry Level' },
+            { value: '2', label: 'Good' },
+            { value: '3', label: 'Best' },
+          ]"
+          :disabled="filters.lob != 3"
           class="w-full"
         />
       </div>
@@ -213,7 +298,8 @@ const emailConversionReportTableHeader = [
       </TabList>
 
       <TabPanels class="mt-2">
-        <TabPanel>
+        <!-- conversion rate  -->
+        <TabPanel v-if="filters.lob == quoteTypeIdEnum.Car">
           <DataTable
             table-class-name="tablefixed overflow-hidden-table"
             :loading="loader.table"
@@ -290,7 +376,9 @@ const emailConversionReportTableHeader = [
             </template>
           </DataTable>
         </TabPanel>
-        <TabPanel>
+
+        <!-- auth to capture rate -->
+        <TabPanel v-if="filters.lob == quoteTypeIdEnum.Car">
           <DataTable
             table-class-name="tablefixed overflow-hidden-table"
             :loading="loader.table"
@@ -367,12 +455,14 @@ const emailConversionReportTableHeader = [
             </template>
           </DataTable>
         </TabPanel>
-        <TabPanel>
+
+        <!-- response rate of customer car-->
+        <TabPanel v-if="filters.lob == quoteTypeIdEnum.Car">
           <DataTable
             table-class-name="tablefixed overflow-hidden-table"
             :loading="loader.table"
             :headers="emailConversionReportTableHeader"
-            :items="reportsData.emailConversionReport || []"
+            :items="reportsData.emailConversionReportCar || []"
             border-cell
             hide-rows-per-page
           >
@@ -393,6 +483,160 @@ const emailConversionReportTableHeader = [
             </template>
 
             <template #header-reply_received_count="header">
+              <div class="customize-header underline">
+                <x-tooltip placement="bottom" class="underline">
+                  <span
+                    class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600"
+                  >
+                    {{ header.text }}
+                  </span>
+                  <template #tooltip>
+                    <div class="whitespace-normal normal-case">
+                      {{ header.tooltip }}
+                    </div>
+                  </template>
+                </x-tooltip>
+              </div>
+            </template>
+
+            <template #header-email_sent_count="header">
+              <div class="customize-header underline">
+                <x-tooltip placement="bottom" class="underline">
+                  <span
+                    class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600"
+                  >
+                    {{ header.text }}
+                  </span>
+                  <template #tooltip>
+                    <div class="whitespace-normal normal-case">
+                      {{ header.tooltip }}
+                    </div>
+                  </template>
+                </x-tooltip>
+              </div>
+            </template>
+            <template #header-ratio="header">
+              <div class="customize-header underline">
+                <x-tooltip placement="bottom" class="underline">
+                  <span
+                    class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600"
+                  >
+                    {{ header.text }}
+                  </span>
+                  <template #tooltip>
+                    <div class="whitespace-normal normal-case">
+                      {{ header.tooltip }}
+                    </div>
+                  </template>
+                </x-tooltip>
+              </div>
+            </template>
+          </DataTable>
+        </TabPanel>
+        <!-- response rate of customer Health -->
+        <TabPanel v-if="filters.lob == quoteTypeIdEnum.Health">
+          <DataTable
+            table-class-name="tablefixed overflow-hidden-table"
+            :loading="loader.table"
+            :headers="emailConversionReportTableHeader"
+            :items="reportsData.emailConversionReportHealth || []"
+            border-cell
+            hide-rows-per-page
+          >
+            <template #header-quote_batch_id="header">
+              <x-tooltip placement="top">
+                <span class="underline decoration-dotted">{{
+                  header.text
+                }}</span>
+                <template #tooltip>
+                  <span
+                    class="whitespace-break-spaces !normal-case"
+                    style="margin-top: 50px"
+                  >
+                    {{ header.tooltip }}
+                  </span>
+                </template>
+              </x-tooltip>
+            </template>
+
+            <template #header-reply_received_count="header">
+              <div class="customize-header underline">
+                <x-tooltip placement="bottom" class="underline">
+                  <span
+                    class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600"
+                  >
+                    {{ header.text }}
+                  </span>
+                  <template #tooltip>
+                    <div class="whitespace-normal normal-case">
+                      {{ header.tooltip }}
+                    </div>
+                  </template>
+                </x-tooltip>
+              </div>
+            </template>
+
+            <template #header-email_sent_count="header">
+              <div class="customize-header underline">
+                <x-tooltip placement="bottom" class="underline">
+                  <span
+                    class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600"
+                  >
+                    {{ header.text }}
+                  </span>
+                  <template #tooltip>
+                    <div class="whitespace-normal normal-case">
+                      {{ header.tooltip }}
+                    </div>
+                  </template>
+                </x-tooltip>
+              </div>
+            </template>
+            <template #header-ratio="header">
+              <div class="customize-header underline">
+                <x-tooltip placement="bottom" class="underline">
+                  <span
+                    class="font-semibold tracking-widest uppercase underline decoration-dotted decoration-primary-600"
+                  >
+                    {{ header.text }}
+                  </span>
+                  <template #tooltip>
+                    <div class="whitespace-normal normal-case">
+                      {{ header.tooltip }}
+                    </div>
+                  </template>
+                </x-tooltip>
+              </div>
+            </template>
+          </DataTable>
+        </TabPanel>
+        <!-- transaction approved  -->
+        <TabPanel v-if="filters.lob == quoteTypeIdEnum.Health">
+          <DataTable
+            table-class-name="tablefixed overflow-hidden-table"
+            :loading="loader.table"
+            :headers="transactionApprovedRateTableHeader"
+            :items="reportsData.transactionApprovedReport || []"
+            border-cell
+            hide-rows-per-page
+          >
+            <template #header-quote_batch_id="header">
+              <x-tooltip placement="top">
+                <span class="underline decoration-dotted">{{
+                  header.text
+                }}</span>
+                <template #tooltip>
+                  <span
+                    class="whitespace-break-spaces !normal-case"
+                    style="margin-top: 50px"
+                  >
+                    {{ header.tooltip }}
+                  </span>
+                </template>
+              </x-tooltip>
+            </template>
+
+            <template #header-transaction_approved="header">
               <div class="customize-header underline">
                 <x-tooltip placement="bottom" class="underline">
                   <span
