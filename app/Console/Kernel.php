@@ -127,6 +127,7 @@ class Kernel extends ConsoleKernel
         //     ->onFailure(function (Stringable $output) {
         //         info('----------- Business Data Migrations Failed -----------'.$output);
         //     });
+
     }
 
     /**
