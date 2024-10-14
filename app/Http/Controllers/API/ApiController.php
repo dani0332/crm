@@ -21,6 +21,8 @@ use Illuminate\Validation\ValidationException;
 use App\Http\Requests\EmailEventsRequest;
 use App\Services\EmailStatusService;
 use Illuminate\Support\Facades\Log;
+use App\Models\QuoteFlowDetails;
+use App\Services\BirdService;
 
 class ApiController extends Controller
 {
@@ -90,6 +92,12 @@ class ApiController extends Controller
         return $this->inboundEmailsHookService->process();
     }
 
+    public function birdInboundEmailsHook()
+    {
+
+        return $this->inboundEmailsHookService->handleBirdWebhook();
+    }
+
     public function handleZeroPlansEmail(HandleZeroPlansRequest $request)
     {
         return $this->apiService->handleZeroPlansEmail($request);
@@ -134,4 +142,24 @@ class ApiController extends Controller
             throw $th;
         }
     }
+
+    public function stopFollowUpEvent()
+    {
+        $flowType = request('flowType');
+        $quoteUID = request('uuid');
+
+        info("getting request to stopFollowUpEvent Ref-ID: {$quoteUID} | FlowType: {$flowType} Time:".now());
+        $workflow = QuoteFlowDetails::where('quote_uuid', $quoteUID)
+            ->where('flow_type', $flowType)
+            ->first();
+        if (! $workflow) {
+            info("lead not found for uuid: {$quoteUID} | FlowType: {$flowType} | Time: ".now());
+
+            return apiResponse([], Response::HTTP_NOT_FOUND, 'Lead not found');
+        }
+        $response = app(BirdService::class)->stopWorkFlow($workflow);
+
+        return apiResponse([$response], Response::HTTP_OK, 'Email event stopped successfully');
+    }
+
 }

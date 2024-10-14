@@ -48,7 +48,7 @@ class EmailStatusEventJob implements ShouldQueue
             $newEmailStatus = new EmailStatus;
             $newEmailStatus->quote_type_id = $emailStatusData->quoteTypeId;
             $newEmailStatus->quote_id = $emailStatusData->quoteId;
-            $newEmailStatus->email_address =  $this->data->customer_email ?? null;
+            $newEmailStatus->email_address =  $this->data->customer_email ??  $emailStatusData->email_address;
             $newEmailStatus->msg_id =  $this->data->message_id;
             $newEmailStatus->email_status =  $this->data->status;
             $newEmailStatus->email_subject = $this->data->subject;
@@ -57,23 +57,6 @@ class EmailStatusEventJob implements ShouldQueue
         else {
             info('EmailStatusEventJob - email data not found for msg_id: ' . $this->data->message_id);
         }
-
-            $emailStatusData = EmailStatus::where('msg_id', $this->data->message_id)->first();
-            if(!empty($emailStatusData)) {
-                if(!empty( $emailStatusData->quoteTypeId) && !empty($emailStatusData->quoteId)) {
-                    $newEmailStatus = new EmailStatus;
-                    $newEmailStatus->quote_type_id = $emailStatusData->quoteTypeId;
-                    $newEmailStatus->quote_id = $emailStatusData->quoteId;
-                    $newEmailStatus->email_address =  $this->data->customer_email ?? null;
-                    $newEmailStatus->msg_id =  $this->data->message_id;
-                    $newEmailStatus->email_status =  $this->data->status;
-                    $newEmailStatus->email_subject = $this->data->subject;
-                    $newEmailStatus->save();
-                }
-            }
-            else {
-                info('EmailStatusEventJob - email data not found for msg_id: ' . $this->data->message_id);
-            }
      }
      else {
         info('EmailStatusEventJob - email data not found');

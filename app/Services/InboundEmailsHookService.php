@@ -11,6 +11,9 @@ use App\Models\DttRevival;
 use App\Models\TravelQuote;
 use Exception;
 use Illuminate\Http\Response;
+use App\Models\EmailStatus;
+use App\Jobs\EmailStatusEventJob;
+use Carbon\Carbon;
 
 class InboundEmailsHookService extends BaseService
 {
@@ -123,4 +126,89 @@ class InboundEmailsHookService extends BaseService
 
         return apiResponse([], Response::HTTP_OK, 'Lead Assigned to Advisor Successfully!');
     }
+
+    public function handleBirdWebhook()
+    {
+        try {
+            info('Bird Webhook Received Successfully!');
+            $payload = collect(request()->all() ?? []);
+            if (empty($payload)) {
+                info('Webhook Payload data is empty!');
+                return apiResponse([], Response::HTTP_BAD_REQUEST, 'Webhook Payload is empty!');
+            }
+
+            info('Webhook Payload: '.json_encode($payload));
+            $type = data_get($payload, 'results.0.type') ?? null;
+            if(!empty($type)){
+                 // Extract and filter the required fields
+                 $payload = data_get($payload, 'results.0');
+                 if(empty($payload)) {
+                     info('Webhook Payload result is empty!');
+                     return apiResponse([], Response::HTTP_BAD_REQUEST, 'Webhook Payload is empty!');
+                 }
+                 $identifierValue = data_get($payload['receiver'], 'connector.0.identifierValue', null);
+
+                 $result = collect($payload)->only(['messageId', 'type'])
+                 ->merge(['identifierValue' => $identifierValue])
+                 ->filter();
+                $this->birdMessageInteractionsUpdate($result,$identifierValue);
+            }
+            else
+            {
+                $identifierValue = data_get($payload->get('receiver'), 'contacts.0.identifierValue', null);
+            // Extract and filter therequired fields
+                $result = $payload->only(['id', 'status', 'reason'])
+                ->merge(['identifierValue' => $identifierValue])
+                ->filter();
+                 $this->birdMessageStatusUpdate($result,$identifierValue);
+            }
+            return apiResponse([], Response::HTTP_OK, 'Webhook Received Successfully!');
+        } catch (\Throwable $th) {
+            info("Bird Webhook Error: {$th->getMessage()} on line: {$th->getLine()} in file: {$th->getFile()} | ".PHP_EOL.$th->getTraceAsString());
+            throw $th;
+        }
+    }
+
+    public function birdMessageStatusUpdate($result,$identifierValue){
+        $result = (object) $result->all();
+        info('Webhook birdMessageStatusUpdate Payload: '.json_encode($result));
+        $messageId = $result->id ?? null;
+        $status = $result->status ?? null;
+        $emailSubject = $result->reason ?? null;
+        if ($messageId && $status) {
+            $emailData = (object) ['message_id' => $messageId,
+                'status' => $status,
+                'subject' => $emailSubject,
+                'customer_email' => $identifierValue];
+            // Dispatch the EmailStatusEventJob to handle the email status update
+            info('EmailStatusEventJob sending job dispatch | Time: '.now());
+            EmailStatusEventJob::dispatch($emailData)->delay(Carbon::now()->addSeconds(90));
+            info('EmailStatusEventJob dispatched successfully!');
+        } else {
+            $msg = 'EmailData not found for msg_id: '.$messageId;
+            info($msg);
+        }
+    }
+    public function birdMessageInteractionsUpdate($result,$identifierValue){
+        $result = (object) $result->all();
+        info('Webhook birdMessageInteractionsUpdate Payload: '.json_encode($result));
+
+        $messageId = $result->messageId ?? null;
+        $status = $result->type ?? null;
+        $emailSubject = $result->reason ?? null;
+        if ($messageId && $status) {
+            $emailData = (object) ['message_id' => $messageId,
+                'status' => $status,
+                'subject' => $emailSubject,
+                'customer_email' => $identifierValue];
+            // Dispatch the EmailStatusEventJob to handle the email status update
+            info('EmailStatusEventJob sending job dispatch | Time: '.now());
+            EmailStatusEventJob::dispatch($emailData)->delay(Carbon::now()->addSeconds(90));
+            info('EmailStatusEventJob dispatched successfully!');
+        } else {
+            $msg = 'EmailData not found for msg_id: '.$messageId;
+            info($msg);
+        }
+    }
+
 }
