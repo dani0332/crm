@@ -82,7 +82,8 @@ class BookPolicyOnSageJob implements ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->quote->code))->dontRelease()];
+        // release the WithoutOverlapping lock 5 minutes after the job has processed
+        return [(new WithoutOverlapping($this->quote->code))->releaseAfter(60 * 5)->dontRelease()];
     }
 
 }

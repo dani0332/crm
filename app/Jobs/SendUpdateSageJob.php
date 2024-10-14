@@ -83,7 +83,7 @@ class SendUpdateSageJob implements ShouldQueue
 
     public function middleware(): array
     {
-        // release the WithoutOverlapping lock 4 minutes after the job has started processing
-        return [(new WithoutOverlapping($this->sendUpdateLog->uuid))->dontRelease()];
+        // release the WithoutOverlapping lock 5 minutes after the job has processed
+        return [(new WithoutOverlapping($this->sendUpdateLog->uuid))->releaseAfter(60 * 5)->dontRelease()];
     }
 }
