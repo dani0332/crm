@@ -63,7 +63,7 @@ abstract class BaseAllocation extends AllocationService
         return $response;
     }
 
-    private function fetchAvailableAdvisor($isReassignmentJob = false)
+    protected function fetchAvailableAdvisor($isReassignmentJob = false)
     {
         info(self::class." - fetchAvailableAdvisor: {$isReassignmentJob} - {$this->teamId} - {$this->uuid}");
 
