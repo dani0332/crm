@@ -76,9 +76,9 @@ class HealthEmailService extends BaseService
         if (! $lead->oca_flow_enabled) {
             $advisor = User::where('id', $lead->advisor_id)->first();
             $emailData = $this->buildHealthFollowupEmailData($lead, $advisor, WorkflowTypeEnum::HEALTH_AUTOMATED_FOLLOWUPS);
-            $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
-            if ($sicEvent) {
-                $response = app(BirdService::class)->triggerWebHookRequest($sicEvent->value, $emailData);
+            $birdSicHealthWorkflowData = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
+            if ($birdSicHealthWorkflowData) {
+                $response = app(BirdService::class)->triggerWebHookRequest($birdSicHealthWorkflowData->value, $emailData);
                 $lead->oca_flow_enabled = true;
                 $lead->save();
                 info("OCA Health workflow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
