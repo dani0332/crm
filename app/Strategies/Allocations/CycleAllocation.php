@@ -9,11 +9,6 @@ use App\Models\User;
 
 class CycleAllocation extends BaseAllocation
 {
-    public function __construct(public string $uuid, public $teamId = false, bool $overrideAdvisorId = false)
-    {
-        parent::__construct(QuoteTypes::CYCLE, $uuid, $teamId, $overrideAdvisorId);
-    }
-
     protected function resolveLead(): void
     {
         $this->lead = $this->quoteType->model()

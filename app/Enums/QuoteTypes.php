@@ -250,7 +250,7 @@ enum QuoteTypes: string
             self::HEALTH => new HealthAllocation(new HealthAllocationService, $uuid, overrideAdvisorId: $overrideAdvisorId),
             self::BIKE => new BikeAllocation(new BikeAllocationService, $uuid, overrideAdvisorId: $overrideAdvisorId),
             self::TRAVEL => new TravelAllocation(new TravelAllocationService, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
-            self::CYCLE => new CycleAllocation($uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
+            self::CYCLE => new CycleAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
             default => null,
         };
 
