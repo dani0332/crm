@@ -27,6 +27,15 @@ use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
 use App\Models\YachtQuote;
 use App\Models\YachtQuoteRequestDetail;
+use App\Services\BikeAllocationService;
+use App\Services\CarAllocationService;
+use App\Services\HealthAllocationService;
+use App\Services\TravelAllocationService;
+use App\Strategies\Allocations\BikeAllocation;
+use App\Strategies\Allocations\CarAllocation;
+use App\Strategies\Allocations\CycleAllocation;
+use App\Strategies\Allocations\HealthAllocation;
+use App\Strategies\Allocations\TravelAllocation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Route;
 
@@ -73,6 +82,7 @@ enum QuoteTypes: string
             QuoteTypes::GROUP_MEDICAL => 102,
         };
     }
+
     public static function getName($value)
     {
         $types = [
@@ -231,5 +241,23 @@ enum QuoteTypes: string
         return match ($this) {
             self::TRAVEL,self::CAR,self::HEALTH => "{$this->ecomUrl()}{$uuid}".($queryParamsStr ? "?{$queryParamsStr}" : ''),
         };
+    }
+
+    public function allocate(string $uuid, $teamId = false, bool $overrideAdvisorId = false, bool $tierOnly = false)
+    {
+        $allocationService = match ($this) {
+            self::CAR => new CarAllocation(new CarAllocationService, $uuid, $teamId, evaluateTierOnly: $tierOnly, overrideAdvisorId: $overrideAdvisorId),
+            self::HEALTH => new HealthAllocation(new HealthAllocationService, $uuid, overrideAdvisorId: $overrideAdvisorId),
+            self::BIKE => new BikeAllocation(new BikeAllocationService, $uuid, overrideAdvisorId: $overrideAdvisorId),
+            self::TRAVEL => new TravelAllocation(new TravelAllocationService, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
+            self::CYCLE => new CycleAllocation($uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
+            default => null,
+        };
+
+        if ($allocationService) {
+            return $allocationService->executeSteps();
+        }
+
+        return $allocationService;
     }
 }

@@ -9,18 +9,18 @@ use App\Models\User;
 
 class CycleAllocation extends BaseAllocation
 {
-    public function __construct(public string $uuid, public $teamId = false)
+    public function __construct(public string $uuid, public $teamId = false, bool $overrideAdvisorId = false)
     {
-        parent::__construct(QuoteTypes::CYCLE, $uuid, $teamId);
+        parent::__construct(QuoteTypes::CYCLE, $uuid, $teamId, $overrideAdvisorId);
     }
 
-    protected function resolveLead(bool $overrideAdvisorId = false): void
+    protected function resolveLead(): void
     {
         $this->lead = $this->quoteType->model()
             ->where('uuid', $this->uuid)
             ->where('quote_type_id', $this->quoteType->id())
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
-            ->when(! $overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'))
+            ->when(! $this->overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'))
             ->first();
     }
 

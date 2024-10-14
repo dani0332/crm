@@ -3,9 +3,7 @@
 namespace App\Services;
 
 use App\Enums\LeadSourceEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
-use App\Factories\AllocationFactory;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
 use App\Models\TravelQuote;
@@ -116,9 +114,10 @@ class InboundEmailsHookService extends BaseService
             return apiResponse([], Response::HTTP_OK, 'Lead already has an advisor assigned!');
         }
 
-        info(self::class." - handleTravel: AllocationFactory Strategy Executing for lead: {$lead->uuid}");
-        $allocationStrategy = AllocationFactory::createStrategy(QuoteTypeId::Travel, $lead->uuid);
-        $assignedAdvisorId = $allocationStrategy->executeSteps();
+        info(self::class." - handleTravel: Allocation Process Executing for lead: {$lead->uuid}");
+
+        $response = QuoteTypes::TRAVEL->allocate($lead->uuid);
+        $assignedAdvisorId = $response['advisorId'] ?? '';
         info(self::class." - handleTravel: AllocationStrategy Executed for lead: {$lead->uuid} and assignedAdvisorId: {$assignedAdvisorId}");
 
         return apiResponse([], Response::HTTP_OK, 'Lead Assigned to Advisor Successfully!');

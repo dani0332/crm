@@ -7,9 +7,9 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\TeamNameEnum;
 use App\Enums\TiersIdEnum;
-use App\Factories\AllocationFactory;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\PersonalQuote;
@@ -112,8 +112,7 @@ class QuoteAllocation extends Command
             // Only apply teamId if the payment status is AUTHORIZED
             $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;
 
-            $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid, $currentTeamId);
-            $allocationStrategy->executeSteps();
+            QuoteTypes::CAR->allocate(uuid: $lead->uuid, teamId: $currentTeamId);
             $processedRecords++;
             info('Processed record for Quote Allocation with uuid: '.$lead->uuid);
         }
@@ -142,8 +141,7 @@ class QuoteAllocation extends Command
 
         foreach ($leads->get() as $lead) {
             info('Processing Health record for Quote Allocation with uuid: '.$lead->uuid);
-            $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
-            $allocationStrategy->executeSteps();
+            QuoteTypes::HEALTH->allocate(uuid: $lead->uuid);
             $processedRecords++;
             info('Processed Health record for Quote Allocation with uuid: '.$lead->uuid);
         }
@@ -177,8 +175,7 @@ class QuoteAllocation extends Command
             // Only apply teamId if the payment status is AUTHORIZED
             $currentTeamId = $lead->payment_status_id == PaymentStatusEnum::AUTHORISED ? $teamId : false;
 
-            $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid, $currentTeamId);
-            $allocationStrategy->executeSteps();
+            QuoteTypes::TRAVEL->allocate(uuid: $lead->uuid, teamId: $currentTeamId);
             $processedRecords++;
             info('Processed Travel record for Quote Allocation with uuid: '.$lead->uuid);
         }
@@ -219,8 +216,7 @@ class QuoteAllocation extends Command
                 continue;
             }
             info('Processing record for Bike Quote Allocation with uuid: '.$lead->uuid);
-            $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
-            $allocationStrategy->executeSteps();
+            QuoteTypes::BIKE->allocate(uuid: $lead->uuid);
             $processedRecords++;
             info('Processed record for Bike Quote Allocation with uuid: '.$lead->uuid);
         }

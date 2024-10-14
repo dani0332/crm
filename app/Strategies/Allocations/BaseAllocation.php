@@ -15,30 +15,14 @@ use Illuminate\Support\Facades\Log;
 
 abstract class BaseAllocation extends AllocationService
 {
-    abstract protected function resolveLead(bool $overrideAdvisorId = false): void;
+    abstract protected function resolveLead(): void;
     abstract protected function fetchAdvisor(int $onlineStatus);
 
     protected $lead;
 
-    public function __construct(public QuoteTypes $quoteType, public string $uuid, public $teamId = false) {}
+    public function __construct(public QuoteTypes $quoteType, public string $uuid, public $teamId = false, public bool $overrideAdvisorId = false) {}
 
-    private function createResponse(int $advisorId, string $message, int $status, ?int $tierId = null): array
-    {
-        $resp = [
-            'advisorId' => $advisorId,
-            'message' => $message,
-            'tierId' => $tierId,
-            'status' => $status,
-        ];
-
-        if (! $tierId) {
-            unset($resp['tierId']);
-        }
-
-        return $resp;
-    }
-
-    public function executeSteps(bool $overrideAdvisorId = false)
+    public function executeSteps()
     {
         $response = [
             'advisorId' => 0,
@@ -48,7 +32,7 @@ abstract class BaseAllocation extends AllocationService
 
         try {
             info(self::class." - executeSteps: Allocation Started for UUID : {$this->uuid}");
-            $this->resolveLead($overrideAdvisorId);
+            $this->resolveLead();
 
             if (! $this->lead) {
                 info(self::class." - executeSteps: Lead not found for : {$this->uuid}");

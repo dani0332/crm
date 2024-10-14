@@ -340,4 +340,20 @@ class AllocationService
             $quote->markLeadAllocationFailed();
         }
     }
+
+    public function createResponse(int $advisorId, string $message, int $status, ?int $tierId = null): array
+    {
+        $resp = [
+            'advisorId' => $advisorId,
+            'message' => $message,
+            'tierId' => $tierId,
+            'status' => $status,
+        ];
+
+        if (! $tierId) {
+            unset($resp['tierId']);
+        }
+
+        return $resp;
+    }
 }
