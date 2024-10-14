@@ -81,29 +81,37 @@ class UpdatePolicyDetailRequest extends FormRequest
             $model = $this->getModelObject(request()->modelType);
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search($modelType);
             
-            // Check if a policy with the same number and expiry date already exists, excluding the current quote
-            $isExists = $model::where('policy_number', $quote_policy_number)
-                ->where('policy_expiry_date', request()->quote_policy_expiry_date)
-                ->where('code', '!=', $quoteModel->code);
-
-            // Apply additional filters based on quote type
-            if (checkPersonalQuotes($modelType) || $quoteTypeId == QuoteTypeId::GroupMedical) {
-                // Filter by quote type ID for personal quotes or group medical quotes
-                $isExists->where('quote_type_id', $quoteTypeId);
-            }
-
-            if ($quoteTypeId == QuoteTypeId::Business) {
-                // Further filter by business type of insurance ID for group medical quotes
-                if ($quoteModel->business_type_of_insurance_id ==  BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL){
-                    $isExists->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
-                } else {
-                    $isExists->where('business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+            if ($quoteModel->parent_duplicate_quote_id == null) {
+                // Check if a policy with the same number and expiry date already exists, excluding the current quote
+                $isExists = $model::where('policy_number', $quote_policy_number)
+                    ->where('policy_expiry_date', request()->quote_policy_expiry_date)
+                    ->where('code', '!=', $quoteModel->code)
+                    ->whereNotIn('id', function ($query) use ($model, $quote_policy_number) {
+                        $query->select('id')
+                            ->from((new $model)->getTable())
+                            ->where('policy_number', $quote_policy_number)
+                            ->where('policy_expiry_date', request()->quote_policy_expiry_date)
+                            ->whereNotNull('parent_duplicate_quote_id');
+                    });
+                // Apply additional filters based on quote type
+                if (checkPersonalQuotes($modelType) || $quoteTypeId == QuoteTypeId::GroupMedical) {
+                    // Filter by quote type ID for personal quotes or group medical quotes
+                    $isExists->where('quote_type_id', $quoteTypeId);
                 }
-            }
 
-            if ($isExists->exists()) {
-                // Add an error to the validator if a matching policy is found
-                $validator->errors()->add('quote_policy_number', 'Policy number already exists for this line of business with the same expiry date.');
+                if ($quoteTypeId == QuoteTypeId::Business) {
+                    // Further filter by business type of insurance ID for group medical quotes
+                    if ($quoteModel->business_type_of_insurance_id ==  BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL){
+                        $isExists->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+                    } else {
+                        $isExists->where('business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
+                    }
+                }
+
+                if ($isExists->exists()) {
+                    // Add an error to the validator if a matching policy is found
+                    $validator->errors()->add('quote_policy_number', 'Policy number already exists for this line of business with the same expiry date.');
+                }
             }
 
             $quote = $this->getQuoteObject(request()->modelType, request()->quote_id);
