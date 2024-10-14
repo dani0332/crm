@@ -178,4 +178,8 @@ final class SageEnum extends Enum
     const SAGE_STATUS_POSTED = 'Posted';
     const SAGE_STATUS_OPEN = 'Open';
     const SAGE_PROCESSING_CONFLICT_MESSAGE = 'Please wait for 1 minute before booking again.';
+
+    // Sage Payload 
+    const BANK_CODE= 'INSBANK';
+    const PAYMENT_CODE = 'IP';
 }
