@@ -230,7 +230,7 @@ class EmbeddedProduct
                 $pwDoc = $path !== '' ? $websiteURL . $path : '';
                 if (!empty($path)) {
                     $epDocuments[] = [
-                        'document_type' => 'Policy wordings',
+                        'document_type' => 'Policy Wordings',
                         'document_number' => 'Not Applicable',
                         'url' => $pwDoc,
                         'path'=> $item->path,
