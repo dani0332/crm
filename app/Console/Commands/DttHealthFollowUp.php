@@ -159,6 +159,7 @@ class DttHealthFollowUp extends Command
                 $emailData->id = $healthQuote->id;
                 $emailData->fromEmail = ApplicationStorageEnums::DTT_HEALTH_FOLLOWUP_FROM_EMAIL;
 
+                $emailData->requestAdvisorLink = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL') . $healthQuote->uuid . '/?assignAdvisor=true';
                 // after two days
                 if ($today->eq($afterTwoDays)) {
                     $emailData->subject = 'Urgent: Renew your health insurance today! ' . $healthQuote->code;
@@ -240,6 +241,9 @@ class DttHealthFollowUp extends Command
                 $emailData->customerName = $customerName;
                 $emailData->customerEmail = $lead->email;
                 $emailData->fromEmail = ApplicationStorageEnums::DTT_HEALTH_FOLLOWUP_FROM_EMAIL;
+
+                $emailData->requestAdvisorLink = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL') . $lead->uuid . '/?assignAdvisor=true';
+
                 $response = Ken::request('/get-health-cheapest-plans', 'post', [
                     'quoteUID' => $lead->uuid,
                     'isPlanTypes' => true,
