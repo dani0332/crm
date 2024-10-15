@@ -14,6 +14,8 @@ const props = defineProps({
   userManagerIds: Array,
   permissions: Array,
   userPermissions: Array,
+  businessTypes: Array,
+  userBusinessTypeIds: Array,
 });
 
 const page = usePage();
@@ -27,6 +29,7 @@ const departments = ref([]);
 const teams = ref([]);
 const managers = ref([]);
 const isError = ref(false);
+const showBusinessCategories = ref(false);
 
 const loader = reactive({
   table: false,
@@ -66,6 +69,7 @@ const userForm = useForm({
   calendar_link: props.user?.calendar_link ?? null,
   phone_calendar_link: props.user?.phone_calendar_link ?? null,
   department_id: props.user?.department_id ?? null,
+  businessTypes: props?.userBusinessTypeIds ?? [],
 });
 
 const isAdvisor = computed(() => {
@@ -203,8 +207,15 @@ function onSubmit(isValid) {
   }
 }
 
+const resolveBusinessCategoriesShowHide = selectedRoles => {
+  showBusinessCategories.value = selectedRoles.includes(
+    rolesEnum.CorpLineAdvisor,
+  );
+};
+
 const setInitialState = async () => {
   if (isEdit.value) {
+    resolveBusinessCategoriesShowHide(userForm.roles);
     await loadTeamsByProduct();
     await loadSubTeams();
   }
@@ -293,6 +304,19 @@ watch(
           "
           :rules="[isRequired]"
           :hasError="validRole"
+          autocomplete
+          @update:model-value="resolveBusinessCategoriesShowHide"
+        />
+      </x-field>
+      <x-field
+        label="Busineess Categories"
+        v-if="hasRole(rolesEnum.Admin) && showBusinessCategories"
+      >
+        <ComboBox
+          :multiple="true"
+          v-model="userForm.businessTypes"
+          :options="businessTypes"
+          class="w-full"
           autocomplete
         />
       </x-field>
