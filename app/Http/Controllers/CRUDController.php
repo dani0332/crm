@@ -63,6 +63,7 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\NationalityRepository;
+use App\Repositories\PaymentRepository;
 use App\Repositories\QuoteNoteRepository;
 use App\Repositories\RenewalBatchRepository;
 use App\Repositories\SendUpdateLogRepository;
