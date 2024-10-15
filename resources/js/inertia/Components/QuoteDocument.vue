@@ -37,6 +37,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 const rolesEnum = page.props.rolesEnum;
 const permissionEnum = page.props.permissionsEnum;
 const documentTypeCodeEnum = page.props.documentTypeCodeEnum;
+
 const quoteDocumentsTable = reactive({
   isLoading: false,
   columns: [
@@ -182,6 +183,30 @@ const readOnlyMode = reactive({
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
+
+const getS3TempUrl = async docURL => {
+  try {
+    const response = await axios.post('/quotes/documents/get-s3-temp-url', {
+      docURL,
+    });
+    // Check if the request was successful and the response contains the URL
+    if (response.status === 200 && response.data.url) {
+      // Open the URL in a new tab
+      window.open(response.data.url, '_blank');
+    } else {
+      notification.error({
+        title: response.data.error,
+        position: 'top',
+      });
+    }
+  } catch (error) {
+    notification.error({
+      title: error,
+      position: 'top',
+    });
+    console.error('An error occurred:', error);
+  }
+};
 </script>
 
 <template>
@@ -280,6 +305,15 @@ onMounted(() => {
         >
           <template #item-original_name="item">
             <a
+              v-if="hasAnyRole([rolesEnum.BetaUser])"
+              @click.prevent="getS3TempUrl(item.doc_url)"
+              class="text-primary-600 cursor-pointer"
+            >
+              {{ item.original_name }}
+            </a>
+
+            <a
+              v-else
               :href="storageUrl + (item.watermarked_doc_url ?? item.doc_url)"
               target="_blank"
               class="text-primary-600"
@@ -394,6 +428,14 @@ onMounted(() => {
                 :key="quoteDocument.id"
               >
                 <a
+                  v-if="hasAnyRole([rolesEnum.BetaUser])"
+                  @click.prevent="getS3TempUrl(quoteDocument.doc_url)"
+                  class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate cursor-pointer"
+                >
+                  {{ quoteDocument.original_name || quoteDocument.doc_name }}
+                </a>
+                <a
+                  v-else
                   :href="
                     storageUrl +
                     (quoteDocument.watermarked_doc_url ?? quoteDocument.doc_url)

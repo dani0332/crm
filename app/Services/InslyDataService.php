@@ -6,21 +6,16 @@ use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\InslyBatchLog;
 use App\Models\InslyDataMapping;
-use Config;
-use Illuminate\Support\Facades\Log;
 
-//Scheduled to delete 1st April 2024
 class InslyDataService extends BaseService
 {
     public static function GetDataFromInsly($nextStartDate, $nextEndDate)
     {
         $client = new \GuzzleHttp\Client;
-        $user = Config::get('constants.INSLY_API_RENEWAL_USERNAME');
-        $pass = Config::get('constants.INSLY_API_RENEWAL_PASSWORD');
-        $uri = Config::get('constants.INSLY_API_RENEWAL_URI');
-        $timeout = Config::get('constants.INSLY_REQUEST_TIMEOUT_IN_SECONDS');
-
-        Log::info('User : '.$user.', Pass : '.$pass.', URI : '.$uri);
+        $user = config('constants.INSLY_API_RENEWAL_USERNAME');
+        $pass = config('constants.INSLY_API_RENEWAL_PASSWORD');
+        $uri = config('constants.INSLY_API_RENEWAL_URI');
+        $timeout = config('constants.INSLY_REQUEST_TIMEOUT_IN_SECONDS');
 
         $requestBody = [
             'username' => $user,
@@ -74,7 +69,7 @@ class InslyDataService extends BaseService
                 'Engineering and plant insurance', 'fidelity guarantee', 'group life', 'group medical insurance', 'holiday homes',
                 'livestock insurance', 'machinery breakdown insurance', 'marine cargo (individual shipment) insurance',
                 'marine hull insurance', 'medical malpractice insurance', 'money insurance', 'motor fleet',
-                'open cover - marine cargo insurance', 'professional indemnity insurance,property insurance',
+                'open cover - marine cargo insurance', 'professional indemnity insurance', 'property insurance',
                 'public liability insurance', 'road transit (international)', 'road transit (UAE only)',
                 'sme packaged insurance', 'trade credit insurance', 'workmens compensation insurance',
             ],

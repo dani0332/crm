@@ -52,7 +52,7 @@ const props = defineProps({
   storageUrl: String,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
-  isAmlClearedForPayment: Boolean,
+  amlStatusName: String,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -65,6 +65,7 @@ const props = defineProps({
   paymentDocument: Array,
   noteDocumentType: Array,
 });
+const modelClass = 'App\\Models\\HealthQuote';
 
 const isManualPlansCount = ref(0);
 
@@ -1597,7 +1598,7 @@ const handlePlanSelected = plan => {
   selectedProviderPlan.value.planName = plan.planName;
   selectedProviderPlan.value.providerName = plan.providerName;
   selectedProviderPlan.value.premium = plan.premium;
-  selectedProviderPlan.value.planType = checkPlanType(plan.planTypeId);
+  selectedProviderPlan.value.planType = plan.planType;
   router.reload({
     preserveState: true,
     preserveScroll: true,
@@ -1797,9 +1798,9 @@ const onAddUpdate = () => {
         <h2 class="text-xl font-semibold">Health Detail</h2>
         <p
           class="bg-red-600 px-2 py-1 rounded text-sm text-white"
-          v-if="daysSinceStale(quoteRequest?.stale_at) !== false"
+          v-if="countDays !== false"
         >
-          Stale for {{ daysSinceStale(quoteRequest?.stale_at) }} days
+          Stale for {{ countDays }}
         </p>
       </template>
 
@@ -2002,6 +2003,10 @@ const onAddUpdate = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
                 <dd>{{ quote.customer_type }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
@@ -3020,7 +3025,7 @@ const onAddUpdate = () => {
                 <x-field class="" label="Transaction Type">
                   <x-input
                     type="text"
-                    :value="quote.transaction_type_text"
+                    v-model="quote.transaction_type_text"
                     class="w-full"
                     :disabled="true"
                   />
@@ -3124,6 +3129,10 @@ const onAddUpdate = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CO-PAY / CO-INSURANCE</dt>
                 <dd>{{ coPayment ? coPayment.text : 'N/A' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PLAN TYPE</dt>
+                <dd>{{ selectedProviderPlan.planType ?? 'N/A' }}</dd>
               </div>
             </dl>
           </div>
@@ -3578,7 +3587,6 @@ const onAddUpdate = () => {
       "
       :storageUrl="storageUrl"
       :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
-      :isAmlClearedForPayment="isAmlClearedForPayment"
       :eCommercePriceWithLP="
         ecomDetails.priceWithLP ? ecomDetails.priceWithLP : 0
       "
@@ -3653,6 +3661,7 @@ const onAddUpdate = () => {
       "
       :quote="quote"
       quoteType="health"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
@@ -3896,7 +3905,7 @@ const onAddUpdate = () => {
     />
 
     <AuditLogs
-      :type="'App\\Models\\HealthQuote'"
+      :type="modelClass"
       :id="$page.props.quote.id"
       :quoteCode="$page.props.quote.code"
     />
@@ -3905,5 +3914,10 @@ const onAddUpdate = () => {
       v-if="clientInquiryLogs?.length > 0"
       :logs="clientInquiryLogs"
     />
+
+    <lead-raw-data
+      :modelType="'Health'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

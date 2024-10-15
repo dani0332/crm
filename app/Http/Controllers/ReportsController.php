@@ -386,6 +386,7 @@ class ReportsController extends Controller
             'defaultFilters' => $reportService->getDefaultFiltersForLeadsList(),
         ]);
     }
+
     public function renderConversionAsAtReport(Request $request, ConversionAsAtReportService $conversionAsAtReportService)
     {
 

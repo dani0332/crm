@@ -85,7 +85,7 @@ defineProps({
   isNewPaymentStructure: Boolean,
   vatPercentage: Number,
   commercialRules: Boolean,
-  isAmlClearedForPayment: Boolean,
+
   clientInquiryLogs: Array,
   puaTypeEnum: Object,
   sendUpdateOptions: Array,
@@ -94,6 +94,7 @@ defineProps({
   paymentDocument: Array,
   linkedQuoteDetails: Object,
   lockLeadSectionsDetails: Object,
+  amlStatusName: String,
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -106,6 +107,8 @@ const selectedProviderPlan = ref({
   providerName: page.props.record.car_plan_provider_id_text,
   premium: page.props.record.premium,
 });
+
+const modelClass = 'App\\Models\\CarQuote';
 
 /*
 * comment for now, will be used in later after confirmation
@@ -500,6 +503,7 @@ const leadStatusOptions = computed(() => {
   const statuses = Array.isArray(page.props.leadStatuses)
     ? page.props.leadStatuses
     : Object.values(page.props.leadStatuses);
+
   const filteredLeadStatuses = statuses?.map(status => {
     if (
       (!isLeadPool &&
@@ -552,7 +556,9 @@ const assumptionsForm = useForm({
   vehicle_type_id: page.props.record.vehicle_type_id || null,
   is_modified: page.props.record.is_modified || 0,
   is_bank_financed: page.props.record.is_bank_financed || 0,
-  is_gcc_standard: page.props.record.is_gcc_standard || null,
+  is_gcc_standard: [0, 1].includes(page.props.record.is_gcc_standard)
+    ? page.props.record.is_gcc_standard
+    : null,
   current_insurance_status: page.props.record.current_insurance_status || null,
   year_of_first_registration:
     page.props.record.year_of_first_registration || null,
@@ -1740,7 +1746,6 @@ const onAddUpdate = () => {
         </template>
       </Collapsible>
     </div>
-
     <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
@@ -1768,6 +1773,10 @@ const onAddUpdate = () => {
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CUSTOMER TYPE</dt>
                 <dd>{{ quote.customer_type }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ amlStatusName ?? '' }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">BATCH</dt>
@@ -2570,7 +2579,7 @@ const onAddUpdate = () => {
                 <x-field class="uppercase" label="Transaction Type">
                   <x-input
                     type="text"
-                    :value="record.transaction_type_text"
+                    v-model="record.transaction_type_text"
                     class="w-full"
                     :disabled="true"
                   />
@@ -3527,11 +3536,9 @@ const onAddUpdate = () => {
         })
       "
       :storageUrl="storageUrl"
-      :isAmlClearedForPayment="isAmlClearedForPayment"
       :isPlanDetailEnabled="isPlanDetailEnabled"
       :expanded="sectionExpanded"
     />
-
     <PaymentTable
       v-else
       :payments="payments"
@@ -3655,6 +3662,7 @@ const onAddUpdate = () => {
       "
       :quote="quote"
       :quoteType="quoteType"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
     />
@@ -4025,14 +4033,14 @@ const onAddUpdate = () => {
     />
   </div>
   <AuditLogs
-    :type="'App\\Models\\CarQuote'"
+    :type="modelClass"
     :id="$page.props.record.id"
     :quoteCode="$page.props.record.code"
     :expanded="sectionExpanded"
   />
   <ApiLogs
     v-if="can(permissionEnum.API_LOG_VIEW)"
-    :type="'App\\Models\\CarQuote'"
+    :type="modelClass"
     :id="$page.props.record.id"
     :expanded="sectionExpanded"
   />
@@ -4041,4 +4049,9 @@ const onAddUpdate = () => {
     v-if="clientInquiryLogs?.length > 0"
     :logs="clientInquiryLogs"
   />
+
+  <lead-raw-data
+    :modelType="'Car'"
+    :code="$page.props.quote.code"
+  ></lead-raw-data>
 </template>

@@ -141,6 +141,26 @@ const tableHeader = reactive([
     text: 'Broker Invoice No',
     value: 'broker_invoice_number',
   },
+  {
+    text: 'Commission Tax Invoice Number',
+    value: 'insurer_commmission_invoice_number',
+  },
+  {
+    text: 'Commission Percentage',
+    value: 'commmission_percentage',
+  },
+  {
+    text: 'Transaction Type',
+    value: 'transaction_type',
+  },
+  {
+    text: 'Lead Status',
+    value: 'quote_status',
+  },
+  {
+    text: 'Lead Source',
+    value: 'source',
+  },
 ]);
 const isIntegerColumn = key => {
   // Add logic to determine if the column contains an integer
@@ -271,6 +291,25 @@ const isIntegerColumn = key => {
     </template>
     <template #item-broker_invoice_number="{ broker_invoice_number }">
       {{ broker_invoice_number ?? 'N/A' }}
+    </template>
+    <template
+      #item-insurer_commmission_invoice_number="{
+        insurer_commmission_invoice_number,
+      }"
+    >
+      {{ insurer_commmission_invoice_number ?? 'N/A' }}
+    </template>
+    <template #item-transaction_type="{ transaction_type }">
+      {{ transaction_type ?? 'N/A' }}
+    </template>
+    <template #item-quote_status="{ quote_status }">
+      {{ quote_status ?? 'N/A' }}
+    </template>
+    <template #item-commmission_percentage="{ commmission_percentage }">
+      {{ commmission_percentage ?? 'N/A' }}
+    </template>
+    <template #item-source="{ source }">
+      {{ source ?? 'N/A' }}
     </template>
     <template #body-append>
       <tr v-if="reportData.data.length > 0" class="total-row sticky bottom-0">

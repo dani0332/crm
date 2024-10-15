@@ -25,7 +25,6 @@ defineProps({
   paymentTooltipEnum: Object,
   paymentMethods: Array,
   isNewPaymentStructure: Boolean,
-  isAmlClearedForPayment: Boolean,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -36,6 +35,7 @@ defineProps({
   payments: Array,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
+  amlStatusName: String,
 });
 
 const page = usePage();
@@ -53,6 +53,7 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
 
 const permissionEnum = page.props.permissionsEnum;
 const canAny = permissions => useCanAny(permissions);
+const modelClass = 'App\\Models\\BusinessQuote';
 
 const historyData = ref(null),
   historyLoading = ref(false);
@@ -542,6 +543,11 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 <dt class="font-medium">CUSTOMER TYPE</dt>
                 <dd>{{ quote.customer_type }}</dd>
               </div>
+
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">FIRST NAME</dt>
                 <dd>{{ quote.first_name }}</dd>
@@ -558,7 +564,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
                 <dt class="font-medium">EMAIL</dt>
                 <dd class="break-words">{{ quote.email }}</dd>
               </div>
-
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">COMPANY NAME</dt>
                 <dd class="break-words">{{ quote.company_name }}</dd>
@@ -1025,7 +1030,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
               <x-field label="Transaction Type">
                 <x-input
                   type="text"
-                  :value="quote.transaction_type_text"
+                  v-model="quote.transaction_type_text"
                   class="w-full"
                   :disabled="true"
                 />
@@ -1102,7 +1107,6 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       "
       :storageUrl="storageUrl"
       quoteSubType="Group Medical"
-      :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
       :expanded="sectionExpanded"
     />
@@ -1135,6 +1139,7 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
       :quote="quote"
       quoteType="Business"
       modelType="Group Medical"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
@@ -1183,9 +1188,14 @@ const [StatusUpdateButtonTemplate, StatusUpdateButtonReuseTemplate] =
     </div>
 
     <AuditLogs
-      :type="'App\\Models\\BusinessQuote'"
+      :type="modelClass"
       :id="$page.props.quote.id"
       :expanded="sectionExpanded"
     />
+
+    <lead-raw-data
+      :modelType="'Business'"
+      :code="$page.props.quote.code"
+    ></lead-raw-data>
   </div>
 </template>

@@ -62,14 +62,14 @@ const showChat = item => {
     .post('/get-alfred-chat-by-date', {
       quoteId: props.quoteId,
       quoteType: props.quoteType,
-      created_at: item._id,
+      created_at: item.id,
     })
     .then(response => {
       let { data } = { ...response.data };
       loader.value = false;
-      chatMessages.value.created_at = item._id;
+      chatMessages.value.created_at = item.id;
       chatMessages.value.data = data;
-      chatMessages.value.id = item.quote_type + '-' + item.quote_id;
+      chatMessages.value.id = props.quoteType + '-' + props.quoteId;
       showChatLogs.value = true;
     })
     .catch(error => {

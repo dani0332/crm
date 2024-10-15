@@ -133,8 +133,8 @@ const filters = reactive({
   last_name: '',
   email: '',
   mobile_no: '',
-  created_at_start: '',
-  created_at_end: '',
+  created_at_start: new Date() || '',
+  created_at_end: new Date() || '',
   sub_team: '',
   quote_status: [],
   advisors: [],
@@ -154,6 +154,7 @@ const filters = reactive({
   policy_expiry_date: '',
   policy_expiry_date_end: '',
   segment_filter: '',
+  transaction_approved_dates: '',
 });
 
 const canExport = ref(false);
@@ -163,7 +164,8 @@ watch(
     if (
       (filters.created_at_start && filters.created_at_end) ||
       filters.payment_due_date ||
-      filters.booking_date
+      filters.booking_date ||
+      filters.transaction_approved_dates
     ) {
       canExport.value = true;
     } else {
@@ -351,6 +353,36 @@ const fixedValue = numberString => {
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
+const onDataExport = () => {
+  if (filters.created_at_start && filters.created_at_end) {
+    filters.created_at_start = useDateFormat(
+      filters.created_at_start,
+      'YYYY-MM-DD',
+    ).value;
+
+    filters.created_at_end = useDateFormat(
+      filters.created_at_end,
+      'YYYY-MM-DD',
+    ).value;
+  } else if (
+    filters.transaction_approved_dates[0] &&
+    filters.transaction_approved_dates[1]
+  ) {
+    filters.transaction_approved_dates[0] = useDateFormat(
+      filters.transaction_approved_dates[0],
+      'YYYY-MM-DD',
+    ).value;
+    filters.transaction_approved_dates[1] = useDateFormat(
+      filters.transaction_approved_dates[1],
+      'YYYY-MM-DD',
+    ).value;
+  }
+
+  const data = useObjToUrl(filters);
+  const url = route('data-extraction', 'health');
+  window.open(url + '?' + new URLSearchParams(data).toString());
+};
+
 onMounted(() => {
   params = getSavedQueryParams() || params;
   setQueryStringFilters();
@@ -477,6 +509,13 @@ const validateDateRange = () => {
 
 const formatDate = dateString =>
   useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY').value;
+
+watch(() => {
+  if (filters.transaction_approved_dates) {
+    filters.created_at_start = '';
+    filters.created_at_end = '';
+  }
+});
 </script>
 
 <template>
@@ -731,6 +770,15 @@ const formatDate = dateString =>
           :options="quoteSegments"
           :single="true"
         />
+        <DatePicker
+          v-model="filters.transaction_approved_dates"
+          label="Transaction Approved Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+          max-range="120"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -738,7 +786,7 @@ const formatDate = dateString =>
             v-if="canExport"
             size="sm"
             color="emerald"
-            :href="`/health/leads-export?${objToUrl(filters)}`"
+            @click.prevent="onDataExport"
             class="justify-self-start"
           >
             Export
@@ -747,8 +795,8 @@ const formatDate = dateString =>
             <x-button tag="div" size="sm" color="emerald"> Export </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates or payment due date or booking date are required
-                to export data.
+                Created dates or Transaction Approved dates or payment due date
+                or booking date are required to export data.
               </span>
             </template>
           </x-tooltip>

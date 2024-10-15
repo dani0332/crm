@@ -2,11 +2,18 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
+use App\Models\ApplicationStorage;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class BirdService extends BaseService
 {
+    private $baseUrl = '';
+    public function __construct()
+    {
+        $this->baseUrl = config('constants.BIRD_BASE_URL');
+    }
     public function triggerWebHookRequest($url, $data, $method = 'post')
     {
         $uuid = $data->uuid ?? '';
@@ -24,9 +31,9 @@ class BirdService extends BaseService
                 : $request->$method($url, ['query' => $data]);
 
             // Log the response details
-            info('Bird Webhook Response received', array_merge($logContext, ['Status' => $response->status(), 'Body' => $response->body()]));
+            info('Bird Webhook Response received', array_merge($logContext, ['Headers' => $response->headers() ?? '', 'Status' => $response->status(), 'Body' => $response->body()]));
 
-            return $response->status();
+            return (object) ['headers' => $response->headers() ?? '', 'body' => $response->body(), 'status_code' => $response->status()];
         } catch (\Exception $e) {
             // Log the error with full context and rethrow the exception
             Log::error('Bird API request failed', array_merge($logContext, [
@@ -35,5 +42,20 @@ class BirdService extends BaseService
             ]));
             throw $e;
         }
+    }
+
+    public function stopWorkFlow($workflow)
+    {
+        $birdWorkSpaceId = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_WORKSPACE_ID)->first();
+        $channelId = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_CHANNEL_ID)->first();
+        if (! $birdWorkSpaceId || ! $channelId) {
+            info("Bird Workspace Id or Channel Id not found for lead : Ref-ID: {$workflow->quote_uuid} |Time: ".now());
+
+            return false;
+        }
+        $cancelFlowRunUrl = "{$this->baseUrl}/workspaces/{$birdWorkSpaceId->value}/flows/{$channelId->value}/runs";
+        info('Bird Webhook Cancel Flow Run Request initiated', ['Ref-ID' => $workflow->quote_uuid, 'URL' => $cancelFlowRunUrl, 'Method' => 'patch']);
+
+        return $this->triggerWebHookRequest($cancelFlowRunUrl, ['action' => 'cancel', 'ids' => [$workflow->flow_id]], 'patch');
     }
 }

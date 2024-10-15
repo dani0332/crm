@@ -673,7 +673,7 @@ class LeadAllocationService extends BaseService
 
     public function getCarUnallocatedLeads()
     {
-        $from = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS');
+        $from = now()->subWeeks(2)->startOfDay();
 
         $to = now()->subMinutes(2)->toDateTimeString();
 
@@ -1003,11 +1003,6 @@ class LeadAllocationService extends BaseService
             ->select(
                 DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
             );
-    }
-
-    public function getUnAssignedHealthQuotes($teamType)
-    {
-        return HealthQuote::whereNull('advisor_id')->where('health_team_type', $teamType)->count() ?? 0;
     }
 
     public function getAllocationLeads($quoteTypeIds)

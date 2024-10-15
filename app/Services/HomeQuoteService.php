@@ -123,6 +123,7 @@ class HomeQuoteService extends BaseService
             'ps.text AS payment_status_id_text',
             'hqr.policy_booking_date',
             'hqr.insly_migrated',
+            'hqr.aml_status',
         )
             ->leftJoin('payments as py', 'py.code', '=', 'hqr.code')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')

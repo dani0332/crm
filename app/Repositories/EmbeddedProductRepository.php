@@ -24,6 +24,7 @@ use App\Services\SendEmailCustomerService;
 use App\Strategies\EmbeddedProducts\AlfredProtect;
 use App\Strategies\EmbeddedProducts\EmbeddedProduct as EmbeddedProductStrategy;
 use App\Strategies\EmbeddedProducts\MDX;
+use App\Strategies\EmbeddedProducts\RDX;
 use App\Strategies\EmbeddedProducts\TravelAnnual;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -274,7 +275,7 @@ class EmbeddedProductRepository extends BaseRepository
     {
         $canSend = false;
         if ($productCategory == EpCategoryEnum::BOLT_ON) {
-            if (in_array($quoteStatusId, [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued])) {
+            if (in_array($quoteStatusId, [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyBooked])) {
                 if ($transaction->isNotEmpty()) {
                     $canSend = true;
                 }
@@ -291,7 +292,7 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchSendDocumentsByLead($leadId, $modelType, $epId = null)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        if ($quoteTypeId !== QuoteTypeId::Car) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
             return false;
         }
 
@@ -384,7 +385,7 @@ class EmbeddedProductRepository extends BaseRepository
 
         if ($isAlfredProtect) {
             return $this->sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData);
-        } else {
+        } elseif (in_array($short_code, [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX])) {
             return $this->sendMedexEmail($short_code, $quoteObject, $certificate_number, $premium, $capturedAt, $attachments, $advisorData, $ep);
         }
     }
@@ -480,6 +481,7 @@ class EmbeddedProductRepository extends BaseRepository
     private function sendMedexEmail($short_code, $quoteObject, $certificate_number, $premium, $capturedAt, $attachments, $advisorData, $ep)
     {
         $pdf = $this->getPDF($short_code, $quoteObject, $certificate_number, $premium, $capturedAt);
+        $certificatesConfig = config('embedded-products.certificates');
         if ($pdf) {
             $attachments[] = [
                 'Content' => base64_encode($pdf->output()),
@@ -494,12 +496,12 @@ class EmbeddedProductRepository extends BaseRepository
             'To' => $quoteObject->email,
             'Cc' => $advisorData['email'] ?? '',
             'Tag' => '',
-            'TemplateAlias' => 'embedded-products-payment-auth',
+            'TemplateAlias' => $certificatesConfig[$short_code]['email_template_alias'],
             'Attachments' => $attachments,
             'TemplateModel' => [
                 'params' => [
                     'customerName' => $quoteObject->first_name.' '.$quoteObject->last_name,
-                    'isMedex' => strtoupper($short_code) == 'MDX',
+                    'isMedex' => strtoupper($short_code) == EmbeddedProductEnum::MDX,
                     'productName' => $ep->product_name,
                     'productDescription' => $ep->description,
                     'advisor' => (object) $advisorData,
@@ -546,14 +548,19 @@ class EmbeddedProductRepository extends BaseRepository
         $certificatesConfig = config('embedded-products.certificates');
         if (isset($certificatesConfig[$short_code])) {
             $viewFile = $certificatesConfig[$short_code]['view_file'];
+            if ($short_code === EmbeddedProductEnum::MDX) {
+                if (
+                    $epMdxV3From && ! empty($capturedAt)
+                    && Carbon::parse($capturedAt)->gte(Carbon::parse($epMdxV3From->value))
+                ) {
+                    $viewFile = $certificatesConfig[$short_code]['view_file_v3'];
 
-            if ($epMdxV3From && ! empty($capturedAt)
-                && Carbon::parse($capturedAt)->gte(Carbon::parse($epMdxV3From->value))) {
-                $viewFile = $certificatesConfig[$short_code]['view_file_v3'];
-
-            } elseif ($epMdxV2From && ! empty($capturedAt)
-            && Carbon::parse($capturedAt)->gte(Carbon::parse($epMdxV2From->value))) {
-                $viewFile = $certificatesConfig[$short_code]['view_file_v2'];
+                } elseif (
+                    $epMdxV2From && ! empty($capturedAt)
+                    && Carbon::parse($capturedAt)->gte(Carbon::parse($epMdxV2From->value))
+                ) {
+                    $viewFile = $certificatesConfig[$short_code]['view_file_v2'];
+                }
             }
 
             $strategy = $this->createStrategy($short_code);
@@ -600,12 +607,14 @@ class EmbeddedProductRepository extends BaseRepository
     {
         $strategy = null;
         $shortCode = strtoupper($shortCode);
-        if ($shortCode == 'MDX') {
+        if ($shortCode == EmbeddedProductEnum::MDX) {
             $strategy = new MDX;
         } elseif ($shortCode == EmbeddedProductEnum::TRAVEL) {
             $strategy = new TravelAnnual;
         } elseif ($isAlfredProtect) {
             $strategy = new AlfredProtect;
+        } elseif ($shortCode == EmbeddedProductEnum::RDX) {
+            $strategy = new RDX;
         } else {
             $strategy = new EmbeddedProductStrategy;
         }
@@ -714,7 +723,7 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchCapturePayment($leadId, $modelType)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        if ($quoteTypeId !== QuoteTypeId::Car) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
             return false;
         }
 

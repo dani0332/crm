@@ -9,7 +9,8 @@ use BenSampo\Enum\Enum;
  * @method static static OptionTwo()
  * @method static static OptionThree()
  */
-final class QuoteStatusId extends Enum
+final class ActivityTypeEnum extends Enum
 {
-    const Lost = 34;
+    public const CALL_BACK = 'CALL';
+    public const WHATS_APP = 'WHATSAPP';
 }
