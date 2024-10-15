@@ -491,10 +491,10 @@ const validateDateRange = () => {
 const formatDate = dateString =>
   useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY').value;
 
-const  exportPUAUrl = () => {
-    let url = '/pua-leads-export';
-    return url;
-}
+const exportPUAUrl = () => {
+  let url = '/pua-leads-export';
+  return url;
+};
 </script>
 
 <template>
