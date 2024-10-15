@@ -7,14 +7,19 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Factories\AllocationFactory;
 use App\Jobs\EmailStatusEventJob;
-use App\Jobs\EmailStatusEventJob;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
 use App\Models\TravelQuote;
 use Carbon\Carbon;
-use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Response;
+use App\Models\EmailStatus;
+use App\Enums\ProcessStatusCode;
+use App\Models\HealthQuote;
+use App\Models\User;
+use App\Models\ApplicationStorage;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\WorkflowTypeEnum;
 
 class InboundEmailsHookService extends BaseService
 {
@@ -148,9 +153,16 @@ class InboundEmailsHookService extends BaseService
 
                     return apiResponse([], Response::HTTP_BAD_REQUEST, 'Webhook Payload is empty!');
                 }
+
+                info("Webhook Payload type: ".$type);
                 $result = collect($payload)->only(['messageId', 'type'])
                     ->filter();
                 $this->birdMessageInteractionsUpdate($result);
+
+                if(in_array($type,[ ProcessStatusCode::UNSUBSCRIBED, ProcessStatusCode::UNSUBSCRIBE_REQUESTED])){
+                    $this->sendUnsubscribeEmailNotification($result['messageId']);
+                }
+
             } else {
                 $identifierValue = isset($payload['receiver']['contacts']) ? collect($payload['receiver']['contacts'])->first()['identifierValue'] : null;
                 // Extract and filter therequired fields
@@ -209,6 +221,45 @@ class InboundEmailsHookService extends BaseService
             $msg = 'EmailData not found for msg_id: '.$messageId;
             info($msg);
         }
+    }
+
+    public function sendUnsubscribeEmailNotification($messageId){
+        $emailStatusData = EmailStatus::where('msg_id', $messageId)->first();
+        if($emailStatusData){
+            switch ($emailStatusData->quote_type_id) {
+                case QuoteTypes::CAR->id():
+                    $quote = CarQuote::where('id', $emailStatusData->quote_id)->first();
+                break;
+                case QuoteTypes::HEALTH->id():
+                    $quote = HealthQuote::where('id', $emailStatusData->quote_id)->first();
+                break;
+                default:
+                    $quote = null;
+                break;
+            }
+            if (! empty($quote)) {
+                $advisor = User::where('id', $quote->advisor_id)->first();
+                if(!empty($advisor)){
+                    $emailData = [
+                        'advisorEmail' => $advisor->email,
+                        'customerEmail' => $quote->email,
+                        'quoteUID' => $quote->uuid,
+                        'refID' => $quote->code,
+                        'receivedDate' => now(),
+                        'workflowType' => WorkflowTypeEnum::UNSUBSCRIBE_REQUESTED_NOTIFICATIION,
+                    ];
+                    $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
+                    app(BirdService::class)->triggerWebHookRequest($birdMotorEventNB->value, $emailData);
+                }
+                else
+                  info("Advisor not found for email: {$quote->uuid} | Time: ".now());
+            }
+        }
+        else {
+            $msg = 'EmailStatus not found for msg_id: '.$messageId;
+            info($msg);
+        }
+
     }
 
 }

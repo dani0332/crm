@@ -9,18 +9,14 @@ use App\Http\Requests\APiFetchUrl;
 use App\Http\Requests\AssignLeadRequest;
 use App\Http\Requests\BirdWebhookRequest;
 use App\Http\Requests\EmailEventsRequest;
-use App\Http\Requests\EmailEventsRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Jobs\FixQuoteStatusDate;
 use App\Models\QuoteFlowDetails;
-use App\Models\QuoteFlowDetails;
 use App\Services\ApiService;
 use App\Services\BirdService;
-use App\Services\BirdService;
-use App\Services\EmailStatusService;
 use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
 use App\Services\NotificationService;
@@ -28,7 +24,6 @@ use App\Services\QuoteStatusService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -102,11 +97,6 @@ class ApiController extends Controller
         return $this->inboundEmailsHookService->process();
     }
 
-    public function birdInboundEmailsHook()
-    {
-
-        return $this->inboundEmailsHookService->handleBirdWebhook();
-    }
 
     public function handleZeroPlansEmail(HandleZeroPlansRequest $request)
     {
