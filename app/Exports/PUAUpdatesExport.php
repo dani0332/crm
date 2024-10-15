@@ -113,6 +113,7 @@ class PUAUpdatesExport implements FromCollection, WithHeadings, WithMapping
         if (! isset($row->RefId) && isset($row->PaymentStatus)) {
             info($row->PaymentStatus);
             info($row->Count);
+
             return [
                 'Payment Status' => $row->PaymentStatus,
                 'Count' => $row->Count ? $row->Count : number_format(0),
