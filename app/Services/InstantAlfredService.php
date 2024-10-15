@@ -362,12 +362,10 @@ class InstantAlfredService extends BaseService
 
             $mongoResults = AlfredChat::raw(fn ($collection) => $collection->aggregate($mongoPipeline))->toArray();
 
-            info('mongodb result', $mongoResults);
             $mongoResultsCollection = collect($mongoResults);
             foreach ($sqlBatch as $sqlRecord) {
                 
                 $relatedMongoRecord = $mongoResultsCollection->firstWhere('id', $sqlRecord->uuid);
-                info('computed mongodb result', $relatedMongoRecord);
 
                 if ($relatedMongoRecord) {
                     $sqlRecord->quote_type = $relatedMongoRecord['quote_type'];
@@ -382,7 +380,6 @@ class InstantAlfredService extends BaseService
 
         });
 
-        info('Chat Consolidated Report Generated', $data->toArray());
         return $data;
     }
 
