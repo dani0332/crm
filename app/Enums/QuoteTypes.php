@@ -33,6 +33,7 @@ use App\Services\HealthAllocationService;
 use App\Services\TravelAllocationService;
 use App\Strategies\Allocations\BikeAllocation;
 use App\Strategies\Allocations\CarAllocation;
+use App\Strategies\Allocations\CorplineAllocation;
 use App\Strategies\Allocations\CycleAllocation;
 use App\Strategies\Allocations\HealthAllocation;
 use App\Strategies\Allocations\LifeAllocation;
@@ -257,6 +258,7 @@ enum QuoteTypes: string
             self::YACHT => new YachtAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
             self::PET => new PetAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
             self::LIFE => new LifeAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
+            self::CORPLINE => new CorplineAllocation($this, $uuid, $teamId, overrideAdvisorId: $overrideAdvisorId),
             default => null,
         };
 
