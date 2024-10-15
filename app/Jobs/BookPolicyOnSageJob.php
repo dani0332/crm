@@ -50,7 +50,7 @@ class BookPolicyOnSageJob implements ShouldQueue
         $this->sageProcess = SageProcess::find($this->sageProcess->id);
 
         if ($this->sageProcess->status === SageEnum::SAGE_PROCESS_PENDING_STATUS) {
-            (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PROCESSING_STATUS);
+            (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PROCESSING_STATUS, null, 'BookPolicyOnSageJob : '.$this->quote->code);
 
             $response = (new SageApiService)->bookPolicyOnSage([$this->sageRequest, $this->quote,  $this->request]);
 
@@ -58,17 +58,17 @@ class BookPolicyOnSageJob implements ShouldQueue
                 $message = $response['message'];
                 if ($message == SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE) {
                     info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - sage conflict - updating status to pending');
-                    (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message);
+                    (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message, 'BookPolicyOnSageJob : '.$this->quote->code);
                 } else {
                     info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - booking failed - updating status to failed');
-                    (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message);
+                    (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, 'BookPolicyOnSageJob : '.$this->quote->code);
 
                     (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, $this->sageRequest->userId);
                 }
 
             } else {
                 info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - policy booked - updating status to completed');
-                (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS);
+                (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS, null, 'BookPolicyOnSageJob : '.$this->quote->code);
             }
 
             info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - Response : '.json_encode($response));

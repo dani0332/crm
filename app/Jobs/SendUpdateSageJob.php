@@ -49,7 +49,7 @@ class SendUpdateSageJob implements ShouldQueue
         $this->sageProcess = SageProcess::find($this->sageProcess->id);
 
         if ($this->sageProcess->status === SageEnum::SAGE_PROCESS_PENDING_STATUS) {
-            $sageApiService->updateSageProcessStatus(sageProcess: $this->sageProcess, status: SageEnum::SAGE_PROCESS_PROCESSING_STATUS, logFor: 'Endorsement Booking Sage Process');
+            $sageApiService->updateSageProcessStatus(sageProcess: $this->sageProcess, status: SageEnum::SAGE_PROCESS_PROCESSING_STATUS, logFor: 'Endorsement Booking Sage Process : '.$this->sendUpdateLog->uuid);
             $this->sendUpdateLog->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED]);
 
             $response = $sageApiService->bookEndorsementOnSage([
@@ -62,16 +62,16 @@ class SendUpdateSageJob implements ShouldQueue
                 $message = $response['message'];
                 if ($message == SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE) {
                     info('job:SendUpdateSageJob - QuoteType: '.$this->requestPayload->quoteType.' - QuoteUUID: '.$this->requestPayload->quoteUuid.' - SendUpdateUUID: '.$this->sendUpdateLog->uuid.' sage conflict - updating status to pending');
-                    (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message);
+                    (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message, 'SendUpdateUUID: '.$this->sendUpdateLog->uuid);
                 } else {
                     info('job:SendUpdateSageJob - QuoteType: '.$this->requestPayload->quoteType.' - QuoteUUID: '.$this->requestPayload->quoteUuid.' - SendUpdateUUID: '.$this->sendUpdateLog->uuid.' booking failed - updating status to failed');
-                    (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message);
+                    (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message, 'SendUpdateUUID: '.$this->sendUpdateLog->uuid);
                     $this->sendUpdateLog->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED]);
                 }
 
             } else {
                 info('job:SendUpdateSageJob - QuoteType: '.$this->requestPayload->quoteType.' - QuoteUUID: '.$this->requestPayload->quoteUuid.' - SendUpdateUUID: '.$this->sendUpdateLog->uuid.' booking completed - updating status to completed');
-                (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS);
+                (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS, null, 'SendUpdateUUID: '.$this->sendUpdateLog->uuid);
             }
 
             info('job:SendUpdateSageJob - Response: '.json_encode($response).' - QuoteType: '.$this->requestPayload->quoteType.' - QuoteUUID: '.$this->requestPayload->quoteUuid.' - SendUpdateUUID: '.$this->sendUpdateLog->uuid);
