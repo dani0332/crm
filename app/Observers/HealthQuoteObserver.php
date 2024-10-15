@@ -5,8 +5,10 @@ namespace App\Observers;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Jobs\CourtesyEmailJob;
+use App\Jobs\IntroEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
@@ -63,6 +65,10 @@ class HealthQuoteObserver
             $this->syncLeadEntries($healthQuote->uuid);
         }
 
+        if (isset($dirty['quote_status_id']) && $healthQuote->quote_status_id === QuoteStatusEnum::Qualified && $healthQuote->advisor_id) {
+            info("Quote status changed to {$healthQuote->quote_status_id} | Ref-ID: {$healthQuote->uuid} | Time: ".now());
+            IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $healthQuote->uuid, 'send-rm-intro-email', null, false);
+        }
         if (
             isset($dirty['quote_status_id']) &&
             in_array($healthQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
