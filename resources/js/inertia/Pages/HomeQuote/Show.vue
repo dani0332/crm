@@ -1,4 +1,6 @@
 <script setup>
+import LazyAvailablePlan from './Partials/AvailablePlans.vue';
+
 const props = defineProps({
   quote: Object,
   quoteType: String,
@@ -483,6 +485,7 @@ const readOnlyMode = reactive({
 });
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionEnum.All_QUOTES_VIEWONLY_ACCESS);
+  onLoadAvailablePlansData();
 });
 
 const sectionExpanded = computed(() => !page.props.hasPolicyIssuedStatus);
@@ -507,6 +510,219 @@ const isAddUpdate = ref(false);
 const onAddUpdate = () => {
   isAddUpdate.value = true;
 };
+
+const availablePlansTable = reactive({
+  data: [],
+  columns: [
+    {
+      text: 'Provider Name',
+      value: 'providerName',
+    },
+    {
+      text: 'Plan Name',
+      value: 'name',
+    },
+    {
+      text: 'Price',
+      value: 'actualPremium',
+    },
+    {
+      text: 'Total Price',
+      value: 'discountPremium',
+    },
+    {
+      text: 'Action',
+      value: 'action',
+    },
+  ],
+});
+
+const homePlansIds = reactive({
+  ids: [],
+});
+const selectedPlans = ref([]);
+const selectedPlanIds = computed(() => {
+  return page.props.payments.length > 0
+    ? page.props.payments.map(plan => plan.plan_id)
+    : [];
+});
+
+const onLoadAvailablePlansData = async () => {
+  const url = `/quotes/home/available-plans/${page.props.quote.uuid}`;
+  const data = {
+    jsonData: true,
+  };
+
+  try {
+    const response = await axios.post(url, data);
+
+    if (response.status === 200) {
+      // Assuming the normal plans are stored in `data` field
+      const homePlans = response.data;
+
+      console.log('Available plans:', homePlans);
+
+      // If you need to update the table and store the ids
+      availablePlansTable.data = homePlans;
+      homePlansIds.ids = homePlans.map(plan => plan.planId);
+      console.log('homePlansIds :', homePlansIds);
+
+    } else {
+      console.error('Error: Unexpected status code', status);
+    }
+  } catch (error) {
+    console.error('Failed to load available plans', error);
+  }
+};
+
+const onTogglePlans = toggle => {
+  toggleLoader.value = true;
+
+  const planIds = useArrayUnique(
+    selectedPlans.value.map(p => {
+      return p.id;
+    }),
+  ).value;
+
+  axios
+    .post(route('manualPlanToggle', { quoteType: 'travel' }), {
+      modelType: 'Travel',
+      planIds: planIds,
+      quote_uuid: page.props.quote.uuid,
+      toggle: toggle,
+    })
+    .then(response => {
+      notification.success({
+        title: 'Plans has been updated',
+        position: 'top',
+      });
+      onLoadAvailablePlansData();
+      router.reload({
+        preserveScroll: true,
+      });
+    })
+    .catch(error => {
+      notification.error({
+        title: error,
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      toggleLoader.value = false;
+      selectedPlans.value = [];
+    });
+};
+
+const planDetails = ref(null);
+
+const getPlanDetails = id => {
+    console.log('getPlanDetails', id);
+  try {
+    axios
+      .get(`/home/${page.props.quote.uuid}/plan_details/${id}`)
+      .then(res => {
+        planDetails.value = res.data;
+        modals.planDetails = true;
+      })
+      .catch(err => {
+        notification.error({
+          title: 'Error',
+          message: 'Plan Details Not Found',
+          position: 'top',
+        });
+        console.log(err);
+      });
+  } catch (err) {
+    console.log(err);
+    notification.error({
+      title: 'Error',
+      message: 'Something went wrong',
+      position: 'top',
+    });
+  }
+};
+
+const { copy, copied } = useClipboard();
+const onCopyText = text => {
+  copy(text);
+  if (copied)
+    notification.success({
+      title: 'Link copied to clipboard',
+      position: 'top',
+    });
+};
+
+const onExportPlans = () => {
+  if (selectedPlans.value.length < 2 || selectedPlans.value.length > 5) {
+    notification.error({
+      title: 'Please select 2 to 5 plans to download PDF.',
+      position: 'top',
+    });
+    return;
+  }
+  exportLoader.value = true;
+  const planIds = selectedPlans.value.map(p => {
+    return p.id;
+  });
+
+  axios
+    .post(
+      '/api/v1/quotes/travel/export-plans-pdf',
+      {
+        plan_ids: planIds,
+        quote_uuid: page.props.quote.uuid,
+        modelType: 'travel',
+        quoteType: 'travel',
+        hasAdultAndSeniorMember:
+          availableSeniorPlansTable?.data?.length > 0 &&
+          availablePlansTable?.data?.length > 0
+            ? true
+            : false,
+      },
+      {
+        responseType: 'json',
+      },
+    )
+    .then(response => {
+      const link = document.createElement('a');
+      let fileName = response.data.name;
+      link.href = response.data.data;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      notification.success({
+        title: 'Plans Exported',
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      console.log(error);
+    })
+    .finally(() => {
+      exportLoader.value = false;
+    });
+};
+
+const selectedProviderPlan = ref({
+  id: page.props?.quote?.plan_id,
+  planName: page.props?.quote?.plans?.planName,
+  providerName: page.props?.quote?.plans?.providerName,
+  premium: page.props?.quote?.plans?.premium,
+});
+
+const handlePlanSelected = plan => {
+  selectedProviderPlan.value.id = plan.id;
+  selectedProviderPlan.value.planName = plan.planName;
+  selectedProviderPlan.value.providerName = plan.providerName;
+  selectedProviderPlan.value.premium = plan.premium;
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['payments', 'quoteRequest'],
+  });
+};
+
+
 </script>
 
 <template>
@@ -1253,14 +1469,170 @@ const onAddUpdate = () => {
       </Collapsible>
     </div>
 
-    <PlanDetails
+    <!-- <PlanDetails
       :insuranceProviders="insuranceProviders"
       :quote="quote"
       :quoteType="quoteType"
       :expanded="sectionExpanded"
       :vatPrice="vatPercentage"
       :isAddUpdate="isAddUpdate"
-    />
+    /> -->
+
+    <div class="p-4 rounded shadow mb-6 bg-white">
+        <Collapsible :expanded="sectionExpanded">
+          <template #header>
+            <div class="flex flex-wrap gap-4 justify-between items-center">
+              <h3 class="font-semibold text-primary-800 text-lg">
+                Available Plans
+              </h3>
+            </div>
+          </template>
+          <template #body>
+            <x-divider class="my-4" />
+            <div class="flex justify-between items-center flex-wrap gap-2">
+              <div class="flex gap-2 mb-4" v-if="readOnlyMode.isDisable === true">
+                <x-button-group
+                  v-if="selectedPlans.length > 0"
+                  size="sm"
+                  class="mr-2"
+                >
+                  <x-button
+                    @click.prevent="onTogglePlans(false)"
+                    :loading="toggleLoader"
+                    v-if="readOnlyMode.isDisable === true"
+                  >
+                    Show
+                  </x-button>
+                  <x-button
+                    @click.prevent="onTogglePlans(true)"
+                    :loading="toggleLoader"
+                    v-if="readOnlyMode.isDisable === true"
+                  >
+                    Hide
+                  </x-button>
+                </x-button-group>
+                <x-button
+                  v-if="
+                    availablePlansTable.data.length > 0
+                  "
+                  size="sm"
+                  color="orange"
+                  class="mr-2"
+                  @click.prevent="
+                    onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)
+                  "
+                >
+                  Copy Link
+                </x-button>
+                <x-button
+                  v-if="selectedPlans.length > 0"
+                  size="sm"
+                  color="emerald"
+                  @click.prevent="onExportPlans"
+                  :loading="exportLoader"
+                >
+                  Download PDF
+                </x-button>
+              </div>
+            </div>
+
+            <div
+              v-if="
+                availablePlansTable.data &&
+                typeof availablePlansTable.data == 'string'
+              "
+            >
+              <p
+                class="text-center text-primary-600 uppercase"
+                v-if="typeof availablePlansTable.data == 'string'"
+              >
+                {{ availablePlansTable.data }}
+              </p>
+            </div>
+            <div v-else>
+              <DataTable
+                v-model:items-selected="selectedPlans"
+                table-class-name="tablefixed"
+                :headers="availablePlansTable.columns"
+                :items="availablePlansTable.data || []"
+                border-cell
+                hide-rows-per-page
+                :rows-per-page="15"
+                :hide-footer="availablePlansTable.data.length < 15"
+              >
+                <template #item-providerName="item">
+                  <p class="text-primary-600 uppercase">
+                    {{ item.providerName }}
+                  </p>
+                  <div class="flex gap-1">
+                    <x-tag
+                      v-if="item.isDisabled"
+                      size="xs"
+                      color="error"
+                      class="mt-0.5 text-[10px]"
+                    >
+                      Hidden
+                    </x-tag>
+                  </div>
+                </template>
+                <template #item-name="item">
+                  <span class="text-primary-600 uppercase">{{ item.planName }}</span>
+                </template>
+                <template #item-discountPremium="item">
+                  <span class="text-primary-600">
+                    {{ item.discountPremium + item.vat }}
+                  </span>
+                </template>
+                <template #item-action="item">
+                  <div class="flex gap-2">
+                    <x-button
+                      size="xs"
+                      color="error"
+                      outlined
+                      @click.prevent="getPlanDetails(item.planId)"
+                    >
+                      View
+                    </x-button>
+
+                    <span>
+                      <SelectPlan
+                        v-if="!selectedPlanIds.includes(item.id)"
+                        @update:selectedPlanChanged="handlePlanSelected"
+                        :plan="item"
+                        :quoteType="modelType"
+                        :uuid="quote.uuid"
+                        :extraDetails="{
+                          homePlansIds: homePlansIds.ids,
+                          selectedPlansIds: selectedPlanIds,
+                          planType: 'normalPlans',
+                        }"
+                      />
+                      <x-button
+                        v-else
+                        size="xs"
+                        color="orange"
+                        outlined
+                        :disabled="true"
+                      >
+                        Selected
+                      </x-button>
+                    </span>
+                  </div>
+                </template>
+              </DataTable>
+            </div>
+            <x-modal
+              v-model="modals.planDetails"
+              size="xl"
+              :title="`${planDetails?.providerName}`"
+              show-close
+              backdrop
+            >
+              <LazyAvailablePlan :plan="planDetails" />
+            </x-modal>
+          </template>
+        </Collapsible>
+      </div>
 
     <MigratePayment
       v-if="!isNewPaymentStructure"

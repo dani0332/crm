@@ -96,8 +96,8 @@ class HomeQuoteService extends BaseService
             DB::raw('IF(EXISTS (
                 SELECT *
                 FROM quote_request_entity_mapping
-                WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = hqr.id),
-                "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+                WHERE quote_type_id = ' . QuoteTypeId::Home . ' AND quote_request_id = hqr.id),
+                "' . CustomerTypeEnum::Entity . '", "' . CustomerTypeEnum::Individual . '")
             as customer_type'),
             'c.insured_first_name',
             'c.insured_last_name',
@@ -342,7 +342,7 @@ class HomeQuoteService extends BaseService
                     if (in_array($item, $skipped)) {
                         continue;
                     }
-                    $this->query->where($this->getQuerySuffix($item).'.'.$item, $request[$item]);
+                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                 }
             }
         }
@@ -457,7 +457,7 @@ class HomeQuoteService extends BaseService
         $homeQuote->save();
 
         if (isset($request->return_to_view)) {
-            return redirect('quote/home/'.$id)->with('success', 'Home Quote has been updated');
+            return redirect('quote/home/' . $id)->with('success', 'Home Quote has been updated');
         }
     }
 
@@ -687,7 +687,7 @@ class HomeQuoteService extends BaseService
         }
         $userId = (int) $request->assigned_to_id_new;
         $quoteBatch = QuoteBatches::latest()->first();
-        Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
+        Log::info('Leads ids to assign: ' . json_encode($leadsIds) . ' Quote Batch with ID: ' . $quoteBatch->id . ' and Name: ' . $quoteBatch->name);
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
@@ -728,5 +728,121 @@ class HomeQuoteService extends BaseService
         }
 
         return 'true';
+    }
+
+    public function getHomePlans($type, $id)
+    {
+        $quotePlans = $this->getQuotePlans($type, $id);
+        $listQuotePlans = [];
+        if (isset($quotePlans->message) && $quotePlans->message != '') {
+            $listQuotePlans = $quotePlans->message;
+        } else {
+            if (gettype($quotePlans) != 'string' && isset($quotePlans->quotes->plans)) {
+                $listQuotePlans = $quotePlans->quotes->plans;
+            } elseif (! isset($quotePlans->quotes->plans)) {
+                $listQuotePlans = 'Plans not available!';
+            } else {
+                $listQuotePlans = $quotePlans;
+            }
+        }
+
+        return $listQuotePlans;
+    }
+
+    public function getQuotePlans($type, $id)
+    {
+        $modelName = checkPersonalQuotes(ucfirst($type)) ? 'PersonalQuote' : ucfirst($type) . 'Quote';
+        $model = '\\App\\Models\\' . $modelName;
+        $quoteUuId = $model::where('uuid', '=', $id)->value('uuid');
+        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT') . '/get-' . lcfirst($type) . '-quote-plans';
+        $plansApiToken = config('constants.KEN_API_TOKEN');
+        $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
+        $plansApiUserName = config('constants.KEN_API_USER');
+        $plansApiPassword = config('constants.KEN_API_PWD');
+        $authBasic = base64_encode($plansApiUserName . ':' . $plansApiPassword);
+
+        $plansDataArr = [
+            'quoteUID' => $quoteUuId,
+            'lang' => 'en',
+        ];
+
+        $client = new \GuzzleHttp\Client;
+
+        try {
+            $kenRequest = $client->post(
+                $plansApiEndPoint,
+                [
+                    'headers' => [
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
+                        'x-api-token' => $plansApiToken,
+                        'Authorization' => 'Basic ' . $authBasic,
+                    ],
+                    'body' => json_encode($plansDataArr),
+                    'timeout' => $plansApiTimeout,
+                ]
+            );
+
+            $getStatusCode = $kenRequest->getStatusCode();
+
+            if ($getStatusCode == 200) {
+                $getContents = $kenRequest->getBody();
+                $getdecodeContents = json_decode($getContents);
+
+                return $getdecodeContents;
+            }
+        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+            $response = $e->getResponse();
+            $contents = (string) $response->getBody();
+            $response = json_decode($contents);
+        }
+    }
+
+    public function planDetails($quoteId, $planId)
+    {
+        $quotePlans = $this->getHomePlans('home', $quoteId);
+
+        if (gettype($quotePlans) == 'string') {
+            return response()->json([
+                'message' => $quotePlans,
+            ], 404);
+        }
+
+        foreach ($quotePlans as $listQuotePlan) {
+            if ($listQuotePlan->planId == $planId) {
+                $listQuotePlanName = $listQuotePlan->planName;
+                $providerCode = $listQuotePlan->providerCode;
+                $providerName = $listQuotePlan->providerName;
+                $actualPremium = $listQuotePlan->actualPremium;
+                $discountPremium = $listQuotePlan->discountPremium;
+                $listQuotePlanBenefitsInclusions = [
+                    'buildings' => $listQuotePlan->benefits->buildings ?? '',
+                    'contents' => $listQuotePlan->benefits->contents ?? '',
+                    'personalBelongings' => $listQuotePlan->benefits->personalBelongings ?? '',
+                ];
+                $listQuotePlanBenefitsAditionalCovers = $listQuotePlan->benefits->standardBenefits;
+                $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
+                // $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
+
+                // foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
+                //     $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
+                // }
+            }
+        }
+
+        $data = [
+            'listQuotePlanName' => $listQuotePlanName ?? '',
+            'providerCode' => $providerCode,
+            'providerName' => $providerName,
+            'actualPremium' => $actualPremium,
+            'discountPremium' => $discountPremium,
+            'listQuotePlanBenefitsInclusions' => $listQuotePlanBenefitsInclusions,
+            'listQuotePlanBenefitsExclusions' => $listQuotePlanBenefitsExclusions,
+            // 'listQuotePlanBenefitsPolicyDetails' => $listQuotePlanBenefitsPolicyDetails,
+            // 'listQuotePlanBenefitsPolicyDetailLink' => $listQuotePlanBenefitsPolicyDetailLink ?? '',
+            // 'modelName' => self::TYPE,
+        ];
+
+        return response()->json($data, 200);
     }
 }

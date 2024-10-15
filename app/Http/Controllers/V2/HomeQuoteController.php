@@ -8,6 +8,7 @@ use App\Http\Requests\PersonalQuotes\HomeQuoteRequest;
 use App\Repositories\HomeQuoteRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
+use App\Services\HomeQuoteService;
 use Illuminate\Http\Request;
 
 class HomeQuoteController extends Controller
@@ -81,5 +82,10 @@ class HomeQuoteController extends Controller
     public function cardsView(Request $request)
     {
         return HomeQuoteRepository::cardsView($request);
+    }
+
+    public function planDetails($quoteId, $planId)
+    {
+        return app(HomeQuoteService::class)->planDetails($quoteId, $planId);
     }
 }
