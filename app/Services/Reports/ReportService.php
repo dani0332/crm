@@ -654,6 +654,9 @@ class ReportService extends BaseService
                 ->leftjoin('dtt_revivals', 'dtt_revivals.uuid', $tableName . '.uuid')
                 ->whereNotNull(['dtt_revivals.revival_quote_batch_id'])
                 ->orderBy('dtt_revivals.revival_quote_batch_id', 'desc');
+            if (! empty($request->type_of_plan)) {
+                $query->where('health_plan_type_id', $request->type_of_plan);
+            }
         }
 
         if ($request->lob == QuoteTypeId::Car) {
@@ -674,6 +677,10 @@ class ReportService extends BaseService
                 ->leftjoin('dtt_revivals', 'dtt_revivals.uuid', $tableName . '.uuid')
                 ->whereNotNull(['dtt_revivals.revival_quote_batch_id'])
                 ->orderBy('dtt_revivals.revival_quote_batch_id', 'desc');
+
+            if (! empty($carInsurancetypeId)) {
+                $query->where('car_type_insurance_id', $carInsurancetypeId);
+            }
         }
 
 
@@ -681,12 +688,6 @@ class ReportService extends BaseService
             $query->where('source', $leadSource);
         } else {
             $query->whereIn('source', $source);
-        }
-        if (! empty($carInsurancetypeId)) {
-            $query->where('car_type_insurance_id', $carInsurancetypeId);
-        }
-        if (! empty($request->type_of_plan)) {
-            $query->where('health_plan_type_id', $request->type_of_plan);
         }
         $record = $query->groupBy('dtt_revivals.revival_quote_batch_id')->get()->toArray();
 
