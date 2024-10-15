@@ -366,7 +366,7 @@ class InstantAlfredService extends BaseService
             $mongoResultsCollection = collect($mongoResults);
             foreach ($sqlBatch as $sqlRecord) {
                 
-                $relatedMongoRecord = $mongoResultsCollection->firstWhere('_id', $sqlRecord->uuid);
+                $relatedMongoRecord = $mongoResultsCollection->firstWhere('id', $sqlRecord->uuid);
                 info('computed mongodb result', $relatedMongoRecord);
 
                 if ($relatedMongoRecord) {
