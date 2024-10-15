@@ -58,6 +58,7 @@ class PersonalQuoteObserver
                     $personalQuote->advisor_id !== null &&
                     $personalQuote->advisor_id !== 0
                 ) {
+                    $personalQuote->markLeadAllocationPassed();
                     $oldAdvisorId = $changes['advisor_id']['old'];
                     event(new BikeQuoteAdvisorUpdated($personalQuote, $oldAdvisorId));
                 }
@@ -81,7 +82,9 @@ class PersonalQuoteObserver
 
         if (isset($dirty['quote_status_id']) && $this->removeStaleFromLead($personalQuote->quote_status_id)
             && in_array($personalQuote->quote_type_id, [QuoteTypeId::Pet, QuoteTypeId::Cycle, QuoteTypeId::Yacht])) {
-            $personalQuote->update(['stale_at' => null]);
+            PersonalQuote::withoutEvents(function () use ($personalQuote) {
+                $personalQuote->update(['stale_at' => null]);
+            });
         }
     }
 }

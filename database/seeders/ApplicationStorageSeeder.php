@@ -464,6 +464,15 @@ class ApplicationStorageSeeder extends Seeder
                 'updated_at' => now(),
             ]);
         }
+        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_OCA_HEALTH_WORKFLOW)->exists()) {
+            ApplicationStorage::create([
+                'key_name' => ApplicationStorageEnums::BIRD_OCA_HEALTH_WORKFLOW,
+                'value' => 'https://capture.eu-west-1.nest.messagebird.com/webhooks/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/54e964c5-9bff-4665-af06-8cb31b5c7c2c',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
         $sukoonConstants = [
             [
@@ -624,11 +633,37 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
-
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_WORKSPACE_ID],
+            [
+                'value' => 'a1b37cbd-b29d-4371-a81a-c1cd939b73a2',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
         ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::BIRD_SIC_MOTOR_RENEWAL_WORKFLOW],
             [
                 'value' => 'https://capture.eu-west-1.nest.messagebird.com/webhooks/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/85a0a2b6-51b9-4ac5-9319-a6ada510025b',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_CHANNEL_ID],
+            [
+                'value' => '5f5c6b3c-cb98-4d8e-ba14-b6e19884bd2a',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_SIC_MOTOR_RENEWAL_TAG],
+            [
+                'value' => 'sic-3.0-renewal-process',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
