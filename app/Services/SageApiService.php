@@ -506,6 +506,7 @@ class SageApiService
 
         // payload
         $sageRequest = app(SagePayloadFactory::class)->sagePayLoad($request->model_type, $payment, $quote, $paymentSplits);
+        $sageRequest->quoteCode = $quote?->code;
         $sageRequest->quoteTypeId = $quoteTypeId;
         $sageRequest->sageProcessRequestType = SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST;
 
@@ -1894,7 +1895,7 @@ class SageApiService
 
         $quote->update($quoteData);
 
-        info('Policy Book : updateAndLogQuoteStatus - Status : '.$quote->code.', - Status : '.$newQuoteStatusId);
+        info('Policy Book : updateAndLogQuoteStatus - Code : '.$quote->code.', - Status : '.$newQuoteStatusId);
 
         $quoteLogData = [
             'quote_type_id' => $quoteTypeId,
