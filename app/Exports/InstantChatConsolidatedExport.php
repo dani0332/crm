@@ -48,7 +48,7 @@ class InstantChatConsolidatedExport implements FromCollection, WithHeadings, Wit
     public function map($chat): array
     {
         return [
-            $chat->quote_type ?? 'N/A', // 'QUOTE TYPE'
+            $chat->quote_type ?? explode('-', $chat->code)[0], // 'QUOTE TYPE'
             $chat->code ?? 'N/A', // 'REF ID'
             $chat->chat_initiated_at ?? $chat->date_of_first_interaction ?? 'N/A', // 'DATE OF FIRST INTERACTION'
             $this->formatCommunicationChannel($chat->communication_channels ?? []), // 'COMMUNICATION CHANNEL'
