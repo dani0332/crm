@@ -490,6 +490,11 @@ const validateDateRange = () => {
 
 const formatDate = dateString =>
   useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY').value;
+
+const  exportPUAUrl = () => {
+    let url = '/pua-leads-export';
+    return url;
+}
 </script>
 
 <template>
@@ -868,7 +873,7 @@ const formatDate = dateString =>
             v-if="can(permissionsEnum.EXPORT_CAR_PUA_UPDATES)"
             size="sm"
             color="emerald"
-            :href="'/pua-leads-export'"
+            href="/pua-leads-export"
             class="justify-self-start mr-3"
           >
             Export PUA Updates

@@ -544,6 +544,10 @@ class CentralController extends Controller
     }
     public function exportPUAUpdates(Request $request)
     {
+        if (! auth()->user()->can(PermissionsEnum::EXPORT_CAR_PUA_UPDATES)) {
+            return response()->json(['message' => 'User Has No Permission to Download PUA Updates.'], 403);
+        }
+
         $zipFileName = 'PUA-UPDATES.zip';
         $zipFilePath = storage_path('temp/'.$zipFileName);
         $zip = new \ZipArchive;
