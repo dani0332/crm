@@ -69,7 +69,7 @@ class CammyService
                     ]);
                 }
             } else {
-                info('Cammy Service - Error - '.$lead->code.' - '.json_encode($quote));
+                info('Cammy Service - Error - '.$lead->code.' - Plans Object Not Found');
 
                 return false;
             }
