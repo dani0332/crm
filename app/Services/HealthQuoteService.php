@@ -1909,4 +1909,63 @@ class HealthQuoteService extends BaseService
 
         return $response;
     }
+
+    public function exportRmLeads()
+    {
+        $startOfMonth = Carbon::now()->startOfMonth()->format('Y-m-d 00:00:00');
+        $endOfPreviousDay = Carbon::now()->subDay()->format('Y-m-d 23:59:59');
+        $carTeam = $this->getProductByName(quoteTypeCode::Car);
+        $healthTeam = $this->getProductByName(quoteTypeCode::Health);
+
+        //        dd($startOfMonth , $endOfPreviousDay);
+
+        $query = DB::table('health_quote_request as q')
+            ->select([
+                'q.code as Ref_Id',
+                DB::raw("DATE_FORMAT(q.transaction_approved_at, '%m/%d/%Y') as Transaction_Approved_At"),
+                'u.name as Advisor_Name',
+                'u.email as Advisor_Email',
+                'qs.text as Lead_Status',
+                'ps.text as Payment_Status',
+                DB::raw("DATE_FORMAT(q.created_at, '%m/%d/%Y') as Created_At"),
+                DB::raw("(SELECT GROUP_CONCAT(DISTINCT t1.name SEPARATOR ', ')
+                      FROM teams t1
+                      WHERE t1.parent_team_id = $carTeam->id
+                      AND t1.name IN (
+                          SELECT t2.name
+                          FROM teams t2
+                          JOIN user_team ut2 ON t2.id = ut2.team_id
+                          WHERE ut2.user_id = u.id)
+                      ) AS CarTeams"),
+                DB::raw("(SELECT GROUP_CONCAT(DISTINCT t1.name SEPARATOR ', ')
+                      FROM teams t1
+                      WHERE t1.parent_team_id = $healthTeam->id
+                      AND t1.name IN (
+                          SELECT t2.name
+                          FROM teams t2
+                          JOIN user_team ut2 ON t2.id = ut2.team_id
+                          WHERE ut2.user_id = u.id)
+                      ) AS HealthTeams"),
+                DB::raw("GROUP_CONCAT(t.name ORDER BY t.name SEPARATOR ', ') AS AdvisorTeamName"),
+            ])
+            ->leftJoin('quote_status as qs', 'q.quote_status_id', '=', 'qs.id')
+            ->leftJoin('payment_status as ps', 'q.payment_status_id', '=', 'ps.id')
+            ->leftJoin('users as u', 'q.advisor_id', '=', 'u.id')
+            ->leftJoin('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
+            ->leftJoin('teams as t', 'ut.team_id', '=', 't.id')
+            ->whereBetween('q.transaction_approved_at', [$startOfMonth, $endOfPreviousDay])
+            ->whereIn('u.id', function ($subQuery) use ($carTeam) {
+                $subQuery->select('u.id')
+                    ->from('users as u')
+                    ->leftJoin('user_team as ut', 'u.id', '=', 'ut.user_id')
+                    ->leftJoin('teams as t', 'ut.team_id', '=', 't.id')
+                    ->where('t.parent_team_id', $carTeam->id);
+            })
+            ->groupBy('q.code', 'q.transaction_approved_at', 'u.name', 'u.email', 'qs.text', 'ps.text', 'q.created_at')
+            ->orderBy('q.created_at', 'ASC')
+            ;
+        dd($query->toSql());
+
+        return $query;
+    }
 }
