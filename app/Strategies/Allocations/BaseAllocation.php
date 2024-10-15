@@ -4,6 +4,7 @@ namespace App\Strategies\Allocations;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
 use App\Models\QuoteBatches;
@@ -61,6 +62,14 @@ abstract class BaseAllocation extends AllocationService
         }
 
         return $response;
+    }
+
+    protected function getLeadBaseQuery()
+    {
+        return $this->quoteType->model()
+            ->where('uuid', $this->uuid)
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->when(! $this->overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'));
     }
 
     protected function getAdvisorBaseQuery(int $onlineStatus, array $roles)
