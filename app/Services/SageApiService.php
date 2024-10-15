@@ -1894,7 +1894,7 @@ class SageApiService
 
         $quote->update($quoteData);
 
-        info('Policy Book : updateAndLogQuoteStatus - Status : '.$quote->code.', - Status : '.$newQuoteStatusId);
+        info('Policy Book : updateAndLogQuoteStatus - Code : '.$quote->code.', - Status : '.$newQuoteStatusId);
 
         $quoteLogData = [
             'quote_type_id' => $quoteTypeId,
