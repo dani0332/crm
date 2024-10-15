@@ -18,6 +18,27 @@ class RolePermissionSeeder extends Seeder
     public function run(): void
     {
         try {
+            //permission for upload Health Rates and Coverages
+            $uploadHealthRatesPermission = Permission::where('name', PermissionsEnum::UPLOAD_HEALTH_RATES)->first();
+            if (! $uploadHealthRatesPermission) {
+                Permission::create([
+                    'name' => PermissionsEnum::UPLOAD_HEALTH_RATES,
+                    'guard_name' => 'web',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            $uploadHealthCoveragesPermission = Permission::where('name', PermissionsEnum::UPLOAD_HEALTH_COVERAGES)->first();
+            if (! $uploadHealthCoveragesPermission) {
+                Permission::create([
+                    'name' => PermissionsEnum::UPLOAD_HEALTH_COVERAGES,
+                    'guard_name' => 'web',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
             $bookingFailedEditPermission = Permission::where('name', PermissionsEnum::BOOKING_FAILED_EDIT)->first();
             if (! $bookingFailedEditPermission) {
                 Permission::create([

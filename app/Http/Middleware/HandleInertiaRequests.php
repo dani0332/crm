@@ -320,28 +320,36 @@ class HandleInertiaRequests extends Middleware
                     );
             });
         }
-        $nav = $nav->add('Upload Rates & Coverages', '', function (Section $section) {
-            $section
-                ->addIf(
-                    'true',
-                    'Health',
-                    route('upload-rates'),
-                    fn ($s) => $s
-                        ->attributes(['icon' => 'health'])
-                        ->addIf(
-                            'true',
-                            'Rates',
-                            route('upload-rates'),
-                            fn ($s) => $s->attributes(['icon' => 'health'])
-                        )
-                        ->addIf(
-                            'true',
-                            'Coverages',
-                            route('upload-coverages'),
-                            fn ($s) => $s->attributes(['icon' => 'health'])
-                        ),
-                );
-        });
+        if (auth()->user()->hasAnyPermission([
+            PermissionsEnum::UPLOAD_HEALTH_RATES,
+            PermissionsEnum::UPLOAD_HEALTH_COVERAGES,
+        ])) {
+            $nav = $nav->add('Upload Rates & Coverages', '', function (Section $section) {
+                $section
+                    ->addIf(
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::UPLOAD_HEALTH_RATES,
+                            PermissionsEnum::UPLOAD_HEALTH_COVERAGES,
+                        ]),
+                        'Health',
+                        route('upload-rates'),
+                        fn ($s) => $s
+                            ->attributes(['icon' => 'health'])
+                            ->addIf(
+                                auth()->user()->hasPermissionTo(PermissionsEnum::UPLOAD_HEALTH_RATES),
+                                'Rates',
+                                route('upload-rates'),
+                                fn ($s) => $s->attributes(['icon' => 'health'])
+                            )
+                            ->addIf(
+                                auth()->user()->hasPermissionTo(PermissionsEnum::UPLOAD_HEALTH_COVERAGES),
+                                'Coverages',
+                                route('upload-coverages'),
+                                fn ($s) => $s->attributes(['icon' => 'health'])
+                            ),
+                    );
+            });
+        }
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::GMQuotesList,
             PermissionsEnum::CorpLineQuotesList,
