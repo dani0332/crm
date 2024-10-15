@@ -865,6 +865,7 @@ const formatDate = dateString =>
             Extract makes models trims
           </x-button>
           <x-button
+            v-if="can(permissionsEnum.EXPORT_CAR_PUA_UPDATES)"
             size="sm"
             color="emerald"
             :href="'/pua-leads-export'"
