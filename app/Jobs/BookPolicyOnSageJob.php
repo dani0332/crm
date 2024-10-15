@@ -57,14 +57,17 @@ class BookPolicyOnSageJob implements ShouldQueue
             if (! $response['status']) {
                 $message = $response['message'];
                 if ($message == SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE) {
+                    info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - sage conflict - updating status to pending');
                     (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message);
                 } else {
+                    info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - booking failed - updating status to failed');
                     (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message);
 
                     (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, $this->sageRequest->userId);
                 }
 
             } else {
+                info('Policy Book : BookPolicyOnSageJob - '.$this->quote->code.' - policy booked - updating status to completed');
                 (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS);
             }
 
@@ -82,10 +85,11 @@ class BookPolicyOnSageJob implements ShouldQueue
     {
         (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $exception->getMessage());
 
+        info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses fn:failed triggered for code -'. $this->quote->code . ' updating status to failed');
         (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, $this->sageRequest->userId);
 
         (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
-        info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses triggered for Insurer - '.$this->sageRequest->insurerID);
+        info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses fn:failed triggered for code -'. $this->quote->code . ' Insurer - '.$this->sageRequest->insurerID);
 
         Log::error('Policy Book : BookPolicyOnSageJob : '.$this->quote->code.' Error : '.$exception->getMessage());
     }
