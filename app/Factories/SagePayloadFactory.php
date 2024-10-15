@@ -1159,7 +1159,6 @@ class SagePayloadFactory
 
         $sageRequest = new stdClass;
 
-        $sageRequest->quoteCode = $quote?->code;
         $sageRequest->userId = auth()->id();
         $sageRequest->discount = floatval($payment->discount_value);
         $sageRequest->invoiceDescription = $payment->invoice_description;
