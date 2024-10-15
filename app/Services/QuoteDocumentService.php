@@ -2,26 +2,27 @@
 
 namespace App\Services;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\DocumentTypeCategory;
-use App\Enums\DocumentTypeCode;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
+use setasign\Fpdi\Fpdi;
 use App\Enums\RolesEnum;
-use App\Enums\SendUpdateLogStatusEnum;
-use App\Models\ApplicationStorage;
+use App\Enums\QuoteTypeId;
+use App\Enums\quoteTypeCode;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
-use App\Repositories\DocumentTypeRepository;
-use App\Traits\GenericQueriesAllLobs;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\DocumentTypeCode;
+use PhpOffice\PhpWord\IOFactory;
+use App\Models\ApplicationStorage;
+use App\Enums\DocumentTypeCategory;
 use Illuminate\Support\Facades\Log;
+use App\Enums\WatermarkDocTypesEnum;
+use Intervention\Image\ImageManager;
+use App\Traits\GenericQueriesAllLobs;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\SendUpdateLogStatusEnum;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
-use Intervention\Image\ImageManager;
-use PhpOffice\PhpWord\IOFactory;
-use setasign\Fpdi\Fpdi;
+use App\Repositories\DocumentTypeRepository;
 
 class QuoteDocumentService extends BaseService
 {
@@ -119,6 +120,9 @@ class QuoteDocumentService extends BaseService
         if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
             return response()->json(['error' => 'Invalid document type code provided'], 500);
         }
+
+        $isWaterMarkQualifyDoc = in_array($documentType->code, WatermarkDocTypesEnum::asArray());
+
         try {
 
             if (data_get($data, 'is_base_64', 0) == 1) {
@@ -179,11 +183,11 @@ class QuoteDocumentService extends BaseService
             }
 
             // watermark only for pdf files
-            if ($fileMimeType == 'application/pdf' || $fileMimeType == '.pdf') {
+            if (($fileMimeType == 'application/pdf' || $fileMimeType == '.pdf') && $isWaterMarkQualifyDoc) {
                 $watermarkData = $this->watermarkPdf($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType, $isKyc, $isPaymentReceipt);
-            } elseif ($fileMimeType == 'image/jpeg' || $fileMimeType == 'image/png' || $fileMimeType == 'image/jpg') {
+            } elseif (($fileMimeType == 'image/jpeg' || $fileMimeType == 'image/png' || $fileMimeType == 'image/jpg') && $isWaterMarkQualifyDoc) {
                 $watermarkData = $this->watermarkImage($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
-            } elseif ($fileMimeType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || $fileMimeType == 'application/msword') {
+            } elseif (($fileMimeType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || $fileMimeType == 'application/msword') && $isWaterMarkQualifyDoc) {
                 $watermarkData = $this->watermarkWordDocs($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
             }
 

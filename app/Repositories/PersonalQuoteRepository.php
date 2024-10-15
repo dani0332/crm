@@ -2,23 +2,25 @@
 
 namespace App\Repositories;
 
-use App\Enums\PaymentMethodsEnum;
-use App\Enums\PaymentStatusEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
+use Carbon\Carbon;
 use App\Facades\Capi;
+use App\Enums\QuoteTypeId;
+use Illuminate\Support\Arr;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
-use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
-use App\Services\CentralService;
 use App\Services\CRUDService;
-use App\Services\QuoteDocumentService;
-use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Auth;
+use App\Enums\QuoteStatusEnum;
+use App\Models\QuoteStatusLog;
+use App\Enums\PaymentStatusEnum;
+use App\Services\CentralService;
+use App\Enums\PaymentMethodsEnum;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Enums\WatermarkDocTypesEnum;
+use Illuminate\Support\Facades\Auth;
+use App\Traits\GenericQueriesAllLobs;
+use App\Services\QuoteDocumentService;
 
 class PersonalQuoteRepository extends BaseRepository
 {
@@ -82,6 +84,7 @@ class PersonalQuoteRepository extends BaseRepository
      */
     public function fetchUploadDocument($id, $file, $data)
     {
+        try{
         info('fn: fetchUploadDocument called');
         $quoteType = '';
         $quoteDocumentService = app(QuoteDocumentService::class);
@@ -95,6 +98,8 @@ class PersonalQuoteRepository extends BaseRepository
         }
 
         $documentType = $query->first();
+
+        $isWaterMarkQualifyDoc = in_array($documentType->code, WatermarkDocTypesEnum::asArray());
 
         if (request()->is_send_update) {
             $quote = SendUpdateLog::where('id', request()->send_update_id ?? '')->first();
@@ -110,11 +115,11 @@ class PersonalQuoteRepository extends BaseRepository
         $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
 
         // watermark only for pdf files
-        if ($fileMimeType == 'application/pdf') {
+        if (($fileMimeType == 'application/pdf' || $fileMimeType == '.pdf') && $isWaterMarkQualifyDoc) {
             $watermarkData = $quoteDocumentService->watermarkPdf($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
-        } elseif ($fileMimeType == 'image/jpeg' || $fileMimeType == 'image/png' || $fileMimeType == 'image/jpg') {
+        } elseif (($fileMimeType == 'image/jpeg' || $fileMimeType == 'image/png' || $fileMimeType == 'image/jpg') && $isWaterMarkQualifyDoc ) {
             $watermarkData = $quoteDocumentService->watermarkImage($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
-        } elseif ($fileMimeType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        } elseif (($fileMimeType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || $fileMimeType == 'application/msword') && $isWaterMarkQualifyDoc) {
             $watermarkData = $quoteDocumentService->watermarkWordDocs($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
         }
 
@@ -140,6 +145,10 @@ class PersonalQuoteRepository extends BaseRepository
         info('Document array prepared for creation', $document);
 
         return $quote->documents()->create($document);
+        } catch (\Exception $exception) {
+            Log::info($exception->getMessage());
+            return response()->json(['error' => 'Document upload failed, please try again'], 500);
+        }
     }
 
     /**
