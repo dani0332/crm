@@ -685,6 +685,9 @@ class ReportService extends BaseService
         if (! empty($carInsurancetypeId)) {
             $query->where('car_type_insurance_id', $carInsurancetypeId);
         }
+        if (! empty($request->type_of_plan)) {
+            $query->where('health_plan_type_id', $request->type_of_plan);
+        }
         $record = $query->groupBy('dtt_revivals.revival_quote_batch_id')->get()->toArray();
 
         if ($request->lob == QuoteTypeId::Health) {
