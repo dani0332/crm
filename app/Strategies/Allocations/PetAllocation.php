@@ -25,6 +25,22 @@ class PetAllocation extends BaseAllocation
         return $this->getAdvisor($onlineStatus);
     }
 
+    private function findEligibleAdvisor(array $statusOrder, $role)
+    {
+        foreach ($statusOrder as $status) {
+            info(self::class." - trying to get {$role} with current status: {$status} for lead uuid: {$this->uuid}");
+            $eligibleUser = $this->getAdvisor($status, $role);
+
+            if ($eligibleUser) {
+                info(self::class." - eligible {$role} found with status: {$status}, user id: {$eligibleUser->user_id}, and uuid: {$this->uuid}");
+
+                return User::find($eligibleUser->user_id);
+            }
+        }
+
+        return null;
+    }
+
     protected function fetchAvailableAdvisor($isReassignmentJob = false)
     {
         info(self::class." - fetchAvailableAdvisor: {$isReassignmentJob} - {$this->teamId} - {$this->uuid}");
@@ -38,29 +54,11 @@ class PetAllocation extends BaseAllocation
             $statusOrder[] = UserStatusEnum::UNAVAILABLE;
         }
 
-        foreach ($statusOrder as $status) {
-            info(self::class." - trying to get advisors with current status as {$status} for lead uuid: {$this->uuid}");
-            $eligibleUser = $this->fetchAdvisor($status);
-
-            if ($eligibleUser) {
-                info(self::class." - eligible user found with status: {$status} and user id : {$eligibleUser->user_id} and uuid: {$this->uuid}");
-
-                return User::find($eligibleUser->user_id);
-            }
+        if ($advisor = $this->findEligibleAdvisor($statusOrder, RolesEnum::PetAdvisor)) {
+            return $advisor;
         }
 
-        // if pet advisor not found, then find home advisor
-        foreach ($statusOrder as $status) {
-            info(self::class." - trying to get home advisors with current status as {$status} for lead uuid: {$this->uuid}");
-            $eligibleUser = $this->getAdvisor($status, RolesEnum::HomeAdvisor);
-
-            if ($eligibleUser) {
-                info(self::class." - eligible home advisor user found with status: {$status} and user id : {$eligibleUser->user_id} and uuid: {$this->uuid}");
-
-                return User::find($eligibleUser->user_id);
-            }
-        }
-
-        return null;
+        // If no pet advisor, find home advisor
+        return $this->findEligibleAdvisor($statusOrder, RolesEnum::HomeAdvisor);
     }
 }
