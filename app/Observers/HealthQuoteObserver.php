@@ -13,9 +13,8 @@ use App\Models\HealthQuote;
 use App\Services\HealthQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
-use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
 
-class HealthQuoteObserver implements ShouldHandleEventsAfterCommit
+class HealthQuoteObserver
 {
     use GenericQueriesAllLobs, PersonalQuoteSyncTrait;
 
@@ -52,6 +51,10 @@ class HealthQuoteObserver implements ShouldHandleEventsAfterCommit
                 $healthQuote->update(['stale_at' => null]);
             });
             $dirty = [...$dirty, 'stale_at' => $healthQuote->stale_at];
+        }
+
+        if ($healthQuote->isDirty('advisor_id')) {
+            $healthQuote->markLeadAllocationPassed();
         }
 
         $this->syncQuote($healthQuote, $dirty);

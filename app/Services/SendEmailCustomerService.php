@@ -83,7 +83,6 @@ class SendEmailCustomerService extends BaseService
         }
 
         return $attachments;
-
     }
 
     public function sendMail(
@@ -1342,7 +1341,7 @@ class SendEmailCustomerService extends BaseService
             'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
             'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
             'healthQuoteId' => $healthQuote->code,
-            'quoteId' => $healthQuote->id,
+            'quoteId' => $healthQuote->code,
             'quoteTypeId' => QuoteTypeId::Health,
             'currentInsurer' => $currentInsurer ? $currentInsurer->text : null,
             'quotePlanLink' => url(config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$healthQuote->uuid.($isRevivalLead ? '?dla=true' : '')), // DLA = Disable Lead Assignment

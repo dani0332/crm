@@ -17,8 +17,8 @@ class SendUpdateSageJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    // 30 seconds
-    public int $timeout = 70;
+    public $tries = 1;
+    public int $timeout = 80;
     private $requestPayload;
     private $sendUpdateLog;
     private $sageRequestPayload;
@@ -83,6 +83,7 @@ class SendUpdateSageJob implements ShouldQueue
 
     public function middleware(): array
     {
+        // release the WithoutOverlapping lock 4 minutes after the job has started processing
         return [(new WithoutOverlapping($this->sendUpdateLog->uuid))->dontRelease()];
     }
 }
