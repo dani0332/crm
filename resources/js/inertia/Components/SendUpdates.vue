@@ -49,6 +49,10 @@ const sendUpdatesTable = reactive({
         'A further classification of the "Send Update" request, providing additional context or details.',
     },
     {
+      text: 'Notes',
+      value: 'notes',
+    },
+    {
       text: 'Status',
       value: 'display_status',
       tooltip:
@@ -285,6 +289,8 @@ const findOption = (item, key) => {
   });
   return title;
 };
+
+const expandNotes = ref(false);
 </script>
 
 <template>
@@ -375,6 +381,18 @@ const findOption = (item, key) => {
               </template>
             </x-tooltip>
           </template>
+
+          <template #header-notes="notes">
+            <div class="flex gap-3 items-center">
+              {{ notes.text }}
+              <x-icon
+                  @click="expandNotes = !expandNotes"
+                  icon="chevronDown"
+                  :class="{ 'rotate-180': expandNotes }"
+              />
+            </div>
+          </template>
+
           <template #item-code="{ code, uuid }">
             <Link
               :href="
@@ -394,6 +412,24 @@ const findOption = (item, key) => {
 
           <template #item-sub_type="item">
             <span>{{ findOption(item, 'option_id') }}</span>
+          </template>
+
+          <template #item-notes="{ notes }">
+            <template v-if="notes.length < 40">
+              {{ notes }}
+            </template>
+            <x-accordion v-else show-icon icon="chevronDown">
+              <x-accordion-item :expanded="expandNotes">
+                <div class="bg-gray-10 w-80">
+                  {{ notes.slice(0, 40) }}
+                </div>
+                <template #content>
+                  <div>
+                    {{ notes.slice(40, notes.length) }}
+                  </div>
+                </template>
+              </x-accordion-item>
+            </x-accordion>
           </template>
 
           <template #item-created_at="{ created_at }">
