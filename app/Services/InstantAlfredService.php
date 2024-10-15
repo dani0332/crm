@@ -380,6 +380,7 @@ class InstantAlfredService extends BaseService
 
         });
 
+        info('Chat Consolidated Report Generated', $data->toArray());
         return $data;
     }
 
