@@ -2072,6 +2072,8 @@ class CarQuoteService extends BaseService
     }
     public function exportnonPUAAuthorized()
     {
+        $carTeam = $this->getProductByName(quoteTypeCode::Car);
+
         $nonPUAAuthLead = DB::table('car_quote_request as q')
             ->leftJoin('car_make as cmk', 'q.car_make_id', '=', 'cmk.id')
             ->leftJoin('car_model as cmd', 'q.car_model_id', '=', 'cmd.id')
@@ -2083,7 +2085,7 @@ class CarQuoteService extends BaseService
             ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
             ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
             ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
-            ->where('t.parent_team_id', TeamNameEnum::getTeamID(TeamNameEnum::CAR))
+            ->where('t.parent_team_id', $carTeam->id)
             ->whereNotIn('q.uuid', function ($query) {
                 $query->select('q.uuid')
                     ->from('car_quote_plan_details as cqp')
@@ -2104,7 +2106,7 @@ class CarQuoteService extends BaseService
             ->join('user_team as ut', 'q.advisor_id', '=', 'ut.user_id')
             ->join('teams as t', 'ut.team_id', '=', 't.id')
             ->where('q.payment_status_id', PaymentStatusEnum::AUTHORISED)
-            ->where('t.parent_team_id', TeamNameEnum::getTeamID(TeamNameEnum::CAR))
+            ->where('t.parent_team_id', $carTeam->id)
             ->whereNotIn('q.quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyIssued])
             ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
             ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
@@ -2123,6 +2125,8 @@ class CarQuoteService extends BaseService
 
     public function exportPUAAuthorized()
     {
+        $carTeam = $this->getProductByName(quoteTypeCode::Car);
+
         $puaAuthUpdate = DB::table('car_quote_plan_details as cqp')
             ->join('car_quote_request as q', 'cqp.quote_uuid', '=', 'q.uuid')
             ->leftJoin('car_plan as cp', 'q.plan_id', '=', 'cp.id')
@@ -2139,7 +2143,7 @@ class CarQuoteService extends BaseService
             ->where('q.paid_at', '<=', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR'))
             ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'))
             ->where('cqp.plan_id', '=', DB::raw('q.plan_id'))
-            ->where('t.parent_team_id', '=', TeamNameEnum::getTeamID(TeamNameEnum::CAR))
+            ->where('t.parent_team_id', '=', $carTeam->id)
             ->orderBy('q.paid_at', 'desc');
 
         $puaAuthTeamUpdate = DB::table('car_quote_plan_details as cqp')
@@ -2153,7 +2157,7 @@ class CarQuoteService extends BaseService
             ->where('q.paid_at', '<=', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR'))
             ->where('q.paid_at', '>', DB::raw('DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY'))
             ->where('cqp.plan_id', '=', DB::raw('q.plan_id'))
-            ->where('t.parent_team_id', '=', TeamNameEnum::getTeamID(TeamNameEnum::CAR))
+            ->where('t.parent_team_id', '=', $carTeam->id)
             ->groupBy('t.name');
 
         return [$puaAuthUpdate, $puaAuthTeamUpdate];
