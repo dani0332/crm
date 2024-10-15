@@ -14,6 +14,7 @@ use App\Facades\Marshall;
 use App\Jobs\ProcessSyncAlfredProtect;
 use App\Jobs\SendEPDocumentsJob;
 use App\Models\ApplicationStorage;
+use App\Models\DocumentType;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
@@ -33,9 +34,8 @@ use Exception;
 use finfo;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use PDF;
-use App\Models\DocumentType;
 use Illuminate\Support\Facades\Storage;
+use PDF;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -390,7 +390,7 @@ class EmbeddedProductRepository extends BaseRepository
             ['quote_request_id', '=', $quoteId],
         ])->whereIn('product_id', $optionsIds);
 
-        if($selected) {
+        if ($selected) {
             $transactions = $transactions->where('is_selected', true);
         }
 
@@ -438,8 +438,8 @@ class EmbeddedProductRepository extends BaseRepository
         $certificatesConfig = config('embedded-products.certificates');
 
         if ($pdf) {
-            $websiteURL = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
-            $url = $websiteURL . $pdf->doc_url;
+            $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+            $url = $websiteURL.$pdf->doc_url;
             $file = file_get_contents($url);
             $attachments[] = [
                 'Content' => base64_encode($file),
@@ -485,13 +485,14 @@ class EmbeddedProductRepository extends BaseRepository
 
     /**
      * Retrieves the PDF certificate for a specific product.
-     * 
-     * @param mixed $short_code
-     * @param mixed $quoteObject
-     * @param mixed $transaction
-     * @param mixed $modelType
-     * @throws \Exception
+     *
+     * @param  mixed  $short_code
+     * @param  mixed  $quoteObject
+     * @param  mixed  $transaction
+     * @param  mixed  $modelType
      * @return mixed
+     *
+     * @throws \Exception
      */
     private function getPDF(
         $short_code,
@@ -499,14 +500,14 @@ class EmbeddedProductRepository extends BaseRepository
         $transaction,
         $modelType
     ) {
-        
+
         $certificateDocument = null;
         $certificate_number = $transaction->certificate_number;
         $premium = $transaction->price_with_vat;
         $capturedAt = $transaction->payment_status_date;
 
         $certificateDocument = $transaction->documents->where('document_type_code', QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE)->first();
-        if($certificateDocument) {
+        if ($certificateDocument) {
             return $certificateDocument;
         }
 
@@ -545,9 +546,9 @@ class EmbeddedProductRepository extends BaseRepository
             $title = "{$docUuid}_PolicyContract-{$certificate_number}.pdf";
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
             $documentType = DocumentType::where('code', QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE)->where('quote_type_id', $quoteTypeId)->first();
-            $filePathAzure = 'documents/' . $documentType->folder_path . '/' . $title;
+            $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$title;
             Storage::disk('azureIM')->put($filePathAzure, $pdfContent);
-            if (!Storage::disk('azureIM')->exists($filePathAzure)) {
+            if (! Storage::disk('azureIM')->exists($filePathAzure)) {
                 throw new Exception('Error uploading document');
             }
 
@@ -778,7 +779,7 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchGetDocuments($data)
     {
         $ep = $this->where('id', $data['epId'])->first();
-        if (!$ep) {
+        if (! $ep) {
             return false;
         }
 
@@ -789,7 +790,7 @@ class EmbeddedProductRepository extends BaseRepository
         $strategy = $this->createStrategy($ep->short_code, $isAlfredProtect);
 
         $canSendDocuments = $this->canSendDocuments($ep->product_category, $quoteObject->quote_status_id, $transaction);
-        if($canSendDocuments) {
+        if ($canSendDocuments) {
             $this->getPDF($ep->short_code, $quoteObject, $transaction->first(), $data['modelType']);
         }
 
@@ -798,7 +799,7 @@ class EmbeddedProductRepository extends BaseRepository
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($data['modelType']));
         $documentType = DocumentType::where('code', QuoteDocumentsEnum::EP)->where('quote_type_id', $quoteTypeId)->first();
         $canAddDocument = false;
-        if($transaction->isNotEmpty()) {
+        if ($transaction->isNotEmpty()) {
             $canAddDocument = in_array($transaction->first()->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::PAID]);
         }
 
@@ -813,7 +814,7 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchUploadQuoteDocument($data)
     {
         $ep = $this->where('id', $data['epId'])->first();
-        if (!$ep) {
+        if (! $ep) {
             return false;
         }
 
@@ -829,13 +830,13 @@ class EmbeddedProductRepository extends BaseRepository
     private function prepareDocumentData($file, $title, $type, $quoteObject, $modelType)
     {
         $originalName = $file->getClientOriginalName();
-        $docName = preg_replace('/\s+/', '', uniqid() . '_' . $originalName);
+        $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         $documentType = DocumentType::where('code', QuoteDocumentsEnum::EP)->where('quote_type_id', $quoteTypeId)->first();
-        $fileNameAzure = $quoteObject->uuid . '_' . $docName;
+        $fileNameAzure = $quoteObject->uuid.'_'.$docName;
         $docUuid = uniqid();
-        $filePathAzure = $file->storeAs('documents/' . $documentType->folder_path, $fileNameAzure, 'azureIM');
-        if($filePathAzure == false) {
+        $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
+        if ($filePathAzure == false) {
             throw new Exception('Error uploading document');
         }
 

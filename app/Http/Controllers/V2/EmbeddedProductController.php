@@ -10,9 +10,9 @@ use App\Http\Requests\EmbeddedProducDocumentRequest;
 use App\Http\Requests\EmbeddedProductRequest;
 use App\Models\EmbeddedProduct;
 use App\Repositories\EmbeddedProductRepository;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Exception;
 
 class EmbeddedProductController extends Controller
 {
@@ -207,16 +207,17 @@ class EmbeddedProductController extends Controller
 
         return response()->json($documents);
     }
-    
+
     public function uploadQuoteDocument(Request $request)
     {
         try {
             EmbeddedProductRepository::uploadQuoteDocument($request->all());
         } catch (Exception $e) {
-            info('Documents upload failed - ' . json_encode($request->all()) . ' - ' . $e->getMessage());
+            info('Documents upload failed - '.json_encode($request->all()).' - '.$e->getMessage());
+
             return redirect()->back()->with('error', 'Document uploaded failed!');
         }
-        
+
         return redirect()->back()->with('success', 'Document uploaded successfully!');
     }
 }
