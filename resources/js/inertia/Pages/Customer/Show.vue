@@ -79,6 +79,10 @@ const permissionsEnum = page.props.permissionsEnum;
             <dd>{{ customer.is_we_sent ? 'Yes' : 'No' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Receive Marketing Updates</dt>
+            <dd>{{ customer.receive_marketing_updates ? 'Yes' : 'No' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Created At</dt>
             <dd>{{ customer.created_at }}</dd>
           </div>
