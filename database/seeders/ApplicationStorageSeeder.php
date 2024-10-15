@@ -4,9 +4,9 @@ namespace Database\Seeders;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EnvEnum;
+use App\Enums\ThirdPartyTagEnum;
 use App\Models\ApplicationStorage;
 use Illuminate\Database\Seeder;
-use App\Enums\ThirdPartyTagEnum;
 
 class ApplicationStorageSeeder extends Seeder
 {
