@@ -821,68 +821,8 @@ class TravelQuoteService extends BaseService
             if ($getStatusCode == 200) {
                 $getContents = $kenRequest->getBody();
                 $getdecodeContents = json_decode($getContents);
-
-                //Todo - To remove - Addons testing purposes
-                $addons = [
-                    [
-                        'id' => 100,
-                        'code' => 'hazardousActivitiesCover',
-                        'text' => 'Hazardous Activities Cover',
-                        'description' => 'This cover provides protection for high-risk leisure activities typically not covered under standard travel insurance policies, such as extreme sports, bungee jumping, scuba diving, and mountain climbing, paragliding, weightlifting, martial arts, shark diving, lacrosse, rugby, mountain biking off-road, rock climbing, trekking between 4k-5.5k meters etc.',
-                        'type' => 'checkbox',
-                        'travelAddonOption' => [
-                            [
-                                'id' => 101,
-                                'value' => 'Included',
-                                'description' => null,
-                                'price' => 0,
-                                'vat' => 0,
-                                'isSelected' => false,
-                            ],
-                        ],
-                    ],
-                    [
-                        'id' => 102,
-                        'code' => 'adventureSportsCover',
-                        'text' => 'Adventure Sports Cover',
-                        'description' => 'Extending cover to include adventure and high-risk leisure activities including bungee jumping, cliff diving, coasteering, expeditions to remote areas, American football, rugby, heli-skiing, solo climbing, freestyle climbing, offshore sailing, yachting, winter and water sports, trekking, safari, etc.',
-                        'type' => 'checkbox',
-                        'travelAddonOption' => [
-                            [
-                                'id' => 103,
-                                'value' => 'Included',
-                                'description' => null,
-                                'price' => 500,
-                                'vat' => 0,
-                                'isSelected' => true,
-                            ],
-                        ],
-                    ],
-                ];
-
-                if (isset($getdecodeContents->quotes->plans->adult)) {
-                    //for Travel OCB Intro Email
-                    foreach ($getdecodeContents->quotes->plans->adult as $adultPlan) {
-                        $adultPlan->addons = $addons;
-                    }
-                    foreach ($getdecodeContents->quotes->plans->senior as $seniorPlan) {
-                        $seniorPlan->addons = $addons;
-                    }
-                } elseif (! is_array($getdecodeContents)) {
-                    foreach ($getdecodeContents?->quotes?->plans as $plan) {
-                        $plan->addons = $addons;
-                    }
-                } else {
-                    //for Travel OCB Intro Email
-                    foreach ($getdecodeContents['adult'] as $adultPlan) {
-                        $adultPlan['addons'] = $addons;
-                    }
-                    foreach ($getdecodeContents['senior'] as $seniorPlan) {
-                        $seniorPlan['addons'] = $addons;
-                    }
-                }
-
                 return $getdecodeContents;
+
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $response = $e->getResponse();
@@ -1181,7 +1121,7 @@ class TravelQuoteService extends BaseService
                 'apiPassword' => $apiPassword,
             ];
 
-            // $response = $this->httpService->processRequest($travelPlanData, $apiCreds);
+            $response = $this->httpService->processRequest($travelPlanData, $apiCreds);
         }
 
         return $response;
