@@ -61,13 +61,16 @@ class SendUpdateSageJob implements ShouldQueue
             if (! $response['status']) {
                 $message = $response['message'];
                 if ($message == SageEnum::SAGE_PROCESSING_CONFLICT_MESSAGE) {
+                    info('job:SendUpdateSageJob - QuoteType: '.$this->requestPayload->quoteType.' - QuoteUUID: '.$this->requestPayload->quoteUuid.' - SendUpdateUUID: '.$this->sendUpdateLog->uuid . ' sage conflict - updating status to pending');
                     (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_PENDING_STATUS, $message);
                 } else {
+                    info('job:SendUpdateSageJob - QuoteType: '.$this->requestPayload->quoteType.' - QuoteUUID: '.$this->requestPayload->quoteUuid.' - SendUpdateUUID: '.$this->sendUpdateLog->uuid . ' booking failed - updating status to failed');
                     (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $message);
                     $this->sendUpdateLog->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED]);
                 }
 
             } else {
+                info('job:SendUpdateSageJob - QuoteType: '.$this->requestPayload->quoteType.' - QuoteUUID: '.$this->requestPayload->quoteUuid.' - SendUpdateUUID: '.$this->sendUpdateLog->uuid . ' booking completed - updating status to completed');
                 (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_COMPLETED_STATUS);
             }
 
@@ -85,6 +88,7 @@ class SendUpdateSageJob implements ShouldQueue
 
     public function failed(Throwable $exception): void
     {
+        info('job:SendUpdateSageJob - QuoteType: '.$this->requestPayload->quoteType.' - QuoteUUID: '.$this->requestPayload->quoteUuid.' - SendUpdateUUID: '.$this->sendUpdateLog->uuid . ' fn:failed - updating status to failed');
         (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $exception->getMessage());
         $this->sendUpdateLog->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED]);
         info('job:SendUpdateSageJob - SendUpdateUUID: '.$this->sendUpdateLog->uuid.' - Error : '.$exception->getMessage());
