@@ -27,6 +27,7 @@ use App\Exports\TravelQuoteExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookPolicyRequest;
 use App\Http\Requests\CustomerProfileRequest;
+use App\Http\Requests\DeleteSplitPaymentRequest;
 use App\Http\Requests\DragAndDropUpdateLeadStatusRequest;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\ExportValidationRequest;
@@ -44,6 +45,7 @@ use App\Http\Requests\UpdateLastYearPolicyRequest;
 use App\Http\Requests\UpdatePaymentRequest;
 use App\Http\Requests\UpdateSelectedPlanRequest;
 use App\Http\Requests\UpdateTotalPriceRequest;
+use App\Jobs\OCAHealthFollowupEmailJob;
 use App\Jobs\SendBookPolicyDocumentsJob;
 use App\Models\ApplicationStorage;
 use App\Models\CcPaymentProcess;
@@ -65,8 +67,8 @@ use App\Services\SendEmailCustomerService;
 use App\Services\SplitPaymentService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class CentralController extends Controller
@@ -228,20 +230,22 @@ class CentralController extends Controller
     {
         $request = (object) $sendBookPolicyRequest->validated();
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
+        $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
 
         info('Quote Code: '.$quote->code.' fn: sendBookingPolicy called policy type '.$request->send_policy_type);
 
         if ($request->send_policy_type == SendPolicyTypeEnum::CUSTOMER) {
-            dispatch(new SendBookPolicyDocumentsJob($request, $quote->code));
+            SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
 
-            $quote->update([
+            $quoteData = [
                 'quote_status_id' => QuoteStatusEnum::PolicySentToCustomer,
                 'quote_status_date' => now(),
-            ]);
+            ];
+            $quote->update($quoteData);
 
             info('Quote Code: '.$quote->code.' Policy send to customer');
 
-            return response()->json(['message' => 'Policy sent to customer'], 200);
+            return response()->json(['message' => 'Quote status updated to Policy Sent To Customer. Documents are being sent to the customer in background.'], 200);
         }
         if ($request->send_policy_type == SendPolicyTypeEnum::SAGE) {
             if (! auth()->user()->canany([PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON, PermissionsEnum::BOOK_POLICY_BUTTON])) {
@@ -249,41 +253,8 @@ class CentralController extends Controller
                     'message' => 'You are not authorized to perform this action',
                 ]], 403);
             }
-            $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($request->model_type));
-            $payment = Payment::where('code', $quote['code'])->mainLeadPayment()->with('paymentSplits')->first();
-            $payment->update([
-                'broker_invoice_number' => (new PaymentRepository)->generateBrokerInvoiceNumber($payment, $request->model_type),
-            ]);
-            $paymentSplits = $payment->paymentSplits;
-            $data['quoteTypeId'] = $quoteTypeId;
-            $data['id'] = $quote->id;
 
-            $sageService = new SageApiService;
-            $response = $sageService->postBookPolicyToSage($request, $payment, $quote, $paymentSplits, $data);
-
-            if ($response['status'] === false) {
-                return response()->json(['errors' => [
-                    'message' => $response['message'],
-                    'sageError' => isset($response['error']) ? 'SAGE API : '.$response['error'] : null,
-                ]], 500);
-            }
-
-            if ($quote->quote_status_id != QuoteStatusEnum::PolicySentToCustomer) {
-                // dispatch job to send email
-                dispatch(new SendBookPolicyDocumentsJob($request, $quote->code));
-            }
-
-            $quote->update([
-                'quote_status_id' => QuoteStatusEnum::PolicyBooked,
-                'policy_booking_date' => Carbon::now(),
-                'quote_status_date' => now(),
-            ]);
-
-            (new CentralService)->straightforwardPayments($payment, $paymentSplits, $quote);
-
-            $this->updatePaymentAllocationStatus($quote);
-
-            info('Quote Code: '.$quote->code.' Payment allocation && Transaction payment status update & policy send to customer');
+            $response = (new SageApiService)->postBookPolicyToSage($request, $quote);
 
             return response()->json(['message' => $response['message']], 200);
         }
@@ -360,6 +331,13 @@ class CentralController extends Controller
         $successMessage = app(SplitPaymentService::class)->processSplitPaymentApprove($paymentProcessJob->quote_type, $paymentProcessJob->quoteable_id, $paymentProcessJob->payment_splits_id, $paymentProcessJob->amount_captured, true);
 
         return $successMessage;
+    }
+
+    // Delete split payment
+    public function deleteSplitPayment(DeleteSplitPaymentRequest $request)
+    {
+        return app(SplitPaymentService::class)->deleteSplitPayment($request->payment_split_id);
+
     }
 
     // Store new payment
@@ -469,7 +447,7 @@ class CentralController extends Controller
                 $previousStatusIdChanged = true;
             }
 
-            $repository->update(['quote_status_id' => $dataTo['quote_status_id'], 'quote_status_date' => now(), 'stale_at' => null]);
+            $repository->update(['quote_status_id' => $dataTo['quote_status_id'], 'quote_status_date' => now()]);
 
             if ($dataTo['quote_status_id'] == QuoteStatusEnum::Lost && $dataFrom['quoteTypeId'] == QuoteTypeId::Health) {
                 HealthQuoteRequestDetail::updateOrCreate(['health_quote_request_id' => $repository->id], ['lost_reason_id' => $dragAndDropUpdateLeadStatusRequest->get('data')['to']['lost_reason']]);
@@ -552,6 +530,9 @@ class CentralController extends Controller
                 $healthQuote->quote_status_id = QuoteStatusEnum::Quoted;
                 $healthQuote->quote_status_date = now();
                 $healthQuote->save();
+                $delayTime = isLeadSic($healthQuote->uuid) ? 3 : 2;
+                OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addMinutes($delayTime));
+                info('OCAHealthFollowupEmailJob dispatched for HEA-'.$healthQuote->uuid.' - Time: '.now());
             }
             info('sendHealthEmailOneClickBuy - OCB Email Sent & Quote Status Changed to "QUOTED" for quote uuid: '.$request->quote_uuid);
 

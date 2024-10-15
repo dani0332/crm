@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\AMLDecisionStatusEnum;
+use App\Enums\AMLStatusCode;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\LookupsEnum;
@@ -198,6 +199,15 @@ class AMLController extends Controller
             })->whereNull('screenshot');
         $kycLogs = $amlRecordFetch->orderBy('created_at', 'desc')->get();
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
+
+        $isPersonalQuote = checkPersonalQuotes($quoteType->code);
+
+        if ($isPersonalQuote) {
+            $quoteRequest->quote_link = '/personal-quotes/'.strtolower($quoteType->code).'/'.$quoteRequest->uuid;
+        } else {
+            $quoteRequest->quote_link = '/quotes/'.strtolower($quoteType->code).'/'.$quoteRequest->uuid;
+        }
+
         $customerDetails = Customer::where('id', $quoteRequest->customer_id)->with('detail')->firstOrFail();
         $entityDetails = QuoteRequestEntityMapping::with(['entity', 'entity.quoteMember'])
             ->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])
@@ -230,7 +240,7 @@ class AMLController extends Controller
             return [str_replace('-', '_', $key) => $item];
         });
 
-        $checkScreeningStatus = [QuoteStatusEnum::AMLScreeningCleared => 2, QuoteStatusEnum::AMLScreeningFailed => 1];
+        $checkScreeningStatus = [AMLStatusCode::AMLScreeningCleared => 2, AMLStatusCode::AMLScreeningFailed => 1];
         $kycStatus = AMLService::getKycType($quoteTypeId, $quoteRequestId);
 
         $payment = Payment::where('code', $quoteRequest->code)
@@ -242,9 +252,11 @@ class AMLController extends Controller
         if (isset($payment->getCustomerPaymentInstrument->card_holder_name)) {
             $cardHolderName = $payment->getCustomerPaymentInstrument;
         }
+        $amlStatusName = AMLStatusCode::getName($quoteRequest->aml_status);
         $data = [
             'quoteType' => $quoteType,
             'quoteRequest' => $quoteRequest,
+            'amlStatusName' => $amlStatusName,
             'entityDetails' => $entityDetails,
             'membersDetails' => $membersDetail,
             'uboDetails' => $uboDetails,
@@ -256,7 +268,7 @@ class AMLController extends Controller
             'customerDetails' => $customerDetails,
             'amlDecisionStatusEnum' => AMLDecisionStatusEnum::asArray(),
             'lookups' => $lookups,
-            'quoteAmlStatus' => $checkScreeningStatus[$quoteRequest->quote_status_id] ?? null,
+            'quoteAmlStatus' => $checkScreeningStatus[$quoteRequest->aml_status] ?? null,
             'cardHolderName' => $cardHolderName,
         ];
 
@@ -599,7 +611,6 @@ class AMLController extends Controller
                 auth()->user()->email
             );
         }
-
         if (! in_array(true, session()->get('amlResponseCheck')) && ! AMLService::checkAMLStatusFailed($quoteTypeId, $quoteRequestId)) {
             QuoteStatusLog::create([
                 'quote_type_id' => $quoteTypeId,
@@ -612,7 +623,8 @@ class AMLController extends Controller
             if ($quoteTypeId == QuoteTypeId::Health || $quoteTypeId == QuoteTypeId::Home || $quoteTypeId == QuoteTypeId::Cycle || $quoteTypeId == QuoteTypeId::Pet || $quoteTypeId == QuoteTypeId::Yacht || $quoteTypeId == QuoteTypeId::Corpline) {
                 $quoteDetails->stale_at = null;
             }
-            $quoteDetails->quote_status_id = QuoteStatusEnum::AMLScreeningCleared;
+
+            $quoteDetails->aml_status = AMLStatusCode::AMLScreeningCleared;
             $quoteDetails->save();
             // this event only working for travel lob
             if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
@@ -629,7 +641,7 @@ class AMLController extends Controller
                 'updated_at' => Carbon::now(),
             ]);
 
-            $quoteDetails->quote_status_id = QuoteStatusEnum::AMLScreeningFailed;
+            $quoteDetails->aml_status = AMLStatusCode::AMLScreeningFailed;
             $quoteDetails->save();
             if (QuoteTypes::TRAVEL->id() == $quoteTypeId) {
                 if (isset($quoteDetails->is_documents_valid) && ! $quoteDetails->is_documents_valid) {

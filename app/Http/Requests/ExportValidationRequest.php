@@ -38,6 +38,8 @@ class ExportValidationRequest extends FormRequest
                     'displayBy' => 'required',
                     'policyExpiryDate.*' => 'required|date',
                 ];
+            } elseif ($this->has('transaction_approved_dates')) {
+                $rules['transaction_approved_dates.*'] = 'required|date';
             } else {
                 $rules = [
                     'created_at_start' => 'required|date',
@@ -86,6 +88,10 @@ class ExportValidationRequest extends FormRequest
                             $end = Carbon::parse($this->input('policyExpiryDate')[1])->endOfDay();
                             $error_fields = 'start & end date';
                         }
+                    } elseif ($this->has('transaction_approved_dates')) {
+                        $start = Carbon::parse($this->input('transaction_approved_dates')[0])->startOfDay();
+                        $end = Carbon::parse($this->input('transaction_approved_dates')[1])->endOfDay();
+                        $error_fields = 'transaction approved dates';
                     }
                     $diff = $start->diffInDays($end);
                     if ($diff > $diffInDays) {

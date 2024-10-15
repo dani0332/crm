@@ -47,7 +47,7 @@ defineProps({
   websiteURL: String,
   linkedQuoteDetails: Object,
   vatPercentage: Number,
-  isAmlClearedForPayment: Boolean,
+
   permissions: Object,
   enums: Object,
   payments: Array,
@@ -57,11 +57,11 @@ defineProps({
   hasPolicyIssuedStatus: Boolean,
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
+  amlStatusName: String,
 });
 
 const assumptionState = reactive({
   isEditing: false,
-  isAmlClearedForPayment: Boolean,
 });
 
 const page = usePage();
@@ -439,9 +439,14 @@ const fetchUpdatedQuote = async () => {
             <dt class="font-medium">PRICE</dt>
             <dd>{{ quote?.premium ?? '' }}</dd>
           </div>
+
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
             <dd>{{ quote?.paid_at ?? '' }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">AML STATUS</dt>
+            <dd>{{ amlStatusName ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>
@@ -476,7 +481,6 @@ const fetchUpdatedQuote = async () => {
             <dd>{{ quote?.payments[0]?.code ?? '' }}</dd>
           </div>
         </dl>
-
         <AddOn
           v-if="bikeQuotePlanAddons.length > 0"
           :quotePlanAddons="bikeQuotePlanAddons"
@@ -1278,7 +1282,6 @@ const fetchUpdatedQuote = async () => {
         })
       "
       :storageUrl="storageUrl"
-      :isAmlClearedForPayment="isAmlClearedForPayment"
       :bookPolicyDetails="bookPolicyDetails"
     />
 
@@ -1291,6 +1294,15 @@ const fetchUpdatedQuote = async () => {
       :insurance-providers="insuranceProviders"
       :is-beta-user="isBetaUser"
       :personal-plans="personalPlans"
+    />
+
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="record.uuid"
+      :code="record.code"
+      :quote="record"
+      :modelType="quoteType"
+      :expanded="sectionExpanded"
     />
 
     <PolicyDetail
@@ -1321,10 +1333,10 @@ const fetchUpdatedQuote = async () => {
       "
       :quote="quote"
       quoteType="Bike"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
-      :modelClass="modelClass"
     />
 
     <EmailStatus :emailStatuses="emailStatuses" />

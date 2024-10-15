@@ -264,6 +264,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Artisan::call('route:clear');
         Artisan::call('config:clear');
         Artisan::call('view:clear');
+        Artisan::call('schedule:clear-cache');
 
         return '<h1>All cache cleared. LARAVEL Version='.app()->version().'</h1>';
     });
@@ -276,6 +277,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/payments/{quoteType}/store-new', [CentralController::class, 'storeNewPayment'])->name('payment-create')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/update-new', [CentralController::class, 'updateNewPayment'])->name('payment-edit')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/retry-payment', [CentralController::class, 'retrySplitPayment'])->name('approve-payments')->middleware('check_route_access');
+    Route::post('/payments/{quoteType}/delete-split-payment', [CentralController::class, 'deleteSplitPayment'])->name('payment-edit')->middleware('check_route_access');
 
     Route::get('/quotes/car/post-sage-data', [SageApi::class, 'processSagePostTest'])->name('post-sage-data');
     // Route::post('/quotes/car/post-sage-data', [\App\Http\Controllers\V2\CarQuoteController::class, 'processSagePost'])->name('post-sage-data');
@@ -570,6 +572,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('/send-update-customer-validation', 'sendUpdateCustomerValidation')->name('send-update-customer-validation');
         Route::post('/send-update-to-customer', 'sendUpdateToCustomer')->name('send-update-to-customer');
         Route::post('/save-provider-details', 'saveProviderDetails')->name('save-provider-details');
+        Route::post('/book-update-validation', 'sendUpdateValidation')->name('book-update-validation');
         Route::post('book-update', 'sendUpdate')->name('book-update');
     });
     Route::get('get-plans/{quoteType}/{providerId}/{planId?}', [CentralController::class, 'getQuoteWisePlans'])->name('get-quote-wise-plans');

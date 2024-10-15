@@ -255,14 +255,24 @@ const checkTransactionExist = item => {
 const { copy, copied } = useClipboard();
 
 const onCopyText = () => {
+  let providerCode = props.quote.plan_provider_code;
+  if (
+    props.modelType.toLowerCase() ==
+    page.props.quoteTypeCodeEnum.Bike.toLowerCase()
+  ) {
+    providerCode = props.quote.car_plan?.insurance_provider?.code;
+  }
+
   let paymentLink =
     page.props.epLink +
-    '/car-insurance/quote/' +
+    '/' +
+    props.modelType.toLowerCase() +
+    '-insurance/quote/' +
     props.quote.uuid +
     '/payment?planId=' +
     props.quote.plan_id +
     '&providerCode=' +
-    props.quote.plan_provider_code;
+    providerCode;
   copy(paymentLink);
   if (copied)
     notification.success({

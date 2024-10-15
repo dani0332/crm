@@ -152,6 +152,7 @@ class BaseService
     {
         $crudService = app(CrudService::class);
         $fields = [];
+
         foreach ($fieldsToDisplay as $property => $field) {
             if (str_contains($field, 'static')) {
                 $options = $this->getStaticFields($field);

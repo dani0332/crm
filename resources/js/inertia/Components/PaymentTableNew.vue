@@ -1,6 +1,6 @@
 <script setup>
 import ToolTip from './../Components/ToolTip.vue';
-import { onMounted, reactive } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import moment from 'moment';
 import NProgress from 'nprogress';
 import { computed } from 'vue';
@@ -9,6 +9,7 @@ import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
 const notification = useNotifications('toast');
 const page = usePage();
 
+const paymentFrequencyEnum = page.props.paymentFrequencyEnum;
 const permissionEnum = page.props.permissionsEnum;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const paymentLookups = page.props.paymentLookups;
@@ -49,10 +50,6 @@ const props = defineProps({
   insuranceProviders: {
     type: Array,
     required: false,
-  },
-  isAmlClearedForPayment: {
-    type: Boolean,
-    default: false,
   },
   eCommercePriceWithLP: {
     type: [String, Number],
@@ -135,6 +132,7 @@ const isTotalPriceUpdated = ref(false);
 const trashedFilesModal = ref([]);
 const isApproveNotChecked = ref(true);
 const isApproveConfirmed = ref(false);
+const isAmlApprovalRequired = ref(false);
 const isCreditApprovalAllowed = ref(true);
 const isVerificationAllowed = ref(true);
 const isPaymentFrequencyNotSelected = ref(false);
@@ -142,6 +140,11 @@ const isDiscountAllowed = ref(true);
 const isRetryModalOpen = ref(false);
 const retryProcessJobId = ref(0);
 const retryPaymentErrorMessage = ref('');
+const isSplitAmountInvalid = ref([]);
+const isSplitAmountInvalidError = ref([]);
+const isDeleteModalOpen = ref(false);
+const deleteSplitPaymentId = ref(0);
+const deleteSplitPaymentStatus = ref(0);
 
 const modal2Ref = ref(null);
 
@@ -348,6 +351,9 @@ const closeConfirmModal = () => {
   isApproveConfirmed.value = false;
   isApproveNotChecked.value = true;
 };
+const closeAmlConfirmModal = () => {
+  isAmlApprovalRequired.value = false;
+};
 const hasNextFile = computed(() => {
   return currentFileIndex.value < filesTest.value.length - 1;
 });
@@ -396,19 +402,29 @@ const rules = {
 };
 
 const isPaymentLocked = computed(() => {
-  if (
-    paymentMethodsForm.status == 'edit' &&
-    !props.sendUpdate &&
-    (props.quoteRequest.quote_status_id ===
-      page.props.quoteStatusEnum.CancellationPending ||
-      props.quoteRequest.quote_status_id ===
-        page.props.quoteStatusEnum.PolicyCancelled ||
-      props.quoteRequest.quote_status_id ===
-        page.props.quoteStatusEnum.PolicyBooked ||
-      props.quoteRequest.quote_status_id ===
-        page.props.quoteStatusEnum.PolicyCancelledReissued)
-  ) {
-    return true;
+  const { status } = paymentMethodsForm;
+  const { quote_status_id } = props.quoteRequest;
+  const { quoteStatusEnum } = page.props;
+  const lockedStatuses = new Set([
+    quoteStatusEnum.CancellationPending,
+    quoteStatusEnum.PolicyCancelled,
+    quoteStatusEnum.PolicyBooked,
+    quoteStatusEnum.PolicyCancelledReissued,
+    quoteStatusEnum.POLICY_BOOKING_QUEUED,
+  ]);
+
+  if (status === 'edit') {
+    if (props.sendUpdate && can(permissionEnum.BOOKING_FAILED_EDIT)) {
+      return false;
+    }
+    if (
+      !props.sendUpdate &&
+      (lockedStatuses.has(quote_status_id) ||
+        (quote_status_id === quoteStatusEnum.POLICY_BOOKING_FAILED &&
+          !can(permissionEnum.BOOKING_FAILED_EDIT)))
+    ) {
+      return true;
+    }
   }
   return false;
 });
@@ -804,8 +820,7 @@ const handlePaymentTypes = count => {
     count >= 2 &&
     (paymentMethodsForm.frequency === 'semi_annual' ||
       paymentMethodsForm.frequency === 'quarterly' ||
-      paymentMethodsForm.frequency === 'monthly' ||
-      paymentMethodsForm.frequency === 'custom')
+      paymentMethodsForm.frequency === 'monthly')
   ) {
     paymentTypesWithoutCheck = paymentTypesFiltered.value.filter(
       item =>
@@ -1578,7 +1593,6 @@ const addPaymentModal = () => {
 };
 
 const retrySplitPaymentModal = (process_job_id, message) => {
-  console.log('retrySplitPaymentModal', process_job_id, message);
   retryProcessJobId.value = process_job_id;
   retryPaymentErrorMessage.value = message;
   isRetryModalOpen.value = true;
@@ -1614,6 +1628,44 @@ const handleRetryPayment = async () => {
     });
 };
 
+const deleteSplitPaymentModal = (payment_split_id, payment_status_id) => {
+  console.log('deleteSplitPaymentModal', payment_split_id);
+  deleteSplitPaymentId.value = payment_split_id;
+  deleteSplitPaymentStatus.value = payment_status_id;
+  isDeleteModalOpen.value = true;
+};
+
+const closeDeleteModal = () => {
+  isDeleteModalOpen.value = false;
+};
+
+const handleDeletePayment = async () => {
+  let retryData = {
+    payment_split_id: deleteSplitPaymentId.value,
+    payment_status_id: deleteSplitPaymentStatus.value,
+    model_type: props.quoteType,
+    quote_id: props.quoteRequest.id,
+  };
+  deleteForm
+    .transform(data => retryData)
+    .post('/payments/' + props.quoteType + '/delete-split-payment', {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success({
+          title: 'Split Payment has been deleted',
+          position: 'top',
+        });
+        isDeleteModalOpen.value = false;
+      },
+      onError: () => {
+        notification.error({
+          title: 'Payment delete failed',
+          position: 'top',
+        });
+      },
+    });
+};
+
 const editPaymentModal = (
   payment,
   split_payment_id,
@@ -1623,7 +1675,8 @@ const editPaymentModal = (
   if (
     sr_no === 0 &&
     payment.payment_status.id === props.paymentStatusEnum.PAID &&
-    capture_approval === 0
+    capture_approval === 0 &&
+    isPaidEditable.value === false
   ) {
     notification.error({
       title: 'No further actions allowed to paid payments',
@@ -1631,6 +1684,21 @@ const editPaymentModal = (
     });
     return false;
   }
+
+  resetPaymentForm();
+  initializePaymentForm(payment, split_payment_id, sr_no, capture_approval);
+  handleCollectionTypeChange();
+  handleFrequencyChange(false);
+  handleApprovalReasonChange();
+  handleDiscountChange();
+  handleDeclinedReasonChange();
+  calculateTotalAmount();
+  applyPermissions();
+  processPaymentSplits(payment);
+  finalizePaymentForm(payment, capture_approval);
+};
+
+const resetPaymentForm = () => {
   paymentMethodsForm.reset();
   splitPaymentNo.value = 0;
   isFieldReadonly.value = false;
@@ -1671,6 +1739,15 @@ const editPaymentModal = (
   authorizedPayments.value = [];
   isApproveConfirmed.value = false;
   isApproveNotChecked.value = true;
+  isAmlApprovalRequired.value = false;
+};
+
+const initializePaymentForm = (
+  payment,
+  split_payment_id,
+  sr_no,
+  capture_approval,
+) => {
   if (sr_no > 0) {
     splitPaymentNo.value = sr_no;
     isFieldReadonly.value = true;
@@ -1687,9 +1764,7 @@ const editPaymentModal = (
       payment.system_adjusted_discount;
   }
 
-  //paymentMethodsForm.masterPaymentStatus = payment.
   masterPaymentStatus.value = payment.payment_status.text;
-
   paymentMethodsForm.paymentCode = payment.code;
   paymentMethodsForm.insurance_provider_id = payment.insurance_provider_id;
   paymentMethodsForm.collection_type = payment.collection_type;
@@ -1703,13 +1778,6 @@ const editPaymentModal = (
   if (payment.discount_reason !== null && payment.discount_type !== null) {
     resetDiscountReason.value = payment.discount_reason;
   }
-
-  /*
-  if (payment.discount_type=='' || payment.discount_type==null) {
-    paymentMethodsForm.discount= payment.discount_type;
-  } else {
-    paymentMethodsForm.discount= payment.discount_type;
-  }*/
 
   paymentMethodsForm.custom_reason = payment.custom_reason;
   paymentMethodsForm.discount_custom_reason = payment.discount_custom_reason;
@@ -1730,16 +1798,9 @@ const editPaymentModal = (
     paymentMethodsForm.discount =
       payment.discount_type !== null ? payment.discount_type : '';
   }
+};
 
-  handleCollectionTypeChange();
-  handleFrequencyChange(false);
-  handleApprovalReasonChange();
-  handleDiscountChange();
-  handleDeclinedReasonChange();
-  calculateTotalAmount();
-  applyPermissions();
-  var isAnyPaid = false;
-
+const processPaymentSplits = payment => {
   const paidStatusIds = [
     props.paymentStatusEnum.PAID,
     props.paymentStatusEnum.PARTIALLY_PAID,
@@ -1749,93 +1810,68 @@ const editPaymentModal = (
   ];
 
   for (let i = 1; i <= payment.total_payments; i++) {
-    if (
-      paidStatusIds.includes(payment.payment_splits[i - 1].payment_status_id)
-    ) {
-      readOnlyPayments.value[i] = true;
+    const split = payment.payment_splits[i - 1];
+    readOnlyPayments.value[i] = paidStatusIds.includes(split.payment_status_id);
+    if (readOnlyPayments.value[i]) {
       totalPaidAmount.value++;
-      paidAmountSum.value =
-        parseFloat(paidAmountSum.value) +
-        parseFloat(payment.payment_splits[i - 1].payment_amount);
-      isAnyPaid = true;
-    } else {
-      readOnlyPayments.value[i] = false;
+      paidAmountSum.value += parseFloat(split.payment_amount);
     }
-    if (
-      payment.payment_splits[i - 1].payment_status_id ===
-      props.paymentStatusEnum.AUTHORISED
-    ) {
-      authorizedPayments.value[i] = true;
-    } else {
-      authorizedPayments.value[i] = false;
-    }
-
+    authorizedPayments.value[i] =
+      split.payment_status_id === props.paymentStatusEnum.AUTHORISED;
     fileUploadModels.value[i] = [];
-    paymentMethodsModels.value[i] =
-      payment.payment_splits[i - 1].payment_method.code;
-    splitAmountModels.value[i] = payment.payment_splits[i - 1].payment_amount;
-
-    const dueDate = payment.payment_splits[i - 1].due_date;
-    dueDateModels.value[i] = dueDate
-      ? moment(dueDate).format('YYYY-MM-DD')
+    paymentMethodsModels.value[i] = split.payment_method.code;
+    splitAmountModels.value[i] = split.payment_amount;
+    dueDateModels.value[i] = split.due_date
+      ? moment(split.due_date).format('YYYY-MM-DD')
       : '';
+    collectionAmountModels.value[i] = split.collection_amount;
 
-    collectionAmountModels.value[i] =
-      payment.payment_splits[i - 1].collection_amount;
-
-    if (
-      payment.payment_splits[i - 1].payment_method.code === 'CHQ' ||
-      payment.payment_splits[i - 1].payment_method.code === 'PDC'
-    ) {
+    if (['CHQ', 'PDC'].includes(split.payment_method.code)) {
       isCheckDetailsEnabled.value[i] = true;
-      checkDetailModels.value[i] = payment.payment_splits[i - 1].check_detail;
+      checkDetailModels.value[i] = split.check_detail;
     }
-    if (payment.payment_splits[i - 1].documents.length > 0) {
-      for (let doc in payment.payment_splits[i - 1].documents) {
-        /*if (!fileUploadModels.value[i]) {
-            fileUploadModels.value[i] = [];
-          }
-        fileUploadModels.value[i].push(payment.payment_splits[i-1].documents[doc]); */
-        if (
-          payment.payment_splits[i - 1].documents[doc].payment_split_type ===
-          'discount'
-        ) {
+
+    if (split.documents.length > 0) {
+      split.documents.forEach(doc => {
+        if (doc.payment_split_type === 'discount') {
           if (!discountDocumentModel.value[0]) {
             discountDocumentModel.value[0] = [];
           }
-          discountDocumentModel.value[0].push(
-            payment.payment_splits[i - 1].documents[doc],
-          );
+          discountDocumentModel.value[0].push(doc);
         } else {
           if (!fileUploadModels.value[i]) {
             fileUploadModels.value[i] = [];
           }
-          fileUploadModels.value[i].push(
-            payment.payment_splits[i - 1].documents[doc],
-          );
+          fileUploadModels.value[i].push(doc);
         }
-      }
+      });
     }
   }
-  // Assign the first document to the approve document model for insurer
+
   if (
     paymentMethodsForm.status == 'view' &&
     paymentMethodsForm.collection_type === 'insurer'
   ) {
     approvedDocumentModel.value = fileUploadModels.value.slice();
   }
-  if (paymentMethodsForm.status == 'edit') {
+};
+
+const finalizePaymentForm = (payment, capture_approval) => {
+  const updateTotalValues = () => {
     totalPrice.value = payment.total_price;
     totalAmount.value = payment.total_price - payment.discount_value;
+  };
 
+  const handleEditStatus = () => {
+    updateTotalValues();
     if (isPaymentLocked.value) {
       isFieldReadonly.value = true;
     } else if (
-      isAnyPaid &&
+      isAnyPaid(payment) &&
       payment.total_price <= payment.total_amount + payment.discount_value
     ) {
-      //FOR EDIT
       isFieldReadonly.value = true;
+      isTotalPriceUpdated.value = is_lacking_payment.value;
     } else if (
       payment.total_price >
       payment.total_amount + payment.discount_value
@@ -1845,56 +1881,78 @@ const editPaymentModal = (
     } else {
       isFieldReadonly.value = false;
     }
-  }
-  if (paymentMethodsForm.status == 'view') {
-    totalPrice.value = payment.total_price;
-    totalAmount.value = payment.total_price - payment.discount_value;
-  }
-  if (
-    (payment.discount_type === 'family_employee_discount' ||
-      payment.discount_type === 'employee_discount') &&
-    payment.discount_value > 0
-  ) {
-    discountValue.value = payment.discount_value;
-    calculatedDiscount.value = payment.discount_value;
-  } //Assign plan for Travel
-  if (
-    props.quoteType === 'Travel' &&
-    (paymentMethodsForm.status == 'edit' || paymentMethodsForm.status == 'view')
-  ) {
-    planDetail.value = payment.travel_plan;
+  };
 
-    if (!(props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
-      planDetail.value['insurance_provider'] =
-        payment.travel_plan.insurance_provider;
+  const handleViewStatus = () => {
+    updateTotalValues();
+  };
+
+  const handleDiscount = () => {
+    if (
+      ['family_employee_discount', 'employee_discount'].includes(
+        payment.discount_type,
+      ) &&
+      payment.discount_value > 0
+    ) {
+      discountValue.value = payment.discount_value;
+      calculatedDiscount.value = payment.discount_value;
     }
+  };
+
+  const handleTravelQuoteType = () => {
+    if (
+      props.quoteType === 'Travel' &&
+      ['edit', 'view'].includes(paymentMethodsForm.status)
+    ) {
+      planDetail.value = payment.travel_plan;
+      if (!(props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
+        planDetail.value['insurance_provider'] =
+          payment.travel_plan.insurance_provider;
+      }
+    }
+  };
+
+  const handleCaptureApproval = () => {
+    if (capture_approval > 0) {
+      isApproveClicked.value = true;
+      if (capture_approval == 1) {
+        isCreditCardView.value = true;
+      }
+      for (let i = 1; i <= payment.total_payments; i++) {
+        readOnlyPayments.value[i] = true;
+      }
+      isFieldReadonly.value = true;
+      isCreditApprovalView.value = true;
+      isVerificationAllowed.value = true;
+    }
+  };
+
+  if (paymentMethodsForm.status == 'edit') {
+    handleEditStatus();
+  } else if (paymentMethodsForm.status == 'view') {
+    handleViewStatus();
   }
 
-  //Assign plan for Travel
-  if (
-    props.quoteType === 'Travel' &&
-    (paymentMethodsForm.status == 'edit' || paymentMethodsForm.status == 'view')
-  ) {
-    planDetail.value = payment.travel_plan;
-    if (!(props.quoteRequest.insly_migrated || props.quoteRequest.insly_id)) {
-      planDetail.value['insurance_provider'] =
-        payment.travel_plan.insurance_provider;
-    }
-  }
+  handleDiscount();
+  handleTravelQuoteType();
+  handleCaptureApproval();
 
-  if (capture_approval > 0) {
-    isApproveClicked.value = true;
-    if (capture_approval == 1) {
-      isCreditCardView.value = true;
-    }
-    for (let i = 1; i <= payment.total_payments; i++) {
-      readOnlyPayments.value[i] = true;
-    }
-    isFieldReadonly.value = true;
-    isCreditApprovalView.value = true;
-    isVerificationAllowed.value = true;
-  }
   createPaymentModal.value = true;
+};
+
+const isAnyPaid = payment => {
+  console.log('isAnyPaid', payment);
+  const paidStatusIds = [
+    props.paymentStatusEnum.PAID,
+    props.paymentStatusEnum.PARTIALLY_PAID,
+    props.paymentStatusEnum.AUTHORISED,
+    props.paymentStatusEnum.CAPTURED,
+    props.paymentStatusEnum.PARTIAL_CAPTURED,
+  ];
+
+  return payment.payment_splits.some(split =>
+    paidStatusIds.includes(split.payment_status_id),
+  );
 };
 
 const paymentMethodsForm = useForm({
@@ -2012,6 +2070,24 @@ const validateCapturePayment = isValid => {
   return false;
 };
 
+const validatePaymentAmount = isValid => {
+  for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
+    isSplitAmountInvalid.value[i] = false;
+    if (
+      parseFloat(splitAmountModels.value[i]) >
+      parseFloat(collectionAmountModels.value[i])
+    ) {
+      isSplitAmountInvalid.value[i] = true;
+      isSplitAmountInvalidError.value[i] =
+        'Amount should not exceed ' + collectionAmountModels.value[i] + ' AED';
+    }
+  }
+  if (isSplitAmountInvalid.value.includes(true)) {
+    return true;
+  }
+  return false;
+};
+
 const addPayment = isValid => {
   if (
     !props.sendUpdate?.insurance_provider_id &&
@@ -2029,8 +2105,12 @@ const addPayment = isValid => {
     if (validateViewPayment(isValid)) return;
   } else if (paymentMethodsForm.status !== 'view') {
     if (validatePaymentOption()) return;
+    if (isPaidEditable.value === true) {
+      if (validatePaymentAmount()) return;
+    }
   }
   if (!isValid) return;
+
   //define main payment method
   let mainPaymentMethod = paymentMethodsModels.value[0]
     ? paymentMethodsModels.value[0]
@@ -2205,7 +2285,8 @@ const addPayment = isValid => {
   if (paymentMethodsForm.status === 'edit') {
     if (
       totalPaidAmount.value == paymentMethodsForm.payment_no &&
-      isPolicyIssuanceDiscount.value === false
+      isPolicyIssuanceDiscount.value === false &&
+      isPaidEditable.value === false
     ) {
       notification.error({
         title: 'No further actions allowed to paid payments',
@@ -2219,6 +2300,7 @@ const addPayment = isValid => {
       trashedFilesModal: trashedFilesModal.value,
       isPaymentLocked: isPaymentLocked.value,
       isPolicyIssuanceDiscount: isPolicyIssuanceDiscount.value,
+      isPaidEditable: isPaidEditable.value,
     };
     paymentMethodsForm
       .transform(data => editData)
@@ -2256,36 +2338,29 @@ const addPayment = isValid => {
 };
 
 const applyPermissions = () => {
-  frequencyTypes.value = paymentLookups.paymentFrequencyTypes.map(item => ({
-    value: item.code,
-    label: item.text,
-    tooltip: item.description,
-  }));
-  if (
-    paymentMethodsForm.status === 'create' &&
-    paymentMethodsForm.frequency === ''
-  ) {
-    paymentMethodsForm.frequency = '';
-  }
-  //PAYMENTS-DISCOUNT-ADD
-  can(permissionEnum.PAYMENTS_DISCOUNT_ADD)
-    ? (isDiscountAllowed.value = true)
-    : (isDiscountAllowed.value = false);
+  const setFrequencyTypes = () => {
+    frequencyTypes.value = paymentLookups.paymentFrequencyTypes.map(item => ({
+      value: item.code,
+      label: item.text,
+      tooltip: item.description,
+    }));
+  };
 
-  //PAYMENTS-CREDIT-APPROVAL-ADD
-  can(permissionEnum.PAYMENTS_CREDIT_APPROVAL_ADD)
-    ? (isCreditApprovalAllowed.value = true)
-    : (isCreditApprovalAllowed.value = false);
+  const setDiscountAndCreditApprovalPermissions = () => {
+    isDiscountAllowed.value = can(permissionEnum.PAYMENTS_DISCOUNT_ADD);
+    isCreditApprovalAllowed.value = can(
+      permissionEnum.PAYMENTS_CREDIT_APPROVAL_ADD,
+    );
+  };
 
-  //Set permission for broker
-  if (paymentMethodsForm.collection_type === 'broker') {
-    //PAYMENTS-FREQUENCY-UPRONT-SPLIT-COLLECTED-BY-BROKER-ADD
+  const setBrokerPermissions = () => {
     const hasPermissionToBroker = can(
       permissionEnum.PAYMENTS_FREQUENCY_UPRONT_SPLIT_COLLECTED_BY_BROKER_ADD,
     );
     const hasPermissionToTermFrequencies = can(
       permissionEnum.PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_BROKER_ADD,
     );
+
     if (!hasPermissionToBroker) {
       frequencyTypes.value = frequencyTypes.value.filter(
         item => item.value !== 'upfront' && item.value !== 'split_payments',
@@ -2300,50 +2375,62 @@ const applyPermissions = () => {
     if (!hasPermissionToTermFrequencies) {
       frequencyTypes.value = frequencyTypes.value.filter(
         item =>
-          item.value !== 'custom' &&
-          item.value !== 'monthly' &&
-          item.value !== 'quarterly' &&
-          item.value !== 'semi_annual',
+          !['custom', 'monthly', 'quarterly', 'semi_annual'].includes(
+            item.value,
+          ),
       );
     }
-    // Set verification allowed if the payment is in view mode and the user has the permission
-    isVerificationAllowed.value = false;
-    if (
-      paymentMethodsForm.status === 'view' &&
-      can(permissionEnum.PAYMENT_VERIFICATION_COLLECTED_BY_BROKER)
-    ) {
-      isVerificationAllowed.value = true;
-    }
-  }
 
-  // Set permission for insurer
-  if (paymentMethodsForm.collection_type === 'insurer') {
+    isVerificationAllowed.value =
+      paymentMethodsForm.status === 'view' &&
+      can(permissionEnum.PAYMENT_VERIFICATION_COLLECTED_BY_BROKER);
+  };
+
+  const setInsurerPermissions = () => {
     if (
       !can(permissionEnum.PAYMENTS_FREQUENCY_TERMS_COLLECTED_BY_INSURER_ADD)
     ) {
       frequencyTypes.value = frequencyTypes.value.filter(
         item =>
-          item.value !== 'custom' &&
-          item.value !== 'monthly' &&
-          item.value !== 'quarterly' &&
-          item.value !== 'semi_annual',
+          !['custom', 'monthly', 'quarterly', 'semi_annual'].includes(
+            item.value,
+          ),
       );
     }
+
     if (
       paymentMethodsForm.status === 'create' &&
       paymentMethodsForm.frequency === ''
     ) {
       paymentMethodsForm.frequency = 'upfront';
     }
-    // Set verification allowed if the payment is in view mode and the user has the permission
-    isVerificationAllowed.value = false;
+
+    isVerificationAllowed.value =
+      paymentMethodsForm.status === 'view' &&
+      can(permissionEnum.PAYMENT_VERIFICATION_COLLECTED_BY_INSURER);
+  };
+
+  const setInplApproverPermission = () => {
     if (
       paymentMethodsForm.status === 'view' &&
-      can(permissionEnum.PAYMENT_VERIFICATION_COLLECTED_BY_INSURER)
+      can(permissionEnum.INPL_APPROVER) &&
+      splitPaymentRecord.value.payment_method.code ===
+        page.props.paymentMethodsEnum?.InsureNowPayLater
     ) {
       isVerificationAllowed.value = true;
     }
+  };
+
+  setFrequencyTypes();
+  setDiscountAndCreditApprovalPermissions();
+
+  if (paymentMethodsForm.collection_type === 'broker') {
+    setBrokerPermissions();
+  } else if (paymentMethodsForm.collection_type === 'insurer') {
+    setInsurerPermissions();
   }
+
+  setInplApproverPermission();
 };
 
 const documentForm = useForm({
@@ -2355,6 +2442,10 @@ const documentForm = useForm({
 });
 
 const retryForm = useForm({
+  payment_process_job_id: null,
+});
+
+const deleteForm = useForm({
   payment_process_job_id: null,
 });
 
@@ -2554,9 +2645,8 @@ const getCaptureValidation = computed(() => {
     if (
       props.payments.length > 0 &&
       totalPriceRounded === calculatedTotal &&
-      (((props.isAmlClearedForPayment ||
-        props.quoteRequest.quote_status_id ===
-          page.props.quoteStatusEnum.AMLScreeningCleared ||
+      (((props.quoteRequest.aml_status ===
+        page.props.amlStatusEnum.AMLScreeningCleared ||
         props.quoteRequest.quote_status_id ===
           page.props.quoteStatusEnum.TransactionDeclined ||
         props.quoteRequest.quote_status_id ===
@@ -2916,6 +3006,13 @@ let is_lacking_payment = ref(
     false,
 );
 
+const isPaidEditable = ref(
+  page.props?.bookPolicyDetails?.isPaidEditable ||
+    page.props?.bookingDetails?.isPaidEditable ||
+    page.props?.isPaidEditable ||
+    false,
+);
+
 watch(
   () => page.props?.bookPolicyDetails?.isLackingOfPayment,
   newVal => {
@@ -2927,6 +3024,20 @@ watch(
   () => page.props?.bookingDetails?.isLackingOfPayment,
   newVal => {
     is_lacking_payment.value = newVal || false;
+  },
+);
+
+watch(
+  () => page.props?.bookPolicyDetails?.isPaidEditable,
+  newVal => {
+    isPaidEditable.value = newVal || false;
+  },
+);
+
+watch(
+  () => page.props?.isPaidEditable,
+  newVal => {
+    isPaidEditable.value = newVal || false;
   },
 );
 
@@ -3014,6 +3125,32 @@ const splitPaymentTotalPrice = (
 
   return formatAmount(total);
 };
+
+const isAmlVerified = () => {
+  //Bypass Travel Quote Type for aml verification
+  if (props.quoteType === quoteTypeCodeEnum.Travel) {
+    return true;
+  }
+
+  return (
+    props.quoteRequest.aml_status ===
+    page.props.amlStatusEnum.AMLScreeningCleared
+  );
+};
+
+const openAmlVerificationModal = () => {
+  isAmlApprovalRequired.value = true;
+};
+
+// verifiy if split payment deletion is enabled
+const isSplitDeleteEnabled = computed(() => {
+  return (
+    paymentMethodsForm.frequency != paymentFrequencyEnum.UPFRONT &&
+    can(permissionEnum.PaymentsEdit) &&
+    props.quoteRequest.quote_status_id !=
+      page.props.quoteStatusEnum.PolicyBooked
+  );
+});
 </script>
 
 <template>
@@ -3429,7 +3566,9 @@ const splitPaymentTotalPrice = (
                     </tr>
                     <template v-if="isExpandedSplitPayments[index]">
                       <tr
-                        v-for="splitPayment in item.payment_splits"
+                        v-for="(
+                          splitPayment, splitIndex
+                        ) in item.payment_splits"
                         :key="splitPayment.id"
                       >
                         <td class="text-center">{{ splitPayment.sr_no }}</td>
@@ -3528,6 +3667,32 @@ const splitPaymentTotalPrice = (
                               "
                               outlined
                               >Copy Payment Link</x-button
+                            >
+                            <x-button
+                              v-if="
+                                isSplitDeleteEnabled &&
+                                item.total_payments == splitIndex + 1 &&
+                                ![
+                                  paymentStatusEnum.PAID,
+                                  paymentStatusEnum.CAPTURED,
+                                  paymentStatusEnum.AUTHORISED,
+                                  paymentStatusEnum.REFUNDED,
+                                  paymentStatusEnum.PARTIAL_CAPTURED,
+                                  paymentStatusEnum.PARTIALLY_PAID,
+                                ].includes(splitPayment.payment_status_id) &&
+                                splitPayment.sr_no > 1
+                              "
+                              size="xs"
+                              color="red"
+                              class="ml-2"
+                              @click="
+                                deleteSplitPaymentModal(
+                                  splitPayment.id,
+                                  splitPayment.payment_status_id,
+                                )
+                              "
+                              outlined
+                              >Delete</x-button
                             >
                             <x-button
                               v-if="
@@ -4810,7 +4975,9 @@ const splitPaymentTotalPrice = (
                       </template>
                     </div>
                     <div class="w-1/5 px-2">
-                      <template v-if="readOnlyPayments[count]">
+                      <template
+                        v-if="readOnlyPayments[count] && !isPaidEditable"
+                      >
                         {{ formatAmount(splitAmountModels[count]) }}
                       </template>
                       <template v-else>
@@ -4820,6 +4987,11 @@ const splitPaymentTotalPrice = (
                           :rules="[rules.isRequired]"
                           :disabled="isPaymentLocked"
                         />
+                        <sup
+                          v-if="isSplitAmountInvalid[count]"
+                          class="text-sm text-red-500 dark:text-red-400"
+                          >{{ isSplitAmountInvalidError[count] }}</sup
+                        >
                       </template>
                     </div>
                     <div class="w-1/5 px-2" v-if="isCreditApprovalView">
@@ -5243,7 +5415,7 @@ const splitPaymentTotalPrice = (
                       paymentStatusEnum.PAID &&
                       (can(permissionEnum.ApprovePayments) ||
                         (can(permissionEnum.INPL_APPROVER) &&
-                          splitPaymentRecord.payment_methods_code ==
+                          splitPaymentRecord.payment_method.code ==
                             paymentMethodsEnum?.InsureNowPayLater)))
                   "
                   class="w-full flex justify-end"
@@ -5311,7 +5483,11 @@ const splitPaymentTotalPrice = (
                       class="mr-2 focus:outline-black"
                       size="sm"
                       color="#ff5e00"
-                      @click="isApproveClicked = !isApproveClicked"
+                      @click="
+                        isAmlVerified()
+                          ? (isApproveClicked = !isApproveClicked)
+                          : openAmlVerificationModal()
+                      "
                       tabindex="0"
                     >
                       Approve
@@ -5464,6 +5640,73 @@ const splitPaymentTotalPrice = (
                   >
                     <span>Confirm</span></x-button
                   >
+                </div>
+              </div>
+            </div>
+            <div
+              class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
+              v-if="isAmlApprovalRequired"
+            >
+              <div
+                class="modal-confirm-container bg-white w-full max-w-full overflow-hidden rounded-lg"
+              >
+                <div class="modal-confirm-header text-base text-white bg-white">
+                  <div
+                    class="flex flex-row-reverse text-lg font-semibold px-6 py-4"
+                  >
+                    <div class="flex items-center space-x-2">
+                      <span
+                        @click="closeAmlConfirmModal"
+                        class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 cursor-pointer"
+                      >
+                        <!-- Cross icon -->
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          tabindex="0"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          class="w-4 h-4 text-gray-800"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"
+                          ></path>
+                        </svg>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="w-full h-full mt-2 flex flex-col items-center">
+                  <div
+                    class="text-lg font-bold px-6 flex justify-between items-start"
+                  >
+                    <div class="text-left">
+                      <span>Please complete the AML screening to proceed.</span>
+                    </div>
+                  </div>
+                  <Link
+                    :href="`/kyc/aml/${page.props.quoteTypeId ?? props.sendUpdate.quote_type_id}/details/${props.quoteRequest.id}`"
+                  >
+                    <x-tooltip>
+                      <x-button
+                        v-if="can(permissionEnum.AMLList)"
+                        size="lg"
+                        color="orange"
+                        class="px-4 py-4 mt-4"
+                        :loading="paymentMethodsForm.processing"
+                      >
+                        <span>Go to AML & KYC page</span></x-button
+                      >
+                      <template #tooltip>
+                        <span>{{
+                          paymentTooltipEnum.GOTO_AML_AND_KYC_PAGE
+                        }}</span>
+                      </template>
+                    </x-tooltip>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -5658,7 +5901,6 @@ const splitPaymentTotalPrice = (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
-                      tabindex="0"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
                       class="w-4 h-4 text-gray-800"
@@ -5693,6 +5935,68 @@ const splitPaymentTotalPrice = (
                   :loading="retryForm.processing"
                 >
                   <span>Retry</span></x-button
+                >
+              </div>
+            </x-form>
+          </div>
+        </div>
+
+        <div
+          class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
+          v-if="isDeleteModalOpen"
+        >
+          <div
+            class="modal-retry-container bg-white w-full max-w-full overflow-hidden rounded-lg"
+          >
+            <div class="modal-confirm-header text-base text-white bg-white">
+              <div
+                class="flex items-center justify-between text-lg font-semibold px-6 py-4 border-b"
+              >
+                <div class="flex items-center space-x-2">
+                  Delete Split Payment
+                </div>
+                <div class="flex items-center space-x-2">
+                  <span
+                    @click="closeDeleteModal"
+                    class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 cursor-pointer"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      class="w-4 h-4 text-gray-800"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      ></path>
+                    </svg>
+                  </span>
+                </div>
+              </div>
+            </div>
+            <x-form @submit="handleDeletePayment" :auto-focus="false">
+              <div class="w-full h-full mt-2 flex flex-col">
+                <div
+                  class="text-lg px-6 py-4 border-b flex justify-between items-start"
+                >
+                  <div class="text-left">
+                    <span> Are you sure to delete this payment?</span>
+                  </div>
+                </div>
+              </div>
+              <div class="w-full h-full mt-2 flex flex-col items-center">
+                <x-button
+                  size="lg"
+                  type="submit"
+                  color="orange"
+                  class="px-4 py-2 mt-4 mb-4"
+                  :loading="deleteForm.processing"
+                >
+                  <span>Delete</span></x-button
                 >
               </div>
             </x-form>
