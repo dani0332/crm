@@ -1,6 +1,6 @@
 <script setup>
 import ToolTip from './../Components/ToolTip.vue';
-import { onMounted, reactive } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import moment from 'moment';
 import NProgress from 'nprogress';
 import { computed } from 'vue';
@@ -140,6 +140,8 @@ const isDiscountAllowed = ref(true);
 const isRetryModalOpen = ref(false);
 const retryProcessJobId = ref(0);
 const retryPaymentErrorMessage = ref('');
+const isSplitAmountInvalid = ref([]);
+const isSplitAmountInvalidError = ref([]);
 const isDeleteModalOpen = ref(false);
 const deleteSplitPaymentId = ref(0);
 const deleteSplitPaymentStatus = ref(0);
@@ -1591,7 +1593,6 @@ const addPaymentModal = () => {
 };
 
 const retrySplitPaymentModal = (process_job_id, message) => {
-  console.log('retrySplitPaymentModal', process_job_id, message);
   retryProcessJobId.value = process_job_id;
   retryPaymentErrorMessage.value = message;
   isRetryModalOpen.value = true;
@@ -1674,7 +1675,8 @@ const editPaymentModal = (
   if (
     sr_no === 0 &&
     payment.payment_status.id === props.paymentStatusEnum.PAID &&
-    capture_approval === 0
+    capture_approval === 0 &&
+    isPaidEditable.value === false
   ) {
     notification.error({
       title: 'No further actions allowed to paid payments',
@@ -1868,7 +1870,7 @@ const finalizePaymentForm = (payment, capture_approval) => {
       isAnyPaid(payment) &&
       payment.total_price <= payment.total_amount + payment.discount_value
     ) {
-      isFieldReadonly.value = !is_lacking_payment.value;
+      isFieldReadonly.value = true;
       isTotalPriceUpdated.value = is_lacking_payment.value;
     } else if (
       payment.total_price >
@@ -2068,6 +2070,24 @@ const validateCapturePayment = isValid => {
   return false;
 };
 
+const validatePaymentAmount = isValid => {
+  for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
+    isSplitAmountInvalid.value[i] = false;
+    if (
+      parseFloat(splitAmountModels.value[i]) >
+      parseFloat(collectionAmountModels.value[i])
+    ) {
+      isSplitAmountInvalid.value[i] = true;
+      isSplitAmountInvalidError.value[i] =
+        'Amount should not exceed ' + collectionAmountModels.value[i] + ' AED';
+    }
+  }
+  if (isSplitAmountInvalid.value.includes(true)) {
+    return true;
+  }
+  return false;
+};
+
 const addPayment = isValid => {
   if (
     !props.sendUpdate?.insurance_provider_id &&
@@ -2085,8 +2105,12 @@ const addPayment = isValid => {
     if (validateViewPayment(isValid)) return;
   } else if (paymentMethodsForm.status !== 'view') {
     if (validatePaymentOption()) return;
+    if (isPaidEditable.value === true) {
+      if (validatePaymentAmount()) return;
+    }
   }
   if (!isValid) return;
+
   //define main payment method
   let mainPaymentMethod = paymentMethodsModels.value[0]
     ? paymentMethodsModels.value[0]
@@ -2261,7 +2285,8 @@ const addPayment = isValid => {
   if (paymentMethodsForm.status === 'edit') {
     if (
       totalPaidAmount.value == paymentMethodsForm.payment_no &&
-      isPolicyIssuanceDiscount.value === false
+      isPolicyIssuanceDiscount.value === false &&
+      isPaidEditable.value === false
     ) {
       notification.error({
         title: 'No further actions allowed to paid payments',
@@ -2275,6 +2300,7 @@ const addPayment = isValid => {
       trashedFilesModal: trashedFilesModal.value,
       isPaymentLocked: isPaymentLocked.value,
       isPolicyIssuanceDiscount: isPolicyIssuanceDiscount.value,
+      isPaidEditable: isPaidEditable.value,
     };
     paymentMethodsForm
       .transform(data => editData)
@@ -2980,6 +3006,13 @@ let is_lacking_payment = ref(
     false,
 );
 
+const isPaidEditable = ref(
+  page.props?.bookPolicyDetails?.isPaidEditable ||
+    page.props?.bookingDetails?.isPaidEditable ||
+    page.props?.isPaidEditable ||
+    false,
+);
+
 watch(
   () => page.props?.bookPolicyDetails?.isLackingOfPayment,
   newVal => {
@@ -2991,6 +3024,20 @@ watch(
   () => page.props?.bookingDetails?.isLackingOfPayment,
   newVal => {
     is_lacking_payment.value = newVal || false;
+  },
+);
+
+watch(
+  () => page.props?.bookPolicyDetails?.isPaidEditable,
+  newVal => {
+    isPaidEditable.value = newVal || false;
+  },
+);
+
+watch(
+  () => page.props?.isPaidEditable,
+  newVal => {
+    isPaidEditable.value = newVal || false;
   },
 );
 
@@ -4928,7 +4975,9 @@ const isSplitDeleteEnabled = computed(() => {
                       </template>
                     </div>
                     <div class="w-1/5 px-2">
-                      <template v-if="readOnlyPayments[count]">
+                      <template
+                        v-if="readOnlyPayments[count] && !isPaidEditable"
+                      >
                         {{ formatAmount(splitAmountModels[count]) }}
                       </template>
                       <template v-else>
@@ -4938,6 +4987,11 @@ const isSplitDeleteEnabled = computed(() => {
                           :rules="[rules.isRequired]"
                           :disabled="isPaymentLocked"
                         />
+                        <sup
+                          v-if="isSplitAmountInvalid[count]"
+                          class="text-sm text-red-500 dark:text-red-400"
+                          >{{ isSplitAmountInvalidError[count] }}</sup
+                        >
                       </template>
                     </div>
                     <div class="w-1/5 px-2" v-if="isCreditApprovalView">

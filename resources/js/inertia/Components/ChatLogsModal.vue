@@ -163,13 +163,15 @@ const checkCaption = (whatsapp_request, UserAudio) => {
             <div class="chat-header">
               {{ customerName ?? message.role }}
               <span
-                v-if="message.channel"
+                v-if="message.channel && typeof message.channel === 'string'"
                 class="py-[4px] rounded-md px-4 text-white ml-2 text-xs capitalize"
-                :class="
-                  message.channel.toLowerCase() == 'website'
-                    ? 'bg-sky-400'
-                    : 'bg-emerald-400'
-                "
+                :class="{
+                  'bg-sky-400': message.channel.toLowerCase() === 'website',
+                  'bg-orange-600': message.channel.toLowerCase() === 'email',
+                  'bg-emerald-400':
+                    message.channel.toLowerCase() !== 'website' &&
+                    message.channel.toLowerCase() !== 'email',
+                }"
                 >{{ message.channel.toLowerCase() }}</span
               >
             </div>

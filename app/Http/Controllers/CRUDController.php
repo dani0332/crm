@@ -72,13 +72,13 @@ use App\Services\ActivitiesService;
 use App\Services\AllocationService;
 use App\Services\ApplicationStorageService;
 use App\Services\BusinessQuoteService;
+use App\Services\CarEmailService;
 use App\Services\CarQuoteService;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
 use App\Services\EmailDataService;
-use App\Services\EmailServices\CarEmailService;
 use App\Services\EmailStatusService;
 use App\Services\HealthQuoteService;
 use App\Services\HomeQuoteService;
@@ -2034,7 +2034,7 @@ class CRUDController extends Controller
 
     public function toggleEmbeddedProduct(Request $request)
     {
-        $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($this->genericModel->modelType));
+        $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower(ucfirst($request->modelType)));
 
         return $this->crudService->toggleSelection($request, $quoteTypeId);
     }
