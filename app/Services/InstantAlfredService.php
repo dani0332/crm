@@ -353,7 +353,7 @@ class InstantAlfredService extends BaseService
 
         $request = request();
 
-        $data = app(InstantAlfredService::class)->processSqlChatFilters($request)->get();
+        $data = $this->processSqlChatFilters($request)->get();
 
         $data->chunk(1000)->each(function ($sqlBatch) use ($request) {
             $uuids = $sqlBatch->pluck('uuid')->toArray();
@@ -388,7 +388,7 @@ class InstantAlfredService extends BaseService
     {
         $request = request();
 
-        $data = app(InstantAlfredService::class)->processSqlChatFilters($request)->get();
+        $data = $this->processSqlChatFilters($request)->get();
 
         $uuids = array_column($data->toArray(), 'uuid');
 
