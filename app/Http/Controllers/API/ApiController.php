@@ -4,19 +4,27 @@ namespace App\Http\Controllers\API;
 
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\UpdateLeadStatusRequest;
 use App\Http\Requests\APiFetchUrl;
 use App\Http\Requests\AssignLeadRequest;
+use App\Http\Requests\BirdWebhookRequest;
+use App\Http\Requests\EmailEventsRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\PaymentNotificationRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Jobs\FixQuoteStatusDate;
+use App\Models\QuoteFlowDetails;
 use App\Services\ApiService;
+use App\Services\BirdService;
+use App\Services\EmailStatusService;
 use App\Services\InboundEmailsHookService;
 use App\Services\NotificationService;
+use App\Services\QuoteStatusService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use App\Http\Requests\EmailEventsRequest;
 use App\Services\EmailStatusService;
@@ -30,11 +38,13 @@ class ApiController extends Controller
 
     public $apiService;
     public $inboundEmailsHookService;
+    protected $emailStatusService;
 
-    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService)
+    public function __construct(ApiService $apiService, InboundEmailsHookService $inboundEmailsHookService, EmailStatusService $emailStatusService)
     {
         $this->apiService = $apiService;
         $this->inboundEmailsHookService = $inboundEmailsHookService;
+        $this->emailStatusService = $emailStatusService;
     }
 
     public function fetchSignupUrl(APiFetchUrl $request)
@@ -103,44 +113,16 @@ class ApiController extends Controller
         return $this->apiService->handleZeroPlansEmail($request);
     }
 
-    // Temporary Endpoint - Will be Removed after fixing Quote Status Dates for all LOBs
-    public function fixQuoteStatusDate()
+    public function birdInboundEmailsHook(BirdWebhookRequest $request)
     {
-        $quoteType = QuoteTypes::getName(request()->quoteTypeId);
-
-        if ($quoteType) {
-            if (request('process')) {
-                FixQuoteStatusDate::dispatch($quoteType, request('statuses'), request('chunkSize', 200));
-
-                return apiResponse(null, Response::HTTP_OK, 'Fix Quote Status Date Job dispatched');
-            } else {
-                $records = $quoteType->model()->whereIn('quote_status_id', request('statuses'))->count();
-
-                return apiResponse(null, Response::HTTP_OK, "Total Records are: {$records}");
-            }
-        }
-
-        return apiResponse(null, Response::HTTP_OK, 'Invalid Quote Type');
+        return $this->inboundEmailsHookService->handleBirdWebhook($request);
     }
 
-    public function logFollowUpEvent(EmailEventsRequest $request){
-       try {
-       $response = app(EmailStatusService::class)->addBirdEmailStatus($request);
-       if($response->status){
+    public function logFollowUpEvent(EmailEventsRequest $request)
+    {
+        $response = app(EmailStatusService::class)->addBirdEmailStatus($request);
+
         return apiResponse([], Response::HTTP_OK, $response->message);
-       }
-       else {
-        return apiResponse([], Response::HTTP_NOT_FOUND, $response->message);
-       }
-        } catch (\Throwable $th) {
-            Log::error("logFollowUpEvent - Exception occurred while processing follow-up event", [
-                'error_message' => $th->getMessage(),
-                'line' => $th->getLine(),
-                'file' => $th->getFile(),
-                'stack_trace' => $th->getTraceAsString(),
-            ]);
-            throw $th;
-        }
     }
 
     public function stopFollowUpEvent()
@@ -161,5 +143,31 @@ class ApiController extends Controller
 
         return apiResponse([$response], Response::HTTP_OK, 'Email event stopped successfully');
     }
+    // Temporary Endpoint - Will be Removed after fixing Quote Status Dates for all LOBs
+    public function fixQuoteStatusDate()
+    {
+        $quoteType = QuoteTypes::getName(request()->quoteTypeId);
 
+        if ($quoteType) {
+            if (request('process')) {
+                FixQuoteStatusDate::dispatch($quoteType, request('statuses'), request('chunkSize', 200));
+
+                return apiResponse(null, Response::HTTP_OK, 'Fix Quote Status Date Job dispatched');
+            } else {
+                $records = $quoteType->model()->whereIn('quote_status_id', request('statuses'))->count();
+
+                return apiResponse(null, Response::HTTP_OK, "Total Records are: {$records}");
+            }
+        }
+
+        return apiResponse(null, Response::HTTP_OK, 'Invalid Quote Type');
+    }
+
+    public function updateQuoteStatus(UpdateLeadStatusRequest $request)
+    {
+        $quoteTypeId = QuoteTypes::getIdFromValue($request->quote_type);
+        app(QuoteStatusService::class)->markQuoteAsStale($quoteTypeId, $request->quote_uuid);
+
+        return response()->json(['success' => true, 'message' => 'Lead status updated successfully']);
+    }
 }

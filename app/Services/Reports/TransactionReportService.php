@@ -86,6 +86,7 @@ class TransactionReportService extends ManagementReport
                 'l.text as transaction_type',
                 'qs.text as quote_status',
                 'p.commmission_percentage',
+                'personal_quotes.source',
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')

@@ -152,11 +152,15 @@ class PetQuoteRepository extends BaseRepository
                         'paymentStatusLogs',
                         'insuranceProvider',
                         'paymentable',
-                        'paymentSplits.paymentStatus',
-                        'paymentSplits.paymentMethod',
-                        'paymentSplits.documents',
-                        'paymentSplits.verifiedByUser',
-                        'paymentSplits.processJob',
+                        'paymentSplits' => function ($q) {
+                            $q->with([
+                                'paymentStatus',
+                                'paymentMethod',
+                                'documents',
+                                'verifiedByUser',
+                                'processJob',
+                            ])->orderBy('sr_no', 'asc');
+                        },
                     ]);
                 },
                 'createdBy',

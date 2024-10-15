@@ -67,6 +67,18 @@ class UpdateStaleLeads extends Command
             QuoteStatusEnum::Duplicate,
             QuoteStatusEnum::CancellationPending,
             QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued,
+        ];
+
+        $skipStatusInLost = [
+            QuoteStatusEnum::TransactionApproved,
+            QuoteStatusEnum::PolicyDocumentsPending,
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued,
         ];
 
         info('------------------- Update Stale Leads Command Started At: '.now().' -------------------');
@@ -96,6 +108,7 @@ class UpdateStaleLeads extends Command
 
             info('------------------- Updating Lost Status on Stale Leads for: '.$eligibleQuoteType.' -------------------');
             $eligibleQuoteType::with('activities')
+                ->whereNotIn('quote_status_id', $skipStatusInLost)
                 ->whereNotNull('stale_at')
                 ->where('stale_at', '<', Carbon::parse(date(config('constants.DATE_FORMAT_ONLY'), strtotime('-90 days')))->endOfDay())
                 ->chunkById(1000, function ($staleLeads) use ($eligibleQuoteType, $lostReasonId) {

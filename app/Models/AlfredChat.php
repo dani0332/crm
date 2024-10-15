@@ -7,7 +7,7 @@ use MongoDB\Laravel\Eloquent\Model;
 class AlfredChat extends Model
 {
     protected $connection = 'alfredchatmongo';
-    protected $collection = 'chats';
+    protected $table = 'chats';
     protected $casts = ['createdAt' => 'datetime', 'updatedAt' => 'datetime'];
 
     public function getCreatedAtAttribute($date)
