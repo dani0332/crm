@@ -82,6 +82,9 @@ abstract class BaseAllocation extends AllocationService
             ->where(function ($query) {
                 $query->whereRaw('la.allocation_count < la.max_capacity')->orWhere('la.max_capacity', -1);
             })
+            ->when($this->teamId, function ($q) {
+                $q->whereIn('users.id', fn ($query) => $query->select('user_id')->from('user_team')->where('team_id', $this->teamId));
+            })
             ->whereIn('r.name', $roles)
             ->where('la.quote_type_id', $this->quoteType->id())
             ->where('users.is_active', true)
