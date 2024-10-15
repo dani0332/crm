@@ -526,9 +526,14 @@ class CentralController extends Controller
                 $healthQuote->quote_status_id = QuoteStatusEnum::Quoted;
                 $healthQuote->quote_status_date = now();
                 $healthQuote->save();
-                $delayTime = isLeadSic($healthQuote->uuid) ? 3 : 2;
-                OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addMinutes($delayTime));
-                info('OCAHealthFollowupEmailJob dispatched for HEA-'.$healthQuote->uuid.' - Time: '.now());
+                $healthAutoFollowupSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_AUTOMATED_FOLLOWUPS_SWITCH)->first();
+                // Send Automated Followup Email Job if Health Auto-Followups is enabled.
+                if(!empty( $healthAutoFollowupSwitch->value) && $healthAutoFollowupSwitch->value == 1){
+                    $delayTime = isLeadSic($healthQuote->uuid) ? 3 : 2;
+                    OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addMinutes($delayTime));
+                    info('OCAHealthFollowupEmailJob dispatched for HEA-'.$healthQuote->uuid.' - Time: '.now());
+                }
+
             }
             info('sendHealthEmailOneClickBuy - OCB Email Sent & Quote Status Changed to "QUOTED" for quote uuid: '.$request->quote_uuid);
 

@@ -698,6 +698,16 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HEALTH_AUTOMATED_FOLLOWUPS_SWITCH],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 0,
+            ],
+        );
     }
     private function seedBirdWorkflowUrls()
     {
