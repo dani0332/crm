@@ -2,15 +2,15 @@
 
 namespace App\Jobs;
 
+use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Models\CarQuote;
+use App\Services\EmailServices\CarEmailService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Models\CarQuote;
-use App\Enums\QuoteStatusEnum;
-use App\Services\EmailServices\CarEmailService;
-use App\Enums\LeadSourceEnum;
 
 class NBMotorFollowupEmailJob implements ShouldQueue
 {
@@ -20,6 +20,7 @@ class NBMotorFollowupEmailJob implements ShouldQueue
      * Create a new job instance.
      */
     private $quoteUuid;
+
     public $tries = 3;
     public $timeout = 15;
     public $backoff = 60;
@@ -43,9 +44,9 @@ class NBMotorFollowupEmailJob implements ShouldQueue
                 return;
             }
 
-            $eligibleStatuses = [QuoteStatusEnum::Quoted,QuoteStatusEnum::NewLead];
-            $leadSources = [LeadSourceEnum::REVIVAL,LeadSourceEnum::REVIVAL_PAID,LeadSourceEnum::REVIVAL_REPLIED];
-            if (in_array($carLead->quote_status_id, $eligibleStatuses) && !in_array($carLead->source,$leadSources)) {
+            $eligibleStatuses = [QuoteStatusEnum::Quoted, QuoteStatusEnum::NewLead];
+            $leadSources = [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_PAID, LeadSourceEnum::REVIVAL_REPLIED];
+            if (in_array($carLead->quote_status_id, $eligibleStatuses) && ! in_array($carLead->source, $leadSources)) {
                 info("Sending NB motor email follow-ups for Ref-ID: {$carLead->uuid}, Lead Status ID: {$carLead->quote_status_id} | Time: ".now());
                 $carEmailService->sendNBMotorWorkFlow($carLead);
                 $carLead->quote_status_id = QuoteStatusEnum::FollowedUp;
@@ -59,7 +60,5 @@ class NBMotorFollowupEmailJob implements ShouldQueue
             throw $th;
         }
     }
-
-   
 
 }

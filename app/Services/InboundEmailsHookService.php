@@ -7,15 +7,14 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Factories\AllocationFactory;
 use App\Jobs\EmailStatusEventJob;
+use App\Jobs\EmailStatusEventJob;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
 use App\Models\TravelQuote;
 use Carbon\Carbon;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Response;
-use App\Models\EmailStatus;
-use App\Jobs\EmailStatusEventJob;
-use Carbon\Carbon;
 
 class InboundEmailsHookService extends BaseService
 {

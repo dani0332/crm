@@ -14,20 +14,20 @@ enum QuoteFlowType: int
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             QuoteFlowType::HEALTH_AUTOMATED_FOLLOWUPS => 'health_automated_followups',
             QuoteFlowType::HEALTH_SIC_FOLLOWUPS => 'health_sic_followups',
             QuoteFlowType::MOTOR_SIC_FOLLOWUPS => 'motor_sic_followups',
             QuoteFlowType::MOTOR_AUTOMATED_FOLLOWUPS => 'motor_automated_followups',
             QuoteFlowType::TRAVEL_SIC_FOLLOWUPS => 'travel_sic_followups',
             QuoteFlowType::TRAVEL_AUTOMATED_FOLLOWUPS => 'travel_automated_followups',
-            QuoteFlowType::NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS =>'nb_motor_automated_followups',
+            QuoteFlowType::NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS => 'nb_motor_automated_followups',
         };
     }
 
     public static function fromValue(int $value): ?self
     {
-        return match($value) {
+        return match ($value) {
             1 => QuoteFlowType::HEALTH_AUTOMATED_FOLLOWUPS,
             2 => QuoteFlowType::HEALTH_SIC_FOLLOWUPS,
             3 => QuoteFlowType::MOTOR_SIC_FOLLOWUPS,

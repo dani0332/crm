@@ -660,5 +660,5 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/update-user-status', [UserController::class, 'updateUserStatus']);
 
     // Sending NB Car Followups
-    Route::post('/event-followups-new-business',[CarQuoteController::class,'sendNBEventFollowup'])->name('event-followups-new-business');
+    Route::post('/event-followups-new-business', [CarQuoteController::class, 'sendNBEventFollowup'])->name('event-followups-new-business');
 });

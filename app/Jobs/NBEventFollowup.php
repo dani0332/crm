@@ -2,30 +2,27 @@
 
 namespace App\Jobs;
 
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\WorkflowTypeEnum;
+use App\Models\ApplicationStorage;
+use App\Models\CarQuote;
+use App\Models\User;
+use App\Services\BirdService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Carbon\Carbon;
-use App\Models\User;
-use App\Models\ApplicationStorage;
-use App\Services\BirdService;
-use App\Enums\ApplicationStorageEnums;
-use App\Models\CarQuote;
-use App\Enums\WorkflowTypeEnum;
 
 class NBEventFollowup implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-   public $tries = 3;
-
-   public $timeout = 60;
-   public $backoff = 60;
-   private $uuid;
-   private $templateType;
+    public $tries = 3;
+    public $timeout = 60;
+    public $backoff = 60;
+    private $uuid;
+    private $templateType;
     /**
      * Create a new job instance.
      */
@@ -41,29 +38,29 @@ class NBEventFollowup implements ShouldQueue
      */
     public function handle()
     {
-        try{
+        try {
             $lead = CarQuote::where('uuid', $this->uuid)->first();
 
             info('Sending NBEventFollowup followups email for lead: '.$lead->uuid.' | Time: '.now());
 
-                $advisor = User::where('id', $lead->advisor_id)->first();
-                $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor);
-                $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
-                if ($birdMotorEventNB) {
-                    $response =app(BirdService::class)->triggerWebHookRequest($birdMotorEventNB->value, $emailData);
-                    info("NBEventFollowup event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
-                    info("NBEventFollowup response: {$response->status_code} | Ref-ID: {$lead->uuid} |Time: ".now());
+            $advisor = User::where('id', $lead->advisor_id)->first();
+            $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor);
+            $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
+            if ($birdMotorEventNB) {
+                $response = app(BirdService::class)->triggerWebHookRequest($birdMotorEventNB->value, $emailData);
+                info("NBEventFollowup event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
+                info("NBEventFollowup response: {$response->status_code} | Ref-ID: {$lead->uuid} |Time: ".now());
 
-                    info("NBEventFollowup lead ref-id: {$lead->uuid}| Quote StatusID: {$lead->quote_status_id} | Time: ".now());
-                } else {
-                    info("NBEventFollowup key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
-                }
+                info("NBEventFollowup lead ref-id: {$lead->uuid}| Quote StatusID: {$lead->quote_status_id} | Time: ".now());
+            } else {
+                info("NBEventFollowup key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+            }
 
             return $response ?? null;
-        }catch (\Throwable $th) {
-            $errorMessage = "NBEventFollowup-Error: while sending quote workflow for lead: Ref-ID: {$lead->uuid} | Time: " . now();
+        } catch (\Throwable $th) {
+            $errorMessage = "NBEventFollowup-Error: while sending quote workflow for lead: Ref-ID: {$lead->uuid} | Time: ".now();
             info($errorMessage);
-            info("NBEventFollowup-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: " . now());
+            info("NBEventFollowup-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
             throw $th;
         }
     }
@@ -90,7 +87,7 @@ class NBEventFollowup implements ShouldQueue
             'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
             'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
             'workflowType' => WorkflowTypeEnum::NEW_BUSINESS_MOTOR_EVENT_FOLLOWUPS,
-            'templateType' =>$this->templateType,
+            'templateType' => $this->templateType,
             'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
             'instantAlfredLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
             'createdAt' => $lead->created_at,

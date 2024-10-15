@@ -5,25 +5,24 @@ namespace App\Services\EmailServices;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanType;
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteFlowType;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
+use App\Enums\WorkflowTypeEnum;
+use App\Jobs\NBMotorFollowupEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
+use App\Models\QuoteFlowDetails;
 use App\Models\User;
 use App\Services\BaseService;
+use App\Services\BirdService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SIBService;
 use Carbon\Carbon;
-use App\Services\BirdService;
-use App\Enums\WorkflowTypeEnum;
-use App\Models\QuoteFlowDetails;
-use App\Enums\QuoteTypeId;
-use App\Enums\QuoteFlowType;
-use App\Enums\QuoteStatusEnum;
-use App\Jobs\NBMotorFollowupEmailJob;
 
 class CarEmailService extends BaseService
 {
@@ -329,37 +328,37 @@ class CarEmailService extends BaseService
 
     public function sendNBMotorWorkFlow($lead)
     {
-        try{
-        info('Sending NBMotorWorkFlow followups email for lead: '.$lead->uuid.' | Time: '.now());
-        if (empty($lead->nb_flow_executed_at)) {
-            $advisor = User::where('id', $lead->advisor_id)->first();
-            $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor);
-            $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
-            if ($birdMotorEventNB) {
-                $response =app(BirdService::class)->triggerWebHookRequest($birdMotorEventNB->value, $emailData);
-                info("NBMotorWorkFlow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
-                info("NBMotorWorkFlow response: {$response->status_code} | Ref-ID: {$lead->uuid} |Time: ".now());
-                $lead->nb_flow_executed_at = now();
-                info("NBMotorWorkFlow lead ref-id: {$lead->uuid}| Quote StatusID: {$lead->quote_status_id} | Time: ".now());
-                $lead->save();
+        try {
+            info('Sending NBMotorWorkFlow followups email for lead: '.$lead->uuid.' | Time: '.now());
+            if (empty($lead->nb_flow_executed_at)) {
+                $advisor = User::where('id', $lead->advisor_id)->first();
+                $emailData = $this->buildNBMotorFollowupEmailData($lead, $advisor);
+                $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
+                if ($birdMotorEventNB) {
+                    $response = app(BirdService::class)->triggerWebHookRequest($birdMotorEventNB->value, $emailData);
+                    info("NBMotorWorkFlow event triggered for lead  Ref-ID: {$lead->uuid} |Time: ".now());
+                    info("NBMotorWorkFlow response: {$response->status_code} | Ref-ID: {$lead->uuid} |Time: ".now());
+                    $lead->nb_flow_executed_at = now();
+                    info("NBMotorWorkFlow lead ref-id: {$lead->uuid}| Quote StatusID: {$lead->quote_status_id} | Time: ".now());
+                    $lead->save();
 
-                if(!empty($response->headers['Run-Id'])) {
-                    $this->createQuoteFlowDetails($lead, $response);
+                    if (! empty($response->headers['Run-Id'])) {
+                        $this->createQuoteFlowDetails($lead, $response);
+                    }
+                } else {
+                    info("NBMotorWorkFlow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
                 }
             } else {
-                info("NBMotorWorkFlow key not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
+                info("NBMotorWorkFlow already executed: {$lead->nb_flow_executed_at}  for lead Ref-ID: {$lead->uuid} | Time: ".now());
             }
-        } else {
-            info("NBMotorWorkFlow already executed: {$lead->nb_flow_executed_at}  for lead Ref-ID: {$lead->uuid} | Time: ".now());
-        }
 
-        return $response ?? null;
-    }catch (\Throwable $th) {
-        $errorMessage = "NBMotorWorkFlow-Error: while sending quote workflow for lead: Ref-ID: {$lead->uuid} | Time: " . now();
-        info($errorMessage);
-        info("NBMotorWorkFlow-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: " . now());
-        throw $th;
-    }
+            return $response ?? null;
+        } catch (\Throwable $th) {
+            $errorMessage = "NBMotorWorkFlow-Error: while sending quote workflow for lead: Ref-ID: {$lead->uuid} | Time: ".now();
+            info($errorMessage);
+            info("NBMotorWorkFlow-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
+            throw $th;
+        }
     }
     public function buildNBMotorFollowupEmailData($lead, $advisor)
     {
@@ -393,7 +392,7 @@ class CarEmailService extends BaseService
     {
         try {
             $runId = collect($response->headers['Run-Id'])->first();
-            if (!empty($runId)) {
+            if (! empty($runId)) {
                 QuoteFlowDetails::create([
                     'quote_uuid' => $lead->uuid,
                     'quote_type_id' => QuoteTypeId::Car,
@@ -401,14 +400,13 @@ class CarEmailService extends BaseService
                     'flow_id' => $runId,
                 ]);
                 info("NBMotorWorkFlow  run id created for lead : Ref-ID: {$lead->uuid} |Time: ".now());
-            }
-            else {
+            } else {
                 info("NBMotorWorkFlow  run id not found for lead : Ref-ID: {$lead->uuid} |Time: ".now());
             }
         } catch (\Throwable $th) {
-            $errorMessage = "NBMotorWorkFlow-Error: while creating quote flow details for lead: Ref-ID: {$lead->uuid} | Time: " . now();
+            $errorMessage = "NBMotorWorkFlow-Error: while creating quote flow details for lead: Ref-ID: {$lead->uuid} | Time: ".now();
             info($errorMessage);
-            info("NBMotorWorkFlow-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: " . now());
+            info("NBMotorWorkFlow-Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
             throw $th;
         }
     }
