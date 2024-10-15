@@ -753,7 +753,7 @@ class RenewalsUploadService
             $customer = $this->getCustomer($customerData);
 
             $quoteTypeVal = $quoteType->id == QuoteTypeId::Car ? 1:null;
-            $batch = RenewalBatch::where([['name', $data['batch'], ['quote_type_id', $quoteTypeVal]]])->first() ?? null;
+            
 
             $quoteData = [
                 'customer_id' => $customer->id,
@@ -766,7 +766,6 @@ class RenewalsUploadService
                 'source' => LeadSourceEnum::RENEWAL_UPLOAD,
                 'advisor_id' => $advisorId,
                 'renewal_batch' => $data['batch'],
-                'renewal_batch_id' => $batch->id,
                 'quote_status_id' => $transApprovedId,
                 'renewal_import_code' => $renewalUploadLead->renewal_import_code,
                 'previous_quote_policy_number' => $data['policy_number'],
@@ -1727,14 +1726,15 @@ class RenewalsUploadService
                             if ($leadData->previous_advisor && ! User::where('email', $leadData->previous_advisor)->first()) {
                                 $leadValidationErrors->push('Invalid Previous Advisor Email');
                             }
-                        }
-                        if ($leadData->batch) {
-                            $batchRef = RenewalBatch::where([['name', $leadData->batch], ['quote_type_id', QuoteTypeId::Car]])->first();
-                            !$batchRef && $leadValidationErrors->push('Invalid Renewal Batch Provided');
+
+                            if ($leadData->batch) {
+                                $batchRef = $leadData->batch == null ? false : RenewalBatch::where([['name', $leadData->batch], ['quote_type_id', QuoteTypeId::Car]])->first();
+                                !$batchRef && $leadValidationErrors->push('Invalid Renewal Batch Provided');
+                            }
                         }
                         break;
                     default:
-                        if ($leadData->batch) {
+                        if ($leadData->batch && $leadData->batch != null && $lead->type == RenewalsUploadType::UPDATE_LEADS) {
                             $checkBatch = $this->validateBatch($leadData->batch, $leadData->end_date);
                             !$checkBatch && $leadValidationErrors->push('Invalid Renewal Batch Provided');
                         }
