@@ -1769,7 +1769,7 @@ class RenewalsUploadService
      * @param  string  $endDate
      * @return void
      */
-    private function validateBatch($batchName, $endDate, $isCreated = false, $lead)
+    private function validateBatch($batchName, $endDate, $isCreated, $lead)
     {
         info('Validating batch: '.$batchName.' with end date: '.$endDate);
         // Extract year from endDate
@@ -1782,7 +1782,7 @@ class RenewalsUploadService
         info('Validating year: '.$year.' with week number: '.$weekNumber);
 
         // Validate batch name by checking if it contains the week number
-        if ((strpos($batchName, $weekNumber) === false || $batchName != $weekNumber) && !$isCreated ) {
+        if ((strpos($batchName, $weekNumber) === false || $batchName != $weekNumber) && ! $isCreated) {
             info('Batch name does not contain week number');
 
             return false;
@@ -1797,12 +1797,13 @@ class RenewalsUploadService
 
         if ($batch) {
             info('Batch found');
-            if($isCreated) {
+            if ($isCreated) {
                 $data = $lead->data;
                 $data['batch'] = $batch->name;
                 $lead->data = $data;
                 $lead->save();
             }
+
             return true;
         }
         info('Batch not found with year: '.$year.' and batch name: '.$batchName);
