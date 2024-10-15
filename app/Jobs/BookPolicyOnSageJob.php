@@ -85,11 +85,11 @@ class BookPolicyOnSageJob implements ShouldQueue
     {
         (new SageApiService)->updateSageProcessStatus($this->sageProcess, SageEnum::SAGE_PROCESS_FAILED_STATUS, $exception->getMessage());
 
-        info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses fn:failed triggered for code -'. $this->quote->code . ' updating status to failed');
+        info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses fn:failed triggered for code -'.$this->quote->code.' updating status to failed');
         (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, $this->sageRequest->userId);
 
         (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
-        info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses fn:failed triggered for code -'. $this->quote->code . ' Insurer - '.$this->sageRequest->insurerID);
+        info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses fn:failed triggered for code -'.$this->quote->code.' Insurer - '.$this->sageRequest->insurerID);
 
         Log::error('Policy Book : BookPolicyOnSageJob : '.$this->quote->code.' Error : '.$exception->getMessage());
     }
