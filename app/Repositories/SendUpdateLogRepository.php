@@ -202,6 +202,9 @@ class SendUpdateLogRepository extends BaseRepository
 
             if ($payments->payment_status_id == PaymentStatusEnum::PAID) {
                 $payments->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
+                if ($data['price_with_vat'] < ($payments->total_amount + $payments->discount_value)) {
+                    app(SendUpdateLogService::class)->updatePaymentTotalPrice($payments, $data['price_with_vat']);
+                }
             }
 
             return $payments->save();
@@ -340,8 +343,12 @@ class SendUpdateLogRepository extends BaseRepository
             $payment = Payment::where('send_update_log_id', $data['id'])->first();
             if ($payment) {
                 $sendUpdateLogService = app(SendUpdateLogService::class);
-                info('Send update - Updating Booking details and Commission Schedule in Payments - SendUpdateCode: '.$sendUpdate->code);
-                $sendUpdateLogService->sendUpdatePriceAndDiscount($sendUpdate, $payment);
+                info('Send update - Updating Booking details and Commission Schedule in Payments - SendUpdateUUID: '.$sendUpdate->uuid);
+                if ($data['price_with_vat'] < ($payment->total_amount + $payment->discount_value)) {
+                    $sendUpdateLogService->updatePaymentTotalPrice($payment, $data['price_with_vat']);
+                } else {
+                    $sendUpdateLogService->sendUpdatePriceAndDiscount($sendUpdate, $payment);
+                }
                 $sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate, true);
                 app(SplitPaymentService::class)->updateCommissionSchedule($payment);
             }
