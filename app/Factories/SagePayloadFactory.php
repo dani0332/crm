@@ -315,14 +315,14 @@ class SagePayloadFactory
 
             if ($type == SageEnum::SCT_REVERSAL) {
 
-                $reversePayLoad->Invoices[0]->DocumentNumber = (string) substr($reversePayLoad->Invoices[0]->DocumentNumber, -18).'-REV';
+                $reversePayLoad->Invoices[0]->DocumentNumber = (string) mb_substr($reversePayLoad->Invoices[0]->DocumentNumber, -18).'-REV';
                 $reversePayLoad->Invoices[0]->InvoiceDescription = $reversePayLoad->Invoices[0]->InvoiceDescription.' - REVERSAL';
                 $reversePayLoad->Invoices[0]->DocumentType = 'DebitNote';
                 $sageRequestType = SageEnum::SRT_CREATE_AR_DISC_REV_INV;
             }
 
             if ($type == SageEnum::SCT_CORRECTION) {
-                $payLoad['Invoices'][0]['DocumentNumber'] = (string) substr($payLoad['Invoices'][0]['DocumentNumber'], -18);
+                $payLoad['Invoices'][0]['DocumentNumber'] = (string) mb_substr($payLoad['Invoices'][0]['DocumentNumber'], -18);
                 $payLoad['Invoices'][0]['InvoiceDescription'] = $payLoad['Invoices'][0]['InvoiceDescription'].' - NEW';
 
                 $sageRequestType = SageEnum::SRT_CREATE_AR_DISC_CORR_INV;
@@ -1087,7 +1087,7 @@ class SagePayloadFactory
 
     private static function createReceiptData($item, $sage_customer_number, $payment, $paymentNumber = 1)
     {
-        $documentNumber = substr($payment->insurer_tax_number, -18);
+        $documentNumber = mb_substr($payment->insurer_tax_number, -18);
         $receiptData = [
             'BatchType' => 'CA',
             'CustomerNumber' => $sage_customer_number,
@@ -1173,7 +1173,7 @@ class SagePayloadFactory
         }
 
         $sageRequest->mainClassInsurance = $modelType;
-        $sageRequest->policyNumber = substr($quote->policy_number, 60);
+        $sageRequest->policyNumber = mb_substr($quote->policy_number, 60);
         $sageRequest->originalPolicyNumber = $quote->policy_number;
         $sageRequest->policyIssuer = $policyIssuer;
         $sageRequest->requestType = Lookup::where('id', $quote->transaction_type_id)->first()->text ?? '';
@@ -1213,8 +1213,8 @@ class SagePayloadFactory
         $sageRequest->commissionPercentage = strval($payment->commmission_percentage);
 
         // Slice the last 18 characters from the string to avoid sage document number length issue and store the original values in optional fields
-        $sageRequest->insurerPremiumNumber = (string) substr($payment->insurer_tax_number, -18);
-        $sageRequest->insurerCommissionNumber = (string) substr($payment->insurer_commmission_invoice_number, -18);
+        $sageRequest->insurerPremiumNumber = (string) mb_substr($payment->insurer_tax_number, -18);
+        $sageRequest->insurerCommissionNumber = (string) mb_substr($payment->insurer_commmission_invoice_number, -18);
         $sageRequest->originalInsurerPremiumNumber = (string) $payment->insurer_tax_number;
         $sageRequest->originalInsurerCommissionNumber = (string) $payment->insurer_commmission_invoice_number;
 
