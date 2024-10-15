@@ -428,7 +428,6 @@ class RetentionReportService extends BaseService
         }
     }
 
-
     /**
      * Formats the report data by calculating and adding volume net retention and volume gross retention.
      * Iterates through the report data and calculates the retention percentages.
@@ -716,16 +715,16 @@ class RetentionReportService extends BaseService
         // Parse the start and end dates from the request and set them to the start and end of the day
         $startDate = Carbon::parse($request['policyExpiryDate'][0])->startOfDay();
         $endDate = Carbon::parse($request['policyExpiryDate'][1])->endOfDay();
-    
+
         // Format the start and end dates according to the specified date format
         $startDate = $startDate->format($this->dateFormat);
         $endDate = $endDate->format($this->dateFormat);
-    
+
         // Apply the date range filter to the query
         $batches = RenewalBatch::select('name', 'start_date', 'end_date', 'id')
             ->whereNull('quote_type_id')
             ->whereBetween('start_date', [$startDate, $endDate]);
-    
+
         // Order the batches by ID and format the results
         $batches = $batches->orderBy('id')
             ->get()
@@ -735,15 +734,15 @@ class RetentionReportService extends BaseService
                 // Format the start and end dates of the batch
                 $start_date = Carbon::parse($batch->start_date)->format($dateFormat);
                 $end_date = Carbon::parse($batch->end_date)->format($dateFormat);
-    
-            // Return an associative array with the batch 'name' and 'id'
-            return [
+
+                // Return an associative array with the batch 'name' and 'id'
+                return [
                     'id' => $batch->id,
                     'name' => $batch->name.'-('.$start_date.' to '.$end_date.')',
                 ];
             })
             ->toArray();
-    
+
         return $batches;
     }
 }

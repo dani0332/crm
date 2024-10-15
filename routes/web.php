@@ -665,9 +665,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/update-user-status', [UserController::class, 'updateUserStatus']);
 });
 
-
-Route::get('/add-batch-number', function(){
-    $addBtchNuimber = new AddBatchForNonMotors();
+Route::get('/add-batch-number', function () {
+    $addBtchNuimber = new AddBatchForNonMotors;
     $addBtchNuimber->handle();
-    echo "Done";
+    echo 'Done';
 });

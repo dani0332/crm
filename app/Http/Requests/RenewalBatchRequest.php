@@ -33,7 +33,7 @@ class RenewalBatchRequest extends FormRequest
         $slabArray = $this->input('slab');
         $optionalSlabsId = $this->input('optional_slabs') ?? [];
         $optionalTeamsId = $this->input('optional_teams') ?? [];
-    
+
         $slabIndex = count($slabArray);
 
         // Define the validation rules

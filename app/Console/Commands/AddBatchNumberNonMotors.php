@@ -100,7 +100,7 @@ class AddBatchNumberNonMotors extends Command
             $weekNumber = $currentDate->weekOfYear;
 
             $batchArray[] = [
-                'name' => 'W' . $weekNumber,
+                'name' => 'W'.$weekNumber,
                 'startDate' => $currentDate->toDateString(),
                 'endDate' => $nextWeek->toDateString(),
                 'month' => $monthNumber,

@@ -752,8 +752,7 @@ class RenewalsUploadService
 
             $customer = $this->getCustomer($customerData);
 
-            $quoteTypeVal = $quoteType->id == QuoteTypeId::Car ? 1:null;
-            
+            $quoteTypeVal = $quoteType->id == QuoteTypeId::Car ? 1 : null;
 
             $quoteData = [
                 'customer_id' => $customer->id,
@@ -1729,14 +1728,14 @@ class RenewalsUploadService
 
                             if ($leadData->batch) {
                                 $batchRef = $leadData->batch == null ? false : RenewalBatch::where([['name', $leadData->batch], ['quote_type_id', QuoteTypeId::Car]])->first();
-                                !$batchRef && $leadValidationErrors->push('Invalid Renewal Batch Provided');
+                                ! $batchRef && $leadValidationErrors->push('Invalid Renewal Batch Provided');
                             }
                         }
                         break;
                     default:
                         if ($leadData->batch && $leadData->batch != null && $lead->type == RenewalsUploadType::UPDATE_LEADS) {
                             $checkBatch = $this->validateBatch($leadData->batch, $leadData->end_date);
-                            !$checkBatch && $leadValidationErrors->push('Invalid Renewal Batch Provided');
+                            ! $checkBatch && $leadValidationErrors->push('Invalid Renewal Batch Provided');
                         }
                         break;
                 }
@@ -1764,8 +1763,8 @@ class RenewalsUploadService
     /**
      * This function use to validate batch for non motors only
      *
-     * @param string $batchName
-     * @param string $endDate
+     * @param  string  $batchName
+     * @param  string  $endDate
      * @return void
      */
     private function validateBatch($batchName, $endDate)
@@ -1776,13 +1775,14 @@ class RenewalsUploadService
         $year = $endDate->format('Y');
 
         // Extract week number from endDate and remove leading zero if present
-        $weekNumber = 'W'. $endDate->weekOfYear;
+        $weekNumber = 'W'.$endDate->weekOfYear;
 
-        info('Validating year: ' . $year . ' with week number: ' . $weekNumber);
+        info('Validating year: '.$year.' with week number: '.$weekNumber);
 
         // Validate batch name by checking if it contains the week number
         if (strpos($batchName, $weekNumber) === false || $batchName != $weekNumber) {
             info('Batch name does not contain week number');
+
             return false;
         }
 
@@ -1790,14 +1790,16 @@ class RenewalsUploadService
         $batch = RenewalBatch::where([
             ['name', $batchName],
             ['year', $year],
-            ['quote_type_id', null]
+            ['quote_type_id', null],
         ])->first();
 
         if ($batch) {
             info('Batch found');
+
             return true;
         }
-        info('Batch not found with year: ' . $year . ' and batch name: ' . $batchName);
+        info('Batch not found with year: '.$year.' and batch name: '.$batchName);
+
         return false;
     }
 
