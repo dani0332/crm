@@ -60,7 +60,9 @@ const transactionType = computed(() => {
     ].includes(props.sendUpdateLog.category.code)
   ) {
     return 'Endorsement';
-  } else if (props.sendUpdateLog.option.code === props.sendUpdateStatusEnum.ATICB) {
+  } else if (
+    props.sendUpdateLog.option.code === props.sendUpdateStatusEnum.ATICB
+  ) {
     return page.props.parentText;
   }
 
