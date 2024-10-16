@@ -132,6 +132,7 @@ const isTotalPriceUpdated = ref(false);
 const trashedFilesModal = ref([]);
 const isApproveNotChecked = ref(true);
 const isApproveConfirmed = ref(false);
+const isAmlApprovalRequired = ref(false);
 const isCreditApprovalAllowed = ref(true);
 const isVerificationAllowed = ref(true);
 const isPaymentFrequencyNotSelected = ref(false);
@@ -349,6 +350,9 @@ const closeInnerModal = () => {
 const closeConfirmModal = () => {
   isApproveConfirmed.value = false;
   isApproveNotChecked.value = true;
+};
+const closeAmlConfirmModal = () => {
+  isAmlApprovalRequired.value = false;
 };
 const hasNextFile = computed(() => {
   return currentFileIndex.value < filesTest.value.length - 1;
@@ -1735,6 +1739,7 @@ const resetPaymentForm = () => {
   authorizedPayments.value = [];
   isApproveConfirmed.value = false;
   isApproveNotChecked.value = true;
+  isAmlApprovalRequired.value = false;
 };
 
 const initializePaymentForm = (
@@ -3119,6 +3124,22 @@ const splitPaymentTotalPrice = (
   }
 
   return formatAmount(total);
+};
+
+const isAmlVerified = () => {
+  //Bypass Travel Quote Type for aml verification
+  if (props.quoteType === quoteTypeCodeEnum.Travel) {
+    return true;
+  }
+
+  return (
+    props.quoteRequest.aml_status ===
+    page.props.amlStatusEnum.AMLScreeningCleared
+  );
+};
+
+const openAmlVerificationModal = () => {
+  isAmlApprovalRequired.value = true;
 };
 
 // verifiy if split payment deletion is enabled
@@ -5462,7 +5483,11 @@ const isSplitDeleteEnabled = computed(() => {
                       class="mr-2 focus:outline-black"
                       size="sm"
                       color="#ff5e00"
-                      @click="isApproveClicked = !isApproveClicked"
+                      @click="
+                        isAmlVerified()
+                          ? (isApproveClicked = !isApproveClicked)
+                          : openAmlVerificationModal()
+                      "
                       tabindex="0"
                     >
                       Approve
@@ -5615,6 +5640,73 @@ const isSplitDeleteEnabled = computed(() => {
                   >
                     <span>Confirm</span></x-button
                   >
+                </div>
+              </div>
+            </div>
+            <div
+              class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
+              v-if="isAmlApprovalRequired"
+            >
+              <div
+                class="modal-confirm-container bg-white w-full max-w-full overflow-hidden rounded-lg"
+              >
+                <div class="modal-confirm-header text-base text-white bg-white">
+                  <div
+                    class="flex flex-row-reverse text-lg font-semibold px-6 py-4"
+                  >
+                    <div class="flex items-center space-x-2">
+                      <span
+                        @click="closeAmlConfirmModal"
+                        class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 cursor-pointer"
+                      >
+                        <!-- Cross icon -->
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          tabindex="0"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          class="w-4 h-4 text-gray-800"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"
+                          ></path>
+                        </svg>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="w-full h-full mt-2 flex flex-col items-center">
+                  <div
+                    class="text-lg font-bold px-6 flex justify-between items-start"
+                  >
+                    <div class="text-left">
+                      <span>Please complete the AML screening to proceed.</span>
+                    </div>
+                  </div>
+                  <Link
+                    :href="`/kyc/aml/${page.props.quoteTypeId ?? props.sendUpdate.quote_type_id}/details/${props.quoteRequest.id}`"
+                  >
+                    <x-tooltip>
+                      <x-button
+                        v-if="can(permissionEnum.AMLList)"
+                        size="lg"
+                        color="orange"
+                        class="px-4 py-4 mt-4"
+                        :loading="paymentMethodsForm.processing"
+                      >
+                        <span>Go to AML & KYC page</span></x-button
+                      >
+                      <template #tooltip>
+                        <span>{{
+                          paymentTooltipEnum.GOTO_AML_AND_KYC_PAGE
+                        }}</span>
+                      </template>
+                    </x-tooltip>
+                  </Link>
                 </div>
               </div>
             </div>
