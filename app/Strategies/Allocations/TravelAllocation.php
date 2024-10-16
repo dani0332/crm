@@ -3,6 +3,7 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\QuoteTypes;
 use App\Factories\AllocationFactory;
 use App\Models\TravelQuote;
 use App\Models\User;
@@ -43,7 +44,10 @@ class TravelAllocation implements Allocation
                 $advisor = $this->fetchAvailableAdvisor();
 
                 if (! $advisor) {
+                    $this->travelAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::TRAVEL);
+
                     info(self::class." - executeSteps: No advisor found against lead : {$lead->uuid}");
+
                     $response = AllocationFactory::createResponse(0, 'Advisor not found', Response::HTTP_NOT_FOUND);
                 } else {
                     $this->assignLead($lead, $advisor); // Assign the lead to the advisor
@@ -51,6 +55,8 @@ class TravelAllocation implements Allocation
                 }
             }
         } catch (\Throwable $th) {
+            $this->travelAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::TRAVEL);
+
             $message = $th->getMessage() ?? '';
             info('exception occurred in travel lead allocation with error : '.$message);
             info('exception occurred in travel lead allocation with error stack as  : '.$th->getTraceAsString());

@@ -147,6 +147,7 @@ return [
     'SAGE_300_BASE_URL' => env('SAGE_300_BASE_URL', ''),
     'SAGE_300_CUSTOM_API_VERSION' => env('SAGE_300_CUSTOM_API_VERSION', ''),
     'SAGE_300_CUSTOM_API_DB_NAME' => env('SAGE_300_CUSTOM_API_DB_NAME', ''),
+    'BIRD_BASE_URL' => env('BIRD_BASE_URL', ''),
     /* Alliance API Cred */
     'ALLIANCE_API_BASE_URL' => env('ALLIANCE_API_BASE_URL', ''),
     'ALLIANCE_AGENCY_ID' => env('ALLIANCE_AGENCY_ID', ''),

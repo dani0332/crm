@@ -16,6 +16,7 @@ use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
+use App\Services\LeadAllocationService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -77,11 +78,23 @@ class SendUpdateLogRepository extends BaseRepository
                 $quote = $quoteServiceFile->getEntity($data['quote_uuid']);
             }
 
+            $commercialRules = false;
+            if ($quoteType == QuoteTypes::CAR->value) {
+                $commercialRules = app(LeadAllocationService::class)->isCommercialVehicles($quote);
+                if ($commercialRules) {
+                    info('Commercial Rules - SendUpdateUUID: '.$uuid.' - QuoteUUID: '.$quote->uuid);
+                }
+            }
+
             // it will check if send update type is Correction of Policy Details or Endorsement Financial with subtype Policy Period Extension, it will save
             // insurance_provider_id and plan_id.
             $policyDetails = [];
-            if ($category == SendUpdateLogStatusEnum::CPD || ($category == SendUpdateLogStatusEnum::EF && $option == SendUpdateLogStatusEnum::PPE)) {
-                @[$insuranceProviderId, $plan_id] = app(SendUpdateLogService::class)->getProviderDetails($quote, $data['quote_type_id'], true);
+            if (
+                $category == SendUpdateLogStatusEnum::CPD
+                || ($category == SendUpdateLogStatusEnum::EF && $option == SendUpdateLogStatusEnum::PPE)
+                || ($quoteType == QuoteTypes::CAR->value && $commercialRules)
+            ) {
+                @[$insuranceProviderId, $plan_id] = app(SendUpdateLogService::class)->getProviderDetails($quote, $data['quote_type_id'], true, $commercialRules);
                 $policyDetails = $this->autoFillPolicyDetails($quote, $data['quote_type_id'], $insuranceProviderId, $plan_id);
             }
 
@@ -202,6 +215,9 @@ class SendUpdateLogRepository extends BaseRepository
 
             if ($payments->payment_status_id == PaymentStatusEnum::PAID) {
                 $payments->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
+                if ($data['price_with_vat'] < ($payments->total_amount + $payments->discount_value)) {
+                    app(SendUpdateLogService::class)->updatePaymentTotalPrice($payments, $data['price_with_vat']);
+                }
             }
 
             return $payments->save();
@@ -340,8 +356,12 @@ class SendUpdateLogRepository extends BaseRepository
             $payment = Payment::where('send_update_log_id', $data['id'])->first();
             if ($payment) {
                 $sendUpdateLogService = app(SendUpdateLogService::class);
-                info('Send update - Updating Booking details and Commission Schedule in Payments - SendUpdateCode: '.$sendUpdate->code);
-                $sendUpdateLogService->sendUpdatePriceAndDiscount($sendUpdate, $payment);
+                info('Send update - Updating Booking details and Commission Schedule in Payments - SendUpdateUUID: '.$sendUpdate->uuid);
+                if ($data['price_with_vat'] < ($payment->total_amount + $payment->discount_value)) {
+                    $sendUpdateLogService->updatePaymentTotalPrice($payment, $data['price_with_vat']);
+                } else {
+                    $sendUpdateLogService->sendUpdatePriceAndDiscount($sendUpdate, $payment);
+                }
                 $sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate, true);
                 app(SplitPaymentService::class)->updateCommissionSchedule($payment);
             }

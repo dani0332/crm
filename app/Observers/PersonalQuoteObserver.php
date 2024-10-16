@@ -58,6 +58,7 @@ class PersonalQuoteObserver
                     $personalQuote->advisor_id !== null &&
                     $personalQuote->advisor_id !== 0
                 ) {
+                    $personalQuote->markLeadAllocationPassed();
                     $oldAdvisorId = $changes['advisor_id']['old'];
                     event(new BikeQuoteAdvisorUpdated($personalQuote, $oldAdvisorId));
                 }
