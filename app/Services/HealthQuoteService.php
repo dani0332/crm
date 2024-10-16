@@ -17,7 +17,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Ken;
-use App\Jobs\CammyJob;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
 use App\Models\BusinessInsuranceType;
@@ -1249,9 +1248,6 @@ class HealthQuoteService extends BaseService
                 ->addJob(new GetQuotePlansJob($lead))
                 ->then(function () use ($lead, $isReassignment, $previousAdvisorId) {
                     if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
-                        if ($lead->quote_status_id == QuoteStatusEnum::FollowedUp) {
-                            CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(15));
-                        }
                         IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousAdvisorId, $isReassignment)->delay(now()->addSeconds(15));
                     }
                 })->dispatch();
@@ -1837,9 +1833,6 @@ class HealthQuoteService extends BaseService
 
         if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
             IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', null, false)->delay(now()->addSeconds(3));
-        }
-        if ($lead->quote_status_id == QuoteStatusEnum::FollowedUp) {
-            CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
         }
     }
 
