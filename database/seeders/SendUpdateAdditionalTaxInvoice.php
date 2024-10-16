@@ -7,7 +7,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\BusinessInsuranceType;
 use App\Models\Lookup;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class SendUpdateAdditionalTaxInvoice extends Seeder
