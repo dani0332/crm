@@ -241,4 +241,16 @@ final class WatermarkDocTypesEnum extends Enum
     const IND_E_CAR = "IND_E-CAR";
     const IND_E_card = "IND_E-card";
     const SUECARD = "SUECARD";
+
+    const CAR_GL = "CAR_GL";
+    const COMP_GL = "COMP_GL";
+    const GL_BIKE = "GL_BIKE";
+    const GL_CYC = "GL_CYC";
+    const GL_GH = "GL_GH";
+    const GL_HLTH = "GL_HLTH";
+    const GL_HOME = "GL_HOME";
+    const GL_life = "GL_life";
+    const GL_PET = "GL_PET";
+    const GL_TRVL = "GL_TRVL";
+    const GL_YTCH = "GL_YTCH";
 }
