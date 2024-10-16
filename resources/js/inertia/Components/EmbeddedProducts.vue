@@ -34,10 +34,13 @@ const props = defineProps({
 });
 
 const propsDataReactive = ref(props.data);
+const documentsReactive = ref([]);
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const permissionsEnum = page.props.permissionsEnum;
 const modals = reactive({
   cancelPayment: false,
+  viewDocuments: false,
+  addDocument: false,
 });
 
 const { isRequired, isEmail, isNumberOrDecimal, isMobileNo } = useRules();
@@ -61,11 +64,20 @@ const paymentForm = useForm({
 const syncDocumentLoader = ref(false);
 const downloadLoader = ref(false);
 const sendDocumentLoader = ref(false);
+const viewDocumentLoader = ref(false);
 const downloadDocumentLoader = ref(false);
+const addDocumentLoader = ref(false);
 const sendDocumentForm = useForm({
   quoteId: props.quote.id,
   modelType: props.modelType,
   isInertia: true,
+});
+
+const addDocumentForm = useForm({
+  epId: null,
+  type: null,
+  title: null,
+  file: null,
 });
 
 const syncDocument = id => {
@@ -87,40 +99,6 @@ const syncDocument = id => {
     });
 };
 
-const downloadDcoument = id => {
-  downloadLoader.value = true;
-  axios
-    .post(
-      '/embedded-products/download-document',
-      {
-        quoteId: props.quote.id,
-        modelType: props.modelType,
-        epId: id,
-        isInertia: true,
-      },
-      {
-        responseType: 'json',
-      },
-    )
-    .then(response => {
-      const link = document.createElement('a');
-      let fileName = response.data.name;
-      link.href = response.data.data;
-      link.setAttribute('download', fileName);
-      document.body.appendChild(link);
-      link.click();
-      notification.success({
-        title: 'Certificate Downloaded',
-        position: 'top',
-      });
-    })
-    .catch(error => {
-      console.log(error);
-    })
-    .finally(() => {
-      downloadLoader.value = false;
-    });
-};
 const sendDcoument = id => {
   sendDocumentLoader.value = true;
   sendDocumentForm
@@ -136,33 +114,6 @@ const sendDcoument = id => {
       onError: () => {
         sendDocumentLoader.value = false;
       },
-    });
-};
-
-/**
- * this function use download embedded transaction documents issue from insurance provider
- */
-const downloadDocument = async id => {
-  downloadDocumentLoader.value = true;
-  const formData = {
-    quoteId: props.quote.id,
-    modelType: props.modelType,
-    epId: id,
-  };
-
-  axios
-    .post('/embedded-products/download-document', formData)
-    .then(response => {
-      if (response.data.attachments.length > 0) {
-        response.data.attachments.forEach(attachment => {
-          downloadFile(attachment);
-        });
-      }
-
-      downloadDocumentLoader.value = false;
-    })
-    .catch(error => {
-      downloadDocumentLoader.value = false;
     });
 };
 
@@ -188,6 +139,39 @@ const downloadFile = download => {
       '/embedded-products/download/force?path=' +
       download.path; // so that it opens new tab for IE11
   }
+
+  downloadLoader.value = true;
+  setTimeout(() => {
+    downloadLoader.value = false;
+  }, 1300);
+};
+
+const viewDocument = id => {
+  viewDocumentLoader.value = true;
+
+  axios
+    .post(
+      '/embedded-products/get-documents',
+      {
+        quoteId: props.quote.id,
+        modelType: props.modelType,
+        epId: id,
+        isInertia: true,
+      },
+      {
+        responseType: 'json',
+      },
+    )
+    .then(response => {
+      documentsReactive.value = response.data;
+      modals.viewDocuments = true;
+    })
+    .catch(error => {
+      console.log(error);
+    })
+    .finally(() => {
+      viewDocumentLoader.value = false;
+    });
 };
 
 const dateFormat = date =>
@@ -225,6 +209,27 @@ const epTable = reactive({
     },
   ],
 });
+
+const epDocuments = reactive({
+  isLoading: false,
+  columns: [
+    {
+      text: 'Document Type',
+      value: 'document_type',
+    },
+    {
+      text: 'Document Number',
+      value: 'document_number',
+    },
+    {
+      text: 'Actions',
+      value: 'actions',
+      width: 100,
+    },
+  ],
+});
+
+const getBlog = file => useObjectUrl(file);
 
 const ppDoc = str => {
   const doc = JSON.parse(str);
@@ -322,8 +327,6 @@ const toggleProduct = (ep, event) => {
     });
   }
 
-  console.log(selectedEp);
-
   let data = {
     quote_uuid: props.quote.uuid,
     id: id,
@@ -370,6 +373,77 @@ const readOnlyMode = reactive({
 onMounted(() => {
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
+
+const addEpDocument = id => {
+  modals.viewDocuments = false;
+  modals.addDocument = true;
+  addDocumentForm.epId = id;
+};
+
+const resetAddForm = () => {
+  addDocumentForm.epId = null;
+  addDocumentForm.title = null;
+  addDocumentForm.type = null;
+  addDocumentForm.file = null;
+};
+
+const uploadEpDocument = event => {
+  addDocumentForm.file = event.files;
+};
+
+const cancelEpDocument = () => {
+  modals.addDocument = false;
+  resetAddForm();
+  modals.viewDocuments = true;
+};
+
+const onAddDocumentSubmit = event => {
+  if (!addDocumentForm.title || !addDocumentForm.type) {
+    return;
+  }
+
+  if (addDocumentForm.file && addDocumentForm.file.length == 0) {
+    notification.error({
+      title: 'Document upload failed, invalid file selected',
+      position: 'top',
+    });
+    return;
+  }
+
+  const epId = addDocumentForm.epId;
+  let url = '/embedded-products/upload-quote-document';
+  addDocumentLoader.value = true;
+
+  return new Promise((resolve, reject) => {
+    addDocumentForm
+      .transform(data => ({
+        ...data,
+        quoteId: props.quote.id,
+        modelType: props.modelType,
+      }))
+      .post(url, {
+        preserveScroll: true,
+        preserveState: true,
+        onError: errors => {
+          addDocumentForm.setError(errors.error);
+          notification.error({
+            title: 'File upload failed',
+            position: 'top',
+          });
+          reject(errors);
+        },
+        onSuccess: data => {
+          resetAddForm();
+          modals.addDocument = false;
+          modals.viewDocuments = true;
+          viewDocument(epId);
+        },
+        onFinish: () => {
+          addDocumentLoader.value = false;
+        },
+      });
+  });
+};
 </script>
 
 <template>
@@ -399,7 +473,7 @@ onMounted(() => {
         </div>
       </div>
       <template #content>
-        <x-divider class="mb-4 mt-2 mt-1" />
+        <x-divider class="mb-4 mt-2" />
         <DataTable
           table-class-name="tablefixed"
           :headers="epTable.columns"
@@ -479,31 +553,11 @@ onMounted(() => {
               </x-button>
               <x-button
                 size="xs"
-                color="emerald"
-                :disabled="!item.download_document_button"
-                :loading="downloadDocumentLoader"
-                @click.prevent="downloadDocument(item.id)"
-              >
-                Download Documents
-              </x-button>
-              <x-button
-                v-if="item.canGenerateCerticate"
-                size="xs"
                 color="#ff5e00"
-                :disabled="!item.send_document_button"
-                :loading="downloadLoader"
-                @click.prevent="downloadDcoument(item.id)"
+                :loading="viewDocumentLoader"
+                @click.prevent="viewDocument(item.id)"
               >
-                Download Certificate
-              </x-button>
-              <x-button
-                size="xs"
-                color="primary"
-                :href="ppDoc(item.company_documents)"
-                target="_blank"
-                :disabled="ppDoc(item.company_documents) === ''"
-              >
-                Download Product Wordings
+                View Documents
               </x-button>
               <x-button
                 v-if="can(permissionsEnum.EMBEDDED_PRODUCT_PAYMENT_CANCEL)"
@@ -562,6 +616,137 @@ onMounted(() => {
               type="submit"
             >
               Cancel Payment
+            </x-button>
+          </template>
+        </x-modal>
+        <x-modal v-model="modals.viewDocuments" size="lg" show-close backdrop>
+          <template #header>
+            <div class="px-6 py-4 bg-gray-100">
+              EP - {{ documentsReactive.ep.display_name }} - Documents
+            </div>
+          </template>
+
+          <template #footer>
+            <div class="mt-2 mb-5 text-center">
+              <x-button
+                size="xs"
+                class="border-0 shadow-none"
+                style="box-shadow: none"
+                @click.prevent="addEpDocument(documentsReactive.ep.id)"
+                v-if="documentsReactive.can_add_document"
+              >
+                <span
+                  class="bg-primary color-white leading-5 mr-1 rounded-full h-[20px] w-[20px] inline-block"
+                  >+</span
+                >
+                Click to add document(s)
+              </x-button>
+            </div>
+          </template>
+
+          <DataTable
+            :headers="epDocuments.columns"
+            :items="documentsReactive.documents || []"
+            border-cell
+            hide-rows-per-page
+            hide-footer
+            :loading="viewDocumentLoader"
+          >
+            <template #item-actions="item">
+              <div class="flex flex-row gap-3">
+                <x-button
+                  size="xs"
+                  color="primary"
+                  outlined
+                  :href="item.url"
+                  target="_blank"
+                >
+                  View
+                </x-button>
+
+                <x-button
+                  size="xs"
+                  color="emerald"
+                  outlined
+                  :loading="downloadLoader"
+                  @click.prevent="downloadFile(item)"
+                >
+                  Download
+                </x-button>
+              </div>
+            </template>
+          </DataTable>
+        </x-modal>
+
+        <x-modal
+          v-model="modals.addDocument"
+          size="md"
+          show-close
+          backdrop
+          is-form
+          @submit="onAddDocumentSubmit"
+        >
+          <template #header>
+            <div class="px-6 py-4 bg-gray-100">Add Document</div>
+          </template>
+
+          <div class="grid gap-4">
+            <x-input
+              v-model="addDocumentForm.type"
+              label="Document Type"
+              :rules="[isRequired]"
+              class="w-full"
+            />
+
+            <x-input
+              v-model="addDocumentForm.title"
+              label="Document serial number / title"
+              :rules="[isRequired]"
+              class="w-full"
+            />
+
+            <div
+              v-if="addDocumentForm.file"
+              class="relative bg-primary-50 rounded-md text-center flex flex-col gap-4 items-center border border-primary-300 ease-linear transition-all duration-150 p-4"
+            >
+              <div>
+                {{ addDocumentForm.file[0].file.name }}
+              </div>
+
+              <x-button
+                @click="addDocumentForm.file = null"
+                size="xs"
+                color="error"
+              >
+                Remove
+              </x-button>
+            </div>
+
+            <Dropzone
+              v-else
+              @change="uploadEpDocument($event)"
+              :maxSize="documentsReactive.document_type?.max_size"
+              :accept="documentsReactive.document_type?.accepted_files"
+            />
+          </div>
+
+          <template #secondary-action>
+            <x-button
+              ghost
+              tabindex="-1"
+              @click="cancelEpDocument()"
+              :disabled="addDocumentLoader"
+            >
+              Cancel
+            </x-button>
+          </template>
+          <template #primary-action>
+            <x-button
+              color="primary"
+              type="submit"
+              :loading="addDocumentLoader"
+            >
+              Save
             </x-button>
           </template>
         </x-modal>
