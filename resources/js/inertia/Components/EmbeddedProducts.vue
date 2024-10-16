@@ -631,11 +631,14 @@ const onAddDocumentSubmit = event => {
               <x-button
                 size="xs"
                 class="border-0 shadow-none"
-                style="box-shadow: none;"
+                style="box-shadow: none"
                 @click.prevent="addEpDocument(documentsReactive.ep.id)"
                 v-if="documentsReactive.can_add_document"
               >
-              <span class="bg-primary color-white leading-5 mr-1 rounded-full h-[20px] w-[20px] inline-block">+</span>
+                <span
+                  class="bg-primary color-white leading-5 mr-1 rounded-full h-[20px] w-[20px] inline-block"
+                  >+</span
+                >
                 Click to add document(s)
               </x-button>
             </div>
@@ -660,7 +663,7 @@ const onAddDocumentSubmit = event => {
                 >
                   View
                 </x-button>
-                
+
                 <x-button
                   size="xs"
                   color="emerald"
