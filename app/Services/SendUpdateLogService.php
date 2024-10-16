@@ -1268,14 +1268,14 @@ class SendUpdateLogService
         return $brokerInvoiceNumber;
     }
 
-    public function getProviderDetails($quote, $quoteTypeId, $forSendUpdateCreation = false): array
+    public function getProviderDetails($quote, $quoteTypeId, $forSendUpdateCreation = false, $isCommercial = false): array
     {
         $insuranceProviderId = $plan_id = null;
         if ($forSendUpdateCreation && ($quote->insly_id || $quote->insly_migrated)) {
 
             return [$insuranceProviderId, $plan_id];
         }
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health]) && ! $isCommercial) {
             $quoteType = QuoteTypes::getName($quoteTypeId)->value;
             $quoteServiceFile = getServiceObject($quoteType);
             $quoteModel = app($quoteServiceFile)->getEntityPlain($quote->id)->load(['payments', 'plan']);
