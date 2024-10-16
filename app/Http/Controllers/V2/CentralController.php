@@ -21,6 +21,7 @@ use App\Exports\HealthQuotesExport;
 use App\Exports\HomeQuoteExport;
 use App\Exports\LifeQuotesExport;
 use App\Exports\PersonalQuotesExport;
+use App\Exports\RMQuotesExport;
 use App\Exports\TravelQuoteExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookPolicyRequest;
@@ -539,7 +540,11 @@ class CentralController extends Controller
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
         }
     }
-    public function exportRmLeads(){
-        return app(HealthQuoteService::class)->exportRmLeads();
+    public function exportRmLeads()
+    {
+        if (! auth()->user()->can(PermissionsEnum::EXPORT_RM_LEADS)) {
+            return response()->json(['message' => 'User Has No Permission to Download RM Leads.'], 403);
+        }
+        return app(RMQuotesExport::class)->download('RM-Leads-List');
     }
 }

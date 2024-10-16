@@ -1917,9 +1917,7 @@ class HealthQuoteService extends BaseService
         $carTeam = $this->getProductByName(quoteTypeCode::Car);
         $healthTeam = $this->getProductByName(quoteTypeCode::Health);
 
-        //        dd($startOfMonth , $endOfPreviousDay);
-
-        $query = DB::table('health_quote_request as q')
+        return DB::table('health_quote_request as q')
             ->select([
                 'q.code as Ref_Id',
                 DB::raw("DATE_FORMAT(q.transaction_approved_at, '%m/%d/%Y') as Transaction_Approved_At"),
@@ -1962,10 +1960,6 @@ class HealthQuoteService extends BaseService
                     ->where('t.parent_team_id', $carTeam->id);
             })
             ->groupBy('q.code', 'q.transaction_approved_at', 'u.name', 'u.email', 'qs.text', 'ps.text', 'q.created_at')
-            ->orderBy('q.created_at', 'ASC')
-            ;
-        dd($query->toSql());
-
-        return $query;
+            ->orderBy('q.created_at', 'ASC');
     }
 }

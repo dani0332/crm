@@ -371,6 +371,7 @@ final class PermissionsEnum extends Enum
     public const TRAVEL_SIC_ALLOCATION = 'travel-sic-allocation';
     public const SUPER_LEAD_STATUS_CHANGE = 'super-lead-status-change';
     public const ReApprovePayments = 'reapprove-payment';
+    public const EXPORT_RM_LEADS = 'export-rm-leads';
 
     public static function getAdvisorConversionReportPermissions()
     {
