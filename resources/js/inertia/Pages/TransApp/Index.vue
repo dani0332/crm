@@ -5,53 +5,92 @@ defineProps({
   insuranceCompanies: Array,
   paymentModes: Array,
   reasons: Array,
-  isTransappAdmin: Boolean,
+  isTransappAdmin: String,
   teams: Array,
   isCarManager: Boolean,
   data: Object,
 });
 
+const loader = reactive({
+  table: false,
+});
+
+const page = usePage();
+const notification = useToast();
+
+const hasRole = role => useHasRole(role);
+const hasAnyRole = role => useHasAnyRole(role);
+const rolesEnum = page.props.rolesEnum;
+
+const cleanObj = obj => useCleanObj(obj);
+
+let params = useUrlSearchParams('history');
+
 const tableHeader = ref([
-  { text: 'Approval Code', value: '' },
-  { text: 'Transaction Date', value: '' },
-  { text: 'Insurance Company', value: '' },
-  { text: 'Premium', value: '' },
-  { text: 'Name', value: '' },
-  { text: 'Risk Detail', value: '' },
-  { text: 'Transactor', value: '' },
-  { text: 'Advisor', value: '' },
-  { text: 'Payment mode', value: '' },
-  { text: 'Previous Approval Code', value: '' },
+  { text: 'Approval Code', value: 'approval_code' },
+  { text: 'Transaction Date', value: 'created_at' },
+  { text: 'Insurance Company', value: 'insurance' },
+  { text: 'Premium', value: 'amount_paid' },
+  { text: 'Name', value: 'customer_name' },
+  { text: 'Risk Detail', value: 'risk_details' },
+  { text: 'Transactor', value: 'created_by_name' },
+  { text: 'Advisor', value: 'handler_name' },
+  { text: 'Payment mode', value: 'payment_mode' },
+  { text: 'Previous Approval Code', value: 'prev_approval_code' },
 ]);
 
 const filters = reactive({
-  transapp_start_date: null,
-  transapp_stop_date: null,
+  transapp_start_date: useDateFormat(useNow(), 'YYYY-MM-DD').value || null,
+  transapp_stop_date: useDateFormat(useNow(), 'YYYY-MM-DD').value || null,
   transapp_approval_code: null,
   transapp_customer_email: null,
   transapp_customer_name: null,
-  created_at_start: new Date() || '',
-  created_at_end: new Date() || '',
-  sub_team: '',
-  quote_status: [],
-  advisors: [],
-  is_ecommerce: '',
-  is_renewal: '',
-  previous_quote_policy_number: '',
-  renewal_batch: '',
-  date: null,
-  assigned_to_date_start: '',
-  assigned_to_date_end: '',
-  payment_status: [],
-  is_cold: false,
-  is_stale: false,
-  status_filters: null,
-  payment_due_date: '',
-  booking_date: '',
-  policy_expiry_date: '',
-  policy_expiry_date_end: '',
-  segment_filter: '',
-  transaction_approved_dates: '',
+  transactor: null,
+  handler: null,
+  insurance_company: null,
+  reason: null,
+  payment_mode: null,
+  page: 1,
+});
+
+function onSubmit(isValid) {
+  const filtersCleaned = cleanObj(filters);
+  router.visit(route('transaction.index'), {
+    method: 'get',
+    data: {
+      ...filtersCleaned,
+    },
+    preserveState: true,
+    preserveScroll: true,
+    onBefore: () => (loader.table = true),
+    onFinish: () => (loader.table = false),
+  });
+}
+
+function onReset() {
+  router.visit(route('transaction.index'), {
+    method: 'get',
+    data: { page: 1 },
+    preserveScroll: true,
+    onBefore: () => (loader.table = true),
+    onSuccess: () => (loader.table = false),
+  });
+}
+
+function setQueryStringFilters() {
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key] ?? value;
+    } else {
+      filters[key] = isNaN(parseInt(params[key]))
+        ? params[key]
+        : parseInt(params[key]);
+    }
+  }
+}
+
+onMounted(() => {
+  setQueryStringFilters();
 });
 </script>
 
@@ -64,10 +103,11 @@ const filters = reactive({
       </template>
     </StickyHeader>
     <x-divider class="my-4" />
-    <x-form @submit="" :auto-focus="false">
+    <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <x-field label="Start Date">
           <DatePicker
+            v-model="filters.transapp_start_date"
             name="date_of_purchase"
             class="w-full"
             model-type="yyyy-MM-dd"
@@ -75,13 +115,23 @@ const filters = reactive({
         </x-field>
         <x-field label="Stop Date">
           <DatePicker
+            v-model="filters.transapp_stop_date"
             name="date_of_purchase"
             class="w-full"
             model-type="yyyy-MM-dd"
           />
         </x-field>
-        <x-field label="Transactor">
+        <x-field
+          label="Transactor"
+          v-if="
+            hasAnyRole([
+              rolesEnum.TRANSAPP_ADVISOR,
+              rolesEnum.TRANSAPP_APPROVER,
+            ])
+          "
+        >
           <x-select
+            v-model="filters.transactor"
             placeholder="Select Transactor"
             class="w-full"
             filterable
@@ -90,8 +140,17 @@ const filters = reactive({
             "
           />
         </x-field>
-        <x-field label="Advisor">
+        <x-field
+          label="Advisor"
+          v-if="
+            hasAnyRole([
+              rolesEnum.TRANSAPP_ADVISOR,
+              rolesEnum.TRANSAPP_APPROVER,
+            ])
+          "
+        >
           <x-select
+            v-model="filters.handler"
             :options="
               handlers.map(item => ({ label: item.name, value: item.id }))
             "
@@ -102,6 +161,7 @@ const filters = reactive({
         </x-field>
         <x-field label="Insurance Company">
           <x-select
+            v-model="filters.insurance_company"
             :options="
               insuranceCompanies.map(item => ({
                 label: item.name,
@@ -115,6 +175,7 @@ const filters = reactive({
         </x-field>
         <x-field label="Reason">
           <x-select
+            v-model="filters.reason"
             :options="
               reasons.map(item => ({
                 label: item.name,
@@ -127,13 +188,22 @@ const filters = reactive({
           />
         </x-field>
         <x-field label="Customer Email">
-          <x-input placeholder="Customer Email" class="w-full" />
+          <x-input
+            v-model="filters.transapp_customer_email"
+            placeholder="Customer Email"
+            class="w-full"
+          />
         </x-field>
         <x-field label="Approval Code">
-          <x-input placeholder="Approval Code" class="w-full" />
+          <x-input
+            v-model="filters.transapp_approval_code"
+            placeholder="Approval Code"
+            class="w-full"
+          />
         </x-field>
         <x-field label="Payment mode">
           <x-select
+            v-model="filters.payment_mode"
             :options="
               paymentModes.map(item => ({
                 label: item.name,
@@ -145,72 +215,27 @@ const filters = reactive({
             class="w-full"
           />
         </x-field>
-        <!-- <x-field label="Quote type">
+        <x-field label="Teams" v-if="hasRole(rolesEnum.CAR_MANAGER)">
           <x-select
-            v-model="filters.quote_type"
-            placeholder="Select Quote Type"
-            :options="quoteTypesOptions"
+            v-model="filters.team"
+            :options="
+              teams.map(item => ({
+                label: item.name,
+                value: item.id,
+              }))
+            "
+            filterable
+            placeholder="Select Team"
             class="w-full"
           />
         </x-field>
-        <x-field label="UUID">
-          <x-input
-            v-model="filters.uuid"
-            type="search"
-            name="first_name"
-            class="w-full"
-            placeholder="Type here"
-          />
-        </x-field>
-        <x-field label="Is Synced?">
-          <x-select
-            v-model="filters.is_synced"
-            placeholder="Select Is Synced?"
-            :options="isSyncedOptions"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Status">
-          <x-select
-            v-model="filters.status"
-            placeholder="Select Status"
-            :options="quoteSyncStatusOptions"
-            class="w-full"
-          />
-        </x-field>
-        <x-field label="Synced At">
-          <DatePicker
-            v-model="filters.synced_at"
-            name="date_of_purchase"
-            class="w-full"
-            model-type="yyyy-MM-dd"
-            range
-            max-range="7"
-          />
-        </x-field>
-        <x-field label="Created At">
-          <DatePicker
-            v-model="filters.created_at"
-            name="date_of_purchase"
-            class="w-full"
-            model-type="yyyy-MM-dd"
-            range
-            max-range="7"
-          />
-        </x-field>
-        <x-field label="Distinct">
-          <x-select
-            v-model="filters.distinct"
-            placeholder="Select Distinct"
-            :options="distinctOptions"
-            class="w-full"
-          />
-        </x-field> -->
       </div>
       <div class="flex justify-end">
         <div class="flex justify-self-end gap-3">
           <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-          <x-button size="sm" color="primary" @click.prevent="">Reset</x-button>
+          <x-button size="sm" color="primary" @click.prevent="onReset"
+            >Reset</x-button
+          >
         </div>
       </div>
     </x-form>
@@ -221,20 +246,21 @@ const filters = reactive({
       table-class-name="compact text-wrap"
       :headers="tableHeader"
       :items="data.data || []"
+      :loading="loader.table"
       border-cell
       hide-rows-per-page
       hide-footer
     >
     </DataTable>
 
-    <!-- <Pagination
+    <Pagination
       :links="{
-        next: logs.next_page_url,
-        prev: logs.prev_page_url,
-        current: logs.current_page,
-        from: logs.from,
-        to: logs.to,
+        next: data.next_page_url,
+        prev: data.prev_page_url,
+        current: data.current_page,
+        from: data.from,
+        to: data.to,
       }"
-    /> -->
+    />
   </div>
 </template>

@@ -43,7 +43,7 @@ class TransactionController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request, Transaction $transaction, Datatables $datatables)
+    public function index(Request $request, Transaction $transaction)
     {
         $transactors = $this->transactionService->getTransactors();
         $handlers = $this->transactionService->getHandlers();
