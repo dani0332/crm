@@ -26,7 +26,6 @@ class UploadAndCreateImport implements OnEachRow, SkipsOnFailure, WithChunkReadi
 
     private $validCount = 0;
     private $failedCount = 0;
-    private $policyNumbers = [];
     private $totalRows;
     private $fileName;
     private $renewalImportCode;
