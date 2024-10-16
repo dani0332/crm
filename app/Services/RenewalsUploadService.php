@@ -852,7 +852,6 @@ class RenewalsUploadService
                 }
             }
 
-
             $quote = $quoteObject->create($quoteData);
             if (! $isQuotePersonal) {
                 $this->syncQuote($quote, $quoteData);
@@ -915,14 +914,14 @@ class RenewalsUploadService
      * @param [type] $renewalQuoteProcess
      * @param [type] $renewalUploadLead
      * @param [type] $quoteObject
-     * @return boolean
+     * @return bool
      */
     private function checkForExistingQuote($data, $renewalQuoteProcess, $renewalUploadLead, $quoteObject)
-    {   
+    {
         $leadValidationErrors = collect($renewalQuoteProcess->validation_errors);
         $existingQuote = $quoteObject->where('previous_quote_policy_number', $renewalQuoteProcess->policy_number)
-                                     ->where('previous_policy_expiry_date', $this->formatDate($data['end_date']))
-                                     ->first();
+            ->where('previous_policy_expiry_date', $this->formatDate($data['end_date']))
+            ->first();
 
         if ($existingQuote) {
             $leadValidationErrors->push('Quote already created for this policy number, use upload and update');
@@ -931,6 +930,7 @@ class RenewalsUploadService
             $renewalQuoteProcess->save();
             $renewalUploadLead->cannot_upload += 1;
             $renewalUploadLead->save();
+
             return true;
         }
 
