@@ -13,21 +13,17 @@ class PetAllocation extends BaseAllocation
         $this->lead = $this->getLeadBaseQuery()->first();
     }
 
-    private function getAdvisor(int $onlineStatus, $role = RolesEnum::PetAdvisor)
-    {
-        return $this->getAdvisorBaseQuery($onlineStatus, [$role])->first();
-    }
-
+    // this function not being used as we overrode fetchAvailableAdvisor, this function exists here just to meet abstract function in parent class
     protected function fetchAdvisor(int $onlineStatus)
     {
-        return $this->getAdvisor($onlineStatus);
+        return null;
     }
 
     private function findEligibleAdvisor(array $statusOrder, $role)
     {
         foreach ($statusOrder as $status) {
             info(self::class." - trying to get {$role} with current status: {$status} for lead uuid: {$this->uuid}");
-            $eligibleUser = $this->getAdvisor($status, $role);
+            $eligibleUser = $this->getAdvisorBaseQuery($status, [$role])->first();
 
             if ($eligibleUser) {
                 info(self::class." - eligible {$role} found with status: {$status}, user id: {$eligibleUser->user_id}, and uuid: {$this->uuid}");
