@@ -53,7 +53,6 @@ class TransactionController extends Controller
         $isTransappAdmin = $this->transactionService->checkTransappAdmin();
         $isTransappNonAdmin = $this->transactionService->checkTransappNonAdmin();
 
-        // if ($request->ajax()) {
             $dataTransapp = $transaction::select(
                 'transactions.approval_code',
                 'transactions.created_at',
@@ -115,13 +114,8 @@ class TransactionController extends Controller
             }
 
         
-            $premiumAmount = $dataTransapp->get('amount_paid')->sum('amount_paid');
+        // $premiumAmount = $dataTransapp->get('amount_paid')->sum('amount_paid');
 
-            // return $datatables::of($dataTransapp)
-            //     ->addIndexColumn()
-            //     ->addColumn('premium_total', $premiumAmount)
-            //     ->make(true);
-        // }
 
         $teams = [];
         $teamIds = $this->getUserTeams(auth()->user()->id);
@@ -145,7 +139,6 @@ class TransactionController extends Controller
             'isCarManager' => $isCarManager,
             'data' => $dataTransapp->paginate(15)->withQueryString()
         ]);
-        // return view('transaction.view', compact('transactors', 'handlers', 'insuranceCompanies', 'paymentModes', 'reasons', 'isTransappAdmin', 'teams', 'isCarManager'));
     }
 
     /**
