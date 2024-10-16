@@ -209,12 +209,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'code' => SendUpdateLogStatusEnum::ATIB,
                     'tooltip' => '',
                 ],
-                [
-                    'name' => 'Additional tax invoice and commission booking',
-                    'key' => 'additional-tax-invoice-commission-booking',
-                    'code' => SendUpdateLogStatusEnum::ATICB,
-                    'tooltip' => 'Select this option when you need to book additional tax invoices and commission related to the initial policy. This might include the additional tax invoices for subgroups.',
-                ],
+
             ],
             'Bike' => [
                 [
@@ -255,12 +250,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'code' => SendUpdateLogStatusEnum::ATIB,
                     'tooltip' => '',
                 ],
-                [
-                    'name' => 'Additional tax invoice and commission booking',
-                    'key' => 'additional-tax-invoice-commission-booking',
-                    'code' => SendUpdateLogStatusEnum::ATICB,
-                    'tooltip' => 'Select this option when you need to book additional tax invoices and commission related to the initial policy. This might include the additional tax invoices for subgroups.',
-                ],
+
             ],
             'Health' => [
                 [
@@ -300,12 +290,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'code' => SendUpdateLogStatusEnum::ATIB,
                     'tooltip' => '',
                 ],
-                [
-                    'name' => 'Additional tax invoice and commission booking',
-                    'key' => 'additional-tax-invoice-commission-booking',
-                    'code' => SendUpdateLogStatusEnum::ATICB,
-                    'tooltip' => 'Select this option when you need to book additional tax invoices and commission related to the initial policy. This might include the additional tax invoices for subgroups.',
-                ],
+
             ],
             'Travel' => [
                 [
@@ -345,12 +330,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'code' => SendUpdateLogStatusEnum::ATIB,
                     'tooltip' => '',
                 ],
-                [
-                    'name' => 'Additional tax invoice and commission booking',
-                    'key' => 'additional-tax-invoice-commission-booking',
-                    'code' => SendUpdateLogStatusEnum::ATICB,
-                    'tooltip' => 'Select this option when you need to book additional tax invoices and commission related to the initial policy. This might include the additional tax invoices for subgroups.',
-                ],
+
             ],
             'Life' => [
                 [
@@ -375,12 +355,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'code' => SendUpdateLogStatusEnum::ATIB,
                     'tooltip' => '',
                 ],
-                [
-                    'name' => 'Additional tax invoice and commission booking',
-                    'key' => 'additional-tax-invoice-commission-booking',
-                    'code' => SendUpdateLogStatusEnum::ATICB,
-                    'tooltip' => 'Select this option when you need to book additional tax invoices and commission related to the initial policy. This might include the additional tax invoices for subgroups.',
-                ],
+
             ],
             'Home' => [
                 [
@@ -415,12 +390,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'code' => SendUpdateLogStatusEnum::ATIB,
                     'tooltip' => '',
                 ],
-                [
-                    'name' => 'Additional tax invoice and commission booking',
-                    'key' => 'additional-tax-invoice-commission-booking',
-                    'code' => SendUpdateLogStatusEnum::ATICB,
-                    'tooltip' => 'Select this option when you need to book additional tax invoices and commission related to the initial policy. This might include the additional tax invoices for subgroups.',
-                ],
+
             ],
             'Pet' => [
                 [
@@ -445,12 +415,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'code' => SendUpdateLogStatusEnum::ATIB,
                     'tooltip' => '',
                 ],
-                [
-                    'name' => 'Additional tax invoice and commission booking',
-                    'key' => 'additional-tax-invoice-commission-booking',
-                    'code' => SendUpdateLogStatusEnum::ATICB,
-                    'tooltip' => 'Select this option when you need to book additional tax invoices and commission related to the initial policy. This might include the additional tax invoices for subgroups.',
-                ],
+
             ],
             'Cycle' => [
                 [
@@ -475,12 +440,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'code' => SendUpdateLogStatusEnum::ATIB,
                     'tooltip' => '',
                 ],
-                [
-                    'name' => 'Additional tax invoice and commission booking',
-                    'key' => 'additional-tax-invoice-commission-booking',
-                    'code' => SendUpdateLogStatusEnum::ATICB,
-                    'tooltip' => 'Select this option when you need to book additional tax invoices and commission related to the initial policy. This might include the additional tax invoices for subgroups.',
-                ],
+
             ],
             'Yacht' => [
                 [
@@ -510,12 +470,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'code' => SendUpdateLogStatusEnum::ATIB,
                     'tooltip' => '',
                 ],
-                [
-                    'name' => 'Additional tax invoice and commission booking',
-                    'key' => 'additional-tax-invoice-commission-booking',
-                    'code' => SendUpdateLogStatusEnum::ATICB,
-                    'tooltip' => 'Select this option when you need to book additional tax invoices and commission related to the initial policy. This might include the additional tax invoices for subgroups.',
-                ],
+
             ],
             'MotorFleet' => [
                 [
@@ -566,12 +521,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'code' => SendUpdateLogStatusEnum::ATIB,
                     'tooltip' => '',
                 ],
-                [
-                    'name' => 'Additional tax invoice and commission booking',
-                    'key' => 'additional-tax-invoice-commission-booking',
-                    'code' => SendUpdateLogStatusEnum::ATICB,
-                    'tooltip' => 'Select this option when you need to book additional tax invoices and commission related to the initial policy. This might include the additional tax invoices for subgroups.',
-                ],
+
             ],
             'GroupMedical' => [
                 [
@@ -621,12 +571,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'code' => SendUpdateLogStatusEnum::ATIB,
                     'tooltip' => '',
                 ],
-                [
-                    'name' => 'Additional tax invoice and commission booking',
-                    'key' => 'additional-tax-invoice-commission-booking',
-                    'code' => SendUpdateLogStatusEnum::ATICB,
-                    'tooltip' => 'Select this option when you need to book additional tax invoices and commission related to the initial policy. This might include the additional tax invoices for subgroups.',
-                ],
+
             ],
             'Corpline' => [
                 [
@@ -698,12 +643,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'code' => SendUpdateLogStatusEnum::ATIB,
                     'tooltip' => '',
                 ],
-                [
-                    'name' => 'Additional tax invoice and commission booking',
-                    'key' => 'additional-tax-invoice-commission-booking',
-                    'code' => SendUpdateLogStatusEnum::ATICB,
-                    'tooltip' => 'Select this option when you need to book additional tax invoices and commission related to the initial policy. This might include the additional tax invoices for subgroups.',
-                ],
+
             ],
             // 'Jetski' => [
             //     //
