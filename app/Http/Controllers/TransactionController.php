@@ -53,7 +53,7 @@ class TransactionController extends Controller
         $isTransappAdmin = $this->transactionService->checkTransappAdmin();
         $isTransappNonAdmin = $this->transactionService->checkTransappNonAdmin();
 
-        if ($request->ajax()) {
+        // if ($request->ajax()) {
             $dataTransapp = $transaction::select(
                 'transactions.approval_code',
                 'transactions.created_at',
@@ -113,13 +113,15 @@ class TransactionController extends Controller
             if (isset($request->payment_mode) && ! empty($request->payment_mode)) {
                 $dataTransapp->where('transactions.payment_mode_id', $request->payment_mode);
             }
+
+        
             $premiumAmount = $dataTransapp->get('amount_paid')->sum('amount_paid');
 
-            return $datatables::of($dataTransapp)
-                ->addIndexColumn()
-                ->addColumn('premium_total', $premiumAmount)
-                ->make(true);
-        }
+            // return $datatables::of($dataTransapp)
+            //     ->addIndexColumn()
+            //     ->addColumn('premium_total', $premiumAmount)
+            //     ->make(true);
+        // }
 
         $teams = [];
         $teamIds = $this->getUserTeams(auth()->user()->id);
@@ -132,7 +134,18 @@ class TransactionController extends Controller
         }
         $isCarManager = auth()->user()->hasAnyRole([RolesEnum::CarManager]);
 
-        return view('transaction.view', compact('transactors', 'handlers', 'insuranceCompanies', 'paymentModes', 'reasons', 'isTransappAdmin', 'teams', 'isCarManager'));
+        return inertia('TransApp/Index', [
+            'transactors' => $transactors,
+            'handlers' => $handlers,
+            'insuranceCompanies' => $insuranceCompanies,
+            'paymentModes' => $paymentModes,
+            'reasons' => $reasons,
+            'isTransappAdmin' => $isTransappAdmin,
+            'teams' => $teams,
+            'isCarManager' => $isCarManager,
+            'data' => $dataTransapp->paginate(15)->withQueryString()
+        ]);
+        // return view('transaction.view', compact('transactors', 'handlers', 'insuranceCompanies', 'paymentModes', 'reasons', 'isTransappAdmin', 'teams', 'isCarManager'));
     }
 
     /**
