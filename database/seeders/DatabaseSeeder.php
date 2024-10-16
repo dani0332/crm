@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Console\Application;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -20,6 +19,8 @@ class DatabaseSeeder extends Seeder
             AddSuperLeadStatusChangePermission::class,
             QuoteStatusSeeder::class,
             AddReApprovePaymentPermission::class,
+            SendUpdateAdditionalTaxInvoice::class,
+            DocumentTypeSeeder::class,
             PermissionsSeeder::class,
         ]);
     }

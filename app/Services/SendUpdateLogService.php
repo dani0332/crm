@@ -485,7 +485,7 @@ class SendUpdateLogService
             }
 
             if ($sendUpdateLogCategory == SendUpdateLogStatusEnum::EF) {
-                $invoiceDescription = 'E.'.$invoiceDescription;
+                $invoiceDescription = ($sendUpdateLog->option->code == SendUpdateLogStatusEnum::ATICB) ? 'A.'.$invoiceDescription : 'E.'.$invoiceDescription;
             } elseif (in_array($sendUpdateLogCategory, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
                 $invoiceDescription = 'CI.'.$invoiceDescription;
             } elseif ($sendUpdateLogCategory == SendUpdateLogStatusEnum::CPD) {
@@ -553,8 +553,7 @@ class SendUpdateLogService
         $isPolicyCertOrScheduleUploaded = in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $uploadedDocuments) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments);
         $requiredDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
 
-        if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])) {
-
+        if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB, SendUpdateLogStatusEnum::ATICB])) {
             return SendUpdateLogStatusEnum::SU; // Book Update
         }
 
@@ -1164,7 +1163,7 @@ class SendUpdateLogService
         return true;
     }
 
-    public function getSendUpdateDocuments($category): array
+    public function getSendUpdateDocuments($category, $option): array
     {
         $documentTypesByCategory = app(QuoteDocumentService::class)->getSendUpdateDocumentTypes();
 
@@ -1177,6 +1176,14 @@ class SendUpdateLogService
                     ])
                 ) {
                     $documentTypesByCategory[$documentCategory][$key]['is_required'] = (int) true;
+                } elseif (
+                    $option == SendUpdateLogStatusEnum::ATICB &&
+                    in_array($documentType['code'], [
+                        DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE,
+                        DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
+                    ])
+                ) {
+                    $documentTypesByCategory[$documentCategory][$key]['is_required'] = (int) false;
                 }
             }
         }
@@ -1268,14 +1275,14 @@ class SendUpdateLogService
         return $brokerInvoiceNumber;
     }
 
-    public function getProviderDetails($quote, $quoteTypeId, $forSendUpdateCreation = false): array
+    public function getProviderDetails($quote, $quoteTypeId, $forSendUpdateCreation = false, $isCommercial = false): array
     {
         $insuranceProviderId = $plan_id = null;
         if ($forSendUpdateCreation && ($quote->insly_id || $quote->insly_migrated)) {
 
             return [$insuranceProviderId, $plan_id];
         }
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health]) && ! $isCommercial) {
             $quoteType = QuoteTypes::getName($quoteTypeId)->value;
             $quoteServiceFile = getServiceObject($quoteType);
             $quoteModel = app($quoteServiceFile)->getEntityPlain($quote->id)->load(['payments', 'plan']);
