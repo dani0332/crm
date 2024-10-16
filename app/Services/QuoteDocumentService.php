@@ -245,9 +245,13 @@ class QuoteDocumentService extends BaseService
      *
      * @return Collection
      */
-    public function getQuoteDocuments($quoteType, $recordId, $documentTypeCodes = null)
+    public function getQuoteDocuments($quoteType, $recordId, $documentTypeCodes = null, $isSendUpdate = false)
     {
-        $quote = $this->getQuoteObject($quoteType, $recordId);
+        if ($isSendUpdate) {
+            $quote = SendUpdateLog::find($recordId);
+        } else {
+            $quote = $this->getQuoteObject($quoteType, $recordId);
+        }
 
         if ($quote && $documentTypeCodes) {
             // Return documents filtered by document type codes if provided
@@ -366,7 +370,7 @@ class QuoteDocumentService extends BaseService
                 }
 
                 return [
-                    'url' => $policyWording->link,
+                    'url' => preg_replace('/\s+$/m', '', $policyWording->link),
                     'name' => 'InsuranceMarket.ae™ Policy Handbook for Policy Number '.$quote->policy_number.'.'.pathinfo($policyWording->link, PATHINFO_EXTENSION),
                 ];
             });

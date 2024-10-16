@@ -247,29 +247,7 @@ export const getSavedQueryParams = () => {
   }
   return false;
 };
-export const maskEmail = emails => {
-  if (!emails) return null;
-  return emails
-    .split(',')
-    .map(email => {
-      const [localPart, domainPart] = email.split('@');
-      const maskedLocalPart =
-        localPart.substring(0, Math.ceil(localPart.length / 2)) +
-        '*'.repeat(localPart.length - Math.ceil(localPart.length / 2));
-      return `${maskedLocalPart}@${domainPart}`;
-    })
-    .join(',');
-};
 
-export const maskPhone = mobile_no => {
-  if (mobile_no) {
-    return mobile_no
-      .split('')
-      .map((char, index) => (index < mobile_no.length / 2 ? char : '*'))
-      .join('');
-  }
-  return null;
-};
 export const parseDate = dateString => {
   // Preliminary check for the DD-MM-YYYY format
   const ddMmYyyyRegex = /^\d{2}-\d{2}-\d{4}$/;
@@ -278,7 +256,7 @@ export const parseDate = dateString => {
   }
 
   const patterns = [
-    // Pattern: 24-Jun-2024, 24-6-2024, 6-24-2024, fri-6-2024, fri jun 2024, 24 june 2024, 2024-06-21
+    // Pattern: 24-Jun-2024, 24-6-2024, 6-24-2024, fri-6-2024, fri jun 2024, 05-Oct-2024 12:00am, 24 june 2024, 2024-06-21
     {
       regex: /^(\d{1,2})-([a-zA-Z]+)-(\d{4})$/,
       parts: ['day', 'month', 'year'],
@@ -287,6 +265,10 @@ export const parseDate = dateString => {
     { regex: /^(\d{1,2})-(\d{1,2})-(\d{4})$/, parts: ['month', 'day', 'year'] },
     { regex: /^[a-zA-Z]+-(\d{1,2})-(\d{4})$/, parts: ['month', 'year'] },
     { regex: /^[a-zA-Z]+ ([a-zA-Z]+) (\d{4})$/, parts: ['month', 'year'] },
+    {
+      regex: /(\d{2})-(\w{3})-(\d{4}) (\d{2}):(\d{2})(am|pm)/,
+      parts: ['day', 'month', 'year'],
+    },
     {
       regex: /^(\d{1,2}) ([a-zA-Z]+) (\d{4})$/,
       parts: ['day', 'month', 'year'],

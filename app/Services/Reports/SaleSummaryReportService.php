@@ -5,6 +5,7 @@ namespace App\Services\Reports;
 use App\Enums\EndorsementStatusEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
+use App\Exports\Reports\SaleSummaryReportExport;
 use App\Models\Lookup;
 use App\Models\PersonalQuote;
 use App\Models\SendUpdateLog;
@@ -128,18 +129,7 @@ class SaleSummaryReportService extends ManagementReport
 
             $this->formatData($processedData);
 
-            // Columns that are not integar and should not be summed
-            $nonIntegarIndexes = [0];
-            if (in_array($this->groupByColumn, ['advisor', 'department'])) {
-                $nonIntegarIndexes[] = 1;
-            }
-
-            return $this->download(
-                'Sale Summary Report '.$this->reportDateRange,
-                $processedData,
-                $this->headings(),
-                $nonIntegarIndexes
-            );
+            return (new SaleSummaryReportExport($processedData, $this->groupByColumn))->download("Sale Summary Report {$this->reportDateRange}.xlsx");
         } else {
             return $data;
         }
@@ -381,57 +371,6 @@ class SaleSummaryReportService extends ManagementReport
             'policyBookDate' => $defaultDate,
             'reportCategory' => ManagementReportCategoriesEnum::SALE_SUMMARY,
             'reportType' => ManagementReportTypeEnum::BOOKED_POLICIES,
-        ];
-    }
-
-    public function headings(): array
-    {
-        $headings = [
-            ucwords(str_replace('_', ' ', $this->groupByColumn)),
-        ];
-
-        if (in_array($this->groupByColumn, ['advisor', 'department'])) {
-            $headings[] = 'Department';
-        }
-
-        return [
-            ...$headings,
-            'Total Policies',
-            'Total Endorsements',
-            'Total Transactions',
-            'Price (VAT applicable)',
-            'Total VAT',
-            'Price (VAT not applicable)',
-            'Discount',
-            'Commission',
-            'Total Endorsement Amount',
-            'Total Price',
-        ];
-    }
-
-    public function map($quote): array
-    {
-        $groupBy = $this->groupByColumn;
-        $values = [
-            $quote->$groupBy ?? 'N/A',
-        ];
-
-        if (in_array($this->groupByColumn, ['advisor', 'department'])) {
-            $values[] = $quote->department ?? 'N/A';
-        }
-
-        return [
-            ...$values,
-            $quote->total_policies ?? 0,
-            $quote->total_endorsements ?? 0,
-            $quote->total_transaction ?? 0,
-            $quote->price_vat_applicable ?? '0.00',
-            $quote->total_vat ?? '0.00',
-            $quote->price_vat_not_applicable ?? '0.00',
-            $quote->discount ?? '0.00',
-            $quote->commission_vat_applicable ?? '0.00',
-            $quote->endorsements_amount ? \number_format($quote->endorsements_amount, 2, '.', ',') : '0.00',
-            $quote->total_price ? \number_format($quote->total_price, 2, '.', ',') : '0.00',
         ];
     }
 }

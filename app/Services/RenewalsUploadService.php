@@ -21,6 +21,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
+use App\Enums\ThirdPartyTagEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Exports\RenewalQuotesExport;
@@ -1375,7 +1376,7 @@ class RenewalsUploadService
         } else {
             info('Renewals OCB Email sending without advisor');
             $responseCode = $this->sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'car-quote-one-click-buy-batch', $emailTemplateId);
-            $this->triggerBirdWorkflow($emailData);
+            $this->triggerBirdWorkflow($emailData, $carQuote->mobile_no, $carQuote->uuid);
 
             return $responseCode;
         }
@@ -1386,16 +1387,19 @@ class RenewalsUploadService
      *
      * @param  object  $emailData
      */
-    private function triggerBirdWorkflow($emailData)
+    private function triggerBirdWorkflow($emailData, $mobile, $uuid)
     {
         $birdEmailData = [
             'SendNewProcessRenewalEmail' => true,
             'customerEmail' => $emailData->customerEmail,
+            'phone' => formatMobileNoWithoutPlus($mobile),
             'customerName' => $emailData->customerName,
             'quotePlanLink' => $emailData->quoteLink,
             'instantAlfredLink' => $emailData->quoteLink.'?IA=true',
             'refID' => $emailData->carQuoteId,
             'requestForAdvisor' => $emailData->requestAdvisorLink,
+            'quoteUUID' => $uuid,
+            'tag' => ThirdPartyTagEnum::BIRD_SIC_MOTOR_RENEWAL_TAG,
         ];
 
         $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_MOTOR_RENEWAL_WORKFLOW)->first();

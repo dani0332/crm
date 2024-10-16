@@ -51,15 +51,15 @@ class BusinessQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
                     $businessLead->update($data);
                     info('BusinessQuoteImport - Quote found: '.$businessLead->uuid.' - Quote updated');
                 }
+            } else {
+                info('BusinessQuoteImport - Quote status not defined');
             }
-            info('BusinessQuoteImport - Quote status not defined');
-
         }
     }
 
     public function chunkSize(): int
     {
-        return 1000;
+        return 1500;
     }
 
     private function getQuoteStatusId($dealStatus, $dealStage)
@@ -197,6 +197,8 @@ class BusinessQuoteImport implements ToModel, WithChunkReading, WithHeadingRow
             DealStageInsuranceTypes::EMPLOYERS_LIABILITY => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::workmens),
             DealStageInsuranceTypes::TRAVEL_ISURANCE => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::several),
             DealStageInsuranceTypes::MEDICAL_INSURANCE => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::medicalMalpractices),
+            DealStageInsuranceTypes::WORKSMEN => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::workmens),
+            DealStageInsuranceTypes::PHOTOGRAPHER => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::photographers),
         ];
 
         return $mapping[$insuranceType];

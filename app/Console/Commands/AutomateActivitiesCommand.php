@@ -213,6 +213,7 @@ class AutomateActivitiesCommand extends Command
                                         'quote_uuid' => $quoteDetail->uuid,
                                         'quote_status_id' => $quoteDetail->quote_status_id,
                                         'activity_schedule_id' => $activitySchedules->id,
+                                        'source' => LeadSourceEnum::IMCRM,
                                     ];
                                 }
                             }

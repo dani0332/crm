@@ -15,13 +15,10 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Interfaces\PaymentRepositoryInterface;
-use App\Models\CarQuote;
-use App\Models\HealthQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
-use App\Models\TravelQuote;
 use App\Models\User;
 use App\Services\ApplicationStorageService;
 use App\Services\PaymentLinkService;
@@ -330,6 +327,16 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         foreach ($masterPayment->payment_splits as $splitPayment) {
             $serialNo = $splitPayment['sr_no'];
+            //update payment amount for paid payments
+            if (isset($request->isPaidEditable) && $request->isPaidEditable && count($paymentPaidSerialNo) === $totalSplitPayments) {
+                $paymentSplit = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $serialNo])->first();
+                if ($paymentSplit) {
+                    $paymentSplit->update(['payment_amount' => $splitPayment['payment_amount']]);
+                }
+
+                continue;
+            }
+
             if (in_array($serialNo, $paymentPaidSerialNo)) {
                 continue;
             }
@@ -453,7 +460,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $payment->is_approved = 0;
             $payment->payment_status_id = PaymentStatusEnum::PARTIAL_CAPTURED;
             $payment->save();
-            $this->updateLeadStatus($payment); //update lead status
+            app(SplitPaymentService::class)->updateLeadStatus($payment); //update lead status
 
             return response()->json(['message' => 'Total Price Updated Successfully']);
         }
@@ -463,90 +470,94 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
     public function fetchUpdatePaymentStatus($request)
     {
-        $successMessage = 'Payment Verified';
-        $splitPayment = PaymentSplits::find($request->splitPaymentId);
-        $masterPayment = $splitPayment->payment;
-        if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
-            $paymentInformation = [
-                'collection_amount' => $request->collection_amount,
-                'bank_reference_number' => $request->bank_reference_number,
-                'payment_status_id' => PaymentStatusEnum::CAPTURED,
-                'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
-                'updated_by' => $request->user()->id,
-                'verified_at' => now(),
-                'verified_by' => $request->user()->id,
-            ];
+        $maxRetries = 2;
 
-            //associate approved documents with payment split
-            if (
-                isset($request->approved_document_model[$splitPayment->sr_no])
-                && count($request->approved_document_model[$splitPayment->sr_no]) > 0
-            ) {
-                foreach ($request->approved_document_model[$splitPayment->sr_no] as $document) {
-                    $quoteDocumentRec = QuoteDocument::find($document['id'] ?? '');
-                    if ($quoteDocumentRec) {
-                        if (empty($document['payment_split_id'])) {
-                            $quoteDocumentRec->payment_split_id = $splitPayment->id;
-                        } else {
-                            $quoteDocumentRec->document_type_code = $this->mapToReciept($quoteDocumentRec->document_type_code);
-                            $quoteDocumentRec->document_type_text = DocumentTypeEnum::RECEIPT;
+        return $this->handleWithDeadlockRetries(function () use ($request) {
+            $successMessage = 'Payment Verified';
+            $splitPayment = PaymentSplits::find($request->splitPaymentId);
+            $masterPayment = $splitPayment->payment;
+            if ($request->is_approved && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
+                $paymentInformation = [
+                    'collection_amount' => $request->collection_amount,
+                    'bank_reference_number' => $request->bank_reference_number,
+                    'payment_status_id' => PaymentStatusEnum::CAPTURED,
+                    'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
+                    'updated_by' => $request->user()->id,
+                    'verified_at' => now(),
+                    'verified_by' => $request->user()->id,
+                ];
+
+                //associate approved documents with payment split
+                if (
+                    isset($request->approved_document_model[$splitPayment->sr_no])
+                    && count($request->approved_document_model[$splitPayment->sr_no]) > 0
+                ) {
+                    foreach ($request->approved_document_model[$splitPayment->sr_no] as $document) {
+                        $quoteDocumentRec = QuoteDocument::find($document['id'] ?? '');
+                        if ($quoteDocumentRec) {
+                            if (empty($document['payment_split_id'])) {
+                                $quoteDocumentRec->payment_split_id = $splitPayment->id;
+                            } else {
+                                $quoteDocumentRec->document_type_code = $this->mapToReciept($quoteDocumentRec->document_type_code);
+                                $quoteDocumentRec->document_type_text = DocumentTypeEnum::RECEIPT;
+                            }
+                            $quoteDocumentRec->save();
                         }
-                        $quoteDocumentRec->save();
                     }
                 }
-            }
 
-            //create sage reciept
-            $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
+                //create sage reciept
+                $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
 
-            if ($isSageEnabled) {
-                $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment);
-                if ($sageResponse['status'] == 'success') {
-                    $paymentInformation['sage_reciept_id'] = $sageResponse['response'];
+                if ($isSageEnabled) {
+                    $sageResponse = app(SplitPaymentService::class)->createSageRecipt($request, $splitPayment);
+                    if ($sageResponse['status'] == 'success') {
+                        $paymentInformation['sage_reciept_id'] = $sageResponse['response'];
+                        $splitPayment->update($paymentInformation);
+                        if ($masterPayment) {
+                            $masterPayment->update(
+                                [
+                                    'captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
+                                    'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
+                                ]
+                            );
+                        }
+                    } else {
+                        $failMessage = $sageResponse['response'];
+                        vAbort($failMessage);
+                    }
+                } else {
                     $splitPayment->update($paymentInformation);
+
                     if ($masterPayment) {
+                        $masterCapturedAmount = $masterPayment->captured_amount + $request->collection_amount;
                         $masterPayment->update(
                             [
-                                'captured_amount' => ($masterPayment->captured_amount + $request->collection_amount),
+                                'captured_amount' => $masterCapturedAmount,
                                 'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
                             ]
                         );
                     }
-                } else {
-                    $failMessage = $sageResponse['response'];
-                    vAbort($failMessage);
                 }
-            } else {
+                /* Create payment receipt for broker*/
+                if ($masterPayment->collection_type == CollectionTypeEnum::BROKER) {
+                    app(SplitPaymentService::class)->createReceipt($request->modelType, $request->quote_id, $splitPayment, $request?->send_update_id);
+                }
+            } elseif ($request->is_declined && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
+                $paymentInformation = [
+                    'decline_reason_id' => $request->declined_reason,
+                    'decline_custom_reason' => $request->declined_custom_reason,
+                    'payment_status_id' => PaymentStatusEnum::DECLINED,
+                    'updated_by' => $request->user()->id,
+                ];
                 $splitPayment->update($paymentInformation);
-
-                if ($masterPayment) {
-                    $masterCapturedAmount = $masterPayment->captured_amount + $request->collection_amount;
-                    $masterPayment->update(
-                        [
-                            'captured_amount' => $masterCapturedAmount,
-                            'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
-                        ]
-                    );
-                }
+                $successMessage = 'Payment Declined';
             }
-            /* Create payment receipt for broker*/
-            if ($masterPayment->collection_type == CollectionTypeEnum::BROKER) {
-                app(SplitPaymentService::class)->createReceipt($request->modelType, $request->quote_id, $splitPayment, $request?->send_update_id);
-            }
-        } elseif ($request->is_declined && $splitPayment->payment_status_id != PaymentStatusEnum::PAID) {
-            $paymentInformation = [
-                'decline_reason_id' => $request->declined_reason,
-                'decline_custom_reason' => $request->declined_custom_reason,
-                'payment_status_id' => PaymentStatusEnum::DECLINED,
-                'updated_by' => $request->user()->id,
-            ];
-            $splitPayment->update($paymentInformation);
-            $successMessage = 'Payment Declined';
-        }
-        //Update parent payment status
-        $this->setMasterPaymentStatus($masterPayment);
+            //Update parent payment status
+            $this->setMasterPaymentStatus($masterPayment);
 
-        return $successMessage;
+            return $successMessage;
+        }, $maxRetries);
     }
 
     //map document type to reciept
@@ -628,28 +639,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 }
             }
             info('Updating lead status for Payment Code: '.$payment->code);
-            $this->updateLeadStatus($payment); //update lead status
-        }
-    }
-
-    // Update lead status for ecomm quotes
-    private function updateLeadStatus($payment)
-    {
-        $quoteModel = $payment->paymentable;
-        $ecommQuotes = [
-            CarQuote::class,
-            HealthQuote::class,
-            TravelQuote::class,
-        ];
-        if ($quoteModel) {
-            $quoteModel->payment_status_id = $payment->payment_status_id;
-            if (in_array($payment->paymentable_type, $ecommQuotes) && $payment->payment_status_id == PaymentStatusEnum::PAID) {
-                info('Setting payment_paid_at for Payment Code: '.$payment->code);
-                $quoteModel->payment_paid_at = now();
-            }
-            $quoteModel->save();
-            // Log after successfully saving the quote model
-            info('Lead payment status updated for Code: '.$payment->code.' to '.$payment->payment_status_id);
+            app(SplitPaymentService::class)->updateLeadStatus($payment); //update lead status
         }
     }
 
@@ -678,8 +668,14 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
 
         $insuranceProviderCode = $insuranceProvider?->code;
-        $latestBINByInsurer = Payment::whereNotNull('broker_invoice_number')->where('insurance_provider_id', $insuranceProvider->id)->orderBy('updated_at', 'desc')->first()?->broker_invoice_number;
-        $insuranceProviderLeadCount = (int) str_replace($insuranceProviderCode, '', $latestBINByInsurer) + 1;
+        $latestBINByInsurer = Payment::selectRaw("CAST(REGEXP_REPLACE(broker_invoice_number, '[^0-9.E+-]', '') AS DECIMAL(65, 30)) AS broker_invoice_number")
+            ->whereNotNull('broker_invoice_number')
+            ->whereNull('send_update_log_id')
+            ->where('insurance_provider_id', $insuranceProvider?->id)
+            ->orderByRaw("CAST(REGEXP_REPLACE(broker_invoice_number, '[^0-9.E+-]', '') AS DECIMAL(65,30)) DESC")
+            ->first()?->broker_invoice_number; //get latest broker invoice number for insurer
+
+        $insuranceProviderLeadCount = ((int) $latestBINByInsurer) + 1;
 
         return $insuranceProviderCode.$insuranceProviderLeadCount;
     }

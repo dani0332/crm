@@ -16,6 +16,7 @@ use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
+use App\Services\LeadAllocationService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -77,11 +78,23 @@ class SendUpdateLogRepository extends BaseRepository
                 $quote = $quoteServiceFile->getEntity($data['quote_uuid']);
             }
 
+            $commercialRules = false;
+            if ($quoteType == QuoteTypes::CAR->value) {
+                $commercialRules = app(LeadAllocationService::class)->isCommercialVehicles($quote);
+                if ($commercialRules) {
+                    info('Commercial Rules - SendUpdateUUID: '.$uuid.' - QuoteUUID: '.$quote->uuid);
+                }
+            }
+
             // it will check if send update type is Correction of Policy Details or Endorsement Financial with subtype Policy Period Extension, it will save
             // insurance_provider_id and plan_id.
             $policyDetails = [];
-            if ($category == SendUpdateLogStatusEnum::CPD || ($category == SendUpdateLogStatusEnum::EF && $option == SendUpdateLogStatusEnum::PPE)) {
-                @[$insuranceProviderId, $plan_id] = app(SendUpdateLogService::class)->getProviderDetails($quote, $data['quote_type_id'], true);
+            if (
+                $category == SendUpdateLogStatusEnum::CPD
+                || ($category == SendUpdateLogStatusEnum::EF && $option == SendUpdateLogStatusEnum::PPE)
+                || ($quoteType == QuoteTypes::CAR->value && $commercialRules)
+            ) {
+                @[$insuranceProviderId, $plan_id] = app(SendUpdateLogService::class)->getProviderDetails($quote, $data['quote_type_id'], true, $commercialRules);
                 $policyDetails = $this->autoFillPolicyDetails($quote, $data['quote_type_id'], $insuranceProviderId, $plan_id);
             }
 
@@ -202,6 +215,9 @@ class SendUpdateLogRepository extends BaseRepository
 
             if ($payments->payment_status_id == PaymentStatusEnum::PAID) {
                 $payments->payment_status_id = PaymentStatusEnum::PARTIALLY_PAID;
+                if ($data['price_with_vat'] < ($payments->total_amount + $payments->discount_value)) {
+                    app(SendUpdateLogService::class)->updatePaymentTotalPrice($payments, $data['price_with_vat']);
+                }
             }
 
             return $payments->save();
@@ -252,44 +268,54 @@ class SendUpdateLogRepository extends BaseRepository
         return $result;
     }
 
-    public function fetchSendUpdateToCustomer($data)
+    public function fetchSendUpdateToCustomer($request)
     {
-        $sendUpdateLog = $this->find($data['sendUpdateId']);
+        $sendUpdateLog = $this->find($request['sendUpdateId']);
+        info('fn:SendUpdateToCustomer - Process Start - SendUpdateCode: '.$sendUpdateLog->code);
+
         try {
-            if ($data['quoteType'] == quoteTypeCode::Car && $sendUpdateLog->category->code == SendUpdateLogStatusEnum::EN) {
+            if (isset($request['action']) && $request['action'] == SendUpdateLogStatusEnum::ACTION_SNBU) {
+                $endorsementResponse = app(SendUpdateLogService::class)->preparedDataForEndorsement((object) $request);
+                if ($endorsementResponse['status'] && isset($endorsementResponse['skipSageCalls'])) {
+                    $response[] = ['status' => 200, 'message' => $endorsementResponse['message']];
+                }
+
+                if (! $endorsementResponse['status']) {
+                    $response[] = ['status' => 500, 'message' => $endorsementResponse['message']];
+                }
+
+                if ($endorsementResponse['status'] && ! empty($endorsementResponse['sageRequestPayload'])) {
+                    $request['dispatchSageCall'] = true;
+                    $request['sageRequestPayload'] = $endorsementResponse['sageRequestPayload'];
+                    $response[] = ['status' => 200, 'message' => $endorsementResponse['message']];
+                }
+            }
+
+            if ($request['quoteType'] == quoteTypeCode::Car && $sendUpdateLog->category->code == SendUpdateLogStatusEnum::EN) {
                 $quote = CarQuote::where('uuid', $sendUpdateLog->quote_uuid)->first();
-                if (! empty($sendUpdateLog->emirates_id)) { // will work on Change of Emirates (with no financial impact).
+                if (! empty($sendUpdateLog->emirates_id)) {
+                    info('fn:SendUpdateToCustomer - Updating Emirates ID - SendUpdateCode: '.$sendUpdateLog->code.' - Emirates ID: '.$sendUpdateLog->emirates_id);
                     $quote->update(['emirate_of_registration_id' => $sendUpdateLog->emirates_id]);
-                } elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0) { // will work on Change in seating capacity (with no financial impact).
+                } elseif (! empty($sendUpdateLog->seating_capacity) && $sendUpdateLog->seating_capacity != 0) {
+                    info('fn:SendUpdateToCustomer - Updating Seating Capacity - SendUpdateCode: '.$sendUpdateLog->code.' - Seating Capacity: '.$sendUpdateLog->seating_capacity);
                     $quote->update(['seat_capacity' => $sendUpdateLog->seating_capacity]);
                 }
             }
 
-            dispatch(new SendUpdateToCustomerJob($sendUpdateLog, $data));
-
-            /*$sendUpdateLog->update([
-                'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
-            ]);*/
-
-            // temporary comments.
-            /*if (! $sendUpdateLog->is_email_sent) {
-                dispatch(new SendUpdateToCustomerJob($sendUpdateLog, $data));
+            if ($sendUpdateLog->is_email_sent) {
+                $response[] = ['status' => 200, 'message' => 'Email already sent to customer'];
             } else {
-                $sendUpdateLog->update([
-                    'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
-                ]);
-            }*/
-            info('Send update to Customer - Send Update Code: '.$sendUpdateLog->code.' - Status update to: '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
-            $result = true;
-        } catch (\Exception $ex) {
-            logger()->error('Send Update to Customer - Failed - Send Update Code: '.$sendUpdateLog->code.' - Error : '.$ex->getMessage());
+                $response[] = ['status' => 200, 'message' => 'Send Update to customer email is being scheduled'];
+            }
 
-            $result = (object) [
-                'message' => $ex->getMessage(),
-            ];
+            SendUpdateToCustomerJob::dispatch($sendUpdateLog, $request)->onQueue('insly');
+            info('fn:SendUpdateToCustomer - Process End - SendUpdateCode: '.$sendUpdateLog->code.' - Status updating to '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
+        } catch (\Exception $ex) {
+            logger()->error('fn:SendUpdateToCustomer - Failed - SendUpdateCode: '.$sendUpdateLog->code.' - Error : '.json_encode($ex->getMessage()));
+            $response = ['status' => 500, 'message' => 'Something went wrong, please try again later'];
         }
 
-        return $result;
+        return $response;
     }
 
     public function fetchSaveBookingDetails($data)
@@ -323,22 +349,28 @@ class SendUpdateLogRepository extends BaseRepository
                 $bookingDetails['reversal_invoice'] = $data['reversal_invoice'];
             }
 
+            $result = $sendUpdate->update($bookingDetails);
+            $sendUpdate->save(); // This save is used because sometime object not refresh properly
+            $sendUpdate->refresh();
+
             $payment = Payment::where('send_update_log_id', $data['id'])->first();
             if ($payment) {
                 $sendUpdateLogService = app(SendUpdateLogService::class);
                 info('Send update - Updating Booking details and Commission Schedule in Payments - SendUpdateUUID: '.$sendUpdate->uuid);
-                $sendUpdateLogService->sendUpdatePriceAndDiscount($sendUpdate, $payment);
+                if ($data['price_with_vat'] < ($payment->total_amount + $payment->discount_value)) {
+                    $sendUpdateLogService->updatePaymentTotalPrice($payment, $data['price_with_vat']);
+                } else {
+                    $sendUpdateLogService->sendUpdatePriceAndDiscount($sendUpdate, $payment);
+                }
                 $sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate, true);
                 app(SplitPaymentService::class)->updateCommissionSchedule($payment);
             }
-
-            $result = $sendUpdate->update($bookingDetails);
 
         } catch (\Exception $ex) {
             $result = (object) [
                 'message' => $ex->getMessage(),
             ];
-            info('Unable to save Booking Details - SendUpdateUUID: '.$sendUpdate->uuid.' - Error: '.$ex->getMessage());
+            info('Unable to save Booking Details - SendUpdateCode: '.$sendUpdate->code.' - Error: '.$ex->getMessage());
         }
 
         return $result;
