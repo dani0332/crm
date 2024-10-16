@@ -24,7 +24,7 @@ const loader = ref(false);
 const tableHeaders = reactive([
   {
     text: 'Created At',
-    value: '_id',
+    value: 'id',
   },
   {
     text: 'View',
@@ -69,7 +69,7 @@ const showChat = item => {
       loader.value = false;
       chatMessages.value.created_at = item.id;
       chatMessages.value.data = data;
-      chatMessages.value.id = item.quote_type + '-' + item.quote_id;
+      chatMessages.value.id = props.quoteType + '-' + props.quoteId;
       showChatLogs.value = true;
     })
     .catch(error => {

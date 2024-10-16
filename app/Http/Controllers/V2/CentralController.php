@@ -20,7 +20,11 @@ use App\Exports\CarQuoteExportWithPlans;
 use App\Exports\HealthQuotesExport;
 use App\Exports\HomeQuoteExport;
 use App\Exports\LifeQuotesExport;
+use App\Exports\NonPUAQuoteExport;
 use App\Exports\PersonalQuotesExport;
+use App\Exports\PUAQuoteExport;
+use App\Exports\PUAUpdatesExport;
+use App\Exports\RMQuotesExport;
 use App\Exports\TravelQuoteExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BookPolicyRequest;
@@ -530,9 +534,14 @@ class CentralController extends Controller
                 $healthQuote->quote_status_id = QuoteStatusEnum::Quoted;
                 $healthQuote->quote_status_date = now();
                 $healthQuote->save();
-                $delayTime = isLeadSic($healthQuote->uuid) ? 3 : 2;
-                OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addMinutes($delayTime));
-                info('OCAHealthFollowupEmailJob dispatched for HEA-'.$healthQuote->uuid.' - Time: '.now());
+                $healthAutoFollowupSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_AUTOMATED_FOLLOWUPS_SWITCH)->first();
+                // Send Automated Followup Email Job if Health Auto-Followups is enabled.
+                if ($healthAutoFollowupSwitch && $healthAutoFollowupSwitch->value == 1) {
+                    $delayTime = isLeadSic($healthQuote->uuid) ? 3 : 2;
+                    OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addMinutes($delayTime));
+                    info('OCAHealthFollowupEmailJob dispatched for HEA-'.$healthQuote->uuid.' - Time: '.now());
+                }
+
             }
             info('sendHealthEmailOneClickBuy - OCB Email Sent & Quote Status Changed to "QUOTED" for quote uuid: '.$request->quote_uuid);
 
@@ -542,5 +551,53 @@ class CentralController extends Controller
 
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
         }
+    }
+    public function exportRmLeads()
+    {
+        if (! auth()->user()->can(PermissionsEnum::EXPORT_RM_LEADS)) {
+            return response()->json(['message' => 'User Has No Permission to Download RM Leads.'], 403);
+        }
+
+        return app(RMQuotesExport::class)->download('RM-Leads-List');
+    }
+    public function exportPUAUpdates(Request $request)
+    {
+        if (! auth()->user()->can(PermissionsEnum::EXPORT_CAR_PUA_UPDATES)) {
+            return response()->json(['message' => 'User Has No Permission to Download PUA Updates.'], 403);
+        }
+
+        $zipFileName = 'PUA-UPDATES.zip';
+        $zipFilePath = storage_path('temp/'.$zipFileName);
+        $zip = new \ZipArchive;
+
+        if ($zip->open($zipFilePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            return response()->json(['message' => 'Could not create ZIP file.'], 500);
+        }
+
+        try {
+            $puaUpdateExport = app(PUAQuoteExport::class)->download('PUA-AUTHORIZED.xlsx');
+            $nonPuaUpdateExport = app(NonPUAQuoteExport::class)->download('NON-PUA-AUTHORIZED.xlsx');
+            $puaUpdatesExport = app(PUAUpdatesExport::class)->download('PUA-UPDATES.xlsx');
+
+            $files = [
+                ['path' => $puaUpdateExport->getFile()->getRealPath(), 'name' => 'PUA-AUTHORIZED.xlsx'],
+                ['path' => $nonPuaUpdateExport->getFile()->getRealPath(), 'name' => 'NON-PUA-AUTHORIZED.xlsx'],
+                ['path' => $puaUpdatesExport->getFile()->getRealPath(), 'name' => 'PUA-UPDATES.xlsx'],
+            ];
+
+            foreach ($files as $file) {
+                if (file_exists($file['path'])) {
+                    $zip->addFile($file['path'], $file['name']);
+                } else {
+                    info("File does not exist: {$file['path']}");
+                }
+            }
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error processing exports: '.$e->getMessage()], 500);
+        }
+
+        $zip->close();
+
+        return response()->download($zipFilePath)->deleteFileAfterSend(true);
     }
 }
