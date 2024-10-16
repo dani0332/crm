@@ -133,19 +133,20 @@ class InboundEmailsHookService extends BaseService
         return apiResponse([], Response::HTTP_OK, 'Lead Assigned to Advisor Successfully!');
     }
 
-        public function handleBirdWebhook($request)
+    public function handleBirdWebhook($request)
     {
         try {
             $payload = collect($request->all());
             if ($payload->isEmpty()) {
                 info('Bird Webhook Payload data is empty!');
+
                 return apiResponse([], Response::HTTP_BAD_REQUEST, 'Webhook Payload is empty!');
             }
             // Extract the event type from the payload
             $type = $payload['payload']['type'] ?? null;
 
-            if (!empty($type)) {
-                info('Bird Webhook  Payload: ' . json_encode($payload));
+            if (! empty($type)) {
+                info('Bird Webhook  Payload: '.json_encode($payload));
                 // Extract necessary fields from the payload
                 $messageId = $payload['payload']['messageId'] ?? null;
                 $status = $type;
@@ -156,31 +157,33 @@ class InboundEmailsHookService extends BaseService
                         ->merge(['identifierValue' => $identifierValue])
                         ->filter();
 
-                    $this->birdMessageInteractionsUpdate($result,$identifierValue);
+                    $this->birdMessageInteractionsUpdate($result, $identifierValue);
                     // Handle specific status types if necessary
                     if (in_array($type, [ProcessStatusCode::UNSUBSCRIBED])) {
                         $this->sendUnsubscribeEmailNotification($messageId);
                     }
                 } else {
                     info('Required fields missing in the payload.');
+
                     return apiResponse([], Response::HTTP_BAD_REQUEST, 'Invalid payload data.');
                 }
             } else {
                 // Handle cases where no type is provided in the payload
                 info('Type not found in the payload.');
+
                 return apiResponse([], Response::HTTP_BAD_REQUEST, 'Invalid webhook data.');
             }
 
             return apiResponse([], Response::HTTP_OK, 'Webhook Received Successfully!');
         } catch (\Throwable $th) {
-            info("Bird Webhook Error: {$th->getMessage()} on line: {$th->getLine()} in file: {$th->getFile()} | " . PHP_EOL . $th->getTraceAsString());
+            info("Bird Webhook Error: {$th->getMessage()} on line: {$th->getLine()} in file: {$th->getFile()} | ".PHP_EOL.$th->getTraceAsString());
             throw $th;
         }
     }
     public function birdMessageInteractionsUpdate($result, $identifierValue = null)
     {
         $result = (object) $result->all();
-        info('Webhook birdMessageInteractionsUpdate Payload: ' . json_encode($result));
+        info('Webhook birdMessageInteractionsUpdate Payload: '.json_encode($result));
         $messageId = $result->messageId ?? null;
         $status = $result->type ?? null;
         $emailSubject = $result->reason ?? null;
@@ -190,14 +193,14 @@ class InboundEmailsHookService extends BaseService
                 'message_id' => $messageId,
                 'status' => $status,
                 'subject' => $emailSubject,
-                'customer_email' => $identifierValue
+                'customer_email' => $identifierValue,
             ];
             // Dispatch the EmailStatusEventJob to handle the email status update
-            info('EmailStatusEventJob sending job dispatch | Time: ' . now());
+            info('EmailStatusEventJob sending job dispatch | Time: '.now());
             EmailStatusEventJob::dispatch($emailData)->delay(Carbon::now()->addSeconds(120));
             info('EmailStatusEventJob dispatched successfully!');
         } else {
-            $msg = 'EmailData not found for msg_id: ' . $messageId;
+            $msg = 'EmailData not found for msg_id: '.$messageId;
             info($msg);
         }
     }
