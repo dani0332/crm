@@ -1069,7 +1069,7 @@ class HealthQuoteService extends BaseService
                 $getContents = $kenRequest->getBody();
                 $getdecodeContents = json_decode($getContents);
 
-                return $getdecodeContents;
+                return $getdecodeContents->quote;
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $response = $e->getResponse();

@@ -641,9 +641,13 @@ class SendEmailCustomerService extends BaseService
         } elseif ($response && isset($response->message)) {
 
             info('RM Intro Email Triggered to CAPI for HEA-'.$quoteUuid.' - Message: '.$response->message);
-            $delayTime = isLeadSic($quoteUuid) ? 3 : 2;
-            OCAHealthFollowupEmailJob::dispatch($quoteUuid)->delay(Carbon::now()->addMinutes($delayTime));
-            info('OCAHealthFollowupEmailJob dispatched for HEA-'.$quoteUuid.' - Time: '.now());
+            $healthAutoFollowupSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_AUTOMATED_FOLLOWUPS_SWITCH)->first();
+            // Send Automated Followup Email Job if Health Auto-Followups is enabled.
+            if ($healthAutoFollowupSwitch && $healthAutoFollowupSwitch->value == 1) {
+                $delayTime = isLeadSic($quoteUuid) ? 3 : 2;
+                OCAHealthFollowupEmailJob::dispatch($quoteUuid)->delay(Carbon::now()->addMinutes($delayTime));
+                info('OCAHealthFollowupEmailJob dispatched for HEA-'.$quoteUuid.' - Time: '.now());
+            }
         }
     }
 
