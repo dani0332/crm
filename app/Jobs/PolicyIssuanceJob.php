@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\PolicyIssuanceEnum;
 use App\Factories\PolicyIssuanceFactory;
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -33,33 +34,39 @@ class PolicyIssuanceJob implements ShouldQueue
     public function handle(): void
     {
         $this->process->update(['status' => PolicyIssuanceEnum::PROCESSING_STATUS]);
+        info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' - Process status updated to : '.$this->process->status);
 
         $quoteType = $this->process->quote_type;
         $insuranceProvider = $this->process->insuranceProvider;
         if (! $insuranceProvider) {
-            info(__CLASS__.' fn:'.__FUNCTION__.' - Insurance Provider not found');
+            info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' - Insurance Provider not found');
+
             return;
         }
 
         $insuranceProviderAutomation = PolicyIssuanceFactory::make($quoteType, $insuranceProvider->code);
         if (! $insuranceProviderAutomation) {
-            info(__CLASS__.' fn:'.__FUNCTION__.' - '.$insuranceProvider->text.' Automation not found');
+            info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' - '.$insuranceProvider->text.' Automation not found');
+
             return;
         }
 
         $response = $insuranceProviderAutomation->handle($this->process);
-        info(__CLASS__.' fn:'.__FUNCTION__.' - Quote Code '.$this->process->model->code.' Response : '.json_encode($response));
+        info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' - Quote Code '.$this->process->model->code.' Response : '.json_encode($response));
+        if (! $response['status']) {
+            $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $response['error']])]);
+        }
     }
 
     public function failed(Throwable $exception)
     {
-        $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => $exception->getMessage()]);
+        $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
 
-        Log::error(__CLASS__.' fn:'.__FUNCTION__.' - Quote Code '.$this->process->model->code.' Error : '.$exception->getMessage());
+        Log::error('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' - Quote Code '.$this->process->model->code.' Error : '.$exception->getMessage());
     }
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->process->model->code))->dontRelease()];
+        return [(new WithoutOverlapping($this->process->model->code.'-'.Carbon::now()->timestamp))->dontRelease()];
     }
 }

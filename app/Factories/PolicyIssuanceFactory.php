@@ -4,7 +4,7 @@ namespace App\Factories;
 
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\QuoteTypes;
-use App\Services\InsuePolicyAutomation\Travel\AllianceInsuranceService;
+use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
 
 class PolicyIssuanceFactory
 {

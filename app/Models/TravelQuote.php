@@ -223,4 +223,11 @@ class TravelQuote extends Model implements AuditableContract
         $segmentFilter = request()->input('segment_filter');
         self::applySegmentFilter($query, $segmentFilter, $alias, QuoteTypeId::Travel);
     }
+
+    public function travelQuotePlanDetails()
+    {
+        return $this->hasMany(TravelQuotePlanDetail::class, 'travel_quote_request_id');
+    }
+
+
 }

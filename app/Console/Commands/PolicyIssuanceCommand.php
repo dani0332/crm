@@ -38,7 +38,7 @@ class PolicyIssuanceCommand extends Command
      */
     public function handle()
     {
-        info('cmd:PolicyIssuanceAutomationCommand Started');
+        info('cmd:'.basename(__CLASS__).' Started');
 
         $policyIssuanceProcesses = PolicyIssuance::where('status', PolicyIssuanceEnum::PENDING_STATUS)
             ->orderBy('created_at')
@@ -47,15 +47,13 @@ class PolicyIssuanceCommand extends Command
         if (count($policyIssuanceProcesses) > 0) {
             foreach ($policyIssuanceProcesses as $policyIssuanceProcess) {
 
-                info(__CLASS__.' fn:'.__FUNCTION__.' - ID: '.$policyIssuanceProcess->id.' for Insurance Provider ID: '.$policyIssuanceProcess->insurance_provider_id);
+                info('cmd:'.basename(__CLASS__).' fn:'.__FUNCTION__.' - PID: '.$policyIssuanceProcess->id.' for Insurance Provider ID: '.$policyIssuanceProcess->insurance_provider_id);
                 PolicyIssuanceJob::dispatch($policyIssuanceProcess)->onQueue('policy-issuance-automation');
             }
         } else {
-            info(__CLASS__.' fn:'.__FUNCTION__.' - No Policy Issuance Process found');
+            info('cmd:'.basename(__CLASS__).' fn:'.__FUNCTION__.' - No Policy Issuance Process found');
         }
 
-
-
-        info('cmd:PolicyIssuanceAutomationCommand Ended');
+        info('cmd:'.basename(__CLASS__).' Ended');
     }
 }
