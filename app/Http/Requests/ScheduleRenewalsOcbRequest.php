@@ -43,11 +43,11 @@ class ScheduleRenewalsOcbRequest extends FormRequest
         $validator->after(function ($validator) {
             $batch = request()->batch;
 
-            $lastScheduleTime = RenewalsBatchEmails::where('batch', $batch)->orderBy('created_at', 'desc')->first();
+            /* $lastScheduleTime = RenewalsBatchEmails::where('batch', $batch)->orderBy('created_at', 'desc')->first();
 
-            /*if ($lastScheduleTime && Carbon::now()->timezone(config('app.timezone'))->diffInMinutes($lastScheduleTime->created_at) <= 5) {
-                $validator->errors()->add('error', 'Batch process is already created, next can be created after 5 minutes');
-            }*/
+             if ($lastScheduleTime && Carbon::now()->timezone(config('app.timezone'))->diffInMinutes($lastScheduleTime->created_at) <= 5) {
+                 $validator->errors()->add('error', 'Batch process is already created, next can be created after 5 minutes');
+             }*/
 
             $totalLeads = $this->renewalsUploadService->getPendingOcbLeadsTotal($batch);
             if ($totalLeads == 0) {
