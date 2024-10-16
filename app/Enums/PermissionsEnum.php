@@ -373,6 +373,8 @@ final class PermissionsEnum extends Enum
     public const ReApprovePayments = 'reapprove-payment';
     public const EXPORT_RM_LEADS = 'export-rm-leads';
     public const EXPORT_CAR_PUA_UPDATES = 'export-car-pua-updates';
+    public const UPDATE_LEAD_STATUS_TO_FAKE_DUPLICATE = 'update-lead-status-to-fake-duplicate';
+
     public static function getAdvisorConversionReportPermissions()
     {
         return [
