@@ -7,7 +7,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\BusinessInsuranceType;
 use App\Models\Lookup;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class SendUpdateAdditionalTaxInvoice extends Seeder
@@ -22,11 +21,17 @@ class SendUpdateAdditionalTaxInvoice extends Seeder
         $parent = Lookup::where('code', SendUpdateLogStatusEnum::EF)->first();
 
         foreach ($allLOBs as $lob) {
+            if (in_array($lob['name'], ['Corpline', 'GroupMedical', 'MotorFleet'])) {
+                $item = $allLOBs->where('name', '=', 'Business')->first();
+            } else {
+                $item = $allLOBs->where('name', '=', $lob['name'])->first();
+            }
+
             $businessInsuranceTypeId = null;
-            if (in_array($lob, ['GroupMedical', 'MotorFleet'])) {
-                if ($lob === 'GroupMedical') {
+            if (in_array($lob['name'], ['GroupMedical', 'MotorFleet'])) {
+                if ($lob['name'] === 'GroupMedical') {
                     $businessInsuranceType = quoteBusinessTypeCode::groupMedical;
-                } elseif ($lob === 'MotorFleet') {
+                } elseif ($lob['name'] === 'MotorFleet') {
                     $businessInsuranceType = quoteBusinessTypeCode::carFleet;
                 }
 
@@ -34,7 +39,7 @@ class SendUpdateAdditionalTaxInvoice extends Seeder
             }
 
             Lookup::firstOrCreate([
-                'quote_type_id' => $lob->id,
+                'quote_type_id' => $item['id'],
                 'business_insurance_type_id' => $businessInsuranceTypeId ?? null,
                 'key' => 'additional-tax-invoice-commission-booking',
                 'text' => 'Additional tax invoice and commission booking',
