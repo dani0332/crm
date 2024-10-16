@@ -327,6 +327,16 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         foreach ($masterPayment->payment_splits as $splitPayment) {
             $serialNo = $splitPayment['sr_no'];
+            //update payment amount for paid payments
+            if (isset($request->isPaidEditable) && $request->isPaidEditable && count($paymentPaidSerialNo) === $totalSplitPayments) {
+                $paymentSplit = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $serialNo])->first();
+                if ($paymentSplit) {
+                    $paymentSplit->update(['payment_amount' => $splitPayment['payment_amount']]);
+                }
+
+                continue;
+            }
+
             if (in_array($serialNo, $paymentPaidSerialNo)) {
                 continue;
             }
@@ -658,12 +668,12 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         }
 
         $insuranceProviderCode = $insuranceProvider?->code;
-        $latestBINByInsurer = Payment::selectRaw("REGEXP_REPLACE(broker_invoice_number, '[^0-9]', '') as broker_invoice_number")
+        $latestBINByInsurer = Payment::selectRaw("CAST(REGEXP_REPLACE(broker_invoice_number, '[^0-9.E+-]', '') AS DECIMAL(65, 30)) AS broker_invoice_number")
             ->whereNotNull('broker_invoice_number')
             ->whereNull('send_update_log_id')
-            ->where('insurance_provider_id', $insuranceProvider->id)
-            ->orderByRaw("CAST(REGEXP_REPLACE(broker_invoice_number, '[^0-9]', '') AS UNSIGNED) DESC")
-            ->first()->broker_invoice_number;
+            ->where('insurance_provider_id', $insuranceProvider?->id)
+            ->orderByRaw("CAST(REGEXP_REPLACE(broker_invoice_number, '[^0-9.E+-]', '') AS DECIMAL(65,30)) DESC")
+            ->first()?->broker_invoice_number; //get latest broker invoice number for insurer
 
         $insuranceProviderLeadCount = ((int) $latestBINByInsurer) + 1;
 
