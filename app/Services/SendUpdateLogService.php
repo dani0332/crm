@@ -1196,6 +1196,12 @@ class SendUpdateLogService
         $this->updatePriceAndDiscount($sendUpdateLog, $payment);
     }
 
+    public function updatePaymentTotalPrice($payment, $totalPrice): void
+    {
+        info('Payment code: '.$payment->code.' - Total Price: '.$totalPrice.' Updated.');
+        $payment->total_price = $totalPrice;
+    }
+
     public function checkSendUpdatePermissions(): array
     {
         $permissionArray = [

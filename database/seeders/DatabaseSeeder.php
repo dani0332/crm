@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             QuoteStatusSeeder::class,
             AddReApprovePaymentPermission::class,
             AddSendUpdatesCategoriesInLookups::class,
+            DocumentTypeSeeder::class,
         ]);
     }
 }
