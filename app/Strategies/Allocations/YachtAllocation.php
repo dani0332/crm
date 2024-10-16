@@ -8,9 +8,7 @@ class YachtAllocation extends BaseAllocation
 {
     protected function resolveLead(): void
     {
-        $this->lead = $this->getLeadBaseQuery()
-            ->where('quote_type_id', $this->quoteType->id())
-            ->first();
+        $this->lead = $this->getLeadBaseQuery()->first();
     }
 
     protected function fetchAdvisor(int $onlineStatus)

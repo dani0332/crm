@@ -8,17 +8,27 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
-use App\Models\PersonalQuote;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class CycleLeadAllocationController extends Controller
+class LeadAllocationController extends Controller
 {
+    private QuoteTypes $quoteType;
+
     public function __construct()
     {
-        $this->middleware(['permission:'.PermissionsEnum::CYCLE_LEAD_ALLOCATION_DASHBOARD], ['only' => ['index']]);
+        $this->quoteType = QuoteTypes::from(request('quoteType'));
+        $permission = match ($this->quoteType) {
+            QuoteTypes::CORPLINE => PermissionsEnum::CORPLINE_LEAD_ALLOCATION_DASHBOARD,
+            QuoteTypes::CYCLE => PermissionsEnum::CYCLE_LEAD_ALLOCATION_DASHBOARD,
+            QuoteTypes::PET => PermissionsEnum::PET_LEAD_ALLOCATION_DASHBOARD,
+            QuoteTypes::YACHT => PermissionsEnum::YACHT_LEAD_ALLOCATION_DASHBOARD,
+            QuoteTypes::LIFE => PermissionsEnum::LIFE_LEAD_ALLOCATION_DASHBOARD,
+            QuoteTypes::HOME => PermissionsEnum::HOME_LEAD_ALLOCATION_DASHBOARD,
+        };
+        $this->middleware("permission:{$permission}", ['only' => ['index']]);
     }
 
     private function getAdvisors()
@@ -43,7 +53,7 @@ class CycleLeadAllocationController extends Controller
                 ->join('lead_allocation as la', 'la.user_id', 'users.id')
                 ->join('user_team', 'user_team.user_id', 'users.id')
                 ->join('teams', 'teams.id', 'user_team.team_id')
-                ->where('la.quote_type_id', QuoteTypes::CYCLE->id())
+                ->where('la.quote_type_id', $this->quoteType->id())
                 // subquery to exclude users with any kind of "manager" roles
                 ->whereNotExists(function ($query) use ($managerRoleIds) {
                     $query->select(DB::raw(1))
@@ -74,52 +84,50 @@ class CycleLeadAllocationController extends Controller
         $from = now()->startOfDay();
         $to = now()->endOfDay();
 
-        return PersonalQuote::whereBetween('created_at', [$from, $to])
-            ->where('quote_type_id', QuoteTypes::CYCLE->id())
+        return $this->quoteType->model()
+            ->whereBetween('created_at', [$from, $to])
+            ->when($this->quoteType->isPersonalQuote(), function ($q) {
+                $q->where('quote_type_id', $this->quoteType->id());
+            })
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY]);
     }
 
-    private function getTodaysTotalLeadsCount()
+    private function getTodaysTotalLeadsCount(QuoteTypes $quoteType)
     {
-        return $this->getQuotesBaseQuery()->count();
+        return $this->getQuotesBaseQuery($quoteType)->count();
     }
 
-    private function getTodaysTotalUnAssignedLeadsCount()
+    private function getTodaysTotalUnAssignedLeadsCount(QuoteTypes $quoteType)
     {
-        return $this->getQuotesBaseQuery()
+        return $this->getQuotesBaseQuery($quoteType)
             ->whereNull('advisor_id')
-            ->isNonSICLead(QuoteTypes::CYCLE)
+            ->isNonSICLead($quoteType)
             ->count();
     }
 
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
+    public function index(QuoteTypes $quoteType)
     {
         $totalAssignedLeadCount = 0;
         $availableUsers = 0;
         $unAvailableUsers = 0;
 
-        $todayTotalLeadCount = $this->getTodaysTotalLeadsCount();
-        $todayTotalUnAssignedLeadCount = $this->getTodaysTotalUnAssignedLeadsCount();
+        $todayTotalLeadCount = $this->getTodaysTotalLeadsCount($quoteType);
+        $todayTotalUnAssignedLeadCount = $this->getTodaysTotalUnAssignedLeadsCount($quoteType);
 
-        $data = $this->getAdvisors();
+        $data = $this->getAdvisors($quoteType);
         foreach ($data as $value) {
             $totalAssignedLeadCount = $totalAssignedLeadCount + $value->allocationCount;
             $value->isAvailable == 1 ? $availableUsers++ : $unAvailableUsers++;
         }
 
-        return inertia('LeadAllocation/Cycle', [
+        return inertia('LeadAllocation/Index', [
             'totalAssignedLeadCount' => $totalAssignedLeadCount,
             'availableUsers' => $availableUsers,
             'unAvailableUsers' => $unAvailableUsers,
             'todayTotalLeadCount' => $todayTotalLeadCount,
             'todayTotalUnAssignedLeadCount' => $todayTotalUnAssignedLeadCount,
-            'quoteType' => QuoteTypes::CYCLE->value,
+            'quoteType' => $quoteType->value,
             'data' => $data,
         ]);
     }

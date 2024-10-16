@@ -259,7 +259,7 @@ onMounted(() => {
 <template>
   <div>
     <UserStatus />
-    <Head title="Cycle Lead Allocation" />
+    <Head :title="quoteType + ' Lead Allocation'" />
     <div class="flex justify-between items-center">
       <div></div>
       <div
@@ -281,7 +281,7 @@ onMounted(() => {
     <div class="grid grid-cols-2 md:grid-cols-4 gap-5 my-6">
       <div class="labox border-green-500">
         <h3>Team</h3>
-        <p>Cycle</p>
+        <p>{{ quoteType }}</p>
       </div>
       <div class="labox border-primary-500">
         <h3>Assigned Lead Count</h3>

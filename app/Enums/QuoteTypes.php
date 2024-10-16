@@ -146,6 +146,11 @@ enum QuoteTypes: string
         };
     }
 
+    public function isPersonalQuote()
+    {
+        return $this->model() instanceof PersonalQuote;
+    }
+
     public function detailModel(): Model
     {
         return match ($this) {
