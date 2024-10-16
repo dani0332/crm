@@ -1,0 +1,126 @@
+<?php
+
+namespace App\Http\Controllers\Allocations;
+
+use App\Enums\LeadSourceEnum;
+use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
+use App\Http\Controllers\Controller;
+use App\Models\PersonalQuote;
+use App\Models\Role;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
+class CycleLeadAllocationController extends Controller
+{
+    public function __construct()
+    {
+        $this->middleware(['permission:'.PermissionsEnum::CYCLE_LEAD_ALLOCATION_DASHBOARD], ['only' => ['index']]);
+    }
+
+    private function getAdvisors()
+    {
+        try {
+            $managerRoleIds = Role::where('name', 'like', '%manager%')->pluck('id')->toArray();
+
+            $users = User::withActive()
+                ->select(
+                    'users.id as userId',
+                    'users.name as userName',
+                    DB::RAW('(la.manual_assignment_count  + la.auto_assignment_count) as allocationCount'),
+                    DB::RAW("DATE_FORMAT(FROM_UNIXTIME(la.last_allocated), '%d-%m-%Y %H:%i:%s') as lastAllocation"),
+                    'la.max_capacity as maxCapacity',
+                    'users.status as isAvailable',
+                    'la.id as id',
+                    'la.manual_assignment_count as manualAllocationCount',
+                    'la.auto_assignment_count as autoAllocationCount',
+                    'la.reset_cap',
+                    'teams.name as teamName',
+                )
+                ->join('lead_allocation as la', 'la.user_id', 'users.id')
+                ->join('user_team', 'user_team.user_id', 'users.id')
+                ->join('teams', 'teams.id', 'user_team.team_id')
+                ->where('la.quote_type_id', QuoteTypes::CYCLE->id())
+                // subquery to exclude users with any kind of "manager" roles
+                ->whereNotExists(function ($query) use ($managerRoleIds) {
+                    $query->select(DB::raw(1))
+                        ->from('model_has_roles as mr')
+                        ->join('roles as r', 'r.id', '=', 'mr.role_id')
+                        ->whereColumn('mr.model_id', 'users.id')
+                        ->whereIn('r.id', $managerRoleIds);
+                })
+                ->groupBy('users.name', 'users.id', 'la.id');
+            if (! auth()->user()->hasRole(RolesEnum::Admin)) {
+                $userTeamIds = $this->getUserTeams(auth()->id())->pluck('id')->toArray();
+                $users = $users->whereIn('teams.id', $userTeamIds);
+            }
+            if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
+                $users = $users->where('users.manager_id', auth()->id());
+            }
+
+            return $users->get();
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+
+            return [];
+        }
+    }
+
+    private function getQuotesBaseQuery()
+    {
+        $from = now()->startOfDay();
+        $to = now()->endOfDay();
+
+        return PersonalQuote::whereBetween('created_at', [$from, $to])
+            ->where('quote_type_id', QuoteTypes::CYCLE->id())
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY]);
+    }
+
+    private function getTodaysTotalLeadsCount()
+    {
+        return $this->getQuotesBaseQuery()->count();
+    }
+
+    private function getTodaysTotalUnAssignedLeadsCount()
+    {
+        return $this->getQuotesBaseQuery()
+            ->whereNull('advisor_id')
+            ->isNonSICLead(QuoteTypes::CYCLE)
+            ->count();
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index()
+    {
+        $totalAssignedLeadCount = 0;
+        $availableUsers = 0;
+        $unAvailableUsers = 0;
+
+        $todayTotalLeadCount = $this->getTodaysTotalLeadsCount();
+        $todayTotalUnAssignedLeadCount = $this->getTodaysTotalUnAssignedLeadsCount();
+
+        $data = $this->getAdvisors();
+        foreach ($data as $value) {
+            $totalAssignedLeadCount = $totalAssignedLeadCount + $value->allocationCount;
+            $value->isAvailable == 1 ? $availableUsers++ : $unAvailableUsers++;
+        }
+
+        return inertia('LeadAllocation/Cycle', [
+            'totalAssignedLeadCount' => $totalAssignedLeadCount,
+            'availableUsers' => $availableUsers,
+            'unAvailableUsers' => $unAvailableUsers,
+            'todayTotalLeadCount' => $todayTotalLeadCount,
+            'todayTotalUnAssignedLeadCount' => $todayTotalUnAssignedLeadCount,
+            'quoteType' => QuoteTypes::CYCLE->value,
+            'data' => $data,
+        ]);
+    }
+}

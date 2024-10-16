@@ -6,6 +6,7 @@ use App\Enums\quoteTypeCode;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
+use App\Http\Controllers\Allocations\CycleLeadAllocationController;
 use App\Http\Controllers\AllocationThresholdController;
 use App\Http\Controllers\AMTController;
 use App\Http\Controllers\AuditableController;
@@ -316,6 +317,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::resource('lead-allocation', LeadAllocationController::class);
     Route::resource('car-lead-allocation', CarLeadAllocationController::class);
     Route::resource('travel-lead-allocation', TravelLeadAllocationController::class);
+    Route::resource('cycle-lead-allocation', CycleLeadAllocationController::class);
     Route::post('/travel-lead-allocation/update-hard-stop', [TravelLeadAllocationController::class, 'updateUserHardStopStatus']);
 
     Route::post('/update-cap/lead-allocation', [LeadAllocationController::class, 'updateCapsAllocation']);

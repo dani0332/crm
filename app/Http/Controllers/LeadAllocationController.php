@@ -198,6 +198,10 @@ class LeadAllocationController extends Controller
                     }
                 }
             }
+
+            return response()->json([
+                'message' => 'Max Capacity Updated Successfully.',
+            ], 200);
         } else {
             return back()->with('info', 'Please select at least one item.');
         }

@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             AddSuperLeadStatusChangePermission::class,
             QuoteStatusSeeder::class,
             AddReApprovePaymentPermission::class,
+            PermissionsSeeder::class,
         ]);
     }
 }
