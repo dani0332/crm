@@ -155,4 +155,5 @@ final class ApplicationStorageEnums extends Enum
     public const CAR_EMAIL_REPLY_TO = 'CAR_EMAIL_REPLY_TO';
     public const CAR_DISPLAY_NAME = 'CAR_DISPLAY_NAME';
     public const TRAVEL_DISPLAY_NAME = 'TRAVEL_DISPLAY_NAME';
+    public const HEALTH_AUTOMATED_FOLLOWUPS_SWITCH = 'HEALTH_AUTOMATED_FOLLOWUPS_SWITCH';
 }
