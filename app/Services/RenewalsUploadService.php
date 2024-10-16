@@ -730,14 +730,18 @@ class RenewalsUploadService
     {
         $data = $renewalQuoteProcess->data;
         $quoteType = $this->getQuoteTypeByShortCode($data['quote_type']);
+        $renewalUploadLead = $renewalQuoteProcess->renewalUploadLead;
+
         $logPrefix = 'UAC FN: createQuote Policy NO: '.$data['policy_number'].' EndDate: '.$data['end_date'];
         info($logPrefix.' Quote creation started');
 
-        $quote = DB::transaction(function () use ($renewalQuoteProcess, $logPrefix, $data, $quoteType) {
+        $quote = DB::transaction(function () use ($renewalQuoteProcess, $logPrefix, $data, $quoteType, $renewalUploadLead) {
             $detailData = [];
 
-            $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
-
+            $quoteObject = $this->createQuoteObject($quoteType->code);
+            if ($this->checkForExistingQuote($data, $renewalQuoteProcess, $renewalUploadLead, $quoteObject)) {
+                return false;
+            }
             $transApprovedId = $quoteType->short_code === QuoteTypeShortCode::CAR ? $this->getquoteStatusIdbyCode(quoteStatusCode::NEW_LEAD) : $this->getquoteStatusIdbyCode(quoteStatusCode::ALLOCATED);
 
             //advisor and previous advisors will be ignored when not exists
@@ -848,7 +852,6 @@ class RenewalsUploadService
                 }
             }
 
-            $quoteObject = $this->createQuoteObject($quoteType->code);
 
             $quote = $quoteObject->create($quoteData);
             if (! $isQuotePersonal) {
@@ -903,6 +906,35 @@ class RenewalsUploadService
         return collect($values)->filter(function ($value) {
             return $value ?? null;
         })->toArray();
+    }
+
+    /**
+     * Below logic is used to check if the quote is already created for the same policy number and expiry date within the same excel file.
+     *
+     * @param [type] $data
+     * @param [type] $renewalQuoteProcess
+     * @param [type] $renewalUploadLead
+     * @param [type] $quoteObject
+     * @return boolean
+     */
+    private function checkForExistingQuote($data, $renewalQuoteProcess, $renewalUploadLead, $quoteObject)
+    {   
+        $leadValidationErrors = collect($renewalQuoteProcess->validation_errors);
+        $existingQuote = $quoteObject->where('previous_quote_policy_number', $renewalQuoteProcess->policy_number)
+                                     ->where('previous_policy_expiry_date', $this->formatDate($data['end_date']))
+                                     ->first();
+
+        if ($existingQuote) {
+            $leadValidationErrors->push('Quote already created for this policy number, use upload and update');
+            $renewalQuoteProcess->validation_errors = $leadValidationErrors;
+            $renewalQuoteProcess->status = RenewalProcessStatuses::BAD_DATA;
+            $renewalQuoteProcess->save();
+            $renewalUploadLead->cannot_upload += 1;
+            $renewalUploadLead->save();
+            return true;
+        }
+
+        return false;
     }
 
     /**
