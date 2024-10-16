@@ -2,27 +2,27 @@
 
 namespace App\Services;
 
-use setasign\Fpdi\Fpdi;
-use App\Enums\RolesEnum;
-use App\Enums\QuoteTypeId;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\DocumentTypeCategory;
+use App\Enums\DocumentTypeCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\WatermarkDocTypesEnum;
+use App\Models\ApplicationStorage;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
 use App\Models\SendUpdateLog;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\DocumentTypeCode;
-use PhpOffice\PhpWord\IOFactory;
-use App\Models\ApplicationStorage;
-use App\Enums\DocumentTypeCategory;
-use Illuminate\Support\Facades\Log;
-use App\Enums\WatermarkDocTypesEnum;
-use Intervention\Image\ImageManager;
+use App\Repositories\DocumentTypeRepository;
 use App\Traits\GenericQueriesAllLobs;
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\SendUpdateLogStatusEnum;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver;
-use App\Repositories\DocumentTypeRepository;
+use Intervention\Image\ImageManager;
+use PhpOffice\PhpWord\IOFactory;
+use setasign\Fpdi\Fpdi;
 
 class QuoteDocumentService extends BaseService
 {
@@ -457,7 +457,7 @@ class QuoteDocumentService extends BaseService
             $outputPath = storage_path('app/temp/'.$docName);
         }
 
-        $pdf = new Fpdi();
+        $pdf = new Fpdi;
         $pageCount = $pdf->setSourceFile(storage_path('app/'.$filePath));
 
         $watermarkImagePath = public_path('images/watermark1.png');
@@ -503,7 +503,7 @@ class QuoteDocumentService extends BaseService
             mkdir(storage_path('/app/temp'), 0775, true);
         }
 
-        $manager = new ImageManager(new Driver());
+        $manager = new ImageManager(new Driver);
 
         $image = $manager->read($file);
 
