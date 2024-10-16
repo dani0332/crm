@@ -3,11 +3,11 @@
 namespace App\Services;
 
 use App\helpers\LookUpModelHelper;
+use App\Jobs\MAWelcomeJob;
 use App\Models\CarQuote;
 use App\Models\CarQuotePaymentHistory;
 use App\Models\CarQuotePolicy;
 use App\Models\InsuranceCompany;
-use App\Models\MyAlFredUser;
 use App\Models\PaymentMode;
 use App\Models\Reason;
 use App\Models\Status;
@@ -66,14 +66,7 @@ class TransAppService extends BaseService
         $customer->myalfred_expiry_date = $expiryDate;
         $customer->save();
 
-        $responseExtend = $this->berlinService->extendCustomerSubscription($customerId, $request->email, 'TRANSAPP', 'transapp-myalfred-we');
-        info('createTransaction responseExtend: '.$responseExtend);
-
-        if ($responseExtend != 201) {
-            $customerToken = MyAlFredUser::select('code')->where('customer_id', $customerId)->orderBy('created_at', 'asc')->first();
-            $message = 'Customer trying to extend subscription but not exist in myAflred - Customer Email: '.$request->email.' - Token: '.$customerToken;
-            Log::info($message);
-        }
+        MAWelcomeJob::dispatch($customer, 'TRANSAPP', 'transapp-myalfred-we');
 
         if ($existingCustomer) { // Existing customer
             if ($existingCustomer->is_we_sent == 1) { // is_we_sent is true

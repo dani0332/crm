@@ -54,6 +54,7 @@ const filters = reactive({
   policy_expiry_date: '',
   policy_expiry_date_end: '',
   sic_advisor_requested: 'All',
+  transaction_approved_dates: page.props.transaction_approved_dates || '',
 });
 
 const loader = reactive({
@@ -114,12 +115,19 @@ const paymentStatusOptions = computed(() => {
 });
 
 const advisorsOptions = computed(() => {
-  return page.props.dropdownSource.advisor_id.map(item => {
+  const advisors = page.props.dropdownSource.advisor_id.map(item => {
     return {
       value: item.id,
       label: item.name,
     };
   });
+  return [
+    ...advisors,
+    {
+      value: -1,
+      label: 'UnAssigned',
+    },
+  ];
 });
 
 const leadsStatusOptions = computed(() => {
@@ -509,6 +517,15 @@ const formatDate = date => {
             :options="advisorsOptions"
           />
         </x-field>
+        <DatePicker
+          v-model="filters.transaction_approved_dates"
+          label="Transaction Approved Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+          max-range="30"
+        />
         <x-field label="Ecommerce">
           <x-select
             v-model="filters.is_ecommerce"
@@ -688,12 +705,12 @@ const formatDate = date => {
       hide-footer
     >
       <template #item-code="{ code, uuid }">
-        <a
+        <Link
           :href="route('travel.show', uuid)"
           class="text-primary-500 hover:underline"
         >
           {{ code }}
-        </a>
+        </Link>
       </template>
       <template #item-authorized_at="item">
         <p v-if="item.payment_status_id_text === 'AUTHORISED'">

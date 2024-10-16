@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enums;
 
 use BenSampo\Enum\Enum;
@@ -9,7 +11,8 @@ use BenSampo\Enum\Enum;
  * @method static static OptionTwo()
  * @method static static OptionThree()
  */
-final class QuoteStatusId extends Enum
+final class QuoteTagEnums extends Enum
 {
-    const Lost = 34;
+    public const POLICY_SENT_TO_CUSTOMER = 'PSTC';
+    public const POLICY_BOOKED_ON_SAGE = 'PBOS';
 }

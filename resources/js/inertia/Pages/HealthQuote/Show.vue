@@ -52,7 +52,7 @@ const props = defineProps({
   storageUrl: String,
   bookPolicyDetails: Array,
   isNewPaymentStructure: Boolean,
-  isAmlClearedForPayment: Boolean,
+  amlStatusName: String,
   sendUpdateOptions: Array,
   sendUpdateLogs: Array,
   hasPolicyIssuedStatus: Boolean,
@@ -1985,6 +1985,10 @@ const onAddUpdate = () => {
                 <dd>{{ quote.customer_type }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">AML STATUS</dt>
+                <dd>{{ amlStatusName ?? '' }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
                 <dd>{{ quote.created_at }}</dd>
               </div>
@@ -3563,7 +3567,6 @@ const onAddUpdate = () => {
       "
       :storageUrl="storageUrl"
       :eCommercePrice="ecomDetails.priceWithVAT ? ecomDetails.priceWithVAT : 0"
-      :isAmlClearedForPayment="isAmlClearedForPayment"
       :eCommercePriceWithLP="
         ecomDetails.priceWithLP ? ecomDetails.priceWithLP : 0
       "
@@ -3638,10 +3641,10 @@ const onAddUpdate = () => {
       "
       :quote="quote"
       quoteType="health"
+      :modelClass="modelClass"
       :bookPolicyDetails="bookPolicyDetails"
       :payments="payments"
       :expanded="sectionExpanded"
-      :modelClass="modelClass"
     />
 
     <SendUpdates
