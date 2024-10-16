@@ -643,7 +643,7 @@ class SendEmailCustomerService extends BaseService
             info('RM Intro Email Triggered to CAPI for HEA-'.$quoteUuid.' - Message: '.$response->message);
             $healthAutoFollowupSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_AUTOMATED_FOLLOWUPS_SWITCH)->first();
             // Send Automated Followup Email Job if Health Auto-Followups is enabled.
-            if (! empty($healthAutoFollowupSwitch->value) && $healthAutoFollowupSwitch->value == 1) {
+            if ($healthAutoFollowupSwitch && $healthAutoFollowupSwitch->value == 1) {
                 $delayTime = isLeadSic($quoteUuid) ? 3 : 2;
                 OCAHealthFollowupEmailJob::dispatch($quoteUuid)->delay(Carbon::now()->addMinutes($delayTime));
                 info('OCAHealthFollowupEmailJob dispatched for HEA-'.$quoteUuid.' - Time: '.now());
