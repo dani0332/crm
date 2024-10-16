@@ -799,18 +799,23 @@ watch(() => {
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
-        <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+        <div>
           <x-button
-            v-if="canExport"
+            v-if="canExport && can(permissionsEnum.DATA_EXTRACTION)"
             size="sm"
             color="emerald"
             @click.prevent="onDataExport"
-            class="justify-self-start"
+            class="justify-self-start mr-3"
           >
             Export
           </x-button>
-          <x-tooltip v-else placement="right">
-            <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+          <x-tooltip
+            v-if="!canExport && can(permissionsEnum.DATA_EXTRACTION)"
+            placement="right"
+          >
+            <x-button tag="div" size="sm" color="emerald" class="mr-3">
+              Export
+            </x-button>
             <template #tooltip>
               <span class="font-medium">
                 Created dates or Transaction Approved dates or payment due date
@@ -818,17 +823,19 @@ watch(() => {
               </span>
             </template>
           </x-tooltip>
-        </div>
-        <div v-else />
-        <div class="flex justify-self-end gap-3">
+
           <x-button
+            v-if="can(permissionsEnum.EXPORT_RM_LEADS)"
             size="sm"
-            color="#ff5e00"
-            type="submit"
-            :loading="loader.table"
+            color="emerald"
+            href="/rm-leads-export"
+            class="justify-self-start mr-3"
           >
-            Search
+            Export RM Leads by Car Advisors
           </x-button>
+        </div>
+        <div class="flex justify-self-end gap-3">
+          <x-button type="submit" size="sm" color="#ff5e00">Search</x-button>
           <x-button size="sm" color="primary" @click.prevent="onReset">
             Reset
           </x-button>
