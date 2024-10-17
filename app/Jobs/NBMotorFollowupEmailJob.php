@@ -40,6 +40,7 @@ class NBMotorFollowupEmailJob implements ShouldQueue
 
             if (! $carLead) {
                 info("NBMotorFollowupEmailJob - Car Lead Not Found - Ref ID: {$this->quoteUuid} | Time: ".now());
+
                 return;
             }
             $eligibleStatuses = [QuoteStatusEnum::Quoted, QuoteStatusEnum::NewLead];
