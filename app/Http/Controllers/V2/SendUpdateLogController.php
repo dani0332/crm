@@ -142,7 +142,7 @@ class SendUpdateLogController extends Controller
 
         $categoryCode = $sendUpdateLog->category?->code;
         $optionCode = $sendUpdateLog->option?->code ?? null;
-        $documentTypes = $this->sendUpdateLogService->getSendUpdateDocuments($categoryCode);
+        $documentTypes = $this->sendUpdateLogService->getSendUpdateDocuments($categoryCode, $optionCode);
         $issuanceStatuses = PolicyIssuanceStatusRepository::getColumns(['id', 'text']);
         if (checkPersonalQuotes($quoteType)) {
             $repository = 'App\\Repositories\\'.$quoteType.'QuoteRepository';
@@ -151,6 +151,8 @@ class SendUpdateLogController extends Controller
             $quoteServiceFile = app(getServiceObject($quoteType));
             $realQuote = $quoteServiceFile->getEntity($quote->uuid);
         }
+
+        $parentText = $sendUpdateLog?->option?->code == SendUpdateLogStatusEnum::ATICB ? $realQuote?->transaction_type_text : $sendUpdateLog->category->parent->text;
 
         // the business_type_of_insurance_id is only on business quotes.
         $sendUpdateOptions = SendUpdateLogRepository::sendUpdateOptions($quoteTypeId, $sendUpdateLog->category_id, $sendUpdateLog->category->code, $realQuote->business_type_of_insurance_id ?? null);
@@ -204,7 +206,7 @@ class SendUpdateLogController extends Controller
             'quoteLink' => QuoteTypes::getName($quoteTypeId)?->url($quote->uuid),
             'quoteType' => $quoteType,
             'sendUpdateLog' => $sendUpdateLog,
-            'parentText' => $sendUpdateLog->category->parent->text,
+            'parentText' => $parentText,
             'sendUpdateOptions' => $sendUpdateOptions,
             'insuranceProviders' => $insuranceProviders,
             'sendUpdateStatusEnum' => SendUpdateLogStatusEnum::asArray(),
@@ -232,6 +234,8 @@ class SendUpdateLogController extends Controller
             'issuanceStatuses' => $issuanceStatuses,
             'isPlanDetailAvailable' => $isPlanDetailAvailable,
             'vatValue' => ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0,
+            'isPaidEditable' => $this->isSplitPaymentFullyPaid($sendUpdatePayments->first()),
+            'isEditDisabledForQueuedBooking' => $isEditDisabledForQueuedBooking,
         ]);
     }
 

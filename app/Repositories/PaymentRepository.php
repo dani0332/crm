@@ -330,6 +330,16 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         foreach ($masterPayment->payment_splits as $splitPayment) {
             $serialNo = $splitPayment['sr_no'];
+            //update payment amount for paid payments
+            if (isset($request->isPaidEditable) && $request->isPaidEditable && count($paymentPaidSerialNo) === $totalSplitPayments) {
+                $paymentSplit = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $serialNo])->first();
+                if ($paymentSplit) {
+                    $paymentSplit->update(['payment_amount' => $splitPayment['payment_amount']]);
+                }
+
+                continue;
+            }
+
             if (in_array($serialNo, $paymentPaidSerialNo)) {
                 continue;
             }

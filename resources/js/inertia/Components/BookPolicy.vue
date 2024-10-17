@@ -767,7 +767,7 @@ onMounted(() => {
                 <dd>
                   <x-input
                     v-model="bpForm.insurer_commmission_invoice_number"
-                    placeholder="Insurer Tax Invoice Number"
+                    placeholder="Insurer Commission Tax Invoice Number"
                     class="w-full"
                     :disabled="
                       !bp.isEditing ||

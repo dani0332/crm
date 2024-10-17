@@ -90,4 +90,5 @@ final class SendUpdateLogStatusEnum extends Enum
     const DOV = 'DOV'; // Deletion of vehicle
     const ACB = 'ACB'; // Additional commission booking
     const ATIB = 'ATIB'; // Additional tax invoice booking
+    const ATICB = 'ATICB'; // Additional tax invoice and commission booking
 }
