@@ -46,7 +46,7 @@ class BusinessQuoteObserver
         $this->syncQuote($businessQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $businessQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
-            $this->UpdatePersonalQuote($businessQuote->uuid, QuoteTypeId::Business, $dirty);
+            $this->updatePersonalQuote($businessQuote->uuid, QuoteTypeId::Business, $dirty);
         }
 
         if (

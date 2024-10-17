@@ -406,7 +406,7 @@ trait PersonalQuoteSyncTrait
      * @param  mixed  $data
      * @return mixed
      */
-    public function UpdatePersonalQuote($uuid, $quoteTypeId, $data)
+    public function updatePersonalQuote($uuid, $quoteTypeId, $data)
     {
         $personalQuote = PersonalQuoteRepository::where([
             'quote_type_id' => $quoteTypeId,

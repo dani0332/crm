@@ -47,7 +47,7 @@ class HomeQuoteObserver
         $this->syncQuote($homeQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $homeQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
-            $this->UpdatePersonalQuote($homeQuote->uuid, QuoteTypeId::Home, $dirty);
+            $this->updatePersonalQuote($homeQuote->uuid, QuoteTypeId::Home, $dirty);
         }
 
         if (
