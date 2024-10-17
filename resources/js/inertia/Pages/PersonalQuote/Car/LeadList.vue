@@ -886,13 +886,8 @@ const exportPUAUrl = () => {
             Reset
           </x-button>
         </div>
-
-
       </div>
     </x-form>
-
-
-
 
     <Transition name="fade" v-if="!hasRole(rolesEnum.CarAdvisor)">
       <div v-if="quotesSelected.length > 0" class="mb-4">
@@ -1027,6 +1022,5 @@ const exportPUAUrl = () => {
         </x-button>
       </template>
     </x-modal>
-
   </div>
 </template>
