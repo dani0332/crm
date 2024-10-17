@@ -51,6 +51,7 @@ const sendUpdatesTable = reactive({
     {
       text: 'Notes',
       value: 'notes',
+      width: 300,
     },
     {
       text: 'Status',
@@ -420,12 +421,14 @@ const expandNotes = ref(false);
             </template>
             <x-accordion v-else-if="notes" show-icon icon="chevronDown">
               <x-accordion-item :expanded="expandNotes">
-                <div class="bg-gray-10 w-80">
-                  {{ notes.slice(0, 40) }}
-                </div>
+                <template #default="{ collapsed }">
+                  <div v-show="collapsed" class="bg-gray-10 w-80 text-xs">
+                    {{ notes.slice(0, 40) }}
+                  </div>
+                </template>
                 <template #content>
-                  <div>
-                    {{ notes.slice(40, notes.length) }}
+                  <div class="text-xs">
+                    {{ notes }}
                   </div>
                 </template>
               </x-accordion-item>
