@@ -53,7 +53,7 @@ let availableFilters = {
 };
 
 const filters = reactive(availableFilters);
-console.log("selected serach");
+console.log('selected serach');
 function onSubmit(isValid) {
   if (isValid) {
     filters.page = 1;
@@ -199,17 +199,31 @@ const followupLead = reactive({
 });
 
 const sendFollowupLead = () => {
-  router.post(route('event-followups-new-business'),{'followup_type':followupLead.type,'uuids':quotesSelected.value.map(e => e.uuid)});
+  router.post(route('event-followups-new-business'), {
+    followup_type: followupLead.type,
+    uuids: quotesSelected.value.map(e => e.uuid),
+  });
   followupLead.modal = false;
 };
-const openNBFollowupModal = ()=>{
-    followupLead.modal = true;
-}
+const openNBFollowupModal = () => {
+  followupLead.modal = true;
+};
 const nbFollowupTemplates = [
   { value: 'nb_template_holiday', label: 'Holiday Template' },
-  { value: 'nb_template_followup_1', label: 'Follow up 1: Preview Text: Time-Sensitive: Secure Your Motor Insurance Today!' },
-  { value: 'nb_template_followup_2', label: 'Follow up 2: Preview Text: Complete Your Motor Insurance Today!' },
-  { value: 'nb_template_followup_3', label: "Follow up 3: Preview Text: Making Sure You Don't Miss Out on Motor Insurance Coverage" },
+  {
+    value: 'nb_template_followup_1',
+    label:
+      'Follow up 1: Preview Text: Time-Sensitive: Secure Your Motor Insurance Today!',
+  },
+  {
+    value: 'nb_template_followup_2',
+    label: 'Follow up 2: Preview Text: Complete Your Motor Insurance Today!',
+  },
+  {
+    value: 'nb_template_followup_3',
+    label:
+      "Follow up 3: Preview Text: Making Sure You Don't Miss Out on Motor Insurance Coverage",
+  },
 ];
 </script>
 
@@ -313,12 +327,26 @@ const nbFollowupTemplates = [
         </x-button>
       </div>
       <div class="flex gap-3 mt-4 mb-4">
-        <div class="ml-auto" v-if="quotesSelected.length > 0 && hasAnyRole([rolesEnum.CarManager,rolesEnum.Admin,rolesEnum.Engineering])">
-          <x-button size="sm" color="#ff5e00" @click.prevent="openNBFollowupModal" >
+        <div
+          class="ml-auto"
+          v-if="
+            quotesSelected.length > 0 &&
+            hasAnyRole([
+              rolesEnum.CarManager,
+              rolesEnum.Admin,
+              rolesEnum.Engineering,
+            ])
+          "
+        >
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            @click.prevent="openNBFollowupModal"
+          >
             Send NB Followup Email
           </x-button>
         </div>
-        </div>
+      </div>
     </x-form>
     <FollowUpModal
       v-model:modelValue="showFollowUpModal"
@@ -402,41 +430,45 @@ const nbFollowupTemplates = [
     />
 
     <x-modal
-    v-model="followupLead.modal"
-    size="md"
-    title="Send Followup Lead"
-    show-close
-    backdrop
-  >
-    <div class="w-full grid  gap-5 mb-4">
-      <p class="text-md font-bold text-gray-500">
+      v-model="followupLead.modal"
+      size="md"
+      title="Send Followup Lead"
+      show-close
+      backdrop
+    >
+      <div class="w-full grid gap-5 mb-4">
+        <p class="text-md font-bold text-gray-500">
           Please select one of the templates provided below to use:
-      </p>
-    </div>
-    <div class="w-full grid  gap-5" v-for="item in nbFollowupTemplates" :key="item.value">
-      <x-form-group v-model="followupLead.type">
+        </p>
+      </div>
+      <div
+        class="w-full grid gap-5"
+        v-for="item in nbFollowupTemplates"
+        :key="item.value"
+      >
+        <x-form-group v-model="followupLead.type">
           <x-radio :value="item.value" :label="item.label" />
-      </x-form-group>
-    </div>
-    <template #actions>
-      <x-button
-        ghost
-        tabindex="-1"
-        size="md"
-        type="button"
-        @click.prevent="followupLead.modal = false"
-      >
-        Cancel
-      </x-button>
-      <x-button
-        size="md"
-        color="emerald"
-        type="button"
-        @click.prevent="sendFollowupLead"
-      >
-        OK
-      </x-button>
-    </template>
-  </x-modal>
+        </x-form-group>
+      </div>
+      <template #actions>
+        <x-button
+          ghost
+          tabindex="-1"
+          size="md"
+          type="button"
+          @click.prevent="followupLead.modal = false"
+        >
+          Cancel
+        </x-button>
+        <x-button
+          size="md"
+          color="emerald"
+          type="button"
+          @click.prevent="sendFollowupLead"
+        >
+          OK
+        </x-button>
+      </template>
+    </x-modal>
   </div>
 </template>
