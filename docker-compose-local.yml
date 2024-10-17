@@ -56,37 +56,6 @@ services:
       - ./docker-local/mysql/my.cnf:/etc/mysql/my.cnf
     networks:
       - blanka-app-network
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    container_name: phpmyadminblanka
-    restart: always
-    networks:
-      - blanka-app-network
-    depends_on:
-      - dbblanka
-    environment:
-      PMA_HOST: dbblanka
-      PMA_USER: root
-      PMA_PASSWORD: root
-      PMA_PORT: 3306
-      PMA_ARBITRARY: 1
-    ports:
-      - '$PHPMYADMIN_PORT:80'
-  meilisearch:
-    image: 'getmeili/meilisearch:latest'
-    ports:
-      - '7700:7700'
-    volumes:
-      - 'sailmeilisearch:/data.ms'
-    networks:
-      - blanka-app-network
-  mailhogblanka:
-    networks:
-      - blanka-app-network
-    image: mailhog/mailhog
-    ports:
-      - $MAIL_PORT:1025 # smtp server
-      - $MAIL_UI_PORT:8025 # web ui
   redisblanka:
     image: 'redis:latest'
     ports:
