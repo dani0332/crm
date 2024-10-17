@@ -16,31 +16,24 @@ class SendUpdateAdditionalTaxInvoice extends Seeder
      */
     public function run(): void
     {
-        $allLOBs = $this->getAllLOBs();
-
         $parent = Lookup::where('code', SendUpdateLogStatusEnum::EF)->first();
+        $quoteTypes = [
+            QuoteTypeId::Car,
+            QuoteTypeId::Home,
+            QuoteTypeId::Health,
+            QuoteTypeId::Life,
+            QuoteTypeId::Business,
+            QuoteTypeId::Bike,
+            QuoteTypeId::Yacht,
+            QuoteTypeId::Travel,
+            QuoteTypeId::Pet,
+            QuoteTypeId::Cycle,
+        ];
 
-        foreach ($allLOBs as $lob) {
-            if (in_array($lob['name'], ['Corpline', 'GroupMedical', 'MotorFleet'])) {
-                $item = $allLOBs->where('name', '=', 'Business')->first();
-            } else {
-                $item = $allLOBs->where('name', '=', $lob['name'])->first();
-            }
-
-            $businessInsuranceTypeId = null;
-            if (in_array($lob['name'], ['GroupMedical', 'MotorFleet'])) {
-                if ($lob['name'] === 'GroupMedical') {
-                    $businessInsuranceType = quoteBusinessTypeCode::groupMedical;
-                } elseif ($lob['name'] === 'MotorFleet') {
-                    $businessInsuranceType = quoteBusinessTypeCode::carFleet;
-                }
-
-                $businessInsuranceTypeId = BusinessInsuranceType::where('code', $businessInsuranceType)->first()->id;
-            }
-
+        foreach ($quoteTypes as $quoteTypeId) {
             Lookup::firstOrCreate([
-                'quote_type_id' => $item['id'],
-                'business_insurance_type_id' => $businessInsuranceTypeId ?? null,
+                'quote_type_id' => $quoteTypeId,
+                'business_insurance_type_id' => null,
                 'key' => 'additional-tax-invoice-commission-booking',
                 'text' => 'Additional tax invoice and commission booking',
                 'code' => SendUpdateLogStatusEnum::ATICB,
@@ -49,15 +42,25 @@ class SendUpdateAdditionalTaxInvoice extends Seeder
                 'description' => 'Select this option when you need to book additional tax invoices and commission related to the initial policy. This might include the additional tax invoices for subgroups.',
             ]);
         }
-    }
 
-    private function getAllLOBs()
-    {
-        return collect(QuoteTypeId::getOptions())->map(function ($value, $key) {
-            return [
-                'id' => $key,
-                'name' => $value,
-            ];
-        });
+        $businessInsuranceTypes = [
+            quoteBusinessTypeCode::groupMedical,
+            quoteBusinessTypeCode::carFleet,
+        ];
+
+        foreach ($businessInsuranceTypes as $businessTypeCode) {
+            $businessInsuranceTypeId = BusinessInsuranceType::where('code', $businessTypeCode)->first()->id;
+
+            Lookup::firstOrCreate([
+                'quote_type_id' => QuoteTypeId::Business,
+                'business_insurance_type_id' => $businessInsuranceTypeId,
+                'key' => 'additional-tax-invoice-commission-booking',
+                'text' => 'Additional tax invoice and commission booking',
+                'code' => SendUpdateLogStatusEnum::ATICB,
+                'parent_id' => $parent->id,
+            ], [
+                'description' => 'Select this option when you need to book additional tax invoices and commission related to the initial policy. This might include the additional tax invoices for subgroups.',
+            ]);
+        }
     }
 }
