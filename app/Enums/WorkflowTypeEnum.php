@@ -16,4 +16,5 @@ final class WorkflowTypeEnum extends Enum
     public const NEW_BUSINESS_MOTOR_AUTOMATED_FOLLOWUPS = 'nb_motor_automated_followups';
     public const NEW_BUSINESS_MOTOR_EVENT_FOLLOWUPS = 'nb_motor_event_followups';
     public const UNSUBSCRIBE_REQUESTED_NOTIFICATIION = 'unsubscribe_requested_notification';
+    public const HEALTH_APPLICATION_SUBMITTED = 'health_application_submitted';
 }
