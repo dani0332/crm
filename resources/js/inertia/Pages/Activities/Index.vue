@@ -470,6 +470,7 @@ onMounted(() => {
           </x-button>
 
           <x-button
+            v-if="item.user_id && item.user_id != null"
             size="xs"
             color="error"
             :disabled="item.status === 1"

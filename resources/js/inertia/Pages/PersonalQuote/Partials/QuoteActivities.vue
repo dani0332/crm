@@ -222,7 +222,11 @@ onMounted(() => {
                 :disabled="item.status === 1"
                 outlined
                 @click.prevent="confirmDelete(item.id)"
-                v-if="readOnlyMode.isDisable === true"
+                v-if="
+                  readOnlyMode.isDisable === true &&
+                  item.user_id &&
+                  item.user_id != null
+                "
               >
                 Delete
               </x-button>

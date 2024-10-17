@@ -3875,7 +3875,11 @@ const onAddUpdate = () => {
                   outlined
                   :disabled="item.status === 1"
                   @click.prevent="activityDelete(item.id)"
-                  v-if="readOnlyMode.isDisable === true"
+                  v-if="
+                    readOnlyMode.isDisable === true &&
+                    item.user_id &&
+                    item.user_id != null
+                  "
                 >
                   Delete
                 </x-button>
