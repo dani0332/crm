@@ -82,9 +82,6 @@ class UploadCoveragesJob implements ShouldQueue
                     }
                 }
 
-                info('COVERAGES: '.print_r($coverages, true));
-                info('RATES '.print_r($planCodesToDelete, true));
-
                 if (! empty($planCodesToDelete)) {
                     // Delete existing coverages for the plan codes
                     DB::table('health_plan_coverage')->whereIn('plan_id', $planCodesToDelete)->delete();

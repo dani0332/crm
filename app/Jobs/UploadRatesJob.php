@@ -73,7 +73,7 @@ class UploadRatesJob implements ShouldQueue
                                 'min_age' => $row[$headerMap['min_age']],
                                 'max_age' => $row[$headerMap['max_age']],
                                 'gender' => $row[$headerMap['gender']],
-                                'premium' => str_replace(',', '', $row[$headerMap['premium']]),
+                                'premium' => $row[$headerMap['premium']],
                                 'created_at' => Carbon::now(),
                                 'updated_at' => Carbon::now(),
                             ];
