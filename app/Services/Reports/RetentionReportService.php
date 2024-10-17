@@ -370,18 +370,6 @@ class RetentionReportService extends BaseService
             ->join('renewal_batches', 'renewal_batch_id', '=', 'renewal_batches.id');
 
         // Check if 'policyExpiryDate' parameter is set in the request
-        if (isset($request['policyExpiryDate'])) {
-            // Parse the start and end dates from the request
-            $startDate = Carbon::parse($request['policyExpiryDate'][0])->startOfDay();
-            $endDate = Carbon::parse($request['policyExpiryDate'][1])->endOfDay();
-
-            $startDate = $startDate->format($this->dateFormat);
-            $endDate = $endDate->format($this->dateFormat);
-            // Apply the date range filter to the query
-            $query->whereBetween($this->policyExpiryColumnName, [$startDate, $endDate]);
-            $query->whereBetween('renewal_batches.start_date', [$startDate, $endDate]);
-        }
-
         if (! $isDetailsFilter) {
             $query->groupBy('renewal_batches.id');
         }
