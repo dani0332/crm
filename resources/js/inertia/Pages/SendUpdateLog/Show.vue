@@ -60,6 +60,10 @@ const transactionType = computed(() => {
     ].includes(props.sendUpdateLog.category.code)
   ) {
     return 'Endorsement';
+  } else if (
+    props.sendUpdateLog.option.code === props.sendUpdateStatusEnum.ATICB
+  ) {
+    return page.props.parentText;
   }
 
   return null;
@@ -300,7 +304,7 @@ onBeforeMount(() => {
                     </template>
                   </x-tooltip>
                 </dt>
-                <dd>{{ transactionType || page.props.parentText || '' }}</dd>
+                <dd>{{ transactionType || '' }}</dd>
               </template>
             </div>
             <div class="grid md:grid-cols-2 gap-y-4">
