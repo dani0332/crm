@@ -8,7 +8,6 @@ use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\FollowupStartedRequest;
 use App\Http\Requests\Api\UpdateLeadStatusRequest;
-use App\Http\Resources\CarQuoteResource;
 use App\Models\CarQuote;
 use App\Repositories\CarQuoteRepository;
 use App\Services\CarQuoteService;
@@ -26,7 +25,6 @@ class CarQuoteController extends Controller
         )->filter()
             ->simplePaginate();
 
-        //return CarQuoteResource::collection($quotes);
         return response()->json($quotes);
     }
 
@@ -92,5 +90,4 @@ class CarQuoteController extends Controller
 
         return response()->json(['success' => true]);
     }
-
 }

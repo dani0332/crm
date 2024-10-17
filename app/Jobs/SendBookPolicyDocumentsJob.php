@@ -27,6 +27,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
     public $timeout = 100;
     public $tries = 3;
+    public $backoff = 120;
 
     /**
      * Create a new job instance.
@@ -40,6 +41,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         info('Quote Code: '.$code.' job: SendBookPolicyDocumentsJob constructor called ');
         $this->data = $payload;
         $this->code = $code;
+        $this->onQueue('insly');
     }
 
     /**
@@ -53,9 +55,11 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         // In case of Group Medical & Corpline, modelType is used & for rest of the LOBs model_type is used
         // Basically we are different to identify the template which will send to customer after policy booking
         $modelType = ucfirst(! empty($this->data->modelType) ? $this->data->modelType : $this->data->model_type);
-        $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($modelType));
+        $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($this->data->model_type));
 
         $quote = $this->getQuoteObject($this->data->model_type, $this->data->quote_id);
+
+        info('job: SendBookPolicyDocumentsJob Code: '.$quote->code.' , Quote Type: '.$this->data->model_type.', Type Id: '.$quoteTypeId);
 
         $isDocumentEmailSentToCustomer = QuoteTag::where([
             'quote_type_id' => $quoteTypeId,
@@ -65,7 +69,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         ])->first();
 
         if ($isDocumentEmailSentToCustomer) {
-            info('job: SendBookPolicyDocumentsJob skipped for: '.$this->code.' as email already sent');
+            info('job: SendBookPolicyDocumentsJob skipped for: '.$quote->code.' as email already sent');
 
             return;
         }
@@ -146,12 +150,14 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             info('Quote Code: '.$quote->code.' Send Book Policy Documents Job Response '.$quote->uuid.' : '.json_encode($response));
         }
 
-        QuoteTag::create([
+        $quoteTag = QuoteTag::create([
             'quote_type_id' => $quoteTypeId,
             'quote_uuid' => $quote->uuid,
             'name' => QuoteTagEnums::POLICY_SENT_TO_CUSTOMER,
             'value' => 1,
         ]);
+
+        info('job: SendBookPolicyDocumentsJob Code: '.$quote->code.' , Quote Tag id: '.$quoteTag->id);
     }
 
     public function failed(Throwable $exception)
@@ -161,6 +167,6 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->data->quote_id))->dontRelease()];
+        return [(new WithoutOverlapping($this->code))->dontRelease()];
     }
 }

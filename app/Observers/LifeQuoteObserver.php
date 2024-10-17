@@ -2,8 +2,9 @@
 
 namespace App\Observers;
 
-use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
+use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\LifeQuote;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -29,16 +30,6 @@ class LifeQuoteObserver
             $lifeQuote->isDirty('quote_status_id') &&
             $lifeQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
         ) {
-            MAWelcomeJob::dispatchIf(
-                isMyAlfredCampaignEnabled(getAppStorageValueByKey(ApplicationStorageEnums::EMAIL_CAMPAIGN)) && $lifeQuote->customer,
-                $lifeQuote->customer?->first_name,
-                $lifeQuote->customer?->last_name,
-                $lifeQuote->customer?->email,
-                $lifeQuote->customer?->mobile_no,
-                'CUSTOMER_UPDATE',
-                'customer-update-myalfred-we'
-            );
-
             LifeQuote::withoutEvents(function () use ($lifeQuote) {
                 $lifeQuote->update(['transaction_approved_at' => now()]);
             });
@@ -49,6 +40,18 @@ class LifeQuoteObserver
 
         if (isset($dirty['quote_status_id']) && $lifeQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
             $this->syncLeadEntries($lifeQuote->uuid);
+        }
+
+        if (
+            $lifeQuote->isDirty('quote_status_id') &&
+            in_array($lifeQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
+        ) {
+            CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Life, 'quoteUID' => $lifeQuote->uuid]);
+            MAWelcomeJob::dispatch(
+                $lifeQuote->customer,
+                'LEAD_STATUS_UPDATE',
+                'lead-status-update-myalfred-we'
+            );
         }
     }
 }
