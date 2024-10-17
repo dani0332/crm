@@ -454,10 +454,14 @@ class SendUpdateLogService
 
     public function getInvoiceDescription($sendUpdateLog, $quote, $quoteType, $payments, $isBrokerInvoiceShowOnly = false)
     {
-        if ($sendUpdateLog->category->code == SendUpdateLogStatusEnum::CPD || empty($payments)) {
-            $insuranceProviderId = $sendUpdateLog->insurance_provider_id;
+        if (! $sendUpdateLog->insurance_provider_id) {
+            if ($quote->insly_id || $quote->insly_migrated) {
+                $insuranceProviderId = empty($sendUpdateLog->insurance_provider_id) ? null : $sendUpdateLog->insurance_provider_id;
+            } else {
+                @[$insuranceProviderId, $planId] = $this->getProviderDetails($quote, QuoteTypes::getIdFromValue($quoteType), false);
+            }
         } else {
-            @[$insuranceProviderId, $planId] = $this->getProviderDetails($quote, QuoteTypes::getIdFromValue($quoteType), false);
+            $insuranceProviderId = $sendUpdateLog->insurance_provider_id;
         }
 
         $sendUpdateLogCategory = LookupRepository::where('id', $sendUpdateLog->category_id)->value('code');
@@ -466,9 +470,11 @@ class SendUpdateLogService
         if ($insuranceProvider) {
             $brokerInvoiceNumber = $this->generateBrokerInvoiceNumber($sendUpdateLog, $insuranceProvider, $isBrokerInvoiceShowOnly);
             if (! $brokerInvoiceNumber) {
+                info('fn: generateBrokerInvoiceNumber failed - BrokerInvoiceNumber not generated for Send Update uuid -> '.$sendUpdateLog->uuid);
+
                 return false;
             }
-            info('fn: getInvoiceDescription - BrokerInvoiceNumber: '.$brokerInvoiceNumber);
+            info('fn: generateBrokerInvoiceNumber - BrokerInvoiceNumber: '.$brokerInvoiceNumber);
         }
 
         if (empty($sendUpdateLog->invoice_description) && $insuranceProvider) {
@@ -479,7 +485,7 @@ class SendUpdateLogService
             }
 
             if ($sendUpdateLogCategory == SendUpdateLogStatusEnum::EF) {
-                $invoiceDescription = 'E.'.$invoiceDescription;
+                $invoiceDescription = ($sendUpdateLog->option->code == SendUpdateLogStatusEnum::ATICB) ? 'A.'.$invoiceDescription : 'E.'.$invoiceDescription;
             } elseif (in_array($sendUpdateLogCategory, [SendUpdateLogStatusEnum::CI, SendUpdateLogStatusEnum::CIR])) {
                 $invoiceDescription = 'CI.'.$invoiceDescription;
             } elseif ($sendUpdateLogCategory == SendUpdateLogStatusEnum::CPD) {
@@ -547,8 +553,7 @@ class SendUpdateLogService
         $isPolicyCertOrScheduleUploaded = in_array(DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE, $uploadedDocuments) || in_array(DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, $uploadedDocuments);
         $requiredDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
 
-        if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB])) {
-
+        if (in_array($sendUpdateLog->option?->code, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB, SendUpdateLogStatusEnum::ATICB])) {
             return SendUpdateLogStatusEnum::SU; // Book Update
         }
 
@@ -700,20 +705,20 @@ class SendUpdateLogService
 
         $payment = Payment::with('paymentSplits')->where(['send_update_log_id' => $sendUpdateRequest->sendUpdateId])->first();
         if ($payment) {
-            info('fn:preparedDetailsForEndorsement - Fetching Payment details from Send Update. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            info('fn:preparedDetailsForEndorsement - Fetching Payment details from Send Update. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
 
             return ['payment' => $payment, 'splitPayments' => $payment?->paymentSplits];
         } else {
             $checkInslyMigratedLead = $this->checkInslyMigratedLead($sendUpdateRequest, $quote);
 
             if ($checkInslyMigratedLead) {
-                info('fn:preparedDetailsForEndorsement - Creating payment details based on the send update - The lead originated from Insly. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+                info('fn:preparedDetailsForEndorsement - Creating payment details based on the send update - The lead originated from Insly. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
                 $payment = new Payment;
                 $splitPayments = collect([new PaymentSplits]);
 
             } else {
                 // If we don't have payment details then we fetched it from the Main Lead
-                info('fn:preparedDetailsForEndorsement - Fetching Payment details from Main Lead. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+                info('fn:preparedDetailsForEndorsement - Fetching Payment details from Main Lead. QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
                 $quote->load(['payments' => function ($query) {
                     $query->whereNull('send_update_log_id');
                 }, 'payments.paymentSplits']);
@@ -780,11 +785,11 @@ class SendUpdateLogService
     public function preparedDataForEndorsement($sendUpdateRequest)
     {
         $sendUpdateLog = SendUpdateLog::with('category', 'sageApiLogs')->find($sendUpdateRequest->sendUpdateId);
-        info('fn:preparedDataForEndorsement - Preparing Data for Endorsement - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+        info('fn:preparedDataForEndorsement - Preparing Data for Endorsement - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
 
         $skipCategories = [SendUpdateLogStatusEnum::EN];
         if (in_array($sendUpdateLog?->category?->code, $skipCategories)) {
-            info('fn:preparedDataForEndorsement - Skipping Sage APIs for Endorsement - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            info('fn:preparedDataForEndorsement - Skipping Sage APIs for Endorsement - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
 
             return ['status' => true, 'skipSageCalls' => true, 'message' => 'Skipping Sage APIs for Non Financial Endorsement'];
         }
@@ -795,7 +800,7 @@ class SendUpdateLogService
 
         $paymentInsurerInvoiceNumber = ($preparedDetailsForEndorsement['payment']->insurer_tax_number ?? $preparedDetailsForEndorsement['payment']->insurer_commmission_invoice_number) ?? null;
         if (empty($paymentInsurerInvoiceNumber)) {
-            info('fn:preparedDataForEndorsement - Payment not successfully updated - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            info('fn:preparedDataForEndorsement - Payment not successfully updated - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
 
             return ['status' => false, 'message' => 'Payment not successfully updated'];
         }
@@ -814,7 +819,7 @@ class SendUpdateLogService
             'booking_filled_by' => $sendUpdateLog->booking_filled_by,
         ];
 
-        info('fn:preparedDataForEndorsement - Preparing Sage Payload for Endorsement - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+        info('fn:preparedDataForEndorsement - Preparing Sage Payload for Endorsement - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
         $sageRequestPayload = SagePayloadFactory::sagePayLoad($sendUpdateRequest->quoteType, $preparedDetailsForEndorsement['payment'], (object) $sendUpdateLogDetails, $preparedDetailsForEndorsement['splitPayments']);
         $sageRequestPayload->customerId = app(SageApiService::class)->verifySageCustomer(
             $quoteDetails->customer_id,
@@ -825,7 +830,7 @@ class SendUpdateLogService
 
         $checkRequiredSageValidations = app(SageApiService::class)->checkRequiredSageIds($sageRequestPayload);
         if (! $checkRequiredSageValidations['status']) {
-            info('fn:preparedDataForEndorsement - Sage Validation Failed - '.$checkRequiredSageValidations['message'].' - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            info('fn:preparedDataForEndorsement - Sage Validation Failed - '.$checkRequiredSageValidations['message'].' - QuoteType: '.$sendUpdateRequest->quoteType.' - QuoteUUID: '.$sendUpdateRequest->quoteUuid.' - SendUpdateCode: '.$sendUpdateLog->code);
 
             return $checkRequiredSageValidations;
         }
@@ -1071,19 +1076,12 @@ class SendUpdateLogService
             $update = quoteStatusCode::POLICY_CANCELLED;
         }
 
-        if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
+        if (! in_array($quoteTypeId, [QuoteTypeId::Jetski, QuoteTypeId::Business])) {
             $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
                 DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE])->toArray();
-        } elseif (in_array($quoteTypeId, [QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
-            if ($action == SendUpdateLogStatusEnum::ACTION_SNBU) {
-                $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
-                    DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE])->toArray();
-            } elseif ($action == SendUpdateLogStatusEnum::ACTION_SUC) {
-                $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
-                    DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE])->toArray();
-            } elseif ($action == SendUpdateLogStatusEnum::ACTION_SU) {
-                $documents = $sendUpdateLog->documents->where('document_type_code', DocumentTypeCode::SEND_UPDATE_TAX_INVOICE)->toArray();
-            }
+        } elseif ($quoteTypeId == QuoteTypeId::Business) {
+            $documents = $sendUpdateLog->documents->whereIn('document_type_code', [DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
+                DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE])->toArray();
         }
 
         $emailData = (object) [
@@ -1165,7 +1163,7 @@ class SendUpdateLogService
         return true;
     }
 
-    public function getSendUpdateDocuments($category): array
+    public function getSendUpdateDocuments($category, $option): array
     {
         $documentTypesByCategory = app(QuoteDocumentService::class)->getSendUpdateDocumentTypes();
 
@@ -1178,6 +1176,14 @@ class SendUpdateLogService
                     ])
                 ) {
                     $documentTypesByCategory[$documentCategory][$key]['is_required'] = (int) true;
+                } elseif (
+                    $option == SendUpdateLogStatusEnum::ATICB &&
+                    in_array($documentType['code'], [
+                        DocumentTypeCode::SEND_UPDATE_POLICY_SCHEDULE,
+                        DocumentTypeCode::SEND_UPDATE_POLICY_CERTIFICATE,
+                    ])
+                ) {
+                    $documentTypesByCategory[$documentCategory][$key]['is_required'] = (int) false;
                 }
             }
         }
@@ -1188,6 +1194,12 @@ class SendUpdateLogService
     public function sendUpdatePriceAndDiscount($sendUpdateLog, $payment): void
     {
         $this->updatePriceAndDiscount($sendUpdateLog, $payment);
+    }
+
+    public function updatePaymentTotalPrice($payment, $totalPrice): void
+    {
+        info('Payment code: '.$payment->code.' - Total Price: '.$totalPrice.' Updated.');
+        $payment->total_price = $totalPrice;
     }
 
     public function checkSendUpdatePermissions(): array
@@ -1252,6 +1264,8 @@ class SendUpdateLogService
         if (empty($sendUpdateLog->broker_invoice_number)) {
             $brokerInvoiceNumber = $this->generateUniqueBrokerInvoiceNumber($insuranceProvider, $sendUpdateLog, $isBrokerInvoiceShowOnly);
             if (! $brokerInvoiceNumber) {
+                info('fn: generateUniqueBrokerInvoiceNumber failed - BrokerInvoiceNumber not generated for Send Update uuid -> '.$sendUpdateLog->uuid);
+
                 return false;
             }
         } else {
@@ -1261,14 +1275,14 @@ class SendUpdateLogService
         return $brokerInvoiceNumber;
     }
 
-    public function getProviderDetails($quote, $quoteTypeId, $forSendUpdateCreation = false): array
+    public function getProviderDetails($quote, $quoteTypeId, $forSendUpdateCreation = false, $isCommercial = false): array
     {
         $insuranceProviderId = $plan_id = null;
         if ($forSendUpdateCreation && ($quote->insly_id || $quote->insly_migrated)) {
 
             return [$insuranceProviderId, $plan_id];
         }
-        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health])) {
+        if (in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health]) && ! $isCommercial) {
             $quoteType = QuoteTypes::getName($quoteTypeId)->value;
             $quoteServiceFile = getServiceObject($quoteType);
             $quoteModel = app($quoteServiceFile)->getEntityPlain($quote->id)->load(['payments', 'plan']);

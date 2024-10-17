@@ -5,8 +5,11 @@ namespace App\Observers;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Jobs\CourtesyEmailJob;
+use App\Jobs\Health\SendApplicationSubmittedEmailJob;
+use App\Jobs\IntroEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
@@ -31,23 +34,36 @@ class HealthQuoteObserver
     public function updated(HealthQuote $healthQuote): void
     {
         $dirty = $healthQuote->getDirty();
-        if (
-            $healthQuote->isDirty('quote_status_id') &&
-            $healthQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
-        ) {
-            HealthQuote::withoutEvents(function () use ($healthQuote) {
-                $healthQuote->update(['transaction_approved_at' => now()]);
-            });
 
-            $ecommerceSource = ApplicationStorage::where('key_name', ApplicationStorageEnums::LEAD_SOURCE_ECOMMERCE)->value('value');
-            if ($healthQuote->source === LeadSourceEnum::IMCRM || strpos($healthQuote->source, $ecommerceSource) !== false) {
-                app(HealthQuoteService::class)->assignRenewalBatch($healthQuote->id);
+        if (
+            $healthQuote->isDirty('quote_status_id')
+        ) {
+            if ($healthQuote->quote_status_id === QuoteStatusEnum::TransactionApproved) {
+                HealthQuote::withoutEvents(function () use ($healthQuote) {
+                    $healthQuote->update(['transaction_approved_at' => now()]);
+                });
+
+                $ecommerceSource = ApplicationStorage::where('key_name', ApplicationStorageEnums::LEAD_SOURCE_ECOMMERCE)->value('value');
+                if ($healthQuote->source === LeadSourceEnum::IMCRM || strpos($healthQuote->source, $ecommerceSource) !== false) {
+                    app(HealthQuoteService::class)->assignRenewalBatch($healthQuote->id);
+                }
+                $dirty = [...$dirty, 'transaction_approved_at' => $healthQuote->transaction_approved_at];
             }
-            $dirty = [...$dirty, 'transaction_approved_at' => $healthQuote->transaction_approved_at];
+
+            if ($healthQuote->quote_status_id === QuoteStatusEnum::ApplicationSubmitted) {
+                SendApplicationSubmittedEmailJob::dispatch($healthQuote);
+            }
         }
 
-        if ($healthQuote->isDirty('quote_status_id') && $this->removeStaleFromLead($healthQuote->quote_status_id)) {
-            $healthQuote->update(['stale_at' => null]);
+        if (isset($dirty['quote_status_id']) && $this->removeStaleFromLead($healthQuote->quote_status_id)) {
+            HealthQuote::withoutEvents(function () use ($healthQuote) {
+                $healthQuote->update(['stale_at' => null]);
+            });
+            $dirty = [...$dirty, 'stale_at' => $healthQuote->stale_at];
+        }
+
+        if ($healthQuote->isDirty('advisor_id')) {
+            $healthQuote->markLeadAllocationPassed();
         }
 
         $this->syncQuote($healthQuote, $dirty);
@@ -56,8 +72,12 @@ class HealthQuoteObserver
             $this->syncLeadEntries($healthQuote->uuid);
         }
 
+        if (isset($dirty['quote_status_id']) && $healthQuote->quote_status_id === QuoteStatusEnum::Qualified && $healthQuote->advisor_id) {
+            info("Quote status changed to {$healthQuote->quote_status_id} | Ref-ID: {$healthQuote->uuid} | Time: ".now());
+            IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $healthQuote->uuid, 'send-rm-intro-email', null, false);
+        }
         if (
-            $healthQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             in_array($healthQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
         ) {
             CourtesyEmailJob::dispatch(['quoteTypeId' => QuoteTypeId::Health, 'quoteUID' => $healthQuote->uuid]);
