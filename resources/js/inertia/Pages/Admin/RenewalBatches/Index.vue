@@ -42,7 +42,7 @@ const tableHeader = [
     >
       <template #item-id="item">
         <a
-          v-if ="item.quote_type_id == 1"
+          v-if="item.quote_type_id == 1"
           :href="route('renewal-batches-edit', item)"
           class="text-primary-500 hover:underline"
         >
@@ -57,7 +57,7 @@ const tableHeader = [
         {{ end_date ? formatted(end_date) : 'N/A' }}
       </template>
       <template #item-quote_type_id="{ quote_type_id }">
-        {{ quote_type_id == 1 ?  'Motor' : 'Non-motor' }}
+        {{ quote_type_id == 1 ? 'Motor' : 'Non-motor' }}
       </template>
     </DataTable>
 

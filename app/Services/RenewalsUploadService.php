@@ -1766,7 +1766,7 @@ class RenewalsUploadService
      * @param  string  $endDate
      * @return void
      */
-    private function validateBatch($batchName, $endDate, $isCreated = false, &$lead)
+    private function validateBatch($batchName, $endDate, $isCreated, &$lead)
     {
         info('Validating batch: '.$batchName.' with end date: '.$endDate);
         // Extract year from endDate
@@ -1794,11 +1794,12 @@ class RenewalsUploadService
 
         if ($batch) {
             info('Batch found');
-            if($isCreated) {
+            if ($isCreated) {
                 $data = $lead->data;
                 $data['renewal_batch_id'] = $batch->id;
                 $lead->data = $data;
             }
+
             return true;
         }
         info('Batch not found with year: '.$year.' and batch name: '.$batchName);

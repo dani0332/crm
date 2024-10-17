@@ -995,9 +995,7 @@ function handleDateChange(dateRange) {
       <template #header>
         <div class="text-center">
           Advisor Assigned :
-          {{
-            filters?.type?.charAt(0).toUpperCase() + filters?.type?.slice(1)
-          }}
+          {{ filters?.type?.charAt(0).toUpperCase() + filters?.type?.slice(1) }}
           Leads
         </div>
       </template>

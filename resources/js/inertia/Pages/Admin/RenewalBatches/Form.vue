@@ -109,8 +109,8 @@ function onSubmit(isValid) {
   else isSagmentVolumeEmpty.value = true;
 
   if (batchForm.segment_value.length > 0) isSagmentValueEmpty.value = false;
-  else isSagmentValueEmpty.value = true; 
- 
+  else isSagmentValueEmpty.value = true;
+
   let valid = validateSlabs();
 
   if (
