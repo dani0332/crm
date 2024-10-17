@@ -34,6 +34,8 @@ class LifeQuote extends Model implements AuditableContract
         'policy_expiry_date' => FilterTypes::DATE_BETWEEN,
         'previous_quote_policy_number' => FilterTypes::NULL_CHECK,
         'previous_quote_policy_number_text' => FilterTypes::EXACT,
+        'insurer_tax_number' => FilterTypes::EXACT,
+        'insurer_commmission_invoice_number' => FilterTypes::EXACT,
     ];
     protected $dispatchesEvents = [
         'updated' => QuoteEmailUpdated::class,

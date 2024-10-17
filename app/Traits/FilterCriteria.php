@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Enums\DatabaseColumnsString;
 use App\Enums\FilterTypes;
+use App\Enums\PermissionsEnum;
 use Carbon\Carbon;
 
 trait FilterCriteria
@@ -30,6 +31,20 @@ trait FilterCriteria
                                 $query->where(function ($query) use ($value) {
                                     $query->where('policy_number', $value)
                                         ->orWhere('previous_quote_policy_number', $value);
+                                });
+                            } elseif ($key == DatabaseColumnsString::INSURER_TAX_INVOICE_NUMBER &&
+                                auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) &&
+                                ! empty($value)
+                            ) {
+                                $query->whereHas('payments', function($query) use ($value) {
+                                    $query->where(DatabaseColumnsString::INSURER_TAX_INVOICE_NUMBER, $value);
+                                });
+                            } elseif ($key == DatabaseColumnsString::INSURER_COMMISSION_TAX_INVOICE_NUMBER &&
+                                auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) &&
+                                ! empty($value)
+                            ) {
+                                $query->whereHas('payments', function($query) use ($value) {
+                                    $query->where(DatabaseColumnsString::INSURER_COMMISSION_TAX_INVOICE_NUMBER, $value);
                                 });
                             } else {
                                 $query->where($key, $value);

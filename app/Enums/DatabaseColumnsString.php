@@ -24,4 +24,6 @@ final class DatabaseColumnsString extends Enum
     public const CAR_VALUE_TIER = 'car_value_tier';
     public const DATE_OF_BIRTH = 'dob';
     public const CODE = 'code';
+    public const INSURER_TAX_INVOICE_NUMBER= 'insurer_tax_number';
+    public const INSURER_COMMISSION_TAX_INVOICE_NUMBER= 'insurer_commmission_invoice_number';
 }

@@ -39,6 +39,8 @@ class PersonalQuote extends Model implements AuditableContract
         'is_cold' => FilterTypes::EXACT,
         'stale_at' => FilterTypes::NULL_CHECK,
         'previous_policy_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'insurer_tax_number' => FilterTypes::EXACT,
+        'insurer_commmission_invoice_number' => FilterTypes::EXACT,
     ];
 
     /**
