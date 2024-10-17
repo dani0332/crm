@@ -130,7 +130,7 @@ class ApiController extends Controller
         }
         $response = app(BirdService::class)->stopWorkFlow($workflow);
 
-        return apiResponse([$response], Response::HTTP_OK, 'Email event stopped successfully');
+        return apiResponse(['response_body'=>$response->body ?? null], Response::HTTP_OK, 'Email event stopped successfully');
     }
     // Temporary Endpoint - Will be Removed after fixing Quote Status Dates for all LOBs
     public function fixQuoteStatusDate()
