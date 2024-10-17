@@ -1734,10 +1734,8 @@ class RenewalsUploadService
                         }
                         break;
                     default:
-                        if ($leadData->batch) {
-                            $checkBatch = $this->validateBatch($leadData->batch, $leadData->end_date, $lead->type == RenewalsUploadType::CREATE_LEADS, $lead);
-                            ! $checkBatch && $leadValidationErrors->push('Invalid Renewal Batch Provided');
-                        }
+                        $checkBatch = $this->validateBatch($leadData->batch, $leadData->end_date, $lead->type == RenewalsUploadType::CREATE_LEADS, $lead);
+                        ! $checkBatch && $leadValidationErrors->push('Invalid Renewal Batch Provided');
                         break;
                 }
 
@@ -1781,11 +1779,11 @@ class RenewalsUploadService
         info('Validating year: '.$year.' with week number: '.$weekNumber);
 
         // Validate batch name by checking if it contains the week number
-        if ((strpos($batchName, $weekNumber) === false || $batchName != $weekNumber) && !$isCreated ) {
-            info('Batch name does not contain week number');
+        // if ((strpos($batchName, $weekNumber) === false || $batchName != $weekNumber) && !$isCreated ) {
+        //     info('Batch name does not contain week number');
 
-            return false;
-        }
+        //     return false;
+        // }
 
         // Check if the batch exists in the table with the extracted year and week number
         $batch = RenewalBatch::where([
