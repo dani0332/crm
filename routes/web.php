@@ -321,7 +321,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::resource('lead-allocation', LeadAllocationController::class);
     Route::resource('car-lead-allocation', CarLeadAllocationController::class);
     Route::resource('travel-lead-allocation', TravelLeadAllocationController::class);
-    Route::get('lead-allocation-dashboard/{quoteType}', [V2LeadAllocationController::class, 'index'])->name('lead-allocation-dashboard');
+    Route::get('allocation-dashboard/{quoteType}', [V2LeadAllocationController::class, 'index'])->name('lead-allocation-dashboard');
     Route::post('/travel-lead-allocation/update-hard-stop', [TravelLeadAllocationController::class, 'updateUserHardStopStatus']);
 
     Route::post('/update-cap/lead-allocation', [LeadAllocationController::class, 'updateCapsAllocation']);
