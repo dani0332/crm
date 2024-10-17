@@ -96,8 +96,8 @@ class HomeQuoteService extends BaseService
             DB::raw('IF(EXISTS (
                 SELECT *
                 FROM quote_request_entity_mapping
-                WHERE quote_type_id = ' . QuoteTypeId::Home . ' AND quote_request_id = hqr.id),
-                "' . CustomerTypeEnum::Entity . '", "' . CustomerTypeEnum::Individual . '")
+                WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = hqr.id),
+                "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
             as customer_type'),
             'c.insured_first_name',
             'c.insured_last_name',
@@ -342,7 +342,7 @@ class HomeQuoteService extends BaseService
                     if (in_array($item, $skipped)) {
                         continue;
                     }
-                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
+                    $this->query->where($this->getQuerySuffix($item).'.'.$item, $request[$item]);
                 }
             }
         }
@@ -457,7 +457,7 @@ class HomeQuoteService extends BaseService
         $homeQuote->save();
 
         if (isset($request->return_to_view)) {
-            return redirect('quote/home/' . $id)->with('success', 'Home Quote has been updated');
+            return redirect('quote/home/'.$id)->with('success', 'Home Quote has been updated');
         }
     }
 
@@ -687,7 +687,7 @@ class HomeQuoteService extends BaseService
         }
         $userId = (int) $request->assigned_to_id_new;
         $quoteBatch = QuoteBatches::latest()->first();
-        Log::info('Leads ids to assign: ' . json_encode($leadsIds) . ' Quote Batch with ID: ' . $quoteBatch->id . ' and Name: ' . $quoteBatch->name);
+        Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
@@ -751,15 +751,15 @@ class HomeQuoteService extends BaseService
 
     public function getQuotePlans($type, $id)
     {
-        $modelName = checkPersonalQuotes(ucfirst($type)) ? 'PersonalQuote' : ucfirst($type) . 'Quote';
-        $model = '\\App\\Models\\' . $modelName;
+        $modelName = checkPersonalQuotes(ucfirst($type)) ? 'PersonalQuote' : ucfirst($type).'Quote';
+        $model = '\\App\\Models\\'.$modelName;
         $quoteUuId = $model::where('uuid', '=', $id)->value('uuid');
-        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT') . '/get-' . lcfirst($type) . '-quote-plans';
+        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-'.lcfirst($type).'-quote-plans';
         $plansApiToken = config('constants.KEN_API_TOKEN');
         $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
         $plansApiUserName = config('constants.KEN_API_USER');
         $plansApiPassword = config('constants.KEN_API_PWD');
-        $authBasic = base64_encode($plansApiUserName . ':' . $plansApiPassword);
+        $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
 
         $plansDataArr = [
             'quoteUID' => $quoteUuId,
@@ -776,7 +776,7 @@ class HomeQuoteService extends BaseService
                         'Content-Type' => 'application/json',
                         'Accept' => 'application/json',
                         'x-api-token' => $plansApiToken,
-                        'Authorization' => 'Basic ' . $authBasic,
+                        'Authorization' => 'Basic '.$authBasic,
                     ],
                     'body' => json_encode($plansDataArr),
                     'timeout' => $plansApiTimeout,

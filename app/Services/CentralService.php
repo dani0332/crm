@@ -141,11 +141,11 @@ class CentralService
                 } else {
                     $response = in_array(ucfirst($lob), newUi()) ?
                         ((method_exists($repository, 'fetchCreateDuplicate') && ! checkPersonalQuotes(ucfirst($lob))) ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob))) :
-                        Capi::request('/api/v1-save-' . strtolower($lob) . '-quote', 'post', $dataArr);
+                        Capi::request('/api/v1-save-'.strtolower($lob).'-quote', 'post', $dataArr);
                 }
 
                 if (empty($response) || (isset($response->message) && str_contains($response->message, 'Error'))) {
-                    $resp['errors'][] = 'Something went wrong while duplicating ' . $lob . ' quotes';
+                    $resp['errors'][] = 'Something went wrong while duplicating '.$lob.' quotes';
                 } elseif (isset($response->quoteUID) && isset($parentRecord->enquiryType) && $parentRecord->enquiryType == GenericRequestEnum::RECORD_PURPOSE) {
                     $record = $repository::where('uuid', $response->quoteUID)->first();
                     if ($record) {
@@ -174,7 +174,7 @@ class CentralService
         $leadsIds = $request->assigned_lead_id;
         $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht, quoteTypeCode::Jetski, quoteTypeCode::Home];
         $quoteBatch = QuoteBatches::latest()->first();
-        Log::info('Leads ids to assign: ' . json_encode($leadsIds) . ' Quote Batch with ID: ' . $quoteBatch->id . ' and Name: ' . $quoteBatch->name);
+        Log::info('Leads ids to assign: '.json_encode($leadsIds).' Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name);
 
         if (str_starts_with($leadsIds, ',')) {
             $leadsIds = substr($leadsIds, 1);
@@ -183,7 +183,7 @@ class CentralService
         $leadsIds = array_map('intval', explode(',', $leadsIds));
         $model = (in_array(ucfirst($request->modelType), $personalQuotes) && in_array(ucfirst($request->modelType), newUi())) ?
             ['parent' => PersonalQuote::class, 'child' => PersonalQuoteDetail::class] :
-            ['parent' => (ucfirst($request->modelType) . 'Quote'), 'child' => (ucfirst($request->modelType) . 'QuoteRequestDetail')];
+            ['parent' => (ucfirst($request->modelType).'Quote'), 'child' => (ucfirst($request->modelType).'QuoteRequestDetail')];
 
         if (! class_exists($model['parent'])) {
             vAbort('Something went wrong');
@@ -197,7 +197,7 @@ class CentralService
                 $getQuoteLead->save();
 
                 $parentFieldName = (in_array(ucfirst($request->modelType), $personalQuotes) && in_array(ucfirst($request->modelType), newUi())) ?
-                    'personal_quote_id' : strtolower($request->modelType) . '_quote_request_id';
+                    'personal_quote_id' : strtolower($request->modelType).'_quote_request_id';
 
                 $model['child']::updateOrCreate(
                     [$parentFieldName => $getQuoteLead->id],
@@ -252,7 +252,7 @@ class CentralService
         info('fn: updateQuotePayment called');
 
         if ($quote->payments()->count() > 0) {
-            info('fn: updateQuotePayment payment found to be updated for quote uuid: ' . $quote->uuid);
+            info('fn: updateQuotePayment payment found to be updated for quote uuid: '.$quote->uuid);
 
             $payment = $quote->payments->first();
 
@@ -276,7 +276,7 @@ class CentralService
 
             $payment->update($paymentData);
 
-            info('fn: updateQuotePayment payment updated for quote uuid: ' . $quote->uuid);
+            info('fn: updateQuotePayment payment updated for quote uuid: '.$quote->uuid);
         }
     }
 
@@ -376,7 +376,7 @@ class CentralService
         if ($quoteType == QuoteTypes::BIKE->value) {
             $quoteType = 'Car';
         }
-        $planModel = 'App\\Models\\' . ucfirst($quoteType) . 'Plan';
+        $planModel = 'App\\Models\\'.ucfirst($quoteType).'Plan';
 
         if ($plandId) {
             return $planModel::find($plandId);
@@ -387,7 +387,7 @@ class CentralService
 
     public function getPlanById($quoteType, $planId)
     {
-        $planModel = 'App\\Models\\' . ucfirst($quoteType) . 'Plan';
+        $planModel = 'App\\Models\\'.ucfirst($quoteType).'Plan';
 
         return $planModel::find($planId);
     }
@@ -452,7 +452,7 @@ class CentralService
             if ($payment && $payment->paymentSplits->isNotEmpty()) {
                 $this->straightforwardPayments($payment, $payment->paymentSplits, $quote);
             } else {
-                info('Quote Code: ' . $quote->code . ' updatePaymentAllocation no payment found');
+                info('Quote Code: '.$quote->code.' updatePaymentAllocation no payment found');
             }
         }
     }
@@ -465,7 +465,7 @@ class CentralService
      */
     public function straightforwardPayments($payment, $paymentSplits, $quote)
     {
-        info('Quote Code: ' . $quote->code . ' fn: straightforwardPayments');
+        info('Quote Code: '.$quote->code.' fn: straightforwardPayments');
 
         if ($payment) {
             $paymentSplit = $paymentSplits->first();
@@ -500,31 +500,31 @@ class CentralService
     {
         $collectionAmount = $paymentSplit ? $paymentSplit->collection_amount : $payment->captured_amount;
         $priceWithVat = $quote->price_with_vat;
-        info('Quote Code: ' . $quote->code . ' fn: calculateAllocationStatus sage_reciept_id: ' . $paymentSplit->sage_reciept_id . ' payment status id: ' . $paymentSplit->payment_status_id . ' payment_methods_code: ' . $payment->payment_methods_code . ' Split Payment method ' . $paymentSplit->payment_method);
+        info('Quote Code: '.$quote->code.' fn: calculateAllocationStatus sage_reciept_id: '.$paymentSplit->sage_reciept_id.' payment status id: '.$paymentSplit->payment_status_id.' payment_methods_code: '.$payment->payment_methods_code.' Split Payment method '.$paymentSplit->payment_method);
 
         switch (true) {
             case $paymentSplit && $paymentSplit->sage_reciept_id == null:
-                info('Quote Code: ' . $quote->code . ' Condition: Payment split sage_reciept_id is set to null');
+                info('Quote Code: '.$quote->code.' Condition: Payment split sage_reciept_id is set to null');
 
                 return PaymentAllocationStatus::NOT_ALLOCATED;
             case in_array($payment->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::NEW]):
-                info('Quote Code: ' . $quote->code . ' Condition: Payment status is PENDING, CREDIT_APPROVED, or NEW');
+                info('Quote Code: '.$quote->code.' Condition: Payment status is PENDING, CREDIT_APPROVED, or NEW');
 
                 return null;
             case $paymentSplit && in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED]):
-                info('Quote Code: ' . $quote->code . ' Condition: Payment split status is PENDING or CREDIT_APPROVED');
+                info('Quote Code: '.$quote->code.' Condition: Payment split status is PENDING or CREDIT_APPROVED');
 
                 return PaymentAllocationStatus::NOT_ALLOCATED;
             case $collectionAmount <= 0:
-                info('Quote Code: ' . $quote->code . ' Condition: Collection amount is less than or equal to 0');
+                info('Quote Code: '.$quote->code.' Condition: Collection amount is less than or equal to 0');
 
                 return PaymentAllocationStatus::UNPAID;
             case $collectionAmount <= $priceWithVat:
-                info('Quote Code: ' . $quote->code . ' Condition: Collection amount is less than or equal to price with VAT');
+                info('Quote Code: '.$quote->code.' Condition: Collection amount is less than or equal to price with VAT');
 
                 return PaymentAllocationStatus::FULLY_ALLOCATED;
             default:
-                info('Quote Code: ' . $quote->code . ' Condition: Default case, partially allocated');
+                info('Quote Code: '.$quote->code.' Condition: Default case, partially allocated');
 
                 return PaymentAllocationStatus::PARTIALLY_ALLOCATED;
         }
@@ -725,7 +725,7 @@ class CentralService
                 'assignee_id' => $quoteDetails->advisor_id ?? auth()->user()->id,
                 'uuid' => generateUuid(),
                 'due_date' => addDaysExcludeWeekend($getActivitySchedule->due_days),
-                'client_name' => $quoteDetails->first_name . ' ' . $quoteDetails->last_name,
+                'client_name' => $quoteDetails->first_name.' '.$quoteDetails->last_name,
                 'client_email' => $quoteDetails->email,
                 'quote_uuid' => $quoteDetails->uuid,
                 'quote_status_id' => $quoteDetails->quote_status_id,
@@ -766,15 +766,15 @@ class CentralService
 
     public function getQuotePlans($type, $id, $isRenewalSort = false, $getLatestRating = false, $isDisabledEnabled = false)
     {
-        $modelName = checkPersonalQuotes(ucfirst($type)) ? 'PersonalQuote' : ucfirst($type) . 'Quote';
-        $model = '\\App\\Models\\' . $modelName;
+        $modelName = checkPersonalQuotes(ucfirst($type)) ? 'PersonalQuote' : ucfirst($type).'Quote';
+        $model = '\\App\\Models\\'.$modelName;
         $quoteUuId = $model::where('uuid', '=', $id)->value('uuid');
-        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT') . '/get-' . lcfirst($type) . '-quote-plans';
+        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-'.lcfirst($type).'-quote-plans';
         $plansApiToken = config('constants.KEN_API_TOKEN');
         $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
         $plansApiUserName = config('constants.KEN_API_USER');
         $plansApiPassword = config('constants.KEN_API_PWD');
-        $authBasic = base64_encode($plansApiUserName . ':' . $plansApiPassword);
+        $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
 
         $plansDataArr = [
             'quoteUID' => $quoteUuId,
@@ -809,7 +809,7 @@ class CentralService
                         'Content-Type' => 'application/json',
                         'Accept' => 'application/json',
                         'x-api-token' => $plansApiToken,
-                        'Authorization' => 'Basic ' . $authBasic,
+                        'Authorization' => 'Basic '.$authBasic,
                     ],
                     'body' => json_encode($plansDataArr),
                     'timeout' => $plansApiTimeout,
@@ -829,7 +829,7 @@ class CentralService
             $contents = (string) $response->getBody();
             $response = json_decode($contents);
 
-            info('fn: updateQuotePayment payment updated for quote uuid: ' . $quoteUuId);
+            info('fn: updateQuotePayment payment updated for quote uuid: '.$quoteUuId);
         }
     }
 

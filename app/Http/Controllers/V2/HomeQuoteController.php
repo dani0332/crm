@@ -47,7 +47,7 @@ class HomeQuoteController extends Controller
         }
         dd('Done');
 
-        return redirect('personal-quotes/home/' . $response->quoteUID)->with('message', 'Quote created successfully');
+        return redirect('personal-quotes/home/'.$response->quoteUID)->with('message', 'Quote created successfully');
     }
 
     public function show($uuid)
