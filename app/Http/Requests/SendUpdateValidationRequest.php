@@ -156,6 +156,7 @@ class SendUpdateValidationRequest extends FormRequest
                         SendUpdateLogStatusEnum::DTSI,
                         SendUpdateLogStatusEnum::DOV,
                         SendUpdateLogStatusEnum::ATIB,
+                        SendUpdateLogStatusEnum::ATICB,
                         SendUpdateLogStatusEnum::ACB,
                     ])) {
                     $validator->errors()->add('error', 'Transaction approval is required');

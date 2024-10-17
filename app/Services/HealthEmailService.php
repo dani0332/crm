@@ -10,6 +10,8 @@ use App\Enums\WorkflowTypeEnum;
 use App\Models\ApplicationStorage;
 use App\Models\QuoteFlowDetails;
 use App\Models\User;
+use Exception;
+use Illuminate\Support\Facades\Log;
 
 class HealthEmailService extends BaseService
 {
@@ -20,7 +22,7 @@ class HealthEmailService extends BaseService
         if ($triggerSICWorkFlow) {
             if (! $lead->sic_flow_enabled) {
                 $advisor = User::where('id', $lead->advisor_id)->first();
-                $emailData = $this->buildHealthFollowupEmailData($lead, $advisor, WorkflowTypeEnum::HEALTH_SIC_FOLLOWUPS);
+                $emailData = $this->mapDataForFollowupEmail($lead, $advisor, WorkflowTypeEnum::HEALTH_SIC_FOLLOWUPS);
                 $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
                 if ($sicEvent) {
                     $response = app(BirdService::class)->triggerWebHookRequest($sicEvent->value, $emailData);
@@ -40,18 +42,18 @@ class HealthEmailService extends BaseService
         return $response ?? null;
     }
 
-    private function buildHealthFollowupEmailData($lead, $advisor, $workflowType)
+    private function mapDataForFollowupEmail($lead, $advisor, $workflowType)
     {
         return (object) [
             'quoteUID' => $lead->uuid,
             'customerEmail' => $lead->email,
             'refID' => $lead->code,
             'uuid' => $lead->uuid,
-            'customerFullName' => $lead->first_name.' '.$lead->last_name,
-            'customerName' => $lead->first_name.' '.$lead->last_name,
-            'advisorId' => $advisor->id ?? null,
-            'advisorName' => (! empty($advisor->name) ? $advisor->name : ''),
-            'advisorEmail' => (! empty($advisor->email) ? $advisor->email : ''),
+            'customerFullName' => "{$lead->first_name} {$lead->last_name}",
+            'customerName' => "{$lead->first_name} {$lead->last_name}",
+            'advisorId' => $advisor?->id ?? null,
+            'advisorName' => $advisor?->name ?? '',
+            'advisorEmail' => $advisor?->email ?? '',
             'advisorDetails' => $advisor ?? null,
             'quotePlanLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid,
             'requestAdvisorLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/?assignAdvisor=true',
@@ -59,10 +61,10 @@ class HealthEmailService extends BaseService
             'quotePlanApiLink' => config('constants.KEN_API_ENDPOINT').'/get-health-quote-plans-order-priority?'.$lead->uuid.'&lang=en&isModified=true',
             'ApiToken' => config('constants.KEN_API_TOKEN'),
             'basicAuth' => 'Basic '.base64_encode(config('constants.KEN_API_USER').':'.config('constants.KEN_API_PWD')),
-            'landLine' => (! empty($advisor->landline_no) ? $advisor->landline_no : ''),
-            'mobilePhone' => (! empty($advisor->mobile_no) ? $advisor->mobile_no : ''),
-            'whatsAppNumber' => ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
-            'mobileNoWithoutSpaces' => (! empty($advisor->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
+            'landLine' => (! empty($advisor?->landline_no) ? $advisor->landline_no : ''),
+            'mobilePhone' => (! empty($advisor?->mobile_no) ? $advisor->mobile_no : ''),
+            'whatsAppNumber' => ! empty($advisor?->mobile_no) ? formatMobileNo($advisor->mobile_no) : '',
+            'mobileNoWithoutSpaces' => (! empty($advisor?->mobile_no) ? removeSpaces(formatMobileNoDisplay($advisor->mobile_no)) : ''),
             'workflowType' => $workflowType,
             'customerMobile' => (! empty($lead->mobile_no) ? $lead->mobile_no : ''),
             'whatsappConsent' => getWhatsappConsent(QuoteTypes::HEALTH, $lead->uuid),
@@ -75,7 +77,7 @@ class HealthEmailService extends BaseService
         info('Sending OCA Health followups email for lead: '.$lead->uuid.' | Time: '.now());
         if (! $lead->oca_flow_enabled) {
             $advisor = User::where('id', $lead->advisor_id)->first();
-            $emailData = $this->buildHealthFollowupEmailData($lead, $advisor, WorkflowTypeEnum::HEALTH_AUTOMATED_FOLLOWUPS);
+            $emailData = $this->mapDataForFollowupEmail($lead, $advisor, WorkflowTypeEnum::HEALTH_AUTOMATED_FOLLOWUPS);
             $birdSicHealthWorkflowData = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->first();
             if ($birdSicHealthWorkflowData) {
                 $response = app(BirdService::class)->triggerWebHookRequest($birdSicHealthWorkflowData->value, $emailData);
@@ -96,6 +98,7 @@ class HealthEmailService extends BaseService
 
         return $response ?? null;
     }
+
     public function createQuoteFlowDetails($lead, $response)
     {
         try {
@@ -116,6 +119,24 @@ class HealthEmailService extends BaseService
             info($errorMessage);
             info("Error: {$th->getMessage()} | Ref-ID: {$lead->uuid} | Time: ".now());
             throw $th;
+        }
+    }
+
+    public function sendApplicationSubmittedEmail($healthQuote)
+    {
+        try {
+            info(self::class." - Inside for UUID: {$healthQuote->uuid}");
+            $emailData = $this->mapDataForFollowupEmail($healthQuote, $healthQuote->advisor, WorkflowTypeEnum::HEALTH_APPLICATION_SUBMITTED);
+            $workflow = getAppStorageValueByKey(ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW);
+            info(self::class." - Triggering Bird triggerWebHookRequest for UUID: {$healthQuote->uuid}");
+            $response = app(BirdService::class)->triggerWebHookRequest($workflow, $emailData);
+            info("Application submitted email sent for lead uuid: {$healthQuote->uuid} | Time: ".now());
+
+            return $response;
+        } catch (Exception $e) {
+            Log::error("Error sending application submitted email for lead Ref-ID: {$healthQuote->uuid} | Time: ".now().' - Error: '.$e->getMessage());
+
+            return false;
         }
     }
 }
