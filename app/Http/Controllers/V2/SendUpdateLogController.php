@@ -14,6 +14,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ReversalEntriesRequest;
 use App\Http\Requests\SaveBookingDetailsRequest;
 use App\Http\Requests\SavePolicyDetailsRequest;
+use App\Http\Requests\SaveProviderDetailsRequest;
 use App\Http\Requests\SendUpdateCustomerValidationRequest;
 use App\Http\Requests\SendUpdateRequest;
 use App\Http\Requests\SendUpdateValidationRequest;
@@ -429,5 +430,12 @@ class SendUpdateLogController extends Controller
         return response()->json([
             'options' => $options,
         ]);
+    }
+
+    public function saveProviderDetails(SaveProviderDetailsRequest $request)
+    {
+        SendUpdateLogRepository::saveProviderDetails($request->validated());
+
+        return redirect()->back();
     }
 }

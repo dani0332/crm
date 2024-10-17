@@ -96,6 +96,8 @@ class SendUpdateLogRepository extends BaseRepository
             ) {
                 @[$insuranceProviderId, $plan_id] = app(SendUpdateLogService::class)->getProviderDetails($quote, $data['quote_type_id'], true, $commercialRules);
                 $policyDetails = $this->autoFillPolicyDetails($quote, $data['quote_type_id'], $insuranceProviderId, $plan_id);
+            } elseif ($quote->insly_id || $quote->insly_migrated) {
+                $insuranceProviderId = $quote?->insurance_provider_id ?? null;
             }
 
             // if the send update category is 'Cancellation from Inception', 'Cancellation from Inception and reissuance' or 'Endorsement Financial' with
@@ -248,6 +250,21 @@ class SendUpdateLogRepository extends BaseRepository
                 'message' => $ex->getMessage(),
             ];
             info('Unable to save Policy Details - SendUpdateUUID: '.$sendUpdate->uuid.' - Error: '.$ex->getMessage());
+        }
+
+        return $result;
+    }
+
+    public function fetchSaveProviderDetails($data)
+    {
+        try {
+            $result = $this->find($data['send_update_log_id'])->update([
+                'insurance_provider_id' => $data['insurance_provider_id'],
+            ]);
+        } catch (\Exception $ex) {
+            $result = (object) [
+                'message' => $ex->getMessage(),
+            ];
         }
 
         return $result;
