@@ -1,23 +1,23 @@
 <?php
 
-namespace App\Listeners;
+namespace App\Listeners\Health;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
-use App\Events\HealthTransactionApproved;
+use App\Events\Health\TransactionApproved;
 use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
 use App\Models\RenewalBatch;
 
-class HandleHealthTransactionApproved
+class HandleTransactionApproved
 {
     /**
-     * Handles the HealthTransactionApproved event.
+     * Handles the TransactionApproved event.
      *
-     * @param HealthTransactionApproved $event The HealthTransactionApproved event.
+     * @param TransactionApproved $event The TransactionApproved event.
      * @return void
      */
-    public function handle(HealthTransactionApproved $event): void
+    public function handle(TransactionApproved $event): void
     {
         $healthQuote = $event->healthQuote;
     
