@@ -57,6 +57,7 @@ class RetentionReportService extends BaseService
 
         // Build the query based on the model object and request parameters
         $query = $this->buildQuery($request);
+
         $allData = $query->get();
 
         $aggregatedData = $this->getSummarizedData($allData);
@@ -271,6 +272,11 @@ class RetentionReportService extends BaseService
             $query->whereBetween('renewal_batches.start_date', [$previousMonthStartDateFormatted, $nextMonthEndDateFormatted]);
 
             $this->applyDefaultFilterForBatch($query, $request, $isDetailsFilter);
+        }
+
+        if ($request->asAtDate) {
+            $query->where('personal_quotes.policy_booking_date', '<=', Carbon::parse($request->asAtDate)->endOfDay())
+                ->whereIn('quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued]);
         }
     }
 
