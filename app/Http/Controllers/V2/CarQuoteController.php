@@ -221,7 +221,6 @@ class CarQuoteController extends Controller
 
         foreach ($request->uuids as $uuid) {
             NBEventFollowup::dispatch($uuid, $request->followup_type)->delay(Carbon::now()->addMinutes(2));
-            usleep(200);
         }
 
         return back()->with('success', 'Event Followup sending successful');
