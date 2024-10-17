@@ -27,12 +27,8 @@ class HandleTransactionApproved
         // Update transaction approval timestamp without triggering events
         $this->updateTransactionApprovedAt($healthQuote);
     
-        // Log after updating the transaction approval timestamp
-        info(self::class . " - Transaction approved timestamp updated for quote uuid: {$healthQuote->uuid}, transaction_approved_at: {$healthQuote->transaction_approved_at}");
-    
         // Check if source is ecommerce or IMCRM and assign renewal batch if applicable
         if ($this->isEcommerceOrIMCRM($healthQuote)) {
-            info(self::class . " - Ecommerce or IMCRM source detected for quote uuid: {$healthQuote->uuid}");
             $this->assignRenewalBatch($healthQuote);
         } else {
             info(self::class . " - Non-Ecommerce/IMCRM source, no renewal batch assigned for quote uuid: {$healthQuote->uuid}");
