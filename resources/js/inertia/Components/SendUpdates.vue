@@ -415,10 +415,10 @@ const expandNotes = ref(false);
           </template>
 
           <template #item-notes="{ notes }">
-            <template v-if="notes.length < 40">
+            <template v-if="notes?.length < 40">
               {{ notes }}
             </template>
-            <x-accordion v-else show-icon icon="chevronDown">
+            <x-accordion v-else-if="notes" show-icon icon="chevronDown">
               <x-accordion-item :expanded="expandNotes">
                 <div class="bg-gray-10 w-80">
                   {{ notes.slice(0, 40) }}
