@@ -31,7 +31,7 @@ function onSubmit(isValid) {
       .then(() => {
         contactLoader.value = false;
         notification.success({
-          title: 'Uploaded Rates records has been stored',
+          title: 'Rates upload is being processed.',
           position: 'top',
         });
         files = [];

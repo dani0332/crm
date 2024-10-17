@@ -31,7 +31,7 @@ function onSubmit(isValid) {
       .then(() => {
         contactLoader.value = false;
         notification.success({
-          title: 'Uploaded Coverages records has been stored',
+          title: 'Coverages upload is being processed.',
           position: 'top',
         });
         files = [];
