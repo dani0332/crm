@@ -2,32 +2,49 @@
 
 namespace App\Services\PolicyIssuanceAutomation\Travel;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
+use App\Enums\QuoteDocumentsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\TravelQuoteEnum;
 use App\Interfaces\PolicyIssuanceInterface;
+use App\Models\DocumentType;
 use App\Models\Payment;
+use App\Services\ApplicationStorageService;
+use App\Services\HelperService;
 use App\Services\SplitPaymentService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
+use Storage;
 
 class AllianceInsuranceService implements PolicyIssuanceInterface
 {
+    protected $helperService;
+
+    public const TYPE = quoteTypeCode::Travel;
+    public const TYPE_ID = QuoteTypeId::Travel;
+
     private mixed $baseUrl;
     private mixed $agencyId;
     private mixed $agencyCode;
     protected string $ISSUE_POLICY = 'Issue Policy';
     protected string $PURCHASE_POLICY = 'Purchase Policy';
     protected string $UPLOAD_POLICY_DOCUMENTS = 'Upload Policy Documents';
-
     protected string $FILL_POLICY_BOOKING_DETAILS = 'Fill Policy Booking Details';
     protected string $BOOK_POLICY = 'Book Policy';
+    protected string $vat = 'Book Policy';
 
-    public function __construct()
+    public function __construct(HelperService $helperService)
     {
+        $this->helperService = $helperService;
+
         $this->baseUrl = config('constants.ALLIANCE_API_BASE_URL');
         $this->agencyId = config('constants.ALLIANCE_AGENCY_ID');
         $this->agencyCode = config('constants.ALLIANCE_AGENCY_CODE');
+
+        $this->vat = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::VAT_VALUE);
     }
     public function handle($process)
     {
@@ -85,7 +102,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
         $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
         if ($nextStepToBeExecuted === $this->FILL_POLICY_BOOKING_DETAILS) {
-            $fillPolicyDetailsResponse = $this->fillBookingDetails($quote, $payment);
+            $fillPolicyDetailsResponse = $this->uploadBuyerTaxInvoiceAndFillBookingDetails($quote, $payment);
             if (! $fillPolicyDetailsResponse['status']) {
                 return $fillPolicyDetailsResponse;
             }
@@ -142,7 +159,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $issuePolicyResult = $issuePolicyResponse?->result;
         $insurerPolicyId = $issuePolicyResult->policy_id;
         $premium = $issuePolicyResult->premium;
-        $priceVatApplicable = $premium / 1.05;
+        $priceVatApplicable = $premium / (1 + ((float) $this->vat / 100));
         $policyIssuanceDate = Carbon::now();
         $policyExpiryDate = Carbon::parse($quote->policy_start_date)->addDays($quote->days_cover_for);
 
@@ -231,6 +248,10 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         }
 
         $policyDocumentsResult = $policyDocumentsResponse?->result;
+        $policyDocuments = $policyDocumentsResult?->policy_documents[0];
+        /*foreach ($policyDocuments as $policyDocument) {
+
+        }*/
 
         info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy documents are uploaded');
 
@@ -243,8 +264,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
     }
 
-
-    public function fillBookingDetails($quote, $payment)
+    public function uploadBuyerTaxInvoiceAndFillBookingDetails($quote, $payment)
     {
         info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
 
@@ -272,20 +292,24 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $bookingDetails = $buyerTaxInvoiceResult?->buyer_tax_invoices[0];
 
         $insurerInvoiceDate = Carbon::createFromFormat('d-M-y', $bookingDetails->tax_invoice_date)->format('Y-m-d');
+        $buyerTaxInvoiceURL = $bookingDetails->url;
+        $buyerTaxInvoiceDocumentCode = QuoteDocumentsEnum::TRAVEL_TAX_INVOICE_RAISE_BY_BUYER;
+
+        $this->uploadAndAttachToQuoteDocuments($quote, $buyerTaxInvoiceURL, $buyerTaxInvoiceDocumentCode);
+        info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Buyer Tax Invoice is uploaded');
 
         $payment->update([
             'commission' => $bookingDetails->agency_commission_inc_tax,
             'commission_vat' => $bookingDetails->agency_commission_tax,
             'commission_vat_applicable' => $bookingDetails->agency_commission,
+            'commmission_percentage' => ($bookingDetails->agency_commission / ($bookingDetails->premium / (1 + (float) $bookingDetails->tax_rate))) * 100,
             'insurer_commmission_invoice_number' => $bookingDetails->tax_invoice_number,
             'insurer_invoice_date' => $insurerInvoiceDate,
         ]);
-
-        info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy Details filled and Buyer Tax Invoice is uploaded');
+        info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy Details filled.');
 
         (new SplitPaymentService)->updateCommissionSchedule($payment);
         info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Commission Schedule updated');
-
 
         info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
 
@@ -305,7 +329,6 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         return $data;
     }
 
-
     public function getNextStep($completedStep = null)
     {
         return match ($completedStep) {
@@ -314,6 +337,54 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             $this->UPLOAD_POLICY_DOCUMENTS => $this->FILL_POLICY_BOOKING_DETAILS,
             $this->FILL_POLICY_BOOKING_DETAILS => $this->BOOK_POLICY,
             default => $this->ISSUE_POLICY,
+        };
+    }
+
+    private function uploadAndAttachToQuoteDocuments($quote, $documentUrl, $documentCode, $originalName = null)
+    {
+        $buyerTaxInvoiceDocumentType = DocumentType::where(['quote_type_id' => $quote->id, 'code' => $documentCode, 'is_active' => true])->first();
+
+        $fileContents = Http::get($documentUrl);
+        [$mimeType , $docName] = $this->getMimeTypeAndFileName($documentUrl);
+
+        //upload file to azure
+        $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
+        $filePathAzure = 'documents/'.ucwords(self::TYPE).'/'.$fileNameAzure;
+        Storage::disk('azureIM')->put($filePathAzure, $fileContents);
+
+        return $quote->documents()->create([
+            'doc_name' => $docName,
+            'original_name' => $originalName ?? $docName,
+            'doc_url' => $filePathAzure,
+            'doc_mime_type' => $mimeType,
+            'document_type_code' => $buyerTaxInvoiceDocumentType->code,
+            'document_type_text' => $buyerTaxInvoiceDocumentType->text,
+            'doc_uuid' => $this->helperService->generateUUID(),
+        ]);
+
+    }
+    private function getMimeTypeAndFileName($documentUrl)
+    {
+        $httpHeaders = Http::head($documentUrl);
+
+        $mimeType = $httpHeaders->header('Content-Type');
+        $contentDisposition = $httpHeaders->header('Content-Disposition');
+
+        $docName = basename(parse_url($documentUrl, PHP_URL_PATH));
+        if ($contentDisposition && preg_match('/filename\*?=(?:UTF-\d\'\')?["\']?([^"\';\r\n]+)/', $contentDisposition, $matches)) {
+            $docName = urldecode($matches[1]);
+        }
+
+        return [$mimeType , $docName];
+
+    }
+
+    private function getTravelDocumentMapping($docName)
+    {
+        return match ($docName) {
+            'Policy Tax Invoice' => ['key' => $docName, 'code' => QuoteDocumentsEnum::TRAVEL_TAX_INVOICE],
+            'Certificate of Insurance' => ['key' => $docName, 'code' => QuoteDocumentsEnum::TRAVEL_POLICY_CERTIFICATE],
+            default => null,
         };
     }
 
