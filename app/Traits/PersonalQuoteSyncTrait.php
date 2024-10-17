@@ -6,7 +6,6 @@ use App\Enums\EnvEnum;
 use App\Enums\QuoteSyncStatus;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypeShortCode;
-use App\Models\ApplicationStorage;
 use App\Models\BikeQuote;
 use App\Models\BikeQuoteRequestDetail;
 use App\Models\BusinessQuote;
@@ -401,10 +400,10 @@ trait PersonalQuoteSyncTrait
 
     /**
      * Returns personal quote record, creates if doesn't exists from source quote and updates if data is provided
-     * 
-     * @param mixed $uuid
-     * @param mixed $quoteTypeId
-     * @param mixed $data
+     *
+     * @param  mixed  $uuid
+     * @param  mixed  $quoteTypeId
+     * @param  mixed  $data
      * @return mixed
      */
     public function UpdatePersonalQuote($uuid, $quoteTypeId, $data)
@@ -415,15 +414,15 @@ trait PersonalQuoteSyncTrait
         ])->first();
 
         $this->init();
-        if (!$personalQuote) {
+        if (! $personalQuote) {
             $sourceQuote = $this->getQuoteRecord($quoteTypeId, $uuid);
             if ($sourceQuote) {
                 $personalQuote = $this->createPersonalQuoteFromSource($sourceQuote, $data, $uuid, $quoteTypeId);
                 $this->upsertPersonalQuoteDetail($personalQuote, $data);
             }
         }
-        
-        if(!empty($data)) {
+
+        if (! empty($data)) {
             $dataToBeUpdated = [];
             foreach ($data as $column => $value) {
                 if (in_array($column, ['id', 'currently_insured_with', 'created_at', 'updated_at', 'is_cold'])) {
@@ -434,7 +433,7 @@ trait PersonalQuoteSyncTrait
                 }
             }
 
-            if (!empty($dataToBeUpdated)) {
+            if (! empty($dataToBeUpdated)) {
                 $personalQuote->update($dataToBeUpdated);
             }
         }
