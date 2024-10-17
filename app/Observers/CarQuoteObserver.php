@@ -54,7 +54,7 @@ class CarQuoteObserver
         $this->syncQuote($lead, $dirty);
 
         if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PolicyBooked) {
-            $this->syncLeadEntries($lead->uuid);
+            $this->UpdatePersonalQuote($lead->uuid, QuoteTypeId::Car, $dirty);
         }
 
         if (

@@ -53,19 +53,7 @@ class SendUpdateLogRepository extends BaseRepository
 
             $uuid = strtoupper(Str::random(6));
 
-            // Todo:: Check if personal quote exists because its break when quote not in personal quotes
-            $personalQuote = PersonalQuoteRepository::where([
-                'quote_type_id' => $data['quote_type_id'],
-                'uuid' => $data['quote_uuid'],
-            ])->first();
-
-            if (! $personalQuote) {
-                $this->syncLeadEntries($data['quote_uuid']);
-                $personalQuote = PersonalQuoteRepository::where([
-                    'quote_type_id' => $data['quote_type_id'],
-                    'uuid' => $data['quote_uuid'],
-                ])->first();
-            }
+            $personalQuote = $this->UpdatePersonalQuote($data['quote_uuid'], $data['quote_type_id'], []);
 
             $data['personal_quote_id'] = $personalQuote?->id ?? null;
             $option = ! empty($data['option_id']) ? LookupRepository::find($data['option_id'])->code : null;

@@ -399,25 +399,47 @@ trait PersonalQuoteSyncTrait
         }
     }
 
-    public function syncLeadEntries($uuid)
+    /**
+     * Returns personal quote record, creates if doesn't exists from source quote and updates if data is provided
+     * 
+     * @param mixed $uuid
+     * @param mixed $quoteTypeId
+     * @param mixed $data
+     * @return mixed
+     */
+    public function UpdatePersonalQuote($uuid, $quoteTypeId, $data)
     {
+        $personalQuote = PersonalQuoteRepository::where([
+            'quote_type_id' => $quoteTypeId,
+            'uuid' => $uuid,
+        ])->first();
+
         $this->init();
+        if (!$personalQuote) {
+            $sourceQuote = $this->getQuoteRecord($quoteTypeId, $uuid);
+            if ($sourceQuote) {
+                $personalQuote = $this->createPersonalQuoteFromSource($sourceQuote, $data, $uuid, $quoteTypeId);
+                $this->upsertPersonalQuoteDetail($personalQuote, $data);
+            }
+        }
+        
+        if(!empty($data)) {
+            $dataToBeUpdated = [];
+            foreach ($data as $column => $value) {
+                if (in_array($column, ['id', 'currently_insured_with', 'created_at', 'updated_at', 'is_cold'])) {
+                    continue;
+                }
+                if (isset($this->schemas['personal_quotes']['columns'][$column])) {
+                    $dataToBeUpdated[$column] = $value;
+                }
+            }
 
-        info('----------- QuoteSyncJob - single entry - Started -----------');
-        $isQuoteSyncEnabled = ApplicationStorage::where('key_name', 'quote_sync_enabled')->first();
-
-        if (! $isQuoteSyncEnabled || $isQuoteSyncEnabled->value == 0) {
-            info('----------- QuoteSync - single entry - is disabled -----------');
-
-            return;
+            if (!empty($dataToBeUpdated)) {
+                $personalQuote->update($dataToBeUpdated);
+            }
         }
 
-        $entries = QuoteSync::where('is_synced', false)
-            ->where('id', '>', $this->startId)
-            ->where('quote_uuid', $uuid)
-            ->get();
-
-        $this->processQuoteSyncEntries($entries, true);
+        return $personalQuote;
     }
 
     private function processQuoteSyncEntries($entries, $isSingle = false)

@@ -39,7 +39,7 @@ class LifeQuoteObserver
         $this->syncQuote($lifeQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $lifeQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
-            $this->syncLeadEntries($lifeQuote->uuid);
+            $this->UpdatePersonalQuote($lifeQuote->uuid, QuoteTypeId::Life, $dirty);
         }
 
         if (
