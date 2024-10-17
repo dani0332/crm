@@ -13,4 +13,5 @@ final class WorkflowTypeEnum extends Enum
     public const HEALTH_AUTOMATED_FOLLOWUPS = 'health_automated_followups';
     public const HEALTH_SIC_FOLLOWUPS = 'health_sic_followups';
     public const TRAVEL_SIC_FOLLOWUPS = 'travel_sic_followups';
+    public const HEALTH_APPLICATION_SUBMITTED = 'health_application_submitted';
 }

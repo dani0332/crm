@@ -13,7 +13,6 @@ use App\Services\TransAppService;
 use App\Traits\TeamHierarchyTrait;
 use Auth;
 use Carbon\Carbon;
-use DataTables;
 use DB;
 use Illuminate\Http\Request;
 
@@ -43,7 +42,7 @@ class TransactionController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request, Transaction $transaction, Datatables $datatables)
+    public function index(Request $request, Transaction $transaction)
     {
         $transactors = $this->transactionService->getTransactors();
         $handlers = $this->transactionService->getHandlers();
@@ -53,73 +52,67 @@ class TransactionController extends Controller
         $isTransappAdmin = $this->transactionService->checkTransappAdmin();
         $isTransappNonAdmin = $this->transactionService->checkTransappNonAdmin();
 
-        if ($request->ajax()) {
-            $dataTransapp = $transaction::select(
-                'transactions.approval_code',
-                'transactions.created_at',
-                'insurance_companies.name as insurance',
-                'transactions.amount_paid',
-                DB::raw('CONCAT(customer.first_name, " ", customer.last_name) AS customer_name'),
-                'transactions.risk_details',
-                'creator.name as created_by_name',
-                'handlers.name as handler_name',
-                'payment_modes.name as payment_mode',
+        $dataTransapp = $transaction::select(
+            'transactions.approval_code',
+            'transactions.created_at',
+            'insurance_companies.name as insurance',
+            'transactions.amount_paid',
+            DB::raw('CONCAT(customer.first_name, " ", customer.last_name) AS customer_name'),
+            'transactions.risk_details',
+            'creator.name as created_by_name',
+            'handlers.name as handler_name',
+            'payment_modes.name as payment_mode',
 
-            )
-                ->leftjoin('customer', 'customer.id', 'transactions.customer_id')
-                ->leftjoin('insurance_companies', 'insurance_companies.id', 'transactions.insurance_company_id')
-                ->leftjoin('users as handlers', 'transactions.assigned_to_id', 'handlers.id')
-                ->leftjoin('users as creator', 'transactions.created_by_id', 'creator.id')
-                ->leftjoin('payment_modes', 'payment_modes.id', 'transactions.payment_mode_id')->orderBy('transactions.created_at', 'desc')
-                ->where('transactions.is_deleted', 0);
-            if ($isTransappNonAdmin == '1') {
-                $dataTransapp->where('transactions.assigned_to_id', auth()->user()->id);
-            }
-            if (! empty($request->team_id) && $request->team_id[0] != null) {
-                $dataTransapp->leftjoin('user_team', 'handlers.id', 'user_team.user_id');
-                $dataTransapp->whereIn('user_team.team_id', $request->team_id);
-                $dataTransapp->groupBy('transactions.id');
-            }
-            if (isset($request->transapp_start_date) && ! empty($request->transapp_start_date)
-            && isset($request->transapp_stop_date) && ! empty($request->transapp_stop_date)) {
-                $dataTransapp->whereBetween('transactions.created_at', [Carbon::parse($request->transapp_start_date)->format('Y-m-d').' 00:00:00', Carbon::parse($request->transapp_stop_date)->format('Y-m-d').' 23:59:59']);
-            } else {
-                $dataTransapp->whereBetween('transactions.created_at', [now()->startOfDay(), now()->endOfDay()]);
-            }
-            if (! empty($request->transapp_approval_code)) {
-                $dataTransapp->where('transactions.approval_code', $request->transapp_approval_code)->orWhere('transactions.prev_approval_code', $request->transapp_approval_code);
-            }
-
-            if (! empty($request->transapp_customer_email)) {
-                $dataTransapp->where('customer.email', $request->transapp_customer_email);
-            }
-
-            if (! empty($request->transapp_customer_name)) {
-                $dataTransapp->where('customer.first_name', 'like', '%'.$request->transapp_customer_name.'%')->orWhere('customer.last_name', 'like', '%'.$request->transapp_customer_name.'%');
-            }
-
-            if (isset($request->transactor) && ! empty($request->transactor)) {
-                $dataTransapp->where('transactions.created_by_id', $request->transactor);
-            }
-            if (isset($request->handler) && ! empty($request->handler)) {
-                $dataTransapp->where('transactions.assigned_to_id', $request->handler);
-            }
-            if (isset($request->insurance_company) && ! empty($request->insurance_company)) {
-                $dataTransapp->where('transactions.insurance_company_id', $request->insurance_company);
-            }
-            if (isset($request->reason) && ! empty($request->reason)) {
-                $dataTransapp->where('transactions.reason_id', $request->reason);
-            }
-            if (isset($request->payment_mode) && ! empty($request->payment_mode)) {
-                $dataTransapp->where('transactions.payment_mode_id', $request->payment_mode);
-            }
-            $premiumAmount = $dataTransapp->get('amount_paid')->sum('amount_paid');
-
-            return $datatables::of($dataTransapp)
-                ->addIndexColumn()
-                ->addColumn('premium_total', $premiumAmount)
-                ->make(true);
+        )
+            ->leftjoin('customer', 'customer.id', 'transactions.customer_id')
+            ->leftjoin('insurance_companies', 'insurance_companies.id', 'transactions.insurance_company_id')
+            ->leftjoin('users as handlers', 'transactions.assigned_to_id', 'handlers.id')
+            ->leftjoin('users as creator', 'transactions.created_by_id', 'creator.id')
+            ->leftjoin('payment_modes', 'payment_modes.id', 'transactions.payment_mode_id')->orderBy('transactions.created_at', 'desc')
+            ->where('transactions.is_deleted', 0);
+        if ($isTransappNonAdmin == '1') {
+            $dataTransapp->where('transactions.assigned_to_id', auth()->user()->id);
         }
+        if (! empty($request->team_id) && $request->team_id[0] != null) {
+            $dataTransapp->leftjoin('user_team', 'handlers.id', 'user_team.user_id');
+            $dataTransapp->whereIn('user_team.team_id', $request->team_id);
+            $dataTransapp->groupBy('transactions.id');
+        }
+        if (isset($request->transapp_start_date) && ! empty($request->transapp_start_date)
+        && isset($request->transapp_stop_date) && ! empty($request->transapp_stop_date)) {
+            $dataTransapp->whereBetween('transactions.created_at', [Carbon::parse($request->transapp_start_date)->format('Y-m-d').' 00:00:00', Carbon::parse($request->transapp_stop_date)->format('Y-m-d').' 23:59:59']);
+        } else {
+            $dataTransapp->whereBetween('transactions.created_at', [now()->startOfDay(), now()->endOfDay()]);
+        }
+        if (! empty($request->transapp_approval_code)) {
+            $dataTransapp->where('transactions.approval_code', $request->transapp_approval_code)->orWhere('transactions.prev_approval_code', $request->transapp_approval_code);
+        }
+
+        if (! empty($request->transapp_customer_email)) {
+            $dataTransapp->where('customer.email', $request->transapp_customer_email);
+        }
+
+        if (! empty($request->transapp_customer_name)) {
+            $dataTransapp->where('customer.first_name', 'like', '%'.$request->transapp_customer_name.'%')->orWhere('customer.last_name', 'like', '%'.$request->transapp_customer_name.'%');
+        }
+
+        if (isset($request->transactor) && ! empty($request->transactor)) {
+            $dataTransapp->where('transactions.created_by_id', $request->transactor);
+        }
+        if (isset($request->handler) && ! empty($request->handler)) {
+            $dataTransapp->where('transactions.assigned_to_id', $request->handler);
+        }
+        if (isset($request->insurance_company) && ! empty($request->insurance_company)) {
+            $dataTransapp->where('transactions.insurance_company_id', $request->insurance_company);
+        }
+        if (isset($request->reason) && ! empty($request->reason)) {
+            $dataTransapp->where('transactions.reason_id', $request->reason);
+        }
+        if (isset($request->payment_mode) && ! empty($request->payment_mode)) {
+            $dataTransapp->where('transactions.payment_mode_id', $request->payment_mode);
+        }
+
+        // $premiumAmount = $dataTransapp->get('amount_paid')->sum('amount_paid');
 
         $teams = [];
         $teamIds = $this->getUserTeams(auth()->user()->id);
@@ -132,7 +125,17 @@ class TransactionController extends Controller
         }
         $isCarManager = auth()->user()->hasAnyRole([RolesEnum::CarManager]);
 
-        return view('transaction.view', compact('transactors', 'handlers', 'insuranceCompanies', 'paymentModes', 'reasons', 'isTransappAdmin', 'teams', 'isCarManager'));
+        return inertia('TransApp/Index', [
+            'transactors' => $transactors,
+            'handlers' => $handlers,
+            'insuranceCompanies' => $insuranceCompanies,
+            'paymentModes' => $paymentModes,
+            'reasons' => $reasons,
+            'isTransappAdmin' => $isTransappAdmin,
+            'teams' => $teams,
+            'isCarManager' => $isCarManager,
+            'data' => $dataTransapp->paginate(15)->withQueryString(),
+        ]);
     }
 
     /**

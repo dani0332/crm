@@ -16,6 +16,7 @@ final class QuoteDocumentsEnum extends Enum
     public const DRIVING_LICENSE = 'DL';
     public const FINAL_TERMS_AND_CONDITIONS = 'CTC';
     public const POLICY_HANDBOOK = 'PHB';
+    public const EP = 'EP';
 
     // Life Quote
     public const LIFE_POLICY_SCHEDULE = 'PS_LIFE';

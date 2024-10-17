@@ -426,7 +426,7 @@ class SendUpdateLogRepository extends BaseRepository
         $checkAdditionalBookingPermission = auth()->user()->hasPermissionTo(PermissionsEnum::SEND_UPDATE_ADD_BOOKING);
         if (! $checkAdditionalBookingPermission) {
             $response = $response->filter(function ($item) {
-                return ! in_array($item->slug, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB]);
+                return ! in_array($item->slug, [SendUpdateLogStatusEnum::ACB, SendUpdateLogStatusEnum::ATIB, SendUpdateLogStatusEnum::ATICB]);
             });
         }
 
