@@ -4,7 +4,6 @@ const props = defineProps({
   formOptions: Array,
 });
 
-console.log('quotes', props.quotes);
 const page = usePage();
 const notification = useToast();
 const params = useUrlSearchParams('history');
@@ -12,6 +11,7 @@ const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 
+const { isRequired } = useRules();
 const tableHeader = [
   { text: 'Ref-ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
@@ -39,6 +39,24 @@ const tableHeader = [
   { text: 'Renewal Batch', value: 'renewal_batch' },
 ];
 
+const assignForm = useForm({
+  assign_team: null,
+  assigned_to_id_new: null,
+  assignment_type: '1',
+  modelType: 'Health',
+  selectTmLeadId: '',
+  isManagerOrDeputy: 1,
+  isLeadPool: null,
+  isManualAllocationAllowed: 1,
+});
+
+const subTeamsOptions = [
+  { value: 'Best', label: 'Best' },
+  { value: 'Good', label: 'Good' },
+  { value: 'Entry-Level', label: 'Entry-Level' },
+  { value: 'Wow-Call', label: 'Wow-Call' },
+  { value: 'No-Type', label: 'No-Type' },
+];
 const fixedValue = numberString => {
   const number = parseFloat(numberString);
   if (isNaN(number)) {
@@ -53,13 +71,6 @@ const fixedValue = numberString => {
   }
 };
 
-const advisorOptions = computed(() => {
-  return props.formOptions.advisors.map(advisor => ({
-    value: advisor.id,
-    label: advisor.name,
-  }));
-});
-
 const subTeamOptions = [
   { value: '', label: 'All' },
   { value: 'RM-NB', label: 'RM-NB' },
@@ -69,7 +80,19 @@ const subTeamOptions = [
   { value: 'No-Type', label: 'No-Type' },
 ];
 
+const advisorOptions = computed(() => {
+  return props.formOptions.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+});
 const modifiedAdvisorOptions = ref([]);
+
+const quotesSelected = ref([]);
+
+const readOnlyMode = reactive({
+  isDisable: true,
+});
 
 modifiedAdvisorOptions.value = advisorOptions.value;
 
@@ -145,6 +168,32 @@ function onReset() {
     onBefore: () => (loader.table = true),
     onSuccess: () => (loader.table = false),
   });
+}
+
+function onAssignLead(isValid) {
+  if (isValid) {
+    const selected = quotesSelected.value.map(e => e.id);
+    const url =
+      assignForm.assign_team === 'Wow-Call'
+        ? '/quotes/wcuAssign'
+        : '/quotes/health/manualLeadAssign';
+    assignForm
+      .transform(data => ({
+        ...data,
+        selectTmLeadId: `${selected}`,
+      }))
+      .post(url, {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          quotesSelected.value = [];
+          notification.success({
+            title: 'Health Leads Assigned',
+            position: 'top',
+          });
+        },
+      });
+  }
 }
 onMounted(() => {});
 </script>
@@ -349,6 +398,49 @@ onMounted(() => {});
         </div>
       </div>
     </x-form>
+
+    <Transition name="fade">
+      <div v-if="quotesSelected.length > 0" class="mb-4">
+        <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">
+          <x-form @submit="onAssignLead" :auto-focus="false">
+            <div class="w-full flex flex-col md:flex-row gap-4">
+              <x-select
+                v-model="assignForm.assign_team"
+                label="Assign Subteam"
+                :options="subTeamsOptions"
+                placeholder="Select Subteam"
+                class="flex-1 w-auto"
+                :rules="[isRequired]"
+                filterable
+                v-if="readOnlyMode.isDisable === true"
+              />
+              <x-select
+                v-model="assignForm.assigned_to_id_new"
+                label="Assign Advisor"
+                :options="advisorOptions"
+                placeholder="Select Advisor"
+                class="flex-1 w-auto"
+                :rules="[isRequired]"
+                filterable
+                v-if="readOnlyMode.isDisable === true"
+              />
+
+              <div class="mb-3 md:pt-6">
+                <x-button
+                  color="orange"
+                  size="sm"
+                  type="submit"
+                  :loading="assignForm.processing"
+                  v-if="readOnlyMode.isDisable === true"
+                >
+                  Assign
+                </x-button>
+              </div>
+            </div>
+          </x-form>
+        </div>
+      </div>
+    </Transition>
 
     <DataTable
       v-model:items-selected="quotesSelected"
