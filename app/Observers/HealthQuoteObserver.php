@@ -5,7 +5,7 @@ namespace App\Observers;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
-use App\Events\Health\TransactionApproved;
+use App\Events\Health\HealthTransactionApproved;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\IntroEmailJob;
 use App\Jobs\MAWelcomeJob;
@@ -35,7 +35,7 @@ class HealthQuoteObserver
             $healthQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
         ) {
             // Trigger the event for transaction approval
-            TransactionApproved::dispatch($healthQuote);
+            HealthTransactionApproved::dispatch($healthQuote);
         }
 
         if (isset($dirty['quote_status_id']) && $this->removeStaleFromLead($healthQuote->quote_status_id)) {
