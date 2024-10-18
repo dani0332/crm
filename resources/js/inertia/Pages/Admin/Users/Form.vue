@@ -100,7 +100,7 @@ const computedSubTeams = computed(() => {
 });
 
 const computedDepartments = computed(() => {
-    if (page.props.departments?.length > 0)
+  if (page.props.departments?.length > 0)
     return page.props.departments?.map(item => ({
       value: item.id,
       label: item.name,
@@ -339,7 +339,6 @@ watch(
           :rules="[isRequired]"
           :hasError="validTeams"
           autocomplete
-
         />
       </x-field>
       <x-field label="SUB TEAM">
