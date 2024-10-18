@@ -38,6 +38,7 @@ const props = defineProps({
   isPlanDetailAvailable: Boolean,
   quoteLink: String,
   isEditDisabledForQueuedBooking: Boolean,
+  insuranceProviderId: Number,
 });
 
 const page = usePage();
@@ -516,6 +517,7 @@ const isLegacyPolicy = computed(() => {
         v-if="isLegacyPolicy"
         :sendUpdateLog="sendUpdateLog"
         :insuranceProviders="props.insuranceProviders"
+        :insurance-provider-id="props.insuranceProviderId"
     />
 
     <!-- Indicative additional price & Plan details comp -->
