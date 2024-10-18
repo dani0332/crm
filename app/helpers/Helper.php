@@ -1322,3 +1322,29 @@ if (! function_exists('getWhatsappConsent')) {
         return $whatsappConsent;
     }
 }
+
+if (! function_exists('isNonSelfBillingEnabledForInsuranceProvider')) {
+    function isNonSelfBillingEnabledForInsuranceProvider($insuranceProvider): bool
+    {
+        return $insuranceProvider?->non_self_billing == 1;
+    }
+}
+
+if (! function_exists('getInsuranceProvider')) {
+    function getInsuranceProvider($payment, $quoteType)
+    {
+        $insuranceProvider = null;
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
+        if (in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
+            $planRelationName = strtolower($quoteType).'Plan';
+            $payment->load($planRelationName);
+            $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
+        }
+
+        if (! $insuranceProvider) {
+            $insuranceProvider = $payment?->insuranceProvider;
+        }
+
+        return $insuranceProvider;
+    }
+}
