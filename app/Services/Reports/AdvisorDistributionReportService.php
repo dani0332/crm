@@ -316,7 +316,7 @@ class AdvisorDistributionReportService extends BaseService
             ->where('is_active', 1)
             ->get()
             ->keyBy('id')
-            ->map(fn($users) => $users->name)
+            ->map(fn ($users) => $users->name)
             ->toArray();
 
         $leadSources = LeadSource::query()
@@ -326,7 +326,7 @@ class AdvisorDistributionReportService extends BaseService
             ->orderBy('name')
             ->get()
             ->keyBy('name')
-            ->map(fn($users) => $users->name)
+            ->map(fn ($users) => $users->name)
             ->toArray();
 
         $lobs = $this->getLobByPermissions();
@@ -535,7 +535,6 @@ class AdvisorDistributionReportService extends BaseService
         }
 
         if ($lob === quoteTypeCode::Health) {
-
 
             if (isset($filters->sic_advisor_requested) && $filters->sic_advisor_requested != 'All') {
                 $query->where('health_quote_request.sic_advisor_requested', '=', $filters->sic_advisor_requested);
