@@ -10,6 +10,7 @@ use App\Enums\UserStatusEnum;
 use App\Models\BusinessTypeOfInsurance;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\DepartmentService;
 use App\Services\LeadAllocationService;
 use App\Services\UserService;
 use App\Traits\TeamHierarchyTrait;
@@ -181,6 +182,8 @@ class UserController extends Controller
         $user->permissions = $user->permissions->pluck('name')->toArray();
         $user->businessTypes = $user->businessTypes->pluck('text')->toArray();
         $user->department = $user->department ?? '';
+        $departments = implode(',', $user->departments->pluck('name')->toArray()) ?? '';
+
         if ($user->additional_team_ids != '') {
             $additionalTeamNamesArray = Team::whereIn('id', explode(',', $user->additional_team_ids))->where('type', TeamTypeEnum::PRODUCT)->pluck('name')->toArray();
             $additionalTeamNames = implode(', ', $additionalTeamNamesArray);
@@ -193,6 +196,7 @@ class UserController extends Controller
             'user' => $user,
             'teamName' => $teamName,
             'subTeamName' => $subTeamName,
+            'departments' => $departments,
             'additionalTeamNames' => $additionalTeamNames,
             'managerName' => $managerName,
             'productName' => $productName,
@@ -226,6 +230,7 @@ class UserController extends Controller
         $userManagerIds = $this->getUserManagers($user->id)->pluck('id')->toArray();
         $permissions = Permission::orderBy('name')->get();
         $userPermissions = $user->getDirectPermissions()->pluck('id')->toArray();
+        $departmentIds = $this->getUserDepartments($user->id)->pluck('department_id')->toArray();
         $departments = $this->userService->getDepartmentsList();
         $businessTypes = BusinessTypeOfInsurance::select('id as value', 'text as label')->get();
 
@@ -235,6 +240,7 @@ class UserController extends Controller
             'userRole' => $userRole,
             'selectedAdditionalTeams' => $selectedAdditionalTeams,
             'subTeams' => $subTeams,
+            'department_ids' => $departmentIds,
             'departments' => $departments,
             'products' => $products,
             'userProductIds' => $userProductIds,
@@ -282,6 +288,9 @@ class UserController extends Controller
         }
         $user->is_active = $request->is_active ? 1 : 0;
 
+        if ($request->department_ids != null) {
+            app(DepartmentService::class)->syncUserDepartments($user, $request->department_ids);
+        }
         /*
          * temp fix: health lead allocation is using team_id to target health product
          * this needs to be updated with new team/product structure
@@ -381,6 +390,11 @@ class UserController extends Controller
     public function getProductTeams(Request $request)
     {
         return $this->getTeamsByProductIds($request->productIds);
+    }
+
+    public function getTeamDepartments(Request $request)
+    {
+        return $this->getDepartmentsByTeamIds($request->teamIds);
     }
 
     public function getSubTeams(Request $request)

@@ -5,11 +5,13 @@ const props = defineProps({
   teams: Array,
   subTeams: Array,
   departments: Array,
+  departmentIds: Array,
   user: Object,
   userRole: Object,
   selectedAdditionalTeams: Array,
   userProductIds: Array,
   userTeamIds: Array,
+  department_ids: Array,
   managers: Array,
   userManagerIds: Array,
   permissions: Array,
@@ -70,6 +72,7 @@ const userForm = useForm({
   phone_calendar_link: props.user?.phone_calendar_link ?? null,
   department_id: props.user?.department_id ?? null,
   businessTypes: props?.userBusinessTypeIds ?? [],
+  department_ids: props.department_ids?.length > 0 ? props.department_ids : [],
 });
 
 const isAdvisor = computed(() => {
@@ -138,6 +141,21 @@ const loadTeamsByProduct = async e => {
     loader.teamLoader = false;
   } catch (e) {
     loader.teamLoader = false;
+  }
+};
+const loadDepartmentsByTeam = async e => {
+  loader.departLoader = true;
+  try {
+    let response = await axios.post('/get-team-departments', {
+      teamIds: userForm.teams,
+    });
+    if (response.data.length > 0) {
+      departments.value = response.data;
+    }
+
+    loader.departLoader = false;
+  } catch (e) {
+    loader.departLoader = false;
   }
 };
 
@@ -218,6 +236,7 @@ const setInitialState = async () => {
     resolveBusinessCategoriesShowHide(userForm.roles);
     await loadTeamsByProduct();
     await loadSubTeams();
+    await loadDepartmentsByTeam();
   }
 };
 
@@ -227,6 +246,7 @@ watch(
   () => userForm.teams,
   () => {
     loadSubTeams();
+    loadDepartmentsByTeam();
   },
   { deep: true },
 );
@@ -354,12 +374,21 @@ watch(
           :loading="loader.subTeamLoader"
         />
       </x-field>
-      <x-field label="Department">
+      <x-field label="DEPARTMENT">
         <ComboBox
           v-model="userForm.department_id"
           placeholder="Select Department"
           :options="computedDepartments"
           :single="true"
+        />
+      </x-field>
+      <x-field label="DEPARTMENTS VISIBILITY">
+        <ComboBox
+          v-model="userForm.department_ids"
+          :loading="loader.departLoader"
+          placeholder="Select Department"
+          :options="computedDepartments"
+          :multiple="true"
         />
       </x-field>
 

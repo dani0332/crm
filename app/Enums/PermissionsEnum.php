@@ -379,6 +379,8 @@ final class PermissionsEnum extends Enum
     public const PET_LEAD_ALLOCATION_DASHBOARD = 'pet-lead-allocation-dashboard';
     public const LIFE_LEAD_ALLOCATION_DASHBOARD = 'life-lead-allocation-dashboard';
     public const HOME_LEAD_ALLOCATION_DASHBOARD = 'home-lead-allocation-dashboard';
+    public const DEPARTMENT_MANAGER = 'department-manager';
+
     public static function getAdvisorConversionReportPermissions()
     {
         return [
