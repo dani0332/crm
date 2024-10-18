@@ -684,6 +684,18 @@
                         </th>
                     @endforeach
                 </tr>
+                <tr>
+                    <th></th>
+                    @foreach ($planIds as $planId)
+                        <th style="border: solid 1px #bfbfbf; text-align: center;">
+                            <div class="rounded-full">
+                                <p class="m-auto text-xs">
+                                    {{$plans[$planId]->planName}}
+                                </p>
+                            </div>
+                        </th>
+                    @endforeach
+                </tr>
                 {{-- buy now row --}}
                 <tr>
                     <th class="bg-light-blue" style="width: 25% !important;">
