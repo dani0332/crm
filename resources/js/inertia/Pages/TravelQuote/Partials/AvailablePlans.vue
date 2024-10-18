@@ -36,7 +36,7 @@ const planForm = useForm({
 const totalPremiumWithVat = computed(() => {
   let addonVat = 0;
   props.plan.addons.forEach(addon => {
-    addon.travelAddonOption.forEach(option => {
+    addon.addonOptions.forEach(option => {
       if (option.isSelected && option.price != 0) {
         addonVat += parseInt(option.price) + option.vat;
       }
@@ -57,7 +57,7 @@ const onUpdatePlan = () => {
   let addons = [];
   let tempAddons = planForm.addons;
   tempAddons.forEach(addon => {
-    addon.travelAddonOption.forEach(option => {
+    addon.addonOptions.forEach(option => {
       addons.push({
         addonId: addon.id,
         addonOptionId: option.id,
@@ -138,7 +138,7 @@ const onUpdatePlan = () => {
         <TabPanel>
           <div class="p-4">
             <template v-for="addon in planForm.addons" :key="addon">
-              <template v-for="option in addon.travelAddonOption" :key="option">
+              <template v-for="option in addon.addonOptions" :key="option">
                 <div class="flex my-2">
                   <span class="w-60">{{ addon.text }}</span>
                   <span class="w-60">{{ option.value }}</span>

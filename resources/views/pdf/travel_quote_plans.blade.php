@@ -477,11 +477,11 @@
                 $addon->price = 0;
                 $addon->vat = 0;
 
-                if(sizeof($addon->travelAddonOption))
+                if(sizeof($addon->addonOptions))
                 {
                     //replace exclude with selected value if found
 
-                    foreach ($addon->travelAddonOption as $index =>  $travelAddonOption) {
+                    foreach ($addon->addonOptions as $index =>  $travelAddonOption) {
 
                         $travelAddonOption = (object) $travelAddonOption;
 

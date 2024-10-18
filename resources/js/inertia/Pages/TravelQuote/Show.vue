@@ -1067,7 +1067,7 @@ const onCopyText = text => {
 const getAddonVat = item => {
   let addonVat = 0;
   item.addons.forEach(addon => {
-    addon.travelAddonOption.forEach(option => {
+    addon.addonOptions.forEach(option => {
       if (option.isSelected && option.price != 0) {
         addonVat += parseInt(option.price) + option.vat;
       }
