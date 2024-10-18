@@ -51,7 +51,7 @@ class ManagementReport
         $teams = Team::whereIn('id', $teamIds)
             ->select('name', 'id')
             ->orderBy('name')
-            ->where('is_active', 1)
+            ->active()
             ->get()
             ->keyBy('id')
             ->map(fn ($users) => $users->name)
