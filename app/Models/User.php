@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -215,6 +216,11 @@ class User extends Authenticatable implements AuditableContract
     public function isSeniorManagement()
     {
         return Auth::user()->hasRole(RolesEnum::SeniorManagement);
+    }
+
+    public function isDepartmentManager()
+    {
+        return Auth::user()->can(PermissionsEnum::DEPARTMENT_MANAGER);
     }
 
     public function getUserTeams($userId)
