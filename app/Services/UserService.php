@@ -42,7 +42,13 @@ class UserService extends BaseService
                 $user->additional_team_ids = $request->additionalTeams[0];
             }
         }
+
         $user->save();
+
+        if ($request->department_ids != null) {
+            app(DepartmentService::class)->saveUserDepartments($user, $request->department_ids);
+        }
+
         if ($request->manager != '0' && isset($request->manager)) {
             DB::table('user_manager')->where('user_id', $user->id)->delete();
             foreach ($request->manager as $managerId) {
