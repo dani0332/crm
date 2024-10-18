@@ -844,7 +844,6 @@ class CRUDController extends Controller
                 'insuranceProvidersByQuoteType',
                 'vatPercentage',
                 'commercialRules',
-                'isAmlClearedForPayment',
                 'clientInquiryLogs',
                 'policyIssuanceStatus',
                 'bookPolicyDetails',
