@@ -5,6 +5,7 @@ namespace App\Services\Reports;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Enums\PaymentFrequency;
+use App\Enums\PermissionsEnum;
 use App\Exports\Reports\InstallmentReportExport;
 use App\Models\PersonalQuote;
 use App\Strategies\ManagementReport;
@@ -12,7 +13,6 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Enums\PermissionsEnum;
 
 class InstallmentReportService extends ManagementReport
 {

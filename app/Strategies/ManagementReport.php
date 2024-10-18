@@ -6,6 +6,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\LeadSource;
 use App\Models\Lookup;
@@ -15,7 +16,6 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use App\Enums\PermissionsEnum;
 
 class ManagementReport
 {
@@ -31,7 +31,7 @@ class ManagementReport
     {
         $user = auth()->user();
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
-        if($user->can(PermissionsEnum::DEPARTMENT_MANAGER)) {
+        if ($user->can(PermissionsEnum::DEPARTMENT_MANAGER)) {
             $user->load('departments.teams');
             $teamIds = $user->departments->reduce(function ($carry, $department) {
                 return $carry->merge(
@@ -139,7 +139,7 @@ class ManagementReport
             $departments = $user->departments->pluck('id');
         }
 
-        if (! empty($departments) || $user->can(PermissionsEnum::DEPARTMENT_MANAGER)) {    
+        if (! empty($departments) || $user->can(PermissionsEnum::DEPARTMENT_MANAGER)) {
             $query->whereIn('u.department_id', $departments);
         }
 

@@ -5,6 +5,7 @@ namespace App\Services\Reports;
 use App\Enums\EndorsementStatusEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
+use App\Enums\PermissionsEnum;
 use App\Exports\Reports\EndorsementReportExport;
 use App\Models\Lookup;
 use App\Models\SendUpdateLog;
@@ -13,7 +14,6 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Enums\PermissionsEnum;
 
 class EndorsementReportService extends ManagementReport
 {
