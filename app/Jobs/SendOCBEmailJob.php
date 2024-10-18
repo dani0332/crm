@@ -36,7 +36,6 @@ class SendOCBEmailJob implements ShouldQueue
     public $tries = 3;
     public $timeout = 90;
     public $backoff = 30;
-    public $uuid;
 
     /**
      * Create a new job instance.
@@ -47,7 +46,6 @@ class SendOCBEmailJob implements ShouldQueue
     {
         $this->quoteUuid = $quoteUuid;
         $this->onQueue('renewals');
-        $this->uuid = (string) Str::uuid(); // Generate a unique UUID for each job instance
     }
 
     /**
