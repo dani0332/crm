@@ -8,6 +8,7 @@ use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Models\Department;
 use App\Models\LeadSource;
 use App\Models\Lookup;
 use App\Models\Team;
@@ -31,7 +32,7 @@ class ManagementReport
     {
         $user = auth()->user();
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
-        if ($user->can(PermissionsEnum::DEPARTMENT_MANAGER)) {
+        if ($user->isDepartmentManager()) {
             $user->load('departments.teams');
             $teamIds = $user->departments->reduce(function ($carry, $department) {
                 return $carry->merge(
@@ -43,8 +44,7 @@ class ManagementReport
             $departments = $user->departments;
         } else {
             $teamIds = $this->getUserTeams($user->id)->pluck('id');
-            $departments = DB::table('departments')
-                ->where('is_active', 1)
+            $departments = Department::active()
                 ->orderBy('name')
                 ->get();
         }
@@ -108,7 +108,7 @@ class ManagementReport
 
         $teams = $request['teams'] ?? [];
         $user = auth()->user();
-        if ($user->can(PermissionsEnum::DEPARTMENT_MANAGER) && empty($teams)) {
+        if ($user->isDepartmentManager() && empty($teams)) {
             $user->load('departments.teams');
             $teamIds = $user->departments->flatMap(function ($department) {
                 return $department->teams->pluck('team_id');
@@ -135,11 +135,11 @@ class ManagementReport
         $departments = $request['department_id'] ?? [];
         $departments = is_array($departments) ? $request['department_id'] : [$departments];
         $user = auth()->user();
-        if ($user->can(PermissionsEnum::DEPARTMENT_MANAGER) && empty($departments)) {
+        if ($user->isDepartmentManager() && empty($departments)) {
             $departments = $user->departments->pluck('id');
         }
 
-        if (! empty($departments) || $user->can(PermissionsEnum::DEPARTMENT_MANAGER)) {
+        if (! empty($departments) || $user->isDepartmentManager()) {
             $query->whereIn('u.department_id', $departments);
         }
 
@@ -256,14 +256,14 @@ class ManagementReport
         }
 
         if (! $isSSR) {
-            if ((! empty($teams) && count($teams) > 0) || auth()->user()->can(PermissionsEnum::DEPARTMENT_MANAGER)) {
+            if ((! empty($teams) && count($teams) > 0) || auth()->user()->isDepartmentManager()) {
                 $query->whereIn('t.id', $teams);
             }
 
             return $query;
         }
 
-        if ((! empty($teams) && count($teams) > 0) || auth()->user()->can(PermissionsEnum::DEPARTMENT_MANAGER)) {
+        if ((! empty($teams) && count($teams) > 0) || auth()->user()->isDepartmentManager()) {
             $query->whereIn('u.id', function ($query) use ($teams) {
                 $query->select('user_team.user_id')
                     ->from('user_team')

@@ -14,6 +14,7 @@ use Laravel\Jetstream\HasProfilePhoto;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Spatie\Permission\Traits\HasRoles;
+use App\Enums\PermissionsEnum;
 
 class User extends Authenticatable implements AuditableContract
 {
@@ -215,6 +216,11 @@ class User extends Authenticatable implements AuditableContract
     public function isSeniorManagement()
     {
         return Auth::user()->hasRole(RolesEnum::SeniorManagement);
+    }
+
+    public function isDepartmentManager()
+    {
+        return Auth::user()->can(PermissionsEnum::DEPARTMENT_MANAGER);
     }
 
     public function getUserTeams($userId)
