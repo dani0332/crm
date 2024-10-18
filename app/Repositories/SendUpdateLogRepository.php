@@ -16,6 +16,7 @@ use App\Models\Lookup;
 use App\Models\Payment;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
+use App\Services\CentralService;
 use App\Services\LeadAllocationService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
@@ -185,6 +186,10 @@ class SendUpdateLogRepository extends BaseRepository
     {
         try {
             $sendUpdate = $this->find($data['id']);
+            $sendUpdateStatus = ! in_array($sendUpdate->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) ? SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS : $sendUpdate->status;
+            if ($sendUpdateStatus !== $sendUpdate->status) {
+                app(CentralService::class)->updateSendUpdateStatusLogs($sendUpdate->id, $sendUpdate->status, $sendUpdateStatus);
+            }
 
             $result = $sendUpdate->update([
                 'price_with_vat' => $data['price_with_vat'],
@@ -192,7 +197,7 @@ class SendUpdateLogRepository extends BaseRepository
                 'price_vat_not_applicable' => $data['price_vat_not_applicable'],
                 'insurer_quote_number' => $data['insurer_quote_number'],
                 'insurance_provider_id' => $data['insurance_provider_id'],
-                'status' => ! in_array($sendUpdate->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) ? SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS : $sendUpdate->status,
+                'status' => $sendUpdateStatus,
             ]);
             $this->updatePayment($data);
         } catch (\Exception $ex) {
@@ -357,11 +362,7 @@ class SendUpdateLogRepository extends BaseRepository
             if ($payment) {
                 $sendUpdateLogService = app(SendUpdateLogService::class);
                 info('Send update - Updating Booking details and Commission Schedule in Payments - SendUpdateUUID: '.$sendUpdate->uuid);
-                if ($data['price_with_vat'] < ($payment->total_amount + $payment->discount_value)) {
-                    $sendUpdateLogService->updatePaymentTotalPrice($payment, $data['price_with_vat']);
-                } else {
-                    $sendUpdateLogService->sendUpdatePriceAndDiscount($sendUpdate, $payment);
-                }
+                $sendUpdateLogService->sendUpdatePriceAndDiscount($sendUpdate, $payment);
                 $sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate, true);
                 app(SplitPaymentService::class)->updateCommissionSchedule($payment);
             }
@@ -473,12 +474,17 @@ class SendUpdateLogRepository extends BaseRepository
     public function fetchUpdateInsurerDetails($sendUpdate, $insurerDetails)
     {
         try {
-            $sendUpdate->update([
-                'broker_invoice_number' => $insurerDetails['broker_invoice_number'],
+            $sendUpdatePayload = [
                 'invoice_description' => $insurerDetails['invoice_description'],
                 'insurance_provider_id' => $insurerDetails['insurance_provider_id'],
                 'plan_id' => $insurerDetails['plan_id'],
-            ]);
+            ];
+
+            if ($insurerDetails['is_non_self_billing_enabled']) {
+                $sendUpdatePayload['insurer_commission_invoice_number'] = $insurerDetails['broker_invoice_number'];
+            }
+
+            $sendUpdate->update($sendUpdatePayload);
 
             if (! $sendUpdate->payments->isEmpty()) {
                 app(SendUpdateLogService::class)->updatePaymentDetails($sendUpdate->payments->first(), $sendUpdate, false, $insurerDetails);

@@ -233,13 +233,14 @@ trait GenericQueriesAllLobs
         $payment = $payments->whereNull('send_update_log_id')->first();
         if ($payment) {
             $invoiceDescription = (new PaymentRepository)->generateInvoiceDescription($payment, $quoteType, $record);
-            $brokerInvoiceNo = (new PaymentRepository)->generateBrokerInvoiceNumber($payment, $quoteType);
+            $brokerInvoiceNo = $payment->broker_invoice_number;
+            /*$brokerInvoiceNo = (new PaymentRepository)->generateBrokerInvoiceNumber($payment, $quoteType);
 
             $getBINFromDBForPolicyStatuses = [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued,  QuoteStatusEnum::CancellationPending];
 
             if (in_array($record->quote_status_id, $getBINFromDBForPolicyStatuses)) {
                 $brokerInvoiceNo = $payment->broker_invoice_number;
-            }
+            }*/
         }
 
         $bookPolicyDetails = [];
