@@ -4,10 +4,12 @@ namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Events\TravelQuoteAdvisorUpdated;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\TravelQuote;
+use App\Repositories\PaymentRepository;
 use App\Traits\PersonalQuoteSyncTrait;
 
 class TravelQuoteObserver
@@ -70,6 +72,15 @@ class TravelQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            $travelQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
+        ) {
+            $payment = $travelQuote->payments()->mainLeadPayment()->first();
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::TRAVEL->value);
+
         }
     }
 }
