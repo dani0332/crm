@@ -8,11 +8,6 @@ use App\Models\User;
 
 class PetAllocation extends BaseAllocation
 {
-    protected function resolveLead(): void
-    {
-        $this->lead = $this->getLeadBaseQuery()->first();
-    }
-
     // this function not being used as we overrode fetchAvailableAdvisor, this function exists here just to meet abstract function in parent class
     protected function fetchAdvisor(int $onlineStatus)
     {

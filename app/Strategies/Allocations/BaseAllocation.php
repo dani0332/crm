@@ -16,7 +16,6 @@ use Illuminate\Support\Facades\Log;
 
 abstract class BaseAllocation extends AllocationService
 {
-    abstract protected function resolveLead(): void;
     abstract protected function fetchAdvisor(int $onlineStatus);
 
     protected $lead;
@@ -73,6 +72,11 @@ abstract class BaseAllocation extends AllocationService
             })
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->when(! $this->overrideAdvisorId, fn ($q) => $q->whereNull('advisor_id'));
+    }
+
+    protected function resolveLead(): void
+    {
+        $this->lead = $this->getLeadBaseQuery()->first();
     }
 
     protected function getAdvisorBaseQuery(int $onlineStatus, array $roles)

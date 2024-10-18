@@ -10,11 +10,6 @@ class LifeAllocation extends BaseAllocation
     private const CAT_A = 'categoryA';
     private const CAT_B = 'categoryB';
 
-    protected function resolveLead(): void
-    {
-        $this->lead = $this->getLeadBaseQuery()->first();
-    }
-
     protected function fetchAdvisor(int $onlineStatus)
     {
         $emails = $this->getAdvisorEmails();

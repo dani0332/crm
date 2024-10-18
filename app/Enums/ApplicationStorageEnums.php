@@ -156,4 +156,6 @@ final class ApplicationStorageEnums extends Enum
     public const TRAVEL_DISPLAY_NAME = 'TRAVEL_DISPLAY_NAME';
     public const HEALTH_AUTOMATED_FOLLOWUPS_SWITCH = 'HEALTH_AUTOMATED_FOLLOWUPS_SWITCH';
     public const BIRD_ACCESS_KEY = 'BIRD_ACCESS_KEY';
+    public const HOME_VALUE_ADVISORS = 'HOME_VALUE_ADVISORS';
+    public const HOME_VOLUME_ADVISORS = 'HOME_VOLUME_ADVISORS';
 }

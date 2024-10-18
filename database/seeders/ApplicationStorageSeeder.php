@@ -571,6 +571,8 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+
+        $this->seedHomeAdvisors();
     }
 
     private function seedTravelSICStorage()
@@ -726,6 +728,29 @@ class ApplicationStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::BIRD_TRAVEL_FLLOWUP_DEDICATED_WORKFLOW_URL],
             [
                 'value' => 'https://capture.eu-west-1.nest.messagebird.com/webhooks/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/7f5bd31b-6387-4e3e-826f-0f464badb2cd',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+    }
+
+    private function seedHomeAdvisors()
+    {
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HOME_VALUE_ADVISORS],
+            [
+                'value' => 'marialuisa.deguzman@insurancemarket.ae,virgilio.ocon@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HOME_VOLUME_ADVISORS],
+            [
+                'value' => 'ghana.naeem@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
