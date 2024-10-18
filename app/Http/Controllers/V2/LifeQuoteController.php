@@ -164,6 +164,7 @@ class LifeQuoteController extends Controller
                 'status' => $activity->status,
                 'quote_status_id' => $activity->quote_status_id,
                 'quote_status' => $activity?->quoteStatus,
+                'user_id' => $activity?->user_id,
             ];
         }
 
