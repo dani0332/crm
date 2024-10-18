@@ -142,7 +142,7 @@ const retryPaymentErrorMessage = ref('');
 const isDeleteModalOpen = ref(false);
 const deleteSplitPaymentId = ref(0);
 const deleteSplitPaymentStatus = ref(0);
-
+const isCollectedByEnabled = ref(false);
 const modal2Ref = ref(null);
 
 const familyEmployeDiscount = ['Car', 'Health', 'Home', 'Travel'];
@@ -620,6 +620,9 @@ const paymentTypes = ref(
 paymentTypes.value.unshift({ value: '', label: 'Select Payment' });
 
 const getPaymentTypeLabel = code => {
+  console.clear()
+  console.log('code', code)
+  console.log('paymentTypes', paymentTypes.value)
   const paymentType = paymentTypes.value.find(item => item.value === code);
   if (paymentType) {
     return paymentType.label;
@@ -1857,24 +1860,23 @@ const finalizePaymentForm = (payment, capture_approval) => {
 
   const handleEditStatus = () => {
     updateTotalValues();
+    const isAnyChildPaymentPaid = isAnyPaid(payment);
     if (isPaymentLocked.value) {
       isFieldReadonly.value = true;
     } else if (
-      isAnyPaid(payment) &&
+      isAnyChildPaymentPaid &&
       payment.total_price <= payment.total_amount + payment.discount_value
     ) {
       isFieldReadonly.value = !is_lacking_payment.value;
       isTotalPriceUpdated.value = is_lacking_payment.value;
-    } else if (
-      payment.total_price >
-      payment.total_amount + payment.discount_value
-    ) {
-      isFieldReadonly.value = false;
     } else {
       isFieldReadonly.value = false;
     }
     if ( payment.total_price > payment.total_amount + payment.discount_value){
       isTotalPriceUpdated.value = false;
+    }
+    if (isAnyChildPaymentPaid){
+      isCollectedByEnabled.value = true
     }
   };
 
@@ -1936,7 +1938,6 @@ const finalizePaymentForm = (payment, capture_approval) => {
 };
 
 const isAnyPaid = payment => {
-  console.log('isAnyPaid', payment);
   const paidStatusIds = [
     props.paymentStatusEnum.PAID,
     props.paymentStatusEnum.PARTIALLY_PAID,
@@ -3742,7 +3743,7 @@ const isSplitDeleteEnabled = computed(() => {
                       v-model="paymentMethodsForm.collection_type"
                       :rules="[rules.isRequired]"
                       @change="handleCollectionTypeChange"
-                      :disabled="isTotalPriceUpdated"
+                      :disabled="isCollectedByEnabled"
                     >
                     <template
                       v-for="option in collectionTypes"
@@ -4860,7 +4861,7 @@ const isSplitDeleteEnabled = computed(() => {
                     <div class="w-1/6 px-2 text-center">{{ count }}</div>
                     <div class="w-1/5 px-2">
                       <template v-if="readOnlyPayments[count]">
-                        {{ getPaymentTypeLabel(paymentMethodsModels[count]) }}
+                        If condition - Count {{count}} - paymentMethodsModels - {{ paymentMethodsModels[count] }} -  {{ getPaymentTypeLabel(paymentMethodsModels[count]) }}
                         <p>{{ checkDetailModels[count] }}</p>
                       </template>
                       <template v-else>
