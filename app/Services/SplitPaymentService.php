@@ -109,13 +109,13 @@ class SplitPaymentService
         $sageApiService = new SageApiService;
         $sageCustomerNumber = $sageApiService->verifySageCustomer($request->customer_id, $customerData, $splitPayment, 4, $request->advisor_id);
         if ($sageCustomerNumber == '') {
-            info('SAGE API Payments Error: Customer not found in Sage for Payment Code: '.$splitPayment->code);
-            $returnMessage['response'] = 'Customer not found in sage';
+            info('SAGE API Payments Error: Customer not found in Sage for Payment Code: '.$splitPayment->code.' - Ref:'.$quote->code);
+            $returnMessage['response'] = 'Customer not found in sage - Ref:'.$quote->code;
 
             return $returnMessage;
         }
 
-        info('SAGE API Payments: Verified Sage customer number: '.$sageCustomerNumber.' for Payment Code: '.$splitPayment->code);
+        info('SAGE API Payments: Verified Sage customer number: '.$sageCustomerNumber.' for Payment Code: '.$splitPayment->code.' - Ref:'.$quote->code);
         $request->merge(['sage_customer_number' => $sageCustomerNumber]);
 
         if ($splitPayment->sr_no == 1) {
@@ -134,7 +134,7 @@ class SplitPaymentService
         }
 
         if (isset($sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'])) {
-            info('SAGE API Payments: Created AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].' for Payment Code: '.$splitPayment->code);
+            info('SAGE API Payments: Created AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].' for Payment Code: '.$splitPayment->code.' - Ref:'.$quote->code);
             if ($isLiveApiCallStep2) {
                 $this->logSageApiCall($payLoadOptions, $sageResponse, $splitPayment, 2, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
             }
@@ -147,7 +147,7 @@ class SplitPaymentService
                 $readyToPostArray = json_decode($readyToPostResponse, true);
 
                 if (isset($readyToPostArray['error']['message']['value'])) {
-                    info('SAGE API Payments Error: Failed to post AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].' for Payment Code: '.$splitPayment->code.' Error: '.$readyToPostArray['error']['message']['value']);
+                    info('SAGE API Payments Error: Failed to post AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].' for Payment Code: '.$splitPayment->code.' - Ref:'.$quote->code.' Error: '.$readyToPostArray['error']['message']['value']);
 
                     $aRReceiptBatch = $sageApiService->postToSage300("AR/ARReceiptAndAdjustmentBatches(BatchRecordType='CA',BatchNumber=".$sageResponse['BatchNumber'].')', [], 'GET');
                     info('SAGE API Payments: Status of AR Prepayment Receipts batch: '.$aRReceiptBatch);
@@ -157,9 +157,9 @@ class SplitPaymentService
                         $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
                         $isAlreadyPosted = true;
                     } else {
-                        info('SAGE API Payments Error: Failed to post AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].' for Payment Code: '.$splitPayment->code);
+                        info('SAGE API Payments Error: Failed to post AR Prepayment Receipts batch '.$sageResponse['BatchNumber'].' for Payment Code: '.$splitPayment->code.' - Ref:'.$quote->code);
                         $this->logSageApiCall($readyToPostReceiptAr, $readyToPostResponse, $splitPayment, 3, 4, SageEnum::STATUS_FAIL, $request->advisor_id);
-                        $returnMessage['response'] = 'Error while making ready to post to sage';
+                        $returnMessage['response'] = 'Error while making ready to post to sage - Ref:'.$quote->code;
 
                         return $returnMessage;
                     }
@@ -186,8 +186,8 @@ class SplitPaymentService
                 $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4, SageEnum::STATUS_SUCCESS, $request->advisor_id);
             } else {
                 if (isset($postedResponse['error'])) {
-                    info('SAGE API Payments Error: Failed to post AR Receipts for batch '.$sageResponse['BatchNumber'].' for Payment Code: '.$splitPayment->payment->code);
-                    $returnMessage['response'] = 'Error while posting to sage';
+                    info('SAGE API Payments Error: Failed to post AR Receipts for batch '.$sageResponse['BatchNumber'].' for Payment Code: '.$splitPayment->payment->code.' - Ref:'.$quote->code);
+                    $returnMessage['response'] = 'Error while posting to sage - Ref:'.$quote->code;
                     $this->logSageApiCall($aRPostReceipts, $postedResponse, $splitPayment, 4, 4, SageEnum::STATUS_FAIL, $request->advisor_id);
 
                     return $returnMessage;
@@ -199,18 +199,18 @@ class SplitPaymentService
             }
 
             $documentNumberForReciept = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
-            info('SAGE API Payments: Successfully created and posted receipt for Payment Code: '.$splitPayment->code);
+            info('SAGE API Payments: Successfully created and posted receipt for Payment Code: '.$splitPayment->code.' - Ref:'.$quote->code);
             $returnMessage = ['status' => 'success', 'response' => $documentNumberForReciept];
         } else {
-            info('SAGE API Payments Error: Document number not generated from Sage for Payment Code: '.$splitPayment->code);
+            info('SAGE API Payments Error: Document number not generated from Sage for Payment Code: '.$splitPayment->code.' - Ref:'.$quote->code);
             $this->logSageApiCall($payLoadOptions, $sageResponse, $splitPayment, 2, 4, SageEnum::STATUS_FAIL, $request->advisor_id);
-            $returnMessage['response'] = 'Document number not generated from sage';
+            $returnMessage['response'] = 'Document number not generated from sage - Ref:'.$quote->code;
         }
 
         return $returnMessage;
     }
 
-    // functon to check if the payment structure is new
+    // function to check if the payment structure is new
     public function isNewPaymentStructure($payments)
     {
         if ($payments->count() == 0 || $payments[0]->total_payments > 0) {
@@ -701,7 +701,7 @@ class SplitPaymentService
 
         if (! $paymentSplit->payment->is_approved && ! $isFromJob) {
 
-            $retryResponse = $this->handleWithDeadlockRetries(function () use ($paymentSplit, $amountCollected, $modelType, $quoteId, $isFromJob) {
+            $retryResponse = $this->handleWithDeadlockRetries(function () use ($paymentSplit, $amountCollected, $modelType, $quoteId, $isFromJob, $sendUpdateId) {
                 if (empty($paymentSplit->verified_at)) {
                     $paymentSplit->verified_at = now();
                     $paymentSplit->verified_by = Auth::user()->id;
@@ -723,7 +723,9 @@ class SplitPaymentService
                 info('Parent payment captured amount updated for Payment Split ID: '.$paymentSplit->id.' and Code: '.$paymentSplit->code);
 
                 if ($parentPayment->send_update_log_id) {
-                    SendUpdateLog::where('id', $parentPayment->send_update_log_id)->update([
+                    $sendUpdateLog = SendUpdateLog::find($parentPayment->send_update_log_id);
+                    app(CentralService::class)->updateSendUpdateStatusLogs($sendUpdateLog->id, $sendUpdateLog->status, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
+                    $sendUpdateLog->update([
                         'status' => SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
                     ]);
                 }
@@ -797,12 +799,14 @@ class SplitPaymentService
             $totalApproved = $quoteModel->payments()->where('is_approved', 1)->count();
             if ($totalApproved == $quoteModel->payments()->count()) {
                 if ($sendUpdateId) {
+                    app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
                     $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
                 } else {
 
                     $lockLeadSectionsDetails = app(CentralService::class)->lockLeadSectionsDetails($quoteModel);
                     if (! $lockLeadSectionsDetails['lead_status'] || $quoteModel->quote_status_id == QuoteStatusEnum::TransactionDeclined) {
                         $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
+
                         app(CRUDService::class)->calculateScore($quoteModel, $modelType);
                         info('Transaction Score Calculated: '.$quoteModel->code);
                     }

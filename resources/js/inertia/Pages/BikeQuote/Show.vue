@@ -1296,6 +1296,15 @@ const fetchUpdatedQuote = async () => {
       :personal-plans="personalPlans"
     />
 
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="record.uuid"
+      :code="record.code"
+      :quote="record"
+      :modelType="quoteType"
+      :expanded="sectionExpanded"
+    />
+
     <PolicyDetail
       v-if="permissions.isQuoteDocumentEnabled"
       :quote="quote"

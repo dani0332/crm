@@ -67,6 +67,8 @@ const state = reactive({
   reversalSectionEdit: false,
 });
 
+const insCommTaxInvNumState = ref(false);
+
 const page = usePage();
 const notification = useToast();
 const sendUpdateStatusEnum = page.props.sendUpdateStatusEnum;
@@ -74,6 +76,7 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
 const vat = page.props.vatValue;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const permissionsEnum = page.props.permissionsEnum;
+const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 
 const dateToYMD = date => {
   if (date) {
@@ -112,7 +115,7 @@ const hasTaxDocuments = computed(() => {
   );
 });
 
-const checkSectionTwoEdit = () => {
+const checkSectionToEdit = () => {
   if (props.isUpdateBooked) {
     notification.error({
       title: 'Update already booked',
@@ -182,7 +185,9 @@ const checkSectionTwoEdit = () => {
       return;
     }
   }
-
+  if (props.bookingDetails?.is_non_self_billing_enabled) {
+    insCommTaxInvNumState.value = true;
+  }
   state.isEdit = !state.isEdit;
 };
 
@@ -228,6 +233,10 @@ function isNotZero(value) {
   return value;
 }
 
+const isNonSelfBillingEnabled = computed(() => {
+  return props.bookingDetails?.is_non_self_billing_enabled ?? false;
+});
+
 const bookingDetailsForm = useForm({
   id: props.sendUpdateLog.id,
   send_update_type: props.sendUpdateLog.category.code,
@@ -248,10 +257,12 @@ const bookingDetailsForm = useForm({
     props?.payments[0]?.discount_value ||
     props.sendUpdateLog?.discount ||
     '0.00',
-  insurer_commission_invoice_number:
-    props.sendUpdateLog?.insurer_commission_invoice_number ||
-    props?.payments[0]?.insurer_commmission_invoice_number ||
-    '',
+  insurer_commission_invoice_number: props.bookingDetails
+    ?.is_non_self_billing_enabled
+    ? (props.bookingDetails?.broker_invoice_number ?? '')
+    : props.sendUpdateLog?.insurer_commission_invoice_number ||
+      props?.payments[0]?.insurer_commmission_invoice_number ||
+      '',
   commission_percentage:
     props.sendUpdateLog?.commission_percentage ||
     props?.payments[0]?.commmission_percentage ||
@@ -497,7 +508,8 @@ const paymentInvoiceNumberOptions = computed(() => {
 const reversalEntry = reactive({
   booking_date: null,
   invoice_description: props.bookingDetails?.reversal_invoice_description || '',
-  broker_invoice_number: null,
+  broker_invoice_number:
+    props.sendUpdateLog?.reversal_broker_invoice_number ?? null,
   transaction_payment_status: null,
   invoice_date: null,
   insurer_tax_invoice_number: null,
@@ -583,9 +595,8 @@ function updateReversalEntries(payment, sendUpdate) {
   reversalEntry.insurer_tax_invoice_number = payment?.insurer_tax_number
     ? payment.insurer_tax_number + '-REV'
     : sendUpdate.insurer_tax_invoice_number + '-REV';
-  reversalEntry.broker_invoice_number = payment?.broker_invoice_number
-    ? payment.broker_invoice_number + '-REV'
-    : sendUpdate.broker_invoice_number + '-REV';
+  reversalEntry.broker_invoice_number =
+    props.sendUpdateLog?.reversal_broker_invoice_number ?? null;
   reversalEntry.insurer_commission_invoice_number =
     payment?.insurer_commmission_invoice_number
       ? payment.insurer_commmission_invoice_number + '-REV'
@@ -640,9 +651,14 @@ const onUpdateReversal = () => {
   bookingDetailsForm.insurer_tax_invoice_number =
     reversalEntry.insurer_tax_invoice_number.replace('REV', 'NEW');
   bookingDetailsForm.broker_invoice_number =
-    reversalEntry.broker_invoice_number.replace('REV', 'NEW') || '';
+    props.sendUpdateLog?.broker_invoice_number ?? '';
   bookingDetailsForm.insurer_commission_invoice_number =
-    reversalEntry.insurer_commission_invoice_number.replace('REV', 'NEW') || '';
+    (isNonSelfBillingEnabled.value
+      ? (props.sendUpdateLog?.broker_invoice_number ?? '')
+      : reversalEntry.insurer_commission_invoice_number.replace(
+          'REV',
+          'NEW',
+        )) || '';
   bookingDetailsForm.price_vat_applicable =
     Math.abs(reversalEntry.price_vat_applicable) || '0.00';
   bookingDetailsForm.commission_percentage =
@@ -946,12 +962,16 @@ const onCancel = () => {
   bookingDetailsForm.invoice_date = props.bookingDetails?.invoice_date || null;
   bookingDetailsForm.insurer_tax_invoice_number =
     props.bookingDetails?.insurer_tax_invoice_number || '';
-  bookingDetailsForm.insurer_commission_invoice_number =
-    props.bookingDetails?.insurer_commission_invoice_number || '';
+
   bookingDetailsForm.price_vat_applicable =
     props.bookingDetails?.price_vat_applicable || '';
   bookingDetailsForm.commission_vat_applicable =
     props.bookingDetails?.commission_vat_applicable || '';
+
+  if (!props.bookingDetails?.is_non_self_billing_enabled) {
+    bookingDetailsForm.insurer_commission_invoice_number =
+      props.bookingDetails?.insurer_commission_invoice_number || '';
+  }
 };
 
 const [sendUpdateConfirmBtnTemp, SendUpdateReuseBtnTemp] =
@@ -1002,9 +1022,7 @@ const onReversalEdit = () => {
 const checkDiscount = (newPrice, oldPrice) => {
   let paymentTotalPrice = Number(props?.payments[0]?.total_price);
   let paymentTotalAmount = Number(props?.payments[0]?.total_amount);
-  let savedPriceWithVat = isCPD.value
-    ? Number(reversalEntry.price_with_vat)
-    : Number(props.sendUpdateLog?.price_with_vat);
+  let savedPriceWithVat = Number(props.sendUpdateLog?.price_with_vat);
   let savedDiscount =
     Number(props?.payments[0]?.discount_value) ||
     Number(props.sendUpdateLog.discount) ||
@@ -1022,9 +1040,13 @@ const checkDiscount = (newPrice, oldPrice) => {
         // don't use ===
         bookingDetailsForm.discount = savedDiscount;
       } else {
-        bookingDetailsForm.discount = Number(
+        let discount = Number(
           savedDiscount - (savedPriceWithVat - newPrice),
         ).toFixed(2);
+        if (!(discount < 0)) {
+          // negative value should not apply.
+          bookingDetailsForm.discount = discount;
+        }
       }
     } else {
       bookingDetailsForm.discount = savedDiscount;
@@ -1297,8 +1319,11 @@ watch(
                     INSURER COMMISSION TAX INVOICE NUMBER
                   </label>
                   <template #tooltip>
-                    Input the invoice number issued by the insurer for
-                    commission purposes. Double-check for accuracy.
+                    {{
+                      isNonSelfBillingEnabled
+                        ? productionProcessTooltipEnum.NON_SELF_BILLING_INSURER_COM_TAX_INVOICE_NUMBER_TOOLTIP
+                        : productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                    }}
                   </template>
                 </x-tooltip>
               </div>
@@ -1803,8 +1828,11 @@ watch(
                       INSURER COMMISSION TAX INVOICE NUMBER
                     </label>
                     <template #tooltip>
-                      Input the invoice number issued by the insurer for
-                      commission purposes. Double-check for accuracy.
+                      {{
+                        isNonSelfBillingEnabled
+                          ? productionProcessTooltipEnum.NON_SELF_BILLING_INSURER_COM_TAX_INVOICE_NUMBER_TOOLTIP
+                          : productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                      }}
                     </template>
                   </x-tooltip>
                 </div>
@@ -1815,7 +1843,7 @@ watch(
                       bookingDetailsForm.insurer_commission_invoice_number
                     "
                     class="!mb-0 w-full"
-                    :disabled="!state.isEdit"
+                    :disabled="!state.isEdit || insCommTaxInvNumState"
                     placeholder="Enter Commission Tax Invoice No"
                     :rules="[isRequired]"
                     size="xs"
@@ -2159,7 +2187,7 @@ watch(
               <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
                 <x-button
                   size="sm"
-                  @click="checkSectionTwoEdit"
+                  @click="checkSectionToEdit"
                   :disabled="props.isEditDisabledForQueuedBooking"
                 >
                   Edit
@@ -2171,7 +2199,7 @@ watch(
                   </span>
                 </template>
               </x-tooltip>
-              <x-button v-else size="sm" @click="checkSectionTwoEdit">
+              <x-button v-else size="sm" @click="checkSectionToEdit">
                 Edit
               </x-button>
 

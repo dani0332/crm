@@ -3,12 +3,14 @@
 namespace App\Traits;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\Payment;
+use App\Models\QuoteTag;
 use App\Models\SendUpdateLog;
 use Illuminate\Support\Facades\Config;
 
@@ -125,5 +127,79 @@ trait QuoteModelTrait
     public function scopeIsNonSICLead($q, QuoteTypes $quoteType)
     {
         $q->isSICLead($quoteType, true);
+    }
+
+    public function isSIC(QuoteTypes $quoteType): bool
+    {
+        return QuoteTag::where('quote_uuid', $this->uuid)->where('quote_tags.name', QuoteSegmentEnum::SIC->tag())->where('quote_tags.quote_type_id', $quoteType->id())->exists();
+    }
+
+    public function isNonSIC(QuoteTypes $quoteType): bool
+    {
+        return ! $this->isSIC($quoteType);
+    }
+
+    public function markLeadAllocationFailed()
+    {
+        if ($this->lead_allocation_failed_at) {
+            return; // Already marked as failed
+        }
+
+        self::withoutEvents(function () {
+            $this->update([
+                'lead_allocation_failed_at' => now(),
+            ]);
+        });
+    }
+
+    public function markLeadAllocationPassed()
+    {
+        if (! $this->lead_allocation_failed_at || ! $this->advisor_id) {
+            return; // Already marked as passed or advisor not assigned
+        }
+
+        self::withoutEvents(function () {
+            $this->update([
+                'lead_allocation_failed_at' => null,
+            ]);
+        });
+    }
+
+    public function scopeLeadAllocationFailed($q)
+    {
+        $q->whereNotNull('lead_allocation_failed_at');
+    }
+
+    public function scopeSicFlowEnabled($q, bool $enabled = true, bool $or = false)
+    {
+        if ($or) {
+            $q->orWhere('sic_flow_enabled', $enabled);
+
+            return;
+        }
+
+        $q->where('sic_flow_enabled', $enabled);
+    }
+
+    public function scopeOrSicFlowEnabled($q)
+    {
+        $q->sicFlowEnabled(or: true);
+    }
+
+    public function scopeSicFlowDisabled($q)
+    {
+        $q->sicFlowEnabled(false);
+    }
+
+    public function scopeOrSicFlowDisabled($q)
+    {
+        $q->sicFlowEnabled(false, true);
+    }
+
+    public function scopeRequestedAdvisorOrPaymentAuthorized($q)
+    {
+        $q->where(function ($sq) {
+            $sq->where('sic_advisor_requested', 1)->orWhere('payment_status_id', PaymentStatusEnum::AUTHORISED);
+        });
     }
 }
