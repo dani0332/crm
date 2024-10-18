@@ -1041,9 +1041,10 @@ const checkDiscount = (newPrice, oldPrice) => {
         bookingDetailsForm.discount = savedDiscount;
       } else {
         let discount = Number(
-            savedDiscount - (savedPriceWithVat - newPrice),
+          savedDiscount - (savedPriceWithVat - newPrice),
         ).toFixed(2);
-        if (! (discount < 0)) { // negative value should not apply.
+        if (!(discount < 0)) {
+          // negative value should not apply.
           bookingDetailsForm.discount = discount;
         }
       }
