@@ -1,6 +1,10 @@
 <script setup>
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import MemberDetails from '../../Components/MemberDetails.vue';
+import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
+import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
+import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 
 const props = defineProps({
   quote: Object,
@@ -48,6 +52,7 @@ const props = defineProps({
   lockLeadSectionsDetails: Object,
   paymentDocument: Array,
   amlStatusName: String,
+  quoteStatuses: Object,
 });
 
 const page = usePage();
@@ -1396,7 +1401,15 @@ const onMemberUpdated = async () => {
       :expanded="sectionExpanded"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <QuoteStatus
+      :quote="quote"
+      :quote-type="quoteType"
+      :quote-statuses="quoteStatuses"
+      :lost-reasons="lostReasons"
+      :quote-status-enum="quoteStatusEnum"
+    />
+
+    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
       <Collapsible :expanded="sectionExpanded">
         <template #header>
           <div>
@@ -1478,7 +1491,7 @@ const onMemberUpdated = async () => {
           </div>
         </template>
       </Collapsible>
-    </div>
+    </div> -->
 
     <!-- <PlanDetails
       :insuranceProviders="insuranceProviders"
@@ -1652,40 +1665,43 @@ const onMemberUpdated = async () => {
       :quoteType="quoteType"
       :payments="payments"
     />
+
+    <!-- Payments -->
     <PaymentTableNew
-      v-if="isNewPaymentStructure"
-      :quoteType="quoteType"
-      :payments="payments"
-      :paymentDocument="paymentDocument"
-      :proformaPayment="
-        payments.find(
-          item =>
-            item.payment_methods_code ===
-            page.props.paymentMethodsEnum.ProformaPaymentRequest,
-        )
-      "
-      :quoteRequest="quote"
-      :paymentStatusEnum="paymentStatusEnum"
-      :paymentTooltipEnum="paymentTooltipEnum"
-      :paymentMethods="
-        paymentMethods.map(pm => {
-          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
-        })
-      "
-      :storageUrl="storageUrl"
-      :bookPolicyDetails="bookPolicyDetails"
-      :expanded="sectionExpanded"
-    />
-    <PaymentTable
-      v-else
-      :payments="payments"
-      :can="can"
-      :isBetaUser="isBetaUser"
-      :quoteRequest="quote"
-      :paymentMethods="paymentMethods"
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-    />
+    v-if="isNewPaymentStructure"
+    :quoteType="quoteType"
+    :payments="payments"
+    :paymentDocument="paymentDocument"
+    :proformaPayment="
+      quote.payments.find(
+        item =>
+          item.payment_methods_code ===
+          page.props.paymentMethodsEnum.ProformaPaymentRequest,
+      )
+    "
+    :quoteRequest="quote"
+    :paymentStatusEnum="paymentStatusEnum"
+    :paymentTooltipEnum="paymentTooltipEnum"
+    :paymentMethods="
+      paymentMethods.map(pm => {
+        return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+      })
+    "
+    :storageUrl="storageUrl"
+    :bookPolicyDetails="bookPolicyDetails"
+  />
+
+  <QuotePayments
+    v-else
+    :can="can"
+    :payments="quote.payments"
+    :quote-type="quoteType"
+    :payment-methods="paymentMethods"
+    :insurance-providers="insuranceProviders"
+    :is-beta-user="isBetaUser"
+    :personal-plans="personalPlans"
+  />
+    <!-- Payments -->
 
     <EmbeddedProducts
       :data="embeddedProducts"
@@ -1710,8 +1726,10 @@ const onMemberUpdated = async () => {
       :quote-documents="quoteDocuments || []"
       :storageUrl="storageUrl"
       :quote="quote"
+      :modelType="quoteType"
       :insly-id="quote?.insly_id"
       :expanded="sectionExpanded"
+      quote-type="Home"
       :bookPolicyDetails="bookPolicyDetails"
     />
 
@@ -1739,203 +1757,24 @@ const onMemberUpdated = async () => {
       @onAddUpdate="onAddUpdate"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div class="flex justify-between items-center">
-            <h3 class="font-semibold text-primary-800 text-lg">
-              Lead Activities
-              <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
-            </h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div class="flex justify-end mb-4">
-            <x-button
-              size="sm"
-              color="orange"
-              @click.prevent="addActivity"
-              v-if="readOnlyMode.isDisable === true"
-            >
-              Add Activity
-            </x-button>
-          </div>
-          <DataTable
-            table-class-name="compact"
-            :headers="activityTable"
-            :items="activities"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="activities.length < 15"
-          >
-            <template #item-status="{ status, id }">
-              <x-checkbox
-                color="emerald"
-                size="xl"
-                :modelValue="status === 1"
-                :disabled="status === 1"
-                @change="onActivityStatusUpdate(id)"
-              />
-            </template>
-            <template #item-action="item">
-              <div class="space-x-4">
-                <x-button
-                  size="xs"
-                  color="primary"
-                  outlined
-                  :disabled="item.status === 1"
-                  @click.prevent="activityEdit(item)"
-                  v-if="readOnlyMode.isDisable === true"
-                >
-                  Edit
-                </x-button>
-                <x-button
-                  size="xs"
-                  color="error"
-                  :disabled="item.status === 1"
-                  outlined
-                  @click.prevent="activityDelete(item.id)"
-                  v-if="readOnlyMode.isDisable === true"
-                >
-                  Delete
-                </x-button>
-              </div>
-            </template>
-          </DataTable>
-        </template>
-      </Collapsible>
-      <x-modal
-        v-model="modals.activity"
-        :title="`${activityActionEdit ? 'Edit' : 'Add'} Lead Activity`"
-        size="lg"
-        show-close
-        backdrop
-        is-form
-        @submit="onActivitySubmit"
-      >
-        <div class="grid gap-4">
-          <x-input
-            v-model="activityForm.title"
-            label="Title*"
-            :rules="[rules.isRequired]"
-            class="w-full"
-          />
+    <QuoteActivities
+      :can="can"
+      :quote="quote"
+      :activities="activities"
+      :advisors="advisors"
+      :quote-type="quoteType"
+    />
 
-          <x-textarea
-            v-model="activityForm.description"
-            label="Description"
-            :adjust-to-text="false"
-            class="w-full"
-          />
-
-          <x-select
-            v-model="activityForm.assignee_id"
-            label="Assignee*"
-            :options="advisorOptions"
-            :rules="[rules.isRequired]"
-            placeholder="Select Assignee"
-            class="w-full"
-          />
-
-          <DatePicker
-            v-model="activityForm.due_date"
-            withTime
-            :rules="[rules.isRequired]"
-            label="Due Date*"
-          />
-        </div>
-
-        <template #secondary-action>
-          <x-button
-            ghost
-            tabindex="-1"
-            size="sm"
-            @click.prevent="modals.activity = false"
-          >
-            Cancel
-          </x-button>
-        </template>
-        <template #primary-action>
-          <x-button
-            size="sm"
-            color="emerald"
-            :loading="activityForm.processing"
-            type="submit"
-          >
-            {{ activityActionEdit ? 'Update' : 'Save' }}
-          </x-button>
-        </template>
-      </x-modal>
-      <x-modal
-        v-model="modals.activityConfirm"
-        title="Delete Activity"
-        show-close
-        backdrop
-      >
-        <p>Are you sure you want to delete this activity?</p>
-        <template #actions>
-          <div class="text-right space-x-4">
-            <x-button
-              size="sm"
-              ghost
-              @click.prevent="modals.activityConfirm = false"
-            >
-              Cancel
-            </x-button>
-            <x-button
-              size="sm"
-              color="error"
-              :loading="activityForm.processing"
-              @click.prevent="activityDeleteConfirmed"
-            >
-              Delete
-            </x-button>
-          </div>
-        </template>
-      </x-modal>
-    </div>
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <Collapsible :expanded="sectionExpanded">
-        <template #header>
-          <div>
-            <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-          </div>
-        </template>
-        <template #body>
-          <x-divider class="my-4" />
-          <div v-if="historyData === null" class="text-center py-3">
-            <x-button
-              size="sm"
-              color="primary"
-              outlined
-              @click.prevent="onLoadHistoryData"
-              :loading="historyLoading"
-            >
-              Load History Data
-            </x-button>
-          </div>
-          <DataTable
-            v-else
-            table-class-name="compact"
-            :headers="historyDataTable"
-            :items="historyData || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="historyData.length < 15"
-          />
-        </template>
-      </Collapsible>
-    </div>
 
     <AuditLogs
-      :type="modelClass"
       :id="$page.props.quote.id"
+      :quote-type="quoteType"
       :quoteCode="$page.props.quote.code"
-      :expanded="sectionExpanded"
     />
+
+    <ApiLogs :type="modelClass" :id="$page.props.quote.id" />
+
+    <LeadHistory :quote="$page.props.quote" />
 
     <lead-raw-data
       :modelType="'Home'"
