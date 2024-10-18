@@ -20,6 +20,7 @@ use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
+use App\Models\SendUpdateLog;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
 use App\Models\YachtQuote;
@@ -41,6 +42,7 @@ use App\Observers\PaymentObserver;
 use App\Observers\PaymentSplitsObserver;
 use App\Observers\PersonalQuoteObserver;
 use App\Observers\PetQuoteObserver;
+use App\Observers\SendUpdateLogObserver;
 use App\Observers\TravelQuoteDetailObserver;
 use App\Observers\TravelQuoteObserver;
 use App\Observers\YachtQuoteObserver;
@@ -99,6 +101,7 @@ class AppServiceProvider extends ServiceProvider
         Payment::observe(PaymentObserver::class);
         PaymentSplits::observe(PaymentSplitsObserver::class);
         CustomerAddress::observe(CustomerAddressObserver::class);
+        SendUpdateLog::observe(SendUpdateLogObserver::class);
         // DB::listen(function($query) {
         //     info(
         //         $query->sql,

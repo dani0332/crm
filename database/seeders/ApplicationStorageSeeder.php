@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EnvEnum;
+use App\Enums\ThirdPartyTagEnum;
 use App\Models\ApplicationStorage;
 use Illuminate\Database\Seeder;
 
@@ -464,6 +465,15 @@ class ApplicationStorageSeeder extends Seeder
                 'updated_at' => now(),
             ]);
         }
+        if (! ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW)->exists()) {
+            ApplicationStorage::create([
+                'key_name' => ApplicationStorageEnums::BIRD_SIC_HEALTH_WORKFLOW,
+                'value' => 'https://capture.eu-west-1.nest.messagebird.com/webhooks/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/54e964c5-9bff-4665-af06-8cb31b5c7c2c',
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
         $sukoonConstants = [
             [
@@ -616,16 +626,6 @@ class ApplicationStorageSeeder extends Seeder
         );
 
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::TRAVEL_EMAIL_REPLY_TO],
-            [
-                'value' => 'travel@insurancemarket.ae',
-                'created_at' => now(),
-                'updated_at' => now(),
-                'is_active' => 1,
-            ],
-        );
-
-        ApplicationStorage::firstOrCreate(
             ['key_name' => ApplicationStorageEnums::BIRD_SIC_MOTOR_RENEWAL_WORKFLOW],
             [
                 'value' => 'https://capture.eu-west-1.nest.messagebird.com/webhooks/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/85a0a2b6-51b9-4ac5-9319-a6ada510025b',
@@ -634,7 +634,92 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CAR_EMAIL_REPLY_TO],
+            [
+                'value' => 'instant@alfred.insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::TRAVEL_EMAIL_REPLY_TO],
+            [
+                'value' => 'instant@alfred.insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_WORKSPACE_ID],
+            [
+                'value' => 'a1b37cbd-b29d-4371-a81a-c1cd939b73a2',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::TRAVEL_DISPLAY_NAME],
+            [
+                'value' => 'InsuranceMarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::CAR_DISPLAY_NAME],
+            [
+                'value' => 'InsuranceMarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_CHANNEL_ID],
+            [
+                'value' => '5f5c6b3c-cb98-4d8e-ba14-b6e19884bd2a',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ThirdPartyTagEnum::BIRD_SIC_MOTOR_RENEWAL_TAG],
+            [
+                'value' => 'sic-3.0-renewal-process',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HEALTH_AUTOMATED_FOLLOWUPS_SWITCH],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_ACCESS_KEY],
+            [
+                'value' => 'PFW43eLvGkOFh521QmolXW1fTLpT5C3Z3hiA',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
     }
+
     private function seedBirdWorkflowUrls()
     {
         ApplicationStorage::firstOrCreate(

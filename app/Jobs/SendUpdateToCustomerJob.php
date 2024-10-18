@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
+use App\Services\CentralService;
 use App\Services\SageApiService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SendUpdateLogService;
@@ -54,6 +55,7 @@ class SendUpdateToCustomerJob implements ShouldQueue
 
                 if ($response == 201) {
                     info('job:SendUpdateToCustomerJob - Updating status to: '.SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER.' - SendUpdateCode: '.$sendUpdateLog->code);
+                    app(CentralService::class)->updateSendUpdateStatusLogs($sendUpdateLog->id, $sendUpdateLog->status, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER);
                     $sendUpdateLog->update([
                         'status' => SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
                         'is_email_sent' => true,

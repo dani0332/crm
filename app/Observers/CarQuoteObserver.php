@@ -2,14 +2,17 @@
 
 namespace App\Observers;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Events\CarQuoteAdvisorUpdated;
 use App\Jobs\MACRM\CancelCourierQuoteOnMACRM;
 use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\CarQuote;
+use App\Repositories\PaymentRepository;
 use App\Traits\PersonalQuoteSyncTrait;
 
 class CarQuoteObserver
@@ -76,7 +79,7 @@ class CarQuoteObserver
         $this->syncQuote($lead, $dirty);
 
         if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PolicyBooked) {
-            $this->syncLeadEntries($lead->uuid);
+            $this->updatePersonalQuote($lead->uuid, QuoteTypeId::Car, $dirty);
         }
 
         if (
@@ -89,6 +92,13 @@ class CarQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
+        }
+        if (
+            isset($dirty['quote_status_id']) &&
+            $lead->quote_status_id === QuoteStatusEnum::PolicyIssued
+        ) {
+            $payment = $lead->payments()->mainLeadPayment()->first();
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::CAR->value);
         }
     }
 }
