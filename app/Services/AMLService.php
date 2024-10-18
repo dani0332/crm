@@ -444,7 +444,7 @@ class AMLService
             $clientFullName = $clientFullName ? $clientFullName : 'N/A';
             $quoteTypeName = $quoteTypeText ? $quoteTypeText : 'N/A';
             $quoteCdbId = $quoteCdbId ? $quoteCdbId : 'N/A';
-            $htmlContent = View::make('amlQuoteStatusUpdateMail', compact('amlUrl', 'amlQuoteStatus', 'clientFullName', 'quoteTypeName', 'quoteCdbId'))->render();
+            $htmlContent = View::make('AmlQuoteStatusUpdateMail', compact('amlUrl', 'amlQuoteStatus', 'clientFullName', 'quoteTypeName', 'quoteCdbId'))->render();
 
             $ccEmail = array_map(function ($email) {
                 return ['email' => $email];
