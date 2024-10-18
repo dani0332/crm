@@ -620,9 +620,6 @@ const paymentTypes = ref(
 paymentTypes.value.unshift({ value: '', label: 'Select Payment' });
 
 const getPaymentTypeLabel = code => {
-  console.clear()
-  console.log('code', code)
-  console.log('paymentTypes', paymentTypes.value)
   const paymentType = paymentTypes.value.find(item => item.value === code);
   if (paymentType) {
     return paymentType.label;
@@ -940,7 +937,7 @@ const handleApprovalReasonChange = () => {
     }
   } else {
     if (
-      isTotalPriceUpdated.value === false &&
+      isTotalPriceUpdated.value === true &&
       isPaymentLocked.value === false
     ) {
       handleCollectionTypeChange();
@@ -1857,6 +1854,7 @@ const finalizePaymentForm = (payment, capture_approval) => {
     totalPrice.value = payment.total_price;
     totalAmount.value = payment.total_price - payment.discount_value;
   };
+
 
   const handleEditStatus = () => {
     updateTotalValues();
@@ -4861,7 +4859,7 @@ const isSplitDeleteEnabled = computed(() => {
                     <div class="w-1/6 px-2 text-center">{{ count }}</div>
                     <div class="w-1/5 px-2">
                       <template v-if="readOnlyPayments[count]">
-                        If condition - Count {{count}} - paymentMethodsModels - {{ paymentMethodsModels[count] }} -  {{ getPaymentTypeLabel(paymentMethodsModels[count]) }}
+                        {{ getPaymentTypeLabel(paymentMethodsModels[count]) }}
                         <p>{{ checkDetailModels[count] }}</p>
                       </template>
                       <template v-else>
