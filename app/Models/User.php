@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,7 +15,6 @@ use Laravel\Jetstream\HasProfilePhoto;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Spatie\Permission\Traits\HasRoles;
-use App\Enums\PermissionsEnum;
 
 class User extends Authenticatable implements AuditableContract
 {

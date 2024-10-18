@@ -5,7 +5,6 @@ namespace App\Services\Reports;
 use App\Enums\EndorsementStatusEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
-use App\Enums\PermissionsEnum;
 use App\Exports\Reports\EndorsementReportExport;
 use App\Models\Lookup;
 use App\Models\SendUpdateLog;
