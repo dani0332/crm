@@ -25,7 +25,9 @@ use App\Models\YachtQuote;
 use App\Repositories\CustomerMembersRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
 
 class AMLService
@@ -409,23 +411,20 @@ class AMLService
             $ccRecipients = $complianceEmailRecipients;
         }
 
-        $emailL_sys = config('constants.APP_ENV');
-        if ($emailL_sys == EnvEnum::PRODUCTION) {
-            $emailSubject = 'IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
-        } else {
-            $emailSubject = $emailL_sys.' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
-        }
+        $amlUrl = config('constants.APP_URL').'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
 
-        $appUrl = config('constants.APP_URL');
-        $amlUrl = $appUrl.'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
-
-        $this->amlQuoteStatusUpdateMail('AmlQuoteStatusUpdateMail', $amlUrl, $quoteStatusText, $clientFullName, $quoteTypeText, $quoteCdbId, $emailSubject, $toRecipient, $ccRecipients);
+        $this->amlQuoteStatusUpdateMail($amlUrl, $quoteStatusText, $clientFullName, $quoteTypeText, $quoteCdbId, $toRecipient, $ccRecipients);
     }
 
-    private function amlQuoteStatusUpdateMail($templateName, $amlUrl, $quoteStatusText, $clientFullName, $quoteTypeText, $quoteCdbId, $emailSubject, $toRecipient, $ccRecipients)
+    private function amlQuoteStatusUpdateMail($amlUrl, $quoteStatusText, $clientFullName, $quoteTypeText, $quoteCdbId, $toRecipient, $ccRecipients)
     {
-        try {
+        if (config('constants.APP_ENV') == EnvEnum::PRODUCTION) {
+            $emailSubject = 'IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
+        } else {
+            $emailSubject = config('constants.APP_ENV').' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
+        }
 
+        try {
             $headers = [
                 'Accept' => 'application/json',
                 'api-key' => config('constants.SENDINBLUE_KEY'),
@@ -445,7 +444,7 @@ class AMLService
             $clientFullName = $clientFullName ? $clientFullName : 'N/A';
             $quoteTypeName = $quoteTypeText ? $quoteTypeText : 'N/A';
             $quoteCdbId = $quoteCdbId ? $quoteCdbId : 'N/A';
-            $htmlContent = View::make($templateName, compact('amlUrl', 'amlQuoteStatus', 'clientFullName', 'quoteTypeName', 'quoteCdbId'))->render();
+            $htmlContent = View::make('amlQuoteStatusUpdateMail', compact('amlUrl', 'amlQuoteStatus', 'clientFullName', 'quoteTypeName', 'quoteCdbId'))->render();
 
             $ccEmail = array_map(function ($email) {
                 return ['email' => $email];
@@ -473,10 +472,9 @@ class AMLService
             );
 
             $responseCode = $clientRequest->getStatusCode();
-            info('sendAmlQuoteStatusUpdateMail ---- Received Code : '.$responseCode);
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $responseDetail = 'sendAmlQuoteStatusUpdateMail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+            Log::error('sendAmlQuoteStatusUpdateMail: '.$responseCode.'/'.$ex->getMessage());
         }
     }
 }
