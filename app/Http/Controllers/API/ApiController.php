@@ -60,7 +60,7 @@ class ApiController extends Controller
         try {
 
             // Log the incoming request parameters
-            info(self::class . 'assignLeads: request params as : ' . json_encode($request->all()));
+            info(self::class.'assignLeads: request params as : '.json_encode($request->all()));
 
             // Check if lead allocation endpoint is disabled
             if ($this->apiService->isLeadAllocationEndpointDisabled()) {
@@ -120,12 +120,12 @@ class ApiController extends Controller
         $flowType = request('flowType');
         $quoteUID = request('uuid');
 
-        info("getting request to stopFollowUpEvent Ref-ID: {$quoteUID} | FlowType: {$flowType} Time:" . now());
+        info("getting request to stopFollowUpEvent Ref-ID: {$quoteUID} | FlowType: {$flowType} Time:".now());
         $workflow = QuoteFlowDetails::where('quote_uuid', $quoteUID)
             ->where('flow_type', $flowType)
             ->first();
         if (! $workflow) {
-            info("lead not found for uuid: {$quoteUID} | FlowType: {$flowType} | Time: " . now());
+            info("lead not found for uuid: {$quoteUID} | FlowType: {$flowType} | Time: ".now());
 
             return apiResponse([], Response::HTTP_NOT_FOUND, 'Lead not found');
         }
