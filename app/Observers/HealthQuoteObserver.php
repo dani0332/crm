@@ -31,7 +31,7 @@ class HealthQuoteObserver
     {
         $dirty = $healthQuote->getDirty();
         if (
-            $healthQuote->isDirty('quote_status_id') &&
+            isset($dirty['quote_status_id']) &&
             $healthQuote->quote_status_id === QuoteStatusEnum::TransactionApproved
         ) {
             // Trigger the event for transaction approval
@@ -45,7 +45,7 @@ class HealthQuoteObserver
             $dirty = [...$dirty, 'stale_at' => $healthQuote->stale_at];
         }
 
-        if ($healthQuote->isDirty('advisor_id')) {
+        if (isset($dirty['advisor_id'])) {
             $healthQuote->markLeadAllocationPassed();
         }
 
