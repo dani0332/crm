@@ -316,7 +316,7 @@ class AdvisorDistributionReportService extends BaseService
             ->where('is_active', 1)
             ->get()
             ->keyBy('id')
-            ->map(fn ($users) => $users->name)
+            ->map(fn($users) => $users->name)
             ->toArray();
 
         $leadSources = LeadSource::query()
@@ -326,7 +326,7 @@ class AdvisorDistributionReportService extends BaseService
             ->orderBy('name')
             ->get()
             ->keyBy('name')
-            ->map(fn ($users) => $users->name)
+            ->map(fn($users) => $users->name)
             ->toArray();
 
         $lobs = $this->getLobByPermissions();
@@ -535,6 +535,12 @@ class AdvisorDistributionReportService extends BaseService
         }
 
         if ($lob === quoteTypeCode::Health) {
+
+
+            if (isset($filters->sic_advisor_requested) && $filters->sic_advisor_requested != 'All') {
+                $query->where('health_quote_request.sic_advisor_requested', '=', $filters->sic_advisor_requested);
+            }
+
             if (! empty($filters->insurance_for) && $filters->insurance_for != '') {
                 $query->join('health_quote_request', function ($join) use ($filters) {
                     $join->on('health_quote_request.uuid', 'personal_quotes.uuid')
@@ -555,7 +561,8 @@ class AdvisorDistributionReportService extends BaseService
         if ($lob === quoteTypeCode::Travel) {
             $isTravelQuote = false;
             if ((! empty($filters->insurance_type) && $filters->insurance_type != '') ||
-                (! empty($filters->travel_coverage) && $filters->travel_coverage != '')) {
+                (! empty($filters->travel_coverage) && $filters->travel_coverage != '')
+            ) {
                 $isTravelQuote = true;
                 $query->join('travel_quote_request', 'travel_quote_request.uuid', 'personal_quotes.uuid');
             }
@@ -570,6 +577,9 @@ class AdvisorDistributionReportService extends BaseService
             if (isset($filters->isEmbeddedProducts) && $filters->isEmbeddedProducts == 'false') {
                 $table = $isTravelQuote ? 'travel_quote_request.source' : 'source';
                 $query->where($table, '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
+            }
+            if (isset($filters->sic_advisor_requested) && $filters->sic_advisor_requested != 'All') {
+                $query->where('travel_quote_request.sic_advisor_requested', '=', $filters->sic_advisor_requested);
             }
         }
 
