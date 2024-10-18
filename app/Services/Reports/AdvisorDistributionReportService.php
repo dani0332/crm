@@ -537,7 +537,11 @@ class AdvisorDistributionReportService extends BaseService
         if ($lob === quoteTypeCode::Health) {
 
             if (isset($filters->sic_advisor_requested) && $filters->sic_advisor_requested != 'All') {
-                $query->where('health_quote_request.sic_advisor_requested', '=', $filters->sic_advisor_requested);
+
+                $query->join('health_quote_request', function ($join) use ($filters) {
+                    $join->on('health_quote_request.uuid', 'personal_quotes.uuid')
+                        ->where('health_quote_request.sic_advisor_requested', $filters->sic_advisor_requested);
+                });
             }
 
             if (! empty($filters->insurance_for) && $filters->insurance_for != '') {
@@ -577,8 +581,13 @@ class AdvisorDistributionReportService extends BaseService
                 $table = $isTravelQuote ? 'travel_quote_request.source' : 'source';
                 $query->where($table, '!=', EmbeddedProductEnum::SRC_CAR_EMBEDDED_PRODUCT);
             }
+
             if (isset($filters->sic_advisor_requested) && $filters->sic_advisor_requested != 'All') {
-                $query->where('travel_quote_request.sic_advisor_requested', '=', $filters->sic_advisor_requested);
+
+                $query->join('travel_quote_request', function ($join) use ($filters) {
+                    $join->on('travel_quote_request.uuid', 'personal_quotes.uuid')
+                        ->where('travel_quote_request.sic_advisor_requested', $filters->sic_advisor_requested);
+                });
             }
         }
 
