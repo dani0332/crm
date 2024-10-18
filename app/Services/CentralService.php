@@ -33,7 +33,7 @@ use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
 use App\Models\QuoteBatches;
 use App\Models\QuoteStatusLog;
-use App\Models\SendUpdateStatusLogs;
+use App\Models\SendUpdateStatusLog;
 use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
@@ -864,7 +864,7 @@ class CentralService
 
     public function updateSendUpdateStatusLogs($sendUpdateLogId, $previousStatus, $currentStatus): void
     {
-        SendUpdateStatusLogs::create([
+        SendUpdateStatusLog::create([
             'send_update_logs_id' => $sendUpdateLogId,
             'previous_status' => $previousStatus,
             'current_status' => $currentStatus,
@@ -875,7 +875,7 @@ class CentralService
 
     public function checkStatusSUStatusLogs($sendUpdateId, $sendUpdateStatus): bool
     {
-        $sendUpdateStatusCount = SendUpdateStatusLogs::where('send_update_logs_id', $sendUpdateId)
+        $sendUpdateStatusCount = SendUpdateStatusLog::where('send_update_logs_id', $sendUpdateId)
             ->where('current_status', $sendUpdateStatus)
             ->count();
 
