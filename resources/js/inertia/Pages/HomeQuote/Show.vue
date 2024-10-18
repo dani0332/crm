@@ -1,5 +1,6 @@
 <script setup>
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
+import MemberDetails from '../../Components/MemberDetails.vue';
 
 const props = defineProps({
   quote: Object,
@@ -566,7 +567,6 @@ const onLoadAvailablePlansData = async () => {
       availablePlansTable.data = homePlans;
       homePlansIds.ids = homePlans.map(plan => plan.planId);
       console.log('homePlansIds :', homePlansIds);
-
     } else {
       console.error('Error: Unexpected status code', status);
     }
@@ -616,7 +616,7 @@ const onTogglePlans = toggle => {
 const planDetails = ref(null);
 
 const getPlanDetails = id => {
-    console.log('getPlanDetails', id);
+  console.log('getPlanDetails', id);
   try {
     axios
       .get(`/home/${page.props.quote.uuid}/plan_details/${id}`)
@@ -722,7 +722,13 @@ const handlePlanSelected = plan => {
   });
 };
 
-
+const onMemberUpdated = async () => {
+  await router.reload({
+    preserveScroll: true,
+    only: ['membersDetails'],
+  });
+  page.props.membersDetails = [...page.props.membersDetails];
+};
 </script>
 
 <template>
@@ -996,7 +1002,11 @@ const handlePlanSelected = plan => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">HAS PERSONAL BELONGINGS</dt>
-                <dd>{{ quote?.home_quote?.has_personal_belongings ? 'Yes' : 'No' }}</dd>
+                <dd>
+                  {{
+                    quote?.home_quote?.has_personal_belongings ? 'Yes' : 'No'
+                  }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PERSONAL BELONGINGS AED</dt>
@@ -1351,6 +1361,7 @@ const handlePlanSelected = plan => {
       :memberRelations="memberRelations"
       :quote_type="modelType"
       :expanded="sectionExpanded"
+      @memberUpdated="onMemberUpdated"
     />
 
     <UBODetails
@@ -1479,160 +1490,160 @@ const handlePlanSelected = plan => {
     /> -->
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-        <Collapsible :expanded="sectionExpanded">
-          <template #header>
-            <div class="flex flex-wrap gap-4 justify-between items-center">
-              <h3 class="font-semibold text-primary-800 text-lg">
-                Available Plans
-              </h3>
-            </div>
-          </template>
-          <template #body>
-            <x-divider class="my-4" />
-            <div class="flex justify-between items-center flex-wrap gap-2">
-              <div class="flex gap-2 mb-4" v-if="readOnlyMode.isDisable === true">
-                <x-button-group
-                  v-if="selectedPlans.length > 0"
-                  size="sm"
-                  class="mr-2"
-                >
-                  <x-button
-                    @click.prevent="onTogglePlans(false)"
-                    :loading="toggleLoader"
-                    v-if="readOnlyMode.isDisable === true"
-                  >
-                    Show
-                  </x-button>
-                  <x-button
-                    @click.prevent="onTogglePlans(true)"
-                    :loading="toggleLoader"
-                    v-if="readOnlyMode.isDisable === true"
-                  >
-                    Hide
-                  </x-button>
-                </x-button-group>
+      <Collapsible :expanded="sectionExpanded">
+        <template #header>
+          <div class="flex flex-wrap gap-4 justify-between items-center">
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Available Plans
+            </h3>
+          </div>
+        </template>
+        <template #body>
+          <x-divider class="my-4" />
+          <div class="flex justify-between items-center flex-wrap gap-2">
+            <div class="flex gap-2 mb-4" v-if="readOnlyMode.isDisable === true">
+              <x-button-group
+                v-if="selectedPlans.length > 0"
+                size="sm"
+                class="mr-2"
+              >
                 <x-button
-                  v-if="
-                    availablePlansTable.data.length > 0
-                  "
-                  size="sm"
-                  color="orange"
-                  class="mr-2"
-                  @click.prevent="
-                    onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)
-                  "
+                  @click.prevent="onTogglePlans(false)"
+                  :loading="toggleLoader"
+                  v-if="readOnlyMode.isDisable === true"
                 >
-                  Copy Link
+                  Show
                 </x-button>
                 <x-button
-                  v-if="selectedPlans.length > 0"
-                  size="sm"
-                  color="emerald"
-                  @click.prevent="onExportPlans"
-                  :loading="exportLoader"
+                  @click.prevent="onTogglePlans(true)"
+                  :loading="toggleLoader"
+                  v-if="readOnlyMode.isDisable === true"
                 >
-                  Download PDF
+                  Hide
                 </x-button>
-              </div>
+              </x-button-group>
+              <x-button
+                v-if="availablePlansTable.data.length > 0"
+                size="sm"
+                color="orange"
+                class="mr-2"
+                @click.prevent="
+                  onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)
+                "
+              >
+                Copy Link
+              </x-button>
+              <x-button
+                v-if="selectedPlans.length > 0"
+                size="sm"
+                color="emerald"
+                @click.prevent="onExportPlans"
+                :loading="exportLoader"
+              >
+                Download PDF
+              </x-button>
             </div>
+          </div>
 
-            <div
-              v-if="
-                availablePlansTable.data &&
-                typeof availablePlansTable.data == 'string'
-              "
+          <div
+            v-if="
+              availablePlansTable.data &&
+              typeof availablePlansTable.data == 'string'
+            "
+          >
+            <p
+              class="text-center text-primary-600 uppercase"
+              v-if="typeof availablePlansTable.data == 'string'"
             >
-              <p
-                class="text-center text-primary-600 uppercase"
-                v-if="typeof availablePlansTable.data == 'string'"
-              >
-                {{ availablePlansTable.data }}
-              </p>
-            </div>
-            <div v-else>
-              <DataTable
-                v-model:items-selected="selectedPlans"
-                table-class-name="tablefixed"
-                :headers="availablePlansTable.columns"
-                :items="availablePlansTable.data || []"
-                border-cell
-                hide-rows-per-page
-                :rows-per-page="15"
-                :hide-footer="availablePlansTable.data.length < 15"
-              >
-                <template #item-providerName="item">
-                  <p class="text-primary-600 uppercase">
-                    {{ item.providerName }}
-                  </p>
-                  <div class="flex gap-1">
-                    <x-tag
-                      v-if="item.isDisabled"
-                      size="xs"
-                      color="error"
-                      class="mt-0.5 text-[10px]"
-                    >
-                      Hidden
-                    </x-tag>
-                  </div>
-                </template>
-                <template #item-name="item">
-                  <span class="text-primary-600 uppercase">{{ item.planName }}</span>
-                </template>
-                <template #item-discountPremium="item">
-                  <span class="text-primary-600">
-                    {{ item.discountPremium + item.vat }}
-                  </span>
-                </template>
-                <template #item-action="item">
-                  <div class="flex gap-2">
+              {{ availablePlansTable.data }}
+            </p>
+          </div>
+          <div v-else>
+            <DataTable
+              v-model:items-selected="selectedPlans"
+              table-class-name="tablefixed"
+              :headers="availablePlansTable.columns"
+              :items="availablePlansTable.data || []"
+              border-cell
+              hide-rows-per-page
+              :rows-per-page="15"
+              :hide-footer="availablePlansTable.data.length < 15"
+            >
+              <template #item-providerName="item">
+                <p class="text-primary-600 uppercase">
+                  {{ item.providerName }}
+                </p>
+                <div class="flex gap-1">
+                  <x-tag
+                    v-if="item.isDisabled"
+                    size="xs"
+                    color="error"
+                    class="mt-0.5 text-[10px]"
+                  >
+                    Hidden
+                  </x-tag>
+                </div>
+              </template>
+              <template #item-name="item">
+                <span class="text-primary-600 uppercase">{{
+                  item.planName
+                }}</span>
+              </template>
+              <template #item-discountPremium="item">
+                <span class="text-primary-600">
+                  {{ item.discountPremium + item.vat }}
+                </span>
+              </template>
+              <template #item-action="item">
+                <div class="flex gap-2">
+                  <x-button
+                    size="xs"
+                    color="error"
+                    outlined
+                    @click.prevent="getPlanDetails(item.planId)"
+                  >
+                    View
+                  </x-button>
+
+                  <span>
+                    <SelectPlan
+                      v-if="!selectedPlanIds.includes(item.id)"
+                      @update:selectedPlanChanged="handlePlanSelected"
+                      :plan="item"
+                      :quoteType="modelType"
+                      :uuid="quote.uuid"
+                      :extraDetails="{
+                        homePlansIds: homePlansIds.ids,
+                        selectedPlansIds: selectedPlanIds,
+                        planType: 'normalPlans',
+                      }"
+                    />
                     <x-button
+                      v-else
                       size="xs"
-                      color="error"
+                      color="orange"
                       outlined
-                      @click.prevent="getPlanDetails(item.planId)"
+                      :disabled="true"
                     >
-                      View
+                      Selected
                     </x-button>
-
-                    <span>
-                      <SelectPlan
-                        v-if="!selectedPlanIds.includes(item.id)"
-                        @update:selectedPlanChanged="handlePlanSelected"
-                        :plan="item"
-                        :quoteType="modelType"
-                        :uuid="quote.uuid"
-                        :extraDetails="{
-                          homePlansIds: homePlansIds.ids,
-                          selectedPlansIds: selectedPlanIds,
-                          planType: 'normalPlans',
-                        }"
-                      />
-                      <x-button
-                        v-else
-                        size="xs"
-                        color="orange"
-                        outlined
-                        :disabled="true"
-                      >
-                        Selected
-                      </x-button>
-                    </span>
-                  </div>
-                </template>
-              </DataTable>
-            </div>
-            <x-modal
-              v-model="modals.planDetails"
-              size="xl"
-              :title="`${planDetails?.providerName}`"
-              show-close
-              backdrop
-            >
-              <LazyAvailablePlan :plan="planDetails" />
-            </x-modal>
-          </template>
-        </Collapsible>
-      </div>
+                  </span>
+                </div>
+              </template>
+            </DataTable>
+          </div>
+          <x-modal
+            v-model="modals.planDetails"
+            size="xl"
+            :title="`${planDetails?.providerName}`"
+            show-close
+            backdrop
+          >
+            <LazyAvailablePlan :plan="planDetails" />
+          </x-modal>
+        </template>
+      </Collapsible>
+    </div>
 
     <MigratePayment
       v-if="!isNewPaymentStructure"
