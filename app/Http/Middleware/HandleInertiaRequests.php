@@ -230,6 +230,24 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'travel'])
                     )
                     ->addIf(
+                        auth()->user()->can(PermissionsEnum::LIFE_LEAD_ALLOCATION_DASHBOARD),
+                        'Life',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::LIFE]),
+                        fn ($s) => $s->attributes(['icon' => 'life'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::HOME_LEAD_ALLOCATION_DASHBOARD),
+                        'Home',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::HOME]),
+                        fn ($s) => $s->attributes(['icon' => 'home'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::PET_LEAD_ALLOCATION_DASHBOARD),
+                        'Pet',
+                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::PET]),
+                        fn ($s) => $s->attributes(['icon' => 'pet'])
+                    )
+                    ->addIf(
                         auth()->user()->can(PermissionsEnum::CORPLINE_LEAD_ALLOCATION_DASHBOARD),
                         'Corpline',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::CORPLINE]),
@@ -246,24 +264,6 @@ class HandleInertiaRequests extends Middleware
                         'Yacht',
                         route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::YACHT]),
                         fn ($s) => $s->attributes(['icon' => 'yacht'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::PET_LEAD_ALLOCATION_DASHBOARD),
-                        'Pet',
-                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::PET]),
-                        fn ($s) => $s->attributes(['icon' => 'pet'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::LIFE_LEAD_ALLOCATION_DASHBOARD),
-                        'Life',
-                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::LIFE]),
-                        fn ($s) => $s->attributes(['icon' => 'life'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::HOME_LEAD_ALLOCATION_DASHBOARD),
-                        'Home',
-                        route('lead-allocation-dashboard', ['quoteType' => QuoteTypes::HOME]),
-                        fn ($s) => $s->attributes(['icon' => 'home'])
                     );
             });
         }
