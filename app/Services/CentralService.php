@@ -865,7 +865,7 @@ class CentralService
     public function updateSendUpdateStatusLogs($sendUpdateLogId, $previousStatus, $currentStatus): void
     {
         SendUpdateStatusLog::create([
-            'send_update_logs_id' => $sendUpdateLogId,
+            'send_update_log_id' => $sendUpdateLogId,
             'previous_status' => $previousStatus,
             'current_status' => $currentStatus,
             'created_at' => Carbon::now(),
@@ -875,7 +875,7 @@ class CentralService
 
     public function checkStatusSUStatusLogs($sendUpdateId, $sendUpdateStatus): bool
     {
-        $sendUpdateStatusCount = SendUpdateStatusLog::where('send_update_logs_id', $sendUpdateId)
+        $sendUpdateStatusCount = SendUpdateStatusLog::where('send_update_log_id', $sendUpdateId)
             ->where('current_status', $sendUpdateStatus)
             ->count();
 
