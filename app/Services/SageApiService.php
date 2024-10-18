@@ -474,6 +474,7 @@ class SageApiService
         $isSageEnabled = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::SAGE_ENABLED);
 
         if (! $isSageEnabled) {
+            info('Policy Book : postBookPolicyToSage : Sage is not enabled');
             $returnMessage['message'] = 'Sage is not enabled';
 
             return $returnMessage;
@@ -501,6 +502,7 @@ class SageApiService
         $isPaymentMethodCreditApproved = $payment->payment_methods_code == PaymentMethodsEnum::CreditApproval;
         $isTotalPriceZero = $payment->total_price == 0;
         if (! $isPaymentMethodCreditApproved && $isTotalPriceZero && $isPaymentFrequencyUpfront) {
+            info('Policy Book : postBookPolicyToSage : Please check the payment as total price is set to zero while Payment Method is '.PaymentMethodsEnum::CreditApproval.' and Frequency is '.$payment->frequency.'. Please Select Credit Approval as your payment method and Upfront as Payment Frequency to Proceed!');
             return ['status' => false, 'message' => 'Please check the payment as total price is set to zero while Payment Method is '.PaymentMethodsEnum::CreditApproval.' and Frequency is '.$payment->frequency.'. Please Select Credit Approval as your payment method and Upfront as Payment Frequency to Proceed!'];
         }
 
@@ -516,10 +518,12 @@ class SageApiService
         /* Check Sage Vendor ID, GL Account ID, Insurer Customer ID, and Sage Customer ID*/
         $checkRequiredSageIds = $this->checkRequiredSageIds($sageRequest);
         if (! $checkRequiredSageIds['status']) {
+            info('Policy Book : postBookPolicyToSage : '. $checkRequiredSageIds['message']);
             return $checkRequiredSageIds;
         }
 
         if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
+            info('Policy Book : postBookPolicyToSage : Policy has been already booked!');
             return ['status' => true, 'message' => 'Policy has been already booked!'];
         }
 
@@ -552,6 +556,7 @@ class SageApiService
 
         if (! empty($missingFields)) {
             $message = implode(', ', $missingFields).' not found.';
+            info('Policy Book : postBookPolicyToSage : ' . $message);
 
             return ['status' => false, 'message' => $message];
         }
