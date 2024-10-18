@@ -2,12 +2,12 @@
 
 namespace App\Repositories;
 
-use App\Enums\QuoteTypeId;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Models\CarQuote;
 use App\Models\InsuranceProvider;
-use App\Models\QuoteStatusLog;
+use App\Services\QuoteStatusService;
 use App\Traits\CentralTrait;
 use Illuminate\Support\Facades\DB;
 
@@ -121,37 +121,14 @@ class CarQuoteRepository extends BaseRepository
     }
 
     /**
-     * update quote status
-     *
-     * @return void
-     */
-    public function fetchUpdateQuoteStatus($data)
-    {
-        return DB::transaction(function () use ($data) {
-            $quote = $this->where('uuid', $data['quote_uuid'])->first();
-
-            $previousStatusId = $quote->quote_status_id;
-
-            $quote->update(['quote_status_id' => $data['quote_status_id']]);
-
-            QuoteStatusLog::create([
-                'quote_type_id' => QuoteTypeId::Car,
-                'quote_request_id' => $quote->id,
-                'current_quote_status_id' => $data['quote_status_id'],
-                'previous_quote_status_id' => $previousStatusId,
-                'notes' => $data['notes'] ?? null,
-            ]);
-
-            return $quote;
-        });
-    }
-
-    /**
      * @return null
      */
     public function fetchFollowupStarted($data)
     {
-        $quote = $this->fetchUpdateQuoteStatus($data);
+        $quoteStatus = QuoteStatusEnum::getKey($data['quote_status_id']);
+        $quoteTypeId = QuoteTypes::getIdFromValue($data['quote_type']);
+        app(QuoteStatusService::class)->updateQuoteStatus($quoteTypeId, $data['quote_uuid'], $quoteStatus, [], $data['notes']);
+        $quote = $this->where('uuid', $data['quote_uuid'])->first();
 
         //set followup id coming from kyo
         $quote->carQuoteRequestDetail->updateOrCreate(

@@ -71,7 +71,11 @@ class CustomerController extends Controller
         $customer->update($customerRequest->validated());
 
         if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && ! $customer->is_we_sent) {
-            dispatch(new MAWelcomeJob($customer, 'CUSTOMER_UPDATE', 'customer-update-myalfred-we'));
+            MAWelcomeJob::dispatch(
+                $customer,
+                'CUSTOMER_UPDATE',
+                'customer-update-myalfred-we'
+            );
         }
 
         return redirect('customer/'.$uuid)->with('message', 'Customer information has been updated');
@@ -100,5 +104,4 @@ class CustomerController extends Controller
 
         return redirect('customer-upload')->with('success', 'Upload customers records has been stored');
     }
-
 }

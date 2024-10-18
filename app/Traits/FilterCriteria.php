@@ -8,9 +8,13 @@ use Carbon\Carbon;
 
 trait FilterCriteria
 {
-    public function scopeFilter($query, $paginate = true)
+    public function scopeFilter($query, $paginate = true, $forTotalLeadsCount = false)
     {
-        $filters = request()->all();
+
+        $filters = $forTotalLeadsCount ? request()->merge([
+            'created_at_start' => date(config('constants.DATE_FORMAT_ONLY'), strtotime('-30 days')),
+            'created_at_end' => now()->format(config('constants.DATE_FORMAT_ONLY')),
+        ])->all() : request()->all();
 
         if (count($filters) && isset($this->filterables) && count($this->filterables)) {
             foreach ($this->filterables as $key => $operator) {
@@ -22,7 +26,14 @@ trait FilterCriteria
                             if ($key == DatabaseColumnsString::PREVIOUS_QUOTE_POLICY_NUMBER_TEXT) {
                                 $key = DatabaseColumnsString::PREVIOUS_QUOTE_POLICY_NUMBER;
                             }
-                            $query->where($key, $value);
+                            if ($key == 'policy_number' || $key == 'previous_quote_policy_number') {
+                                $query->where(function ($query) use ($value) {
+                                    $query->where('policy_number', $value)
+                                        ->orWhere('previous_quote_policy_number', $value);
+                                });
+                            } else {
+                                $query->where($key, $value);
+                            }
                             break;
                         case FilterTypes::FREE:
                             $query->where($key, 'like', '%'.$value.'%');
@@ -52,6 +63,10 @@ trait FilterCriteria
                                 $startDate = date('Y-m-d H:i:s', strtotime(request()->{$key.'_time_start'}));
                                 $endDate = date('Y-m-d H:i:s', strtotime(request()->{$key.'_time_end'}));
                                 $query->whereBetween($key, [$startDate, $endDate]);
+                            } elseif (isset(request()->{'policy_expiry_date'}) && isset(request()->{'policy_expiry_date_end'})) {
+                                $startDate = date('Y-m-d H:i:s', strtotime(request()->{'policy_expiry_date'}));
+                                $endDate = date('Y-m-d H:i:s', strtotime(request()->{'policy_expiry_date_end'}));
+                                $query->whereBetween('previous_policy_expiry_date', [$startDate, $endDate]);
                             }
                             break;
                         default:

@@ -1,11 +1,19 @@
 <script setup>
 defineProps({
   policies: Array,
+  legacyPolicyMapping: Array,
+  coveragePolicyMapping: Array,
 });
 
-const { isRequired } = useRules();
+const { isRequired, emptyOrNumericAndNoSpecialChar } = useRules();
+
+const poidForm = useForm({
+  poid: '',
+});
 
 const page = usePage();
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 const loader = reactive({
   table: false,
   export: false,
@@ -41,11 +49,27 @@ function onSubmit(isValid) {
     console.log('Invalid');
   }
 }
+
+function onSubmitMigrate(isValid) {
+  if (!isValid) return;
+  router.visit(route('migrate-legacy-policy', poidForm.poid), {
+    method: 'post',
+    preserveState: true,
+    preserveScroll: true,
+    onFinish: response => {
+      loader.poid = false;
+    },
+    onBefore: () => {
+      loader.poid = true;
+    },
+  });
+}
 let availableFilters = {
   policy_number: '',
   email: '',
   mobile_no: '',
   page: 1,
+  poid: '',
 };
 const filters = reactive(availableFilters);
 const tableHeader = [
@@ -53,9 +77,36 @@ const tableHeader = [
   { text: 'Policy Number', value: 'policy_no' },
   { text: 'Customer name', value: 'customer.name' },
   { text: 'Currently insured with', value: 'policy.insurer' },
-  { text: 'Product', value: 'product.product' },
-  { text: 'Policy expiry date', value: 'policy.end_date' },
+  { text: 'Product', value: 'product_name' },
+  { text: 'Policy expiry date', value: 'policy_end_date' },
 ];
+
+const dateFormat = date => {
+  if (date) {
+    if (date.$date && date.$date.$numberLong) {
+      date = formatDate(date);
+    }
+    return useDateFormat(date, 'DD-MM-YYYY').value;
+  }
+  return null;
+};
+
+const productName = item => {
+  let product = item?.product?.product;
+  let coverage = item?.policy?.coverage;
+  if (product) {
+    let productKey = product.toLowerCase().trim();
+    return page.props.legacyPolicyMapping[productKey] ?? '';
+  } else if (coverage) {
+    let coverageKey = coverage.toLowerCase().trim();
+    return (
+      page.props.coveragePolicyMapping[coverageKey] ??
+      page.props.legacyPolicyMapping[coverageKey] ??
+      ''
+    );
+  }
+  return '-';
+};
 </script>
 
 <template>
@@ -75,7 +126,7 @@ const tableHeader = [
           name="policy_number"
           label="Policy Number"
           class="w-full"
-          placeholder="Search by Last Name"
+          placeholder="Search by Policy Number"
         />
         <x-input
           v-model="filters.email"
@@ -91,6 +142,7 @@ const tableHeader = [
           name="mobile_no"
           label="Mobile Number"
           class="w-full"
+          :rules="[emptyOrNumericAndNoSpecialChar]"
           placeholder="Search by Mobile Number"
         />
       </div>
@@ -102,6 +154,35 @@ const tableHeader = [
       </div>
     </x-form>
 
+    <x-form
+      v-if="can(permissionsEnum.MIGRATE_INSLY_LEAD)"
+      @submit="onSubmitMigrate"
+      :auto-focus="false"
+    >
+      <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <x-input
+          v-model="poidForm.poid"
+          type="text"
+          name="policy_number"
+          label="POID"
+          class="w-full"
+          placeholder="Enter POID"
+          :rules="[isRequired]"
+        />
+        <div class="flex items-center">
+          <x-button
+            :loading="loader.poid"
+            size="sm"
+            color="#ff5e00"
+            type="submit"
+            class="w-full sm:w-auto"
+          >
+            Migrate
+          </x-button>
+        </div>
+      </div>
+    </x-form>
+
     <DataTable
       table-class-name="tablefixed"
       :headers="tableHeader"
@@ -109,15 +190,21 @@ const tableHeader = [
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-_id="item">
         <Link
-          :href="`/legacy-policy/${item._id}`"
+          :href="`/legacy-policy/${item.id}`"
+          :data="{ policy_oid: item.policy_oid }"
           class="text-primary-500 hover:underline"
         >
-          {{ item._id }}
+          {{ item.id }}
         </Link>
+      </template>
+      <template #item-product_name="item">
+        {{ productName(item) }}
+      </template>
+      <template #item-policy_end_date="item">
+        {{ dateFormat(item?.policy?.end_date) ?? '' }}
       </template>
     </DataTable>
 

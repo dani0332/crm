@@ -16,7 +16,10 @@ class QuoteTypeRepository extends BaseRepository
 
     public function fetchGetList()
     {
-        return $this->withActive()->orderBy('sort_order')->get();
+        $query = $this->withActive()
+            ->orderBy('sort_order');
+
+        return $query->get();
     }
 
     public function fetchAllowedQuoteForAml()
@@ -24,5 +27,10 @@ class QuoteTypeRepository extends BaseRepository
         $notAllowedQuoted = [];
 
         return $this->whereNotIn('id', $notAllowedQuoted)->withActive()->orderBy('sort_order')->get();
+    }
+
+    public function fetchGetById($quoteTypeId)
+    {
+        return $this->where('id', $quoteTypeId)->first();
     }
 }

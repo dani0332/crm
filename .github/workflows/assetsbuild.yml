@@ -10,24 +10,34 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        php: [8.2]
     steps:
       - name: Clone repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
-          tools: composer:v2
+          php-version: ${{ matrix.php }}
+          extensions: json, dom, curl, libxml, mbstring
+          coverage: none
+
       - name: Install Composer dependencies
         run: composer install
+
       - name: Use Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18.18.x'
+
       - name: Setup yarn
         run: npm install -g yarn
-      - run: yarn && yarn vite build
+
+      - run: yarn && yarn lint --fix && yarn vite build
+
       - name: Push changes
-        uses: stefanzweifel/git-auto-commit-action@v4
+        uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: yarn prod

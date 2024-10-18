@@ -57,6 +57,7 @@ class PaymentLookupSeeder extends Seeder
                 ['key' => LookupsEnum::PAYMENT_DISCOUNT_TYPE, 'code' => 'managerial_approval_discount', 'text' => 'Managerial approval discount', 'description' => PaymentTooltip::DISCOUNT_TYPE_LIST_MANAGERIAL],
                 ['key' => LookupsEnum::PAYMENT_DISCOUNT_TYPE, 'code' => 'employee_discount', 'text' => 'Employee discount', 'description' => PaymentTooltip::DISCOUNT_TYPE_LIST_EMPLOYEE],
                 ['key' => LookupsEnum::PAYMENT_DISCOUNT_TYPE, 'code' => 'family_employee_discount', 'text' => 'Employee family discount', 'description' => PaymentTooltip::DISCOUNT_TYPE_LIST_FAMILY],
+                ['key' => LookupsEnum::PAYMENT_DISCOUNT_TYPE, 'code' => LookupsEnum::SYSTEM_ADJUSTED_DISCOUNT, 'text' => 'System adjusted discount', 'description' => 'System generated discount'],
             ]);
         }
 

@@ -9,23 +9,40 @@ defineProps({
   todayManualCount: Number,
   yesterdayAutoCount: Number,
   yesterdayManualCount: Number,
+  quoteSegments: Object,
+  totalCount: {
+    type: Number,
+    default: 0,
+  },
+  authorizedDays: Number,
 });
 
 const page = usePage();
 const notification = useToast();
-const params = useUrlSearchParams('history');
+
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
+const quoteSegments = page.props.quoteSegments;
 
 const loader = reactive({
   table: false,
   export: false,
 });
 
-const canExport = ref(false);
+const { isRequired } = useRules();
+
 const objToUrl = obj => useObjToUrl(obj);
 const quotesSelected = ref([]);
+
+let params = useUrlSearchParams('history');
+const cleanObj = obj => useCleanObj(obj);
+const showFilters = ref(true);
+const filtersCount = ref(0);
+const serverOptions = ref({
+  page: 1,
+  sortType: 'desc',
+});
 
 const assignForm = useForm({
   assign_team: null,
@@ -38,38 +55,76 @@ const assignForm = useForm({
   isManualAllocationAllowed: 1,
 });
 
-const tableHeader = [
-  { text: 'Ref-ID', value: 'code' },
-  { text: 'FIRST NAME', value: 'first_name' },
-  { text: 'LAST NAME', value: 'last_name' },
-  { text: 'LEAD STATUS', value: 'quote_status_id_text' },
-  { text: 'ADVISOR', value: 'advisor_id_text' },
-  { text: 'ASSIGNMENT TYPE', value: 'assignment_type' },
-  { text: 'CREATED DATE', value: 'created_at' },
-  { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-  { text: 'HEALTH TEAM TYPE', value: 'health_team_type' },
-  { text: 'LOST REASON', value: 'lost_reason' },
-  { text: 'STARTING FROM', value: 'price_starting_from' },
-  { text: 'PRICE', value: 'premium' },
-  { text: 'POLICY NUMBER', value: 'policy_number' },
-  { text: 'SOURCE', value: 'source' },
-  { text: 'LEAD TYPE', value: 'lead_type_id_text' },
-  { text: 'SALARY BAND', value: 'salary_band_id_text' },
-  { text: 'MEMBER CATEGORY', value: 'member_category_id_text' },
-  { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with_id_text' },
-  { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
-  { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
-  { text: 'Renewal Batch', value: 'renewal_batch' },
-];
+const tableHeader = ref([
+  { text: 'Ref-ID', value: 'code', is_active: true },
+  { text: 'FIRST NAME', value: 'first_name', is_active: true },
+  { text: 'LAST NAME', value: 'last_name', is_active: true },
+  { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at', is_active: true },
+  { text: 'PAYMENT EXPIRY', value: 'expiry_date', is_active: true },
+  { text: 'LEAD STATUS', value: 'quote_status_id_text', is_active: true },
+  { text: 'ADVISOR', value: 'advisor_id_text', is_active: true },
+  { text: 'ASSIGNMENT TYPE', value: 'assignment_type', is_active: true },
+  {
+    text: 'CREATED DATE',
+    value: 'created_at',
+    is_active: true,
+    sortable: true,
+  },
+  {
+    text: 'LAST MODIFIED DATE',
+    value: 'updated_at',
+    is_active: true,
+    sortable: true,
+  },
+  {
+    text: 'POLICY EXPIRY DATE',
+    value: 'previous_policy_expiry_date',
+    is_active: true,
+    sortable: true,
+  },
+  { text: 'HEALTH TEAM TYPE', value: 'health_team_type', is_active: true },
+  { text: 'TRANSAPP CODE', value: 'transapp_code', is_active: true },
+  { text: 'LOST REASON', value: 'lost_reason', is_active: true },
+  {
+    text: 'STARTING FROM',
+    value: 'price_starting_from',
+    is_active: true,
+    sortable: true,
+  },
+  { text: 'PRICE', value: 'premium', is_active: true, sortable: true },
+  { text: 'POLICY NUMBER', value: 'policy_number', is_active: true },
+  { text: 'SOURCE', value: 'source', is_active: true },
+  { text: 'LEAD TYPE', value: 'lead_type_id_text', is_active: true },
+  { text: 'SALARY BAND', value: 'salary_band_id_text', is_active: true },
+  {
+    text: 'MEMBER CATEGORY',
+    value: 'member_category_id_text',
+    is_active: true,
+  },
+  {
+    text: 'CURRENTLY INSURED WITH',
+    value: 'currently_insured_with_id_text',
+    is_active: true,
+  },
+  { text: 'IS ECOMMERCE', value: 'is_ecommerce', is_active: true },
+  {
+    text: 'Previous Policy Number',
+    value: 'previous_quote_policy_number',
+    is_active: true,
+  },
+  { text: 'Renewal Batch', value: 'renewal_batch', is_active: true },
+]);
 
 const filteredTableHeader = computed(() => {
+  let headers = [];
   if (!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])) {
-    return tableHeader;
+    headers = tableHeader.value;
   } else {
-    return tableHeader.filter(
+    headers = tableHeader.value.filter(
       column => column.value !== 'source' && column.value !== 'assignment_type',
     );
   }
+  return headers.filter(x => x.is_active);
 });
 
 const filters = reactive({
@@ -78,31 +133,58 @@ const filters = reactive({
   last_name: '',
   email: '',
   mobile_no: '',
-  created_at_start: '',
-  created_at_end: '',
+  created_at_start: new Date() || '',
+  created_at_end: new Date() || '',
   sub_team: '',
   quote_status: [],
   advisors: [],
   is_ecommerce: '',
   is_renewal: '',
-  page: 1,
   previous_quote_policy_number: '',
   renewal_batch: '',
+  date: null,
   assigned_to_date_start: '',
   assigned_to_date_end: '',
+  payment_status: [],
+  is_cold: false,
+  is_stale: false,
+  status_filters: null,
+  payment_due_date: '',
+  booking_date: '',
+  policy_expiry_date: '',
+  policy_expiry_date_end: '',
+  segment_filter: '',
+  transaction_approved_dates: '',
 });
+
+const canExport = ref(false);
+watch(
+  () => filters,
+  () => {
+    if (
+      (filters.created_at_start && filters.created_at_end) ||
+      filters.payment_due_date ||
+      filters.booking_date ||
+      filters.transaction_approved_dates
+    ) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
+  },
+  { deep: true, immediate: true },
+);
 
 const subTeamOptions = [
   { value: '', label: 'All' },
-  { value: 'RM-NB', label: 'RM-NB' },
-  { value: 'RM-Speed', label: 'RM-Speed' },
-  { value: 'EBP', label: 'EBP' },
+  { value: 'Best', label: 'Best' },
+  { value: 'Good', label: 'Good' },
+  { value: 'Entry-Level', label: 'Entry-Level' },
   { value: 'Wow-Call', label: 'Wow-Call' },
   { value: 'No-Type', label: 'No-Type' },
 ];
 
 const assignmentTypeOptions = [
-  { value: '', label: 'Please select is assignment type' },
   { value: 1, label: 'System Assigned' },
   { value: 2, label: 'System ReAssigned' },
   { value: 3, label: 'Manual Assigned' },
@@ -146,24 +228,35 @@ modifiedAdvisorOptions.value.push({
 // });
 
 const subTeamsOptions = [
-  { value: 'RM-NB', label: 'RM-NB' },
-  { value: 'RM-SPEED', label: 'RM-SPEED' },
-  { value: 'EBP', label: 'EBP' },
+  { value: 'Best', label: 'Best' },
+  { value: 'Good', label: 'Good' },
+  { value: 'Entry-Level', label: 'Entry-Level' },
   { value: 'Wow-Call', label: 'Wow-Call' },
   { value: 'No-Type', label: 'No-Type' },
 ];
 
 function onSubmit(isValid) {
   if (isValid) {
-    filters.page = 1;
-    Object.keys(filters).forEach(
-      key =>
-        (filters[key] === '' || filters[key].length === 0) &&
-        delete filters[key],
-    );
+    if (validateDateRange()) {
+      notification.error({
+        title:
+          'The selected date range exceeds one month. Please select a range within one month.',
+        position: 'top',
+      });
+      return;
+    }
+    serverOptions.value.page = 1;
+
+    const filtersCleaned = cleanObj(filters);
+
+    filtersCount.value = Object.keys(filtersCleaned).length;
+
     router.visit(route('health.index'), {
       method: 'get',
-      data: filters,
+      data: {
+        ...filtersCleaned,
+        ...serverOptions.value,
+      },
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loader.table = true),
@@ -174,7 +267,28 @@ function onSubmit(isValid) {
   }
 }
 
+const handleSelectedFilters = selectedFilters => {
+  if (selectedFilters.created_at_start && selectedFilters.created_at_end) {
+    filters.created_at_start = selectedFilters.created_at_start;
+    filters.created_at_end = selectedFilters.created_at_end;
+  }
+
+  if (selectedFilters.quote_status) {
+    filters.quote_status = selectedFilters.quote_status;
+  }
+
+  if (selectedFilters.payment_status) {
+    filters.payment_status = selectedFilters.payment_status;
+  }
+
+  filters.is_cold = selectedFilters.cold;
+  filters.is_stale = selectedFilters.stale;
+
+  onSubmit(true);
+};
+
 function onReset() {
+  removedSavedParams();
   router.visit(route('health.index'), {
     method: 'get',
     data: { page: 1 },
@@ -183,10 +297,6 @@ function onReset() {
     onSuccess: () => (loader.table = false),
   });
 }
-
-const rules = {
-  isRequired: v => !!v || 'Please select this option',
-};
 
 function onAssignLead(isValid) {
   if (isValid) {
@@ -217,9 +327,11 @@ function onAssignLead(isValid) {
 function setQueryStringFilters() {
   for (const [key] of Object.entries(params)) {
     if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key];
+      filters[key.substring(0, key.length - 2)] = params[key] ?? value;
     } else {
-      filters[key] = params[key];
+      filters[key] = isNaN(parseInt(params[key]))
+        ? params[key]
+        : parseInt(params[key]);
     }
   }
 }
@@ -237,54 +349,238 @@ const fixedValue = numberString => {
     });
   }
 };
+
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
-watch(
-  () => filters,
-  () => {
-    if (filters.created_at_start && filters.created_at_end) {
-      canExport.value = true;
-    } else {
-      canExport.value = false;
-    }
-  },
-  { deep: true, immediate: true },
-);
+const onDataExport = () => {
+  if (filters.created_at_start && filters.created_at_end) {
+    filters.created_at_start = useDateFormat(
+      filters.created_at_start,
+      'YYYY-MM-DD',
+    ).value;
+
+    filters.created_at_end = useDateFormat(
+      filters.created_at_end,
+      'YYYY-MM-DD',
+    ).value;
+  } else if (
+    filters.transaction_approved_dates[0] &&
+    filters.transaction_approved_dates[1]
+  ) {
+    filters.transaction_approved_dates[0] = useDateFormat(
+      filters.transaction_approved_dates[0],
+      'YYYY-MM-DD',
+    ).value;
+    filters.transaction_approved_dates[1] = useDateFormat(
+      filters.transaction_approved_dates[1],
+      'YYYY-MM-DD',
+    ).value;
+  }
+
+  const data = useObjToUrl(filters);
+  const url = route('data-extraction', 'health');
+  window.open(url + '?' + new URLSearchParams(data).toString());
+};
 
 onMounted(() => {
+  params = getSavedQueryParams() || params;
   setQueryStringFilters();
+  let filtersCleaned = cleanObj(filters);
+
+  if (filtersCleaned.sortBy) {
+    serverOptions.value.sortBy = filtersCleaned.sortBy;
+    delete filtersCleaned.sortBy;
+  }
+
+  if (filtersCleaned.sortType) {
+    serverOptions.value.sortType = filtersCleaned.sortType;
+    delete filtersCleaned.sortType;
+  }
+
+  if (filtersCleaned.page) {
+    serverOptions.value.page = filtersCleaned.page;
+    delete filtersCleaned.page;
+  }
+
+  filtersCount.value = Object.keys(filtersCleaned).length;
+});
+
+watch(
+  () => serverOptions.value,
+  (newValue, oldValue) => {
+    if (oldValue !== newValue) onSubmit(true);
+  },
+);
+function daysAgoFromAuthorizedDate(authorizedDate) {
+  if (!authorizedDate) {
+    return;
+  }
+
+  const [day, month, year] = authorizedDate.split('-').map(Number);
+  const parsedDate = new Date(year, month - 1, day);
+
+  if (isNaN(parsedDate.getTime())) {
+    return 'Invalid date';
+  }
+
+  // Reset time to 00:00:00 to consider only the date
+  parsedDate.setHours(0, 0, 0, 0);
+
+  // Add `page.props.authorizedDays` to the parsed date
+  const authorizedDays = page.props.authorizedDays || 8; // Default to 8 if not defined
+  const newDate = new Date(parsedDate);
+  newDate.setDate(parsedDate.getDate() + authorizedDays);
+
+  // Reset time for newDate as well
+  newDate.setHours(0, 0, 0, 0);
+
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0); // Reset time for current date
+
+  // Calculate the difference in days
+  const differenceInTime = newDate.getTime() - currentDate.getTime();
+  const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+
+  // Return appropriate message
+  if (differenceInDays <= 0) {
+    return 'Expired';
+  }
+
+  return differenceInDays === 1
+    ? `${differenceInDays} day`
+    : `${differenceInDays} days`;
+}
+
+const readOnlyMode = reactive({
+  isDisable: true,
+});
+onMounted(() => {
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
+});
+const resetDateFilters = filterName => {
+  const filterMappings = {
+    payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
+    booking_date: ['payment_due_date', 'created_at_start', 'created_at_end'],
+    created_at: ['booking_date', 'payment_due_date'],
+  };
+
+  const filtersToReset =
+    filterMappings[filterName] ||
+    (filterName.startsWith('created_at') ? filterMappings.created_at : []);
+
+  filtersToReset.forEach(filter => {
+    filters[filter] = '';
+  });
+};
+
+[
+  'payment_due_date',
+  'booking_date',
+  'created_at_start',
+  'created_at_end',
+].forEach(filterName => {
+  watch(
+    () => filters[filterName],
+    newValue => {
+      if (newValue) {
+        resetDateFilters(filterName);
+      }
+    },
+  );
+});
+const validateDateRange = () => {
+  const { policy_expiry_date, policy_expiry_date_end } = filters;
+  if (policy_expiry_date && policy_expiry_date_end) {
+    const startDate = new Date(policy_expiry_date);
+    const endDate = new Date(policy_expiry_date_end);
+    const oneMonthLater = new Date(startDate);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    // Adjust for months with fewer than 31 days
+    if (oneMonthLater.getDate() < startDate.getDate()) {
+      oneMonthLater.setDate(0);
+    }
+    if (endDate > oneMonthLater) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const formatDate = dateString =>
+  useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY').value;
+
+watch(() => {
+  if (filters.transaction_approved_dates) {
+    filters.created_at_start = '';
+    filters.created_at_end = '';
+  }
 });
 </script>
 
 <template>
   <div>
     <Head title="Health List" />
-    <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Health List</h2>
-      <LeadAssignedWidget
-        v-if="hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])"
-        :todayAutoCount="todayAutoCount"
-        :todayManualCount="todayManualCount"
-        :yesterdayAutoCount="yesterdayAutoCount"
-        :yesterdayManualCount="yesterdayManualCount"
-        :userMaxCap="userMaxCap"
-      />
-      <div class="space-x-3">
+    <StickyHeader>
+      <template v-slot:header>
+        <h2 class="text-xl font-semibold">Health List</h2>
+        <!-- // PD Revert
+          <LeadsCount
+          :leadsCount="$page.props.totalCount"
+          :key="$page.props.totalCount"
+        /> -->
+      </template>
+      <template #default>
+        <ColumnSelection
+          v-model:columns="tableHeader"
+          storage-key="health-list"
+        />
+
+        <FiltersButton
+          :is-shown="showFilters"
+          :filters="filters"
+          :filters-count="filtersCount"
+          @selected-filters="handleSelectedFilters"
+          @toggleFilters="showFilters = !showFilters"
+        />
         <Link :href="route('health.cards')">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
+          <x-button
+            size="sm"
+            color="#1d83bc"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Cards View
+          </x-button>
         </Link>
 
         <Link :href="route('health.create')">
-          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            tag="div"
+            v-if="readOnlyMode.isDisable === true"
+          >
+            Create Lead
+          </x-button>
         </Link>
-      </div>
-    </div>
+      </template>
+    </StickyHeader>
+
+    <LeadAssignedWidget
+      v-if="hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])"
+      :todayAutoCount="todayAutoCount"
+      :todayManualCount="todayManualCount"
+      :yesterdayAutoCount="yesterdayAutoCount"
+      :yesterdayManualCount="yesterdayManualCount"
+      :userMaxCap="userMaxCap"
+    />
+
     <x-divider class="my-4" />
-    <x-form @submit="onSubmit" :auto-focus="false">
+    <x-form v-show="showFilters" @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
-          <x-tooltip position="bottom">
+          <x-tooltip placement="bottom">
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -342,12 +638,12 @@ onMounted(() => {
           name="created_at_end"
           label="Created Date End"
         />
-        <x-select
+        <ComboBox
           v-model="filters.sub_team"
           label="Sub Team"
-          :options="subTeamOptions"
           placeholder="Search by Sub Team"
-          class="w-full"
+          :options="subTeamOptions"
+          :single="true"
         />
 
         <ComboBox
@@ -357,8 +653,26 @@ onMounted(() => {
           placeholder="Search by Lead Status"
           :options="leadStatusOptions"
         />
+        <DatePicker
+          v-model="filters.policy_expiry_date"
+          name="policy_expiry_date"
+          label="Policy Expiry Start Date"
+        />
+        <DatePicker
+          v-model="filters.policy_expiry_date_end"
+          name="policy_expiry_date_end"
+          label="Policy Expiry End Date"
+        />
         <ComboBox
-          v-if="!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor, rolesEnum.CarAdvisor])"
+          v-if="
+            !hasAnyRole([
+              rolesEnum.RMAdvisor,
+              rolesEnum.EBPAdvisor,
+              rolesEnum.CarAdvisor,
+              rolesEnum.HealthRenewalAdvisor,
+              rolesEnum.HealthAdvisor,
+            ])
+          "
           v-model="filters.advisors"
           label="Advisor"
           placeholder="Search by Advisor"
@@ -377,7 +691,7 @@ onMounted(() => {
         />
         <x-select
           v-model="filters.is_renewal"
-          label="Is Renewal"
+          label="Renewal"
           placeholder="Search by Renewal"
           :options="[
             { value: '', label: 'All' },
@@ -386,22 +700,28 @@ onMounted(() => {
           ]"
           class="w-full"
         />
-        <x-select
-          v-if="!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor, rolesEnum.CarAdvisor])"
+
+        <ComboBox
+          v-if="
+            !hasAnyRole([
+              rolesEnum.RMAdvisor,
+              rolesEnum.EBPAdvisor,
+              rolesEnum.CarAdvisor,
+            ])
+          "
           v-model="filters.assignment_type"
           label="Assignment Type"
-          name="assignment_type"
+          placeholder="Search by Assignment Type"
           :options="assignmentTypeOptions"
-          placeholder="Please select assignment type"
-          class="w-full"
+          :single="true"
         />
         <x-input
           v-model="filters.previous_quote_policy_number"
           type="text"
           name="previous_quote_policy_number"
-          label="Previous Policy Number"
+          label="Policy Number"
           class="w-full"
-          placeholder="Search by Previous Policy Number"
+          placeholder="Policy Number"
         />
         <x-input
           v-model="filters.renewal_batch"
@@ -413,41 +733,91 @@ onMounted(() => {
         />
 
         <DatePicker
-            v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
-            v-model="filters.assigned_to_date_start"
-            name="assigned_to_date_start"
-            label="Advisor Assigned Date Start"
+          v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
+          v-model="filters.assigned_to_date_start"
+          name="assigned_to_date_start"
+          label="Advisor Assigned Date Start"
         />
         <DatePicker
-            v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
-            v-model="filters.assigned_to_date_end"
-            name="assigned_to_date_end"
-            label="Advisor Assigned Date End"
+          v-if="!hasAnyRole([rolesEnum.CarAdvisor])"
+          v-model="filters.assigned_to_date_end"
+          name="assigned_to_date_end"
+          label="Advisor Assigned Date End"
+        />
+
+        <DatePicker
+          v-model="filters.payment_due_date"
+          label="Payment Due Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+
+        <DatePicker
+          v-model="filters.booking_date"
+          label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <ComboBox
+          v-if="can(permissionsEnum.SEGMENT_FILTER)"
+          v-model="filters.segment_filter"
+          label="Segment"
+          placeholder="Select Segment"
+          :options="quoteSegments"
+          :single="true"
+        />
+        <DatePicker
+          v-model="filters.transaction_approved_dates"
+          label="Transaction Approved Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+          max-range="120"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
-        <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+        <div>
           <x-button
-            v-if="canExport"
+            v-if="canExport && can(permissionsEnum.DATA_EXTRACTION)"
             size="sm"
             color="emerald"
-            :href="`/health/leads-export?${objToUrl(filters)}`"
-            class="justify-self-start"
+            @click.prevent="onDataExport"
+            class="justify-self-start mr-3"
           >
             Export
           </x-button>
-          <x-tooltip v-else position="right">
-            <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+          <x-tooltip
+            v-if="!canExport && can(permissionsEnum.DATA_EXTRACTION)"
+            placement="right"
+          >
+            <x-button tag="div" size="sm" color="emerald" class="mr-3">
+              Export
+            </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates are required to export data.
+                Created dates or Transaction Approved dates or payment due date
+                or booking date are required to export data.
               </span>
             </template>
           </x-tooltip>
+
+          <x-button
+            v-if="can(permissionsEnum.EXPORT_RM_LEADS)"
+            size="sm"
+            color="emerald"
+            href="/rm-leads-export"
+            class="justify-self-start mr-3"
+          >
+            Export RM Leads by Car Advisors
+          </x-button>
         </div>
-        <div v-else />
         <div class="flex justify-self-end gap-3">
-          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button type="submit" size="sm" color="#ff5e00">Search</x-button>
           <x-button size="sm" color="primary" @click.prevent="onReset">
             Reset
           </x-button>
@@ -465,7 +835,9 @@ onMounted(() => {
                 :options="subTeamsOptions"
                 placeholder="Select Subteam"
                 class="flex-1 w-auto"
-                :rules="[rules.isRequired]"
+                :rules="[isRequired]"
+                filterable
+                v-if="readOnlyMode.isDisable === true"
               />
               <x-select
                 v-model="assignForm.assigned_to_id_new"
@@ -473,7 +845,9 @@ onMounted(() => {
                 :options="advisorOptions"
                 placeholder="Select Advisor"
                 class="flex-1 w-auto"
-                :rules="[rules.isRequired]"
+                :rules="[isRequired]"
+                filterable
+                v-if="readOnlyMode.isDisable === true"
               />
 
               <div class="mb-3 md:pt-6">
@@ -482,6 +856,7 @@ onMounted(() => {
                   size="sm"
                   type="submit"
                   :loading="assignForm.processing"
+                  v-if="readOnlyMode.isDisable === true"
                 >
                   Assign
                 </x-button>
@@ -493,6 +868,7 @@ onMounted(() => {
     </Transition>
     <DataTable
       v-model:items-selected="quotesSelected"
+      v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :loading="loader.table"
       :headers="filteredTableHeader"
@@ -500,14 +876,14 @@ onMounted(() => {
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
-      <template #item-code="{ code, uuid }">
+      <template #item-code="item">
         <Link
-          :href="route('health.show', uuid)"
-          class="text-primary-500 hover:underline"
+          :href="route('health.show', item.uuid)"
+          class="text-primary-500 hover:underline flex items-center space-x-1"
         >
-          {{ code }}
+          <span>{{ item.code }}</span>
+          <StaleLeadsBadge :date="item.stale_at" :align="`left`" />
         </Link>
       </template>
       <template #item-is_ecommerce="{ is_ecommerce }">
@@ -516,6 +892,28 @@ onMounted(() => {
             {{ is_ecommerce ? 'Yes' : 'No' }}
           </x-tag>
         </div>
+      </template>
+      <template #item-authorized_at="item">
+        <p v-if="item.payment_status_text === 'AUTHORISED'">
+          {{ item.authorized_at }}
+        </p>
+      </template>
+      <template #item-expiry_date="item">
+        <p v-if="item.payment_status_text === 'AUTHORISED'">
+          {{ daysAgoFromAuthorizedDate(item.authorized_at) }}
+        </p>
+      </template>
+      <template
+        #item-previous_policy_expiry_date="{
+          previous_policy_expiry_date,
+          source,
+        }"
+      >
+        {{
+          source === 'Renewal_upload'
+            ? formatDate(previous_policy_expiry_date)
+            : ''
+        }}
       </template>
       <template #item-price_starting_from="item">
         <p v-if="item.price_starting_from != null">

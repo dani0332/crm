@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\FilterTypes;
 use App\Enums\QuoteTypeId;
+use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Carbon\Carbon;
@@ -30,8 +31,33 @@ class LifeQuote extends Model implements AuditableContract
         'quote_status_id' => FilterTypes::IN,
         'advisor_id' => FilterTypes::IN,
         'source' => FilterTypes::EXACT,
-        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'policy_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'previous_quote_policy_number' => FilterTypes::NULL_CHECK,
+        'previous_quote_policy_number_text' => FilterTypes::EXACT,
     ];
+    protected $dispatchesEvents = [
+        'updated' => QuoteEmailUpdated::class,
+    ];
+
+    protected static function booted()
+    {
+        static::updating(function ($model) {
+            $skipBookingDateUpdateForNonCPD = true;
+            if (isset(request()->sendUpdateId)) {
+                $lifeQuote = new LifeQuote;
+                $endorsmentDetails = $lifeQuote->isCPDEndorsment(request()->sendUpdateId);
+                if ($endorsmentDetails['isCPDEndorsment']) {
+                    info('Book Update - Policy Booking Date update is allowed for CPD Endorsment. Old PBD ('.$model->getOriginal('policy_booking_date').') - New PBD ('.$model->policy_booking_date.'). QuoteType: '.request()->quoteType.' - QuoteUUID: '.request()->quoteUuid.' - SendUpdateUUID: '.$endorsmentDetails['sendUpdateUUID']);
+                    $skipBookingDateUpdateForNonCPD = false;
+                }
+            }
+
+            if ($model->isDirty('policy_booking_date') && $model->getOriginal('policy_booking_date') && $skipBookingDateUpdateForNonCPD) {
+                info($model->code.' updating the value of policy_booking_date is skipped. tried to change policy_booking_date from '.$model->getOriginal('policy_booking_date').' to '.$model->policy_booking_date);
+                unset($model->policy_booking_date); // lock the policy booking date field
+            }
+        });
+    }
 
     public function getDobAttribute($value)
     {
@@ -50,7 +76,7 @@ class LifeQuote extends Model implements AuditableContract
 
     public function advisor()
     {
-        return $this->belongsTo(User::class)->select(['id', 'email', 'name']);
+        return $this->belongsTo(User::class)->select(['id', 'email', 'name', 'mobile_no', 'landline_no', 'profile_photo_path', 'calendar_link']);
     }
     public function previousAdvisor()
     {
@@ -85,10 +111,12 @@ class LifeQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(LifeNumberOfYears::class, 'number_of_years_id');
     }
+
     public function maritalStatus()
     {
         return $this->belongsTo(MartialStatus::class, 'marital_status_id');
     }
+
     public function paymentStatus()
     {
         return $this->belongsTo(PaymentStatus::class, 'payment_status_id');
@@ -119,8 +147,24 @@ class LifeQuote extends Model implements AuditableContract
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
 
+    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Activities::class, 'quote_request_id')
+            ->where('quote_type_id', QuoteTypeId::Life);
+    }
+
     public function insuranceProvider()
     {
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
+    }
+
+    public function sageApiLogs()
+    {
+        return $this->morphMany(SageApiLog::class, 'section');
+    }
+
+    public function customerMembers()
+    {
+        return $this->morphMany(CustomerMembers::class, 'quote');
     }
 }

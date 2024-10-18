@@ -28,10 +28,13 @@ class AllocationThresholdController extends Controller
             $index = array_search($team['name'], $customSequence);
 
             return $index === false ? PHP_INT_MAX : $index;
-        });
+        })->values();
         $teams = $sortedTeams;
 
-        return view('allocationthreshold.view', compact('teams'));
+        return inertia('Admin/AllocationConfig/AllocationThreshold', [
+            'teams' => $teams,
+
+        ]);
     }
 
     public function updateAllocation(Request $request)
@@ -43,6 +46,6 @@ class AllocationThresholdController extends Controller
             }
         }
 
-        return true;
+        return response()->json(['message' => 'Allocation Threshold updated successfully']);
     }
 }

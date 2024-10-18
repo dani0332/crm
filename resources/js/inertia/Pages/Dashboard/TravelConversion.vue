@@ -167,7 +167,6 @@ onMounted(() => {
       :headers="travelHeaders"
       border-cell
       hide-footer
-      fixed-checkbox
       :items="stats[key]"
       :rows-per-page="500"
     >
@@ -186,12 +185,12 @@ onMounted(() => {
               header.value == 'overall_ecom_conv'
                 ? calculateOverConvEacomTotal(stats[key]) + '%'
                 : header.value == 'non_ecom_conv'
-                ? calculateNonEcomTotal(stats[key]) + '%'
-                : header.value == 'ecom_conv'
-                ? calculateEcomTotal(stats[key]) + '%'
-                : isIntegerColumn(header.value)
-                ? calculateTotalSum(stats[key], header.value)
-                : 'N/A'
+                  ? calculateNonEcomTotal(stats[key]) + '%'
+                  : header.value == 'ecom_conv'
+                    ? calculateEcomTotal(stats[key]) + '%'
+                    : isIntegerColumn(header.value)
+                      ? calculateTotalSum(stats[key], header.value)
+                      : 'N/A'
             }}
           </td>
         </tr>

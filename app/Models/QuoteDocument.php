@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class QuoteDocument extends Model
+class QuoteDocument extends Model implements AuditableContract
 {
-    use HasFactory, SoftDeletes;
+    use Auditable, HasFactory, SoftDeletes;
 
     protected $table = 'quote_documents';
     protected $guarded = [];
@@ -45,6 +47,11 @@ class QuoteDocument extends Model
     public function quoteDocumentable()
     {
         return $this->morphTo();
+    }
+
+    public function notes()
+    {
+        return $this->belongsToMany(QuoteNote::class, 'document_note', 'document_id', 'note_id');
     }
 
     public function paymentDocuments()

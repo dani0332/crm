@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Enums\UserStatusEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
@@ -55,7 +56,7 @@ class AllocationService
         $apiToken = config('constants.KEN_API_TOKEN');
         $apiTimeout = config('constants.KEN_API_TIMEOUT');
 
-        $client = new \GuzzleHttp\Client();
+        $client = new \GuzzleHttp\Client;
         $request = $client->post(
             $apiEndPoint,
             [
@@ -80,10 +81,15 @@ class AllocationService
         }
     }
 
-    public function getLeadAllocationRecordByUserId($userId)
+    public function getLeadAllocationRecordByUserId($userId, $quoteTypeId = null)
     {
         try {
-            $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
+            $leadAllocation = LeadAllocation::latest();
+            info('Allocation Quote Type Id : '.$quoteTypeId);
+            if (! empty($quoteTypeId)) {
+                $leadAllocation = $leadAllocation->where('quote_type_id', $quoteTypeId);
+            }
+            $leadAllocation = $leadAllocation->where('user_id', $userId)->first();
 
             return $leadAllocation;
         } catch (\Exception $e) {
@@ -91,33 +97,31 @@ class AllocationService
         }
     }
 
-    public function addAllocationCounts($userId)
+    public function addAllocationCounts($userId, $quoteTypeId = null)
     {
-        $allocationRecord = $this->getLeadAllocationRecordByUserId($userId);
-        $allocationRecord->auto_assignment_count = $allocationRecord->auto_assignment_count + 1;
-        $allocationRecord->allocation_count = $allocationRecord->allocation_count + 1;
-        $allocationRecord->updated_at = now();
-        $allocationRecord->last_allocated = now()->timestamp;
-        $allocationRecord->save();
 
+        $allocationRecord = $this->getLeadAllocationRecordByUserId($userId, $quoteTypeId);
+        info('Allocation Quote Type Id : '.$allocationRecord->quote_type_id.'  Quote Type Id : '.$quoteTypeId);
+        if (! empty($allocationRecord)) {
+            $allocationRecord->auto_assignment_count = $allocationRecord->auto_assignment_count + 1;
+            $allocationRecord->allocation_count = $allocationRecord->allocation_count + 1;
+            $allocationRecord->updated_at = now();
+            $allocationRecord->last_allocated = now()->timestamp;
+            $allocationRecord->save();
+        } else {
+            info('Allocation record not found against advisor');
+        }
     }
 
-    public function updateExistingQuoteDetail($quoteDetail, $uuid): void
+    public function upsertQuoteDetail($leadId, $quoteModel, $keyColumn): void
     {
-        $quoteDetail->advisor_assigned_date = now();
-        $quoteDetail->advisor_assigned_by_id = auth()->id();
-        $quoteDetail->save();
-    }
-
-    public function createNewQuoteDetail($leadId, $quoteModel, $keyColumn): void
-    {
-        $quoteModel::create([
-            $keyColumn => $leadId,
-            'advisor_assigned_date' => now(),
-            'advisor_assigned_by_id' => auth()->id(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $quoteModel::updateOrCreate(
+            [$keyColumn => $leadId],
+            [
+                'advisor_assigned_date' => now(),
+                'advisor_assigned_by_id' => auth()->id(),
+            ]
+        );
     }
 
     public function getAssignmentTypeText($assignmentType)
@@ -143,7 +147,7 @@ class AllocationService
         return $assignmentText;
     }
 
-    public function adjustAllocationCounts($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType)
+    public function adjustAllocationCounts($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $quoteTypeId = null)
     {
         // Check if $lead or $newAdvisorId is not provided
         if ($lead === null || $newAdvisorId === null) {
@@ -156,14 +160,16 @@ class AllocationService
         $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
 
         // Get the allocation record for the new advisor
-        $newAdvisorAllocationRecord = $this->getLeadAllocationRecordByUserId($newAdvisorId);
+        info('adjust Allocation Quote Type Id : '.$quoteTypeId);
+        $newAdvisorAllocationRecord = $this->getLeadAllocationRecordByUserId($newAdvisorId, $quoteTypeId);
 
         // Update allocation counts for the new advisor
         $this->updateAllocationCountsForNewAdvisor($newAdvisorAllocationRecord, $lead, $systemAssignedTypes);
 
         // Get the allocation record for the previous advisor (if applicable)
         if ($previousAdvisorId !== null) {
-            $previousAdvisorAllocationRecord = $this->getLeadAllocationRecordByUserId($previousAdvisorId);
+
+            $previousAdvisorAllocationRecord = $this->getLeadAllocationRecordByUserId($previousAdvisorId, $quoteTypeId);
 
             // Update allocation counts for the previous advisor (if applicable)
             $this->updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes);
@@ -230,7 +236,7 @@ class AllocationService
         $allocationCount = LeadAllocation::where('user_id', $userId)->select('auto_assignment_count', 'manual_assignment_count', 'max_capacity')
             ->first();
 
-        $leads = CarQuote::join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
+        $leads = CarQuote::select('assignment_type')->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->whereBetween('car_quote_request_detail.advisor_assigned_date', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()])
@@ -309,4 +315,29 @@ class AllocationService
         return $query->get();
     }
 
+    public function deductLeadAllocationCount($quoteModel, $quoteUuid)
+    {
+        $quote = $quoteModel::with('advisor')->where('uuid', $quoteUuid)->first();
+
+        if ($quote->advisor) {
+            $leadAllocation = LeadAllocation::where('user_id', $quote->advisor->id)->first();
+            $leadAllocation->allocation_count = $leadAllocation->allocation_count - 1;
+            if (in_array($quote->assignment_type, [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED])) {
+                $leadAllocation->auto_assignment_count = $leadAllocation->auto_assignment_count - 1;
+            } elseif (in_array($quote->assignment_type, [AssignmentTypeEnum::MANUAL_ASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED])) {
+                $leadAllocation->manual_assignment_count = $leadAllocation->manual_assignment_count - 1;
+            }
+            $leadAllocation->save();
+        }
+
+    }
+
+    public function leadAllocationFailed(string $uuid, QuoteTypes $quoteType)
+    {
+        $quote = $quoteType->model()->where('uuid', $uuid)->first();
+
+        if ($quote) {
+            $quote->markLeadAllocationFailed();
+        }
+    }
 }

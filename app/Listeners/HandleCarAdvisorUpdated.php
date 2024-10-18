@@ -3,16 +3,20 @@
 namespace App\Listeners;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteTypes;
 use App\Events\CarQuoteAdvisorUpdated;
-use App\Jobs\SendOCBIntroEmailJob;
+use App\Jobs\OCB\SendCarOCBIntroEmailJob;
+use App\Jobs\SendFTCEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\Customer;
 use App\Models\User;
 use App\Services\CarAllocationService;
-use App\Services\CarEmailService;
+use App\Services\EmailServices\CarEmailService;
 use App\Services\HttpRequestService;
 use App\Services\SendSmsCustomerService;
 use App\Services\SIBService;
+use App\Services\UserService;
+use Illuminate\Support\Facades\Log;
 
 class HandleCarAdvisorUpdated
 {
@@ -45,8 +49,13 @@ class HandleCarAdvisorUpdated
 
         $lead = $event->lead;
 
-        if ($lead->source == LeadSourceEnum::RENEWAL_UPLOAD) {
-            info('lead is source is renewal upload. Skipping intro email job');
+        if ($lead) {
+            SendFTCEmailJob::dispatch($lead->uuid, QuoteTypes::CAR)->delay(now()->addSeconds(5));
+        }
+
+        $skippableSources = [LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::INSLY];
+        if (in_array($lead->source, $skippableSources)) {
+            info('lead is source is '.$lead->source.' upload. Skipping intro email job');
 
             return;
         }
@@ -58,6 +67,16 @@ class HandleCarAdvisorUpdated
         info('about to trigger intro email job for lead uuid : '.$lead->uuid.' and previous advisor id : '.$oldAdvisorId);
 
         if ($lead->sic_flow_enabled) {
+
+            info('Lead is SIC enabled so send SIC notification to advisor against: '.$lead->uuid);
+            $user = (new UserService)->getUserById($lead->advisor_id);
+            $responseCode = $this->carEmailService->sendSICNotificationToAdvisor($lead, $user);
+
+            if (in_array($responseCode, [200, 201])) {
+                info('SIC Notification to Advisor: '.$user->email.' Sent Successfully against Quote UuId: '.$lead->uuid);
+            } else {
+                Log::error('SIC Notification to Advisor Not Sent: '.$responseCode.' Advisor EmailAddress: '.$user->email.' Quote UuId: '.$lead->uuid);
+            }
 
             $lead->sic_flow_enabled = 0;
             $lead->save();
@@ -71,13 +90,11 @@ class HandleCarAdvisorUpdated
             } else {
                 info('SIC workflow key not found');
             }
-
         }
 
-        SendOCBIntroEmailJob::dispatch($lead->uuid, $previousAdvisor);
+        SendCarOCBIntroEmailJob::dispatch($lead->uuid, $previousAdvisor);
 
         info('SMS sending code reached');
-
     }
     public function buildSMS($lead)
     {

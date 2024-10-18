@@ -24,9 +24,10 @@ class PetQuote extends Model implements AuditableContract
         'code' => FilterTypes::EXACT,
         'email' => FilterTypes::EXACT,
         'source' => FilterTypes::EXACT,
-        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'policy_expiry_date' => FilterTypes::DATE_BETWEEN,
         'mobile_no' => FilterTypes::EXACT,
     ];
+    public $allowedColumns = ['premium', 'policy_number', 'breed_of_pet1', 'pet_type_id', 'pet_age_id', 'is_neutered', 'is_microchipped', 'microchip_no', 'is_mixed_breed', 'has_injury', 'gender', 'ilivein_accommodation_type_id', 'iam_possesion_type_id'];
 
     public function quoteStatus()
     {
@@ -74,7 +75,7 @@ class PetQuote extends Model implements AuditableContract
 
     public function advisor()
     {
-        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name']);
+        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no', 'profile_photo_path', 'calendar_link']);
     }
 
     /**
@@ -119,4 +120,15 @@ class PetQuote extends Model implements AuditableContract
     {
         return $this->morphMany(Payment::class, 'paymentable');
     }
+
+    public function allowedColumns()
+    {
+        return $this->allowedColumns;
+    }
+
+    public function sageApiLogs()
+    {
+        return $this->morphMany(SageApiLog::class, 'section');
+    }
+
 }

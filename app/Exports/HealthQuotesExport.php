@@ -2,10 +2,14 @@
 
 namespace App\Exports;
 
+use App\Enums\CustomerTypeEnum;
+use App\Enums\QuoteTypeId;
+use App\Enums\TeamNameEnum;
 use App\Services\CRUDService;
 use App\Services\HealthQuoteService;
 use App\Traits\ExcelExportable;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class HealthQuotesExport
 {
@@ -20,7 +24,57 @@ class HealthQuotesExport
 
     public function collection()
     {
-        return app(HealthQuoteService::class)->getGridData()->get();
+        return app(HealthQuoteService::class)->getGridData()->select(
+            'hqr.code',
+            'hqr.first_name',
+            'hqr.last_name',
+            'qs.text as quote_status_id_text',
+            'u.name as advisor_id_text',
+            'u.email as advisor_email',
+            'wcu.name as wcu_id_text',
+            'hqr.created_at',
+            'hqr.updated_at',
+            'hqr.health_team_type',
+            'hqrd.transapp_code',
+            'ls.text as lost_reason',
+            'hqr.price_starting_from',
+            'hqr.premium',
+            'hqr.policy_number',
+            'hqr.source',
+            'lt.TEXT AS lead_type_id_text',
+            'sb.text as salary_band_id_text',
+            'mc.text as member_category_id_text',
+            'ins_provider.TEXT as currently_insured_with_id_text',
+            'hqr.is_ecommerce',
+            'hqr.device',
+            'hqr.gender',
+            'n.TEXT AS nationality_id_text',
+            'hqr.dob',
+            'e.TEXT AS emirate_of_your_visa_id_text',
+            DB::raw('IF(EXISTS (
+                SELECT *
+                FROM quote_request_entity_mapping
+                WHERE quote_type_id = '.QuoteTypeId::Health.' AND quote_request_id = hqr.id),
+                "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+            as customer_type'),
+            'hp.text as health_plan_name_text',
+            'ihp.text as plan_provider_name_text',
+            'hqr.renewal_batch',
+            'hqr.previous_policy_expiry_date',
+            'hqr.transaction_approved_at',
+            'hqr.policy_booking_date',
+            'payment_status.text as payment_status_text',
+            DB::raw('(SELECT GROUP_CONCAT(DISTINCT t1.name SEPARATOR ", ")
+              FROM teams t1
+              WHERE t1.parent_team_id = '.TeamNameEnum::getTeamID(TeamNameEnum::CAR).'
+              AND t1.name IN (
+                  SELECT t2.name
+                  FROM teams t2
+                  JOIN user_team ut2 ON t2.id = ut2.team_id
+                  WHERE ut2.user_id = u.id)
+             ) AS CarTeams')
+
+        )->get();
     }
 
     public function headings(): array
@@ -31,6 +85,7 @@ class HealthQuotesExport
             'LAST NAME',
             'LEAD STATUS',
             'ADVISOR',
+            'ADVISOR EMAIL',
             'WC ADVISOR',
             'CREATED DATE',
             'LAST MODIFIED DATE',
@@ -54,6 +109,12 @@ class HealthQuotesExport
             'FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?',
             'TYPE OF PLAN',
             'Provider Name',
+            'RENEWAL BATCH',
+            'PREVIOUS POLICY EXPIRY DATE',
+            'TRANSACTION APPROVED DATE',
+            'BOOKING DATE',
+            'PAYMENT STATUS',
+            'ADVISOR CAR TEAM(s)',
         ];
     }
 
@@ -65,6 +126,7 @@ class HealthQuotesExport
             $quote->last_name,
             $quote->quote_status_id_text,
             $quote->advisor_id_text,
+            $quote->advisor_email,
             $quote->wcu_id_text,
             date(config('constants.datetime_format'), strtotime($quote->created_at)),
             date(config('constants.datetime_format'), strtotime($quote->updated_at)),
@@ -88,6 +150,12 @@ class HealthQuotesExport
             $quote->customer_type,
             $quote->health_plan_name_text,
             $quote->plan_provider_name_text,
+            $quote->renewal_batch,
+            $quote->previous_policy_expiry_date ? date('d-M-Y', strtotime($quote->previous_policy_expiry_date)) : '',
+            $quote->transaction_approved_at ? date(config('constants.datetime_format'), strtotime($quote->transaction_approved_at)) : '',
+            $quote->policy_booking_date ? date(config('constants.datetime_format'), strtotime($quote->policy_booking_date)) : '',
+            $quote->payment_status_text ?? 'N/A',
+            $quote->CarTeams ?? 'N/A',
         ];
     }
 }

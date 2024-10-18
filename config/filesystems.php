@@ -11,7 +11,7 @@ return [
     | by the framework. The "local" disk, as well as a variety of cloud
     | based disks are available to your application. Just store away!
     |
-    */
+     */
 
     'default' => env('FILESYSTEM_DRIVER', 'local'),
 
@@ -26,7 +26,7 @@ return [
     |
     | Supported Drivers: "local", "ftp", "sftp", "s3"
     |
-    */
+     */
 
     'disks' => [
 
@@ -46,48 +46,43 @@ return [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
             'secret' => env('AWS_SECRET_ACCESS_KEY'),
-            'region' => env('AWS_DEFAULT_REGION'),
+            'region' => env('AWS_REGION'),
+            'bucket' => env('AWS_INSLY_DOCUMENT_BUCKET_NAME'),
+            'url' => env('AWS_URL'),
+            'endpoint' => env('AWS_ENDPOINT'),
+            // 'visibility' => 'public',
+            'bucket_endpoint' => true, //add this
+        ],
+        'insly_documents' => [
+            'driver' => 's3',
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_REGION'),
             'bucket' => env('AWS_BUCKET'),
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             // 'visibility' => 'public',
-            'bucket_endpoint' => true,  //add this
+            'bucket_endpoint' => true, //add this
         ],
-        'azure' => [
-            'driver' => 'azure',
-            'name' => env('AZURE_STORAGE_NAME'),
-            'key' => env('AZURE_STORAGE_KEY'),
-            'container' => env('AZURE_STORAGE_CONTAINER'),
-            'url' => env('AZURE_STORAGE_URL'),
-            'prefix' => null,
-        ],
-
         // RYU Container for Azure
         'azureForRyu' => [
-            'driver' => 'azure',
-            'name' => env('AZURE_RYU_STORAGE_NAME'),
-            'key' => env('AZURE_RYU_STORAGE_KEY'),
+            'driver' => 'azure-storage-blob',
+            'connection_string' => 'DefaultEndpointsProtocol=https;AccountName='.env('AZURE_RYU_STORAGE_NAME').';AccountKey='.env('AZURE_RYU_STORAGE_KEY').';EndpointSuffix=core.windows.net',
             'container' => env('AZURE_RYU_STORAGE_CONTAINER'),
             'url' => env('AZURE_RYU_STORAGE_URL'),
             'prefix' => null,
         ],
-
         'azureIM' => [
-            'driver' => 'azure',
-            'name' => env('AZURE_IM_STORAGE_NAME'),
-            'key' => env('AZURE_IM_STORAGE_KEY'),
+            'driver' => 'azure-storage-blob',
+            'connection_string' => 'DefaultEndpointsProtocol=https;AccountName='.env('AZURE_IM_STORAGE_NAME').';AccountKey='.env('AZURE_IM_STORAGE_KEY').';EndpointSuffix=core.windows.net',
             'container' => env('AZURE_IM_STORAGE_CONTAINER'),
             'url' => env('AZURE_IM_STORAGE_URL'),
             'prefix' => null,
         ],
-        // 'azureForRenewals' => [
-        //     'driver'    => 'azure',
-        //     'name'      => env('AZURE_STORAGE_NAME'),
-        //     'key'       => env('AZURE_STORAGE_KEY'),
-        //     'container' => env('AZURE_RENEWALS_STORAGE_CONTAINER'),
-        //     'url'       => env('AZURE_STORAGE_URL'),
-        //     'prefix'    => null,
-        // ],
+        'pdmigrations' => [
+            'driver' => 'local',
+            'root' => storage_path('PDMigrations'),
+        ],
     ],
 
     /*
@@ -99,7 +94,7 @@ return [
     | `storage:link` Artisan command is executed. The array keys should be
     | the locations of the links and the values should be their targets.
     |
-    */
+     */
 
     'links' => [
         public_path('storage') => storage_path('app/public'),

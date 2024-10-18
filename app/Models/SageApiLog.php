@@ -20,10 +20,12 @@ class SageApiLog extends Model
         'section_type',
         'step',
         'total_steps',
+        'sage_request_type',
         'sage_end_point',
         'sage_payload',
         'response',
         'status',
+        'entry_type',
         'created_at',
         'updated_at',
     ];
@@ -31,5 +33,10 @@ class SageApiLog extends Model
     public function section()
     {
         return $this->morphTo();
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class)->select(['id', 'email', 'name', 'mobile_no']);
     }
 }

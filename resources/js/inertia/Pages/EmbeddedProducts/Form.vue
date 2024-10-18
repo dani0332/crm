@@ -6,6 +6,8 @@ const props = defineProps({
 });
 
 const page = usePage();
+const isLOBEmpty = ref([]);
+const isInsuranceProviderIdEmpty = ref(false);
 
 const isEdit = computed(() => {
   return route().current() === 'embedded-products.edit';
@@ -18,6 +20,10 @@ const form = useForm({
   insurance_provider_id: props.embeddedProduct?.insurance_provider_id || '',
   product_name: props.embeddedProduct?.product_name || '',
   short_code: props.embeddedProduct?.short_code || '',
+  min_age: props.embeddedProduct?.min_age || '',
+  max_age: props.embeddedProduct?.max_age || '',
+  min_value: props.embeddedProduct?.min_value || '',
+  max_value: props.embeddedProduct?.max_value || '',
   display_name: props.embeddedProduct?.display_name || '',
   description: props.embeddedProduct?.description || '',
 
@@ -130,7 +136,16 @@ const updatePricingType = () => {
   ];
 };
 function onSubmit(isValid) {
-  if (isValid) {
+  form.placements.forEach((placement, index) => {
+    isLOBEmpty.value[index] = !placement.quote_type_id;
+  });
+
+  isInsuranceProviderIdEmpty.value = !form.insurance_provider_id;
+  if (form.product_type == 'insurance' && !form.insurance_provider_id) {
+    isValid = false;
+  }
+
+  if (isValid && form.placements.every(placement => placement.quote_type_id)) {
     const method = isEdit.value ? 'put' : 'post';
 
     const url = isEdit.value
@@ -226,12 +241,12 @@ function onSubmit(isValid) {
           label="Insurance Provider"
           required
         >
-          <x-select
+          <ComboBox
             v-model="form.insurance_provider_id"
-            :options="insuranceProviderOptions"
-            :rules="[isRequired]"
-            class="w-full"
             placeholder="Select Insurance Provider"
+            :options="insuranceProviderOptions"
+            :single="true"
+            :hasError="isInsuranceProviderIdEmpty"
           />
         </x-field>
 
@@ -268,14 +283,53 @@ function onSubmit(isValid) {
             :error="form.errors.short_code"
           />
         </x-field>
+
+        <x-field label="Age">
+          <x-input
+            v-model="form.min_age"
+            type="number"
+            min="0"
+            class="w-1/2 pr-2"
+            placeholder="Minimum Age"
+            :error="form.errors.min_age"
+          />
+          <x-input
+            v-model="form.max_age"
+            type="number"
+            min="0"
+            class="w-1/2"
+            placeholder="Maximum Age"
+            :error="form.errors.max_age"
+          />
+        </x-field>
+
+        <x-field label="Value">
+          <x-input
+            v-model="form.min_value"
+            type="number"
+            min="0"
+            class="w-1/2 pr-2"
+            placeholder="Minimum Value"
+            :error="form.errors.min_value"
+          />
+          <x-input
+            v-model="form.max_value"
+            type="number"
+            min="0"
+            class="w-1/2"
+            placeholder="Maximum Value"
+            :error="form.errors.max_value"
+          />
+        </x-field>
       </div>
 
       <x-divider class="my-4" />
 
       <div class="grid gap-4 sm:grid-cols-3">
         <div class="sm:col-span-2">
-          <x-field label="Product Description">
+          <x-field label="Tooltip /Help text">
             <x-markdown-editor
+              :toolBarProp="['bold', 'italic', 'link', 'table', 'preview']"
               id="product_description"
               v-model="form.description"
               height="max-h-72"
@@ -372,12 +426,12 @@ function onSubmit(isValid) {
       <template v-for="(f, index) in form.placements" :key="index">
         <div class="grid sm:grid-cols-2 gap-4">
           <x-field label="LOB" required>
-            <x-select
+            <ComboBox
               v-model="form.placements[index].quote_type_id"
-              :rules="[isRequired]"
               placeholder="Select LOB"
               :options="quoteTypesOptions"
-              class="w-full"
+              :single="true"
+              :hasError="isLOBEmpty[index]"
             />
           </x-field>
 
@@ -447,6 +501,7 @@ function onSubmit(isValid) {
               <x-input
                 v-model="form.pricings[index].price"
                 type="number"
+                step="0.01"
                 :rules="[isRequired]"
                 class="w-full"
               />
@@ -455,7 +510,7 @@ function onSubmit(isValid) {
             <div class="flex gap-3 items-center">
               <x-field label="Price with 5% VAT" class="flex-1">
                 <x-input
-                  :value="(form.pricings[index].price * 1.05).toFixed(2)"
+                  :modelValue="(form.pricings[index].price * 1.05).toFixed(2)"
                   class="w-full"
                   readonly
                 />

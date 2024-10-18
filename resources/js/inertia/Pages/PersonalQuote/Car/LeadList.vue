@@ -13,11 +13,13 @@ defineProps({
   yesterdayManualCount: Number,
   genericRequestEnum: Array,
   isBetaUser: Boolean,
+  teams: Object,
+  authorizedDays: Number,
 });
 
 const page = usePage();
 const { isRequired } = useRules();
-const notification = useToast();
+const notification = useNotifications('toast');
 const params = useUrlSearchParams('history');
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
@@ -34,6 +36,8 @@ const tableHeader = [
   { text: 'BATCH', value: 'quote_batch_id_text' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
+  { text: 'PAYMENT AUTHORISED DATE', value: 'authorized_at' },
+  { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
   { text: 'DATE OF BIRTH', value: 'dob' },
   { text: 'LEAD SOURCE', value: 'source' },
   { text: 'NATIONALITY', value: 'nationality_id_text' },
@@ -49,6 +53,11 @@ const tableHeader = [
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with_text' },
   { text: 'CLAIM HISTORY', value: 'claim_history_id_text' },
   { text: 'CREATED DATE', value: 'created_at' },
+  {
+    text: 'POLICY EXPIRY DATE',
+    value: 'previous_policy_expiry_date',
+    sortable: true,
+  },
   { text: 'ADVISOR ASSIGNED DATE', value: 'advisor_assigned_date' },
   { text: 'LEAD COST', value: 'cost_per_lead' },
   { text: 'LEAD STATUS', value: 'quote_status_id_text' },
@@ -63,7 +72,6 @@ const tableHeader = [
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
-  { text: 'RENEWAL EXPIRY DATE', value: 'renewal_expiry_date' },
   { text: 'IS GCC STANDARD', value: 'is_gcc_standard' },
   { text: 'IS VEHICLE MODIFIED', value: 'is_modified' },
   { text: 'PRICE', value: 'premium' },
@@ -157,6 +165,13 @@ const batchOptions = computed(() => {
   }));
 });
 
+const teamOptions = computed(() => {
+  return page.props.teams.map(team => ({
+    value: team.id,
+    label: team.name,
+  }));
+});
+
 function formatString(input) {
   const lowercaseString = input.toLowerCase();
   const words = lowercaseString.replace(/_/g, ' ').split(' ');
@@ -167,20 +182,27 @@ function formatString(input) {
   return formattedString;
 }
 const paymentStatusOptions = computed(() => {
-  if ( hasRole(rolesEnum.BetaUser) ) { //FOR NEW PAYMENTS SECTION
-    return page.props.dropdownSource.payment_status_id.
-      filter(status => status.text !== "STARTED" && status.text !== "FAILED" 
-      && status.text !== "DRAFT" && status.text !== "CAPTURED" && status.text !== "PARTIAL CAPTURED").
-      sort((a, b) => a.text.localeCompare(b.text)).
-        map(status => ({
+  if (hasRole(rolesEnum.BetaUser)) {
+    //FOR NEW PAYMENTS SECTION
+    return page.props.dropdownSource.payment_status_id
+      .filter(
+        status =>
+          status.text !== 'STARTED' &&
+          status.text !== 'FAILED' &&
+          status.text !== 'DRAFT' &&
+          status.text !== 'CAPTURED' &&
+          status.text !== 'PARTIAL CAPTURED',
+      )
+      .sort((a, b) => a.text.localeCompare(b.text))
+      .map(status => ({
         value: status.id,
         label: formatString(status.text),
       }));
-  } else {  
+  } else {
     return page.props.dropdownSource.payment_status_id.map(status => ({
       value: status.id,
       label: status.text,
-    }));  
+    }));
   }
 });
 
@@ -191,9 +213,8 @@ const filters = reactive({
   email: '',
   mobile_no: '',
   quote_status_id: [],
-  created_at_start: page.props.createdAtStart || '',
+  created_at_start: '',
   currently_insured_with: '',
-  renewal_expiry_date: '',
   is_ecommerce: '',
   payment_status_id: '',
   renewal_batch: '',
@@ -205,17 +226,33 @@ const filters = reactive({
   quote_batch_id: [],
   advisor_id: [],
   advisor_assigned_date_end: '',
-  renewal_expiry_date_end: '',
-  created_at_end: page.props.createdAtEnd || '',
+  created_at_end: '',
   page: 1,
   paid_at_start: '',
   paid_at_end: '',
   segment_filter: 'all',
+  teams: [],
+  transaction_approved_dates: page.props.transaction_approved_dates || '',
+  payment_due_date: '',
+  booking_date: '',
+  policy_expiry_date: '',
+  policy_expiry_date_end: '',
 });
+
+const teamUsers =
+  hasRole(rolesEnum.LeadPool) || hasRole(rolesEnum.Admin)
+    ? ref([
+        {
+          id: -1,
+          name: 'UnAssigned',
+        },
+      ])
+    : ref([]);
 
 const loader = reactive({
   table: false,
   export: false,
+  advisorTeamOptions: false,
 });
 
 const quotesSelected = ref([]);
@@ -225,7 +262,11 @@ const canExportLeadsAndPlan = ref(false);
 watch(
   () => filters,
   () => {
-    if (filters.created_at_start && filters.created_at_end) {
+    if (
+      (filters.created_at_start && filters.created_at_end) ||
+      filters.payment_due_date ||
+      filters.booking_date
+    ) {
       canExport.value = true;
     } else {
       canExport.value = false;
@@ -237,7 +278,6 @@ watch(
     }
   },
   { deep: true, immediate: true },
-
 );
 
 const rules = {
@@ -246,6 +286,14 @@ const rules = {
 
 function onSubmit(isValid) {
   if (isValid) {
+    if (validateDateRange()) {
+      notification.error({
+        title:
+          'The selected date range exceeds one month. Please select a range within one month.',
+        position: 'top',
+      });
+      return;
+    }
     filters.page = 1;
     let data = { ...filters };
     Object.keys(data).forEach(
@@ -311,10 +359,33 @@ function setQueryStringFilters() {
     if (key.includes('[]')) {
       filters[key.substring(0, key.length - 2)] = params[key];
     } else {
-      filters[key] = params[key];
+      filters[key] = isNaN(parseInt(params[key]))
+        ? params[key]
+        : parseInt(params[key]);
     }
   }
 }
+
+const fetchTeamUsers = () => {
+  loader.advisorTeamOptions = true;
+  axios
+    .post('/get-users-by-team', { team_filter: filters.teams })
+    .then(response => {
+      if (
+        response.data.length > 0 &&
+        (hasRole(rolesEnum.LeadPool) || hasRole(rolesEnum.Admin))
+      ) {
+        response.data.push({
+          id: -1,
+          name: 'UnAssigned',
+        });
+      }
+      teamUsers.value = response.data;
+    })
+    .finally(() => {
+      loader.advisorTeamOptions = false;
+    });
+};
 
 const onConfirmCreateLead = () => {
   if (createLead.type === 'referral') {
@@ -323,9 +394,107 @@ const onConfirmCreateLead = () => {
   createLead.modal = false;
 };
 
+function daysAgoFromAuthorizedDate(authorizedDate) {
+  if (!authorizedDate) {
+    return;
+  }
+
+  const [day, month, year] = authorizedDate.split('-').map(Number);
+  const parsedDate = new Date(year, month - 1, day);
+
+  if (isNaN(parsedDate.getTime())) {
+    return 'Invalid date';
+  }
+  // Reset time to 00:00:00 to consider only the date
+  parsedDate.setHours(0, 0, 0, 0);
+  // Add `page.props.authorizedDays` to the parsed date
+  const authorizedDays = page.props.authorizedDays || 8; // Default to 8 if not defined
+  const newDate = new Date(parsedDate);
+  newDate.setDate(parsedDate.getDate() + authorizedDays);
+  // Reset time for newDate as well
+  newDate.setHours(0, 0, 0, 0);
+
+  const currentDate = new Date();
+  currentDate.setHours(0, 0, 0, 0); // Reset time for current date
+
+  // Calculate the difference in days
+  const differenceInTime = newDate.getTime() - currentDate.getTime();
+  const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
+
+  // Return appropriate message
+  if (differenceInDays <= 0) {
+    return 'Expired';
+  }
+
+  return differenceInDays === 1
+    ? `${differenceInDays} day`
+    : `${differenceInDays} days`;
+}
+
+const readOnlyMode = reactive({
+  isDisable: true,
+});
 onMounted(() => {
   setQueryStringFilters();
+  readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
+
+const resetDateFilters = filterName => {
+  const filterMappings = {
+    payment_due_date: ['created_at_start', 'created_at_end', 'booking_date'],
+    booking_date: ['payment_due_date', 'created_at_start', 'created_at_end'],
+    created_at: ['booking_date', 'payment_due_date'],
+  };
+
+  const filtersToReset =
+    filterMappings[filterName] ||
+    (filterName.startsWith('created_at') ? filterMappings.created_at : []);
+
+  filtersToReset.forEach(filter => {
+    filters[filter] = '';
+  });
+};
+
+[
+  'payment_due_date',
+  'booking_date',
+  'created_at_start',
+  'created_at_end',
+].forEach(filterName => {
+  watch(
+    () => filters[filterName],
+    newValue => {
+      if (newValue) {
+        resetDateFilters(filterName);
+      }
+    },
+  );
+});
+const validateDateRange = () => {
+  const { policy_expiry_date, policy_expiry_date_end } = filters;
+  if (policy_expiry_date && policy_expiry_date_end) {
+    const startDate = new Date(policy_expiry_date);
+    const endDate = new Date(policy_expiry_date_end);
+    const oneMonthLater = new Date(startDate);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    // Adjust for months with fewer than 31 days
+    if (oneMonthLater.getDate() < startDate.getDate()) {
+      oneMonthLater.setDate(0);
+    }
+    if (endDate > oneMonthLater) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const formatDate = dateString =>
+  useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY').value;
+
+const exportPUAUrl = () => {
+  let url = '/pua-leads-export';
+  return url;
+};
 </script>
 
 <template>
@@ -347,6 +516,7 @@ onMounted(() => {
         color="#ff5e00"
         tag="div"
         @click="createLead.modal = true"
+        v-if="readOnlyMode.isDisable === true"
       >
         Create Lead
       </x-button>
@@ -390,10 +560,13 @@ onMounted(() => {
           v-model="filters.created_at_start"
           label="Created Date Start"
           :rules="
+            filters.previous_quote_policy_number ||
             filters.code ||
             filters.email ||
             filters.renewal_batch ||
-            filters.quote_batch_id
+            filters.quote_batch_id ||
+            filters.payment_due_date ||
+            filters.booking_date
               ? []
               : [isRequired]
           "
@@ -402,10 +575,13 @@ onMounted(() => {
           v-model="filters.created_at_end"
           label="Created Date End"
           :rules="
+            filters.previous_quote_policy_number ||
             filters.code ||
             filters.email ||
             filters.renewal_batch ||
-            filters.quote_batch_id
+            filters.quote_batch_id ||
+            filters.payment_due_date ||
+            filters.booking_date
               ? []
               : [isRequired]
           "
@@ -492,16 +668,6 @@ onMounted(() => {
           class="w-full"
           placeholder="Search by Renewal Batch"
         />
-        <DatePicker
-          v-model="filters.renewal_expiry_date"
-          name="renewal_expiry_date"
-          label="Renewal Expiry Date Start"
-        />
-        <DatePicker
-          v-model="filters.renewal_expiry_date_end"
-          name="renewal_expiry_date_end"
-          label="Renewal Expiry Date End"
-        />
         <ComboBox
           :single="true"
           v-model="filters.currently_insured_with"
@@ -515,26 +681,60 @@ onMounted(() => {
           v-model="filters.previous_quote_policy_number"
           type="text"
           name="previous_quote_policy_number"
-          label="Previous Policy Number"
+          label="Policy Number"
           class="w-full"
-          placeholder="Search by Previous Policy Number"
+          placeholder="Policy Number"
+        />
+        <DatePicker
+          v-model="filters.policy_expiry_date"
+          name="policy_expiry_date"
+          label="Policy Expiry Start Date"
+        />
+        <DatePicker
+          v-model="filters.policy_expiry_date_end"
+          name="policy_expiry_date_end"
+          label="Policy Expiry End Date"
         />
         <ComboBox
           v-if="!hasRole(rolesEnum.CarAdvisor)"
           v-model="filters.advisor_id"
-          label="Advisor"
+          label="Advisors (select teams first)"
           name="advisor_id"
           placeholder="Please select Advisor"
-          :options="advisorOptions"
+          :options="
+            teamUsers.map(user => ({
+              value: user.id,
+              label: user.name,
+            }))
+          "
+          :loading="loader.advisorTeamOptions"
         />
-        <x-select
+        <ComboBox
           v-if="!hasRole(rolesEnum.CarAdvisor)"
           v-model="filters.assignment_type"
           label="Assignment Type"
-          name="assignment_type"
-          :options="assignmentTypeOptions"
           placeholder="Please select assignment type"
+          :options="assignmentTypeOptions"
+          :single="true"
           class="w-full"
+        />
+        <ComboBox
+          v-if="!hasRole(rolesEnum.CarAdvisor)"
+          v-model="filters.teams"
+          label="Teams"
+          placeholder="Search by Teams"
+          :options="teamOptions"
+          @update:modelValue="fetchTeamUsers"
+        />
+        <DatePicker
+          v-if="!hasRole(rolesEnum.CarAdvisor)"
+          v-model="filters.transaction_approved_dates"
+          label="Transaction Approved Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+          max-range="30"
         />
 
         <DatePicker
@@ -549,12 +749,29 @@ onMounted(() => {
           label="Paid Date End"
         />
 
-        <x-select
+        <ComboBox
           v-if="can(permissionsEnum.SEGMENT_FILTER)"
           v-model="filters.segment_filter"
           label="Segment"
           placeholder="Select Segment"
           :options="quoteSegments"
+          :single="true"
+        />
+        <DatePicker
+          v-model="filters.payment_due_date"
+          label="Payment Due Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.booking_date"
+          label="Booking Date"
+          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
@@ -568,25 +785,42 @@ onMounted(() => {
           >
             Export
           </x-button>
-          <x-tooltip v-if="!canExport && can(permissionsEnum.DATA_EXTRACTION)" position="right">
-            <x-button tag="div" size="sm" color="emerald" class="mr-3"> Export </x-button>
+          <x-tooltip
+            v-if="!canExport && can(permissionsEnum.DATA_EXTRACTION)"
+            placement="right"
+          >
+            <x-button tag="div" size="sm" color="emerald" class="mr-3">
+              Export
+            </x-button>
             <template #tooltip>
               <span class="font-medium">
-                Created dates are required to export data.
+                Created dates or payment due date or booking date are required
+                to export data.
               </span>
             </template>
           </x-tooltip>
           <x-button
-            v-if="canExportLeadsAndPlan && can(permissionsEnum.EXPORT_PLAN_DETAIL)"
+            v-if="
+              canExportLeadsAndPlan && can(permissionsEnum.EXPORT_PLAN_DETAIL)
+            "
             size="sm"
             color="emerald"
-            :href="`/car/leads-export-plan/${genericRequestEnum.EXPORT_PLAN_DETAIL}?${objToUrl(filters)}`"
+            :href="`/car/leads-export-plan/${
+              genericRequestEnum.EXPORT_PLAN_DETAIL
+            }?${objToUrl(filters)}`"
             class="justify-self-start mr-3"
           >
             Extract leads and plan detail
           </x-button>
-          <x-tooltip v-if="!canExportLeadsAndPlan && can(permissionsEnum.EXPORT_PLAN_DETAIL)" position="right">
-            <x-button class="mr-3" tag="div" size="sm" color="emerald"> Extract leads and plan detail</x-button>
+          <x-tooltip
+            v-if="
+              !canExportLeadsAndPlan && can(permissionsEnum.EXPORT_PLAN_DETAIL)
+            "
+            placement="right"
+          >
+            <x-button class="mr-3" tag="div" size="sm" color="emerald">
+              Extract leads and plan detail</x-button
+            >
             <template #tooltip>
               <span class="font-medium">
                 Paid dates are required to export data.
@@ -595,31 +829,55 @@ onMounted(() => {
           </x-tooltip>
 
           <x-button
-              v-if="canExport && can(permissionsEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE)"
-              size="sm"
-              color="emerald"
-              :href="`/car/leads-details-with-email/${genericRequestEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE}?${objToUrl(filters)}`"
-              class="justify-self-start mr-3"
+            v-if="
+              canExport &&
+              can(permissionsEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE)
+            "
+            size="sm"
+            color="emerald"
+            :href="`/car/leads-details-with-email/${
+              genericRequestEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE
+            }?${objToUrl(filters)}`"
+            class="justify-self-start mr-3"
           >
-              Extract leads detail with email/mobile_no
+            Extract leads detail with email/mobile_no
           </x-button>
-            <x-tooltip v-if="!canExport && can(permissionsEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE)" position="right">
-                <x-button class="mr-3" tag="div" size="sm" color="emerald">Extract leads detail with email/mobile_no</x-button>
-                <template #tooltip>
+          <x-tooltip
+            v-if="
+              !canExport &&
+              can(permissionsEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE)
+            "
+            placement="right"
+          >
+            <x-button class="mr-3" tag="div" size="sm" color="emerald"
+              >Extract leads detail with email/mobile_no</x-button
+            >
+            <template #tooltip>
               <span class="font-medium">
                 Created dates are required to export data.
               </span>
-                </template>
-            </x-tooltip>
-            <x-button
-                v-if="can(permissionsEnum.EXPORT_MAKES_MODELS)"
-                size="sm"
-                color="emerald"
-                :href="`/car/export-makes-model/${genericRequestEnum.EXPORT_MAKES_MODELS}?${objToUrl(filters)}`"
-                class="justify-self-start mr-3"
-            >
-                Extract makes models trims
-            </x-button>
+            </template>
+          </x-tooltip>
+          <x-button
+            v-if="can(permissionsEnum.EXPORT_MAKES_MODELS)"
+            size="sm"
+            color="emerald"
+            :href="`/car/export-makes-model/${
+              genericRequestEnum.EXPORT_MAKES_MODELS
+            }?${objToUrl(filters)}`"
+            class="justify-self-start mr-3"
+          >
+            Extract makes models trims
+          </x-button>
+          <x-button
+            v-if="can(permissionsEnum.EXPORT_CAR_PUA_UPDATES)"
+            size="sm"
+            color="emerald"
+            href="/pua-leads-export"
+            class="justify-self-start mr-3"
+          >
+            Export PUA Updates
+          </x-button>
         </div>
         <div class="flex justify-self-end gap-3">
           <x-button type="submit" size="sm" color="#ff5e00">Search</x-button>
@@ -650,7 +908,6 @@ onMounted(() => {
       border-cell
       hide-rows-per-page
       hide-footer
-      fixed-checkbox
     >
       <template #item-code="{ code, uuid }">
         <Link
@@ -660,6 +917,7 @@ onMounted(() => {
           {{ code }}
         </Link>
       </template>
+
       <template #item-is_ecommerce="{ is_ecommerce }">
         <div class="text-center">
           <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
@@ -681,6 +939,18 @@ onMounted(() => {
           </x-tag>
         </div>
       </template>
+      <template
+        #item-previous_policy_expiry_date="{
+          previous_policy_expiry_date,
+          source,
+        }"
+      >
+        {{
+          source === 'Renewal_upload'
+            ? formatDate(previous_policy_expiry_date)
+            : ''
+        }}
+      </template>
       <template #item-price_starting_from="item">
         <p v-if="item.price_starting_from != null">
           {{ fixedValue(item.price_starting_from) }}
@@ -689,6 +959,16 @@ onMounted(() => {
 
       <template #item-premium="item">
         <p v-if="item.premium != null">{{ fixedValue(item.premium) }}</p>
+      </template>
+      <template #item-authorized_at="item">
+        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
+          {{ item.authorized_at }}
+        </p>
+      </template>
+      <template #item-expiry_date="item">
+        <p v-if="item.payment_status_id_text === 'AUTHORISED'">
+          {{ daysAgoFromAuthorizedDate(item.authorized_at) }}
+        </p>
       </template>
     </DataTable>
 
@@ -702,45 +982,44 @@ onMounted(() => {
       }"
     />
 
-    <x-modal v-model="createLead.modal" size="lg" show-close backdrop>
-      <template #header>
-        <span class="text-primary-800 font-semibold"> Create Lead </span>
+    <x-modal
+      v-model="createLead.modal"
+      size="md"
+      title="Create Lead"
+      show-close
+      backdrop
+    >
+      <div class="w-full grid md:grid-cols-2 gap-5">
+        <p class="text-md font-bold text-gray-500">
+          Select reason to create manual lead <span class="error">*</span>
+        </p>
+      </div>
+      <div class="flex w-full flex-col gap-5 mt-4 mb-4">
+        <x-form-group v-model="createLead.type">
+          <x-radio value="referral" label="Referral" />
+          <x-radio value="early_renewal" label="Early Renewal" />
+          <x-radio value="payment_status" label="Payment Status" />
+        </x-form-group>
+      </div>
+      <template #actions>
+        <x-button
+          ghost
+          tabindex="-1"
+          size="md"
+          type="button"
+          @click.prevent="createLead.modal = false"
+        >
+          Cancel
+        </x-button>
+        <x-button
+          size="md"
+          color="emerald"
+          type="button"
+          @click.prevent="onConfirmCreateLead"
+        >
+          Confirm
+        </x-button>
       </template>
-      <x-form :auto-focus="false">
-        <div class="w-full grid md:grid-cols-2 gap-5">
-          <p class="text-md font-bold text-gray-500">
-            Select reason to create manual lead <span class="error">*</span>
-          </p>
-        </div>
-        <div class="flex w-full flex-col gap-5 mt-4 mb-4">
-          <x-radio
-            v-model="createLead.type"
-            value="referral"
-            label="Referral"
-          />
-          <x-radio
-            v-model="createLead.type"
-            value="early_renewal"
-            label="Early Renewal"
-          />
-          <x-radio
-            v-model="createLead.type"
-            value="payment_status"
-            label="Payment Status"
-          />
-        </div>
-        <x-divider class="my-4" />
-        <div class="flex justify-end gap-3 mb-4">
-          <x-button
-            size="md"
-            color="emerald"
-            type="button"
-            @click.prevent="onConfirmCreateLead"
-          >
-            Confirm
-          </x-button>
-        </div>
-      </x-form>
     </x-modal>
   </div>
 </template>

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\GenericModel;
+use App\Models\QuoteViewCount;
 use App\Models\User;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -25,7 +26,7 @@ class BaseService
     public function getGenericModel($type = null): GenericModel
     {
         $type = $type ?? 'GenericModel';
-        $this->genericModel = $this->fillModel(new GenericModel(), $type);
+        $this->genericModel = $this->fillModel(new GenericModel, $type);
 
         return $this->genericModel;
     }
@@ -76,37 +77,37 @@ class BaseService
 
     public function dropdownValues($key, $quoteTypeId)
     {
-        return (new DropdownSourceService())->getDropdownSource($key, $quoteTypeId);
+        return (new DropdownSourceService)->getDropdownSource($key, $quoteTypeId);
     }
 
     public function quoteDocumentEnabled($type)
     {
-        return (new QuoteDocumentService())->isEnabled($type);
+        return (new QuoteDocumentService)->isEnabled($type);
     }
 
     public function getQuoteDocuments($quoteId, $type)
     {
-        return (new QuoteDocumentService())->getQuoteDocuments($quoteId, $type);
+        return (new QuoteDocumentService)->getQuoteDocuments($quoteId, $type);
     }
 
     public function displaySendPolicyButton($record, $quoteDocuments, $quoteTypeId)
     {
-        return (new QuoteDocumentService())->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
+        return (new QuoteDocumentService)->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
     }
 
     public function getQuoteDocumentsForUpload($type)
     {
-        return (new QuoteDocumentService())->getQuoteDocumentsForUpload($type);
+        return (new QuoteDocumentService)->getQuoteDocumentsForUpload($type);
     }
 
     public function getEmailStatus($typeId, $quoteId)
     {
-        return (new EmailStatusService())->getEmailStatus($typeId, $quoteId);
+        return (new EmailStatusService)->getEmailStatus($typeId, $quoteId);
     }
 
     public function getAdditionalContacts($customerId, $mobileNo)
     {
-        return (new CustomerService())->getAdditionalContacts($customerId, $mobileNo);
+        return (new CustomerService)->getAdditionalContacts($customerId, $mobileNo);
     }
 
     public function audits($auditableId, $auditableType)
@@ -151,6 +152,7 @@ class BaseService
     {
         $crudService = app(CrudService::class);
         $fields = [];
+
         foreach ($fieldsToDisplay as $property => $field) {
             if (str_contains($field, 'static')) {
                 $options = $this->getStaticFields($field);
@@ -237,6 +239,9 @@ class BaseService
                 'assignee' => User::where('id', $activity->assignee_id)->first()->name,
                 'assignee_id' => $activity->assignee_id,
                 'status' => $activity->status,
+                'is_cold' => $activity->is_cold,
+                'quote_status_id' => $activity->quote_status_id,
+                'quote_status' => $activity?->quoteStatus,
             ];
             array_push($activities, $updatedActivity);
         }
@@ -301,5 +306,24 @@ class BaseService
             $quote->save();
         }
 
+    }
+
+    public function addOrUpdateQuoteViewCount($record, $quoteTypeId, $userId = null)
+    {
+        $userId = $userId ?: Auth::user()->id;
+
+        if ($record->advisor_id != null && $record->advisor_id == $userId) {
+            $quoteViewCount = QuoteViewCount::updateOrCreate(
+                ['quote_id' => $record->id, 'user_id' => $userId, 'quote_type_id' => $quoteTypeId],
+                [],
+            );
+
+            if ($quoteViewCount->wasRecentlyCreated) {
+                $quoteViewCount->visit_count = 1;
+                $quoteViewCount->save();
+            } else {
+                $quoteViewCount->increment('visit_count');
+            }
+        }
     }
 }

@@ -8,10 +8,13 @@ use App\Services\SageApiService;
 class SageApi extends Controller
 {
     protected $sageApiService;
+
     public function __construct(SageApiService $sageApi)
     {
         $this->sageApiService = $sageApi;
     }
+
+    public function index() {}
 
     private function processRequest($request, $leadStatus)
     {

@@ -7,7 +7,7 @@ const props = defineProps({
   memberRelations: Object,
   customerType: String,
   entity_id: Number,
-    cardHolderName:Object,
+  cardHolderName: Object,
 });
 
 const { isRequired } = useRules();
@@ -77,13 +77,23 @@ const memberForm = useForm({
   customer_id: props.quoteDetails.customer_id,
   entity_id: props.entity_id ?? null,
   id: null,
-  first_name: props.cardHolderName?props.cardHolderName.card_holder_name:'',
+  first_name: props.cardHolderName ? props.cardHolderName.card_holder_name : '',
   dob: null,
   relation_code: null,
   nationality_id: null,
   is_third_party_payer: true,
   from_aml_model: true,
 });
+
+const rules = {
+  nameCheck: v => {
+    const pattern = /^[a-zA-Z0-9\s]+$/;
+    if (v == null || v == '') return true;
+    return (
+      pattern.test(v) || 'Special characters are not allowed in Payer Name'
+    );
+  },
+};
 
 function onMemberSubmit(isValid) {
   if (!isValid) return;
@@ -214,7 +224,7 @@ function onMemberSubmit(isValid) {
           <x-field label="Payer Name" required>
             <x-input
               v-model="memberForm.first_name"
-              :rules="[isRequired]"
+              :rules="[isRequired, rules.nameCheck]"
               placeholder="Payer Name"
               type="text"
               class="w-full"

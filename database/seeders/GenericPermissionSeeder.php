@@ -7,6 +7,7 @@ use App\Enums\RolesEnum;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Log;
 
 class GenericPermissionSeeder extends Seeder
 {
@@ -17,14 +18,62 @@ class GenericPermissionSeeder extends Seeder
      */
     public function run()
     {
-        $healthManagerAccess = Permission::where('name', PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)->first();
-        if (! $healthManagerAccess) {
+        // ADD Permission to Access raw query data
+        $quoteRawData = Permission::where('name', PermissionsEnum::QUOTE_RAW_DATA)->first();
+        if (! $quoteRawData) {
             Permission::create([
-                'name' => PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS,
-                'guard_name' => 'web',
+                'name' => PermissionsEnum::QUOTE_RAW_DATA,
             ]);
         }
 
+        $role = Role::where('name', RolesEnum::Engineering)->first();
+
+        if (! $role->hasPermissionTo($quoteRawData)) {
+            $role->givePermissionTo($quoteRawData);
+        }
+
+        // ADD Permission to Read only Access LOBS
+        $readOnlyAccessPermission = Permission::where('name', PermissionsEnum::All_QUOTES_VIEWONLY_ACCESS)->first();
+        if (! $readOnlyAccessPermission) {
+            Permission::create([
+                'name' => PermissionsEnum::All_QUOTES_VIEWONLY_ACCESS,
+            ]);
+        }
+        //CUSTOMER RISK SCORE PERMISSION
+        $riskScorePermission = Permission::where('name', PermissionsEnum::CUSTOMER_RISKRRATING_OVERRIDE)->first();
+        if (! $riskScorePermission) {
+            Permission::create([
+                'name' => PermissionsEnum::CUSTOMER_RISKRRATING_OVERRIDE,
+                'guard_name' => 'web',
+            ]);
+        }
+        // Conversion as at report Permissions
+        $conversionReportPermissions = [
+            PermissionsEnum::CONVERSION_AS_AT_REPORT,
+            PermissionsEnum::MOTOR_AS_AT_REPORT_MANAGER,
+            PermissionsEnum::HEALTH_AS_AT_REPORT_MANAGER,
+            PermissionsEnum::TRAVEL_AS_AT_REPORT_MANAGER,
+            PermissionsEnum::LIFE_AS_AT_REPORT_MANAGER,
+            PermissionsEnum::HOME_AS_AT_REPORT_MANAGER,
+            PermissionsEnum::PET_AS_AT_REPORT_MANAGER,
+            PermissionsEnum::CYCLE_AS_AT_REPORT_MANAGER,
+            PermissionsEnum::YACHT_AS_AT_REPORT_MANAGER,
+            PermissionsEnum::BUSINESS_AS_AT_REPORT_MANAGER,
+            PermissionsEnum::GROUPMEDICALS_AS_AT_REPORT_MANAGER,
+            PermissionsEnum::ACCESS_REPORT_SM,
+        ];
+
+        foreach ($conversionReportPermissions as $conversionPermission) {
+            $permission = Permission::where('name', $conversionPermission)->first();
+            if (! $permission) {
+                Permission::create([
+                    'name' => $conversionPermission,
+                    'guard_name' => 'web',
+                ]);
+            }
+        }
+
+        // Add Permission to Admin
         $healthQuoteAccess = Permission::where('name', PermissionsEnum::HEALTH_QUOTES_ACCESS)->first();
         if (! $healthQuoteAccess) {
             Permission::create([
@@ -33,15 +82,49 @@ class GenericPermissionSeeder extends Seeder
             ]);
         }
 
+        // Book policy permissions & roles
+        $bookPolicyPermissions = [
+            ['name' => PermissionsEnum::BOOK_POLICY_EDIT, 'role' => RolesEnum::PRODUCTION],
+            ['name' => PermissionsEnum::BOOK_POLICY_EDIT, 'role' => RolesEnum::NRA],
+            ['name' => PermissionsEnum::BOOK_POLICY_EDIT, 'role' => RolesEnum::FINANCE],
+        ];
+
+        foreach ($bookPolicyPermissions as $permission) {
+            $permissionRecord = Permission::where('name', $permission['name'])->first();
+
+            if (! $permissionRecord) {
+                $permissionRecord = Permission::create([
+                    'name' => $permission['name'],
+                    'guard_name' => 'web',
+                ]);
+            }
+
+            if (! empty($permission['role'])) {
+                $role = Role::where('name', $permission['role'])->first();
+
+                if (! $role) {
+                    $role = Role::create([
+                        'name' => $permission['role'],
+                        'guard_name' => 'web',
+                    ]);
+                }
+
+                if (! $role->hasPermissionTo($permissionRecord->id)) {
+                    $role->givePermissionTo($permissionRecord->id);
+                }
+            }
+        }
         // Add Compliance Permission to Admin
         $role = Role::where('name', RolesEnum::Admin)->first();
 
-        if (! $role->hasPermissionTo(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS)) {
-            $role->givePermissionTo(PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS);
+        if (! $role->hasPermissionTo($conversionPermission)) {
+            $role->givePermissionTo($conversionPermission);
         }
 
-        if (! $role->hasPermissionTo(PermissionsEnum::HEALTH_QUOTES_ACCESS)) {
-            $role->givePermissionTo(PermissionsEnum::HEALTH_QUOTES_ACCESS);
+        // Audit document upload permission
+        $auditPermission = Permission::firstOrCreate(['name' => PermissionsEnum::AUDITDOCUMENT_UPLOAD, 'guard_name' => 'web']);
+        if (! $role->hasPermissionTo($auditPermission)) {
+            $role->givePermissionTo($auditPermission);
         }
 
         // Plans Selection & Plan Details Section Permissions
@@ -116,7 +199,107 @@ class GenericPermissionSeeder extends Seeder
             $role->givePermissionTo(PermissionsEnum::INSTANT_ALFRED_CHAT_LOGS);
         }
 
-        $this->generateSegmentFilterPermission();
+        $permissions = [
+            PermissionsEnum::SAVE_QUOTE_NOTES,
+            PermissionsEnum::UPDATE_QUOTE_NOTES,
+            PermissionsEnum::DELETE_QUOTE_NOTES,
+            PermissionsEnum::TRAVEL_HAPEX,
+        ];
+
+        foreach ($permissions as $permissionName) {
+            $permission = Permission::where('name', $permissionName)->first();
+
+            if (! $permission) {
+                Permission::create([
+                    'name' => $permissionName,
+                    'guard_name' => 'web',
+                ]);
+                $role = Role::where('name', RolesEnum::Admin)->first();
+
+                if (! $role->hasPermissionTo($permissionName)) {
+                    $role->givePermissionTo($permissionName);
+                }
+            }
+        }
+
+        $role = Role::firstOrCreate([
+            'name' => RolesEnum::TravelHapex,
+        ], [
+            'guard_name' => 'web',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        if ($role && ! $role->hasPermissionTo(PermissionsEnum::TRAVEL_HAPEX)) {
+            $role->givePermissionTo(PermissionsEnum::TRAVEL_HAPEX);
+        }
+
+        $rolesForManageQuote = [
+            RolesEnum::Admin,
+            RolesEnum::HealthManager,
+            RolesEnum::HealthAdvisor,
+            RolesEnum::HomeManager,
+            RolesEnum::HomeAdvisor,
+            RolesEnum::PetManager,
+            RolesEnum::PetAdvisor,
+            RolesEnum::CycleManager,
+            RolesEnum::CycleAdvisor,
+            RolesEnum::YachtManager,
+            RolesEnum::YachtAdvisor,
+            RolesEnum::CorplineManager,
+            RolesEnum::CorpLineAdvisor,
+        ];
+
+        foreach ($rolesForManageQuote as $roleName) {
+            $role = Role::findOrCreate($roleName, 'web');
+
+            foreach ($permissions as $permissionName) {
+                $role->givePermissionTo($permissionName);
+            }
+        }
+
+        $extractReport = Permission::where('name', PermissionsEnum::EXTRACT_REPORT)->first();
+        if (! $extractReport) {
+            Permission::create([
+                'name' => PermissionsEnum::EXTRACT_REPORT,
+                'guard_name' => 'web',
+            ]);
+        }
+
+        $this->syncBulkPolicyBookingOnSagePermissionList();
+        $this->syncMasterPermissionList();
+
+        // $this->generateSegmentFilterPermission();
+        // $this->embeddedProductSeeds();
+        // $this->advisorConversionReportSeeds();
+        // $this->quoteSyncSeeds();
+        // $this->advisorDistributionReportSeeds();
+        // $this->addMotorHeadNewRole();
+        // $this->createAndAssignManulHealthPlanPermission();
+        $this->syncMasterPermissionList();
+    }
+
+    /**
+     * add manual health plan permission function.
+     *
+     * @return void
+     */
+    private function createAndAssignManulHealthPlanPermission()
+    {
+        $healthPlanPermission = Permission::where('name', PermissionsEnum::ADD_MANUAL_HEALTH_PLAN)->first();
+        if (! $healthPlanPermission) {
+            Permission::create([
+                'name' => PermissionsEnum::ADD_MANUAL_HEALTH_PLAN,
+                'guard_name' => 'web',
+            ]);
+        }
+
+        // Add Permission to Admin
+        $role = Role::where('name', RolesEnum::Admin)->first();
+
+        if (! $role->hasPermissionTo(PermissionsEnum::ADD_MANUAL_HEALTH_PLAN)) {
+            $role->givePermissionTo(PermissionsEnum::ADD_MANUAL_HEALTH_PLAN);
+        }
     }
 
     private function generateSegmentFilterPermission()
@@ -134,6 +317,433 @@ class GenericPermissionSeeder extends Seeder
         foreach ($roles as $role) {
             if (! $role->hasPermissionTo(PermissionsEnum::SEGMENT_FILTER)) {
                 $role->givePermissionTo(PermissionsEnum::SEGMENT_FILTER);
+            }
+        }
+    }
+
+    private function quoteSyncSeeds()
+    {
+        $permissionList = [
+            PermissionsEnum::QUOTE_SYNC_LOGS => [],
+        ];
+
+        foreach ($permissionList as $permission => $roles) {
+            $dataset = Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+        }
+    }
+
+    private function embeddedProductSeeds()
+    {
+        // update name of existing permission
+        Permission::where(['name' => 'embedded-product-advisor'])->update(['name' => PermissionsEnum::EMBEDDED_PRODUCT_VIEW]);
+        Permission::where(['name' => 'embedded-product-admin'])->update(['name' => PermissionsEnum::EMBEDDED_PRODUCT_PAYMENT_CANCEL]);
+
+        $permissionList = [
+            PermissionsEnum::EMBEDDED_PRODUCT_VIEW => [
+                RolesEnum::CarAdvisor,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+                RolesEnum::BetaUser,
+                RolesEnum::EpAdmin,
+            ],
+            PermissionsEnum::EMBEDDED_PRODUCT_PAYMENT_CANCEL => [
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+                RolesEnum::BetaUser,
+                RolesEnum::EpAdmin,
+            ],
+            PermissionsEnum::EMBEDDED_PRODUCT_CONFIG => [
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+                RolesEnum::BetaUser,
+                RolesEnum::EpAdmin,
+            ],
+        ];
+
+        foreach ($permissionList as $permission => $roles) {
+            $dataset = Permission::where(['name' => $permission, 'guard_name' => 'web'])->first();
+            if (! $dataset) {
+                $dataset = Permission::create(['name' => $permission, 'guard_name' => 'web']);
+            }
+            foreach ($roles as $roleName) {
+                if (($role = Role::where('name', $roleName)->first()) && ! $role->hasPermissionTo($dataset->id)) {
+                    $role->givePermissionTo($dataset->id);
+                }
+            }
+        }
+    }
+
+    public function advisorConversionReportSeeds()
+    {
+        $permissionList = [
+            // car conversion report permission (already existing)
+            PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW => [
+                RolesEnum::CarAdvisor,
+                RolesEnum::CarManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::BIKE_CONVERSION_REPORT => [
+                RolesEnum::BikeAdvisor,
+                RolesEnum::BikeManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::HEALTH_CONVERSION_REPORT => [
+                RolesEnum::RMAdvisor,
+                RolesEnum::HealthManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::TRAVEL_CONVERSION_REPORT => [
+                RolesEnum::TravelAdvisor,
+                RolesEnum::TravelManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::LIFE_CONVERSION_REPORT => [
+                RolesEnum::LifeAdvisor,
+                RolesEnum::LifeManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::HOME_CONVERSION_REPORT => [
+                RolesEnum::HomeAdvisor,
+                RolesEnum::HomeManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::PET_CONVERSION_REPORT => [
+                RolesEnum::PetAdvisor,
+                RolesEnum::PetManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::CYCLE_CONVERSION_REPORT => [
+                RolesEnum::CycleAdvisor,
+                RolesEnum::CycleManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::YACHT_CONVERSION_REPORT => [
+                RolesEnum::YachtAdvisor,
+                RolesEnum::YachtManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::CORPLINE_CONVERSION_REPORT => [
+                RolesEnum::CorpLineAdvisor,
+                RolesEnum::CorplineManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::GROUPMEDICAL_CONVERSION_REPORT => [
+                RolesEnum::GMAdvisor,
+                RolesEnum::GMManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+        ];
+
+        foreach ($permissionList as $permission => $roles) {
+            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+
+            foreach ($roles as $roleName) {
+                if (($role = Role::where('name', $roleName)->first()) && ! $role->hasPermissionTo($permission)) {
+                    $role->givePermissionTo($permission);
+                }
+            }
+        }
+
+        $this->addComprehensiveConversionDashboardPermissions();
+    }
+
+    public function addComprehensiveConversionDashboardPermissions()
+    {
+        $permissionList = [
+            PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW => [
+                RolesEnum::CarManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::BIKE_COMPREHENSIVE_DASHBOARD => [
+                RolesEnum::BikeManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::HEALTH_COMPREHENSIVE_DASHBOARD => [
+                RolesEnum::HealthManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::TRAVEL_COMPREHENSIVE_DASHBOARD => [
+                RolesEnum::TravelManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::LIFE_COMPREHENSIVE_DASHBOARD => [
+                RolesEnum::LifeManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::HOME_COMPREHENSIVE_DASHBOARD => [
+                RolesEnum::HomeManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::PET_COMPREHENSIVE_DASHBOARD => [
+                RolesEnum::PetManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::CYCLE_COMPREHENSIVE_DASHBOARD => [
+                RolesEnum::CycleManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::YACHT_COMPREHENSIVE_DASHBOARD => [
+                RolesEnum::YachtManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::CORPLINE_COMPREHENSIVE_DASHBOARD => [
+                RolesEnum::CorplineManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::GROUPMEDICAL_COMPREHENSIVE_DASHBOARD => [
+                RolesEnum::GMManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+        ];
+
+        foreach ($permissionList as $permission => $roles) {
+            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+
+            foreach ($roles as $roleName) {
+                if (($role = Role::where('name', $roleName)->first()) && ! $role->hasPermissionTo($permission)) {
+                    $role->givePermissionTo($permission);
+                }
+            }
+        }
+    }
+
+    public function advisorDistributionReportSeeds()
+    {
+        $permissionList = [
+            // car distribution report permission (already existing)
+            PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW => [
+                RolesEnum::CarAdvisor,
+                RolesEnum::CarManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::BIKE_DISTRIBUTION_REPORT => [
+                RolesEnum::BikeAdvisor,
+                RolesEnum::BikeManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::HEALTH_DISTRIBUTION_REPORT => [
+                RolesEnum::RMAdvisor,
+                RolesEnum::HealthManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::TRAVEL_DISTRIBUTION_REPORT => [
+                RolesEnum::TravelAdvisor,
+                RolesEnum::TravelManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::LIFE_DISTRIBUTION_REPORT => [
+                RolesEnum::LifeAdvisor,
+                RolesEnum::LifeManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::HOME_DISTRIBUTION_REPORT => [
+                RolesEnum::HomeAdvisor,
+                RolesEnum::HomeManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::PET_DISTRIBUTION_REPORT => [
+                RolesEnum::PetAdvisor,
+                RolesEnum::PetManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::CYCLE_DISTRIBUTION_REPORT => [
+                RolesEnum::CycleAdvisor,
+                RolesEnum::CycleManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::YACHT_DISTRIBUTION_REPORT => [
+                RolesEnum::YachtAdvisor,
+                RolesEnum::YachtManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::CORPLINE_DISTRIBUTION_REPORT => [
+                RolesEnum::CorpLineAdvisor,
+                RolesEnum::CorplineManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+            PermissionsEnum::GROUPMEDICAL_DISTRIBUTION_REPORT => [
+                RolesEnum::GMAdvisor,
+                RolesEnum::GMManager,
+                RolesEnum::SeniorManagement,
+                RolesEnum::Admin,
+                RolesEnum::Engineering,
+            ],
+        ];
+
+        foreach ($permissionList as $permission => $roles) {
+            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+
+            foreach ($roles as $roleName) {
+                if (($role = Role::where('name', $roleName)->first()) && ! $role->hasPermissionTo($permission)) {
+                    $role->givePermissionTo($permission);
+                }
+            }
+        }
+    }
+
+    public function addMotorHeadNewRole()
+    {
+        $carManagerRole = Role::findByName('CAR_MANAGER');
+
+        if (! $carManagerRole) {
+            Log::warning('CAR_MANAGER role not found. Motor Head role creation skipped.');
+
+            return;
+        }
+
+        $motorHeadRole = Role::firstOrCreate([
+            'name' => 'MOTOR_HEAD',
+        ], [
+            'guard_name' => 'web',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        try {
+            $motorHeadRole->syncPermissions($carManagerRole->permissions);
+        } catch (\Exception $e) {
+            Log::error('Error assigning permissions to Motor Head role: '.$e->getMessage());
+        }
+    }
+
+    private function syncMasterPermissionList()
+    {
+        $permissionList = [
+            PermissionsEnum::VIEW_SAGE_API_LOGS => [
+                RolesEnum::Admin,
+            ],
+            PermissionsEnum::ADD_PROFORMA_PAYMENT_REQUEST_DROPDOWN_OPTION => [
+                RolesEnum::Admin,
+                RolesEnum::ServiceExecutive,
+                RolesEnum::SeniorManagement,
+                RolesEnum::GMManager,
+                RolesEnum::CorplineManager,
+            ],
+            PermissionsEnum::ENABLE_PROFORMA_PDF_DOWNLOAD_BUTTON => [],
+            PermissionsEnum::POLICY_DETAILS_ADD => [
+                RolesEnum::Admin,
+                RolesEnum::Production,
+                RolesEnum::NRA,
+                RolesEnum::OperationExecutive,
+                RolesEnum::SeniorManagement,
+            ],
+            PermissionsEnum::BOOK_POLICY_DETAILS_ADD => [
+                RolesEnum::Admin,
+                RolesEnum::Production,
+                RolesEnum::NRA,
+                RolesEnum::OperationExecutive,
+                RolesEnum::SeniorManagement,
+            ],
+            PermissionsEnum::SEND_POLICY_TO_CUSTOMER_BUTTON => [
+                RolesEnum::Admin,
+                RolesEnum::Production,
+                RolesEnum::NRA,
+                RolesEnum::OperationExecutive,
+                RolesEnum::SeniorManagement,
+            ],
+            PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON => [
+                RolesEnum::Admin,
+                RolesEnum::Production,
+                RolesEnum::NRA,
+                RolesEnum::OperationExecutive,
+                RolesEnum::SeniorManagement,
+            ],
+            PermissionsEnum::BOOK_POLICY_BUTTON => [
+                RolesEnum::Admin,
+                RolesEnum::Production,
+                RolesEnum::NRA,
+                RolesEnum::OperationExecutive,
+                RolesEnum::SeniorManagement,
+            ],
+        ];
+
+        $this->syncPermissionsWithRole($permissionList);
+    }
+
+    private function syncBulkPolicyBookingOnSagePermissionList()
+    {
+        $permissionList = PermissionsEnum::getBulkPolicyBookingOnSagePermissions();
+
+        foreach ($permissionList as $permission) {
+            $dataset = Permission::findOrCreate($permission, 'web');
+            if (($role = Role::findOrCreate(RolesEnum::Engineering, 'web')) && ! $role->hasPermissionTo($dataset->id)) {
+                $role->givePermissionTo($dataset->id);
+            }
+        }
+    }
+
+    private function syncPermissionsWithRole($permissionList)
+    {
+        foreach ($permissionList as $permission => $roles) {
+            $dataset = Permission::findOrCreate($permission, 'web');
+            foreach ($roles as $roleName) {
+                if (($role = Role::findOrCreate($roleName, 'web')) && ! $role->hasPermissionTo($dataset->id)) {
+                    $role->givePermissionTo($dataset->id);
+                }
             }
         }
     }

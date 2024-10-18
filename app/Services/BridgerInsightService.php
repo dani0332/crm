@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\AMLDecisionStatusEnum;
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CustomerTypeEnum;
 use App\Models\KycLog;
 use App\Models\QuoteType;
@@ -25,7 +26,7 @@ class BridgerInsightService
         $this->bridgerEndPoint = config('constants.BRIDGER_ENDPOINT'); //'https://staging.bridger.lexisnexis.eu/LN.WebServices';
         $this->bridgerClientID = config('constants.BRIDGER_CLIENTID'); //'AFIALLCAETEST';
         $this->bridgerUserName = config('constants.BRIDGER_USERNAME'); //'DaniyalS01';
-        $this->bridgerPassword = config('constants.BRIDGER_PASSWORD'); //'user@1234@';
+        $this->bridgerPassword = app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::BRIDGER_PASSWORD); //'user@1234@';
         $this->bridgerAPIKey = config('constants.BRIDGER_APIKEY'); //'043b2bb1-2af9-46fe-add5-e6cee1e39259';
     }
 
@@ -33,7 +34,7 @@ class BridgerInsightService
     {
         $tokenEndPoint = $this->bridgerEndPoint.'/api/Token/Issue';
         $bridgerAuthBasic = base64_encode($this->bridgerClientID.'/'.$this->bridgerUserName.':'.$this->bridgerPassword);
-        $bridgerClient = new \GuzzleHttp\Client();
+        $bridgerClient = new \GuzzleHttp\Client;
         $_return = ['status' => true];
 
         try {
@@ -70,12 +71,12 @@ class BridgerInsightService
             $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
             $amlQuoteUrl = config('constants.APP_URL').'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteDetails->id;
             $bridgerEndPoint = $this->bridgerEndPoint.'/api/Lists/Search';
-            $bridgerClient = new \GuzzleHttp\Client();
+            $bridgerClient = new \GuzzleHttp\Client;
             $getBasicConfiguration = $this->getBridgerXGBasicConfig();
 
             switch ($customerType) {
                 case CustomerTypeEnum::Individual:
-                    $customerOrEntityName = $memberUboDetails['first_name'].' '.$memberUboDetails['last_name'];
+                    $customerOrEntityName = $memberUboDetails['first_name'].(($memberUboDetails['last_name'] == 'NULL' || $memberUboDetails['last_name'] == null) ? '' : ' '.$memberUboDetails['last_name']);
                     $amlSearchData = $this->getPayload(CustomerTypeEnum::Individual, $memberUboDetails, $getBasicConfiguration);
                     break;
 
@@ -89,7 +90,7 @@ class BridgerInsightService
                     $customerOrEntityName = '';
             }
 
-            info('Bridger Insight Service - Quote Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Code: '.$memberUboDetails['code'].' - AML Search API Payload : '.json_encode($amlSearchData).'. Triggered By: '.$loginCustomerEmail);
+            info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - Customer Type: '.$customerType.' - Code: '.$memberUboDetails['code'].' Triggered By: '.$loginCustomerEmail);
 
             try {
                 $bridgerRequest = $bridgerClient->post(
@@ -127,7 +128,7 @@ class BridgerInsightService
                         $amlDataForEmail .= '<pre>';
                     }
 
-                    info('Bridger Insight Service - Error Email Send to Engineering Team');
+                    info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - Error Email Send to Engineering Team');
                     AMLService::sendAMLErrorEmailtoEngTeam($amlQuoteUrl, $apiResponseMessage, $amlDataForEmail, $getStatusCode);
                 } else {
                     if ($getDecodeContents) {
@@ -163,17 +164,17 @@ class BridgerInsightService
                                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::PASS;
                             }
                             KycLog::insert($kycLogDetails);
-                            info('Bridger Insight Service - AML Screening Potential Matches inserted into kyc_logs table. Total Matches: '.$amlResultCount);
+                            info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - AML Screening Potential Matches inserted into kyc_logs table. Total Matches: '.$amlResultCount);
 
                             if (isset($getDecodeContents->Records)) {
                                 AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType->text, $loginCustomerEmail);
-                                info('Bridger Insight Service - AML Screening Matched Email triggered to Compliance Team. Triggered By: '.$loginCustomerEmail);
+                                info('Bridger Insight Service - Ref-ID: '.$quoteDetails->code.' - AML Screening Matched Email triggered to Compliance Team. Triggered By: '.$loginCustomerEmail);
                             }
                         }
                     }
                 }
             } catch (Exception $exception) {
-                logger()->error('Bridger Insight Service - Failed - Error : '.$exception->getMessage());
+                logger()->error('Bridger Insight Service - Failed - Ref-ID: '.$quoteDetails->code.' - Error : '.$exception->getMessage());
             }
         }
     }
@@ -264,7 +265,7 @@ class BridgerInsightService
     public function updateDecisionOnLexisNexis($bridgerToken, $request, $decisions)
     {
         $bridgerEndPoint = $this->bridgerEndPoint.'/api/Results/SetRecordState';
-        $bridgerClient = new \GuzzleHttp\Client();
+        $bridgerClient = new \GuzzleHttp\Client;
 
         $amlUpdateData = [
             'ClientContext' => [
