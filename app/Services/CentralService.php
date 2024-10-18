@@ -33,6 +33,7 @@ use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
 use App\Models\QuoteBatches;
 use App\Models\QuoteStatusLog;
+use App\Models\SendUpdateStatusLog;
 use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
@@ -258,6 +259,14 @@ class CentralService
                 $paymentData['payment_status_id'] = PaymentStatusEnum::PARTIALLY_PAID;
             }
 
+            if ($payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::AUTHORISED) {
+                if ($payment->premium_authorized > 0 && $priceWithVat <= $payment->premium_authorized) {
+                    $paymentData['total_amount'] = $priceWithVat;
+                    // update total amount of first split payment
+                    $payment->paymentSplits()->first()->update(['payment_amount' => $priceWithVat]);
+                }
+            }
+
             $payment->update($paymentData);
 
             info('fn: updateQuotePayment payment updated for quote uuid: '.$quote->uuid);
@@ -355,34 +364,11 @@ class CentralService
         return $response;
     }
 
-    //check if aml cleared from log
-    public function amlClearedFromLog($quoteId, $quoteType)
-    {
-        $quoteType = strtolower($quoteType);
-        $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId($quoteType);
-        $isAmlClearedForPayment = false;
-        $quoteStatusLog = QuoteStatusLog::where('quote_request_id', $quoteId)
-            ->where('quote_type_id', $quoteTypeId)
-            ->where(function ($q) {
-                $q->where('current_quote_status_id', QuoteStatusEnum::AMLScreeningCleared);
-                $q->orWhere('previous_quote_status_id', QuoteStatusEnum::AMLScreeningCleared);
-            })->orderBy('id', 'desc')->first();
-        if ($quoteStatusLog) {
-            $amlScreenFailed = QuoteStatusLog::where('quote_request_id', $quoteId)
-                ->where('quote_type_id', $quoteTypeId)
-                ->where('current_quote_status_id', QuoteStatusEnum::AMLScreeningFailed)
-                ->where('id', '>', $quoteStatusLog->id)
-                ->first();
-            if (! $amlScreenFailed) {
-                $isAmlClearedForPayment = true;
-            }
-        }
-
-        return $isAmlClearedForPayment;
-    }
-
     public function getQuoteWiseProviderPlans($quoteType, $providerId, $plandId = null): object
     {
+        if ($quoteType == QuoteTypes::BIKE->value) {
+            $quoteType = 'Car';
+        }
         $planModel = 'App\\Models\\'.ucfirst($quoteType).'Plan';
 
         if ($plandId) {
@@ -456,7 +442,11 @@ class CentralService
         $quote = $this->getQuoteObject($modelType, $quote_uuid);
         if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
             $payment = Payment::where('code', $quote->code)->with('paymentSplits')->first();
-            $this->straightforwardPayments($payment, $payment->paymentSplits, $quote);
+            if ($payment && $payment->paymentSplits->isNotEmpty()) {
+                $this->straightforwardPayments($payment, $payment->paymentSplits, $quote);
+            } else {
+                info('Quote Code: '.$quote->code.' updatePaymentAllocation no payment found');
+            }
         }
     }
 
@@ -468,11 +458,10 @@ class CentralService
      */
     public function straightforwardPayments($payment, $paymentSplits, $quote)
     {
-        info('fn: straightforwardPayments for: '.$payment->code);
+        info('Quote Code: '.$quote->code.' fn: straightforwardPayments');
 
         if ($payment) {
             $paymentSplit = $paymentSplits->first();
-            info('Sage Receipt Id : '.$paymentSplit->sage_reciept_id);
             $this->updatePaymentAllocationStatus($payment, $quote, $paymentSplit);
             if (in_array($payment->frequency, [PaymentFrequency::UPFRONT, PaymentFrequency::SEMI_ANNUAL, PaymentFrequency::QUARTERLY, PaymentFrequency::MONTHLY, PaymentFrequency::CUSTOM])) {
                 $this->firstSplitAllocationStatus($payment, $paymentSplit, $quote);
@@ -504,31 +493,31 @@ class CentralService
     {
         $collectionAmount = $paymentSplit ? $paymentSplit->collection_amount : $payment->captured_amount;
         $priceWithVat = $quote->price_with_vat;
-        info('fn: calculateAllocationStatus code : '.$payment->code.'  sage_reciept_id: '.$paymentSplit->sage_reciept_id.' payment status id: '.$paymentSplit->payment_status_id.' payment_methods_code: '.$payment->payment_methods_code.' Split Payment method '.$paymentSplit->payment_method);
+        info('Quote Code: '.$quote->code.' fn: calculateAllocationStatus sage_reciept_id: '.$paymentSplit->sage_reciept_id.' payment status id: '.$paymentSplit->payment_status_id.' payment_methods_code: '.$payment->payment_methods_code.' Split Payment method '.$paymentSplit->payment_method);
 
         switch (true) {
             case $paymentSplit && $paymentSplit->sage_reciept_id == null:
-                info('Condition: Payment split sage_reciept_id is set to null');
+                info('Quote Code: '.$quote->code.' Condition: Payment split sage_reciept_id is set to null');
 
                 return PaymentAllocationStatus::NOT_ALLOCATED;
             case in_array($payment->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED, PaymentStatusEnum::NEW]):
-                info('Condition: Payment status is PENDING, CREDIT_APPROVED, or NEW');
+                info('Quote Code: '.$quote->code.' Condition: Payment status is PENDING, CREDIT_APPROVED, or NEW');
 
                 return null;
             case $paymentSplit && in_array($paymentSplit->payment_status_id, [PaymentStatusEnum::PENDING, PaymentStatusEnum::CREDIT_APPROVED]):
-                info('Condition: Payment split status is PENDING or CREDIT_APPROVED');
+                info('Quote Code: '.$quote->code.' Condition: Payment split status is PENDING or CREDIT_APPROVED');
 
                 return PaymentAllocationStatus::NOT_ALLOCATED;
             case $collectionAmount <= 0:
-                info('Condition: Collection amount is less than or equal to 0');
+                info('Quote Code: '.$quote->code.' Condition: Collection amount is less than or equal to 0');
 
                 return PaymentAllocationStatus::UNPAID;
             case $collectionAmount <= $priceWithVat:
-                info('Condition: Collection amount is less than or equal to price with VAT');
+                info('Quote Code: '.$quote->code.' Condition: Collection amount is less than or equal to price with VAT');
 
                 return PaymentAllocationStatus::FULLY_ALLOCATED;
             default:
-                info('Condition: Default case, partially allocated');
+                info('Quote Code: '.$quote->code.' Condition: Default case, partially allocated');
 
                 return PaymentAllocationStatus::PARTIALLY_ALLOCATED;
         }
@@ -734,6 +723,7 @@ class CentralService
                 'quote_uuid' => $quoteDetails->uuid,
                 'quote_status_id' => $quoteDetails->quote_status_id,
                 'activity_schedule_id' => $getActivitySchedule->id,
+                'source' => LeadSourceEnum::IMCRM,
             ]);
 
             return $activity;
@@ -809,7 +799,8 @@ class CentralService
                 $plansApiEndPoint,
                 [
                     'headers' => [
-                        'Content-Type' => 'application/json', 'Accept' => 'application/json',
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
                         'x-api-token' => $plansApiToken,
                         'Authorization' => 'Basic '.$authBasic,
                     ],
@@ -842,9 +833,16 @@ class CentralService
             return $quoteStatuses;
         }
 
-        $lockedQuotesStatuses = [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued,
-            QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked,
-            QuoteStatusEnum::CancellationPending, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued,
+        $lockedQuotesStatuses = [
+            QuoteStatusEnum::TransactionApproved,
+            QuoteStatusEnum::PolicyIssued,
+            QuoteStatusEnum::TransactionDeclined,
+            QuoteStatusEnum::PolicySentToCustomer,
+            QuoteStatusEnum::PolicyBooked,
+            QuoteStatusEnum::CancellationPending,
+            QuoteStatusEnum::PolicyCancelled,
+            QuoteStatusEnum::PolicyCancelledReissued,
+            QuoteStatusEnum::POLICY_BOOKING_QUEUED, QuoteStatusEnum::POLICY_BOOKING_FAILED,
         ];
 
         $isTransactionApproved = QuoteStatusLog::where('quote_type_id', $quoteTypeId)
@@ -862,5 +860,25 @@ class CentralService
         }
 
         return $quoteStatuses;
+    }
+
+    public function updateSendUpdateStatusLogs($sendUpdateLogId, $previousStatus, $currentStatus): void
+    {
+        SendUpdateStatusLog::create([
+            'send_update_log_id' => $sendUpdateLogId,
+            'previous_status' => $previousStatus,
+            'current_status' => $currentStatus,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ]);
+    }
+
+    public function checkStatusSUStatusLogs($sendUpdateId, $sendUpdateStatus): bool
+    {
+        $sendUpdateStatusCount = SendUpdateStatusLog::where('send_update_log_id', $sendUpdateId)
+            ->where('current_status', $sendUpdateStatus)
+            ->count();
+
+        return $sendUpdateStatusCount > 0;
     }
 }

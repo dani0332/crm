@@ -8,6 +8,7 @@ use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class RolePermissionSeeder extends Seeder
 {
@@ -17,6 +18,36 @@ class RolePermissionSeeder extends Seeder
     public function run(): void
     {
         try {
+            $exportRMLeadPermission = Permission::where('name', PermissionsEnum::EXPORT_RM_LEADS)->first();
+            if (! $exportRMLeadPermission) {
+                Permission::create([
+                    'name' => PermissionsEnum::EXPORT_RM_LEADS,
+                    'guard_name' => 'web',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            $exportPUAUpdatePermission = Permission::where('name', PermissionsEnum::EXPORT_CAR_PUA_UPDATES)->first();
+            if (! $exportPUAUpdatePermission) {
+                Permission::create([
+                    'name' => PermissionsEnum::EXPORT_CAR_PUA_UPDATES,
+                    'guard_name' => 'web',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            $bookingFailedEditPermission = Permission::where('name', PermissionsEnum::BOOKING_FAILED_EDIT)->first();
+            if (! $bookingFailedEditPermission) {
+                Permission::create([
+                    'name' => PermissionsEnum::BOOKING_FAILED_EDIT,
+                    'guard_name' => 'web',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
             $quoteRawData = Permission::where('name', PermissionsEnum::QUOTE_RAW_DATA)->first();
             if (! $quoteRawData) {
                 Permission::create([
@@ -77,10 +108,49 @@ class RolePermissionSeeder extends Seeder
                     'updated_at' => now(),
                 ]);
             }
-
         } catch (\Throwable $th) {
             info('RolePermission Seeder issue Error:'.$th->getMessage().' Line:'.$th->getLine());
             throw $th;
+        }
+        $this->addTravelSicAllocationPermission();
+    }
+
+    public function addTravelSicAllocationPermission()
+    {
+        try {
+            $travelSicAllocationPermission = Permission::firstOrCreate(
+                ['name' => PermissionsEnum::TRAVEL_SIC_ALLOCATION],
+                ['guard_name' => 'web']
+            );
+
+            if ($travelSicAllocationPermission->wasRecentlyCreated) {
+                Log::info('Permission created: '.PermissionsEnum::TRAVEL_SIC_ALLOCATION);
+            } else {
+                Log::info('Permission already exists: '.PermissionsEnum::TRAVEL_SIC_ALLOCATION);
+            }
+
+            $roles = [RolesEnum::TravelManager, RolesEnum::LeadPool];
+
+            foreach ($roles as $roleName) {
+                $role = Role::where('name', $roleName)->first();
+
+                if (! $role) {
+                    Log::warning("Role not found: {$roleName}");
+
+                    continue;
+                }
+
+                if (! $role->hasPermissionTo($travelSicAllocationPermission)) {
+                    $role->givePermissionTo($travelSicAllocationPermission);
+                    Log::info("Permission {$travelSicAllocationPermission->name} assigned to role {$roleName}");
+                } else {
+                    Log::info("Role {$roleName} already has permission {$travelSicAllocationPermission->name}");
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Error while assigning permission: '.$e->getMessage(), [
+                'exception' => $e,
+            ]);
         }
     }
 }

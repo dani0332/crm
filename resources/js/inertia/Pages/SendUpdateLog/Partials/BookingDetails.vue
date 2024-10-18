@@ -47,6 +47,10 @@ const props = defineProps({
     required: false,
   },
   paymentStatusEnum: Object,
+  modelClass: {
+    type: String,
+    default: '',
+  },
   isUpdateBooked: {
     type: Boolean,
     required: true,
@@ -55,12 +59,15 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  isEditDisabledForQueuedBooking: Boolean,
 });
 
 const state = reactive({
   isEdit: false,
   reversalSectionEdit: false,
 });
+
+const insCommTaxInvNumState = ref(false);
 
 const page = usePage();
 const notification = useToast();
@@ -69,6 +76,7 @@ const paymentStatusEnum = page.props.paymentStatusEnum;
 const vat = page.props.vatValue;
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const permissionsEnum = page.props.permissionsEnum;
+const productionProcessTooltipEnum = page.props.productionProcessTooltipEnum;
 
 const dateToYMD = date => {
   if (date) {
@@ -107,7 +115,7 @@ const hasTaxDocuments = computed(() => {
   );
 });
 
-const checkSectionTwoEdit = () => {
+const checkSectionToEdit = () => {
   if (props.isUpdateBooked) {
     notification.error({
       title: 'Update already booked',
@@ -177,7 +185,9 @@ const checkSectionTwoEdit = () => {
       return;
     }
   }
-
+  if (props.bookingDetails?.is_non_self_billing_enabled) {
+    insCommTaxInvNumState.value = true;
+  }
   state.isEdit = !state.isEdit;
 };
 
@@ -223,6 +233,10 @@ function isNotZero(value) {
   return value;
 }
 
+const isNonSelfBillingEnabled = computed(() => {
+  return props.bookingDetails?.is_non_self_billing_enabled ?? false;
+});
+
 const bookingDetailsForm = useForm({
   id: props.sendUpdateLog.id,
   send_update_type: props.sendUpdateLog.category.code,
@@ -243,10 +257,12 @@ const bookingDetailsForm = useForm({
     props?.payments[0]?.discount_value ||
     props.sendUpdateLog?.discount ||
     '0.00',
-  insurer_commission_invoice_number:
-    props.sendUpdateLog?.insurer_commission_invoice_number ||
-    props?.payments[0]?.insurer_commmission_invoice_number ||
-    '',
+  insurer_commission_invoice_number: props.bookingDetails
+    ?.is_non_self_billing_enabled
+    ? (props.bookingDetails?.broker_invoice_number ?? '')
+    : props.sendUpdateLog?.insurer_commission_invoice_number ||
+      props?.payments[0]?.insurer_commmission_invoice_number ||
+      '',
   commission_percentage:
     props.sendUpdateLog?.commission_percentage ||
     props?.payments[0]?.commmission_percentage ||
@@ -322,7 +338,10 @@ const calculatePriceDetailsForATIB = () => {
     return false;
   }
 
-  if (bookingDetailsForm.price_vat_applicable > 0) {
+  if (
+    bookingDetailsForm.price_vat_applicable > 0 ||
+    bookingDetailsForm.price_vat_not_applicable > 0
+  ) {
     // in this calculation, number 5 is not VAT amount, we need to * the price_vat and price_not_vat with 5% to get the total VAT amount.
     let total_price_with_vat_and_not_vat_applicable =
       Number(bookingDetailsForm.price_vat_applicable) +
@@ -489,7 +508,8 @@ const paymentInvoiceNumberOptions = computed(() => {
 const reversalEntry = reactive({
   booking_date: null,
   invoice_description: props.bookingDetails?.reversal_invoice_description || '',
-  broker_invoice_number: null,
+  broker_invoice_number:
+    props.sendUpdateLog?.reversal_broker_invoice_number ?? null,
   transaction_payment_status: null,
   invoice_date: null,
   insurer_tax_invoice_number: null,
@@ -575,9 +595,8 @@ function updateReversalEntries(payment, sendUpdate) {
   reversalEntry.insurer_tax_invoice_number = payment?.insurer_tax_number
     ? payment.insurer_tax_number + '-REV'
     : sendUpdate.insurer_tax_invoice_number + '-REV';
-  reversalEntry.broker_invoice_number = payment?.broker_invoice_number
-    ? payment.broker_invoice_number + '-REV'
-    : sendUpdate.broker_invoice_number + '-REV';
+  reversalEntry.broker_invoice_number =
+    props.sendUpdateLog?.reversal_broker_invoice_number ?? null;
   reversalEntry.insurer_commission_invoice_number =
     payment?.insurer_commmission_invoice_number
       ? payment.insurer_commmission_invoice_number + '-REV'
@@ -632,9 +651,14 @@ const onUpdateReversal = () => {
   bookingDetailsForm.insurer_tax_invoice_number =
     reversalEntry.insurer_tax_invoice_number.replace('REV', 'NEW');
   bookingDetailsForm.broker_invoice_number =
-    reversalEntry.broker_invoice_number.replace('REV', 'NEW') || '';
+    props.sendUpdateLog?.broker_invoice_number ?? '';
   bookingDetailsForm.insurer_commission_invoice_number =
-    reversalEntry.insurer_commission_invoice_number.replace('REV', 'NEW') || '';
+    (isNonSelfBillingEnabled.value
+      ? (props.sendUpdateLog?.broker_invoice_number ?? '')
+      : reversalEntry.insurer_commission_invoice_number.replace(
+          'REV',
+          'NEW',
+        )) || '';
   bookingDetailsForm.price_vat_applicable =
     Math.abs(reversalEntry.price_vat_applicable) || '0.00';
   bookingDetailsForm.commission_percentage =
@@ -674,11 +698,11 @@ const isStating = ref(false);
 
 const sendUpdatePermissionCheck = computed(() => {
   if (props.updateBtn === sendUpdateStatusEnum.SU) {
-    return !can(page.props.permissionsEnum.BOOK_UPDATE_BUTTON);
+    return !can(permissionsEnum.BOOK_UPDATE_BUTTON);
   } else if (props.updateBtn === sendUpdateStatusEnum.SUC) {
-    return !can(page.props.permissionsEnum.SEND_UPDATE_TO_CUSTOMER_BUTTON);
+    return !can(permissionsEnum.SEND_UPDATE_TO_CUSTOMER_BUTTON);
   } else if (props.updateBtn === sendUpdateStatusEnum.SNBU) {
-    return !can(page.props.permissionsEnum.SEND_AND_BOOK_UPDATE_BUTTON);
+    return !can(permissionsEnum.SEND_AND_BOOK_UPDATE_BUTTON);
   }
 
   return true;
@@ -691,7 +715,7 @@ const isLackingPayment = computed(() => {
 const sendUpdateValidationURL = computed(() => {
   return props.updateBtn === sendUpdateStatusEnum.SU ||
     props.sendUpdateLog.status === sendUpdateStatusEnum.UPDATE_SENT_TO_CUSTOMER
-    ? 'book-update'
+    ? 'book-update-validation'
     : 'send-update-customer-validation';
 });
 const paymentConfirmationMessage = reactive({ status: '', message: '' });
@@ -708,6 +732,7 @@ const actionButton = computed(() => {
   return '';
 });
 
+const isSendUpdateWithEmail = ref(false);
 const sendUpdateValidation = () => {
   loader.sendUpdateSectionBtn = true;
   axios
@@ -717,14 +742,33 @@ const sendUpdateValidation = () => {
       sendUpdateId: props.sendUpdateLog.id,
       quoteRefId: props.realQuote.id,
       action: actionButton.value,
+      inslyMigrated: props.realQuote.insly_migrated,
     })
     .then(response => {
       if (response.status == 200) {
-        if (props.updateBtn === sendUpdateStatusEnum.SU) {
+        if (
+          response.data.action === sendUpdateStatusEnum.ACTION_SNBU &&
+          sendUpdateValidationURL.value === 'send-update-customer-validation'
+        ) {
+          isSendUpdateWithEmail.value = true;
+        }
+        if (
+          props.updateBtn === sendUpdateStatusEnum.SU ||
+          response.data.action === sendUpdateStatusEnum.ACTION_SNBU
+        ) {
           if (response.data.insufficientPaymentCheck == true) {
             insuficientPaymentConfirmation(response);
           } else if (response.data.insufficientPaymentCheck == false) {
-            attestRecord();
+            if (
+              response.data.action === sendUpdateStatusEnum.ACTION_SNBU &&
+              sendUpdateValidationURL.value ===
+                'send-update-customer-validation'
+            ) {
+              modals.sendConfirm = true;
+              isStating.value = response.data?.message;
+            } else {
+              attestRecord();
+            }
           }
         } else {
           modals.sendConfirm = true;
@@ -858,8 +902,8 @@ const isLoading = ref(false);
 const isNotConfirmed = ref(false);
 
 // Need to update this code after Mirza's Implementation
-const submitToCustomer = () => {
-  if (!modals.isConfirmed) {
+const submitToCustomer = (withPartialPaymentCheck = true) => {
+  if (!modals.isConfirmed && withPartialPaymentCheck) {
     isNotConfirmed.value = true;
     return;
   }
@@ -881,10 +925,17 @@ const submitToCustomer = () => {
     .then(response => {
       if (response.status == 200) {
         Object.keys(response.data).forEach(function (key) {
-          notification.success({
-            title: response.data[key],
-            position: 'top',
-          });
+          if (response.data[key]['status'] == 200) {
+            notification.success({
+              title: response.data[key]['message'],
+              position: 'top',
+            });
+          } else {
+            notification.error({
+              title: response.data[key]['message'],
+              position: 'top',
+            });
+          }
         });
         router.reload({ preserveState: true });
         modals.sendConfirm = isLoading.value = false;
@@ -911,12 +962,16 @@ const onCancel = () => {
   bookingDetailsForm.invoice_date = props.bookingDetails?.invoice_date || null;
   bookingDetailsForm.insurer_tax_invoice_number =
     props.bookingDetails?.insurer_tax_invoice_number || '';
-  bookingDetailsForm.insurer_commission_invoice_number =
-    props.bookingDetails?.insurer_commission_invoice_number || '';
+
   bookingDetailsForm.price_vat_applicable =
     props.bookingDetails?.price_vat_applicable || '';
   bookingDetailsForm.commission_vat_applicable =
     props.bookingDetails?.commission_vat_applicable || '';
+
+  if (!props.bookingDetails?.is_non_self_billing_enabled) {
+    bookingDetailsForm.insurer_commission_invoice_number =
+      props.bookingDetails?.insurer_commission_invoice_number || '';
+  }
 };
 
 const [sendUpdateConfirmBtnTemp, SendUpdateReuseBtnTemp] =
@@ -967,9 +1022,7 @@ const onReversalEdit = () => {
 const checkDiscount = (newPrice, oldPrice) => {
   let paymentTotalPrice = Number(props?.payments[0]?.total_price);
   let paymentTotalAmount = Number(props?.payments[0]?.total_amount);
-  let savedPriceWithVat = isCPD.value
-    ? Number(reversalEntry.price_with_vat)
-    : Number(props.sendUpdateLog?.price_with_vat);
+  let savedPriceWithVat = Number(props.sendUpdateLog?.price_with_vat);
   let savedDiscount =
     Number(props?.payments[0]?.discount_value) ||
     Number(props.sendUpdateLog.discount) ||
@@ -1032,6 +1085,8 @@ const noDiscountType = computed(() => {
     sendUpdateStatusEnum.DTSI,
     sendUpdateStatusEnum.DOV,
     sendUpdateStatusEnum.ED,
+    sendUpdateStatusEnum.ATIB,
+    sendUpdateStatusEnum.ACB,
   ];
 
   return (
@@ -1260,8 +1315,11 @@ watch(
                     INSURER COMMISSION TAX INVOICE NUMBER
                   </label>
                   <template #tooltip>
-                    Input the invoice number issued by the insurer for
-                    commission purposes. Double-check for accuracy.
+                    {{
+                      isNonSelfBillingEnabled
+                        ? productionProcessTooltipEnum.NON_SELF_BILLING_INSURER_COM_TAX_INVOICE_NUMBER_TOOLTIP
+                        : productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                    }}
                   </template>
                 </x-tooltip>
               </div>
@@ -1502,13 +1560,24 @@ watch(
         </div>
         <x-divider class="my-4 mt-10" />
         <div class="flex justify-end gap-2">
-          <x-button
-            size="sm"
-            @click="onReversalEdit"
-            v-if="!state.reversalSectionEdit"
-          >
-            Edit
-          </x-button>
+          <template v-if="!state.reversalSectionEdit">
+            <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
+              <x-button
+                size="sm"
+                @click="onReversalEdit"
+                :disabled="props.isEditDisabledForQueuedBooking"
+              >
+                Edit
+              </x-button>
+              <template #tooltip>
+                <span class="custom-tooltip-content">
+                  No further action can be taken on Update Booking Queued or
+                  Failed status.
+                </span>
+              </template>
+            </x-tooltip>
+            <x-button v-else size="sm" @click="onReversalEdit"> Edit </x-button>
+          </template>
           <template v-else>
             <x-button
               size="sm"
@@ -1755,8 +1824,11 @@ watch(
                       INSURER COMMISSION TAX INVOICE NUMBER
                     </label>
                     <template #tooltip>
-                      Input the invoice number issued by the insurer for
-                      commission purposes. Double-check for accuracy.
+                      {{
+                        isNonSelfBillingEnabled
+                          ? productionProcessTooltipEnum.NON_SELF_BILLING_INSURER_COM_TAX_INVOICE_NUMBER_TOOLTIP
+                          : productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                      }}
                     </template>
                   </x-tooltip>
                 </div>
@@ -1767,7 +1839,7 @@ watch(
                       bookingDetailsForm.insurer_commission_invoice_number
                     "
                     class="!mb-0 w-full"
-                    :disabled="!state.isEdit"
+                    :disabled="!state.isEdit || insCommTaxInvNumState"
                     placeholder="Enter Commission Tax Invoice No"
                     :rules="[isRequired]"
                     size="xs"
@@ -2108,7 +2180,25 @@ watch(
               :permissionsEnum="page.props.permissionsEnum"
             />
             <template v-if="!state.isEdit">
-              <x-button size="sm" @click="checkSectionTwoEdit"> Edit </x-button>
+              <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
+                <x-button
+                  size="sm"
+                  @click="checkSectionToEdit"
+                  :disabled="props.isEditDisabledForQueuedBooking"
+                >
+                  Edit
+                </x-button>
+                <template #tooltip>
+                  <span class="custom-tooltip-content">
+                    No further action can be taken on Update Booking Queued or
+                    Failed status.
+                  </span>
+                </template>
+              </x-tooltip>
+              <x-button v-else size="sm" @click="checkSectionToEdit">
+                Edit
+              </x-button>
+
               <template v-if="isLackingPayment">
                 <x-tooltip>
                   <x-button
@@ -2238,8 +2328,12 @@ watch(
           <x-button
             size="sm"
             color="error"
-            :loading="loader.sendUpdate"
-            @click.prevent="sendUpdate(false)"
+            :loading="isSendUpdateWithEmail ? isLoading : loader.sendUpdate"
+            @click.prevent="
+              isSendUpdateWithEmail
+                ? submitToCustomer(false)
+                : sendUpdate(false)
+            "
           >
             Continue
           </x-button>

@@ -583,6 +583,27 @@ if (! function_exists('formatMobileNo')) {
     }
 }
 
+if (! function_exists('formatMobileNoWithoutPlus')) {
+    function formatMobileNoWithoutPlus($mobile)
+    {
+        // Remove spaces from the mobile number
+        $mobile = str_replace(' ', '', $mobile);
+
+        // If the number starts with +971, 971, 92, or 91, return it as is
+        if (preg_match('/^(?:\+?971|92|91)/', $mobile)) {
+            return ltrim($mobile, '+'); // Remove '+' if present, but keep the number unchanged
+        }
+
+        // If the number starts with +0 or 0, replace it with 971
+        if (preg_match('/^\+?0/', $mobile)) {
+            return preg_replace('/^\+?0/', '971', $mobile);
+        }
+
+        // If the number does not match any pattern, add 971 as default
+        return '971'.ltrim($mobile, '+');
+    }
+}
+
 if (! function_exists('removeCountryCode')) {
     function removeCountryCode($mobile)
     {
@@ -1299,5 +1320,31 @@ if (! function_exists('getWhatsappConsent')) {
         }
 
         return $whatsappConsent;
+    }
+}
+
+if (! function_exists('isNonSelfBillingEnabledForInsuranceProvider')) {
+    function isNonSelfBillingEnabledForInsuranceProvider($insuranceProvider): bool
+    {
+        return $insuranceProvider?->non_self_billing == 1;
+    }
+}
+
+if (! function_exists('getInsuranceProvider')) {
+    function getInsuranceProvider($payment, $quoteType)
+    {
+        $insuranceProvider = null;
+        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
+        if (in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
+            $planRelationName = strtolower($quoteType).'Plan';
+            $payment->load($planRelationName);
+            $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
+        }
+
+        if (! $insuranceProvider) {
+            $insuranceProvider = $payment?->insuranceProvider;
+        }
+
+        return $insuranceProvider;
     }
 }

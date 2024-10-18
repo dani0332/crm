@@ -4,6 +4,7 @@ namespace App\Strategies\EmbeddedProducts;
 
 use App\Enums\EmbeddedProductEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteDocumentsEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\EmbeddedTransaction;
 use App\Traits\GenericQueriesAllLobs;
@@ -70,8 +71,6 @@ class EmbeddedProduct
             $quoteObject = $item->quoteRequest;
             $status = $quoteObject->quoteStatus->text ?? '';
             $customer = $quoteObject->customer ?? null;
-            $carMake = $quoteObject->carMake->text ?? '';
-            $carModel = $quoteObject->carModel->text ?? '';
             $advisorName = $quoteObject->advisor->name ?? '';
             $nationality = $quoteObject->customer->nationality->text ?? '';
 
@@ -95,14 +94,13 @@ class EmbeddedProduct
             $item->id = $item->id;
             $item->ref_id = $item->code;
             $item->advisor_name = $advisorName;
-            $item->payment_date = isset($item->paid_at) ? Carbon::parse($item->paid_at)->format($dateFormat) : '';
+            $item->payment_date = isset($item->captured_at) ? Carbon::parse($item->captured_at)->format($dateFormat) : '';
             $item->plan_start_date = $planStartDate;
             $item->plan_end_date = $planEndDate;
             $item->certificate_number = $item->certificate_number ?? '';
             $item->name = $firstName.' '.$lastName;
             $item->dob = isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format($dateFormat) : '';
             $item->age = $age;
-            $item->vehicle = $carMake.' '.$carModel;
             $item->contact_number = $quoteObject->mobile_no ?? '';
             $item->nationality = $nationality ?? '';
             $item->email = $quoteObject->email ?? '';
@@ -110,7 +108,6 @@ class EmbeddedProduct
             $item->status = $status;
             $item->policy_issuance_date = $quoteObject->policy_issuance_date ?? '';
             $item->emirates_id_number = $customer->emirates_id_number ?? '';
-            $item->lob = quoteTypeCode::getName($quoteObject::class) ?? '';
 
             if ($isAlfredProtect) {
                 $item->plan_type = EmbeddedProductEnum::{$item->product->embeddedProduct->short_code}()->value;
@@ -122,18 +119,27 @@ class EmbeddedProduct
                 $item->premium_with_vat = $item->contribution_amount;
             }
 
+            $item = $this->processReportRecord($quoteObject, $item);
+
             return $item;
         });
 
         return $dataset;
     }
 
-    public function filterReport($ep, $filters)
+    protected function processReportRecord($quoteObject, $item)
     {
-        $productTransaction = EmbeddedTransaction::whereHas('product.embeddedProduct', function ($query) use ($ep) {
-            $query->where('id', $ep->id);
-        });
-        $dataset = $productTransaction->with(
+        $item->lob = quoteTypeCode::getName($quoteObject::class) ?? '';
+        $carMake = $quoteObject->carMake->text ?? '';
+        $carModel = $quoteObject->carModel->text ?? '';
+        $item->vehicle = $carMake.' '.$carModel;
+
+        return $item;
+    }
+
+    protected function getReportRelations()
+    {
+        return [
             'product.embeddedProduct',
             'quoteRequest.customer',
             'quoteRequest.customer.nationality',
@@ -142,7 +148,20 @@ class EmbeddedProduct
             'quoteRequest.quoteStatus',
             'quoteRequest.advisor',
             'quoteRequest.quoteRequestEntityMapping',
-        )->where('embedded_transactions.is_selected', true)
+        ];
+    }
+
+    public function filterReport($ep, $filters)
+    {
+        $productTransaction = EmbeddedTransaction::whereHas('product.embeddedProduct', function ($query) use ($ep) {
+            $query->where('id', $ep->id);
+        });
+        $dataset = $productTransaction->with($this->getReportRelations())
+            ->join('payments', function ($join) {
+                $join->on('embedded_transactions.id', '=', 'payments.paymentable_id')
+                    ->where('payments.paymentable_type', '=', 'App\\Models\\EmbeddedTransaction');
+            })
+            ->where('embedded_transactions.is_selected', true)
             ->where('embedded_transactions.payment_status_id', PaymentStatusEnum::CAPTURED)
             ->when(isset($filters['ref_id']), function ($query) use ($filters) {
                 $query->where('embedded_transactions.code', 'like', "%{$filters['ref_id']}%");
@@ -150,7 +169,8 @@ class EmbeddedProduct
             ->when(isset($filters['months']), function ($query) use ($filters) {
                 $startDate = Carbon::parse($filters['months'])->startOfMonth()->format('Y-m-d');
                 $endDate = Carbon::parse($filters['months'])->endOfMonth()->format('Y-m-d');
-                $query->whereBetween('embedded_transactions.paid_at', [$startDate, $endDate]);
+                $query->whereBetween('payments.captured_at', [$startDate, $endDate]);
+
             })
             ->when(isset($filters['name']), function ($query) use ($filters) {
                 $query->whereHas('quoteRequest', function ($query) use ($filters) {
@@ -169,7 +189,7 @@ class EmbeddedProduct
                 $query->whereHas('quoteRequest', function ($query) use ($filters) {
                     $startDate = Carbon::parse($filters['date_of_purchase'][0])->startOfDay();
                     $endDate = Carbon::parse($filters['date_of_purchase'][1])->endOfDay();
-                    $query->whereBetween('policy_issuance_date', [$startDate, $endDate]);
+                    $query->whereBetween('payments.captured_at', [$startDate, $endDate]);
                 });
             });
 
@@ -177,7 +197,7 @@ class EmbeddedProduct
         $sortOrder = 'desc';
         if (! empty($filters['sortBy']) && ! empty($filters['sortType'])) {
             $sortableColumns = [
-                'payment_date' => 'embedded_transactions.paid_at',
+                'payment_date' => 'payments.captured_at',
                 'contribution_amount' => 'embedded_transactions.price_with_vat',
             ];
             $sortBy = $sortableColumns[$filters['sortBy']] ?? 'embedded_transactions.id';
@@ -200,5 +220,75 @@ class EmbeddedProduct
         $product = strtoupper(trim($product));
 
         return in_array($product, EmbeddedProductEnum::getAlfredProtectCodes());
+    }
+
+    public function getDocumentList($ep, $transaction)
+    {
+        $epDocuments = $this->getPolicyWordings($ep);
+        $epDocuments = array_merge($epDocuments, $this->getadditionalDocuments($transaction));
+
+        return $epDocuments;
+    }
+
+    protected function getPolicyWordings($ep)
+    {
+        $epDocuments = [];
+
+        // get policy wordings
+        $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+        $documents = json_decode($ep->company_documents);
+        if (! empty($documents)) {
+            foreach ($documents as $item) {
+                $path = $item->path;
+                $pwDoc = $path !== '' ? $websiteURL.$path : '';
+                if (! empty($path)) {
+                    $epDocuments[] = [
+                        'document_type' => 'Policy Wordings',
+                        'document_number' => 'Not Applicable',
+                        'url' => $pwDoc,
+                        'path' => $item->path,
+                    ];
+                }
+            }
+        }
+
+        return $epDocuments;
+    }
+
+    protected function getadditionalDocuments($transaction)
+    {
+        if ($transaction->isEmpty()) {
+            return [];
+        }
+
+        $transaction = $transaction->first();
+        $transaction->load('documents');
+        $documents = $transaction->documents;
+        if ($documents->isEmpty()) {
+            return [];
+        }
+
+        $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+        $documentNumbers = [
+            QuoteDocumentsEnum::CAR_TAX_INVOICE_RAISE_BY_BUYER => $transaction['tax_invoice_buyer_no'] ?? '',
+            QuoteDocumentsEnum::CAR_TAX_INVOICE => $transaction['tax_invoice_no'] ?? '',
+            QuoteDocumentsEnum::CAR_TAX_CREDIT_RAISE_BY_BUYER => $transaction['credit_note_buyer_no'] ?? '',
+            QuoteDocumentsEnum::CAR_TAX_CREDIT => $transaction['credit_note_no'] ?? '',
+            QuoteDocumentsEnum::CAR_POLICY_CERTIFICATE => $transaction['certificate_number'] ?? '',
+        ];
+
+        $docs = $documents->map(function ($document) use ($documentNumbers, $websiteURL) {
+
+            $documentNumber = $document->document_type_code === QuoteDocumentsEnum::EP ? $document->doc_name : $documentNumbers[$document->document_type_code] ?? '';
+
+            return [
+                'document_type' => $document->document_type_text,
+                'document_number' => $documentNumber,
+                'url' => $document->doc_url !== '' ? $websiteURL.$document->doc_url : '',
+                'path' => $document->doc_url,
+            ];
+        })->toArray();
+
+        return $docs;
     }
 }

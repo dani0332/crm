@@ -26,7 +26,6 @@ const props = defineProps({
   kycLogs: Array,
   uboDetails: Array,
 });
-
 const rules = {
   isEmail: v =>
     /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
@@ -36,8 +35,15 @@ const rules = {
   isPhone: v =>
     /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,10}$/im.test(v) ||
     'Phone must be valid',
+  isEmiratesId: v => {
+    const pattern = /^\d{3}-\d{4}-\d{7}-\d{1}$/;
+    if (kycForm.id_document_type === 'emiratesId') {
+      return pattern.test(v) || 'Enter the correct EID number format';
+    } else {
+      return true;
+    }
+  },
 };
-
 const uboNationality = computed(() => {
   if (props.uboDetails.length > 0) {
     const uboDetail = props.uboDetails.filter(val => {
@@ -484,8 +490,12 @@ onMounted(() => {
       <x-input
         v-model="kycForm.id_number"
         label="Id number"
-        placeholder="Id number"
-        :rules="[isRequired]"
+        :placeholder="
+          kycForm.id_document_type === 'emiratesId'
+            ? 'xxx-xxxx-xxxxxxx-x'
+            : 'ID number'
+        "
+        :rules="[isRequired, rules.isEmiratesId]"
       />
 
       <div>

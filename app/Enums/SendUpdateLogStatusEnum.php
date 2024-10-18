@@ -19,9 +19,12 @@ final class SendUpdateLogStatusEnum extends Enum
     const FULL_PAID = 'Fully paid';
 
     // const STALE_REQUEST = 'Stale Request';
+    const UPDATE_ISSUED = 'UPDATE_ISSUED';
     const UPDATE_SENT_TO_CUSTOMER = 'UPDATE_SENT_TO_CUSTOMER';
     const UPDATE_BOOKED = 'UPDATE_BOOKED';
     const SEND_UPDATE = 'SEND_UPDATE';
+    const UPDATE_BOOKING_QUEUED = 'UPDATE_BOOKING_QUEUED';
+    const UPDATE_BOOKING_FAILED = 'UPDATE_BOOKING_FAILED';
     const EF = 'EF';    // Endorsement Financial
     const EN = 'EN';    // Endorsement Non Financial
     const CI = 'CI';    // Cancellation from Inception
@@ -87,4 +90,5 @@ final class SendUpdateLogStatusEnum extends Enum
     const DOV = 'DOV'; // Deletion of vehicle
     const ACB = 'ACB'; // Additional commission booking
     const ATIB = 'ATIB'; // Additional tax invoice booking
+    const ATICB = 'ATICB'; // Additional tax invoice and commission booking
 }
