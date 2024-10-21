@@ -125,7 +125,7 @@ class EmbeddedProductController extends Controller
         $quoteId = $data['quoteId'];
         $modelType = $data['modelType'];
         $epId = $data['epId'];
-        EmbeddedProductRepository::SendDocumentsByLead($quoteId, $modelType, $epId);
+        EmbeddedProductRepository::SendDocumentsByLead($quoteId, $modelType, $epId, true);
 
         return redirect()->back()->with('success', 'Certificate send Successfully');
     }

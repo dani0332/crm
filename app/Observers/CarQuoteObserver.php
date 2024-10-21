@@ -14,6 +14,8 @@ use App\Jobs\MAWelcomeJob;
 use App\Models\CarQuote;
 use App\Repositories\PaymentRepository;
 use App\Traits\PersonalQuoteSyncTrait;
+use App\Repositories\EmbeddedProductRepository;
+use App\Enums\quoteTypeCode;
 
 class CarQuoteObserver
 {
@@ -82,6 +84,10 @@ class CarQuoteObserver
             $this->updatePersonalQuote($lead->uuid, QuoteTypeId::Car, $dirty);
         }
 
+        if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PolicyIssued) {
+            EmbeddedProductRepository::capturePayment($lead->id, quoteTypeCode::Car);
+        }
+
         if (
             $lead->isDirty('quote_status_id') &&
             in_array($lead->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
@@ -92,6 +98,9 @@ class CarQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
+
+            // Ep send documents
+            EmbeddedProductRepository::sendDocumentsByLead($lead->id, quoteTypeCode::Car);
         }
         if (
             isset($dirty['quote_status_id']) &&

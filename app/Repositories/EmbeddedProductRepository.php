@@ -187,6 +187,7 @@ class EmbeddedProductRepository extends BaseRepository
                 'prices.transactions' => function ($query) use ($quoteRequestId) {
                     $query->where('quote_request_id', $quoteRequestId);
                 },
+                'prices.transactions.payments'
             ])
             ->whereHas('prices.transactions', function ($query) use ($quoteRequestId) {
                 $query->where('quote_request_id', $quoteRequestId);
@@ -219,30 +220,41 @@ class EmbeddedProductRepository extends BaseRepository
 
             $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
             $item->send_document_button = $this->canSendDocuments($item->product_category, $quoteObject->quote_status_id, $transaction);
+            $item->can_cancel_payment = $this->canCancelPayment($transaction->first());
         });
 
         return $ep;
     }
 
-    private function canSendDocuments($productCategory, $quoteStatusId, $transaction)
+    private function canCancelPayment($transaction)
     {
-        $canSend = false;
-        if ($productCategory == EpCategoryEnum::BOLT_ON) {
-            if (in_array($quoteStatusId, [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyBooked])) {
-                if ($transaction->isNotEmpty()) {
-                    $canSend = true;
-                }
-            }
-        } elseif ($productCategory == EpCategoryEnum::STAND_ALONE) {
-            if ($transaction->isNotEmpty()) {
-                $canSend = true;
+        if($transaction && $transaction->payments->first()) {
+            $payment = $transaction->payments->first();
+            if($payment->getAttributes()['payment_status_id'] == PaymentStatusEnum::CAPTURED) {
+                $paymentDate = Carbon::parse($payment->getAttributes()['captured_at']);
+                return $paymentDate->diffInDays(Carbon::now()) <= 3;
             }
         }
 
-        return $canSend;
+        return false;
     }
 
-    public function fetchSendDocumentsByLead($leadId, $modelType, $epId = null)
+    private function canSendDocuments($productCategory, $quoteStatusId, $transaction)
+    {
+        if (!$transaction->isEmpty() && in_array($transaction->first()->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
+            if (
+                $productCategory == EpCategoryEnum::STAND_ALONE ||
+                ($productCategory == EpCategoryEnum::BOLT_ON && in_array($quoteStatusId, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked]))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+
+    public function fetchSendDocumentsByLead($leadId, $modelType, $epId = null, $forceSendDocuments = false)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
@@ -283,6 +295,7 @@ class EmbeddedProductRepository extends BaseRepository
                     $data['quoteId'] = $leadId;
                     $data['modelType'] = $modelType;
                     $data['epId'] = $embedded_product_id;
+                    $data['forceSendDocuments'] = $forceSendDocuments;
                     $this->fetchSendDocument($data);
                 }
             }
@@ -306,6 +319,7 @@ class EmbeddedProductRepository extends BaseRepository
         $quoteId = $data['quoteId'];
         $modelType = $data['modelType'];
         $epId = $data['epId'];
+        $forceSendDocuments = $data['forceSendDocuments'] ?? false;
 
         $ep = $this->where('id', $epId)->first();
         if (! $ep) {
@@ -331,10 +345,12 @@ class EmbeddedProductRepository extends BaseRepository
             return 'Documents cannot be sent';
         }
 
-        if ($isAlfredProtect) {
-            return $this->sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData);
-        } elseif (in_array($short_code, [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX])) {
-            return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $modelType, $attachments, $advisorData, $ep);
+        if($forceSendDocuments || $transaction->first()->is_document_sent == false) {
+            if ($isAlfredProtect) {
+                return $this->sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData);
+            } elseif (in_array($short_code, [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX])) {
+                return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $modelType, $attachments, $advisorData, $ep);
+            }   
         }
     }
 
@@ -426,6 +442,7 @@ class EmbeddedProductRepository extends BaseRepository
         info('Send Alfred Protect Email Response: '.json_encode($response));
 
         if ($response == 201) {
+            $transaction->first()->update(['is_document_sent' => true]);
             return $this->handleAjaxResponse('Certificate sent successfully.', 'success');
         } else {
             return $this->handleAjaxResponse('Error sending Certificate.', 'error');
@@ -469,7 +486,7 @@ class EmbeddedProductRepository extends BaseRepository
             'MessageStream' => config('constants.EMBEDDED_PRODUCTS_POSTMARK_STREAM'),
         ], JSON_UNESCAPED_SLASHES);
 
-        SendEPDocumentsJob::dispatch($body);
+        SendEPDocumentsJob::dispatch($body, $transaction);
 
         return 'Certificate sent successfully';
     }
@@ -770,7 +787,6 @@ class EmbeddedProductRepository extends BaseRepository
 
         try {
             Marshall::request('/payment/checkout/capture', 'post', $payload);
-            $this->fetchSendDocumentsByLead($leadId, $modelType);
         } catch (Exception $e) {
             Log::error('Capture Payment Error: '.$e->getMessage());
         }
