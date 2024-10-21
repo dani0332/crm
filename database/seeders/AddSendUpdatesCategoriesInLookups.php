@@ -209,6 +209,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'code' => SendUpdateLogStatusEnum::ATIB,
                     'tooltip' => '',
                 ],
+
             ],
             'Bike' => [
                 [
@@ -249,6 +250,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'code' => SendUpdateLogStatusEnum::ATIB,
                     'tooltip' => '',
                 ],
+
             ],
             'Health' => [
                 [
@@ -288,6 +290,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'code' => SendUpdateLogStatusEnum::ATIB,
                     'tooltip' => '',
                 ],
+
             ],
             'Travel' => [
                 [
@@ -327,6 +330,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'code' => SendUpdateLogStatusEnum::ATIB,
                     'tooltip' => '',
                 ],
+
             ],
             'Life' => [
                 [
@@ -351,6 +355,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'code' => SendUpdateLogStatusEnum::ATIB,
                     'tooltip' => '',
                 ],
+
             ],
             'Home' => [
                 [
@@ -385,6 +390,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'code' => SendUpdateLogStatusEnum::ATIB,
                     'tooltip' => '',
                 ],
+
             ],
             'Pet' => [
                 [
@@ -409,6 +415,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'code' => SendUpdateLogStatusEnum::ATIB,
                     'tooltip' => '',
                 ],
+
             ],
             'Cycle' => [
                 [
@@ -433,6 +440,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'code' => SendUpdateLogStatusEnum::ATIB,
                     'tooltip' => '',
                 ],
+
             ],
             'Yacht' => [
                 [
@@ -462,6 +470,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'code' => SendUpdateLogStatusEnum::ATIB,
                     'tooltip' => '',
                 ],
+
             ],
             'MotorFleet' => [
                 [
@@ -512,6 +521,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'code' => SendUpdateLogStatusEnum::ATIB,
                     'tooltip' => '',
                 ],
+
             ],
             'GroupMedical' => [
                 [
@@ -561,6 +571,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'code' => SendUpdateLogStatusEnum::ATIB,
                     'tooltip' => '',
                 ],
+
             ],
             'Corpline' => [
                 [
@@ -632,6 +643,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'code' => SendUpdateLogStatusEnum::ATIB,
                     'tooltip' => '',
                 ],
+
             ],
             // 'Jetski' => [
             //     //
