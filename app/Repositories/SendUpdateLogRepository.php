@@ -27,6 +27,7 @@ use Illuminate\Support\Str;
 class SendUpdateLogRepository extends BaseRepository
 {
     use PersonalQuoteSyncTrait;
+
     public function model()
     {
         return SendUpdateLog::class;
@@ -54,19 +55,7 @@ class SendUpdateLogRepository extends BaseRepository
 
             $uuid = strtoupper(Str::random(6));
 
-            // Todo:: Check if personal quote exists because its break when quote not in personal quotes
-            $personalQuote = PersonalQuoteRepository::where([
-                'quote_type_id' => $data['quote_type_id'],
-                'uuid' => $data['quote_uuid'],
-            ])->first();
-
-            if (! $personalQuote) {
-                $this->syncLeadEntries($data['quote_uuid']);
-                $personalQuote = PersonalQuoteRepository::where([
-                    'quote_type_id' => $data['quote_type_id'],
-                    'uuid' => $data['quote_uuid'],
-                ])->first();
-            }
+            $personalQuote = $this->updatePersonalQuote($data['quote_uuid'], $data['quote_type_id'], []);
 
             $data['personal_quote_id'] = $personalQuote?->id ?? null;
             $option = ! empty($data['option_id']) ? LookupRepository::find($data['option_id'])->code : null;
@@ -362,11 +351,7 @@ class SendUpdateLogRepository extends BaseRepository
             if ($payment) {
                 $sendUpdateLogService = app(SendUpdateLogService::class);
                 info('Send update - Updating Booking details and Commission Schedule in Payments - SendUpdateUUID: '.$sendUpdate->uuid);
-                if ($data['price_with_vat'] < ($payment->total_amount + $payment->discount_value)) {
-                    $sendUpdateLogService->updatePaymentTotalPrice($payment, $data['price_with_vat']);
-                } else {
-                    $sendUpdateLogService->sendUpdatePriceAndDiscount($sendUpdate, $payment);
-                }
+                $sendUpdateLogService->sendUpdatePriceAndDiscount($sendUpdate, $payment);
                 $sendUpdateLogService->updatePaymentDetails($payment, $sendUpdate, true);
                 app(SplitPaymentService::class)->updateCommissionSchedule($payment);
             }
