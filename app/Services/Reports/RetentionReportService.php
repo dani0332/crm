@@ -274,8 +274,8 @@ class RetentionReportService extends BaseService
             $this->applyDefaultFilterForBatch($query, $request, $isDetailsFilter);
         }
 
-        if ($request->asAtDate) {
-            $query->where('personal_quotes.policy_booking_date', '<=', Carbon::parse($request->asAtDate)->endOfDay())
+        if (isset($request['asAtDate'])) {
+            $query->where('personal_quotes.policy_booking_date', '<=', Carbon::parse($request['asAtDate'])->endOfDay())
                 ->whereIn('quote_status_id', [QuoteStatusEnum::PolicyBooked, QuoteStatusEnum::PolicyCancelled, QuoteStatusEnum::PolicyCancelledReissued]);
         }
     }
