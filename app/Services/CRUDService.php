@@ -2,50 +2,51 @@
 
 namespace App\Services;
 
-use App\Enums\AMLDecisionStatusEnum;
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\CustomerTypeEnum;
-use App\Enums\GenericRequestEnum;
-use App\Enums\HealthTeamType;
-use App\Enums\Kyc;
-use App\Enums\LeadSourceEnum;
-use App\Enums\LookupsEnum;
-use App\Enums\PaymentMethodsEnum;
-use App\Enums\PermissionsEnum;
-use App\Enums\QuoteDocumentsEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
-use App\Enums\RolesEnum;
-use App\Facades\Ken;
-use App\Facades\Marshall;
-use App\Jobs\CammyJob;
-use App\Jobs\CarLost\CarLostStatusRejected;
-use App\Models\AML;
-use App\Models\ApplicationStorage;
-use App\Models\CarLostQuoteLog;
-use App\Models\Entity;
-use App\Models\GenericModel;
-use App\Models\Lookup;
-use App\Models\PaymentAction;
-use App\Models\QuoteStatusLog;
-use App\Models\QuoteType;
-use App\Models\SendUpdateLog;
-use App\Models\User;
-use App\Repositories\CustomerMembersRepository;
-use App\Traits\GenericQueriesAllLobs;
-use App\Traits\TeamHierarchyTrait;
-use Carbon\Carbon;
-use Illuminate\Http\File;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use PDF;
+use App\Enums\Kyc;
+use Carbon\Carbon;
+use App\Models\AML;
+use App\Facades\Ken;
+use App\Models\User;
+use App\Jobs\CammyJob;
+use App\Models\Entity;
+use App\Models\Lookup;
+use App\Enums\RolesEnum;
+use App\Enums\QuoteTypes;
+use App\Facades\Marshall;
+use App\Models\QuoteType;
+use Illuminate\Http\File;
+use App\Enums\LookupsEnum;
+use App\Enums\QuoteTypeId;
+use App\Enums\quoteTypeCode;
+use App\Models\GenericModel;
+use App\Traits\CentralTrait;
+use Illuminate\Http\Request;
+use App\Enums\HealthTeamType;
+use App\Enums\LeadSourceEnum;
+use App\Models\PaymentAction;
+use App\Models\SendUpdateLog;
+use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Models\QuoteStatusLog;
+use App\Enums\CustomerTypeEnum;
+use App\Models\CarLostQuoteLog;
+use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentMethodsEnum;
+use App\Enums\QuoteDocumentsEnum;
+use App\Models\ApplicationStorage;
+use App\Traits\TeamHierarchyTrait;
+use Illuminate\Support\Facades\DB;
+use App\Enums\AMLDecisionStatusEnum;
+use Illuminate\Support\Facades\Auth;
+use App\Traits\GenericQueriesAllLobs;
+use App\Enums\ApplicationStorageEnums;
+use App\Jobs\CarLost\CarLostStatusRejected;
+use App\Repositories\CustomerMembersRepository;
 
 class CRUDService extends BaseService
 {
-    use GenericQueriesAllLobs, TeamHierarchyTrait;
+    use GenericQueriesAllLobs, TeamHierarchyTrait, CentralTrait;
 
     protected $healthQuoteService;
     protected $carQuoteService;
@@ -1141,7 +1142,7 @@ class CRUDService extends BaseService
             $pdfFile = $pdf->output();
 
             // Create a temporary file and write the PDF content to it
-            $tempFile = createTempPdfFileForWatermark($pdfFile);
+            $tempFile = $this->createTempPdfFileForWatermark($pdfFile);
 
             app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quoteModel, true, false, $tempFile);
         }

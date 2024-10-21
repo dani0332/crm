@@ -1403,27 +1403,6 @@ if (! function_exists('isVatApplied')) {
     }
 }
 
-if (! function_exists('createTempPdfFileForWatermark')) {
-    function createTempPdfFileForWatermark($pdfFile): File
-    {
-        if (! file_exists(storage_path('/app/temp'))) {
-            mkdir(storage_path('/app/temp'), 0775, true);
-        }
-        // Create a temporary file and write the PDF content to it
-        $tempDir = storage_path('app/temp');
-
-        // Generate a unique filename for the temp PDF file
-        $tempFileName = 'pdf_'.uniqid().'.pdf';
-        $tempFilePath = $tempDir.'/'.$tempFileName;
-
-        // Create the temporary file and write the PDF content to it
-        file_put_contents($tempFilePath, $pdfFile);
-
-        // Return a new File instance pointing to the temporary file
-        return new File($tempFilePath);
-    }
-}
-
 if (! function_exists('getTeamId')) {
     /**
      * Get the ID of a team by its name.
