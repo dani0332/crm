@@ -3,6 +3,7 @@
 namespace App\Strategies\Allocations;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\QuoteTypes;
 use App\Factories\AllocationFactory;
 use App\Services\HealthAllocationService;
 use App\Services\HealthEmailService;
@@ -44,6 +45,8 @@ class HealthAllocation implements Allocation
             $advisor = $this->fetchAvailableAdvisor($lead->health_team_type);
 
             if (! $advisor) {
+                $this->healthAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::HEALTH);
+
                 info('No advisors found against lead : '.$lead->uuid);
 
                 if ($lead->isApplicationPending() && ! $lead->isApplyNowEmailSent() && Carbon::parse($lead->quote_status_date)->lessThanOrEqualTo(now()->subMinutes(10))) {
@@ -58,6 +61,8 @@ class HealthAllocation implements Allocation
 
             return AllocationFactory::createResponse($advisor->id, 'Advisor assigned successfully!', Response::HTTP_OK);
         } catch (\Throwable $th) {
+            $this->healthAllocationService->leadAllocationFailed($this->allocationId, QuoteTypes::HEALTH);
+
             $message = $th->getMessage() ?? '';
             info('exception occurred in health lead allocation with error : '.$message);
             info('exception occurred in health lead allocation with error stack as  : '.$th->getTraceAsString());

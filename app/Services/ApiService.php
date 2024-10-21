@@ -13,6 +13,7 @@ use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWorkflowRequest;
+use App\Jobs\MACRM\SyncCourierQuoteWithMacrm;
 use App\Jobs\SendHealthOCBIntroEmailJob;
 use App\Models\Customer;
 use App\Models\HealthQuote;
@@ -326,5 +327,24 @@ class ApiService
         }
 
         return apiResponse(null, Response::HTTP_OK, 'Email Already Sent!');
+    }
+
+    public function quoteUpdated($data)
+    {
+        $quoteType = QuoteTypes::getName($data['quoteTypeId']);
+        if (! $quoteType) {
+            return apiResponse(null, Response::HTTP_NOT_FOUND, 'Invalid Quote Type!');
+        }
+        $model = $quoteType?->model();
+
+        $quote = $model::where('uuid', $data['quoteUUID'])->first();
+        if (! $quote) {
+            return apiResponse(null, Response::HTTP_NOT_FOUND, 'Quote not found!');
+        }
+
+        // Sync Courier Quote with MACRM if Policy Issued
+        SyncCourierQuoteWithMacrm::dispatch($quote, $quoteType?->id());
+
+        return apiResponse(null, message: 'ok');
     }
 }
