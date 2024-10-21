@@ -22,8 +22,8 @@ use App\Services\Reports\Reportable;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use \Illuminate\Http\Request;
 
 class ConversionAsAtReportService extends BaseService
 {
@@ -104,9 +104,6 @@ class ConversionAsAtReportService extends BaseService
 
     /**
      * Get the count of unassigned leads based on the request parameters.
-     *
-     * @param  Request  $request
-     * @return int
      */
     public function getUnassignedLeadsCount(Request $request): int
     {
@@ -137,7 +134,7 @@ class ConversionAsAtReportService extends BaseService
                 ->count();
         }
 
-        return $unassignedLeadsCount;        
+        return $unassignedLeadsCount;
     }
 
     public function getFilterOptions()
