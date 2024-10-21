@@ -23,6 +23,7 @@ use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use \Illuminate\Http\Request;
 
 class ConversionAsAtReportService extends BaseService
 {
@@ -99,6 +100,44 @@ class ConversionAsAtReportService extends BaseService
             // map operation to calculate gross and net conversions of records
             return $this->mapConversionData($query, $request);
         }
+    }
+
+    /**
+     * Get the count of unassigned leads based on the request parameters.
+     *
+     * @param  Request  $request
+     * @return int
+     */
+    public function getUnassignedLeadsCount(Request $request): int
+    {
+        $unassignedLeadsCount = 0;
+
+        if ($request->lob && $request->createdAtDate) {
+            $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+
+            if ($request->lob == QuoteTypes::getIdFromValue(quoteTypeCode::Car)) {
+                $model = app(CarQuote::class);
+            } else {
+                $model = app(PersonalQuote::class);
+            }
+
+            $createdAtDate = (object) $request->createdAtDate;
+
+            $startDate = isset($createdAtDate->startEndDate) ?
+                Carbon::parse($createdAtDate->startEndDate[0])->startOfDay()->format($dateFormat) :
+                Carbon::parse(now())->startOfDay()->format($dateFormat);
+
+            $endDate = isset($createdAtDate->startEndDate) ?
+                Carbon::parse($createdAtDate->startEndDate[1])->endOfDay()->format($dateFormat) :
+                Carbon::parse(now())->endOfDay()->format($dateFormat);
+
+            $unassignedLeadsCount = $model::query()
+                ->whereNull('advisor_id')
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->count();
+        }
+
+        return $unassignedLeadsCount;        
     }
 
     public function getFilterOptions()
