@@ -710,11 +710,12 @@ class SagePayloadFactory
             ],
         ];
 
-        if (in_array($request->sage_payment_code, [PaymentMethodsEnum::InsurerPayment, PaymentMethodsEnum::PostDatedCheque])){
+        if (in_array($request->sage_payment_code, [PaymentMethodsEnum::InsurerPayment, PaymentMethodsEnum::PostDatedCheque])) {
             $payLoad['BankCode'] = SageEnum::BANK_CODE;
             $payLoad['ReceiptsAdjustments'][0]['BankCode'] = SageEnum::BANK_CODE;
             $payLoad['ReceiptsAdjustments'][0]['PaymentCode'] = SageEnum::PAYMENT_CODE;
         }
+
         return [
             'endPoint' => 'AR/ARReceiptAndAdjustmentBatches',
             'payload' => $payLoad,
