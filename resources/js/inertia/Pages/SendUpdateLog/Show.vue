@@ -114,8 +114,11 @@ onMounted(() => {
   state.redirectURL = params.get('refURL');
 });
 
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
+
 const onEdit = () => {
-  if (isUpdateBooked.value) {
+  if (isUpdateBooked.value && ! can(permissionsEnum.SEND_UPDATE_EDIT_NOTES)) {
     notification.error({
       title: 'Update already booked',
       position: 'top',
