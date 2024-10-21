@@ -2,36 +2,36 @@
 
 namespace App\Http\Controllers;
 
-use PDF;
-use App\Enums\Kyc;
-use Carbon\Carbon;
-use App\Models\Entity;
-use App\Models\CarMake;
-use App\Models\Payment;
-use App\Models\CarModel;
-use App\Models\Customer;
-use App\Models\QuoteType;
-use App\Enums\LookupsEnum;
-use App\Enums\QuoteTypeId;
-use App\Models\Nationality;
-use App\Traits\CentralTrait;
-use Illuminate\Http\Request;
-use App\Models\PersonalQuote;
-use App\Services\CRUDService;
-use App\Enums\QuoteStatusEnum;
-use App\Models\CarModelDetail;
-use App\Models\CustomerDetail;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
-use App\Enums\PaymentStatusEnum;
-use App\Models\PaymentStatusLog;
+use App\Enums\Kyc;
+use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
-use App\Models\QuoteMemberDetail;
-use App\Services\ActivitiesService;
-use App\Repositories\LookupRepository;
-use App\Services\QuoteDocumentService;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Http\Requests\KycEntityDocRequest;
 use App\Http\Requests\KycIndividualDocRequest;
+use App\Models\CarMake;
+use App\Models\CarModel;
+use App\Models\CarModelDetail;
+use App\Models\Customer;
+use App\Models\CustomerDetail;
+use App\Models\Entity;
+use App\Models\Nationality;
+use App\Models\Payment;
+use App\Models\PaymentStatusLog;
+use App\Models\PersonalQuote;
+use App\Models\QuoteMemberDetail;
+use App\Models\QuoteType;
+use App\Repositories\LookupRepository;
+use App\Services\ActivitiesService;
+use App\Services\CRUDService;
+use App\Services\QuoteDocumentService;
+use App\Traits\CentralTrait;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use PDF;
 
 class AjaxController extends Controller
 {
