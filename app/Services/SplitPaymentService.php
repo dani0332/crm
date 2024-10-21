@@ -8,7 +8,6 @@ use App\Enums\SageEnum;
 use App\Models\Payment;
 use App\Models\CarQuote;
 use App\Enums\QuoteTypes;
-use Illuminate\Http\File;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\HealthQuote;
@@ -46,7 +45,7 @@ use App\Repositories\EmbeddedProductRepository;
 
 class SplitPaymentService
 {
-    use GenericQueriesAllLobs, CentralTrait;
+    use CentralTrait;
     use HandlesDeadlockRetries;
     use SageLoggable;
 

@@ -15,7 +15,6 @@ use App\Enums\RolesEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Marshall;
 use App\Models\QuoteType;
-use Illuminate\Http\File;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\quoteTypeCode;
@@ -39,14 +38,13 @@ use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\DB;
 use App\Enums\AMLDecisionStatusEnum;
 use Illuminate\Support\Facades\Auth;
-use App\Traits\GenericQueriesAllLobs;
 use App\Enums\ApplicationStorageEnums;
 use App\Jobs\CarLost\CarLostStatusRejected;
 use App\Repositories\CustomerMembersRepository;
 
 class CRUDService extends BaseService
 {
-    use GenericQueriesAllLobs, TeamHierarchyTrait, CentralTrait;
+    use TeamHierarchyTrait, CentralTrait;
 
     protected $healthQuoteService;
     protected $carQuoteService;

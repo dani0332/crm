@@ -29,7 +29,6 @@ use App\Models\PaymentStatusLog;
 use App\Enums\PaymentMethodsEnum;
 use App\Models\QuoteMemberDetail;
 use App\Services\ActivitiesService;
-use App\Traits\GenericQueriesAllLobs;
 use App\Repositories\LookupRepository;
 use App\Services\QuoteDocumentService;
 use App\Http\Requests\KycEntityDocRequest;
@@ -37,7 +36,7 @@ use App\Http\Requests\KycIndividualDocRequest;
 
 class AjaxController extends Controller
 {
-    use GenericQueriesAllLobs, CentralTrait;
+    use CentralTrait;
 
     protected $quoteDocumentService;
 
