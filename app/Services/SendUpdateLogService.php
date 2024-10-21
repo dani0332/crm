@@ -465,9 +465,18 @@ class SendUpdateLogService
             $insuranceProviderId = $sendUpdateLog->insurance_provider_id;
         } else {
             if ($getQuoteDetails->insly_id || $getQuoteDetails->insly_migrated) {
-                $insuranceProviderId = empty($sendUpdateLog->insurance_provider_id) ? null : $sendUpdateLog->insurance_provider_id;
+                if (empty($sendUpdateLog->insurance_provider_id)) {
+                    if (! checkPersonalQuotes($quoteType)) {
+                        $getQuoteDetails->load('plan.insuranceProvider');
+                        $insuranceProviderId = $getQuoteDetails?->plan?->insuranceProvider?->id;
+                    } else {
+                        $insuranceProviderId = $getQuoteDetails?->insurance_provider_id;
+                    }
+                } else {
+                    $insuranceProviderId = $sendUpdateLog->insurance_provider_id;
+                }
             } else {
-                @[$insuranceProviderId, $planId] = $this->getProviderDetails($getQuoteDetails, $sendUpdateLog->quote_type_id, false);
+                @[$insuranceProviderId, $planId] = $this->getProviderDetails($getQuoteDetails, $sendUpdateLog->quote_type_id);
             }
         }
 
@@ -1341,9 +1350,13 @@ class SendUpdateLogService
         }
     }
 
-    public function getProviderDetails($quote, $quoteTypeId, $forSendUpdateCreation = false, $isCommercial = false): array
+    public function getProviderDetails($quote, $quoteTypeId, $forSendUpdateCreation = false): array
     {
         $insuranceProviderId = $plan_id = null;
+        $isCommercial = false;
+        if ($quoteTypeId == QuoteTypeId::Car) {
+            $isCommercial = app(LeadAllocationService::class)->isCommercialVehicles($quote);
+        }
         if ($forSendUpdateCreation && ($quote->insly_id || $quote->insly_migrated)) {
 
             return [$insuranceProviderId, $plan_id];
@@ -1355,7 +1368,9 @@ class SendUpdateLogService
             $payment = $quoteModel->payments()->mainLeadPayment()->first();
 
             $planRelationName = strtolower($quoteType).'Plan';
-            $payment->load($planRelationName);
+            if ($payment) {
+                $payment->load($planRelationName);
+            }
             $insuranceProvider = $payment->{$planRelationName}?->insuranceProvider;
             $insuranceProviderId = $insuranceProvider->id ?? null;
             $plan_id = $quoteModel->plan?->id ?? null;
