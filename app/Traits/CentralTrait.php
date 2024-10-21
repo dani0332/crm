@@ -36,8 +36,7 @@ trait CentralTrait
     /**
      * Create a temporary PDF file for watermarking
      *
-     * @param string $pdfFile
-     * @return File
+     * @param  string  $pdfFile
      */
     public function createTempPdfFileForWatermark($pdfFile): File
     {
