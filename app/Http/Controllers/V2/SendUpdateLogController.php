@@ -193,7 +193,7 @@ class SendUpdateLogController extends Controller
             $insuranceProviderId = $paymentEntityModel->plan->insuranceProvider->id;
         } else {
             checkPersonalQuotes($quoteType) ? $realQuote->load(['insuranceProvider']) : $paymentEntityModel->load(['insuranceProvider']);
-            $insuranceProviderId = $realQuote->insuranceProvider->id;
+            $insuranceProviderId = $realQuote?->insurance_provider_id ?? $realQuote?->insuranceProvider?->id ?? null;
         }
 
         // quote type business only has 2 providers, but as per business lead detail page it's getting providers via Corpline.
