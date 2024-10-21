@@ -44,7 +44,7 @@ use App\Repositories\CustomerMembersRepository;
 
 class CRUDService extends BaseService
 {
-    use TeamHierarchyTrait, CentralTrait;
+    use CentralTrait, TeamHierarchyTrait;
 
     protected $healthQuoteService;
     protected $carQuoteService;

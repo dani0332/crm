@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use PDF;
+use Exception;
 use Carbon\Carbon;
 use App\Enums\SageEnum;
 use App\Models\Payment;
@@ -35,7 +36,6 @@ use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PaymentStatusTextEnum;
 use Illuminate\Support\Facades\Auth;
 use App\Factories\SagePayloadFactory;
-use App\Traits\GenericQueriesAllLobs;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Repositories\LookupRepository;
