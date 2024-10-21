@@ -17,10 +17,16 @@ class Department extends Model implements AuditableContract
     {
         return $this->hasMany(DepartmentTeams::class, 'department_id', 'id')->with('team');
     }
+
     public function getAuditables()
     {
         return [
             'auditable_type' => self::class,
         ];
+    }
+
+    public function scopeActive($query)
+    {
+        $query->where('is_active', 1);
     }
 }
