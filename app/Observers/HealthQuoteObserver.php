@@ -7,12 +7,14 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Jobs\CourtesyEmailJob;
 use App\Jobs\Health\SendApplicationSubmittedEmailJob;
 use App\Jobs\IntroEmailJob;
 use App\Jobs\MAWelcomeJob;
 use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
+use App\Repositories\PaymentRepository;
 use App\Services\HealthQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -69,7 +71,7 @@ class HealthQuoteObserver
         $this->syncQuote($healthQuote, $dirty);
 
         if (isset($dirty['quote_status_id']) && $healthQuote->quote_status_id === QuoteStatusEnum::PolicyBooked) {
-            $this->syncLeadEntries($healthQuote->uuid);
+            $this->updatePersonalQuote($healthQuote->uuid, QuoteTypeId::Health, $dirty);
         }
 
         if (isset($dirty['quote_status_id']) && $healthQuote->quote_status_id === QuoteStatusEnum::Qualified && $healthQuote->advisor_id) {
@@ -86,6 +88,15 @@ class HealthQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            $healthQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
+        ) {
+            $payment = $healthQuote->payments()->mainLeadPayment()->first();
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::HEALTH->value);
+
         }
     }
 }

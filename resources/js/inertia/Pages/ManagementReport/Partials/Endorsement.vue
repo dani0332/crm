@@ -8,7 +8,7 @@ const props = defineProps({
 });
 
 const calculateTotalSum = useCalculateTotalSum;
-
+const dateFormat = date => useDateFormat(date, 'YYYY-MM-DD');
 const priceFormat = (price, thousandSeparator = false) => {
   return thousandSeparator
     ? parseFloat(price).toLocaleString('en-US', {
@@ -168,6 +168,10 @@ const tableHeader = reactive([
   {
     text: 'Lead Source',
     value: 'source',
+  },
+  {
+    text: 'Booking Date',
+    value: 'policy_booking_date',
   },
 ]);
 const isIntegerColumn = key => {
@@ -335,6 +339,9 @@ const isIntegerColumn = key => {
     </template>
     <template #item-source="{ source }">
       {{ source ?? 'N/A' }}
+    </template>
+    <template #item-policy_booking_date="{ policy_booking_date }">
+      {{ dateFormat(policy_booking_date).value ?? 'N/A' }}
     </template>
     <template #body-append>
       <tr v-if="reportData.data.length > 0" class="total-row sticky bottom-0">
