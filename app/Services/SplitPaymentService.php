@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CollectionTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
@@ -41,7 +42,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PDF;
-use App\Enums\InsuranceProvidersEnum;
 
 class SplitPaymentService
 {
@@ -440,7 +440,7 @@ class SplitPaymentService
             info($errorMessage);
             if ($isFromJob && $splitPayment->id > 0) {
                 CcPaymentProcess::where('payment_splits_id', $splitPayment->id)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $errorMessage]);
-                info('Payment Process Job failed for Split Payment ID: ' . $splitPayment->id . ' with error: ' . $errorMessage);
+                info('Payment Process Job failed for Split Payment ID: '.$splitPayment->id.' with error: '.$errorMessage);
             }
         }
     }
@@ -775,9 +775,9 @@ class SplitPaymentService
     {
         if ($isFromJob && $splitPaymentId > 0) {
             CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::FAILED, 'message' => $error]);
-            info('Payment Process Job failed for Split Payment ID: ' . $splitPaymentId . ' with error: ' . $error);
+            info('Payment Process Job failed for Split Payment ID: '.$splitPaymentId.' with error: '.$error);
         }
-        Log::error('Error in handleCreditCardPayment for Quote Code: ' . $quoteCode . ': ' . $error);
+        Log::error('Error in handleCreditCardPayment for Quote Code: '.$quoteCode.': '.$error);
     }
 
     // function to process the master payment approve

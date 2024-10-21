@@ -12,7 +12,7 @@ class PolicyIssuanceFactory
     {
         return match (ucfirst($quoteType)) {
             QuoteTypes::TRAVEL->value => match ($insurerCode) {
-                InsuranceProvidersEnum::ALNC => new AllianceInsuranceService(),
+                InsuranceProvidersEnum::ALNC => new AllianceInsuranceService,
                 default => null,
             },
             default => null,

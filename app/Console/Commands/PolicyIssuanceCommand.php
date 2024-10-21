@@ -3,13 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Enums\PolicyIssuanceEnum;
-use App\Enums\SageEnum;
-use App\Factories\PolicyIssuanceFactory;
-use App\Jobs\BookPolicyOnSageJob;
 use App\Jobs\PolicyIssuanceJob;
-use App\Jobs\SendUpdateSageJob;
 use App\Models\PolicyIssuance;
-use App\Models\SageProcess;
 use Illuminate\Console\Command;
 
 class PolicyIssuanceCommand extends Command

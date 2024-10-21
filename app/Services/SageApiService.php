@@ -500,6 +500,7 @@ class SageApiService
         $isTotalPriceZero = $payment->total_price == 0;
         if (! $isPaymentMethodCreditApproved && $isTotalPriceZero && $isPaymentFrequencyUpfront) {
             info('Policy Book : postBookPolicyToSage : Please check the payment as total price is set to zero while Payment Method is '.PaymentMethodsEnum::CreditApproval.' and Frequency is '.$payment->frequency.'. Please Select Credit Approval as your payment method and Upfront as Payment Frequency to Proceed!');
+
             return ['status' => false, 'message' => 'Please check the payment as total price is set to zero while Payment Method is '.PaymentMethodsEnum::CreditApproval.' and Frequency is '.$payment->frequency.'. Please Select Credit Approval as your payment method and Upfront as Payment Frequency to Proceed!'];
         }
 
@@ -515,12 +516,14 @@ class SageApiService
         /* Check Sage Vendor ID, GL Account ID, Insurer Customer ID, and Sage Customer ID*/
         $checkRequiredSageIds = $this->checkRequiredSageIds($sageRequest);
         if (! $checkRequiredSageIds['status']) {
-            info('Policy Book : postBookPolicyToSage : '. $checkRequiredSageIds['message']);
+            info('Policy Book : postBookPolicyToSage : '.$checkRequiredSageIds['message']);
+
             return $checkRequiredSageIds;
         }
 
         if ($quote->quote_status_id == QuoteStatusEnum::PolicyBooked) {
             info('Policy Book : postBookPolicyToSage : Policy has been already booked!');
+
             return ['status' => true, 'message' => 'Policy has been already booked!'];
         }
 
@@ -553,7 +556,7 @@ class SageApiService
 
         if (! empty($missingFields)) {
             $message = implode(', ', $missingFields).' not found.';
-            info('Policy Book : postBookPolicyToSage : ' . $message);
+            info('Policy Book : postBookPolicyToSage : '.$message);
 
             return ['status' => false, 'message' => $message];
         }

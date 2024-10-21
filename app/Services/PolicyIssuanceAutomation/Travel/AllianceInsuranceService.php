@@ -366,7 +366,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
             return $response;
         }
-        info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Sage Process Created : ' . $createSageProcessResponse['message']);
+        info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Sage Process Created : '.$createSageProcessResponse['message']);
 
         info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
 
