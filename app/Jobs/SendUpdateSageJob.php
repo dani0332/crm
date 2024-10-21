@@ -36,7 +36,7 @@ class SendUpdateSageJob implements ShouldQueue
         $this->sendUpdateLog = $sendUpdateLog;
         $this->sageRequestPayload = $sageRequestPayload;
         $this->sageProcess = $sageProcess;
-        $this->lockPostfix = Carbon::now()->timestamp;
+        $this->lockPostfix = Carbon::now()->format('YmdHi'); // lock postfix to release the WithoutOverlapping lock i.e 2024102113
     }
 
     /**
