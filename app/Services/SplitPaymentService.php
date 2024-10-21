@@ -706,7 +706,7 @@ class SplitPaymentService
 
         if (! $paymentSplit->payment->is_approved && ! $isFromJob) {
 
-            $retryResponse = $this->handleWithDeadlockRetries(function () use ($paymentSplit, $amountCollected, $modelType, $quoteId, $isFromJob) {
+            $retryResponse = $this->handleWithDeadlockRetries(function () use ($paymentSplit, $amountCollected, $modelType, $quoteId, $isFromJob, $sendUpdateId) {
                 if (empty($paymentSplit->verified_at)) {
                     $paymentSplit->verified_at = now();
                     $paymentSplit->verified_by = Auth::user()->id;
@@ -728,7 +728,9 @@ class SplitPaymentService
                 info('Parent payment captured amount updated for Payment Split ID: '.$paymentSplit->id.' and Code: '.$paymentSplit->code);
 
                 if ($parentPayment->send_update_log_id) {
-                    SendUpdateLog::where('id', $parentPayment->send_update_log_id)->update([
+                    $sendUpdateLog = SendUpdateLog::find($parentPayment->send_update_log_id);
+                    app(CentralService::class)->updateSendUpdateStatusLogs($sendUpdateLog->id, $sendUpdateLog->status, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
+                    $sendUpdateLog->update([
                         'status' => SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
                     ]);
                 }
@@ -802,6 +804,7 @@ class SplitPaymentService
             $totalApproved = $quoteModel->payments()->where('is_approved', 1)->count();
             if ($totalApproved == $quoteModel->payments()->count()) {
                 if ($sendUpdateId) {
+                    app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
                     $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
                 } else {
 

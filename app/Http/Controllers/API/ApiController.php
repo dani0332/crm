@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\QuoteUpdatedRequest;
 use App\Http\Requests\Api\UpdateLeadStatusRequest;
 use App\Http\Requests\APiFetchUrl;
 use App\Http\Requests\AssignLeadRequest;
@@ -130,7 +131,7 @@ class ApiController extends Controller
         }
         $response = app(BirdService::class)->stopWorkFlow($workflow);
 
-        return apiResponse([$response], Response::HTTP_OK, 'Email event stopped successfully');
+        return apiResponse(['response_body' => $response->body ?? null], Response::HTTP_OK, 'Email event stopped successfully');
     }
     // Temporary Endpoint - Will be Removed after fixing Quote Status Dates for all LOBs
     public function fixQuoteStatusDate()
@@ -150,6 +151,11 @@ class ApiController extends Controller
         }
 
         return apiResponse(null, Response::HTTP_OK, 'Invalid Quote Type');
+    }
+
+    public function quoteUpdated(QuoteUpdatedRequest $request)
+    {
+        return $this->apiService->quoteUpdated($request->validated());
     }
 
     public function updateQuoteStatus(UpdateLeadStatusRequest $request)

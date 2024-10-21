@@ -2,11 +2,13 @@
 
 namespace App\Repositories;
 
+use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\WatermarkDocTypesEnum;
+use App\Enums\SendUpdateLogStatusEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
@@ -129,7 +131,7 @@ class PersonalQuoteRepository extends BaseRepository
                 $docUuid = uniqid().rand(1, 100);
             }
 
-            // This data will store in quote doocumeets table
+            // This data will store in quote documents table
             $document = [
                 'doc_name' => 'original_'.$docName,
                 'watermarked_doc_name' => $watermarkData['watermarked_doc_name'] ?? null,
@@ -144,7 +146,28 @@ class PersonalQuoteRepository extends BaseRepository
             ];
             info('Document array prepared for creation', $document);
 
-            return $quote->documents()->create($document);
+            try {
+            DB::transaction(function () use ($quote, $document, $documentType) {
+
+                $quoteDocuments = $quote->documents->pluck('document_type_code')->toArray();
+                $taxInvoiceDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
+
+                if (request()->is_send_update && in_array($documentType->code, $taxInvoiceDocuments) && count(array_intersect($taxInvoiceDocuments, $quoteDocuments)) == 0) {
+                    app(CentralService::class)->updateSendUpdateStatusLogs($quote->id, $quote->status, SendUpdateLogStatusEnum::UPDATE_ISSUED);
+                    $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_ISSUED]);
+                    info('Send Update status updated to UPDATE_ISSUED - Ref: '.$quote->code);
+                }
+
+                $quote->documents()->create($document);
+                info('Document uploaded - Ref: '.$quote->code);
+            });
+
+            return ['status' => true, 'message' => 'File Uploaded'];
+        } catch (\Exception $exception) {
+            logger()->error('Error while uploading document - Ref: '.$quote->code, ['error' => $exception->getMessage()]);
+
+            return ['status' => false, 'message' => $exception->getMessage() ?? 'Error uploading file'];
+        }
         } catch (\Exception $exception) {
             Log::info($exception->getMessage());
 

@@ -627,7 +627,7 @@ const onAddDocumentSubmit = event => {
           </template>
 
           <template #footer>
-            <div class="mt-2 mb-5 text-center">
+            <div class="mt-2 mb-5 text-center hidden">
               <x-button
                 size="xs"
                 class="border-0 shadow-none"
