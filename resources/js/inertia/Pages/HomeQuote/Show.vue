@@ -1417,6 +1417,7 @@ const onAddUpdate = () => {
                     item.user_id &&
                     item.user_id != null
                   "
+                  :key="item.user_id"
                 >
                   Delete
                 </x-button>
