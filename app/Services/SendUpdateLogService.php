@@ -466,7 +466,7 @@ class SendUpdateLogService
         } else {
             if ($getQuoteDetails->insly_id || $getQuoteDetails->insly_migrated) {
                 if (empty($sendUpdateLog->insurance_provider_id)) {
-                    if (! checkPersonalQuotes($quoteType)) {
+                    if (in_array($quoteType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
                         $getQuoteDetails->load('plan.insuranceProvider');
                         $insuranceProviderId = $getQuoteDetails?->plan?->insuranceProvider?->id;
                     } else {
