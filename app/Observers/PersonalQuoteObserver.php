@@ -76,7 +76,7 @@ class PersonalQuoteObserver
             $personalQuote->quote_status_id === QuoteStatusEnum::PolicyIssued &&
             $personalQuote->quote_type_id === QuoteTypeId::Bike
         ) {
-            EmbeddedProductRepository::capturePayment($personalQuote->id, QuoteTypes::getName($personalQuote->quote_type_id));
+            EmbeddedProductRepository::capturePayment($personalQuote->id, QuoteTypes::getName($personalQuote->quote_type_id)->value);
         }
 
         if (
@@ -93,7 +93,7 @@ class PersonalQuoteObserver
 
             if($personalQuote->quote_type_id === QuoteTypeId::Bike) {
                 // Ep send documents
-                EmbeddedProductRepository::sendDocumentsByLead($personalQuote->id, QuoteTypes::getName($personalQuote->quote_type_id));
+                EmbeddedProductRepository::sendDocumentsByLead($personalQuote->id, QuoteTypes::getName($personalQuote->quote_type_id)->value);
             }
         }
 
