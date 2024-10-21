@@ -13,11 +13,11 @@ use App\Enums\TravelQuoteEnum;
 use App\Interfaces\PolicyIssuanceInterface;
 use App\Models\DocumentType;
 use App\Models\Payment;
+use App\Models\PolicyIssuanceLog;
 use App\Services\ApplicationStorageService;
 use App\Services\SageApiService;
 use App\Services\SplitPaymentService;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Storage;
 
@@ -47,15 +47,15 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
     }
     public function handle($process)
     {
-        info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' PID : '.$process->id.' started');
+        $quote = $process->model;
+
+        info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' started');
 
         $response = ['status' => false, 'error' => null, 'message' => null];
-
-        $quote = $process->model;
-        info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' PID : '.$process->id.' - Plan ID : '.$quote->plan_id);
+        info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Plan ID : '.$quote->plan_id);
 
         $selectedPlan = $quote->travelQuotePlanDetails()->where('plan_id', $quote->plan_id)->first();
-        info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' PID : '.$process->id.' - TravelQuotePlanDetails ID : '.$selectedPlan->id);
+        info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - TravelQuotePlanDetails ID : '.$selectedPlan->id);
 
         $isDuplicateOrCIRLead = ! empty($quote->parent_duplicate_quote_id);
         $payment = Payment::where('code', $quote->code)->mainLeadPayment()->first();
@@ -70,13 +70,13 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             $travelType = TravelQuoteEnum::ALLIANCE_OUT_BOUND;
         }
 
-        info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' PID : '.$process->id.' - Travel Type : '.$travelType);
+        info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Travel Type : '.$travelType);
         $lastCompletedStep = $process->completed_step;
         $nextStepToBeExecuted = $lastCompletedStep ? $this->getNextStep($lastCompletedStep) : self::ISSUE_POLICY;
 
         if ($nextStepToBeExecuted) {
             if ($nextStepToBeExecuted === self::ISSUE_POLICY) {
-                info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
+                info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
                 $policyIssuanceResponse = $this->issuePolicyAndFillPolicyDetails($quote, $selectedPlan, $travelType);
                 if (! $policyIssuanceResponse['status']) {
                     return $policyIssuanceResponse;
@@ -86,7 +86,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
             if ($nextStepToBeExecuted === self::PURCHASE_POLICY) {
-                info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
+                info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
                 $policyPurchaseResponse = $this->policyPurchase($quote, $travelType);
                 if (! $policyPurchaseResponse['status']) {
                     return $policyPurchaseResponse;
@@ -97,9 +97,9 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
             if ($nextStepToBeExecuted === self::UPLOAD_POLICY_DOCUMENTS) {
                 // Add Sleep because after purchase policy we need to wait for some time to get the policy documents generated. -- Policy documents are still generating
-                info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted.' - Waiting for 10 seconds so  Provider can generate the policy documents');
+                info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted.' - Waiting for 10 seconds so  Provider can generate the policy documents');
                 sleep(10);
-                info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
+                info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
                 $uploadPolicyDocumentResponse = $this->fetchAndUploadDocument($quote, $travelType);
                 if (! $uploadPolicyDocumentResponse['status']) {
                     return $uploadPolicyDocumentResponse;
@@ -109,7 +109,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
             if ($nextStepToBeExecuted === self::FILL_POLICY_BOOKING_DETAILS) {
-                info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
+                info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
                 $fillPolicyDetailsResponse = $this->uploadBuyerTaxInvoiceAndFillBookingDetails($quote, $payment);
                 if (! $fillPolicyDetailsResponse['status']) {
                     return $fillPolicyDetailsResponse;
@@ -118,7 +118,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             }
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
             if ($nextStepToBeExecuted === self::BOOK_POLICY) {
-                info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
+                info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
                 $fillPolicyDetailsResponse = $this->triggerBookPolicyProcess($quote, $process);
                 if (! $fillPolicyDetailsResponse['status']) {
                     return $fillPolicyDetailsResponse;
@@ -126,10 +126,10 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
                 $process->update(['completed_step' => $fillPolicyDetailsResponse['completed_step']]);
             }
         } else {
-            info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' PID : '.$process->id.' - Last Completed Step : '.$lastCompletedStep);
+            info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Last Completed Step : '.$lastCompletedStep);
         }
 
-        info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' PID : '.$process->id.' ended');
+        info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' ended');
         $response['status'] = true;
         $response['message'] = 'Sage Booking of policy triggered successfully';
 
@@ -194,7 +194,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         ]);
         info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy Issued Api called successfully and Quote is updated');
 
-        info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote ID : '.$quote->code.' ended');
+        info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
 
         $response['status'] = true;
         $response['message'] = 'Policy Issued Api called successfully and Quote is updated.';
@@ -351,18 +351,13 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
         $response = ['status' => false, 'completed_step' => self::BOOK_POLICY, 'error' => null, 'message' => null];
 
-        $request = new Request;
-        $request->setMethod('POST');
-
-        $data = [
-            'quote_id' => $quote->id,
-            'modelType' => self::TYPE,
-            'model_type' => self::TYPE,
-            'is_send_policy' => false,
-            'send_policy_type' => SendPolicyTypeEnum::SAGE,
-            'transaction_payment_status' => null,
-        ];
-        $request->request->add($data);
+        $request = new \stdClass;
+        $request->quote_id = $quote->id;
+        $request->modelType = self::TYPE;
+        $request->model_type = self::TYPE;
+        $request->is_send_policy = false;
+        $request->send_policy_type = SendPolicyTypeEnum::SAGE;
+        $request->transaction_payment_status = null;
 
         $createSageProcessResponse = (new SageApiService)->postBookPolicyToSage($request, $quote);
 
@@ -371,6 +366,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
             return $response;
         }
+        info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' Sage Process Created : ' . $createSageProcessResponse['message']);
 
         info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
 
@@ -438,5 +434,15 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             default => null,
         };
     }
+
+    /*private function storePolicyIssuanceLog($quote, $payload, $response, $step){
+        PolicyIssuanceLog::create([
+            'model_type' => $quote->id,
+            'model_id' => $quote->id,
+            'step' => $step,
+            'payload' => json_encode($payload),
+            'response' => json_encode($response),
+        ]);
+    }*/
 
 }
