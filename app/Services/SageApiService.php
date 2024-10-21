@@ -489,9 +489,6 @@ class SageApiService
                 'paymentable_type' => $quote->getMorphClass(),
             ])->mainLeadPayment()->with('paymentSplits')->first();
         }
-        $payment->update([
-            'broker_invoice_number' => (new PaymentRepository)->generateBrokerInvoiceNumber($payment, $request->model_type),
-        ]);
         $paymentSplits = $payment->paymentSplits;
 
         $data = ['id' => $quote->id, 'quoteTypeId' => $quoteTypeId];
