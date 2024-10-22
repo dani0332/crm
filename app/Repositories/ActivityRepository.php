@@ -76,7 +76,7 @@ class ActivityRepository extends BaseRepository
             'source' => LeadSourceEnum::IMCRM,
             'user_id' => auth()->user()->id ?? null,
         ];
-        
+
         if (isset($data['quote_id'])) {
             $quote = PersonalQuoteRepository::where('id', $data['quote_id'])->firstOrFail();
             $activityData['client_name'] = $quote->first_name.' '.$quote->last_name;
