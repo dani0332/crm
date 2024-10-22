@@ -94,7 +94,7 @@ class PersonalQuoteObserver
             $personalQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             $payment = $personalQuote->payments()->mainLeadPayment()->first();
-            if(!empty($payment)) {
+            if (! empty($payment)) {
                 (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::PERSONAL->value);
             }
         }
