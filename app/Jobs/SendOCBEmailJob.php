@@ -71,7 +71,9 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
 
         try {
             $carQuote = CarQuote::where('uuid', $this->quoteUuid)->firstOrFail();
-
+            if (! $carQuote) {
+                return false;
+            }
             $listQuotePlans = $this->carQuoteService->getPlans($this->quoteUuid, true, true);
 
             $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
