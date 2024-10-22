@@ -17,6 +17,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -34,7 +35,7 @@ class SendOCBEmailJob implements ShouldQueue
     protected $sendEmailCustomerService;
     public $tries = 3;
     public $timeout = 90;
-    public $backoff = 30;
+    public $backoff = 120;
 
     /**
      * Create a new job instance.
@@ -102,6 +103,11 @@ class SendOCBEmailJob implements ShouldQueue
 
     public function failed(Throwable $exception)
     {
-        info('SendOCBEmailJob -: '.$this->quoteUuid.' Error: '.$exception->getMessage());
+        info('SendOCBEmailJob Failed: '.$this->quoteUuid.' Error: '.$exception->getMessage());
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping($this->quoteUuid))->dontRelease()];
     }
 }
