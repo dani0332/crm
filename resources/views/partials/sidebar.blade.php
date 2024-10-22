@@ -123,12 +123,18 @@ use App\Enums\PermissionsEnum;
                                 </ul>
                             </li>
                             @endcanany
-                            @can(PermissionsEnum::HealthQuotesList)
-                            <li><a href={{ url('quotes/health') }}>Health Quotes</a></li>
-                            @endcan
-                            @can(PermissionsEnum::HEALTH_REVIVAL_QUOTES_LIST)
-                            <li><a href={{ url('quotes/health-revival') }}>Health Revival Quotes</a></li>
-                            @endcan
+
+                            <li><a>Health<span class="fa fa-chevron-down" style="color: white;"></span></a>
+                                <ul class="nav child_menu">
+                                    @can(PermissionsEnum::HealthQuotesList)
+                                    <li><a href={{ url('quotes/health') }}>Health Quotes</a></li>
+                                    @endcan
+
+                                    @can(PermissionsEnum::HEALTH_REVIVAL_QUOTES_LIST)
+                                    <li><a href={{ url('quotes/health-revival') }}>Health Revival Quotes</a></li>
+                                    @endcan
+                                </ul>
+                            </li>
                             @can(PermissionsEnum::TravelQuotesList)
                             <li><a href="{{ url('quotes/travel') }}">Travel Quotes</a></li>
                             @endcan

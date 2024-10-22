@@ -267,19 +267,30 @@ class HandleInertiaRequests extends Middleware
                     auth()->user()->hasAnyPermission(
                         PermissionsEnum::HealthQuotesList,
                         PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS,
-                        PermissionsEnum::HEALTH_QUOTES_ACCESS
-                    ),
-                    'Health Quotes',
-                    route('health.index'),
-                    fn ($s) => $s->attributes(['icon' => 'health'])
-                )
-                ->addIf(
-                    auth()->user()->hasAnyPermission(
+                        PermissionsEnum::HEALTH_QUOTES_ACCESS,
                         PermissionsEnum::HEALTH_REVIVAL_QUOTES_LIST,
                     ),
-                    'Health Revival Quotes',
-                    '/quotes/health-revival',
-                    fn ($s) => $s->attributes(['icon' => 'health'])
+                    'Health',
+                    route('health.index'),
+                    fn($s) => $s
+                        ->attributes(['icon' => 'health'])
+                        ->addIf(
+                            auth()->user()->hasAnyPermission(
+                                PermissionsEnum::HealthQuotesList,
+                                PermissionsEnum::HEALTH_QUOTES_MANAGER_ACCESS,
+                                PermissionsEnum::HEALTH_QUOTES_ACCESS
+                            ),
+                            'Health Quotes',
+                            route('health.index'),
+                            fn($s) => $s->attributes(['icon' => 'health'])
+                        )
+
+                        ->addIf(
+                            auth()->user()->can(PermissionsEnum::HEALTH_REVIVAL_QUOTES_LIST),
+                            'Health Revival Quotes',
+                            '/quotes/health-revival',
+                            fn($s) => $s->attributes(['icon' => 'health'])
+                        ),
                 )
                 ->addIf(
                     auth()->user()->can(PermissionsEnum::TravelQuotesList),
