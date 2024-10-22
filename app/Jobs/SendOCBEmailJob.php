@@ -2,7 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\TiersEnum;
+use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\CarQuoteService;
@@ -78,7 +80,7 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
 
             $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
 
-            $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($quotePlansCount);
+            $emailTemplateId = $this->getEmailTemplateId($carQuote, $quotePlansCount);
 
             $previousAdvisor = null;
             if (! empty($carQuote->previous_advisor_id)) {
@@ -91,7 +93,12 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
 
             $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
 
-            $responseCode = $this->sendEmailCustomerService->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
+            $senderDetail = isset($emailData->advisorEmail) && $emailData->advisorEmail != null && $emailData->advisorEmail != '' ? [
+                'email' => strstr($emailData->advisorEmail, '@', true) . '@renewals.insurancemarket.ae',
+                'name' => $emailData->advisorName,
+            ]: [];
+
+            $responseCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch', [], $senderDetail);
 
             if (in_array($responseCode, [200, 201])) {
                 Log::info('SendOCBEmailJob - OCB Email Sent: '.$responseCode.' Customer Email Address: '.$carQuote->email.' Quote UuId: '.$this->quoteUuid);
@@ -100,6 +107,39 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
             }
         } catch (Exception $e) {
             Log::info('SendOCBEmailJob - Error: '.$e->getMessage());
+        }
+    }
+
+    private function getEmailTemplateId($carQuote, $quotePlansCount) 
+    {
+        $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($quotePlansCount);
+        Log::info('fn: sendOcbEmailJob Renewals OCB Email email template id: ' . $emailTemplateId);
+
+        if (isset($carQuote->advisor_id)) {
+            $advisor = $this->userService->getUserById($carQuote->advisor_id);
+        } else {
+            $key = $this->getNoAdvisorKey($quotePlansCount);
+            $noAdvisorTemplateId = ApplicationStorage::where('key_name', $key)->first();
+            $emailTemplateId = $noAdvisorTemplateId ? (int) $noAdvisorTemplateId->value : 551;
+        }
+
+        return $emailTemplateId;
+    }
+
+    /**
+     * This function use to get key for no advisor email template
+     *
+     * @param  int  $quotePlansCount
+     * @return string
+     */
+    private function getNoAdvisorKey($quotePlansCount)
+    {
+        if ($quotePlansCount == 0) {
+            return ApplicationStorageEnums::OCB_NEW_BUSINESS_ZERO_PLAN;
+        } elseif ($quotePlansCount == 1) {
+            return ApplicationStorageEnums::OCB_NEW_BUSINESS_SINGLE_PLAN;
+        } else {
+            return ApplicationStorageEnums::OCB_NEW_BUSINESS_MULTIPLE_PLANS;
         }
     }
 

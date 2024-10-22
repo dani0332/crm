@@ -153,7 +153,7 @@ class SendEmailCustomerService extends BaseService
         }
     }
 
-    public function sendEmail($emailTemplateId, $emailData, $tag, $cc = [])
+    public function sendEmail($emailTemplateId, $emailData, $tag, $cc = [], $senderDetail = [])
     {
         try {
             $appEnv = config('constants.APP_ENV');
@@ -178,6 +178,7 @@ class SendEmailCustomerService extends BaseService
                     'name' => $emailData->customerName,
                 ]],
                 'cc' => count($cc) > 0 ? $cc : null,
+                'sender' => count($senderDetail) > 0 ? $senderDetail : null,
                 'templateId' => (int) $emailTemplateId,
                 'params' => [
                     'customerName' => $emailData->customerName,
@@ -355,6 +356,7 @@ class SendEmailCustomerService extends BaseService
                     'name' => $emailData->pdfAttachment->name,
                 ];
             }
+
 
             $body = [
                 'sender' => [
