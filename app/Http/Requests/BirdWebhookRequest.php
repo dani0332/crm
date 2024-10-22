@@ -24,19 +24,22 @@ class BirdWebhookRequest extends FormRequest
     public function rules()
     {
         return [
-            'results' => 'nullable |array',
-            'results.0' => 'nullable|array',
-            'results.0.type' => 'nullable|string',
-            'results.0.receiver' => 'nullable|array',
-            'results.0.receiver.connector' => 'nullable|array',
-            'results.0.receiver.connector.0.identifierValue' => 'nullable|string',
-            'results.0.receiver.contacts' => 'nullable|array',
-            'results.0.receiver.contacts.0.identifierValue' => 'nullable|string',
-            'receiver.contacts' => 'nullable|array',
-            'receiver.contacts.0.identifierValue' => 'nullable|string',
-            'id' => 'nullable|string',
-            'status' => 'nullable|string',
-            'reason' => 'nullable|string',
+            'service' => 'required|string',
+            'event' => 'required|string',
+            'payload.id' => 'required|uuid',
+            'payload.type' => 'required|string',
+            'payload.createdAt' => 'required|date',
+            'payload.messageId' => 'required|uuid',
+            'payload.channelId' => 'required|uuid',
+            'payload.platformId' => 'required|string',
+            'payload.messageReference' => 'required|string',
+            'payload.messagePartsCount' => 'required|integer',
+            'payload.receiver.contacts' => 'required|array',
+            'payload.receiver.contacts.*.id' => 'required|uuid',
+            'payload.receiver.contacts.*.identifierKey' => 'required|string',
+            'payload.receiver.contacts.*.identifierValue' => 'required|email',
+            'payload.details' => 'nullable|string',
+            'payload.metadata' => 'nullable|array',
         ];
     }
 

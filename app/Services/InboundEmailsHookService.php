@@ -2,14 +2,21 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
+use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\WorkflowTypeEnum;
 use App\Factories\AllocationFactory;
 use App\Jobs\EmailStatusEventJob;
+use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
+use App\Models\EmailStatus;
+use App\Models\HealthQuote;
 use App\Models\TravelQuote;
+use App\Models\User;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Response;
@@ -129,33 +136,42 @@ class InboundEmailsHookService extends BaseService
     public function handleBirdWebhook($request)
     {
         try {
-            info('Bird Webhook Received Successfully!');
-            $payload = collect($request);
-            if (empty($payload)) {
-                info('Webhook Payload data is empty!');
+            $payload = collect($request->all());
+            if ($payload->isEmpty()) {
+                info('Bird Webhook Payload data is empty!');
 
                 return apiResponse([], Response::HTTP_BAD_REQUEST, 'Webhook Payload is empty!');
             }
-            info('Webhook Payload: '.json_encode($payload));
-            $type = (isset($payload['results'])) ? collect($payload['results'])->first()['type'] : null;
-            if (! empty($type)) {
-                // Extract and filter the required fields
-                $payload = collect($payload['results'])->first();
-                if (empty($payload)) {
-                    info('Webhook Payload result is empty!');
+            // Extract the event type from the payload
+            $type = $payload['payload']['type'] ?? null;
 
-                    return apiResponse([], Response::HTTP_BAD_REQUEST, 'Webhook Payload is empty!');
+            if (! empty($type)) {
+                info('Bird Webhook  Payload: '.json_encode($payload));
+                // Extract necessary fields from the payload
+                $messageId = $payload['payload']['messageId'] ?? null;
+                $status = $type;
+                $identifierValue = collect($payload['payload']['receiver']['contacts'])->first()['identifierValue'] ?? null;
+                if ($messageId && $status) {
+                    // Update the message interaction
+                    $result = collect($payload['payload'])->only(['messageId', 'type'])
+                        ->merge(['identifierValue' => $identifierValue])
+                        ->filter();
+
+                    $this->birdMessageInteractionsUpdate($result, $identifierValue);
+                    // Handle specific status types if necessary
+                    if (in_array($type, [ProcessStatusCode::UNSUBSCRIBED])) {
+                        $this->sendUnsubscribeEmailNotification($messageId);
+                    }
+                } else {
+                    info('Required fields missing in the payload.');
+
+                    return apiResponse([], Response::HTTP_BAD_REQUEST, 'Invalid payload data.');
                 }
-                $result = collect($payload)->only(['messageId', 'type'])
-                    ->filter();
-                $this->birdMessageInteractionsUpdate($result);
             } else {
-                $identifierValue = isset($payload['receiver']['contacts']) ? collect($payload['receiver']['contacts'])->first()['identifierValue'] : null;
-                // Extract and filter therequired fields
-                $result = $payload->only(['id', 'status', 'reason'])
-                    ->merge(['identifierValue' => $identifierValue])
-                    ->filter();
-                $this->birdMessageStatusUpdate($result, $identifierValue);
+                // Handle cases where no type is provided in the payload
+                info('Type not found in the payload.');
+
+                return apiResponse([], Response::HTTP_BAD_REQUEST, 'Invalid webhook data.');
             }
 
             return apiResponse([], Response::HTTP_OK, 'Webhook Received Successfully!');
@@ -164,49 +180,67 @@ class InboundEmailsHookService extends BaseService
             throw $th;
         }
     }
-
-    public function birdMessageStatusUpdate($result, $identifierValue = null)
+    public function birdMessageInteractionsUpdate($result, $identifierValue = null)
     {
         $result = (object) $result->all();
-        info('Webhook birdMessageStatusUpdate Payload: '.json_encode($result));
-        $messageId = $result->id ?? null;
-        $status = $result->status ?? null;
+        info('Webhook birdMessageInteractionsUpdate Payload: '.json_encode($result));
+        $messageId = $result->messageId ?? null;
+        $status = $result->type ?? null;
         $emailSubject = $result->reason ?? null;
+
         if ($messageId && $status) {
-            $emailData = (object) ['message_id' => $messageId,
+            $emailData = (object) [
+                'message_id' => $messageId,
                 'status' => $status,
                 'subject' => $emailSubject,
-                'customer_email' => $identifierValue];
+                'customer_email' => $identifierValue,
+            ];
             // Dispatch the EmailStatusEventJob to handle the email status update
             info('EmailStatusEventJob sending job dispatch | Time: '.now());
-            EmailStatusEventJob::dispatch($emailData)->delay(Carbon::now()->addSeconds(90));
+            EmailStatusEventJob::dispatch($emailData)->delay(Carbon::now()->addSeconds(120));
             info('EmailStatusEventJob dispatched successfully!');
         } else {
             $msg = 'EmailData not found for msg_id: '.$messageId;
             info($msg);
         }
     }
-    public function birdMessageInteractionsUpdate($result, $identifierValue = null)
+    public function sendUnsubscribeEmailNotification($messageId)
     {
-        $result = (object) $result->all();
-        info('Webhook birdMessageInteractionsUpdate Payload: '.json_encode($result));
-
-        $messageId = $result->messageId ?? null;
-        $status = $result->type ?? null;
-        $emailSubject = $result->reason ?? null;
-        if ($messageId && $status) {
-            $emailData = (object) ['message_id' => $messageId,
-                'status' => $status,
-                'subject' => $emailSubject,
-                'customer_email' => $identifierValue];
-            // Dispatch the EmailStatusEventJob to handle the email status update
-            info('EmailStatusEventJob sending job dispatch | Time: '.now());
-            EmailStatusEventJob::dispatch($emailData)->delay(Carbon::now()->addSeconds(90));
-            info('EmailStatusEventJob dispatched successfully!');
+        $emailStatusData = EmailStatus::where('msg_id', $messageId)->first();
+        if ($emailStatusData) {
+            switch ($emailStatusData->quote_type_id) {
+                case QuoteTypes::CAR->id():
+                    $quote = CarQuote::where('id', $emailStatusData->quote_id)->first();
+                    break;
+                case QuoteTypes::HEALTH->id():
+                    $quote = HealthQuote::where('id', $emailStatusData->quote_id)->first();
+                    break;
+                default:
+                    $quote = null;
+                    break;
+            }
+            if (! empty($quote)) {
+                $advisor = User::where('id', $quote->advisor_id)->first();
+                if (! empty($advisor)) {
+                    $emailData = [
+                        'advisorEmail' => $advisor->email,
+                        'customerEmail' => $quote->email,
+                        'quoteUID' => $quote->uuid,
+                        'refID' => $quote->code,
+                        'receivedDate' => now(),
+                        'workflowType' => WorkflowTypeEnum::UNSUBSCRIBE_REQUESTED_NOTIFICATIION,
+                    ];
+                    $birdMotorEventNB = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW)->first();
+                    app(BirdService::class)->triggerWebHookRequest($birdMotorEventNB->value, $emailData);
+                } else {
+                    info("Advisor not found for email: {$quote->uuid} | Time: ".now());
+                }
+            }
         } else {
-            $msg = 'EmailData not found for msg_id: '.$messageId;
+            $msg = 'EmailStatus not found for msg_id: '.$messageId;
             info($msg);
         }
+
     }
 
 }
