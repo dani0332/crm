@@ -6,6 +6,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\SageEnum;
 use App\Models\SageProcess;
 use App\Services\SageApiService;
+use Artisan;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -37,7 +38,7 @@ class BookPolicyOnSageJob implements ShouldQueue
         $this->quote = $quote;
         $this->request = $request;
         $this->sageProcess = $sageProcess;
-        $this->lockPostfix = Carbon::now()->timestamp;
+        $this->lockPostfix = Carbon::now()->format('YmdHi'); // lock postfix to release the WithoutOverlapping lock i.e 2024102113
     }
 
     /**
@@ -77,8 +78,8 @@ class BookPolicyOnSageJob implements ShouldQueue
             info('job:SendUpdateSageJob - Process Skipped - QuoteType: '.$this->sageProcess->id.' - Status : '.$this->sageProcess->status);
         }
 
-        (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
-        info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses triggered for Insurer - '.$this->sageRequest->insurerID);
+        Artisan::call('sage-processes:run', ['insurer' => $this->sageRequest->insurerID]);
+        info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses triggered for  code -'.$this->quote->code.'Insurer - '.$this->sageRequest->insurerID);
     }
 
     public function failed(Throwable $exception)
@@ -88,7 +89,7 @@ class BookPolicyOnSageJob implements ShouldQueue
         info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses fn:failed triggered for code -'.$this->quote->code.' updating status to failed');
         (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, $this->sageRequest->userId);
 
-        (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
+        Artisan::call('sage-processes:run', ['insurer' => $this->sageRequest->insurerID]);
         info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses fn:failed triggered for code -'.$this->quote->code.' Insurer - '.$this->sageRequest->insurerID);
 
         Log::error('Policy Book : BookPolicyOnSageJob : '.$this->quote->code.' Error : '.$exception->getMessage());
