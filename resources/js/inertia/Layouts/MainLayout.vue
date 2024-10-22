@@ -17,10 +17,16 @@ const createLink = link => {
       icon: link.attributes.icon,
       value: link.url,
       href: link.url,
-      active: page.props.location.startsWith(link.url) || link.active,
+      active: isActive(link),
       ...(link.attributes.external ? { target: '_blank' } : null),
     };
   }
+};
+
+const isActive = link => {
+  const currentUrl = page.props.location;
+  const exactMatch = new RegExp(`^${link.url}$`);
+  return exactMatch.test(currentUrl) || link.active;
 };
 
 const user = computed(() => page.props.auth.user);

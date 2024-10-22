@@ -272,7 +272,7 @@ class HandleInertiaRequests extends Middleware
                     ),
                     'Health',
                     route('health.index'),
-                    fn($s) => $s
+                    fn ($s) => $s
                         ->attributes(['icon' => 'health'])
                         ->addIf(
                             auth()->user()->hasAnyPermission(
@@ -282,14 +282,14 @@ class HandleInertiaRequests extends Middleware
                             ),
                             'Health Quotes',
                             route('health.index'),
-                            fn($s) => $s->attributes(['icon' => 'health'])
+                            fn ($s) => $s->attributes(['icon' => 'health'])
                         )
 
                         ->addIf(
                             auth()->user()->can(PermissionsEnum::HEALTH_REVIVAL_QUOTES_LIST),
                             'Health Revival Quotes',
-                            '/quotes/health-revival',
-                            fn($s) => $s->attributes(['icon' => 'health'])
+                            route('healthrevival-quotes-list'),
+                            fn ($s) => $s->attributes(['icon' => 'health'])
                         ),
                 )
                 ->addIf(
