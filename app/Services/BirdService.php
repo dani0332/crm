@@ -49,7 +49,7 @@ class BirdService extends BaseService
         }
     }
 
-    public function stopWorkFlow($workflow, $flowId=null)
+    public function stopWorkFlow($workflow, $flowId = null)
     {
         $birdWorkSpaceId = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_WORKSPACE_ID)->first();
         $channelId = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_CHANNEL_ID)->first();
