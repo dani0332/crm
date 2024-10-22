@@ -75,7 +75,7 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
 
             $emailData = (new CarEmailService($sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
 
-            $responseCode = $this->sendEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch', $sendEmailCustomerService);
+            $responseCode = $this->sendEmail($carQuote, $emailTemplateId, $emailData, $sendEmailCustomerService);
 
             if (in_array($responseCode, [200, 201])) {
                 Log::info('SendOCBEmailJob - OCB Email Sent: '.$responseCode.' Customer Email Address: '.$carQuote->email.' Quote UuId: '.$this->quoteUuid);
