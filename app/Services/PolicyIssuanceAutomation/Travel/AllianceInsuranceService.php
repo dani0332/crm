@@ -147,12 +147,15 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         if (in_array($quote->gender, [GenericRequestEnum::FEMALE, strtolower(GenericRequestEnum::FEMALE), GenericRequestEnum::FEMALE_SHORT_VALUE])) {
             $title = 'Mrs';
         }
+
+        $customerMember = $quote->customerMembers()->where('customer_entity_id', $quote->customer_id)->first();
+
         $endpoint = $this->baseUrl.'/v1/quote/'.$travelType.'/finalise';
         $payLoad = [
             'agency_id' => $this->agencyId,
             'agency_code' => $this->agencyCode,
             'quote_id' => $selectedPlan->insurer_quote_id,
-            'scheme_id' => $selectedPlan->alliance_scheme_id ?? 55,
+            'scheme_id' => $selectedPlan->alliance_scheme_id,
             'title_customer' => $title,
             'first_name_customer' => $quote->first_name,
             'last_name_customer' => $quote->last_name,
@@ -160,8 +163,8 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             'first_name_traveller' => [$quote->first_name],
             'last_name_traveller' => [$quote->last_name],
             'dob' => [$dateOfBirth],
-            'passport_number' => ['1122334455'],
-            'nationality_traveller' => [12],
+            'passport_number' => [$customerMember->passport],
+            'nationality_traveller' => [$quote->nationality_id],
             'email' => $quote->email,
             'mobile' => $quote->mobile_no,
             'agency_reference' => 'asc',
