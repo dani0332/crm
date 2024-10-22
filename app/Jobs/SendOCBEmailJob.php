@@ -46,7 +46,6 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
     public function __construct($quoteUuid)
     {
         $this->quoteUuid = $quoteUuid;
-        $this->onQueue('renewals');
     }
 
     /**
