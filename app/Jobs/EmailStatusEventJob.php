@@ -35,7 +35,6 @@ class EmailStatusEventJob implements ShouldQueue
             $isEmailStatus = EmailStatus::where('msg_id', $this->emailData->message_id)
                 ->where('email_status', $this->emailData->status)
                 ->exists();
-            info('isEmailStatus: '.json_encode($isEmailStatus));
             if ($isEmailStatus) {
                 $msg = 'EmailStatus already exists for msg_id: '.$this->emailData->message_id;
                 info($msg);
@@ -43,10 +42,8 @@ class EmailStatusEventJob implements ShouldQueue
                 return true;
             }
             $emailStatusData = EmailStatus::where('msg_id', $this->emailData->message_id)->first();
-            info('emailStatusData: '.json_encode($emailStatusData));
             if (! empty($emailStatusData)) {
                 if (! empty($emailStatusData->quote_type_id) && ! empty($emailStatusData->quote_id)) {
-                    info('emailStatusData: 2');
                     $newEmailStatus = new EmailStatus;
                     $newEmailStatus->quote_type_id = $emailStatusData->quote_type_id;
                     $newEmailStatus->quote_id = $emailStatusData->quote_id;
