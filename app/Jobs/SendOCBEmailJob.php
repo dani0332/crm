@@ -10,10 +10,7 @@ use App\Models\Tier;
 use App\Services\CarQuoteService;
 use App\Services\CRUDService;
 use App\Services\EmailServices\CarEmailService;
-use App\Services\LookupService;
-use App\Services\RenewalsUploadService;
 use App\Services\SendEmailCustomerService;
-use App\Services\UserService;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -28,13 +25,7 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $quoteUuid;
-    protected $carQuoteService;
-    protected $renewalUploadService;
-    protected $crudService;
-    protected $userService;
-    protected $lookupService;
-    protected $sendEmailCustomerService;
+    private $quoteUuid;
     public $tries = 3;
     public $timeout = 90;
     public $backoff = 120;
@@ -57,26 +48,15 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
      */
     public function handle(
         CarQuoteService $carQuoteService,
-        CRUDService $crudService,
-        UserService $userService,
-        LookupService $lookupService,
-        SendEmailCustomerService $sendEmailCustomerService,
-        RenewalsUploadService $renewalsUploadFileService
+        SendEmailCustomerService $sendEmailCustomerService
     ) {
-
-        $this->carQuoteService = $carQuoteService;
-        $this->crudService = $crudService;
-        $this->userService = $userService;
-        $this->lookupService = $lookupService;
-        $this->sendEmailCustomerService = $sendEmailCustomerService;
-        $this->renewalUploadService = $renewalsUploadFileService;
 
         try {
             $carQuote = CarQuote::where('uuid', $this->quoteUuid)->firstOrFail();
             if (! $carQuote) {
                 return false;
             }
-            $listQuotePlans = $this->carQuoteService->getPlans($this->quoteUuid, true, true);
+            $listQuotePlans = $carQuoteService->getPlans($this->quoteUuid, true, true);
 
             $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
 
@@ -84,21 +64,21 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
 
             $previousAdvisor = null;
             if (! empty($carQuote->previous_advisor_id)) {
-                $previousAdvisor = $this->userService->getUserById($carQuote->previous_advisor_id);
+                $previousAdvisor = $carQuote->advisor;
             }
 
             $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
 
             $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
 
-            $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
+            $emailData = (new CarEmailService($sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
 
             $senderDetail = isset($emailData->advisorEmail) && $emailData->advisorEmail != null && $emailData->advisorEmail != '' ? [
                 'email' => strstr($emailData->advisorEmail, '@', true).'@renewals.insurancemarket.ae',
                 'name' => $emailData->advisorName,
             ] : [];
 
-            $responseCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch', [], $senderDetail);
+            $responseCode = $sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch', [], $senderDetail);
 
             if (in_array($responseCode, [200, 201])) {
                 Log::info('SendOCBEmailJob - OCB Email Sent: '.$responseCode.' Customer Email Address: '.$carQuote->email.' Quote UuId: '.$this->quoteUuid);
@@ -112,12 +92,10 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
 
     private function getEmailTemplateId($carQuote, $quotePlansCount)
     {
-        $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($quotePlansCount);
+        $emailTemplateId = (int) app(CRUDService::class)->getOcbCustomerEmailTemplate($quotePlansCount);
         Log::info('fn: sendOcbEmailJob Renewals OCB Email email template id: '.$emailTemplateId);
 
-        if (isset($carQuote->advisor_id)) {
-            $advisor = $this->userService->getUserById($carQuote->advisor_id);
-        } else {
+        if (! $carQuote->advisor_id) {
             $key = $this->getNoAdvisorKey($quotePlansCount);
             $noAdvisorTemplateId = ApplicationStorage::where('key_name', $key)->first();
             $emailTemplateId = $noAdvisorTemplateId ? (int) $noAdvisorTemplateId->value : 551;
