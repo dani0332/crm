@@ -6,7 +6,6 @@ use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SageProcess;
 use App\Services\SageApiService;
-use Artisan;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;

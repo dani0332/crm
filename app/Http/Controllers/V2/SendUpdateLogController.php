@@ -36,7 +36,6 @@ use App\Services\QuoteDocumentService;
 use App\Services\SageApiService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
-use Artisan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 

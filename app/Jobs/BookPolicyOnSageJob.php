@@ -6,7 +6,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\SageEnum;
 use App\Models\SageProcess;
 use App\Services\SageApiService;
-use Artisan;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;

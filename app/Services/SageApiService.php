@@ -27,7 +27,6 @@ use App\Repositories\SageApiLogRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
 use App\Traits\TeamHierarchyTrait;
-use Artisan;
 use Cache;
 use Carbon\Carbon;
 use Exception;
