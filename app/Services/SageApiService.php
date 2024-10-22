@@ -27,6 +27,7 @@ use App\Repositories\SageApiLogRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
 use App\Traits\TeamHierarchyTrait;
+use Artisan;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
@@ -527,7 +528,7 @@ class SageApiService
 
         $this->updateAndLogQuoteStatus($quote, $sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_QUEUED, $sageRequest->userId);
 
-        $this->scheduleSageProcesses($sageRequest->insurerID);
+        Artisan::call('sage-processes:run', ['insurer' => $sageRequest->insurerID]);
         info('Policy Book : postBookPolicyToSage : scheduleSageProcesses triggered for Insurer - '.$sageRequest->insurerID);
 
         return ['status' => true, 'message' => 'Booking process in started! It will take some time to Complete. Come Back in a while to check the status!'];

@@ -38,6 +38,7 @@ use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Artisan;
 
 class SendUpdateLogController extends Controller
 {
@@ -417,7 +418,7 @@ class SendUpdateLogController extends Controller
         info('fn:sendUpdate - Calling updateSageProcessForDispatching function through sendUpdate - SendUpdateCode: '.$sendUpdateLog->code);
         app(SendUpdateLogService::class)->updateSageProcessForDispatching($sendUpdateRequest->toArray(), $sendUpdateLog, $endorsementResponse['sageRequestPayload']);
 
-        app(SageApiService::class)->scheduleSageProcesses($endorsementResponse['sageRequestPayload']->insurerID);
+        Artisan::call('sage-processes:run', ['insurer' => $endorsementResponse['sageRequestPayload']->insurerID]);
         info('fn:sendUpdate - fn:scheduleSageProcesses triggered for Insurer - '.$endorsementResponse['sageRequestPayload']->insurerID.' - SendUpdateCode: '.$sendUpdateLog->code);
 
         return response()->json(['message' => $endorsementResponse['message']], 200);
