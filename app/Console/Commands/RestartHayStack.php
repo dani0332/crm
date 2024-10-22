@@ -14,15 +14,16 @@ class RestartHaystack extends Command
     public function handle()
     {
         $haystack = Haystack::whereNull('finished_at')
-            ->where('resume_at', null)
+            ->whereNull('resume_at')
             ->where('started_at', '!=', null)
-            ->where('finished_at', null)
             ->first();
 
         if ($haystack) {
             if($haystack->bales()->count() > 0) {
                 if(Carbon::now()->timezone(config('app.timezone'))->diffInMinutes($haystack->updated_at) <= 10) {
                     $haystack->restart();
+                    $haystack->resume_at = Carbon::now();
+                    $haystack->save();
                     $this->info('Haystack process restarted successfully.');
                     return;
 
