@@ -18,6 +18,7 @@ use App\Models\CustomerAdditionalInfo;
 use App\Models\CustomerMembers;
 use App\Models\EmbeddedTransaction;
 use App\Models\HealthQuote;
+use App\Models\HomeQuote;
 use App\Models\PersonalQuote;
 use App\Models\QuoteAdditionalDetail;
 use App\Models\QuoteTag;
@@ -816,15 +817,79 @@ if (! function_exists('strToFloat')) {
 if (! function_exists('getCardViewRequestFilters')) {
     function getCardViewRequestFilters($partialQuery, Request $request, $modelType)
     {
-        if ($modelType == HealthQuote::class && ! empty($request->assigned_to_date_start) && ! empty($request->assigned_to_date_end)) {
-            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['assigned_to_date_start']));
-            $dateTo = date('Y-m-d 23:59:59', strtotime($request['assigned_to_date_end']));
+        // Mapping model types to relationships and column names
+        $modelTypeMappings = [
+            HealthQuote::class => [
+                'relation' => 'healthQuoteRequestDetail',
+                'column' => 'advisor_assigned_date',
+            ],
+            HomeQuote::class => [
+                'relation' => 'homeQuoteRequestDetail',
+                'column' => 'advisor_assigned_date',
+            ],
+            PersonalQuote::class => [
+                'relation' => 'quoteDetail',
+                'column' => 'advisor_assigned_date',
+            ],
+            BusinessQuote::class => [
+                'relation' => 'businessQuoteRequestDetail',
+                'column' => 'advisor_assigned_date',
+            ]
+        ];
 
-            $partialQuery->whereHas('healthQuoteRequestDetail', function ($query) use ($dateFrom, $dateTo) {
-                $query->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
-            });
+        if (array_key_exists($modelType, $modelTypeMappings)) {
+            $mapping = $modelTypeMappings[$modelType];
+
+            // Handle HealthQuote type filtering
+            if (!empty($request->assigned_to_date_start) && !empty($request->assigned_to_date_end)) {
+                $dateFrom = date('Y-m-d 00:00:00', strtotime($request['assigned_to_date_start']));
+                $dateTo = date('Y-m-d 23:59:59', strtotime($request['assigned_to_date_end']));
+
+                // Dynamically applying filter for the model type
+                $partialQuery->whereHas($mapping['relation'], function ($query) use ($dateFrom, $dateTo, $mapping) {
+                    $query->whereBetween($mapping['column'], [$dateFrom, $dateTo]);
+                });
+            }
+            
+            // Handle HomeQuote type filtering
+            if (!empty($request->advisor_assigned_date)) {
+                $dateArray = $request['advisor_assigned_date'];
+                
+                $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+                $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+                
+                // Dynamically applying filter for the model type
+                $partialQuery->whereHas($mapping['relation'], function ($query) use ($dateFrom, $dateTo, $mapping) {
+                    $query->whereBetween($mapping['column'], [$dateFrom, $dateTo]);
+                });
+            }
+
             $partialQuery->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
         }
+
+
+        // if ($modelType == HealthQuote::class && ! empty($request->assigned_to_date_start) && ! empty($request->assigned_to_date_end)) {
+        //     $dateFrom = date('Y-m-d 00:00:00', strtotime($request['assigned_to_date_start']));
+        //     $dateTo = date('Y-m-d 23:59:59', strtotime($request['assigned_to_date_end']));
+
+        //     $partialQuery->whereHas('healthQuoteRequestDetail', function ($query) use ($dateFrom, $dateTo) {
+        //         $query->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
+        //     });
+        //     $partialQuery->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+        // }
+
+        // if ($modelType == HomeQuote::class && ! empty($request->advisor_assigned_date) && ! empty($request->advisor_assigned_date)) {
+        //     $dateArray = $request['advisor_assigned_date'];
+            
+        //     $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+        //     $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+
+        //     $partialQuery->whereHas('homeQuoteRequestDetail', function ($query) use ($dateFrom, $dateTo) {
+        //         $query->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
+        //     });
+        //     $partialQuery->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+        // }
+
         if (isset($request->code) && $request->code != '') {
             $partialQuery->where('code', $request->code);
         }
