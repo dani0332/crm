@@ -4,7 +4,6 @@ namespace App\Jobs;
 
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
-use App\Services\SageApiService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;

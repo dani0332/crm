@@ -33,12 +33,11 @@ use App\Repositories\QuoteTypeRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
-use App\Services\SageApiService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
+use Artisan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Artisan;
 
 class SendUpdateLogController extends Controller
 {
