@@ -1,7 +1,12 @@
 <script setup>
+
+import { computed } from 'vue';
+
 const props = defineProps({
   plan: Object,
 });
+
+const emit = defineEmits([]);
 
 console.log('props.plan', props.plan);
 
@@ -66,9 +71,26 @@ const homeDiscountOptions = computed(() => {
   return arr;
 });
 
-const getBuildingValue = () => {
-    return page.props.plan?.listQuotePlanBenefitsInclusions?.buildings[0]?.value || 0;
-};
+const buildingValue = computed({
+  get() {
+    console.log('buildingValue', props.plan?.listQuotePlanBenefitsInclusions?.buildings?.[0]?.value);
+
+    // Get the raw value (e.g., "AED 40,000")
+    const rawValue = props.plan?.listQuotePlanBenefitsInclusions?.buildings?.[0]?.value || '0';
+
+    // Remove non-numeric characters (like "AED" or commas) and parse it as float
+    const numericValue = parseFloat(rawValue.replace(/[^\d.-]/g, ''));
+
+    console.log('numericValue', numericValue);
+
+    // Return the numeric value directly for v-model binding (input expects raw numbers)
+    return numericValue;
+  },
+  set(newValue) {
+    // Keep it as raw number, but remove commas or format artifacts when setting
+    props.plan.listQuotePlanBenefitsInclusions.buildings[0].value = newValue.toString();
+  }
+});
 </script>
 
 <template>
@@ -145,7 +167,7 @@ const getBuildingValue = () => {
             <div class="grid sm:grid-cols-2">
               <dt class="mt-2">Building Value:</dt>
               <x-input
-                v-model="getBuildingValue"
+                v-model="buildingValue"
                 size="sm"
                 type="number"
               />
