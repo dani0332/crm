@@ -203,7 +203,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         Route::get('quotes/car-sold', [CarQuoteController::class, 'getCarSoldQuotes'])->name('car-sold-list');
         Route::get('quotes/car-uncontactable', [CarQuoteController::class, 'getCarUncontactableQuotes'])->name('car-uncontactable-list');
-        Route::get('/insurance-provider-plans', [CarQuoteController::class, 'carPlansByInsuranceProvider']);
 
         Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('data-extraction');
         Route::get('/pua-leads-export', [CentralController::class, 'exportPUAUpdates'])->middleware(SetReadDbConnection::class)->name('export-car-pua-updates');
@@ -636,7 +635,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/health-plan-copays', [HealthQuoteController::class, 'copaysByPlan']);
 
     Route::get('/insurance-provider-networks', [HealthQuoteController::class, 'networksByInsuranceProvider']);
-    Route::post('/car-plan-manual-update-process', [ClaimController::class, 'carPlanUpdateManualProcess']);
+    // Route::post('/car-plan-manual-update-process', [ClaimController::class, 'carPlanUpdateManualProcess']);
     Route::post('/bike-plan-manual-update-process', [BikeQuoteController::class, 'bikePlanUpdateManualProcess']);
     Route::post('/car-plan-manual-update-process', [CarQuoteController::class, 'carPlanUpdateManualProcess']);
     Route::resource('travelers', TravelMembersDetailController::class);
