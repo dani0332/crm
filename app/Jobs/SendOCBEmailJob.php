@@ -14,6 +14,7 @@ use App\Services\SendEmailCustomerService;
 use App\Services\UserService;
 use Exception;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -21,7 +22,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-class SendOCBEmailJob implements ShouldQueue
+class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -35,6 +36,7 @@ class SendOCBEmailJob implements ShouldQueue
     public $tries = 3;
     public $timeout = 90;
     public $backoff = 120;
+    public $uniqueFor = 640;
 
     /**
      * Create a new job instance.
@@ -103,5 +105,10 @@ class SendOCBEmailJob implements ShouldQueue
     public function failed(Throwable $exception)
     {
         info('SendOCBEmailJob Failed: '.$this->quoteUuid.' Error: '.$exception->getMessage());
+    }
+
+    public function uniqueId(): string
+    {
+        return $this->quoteUuid;
     }
 }
