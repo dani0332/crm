@@ -15,16 +15,19 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Interfaces\PaymentRepositoryInterface;
+use App\Models\BrokerInvoiceNumber;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Models\User;
 use App\Services\ApplicationStorageService;
+use App\Services\CentralService;
 use App\Services\PaymentLinkService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -406,6 +409,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'updated_by' => Auth::user()->id,
             ]);
             if ($request->send_update_id > 0) {
+                app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_DECLINE);
                 $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_DECLINE;
             } else {
                 $quoteModel->quote_status_id = QuoteStatusEnum::TransactionDeclined;
@@ -653,31 +657,81 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return $quote->payments()->where('insurer_tax_number', $invoiceNumber)->first();
     }
 
-    public function generateBrokerInvoiceNumber($payment, $quoteType): string
+    public function generateAndStoreBrokerInvoiceNumber($payment, $quoteType, $attempts = 0)
     {
-        $insuranceProvider = null;
-        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
-        if (in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
-            $planRelationName = strtolower($quoteType).'Plan';
-            $payment->load($planRelationName);
-            $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
+        info('fn:generateAndStoreBrokerInvoiceNumber Payment : '.$payment->code);
+        $maxRetries = 5;
+        $response = ['status' => false, 'message' => ''];
+        if ($payment->broker_invoice_number) {
+            info('fn:generateAndStoreBrokerInvoiceNumber Payment  : '.$payment->code.' : Broker Invoice Number already exists - BIN : '.$payment->broker_invoice_number);
+            $response['status'] = true;
+            $response['message'] = 'Broker Invoice Number: '.$payment->broker_invoice_number;
+
+            return $response;
         }
+        try {
+            $insuranceProvider = getInsuranceProvider($payment, $quoteType);
 
-        if (! $insuranceProvider) {
-            $insuranceProvider = $payment?->insuranceProvider;
+            if (! isNonSelfBillingEnabledForInsuranceProvider($insuranceProvider)) {
+                info('fn:generateAndStoreBrokerInvoiceNumber Payment : '.$payment->code.' : Non-self Billing is not enabled for Insurance Provider ID : '.$insuranceProvider->id);
+                $response['status'] = true;
+                $response['message'] = 'Non-self Billing is not enabled for Insurance Provider';
+
+                return $response;
+            }
+
+            $currentDate = Carbon::now();
+            DB::transaction(function () use ($insuranceProvider, $currentDate, &$response, $payment) {
+                $invoiceBrokerSequence = BrokerInvoiceNumber::where([
+                    'insurance_provider_id' => $insuranceProvider->id,
+                    'date' => $currentDate->format('Y-m'),
+                ])
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $invoiceBrokerSequence) {
+                    info('fn:generateAndStoreBrokerInvoiceNumber Monthly sequence created for Insurance Provider ID '.$insuranceProvider->id);
+                    $invoiceBrokerSequence = BrokerInvoiceNumber::create([
+                        'insurance_provider_id' => $insuranceProvider->id,
+                        'date' => $currentDate->format('Y-m'),
+                        'sequence_number' => 1,
+                    ]);
+                }
+                info('fn:generateAndStoreBrokerInvoiceNumber Payment : '.$payment->code.' : Insurer sequence number is : '.$invoiceBrokerSequence->sequence_number.' for Insurance Provider ID : '.$insuranceProvider->id);
+                $currentSequence = $invoiceBrokerSequence->sequence_number;
+                $insuranceProviderCode = $insuranceProvider?->code;
+                $brokerInvoiceNumber = 'AFIA/'.$insuranceProviderCode.'/'.$currentDate->format('Y').'/'.$currentDate->format('m').'/'.$currentSequence;
+                $payment->update([
+                    'broker_invoice_number' => $brokerInvoiceNumber,
+                ]);
+                info('fn:generateAndStoreBrokerInvoiceNumber Payment  : '.$payment->code.' : Broker Invoice Number updated : '.$brokerInvoiceNumber);
+                $invoiceBrokerSequence->increment('sequence_number');
+                $response['status'] = true;
+                $response['message'] = 'Broker Invoice Number: '.$brokerInvoiceNumber;
+            });
+
+            return $response;
+        } catch (Exception $e) {
+            $attempts++;
+            if (in_array($e->getCode(), ['40001', '1213'])) {
+                if ($attempts < $maxRetries) {
+                    info('fn:generateAndStoreBrokerInvoiceNumber Payment  : '.$payment->code.' : table locked, trying again');
+                    $this->generateAndStoreBrokerInvoiceNumber($payment, $quoteType, $attempts);
+                } else {
+                    info('fn:generateAndStoreBrokerInvoiceNumber Payment  : '.$payment->code.' : Error occurred while generating broker invoice number: Could not acquire lock after multiple attempts');
+                    $response['message'] = 'Exception: Could not acquire lock after multiple attempts';
+
+                    return $response;
+                }
+            } else {
+                info('fn:generateAndStoreBrokerInvoiceNumber Payment  : '.$payment->code.' : Error occurred while generating broker invoice number: '.$e->getMessage());
+
+                $response['message'] = 'Exception: '.$e->getMessage();
+
+                return $response;
+            }
+
         }
-
-        $insuranceProviderCode = $insuranceProvider?->code;
-        $latestBINByInsurer = Payment::selectRaw("CAST(REGEXP_REPLACE(broker_invoice_number, '[^0-9.E+-]', '') AS DECIMAL(65, 30)) AS broker_invoice_number")
-            ->whereNotNull('broker_invoice_number')
-            ->whereNull('send_update_log_id')
-            ->where('insurance_provider_id', $insuranceProvider?->id)
-            ->orderByRaw("CAST(REGEXP_REPLACE(broker_invoice_number, '[^0-9.E+-]', '') AS DECIMAL(65,30)) DESC")
-            ->first()?->broker_invoice_number; //get latest broker invoice number for insurer
-
-        $insuranceProviderLeadCount = ((int) $latestBINByInsurer) + 1;
-
-        return $insuranceProviderCode.$insuranceProviderLeadCount;
     }
     public function generateInvoiceDescription($payment, $quoteType, $record): string
     {

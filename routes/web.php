@@ -205,9 +205,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('quotes/car-uncontactable', [CarQuoteController::class, 'getCarUncontactableQuotes'])->name('car-uncontactable-list');
 
         Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('data-extraction');
-        Route::get('/pua-leads-export', [CentralController::class, 'exportPUAUpdates'])->middleware(SetReadDbConnection::class)->name('exportPUAUpdates');
+        Route::get('/pua-leads-export', [CentralController::class, 'exportPUAUpdates'])->middleware(SetReadDbConnection::class)->name('export-car-pua-updates');
 
-        Route::get('/rm-leads-export', [CentralController::class, 'exportRmLeads'])->middleware(SetReadDbConnection::class)->name('exportRmLeads');
+        Route::get('/rm-leads-export', [CentralController::class, 'exportRmLeads'])->middleware(SetReadDbConnection::class)->name('export-rm-leads');
 
         Route::post('save-quote-notes', [CentralController::class, 'saveQuoteNotes'])->name('save-quote-notes');
         Route::post('update-quote-notes', [CentralController::class, 'updateQuoteNotes'])->name('update-quote-notes');
@@ -310,6 +310,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('get-team-managers', [UserController::class, 'getTeamManagers'])->name('getTeamManagers');
     Route::post('get-sub-teams', [UserController::class, 'getSubTeams'])->name('getSubTeams');
     Route::post('get-product-teams', [UserController::class, 'getProductTeams'])->name('getProductTeams');
+    Route::post('get-team-departments', [UserController::class, 'getTeamDepartments'])->name('getTeamDepartments');
     Route::get('/customer-upload', [V2CustomerController::class, 'uploadCustomers'])->name('customer.upload');
     Route::post('/customer-process', [V2CustomerController::class, 'processCustomerUpload']);
     Route::post('/customer-additional-contact/{id}/delete', [CustomerController::class, 'deleteAdditionalContact']);
