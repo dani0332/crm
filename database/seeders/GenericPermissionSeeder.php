@@ -268,6 +268,11 @@ class GenericPermissionSeeder extends Seeder
         Permission::firstOrCreate(['name' => PermissionsEnum::MANAGER_RETENTION_REPORT_VIEW, 'guard_name' => 'web']);
         Permission::firstOrCreate(['name' => PermissionsEnum::ADVISOR_RETENTION_REPORT_VIEW, 'guard_name' => 'web']);
 
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::DEPARTMENT_MANAGER,
+            'guard_name' => 'web',
+        ]);
+
         $this->syncBulkPolicyBookingOnSagePermissionList();
         $this->syncMasterPermissionList();
 

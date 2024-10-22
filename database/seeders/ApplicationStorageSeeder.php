@@ -698,7 +698,35 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_NB_MOTOR_WORKFLOW],
+            [
+                'value' => 'https://api.bird.com/workspaces/a1b37cbd-b29d-4371-a81a-c1cd939b73a2/flows/036faf20-0788-4ac1-8b55-4dcfe93ebfa7/invoke-sync',
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::HEALTH_AUTOMATED_FOLLOWUPS_SWITCH],
+            [
+                'value' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::BIRD_ACCESS_KEY],
+            [
+                'value' => 'PFW43eLvGkOFh521QmolXW1fTLpT5C3Z3hiA',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
     }
+
     private function seedBirdWorkflowUrls()
     {
         ApplicationStorage::firstOrCreate(
