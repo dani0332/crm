@@ -97,9 +97,9 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
      */
     private function sendEmail($carQuote, $emailTemplateId, $emailData, $sendEmailCustomerService)
     {
-        info('Renewals OCB Email sending email to email: '.$carQuote->email);
-        info('fn: sendOCBEmailJob Renewals OCB Email email template id: '.$emailTemplateId);
-        info('Renewals OCB Email check email data: '.json_encode($emailData));
+        Log::info('Renewals OCB Email sending email to email: '.$carQuote->email);
+        Log::info('fn: sendOCBEmailJob Renewals OCB Email email template id: '.$emailTemplateId);
+        Log::info('Renewals OCB Email check email data: '.json_encode($emailData));
 
         if (isset($carQuote->advisor_id)) {
             return $sendEmailCustomerService->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
