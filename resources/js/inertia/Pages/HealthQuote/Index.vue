@@ -155,6 +155,7 @@ const filters = reactive({
   policy_expiry_date_end: '',
   segment_filter: '',
   transaction_approved_dates: '',
+  last_modified_date: null,
 });
 
 const canExport = ref(false);
@@ -778,6 +779,13 @@ watch(() => {
           multi-calendars
           multi-calendars-solo
           max-range="120"
+        />
+        <DatePicker
+          v-model="filters.last_modified_date"
+          name="created_at_start"
+          label="Last Modified Date"
+          range
+          format="dd-MM-yyyy"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

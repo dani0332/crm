@@ -96,6 +96,7 @@ const filters = reactive({
   policy_expiry_date_end: '',
   payment_due_date: '',
   booking_date: '',
+  last_modified_date: null,
 });
 
 const canExport = ref(false);
@@ -579,6 +580,13 @@ const formatDate = dateString =>
           range
           multi-calendars
           multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.last_modified_date"
+          name="created_at_start"
+          label="Last Modified Date"
+          range
+          format="dd-MM-yyyy"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

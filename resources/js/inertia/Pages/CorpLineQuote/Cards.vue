@@ -108,6 +108,7 @@ const filters = reactive({
   is_stale: false,
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  last_modified_Date: null,
 });
 
 provide('filters', filters);
@@ -211,6 +212,7 @@ const setIntialState = () => {
     payment_status: [],
     is_cold: false,
     is_stale: false,
+    last_modified_date: null,
   });
   filtersCount.value = 0;
 };
@@ -452,6 +454,13 @@ const validateDateRange = () => {
             { value: 'No', label: 'No' },
           ]"
           class="w-full"
+        />
+        <DatePicker
+          v-model="filters.last_modified_date"
+          name="created_at_start"
+          label="Last Modified Date"
+          range
+          format="dd-MM-yyyy"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4 mt-1">

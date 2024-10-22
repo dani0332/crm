@@ -251,6 +251,15 @@ class HomeQuoteService extends BaseService
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
             $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
+
+        if(isset($request->last_modified_date) && $request->last_modified_date != '') {
+            $dateArray = $request['last_modified_date'];
+            
+            $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+            $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+            $this->query->whereBetween('hqr.updated_at', [$dateFrom, $dateTo]);
+        }
+        
         if (isset($request->code) && $request->code != '') {
             $this->query->where('hqr.code', $request->code);
         }

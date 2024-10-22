@@ -907,6 +907,14 @@ if (! function_exists('getCardViewRequestFilters')) {
             }
         }
 
+        if($request->has('last_modified_date') && $request->filled('last_modified_date')) {
+            $dateArray = $request['last_modified_date'];
+            
+            $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
+            $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+            $partialQuery->whereBetween('updated_at', [$dateFrom, $dateTo]);
+        }
+
         if (isset($request->advisors) && ! empty($request->advisors)) {
             $advisors = (array) $request->advisors;
             if (! empty($advisors)) {

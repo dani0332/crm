@@ -72,6 +72,7 @@ const filters = reactive({
   booking_date: '',
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  last_modified_date: null,
 });
 
 watch(
@@ -186,6 +187,7 @@ const setIntialState = () => {
     is_stale: false,
     policy_expiry_date: '',
     policy_expiry_date_end: '',
+    last_modified_date: null,
   });
   filtersCount.value = 0;
 };
@@ -740,6 +742,13 @@ watch(() => {
           range
           multi-calendars
           multi-calendars-solo
+        />
+        <DatePicker
+          v-model="filters.last_modified_date"
+          name="created_at_start"
+          label="Last Modified Date"
+          range
+          format="dd-MM-yyyy"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

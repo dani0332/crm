@@ -97,6 +97,7 @@ const filters = reactive({
   advisors: [],
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  last_modified_date: null,
 });
 
 provide('filters', filters);
@@ -405,6 +406,13 @@ const validateDateRange = () => {
           label="Previous Policy Number"
           class="w-full"
           placeholder="Search by Previous Policy Number"
+        />
+        <DatePicker
+          v-model="filters.last_modified_date"
+          name="created_at_start"
+          label="Last Modified Date"
+          range
+          format="dd-MM-yyyy"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4 mt-1">

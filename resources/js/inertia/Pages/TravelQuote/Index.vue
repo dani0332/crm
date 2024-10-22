@@ -54,6 +54,7 @@ const filters = reactive({
   policy_expiry_date: '',
   policy_expiry_date_end: '',
   transaction_approved_dates: page.props.transaction_approved_dates || '',
+  last_modified_date: null,
 });
 
 const loader = reactive({
@@ -608,6 +609,13 @@ const formatDate = date => {
           :options="quoteSegments"
           class="w-full"
           :single="true"
+        />
+        <DatePicker
+          v-model="filters.last_modified_date"
+          name="created_at_start"
+          label="Last Modified Date"
+          range
+          format="dd-MM-yyyy"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
