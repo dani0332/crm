@@ -131,7 +131,10 @@ function calculateTotalNetConversion(data) {
     badLeads += Number(row.bad_leads);
   });
   const numerator = saleLeads;
-  const denominator = (showUnassignedLeads && props.unassignedLeadsCount ? +totalLeads + props.unassignedLeadsCount : totalLeads) - badLeads;
+  const denominator =
+    (showUnassignedLeads && props.unassignedLeadsCount
+      ? +totalLeads + props.unassignedLeadsCount
+      : totalLeads) - badLeads;
   return denominator > 0
     ? ((numerator / denominator) * 100).toFixed(2) + ' %'
     : 'NaN';
@@ -145,7 +148,10 @@ function calculateTotalGrossConversion(data) {
     saleLeads += Number(row.sale_leads);
   });
   const numerator = saleLeads;
-  const denominator = showUnassignedLeads && props.unassignedLeadsCount ? +totalLeads + props.unassignedLeadsCount : totalLeads;
+  const denominator =
+    showUnassignedLeads && props.unassignedLeadsCount
+      ? +totalLeads + props.unassignedLeadsCount
+      : totalLeads;
   return denominator > 0
     ? ((numerator / denominator) * 100).toFixed(2) + ' %'
     : 'NaN';
@@ -156,7 +162,9 @@ function calculateTotalLeads(data) {
   data.forEach(row => {
     totalLeads += Number(row.total_leads);
   });
-  return showUnassignedLeads && props.unassignedLeadsCount ? +totalLeads + props.unassignedLeadsCount : totalLeads;
+  return showUnassignedLeads && props.unassignedLeadsCount
+    ? +totalLeads + props.unassignedLeadsCount
+    : totalLeads;
 }
 
 function calculateTotalSaleLeads(data) {
@@ -168,10 +176,10 @@ function calculateTotalSaleLeads(data) {
 }
 
 const onIncludeUnassignedLeadsChange = () => {
-  if(filters.includeUnassignedLeads == 'no') {
+  if (filters.includeUnassignedLeads == 'no') {
     filters.createdAtDate = '';
   }
-}
+};
 
 const filters = reactive({
   startEndDate: [],
@@ -477,10 +485,7 @@ onMounted(() => {
         <p v-else>{{ item.net_conversion }} %</p>
       </template>
       <template #body-append>
-        <tr
-          v-if="showUnassignedLeads"
-          class="total-row row-border-bottom"
-        >
+        <tr v-if="showUnassignedLeads" class="total-row row-border-bottom">
           <td class="direction-left">Unassigned</td>
           <td></td>
           <td></td>
@@ -488,15 +493,9 @@ onMounted(() => {
           <td class="direction-center">
             {{ props.unassignedLeadsCount }}
           </td>
-          <td class="direction-center">
-            0
-          </td>
-          <td class="direction-center">
-            NaN
-          </td>
-          <td class="direction-center">
-            NaN
-          </td>
+          <td class="direction-center">0</td>
+          <td class="direction-center">NaN</td>
+          <td class="direction-center">NaN</td>
         </tr>
         <tr v-if="reportData && reportData?.length > 0" class="total-row">
           <td class="direction-left">Total</td>
