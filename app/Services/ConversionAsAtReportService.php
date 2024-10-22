@@ -118,14 +118,14 @@ class ConversionAsAtReportService extends BaseService
                 $model = app(PersonalQuote::class);
             }
 
-            $createdAtDate = (object) $request->createdAtDate;
+            $createdAtDate = $request->createdAtDate;
 
-            $startDate = isset($createdAtDate->startEndDate) ?
-                Carbon::parse($createdAtDate->startEndDate[0])->startOfDay()->format($dateFormat) :
+            $startDate = isset($createdAtDate) ?
+                Carbon::parse($createdAtDate[0])->startOfDay()->format($dateFormat) :
                 Carbon::parse(now())->startOfDay()->format($dateFormat);
 
-            $endDate = isset($createdAtDate->startEndDate) ?
-                Carbon::parse($createdAtDate->startEndDate[1])->endOfDay()->format($dateFormat) :
+            $endDate = isset($createdAtDate) ?
+                Carbon::parse($createdAtDate[1])->endOfDay()->format($dateFormat) :
                 Carbon::parse(now())->endOfDay()->format($dateFormat);
 
             $unassignedLeadsCount = $model::query()
