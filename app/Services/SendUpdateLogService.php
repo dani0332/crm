@@ -465,9 +465,18 @@ class SendUpdateLogService
             $insuranceProviderId = $sendUpdateLog->insurance_provider_id;
         } else {
             if ($getQuoteDetails->insly_id || $getQuoteDetails->insly_migrated) {
-                $insuranceProviderId = empty($sendUpdateLog->insurance_provider_id) ? null : $sendUpdateLog->insurance_provider_id;
+                if (empty($sendUpdateLog->insurance_provider_id)) {
+                    if (in_array($quoteType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
+                        $getQuoteDetails->load('plan.insuranceProvider');
+                        $insuranceProviderId = $getQuoteDetails?->plan?->insuranceProvider?->id;
+                    } else {
+                        $insuranceProviderId = $getQuoteDetails?->insurance_provider_id;
+                    }
+                } else {
+                    $insuranceProviderId = $sendUpdateLog->insurance_provider_id;
+                }
             } else {
-                @[$insuranceProviderId, $planId] = $this->getProviderDetails($getQuoteDetails, $sendUpdateLog->quote_type_id, false);
+                @[$insuranceProviderId, $planId] = $this->getProviderDetails($getQuoteDetails, $sendUpdateLog->quote_type_id);
             }
         }
 
@@ -1258,11 +1267,14 @@ class SendUpdateLogService
         }
 
         $insuranceProvider = InsuranceProviderRepository::find($insuranceProviderId);
+        $generateBrokerInvoice = true;
         if (! isNonSelfBillingEnabledForInsuranceProvider($insuranceProvider)) {
             info('InsuranceProvider - Non Self Billing Not Enabled - InsuranceProviderID: '.$insuranceProvider->id.' - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
             $response['message'] = 'Non Self Billing Not Enabled for Insurance Provider: '.$insuranceProvider->text;
 
-            return $response;
+            $generateBrokerInvoice = false;
+            $response['status'] = true;
+            // return $response;
         }
 
         $maxAttempts = 25;
@@ -1270,46 +1282,48 @@ class SendUpdateLogService
         $reversalLog = $updateReversalBIN ? 'Reversal ' : '';
 
         try {
-            $currentDate = Carbon::now();
-            DB::transaction(function () use ($insuranceProvider, $updateReversalBIN, $currentDate, $reversalLog, $sendUpdateLog, &$response) {
-                $invoiceBrokerSequence = BrokerInvoiceNumber::where([
-                    'insurance_provider_id' => $insuranceProvider->id,
-                    'date' => $currentDate->format('Y-m'),
-                ])->lockForUpdate()->first();
-
-                if (! $invoiceBrokerSequence) {
-                    $invoiceBrokerSequence = BrokerInvoiceNumber::create([
+            if ($generateBrokerInvoice) {
+                $currentDate = Carbon::now();
+                DB::transaction(function () use ($insuranceProvider, $updateReversalBIN, $currentDate, $reversalLog, $sendUpdateLog, &$response) {
+                    $invoiceBrokerSequence = BrokerInvoiceNumber::where([
                         'insurance_provider_id' => $insuranceProvider->id,
                         'date' => $currentDate->format('Y-m'),
-                        'sequence_number' => 1,
-                    ]);
+                    ])->lockForUpdate()->first();
+
+                    if (! $invoiceBrokerSequence) {
+                        $invoiceBrokerSequence = BrokerInvoiceNumber::create([
+                            'insurance_provider_id' => $insuranceProvider->id,
+                            'date' => $currentDate->format('Y-m'),
+                            'sequence_number' => 1,
+                        ]);
+                    }
+
+                    info('InsuranceProvider - Non Self Billing Enabled - InsuranceProviderID: '.$insuranceProvider->id.' - SequenceNumber: '.$invoiceBrokerSequence->sequence_number.' - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+                    $brokerInvoiceNumber = 'AFIA/'.$insuranceProvider?->code.'/'.$currentDate->format('Y').'/'.$currentDate->format('m').'/'.$invoiceBrokerSequence->sequence_number;
+                    info('InsuranceProvider - '.$reversalLog.'Broker Invoice Number Generated - BIN: '.$brokerInvoiceNumber.' - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+
+                    $fieldForUpdate = $updateReversalBIN ? 'reversal_broker_invoice_number' : 'broker_invoice_number';
+
+                    SendUpdateLog::withoutEvents(function () use ($sendUpdateLog, $fieldForUpdate, $brokerInvoiceNumber) {
+                        $sendUpdateLog->update([
+                            $fieldForUpdate => $brokerInvoiceNumber,
+                        ]);
+                    });
+
+                    $invoiceBrokerSequence->increment('sequence_number');
+                    info('InsuranceProvider - '.$reversalLog.'Broker Invoice Number Updated - BIN: '.$brokerInvoiceNumber.' - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+
+                    $response['status'] = true;
+                    $response['message'] = $reversalLog.'Broker Invoice Number Generated Successfully';
+                });
+
+                if ($sendUpdateLog?->category?->code == SendUpdateLogStatusEnum::CPD && ! $updateReversalBIN) {
+                    info('InsuranceProvider - Generating Reversal Broker Invoice Number - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+                    // Reminder:: commit this transaction because need to get incremented sequence number for reversal BIN with same insurer
+                    DB::afterCommit(function () use ($sendUpdateLog, $insuranceProvider) {
+                        $this->generateBrokerInvoiceNumberForSU($sendUpdateLog, $insuranceProvider->id, true);
+                    });
                 }
-
-                info('InsuranceProvider - Non Self Billing Enabled - InsuranceProviderID: '.$insuranceProvider->id.' - SequenceNumber: '.$invoiceBrokerSequence->sequence_number.' - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-                $brokerInvoiceNumber = 'AFIA/'.$insuranceProvider?->code.'/'.$currentDate->format('Y').'/'.$currentDate->format('m').'/'.$invoiceBrokerSequence->sequence_number;
-                info('InsuranceProvider - '.$reversalLog.'Broker Invoice Number Generated - BIN: '.$brokerInvoiceNumber.' - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-
-                $fieldForUpdate = $updateReversalBIN ? 'reversal_broker_invoice_number' : 'broker_invoice_number';
-
-                SendUpdateLog::withoutEvents(function () use ($sendUpdateLog, $fieldForUpdate, $brokerInvoiceNumber) {
-                    $sendUpdateLog->update([
-                        $fieldForUpdate => $brokerInvoiceNumber,
-                    ]);
-                });
-
-                $invoiceBrokerSequence->increment('sequence_number');
-                info('InsuranceProvider - '.$reversalLog.'Broker Invoice Number Updated - BIN: '.$brokerInvoiceNumber.' - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-
-                $response['status'] = true;
-                $response['message'] = $reversalLog.'Broker Invoice Number Generated Successfully';
-            });
-
-            if ($sendUpdateLog?->category?->code == SendUpdateLogStatusEnum::CPD && ! $updateReversalBIN) {
-                info('InsuranceProvider - Generating Reversal Broker Invoice Number - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-                // Reminder:: commit this transaction because need to get incremented sequence number for reversal BIN with same insurer
-                DB::afterCommit(function () use ($sendUpdateLog, $insuranceProvider) {
-                    $this->generateBrokerInvoiceNumberForSU($sendUpdateLog, $insuranceProvider->id, true);
-                });
             }
 
             return $response;
@@ -1336,9 +1350,13 @@ class SendUpdateLogService
         }
     }
 
-    public function getProviderDetails($quote, $quoteTypeId, $forSendUpdateCreation = false, $isCommercial = false): array
+    public function getProviderDetails($quote, $quoteTypeId, $forSendUpdateCreation = false): array
     {
         $insuranceProviderId = $plan_id = null;
+        $isCommercial = false;
+        if ($quoteTypeId == QuoteTypeId::Car) {
+            $isCommercial = app(LeadAllocationService::class)->isCommercialVehicles($quote);
+        }
         if ($forSendUpdateCreation && ($quote->insly_id || $quote->insly_migrated)) {
 
             return [$insuranceProviderId, $plan_id];
@@ -1350,7 +1368,9 @@ class SendUpdateLogService
             $payment = $quoteModel->payments()->mainLeadPayment()->first();
 
             $planRelationName = strtolower($quoteType).'Plan';
-            $payment->load($planRelationName);
+            if ($payment) {
+                $payment->load($planRelationName);
+            }
             $insuranceProvider = $payment->{$planRelationName}?->insuranceProvider;
             $insuranceProviderId = $insuranceProvider->id ?? null;
             $plan_id = $quoteModel->plan?->id ?? null;

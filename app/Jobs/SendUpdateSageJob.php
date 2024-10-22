@@ -7,6 +7,7 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SageProcess;
 use App\Services\CentralService;
 use App\Services\SageApiService;
+use Artisan;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -37,7 +38,7 @@ class SendUpdateSageJob implements ShouldQueue
         $this->sendUpdateLog = $sendUpdateLog;
         $this->sageRequestPayload = $sageRequestPayload;
         $this->sageProcess = $sageProcess;
-        $this->lockPostfix = Carbon::now()->timestamp;
+        $this->lockPostfix = Carbon::now()->format('YmdHi'); // lock postfix to release the WithoutOverlapping lock i.e 2024102113
     }
 
     /**
@@ -84,7 +85,7 @@ class SendUpdateSageJob implements ShouldQueue
             info('job:SendUpdateSageJob - Sage Process Skipped - Process ID: '.$this->sageProcess->id.' - Status : '.$this->sageProcess->status);
         }
 
-        (new SageApiService)->scheduleSageProcesses($this->sageRequestPayload->insurerID);
+        Artisan::call('sage-processes:run', ['insurer' => $this->sageRequestPayload->insurerID]);
         info('job:SendUpdateSageJob - fn:ScheduleSageProcesses triggered for Insurer: '.$this->sageRequestPayload->insurerID);
 
     }
@@ -97,7 +98,7 @@ class SendUpdateSageJob implements ShouldQueue
         $this->sendUpdateLog->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED]);
         info('job:SendUpdateSageJob - SendUpdateUUID: '.$this->sendUpdateLog->uuid.' - Error : '.$exception->getMessage());
 
-        (new SageApiService)->scheduleSageProcesses($this->sageRequestPayload->insurerID);
+        Artisan::call('sage-processes:run', ['insurer' => $this->sageRequestPayload->insurerID]);
         info('job:SendUpdateSageJob - fn:ScheduleSageProcesses triggered for Insurer:'.$this->sageRequestPayload->insurerID);
     }
 

@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\SageApiService;
+use Cache;
 use Illuminate\Console\Command;
 
 class SageProcessesCommand extends Command
@@ -12,7 +13,7 @@ class SageProcessesCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'sage-processes:run';
+    protected $signature = 'sage-processes:run {insurer?}';
 
     /**
      * The console command description.
@@ -31,11 +32,20 @@ class SageProcessesCommand extends Command
      */
     public function handle()
     {
-        info('cmd:SageProcessesCommand - Sage Policy or Endorsements Booking Command Started');
+        $insurer = $this->argument('insurer');
+        $sageProcessCommandLock = Cache::lock('sage-processes-run-lock', 20); // acquire lock for 30 seconds
 
-        (new SageApiService)->scheduleSageProcesses();
+        info('cmd:SageProcessesCommand - Sage Policy or Endorsements Booking Command Started ', ['insurer' => $insurer]);
 
-        info('cmd:SageProcessesCommand - Sage Policy or Endorsements Booking Command Ended');
+        if ($sageProcessCommandLock->get()) {
+            (new SageApiService)->scheduleSageProcesses($insurer);
+
+            $sageProcessCommandLock->release();
+        } else {
+            info('cmd:SageProcessesCommand - Sage Policy or Endorsements Booking Command is already running, skipping execution.', ['insurer' => $insurer]);
+        }
+
+        info('cmd:SageProcessesCommand - Sage Policy or Endorsements Booking Command Ended', ['insurer' => $insurer]);
     }
 
 }

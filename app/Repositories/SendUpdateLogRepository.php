@@ -17,7 +17,6 @@ use App\Models\Payment;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
-use App\Services\LeadAllocationService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\PersonalQuoteSyncTrait;
@@ -27,6 +26,7 @@ use Illuminate\Support\Str;
 class SendUpdateLogRepository extends BaseRepository
 {
     use PersonalQuoteSyncTrait;
+
     public function model()
     {
         return SendUpdateLog::class;
@@ -54,19 +54,7 @@ class SendUpdateLogRepository extends BaseRepository
 
             $uuid = strtoupper(Str::random(6));
 
-            // Todo:: Check if personal quote exists because its break when quote not in personal quotes
-            $personalQuote = PersonalQuoteRepository::where([
-                'quote_type_id' => $data['quote_type_id'],
-                'uuid' => $data['quote_uuid'],
-            ])->first();
-
-            if (! $personalQuote) {
-                $this->syncLeadEntries($data['quote_uuid']);
-                $personalQuote = PersonalQuoteRepository::where([
-                    'quote_type_id' => $data['quote_type_id'],
-                    'uuid' => $data['quote_uuid'],
-                ])->first();
-            }
+            $personalQuote = $this->updatePersonalQuote($data['quote_uuid'], $data['quote_type_id'], []);
 
             $data['personal_quote_id'] = $personalQuote?->id ?? null;
             $option = ! empty($data['option_id']) ? LookupRepository::find($data['option_id'])->code : null;
@@ -79,23 +67,14 @@ class SendUpdateLogRepository extends BaseRepository
                 $quote = $quoteServiceFile->getEntity($data['quote_uuid']);
             }
 
-            $commercialRules = false;
-            if ($quoteType == QuoteTypes::CAR->value) {
-                $commercialRules = app(LeadAllocationService::class)->isCommercialVehicles($quote);
-                if ($commercialRules) {
-                    info('Commercial Rules - SendUpdateUUID: '.$uuid.' - QuoteUUID: '.$quote->uuid);
-                }
-            }
-
             // it will check if send update type is Correction of Policy Details or Endorsement Financial with subtype Policy Period Extension, it will save
             // insurance_provider_id and plan_id.
             $policyDetails = [];
             if (
                 $category == SendUpdateLogStatusEnum::CPD
                 || ($category == SendUpdateLogStatusEnum::EF && $option == SendUpdateLogStatusEnum::PPE)
-                || ($quoteType == QuoteTypes::CAR->value && $commercialRules)
             ) {
-                @[$insuranceProviderId, $plan_id] = app(SendUpdateLogService::class)->getProviderDetails($quote, $data['quote_type_id'], true, $commercialRules);
+                @[$insuranceProviderId, $plan_id] = app(SendUpdateLogService::class)->getProviderDetails($quote, $data['quote_type_id'], true);
                 $policyDetails = $this->autoFillPolicyDetails($quote, $data['quote_type_id'], $insuranceProviderId, $plan_id);
             }
 
