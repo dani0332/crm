@@ -26,6 +26,7 @@ const rolesEnum = page.props.rolesEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const quoteSegments = page.props.quoteSegments;
+
 const createLead = reactive({
   modal: false,
   type: '',

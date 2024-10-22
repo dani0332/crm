@@ -8,6 +8,7 @@ use App\Http\Requests\Api\QuoteUpdatedRequest;
 use App\Http\Requests\Api\UpdateLeadStatusRequest;
 use App\Http\Requests\APiFetchUrl;
 use App\Http\Requests\AssignLeadRequest;
+use App\Http\Requests\BirdStopWorkFlowRequest;
 use App\Http\Requests\BirdWebhookRequest;
 use App\Http\Requests\EmailEventsRequest;
 use App\Http\Requests\EvaluateTierRequest;
@@ -115,11 +116,11 @@ class ApiController extends Controller
         return apiResponse([], Response::HTTP_OK, $response->message);
     }
 
-    public function stopFollowUpEvent()
+    public function stopFollowUpEvent(BirdStopWorkFlowRequest $request)
     {
-        $flowType = request('flowType');
-        $quoteUID = request('uuid');
-
+        $flowType = $request->flowType;
+        $quoteUID = $request->uuid;
+        $flowId = $request->flowId ?? null;
         info("getting request to stopFollowUpEvent Ref-ID: {$quoteUID} | FlowType: {$flowType} Time:".now());
         $workflow = QuoteFlowDetails::where('quote_uuid', $quoteUID)
             ->where('flow_type', $flowType)
@@ -129,7 +130,7 @@ class ApiController extends Controller
 
             return apiResponse([], Response::HTTP_NOT_FOUND, 'Lead not found');
         }
-        $response = app(BirdService::class)->stopWorkFlow($workflow);
+        $response = app(BirdService::class)->stopWorkFlow($workflow, $flowId);
 
         return apiResponse(['response_body' => $response->body ?? null], Response::HTTP_OK, 'Email event stopped successfully');
     }

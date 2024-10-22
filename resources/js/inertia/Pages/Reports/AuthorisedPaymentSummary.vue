@@ -2,11 +2,16 @@
 const props = defineProps({
   reportData: Object,
   defaultFilters: Object,
+  advisor: Array,
+  leadStatuses: Array,
+  fieldDisable: Boolean,
 });
 
 const loaders = reactive({
   table: false,
 });
+const notification = useToast();
+const page = usePage();
 
 // const { isRequired } = useRules();
 
@@ -17,6 +22,10 @@ const filters = reactive({
   thisWeek: [],
   customDate: [],
   teams: [],
+  quoteType: '',
+  selectedAdvisor: '',
+  userIds: [],
+  statusId: [],
   page: 1,
 });
 
@@ -49,6 +58,12 @@ function onReset() {
     onSuccess: () => (loaders.table = false),
   });
 }
+const quoteTypesOptions = computed(() => {
+  return props.defaultFilters.quoteTypes.map(method => ({
+    value: method.text,
+    label: method.text,
+  }));
+});
 
 const tableHeader = reactive([
   {
@@ -155,6 +170,64 @@ function showCustomDate() {
   filters.expireDate = '';
   filters.thisWeek = [];
 }
+function setUrl(advisor_id, quote_status_id) {
+  let url = '';
+
+  if (!this.filters || !this.filters.quoteType) {
+    notification.error({
+      title: 'Please select a line of business.',
+      position: 'top',
+    });
+  } else {
+    const quoteTypeMapping = {
+      'Car Insurance': 'car',
+      'Health Insurance': 'health',
+      'Business Insurance': 'business',
+      'Bike Insurance': 'bike',
+      'Life Insurance': 'life',
+      'Pet Insurance': 'pet',
+      'Jetski Insurance': 'jetski',
+      'Yacht Insurance': 'yacht',
+      'Travel Insurance': 'travel',
+      'Cycle Insurance': 'cycle',
+      'Home Insurance': 'home',
+    };
+
+    const personalQuoteTypes = new Set([
+      'Bike Insurance',
+      'Jetski Insurance',
+      'Cycle Insurance',
+      'Pet Insurance',
+      'Yacht Insurance',
+    ]);
+
+    const formattedQuoteType = quoteTypeMapping[this.filters.quoteType];
+
+    const quoteStatusParams = quote_status_id
+      .map(id => `quote_status_id[]=${id}`)
+      .join('&');
+
+    url = `/${personalQuoteTypes.has(filters.quoteType) ? 'personal-quotes' : 'quotes'}/${formattedQuoteType}?${quoteStatusParams}&advisor_id[]=${advisor_id}&segment_filter=all&payment_status_id=4`;
+    window.location.href = url;
+  }
+}
+
+watch(
+  () => filters.quoteType,
+  newQuoteType => {
+    if (newQuoteType) {
+      onSubmit(true);
+    }
+  },
+);
+onMounted(() => {
+  if (props.advisor.length === 1) {
+    let data = props.advisor.map(user => ({
+      value: user.name,
+    }));
+    filters.selectedAdvisor = data[0].value;
+  }
+});
 </script>
 <template>
   <Head title="Authorised Payment Report" />
@@ -173,6 +246,46 @@ function showCustomDate() {
           deselect-all
         />
       </x-field>
+      <x-select
+        v-model="filters.quoteType"
+        label="Line of Business"
+        placeholder="Select Line of Business"
+        :options="quoteTypesOptions"
+      />
+      <div v-if="fieldDisable">
+        <ComboBox
+          v-model="filters.userIds"
+          label="Advisor"
+          placeholder="Search by Advisor"
+          :options="
+            props.advisor.original.advisors.map(team => ({
+              value: team.id,
+              label: team.name,
+            }))
+          "
+        />
+      </div>
+      <div v-else>
+        <x-input
+          v-model="filters.selectedAdvisor"
+          type="text"
+          label="Advisor"
+          placeholder="Search by Advisor"
+          disabled
+        />
+      </div>
+
+      <ComboBox
+        v-model="filters.statusId"
+        label="Lead Status"
+        placeholder="Search by Status"
+        :options="
+          props.leadStatuses.map(status => ({
+            value: status.id,
+            label: status.text,
+          }))
+        "
+      />
     </div>
     <div class="flex gap-3 pt-3">
       <x-button
@@ -247,12 +360,13 @@ function showCustomDate() {
     </template>
     <template #item-advisor_name="{ advisor_name, advisor_id }">
       <div class="text-left">
-        <Link
-          v-bind:href="`/quotes/car?page=1&segment_filter=all&payment_status_id=4&advisor_id[]=${[advisor_id]}`"
+        <a
+          :href="url"
+          @click.prevent="setUrl(advisor_id, filters.statusId)"
           class="text-black underline"
         >
           {{ advisor_name }}
-        </Link>
+        </a>
       </div>
     </template>
   </DataTable>
