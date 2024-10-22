@@ -72,15 +72,6 @@ trait FilterCriteria
                                 $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
                                 $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
                                 $query->whereBetween('updated_at', [$dateFrom, $dateTo]); 
-                            }elseif(isset(request()->advisor_assigned_date) && request()->advisor_assigned_date != ''){
-                                $dateArray = request()->{'advisor_assigned_date'};
-                                $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
-                                $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
-                                $query->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]); 
-
-                                $query->whereHas('advisor_assigned_date', function ($subQuery) use ($dateFrom, $dateTo) {
-                                    $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
-                                });
                             }
                             break;
                         default:
