@@ -76,6 +76,7 @@ const quoteForm = useForm({
   days_cover_for: props.quote?.days_cover_for || null,
   members: [{ value: 'male', label: 'Male', primary: true }],
   edit_mode: editMode.value,
+  departure_country_id: null,
 });
 
 const rules = {
@@ -156,6 +157,16 @@ function onSubmit(isValid) {
       'Please select at least one destination.';
     return;
   }
+
+  if (
+    quoteForm.direction_code == travelQuoteEnum.TRAVEL_UAE_INBOUND &&
+    quoteForm?.departure_country_id == null
+  ) {
+    quoteForm.errors.departure_country_id =
+      'Please select departing from.';
+    return;
+  }
+
   quoteForm.clearErrors();
 
   const method = 'post';
@@ -470,6 +481,28 @@ watch(mappedDestinationIds, newVal => {
             name="end_date"
             :disabled-dates="disablePastDates"
             :rules="[isRequired]"
+          />
+        </x-field>
+
+        <x-field
+          v-if="
+            quoteForm.direction_code == travelQuoteEnum.TRAVEL_UAE_INBOUND
+          "
+          label="Departing From"
+          required
+        >
+          <ComboBox
+            v-model="quoteForm.departure_country_id"
+            :options="
+              fields.destination_id.options.map(option => ({
+                value: option.id,
+                label: option.text,
+              }))
+            "
+            :single="true"
+            class="w-full"
+            :rules="[rules.isRequired]"
+            :hasError="quoteForm.errors.departure_country_id"
           />
         </x-field>
 

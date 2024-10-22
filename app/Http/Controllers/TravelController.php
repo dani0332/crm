@@ -24,6 +24,7 @@ use App\Http\Requests\TravelRenewalsUploadRequest;
 use App\Http\Requests\UpdateTravelRequest;
 use App\Models\ApplicationStorage;
 use App\Models\Emirate;
+use App\Models\Nationality;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
@@ -175,6 +176,7 @@ class TravelController extends Controller
         $this->travelQuoteService->fillData();
         $nationalities = NationalityRepository::withActive()->get();
         $record->payment_status_id_text = app(SplitPaymentService::class)->mapQuotePaymentStatus($record->payment_status_id, $record->payment_status_id_text);
+        $record->departure_country_text = $record->departure_country_id ? Nationality::find($record->departure_country_id)->country_name : null;
 
         $ecomDetails = [
             'premium' => $record->premium,
