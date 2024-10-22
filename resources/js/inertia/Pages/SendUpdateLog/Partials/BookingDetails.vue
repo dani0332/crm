@@ -1102,7 +1102,13 @@ const noDiscountType = computed(() => {
 watch(
   () => bookingDetailsForm.price_with_vat,
   (newValue, oldValue) => {
-    if (!(noDiscountType.value || ignoreCheckDiscount.value || props?.payments[0]?.discount_value === 0)) {
+    if (
+      !(
+        noDiscountType.value ||
+        ignoreCheckDiscount.value ||
+        props?.payments[0]?.discount_value === 0
+      )
+    ) {
       checkDiscount(newValue, oldValue);
     }
   },
