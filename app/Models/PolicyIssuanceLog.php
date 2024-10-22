@@ -8,4 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class PolicyIssuanceLog extends Model
 {
     use HasFactory;
+
+    protected $connection = 'mongodb';
+    protected $table = 'policy_issuance_logs';
 }
