@@ -78,7 +78,7 @@ class BookPolicyOnSageJob implements ShouldQueue
             info('job:SendUpdateSageJob - Process Skipped - QuoteType: '.$this->sageProcess->id.' - Status : '.$this->sageProcess->status);
         }
 
-        Artisan::call('sage-processes:run', ['insurer' => $this->sageRequest->insurerID]);
+        (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
         info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses triggered for  code -'.$this->quote->code.'Insurer - '.$this->sageRequest->insurerID);
     }
 
@@ -89,7 +89,7 @@ class BookPolicyOnSageJob implements ShouldQueue
         info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses fn:failed triggered for code -'.$this->quote->code.' updating status to failed');
         (new SageApiService)->updateAndLogQuoteStatus($this->quote, $this->sageRequest->quoteTypeId, QuoteStatusEnum::POLICY_BOOKING_FAILED, $this->sageRequest->userId);
 
-        Artisan::call('sage-processes:run', ['insurer' => $this->sageRequest->insurerID]);
+        (new SageApiService)->scheduleSageProcesses($this->sageRequest->insurerID);
         info('Policy Book : BookPolicyOnSageJob : scheduleSageProcesses fn:failed triggered for code -'.$this->quote->code.' Insurer - '.$this->sageRequest->insurerID);
 
         Log::error('Policy Book : BookPolicyOnSageJob : '.$this->quote->code.' Error : '.$exception->getMessage());
