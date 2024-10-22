@@ -281,7 +281,9 @@ onBeforeMount(() => {
                   v-model="sendUpdateForm.notes"
                   size="xs"
                   :disabled="!state.edit"
+                  maxlength="250"
                 />
+                <span class="text-xs text-error-500" v-if="state.edit">Characters: {{ sendUpdateForm.notes.length }}</span>
               </dd>
             </div>
             <div class="grid sm:grid-cols-2">
