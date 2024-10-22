@@ -1857,26 +1857,39 @@ const finalizePaymentForm = (payment, capture_approval) => {
 
 
   const handleEditStatus = () => {
-    updateTotalValues();
-    const isAnyChildPaymentPaid = isAnyPaid(payment);
-    if (isPaymentLocked.value) {
-      isFieldReadonly.value = true;
-    } else if (
-      isAnyChildPaymentPaid &&
-      payment.total_price <= payment.total_amount + payment.discount_value
-    ) {
-      isFieldReadonly.value = !is_lacking_payment.value;
-      isTotalPriceUpdated.value = is_lacking_payment.value;
-    } else {
-      isFieldReadonly.value = false;
-    }
-    if ( payment.total_price > payment.total_amount + payment.discount_value){
-      isTotalPriceUpdated.value = false;
-    }
-    if (isAnyChildPaymentPaid){
-      isCollectedByEnabled.value = true
-    }
-  };
+  updateTotalValues();
+  const isAnyChildPaymentPaid = isAnyPaid(payment);
+
+  // Check if the payment is locked
+  if (isPaymentLocked.value) {
+    console.log("Condition: Payment is locked");
+    isFieldReadonly.value = true;
+  } else if (
+    isAnyChildPaymentPaid &&
+    payment.total_price <= payment.total_amount + payment.discount_value
+  ) {
+    isFieldReadonly.value = !is_lacking_payment.value;
+    isTotalPriceUpdated.value = is_lacking_payment.value;
+  } else {
+    isFieldReadonly.value = false;
+  }
+
+  // Check if the total price is greater than the total amount plus discount
+  if (payment.total_price > payment.total_amount + payment.discount_value) {
+    isTotalPriceUpdated.value = false;
+  }
+
+  // Check if the total amount is greater than the collected amount and frequency is upfront
+  if (payment.total_amount > payment.collected_amount && payment.frequency === paymentFrequencyEnum.UPFRONT) {
+    isTotalPriceUpdated.value = false;
+    isFieldReadonly.value = false;
+  }
+
+  // Enable collected by field if any child payment is paid
+  if (isAnyChildPaymentPaid) {
+    isCollectedByEnabled.value = true;
+  }
+};
 
   const handleViewStatus = () => {
     updateTotalValues();

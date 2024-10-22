@@ -574,18 +574,27 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     {
         if ($payment) {
             if ($payment->frequency == 'upfront') {
-                if ($payment->paymentSplits[0]->payment_status_id == PaymentStatusEnum::PAID) {
+                $capturedAmount = $payment->captured_amount;
+                $totalAmount = $payment->total_amount;
+                if ($capturedAmount > 0 && $totalAmount > $capturedAmount){
                     $payment->update(
-                        ['payment_status_id' => PaymentStatusEnum::CAPTURED]
+                        ['payment_status_id' => PaymentStatusEnum::PARTIALLY_PAID]
                     );
-                } elseif ($payment->paymentSplits[0]->payment_status_id == PaymentStatusEnum::PARTIALLY_PAID) {
-                    $payment->update(
-                        ['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED]
-                    );
-                } else {
-                    $payment->update(
-                        ['payment_status_id' => $payment->paymentSplits[0]->payment_status_id]
-                    );
+                } 
+                else{
+                    if ($payment->paymentSplits[0]->payment_status_id == PaymentStatusEnum::PAID) {
+                        $payment->update(
+                            ['payment_status_id' => PaymentStatusEnum::CAPTURED]
+                        );
+                    } elseif ($payment->paymentSplits[0]->payment_status_id == PaymentStatusEnum::PARTIALLY_PAID) {
+                        $payment->update(
+                            ['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED]
+                        );
+                    } else {
+                        $payment->update(
+                            ['payment_status_id' => $payment->paymentSplits[0]->payment_status_id]
+                        );
+                    }
                 }
             } else {
                 $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
