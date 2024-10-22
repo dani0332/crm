@@ -7,6 +7,7 @@ const props = defineProps({
   filterOptions: Object,
   quoteTypes: Object,
   displayByColumn: String,
+  createdAtDate: String,
   includeUnassignedLeads: String,
   quoteTypeCodes: Object,
   quoteTypeIdEnum: Object,
@@ -32,6 +33,7 @@ const permissionsEnum = page.props.permissionsEnum;
 const sortBy = ref('net_conversion');
 const sortType = ref('desc');
 const showTable = ref(true);
+let showUnassignedLeads = ref(false);
 
 const quoteTypeIdEnum = page.props.quoteTypeIdEnum;
 const {
@@ -129,10 +131,7 @@ function calculateTotalNetConversion(data) {
     badLeads += Number(row.bad_leads);
   });
   const numerator = saleLeads;
-  const denominator =
-    (props.unassignedLeadsCount
-      ? +totalLeads + props.unassignedLeadsCount
-      : totalLeads) - badLeads;
+  const denominator = (showUnassignedLeads && props.unassignedLeadsCount ? +totalLeads + props.unassignedLeadsCount : totalLeads) - badLeads;
   return denominator > 0
     ? ((numerator / denominator) * 100).toFixed(2) + ' %'
     : 'NaN';
@@ -146,9 +145,7 @@ function calculateTotalGrossConversion(data) {
     saleLeads += Number(row.sale_leads);
   });
   const numerator = saleLeads;
-  const denominator = props.unassignedLeadsCount
-    ? +totalLeads + props.unassignedLeadsCount
-    : totalLeads;
+  const denominator = showUnassignedLeads && props.unassignedLeadsCount ? +totalLeads + props.unassignedLeadsCount : totalLeads;
   return denominator > 0
     ? ((numerator / denominator) * 100).toFixed(2) + ' %'
     : 'NaN';
@@ -159,9 +156,7 @@ function calculateTotalLeads(data) {
   data.forEach(row => {
     totalLeads += Number(row.total_leads);
   });
-  return props.unassignedLeadsCount
-    ? +totalLeads + props.unassignedLeadsCount
-    : totalLeads;
+  return showUnassignedLeads && props.unassignedLeadsCount ? +totalLeads + props.unassignedLeadsCount : totalLeads;
 }
 
 function calculateTotalSaleLeads(data) {
@@ -172,12 +167,19 @@ function calculateTotalSaleLeads(data) {
   return saleLeads;
 }
 
+const onIncludeUnassignedLeadsChange = () => {
+  if(filters.includeUnassignedLeads == 'no') {
+    filters.createdAtDate = '';
+  }
+}
+
 const filters = reactive({
   startEndDate: [],
   lob: '',
   asAtDate: '',
   tag: '',
   displayBy: props.displayByColumn || '',
+  createdAtDate: props.createdAtDate || '',
   page: 1,
   includeUnassignedLeads: props.includeUnassignedLeads || 'no',
 });
@@ -203,6 +205,7 @@ function onSubmit(isValid) {
         loaders.table = true;
       },
       onFinish: () => {
+        updateShowUnassignedLeads();
         loaders.table = false;
         showTable.value = false;
         updateTableHeaders();
@@ -217,6 +220,10 @@ function onSubmit(isValid) {
     });
   }
 }
+
+const updateShowUnassignedLeads = () => {
+  showUnassignedLeads.value = filters.includeUnassignedLeads == 'yes';
+};
 
 function onReset() {
   isDirty.value = false;
@@ -321,6 +328,7 @@ const minDate = computed(() => {
 });
 
 onMounted(() => {
+  updateShowUnassignedLeads();
   document.querySelectorAll('[title]').forEach(element => {
     element.removeAttribute('title');
   });
@@ -406,6 +414,7 @@ onMounted(() => {
           :options="includeUnassignedLeads"
           class="w-full"
           :single="true"
+          @update:modelValue="onIncludeUnassignedLeadsChange"
         />
         <DatePicker
           v-if="filters.includeUnassignedLeads == 'yes'"
@@ -469,15 +478,24 @@ onMounted(() => {
       </template>
       <template #body-append>
         <tr
-          v-if="filters.includeUnassignedLeads == 'yes'"
+          v-if="showUnassignedLeads"
           class="total-row row-border-bottom"
         >
           <td class="direction-left">Unassigned</td>
           <td></td>
           <td></td>
           <td v-if="displayByActive"></td>
-          <td class="direction-center" colspan="4">
+          <td class="direction-center">
             {{ props.unassignedLeadsCount }}
+          </td>
+          <td class="direction-center">
+            0
+          </td>
+          <td class="direction-center">
+            NaN
+          </td>
+          <td class="direction-center">
+            NaN
           </td>
         </tr>
         <tr v-if="reportData && reportData?.length > 0" class="total-row">
