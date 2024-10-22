@@ -87,7 +87,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             $nextStepToBeExecuted = $this->getNextStep($process->completed_step);
             if ($nextStepToBeExecuted === self::PURCHASE_POLICY) {
                 info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PID : '.$process->id.' - Step Executing : '.$nextStepToBeExecuted);
-                $policyPurchaseResponse = $this->policyPurchase($quote, $travelType);
+                $policyPurchaseResponse = $this->policyPurchase($quote, $payment, $travelType);
                 if (! $policyPurchaseResponse['status']) {
                     return $policyPurchaseResponse;
                 }
@@ -202,7 +202,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         return $response;
     }
 
-    public function policyPurchase($quote, $travelType): array
+    public function policyPurchase($quote, $payment, $travelType): array
     {
         info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
 
@@ -229,13 +229,13 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $policyPurchaseResult = $policyPurchaseResponse?->result;
 
         $insurerPolicyNumber = $policyPurchaseResult->policy_number;
+        $insurerTaxNumber = $policyPurchaseResult->tax_invoice_number;
 
-        $quote->update([
-            'policy_number' => $insurerPolicyNumber,
-            'quote_status_id' => QuoteStatusEnum::PolicyIssued,
-            'quote_status_date' => now(),
-        ]);
+        $quote->update(['policy_number' => $insurerPolicyNumber, 'quote_status_id' => QuoteStatusEnum::PolicyIssued, 'quote_status_date' => now()]);
         info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Policy Purchase Api called successfully and Quote is updated');
+
+        $payment->update(['insurer_tax_number' => $insurerTaxNumber]);
+        info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Insurer Tax Invoice number is updated to : '.$insurerTaxNumber);
 
         info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' ended');
 
@@ -245,7 +245,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         return $response;
     }
 
-    public function fetchAndUploadDocument($quote, $travelType)
+    public function fetchAndUploadDocument($quote, $travelType): array
     {
         info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
         $response = ['status' => false, 'completed_step' => self::UPLOAD_POLICY_DOCUMENTS, 'error' => null, 'message' => null];
@@ -289,7 +289,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
     }
 
-    public function uploadBuyerTaxInvoiceAndFillBookingDetails($quote, $payment)
+    public function uploadBuyerTaxInvoiceAndFillBookingDetails($quote, $payment): array
     {
         info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
         $response = ['status' => false, 'completed_step' => self::FILL_POLICY_BOOKING_DETAILS, 'error' => null, 'message' => null];
@@ -345,7 +345,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         return $response;
     }
 
-    public function triggerBookPolicyProcess($quote, $process)
+    public function triggerBookPolicyProcess($quote, $process): array
     {
         info('automation:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
 
@@ -376,7 +376,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         return $response;
     }
 
-    public function getNextStep($completedStep = null)
+    public function getNextStep($completedStep = null): ?string
     {
         return match ($completedStep) {
             self::ISSUE_POLICY => self::PURCHASE_POLICY,
@@ -399,7 +399,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         $filePathAzure = 'documents/'.ucwords(self::TYPE).'/'.$fileNameAzure;
         Storage::disk('azureIM')->put($filePathAzure, $fileContents);
 
-        return $quote->documents()->create([
+        $quote->documents()->create([
             'doc_name' => $docName,
             'original_name' => $originalName ?? $docName,
             'doc_url' => $filePathAzure,
@@ -408,9 +408,8 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             'document_type_text' => $documentType->text,
             'doc_uuid' => generateUUID(),
         ]);
-
     }
-    private function getMimeTypeAndFileName($documentUrl)
+    private function getMimeTypeAndFileName($documentUrl): array
     {
         $httpHeaders = Http::head($documentUrl);
 
@@ -426,11 +425,11 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
     }
 
-    private function getTravelDocumentMapping($docName)
+    private function getTravelDocumentMapping($docName): ?array
     {
         return match ($docName) {
             'Policy Tax Invoice' => ['key' => $docName, 'code' => QuoteDocumentsEnum::TRAVEL_TAX_INVOICE],
-            'Certificate of Insurance' => ['key' => $docName, 'code' => QuoteDocumentsEnum::TRAVEL_POLICY_CERTIFICATE],
+            'Certificate of Insurance' => ['key' => $docName, 'code' => QuoteDocumentsEnum::TRAVEL_POLICY_SCHEDULE],
             default => null,
         };
     }
