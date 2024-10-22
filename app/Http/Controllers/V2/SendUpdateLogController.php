@@ -168,8 +168,9 @@ class SendUpdateLogController extends Controller
                 $paymentInvoices = array_merge($paymentInvoices->toArray(), $sendUpdateLogInvoices->toArray());
             }
         }
-        $bookingDetails = $this->sendUpdateLogService->getInvoiceDescription($sendUpdateLog, $realQuote, $quoteType, $payments, true);
 
+        $bookingDetails = $this->sendUpdateLogService->getInvoiceDescription($sendUpdateLog, $realQuote, $quoteType);
+        $bookingDetails['broker_invoice_number'] = $sendUpdateLog->broker_invoice_number ?? null;
         $uploadedDocuments = $this->sendUpdateLogService->getUploadedDocuments($sendUpdateLog);
         // payment related work.
         $this->quoteDocumentService = app(QuoteDocumentService::class);

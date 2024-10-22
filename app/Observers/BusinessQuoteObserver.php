@@ -4,8 +4,10 @@ namespace App\Observers;
 
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Jobs\MAWelcomeJob;
 use App\Models\BusinessQuote;
+use App\Repositories\PaymentRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\PersonalQuoteSyncTrait;
 
@@ -58,6 +60,15 @@ class BusinessQuoteObserver
                 'LEAD_STATUS_UPDATE',
                 'lead-status-update-myalfred-we'
             );
+        }
+
+        if (
+            isset($dirty['quote_status_id']) &&
+            $businessQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
+        ) {
+            $payment = $businessQuote->payments()->mainLeadPayment()->first();
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::BUSINESS->value);
+
         }
     }
 }
