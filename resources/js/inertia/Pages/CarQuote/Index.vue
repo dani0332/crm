@@ -53,7 +53,6 @@ let availableFilters = {
 };
 
 const filters = reactive(availableFilters);
-console.log('selected serach');
 function onSubmit(isValid) {
   if (isValid) {
     filters.page = 1;
