@@ -3,10 +3,12 @@
 namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\ThirdPartyTagEnum;
 use App\Enums\TiersEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\Tier;
+use App\Services\BirdService;
 use App\Services\CarQuoteService;
 use App\Services\CRUDService;
 use App\Services\EmailServices\CarEmailService;
@@ -73,12 +75,7 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
 
             $emailData = (new CarEmailService($sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
 
-            $senderDetail = isset($emailData->advisorEmail) && $emailData->advisorEmail != null && $emailData->advisorEmail != '' ? [
-                'email' => strstr($emailData->advisorEmail, '@', true).'@renewals.insurancemarket.ae',
-                'name' => $emailData->advisorName,
-            ] : [];
-
-            $responseCode = $sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch', [], $senderDetail);
+            $responseCode = $this->sendEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch', $sendEmailCustomerService);
 
             if (in_array($responseCode, [200, 201])) {
                 Log::info('SendOCBEmailJob - OCB Email Sent: '.$responseCode.' Customer Email Address: '.$carQuote->email.' Quote UuId: '.$this->quoteUuid);
@@ -87,6 +84,59 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
             }
         } catch (Exception $e) {
             Log::info('SendOCBEmailJob - Error: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * This function use to send email
+     *
+     * @param  CarQuote  $carQuote
+     * @param  int  $emailTemplateId
+     * @param  object  $emailData
+     * @return int
+     */
+    private function sendEmail($carQuote, $emailTemplateId, $emailData, $sendEmailCustomerService)
+    {
+        info('Renewals OCB Email sending email to email: ' . $carQuote->email);
+        info('fn: sendOCBEmailJob Renewals OCB Email email template id: ' . $emailTemplateId);
+        info('Renewals OCB Email check email data: ' . json_encode($emailData));
+
+        if (isset($carQuote->advisor_id)) {
+            return $sendEmailCustomerService->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
+        } else {
+            info('Renewals OCB Email sending without advisor');
+            $responseCode = $sendEmailCustomerService->sendNonAdvisorIntroEmail($emailData, 'car-quote-one-click-buy-batch', $emailTemplateId);
+            $this->triggerBirdWorkflow($emailData, $carQuote->mobile_no, $carQuote->uuid);
+
+            return $responseCode;
+        }
+    }
+
+    /**
+     * This function use to trigger bird workflow
+     *
+     * @param  object  $emailData
+     */
+    private function triggerBirdWorkflow($emailData, $mobile, $uuid)
+    {
+        $birdEmailData = [
+            'SendNewProcessRenewalEmail' => true,
+            'customerEmail' => $emailData->customerEmail,
+            'phone' => formatMobileNoWithoutPlus($mobile),
+            'customerName' => $emailData->customerName,
+            'quotePlanLink' => $emailData->quoteLink,
+            'instantAlfredLink' => $emailData->quoteLink . '?IA=true',
+            'refID' => $emailData->carQuoteId,
+            'requestForAdvisor' => $emailData->requestAdvisorLink,
+            'quoteUUID' => $uuid,
+            'tag' => ThirdPartyTagEnum::BIRD_SIC_MOTOR_RENEWAL_TAG,
+        ];
+
+        $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_MOTOR_RENEWAL_WORKFLOW)->first();
+        info('Renewals OCB Email No advisor: workflow trigger on BIRD, BIRD_SIC_MOTOR_RENEWAL_WORKFLOW value: ' . $sicEvent->value);
+
+        if ($sicEvent) {
+            app(BirdService::class)->triggerWebHookRequest($sicEvent->value, $birdEmailData);
         }
     }
 
