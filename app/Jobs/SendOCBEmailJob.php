@@ -97,9 +97,9 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
      */
     private function sendEmail($carQuote, $emailTemplateId, $emailData, $sendEmailCustomerService)
     {
-        info('Renewals OCB Email sending email to email: ' . $carQuote->email);
-        info('fn: sendOCBEmailJob Renewals OCB Email email template id: ' . $emailTemplateId);
-        info('Renewals OCB Email check email data: ' . json_encode($emailData));
+        info('Renewals OCB Email sending email to email: '.$carQuote->email);
+        info('fn: sendOCBEmailJob Renewals OCB Email email template id: '.$emailTemplateId);
+        info('Renewals OCB Email check email data: '.json_encode($emailData));
 
         if (isset($carQuote->advisor_id)) {
             return $sendEmailCustomerService->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
@@ -125,7 +125,7 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
             'phone' => formatMobileNoWithoutPlus($mobile),
             'customerName' => $emailData->customerName,
             'quotePlanLink' => $emailData->quoteLink,
-            'instantAlfredLink' => $emailData->quoteLink . '?IA=true',
+            'instantAlfredLink' => $emailData->quoteLink.'?IA=true',
             'refID' => $emailData->carQuoteId,
             'requestForAdvisor' => $emailData->requestAdvisorLink,
             'quoteUUID' => $uuid,
@@ -133,7 +133,7 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
         ];
 
         $sicEvent = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_SIC_MOTOR_RENEWAL_WORKFLOW)->first();
-        info('Renewals OCB Email No advisor: workflow trigger on BIRD, BIRD_SIC_MOTOR_RENEWAL_WORKFLOW value: ' . $sicEvent->value);
+        info('Renewals OCB Email No advisor: workflow trigger on BIRD, BIRD_SIC_MOTOR_RENEWAL_WORKFLOW value: '.$sicEvent->value);
 
         if ($sicEvent) {
             app(BirdService::class)->triggerWebHookRequest($sicEvent->value, $birdEmailData);
