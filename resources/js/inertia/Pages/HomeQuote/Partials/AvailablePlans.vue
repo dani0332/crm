@@ -5,6 +5,10 @@ const props = defineProps({
 
 console.log('props.plan', props.plan);
 
+const toggleLoader = ref(false);
+const toggleManualLoader = ref(false);
+const showInsurerError = ref(false);
+
 const listQuotePlansMembers = computed(() => {
   return props.plan.listQuotePlansMembers.map((item, index) => {
     return { ...item, index };
@@ -14,12 +18,57 @@ const listQuotePlansMembers = computed(() => {
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 const tabs = ref([
   { index: 0, label: 'General Info' },
-  { index: 1, label: 'Members' },
-  { index: 2, label: 'Inclusions' },
+  { index: 1, label: 'Inclusions' },
+  { index: 2, label: 'Additonal Covers' },
   { index: 3, label: 'Exclusions' },
-  { index: 4, label: 'COVID-19 Cover' },
-  { index: 5, label: 'Policy Details' },
+  { index: 4, label: 'Policy Details' },
 ]);
+
+const onToggleManual = () => {
+  toggleManualLoader.value = true;
+  setTimeout(() => {
+    toggleManualLoader.value = false;
+  }, 300);
+};
+
+const onTogglePlans = () => {
+  toggleLoader.value = true;
+
+  axios
+    .post(route('bikeManualPlanToggle', { quoteType: 'Bike' }), {
+      modelType: 'Bike',
+      planIds: [props.plan.id],
+      bike_quote_uuid: usePage().props.quote.uuid,
+      toggle: planForm.is_disabled,
+    })
+    .then(response => {
+      notification.success({
+        title: 'Plan has been updated',
+        position: 'top',
+      });
+      emit('onLoadAvailablePlansData');
+    })
+    .catch(error => {
+      notification.error({
+        title: error,
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      toggleLoader.value = false;
+    });
+};
+const homeDiscountOptions = computed(() => {
+  let arr = [];
+  for (let i = 0; i <= 20; i++) {
+    arr.push({ value: i, label: `${i}%` });
+  }
+  return arr;
+});
+
+const getBuildingValue = () => {
+    return page.props.plan?.listQuotePlanBenefitsInclusions?.buildings[0]?.value || 0;
+};
 </script>
 
 <template>
@@ -51,26 +100,103 @@ const tabs = ref([
       <TabPanels class="mt-2 text-sm min-h-[70vh]">
         <TabPanel>
           <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Provider Code</dt>
-              <dd>{{ props.plan.providerCode }}</dd>
+            <div class="grid sm:grid-cols-2 mb-3">
+              <x-toggle
+                v-model="props.plan.is_disabled"
+                color="success"
+                label="Hide Plan?"
+                @change="onTogglePlans"
+                :loading="toggleLoader"
+              />
+            </div>
+            <div class="grid sm:grid-cols-2 mb-3">
+              <x-toggle
+                v-model="props.plan.is_manual_update"
+                color="success"
+                label="Manual"
+                @change="onToggleManual"
+                :loading="toggleManualLoader"
+              />
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Provider Name</dt>
               <dd>{{ props.plan.providerName }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Travel Type</dt>
-              <dd>{{ props.plan.travelType }}</dd>
+              <dt class="mt-2">Insurer Quote No.:</dt>
+              <x-input
+                v-model="props.plan.insurer_quote_no"
+                :disabled="!props.plan?.is_manual_update"
+                :error="showInsurerError ? 'This field is required' : ''"
+                maxlength="50"
+                size="sm"
+              />
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Actual Price</dt>
-              <dd>{{ props.plan.actualPremium }}</dd>
+              <dt class="mt-2">Actual Price:</dt>
+              <x-input
+                v-model="props.plan.actualPremium"
+                :disabled="!props.plan.is_manual_update"
+                size="sm"
+                type="number"
+              />
+            </div>
+
+            <div class="grid sm:grid-cols-2">
+              <dt class="mt-2">Building Value:</dt>
+              <x-input
+                v-model="getBuildingValue"
+                size="sm"
+                type="number"
+              />
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Discount Price</dt>
-              <dd>{{ props.plan.discountPremium }}</dd>
+              <dt class="mt-2">Contents Value:</dt>
+              <x-input
+                v-model="props.plan.contentsValue"
+                size="sm"
+                type="number"
+              />
             </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="mt-2">Personal Belongings Value:</dt>
+              <x-input
+                v-model="props.plan.personalBelongingsValue"
+                size="sm"
+                type="number"
+              />
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="mt-2">Excess:</dt>
+              <x-input
+                v-model="props.plan.homeExcess"
+                :disabled="!props.plan.is_manual_update"
+                size="sm"
+                type="number"
+              />
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="mt-2">Discounted Price:</dt>
+              <x-input
+                v-model="props.plan.discountPremium"
+                :disabled="!props.plan.is_manual_update"
+                size="sm"
+                type="number"
+              />
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="mt-2">Discounted Price:</dt>
+              <x-select
+                v-model="props.plan.ancillary_excess"
+                placeholder="Select Option"
+                :options="homeDiscountOptions"
+                class="w-full"
+              />
+            </div>
+            <!-- <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">Provider Code</dt>
+              <dd>{{ props.plan.providerCode }}</dd>
+            </div> -->
           </dl>
         </TabPanel>
 

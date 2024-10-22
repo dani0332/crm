@@ -1602,9 +1602,14 @@ const onMemberUpdated = async () => {
                   item.planName
                 }}</span>
               </template>
+              <template #item-actualPremium="item">
+                <span class="text-primary-600">
+                  {{ item.actualPremium ? parseFloat(item.actualPremium).toFixed(2) : '0.00' }}
+                </span>
+              </template>
               <template #item-discountPremium="item">
                 <span class="text-primary-600">
-                  {{ item.discountPremium + item.vat }}
+                  {{ item.discountPremium + item.vat ? parseFloat(item.discountPremium + item.vat).toFixed(2) : '0.00' }}
                 </span>
               </template>
               <template #item-action="item">
