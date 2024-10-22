@@ -54,7 +54,7 @@ const onLogout = () => {
 };
 
 const urls = computed(() => {
-    return `/reports/payment-summary`;
+  return `/reports/payment-summary`;
 });
 
 const activitiesUrl = computed(() => {
