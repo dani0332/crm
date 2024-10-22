@@ -13,6 +13,7 @@ defineProps({
 
 const page = usePage();
 const hasAnyRole = roles => useHasAnyRole(roles);
+const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 const canExport = ref(false);
 const notification = useNotifications('toast');
@@ -73,6 +74,7 @@ const filters = reactive({
   policy_expiry_date: '',
   policy_expiry_date_end: '',
   last_modified_date: null,
+  advisor_assigned_date: '',
 });
 
 watch(
@@ -188,6 +190,7 @@ const setIntialState = () => {
     policy_expiry_date: '',
     policy_expiry_date_end: '',
     last_modified_date: null,
+    advisor_assigned_date: '',
   });
   filtersCount.value = 0;
 };
@@ -635,7 +638,8 @@ watch(() => {
               filters.renewal_batch ||
               filters.payment_due_date ||
               filters.booking_date ||
-              filters.company_name
+              filters.company_name ||
+              filters.advisor_assigned_date
                 ? []
                 : [isRequired]
             "
@@ -652,7 +656,8 @@ watch(() => {
               filters.renewal_batch ||
               filters.payment_due_date ||
               filters.booking_date ||
-              filters.company_name
+              filters.company_name ||
+              filters.advisor_assigned_date
                 ? []
                 : [isRequired]
             "
@@ -747,6 +752,14 @@ watch(() => {
           v-model="filters.last_modified_date"
           name="created_at_start"
           label="Last Modified Date"
+          range
+          format="dd-MM-yyyy"
+        />
+        <DatePicker
+          v-if="hasRole(rolesEnum.CorplineManager)"
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
           range
           format="dd-MM-yyyy"
         />

@@ -97,6 +97,7 @@ const filters = reactive({
   payment_due_date: '',
   booking_date: '',
   last_modified_date: null,
+  advisor_assigned_date: null,
 });
 
 const canExport = ref(false);
@@ -585,6 +586,14 @@ const formatDate = dateString =>
           v-model="filters.last_modified_date"
           name="created_at_start"
           label="Last Modified Date"
+          range
+          format="dd-MM-yyyy"
+        />
+        <DatePicker
+          v-if="hasRole(rolesEnum.HomeManager)"
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
           range
           format="dd-MM-yyyy"
         />

@@ -26,6 +26,8 @@ const rules = {
 const quotesSelected = ref([]);
 const canExport = ref(false);
 const page = usePage();
+const hasRole = role => useHasRole(role);
+const rolesEnum = page.props.rolesEnum;
 const notification = useNotifications('toast');
 const quoteSegments = page.props.quoteSegments?.filter(
   segment => segment.value !== 'sic-revival',
@@ -55,6 +57,7 @@ const filters = reactive({
   policy_expiry_date_end: '',
   transaction_approved_dates: page.props.transaction_approved_dates || '',
   last_modified_date: null,
+  advisor_assigned_date: '',
 });
 
 const loader = reactive({
@@ -614,6 +617,14 @@ const formatDate = date => {
           v-model="filters.last_modified_date"
           name="created_at_start"
           label="Last Modified Date"
+          range
+          format="dd-MM-yyyy"
+        />
+        <DatePicker
+          v-if="hasRole(rolesEnum.TravelManager)"
+          v-model="filters.advisor_assigned_date"
+          name="created_at_start"
+          label="Advisor Assigned Date"
           range
           format="dd-MM-yyyy"
         />

@@ -264,7 +264,7 @@ class BusinessQuoteService extends BaseService
             $searchProperties = $model->searchProperties;
         }
 
-        if (! isset($request->code) && ! isset($request->last_modified_date)  &&  ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date) && ! isset($request->company_name)) {
+        if (! isset($request->code) && ! isset($request->advisor_assigned_date) && ! isset($request->last_modified_date)  &&  ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date) && ! isset($request->company_name)) {
             $this->query->whereBetween('bqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         // if ($request->ajax()) {
@@ -281,6 +281,13 @@ class BusinessQuoteService extends BaseService
             $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
             $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
             $this->query->whereBetween('bqr.updated_at', [$dateFrom, $dateTo]);
+        }
+
+        if(isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
+            $dateArray = $request['advisor_assigned_date'];
+            $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();
+            $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
+            $this->query->whereBetween('bqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
 
         if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
