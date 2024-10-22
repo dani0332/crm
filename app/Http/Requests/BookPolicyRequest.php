@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\Payment;
 use App\Traits\GenericQueriesAllLobs;
@@ -51,11 +52,22 @@ class BookPolicyRequest extends FormRequest
                 $validator->errors()->add('value', 'No further editing is required as the policy has been booked');
             }
 
+            if ($quoteModel && $quoteModel->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
+                $validator->errors()->add('error', 'Policy Booking Failed! Please contact finance for correction of details');
+            }
+
+            $isDuplicateOrCIRLead = ! empty($quoteModel->parent_duplicate_quote_id);
+            $payment = Payment::where('code', $quoteModel->code)->mainLeadPayment()->first();
+
+            if ($isDuplicateOrCIRLead && empty($payment)) {
+                $payment = Payment::where([
+                    'paymentable_id' => $quoteModel->id,
+                    'paymentable_type' => $quoteModel->getMorphClass(),
+                ])->mainLeadPayment()->first();
+            }
+
             $isInsurerTaxNumberExists = Payment::whereNotNull('insurer_tax_number')
-                ->where(function ($query) use ($quoteModel) {
-                    $query->where('paymentable_id', '!=', request()->quote_id)
-                        ->where('paymentable_type', '!=', $quoteModel::class);
-                })
+                ->whereNot('code', $payment->code)
                 ->where('insurer_tax_number', request()->insurer_tax_invoice_number)
                 ->select('insurer_tax_number')->first();
 
@@ -64,10 +76,7 @@ class BookPolicyRequest extends FormRequest
             }
 
             $isInsurerComTaxNumberExists = Payment::whereNotNull('insurer_commmission_invoice_number')
-                ->where(function ($query) use ($quoteModel) {
-                    $query->where('paymentable_id', '!=', request()->quote_id)
-                        ->where('paymentable_type', '!=', $quoteModel::class);
-                })
+                ->whereNot('code', $payment->code)
                 ->where('insurer_commmission_invoice_number', request()->insurer_commmission_invoice_number)
                 ->select('insurer_commmission_invoice_number')->first();
 
@@ -80,11 +89,9 @@ class BookPolicyRequest extends FormRequest
     public function messages()
     {
         return [
-            'commission_vat_not_applicable.required_without' => 'Commmission (VAT APPLICABLE) OR Commmission (VAT NOT APPLICABLE) is required',
-            'commission_vat_not_applicable.between' => 'Commmission (VAT NOT APPLICABLE) must be less than 13 digits',
-
-            'commission_vat_applicable.between' => 'Commmission (VAT APPLICABLE) must be less than 13 digits',
-
+            'commission_vat_not_applicable.required_without' => 'Commission (VAT APPLICABLE) OR Commission (VAT NOT APPLICABLE) is required',
+            'commission_vat_not_applicable.between' => 'Commission (VAT NOT APPLICABLE) must be less than 13 digits',
+            'commission_vat_applicable.between' => 'Commission (VAT APPLICABLE) must be less than 13 digits',
         ];
     }
 }

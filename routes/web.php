@@ -205,6 +205,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('quotes/car-uncontactable', [CarQuoteController::class, 'getCarUncontactableQuotes'])->name('car-uncontactable-list');
 
         Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('data-extraction');
+        Route::get('/pua-leads-export', [CentralController::class, 'exportPUAUpdates'])->middleware(SetReadDbConnection::class)->name('export-car-pua-updates');
+
+        Route::get('/rm-leads-export', [CentralController::class, 'exportRmLeads'])->middleware(SetReadDbConnection::class)->name('export-rm-leads');
 
         Route::post('save-quote-notes', [CentralController::class, 'saveQuoteNotes'])->name('save-quote-notes');
         Route::post('update-quote-notes', [CentralController::class, 'updateQuoteNotes'])->name('update-quote-notes');
@@ -243,11 +246,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::post('embedded-products/upload-document', [EmbeddedProductController::class, 'uploadDocument'])->name('embedded-products.upload-document');
     Route::post('embedded-products/send-document', [EmbeddedProductController::class, 'sendDocument'])->name('embedded-products.send-document');
-    Route::post('embedded-products/download-document', [EmbeddedProductController::class, 'downloadDocument'])->name('embedded-products.download-document');
     Route::post('embedded-products/sync-document', [EmbeddedProductController::class, 'syncDocument'])->name('embedded-products.sync-document');
     Route::get('embedded-products/download/force', [EmbeddedProductController::class, 'force'])->name('force-download');
 
     Route::post('embedded-products/{id}/toggle-status', [EmbeddedProductController::class, 'toggleStatus'])->name('embedded-products.toggle-status');
+    Route::post('embedded-products/get-documents', [EmbeddedProductController::class, 'getDocuments'])->name('embedded-products.get-documents');
+    Route::post('embedded-products/upload-quote-document', [EmbeddedProductController::class, 'uploadQuoteDocument'])->name('embedded-products.upload-quote-document');
 
     Route::post('updateLeadStatusDragDrop', [CentralController::class, 'updateLeadStatusDragDrop'])->name('update-lead-status-drag-drop');
 
@@ -259,6 +263,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Artisan::call('route:clear');
         Artisan::call('config:clear');
         Artisan::call('view:clear');
+        Artisan::call('schedule:clear-cache');
 
         return '<h1>All cache cleared. LARAVEL Version='.app()->version().'</h1>';
     });
@@ -271,6 +276,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/payments/{quoteType}/store-new', [CentralController::class, 'storeNewPayment'])->name('payment-create')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/update-new', [CentralController::class, 'updateNewPayment'])->name('payment-edit')->middleware('check_route_access');
     Route::post('/payments/{quoteType}/retry-payment', [CentralController::class, 'retrySplitPayment'])->name('approve-payments')->middleware('check_route_access');
+    Route::post('/payments/{quoteType}/delete-split-payment', [CentralController::class, 'deleteSplitPayment'])->name('payment-edit')->middleware('check_route_access');
 
     Route::get('/quotes/car/post-sage-data', [SageApi::class, 'processSagePostTest'])->name('post-sage-data');
     // Route::post('/quotes/car/post-sage-data', [\App\Http\Controllers\V2\CarQuoteController::class, 'processSagePost'])->name('post-sage-data');
@@ -304,6 +310,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('get-team-managers', [UserController::class, 'getTeamManagers'])->name('getTeamManagers');
     Route::post('get-sub-teams', [UserController::class, 'getSubTeams'])->name('getSubTeams');
     Route::post('get-product-teams', [UserController::class, 'getProductTeams'])->name('getProductTeams');
+    Route::post('get-team-departments', [UserController::class, 'getTeamDepartments'])->name('getTeamDepartments');
     Route::get('/customer-upload', [V2CustomerController::class, 'uploadCustomers'])->name('customer.upload');
     Route::post('/customer-process', [V2CustomerController::class, 'processCustomerUpload']);
     Route::post('/customer-additional-contact/{id}/delete', [CustomerController::class, 'deleteAdditionalContact']);
@@ -565,6 +572,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('/send-update-customer-validation', 'sendUpdateCustomerValidation')->name('send-update-customer-validation');
         Route::post('/send-update-to-customer', 'sendUpdateToCustomer')->name('send-update-to-customer');
         Route::post('/save-provider-details', 'saveProviderDetails')->name('save-provider-details');
+        Route::post('/book-update-validation', 'sendUpdateValidation')->name('book-update-validation');
         Route::post('book-update', 'sendUpdate')->name('book-update');
     });
     Route::get('get-plans/{quoteType}/{providerId}/{planId?}', [CentralController::class, 'getQuoteWisePlans'])->name('get-quote-wise-plans');
@@ -655,6 +663,4 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/health-quote-delete-member', [HealthQuoteController::class, 'healthQuoteDeleteMember']);
     Route::post('followups/emails/events', [FollowupController::class, 'getEmailEvents']);
     Route::post('/update-user-status', [UserController::class, 'updateUserStatus']);
-
-    Route::get('/update-aml-status', [CRUDController::class, 'updateAmlStatus']);
 });

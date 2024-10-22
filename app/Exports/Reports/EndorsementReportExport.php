@@ -45,6 +45,8 @@ class EndorsementReportExport extends BaseReportsExport
             'Commission Tax Invoice Number',
             'Commission Percentage',
             'Transaction Type',
+            'Lead Source',
+            'Booking Date',
         ];
     }
 
@@ -87,6 +89,8 @@ class EndorsementReportExport extends BaseReportsExport
             $quote->insurer_commmission_invoice_number ?? 'N/A',
             $quote->commmission_percentage ?? 'N/A',
             $quote->transaction_type ?? 'N/A',
+            $quote->source ?? 'N/A',
+            $quote->policy_booking_date ?? 'N/A',
         ];
     }
 

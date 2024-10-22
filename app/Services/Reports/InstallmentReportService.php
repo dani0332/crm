@@ -71,6 +71,7 @@ class InstallmentReportService extends ManagementReport
                 'p.insurer_commmission_invoice_number',
                 'l.text as transaction_type',
                 DB::raw('CASE WHEN ps.sr_no=1 THEN p.commmission_percentage ELSE 0 END as commmission_percentage'),
+                'personal_quotes.source',
             )
             ->join('payments as p', function ($join) {
                 $join->on('personal_quotes.code', '=', 'p.code')
@@ -129,7 +130,7 @@ class InstallmentReportService extends ManagementReport
 
     protected function filterTeams($query, $teamIds, $isSSR = false)
     {
-        if (! empty($teamIds)) {
+        if (! empty($teamIds) || auth()->user()->isDepartmentManager()) {
             $userIds = $this->getUsersByTeamIds($teamIds)->pluck('id')->toArray();
             $query->whereIn('personal_quotes.advisor_id', $userIds);
         }
@@ -189,6 +190,7 @@ class InstallmentReportService extends ManagementReport
             'Commission Tax Invoice Number',
             'Commission Percentage',
             'Transaction Type',
+            'Source',
         ];
     }
 
@@ -229,6 +231,7 @@ class InstallmentReportService extends ManagementReport
             $quote->insurer_commmission_invoice_number ?? 'N/A',
             $quote->commmission_percentage ?? 'N/A',
             $quote->transaction_type ?? 'N/A',
+            $quote->source ?? 'N/A',
         ];
     }
 }

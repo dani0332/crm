@@ -171,7 +171,7 @@ class ReportsController extends Controller
      */
     public function fetchAdvisorsListByLob(Request $request)
     {
-        $usersReportToLoggedInUser = $this->getUsersByProductName($request->lob)->pluck('id')->toArray();
+        $usersReportToLoggedInUser = $this->getUsersByProductName($request->lob);
         if (! auth()->user()->hasAnyRole([
             RolesEnum::SeniorManagement,
             RolesEnum::Admin,
@@ -417,6 +417,7 @@ class ReportsController extends Controller
             'leadStatuses' => $leadStatuses ?? [],
         ]);
     }
+
     public function renderConversionAsAtReport(Request $request, ConversionAsAtReportService $conversionAsAtReportService)
     {
 

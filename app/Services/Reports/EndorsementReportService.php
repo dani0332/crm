@@ -113,7 +113,9 @@ class EndorsementReportService extends ManagementReport
                 'send_update_logs.booking_date',
                 DB::raw('IFNULL(send_update_logs.insurer_commission_invoice_number, p.insurer_commmission_invoice_number) as insurer_commmission_invoice_number'),
                 DB::raw('CASE WHEN ps.sr_no is NULL OR ps.sr_no=1 THEN IFNULL(send_update_logs.commission_percentage, p.commmission_percentage) ELSE 0 END as commmission_percentage'),
-                DB::raw("'Endorsement' as transaction_type")
+                DB::raw("'Endorsement' as transaction_type"),
+                'personal_quotes.source',
+                'personal_quotes.policy_booking_date',
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -190,7 +192,9 @@ class EndorsementReportService extends ManagementReport
                 'send_update_logs.booking_date',
                 DB::raw('IFNULL(CONCAT(p.insurer_commmission_invoice_number, "-REV"), IFNULL(CONCAT(send_update_logs.insurer_commission_invoice_number, "-REV"), null)) as insurer_commmission_invoice_number'),
                 DB::raw('-1 * IFNULL(send_update_logs.commission_percentage, IFNULL(p.commmission_percentage, 0)) as commmission_percentage'),
-                DB::raw("'Endorsement' as transaction_type")
+                DB::raw("'Endorsement' as transaction_type"),
+                'personal_quotes.source',
+                'personal_quotes.policy_booking_date',
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -254,12 +258,13 @@ class EndorsementReportService extends ManagementReport
             $item->collects = strtoupper($item->collects);
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
             $item->commmission_percentage = number_format($item->commmission_percentage, 2);
+            $item->policy_booking_date = ! empty($item->policy_booking_date) ? Carbon::parse($item->policy_booking_date)->format('Y-m-d') : null;
         });
     }
 
     protected function filterTeams($query, $teamIds, $isSSR = false)
     {
-        if (! empty($teamIds)) {
+        if (! empty($teamIds) || auth()->user()->isDepartmentManager()) {
             $userIds = $this->getUsersByTeamIds($teamIds)->pluck('id')->toArray();
             $query->whereIn('personal_quotes.advisor_id', $userIds);
         }

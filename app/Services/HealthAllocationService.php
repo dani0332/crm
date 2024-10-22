@@ -12,7 +12,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\UserStatusEnum;
-use App\Jobs\CammyJob;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
 use App\Mail\HealthAssignmentIssueEmail;
@@ -179,9 +178,6 @@ class HealthAllocationService extends AllocationService
             ->then(function () use ($lead, $isReassignment, $previousUserId) {
                 if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
                     IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousUserId, $isReassignment)->delay(now()->addSeconds(15));
-                    if ($lead->quote_status_id == QuoteStatusEnum::FollowedUp) {
-                        CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(15));
-                    }
                 }
             })->dispatch();
     }

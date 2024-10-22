@@ -6,18 +6,20 @@ use App\Enums\PaymentProcessJobEnum;
 use App\Models\CcPaymentProcess;
 use App\Services\SplitPaymentService;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class ProcessCCPaymentJob implements ShouldQueue
+class ProcessCCPaymentJob implements ShouldBeUnique, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $paymentRecord;
     public $tries = 1;
     public $timeout = 120; // 2 minutes
+    public $uniqueFor = 125;
 
     /**
      * Create a new job instance.
@@ -52,5 +54,10 @@ class ProcessCCPaymentJob implements ShouldQueue
             // Handle the exception here
             info("CC Payments Job Failed for Payment {$quoteInfo} Split ID: {$this->paymentRecord->payment_splits_id} - Error: ".$exception->getMessage());
         }
+    }
+
+    public function uniqueId(): string
+    {
+        return $this->paymentRecord->payment_splits_id;
     }
 }

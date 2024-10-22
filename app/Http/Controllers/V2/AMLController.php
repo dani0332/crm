@@ -199,6 +199,15 @@ class AMLController extends Controller
             })->whereNull('screenshot');
         $kycLogs = $amlRecordFetch->orderBy('created_at', 'desc')->get();
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
+
+        $isPersonalQuote = checkPersonalQuotes($quoteType->code);
+
+        if ($isPersonalQuote) {
+            $quoteRequest->quote_link = '/personal-quotes/'.strtolower($quoteType->code).'/'.$quoteRequest->uuid;
+        } else {
+            $quoteRequest->quote_link = '/quotes/'.strtolower($quoteType->code).'/'.$quoteRequest->uuid;
+        }
+
         $customerDetails = Customer::where('id', $quoteRequest->customer_id)->with('detail')->firstOrFail();
         $entityDetails = QuoteRequestEntityMapping::with(['entity', 'entity.quoteMember'])
             ->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])
@@ -231,7 +240,7 @@ class AMLController extends Controller
             return [str_replace('-', '_', $key) => $item];
         });
 
-        $checkScreeningStatus = [QuoteStatusEnum::AMLScreeningCleared => 2, QuoteStatusEnum::AMLScreeningFailed => 1];
+        $checkScreeningStatus = [AMLStatusCode::AMLScreeningCleared => 2, AMLStatusCode::AMLScreeningFailed => 1];
         $kycStatus = AMLService::getKycType($quoteTypeId, $quoteRequestId);
 
         $payment = Payment::where('code', $quoteRequest->code)
@@ -259,7 +268,7 @@ class AMLController extends Controller
             'customerDetails' => $customerDetails,
             'amlDecisionStatusEnum' => AMLDecisionStatusEnum::asArray(),
             'lookups' => $lookups,
-            'quoteAmlStatus' => $checkScreeningStatus[$quoteRequest->quote_status_id] ?? null,
+            'quoteAmlStatus' => $checkScreeningStatus[$quoteRequest->aml_status] ?? null,
             'cardHolderName' => $cardHolderName,
         ];
 
