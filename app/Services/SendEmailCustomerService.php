@@ -106,8 +106,8 @@ class SendEmailCustomerService extends BaseService
 
         try {
             $response = Http::withHeaders($headers)
-                ->beforeSending(function () use ($fnName, $body) {
-                    info("{$fnName} ---- Mail Request is Sending");
+                ->beforeSending(function () use ($body) {
+                    // info("{$fnName} ---- Mail Request is Sending");
                     $sender = $body['sender'] ?? null;
                     $replyTo = $body['replyTo'] ?? null;
                     $to = $body['to'] ?? null;
