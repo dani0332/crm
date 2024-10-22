@@ -49,16 +49,17 @@ class BirdService extends BaseService
         }
     }
 
-    public function stopWorkFlow($workflow)
+    public function stopWorkFlow($workflow, $flowId=null)
     {
         $birdWorkSpaceId = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_WORKSPACE_ID)->first();
         $channelId = ApplicationStorage::where('key_name', ApplicationStorageEnums::BIRD_CHANNEL_ID)->first();
-        if (! $birdWorkSpaceId || ! $channelId) {
+        $workflowId = $flowId ?? $channelId->value ?? null;
+        if (! $birdWorkSpaceId || ! $workflowId) {
             info("Bird Workspace Id or Channel Id not found for lead : Ref-ID: {$workflow->quote_uuid} |Time: ".now());
 
             return false;
         }
-        $cancelFlowRunUrl = "{$this->baseUrl}/workspaces/{$birdWorkSpaceId->value}/flows/{$channelId->value}/runs";
+        $cancelFlowRunUrl = "{$this->baseUrl}/workspaces/{$birdWorkSpaceId->value}/flows/{$workflowId}/runs";
         info('Bird Webhook Cancel Flow Run Request initiated', ['Ref-ID' => $workflow->quote_uuid, 'URL' => $cancelFlowRunUrl,  'run_id' => $workflow->flow_id, 'Method' => 'patch']);
 
         return $this->triggerWebHookRequest($cancelFlowRunUrl, ['action' => 'cancel', 'ids' => [$workflow->flow_id]], 'patch', true);

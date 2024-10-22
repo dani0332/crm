@@ -27,6 +27,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use App\Http\Requests\BirdStopWorkFlowRequest;
 
 class ApiController extends Controller
 {
@@ -115,11 +116,11 @@ class ApiController extends Controller
         return apiResponse([], Response::HTTP_OK, $response->message);
     }
 
-    public function stopFollowUpEvent()
+    public function stopFollowUpEvent(BirdStopWorkFlowRequest $request)
     {
-        $flowType = request('flowType');
-        $quoteUID = request('uuid');
-
+        $flowType = $request->flowType;
+        $quoteUID = $request->uuid;
+        $flowId = $request->flowId ?? null;
         info("getting request to stopFollowUpEvent Ref-ID: {$quoteUID} | FlowType: {$flowType} Time:".now());
         $workflow = QuoteFlowDetails::where('quote_uuid', $quoteUID)
             ->where('flow_type', $flowType)
@@ -129,7 +130,7 @@ class ApiController extends Controller
 
             return apiResponse([], Response::HTTP_NOT_FOUND, 'Lead not found');
         }
-        $response = app(BirdService::class)->stopWorkFlow($workflow);
+        $response = app(BirdService::class)->stopWorkFlow($workflow,$flowId);
 
         return apiResponse(['response_body' => $response->body ?? null], Response::HTTP_OK, 'Email event stopped successfully');
     }
