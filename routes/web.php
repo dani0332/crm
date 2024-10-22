@@ -18,7 +18,6 @@ use App\Http\Controllers\CRUDController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
-use App\Http\Controllers\FailedJobsController;
 use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\HandlerController;
 use App\Http\Controllers\HealthQuoteController;
@@ -205,9 +204,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('quotes/car-uncontactable', [CarQuoteController::class, 'getCarUncontactableQuotes'])->name('car-uncontactable-list');
 
         Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->middleware(SetReadDbConnection::class)->name('data-extraction');
-        Route::get('/pua-leads-export', [CentralController::class, 'exportPUAUpdates'])->middleware(SetReadDbConnection::class)->name('exportPUAUpdates');
+        Route::get('/pua-leads-export', [CentralController::class, 'exportPUAUpdates'])->middleware(SetReadDbConnection::class)->name('export-car-pua-updates');
 
-        Route::get('/rm-leads-export', [CentralController::class, 'exportRmLeads'])->middleware(SetReadDbConnection::class)->name('exportRmLeads');
+        Route::get('/rm-leads-export', [CentralController::class, 'exportRmLeads'])->middleware(SetReadDbConnection::class)->name('export-rm-leads');
 
         Route::post('save-quote-notes', [CentralController::class, 'saveQuoteNotes'])->name('save-quote-notes');
         Route::post('update-quote-notes', [CentralController::class, 'updateQuoteNotes'])->name('update-quote-notes');
@@ -382,7 +381,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         ->name('lead-list-report');
     Route::get('/reports/payment-summary', [ReportsController::class, 'renderPaymentSummary'])->name('authorized-payment-summary');
     Route::get('/dashboard/{quoteType}-conversion', [DashboardController::class, 'conversionStats'])->name('dashboard.conversion.stats');
-    Route::get('failed-jobs', [FailedJobsController::class, 'index'])->name('failed-jobs.index');
 
     Route::group(['prefix' => 'admin'], function () {
         Route::resource('users', UserController::class);
@@ -637,7 +635,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/health-plan-copays', [HealthQuoteController::class, 'copaysByPlan']);
 
     Route::get('/insurance-provider-networks', [HealthQuoteController::class, 'networksByInsuranceProvider']);
-    Route::post('/car-plan-manual-update-process', [ClaimController::class, 'carPlanUpdateManualProcess']);
+    // Route::post('/car-plan-manual-update-process', [ClaimController::class, 'carPlanUpdateManualProcess']);
     Route::post('/bike-plan-manual-update-process', [BikeQuoteController::class, 'bikePlanUpdateManualProcess']);
     Route::post('/car-plan-manual-update-process', [CarQuoteController::class, 'carPlanUpdateManualProcess']);
     Route::resource('travelers', TravelMembersDetailController::class);
@@ -653,9 +651,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     //bookpolicy routes
     Route::post('quotes/update-booking-policy', [CentralController::class, 'updateBookingPolicy'])->name('update-booking-policy')->middleware('permission:'.PermissionsEnum::BOOK_POLICY_DETAILS_ADD);
     Route::post('quotes/send-booking-policy', [CentralController::class, 'sendBookingPolicy'])->name('send-booking-policy')->middleware('permission:'.PermissionsEnum::SEND_POLICY_TO_CUSTOMER_BUTTON.'|'.PermissionsEnum::SEND_AND_BOOK_POLICY_BUTTON.'|'.PermissionsEnum::BOOK_POLICY_BUTTON);
-
-    //todo: commented for later use
-    //Route::get('schedule-non-motor-aml', [RenewalsUploadController::class, 'scheduleNonMotorAml']);
 
     /* health quote members */
     Route::post('/health-quote-add-member', [HealthQuoteController::class, 'healthQuoteAddMember']);
