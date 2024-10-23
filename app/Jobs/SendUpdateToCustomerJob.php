@@ -5,10 +5,10 @@ namespace App\Jobs;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
+use App\Services\SageApiService;
 use App\Services\SendEmailCustomerService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
-use Artisan;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -73,7 +73,7 @@ class SendUpdateToCustomerJob implements ShouldQueue
             unset($this->payload['sageRequestPayload']);
             $sendUpdateLogServices->updateSageProcessForDispatching($this->payload, $sendUpdateLog, $sageRequestPayload);
 
-            Artisan::call('sage-processes:run', ['insurer' => $sageRequestPayload->insurerID]);
+            (new SageApiService)->scheduleSageProcesses($sageRequestPayload->insurerID);
             info('job:SendUpdateToCustomerJob - fn:scheduleSageProcesses triggered for Insurer - '.$sageRequestPayload->insurerID.' - SendUpdateCode: '.$sendUpdateLog->code);
         }
 

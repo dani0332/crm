@@ -7,7 +7,6 @@ use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SageProcess;
 use App\Services\CentralService;
 use App\Services\SageApiService;
-use Artisan;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -85,7 +84,7 @@ class SendUpdateSageJob implements ShouldQueue
             info('job:SendUpdateSageJob - Sage Process Skipped - Process ID: '.$this->sageProcess->id.' - Status : '.$this->sageProcess->status);
         }
 
-        Artisan::call('sage-processes:run', ['insurer' => $this->sageRequestPayload->insurerID]);
+        (new SageApiService)->scheduleSageProcesses($this->sageRequestPayload->insurerID);
         info('job:SendUpdateSageJob - fn:ScheduleSageProcesses triggered for Insurer: '.$this->sageRequestPayload->insurerID);
 
     }
@@ -98,7 +97,7 @@ class SendUpdateSageJob implements ShouldQueue
         $this->sendUpdateLog->update(['status' => SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED]);
         info('job:SendUpdateSageJob - SendUpdateUUID: '.$this->sendUpdateLog->uuid.' - Error : '.$exception->getMessage());
 
-        Artisan::call('sage-processes:run', ['insurer' => $this->sageRequestPayload->insurerID]);
+        (new SageApiService)->scheduleSageProcesses($this->sageRequestPayload->insurerID);
         info('job:SendUpdateSageJob - fn:ScheduleSageProcesses triggered for Insurer:'.$this->sageRequestPayload->insurerID);
     }
 
