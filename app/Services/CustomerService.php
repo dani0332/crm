@@ -172,7 +172,7 @@ class CustomerService extends BaseService
             $customer = null;
             $previousEmail = $lead->email;
             if ($lead->customer && ! $this->getCustomerByEmail($value)) {
-                info('Customer additional contact primary email updated. Previous Email: '.$lead->email.' New Email: '.$value);
+                info('Customer additional contact primary email updated. Previous Email: ' . $lead->email . ' New Email: ' . $value);
                 $customerArray = [
                     'first_name' => $lead->first_name,
                     'last_name' => $lead->last_name,
@@ -181,7 +181,7 @@ class CustomerService extends BaseService
                     'dob' => $lead->dob,
                 ];
                 $customer = Customer::create($customerArray);
-                $customer->update(['code' => 'IND-'.$customer->id]);
+                $customer->update(['code' => 'IND-' . $customer->id]);
                 $email = trim($lead->email);
 
                 if (str_ends_with($email, '@insurancemarket.ae') || str_ends_with($email, '@afia.ae')) {
@@ -303,7 +303,7 @@ class CustomerService extends BaseService
             }
             $lead->update(['mobile_no' => $value]);
             if ($lead->customer) {
-                info('Customer additional contact primary mobile_no updated. Previous Mobile_No: '.$lead->mobile_no.' New Mobile_No: '.$value);
+                info('Customer additional contact primary mobile_no updated. Previous Mobile_No: ' . $lead->mobile_no . ' New Mobile_No: ' . $value);
                 $lead->customer->update(['mobile_no' => $value]);
             }
         }
@@ -314,14 +314,26 @@ class CustomerService extends BaseService
         return Customer::select('id', 'email', 'campaign_followups', 'last_followup_sent_at')->where('id', $id)->first();
     }
 
-    public function getCustomerIdByEmail(string $email): ?int
+    public function getCustomerIdByEmail(?string $email): ?int
     {
-        return optional(Customer::where('email', $email)->first())->id;
+        if (empty($email)) {
+            Log::warning('Empty or null email provided to getCustomerIdByEmail.');
+            return null;
+        }
+
+        $customer = Customer::where('email', $email)->first();
+
+        if (! $customer) {
+            Log::info('Customer with the provided email not found.', ['email' => $email]);
+            return null;
+        }
+
+        return $customer->id;
     }
 
     public function getCustomerAddressData($data)
     {
-        $customerId = $this->getCustomerIdByEmail($data->email);
+        $customerId = $data->customer_id ?? null;
         $quoteUuid = $data->uuid ?? null;
 
         if (! $customerId || ! $quoteUuid) {
@@ -329,33 +341,25 @@ class CustomerService extends BaseService
                 'customerId' => $customerId,
                 'quote_uuid' => $quoteUuid,
             ]);
-
             return null;
         }
 
-        try {
-            $customerAddress = CustomerAddress::where('customer_id', $customerId)
-                ->where('quote_uuid', $quoteUuid)
-                ->first();
+        // Retrieve customer address based on customerId and quoteUuid
+        $customerAddress = CustomerAddress::where('customer_id', $customerId)
+            ->where('quote_uuid', $quoteUuid)
+            ->first();
 
-            if (! $customerAddress) {
-                Log::info('Customer address not found.', [
-                    'customerId' => $customerId,
-                    'quote_uuid' => $quoteUuid,
-                ]);
-            }
-
-            return $customerAddress;
-        } catch (\Exception $e) {
-            Log::error('Failed to retrieve customer address.', [
+        if (! $customerAddress) {
+            Log::info('Customer address not found.', [
                 'customerId' => $customerId,
                 'quote_uuid' => $quoteUuid,
-                'error' => $e->getMessage(),
             ]);
-
             return null;
         }
+
+        return $customerAddress;
     }
+
 
     public function createCustomerIfNotExists($customerData)
     {
