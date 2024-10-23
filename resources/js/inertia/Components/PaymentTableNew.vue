@@ -2,7 +2,7 @@
 import ToolTip from './../Components/ToolTip.vue';
 import { onMounted, reactive, ref } from 'vue';
 import moment from 'moment';
-import NProgress from 'nprogress';
+import NProgress, { set } from 'nprogress';
 import { computed } from 'vue';
 import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
 
@@ -2924,11 +2924,8 @@ watch(
   },
 );
 
-watch(
-  () => props.quoteRequest,
-  (newValue, oldValue) => {
-    //refresh premium
-    if (paymentMethodsForm.status !== 'edit') {
+const setPaymentInitialPrice = () => {
+  if (paymentMethodsForm.status !== 'edit') {
       if (props.isPlanDetailEnabled) {
         initialAmount.value = props.quoteRequest.price_with_vat;
       } else if (props.sendUpdate) {
@@ -2944,8 +2941,10 @@ watch(
       }
       totalPrice.value = initialAmount.value;
     }
-    //refresh plan
-    if (
+}
+
+const setPlanDetail = () => {
+  if (
       props.quoteType == 'Business' ||
       props.quoteType == 'Home' ||
       props.isPlanDetailEnabled
@@ -2966,7 +2965,16 @@ watch(
       initalPlanDetails = props.quoteRequest.insurance_provider;
     }
     planDetail.value = initalPlanDetails;
-  },
+}
+
+watch(
+  () => props.quoteRequest,
+  (newValue, oldValue) => {
+    //refresh premium
+    setPaymentInitialPrice();
+    //refresh plan
+    setPlanDetail();
+  }
 );
 const paymentAllocationStatusTooltip = payment_allocation_status => {
   // First convert to upper case as some of the values are in lower case & some of without space
