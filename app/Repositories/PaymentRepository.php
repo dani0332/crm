@@ -590,12 +590,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if ($payment->frequency == 'upfront') {
                 $capturedAmount = $payment->captured_amount;
                 $totalAmount = $payment->total_amount;
-                if ($capturedAmount > 0 && $totalAmount > $capturedAmount){
+                if ($capturedAmount > 0 && $totalAmount > $capturedAmount) {
                     $payment->update(
                         ['payment_status_id' => PaymentStatusEnum::PARTIALLY_PAID]
                     );
-                } 
-                else{
+                } else {
                     if ($payment->paymentSplits[0]->payment_status_id == PaymentStatusEnum::PAID) {
                         $payment->update(
                             ['payment_status_id' => PaymentStatusEnum::CAPTURED]
