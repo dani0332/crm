@@ -476,8 +476,8 @@ class SendUpdateLogService
                     $insuranceProviderId = $sendUpdateLog->insurance_provider_id;
                 }
             } elseif (! $payments->isEmpty()) {
-                $insuranceProviderId = $payments[0]->insurance_provider_id;
-                $planId = $payments[0]->plan_id;
+                $insuranceProviderId = $payments[0]->insurance_provider_id ?? null;
+                $planId = $payments[0]->plan_id ?? null;
             } else {
                 @[$insuranceProviderId, $planId] = $this->getProviderDetails($getQuoteDetails, $sendUpdateLog->quote_type_id);
             }
