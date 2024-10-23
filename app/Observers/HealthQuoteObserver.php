@@ -95,7 +95,7 @@ class HealthQuoteObserver
             $healthQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             $payment = $healthQuote->payments()->mainLeadPayment()->first();
-            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::HEALTH->value);
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($healthQuote, $payment, QuoteTypes::HEALTH->value);
 
         }
     }

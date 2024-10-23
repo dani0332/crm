@@ -1139,7 +1139,10 @@ class CRUDService extends BaseService
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
 
-            app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quoteModel, true, false);
+            // Create a temporary file and write the PDF content to it
+            $tempFile = $this->createTempPdfFileForWatermark($pdfFile);
+
+            app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quoteModel, true, false, $tempFile);
         }
     }
 

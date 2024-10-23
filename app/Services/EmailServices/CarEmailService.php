@@ -108,7 +108,7 @@ class CarEmailService extends BaseService
             $carbonDate = Carbon::parse($carQuote->previous_policy_expiry_date)->format('jS F Y');
             $emailData->renewalDueDate = $carbonDate;
         }
-        info('emailData: '.json_encode($emailData));
+        // info('emailData: '.json_encode($emailData));
 
         return $emailData;
     }

@@ -69,7 +69,7 @@ class HomeQuoteObserver
             $homeQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             $payment = $homeQuote->payments()->mainLeadPayment()->first();
-            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::HOME->value);
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($homeQuote, $payment, QuoteTypes::HOME->value);
 
         }
     }
