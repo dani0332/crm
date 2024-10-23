@@ -1,9 +1,24 @@
 <script setup>
+defineProps({
+    coverages: Array,
+});
 const notification = useToast();
 const uploadForm = useForm({
   csvFile: '',
 });
 const contactLoader = ref(false);
+
+const tableHeader = [
+    {text: "ID" , value: "upload_id"},
+    { text: 'File Name', value: 'fileName' },
+    { text: 'Type', value: 'type' },
+    {text: 'Total Record' , value:'totalRecords'},
+    {text: "Uploaded Record" , value: 'good'},
+    {text: 'Bad Record' , value: 'cannotUpload'},
+    {text: "Error" , value: 'error'},
+
+];
+
 
 let errors = {
   type: '',
@@ -41,9 +56,16 @@ function onSubmit(isValid) {
         uploadForm.csvFile = '';
       })
       .catch(error => {
+          if(error.response.data.message){
+              notification.error({
+                  title: error.response.data.message,
+                  position: 'top',
+              });
+          }
+          console.log(error.response.data.message,"======")
         contactLoader.value = false;
         uploadForm.setError(
-          error.response.data.error || error.response.data.errors.file_name[0],
+          error.response.data.error || error.response.data.errors.file_name[0] || error.response.data.message,
         );
         notification.error({
           title:
@@ -51,6 +73,7 @@ function onSubmit(isValid) {
             error.response.data.errors.file_name[0],
           position: 'top',
         });
+
         document.getElementById('file_name').value = '';
       });
   } else {
@@ -115,5 +138,34 @@ function onSubmit(isValid) {
         >
       </div>
     </x-form>
+
+      <div class="flex justify-between items-center">
+          <h2 class="text-xl font-semibold">Uploaded Coverages</h2>
+          <div class="space-x-3"></div>
+      </div>
+      <x-divider class="my-4" />
+
+      <DataTable
+          table-class-name="tablefixed"
+          :headers="tableHeader"
+          :items="coverages.data || []"
+          border-cell
+          hide-rows-per-page
+          hide-footer
+      >
+
+      </DataTable>
+
+      <Pagination
+          :links="{
+        next: coverages.next_page_url,
+        prev: coverages.prev_page_url,
+        current: coverages.current_page,
+        from: coverages.from,
+        to: coverages.to,
+      }"
+      />
+
+
   </div>
 </template>

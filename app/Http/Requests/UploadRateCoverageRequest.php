@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\RatesCoveragesUpload;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UploadRateCoverageRequest extends FormRequest
@@ -35,6 +36,10 @@ class UploadRateCoverageRequest extends FormRequest
      */
     public function withValidator($validator)
     {
-        //
+        $validator->after(function ($validator) {
+            if (request()->hasFile('file_name') && ($existing = RatesCoveragesUpload::where('file_name', request()->file('file_name')->getClientOriginalName())->first())) {
+                $validator->errors()->add('type', 'File already been uploaded. Please try again with different file.');
+            }
+        });
     }
 }

@@ -2,13 +2,8 @@
 
 namespace App\Imports;
 
-use App\Enums\RenewalProcessStatuses;
-use App\Enums\RenewalsUploadType;
 use App\Models\RateCoveragesProcess;
 use App\Models\RatesCoveragesUpload;
-use App\Models\RenewalQuoteProcess;
-use App\Models\RenewalsUploadLeads;
-use App\Services\RenewalsUploadService;
 use App\Traits\RenewalsImportTrait;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\OnEachRow;
@@ -43,12 +38,14 @@ class CoveragesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, Wi
         $this->validCount++;
         $row = $row->toArray();
 
-        $quoteData = $this->mapQuoteData($row);
+        $coverageData = $this->mapQuoteData($row);
+
+        info('DATA', [$coverageData]);
 
         return RateCoveragesProcess::create([
             'rate_coverage_id' => $this->uploadCoverages->id,
-            'data' => $quoteData,
-            'type' => RenewalsUploadType::CREATE_LEADS,
+            'data' => $coverageData,
+            'type' => 'coverage',
         ]);
     }
 
@@ -83,13 +80,13 @@ class CoveragesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, Wi
     public function getColumns()
     {
         return [
-            'code' => ['index' => 0, 'title' => 'Code', 'rules' => 'required'],
-            'text' => ['index' => 1, 'title' => 'Text', 'rules' => 'required'],
-            'description' => ['index' => 2, 'title' => 'Description', 'rules' => 'required'],
-            'value' => ['index' => 3, 'title' => 'Value', 'rules' => 'required'],
-            'type' => ['index' => 4, 'title' => 'Type', 'rules' => 'required'],
-            'is_northern' => ['index' => 5, 'title' => 'Is Northern', 'rules' => 'required'],
-            'plan_code' => ['index' => 6, 'title' => 'Plan Code', 'rules' => 'required'],
+            'code' => ['index' => 0, 'title' => 'code', 'rules' => 'required'],
+            'text' => ['index' => 1, 'title' => 'text', 'rules' => 'required'],
+            'description' => ['index' => 2, 'title' => 'description', 'rules' => 'required'],
+            'value' => ['index' => 3, 'title' => 'value', 'rules' => 'required'],
+            'type' => ['index' => 4, 'title' => 'type', 'rules' => 'required'],
+            'is_northern' => ['index' => 5, 'title' => 'is_northern', 'rules' => 'required'],
+            'plan_code' => ['index' => 6, 'title' => 'plan_code', 'rules' => 'required'],
         ];
     }
 
@@ -117,11 +114,15 @@ class CoveragesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, Wi
 
                 foreach ($this->failures() as $failure) {
                     if (! isset($failed[$failure->row()])) {
-                        $quoteData = $this->mapData($failure->values());
+                        $quoteData = $this->mapQuoteData($failure->values());
+                        if (empty($quoteData)) {
+                            continue;
+                        }
+                        info('DATAAA', [$quoteData]);
                         $failed[$failure->row()] = [
                             'rate_coverage_id' => $this->uploadCoverages->id,
                             'data' => $quoteData,
-                            'type' => RenewalsUploadType::CREATE_LEADS,
+                            'type' => 'coverage',
                         ];
 
                         $this->failedCount++;
@@ -137,4 +138,29 @@ class CoveragesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, Wi
             },
         ];
     }
+
+    protected function mapQuoteData(array $row): array
+    {
+        $data = [
+            'code' => $row[0] ?? null,
+            'text' => $row[1] ?? null,
+            'description' => $row[2] ?? null,
+            'value' => $row[3] ?? null,
+            'type' => $row[4] ?? null,
+            'is_northern' => $row[5] ?? null,
+            'plan_code' => $row[6] ?? null,
+        ];
+
+        if (is_null($data['plan_code']) || $data['plan_code'] === '') {
+            return [];
+        }
+
+        $filteredData = array_filter($data, function ($value) {
+            return ! is_null($value) && $value !== ''; // Exclude nulls and empty strings
+        });
+
+        return ! empty($filteredData) ? $filteredData : [];
+    }
+
+
 }

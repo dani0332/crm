@@ -41,7 +41,7 @@ class UploadCoveragesJob implements ShouldQueue
      */
     public function handle(RatesCoveragesUploadService $uploadCoveragesService)
     {
-        return $uploadCoveragesService->processUploadCreate($this->uploadCoverages);
+        return $uploadCoveragesService->processUploadCoverages($this->uploadCoverages);
     }
 
     /**
