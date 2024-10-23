@@ -183,7 +183,7 @@ class QuoteDocumentService extends BaseService
             }
 
             // watermark only for pdf files
-            if (($fileMimeType == 'application/pdf' || $fileMimeType == '.pdf') && $isWaterMarkQualifyDoc) {
+            if (($fileMimeType == 'application/pdf' || $fileMimeType == '.pdf') && $isWaterMarkQualifyDoc && ! $isPaymentReceipt && ! $isKyc) {
                 $watermarkData = $this->watermarkPdf($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType, $isKyc, $isPaymentReceipt);
             } elseif (($fileMimeType == 'image/jpeg' || $fileMimeType == 'image/png' || $fileMimeType == 'image/jpg') && $isWaterMarkQualifyDoc) {
                 $watermarkData = $this->watermarkImage($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
