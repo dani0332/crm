@@ -1862,7 +1862,6 @@ const finalizePaymentForm = (payment, capture_approval) => {
 
     // Check if the payment is locked
     if (isPaymentLocked.value) {
-      console.log("Condition: Payment is locked");
       isFieldReadonly.value = true;
     } else if (
       isAnyChildPaymentPaid &&
@@ -2900,8 +2899,7 @@ watch(
     //refresh premium
     if (
       !(
-        paymentMethodsForm.status === 'edit' &&
-        isTotalPriceUpdated.value === true
+        paymentMethodsForm.status === 'edit'
       )
     ) {
       if (props.isPlanDetailEnabled) {
