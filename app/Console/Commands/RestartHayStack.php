@@ -20,15 +20,12 @@ class RestartHaystack extends Command
 
         if ($haystack) {
             if ($haystack->bales()->count() > 0) {
-                if (Carbon::now()->timezone(config('app.timezone'))->diffInMinutes($haystack->updated_at) <= 10) {
-                    $haystack->restart();
-                    $haystack->resume_at = Carbon::now();
-                    $haystack->save();
-                    $this->info('Haystack process restarted successfully.');
+                $haystack->restart();
+                $haystack->resume_at = Carbon::now();
+                $haystack->save();
+                $this->info('Haystack process restarted successfully.');
 
-                    return;
-
-                }
+                return;
             } else {
                 $this->error('No bales found for the haystack process.');
             }
