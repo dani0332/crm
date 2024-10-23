@@ -16,6 +16,8 @@ class RestartHaystack extends Command
         $haystack = Haystack::whereNull('finished_at')
             ->whereNull('resume_at')
             ->where('started_at', '!=', null)
+            ->where('created_at', '>=', Carbon::parse('20-oct-2024'))
+            ->orderBy('created_at', 'desc')
             ->first();
 
         if ($haystack) {
