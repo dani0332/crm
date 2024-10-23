@@ -2,8 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Console\Commands\Common\Batchable;
 use App\Models\RenewalBatch;
-use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -12,7 +12,7 @@ use Illuminate\Queue\Middleware\WithoutOverlapping;
 
 class AddBatchNumberNonMotorsJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable;
+    use Batchable, Dispatchable, InteractsWithQueue, Queueable;
 
     public $tries = 1;
     public $timeout = 30;
@@ -33,27 +33,14 @@ class AddBatchNumberNonMotorsJob implements ShouldQueue
     public function handle()
     {
         try {
-            info('today date for batch job is : '.json_encode(now()->toDateString()));
+            $this->logTodayDate();
+
             $lastBatch = RenewalBatch::whereNull('quote_type_id')->orderBy('id', 'desc')->first();
             info('last batch : '.json_encode($lastBatch));
             if ($lastBatch == null) {
-                info('inside creating batches from scratch');
-                $batches = $this->generateBatchNumbers(Carbon::parse('2024-09-01'));
-                if (count($batches) > 0) {
-                    foreach ($batches as $batch) {
-                        $this->insertQuoteBatch($batch);
-                    }
-                    info('batches created');
-                }
-            } elseif (! (now()->startOfDay() >= Carbon::parse($lastBatch->start_date)->startOfDay() && now()->endOfDay() <= Carbon::parse($lastBatch->end_date)->endOfDay())) {
-                info('inside creating batch of current week');
-                $batches = $this->generateBatchNumbers(Carbon::parse($lastBatch->end_date)->addDays(1));
-                if (count($batches) > 0) {
-                    foreach ($batches as $batch) {
-                        $this->insertQuoteBatch($batch);
-                    }
-                    info('batches created');
-                }
+                $this->processBatchesFromScratch('2024-09-01');
+            } elseif (! $this->isBatchCurrent($lastBatch)) {
+                $this->processBatchesFromLastEndDate($lastBatch);
             } else {
                 info('batches are update to date');
 
@@ -65,20 +52,7 @@ class AddBatchNumberNonMotorsJob implements ShouldQueue
         }
     }
 
-    private function insertQuoteBatch($batch)
-    {
-        RenewalBatch::insert([
-            'name' => $batch['name'],
-            'start_date' => $batch['startDate'],
-            'end_date' => $batch['endDate'],
-            'month' => $batch['month'],
-            'year' => $batch['year'],
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-    }
-
-    private function generateBatchNumbers($startDate)
+    protected function generateBatchNumbers($startDate)
     {
         $batchArray = [];
 
