@@ -4,6 +4,7 @@ namespace App\Console\Commands\Common;
 
 use App\Models\RenewalBatch;
 use Carbon\Carbon;
+use Exception;
 
 trait Batchable
 {
@@ -79,5 +80,27 @@ trait Batchable
         }
 
         return $batchArray;
+    }
+
+    protected function startProcessing($date)
+    {
+        try {
+            $this->logTodayDate();
+
+            $lastBatch = RenewalBatch::whereNull('quote_type_id')->orderBy('id', 'desc')->first();
+            info('last batch : '.json_encode($lastBatch));
+            if ($lastBatch == null) {
+                $this->processBatchesFromScratch($date);
+            } elseif (! $this->isBatchCurrent($lastBatch)) {
+                $this->processBatchesFromLastEndDate($lastBatch);
+            } else {
+                info('batches are update to date');
+
+                return true;
+            }
+        } catch (Exception $e) {
+            info('Add Batch Number Failed');
+            info('message: '.$e->getMessage());
+        }
     }
 }
