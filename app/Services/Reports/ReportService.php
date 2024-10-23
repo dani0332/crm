@@ -646,7 +646,7 @@ class ReportService extends BaseService
 
             $query = DB::table($details['table'])
                 ->select(
-                    'DISTINCT users.id as advisor_id',
+                    'users.id as advisor_id',
                     'users.name as advisor_name',
                     'quote_status_id',
                     DB::raw('COUNT(DISTINCT '.$details['table'].'.code) as total_leads'),
@@ -696,7 +696,8 @@ class ReportService extends BaseService
                 $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startDate, $endDate]);
             }
 
-            $dataCollection = $query->orderBy('total_leads', 'desc')->get();
+            $dataCollection = $query->groupBy('users.id')
+                ->orderBy('total_leads', 'desc')->get();
         }
         $items = $dataCollection->groupBy('advisor_id')->map(function ($group) {
             return [
