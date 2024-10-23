@@ -692,11 +692,21 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return $quote->payments()->where('insurer_tax_number', $invoiceNumber)->first();
     }
 
-    public function generateAndStoreBrokerInvoiceNumber($payment, $quoteType, $attempts = 0)
+    public function generateAndStoreBrokerInvoiceNumber($quote, $payment, $quoteType, $attempts = 0)
     {
+        info('fn:generateAndStoreBrokerInvoiceNumber Quote : '.$quote?->code.' Source : '.$quote?->source.' started');
+
+        $response = ['status' => false, 'message' => ''];
+
+        if (! $payment) {
+            info('fn:generateAndStoreBrokerInvoiceNumber Quote : '.$quote?->code.' Source : '.$quote?->source.' payment not found.');
+            $response['message'] = 'Payment not found.';
+
+            return $response;
+        }
         info('fn:generateAndStoreBrokerInvoiceNumber Payment : '.$payment->code);
         $maxRetries = 5;
-        $response = ['status' => false, 'message' => ''];
+
         if ($payment->broker_invoice_number) {
             info('fn:generateAndStoreBrokerInvoiceNumber Payment  : '.$payment->code.' : Broker Invoice Number already exists - BIN : '.$payment->broker_invoice_number);
             $response['status'] = true;
@@ -751,7 +761,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if (in_array($e->getCode(), ['40001', '1213'])) {
                 if ($attempts < $maxRetries) {
                     info('fn:generateAndStoreBrokerInvoiceNumber Payment  : '.$payment->code.' : table locked, trying again');
-                    $this->generateAndStoreBrokerInvoiceNumber($payment, $quoteType, $attempts);
+                    $this->generateAndStoreBrokerInvoiceNumber($quote, $payment, $quoteType, $attempts);
                 } else {
                     info('fn:generateAndStoreBrokerInvoiceNumber Payment  : '.$payment->code.' : Error occurred while generating broker invoice number: Could not acquire lock after multiple attempts');
                     $response['message'] = 'Exception: Could not acquire lock after multiple attempts';
