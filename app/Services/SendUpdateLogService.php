@@ -461,7 +461,7 @@ class SendUpdateLogService
         $getQuoteDetails = $this->getQuoteObjectBy($quoteType, $sendUpdateLog->quote_uuid, 'uuid');
         $payments = $this->getPayments($getQuoteDetails->id, $getQuoteDetails->uuid, QuoteTypes::getName($sendUpdateLog->quote_type_id)->value);
 
-        if ($sendUpdateLog?->category->code == SendUpdateLogStatusEnum::CPD || empty($payments)) {
+        if ($sendUpdateLog?->category->code == SendUpdateLogStatusEnum::CPD || $payments->isEmpty()) {
             $insuranceProviderId = $sendUpdateLog->insurance_provider_id;
         } else {
             if ($getQuoteDetails->insly_id || $getQuoteDetails->insly_migrated) {
@@ -475,6 +475,9 @@ class SendUpdateLogService
                 } else {
                     $insuranceProviderId = $sendUpdateLog->insurance_provider_id;
                 }
+            } elseif (! $payments->isEmpty()) {
+                $insuranceProviderId = $payments[0]->insurance_provider_id;
+                $planId = $payments[0]->plan_id;
             } else {
                 @[$insuranceProviderId, $planId] = $this->getProviderDetails($getQuoteDetails, $sendUpdateLog->quote_type_id);
             }
