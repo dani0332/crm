@@ -10,7 +10,6 @@ use App\Enums\quoteBusinessTypeCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RetentionReportEnum;
-use App\Enums\RolesEnum;
 use App\Models\PersonalQuote;
 use App\Models\RenewalBatch;
 use App\Models\UserManager;
@@ -26,7 +25,7 @@ use Illuminate\Support\Facades\Auth;
 
 class RetentionReportService extends BaseService
 {
-    use GenericQueriesAllLobs, GetUserTreeTrait, TeamHierarchyTrait;
+    use GenericQueriesAllLobs, GetUserTreeTrait, Reportable, TeamHierarchyTrait;
 
     private $dateFormat;
     private $policyExpiryColumnName;
@@ -74,40 +73,6 @@ class RetentionReportService extends BaseService
             $this->formatReportData($reportData, $aggregatedData),
             $aggregatedData,
         ];
-    }
-
-    /**
-     * Retrieves the quote type from the request or defaults to the user's product name.
-     *
-     * @return string
-     */
-    private function getQuoteType($request)
-    {
-        // Return the 'lob' parameter from the request if it exists, otherwise return the user's product name
-        return $request['lob'] ?? $this->getUserPorductName();
-    }
-
-    /**
-     * Checks if the authenticated user is either a manager or an advisor with the appropriate permissions.
-     *
-     * @return bool
-     */
-    private function isAdvisorManager()
-    {
-        if (auth()->user()->isAdmin()) {
-            return true;
-        }
-        // Check if the user is a manager or deputy and lacks the permission to view the manager retention report
-        if (
-            (auth()->user()->isManagerOrDeputy() && ! Auth::user()->can(PermissionsEnum::MANAGER_RETENTION_REPORT_VIEW)) ||
-            // Check if the user is an advisor and lacks the permission to view the advisor retention report
-            (auth()->user()->isAdvisor() && ! Auth::user()->can(PermissionsEnum::ADVISOR_RETENTION_REPORT_VIEW))
-        ) {
-            return false;
-        }
-
-        return true;
-
     }
 
     /**
@@ -304,21 +269,6 @@ class RetentionReportService extends BaseService
     }
 
     /**
-     * Applies advisor filters to the query based on the request parameters.
-     * Filters the query to include only the specified advisors.
-     *
-     * @return void
-     */
-    private function applyAdvisorFilters($query, $request)
-    {
-        // Check if advisors parameter is set and contains values
-        if (isset($request['advisors']) && count($request['advisors']) > 0) {
-            // Apply the advisor filter to the query
-            $query->whereIn('advisor_id', $request['advisors']);
-        }
-    }
-
-    /**
      * Applies quote type filters to the query based on the request parameters.
      * Filters the query based on the line of business (LOB) and insurance type.
      *
@@ -456,24 +406,6 @@ class RetentionReportService extends BaseService
     }
 
     /**
-     * Retrieves the product name for the authenticated user.
-     * Fetches the user's products and returns the name of the first product.
-     *
-     * @return string The name of the first product associated with the user.
-     */
-    public function getUserPorductName()
-    {
-        $productName = '';
-        // Get the products associated with the authenticated user
-        $products = $this->getUserProducts(auth()->user()->id)->where('name', '!=', quoteTypeCode::Car);
-        if (count($products) === 1) {
-            $productName = $products->first()->name;
-        }
-
-        return $productName;
-    }
-
-    /**
      * Retrieves retention leads data based on the request parameters.
      * Determines the quote type, constructs the query, applies filters, and returns paginated results.
      *
@@ -535,37 +467,6 @@ class RetentionReportService extends BaseService
     }
 
     /**
-     * Aggregates the report data by summing up the total, sales, invalid, and lost values.
-     *
-     * @return array
-     */
-    private function aggregateReportData($reportData)
-    {
-        $isReportDataExist = count($reportData) !== 0;
-
-        return [
-            'total' => $isReportDataExist ? $reportData->sum('total') : 0,
-            'sales' => $isReportDataExist ? $reportData->sum('sales') : 0,
-            'invalid' => $isReportDataExist ? $reportData->sum('invalid') : 0,
-            'lost' => $isReportDataExist ? $reportData->sum('lost') : 0,
-        ];
-    }
-
-    private function calculateAdvisorRetentionPercentage($avgVolumeNetRetention, $volumeNetRetention)
-    {
-        return number_format((((float) $volumeNetRetention) - ((float) $avgVolumeNetRetention)), 2).'%';
-    }
-    /**
-     * Calculates the retention percentage based on sales and total values.
-     *
-     * @return string
-     */
-    private function calculateRetentionPercentage($sales, $total)
-    {
-        return ($total != 0) ? number_format(($sales / $total) * 100, 2).'%' : '0.00%';
-    }
-
-    /**
      * Retrieves the filter options for the retention report.
      *
      * @return array
@@ -611,74 +512,6 @@ class RetentionReportService extends BaseService
         ];
     }
 
-    /**
-     * Retrieves the lines of business (LOB) based on the user's permissions.
-     *
-     * @return array
-     */
-    public function getLobByPermissions()
-    {
-        // Define the initial lines of business (LOB) with their corresponding permission constants
-        $lobs = [
-            quoteTypeCode::Bike => quoteTypeCode::Bike,
-            quoteTypeCode::Health => quoteTypeCode::Health,
-            quoteTypeCode::Travel => quoteTypeCode::Travel,
-            quoteTypeCode::Pet => quoteTypeCode::Pet,
-            quoteTypeCode::Cycle => quoteTypeCode::Cycle,
-            quoteTypeCode::Yacht => quoteTypeCode::Yacht,
-            quoteTypeCode::Life => quoteTypeCode::Life,
-            quoteTypeCode::Home => quoteTypeCode::Home,
-            quoteTypeCode::CORPLINE => quoteTypeCode::CORPLINE,
-            quoteTypeCode::GroupMedical => quoteTypeCode::GroupMedical,
-
-        ];
-
-        // Return the filtered and augmented LOBs
-        return $lobs;
-    }
-
-    /**
-     * Retrieves the filter options based on the lines of business (LOB) and user roles.
-     *
-     * @return array
-     */
-    public function getFiltersByLob()
-    {
-        // Determine the visibility of each LOB based on the user's roles
-        $canView = [
-            quoteTypeCode::Bike => ! Auth::user()->hasRole(RolesEnum::BikeAdvisor),
-            quoteTypeCode::Health => ! Auth::user()->hasRole(RolesEnum::RMAdvisor),
-            quoteTypeCode::Travel => ! Auth::user()->hasRole(RolesEnum::TravelAdvisor),
-            quoteTypeCode::Pet => ! Auth::user()->hasRole(RolesEnum::PetAdvisor),
-            quoteTypeCode::Cycle => ! Auth::user()->hasRole(RolesEnum::CycleAdvisor),
-            quoteTypeCode::Yacht => ! Auth::user()->hasRole(RolesEnum::YachtAdvisor),
-            quoteTypeCode::Life => ! Auth::user()->hasRole(RolesEnum::LifeAdvisor),
-            quoteTypeCode::Home => ! Auth::user()->hasRole(RolesEnum::HomeAdvisor),
-            quoteTypeCode::CORPLINE => ! Auth::user()->hasRole(RolesEnum::CorpLineAdvisor),
-            quoteTypeCode::GroupMedical => ! Auth::user()->hasRole(RolesEnum::GMAdvisor),
-        ];
-
-        // Return the filter options with their visibility settings
-        return [
-            'advisors' => [
-                'can_view' => $canView,
-            ],
-            'teams' => [
-                'can_view' => $canView,
-                'lobs' => [
-                    quoteTypeCode::CORPLINE,
-                ],
-            ],
-            'insurance_type' => [
-                'lobs' => [
-                    quoteTypeCode::CORPLINE,
-                ],
-            ],
-            'previous_policy_expiry_date' => [
-                'can_view' => $canView,
-            ],
-        ];
-    }
     /**
      * Determines whether the batch column should be shown in the report.
      * This method checks the first item in the provided retention report data to see if it has a 'batch' attribute.
