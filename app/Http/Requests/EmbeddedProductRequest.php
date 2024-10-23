@@ -23,7 +23,7 @@ class EmbeddedProductRequest extends FormRequest
      */
     public function rules()
     {
-        $id = request()->route()->parameter('embedded_product');
+        $id = request()->route()->parameter('product');
 
         $minAgeRule = 'nullable|int';
         if ($this->input('min_age') && $this->input('max_age')) {

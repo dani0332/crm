@@ -1,6 +1,6 @@
 <script setup>
 import ToolTip from './../Components/ToolTip.vue';
-import { onMounted, reactive } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import moment from 'moment';
 import NProgress from 'nprogress';
 import { computed } from 'vue';
@@ -132,6 +132,7 @@ const isTotalPriceUpdated = ref(false);
 const trashedFilesModal = ref([]);
 const isApproveNotChecked = ref(true);
 const isApproveConfirmed = ref(false);
+const isAmlApprovalRequired = ref(false);
 const isCreditApprovalAllowed = ref(true);
 const isVerificationAllowed = ref(true);
 const isPaymentFrequencyNotSelected = ref(false);
@@ -139,6 +140,8 @@ const isDiscountAllowed = ref(true);
 const isRetryModalOpen = ref(false);
 const retryProcessJobId = ref(0);
 const retryPaymentErrorMessage = ref('');
+const isSplitAmountInvalid = ref([]);
+const isSplitAmountInvalidError = ref([]);
 const isDeleteModalOpen = ref(false);
 const deleteSplitPaymentId = ref(0);
 const deleteSplitPaymentStatus = ref(0);
@@ -347,6 +350,9 @@ const closeInnerModal = () => {
 const closeConfirmModal = () => {
   isApproveConfirmed.value = false;
   isApproveNotChecked.value = true;
+};
+const closeAmlConfirmModal = () => {
+  isAmlApprovalRequired.value = false;
 };
 const hasNextFile = computed(() => {
   return currentFileIndex.value < filesTest.value.length - 1;
@@ -1587,7 +1593,6 @@ const addPaymentModal = () => {
 };
 
 const retrySplitPaymentModal = (process_job_id, message) => {
-  console.log('retrySplitPaymentModal', process_job_id, message);
   retryProcessJobId.value = process_job_id;
   retryPaymentErrorMessage.value = message;
   isRetryModalOpen.value = true;
@@ -1670,7 +1675,8 @@ const editPaymentModal = (
   if (
     sr_no === 0 &&
     payment.payment_status.id === props.paymentStatusEnum.PAID &&
-    capture_approval === 0
+    capture_approval === 0 &&
+    isPaidEditable.value === false
   ) {
     notification.error({
       title: 'No further actions allowed to paid payments',
@@ -1733,6 +1739,7 @@ const resetPaymentForm = () => {
   authorizedPayments.value = [];
   isApproveConfirmed.value = false;
   isApproveNotChecked.value = true;
+  isAmlApprovalRequired.value = false;
 };
 
 const initializePaymentForm = (
@@ -1867,7 +1874,7 @@ const finalizePaymentForm = (payment, capture_approval) => {
       isAnyChildPaymentPaid &&
       payment.total_price <= payment.total_amount + payment.discount_value
     ) {
-      isFieldReadonly.value = !is_lacking_payment.value;
+      isFieldReadonly.value = true;
       isTotalPriceUpdated.value = is_lacking_payment.value;
     } else {
       isFieldReadonly.value = false;
@@ -2076,6 +2083,24 @@ const validateCapturePayment = isValid => {
   return false;
 };
 
+const validatePaymentAmount = isValid => {
+  for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
+    isSplitAmountInvalid.value[i] = false;
+    if (
+      parseFloat(splitAmountModels.value[i]) >
+      parseFloat(collectionAmountModels.value[i])
+    ) {
+      isSplitAmountInvalid.value[i] = true;
+      isSplitAmountInvalidError.value[i] =
+        'Amount should not exceed ' + collectionAmountModels.value[i] + ' AED';
+    }
+  }
+  if (isSplitAmountInvalid.value.includes(true)) {
+    return true;
+  }
+  return false;
+};
+
 const addPayment = isValid => {
   if (
     !props.sendUpdate?.insurance_provider_id &&
@@ -2093,8 +2118,12 @@ const addPayment = isValid => {
     if (validateViewPayment(isValid)) return;
   } else if (paymentMethodsForm.status !== 'view') {
     if (validatePaymentOption()) return;
+    if (isPaidEditable.value === true) {
+      if (validatePaymentAmount()) return;
+    }
   }
   if (!isValid) return;
+
   //define main payment method
   let mainPaymentMethod = paymentMethodsModels.value[0]
     ? paymentMethodsModels.value[0]
@@ -2269,7 +2298,8 @@ const addPayment = isValid => {
   if (paymentMethodsForm.status === 'edit') {
     if (
       totalPaidAmount.value == paymentMethodsForm.payment_no &&
-      isPolicyIssuanceDiscount.value === false
+      isPolicyIssuanceDiscount.value === false &&
+      isPaidEditable.value === false
     ) {
       notification.error({
         title: 'No further actions allowed to paid payments',
@@ -2283,6 +2313,7 @@ const addPayment = isValid => {
       trashedFilesModal: trashedFilesModal.value,
       isPaymentLocked: isPaymentLocked.value,
       isPolicyIssuanceDiscount: isPolicyIssuanceDiscount.value,
+      isPaidEditable: isPaidEditable.value,
     };
     paymentMethodsForm
       .transform(data => editData)
@@ -2987,6 +3018,13 @@ let is_lacking_payment = ref(
     false,
 );
 
+const isPaidEditable = ref(
+  page.props?.bookPolicyDetails?.isPaidEditable ||
+    page.props?.bookingDetails?.isPaidEditable ||
+    page.props?.isPaidEditable ||
+    false,
+);
+
 watch(
   () => page.props?.bookPolicyDetails?.isLackingOfPayment,
   newVal => {
@@ -2998,6 +3036,20 @@ watch(
   () => page.props?.bookingDetails?.isLackingOfPayment,
   newVal => {
     is_lacking_payment.value = newVal || false;
+  },
+);
+
+watch(
+  () => page.props?.bookPolicyDetails?.isPaidEditable,
+  newVal => {
+    isPaidEditable.value = newVal || false;
+  },
+);
+
+watch(
+  () => page.props?.isPaidEditable,
+  newVal => {
+    isPaidEditable.value = newVal || false;
   },
 );
 
@@ -3084,6 +3136,22 @@ const splitPaymentTotalPrice = (
   }
 
   return formatAmount(total);
+};
+
+const isAmlVerified = () => {
+  //Bypass Travel Quote Type for aml verification
+  if (props.quoteType === quoteTypeCodeEnum.Travel) {
+    return true;
+  }
+
+  return (
+    props.quoteRequest.aml_status ===
+    page.props.amlStatusEnum.AMLScreeningCleared
+  );
+};
+
+const openAmlVerificationModal = () => {
+  isAmlApprovalRequired.value = true;
 };
 
 // verifiy if split payment deletion is enabled
@@ -4919,7 +4987,9 @@ const isSplitDeleteEnabled = computed(() => {
                       </template>
                     </div>
                     <div class="w-1/5 px-2">
-                      <template v-if="readOnlyPayments[count]">
+                      <template
+                        v-if="readOnlyPayments[count] && !isPaidEditable"
+                      >
                         {{ formatAmount(splitAmountModels[count]) }}
                       </template>
                       <template v-else>
@@ -4929,6 +4999,11 @@ const isSplitDeleteEnabled = computed(() => {
                           :rules="[rules.isRequired]"
                           :disabled="isPaymentLocked"
                         />
+                        <sup
+                          v-if="isSplitAmountInvalid[count]"
+                          class="text-sm text-red-500 dark:text-red-400"
+                          >{{ isSplitAmountInvalidError[count] }}</sup
+                        >
                       </template>
                     </div>
                     <div class="w-1/5 px-2" v-if="isCreditApprovalView">
@@ -5420,7 +5495,11 @@ const isSplitDeleteEnabled = computed(() => {
                       class="mr-2 focus:outline-black"
                       size="sm"
                       color="#ff5e00"
-                      @click="isApproveClicked = !isApproveClicked"
+                      @click="
+                        isAmlVerified()
+                          ? (isApproveClicked = !isApproveClicked)
+                          : openAmlVerificationModal()
+                      "
                       tabindex="0"
                     >
                       Approve
@@ -5573,6 +5652,73 @@ const isSplitDeleteEnabled = computed(() => {
                   >
                     <span>Confirm</span></x-button
                   >
+                </div>
+              </div>
+            </div>
+            <div
+              class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
+              v-if="isAmlApprovalRequired"
+            >
+              <div
+                class="modal-confirm-container bg-white w-full max-w-full overflow-hidden rounded-lg"
+              >
+                <div class="modal-confirm-header text-base text-white bg-white">
+                  <div
+                    class="flex flex-row-reverse text-lg font-semibold px-6 py-4"
+                  >
+                    <div class="flex items-center space-x-2">
+                      <span
+                        @click="closeAmlConfirmModal"
+                        class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 cursor-pointer"
+                      >
+                        <!-- Cross icon -->
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          tabindex="0"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          class="w-4 h-4 text-gray-800"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"
+                          ></path>
+                        </svg>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="w-full h-full mt-2 flex flex-col items-center">
+                  <div
+                    class="text-lg font-bold px-6 flex justify-between items-start"
+                  >
+                    <div class="text-left">
+                      <span>Please complete the AML screening to proceed.</span>
+                    </div>
+                  </div>
+                  <Link
+                    :href="`/kyc/aml/${page.props.quoteTypeId ?? props.sendUpdate.quote_type_id}/details/${props.quoteRequest.id}`"
+                  >
+                    <x-tooltip>
+                      <x-button
+                        v-if="can(permissionEnum.AMLList)"
+                        size="lg"
+                        color="orange"
+                        class="px-4 py-4 mt-4"
+                        :loading="paymentMethodsForm.processing"
+                      >
+                        <span>Go to AML & KYC page</span></x-button
+                      >
+                      <template #tooltip>
+                        <span>{{
+                          paymentTooltipEnum.GOTO_AML_AND_KYC_PAGE
+                        }}</span>
+                      </template>
+                    </x-tooltip>
+                  </Link>
                 </div>
               </div>
             </div>

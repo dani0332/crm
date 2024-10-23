@@ -50,5 +50,4 @@ final class TeamNameEnum extends Enum
 
         return $teamIDs[$teamName] ?? null;
     }
-
 }

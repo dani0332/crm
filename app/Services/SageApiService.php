@@ -27,6 +27,7 @@ use App\Repositories\SageApiLogRepository;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\SageLoggable;
 use App\Traits\TeamHierarchyTrait;
+use Cache;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
@@ -112,11 +113,11 @@ class SageApiService
         $verb = strtoupper($verb);
         try {
             $response = match ($verb) {
-                'PATCH' => Http::withBasicAuth($this->sageLogin, $this->sagePassword)
+                'PATCH' => Http::timeout(80)->withBasicAuth($this->sageLogin, $this->sagePassword)
                     ->patch($sageEndPoint, $payLoad),
-                'POST' => Http::withBasicAuth($this->sageLogin, $this->sagePassword)
+                'POST' => Http::timeout(80)->withBasicAuth($this->sageLogin, $this->sagePassword)
                     ->post($sageEndPoint, $payLoad),
-                default => Http::withBasicAuth($this->sageLogin, $this->sagePassword)
+                default => Http::timeout(80)->withBasicAuth($this->sageLogin, $this->sagePassword)
                     ->get($sageEndPoint, $payLoad),
             };
 
@@ -489,9 +490,6 @@ class SageApiService
                 'paymentable_type' => $quote->getMorphClass(),
             ])->mainLeadPayment()->with('paymentSplits')->first();
         }
-        $payment->update([
-            'broker_invoice_number' => (new PaymentRepository)->generateBrokerInvoiceNumber($payment, $request->model_type),
-        ]);
         $paymentSplits = $payment->paymentSplits;
 
         $data = ['id' => $quote->id, 'quoteTypeId' => $quoteTypeId];
@@ -506,6 +504,7 @@ class SageApiService
 
         // payload
         $sageRequest = app(SagePayloadFactory::class)->sagePayLoad($request->model_type, $payment, $quote, $paymentSplits);
+        $sageRequest->quoteCode = $quote?->code;
         $sageRequest->quoteTypeId = $quoteTypeId;
         $sageRequest->sageProcessRequestType = SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST;
 
@@ -1894,7 +1893,7 @@ class SageApiService
 
         $quote->update($quoteData);
 
-        info('Policy Book : updateAndLogQuoteStatus - Status : '.$quote->code.', - Status : '.$newQuoteStatusId);
+        info('Policy Book : updateAndLogQuoteStatus - Code : '.$quote->code.', - Status : '.$newQuoteStatusId);
 
         $quoteLogData = [
             'quote_type_id' => $quoteTypeId,
@@ -1948,36 +1947,42 @@ class SageApiService
 
     public function scheduleSageProcesses($insurerId = null): void
     {
-        $sageProcesses = SageProcess::where('status', SageEnum::SAGE_PROCESS_PENDING_STATUS)
-            ->whereNotIn('insurance_provider_id', function ($query) {
-                $query->select('insurance_provider_id')
-                    ->from('sage_processes')
-                    ->where('status', SageEnum::SAGE_PROCESS_PROCESSING_STATUS);
-            })->when($insurerId, function ($query) use ($insurerId) {
-                $query->where('insurance_provider_id', $insurerId);
-            })->orderBy('created_at')
-            ->groupBy('insurance_provider_id')
-            ->get();
+        $sageProcessCommandLock = Cache::lock('sage-processes-run-lock', 20);
+        if ($sageProcessCommandLock->get()) {
+            $sageProcesses = SageProcess::where('status', SageEnum::SAGE_PROCESS_PENDING_STATUS)
+                ->whereNotIn('insurance_provider_id', function ($query) {
+                    $query->select('insurance_provider_id')
+                        ->from('sage_processes')
+                        ->where('status', SageEnum::SAGE_PROCESS_PROCESSING_STATUS);
+                })->when($insurerId, function ($query) use ($insurerId) {
+                    $query->where('insurance_provider_id', $insurerId);
+                })->orderBy('created_at')
+                ->groupBy('insurance_provider_id')
+                ->get();
 
-        if (count($sageProcesses) > 0) {
-            foreach ($sageProcesses as $sageProcess) {
+            if (count($sageProcesses) > 0) {
+                foreach ($sageProcesses as $sageProcess) {
 
-                info('cmd:SageProcessesCommand - Processing Sage Process ID: '.$sageProcess->id.' for Insurance Provider ID: '.$sageProcess->insurance_provider_id);
+                    info('cmd:SageProcessesCommand - Processing Sage Process ID: '.$sageProcess->id.' for Insurance Provider ID: '.$sageProcess->insurance_provider_id);
 
-                $sageProcessRequest = json_decode($sageProcess->request);
-                $sageRequest = $sageProcessRequest->sagePayload;
-                $request = $sageProcessRequest->requestPayload;
+                    $sageProcessRequest = json_decode($sageProcess->request);
+                    $sageRequest = $sageProcessRequest->sagePayload;
+                    $request = $sageProcessRequest->requestPayload;
 
-                if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST) {
-                    $quote = $this->getQuoteObject($request->model_type, $sageProcess->model_id);
-                    BookPolicyOnSageJob::dispatch($sageRequest, $quote, $request, $sageProcess)->onQueue('insly');
-                } elseif ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_SEND_UPDATE_REQUEST) {
-                    $model = $sageProcess->model;
-                    SendUpdateSageJob::dispatch($request, $model, $sageRequest, $sageProcess)->onQueue('insly');
+                    if ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_BOOK_POLICY_REQUEST) {
+                        $quote = $this->getQuoteObject($request->model_type, $sageProcess->model_id);
+                        BookPolicyOnSageJob::dispatch($sageRequest, $quote, $request, $sageProcess)->onQueue('insly');
+                    } elseif ($sageRequest->sageProcessRequestType == SageEnum::SAGE_PROCESS_SEND_UPDATE_REQUEST) {
+                        $model = $sageProcess->model;
+                        SendUpdateSageJob::dispatch($request, $model, $sageRequest, $sageProcess)->onQueue('insly');
+                    }
                 }
+            } else {
+                info('cmd:SageProcessesCommand - No Sage Process meet the selection criteria / already sage processes are being processed against all insurance providers');
             }
+            $sageProcessCommandLock->release();
         } else {
-            info('cmd:SageProcessesCommand - No Sage Process meet the selection criteria / already sage processes are being processed against all insurance providers');
+            info('cmd:SageProcessesCommand - Sage Policy or Endorsements Booking Command is already running, skipping execution.');
         }
     }
 }

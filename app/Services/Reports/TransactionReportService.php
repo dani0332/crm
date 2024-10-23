@@ -87,6 +87,7 @@ class TransactionReportService extends ManagementReport
                 'qs.text as quote_status',
                 'p.commmission_percentage',
                 'personal_quotes.source',
+                'personal_quotes.policy_booking_date',
             )
             ->join('payments as p', 'personal_quotes.code', '=', 'p.code')
             ->join('payment_splits as ps', 'p.code', '=', 'ps.code')
@@ -140,6 +141,7 @@ class TransactionReportService extends ManagementReport
             $item->pending_balance = number_format($item->pending_balance, 2);
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
             $item->commmission_percentage = number_format($item->commmission_percentage, 2);
+            $item->policy_booking_date = ! empty($item->policy_booking_date) ? Carbon::parse($item->policy_booking_date)->format('Y-m-d') : null;
         });
     }
 
