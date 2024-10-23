@@ -178,7 +178,10 @@ function calculateTotalSaleLeads(data) {
 const onIncludeUnassignedLeadsChange = () => {
   if (filters.includeUnassignedLeads == 'no') {
     filters.createdAtDate = '';
+    return;
   }
+
+  filters.createdAtDate = filters.startEndDate ? filters.startEndDate : '' ;
 };
 
 const filters = reactive({
@@ -427,8 +430,8 @@ onMounted(() => {
         <DatePicker
           v-if="filters.includeUnassignedLeads == 'yes'"
           v-model="filters.createdAtDate"
-          label="Created Date*"
-          placeholder="Specify Created Date*"
+          label="Lead Created Date*"
+          placeholder="Lead Specify Created Date*"
           range
           :max-range="30"
           :maxDate="new Date()"
@@ -568,6 +571,6 @@ onMounted(() => {
 </template>
 <style scoped>
 .row-border-bottom {
-  border-bottom: 1.5px solid gray;
+  border-bottom: 1.5px solid gray !important;
 }
 </style>
