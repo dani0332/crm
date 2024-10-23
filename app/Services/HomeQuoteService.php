@@ -811,8 +811,8 @@ class HomeQuoteService extends BaseService
         }
 
         foreach ($quotePlans as $listQuotePlan) {
-            if ($listQuotePlan->planId == $planId) {
-                $listQuotePlanName = $listQuotePlan->planName;
+            if ($listQuotePlan->id == $planId) {
+                $listQuotePlanName = $listQuotePlan->name;
                 $providerCode = $listQuotePlan->providerCode;
                 $providerName = $listQuotePlan->providerName;
                 $actualPremium = $listQuotePlan->actualPremium;

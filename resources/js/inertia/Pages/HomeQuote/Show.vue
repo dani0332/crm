@@ -570,7 +570,7 @@ const onLoadAvailablePlansData = async () => {
 
       // If you need to update the table and store the ids
       availablePlansTable.data = homePlans;
-      homePlansIds.ids = homePlans.map(plan => plan.planId);
+      homePlansIds.ids = homePlans.map(plan => plan.id);
       console.log('homePlansIds :', homePlansIds);
     } else {
       console.error('Error: Unexpected status code', status);
@@ -1618,7 +1618,7 @@ const onMemberUpdated = async () => {
                     size="xs"
                     color="error"
                     outlined
-                    @click.prevent="getPlanDetails(item.planId)"
+                    @click.prevent="getPlanDetails(item.id)"
                   >
                     View
                   </x-button>

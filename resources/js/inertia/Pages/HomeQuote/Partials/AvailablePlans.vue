@@ -91,6 +91,23 @@ const buildingValue = computed({
     props.plan.listQuotePlanBenefitsInclusions.buildings[0].value = newValue.toString();
   }
 });
+
+const contentValue = computed({
+  get() {
+    console.log('contentValue', props.plan?.listQuotePlanBenefitsInclusions?.contents?.[0]?.value);
+
+    const rawValue = props.plan?.listQuotePlanBenefitsInclusions?.contents?.[0]?.value || '0';
+
+    const numericValue = parseFloat(rawValue.replace(/[^\d.-]/g, ''));
+
+    console.log('numericValue', numericValue);
+
+    return numericValue;
+  },
+  set(newValue) {
+    props.plan.listQuotePlanBenefitsInclusions.contents[0].value = newValue.toString();
+  }
+});
 </script>
 
 <template>
@@ -175,7 +192,7 @@ const buildingValue = computed({
             <div class="grid sm:grid-cols-2">
               <dt class="mt-2">Contents Value:</dt>
               <x-input
-                v-model="props.plan.contentsValue"
+                v-model="contentValue"
                 size="sm"
                 type="number"
               />
