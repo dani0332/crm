@@ -665,7 +665,7 @@ class ReportService extends BaseService
             }
 
             $query->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                ->groupBy('users.id', 'users.name', 'quote_status_id')
+                ->groupBy('users.id', 'users.name')
                 ->orderBy('total_leads', 'desc');
 
             if (isset($request->userIds)) {
