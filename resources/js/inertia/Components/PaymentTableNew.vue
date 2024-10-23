@@ -2928,11 +2928,7 @@ watch(
   () => props.quoteRequest,
   (newValue, oldValue) => {
     //refresh premium
-    if (
-      !(
-        paymentMethodsForm.status === 'edit'
-      )
-    ) {
+    if (paymentMethodsForm.status !== 'edit') {
       if (props.isPlanDetailEnabled) {
         initialAmount.value = props.quoteRequest.price_with_vat;
       } else if (props.sendUpdate) {
