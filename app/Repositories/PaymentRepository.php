@@ -592,7 +592,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
      */
     private function updatePaymentStatusForUpFront($payment)
     {
-        if ($payment->frequency !== 'upfront') {
+        if ($payment->frequency !== PaymentFrequency::UPFRONT) {
             return;
         }
 
@@ -654,11 +654,14 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             $totalCreditPayments = PaymentSplits::whereIn('payment_status_id', [
                 PaymentStatusEnum::CREDIT_APPROVED,
             ])->where('code', $payment->code)->count();
+            info('Total credit approved payments for ' . $payment->code . ': ' . $totalCreditPayments);
             if ($totalCreditPayments > 0) {
+                info('Updating payment status to CREDIT_APPROVED for ' . $payment->code);
                 $payment->update(
                     ['payment_status_id' => PaymentStatusEnum::CREDIT_APPROVED]
                 );
             } else {
+                info('Updating payment status to NEW for ' . $payment->code);
                 $payment->update(
                     ['payment_status_id' => PaymentStatusEnum::NEW]
                 );
