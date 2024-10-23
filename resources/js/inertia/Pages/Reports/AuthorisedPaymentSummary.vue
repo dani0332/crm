@@ -173,7 +173,7 @@ function showCustomDate() {
 function setUrl(advisor_id, quote_status_id) {
   let url = '';
 
-  if (! filters || ! filters.quoteType) {
+  if (!filters || !filters.quoteType) {
     notification.error({
       title: 'Please select a line of business.',
       position: 'top',
