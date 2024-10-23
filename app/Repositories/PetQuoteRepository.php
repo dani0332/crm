@@ -122,7 +122,7 @@ class PetQuoteRepository extends BaseRepository
                 $query->whereHas('quoteDetail', function ($subQuery) use ($dateFrom, $dateTo) {
                     $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
                 });
-             })
+            })
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount);
 

@@ -238,9 +238,9 @@ class HomeQuoteService extends BaseService
             $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
         }
 
-        if(isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
+        if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
             $dateArray = $request['advisor_assigned_date'];
-            
+
             $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
             $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
             $this->query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
@@ -257,16 +257,14 @@ class HomeQuoteService extends BaseService
             $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
 
-        if(isset($request->last_modified_date) && $request->last_modified_date != '') {
+        if (isset($request->last_modified_date) && $request->last_modified_date != '') {
             $dateArray = $request['last_modified_date'];
-            
+
             $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
             $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
             $this->query->whereBetween('hqr.updated_at', [$dateFrom, $dateTo]);
         }
 
-       
-        
         if (isset($request->code) && $request->code != '') {
             $this->query->where('hqr.code', $request->code);
         }

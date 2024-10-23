@@ -67,11 +67,11 @@ trait FilterCriteria
                                 $startDate = date('Y-m-d H:i:s', strtotime(request()->{'policy_expiry_date'}));
                                 $endDate = date('Y-m-d H:i:s', strtotime(request()->{'policy_expiry_date_end'}));
                                 $query->whereBetween('previous_policy_expiry_date', [$startDate, $endDate]);
-                            }elseif(isset(request()->last_modified_date) && request()->last_modified_date != ''){
+                            } elseif (isset(request()->last_modified_date) && request()->last_modified_date != '') {
                                 $dateArray = request()->{'last_modified_date'};
                                 $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
                                 $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
-                                $query->whereBetween('updated_at', [$dateFrom, $dateTo]); 
+                                $query->whereBetween('updated_at', [$dateFrom, $dateTo]);
                             }
                             break;
                         default:

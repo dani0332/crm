@@ -75,7 +75,7 @@ class CycleQuoteRepository extends BaseRepository
             'advisor',
             'paymentStatus',
             'payments',
-            'quoteDetail'
+            'quoteDetail',
         ])
             ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
@@ -91,7 +91,7 @@ class CycleQuoteRepository extends BaseRepository
                 $query->whereHas('quoteDetail', function ($subQuery) use ($dateFrom, $dateTo) {
                     $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
                 });
-             })
+            })
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount);
 

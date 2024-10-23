@@ -352,17 +352,17 @@ class TravelQuoteService extends BaseService
             $this->query->where('tqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
         }
 
-        if(isset($request->last_modified_date) && $request->last_modified_date != '') {
+        if (isset($request->last_modified_date) && $request->last_modified_date != '') {
             $dateArray = $request['last_modified_date'];
-            
+
             $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
             $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
             $this->query->whereBetween('tqr.updated_at', [$dateFrom, $dateTo]);
         }
 
-        if(isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
+        if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
             $dateArray = $request['advisor_assigned_date'];
-            
+
             $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
             $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
             $this->query->whereBetween('tqrd.advisor_assigned_date', [$dateFrom, $dateTo]);

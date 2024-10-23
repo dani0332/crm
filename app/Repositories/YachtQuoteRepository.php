@@ -152,7 +152,7 @@ class YachtQuoteRepository extends BaseRepository
             'advisor',
             'paymentStatus',
             'payments',
-            'quoteDetail'
+            'quoteDetail',
         ])
             ->when(\auth()->user()->hasRole(RolesEnum::YachtAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
@@ -164,7 +164,7 @@ class YachtQuoteRepository extends BaseRepository
                 $query->whereHas('quoteDetail', function ($subQuery) use ($dateFrom, $dateTo) {
                     $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
                 });
-             })
+            })
             ->filter(! $forExport, $forTotalLeadsCount)
             ->withFakeLeadCriteria($forTotalLeadsCount);
         $this->adjustQueryByDateFilters($query, 'personal_quotes');

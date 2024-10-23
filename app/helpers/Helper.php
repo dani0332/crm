@@ -834,14 +834,14 @@ if (! function_exists('getCardViewRequestFilters')) {
             BusinessQuote::class => [
                 'relation' => 'businessQuoteRequestDetail',
                 'column' => 'advisor_assigned_date',
-            ]
+            ],
         ];
 
         if (array_key_exists($modelType, $modelTypeMappings)) {
             $mapping = $modelTypeMappings[$modelType];
 
             // Handle HealthQuote type filtering
-            if (!empty($request->assigned_to_date_start) && !empty($request->assigned_to_date_end)) {
+            if (! empty($request->assigned_to_date_start) && ! empty($request->assigned_to_date_end)) {
                 $dateFrom = date('Y-m-d 00:00:00', strtotime($request['assigned_to_date_start']));
                 $dateTo = date('Y-m-d 23:59:59', strtotime($request['assigned_to_date_end']));
 
@@ -850,14 +850,14 @@ if (! function_exists('getCardViewRequestFilters')) {
                     $query->whereBetween($mapping['column'], [$dateFrom, $dateTo]);
                 });
             }
-            
+
             // Handle HomeQuote type filtering
-            if (!empty($request->advisor_assigned_date)) {
+            if (! empty($request->advisor_assigned_date)) {
                 $dateArray = $request['advisor_assigned_date'];
-                
+
                 $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
                 $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
-                
+
                 // Dynamically applying filter for the model type
                 $partialQuery->whereHas($mapping['relation'], function ($query) use ($dateFrom, $dateTo, $mapping) {
                     $query->whereBetween($mapping['column'], [$dateFrom, $dateTo]);
@@ -866,7 +866,6 @@ if (! function_exists('getCardViewRequestFilters')) {
 
             $partialQuery->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
         }
-
 
         // if ($modelType == HealthQuote::class && ! empty($request->assigned_to_date_start) && ! empty($request->assigned_to_date_end)) {
         //     $dateFrom = date('Y-m-d 00:00:00', strtotime($request['assigned_to_date_start']));
@@ -880,7 +879,7 @@ if (! function_exists('getCardViewRequestFilters')) {
 
         // if ($modelType == HomeQuote::class && ! empty($request->advisor_assigned_date) && ! empty($request->advisor_assigned_date)) {
         //     $dateArray = $request['advisor_assigned_date'];
-            
+
         //     $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
         //     $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
 
@@ -972,9 +971,9 @@ if (! function_exists('getCardViewRequestFilters')) {
             }
         }
 
-        if($request->has('last_modified_date') && $request->filled('last_modified_date')) {
+        if ($request->has('last_modified_date') && $request->filled('last_modified_date')) {
             $dateArray = $request['last_modified_date'];
-            
+
             $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
             $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
             $partialQuery->whereBetween('updated_at', [$dateFrom, $dateTo]);

@@ -71,7 +71,7 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchGetData()
     {
-        $query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason', 'lifeQuoteRequestDetail','paymentStatus',
+        $query = $this->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason', 'lifeQuoteRequestDetail', 'paymentStatus',
             'payments'])
             ->when(\auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
@@ -83,7 +83,7 @@ class LifeQuoteRepository extends BaseRepository
                 $query->whereHas('lifeQuoteRequestDetail', function ($subQuery) use ($dateFrom, $dateTo) {
                     $subQuery->whereBetween('advisor_assigned_date', [$dateFrom, $dateTo]);
                 });
-             })
+            })
             ->filter()
             ->withFakeLeadCriteria()
             ->orderBy('life_quote_request.created_at', 'desc');

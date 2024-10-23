@@ -329,8 +329,6 @@ class HealthQuoteService extends BaseService
             $request = request();
         }
 
-       
-
         if (
             empty($request->email) && empty($request->code) && empty($request->first_name) &&
             empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)
@@ -369,9 +367,9 @@ class HealthQuoteService extends BaseService
             $this->query->whereBetween('hqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
         }
 
-        if(isset($request->last_modified_date) && $request->last_modified_date != '') {
+        if (isset($request->last_modified_date) && $request->last_modified_date != '') {
             $dateArray = $request['last_modified_date'];
-            
+
             $dateFrom = Carbon::parse($dateArray[0])->startOfDay()->toDateTimeString();  // Start of the day for the first date
             $dateTo = Carbon::parse($dateArray[1])->endOfDay()->toDateTimeString();
             $this->query->whereBetween('hqr.updated_at', [$dateFrom, $dateTo]);
@@ -437,7 +435,6 @@ class HealthQuoteService extends BaseService
         if (! isset($request->email) && $request->email == '') {
             $this->query->where('hqr.quote_status_id', '!=', 9);
         }
- 
 
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
@@ -504,8 +501,6 @@ class HealthQuoteService extends BaseService
         if (isset($request->mobile_no) && $request->mobile_no != '') {
             $this->query->where('hqr.mobile_no', $request->mobile_no);
         }
-
-       
 
         if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '') {
             $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
