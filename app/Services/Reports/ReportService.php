@@ -648,8 +648,8 @@ class ReportService extends BaseService
                     'users.id as advisor_id',
                     'users.name as advisor_name',
                     'quote_status_id',
-                    DB::raw('COUNT(*) as total_leads'),
-                    DB::raw('SUM('.$premiumColumn.') as total_premium'),
+                    DB::raw('COUNT(DISTINCT '.$details['table'].'.code) as total_leads'),
+                    DB::raw('SUM(DISTINCT '.$premiumColumn.') as total_premium'),
                     DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
                     DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW()) as expiry_days")
                 )
@@ -665,7 +665,7 @@ class ReportService extends BaseService
             }
 
             $query->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                ->groupBy('users.id', 'users.name')
+                ->groupBy('users.id', 'users.name', 'quote_status_id')
                 ->orderBy('total_leads', 'desc');
 
             if (isset($request->userIds)) {
@@ -700,7 +700,7 @@ class ReportService extends BaseService
                 $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startDate, $endDate]);
             }
 
-            $dataCollection = $dataCollection->merge($query->get());
+            $dataCollection = $query->get();
         }
         $items = $dataCollection->groupBy('advisor_id')->map(function ($group) {
             return [
