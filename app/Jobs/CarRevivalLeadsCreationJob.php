@@ -46,6 +46,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
     public function __construct($lead)
     {
         $this->lead = $lead;
+        $this->onQueue('renewals');
     }
 
     /**
