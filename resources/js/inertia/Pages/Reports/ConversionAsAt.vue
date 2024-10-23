@@ -488,7 +488,7 @@ onMounted(() => {
         <p v-else>{{ item.net_conversion }} %</p>
       </template>
       <template #body-append>
-        <tr v-if="showUnassignedLeads" class="total-row row-border-bottom">
+        <tr v-if="showUnassignedLeads" class="row-border-bottom">
           <td class="direction-left">Unassigned</td>
           <td></td>
           <td></td>
