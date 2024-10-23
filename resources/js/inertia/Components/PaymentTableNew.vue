@@ -2,7 +2,7 @@
 import ToolTip from './../Components/ToolTip.vue';
 import { onMounted, reactive, ref } from 'vue';
 import moment from 'moment';
-import NProgress, { set } from 'nprogress';
+import NProgress from 'nprogress';
 import { computed } from 'vue';
 import UpdateTotalPrice from './../Components/UpdateTotalPrice.vue';
 
