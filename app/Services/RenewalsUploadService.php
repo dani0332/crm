@@ -535,7 +535,7 @@ class RenewalsUploadService
 
             $renewalsUploadLead = DB::transaction(function () use ($renewalsUploadLead) {
                 //start file import
-                info('Begin transaction for RenewalLeadId: ' . $renewalsUploadLead->id);
+                info('Begin transaction for RenewalLeadId: '.$renewalsUploadLead->id);
 
                 $renewalsUpload = new UploadAndUpdateImport($this, $renewalsUploadLead);
                 $renewalsUpload->import($renewalsUploadLead->file_path, 'azureIM');
@@ -550,7 +550,7 @@ class RenewalsUploadService
                     'total_records' => ($validRows + $failedRows),
                 ]);
 
-                info('End transaction for RenewalLeadId: ' . $renewalsUploadLead->id);
+                info('End transaction for RenewalLeadId: '.$renewalsUploadLead->id);
 
                 return $renewalsUploadLead;
             });
