@@ -56,6 +56,8 @@ class SendOCBEmailJob implements ShouldBeUnique, ShouldQueue
         try {
             $carQuote = CarQuote::where('uuid', $this->quoteUuid)->firstOrFail();
             if (! $carQuote) {
+                info('SendOCBEmailJob - OCB Email Not Sent - Car Quote Not Found '.$this->quoteUuid);
+
                 return false;
             }
             $listQuotePlans = $carQuoteService->getPlans($this->quoteUuid, true, true);
