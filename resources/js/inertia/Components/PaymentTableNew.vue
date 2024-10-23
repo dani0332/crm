@@ -1801,7 +1801,7 @@ const initializePaymentForm = (
     paymentMethodsForm.discount =
       payment.discount_type !== null ? payment.discount_type : '';
   }
-  paymentMethodsForm.declined_reason = splitPaymentRecord.value.decline_reason_id
+  paymentMethodsForm.declined_reason = splitPaymentRecord.value.decline_reason_id == null ? '' : splitPaymentRecord.value.decline_reason_id;
   paymentMethodsForm.declined_custom_reason = splitPaymentRecord.value.decline_custom_reason
 };
 
@@ -5140,7 +5140,7 @@ const isSplitDeleteEnabled = computed(() => {
               </div>
               <x-divider class="mb-4 mt-1" />
               <div class="flex w-full">
-                <div class="px-2">
+                <div class="w-full px-2">
                   <x-field label="DECLINE REASON" required>
                     <select
                       :class="{ 'custom-select-error': isDeclinedReasonError }"
@@ -5166,7 +5166,7 @@ const isSplitDeleteEnabled = computed(() => {
                     </p>
                   </x-field>
                 </div>
-                <div v-if="isDeclineCustomReason" class="px-2">
+                <div v-if="isDeclineCustomReason" class="w-full px-2">
                   <x-field label="CUSTOM REASON" required>
                     <x-input
                       class="w-full"
