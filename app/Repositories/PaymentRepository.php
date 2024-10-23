@@ -586,7 +586,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
     /**
      * This method updates the payment status for payments with an upfront frequency.
-     * @param \App\Models\Payment $payment The payment object to update.
+     *
+     * @param  \App\Models\Payment  $payment  The payment object to update.
      * @return void
      */
     private function updatePaymentStatusForUpFront($payment)
@@ -618,7 +619,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
     /**
      * This method updates the payment status for payments that do not have an upfront frequency.
-     * @param \App\Models\Payment $payment The payment object to update.
+     *
+     * @param  \App\Models\Payment  $payment  The payment object to update.
      * @return void
      */
     private function updatePaymentStatusNonUpFront($payment)
