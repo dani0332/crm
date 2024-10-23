@@ -585,6 +585,7 @@ class ReportService extends BaseService
         // Execute the query and return the result
         return $result;
     }
+
     public function getPaymentAuthorisedSummary($request)
     {
 
@@ -645,7 +646,7 @@ class ReportService extends BaseService
 
             $query = DB::table($details['table'])
                 ->select(
-                    'users.id as advisor_id',
+                    'DISTINCT users.id as advisor_id',
                     'users.name as advisor_name',
                     'quote_status_id',
                     DB::raw('COUNT(DISTINCT '.$details['table'].'.code) as total_leads'),
@@ -655,7 +656,7 @@ class ReportService extends BaseService
                 )
                 ->leftJoin('payments as py', 'py.code', '=', $details['table'].'.code')
                 ->join('users', 'users.id', $details['table'].'.advisor_id');
-
+            $query->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED);
             if ($user->isAdvisor()) {
                 $query->where($details['table'].'.advisor_id', $user->id);
             } else {
@@ -663,11 +664,6 @@ class ReportService extends BaseService
                     ->join('teams', 'teams.id', '=', 'user_team.team_id')
                     ->whereIn('teams.name', $userTeams);
             }
-
-            $query->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                ->groupBy('users.id', 'users.name')
-                ->orderBy('total_leads', 'desc');
-
             if (isset($request->userIds)) {
                 $query->whereIn('advisor_id', $request->userIds);
             }
@@ -700,7 +696,7 @@ class ReportService extends BaseService
                 $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startDate, $endDate]);
             }
 
-            $dataCollection = $query->get();
+            $dataCollection = $query->orderBy('total_leads', 'desc')->get();
         }
         $items = $dataCollection->groupBy('advisor_id')->map(function ($group) {
             return [
