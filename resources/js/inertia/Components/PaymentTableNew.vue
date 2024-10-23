@@ -942,10 +942,7 @@ const handleApprovalReasonChange = () => {
         page.props.paymentMethodsEnum?.CreditApproval;
     }
   } else {
-    if (
-      isTotalPriceUpdated.value === true &&
-      isPaymentLocked.value === false
-    ) {
+    if (isTotalPriceUpdated.value === true && isPaymentLocked.value === false) {
       handleCollectionTypeChange();
     }
   }
@@ -1862,7 +1859,6 @@ const finalizePaymentForm = (payment, capture_approval) => {
     totalAmount.value = payment.total_price - payment.discount_value;
   };
 
-
   const handleEditStatus = () => {
     updateTotalValues();
     const isAnyChildPaymentPaid = isAnyPaid(payment);
@@ -1886,7 +1882,10 @@ const finalizePaymentForm = (payment, capture_approval) => {
     }
 
     // Check if the total amount is greater than the collected amount and frequency is upfront
-    if (payment.total_amount > payment.collected_amount && payment.frequency === paymentFrequencyEnum.UPFRONT) {
+    if (
+      payment.total_amount > payment.collected_amount &&
+      payment.frequency === paymentFrequencyEnum.UPFRONT
+    ) {
       isTotalPriceUpdated.value = false;
       isFieldReadonly.value = false;
     }
@@ -2926,46 +2925,46 @@ watch(
 
 const setPaymentInitialPrice = () => {
   if (paymentMethodsForm.status !== 'edit') {
-      if (props.isPlanDetailEnabled) {
-        initialAmount.value = props.quoteRequest.price_with_vat;
-      } else if (props.sendUpdate) {
-        initialAmount.value = props.sendUpdate?.price_with_vat;
-      } else if (props.quoteType === 'Health') {
-        initialAmount.value = props.eCommercePrice;
-      } else if (props.quoteType === 'Bike') {
-        initialAmount.value = props.quoteRequest.premium;
-      } else {
-        initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
-          ? props.quoteRequest.premium
-          : props.quoteRequest.price_with_vat;
-      }
-      totalPrice.value = initialAmount.value;
+    if (props.isPlanDetailEnabled) {
+      initialAmount.value = props.quoteRequest.price_with_vat;
+    } else if (props.sendUpdate) {
+      initialAmount.value = props.sendUpdate?.price_with_vat;
+    } else if (props.quoteType === 'Health') {
+      initialAmount.value = props.eCommercePrice;
+    } else if (props.quoteType === 'Bike') {
+      initialAmount.value = props.quoteRequest.premium;
+    } else {
+      initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
+        ? props.quoteRequest.premium
+        : props.quoteRequest.price_with_vat;
     }
-}
+    totalPrice.value = initialAmount.value;
+  }
+};
 
 const setPlanDetail = () => {
   if (
-      props.quoteType == 'Business' ||
-      props.quoteType == 'Home' ||
-      props.isPlanDetailEnabled
-    ) {
-      initalPlanDetails = props.quoteRequest.insurance_provider_details;
-    } else if (quoteTypesToCheck.includes(props.quoteType)) {
-      initalPlanDetails = props.quoteRequest.plan;
-    } else if (props.quoteType == 'Bike') {
-      initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
-      if (props.sendUpdate) {
-        initalPlanDetails =
-          props.quoteRequest.insurance_provider_details ??
-          props.quoteRequest.insurance_provider;
-      }
-    } else if (quoteTypesToCheck.includes(props.quoteType)) {
-      initalPlanDetails = props.quoteRequest.plan;
-    } else {
-      initalPlanDetails = props.quoteRequest.insurance_provider;
+    props.quoteType == 'Business' ||
+    props.quoteType == 'Home' ||
+    props.isPlanDetailEnabled
+  ) {
+    initalPlanDetails = props.quoteRequest.insurance_provider_details;
+  } else if (quoteTypesToCheck.includes(props.quoteType)) {
+    initalPlanDetails = props.quoteRequest.plan;
+  } else if (props.quoteType == 'Bike') {
+    initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
+    if (props.sendUpdate) {
+      initalPlanDetails =
+        props.quoteRequest.insurance_provider_details ??
+        props.quoteRequest.insurance_provider;
     }
-    planDetail.value = initalPlanDetails;
-}
+  } else if (quoteTypesToCheck.includes(props.quoteType)) {
+    initalPlanDetails = props.quoteRequest.plan;
+  } else {
+    initalPlanDetails = props.quoteRequest.insurance_provider;
+  }
+  planDetail.value = initalPlanDetails;
+};
 
 watch(
   () => props.quoteRequest,
@@ -2974,7 +2973,7 @@ watch(
     setPaymentInitialPrice();
     //refresh plan
     setPlanDetail();
-  }
+  },
 );
 const paymentAllocationStatusTooltip = payment_allocation_status => {
   // First convert to upper case as some of the values are in lower case & some of without space
@@ -3818,14 +3817,14 @@ const isSplitDeleteEnabled = computed(() => {
                       ).label
                     }}
                   </span>
-                    <select
-                      v-if="!isFieldReadonly"
-                      class="custom-select"
-                      v-model="paymentMethodsForm.collection_type"
-                      :rules="[rules.isRequired]"
-                      @change="handleCollectionTypeChange"
-                      :disabled="isCollectedByEnabled"
-                    >
+                  <select
+                    v-if="!isFieldReadonly"
+                    class="custom-select"
+                    v-model="paymentMethodsForm.collection_type"
+                    :rules="[rules.isRequired]"
+                    @change="handleCollectionTypeChange"
+                    :disabled="isCollectedByEnabled"
+                  >
                     <template
                       v-for="option in collectionTypes"
                       :key="option.value"
