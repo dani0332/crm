@@ -174,9 +174,6 @@ class HealthRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 $emailData->tag = 'health-revival-initial-email';
                 $emailData->templateType = 'revivalHealthInitial';
 
-
-                $emailData->requestAdvisorLink = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL') . $healthQuote->uuid . '/?assignAdvisor=true';
-
                 $response = app(SendEmailCustomerService::class)->sendDttEmail($emailData);
                 if ($response == 201) {
                     info($logPrefix . 'healthRevivalParentLead -' . $this->lead->uuid . '-childLead - ' . $capiResponse->quoteUID . '- emailSent -- ' . $emailData->customerEmail);
