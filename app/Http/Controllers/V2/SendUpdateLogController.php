@@ -33,9 +33,9 @@ use App\Repositories\QuoteTypeRepository;
 use App\Repositories\SendUpdateLogRepository;
 use App\Services\LookupService;
 use App\Services\QuoteDocumentService;
+use App\Services\SageApiService;
 use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
-use Artisan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -418,7 +418,7 @@ class SendUpdateLogController extends Controller
         info('fn:sendUpdate - Calling updateSageProcessForDispatching function through sendUpdate - SendUpdateCode: '.$sendUpdateLog->code);
         app(SendUpdateLogService::class)->updateSageProcessForDispatching($sendUpdateRequest->toArray(), $sendUpdateLog, $endorsementResponse['sageRequestPayload']);
 
-        Artisan::call('sage-processes:run', ['insurer' => $endorsementResponse['sageRequestPayload']->insurerID]);
+        (new SageApiService)->scheduleSageProcesses($endorsementResponse['sageRequestPayload']->insurerID);
         info('fn:sendUpdate - fn:scheduleSageProcesses triggered for Insurer - '.$endorsementResponse['sageRequestPayload']->insurerID.' - SendUpdateCode: '.$sendUpdateLog->code);
 
         return response()->json(['message' => $endorsementResponse['message']], 200);
