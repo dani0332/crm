@@ -214,7 +214,7 @@ const onUpdatePlan = () => {
 <template>
   <div class="w-full">
     <TabGroup>
-        <TabList
+      <TabList
         class="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-2 rounded-xl bg-slate-100 p-1.5 w-full"
       >
         <Tab
@@ -229,14 +229,13 @@ const onUpdatePlan = () => {
               'ring-white ring-opacity-60 ring-offset-2 ring-offset-primary-50 focus:outline-none focus:ring-2',
               selected
                 ? 'bg-white shadow text-primary-600'
-                : 'hover:bg-white/50'
+                : 'hover:bg-white/50',
             ]"
           >
             {{ label }}
           </button>
         </Tab>
       </TabList>
-
 
       <TabPanels class="mt-2 text-sm min-h-[70vh]">
         <!-- General Info Tab -->
