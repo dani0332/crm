@@ -127,7 +127,7 @@ enum QuoteTypes: string
         return match ($this) {
             self::CAR => SendCarOCBIntroEmailJob::class,
             self::TRAVEL => SendTravelOCBIntroEmailJob::class,
-            self::HEALTH => SendHealthOCBIntroEmailJob::class,
+            // self::HEALTH => SendHealthOCBIntroEmailJob::class,
             default => null,
         };
     }

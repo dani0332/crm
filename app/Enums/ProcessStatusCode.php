@@ -20,4 +20,6 @@ final class ProcessStatusCode extends Enum
     public const PLANS_FETCHED = 'Plans Fetched';
     public const PLANS_FAILED = 'Plans Failed';
     public const FAILED = 'Failed';
+    public const SENT = 'Sent';
+    public const UNSUBSCRIBED = 'unsubscribe-request';
 }

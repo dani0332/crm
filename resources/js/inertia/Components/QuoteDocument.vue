@@ -73,7 +73,7 @@ const notification = useNotifications('toast');
 
 const docForm = reactive({
   quote_id: page.props.quote.id || null,
-  quote_uuid: page.props.quote.code || null,
+  quote_uuid: page.props.quote.uuid || null,
   quote_type_id: null,
   document_type_code: null,
   file: null,
@@ -95,6 +95,7 @@ const uploadFile = (doc, filesWithInfo) => {
   const url = '/personal-quotes/' + docForm.quote_id + '/documents';
   const formData = new FormData();
   formData.append('quote_id', docForm.quote_id);
+  formData.append('quote_uuid', docForm.quote_uuid);
   formData.append('quote_type_id', doc.quote_type_id);
   formData.append('document_type_code', doc.code);
   formData.append('folder_path', doc.folder_path);
@@ -313,7 +314,7 @@ const getS3TempUrl = async docURL => {
 
             <a
               v-else
-              :href="storageUrl + encodeURIComponent(item.doc_url)"
+              :href="storageUrl + (item.watermarked_doc_url ?? item.doc_url)"
               target="_blank"
               class="text-primary-600"
             >
@@ -435,7 +436,10 @@ const getS3TempUrl = async docURL => {
                 </a>
                 <a
                   v-else
-                  :href="storageUrl + encodeURIComponent(quoteDocument.doc_url)"
+                  :href="
+                    storageUrl +
+                    (quoteDocument.watermarked_doc_url ?? quoteDocument.doc_url)
+                  "
                   target="_blank"
                   class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
                 >

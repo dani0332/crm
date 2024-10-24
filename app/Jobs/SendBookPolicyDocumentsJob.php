@@ -27,6 +27,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
     public $timeout = 100;
     public $tries = 3;
+    public $backoff = 120;
 
     /**
      * Create a new job instance.
@@ -40,6 +41,7 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
         info('Quote Code: '.$code.' job: SendBookPolicyDocumentsJob constructor called ');
         $this->data = $payload;
         $this->code = $code;
+        $this->onQueue('insly');
     }
 
     /**
@@ -165,6 +167,6 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->data->quote_id))->dontRelease()];
+        return [(new WithoutOverlapping($this->code))->dontRelease()];
     }
 }
