@@ -70,7 +70,7 @@ class UpdatePolicyDetailRequest extends FormRequest
             $this->validatePolicyBooked($validator, $quoteModel);
             $this->validatePolicyNumberFormat($validator);
             $this->validatePolicyNumberExists($validator, $quoteModel);
-            $this->validatePolicyBookiingFailed($validator, $quoteModel);
+            $this->validatePolicyBookingFailed($validator, $quoteModel);
 
             // Check if there are any errors and throw a validation exception if there are
             if ($validator->errors()->isNotEmpty()) {
