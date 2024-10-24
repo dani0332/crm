@@ -190,7 +190,7 @@ class SendUpdateLogController extends Controller
 
         if (in_array($quoteType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
             $paymentEntityModel->load(['plan', 'plan.insuranceProvider']);
-            $insuranceProviderId = $paymentEntityModel->plan->insuranceProvider->id;
+            $insuranceProviderId = $paymentEntityModel?->plan?->insuranceProvider?->id;
         } else {
             checkPersonalQuotes($quoteType) ? $realQuote->load(['insuranceProvider']) : $paymentEntityModel->load(['insuranceProvider']);
             $insuranceProviderId = $realQuote?->insurance_provider_id ?? $realQuote?->insuranceProvider?->id ?? null;
