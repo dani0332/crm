@@ -8,8 +8,10 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\WorkflowTypeEnum;
 use App\Models\ApplicationStorage;
+use App\Models\HealthQuote;
 use App\Models\QuoteFlowDetails;
 use App\Models\User;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -70,6 +72,121 @@ class HealthEmailService extends BaseService
             'whatsappConsent' => getWhatsappConsent(QuoteTypes::HEALTH, $lead->uuid),
             'instantAlfredLink' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$lead->uuid.'/?IA=true',
         ];
+    }
+
+    private function getMembers($currentPlan)
+    {
+        return collect($currentPlan->memberPremiumBreakdown ?? [])
+            ->map(function ($member, $index) {
+                return collect($member)
+                    ->merge([
+                        'index' => $index + 1,
+                        'dob' => isset($member->dob) ? Carbon::parse($member->dob)->format('d/m/Y') : null,
+                        'ageValue' => isset($member->dob) ? Carbon::parse($member->dob)->age : null,
+                    ])
+                    ->when(isset($member->gender), function ($collection) use ($member) {
+                        return $collection->put('gender', strtoupper($member->gender) === 'M' ? 'Male' : 'Female');
+                    });
+            })
+            ->toArray();
+    }
+
+    private function buildEmailDataForApplyNowEmail(HealthQuote $lead, ?User $advisor = null)
+    {
+        $currentPlan = $lead->getCurrentPlan();
+
+        $members = $this->getMembers($currentPlan);
+
+        $getDiscountPremium = function () use ($currentPlan) {
+            if ($currentPlan->discountPremium ?? null) {
+                return $currentPlan->discountPremium;
+            }
+
+            if (property_exists($currentPlan, 'ratesPerCopay') && is_array($currentPlan->ratesPerCopay) && count($currentPlan->ratesPerCopay) > 0) {
+                return $currentPlan->ratesPerCopay?->discountPremium ?? 0;
+            }
+        };
+
+        $getVat = function () use ($currentPlan) {
+            if ($currentPlan->vat ?? null) {
+                return $currentPlan->vat;
+            }
+
+            if (property_exists($currentPlan, 'ratesPerCopay') && is_array($currentPlan->ratesPerCopay) && count($currentPlan->ratesPerCopay) > 0) {
+                return $currentPlan->ratesPerCopay?->vat ?? 0;
+            }
+        };
+
+        $payload = [
+            'code' => $lead->code,
+            'quoteUID' => $lead->uuid,
+            'customerName' => "{$lead->first_name} {$lead->last_name}",
+            'totalPremium' => "AED {$lead->premium}",
+            'referenceCode' => $lead->code,
+            'mobile' => $lead->mobile_no ?? '',
+            'email' => $lead->email,
+            'totalMembers' => count($members),
+            'members' => $members,
+            'plan' => [
+                'name' => $currentPlan?->name,
+                'providerName' => $currentPlan?->providerName,
+                'providerCode' => strtolower($currentPlan?->providerCode ?? ''),
+                'tpa' => $currentPlan?->eligibilityName ?? '',
+                'actualPremium' => "AED {$getDiscountPremium()}",
+                'vat' => "AED {$getVat()}",
+                'tobs' => array_map(fn ($item) => (array) $item, $currentPlan?->policyWordings ?? []),
+                'networkLinks' => array_map(fn ($item) => (array) $item, $currentPlan?->benefits?->networkLink ?? []),
+                'mafLink' => $currentPlan?->mafLink,
+            ],
+        ];
+
+        if ($advisor) {
+            $payload['advisorDetails'] = [
+                'id' => $advisor?->id,
+                'name' => $advisor?->name,
+                'email' => $advisor?->email ?? '',
+                'mobileNo' => $advisor?->mobile_no ?? '',
+                'landlineNo' => $advisor?->landline_no ?? '',
+                'status' => $advisor?->status,
+                'profilePhotoPath' => $advisor->profile_photo_path,
+            ];
+        }
+
+        return (object) $payload;
+    }
+
+    public function initiateApplyNowEmail(HealthQuote $lead)
+    {
+        info(self::class." Inside Apply Now for uuid: {$lead->uuid}");
+        try {
+            if (! $lead->isApplicationPending()) {
+                info(self::class." Skipping Apply Now Email becuase quote status is not application pending for uuid: {$lead->uuid}");
+
+                return;
+            }
+
+            $advisor = User::where('id', $lead->advisor_id)->first();
+            $emailData = $this->buildEmailDataForApplyNowEmail($lead, $advisor);
+
+            $responseCode = app(SendEmailCustomerService::class)->sendApplyNowEmail($emailData, $lead->isApplyNowEmailSent());
+
+            if (in_array($responseCode, [200, 201])) {
+                if (! $lead->isApplyNowEmailSent()) {
+                    HealthQuote::withoutEvents(function () use ($lead) {
+                        $lead->apply_now_email_sent_at = now();
+                        $lead->save();
+                    });
+                    info(self::class." - Apply Now Email Sent to Customer Email: {$lead->email} Quote UuId: {$lead->uuid} with response code {$responseCode}");
+                } elseif ($advisor) {
+                    info(self::class." - Apply Now Email Sent to Advisor Email: {$advisor->email} Quote UuId: {$lead->uuid} with response code {$responseCode}");
+                }
+
+            } else {
+                Log::error(self::class." - Apply Now Email Not Sent: {$responseCode} Customer EmailAddress: {$lead->email} Quote UuId: {$lead->uuid}");
+            }
+        } catch (Exception $e) {
+            Log::error(self::class." - Exception for uuid {$lead->uuid}: ".$e->getMessage());
+        }
     }
 
     public function sendOCAHealthWorkFlow($lead)

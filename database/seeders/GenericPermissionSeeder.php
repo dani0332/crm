@@ -266,6 +266,11 @@ class GenericPermissionSeeder extends Seeder
             ]);
         }
 
+        Permission::firstOrCreate([
+            'name' => PermissionsEnum::DEPARTMENT_MANAGER,
+            'guard_name' => 'web',
+        ]);
+
         $this->syncBulkPolicyBookingOnSagePermissionList();
         $this->syncMasterPermissionList();
 
