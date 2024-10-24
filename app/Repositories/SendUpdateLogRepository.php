@@ -165,10 +165,6 @@ class SendUpdateLogRepository extends BaseRepository
     {
         try {
             $sendUpdate = $this->find($data['id']);
-            $sendUpdateStatus = ! in_array($sendUpdate->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) ? SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS : $sendUpdate->status;
-            if ($sendUpdateStatus !== $sendUpdate->status) {
-                app(CentralService::class)->updateSendUpdateStatusLogs($sendUpdate->id, $sendUpdate->status, $sendUpdateStatus);
-            }
 
             $result = $sendUpdate->update([
                 'price_with_vat' => $data['price_with_vat'],
@@ -176,7 +172,6 @@ class SendUpdateLogRepository extends BaseRepository
                 'price_vat_not_applicable' => $data['price_vat_not_applicable'],
                 'insurer_quote_number' => $data['insurer_quote_number'],
                 'insurance_provider_id' => $data['insurance_provider_id'],
-                'status' => $sendUpdateStatus,
             ]);
             $this->updatePayment($data);
         } catch (\Exception $ex) {
