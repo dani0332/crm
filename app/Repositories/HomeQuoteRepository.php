@@ -34,6 +34,7 @@ use App\Services\QuoteDocumentService;
 use App\Services\SendUpdateLogService;
 use App\Services\SplitPaymentService;
 use App\Traits\AddPremiumAllLobs;
+use App\Traits\CentralTrait;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -42,7 +43,7 @@ use Illuminate\Support\Facades\URL;
 
 class HomeQuoteRepository extends BaseRepository
 {
-    use AddPremiumAllLobs, GenericQueriesAllLobs;
+    use AddPremiumAllLobs, GenericQueriesAllLobs, CentralTrait;
 
     public function model()
     {
@@ -267,6 +268,7 @@ class HomeQuoteRepository extends BaseRepository
         })->values();
         $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::HOME->id(), $quoteStatuses);
 
+        $planURL = $this->getEcomQuoteLink(QuoteTypes::HOME, $quote->uuid);
         // dd($subArea, $quote->homeQuote->sub_area_id, $quote);
 
         return [
@@ -317,6 +319,7 @@ class HomeQuoteRepository extends BaseRepository
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ],
             'leadStatuses' => $leadStatuses,
+            'planURL' => $planURL,
         ];
     }
 

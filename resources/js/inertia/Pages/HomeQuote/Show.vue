@@ -585,6 +585,7 @@ const onTogglePlans = toggle => {
 
   const planIds = useArrayUnique(
     selectedPlans.value.map(p => {
+      console.log('p.id', p.id);
       return p.id;
     }),
   ).value;
@@ -715,6 +716,8 @@ const selectedProviderPlan = ref({
   premium: page.props?.quote?.plans?.premium,
 });
 
+console.log('selectedProviderPlan', selectedProviderPlan.value.id);
+
 const handlePlanSelected = plan => {
   selectedProviderPlan.value.id = plan.id;
   selectedProviderPlan.value.planName = plan.planName;
@@ -733,6 +736,16 @@ const onMemberUpdated = async () => {
     only: ['membersDetails'],
   });
   page.props.membersDetails = [...page.props.membersDetails];
+};
+
+const copyLink = () => {
+  console.log('copy link', page.props.planURL);
+  copy(page.props.planURL);
+  if (copied)
+    notification.success({
+      title: 'Link copied to clipboardd',
+      position: 'top',
+    });
 };
 </script>
 
@@ -1540,9 +1553,7 @@ const onMemberUpdated = async () => {
                 size="sm"
                 color="orange"
                 class="mr-2"
-                @click.prevent="
-                  onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)
-                "
+                @click.prevent="copyLink"
               >
                 Copy Link
               </x-button>
@@ -1605,12 +1616,20 @@ const onMemberUpdated = async () => {
               </template>
               <template #item-actualPremium="item">
                 <span class="text-primary-600">
-                  {{ item.actualPremium ? parseFloat(item.actualPremium).toFixed(2) : '0.00' }}
+                  {{
+                    item.actualPremium
+                      ? parseFloat(item.actualPremium).toFixed(2)
+                      : '0.00'
+                  }}
                 </span>
               </template>
               <template #item-discountPremium="item">
                 <span class="text-primary-600">
-                  {{ item.discountPremium + item.vat ? parseFloat(item.discountPremium + item.vat).toFixed(2) : '0.00' }}
+                  {{
+                    item.discountPremium + item.vat
+                      ? parseFloat(item.discountPremium + item.vat).toFixed(2)
+                      : '0.00'
+                  }}
                 </span>
               </template>
               <template #item-action="item">
@@ -1625,7 +1644,7 @@ const onMemberUpdated = async () => {
                   </x-button>
 
                   <span>
-                    <SelectPlan
+                    <!-- <SelectPlan
                       v-if="!selectedPlanIds.includes(item.planId)"
                       @update:selectedPlanChanged="handlePlanSelected"
                       :plan="item"
@@ -1645,7 +1664,27 @@ const onMemberUpdated = async () => {
                       :disabled="true"
                     >
                       Selected
+                    </x-button> -->
+
+                    <!-- new -->
+                    <SelectPlan
+                      v-if="selectedProviderPlan.id != item.planId"
+                      @update:selectedPlanChanged="handlePlanSelected"
+                      :plan="item"
+                      :quoteType="'Home'"
+                      :uuid="quote.uuid"
+                    />
+
+                    <x-button
+                      v-else
+                      size="xs"
+                      color="orange"
+                      outlined
+                      :disabled="true"
+                    >
+                      Selected
                     </x-button>
+                    <!-- new -->
                   </span>
                 </div>
               </template>
@@ -1674,39 +1713,39 @@ const onMemberUpdated = async () => {
 
     <!-- Payments -->
     <PaymentTableNew
-    v-if="isNewPaymentStructure"
-    :quoteType="quoteType"
-    :payments="payments"
-    :paymentDocument="paymentDocument"
-    :proformaPayment="
-      quote.payments.find(
-        item =>
-          item.payment_methods_code ===
-          page.props.paymentMethodsEnum.ProformaPaymentRequest,
-      )
-    "
-    :quoteRequest="quote"
-    :paymentStatusEnum="paymentStatusEnum"
-    :paymentTooltipEnum="paymentTooltipEnum"
-    :paymentMethods="
-      paymentMethods.map(pm => {
-        return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
-      })
-    "
-    :storageUrl="storageUrl"
-    :bookPolicyDetails="bookPolicyDetails"
-  />
+      v-if="isNewPaymentStructure"
+      :quoteType="quoteType"
+      :payments="payments"
+      :paymentDocument="paymentDocument"
+      :proformaPayment="
+        quote.payments.find(
+          item =>
+            item.payment_methods_code ===
+            page.props.paymentMethodsEnum.ProformaPaymentRequest,
+        )
+      "
+      :quoteRequest="quote"
+      :paymentStatusEnum="paymentStatusEnum"
+      :paymentTooltipEnum="paymentTooltipEnum"
+      :paymentMethods="
+        paymentMethods.map(pm => {
+          return { value: pm.code, label: pm.name, tooltip: pm.tool_tip };
+        })
+      "
+      :storageUrl="storageUrl"
+      :bookPolicyDetails="bookPolicyDetails"
+    />
 
-  <QuotePayments
-    v-else
-    :can="can"
-    :payments="quote.payments"
-    :quote-type="quoteType"
-    :payment-methods="paymentMethods"
-    :insurance-providers="insuranceProviders"
-    :is-beta-user="isBetaUser"
-    :personal-plans="personalPlans"
-  />
+    <QuotePayments
+      v-else
+      :can="can"
+      :payments="quote.payments"
+      :quote-type="quoteType"
+      :payment-methods="paymentMethods"
+      :insurance-providers="insuranceProviders"
+      :is-beta-user="isBetaUser"
+      :personal-plans="personalPlans"
+    />
     <!-- Payments -->
 
     <EmbeddedProducts
@@ -1770,7 +1809,6 @@ const onMemberUpdated = async () => {
       :advisors="advisors"
       :quote-type="quoteType"
     />
-
 
     <AuditLogs
       :id="$page.props.quote.id"
