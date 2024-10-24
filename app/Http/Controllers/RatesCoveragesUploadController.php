@@ -16,9 +16,13 @@ class RatesCoveragesUploadController extends Controller
     public function uploadCoverages()
     {
         $coverages = $this->ratesCoveragesUploadFile->getUploadCoverages();
+        $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
+        $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
 
         return inertia('RatesCoverages/Health/Coverages', [
             'coverages' => $coverages,
+            'azureStorageUrl' => $azureStorageUrl,
+            'azureStorageContainer' => $azureStorageContainer,
         ]);
     }
 
@@ -33,9 +37,13 @@ class RatesCoveragesUploadController extends Controller
     public function uploadRates()
     {
         $rates = $this->ratesCoveragesUploadFile->getUploadRates();
+        $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
+        $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
 
         return inertia('RatesCoverages/Health/Rates', [
             'rates' => $rates,
+            'azureStorageUrl' => $azureStorageUrl,
+            'azureStorageContainer' => $azureStorageContainer,
         ]);
     }
 

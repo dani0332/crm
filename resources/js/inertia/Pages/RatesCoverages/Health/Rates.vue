@@ -1,6 +1,8 @@
 <script setup>
 defineProps({
     rates: Array,
+    azureStorageUrl: String,
+    azureStorageContainer: String,
 });
 const notification = useToast();
 const uploadForm = useForm({
@@ -11,7 +13,7 @@ const contactLoader = ref(false);
 const tableHeader = [
     {text: "ID" , value: "upload_id"},
     { text: 'File Name', value: 'fileName' },
-    { text: 'Type', value: 'type' },
+    {text: 'Status' , value: 'status'},
     {text: 'Total Record' , value:'totalRecords'},
     {text: "Uploaded Record" , value: 'good'},
     {text: 'Bad Record' , value: 'cannotUpload'},
@@ -113,6 +115,10 @@ function onSubmit(isValid) {
       <x-alert class="mt-2">
         <h4 class="text-red-500"><b>Import Instructions must be follow:</b></h4>
         <ul class="list-disc text-sm pl-4">
+            <li>
+                Download the sample xlsx file, modify the data according to the
+                recommendations for a successful import.
+            </li>
           <li>File must be a xlsx file.</li>
           <li>Please ensure there are no commas in file.</li>
           <li>
@@ -133,6 +139,19 @@ function onSubmit(isValid) {
           >Upload</x-button
         >
       </div>
+        <div class="flex items-center">
+            <x-button
+                :href="
+            azureStorageUrl +
+            azureStorageContainer +
+            '/renewals/sample_upload_rates.xlsx'
+          "
+                color="green"
+                icon-right="cells"
+            >
+                Download Sample XLSX
+            </x-button>
+        </div>
     </x-form>
 
       <div class="flex justify-between items-center">

@@ -17,14 +17,14 @@ class RatesCoveragesUploadService
 {
     public function uploadFile()
     {
-        $path = 'documents/'; //Changing to exact path
+        $path = 'documents/'; //Changing to azure exact path
         // Getting original file name
         $fileName = request()->file('file_name')->getClientOriginalName();
 
         // Generating name for file for azure usage
         $azureFileName = get_guid().'_'.$fileName;
 
-        $azureFilePath = request()->file('file_name')->storeAs($path, $azureFileName, 'local'); //change with azure storage
+        $azureFilePath = request()->file('file_name')->storeAs($path, $azureFileName, 'azureIM');
 
         return [
             'file_name' => $fileName,
@@ -70,7 +70,7 @@ class RatesCoveragesUploadService
             $uploadCoverages = DB::transaction(function () use ($uploadCoverages) {
                 // Start file import
                 $uploadRecord = new CoveragesImport($uploadCoverages);
-                $uploadRecord->import($uploadCoverages->file_path, 'local');
+                $uploadRecord->import($uploadCoverages->file_path, 'azureIM');
 
                 $rateCoveragesProcesses = RateCoveragesProcess::where('rate_coverage_id', $uploadCoverages->id)->get();
 
@@ -88,9 +88,6 @@ class RatesCoveragesUploadService
                         $validDataCount++;
                     }
                 }
-
-                info('validacount', [$validDataCount], 'faliedcount', [$failedDataCount]);
-
                 $uploadCoverages->update([
                     'cannot_upload' => $failedDataCount,
                     'good' => $validDataCount,
@@ -161,12 +158,14 @@ class RatesCoveragesUploadService
                     DB::table('health_plan_coverage')->insert($insertData);
                 }
             });
+        $uploadCoverages->update(['status' => ProcessStatusCode::COMPLETED]);
     }
 
     public function getUploadCoverages()
     {
         $coverages = RateCoveragesProcess::select(
             'rate_coverage_uploads.file_name as fileName',
+            'rate_coverage_uploads.status as status',
             'rate_coverage_uploads.total_records as totalRecords',
             DB::raw('SUM(CASE WHEN rate_coverage_processes.validation_errors IS NULL THEN 1 ELSE 0 END) as good'),
             DB::raw('SUM(CASE WHEN rate_coverage_processes.validation_errors IS NOT NULL THEN 1 ELSE 0 END) as cannotUpload'),
@@ -177,7 +176,7 @@ class RatesCoveragesUploadService
             ->where('rate_coverage_uploads.type', '=', RateCoverageEnum::COVERAGES)
             ->leftJoin('rate_coverage_uploads', 'rate_coverage_processes.rate_coverage_id', '=', 'rate_coverage_uploads.id')
             ->groupBy('rate_coverage_uploads.id')
-            ->simplePaginate()
+            ->simplePaginate(10)
             ->withQueryString();
 
         return $coverages;
@@ -222,10 +221,9 @@ class RatesCoveragesUploadService
             $uploadRate = DB::transaction(function () use ($uploadRate) {
                 // Start file import
                 $uploadRecord = new RatesImport($uploadRate);
-                $uploadRecord->import($uploadRate->file_path, 'local');
+                $uploadRecord->import($uploadRate->file_path, 'azureIM');
 
                 $rateCoveragesProcesses = RateCoveragesProcess::where('rate_coverage_id', $uploadRate->id)->get();
-                info('uploadedddd', [$rateCoveragesProcesses]);
                 $validDataCount = 0;
                 $failedDataCount = 0;
 
@@ -240,7 +238,6 @@ class RatesCoveragesUploadService
                         $validDataCount++;
                     }
                 }
-                info('VAILDCOUNT'.$validDataCount.'FAILCOUNT'.$failedDataCount);
                 $uploadRate->update([
                     'cannot_upload' => $failedDataCount,
                     'good' => $validDataCount,
@@ -311,12 +308,14 @@ class RatesCoveragesUploadService
                     DB::table('health_rates')->insert($insertData);
                 }
             });
+        $uploadRate->update(['status' => ProcessStatusCode::COMPLETED]);
     }
 
     public function getUploadRates()
     {
         $rates = RateCoveragesProcess::select(
             'rate_coverage_uploads.file_name as fileName',
+            'rate_coverage_uploads.status as status',
             'rate_coverage_uploads.total_records as totalRecords',
             DB::raw('SUM(CASE WHEN rate_coverage_processes.validation_errors IS NULL THEN 1 ELSE 0 END) as good'),
             DB::raw('SUM(CASE WHEN rate_coverage_processes.validation_errors IS NOT NULL THEN 1 ELSE 0 END) as cannotUpload'),
@@ -327,7 +326,7 @@ class RatesCoveragesUploadService
             ->where('rate_coverage_uploads.type', '=', RateCoverageEnum::RATES)
             ->leftJoin('rate_coverage_uploads', 'rate_coverage_processes.rate_coverage_id', '=', 'rate_coverage_uploads.id')
             ->groupBy('rate_coverage_uploads.id')
-            ->simplePaginate()
+            ->simplePaginate(10)
             ->withQueryString();
 
         return $rates;
