@@ -4,10 +4,8 @@ namespace App\Http\Requests;
 
 use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\PermissionsEnum;
-use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Models\PersonalQuote;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\ValidationException;
@@ -80,7 +78,7 @@ class UpdatePolicyDetailRequest extends FormRequest
             $modelType = ucwords(ucfirst(request()->modelType));
             $model = $this->getModelObject(request()->modelType);
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search($modelType);
-            
+
             if ($quoteModel->parent_duplicate_quote_id == null) {
                 // Check if a policy with the same number and expiry date already exists, excluding the current quote
                 $isExists = $model::where('policy_number', $quote_policy_number)
@@ -101,7 +99,7 @@ class UpdatePolicyDetailRequest extends FormRequest
 
                 if ($quoteTypeId == QuoteTypeId::Business) {
                     // Further filter by business type of insurance ID for group medical quotes
-                    if ($quoteModel->business_type_of_insurance_id ==  BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL){
+                    if ($quoteModel->business_type_of_insurance_id == BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL) {
                         $isExists->where('business_type_of_insurance_id', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
                     } else {
                         $isExists->where('business_type_of_insurance_id', '!=', BusinessTypeOfInsuranceIdEnum::GROUP_MEDICAL);
