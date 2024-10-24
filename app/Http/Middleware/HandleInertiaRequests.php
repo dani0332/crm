@@ -336,17 +336,18 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s
                             ->attributes(['icon' => 'health'])
                             ->addIf(
-                                auth()->user()->hasPermissionTo(PermissionsEnum::UPLOAD_HEALTH_RATES),
-                                'Rates',
-                                route('upload-rates'),
-                                fn ($s) => $s->attributes(['icon' => 'health'])
-                            )
-                            ->addIf(
                                 auth()->user()->hasPermissionTo(PermissionsEnum::UPLOAD_HEALTH_COVERAGES),
                                 'Coverages',
                                 route('upload-coverages'),
                                 fn ($s) => $s->attributes(['icon' => 'health'])
+                            )
+                            ->addIf(
+                                auth()->user()->hasPermissionTo(PermissionsEnum::UPLOAD_HEALTH_RATES),
+                                'Rates',
+                                route('upload-rates'),
+                                fn ($s) => $s->attributes(['icon' => 'health'])
                             ),
+
                     );
             });
         }
