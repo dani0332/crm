@@ -55,9 +55,8 @@ class EmailStatusEventJob implements ShouldQueue
                     info('EmailStatusEventJob - EmailStatus created for msg_id: '.$this->emailData->message_id.' email_status: '.$newEmailStatus->email_status.' | Time:'.now());
 
                     return true;
-                }
-                else {
-                    info("EmailStatusEventJob - quote_type_id not found: msg_id: ".$this->emailData->message_id . " | Time: ".now());
+                } else {
+                    info('EmailStatusEventJob - quote_type_id not found: msg_id: '.$this->emailData->message_id.' | Time: '.now());
                 }
 
             } else {
