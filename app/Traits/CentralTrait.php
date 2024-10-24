@@ -31,11 +31,12 @@ trait CentralTrait
             default:
                 return '';
         }
-        $link = $afiaWebDomain . $basePath . $uuid;
+        // Base link with trailing slash
+        $link = rtrim($afiaWebDomain, '/') . $basePath . $uuid . '/';
 
         // Append plan parameters if the plan is provided
         if ($plan) {
-            $link .= '/payment/?planId=' . $plan->id . '&providerCode=' . $plan->providerCode;
+            $link .= 'payment/?planId=' . $plan->id . '&providerCode=' . $plan->providerCode;
         }
 
         return $link;
