@@ -314,14 +314,28 @@ class CustomerService extends BaseService
         return Customer::select('id', 'email', 'campaign_followups', 'last_followup_sent_at')->where('id', $id)->first();
     }
 
-    public function getCustomerIdByEmail(string $email): ?int
+    public function getCustomerIdByEmail(?string $email): ?int
     {
-        return optional(Customer::where('email', $email)->first())->id;
+        if (empty($email)) {
+            Log::warning('Empty or null email provided to getCustomerIdByEmail.');
+
+            return null;
+        }
+
+        $customer = Customer::where('email', $email)->first();
+
+        if (! $customer) {
+            Log::info('Customer with the provided email not found.', ['email' => $email]);
+
+            return null;
+        }
+
+        return $customer->id;
     }
 
     public function getCustomerAddressData($data)
     {
-        $customerId = $this->getCustomerIdByEmail($data->email);
+        $customerId = $data->customer_id ?? null;
         $quoteUuid = $data->uuid ?? null;
 
         if (! $customerId || ! $quoteUuid) {
@@ -333,28 +347,21 @@ class CustomerService extends BaseService
             return null;
         }
 
-        try {
-            $customerAddress = CustomerAddress::where('customer_id', $customerId)
-                ->where('quote_uuid', $quoteUuid)
-                ->first();
+        // Retrieve customer address based on customerId and quoteUuid
+        $customerAddress = CustomerAddress::where('customer_id', $customerId)
+            ->where('quote_uuid', $quoteUuid)
+            ->first();
 
-            if (! $customerAddress) {
-                Log::info('Customer address not found.', [
-                    'customerId' => $customerId,
-                    'quote_uuid' => $quoteUuid,
-                ]);
-            }
-
-            return $customerAddress;
-        } catch (\Exception $e) {
-            Log::error('Failed to retrieve customer address.', [
+        if (! $customerAddress) {
+            Log::info('Customer address not found.', [
                 'customerId' => $customerId,
                 'quote_uuid' => $quoteUuid,
-                'error' => $e->getMessage(),
             ]);
 
             return null;
         }
+
+        return $customerAddress;
     }
 
     public function createCustomerIfNotExists($customerData)
