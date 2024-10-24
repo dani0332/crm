@@ -10,6 +10,7 @@ use App\Enums\RolesEnum;
 use App\Models\BikeQuote;
 use App\Models\CycleQuote;
 use App\Models\InslyDetail;
+use App\Models\InsuranceProvider;
 use App\Models\PetQuote;
 use App\Models\QuoteType;
 use App\Models\YachtQuote;
@@ -80,6 +81,20 @@ class InslyDetailRepository extends BaseRepository
         }
 
         return $policy;
+    }
+
+    public function fetchGetProvider($value)
+    {
+        $query = $this->where('_id', $value);
+        if (! empty(request()->policy_oid)) {
+            $query->orWhere('policy_oid', (int) request()->policy_oid);
+        }
+        $policy = $query->firstOrFail();
+        if ($policy->policy['insurer']) {
+            return InsuranceProvider::where('text', 'LIKE', '%'.$policy->policy['insurer'].'%')->first();
+        }
+
+        return null;
     }
 
     private function getQuoteTypeFromCoverage($coverage)
