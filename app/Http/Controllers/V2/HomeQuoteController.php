@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PersonalQuotes\HomeQuoteRequest;
@@ -47,7 +48,7 @@ class HomeQuoteController extends Controller
         }
         dd('Done');
 
-        return redirect('personal-quotes/home/'.$response->quoteUID)->with('message', 'Quote created successfully');
+        return redirect('personal-quotes/home/' . $response->quoteUID)->with('message', 'Quote created successfully');
     }
 
     public function show($uuid)
@@ -87,5 +88,45 @@ class HomeQuoteController extends Controller
     public function planDetails($quoteId, $planId)
     {
         return app(HomeQuoteService::class)->planDetails($quoteId, $planId);
+    }
+
+    public function manualPlanToggle(Request $request, $quoteType)
+    {
+        $response = app(HomeQuoteService::class)->updateManualPlansBulk($request);
+
+        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
+            return redirect()->back()->with('success', 'Plan has been updated');
+        } else {
+            if (isset($response->message)) {
+                $responseMessage = $response->message;
+            } else {
+                $responseMessage = $response;
+            }
+
+            return redirect()->back()->with('message', $responseMessage);
+        }
+    }
+
+    public function homePlanUpdateManualProcess(Request $request)
+    {
+        // Get the response from the service
+        $response = app(HomeQuoteService::class)->homePlanModify($request);
+
+        // Check if the response is a success (e.g., 200 or 201)
+        if (is_int($response) && in_array($response, [200, 201])) {
+            return response()->json([
+                'message' => 'Plan has been updated successfully'
+            ], 200);
+        }
+
+        // Handle error response (assuming $response is an object or string)
+        $responseMessage = is_object($response) && isset($response->message)
+            ? $response->message
+            : (is_string($response) ? $response : 'Unknown error');
+
+        // Return error as JSON for API consumption
+        return response()->json([
+            'message' => 'Home Plan has not been updated. ' . $responseMessage
+        ], 400); // 400 Bad Request or any relevant error code
     }
 }

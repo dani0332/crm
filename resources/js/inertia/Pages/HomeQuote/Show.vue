@@ -1439,7 +1439,7 @@ const onMemberUpdated = async () => {
                   v-model="leadStatusForm.lostReason"
                   :options="
                     lostReasons?.map(item => ({
-                      value: item.id,
+                      value: item.planId,
                       label: item.text,
                     }))
                   "
@@ -1581,6 +1581,7 @@ const onMemberUpdated = async () => {
               hide-rows-per-page
               :rows-per-page="15"
               :hide-footer="availablePlansTable.data.length < 15"
+              @onLoadAvailablePlansData="onLoadAvailablePlansData"
             >
               <template #item-providerName="item">
                 <p class="text-primary-600 uppercase">
@@ -1618,14 +1619,14 @@ const onMemberUpdated = async () => {
                     size="xs"
                     color="error"
                     outlined
-                    @click.prevent="getPlanDetails(item.id)"
+                    @click.prevent="getPlanDetails(item.planId)"
                   >
                     View
                   </x-button>
 
                   <span>
                     <SelectPlan
-                      v-if="!selectedPlanIds.includes(item.id)"
+                      v-if="!selectedPlanIds.includes(item.planId)"
                       @update:selectedPlanChanged="handlePlanSelected"
                       :plan="item"
                       :quoteType="modelType"

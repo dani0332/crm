@@ -4,11 +4,15 @@ namespace App\Services;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
+use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\QuoteBatches;
@@ -25,6 +29,7 @@ use Illuminate\Support\Facades\Log;
 class HomeQuoteService extends BaseService
 {
     protected $query;
+    protected $httpService;
 
     use AddPremiumAllLobs;
     use GenericQueriesAllLobs;
@@ -32,9 +37,10 @@ class HomeQuoteService extends BaseService
 
     protected $leadAllocationService;
 
-    public function __construct(LeadAllocationService $leadAllocationService)
+    public function __construct(LeadAllocationService $leadAllocationService, HttpRequestService $httpService)
     {
         $this->leadAllocationService = $leadAllocationService;
+        $this->httpService = $httpService;
 
         $this->query = DB::table('home_quote_request as hqr')->select(
             'hqr.id',
@@ -811,8 +817,9 @@ class HomeQuoteService extends BaseService
         }
 
         foreach ($quotePlans as $listQuotePlan) {
-            if ($listQuotePlan->id == $planId) {
-                $listQuotePlanName = $listQuotePlan->name;
+            if ($listQuotePlan->planId == $planId) {
+                // dd($listQuotePlan);
+                $listQuotePlanName = $listQuotePlan->planName;
                 $providerCode = $listQuotePlan->providerCode;
                 $providerName = $listQuotePlan->providerName;
                 $actualPremium = $listQuotePlan->actualPremium;
@@ -824,6 +831,13 @@ class HomeQuoteService extends BaseService
                 ];
                 $listQuotePlanBenefitsAditionalCovers = $listQuotePlan->benefits->standardBenefits;
                 $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
+                $isDisabled = $listQuotePlan->isDisabled;
+                $isManualUpdate = $listQuotePlan->isManualPlan;
+                $vat = $listQuotePlan->vat;
+                $insurerQuoteNo = $listQuotePlan->insurerQuoteNo;
+                $isRatingAvailable = $listQuotePlan->isRatingAvailable;
+                $excess = $listQuotePlan->excess;
+                $planId = $listQuotePlan->planId;
                 // $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
 
                 // foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
@@ -840,14 +854,178 @@ class HomeQuoteService extends BaseService
             'discountPremium' => $discountPremium,
             'listQuotePlanBenefitsInclusions' => $listQuotePlanBenefitsInclusions,
             'listQuotePlanBenefitsExclusions' => $listQuotePlanBenefitsExclusions,
-            'is_disabled' => true,
-            'is_manual_update' => false,
-            'insurer_quote_no' => '',
+            'is_disabled' => $isDisabled,
+            'is_manual_update' => $isManualUpdate,
+            'insurer_quote_no' => $insurerQuoteNo,
+            'vat' => $vat,
+            'isRatingAvailable' => $isRatingAvailable,
+            'listQuotePlanBenefitsAditionalCovers' => $listQuotePlanBenefitsAditionalCovers,
+            'excess' => $excess,
+            'id' => $planId,
+            'permissionsEnum' => PermissionsEnum::class,
             // 'listQuotePlanBenefitsPolicyDetails' => $listQuotePlanBenefitsPolicyDetails,
             // 'listQuotePlanBenefitsPolicyDetailLink' => $listQuotePlanBenefitsPolicyDetailLink ?? '',
             // 'modelName' => self::TYPE,
         ];
 
         return response()->json($data, 200);
+    }
+
+    public function updateManualPlansBulk($request)
+    {
+        $apiEndPoint = config('constants.KEN_API_ENDPOINT') . '/save-manual-home-quote-plan';
+        $apiToken = config('constants.KEN_API_TOKEN');
+        $apiTimeout = config('constants.KEN_API_TIMEOUT');
+        $apiUserName = config('constants.KEN_API_USER');
+        $apiPassword = config('constants.KEN_API_PWD');
+        if ($request->planIds) {
+            $data = $request->planIds;
+            $isDisabled = $request->toggle;
+            $plansArray = [];
+            for ($i = 0; $i < count($data); $i++) {
+                $apiArray = [
+                    'planId' => (int) $data[$i],
+                    'isDisabled' => filter_var($isDisabled, FILTER_VALIDATE_BOOLEAN),
+                ];
+                array_push($plansArray, $apiArray);
+            }
+
+            $dataArray = [
+                'quoteUID' => $request->personal_quote_uuid,
+                'update' => true,
+                'plans' => $plansArray,
+            ];
+            $apiCreds = [
+                'apiEndPoint' => $apiEndPoint,
+                'apiToken' => $apiToken,
+                'apiTimeout' => $apiTimeout,
+                'apiUserName' => $apiUserName,
+                'apiPassword' => $apiPassword,
+            ];
+
+            $response = $this->httpService->processRequest($dataArray, $apiCreds);
+
+            return $response;
+        }
+    }
+
+    public function homePlanModify($request)
+    {
+        if (($response = $this->isPlanModifyAllowed($request->all())) === true) {
+            $apiEndPoint = config('constants.KEN_API_ENDPOINT') . '/save-manual-home-quote-plan';
+            $apiToken = config('constants.KEN_API_TOKEN');
+            $apiTimeout = config('constants.KEN_API_TIMEOUT');
+            $apiUserName = config('constants.KEN_API_USER');
+            $apiPassword = config('constants.KEN_API_PWD');
+
+            $discountedPremium = $request->actual_premium;
+
+            $homePlanData = [
+                'quoteUID' => $request->quote_uuid,
+                'update' => true,
+                'url' => strval($request->current_url),
+                'ipAddress' => request()->ip(),
+                'userAgent' => request()->header('User-Agent'),
+                'userId' => strval(auth()->id()),
+                'plans' => [
+                    [
+                        'planId' => (int) $request->plan['home_plan_id'],
+                        'actualPremium' => (float) $request->plan['actual_premium'],
+                        'buildingsValue' => isset($request->plan['listQuotePlanBenefitsInclusions'])
+                            && !empty($request->plan['listQuotePlanBenefitsInclusions'])
+                            ? $this->getParsedValue($request->plan['listQuotePlanBenefitsInclusions'], 'buildings')
+                            : null,
+                        'contentsValue' => isset($request->plan['listQuotePlanBenefitsInclusions'])
+                            && !empty($request->plan['listQuotePlanBenefitsInclusions'])
+                            ? $this->getParsedValue($request->plan['listQuotePlanBenefitsInclusions'], 'contents')
+                            : null,
+                        'personalBelongingsValue' => isset($request->plan['listQuotePlanBenefitsInclusions'])
+                            && !empty($request->plan['listQuotePlanBenefitsInclusions'])
+                            ? $this->getParsedValue($request->plan['listQuotePlanBenefitsInclusions'], 'personalBelongings')
+                            : null,
+                        'excess' => (float) $request->plan['excess'],
+                        'discountPremium' => (float) $discountedPremium,
+                        'isDisabled' => isset($request->plan['is_disabled']) ? (bool) $request->plan['is_disabled'] : (bool) false,
+                        'insurerQuoteNo' => strval($request->plan['insurer_quote_no']),
+                        'isManualUpdate' => $request->plan['is_manual_update'],
+                        'ancillaryExcess' => (int) $request->plan['ancillary_excess'],
+                    ],
+                ],
+            ];
+
+            $apiCreds = [
+                'apiEndPoint' => $apiEndPoint,
+                'apiToken' => $apiToken,
+                'apiTimeout' => $apiTimeout,
+                'apiUserName' => $apiUserName,
+                'apiPassword' => $apiPassword,
+            ];
+
+            $response = $this->httpService->processRequest($homePlanData, $apiCreds);
+        }
+
+        return $response;
+    }
+
+    public function isPlanModifyAllowed($data)
+    {
+        $logPrefix = self::class . ' fn: isPlanModifyAllowed ';
+        $quote = PersonalQuote::where('uuid', $data['plan']['quote_uuid'])->with('paymentStatus')->first();
+
+        if (in_array($quote->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
+            $bikePayment = Payment::where('code', '=', $quote->code)->first();
+            if (! empty($bikePayment->captured_at)) {
+                $paymentCapturedAt = $bikePayment->captured_at;
+                $today = Carbon::today();
+
+                $dateLimitForAdvisor = Carbon::parse($paymentCapturedAt)->addDays(6);
+                $dateLimitForManager = Carbon::parse($dateLimitForAdvisor)->addDays(6);
+
+                if (Auth::user()->hasRole(RolesEnum::HomeAdvisor) && $today->lte($dateLimitForAdvisor)) {
+                    info($logPrefix . ' plan modify allowed to advisor for uuid ' . $quote->uuid . ' and captured days diff is ' . $paymentCapturedAt);
+
+                    return true;
+                } elseif (Auth::user()->hasRole(RolesEnum::HomeManager) && $today->gt($dateLimitForAdvisor) && $today->lte($dateLimitForManager)) {
+                    info($logPrefix . ' plan modify allowed to bike manager for uuid ' . $quote->uuid . ' and captured days diff is ' . $paymentCapturedAt);
+
+                    return true;
+                }
+            }
+        }
+
+        if (in_array($quote->payment_status_id, [PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED]) && Auth::user()->hasAnyRole([RolesEnum::HomeAdvisor, RolesEnum::HomeManager])) {
+            info($logPrefix . ' plan modify allowed to advisor for uuid ' . $quote->uuid);
+
+            return true;
+        }
+
+        if (
+            $quote->payment_status_id == '' || $quote->payment_status_id == null || (in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT])
+                && Auth::user()->hasAnyRole([RolesEnum::HomeAdvisor,  RolesEnum::HomeManager]))
+        ) {
+            info($logPrefix . ' plan modify allowed for uuid ' . $quote->uuid);
+
+            return true;
+        }
+
+        info($logPrefix . ' plan modification is not allowed for uuid ' . $quote->uuid);
+
+        return 'Plan Modification is not allowed';
+        // return true;
+    }
+
+    function getParsedValue(array $planData, string $key): ?float
+    {
+        if (isset($planData[$key][0]['value'])) {
+            // Extract the raw value (e.g., "AED 40,000")
+            $rawValue = $planData[$key][0]['value'];
+
+            // Remove the "AED" prefix and commas, leaving only the numeric part
+            $cleanedValue = preg_replace('/[^\d.-]/', '', $rawValue);
+
+            return (float) $cleanedValue;
+        }
+
+        return null;
     }
 }
