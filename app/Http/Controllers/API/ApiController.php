@@ -14,6 +14,7 @@ use App\Http\Requests\EmailEventsRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\PaymentNotificationRequest;
+use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Jobs\FixQuoteStatusDate;
 use App\Models\QuoteFlowDetails;
@@ -152,6 +153,11 @@ class ApiController extends Controller
         }
 
         return apiResponse(null, Response::HTTP_OK, 'Invalid Quote Type');
+    }
+
+    public function sendHealthApplyNowEmail(SendHealthApplyNowEmailRequest $request)
+    {
+        return $this->apiService->sendHealthApplyNowEmail($request);
     }
 
     public function quoteUpdated(QuoteUpdatedRequest $request)
