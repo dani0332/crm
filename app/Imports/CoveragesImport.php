@@ -160,5 +160,4 @@ class CoveragesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, Wi
         return ! empty($filteredData) ? $filteredData : [];
     }
 
-
 }

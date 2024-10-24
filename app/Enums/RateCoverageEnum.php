@@ -8,5 +8,4 @@ final class RateCoverageEnum extends Enum
 {
     public const RATES = 'rate';
     public const COVERAGES = 'coverage';
-
 }

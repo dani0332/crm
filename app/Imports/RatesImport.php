@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Imports;
 
 use App\Models\RateCoveragesProcess;
@@ -36,7 +37,7 @@ class RatesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, WithEv
         $rateData = $this->mapQuoteData($row);
 
         // Only proceed if rateData is valid
-        if (!empty($rateData)) {
+        if (! empty($rateData)) {
             $this->validCount++;
             RateCoveragesProcess::create([
                 'rate_coverage_id' => $this->uploadRate->id,
@@ -92,7 +93,7 @@ class RatesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, WithEv
                 $failed = [];
 
                 foreach ($this->failures() as $failure) {
-                    if (!isset($failed[$failure->row()])) {
+                    if (! isset($failed[$failure->row()])) {
                         $quoteData = $this->mapQuoteData($failure->values());
                         if (empty($quoteData)) {
                             continue; // Skip empty quote data
@@ -136,10 +137,10 @@ class RatesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, WithEv
         }
 
         $filteredData = array_filter($data, function ($value) {
-            return !is_null($value) && $value !== '';
+            return ! is_null($value) && $value !== '';
         });
 
         // Only return filtered data if it's not empty
-        return !empty($filteredData) ? $filteredData : [];
+        return ! empty($filteredData) ? $filteredData : [];
     }
 }
