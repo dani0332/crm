@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Models\UserManager;
 use App\Repositories\CarRevivalQuoteRepository;
 use App\Services\ConversionAsAtReportService;
+use App\Services\DropdownSourceService;
 use App\Services\Reports\AdvisorConversionReportService;
 use App\Services\Reports\AdvisorDistributionReportService;
 use App\Services\Reports\AdvisorPerformanceReportService;
@@ -29,6 +30,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use PDF;
 
 class ReportsController extends Controller
@@ -169,7 +171,7 @@ class ReportsController extends Controller
      */
     public function fetchAdvisorsListByLob(Request $request)
     {
-        $usersReportToLoggedInUser = $this->getUsersByProductName($request->lob)->pluck('id')->toArray();
+        $usersReportToLoggedInUser = $this->getUsersByProductName($request->lob);
         if (! auth()->user()->hasAnyRole([
             RolesEnum::SeniorManagement,
             RolesEnum::Admin,
@@ -381,11 +383,41 @@ class ReportsController extends Controller
 
     public function renderPaymentSummary(Request $request, ReportService $reportService)
     {
+        $user = Auth::user();
+        $request->teamIds = $user->getUserTeamsIds($user->id);
+        if ($request->quoteType) {
+            $quoteType = explode(' ', Str::lower(trim($request->quoteType)))[0];
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($quoteType));
+            $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', $quoteTypeId);
+            $leadStatuses = $leadStatuses->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'text' => $item->text,
+                ];
+            })->toArray();
+        }
+        $fieldDisable = true;
+        if ($user->isAdvisor()) {
+            $advisor = [
+                [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                ],
+            ];
+            $fieldDisable = false;
+        } else {
+            $advisor = $this->fetchAdvisorsByTeam($request);
+        }
+
         return inertia('Reports/AuthorisedPaymentSummary', [
             'reportData' => $reportService->getPaymentAuthorisedSummary($request),
-            'defaultFilters' => $reportService->getDefaultFiltersForLeadsList(),
+            'defaultFilters' => $reportService->authorizedPaymentSummaryFilters(),
+            'advisor' => $advisor,
+            'fieldDisable' => $fieldDisable,
+            'leadStatuses' => $leadStatuses ?? [],
         ]);
     }
+
     public function renderConversionAsAtReport(Request $request, ConversionAsAtReportService $conversionAsAtReportService)
     {
 

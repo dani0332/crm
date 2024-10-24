@@ -371,6 +371,9 @@ final class PermissionsEnum extends Enum
     public const TRAVEL_SIC_ALLOCATION = 'travel-sic-allocation';
     public const SUPER_LEAD_STATUS_CHANGE = 'super-lead-status-change';
     public const ReApprovePayments = 'reapprove-payment';
+    public const EXPORT_RM_LEADS = 'export-rm-leads';
+    public const EXPORT_CAR_PUA_UPDATES = 'export-car-pua-updates';
+    public const DEPARTMENT_MANAGER = 'department-manager';
 
     public static function getAdvisorConversionReportPermissions()
     {
@@ -426,8 +429,8 @@ final class PermissionsEnum extends Enum
     public static function getBulkPolicyBookingOnSagePermissions()
     {
         return [
-            self::VIEW_BULK_POLICY_BOOKING_LIST,
-            self::BOOK_BULK_POLICY_ON_SAGE,
+            /*self::VIEW_BULK_POLICY_BOOKING_LIST,
+            self::BOOK_BULK_POLICY_ON_SAGE,*/
             self::BOOKING_FAILED_EDIT,
         ];
     }

@@ -9,6 +9,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
 use App\Services\ApplicationStorageService;
+use App\Services\CentralService;
 use App\Services\SendUpdateLogService;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -140,13 +141,14 @@ class SendUpdateValidationRequest extends FormRequest
                 }
 
                 $bypassStatuses = [
-                    SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
-                    SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER,
                     SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED,
                     SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED,
                 ];
 
-                if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF &&
+                $checkTransactionApprovedInSUStatusLogs = app(CentralService::class)->checkStatusSUStatusLogs($sendUpdateLog->id, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
+
+                if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF && ! $checkTransactionApprovedInSUStatusLogs &&
+                    ! in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) &&
                     ! in_array($sendUpdateLog->status, $bypassStatuses) &&
                     ! in_array($categorySubType, [
                         SendUpdateLogStatusEnum::MPC,
@@ -154,8 +156,11 @@ class SendUpdateValidationRequest extends FormRequest
                         SendUpdateLogStatusEnum::MDOV,
                         SendUpdateLogStatusEnum::ED,
                         SendUpdateLogStatusEnum::DM,
-                        SendUpdateLogStatusEnum::ACB, // TODO:: Need to verify, This is for Additional commission approve where Transaction approval not required
-                        SendUpdateLogStatusEnum::ATIB, // TODO:: Need to verify, This is for Additional commission approve where Transaction approval not required
+                        SendUpdateLogStatusEnum::DTSI,
+                        SendUpdateLogStatusEnum::DOV,
+                        SendUpdateLogStatusEnum::ATIB,
+                        SendUpdateLogStatusEnum::ATICB,
+                        SendUpdateLogStatusEnum::ACB,
                     ])) {
                     $validator->errors()->add('error', 'Transaction approval is required');
                 }

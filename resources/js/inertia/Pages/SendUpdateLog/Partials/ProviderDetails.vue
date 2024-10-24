@@ -107,7 +107,7 @@ const onCancel = () => {
         </div>
         <x-divider class="my-4 mt-10" />
         <div class="flex justify-end gap-2">
-          <template v-if="!state.edit">
+          <template v-if="!state.isEdit">
             <x-tooltip v-if="props.isEditDisabledForQueuedBooking">
               <x-button
                 size="sm"

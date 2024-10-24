@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use App\Jobs\MAWelcomeJob;
 use App\Models\Customer;
 use App\Models\QuoteCustomer;
 use App\Services\BerlinService;
@@ -70,9 +71,8 @@ class CustomersImport implements OnEachRow
                     $updateCustomer->myalfred_expiry_date = $myalfredExpiryDate;
                 }
                 $updateCustomer->save();
-                $customerId = $updateCustomer->id;
             } else {
-                $newCustomer = new Customer([
+                $updateCustomer = new Customer([
                     'first_name' => $firstName,
                     'last_name' => $lastName,
                     'email' => strtolower(trim($email)),
@@ -80,12 +80,9 @@ class CustomersImport implements OnEachRow
                     'has_reward_access' => true,
                     'myalfred_expiry_date' => $myalfredExpiryDate,
                 ]);
-                $newCustomer->save();
-                $customerId = $newCustomer->id;
+                $updateCustomer->save();
             }
-
-            $responseExtend = $this->berlinService->extendCustomerSubscription($customerId, $email, 'CORPORATE', 'corporate-myalfred-we', true);
-            info('CustomersImport responseExtend: '.$responseExtend);
+            MAWelcomeJob::dispatch($updateCustomer, 'CORPORATE', 'corporate-myalfred-we');
 
             $newQuoteCustomer = new QuoteCustomer;
             $newQuoteCustomer->cdb_id = $this->CDBId;

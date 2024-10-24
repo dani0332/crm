@@ -15,16 +15,19 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Interfaces\PaymentRepositoryInterface;
+use App\Models\BrokerInvoiceNumber;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Models\User;
 use App\Services\ApplicationStorageService;
+use App\Services\CentralService;
 use App\Services\PaymentLinkService;
 use App\Services\SplitPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\HandlesDeadlockRetries;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -327,6 +330,16 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         foreach ($masterPayment->payment_splits as $splitPayment) {
             $serialNo = $splitPayment['sr_no'];
+            //update payment amount for paid payments
+            if (isset($request->isPaidEditable) && $request->isPaidEditable && count($paymentPaidSerialNo) === $totalSplitPayments) {
+                $paymentSplit = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $serialNo])->first();
+                if ($paymentSplit) {
+                    $paymentSplit->update(['payment_amount' => $splitPayment['payment_amount']]);
+                }
+
+                continue;
+            }
+
             if (in_array($serialNo, $paymentPaidSerialNo)) {
                 continue;
             }
@@ -396,6 +409,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 'updated_by' => Auth::user()->id,
             ]);
             if ($request->send_update_id > 0) {
+                app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_DECLINE);
                 $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_DECLINE;
             } else {
                 $quoteModel->quote_status_id = QuoteStatusEnum::TransactionDeclined;
@@ -570,63 +584,98 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return $map[$documentTypeCode] ?? $documentTypeCode;
     }
 
+    /**
+     * This method updates the payment status for payments with an upfront frequency.
+     *
+     * @param  \App\Models\Payment  $payment  The payment object to update.
+     * @return void
+     */
+    private function updatePaymentStatusForUpFront($payment)
+    {
+        if ($payment->frequency !== PaymentFrequency::UPFRONT) {
+            return;
+        }
+
+        $capturedAmount = $payment->captured_amount;
+        $totalAmount = $payment->total_amount;
+
+        if ($capturedAmount > 0 && $totalAmount > $capturedAmount) {
+            $payment->update(['payment_status_id' => PaymentStatusEnum::PARTIALLY_PAID]);
+        } else {
+            $firstSplitStatus = $payment->paymentSplits[0]->payment_status_id;
+            switch ($firstSplitStatus) {
+                case PaymentStatusEnum::PAID:
+                    $payment->update(['payment_status_id' => PaymentStatusEnum::CAPTURED]);
+                    break;
+                case PaymentStatusEnum::PARTIALLY_PAID:
+                    $payment->update(['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED]);
+                    break;
+                default:
+                    $payment->update(['payment_status_id' => $firstSplitStatus]);
+                    break;
+            }
+        }
+    }
+
+    /**
+     * This method updates the payment status for payments that do not have an upfront frequency.
+     *
+     * @param  \App\Models\Payment  $payment  The payment object to update.
+     * @return void
+     */
+    private function updatePaymentStatusNonUpFront($payment)
+    {
+        $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
+            PaymentStatusEnum::PAID,
+            PaymentStatusEnum::CAPTURED,
+            PaymentStatusEnum::PARTIAL_CAPTURED,
+            PaymentStatusEnum::PARTIALLY_PAID,
+        ])
+            ->where('code', $payment->code)
+            ->count();
+
+        info('Total paid payments for '.$payment->code.': '.$totalPaidPayments.' out of '.$payment->total_payments);
+
+        if (
+            $totalPaidPayments == $payment->total_payments
+            && $payment->captured_amount >= ($payment->total_price - $payment->discount_value)
+        ) {
+            info('All payments are captured. Updating Payment status to CAPTURED: '.$payment->code);
+            $payment->update(
+                ['payment_status_id' => PaymentStatusEnum::CAPTURED]
+            );
+        } elseif ($totalPaidPayments > 0) {
+            info('Some payments are captured. Updating Payment status to PARTIAL_CAPTURED: '.$payment->code);
+            $payment->update(
+                ['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED]
+            );
+        } else {
+            //verify credit approved status
+            $totalCreditPayments = PaymentSplits::whereIn('payment_status_id', [
+                PaymentStatusEnum::CREDIT_APPROVED,
+            ])->where('code', $payment->code)->count();
+            info('Total credit approved payments for '.$payment->code.': '.$totalCreditPayments);
+            if ($totalCreditPayments > 0) {
+                info('Updating payment status to CREDIT_APPROVED for '.$payment->code);
+                $payment->update(
+                    ['payment_status_id' => PaymentStatusEnum::CREDIT_APPROVED]
+                );
+            } else {
+                info('Updating payment status to NEW for '.$payment->code);
+                $payment->update(
+                    ['payment_status_id' => PaymentStatusEnum::NEW]
+                );
+            }
+        }
+    }
+
     public function setMasterPaymentStatus($payment)
     {
         if ($payment) {
             if ($payment->frequency == 'upfront') {
-                if ($payment->paymentSplits[0]->payment_status_id == PaymentStatusEnum::PAID) {
-                    $payment->update(
-                        ['payment_status_id' => PaymentStatusEnum::CAPTURED]
-                    );
-                } elseif ($payment->paymentSplits[0]->payment_status_id == PaymentStatusEnum::PARTIALLY_PAID) {
-                    $payment->update(
-                        ['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED]
-                    );
-                } else {
-                    $payment->update(
-                        ['payment_status_id' => $payment->paymentSplits[0]->payment_status_id]
-                    );
-                }
+                $this->updatePaymentStatusForUpFront($payment);
             } else {
-                $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
-                    PaymentStatusEnum::PAID,
-                    PaymentStatusEnum::CAPTURED,
-                    PaymentStatusEnum::PARTIAL_CAPTURED,
-                    PaymentStatusEnum::PARTIALLY_PAID,
-                ])
-                    ->where('code', $payment->code)
-                    ->count();
-
-                info('Total paid payments for '.$payment->code.': '.$totalPaidPayments.' out of '.$payment->total_payments);
-
-                if (
-                    $totalPaidPayments == $payment->total_payments
-                    && $payment->captured_amount >= ($payment->total_price - $payment->discount_value)
-                ) {
-                    info('All payments are captured. Updating Payment status to CAPTURED: '.$payment->code);
-                    $payment->update(
-                        ['payment_status_id' => PaymentStatusEnum::CAPTURED]
-                    );
-                } elseif ($totalPaidPayments > 0) {
-                    info('Some payments are captured. Updating Payment status to PARTIAL_CAPTURED: '.$payment->code);
-                    $payment->update(
-                        ['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED]
-                    );
-                } else {
-                    //verify credit approved status
-                    $totalCreditPayments = PaymentSplits::whereIn('payment_status_id', [
-                        PaymentStatusEnum::CREDIT_APPROVED,
-                    ])->where('code', $payment->code)->count();
-                    if ($totalCreditPayments > 0) {
-                        $payment->update(
-                            ['payment_status_id' => PaymentStatusEnum::CREDIT_APPROVED]
-                        );
-                    } else {
-                        $payment->update(
-                            ['payment_status_id' => PaymentStatusEnum::NEW]
-                        );
-                    }
-                }
+                $this->updatePaymentStatusNonUpFront($payment);
             }
             info('Updating lead status for Payment Code: '.$payment->code);
             app(SplitPaymentService::class)->updateLeadStatus($payment); //update lead status
@@ -643,25 +692,91 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return $quote->payments()->where('insurer_tax_number', $invoiceNumber)->first();
     }
 
-    public function generateBrokerInvoiceNumber($payment, $quoteType): string
+    public function generateAndStoreBrokerInvoiceNumber($quote, $payment, $quoteType, $attempts = 0)
     {
-        $insuranceProvider = null;
-        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
-        if (in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
-            $planRelationName = strtolower($quoteType).'Plan';
-            $payment->load($planRelationName);
-            $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
+        info('fn:generateAndStoreBrokerInvoiceNumber Quote : '.$quote?->code.' Source : '.$quote?->source.' started');
+
+        $response = ['status' => false, 'message' => ''];
+
+        if (! $payment) {
+            info('fn:generateAndStoreBrokerInvoiceNumber Quote : '.$quote?->code.' Source : '.$quote?->source.' payment not found.');
+            $response['message'] = 'Payment not found.';
+
+            return $response;
         }
+        info('fn:generateAndStoreBrokerInvoiceNumber Payment : '.$payment->code);
+        $maxRetries = 5;
 
-        if (! $insuranceProvider) {
-            $insuranceProvider = $payment?->insuranceProvider;
+        if ($payment->broker_invoice_number) {
+            info('fn:generateAndStoreBrokerInvoiceNumber Payment  : '.$payment->code.' : Broker Invoice Number already exists - BIN : '.$payment->broker_invoice_number);
+            $response['status'] = true;
+            $response['message'] = 'Broker Invoice Number: '.$payment->broker_invoice_number;
+
+            return $response;
         }
+        try {
+            $insuranceProvider = getInsuranceProvider($payment, $quoteType);
 
-        $insuranceProviderCode = $insuranceProvider?->code;
-        $latestBINByInsurer = Payment::whereNotNull('broker_invoice_number')->where('insurance_provider_id', $insuranceProvider->id)->orderBy('updated_at', 'desc')->first()?->broker_invoice_number;
-        $insuranceProviderLeadCount = (int) str_replace($insuranceProviderCode, '', $latestBINByInsurer) + 1;
+            if (! isNonSelfBillingEnabledForInsuranceProvider($insuranceProvider)) {
+                info('fn:generateAndStoreBrokerInvoiceNumber Payment : '.$payment->code.' : Non-self Billing is not enabled for Insurance Provider ID : '.$insuranceProvider->id);
+                $response['status'] = true;
+                $response['message'] = 'Non-self Billing is not enabled for Insurance Provider';
 
-        return $insuranceProviderCode.$insuranceProviderLeadCount;
+                return $response;
+            }
+
+            $currentDate = Carbon::now();
+            DB::transaction(function () use ($insuranceProvider, $currentDate, &$response, $payment) {
+                $invoiceBrokerSequence = BrokerInvoiceNumber::where([
+                    'insurance_provider_id' => $insuranceProvider->id,
+                    'date' => $currentDate->format('Y-m'),
+                ])
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $invoiceBrokerSequence) {
+                    info('fn:generateAndStoreBrokerInvoiceNumber Monthly sequence created for Insurance Provider ID '.$insuranceProvider->id);
+                    $invoiceBrokerSequence = BrokerInvoiceNumber::create([
+                        'insurance_provider_id' => $insuranceProvider->id,
+                        'date' => $currentDate->format('Y-m'),
+                        'sequence_number' => 1,
+                    ]);
+                }
+                info('fn:generateAndStoreBrokerInvoiceNumber Payment : '.$payment->code.' : Insurer sequence number is : '.$invoiceBrokerSequence->sequence_number.' for Insurance Provider ID : '.$insuranceProvider->id);
+                $currentSequence = $invoiceBrokerSequence->sequence_number;
+                $insuranceProviderCode = $insuranceProvider?->code;
+                $brokerInvoiceNumber = 'AFIA/'.$insuranceProviderCode.'/'.$currentDate->format('Y').'/'.$currentDate->format('m').'/'.$currentSequence;
+                $payment->update([
+                    'broker_invoice_number' => $brokerInvoiceNumber,
+                ]);
+                info('fn:generateAndStoreBrokerInvoiceNumber Payment  : '.$payment->code.' : Broker Invoice Number updated : '.$brokerInvoiceNumber);
+                $invoiceBrokerSequence->increment('sequence_number');
+                $response['status'] = true;
+                $response['message'] = 'Broker Invoice Number: '.$brokerInvoiceNumber;
+            });
+
+            return $response;
+        } catch (Exception $e) {
+            $attempts++;
+            if (in_array($e->getCode(), ['40001', '1213'])) {
+                if ($attempts < $maxRetries) {
+                    info('fn:generateAndStoreBrokerInvoiceNumber Payment  : '.$payment->code.' : table locked, trying again');
+                    $this->generateAndStoreBrokerInvoiceNumber($quote, $payment, $quoteType, $attempts);
+                } else {
+                    info('fn:generateAndStoreBrokerInvoiceNumber Payment  : '.$payment->code.' : Error occurred while generating broker invoice number: Could not acquire lock after multiple attempts');
+                    $response['message'] = 'Exception: Could not acquire lock after multiple attempts';
+
+                    return $response;
+                }
+            } else {
+                info('fn:generateAndStoreBrokerInvoiceNumber Payment  : '.$payment->code.' : Error occurred while generating broker invoice number: '.$e->getMessage());
+
+                $response['message'] = 'Exception: '.$e->getMessage();
+
+                return $response;
+            }
+
+        }
     }
     public function generateInvoiceDescription($payment, $quoteType, $record): string
     {

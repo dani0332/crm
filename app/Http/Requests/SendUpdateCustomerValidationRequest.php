@@ -8,6 +8,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
+use App\Services\CentralService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SendUpdateCustomerValidationRequest extends FormRequest
@@ -84,14 +85,16 @@ class SendUpdateCustomerValidationRequest extends FormRequest
                 SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED,
             ];
 
+            $checkTransactionApprovedInSUStatusLogs = app(CentralService::class)->checkStatusSUStatusLogs($this->sendUpdate->id, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
+
             switch ($category) {
                 case SendUpdateLogStatusEnum::CPD:
-                    if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED && ! in_array($this->sendUpdate->status, $bypassStatuses)) {
+                    if (($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED && ! $checkTransactionApprovedInSUStatusLogs) && ! in_array($this->sendUpdate->status, $bypassStatuses)) {
                         $validator->errors()->add('error', 'Transaction approval is required. ');
                     }
                     break;
                 case SendUpdateLogStatusEnum::EF:
-                    if ($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED) {
+                    if (($this->sendUpdate->status != SendUpdateLogStatusEnum::TRANSACTION_APPROVED && ! $checkTransactionApprovedInSUStatusLogs) && ! in_array($this->sendUpdate->status, $bypassStatuses)) {
                         if (! in_array(
                             $option,
                             [
@@ -102,6 +105,8 @@ class SendUpdateCustomerValidationRequest extends FormRequest
                                 SendUpdateLogStatusEnum::DM,
                                 SendUpdateLogStatusEnum::DTSI,
                                 SendUpdateLogStatusEnum::DOV,
+                                SendUpdateLogStatusEnum::ATIB,
+                                SendUpdateLogStatusEnum::ACB,
                             ]
                         )) {
                             $validator->errors()->add('error', 'Transaction approval is required. ');

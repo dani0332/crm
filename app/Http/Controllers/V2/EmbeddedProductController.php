@@ -10,6 +10,7 @@ use App\Http\Requests\EmbeddedProducDocumentRequest;
 use App\Http\Requests\EmbeddedProductRequest;
 use App\Models\EmbeddedProduct;
 use App\Repositories\EmbeddedProductRepository;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -17,9 +18,9 @@ class EmbeddedProductController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_CONFIG, ['except' => ['sendDocument', 'downloadDocument', 'cancelPayment']]);
+        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_CONFIG, ['except' => ['sendDocument', 'cancelPayment', 'getDocuments', 'uploadQuoteDocument', 'force']]);
         $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_PAYMENT_CANCEL, ['only' => ['cancelPayment']]);
-        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_VIEW, ['only' => ['sendDocument', 'downloadDocument']]);
+        $this->middleware('permission:'.PermissionsEnum::EMBEDDED_PRODUCT_VIEW, ['only' => ['sendDocument', 'getDocuments', 'uploadQuoteDocument', 'force']]);
     }
 
     /**
@@ -136,11 +137,6 @@ class EmbeddedProductController extends Controller
         return redirect()->back()->with('success', 'Re-gerating resquest processing');
     }
 
-    public function downloadDocument(EmbeddedProducDocumentRequest $request)
-    {
-        return EmbeddedProductRepository::downloadCertificate($request->validated());
-    }
-
     /**
      * Get the list of reports for embedded products.
      *
@@ -203,5 +199,25 @@ class EmbeddedProductController extends Controller
                 },
                 $file[$lastIndex - 1]
             );
+    }
+
+    public function getDocuments(EmbeddedProducDocumentRequest $request)
+    {
+        $documents = EmbeddedProductRepository::getDocuments($request->validated());
+
+        return response()->json($documents);
+    }
+
+    public function uploadQuoteDocument(Request $request)
+    {
+        try {
+            EmbeddedProductRepository::uploadQuoteDocument($request->all());
+        } catch (Exception $e) {
+            info('Documents upload failed - '.json_encode($request->all()).' - '.$e->getMessage());
+
+            return redirect()->back()->with('error', 'Document uploaded failed!');
+        }
+
+        return redirect()->back()->with('success', 'Document uploaded successfully!');
     }
 }
