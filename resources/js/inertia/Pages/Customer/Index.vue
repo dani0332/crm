@@ -11,6 +11,7 @@ let availableFilters = {
   page: 1,
 };
 
+console.log(props.customers.data);
 const filters = reactive(availableFilters);
 const loader = reactive({
   table: false,
@@ -184,13 +185,17 @@ function onReset() {
         {{ advisor?.name }}
       </template>
 
-      <template #item-receive_marketing_updates="{ receive_marketing_updates }">
+      <template #item-receive_marketing_updates="item">
         <div class="text-center">
           <x-tag
             size="sm"
-            :color="receive_marketing_updates ? 'success' : 'error'"
+            :color="
+              item.customer.receive_marketing_updates === 1
+                ? 'success'
+                : 'error'
+            "
           >
-            {{ receive_marketing_updates ? 'Yes' : 'No' }}
+            {{ item.customer.receive_marketing_updates === 1 ? 'Yes' : 'No' }}
           </x-tag>
         </div>
       </template>
