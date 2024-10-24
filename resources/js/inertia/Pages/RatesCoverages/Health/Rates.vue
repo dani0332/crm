@@ -54,6 +54,10 @@ function onSubmit(isValid) {
         uploadForm.errors.file_name = [];
         uploadForm.errors.type = [];
         uploadForm.csvFile = '';
+          router.reload({
+              preserveState: true,
+              preserveScroll: true,
+          });
       })
       .catch(error => {
         contactLoader.value = false;

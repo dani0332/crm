@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ProcessStatusCode;
+use App\Enums\RateCoverageEnum;
 use App\Imports\CoveragesImport;
 use App\Imports\RatesImport;
 use App\Jobs\UploadCoveragesJob;
@@ -39,7 +40,7 @@ class RatesCoveragesUploadService
             'status' => ProcessStatusCode::UPLOADED,
             'good' => 0,
             'cannot_upload' => 0,
-            'type' => 'coverage',
+            'type' => RateCoverageEnum::COVERAGES,
         ];
 
         return RatesCoveragesUpload::create($uploadLeadData);
@@ -167,20 +168,21 @@ class RatesCoveragesUploadService
         $coverages = RateCoveragesProcess::select(
             'rate_coverage_uploads.file_name as fileName',
             'rate_coverage_uploads.total_records as totalRecords',
-            'rate_coverage_uploads.good as good',
-            'rate_coverage_uploads.cannot_upload as cannotUpload',
+            DB::raw('SUM(CASE WHEN rate_coverage_processes.validation_errors IS NULL THEN 1 ELSE 0 END) as good'),
+            DB::raw('SUM(CASE WHEN rate_coverage_processes.validation_errors IS NOT NULL THEN 1 ELSE 0 END) as cannotUpload'),
             'rate_coverage_uploads.id as upload_id',
             'rate_coverage_processes.type as type',
-            'rate_coverage_processes.validation_errors as error'
+            DB::raw('GROUP_CONCAT(rate_coverage_processes.validation_errors SEPARATOR \', \') as error')
         )
-            ->where('rate_coverage_uploads.type', '=', 'coverage')
+            ->where('rate_coverage_uploads.type', '=', RateCoverageEnum::COVERAGES)
             ->leftJoin('rate_coverage_uploads', 'rate_coverage_processes.rate_coverage_id', '=', 'rate_coverage_uploads.id')
-            ->simplePaginate()->withQueryString();
+            ->groupBy('rate_coverage_uploads.id')
+            ->simplePaginate()
+            ->withQueryString();
 
         return $coverages;
     }
 
-    //////////////////// RATE FUNCTION START //////////////////////////
 
     public function rateUploadCreate($data)
     {
@@ -201,7 +203,7 @@ class RatesCoveragesUploadService
             'status' => ProcessStatusCode::UPLOADED,
             'good' => 0,
             'cannot_upload' => 0,
-            'type' => 'rate',
+            'type' => RateCoverageEnum::RATES,
         ];
 
         return RatesCoveragesUpload::create($uploadLeadData);
@@ -313,20 +315,22 @@ class RatesCoveragesUploadService
 
     public function getUploadRates()
     {
-        $rate = RateCoveragesProcess::select(
+        $rates = RateCoveragesProcess::select(
             'rate_coverage_uploads.file_name as fileName',
             'rate_coverage_uploads.total_records as totalRecords',
-            'rate_coverage_uploads.good as good',
-            'rate_coverage_uploads.cannot_upload as cannotUpload',
+            DB::raw('SUM(CASE WHEN rate_coverage_processes.validation_errors IS NULL THEN 1 ELSE 0 END) as good'),
+            DB::raw('SUM(CASE WHEN rate_coverage_processes.validation_errors IS NOT NULL THEN 1 ELSE 0 END) as cannotUpload'),
             'rate_coverage_uploads.id as upload_id',
             'rate_coverage_processes.type as type',
-            'rate_coverage_processes.validation_errors as error'
+            DB::raw('GROUP_CONCAT(rate_coverage_processes.validation_errors SEPARATOR \', \') as error')
         )
-            ->where('rate_coverage_uploads.type', '=', 'rate')
+            ->where('rate_coverage_uploads.type', '=', RateCoverageEnum::RATES)
             ->leftJoin('rate_coverage_uploads', 'rate_coverage_processes.rate_coverage_id', '=', 'rate_coverage_uploads.id')
-            ->simplePaginate()->withQueryString();
+            ->groupBy('rate_coverage_uploads.id')
+            ->simplePaginate()
+            ->withQueryString();
 
-        return $rate;
+        return $rates;
     }
 
 }
