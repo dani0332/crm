@@ -21,7 +21,7 @@ const showInsurerError = ref(false);
 const planForm = useForm({
   quote_uuid: usePage().props.quote.uuid || '',
   home_plan_id: props.plan.id || '',
-  provider_name: props.plan.providerName    || '',
+  provider_name: props.plan.providerName || '',
   actual_premium: props.plan.actualPremium || 0,
   discounted_premium: props.plan.discountPremium || 0,
   premium_vat: props.vat ? props.vat : 0,
@@ -35,17 +35,13 @@ const planForm = useForm({
   is_manual_update: props.plan.isManualUpdate || false,
   ancillary_excess: props.plan.ancillaryExcess || 0,
   current_url: usePage().url || '',
-  listQuotePlanBenefitsInclusions : props.plan.listQuotePlanBenefitsInclusions || [],
-  listQuotePlanBenefitsExclusions : props.plan.listQuotePlanBenefitsExclusions || [],
+  listQuotePlanBenefitsInclusions:
+    props.plan.listQuotePlanBenefitsInclusions || [],
+  listQuotePlanBenefitsExclusions:
+    props.plan.listQuotePlanBenefitsExclusions || [],
 });
 
 console.log('planForm', planForm);
-
-const listQuotePlansMembers = computed(() => {
-  return props.plan.listQuotePlansMembers.map((item, index) => {
-    return { ...item, index };
-  });
-});
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 const tabs = ref([
@@ -177,77 +173,41 @@ onMounted(() => {
 
 const onUpdatePlan = () => {
   console.log('onUpdatePlan', props.plan);
-  // return false
-  //   if (plan > planForm.actual_premium
-  //     notification.error({
-  //       title: 'Discounted Price must be lower than Actual Price',
-  //       position: 'top',
-  //     });
-  //     return;
-  //   }
 
-  //   if (planForm.is_manual_update && planForm.insurer_quote_no == '') {
-  //     showInsurerError.value = true;
-  //     return;
-  //   } else {
-  //     showInsurerError.value = false;
-  //   }
+  axios
+    .post(
+      '/home-plan-manual-update-process',
+      {
+        plan: planForm, // Send your planForm data here
+      },
+      {
+        preserveScroll: true,
+        preserveState: true,
+      },
+    )
+    .then(response => {
+      // Log the success response
+      console.log('response', response);
 
-//   axios.post(
-//     '/home-plan-manual-update-process',
-//     {
-//       plan: planForm,
-//     },
-//     {
-//       preserveScroll: true,
-//       preserveState: true,
-//       onSuccess: response => {
-//         console.log('response', response);
-//         notification.success({
-//           title: 'Plan updated successfully',
-//           position: 'top',
-//         });
-//         emit('onLoadAvailablePlansData');
-//       },
-//       onError: error => {
-//         console.log('error', error);
-//         notification.error({
-//           title: error[0],
-//           position: 'top',
-//         });
-//       },
-//     },
-//   );
+      // Show success notification
+      notification.success({
+        title: 'Plan updated successfully',
+        position: 'top',
+      });
 
-axios.post('/home-plan-manual-update-process', {
-    plan: planForm, // Send your planForm data here
-  }, {
-    preserveScroll: true,
-    preserveState: true
-  })
-  .then(response => {
-    // Log the success response
-    console.log('response', response);
+      // Emit event to load available plans
+      emit('onLoadAvailablePlansData');
+    })
+    .catch(error => {
+      // Log the error for debugging
+      console.error('error', error);
 
-    // Show success notification
-    notification.success({
-      title: 'Plan updated successfully',
-      position: 'top',
+      // Show error notification (handle server-side or network errors)
+      notification.error({
+        title: error.response?.data?.message || 'An error occurred',
+        position: 'top',
+      });
     });
-
-    // Emit event to load available plans
-    emit('onLoadAvailablePlansData');
-  })
-  .catch(error => {
-    // Log the error for debugging
-    console.error('error', error);
-
-    // Show error notification (handle server-side or network errors)
-    notification.error({
-      title: error.response?.data?.message || 'An error occurred',
-      position: 'top',
-    });
-  });
 };
 </script>
 
@@ -278,6 +238,7 @@ axios.post('/home-plan-manual-update-process', {
       </TabList>
 
       <TabPanels class="mt-2 text-sm min-h-[70vh]">
+        <!-- General Info Tab -->
         <TabPanel>
           <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
             <div class="grid sm:grid-cols-2 mb-3">
@@ -384,170 +345,77 @@ axios.post('/home-plan-manual-update-process', {
           </div>
         </TabPanel>
 
-        <TabPanel>
+        <!-- Inclusions Tab -->
+        <TabPanel v-if="props.plan?.listQuotePlanBenefitsInclusions">
           <div class="p-4">
-            <x-table
-              :headers="[
-                { text: 'Member ', value: 'member' },
-                { text: 'DOB', value: 'dob' },
-                { text: 'Price', value: 'premium' },
-              ]"
-              :items="listQuotePlansMembers || []"
+            <!-- Loop through the main keys (buildings, contents, personalBelongings) -->
+            <div
+              v-for="(items, category) in props.plan
+                ?.listQuotePlanBenefitsInclusions"
+              :key="category"
+              class="mb-6"
             >
-              <template #item-member="{ item }">
-                Traveler {{ item.index + 1 }}
-              </template>
-              <template #item-dob="{ item }">
-                {{ dateFormat(item.dob) }}
-              </template>
-              <template #item-gender="{ item }">
-                {{ item.premium }}
-              </template>
-            </x-table>
+              <!-- Heading for each category (e.g., "Buildings", "Contents") -->
+              <h6 class="font-bold capitalize mb-1">{{ category }}:</h6>
+
+              <!-- Loop through each item in the current category (e.g., buildings[0], buildings[1], etc.) -->
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div
+                  v-for="(item, index) in items"
+                  :key="index"
+                  class="space-y-1"
+                >
+                  <!-- Display the text field -->
+                  <div class="font-medium">{{ item.text }}</div>
+
+                  <!-- Display the description field with grey text -->
+                  <div class="text-gray-500">{{ item.description }}</div>
+                </div>
+              </div>
+            </div>
           </div>
         </TabPanel>
 
-        <TabPanel>
+        <!-- Additonal Covers Tab -->
+        <TabPanel v-if="props.plan.listQuotePlanBenefitsAditionalCovers && props.plan.listQuotePlanBenefitsAditionalCovers.length">
           <div class="p-4">
-            <table cellpadding="3" cellspacing="3" class="table-auto">
-              <thead class="">
-                <tr>
-                  <th class="px-6 py-3" scope="col">Features & Benefits</th>
-                  <th class="px-4 py-2"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="feature in props.plan.listQuotePlanBenefitsFeatures"
-                  :key="feature.id"
-                >
-                  <td class="px-4 py-2">{{ feature.text }}</td>
-                  <td class="px-4 py-2">{{ feature.value }}</td>
-                </tr>
-              </tbody>
-            </table>
-            <table cellpadding="3" cellspacing="3" class="table-auto">
-              <thead>
-                <tr>
-                  <th class="px-4 py-2">Travel Inconvenience Cover</th>
-                  <th class="px-4 py-2"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="feature in props.plan
-                    .listQuotePlanBenefitstravelInconvenienceCover"
-                  :key="feature.id"
-                >
-                  <td class="px-4 py-2">{{ feature.text }}</td>
-                  <td class="px-4 py-2">{{ feature.value }}</td>
-                </tr>
-              </tbody>
-            </table>
+            <div class="grid sm:grid-cols-2 gap-4">
+              <!-- Loop through the listQuotePlanBenefitsAditionalCovers array -->
+              <div
+                v-for="(cover, index) in props.plan
+                  ?.listQuotePlanBenefitsAditionalCovers"
+                :key="index"
+                class="space-y-2"
+              >
+                <!-- Display the text field -->
+                <div class="font-medium">{{ cover.text }}</div>
 
-            <table cellpadding="3" cellspacing="3" class="table-auto">
-              <thead>
-                <tr>
-                  <th class="px-4 py-2">Emergency Medical Cover</th>
-                  <th class="px-4 py-2"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="feature in props.plan
-                    .listQuotePlanBenefitsemergencyMedicalCover"
-                  :key="feature.id"
-                >
-                  <td class="px-4 py-2">{{ feature.text }}</td>
-                  <td class="px-4 py-2">{{ feature.value }}</td>
-                </tr>
-              </tbody>
-            </table>
-
-            <table cellpadding="3" cellspacing="3" class="table-auto">
-              <thead>
-                <tr>
-                  <th class="px-4 py-2">Included in the plan</th>
-                  <th class="px-4 py-2"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="feature in planForm.listQuotePlanBenefitsInclusions"
-                  :key="feature.id"
-                >
-                  <td class="px-4 py-2">{{ feature.text }}</td>
-                  <td class="px-4 py-2">{{ feature.value }}</td>
-                </tr>
-              </tbody>
-            </table>
+                <!-- Display the description field with grey text -->
+                <div class="text-gray-500">{{ cover.description }}</div>
+              </div>
+            </div>
           </div>
         </TabPanel>
 
-        <TabPanel>
-          <div class="p-4">
-            <table cellpadding="3" cellspacing="3" class="table-auto">
-              <thead>
-                <tr>
-                  <!-- <th class="px-4 py-2">Exclusions</th> -->
-                  <th class="px-4 py-2"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="feature in planForm.listQuotePlanBenefitsExclusions"
-                  :key="feature.id"
-                >
-                  <td class="px-4 py-2">{{ feature.text }}</td>
-                  <td class="px-4 py-2">{{ feature.value }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </TabPanel>
-        <TabPanel>
-          <div>
-            <table cellpadding="3" cellspacing="3" class="table-auto">
-              <thead>
-                <tr>
-                  <!-- <th class="px-4 py-2">COVID-19 Cover</th> -->
-                  <th class="px-4 py-2"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="feature in props.plan.listQuotePlanBenefitsCovid19"
-                  :key="feature.id"
-                >
-                  <td class="px-4 py-2">{{ feature.text }}</td>
-                  <td class="px-4 py-2">{{ feature.value }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </TabPanel>
-        <TabPanel>
-          <div class="p-4">
-            <table cellpadding="3" cellspacing="3" class="table-auto">
-              <tbody>
-                <tr
-                  v-for="feature in props.plan
-                    .listQuotePlanBenefitsPolicyDetails"
-                  :key="feature.id"
-                >
-                  <td class="px-4 py-2">
-                    <a
-                      :href="feature.link"
-                      target="_blank"
-                      title="click to open"
-                      >📃 {{ feature.text }}</a
-                    >
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </TabPanel>
+        <!-- Exclusions Tab -->
+        <TabPanel v-if="props.plan.listQuotePlanBenefitsExclusions && props.plan.listQuotePlanBenefitsExclusions.length">
+            <div class="p-4">
+              <div class="grid sm:grid-cols-2 gap-4">
+                <!-- Loop through the listQuotePlanBenefitsExclusions array -->
+                <div v-for="(exclusion, index) in props.plan?.listQuotePlanBenefitsExclusions" :key="index" class="space-y-2">
+
+                  <!-- Display the text field -->
+                  <div class="font-medium">{{ exclusion.text }}</div>
+
+                  <!-- Display the description field with grey text -->
+                  <div class="text-gray-500">{{ exclusion.description }}</div>
+
+                </div>
+              </div>
+            </div>
+          </TabPanel>
+
+
       </TabPanels>
     </TabGroup>
   </div>
