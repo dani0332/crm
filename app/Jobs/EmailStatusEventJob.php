@@ -31,7 +31,7 @@ class EmailStatusEventJob implements ShouldQueue
      */
     public function handle()
     {
-        if (! empty($this->data->message_id) && ! empty($this->emailData->status)) {
+        if (! empty($this->emailData->message_id) && ! empty($this->emailData->status)) {
             $isEmailStatus = EmailStatus::where('msg_id', $this->emailData->message_id)
                 ->where('email_status', $this->emailData->status)
                 ->exists();
@@ -47,10 +47,10 @@ class EmailStatusEventJob implements ShouldQueue
                     $newEmailStatus = new EmailStatus;
                     $newEmailStatus->quote_type_id = $emailStatusData->quote_type_id;
                     $newEmailStatus->quote_id = $emailStatusData->quote_id;
-                    $newEmailStatus->email_address = $this->data->customer_email ?? $emailStatusData->email_address;
+                    $newEmailStatus->email_address = $this->emailData->customer_email ?? $emailStatusData->email_address;
                     $newEmailStatus->msg_id = $this->emailData->message_id;
                     $newEmailStatus->email_status = $this->emailData->status;
-                    $newEmailStatus->email_subject = $this->data->subject ?? $emailStatusData->email_subject;
+                    $newEmailStatus->email_subject = $this->emailData->subject ?? $emailStatusData->email_subject;
                     $newEmailStatus->save();
                     info('EmailStatusEventJob - EmailStatus created for msg_id: '.$this->emailData->message_id.' email_status: '.$newEmailStatus->email_status.' | Time:'.now());
 
