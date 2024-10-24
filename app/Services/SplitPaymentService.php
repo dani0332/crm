@@ -13,6 +13,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentStatusTextEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -26,6 +27,7 @@ use App\Models\HealthQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
+use App\Models\PolicyIssuance;
 use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
@@ -763,6 +765,15 @@ class SplitPaymentService
                     Log::error('Error in processSplitPaymentApprove '.$quoteModel->code.': '.$retryResponse['message']);
                 }
             } else {
+                if ($isFromJob && $modelType === QuoteTypes::TRAVEL && $paymentSplit->payment->insuranceProvider->code = InsuranceProvidersEnum::ALNC) {
+                    PolicyIssuance::create([
+                        'insurance_provider_id' => $paymentSplit->payment->insuranceProvider->id,
+                        'model_type' => $quoteModel::class,
+                        'model_id' => $quoteModel->id,
+                        'quote_type' => $modelType,
+                        'status' => PolicyIssuanceEnum::PENDING_STATUS,
+                    ]);
+                }
                 CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
             }
 
