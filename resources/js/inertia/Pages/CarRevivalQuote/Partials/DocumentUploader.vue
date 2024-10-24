@@ -11,7 +11,7 @@ const notification = useNotifications('toast');
 
 const docForm = useForm({
   quote_id: usePage().props.quote.id || null,
-  quote_uuid: usePage().props.quote.code || null,
+  quote_uuid: usePage().props.quote.uuid || null,
   quote_type_id: null,
   document_type_code: null,
   folder_path: null,

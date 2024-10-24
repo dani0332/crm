@@ -32,10 +32,11 @@ use App\Models\TravelQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
-use App\Traits\GenericQueriesAllLobs;
+use App\Traits\CentralTrait;
 use App\Traits\HandlesDeadlockRetries;
 use App\Traits\SageLoggable;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -44,7 +45,7 @@ use PDF;
 
 class SplitPaymentService
 {
-    use GenericQueriesAllLobs;
+    use CentralTrait;
     use HandlesDeadlockRetries;
     use SageLoggable;
 
@@ -433,7 +434,11 @@ class SplitPaymentService
             $pdf = PDF::loadView('pdf.payment_receipt', compact('data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
-            $document = app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quote, false, true);
+
+            // Create a temporary file and write the PDF content to it
+            $tempFile = $this->createTempPdfFileForWatermark($pdfFile);
+
+            $document = app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quote, false, true, $tempFile);
         } catch (\Exception $ex) {
             info('Payment Reciept - ERROR:'.$ex->getMessage());
         }
@@ -701,7 +706,7 @@ class SplitPaymentService
 
         if (! $paymentSplit->payment->is_approved && ! $isFromJob) {
 
-            $retryResponse = $this->handleWithDeadlockRetries(function () use ($paymentSplit, $amountCollected, $modelType, $quoteId, $isFromJob) {
+            $retryResponse = $this->handleWithDeadlockRetries(function () use ($paymentSplit, $amountCollected, $modelType, $quoteId, $isFromJob, $sendUpdateId) {
                 if (empty($paymentSplit->verified_at)) {
                     $paymentSplit->verified_at = now();
                     $paymentSplit->verified_by = Auth::user()->id;
@@ -723,7 +728,9 @@ class SplitPaymentService
                 info('Parent payment captured amount updated for Payment Split ID: '.$paymentSplit->id.' and Code: '.$paymentSplit->code);
 
                 if ($parentPayment->send_update_log_id) {
-                    SendUpdateLog::where('id', $parentPayment->send_update_log_id)->update([
+                    $sendUpdateLog = SendUpdateLog::find($parentPayment->send_update_log_id);
+                    app(CentralService::class)->updateSendUpdateStatusLogs($sendUpdateLog->id, $sendUpdateLog->status, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
+                    $sendUpdateLog->update([
                         'status' => SendUpdateLogStatusEnum::TRANSACTION_APPROVED,
                     ]);
                 }
@@ -797,6 +804,7 @@ class SplitPaymentService
             $totalApproved = $quoteModel->payments()->where('is_approved', 1)->count();
             if ($totalApproved == $quoteModel->payments()->count()) {
                 if ($sendUpdateId) {
+                    app(CentralService::class)->updateSendUpdateStatusLogs($quoteModel->id, $quoteModel->status, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
                     $quoteModel->status = SendUpdateLogStatusEnum::TRANSACTION_APPROVED;
                 } else {
 

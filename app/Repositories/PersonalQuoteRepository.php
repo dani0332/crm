@@ -2,10 +2,13 @@
 
 namespace App\Repositories;
 
+use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\SendUpdateLogStatusEnum;
+use App\Enums\WatermarkDocTypesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
@@ -13,11 +16,13 @@ use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\CRUDService;
+use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PersonalQuoteRepository extends BaseRepository
 {
@@ -81,52 +86,93 @@ class PersonalQuoteRepository extends BaseRepository
      */
     public function fetchUploadDocument($id, $file, $data)
     {
-        info('fn: fetchUploadDocument called');
-        $quoteType = '';
-        $query = DocumentTypeRepository::where('code', $data['document_type_code']);
-        if (request()->quote_type_id) {
-            $query->where('quote_type_id', request()->quote_type_id);
+        try {
+            info('fn: fetchUploadDocument called');
+            $quoteType = '';
+            $quoteDocumentService = app(QuoteDocumentService::class);
+
+            $query = DocumentTypeRepository::where('code', $data['document_type_code']);
+            if (request()->quote_type_id) {
+                $query->where('quote_type_id', request()->quote_type_id);
+            }
+            if (isset(request()->quote_type)) {
+                $quoteType = request()->quote_type;
+            }
+
+            $documentType = $query->first();
+
+            $isWaterMarkQualifyDoc = in_array($documentType->code, WatermarkDocTypesEnum::asArray());
+
+            if (request()->is_send_update) {
+                $quote = SendUpdateLog::where('id', request()->send_update_id ?? '')->first();
+            } else {
+                $quote = $this->getQuoteObject($quoteType ?? '', $id);
+            }
+
+            $originalName = $file->getClientOriginalName();
+            $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+            $fileMimeType = $file->getClientMimeType();
+            //upload file to azure
+            $fileNameAzure = uniqid().'_'.$quote->uuid.'_original_'.$docName;
+            $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
+
+            // watermark only for pdf files
+            if (($fileMimeType == 'application/pdf' || $fileMimeType == '.pdf') && $isWaterMarkQualifyDoc) {
+                $watermarkData = $quoteDocumentService->watermarkPdf($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
+            } elseif (($fileMimeType == 'image/jpeg' || $fileMimeType == 'image/png' || $fileMimeType == 'image/jpg') && $isWaterMarkQualifyDoc) {
+                $watermarkData = $quoteDocumentService->watermarkImage($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
+            } elseif (($fileMimeType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || $fileMimeType == 'application/msword') && $isWaterMarkQualifyDoc) {
+                $watermarkData = $quoteDocumentService->watermarkWordDocs($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType);
+            }
+
+            //generate unique uuid
+            $docUuid = uniqid();
+            while (QuoteDocument::where('doc_uuid', $docUuid)->first()) {
+                $docUuid = uniqid().rand(1, 100);
+            }
+
+            // This data will store in quote documents table
+            $document = [
+                'doc_name' => 'original_'.$docName,
+                'watermarked_doc_name' => $watermarkData['watermarked_doc_name'] ?? null,
+                'original_name' => $originalName,
+                'doc_url' => $filePathAzure,
+                'watermarked_doc_url' => $watermarkData['watermarked_doc_url'] ?? null,
+                'doc_mime_type' => $fileMimeType,
+                'document_type_code' => $documentType->code,
+                'document_type_text' => $documentType->text,
+                'doc_uuid' => $docUuid,
+                'created_by_id' => auth()->id(),
+            ];
+            info('Document array prepared for creation', $document);
+
+            try {
+                DB::transaction(function () use ($quote, $document, $documentType) {
+
+                    $quoteDocuments = $quote->documents->pluck('document_type_code')->toArray();
+                    $taxInvoiceDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
+
+                    if (request()->is_send_update && in_array($documentType->code, $taxInvoiceDocuments) && count(array_intersect($taxInvoiceDocuments, $quoteDocuments)) == 0) {
+                        app(CentralService::class)->updateSendUpdateStatusLogs($quote->id, $quote->status, SendUpdateLogStatusEnum::UPDATE_ISSUED);
+                        $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_ISSUED]);
+                        info('Send Update status updated to UPDATE_ISSUED - Ref: '.$quote->code);
+                    }
+
+                    $quote->documents()->create($document);
+                    info('Document uploaded - Ref: '.$quote->code);
+                });
+
+                return ['status' => true, 'message' => 'File Uploaded'];
+            } catch (\Exception $exception) {
+                logger()->error('Error while uploading document - Ref: '.$quote->code, ['error' => $exception->getMessage()]);
+
+                return ['status' => false, 'message' => $exception->getMessage() ?? 'Error uploading file'];
+            }
+        } catch (\Exception $exception) {
+            Log::info($exception->getMessage());
+
+            return response()->json(['error' => 'Document upload failed, please try again'], 500);
         }
-        if (isset(request()->quote_type)) {
-            $quoteType = request()->quote_type;
-        }
-
-        $documentType = $query->first();
-
-        if (request()->is_send_update) {
-            $quote = SendUpdateLog::where('id', request()->send_update_id ?? '')->first();
-        } else {
-            $quote = $this->getQuoteObject($quoteType ?? '', $id);
-        }
-
-        $originalName = $file->getClientOriginalName();
-        $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
-        $fileMimeType = $file->getClientMimeType();
-
-        //upload file to azure
-        $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
-        $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
-
-        //generate unique uuid
-        $docUuid = uniqid();
-        while (QuoteDocument::where('doc_uuid', $docUuid)->first()) {
-            $docUuid = uniqid().rand(1, 100);
-        }
-
-        // This data will store in quote doocumeets table
-        $document = [
-            'doc_name' => $docName,
-            'original_name' => $originalName,
-            'doc_url' => $filePathAzure,
-            'doc_mime_type' => $fileMimeType,
-            'document_type_code' => $documentType->code,
-            'document_type_text' => $documentType->text,
-            'doc_uuid' => $docUuid,
-            'created_by_id' => auth()->id(),
-        ];
-        info('Document array prepared for creation', $document);
-
-        return $quote->documents()->create($document);
     }
 
     /**
