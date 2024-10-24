@@ -204,10 +204,10 @@ const paidAmountSum = ref(0);
 const totalPaidAmount = ref(0);
 const masterPaymentStatus = ref('NEW');
 
-const getCustomReasonIndex  = (value) =>{
+const getCustomReasonIndex = value => {
   const index = declinedReasons.findIndex(reason => reason.value === value);
   return index !== -1 ? index : null;
-}
+};
 
 const calculateTotalAmount = () => {
   const discount = discountValue.value;
@@ -1786,7 +1786,6 @@ const initializePaymentForm = (
   paymentMethodsForm.collection_date = payment.collection_date;
   discountValue.value = payment.discount_value; // discount amount
 
-
   if (paymentMethodsForm.status === 'view' || capture_approval > 0) {
     paymentMethodsForm.credit_approval =
       payment.credit_approval !== null ? payment.credit_approval : 'N/A';
@@ -1798,8 +1797,12 @@ const initializePaymentForm = (
     paymentMethodsForm.discount =
       payment.discount_type !== null ? payment.discount_type : '';
   }
-  paymentMethodsForm.declined_reason = splitPaymentRecord.value.decline_reason_id == null ? '' : splitPaymentRecord.value.decline_reason_id;
-  paymentMethodsForm.declined_custom_reason = splitPaymentRecord.value.decline_custom_reason
+  paymentMethodsForm.declined_reason =
+    splitPaymentRecord.value.decline_reason_id == null
+      ? ''
+      : splitPaymentRecord.value.decline_reason_id;
+  paymentMethodsForm.declined_custom_reason =
+    splitPaymentRecord.value.decline_custom_reason;
 };
 
 const processPaymentSplits = payment => {
