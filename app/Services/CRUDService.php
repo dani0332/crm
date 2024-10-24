@@ -22,8 +22,6 @@ use App\Facades\Ken;
 use App\Facades\Marshall;
 use App\Jobs\CammyJob;
 use App\Jobs\CarLost\CarLostStatusRejected;
-use App\Jobs\IntroEmailJob;
-use App\Jobs\SyncSIBContactJob;
 use App\Models\AML;
 use App\Models\ApplicationStorage;
 use App\Models\CarLostQuoteLog;
@@ -36,7 +34,7 @@ use App\Models\QuoteType;
 use App\Models\SendUpdateLog;
 use App\Models\User;
 use App\Repositories\CustomerMembersRepository;
-use App\Traits\GenericQueriesAllLobs;
+use App\Traits\CentralTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -46,7 +44,7 @@ use PDF;
 
 class CRUDService extends BaseService
 {
-    use GenericQueriesAllLobs, TeamHierarchyTrait;
+    use CentralTrait, TeamHierarchyTrait;
 
     protected $healthQuoteService;
     protected $carQuoteService;
@@ -351,14 +349,6 @@ class CRUDService extends BaseService
                 strtolower($request->modelType) == strtolower(quoteTypeCode::Health)
                 && in_array($entity->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
             ) {
-                if ($entity->quote_status_id == QuoteStatusEnum::FollowedUp && $entity->advisor_id) {
-                    CammyJob::dispatch($entity, 'intro');
-                }
-                if ($request->leadStatus == QuoteStatusEnum::Qualified && $entity->advisor_id) {
-                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $entity->uuid, 'send-rm-intro-email', null, false);
-                } else {
-                    SyncSIBContactJob::dispatch($entity);
-                }
 
                 if (
                     $previousQuoteStatus == QuoteStatusEnum::FollowedUp && $request->leadStatus != QuoteStatusEnum::FollowedUp
@@ -1149,7 +1139,10 @@ class CRUDService extends BaseService
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
 
-            app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quoteModel, true);
+            // Create a temporary file and write the PDF content to it
+            $tempFile = $this->createTempPdfFileForWatermark($pdfFile);
+
+            app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quoteModel, true, false, $tempFile);
         }
     }
 

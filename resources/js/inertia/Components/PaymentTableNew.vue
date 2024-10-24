@@ -132,6 +132,7 @@ const isTotalPriceUpdated = ref(false);
 const trashedFilesModal = ref([]);
 const isApproveNotChecked = ref(true);
 const isApproveConfirmed = ref(false);
+const isAmlApprovalRequired = ref(false);
 const isCreditApprovalAllowed = ref(true);
 const isVerificationAllowed = ref(true);
 const isPaymentFrequencyNotSelected = ref(false);
@@ -144,7 +145,7 @@ const isSplitAmountInvalidError = ref([]);
 const isDeleteModalOpen = ref(false);
 const deleteSplitPaymentId = ref(0);
 const deleteSplitPaymentStatus = ref(0);
-
+const isCollectedByEnabled = ref(false);
 const modal2Ref = ref(null);
 
 const familyEmployeDiscount = ['Car', 'Health', 'Home', 'Travel'];
@@ -349,6 +350,9 @@ const closeInnerModal = () => {
 const closeConfirmModal = () => {
   isApproveConfirmed.value = false;
   isApproveNotChecked.value = true;
+};
+const closeAmlConfirmModal = () => {
+  isAmlApprovalRequired.value = false;
 };
 const hasNextFile = computed(() => {
   return currentFileIndex.value < filesTest.value.length - 1;
@@ -938,10 +942,7 @@ const handleApprovalReasonChange = () => {
         page.props.paymentMethodsEnum?.CreditApproval;
     }
   } else {
-    if (
-      isTotalPriceUpdated.value === false &&
-      isPaymentLocked.value === false
-    ) {
+    if (isTotalPriceUpdated.value === true && isPaymentLocked.value === false) {
       handleCollectionTypeChange();
     }
   }
@@ -1735,6 +1736,7 @@ const resetPaymentForm = () => {
   authorizedPayments.value = [];
   isApproveConfirmed.value = false;
   isApproveNotChecked.value = true;
+  isAmlApprovalRequired.value = false;
 };
 
 const initializePaymentForm = (
@@ -1859,22 +1861,38 @@ const finalizePaymentForm = (payment, capture_approval) => {
 
   const handleEditStatus = () => {
     updateTotalValues();
+    const isAnyChildPaymentPaid = isAnyPaid(payment);
+
+    // Check if the payment is locked
     if (isPaymentLocked.value) {
       isFieldReadonly.value = true;
     } else if (
-      isAnyPaid(payment) &&
+      isAnyChildPaymentPaid &&
       payment.total_price <= payment.total_amount + payment.discount_value
     ) {
       isFieldReadonly.value = true;
       isTotalPriceUpdated.value = is_lacking_payment.value;
-    } else if (
-      payment.total_price >
-      payment.total_amount + payment.discount_value
-    ) {
-      isFieldReadonly.value = false;
-      isTotalPriceUpdated.value = true;
     } else {
       isFieldReadonly.value = false;
+    }
+
+    // Check if the total price is greater than the total amount plus discount
+    if (payment.total_price > payment.total_amount + payment.discount_value) {
+      isTotalPriceUpdated.value = false;
+    }
+
+    // Check if the total amount is greater than the collected amount and frequency is upfront
+    if (
+      payment.total_amount > payment.collected_amount &&
+      payment.frequency === paymentFrequencyEnum.UPFRONT
+    ) {
+      isTotalPriceUpdated.value = false;
+      isFieldReadonly.value = false;
+    }
+
+    // Enable collected by field if any child payment is paid
+    if (isAnyChildPaymentPaid) {
+      isCollectedByEnabled.value = true;
     }
   };
 
@@ -1936,7 +1954,6 @@ const finalizePaymentForm = (payment, capture_approval) => {
 };
 
 const isAnyPaid = payment => {
-  console.log('isAnyPaid', payment);
   const paidStatusIds = [
     props.paymentStatusEnum.PAID,
     props.paymentStatusEnum.PARTIALLY_PAID,
@@ -2906,53 +2923,56 @@ watch(
   },
 );
 
+const setPaymentInitialPrice = () => {
+  if (paymentMethodsForm.status !== 'edit') {
+    if (props.isPlanDetailEnabled) {
+      initialAmount.value = props.quoteRequest.price_with_vat;
+    } else if (props.sendUpdate) {
+      initialAmount.value = props.sendUpdate?.price_with_vat;
+    } else if (props.quoteType === 'Health') {
+      initialAmount.value = props.eCommercePrice;
+    } else if (props.quoteType === 'Bike') {
+      initialAmount.value = props.quoteRequest.premium;
+    } else {
+      initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
+        ? props.quoteRequest.premium
+        : props.quoteRequest.price_with_vat;
+    }
+    totalPrice.value = initialAmount.value;
+  }
+};
+
+const setPlanDetail = () => {
+  if (
+    props.quoteType == 'Business' ||
+    props.quoteType == 'Home' ||
+    props.isPlanDetailEnabled
+  ) {
+    initalPlanDetails = props.quoteRequest.insurance_provider_details;
+  } else if (quoteTypesToCheck.includes(props.quoteType)) {
+    initalPlanDetails = props.quoteRequest.plan;
+  } else if (props.quoteType == 'Bike') {
+    initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
+    if (props.sendUpdate) {
+      initalPlanDetails =
+        props.quoteRequest.insurance_provider_details ??
+        props.quoteRequest.insurance_provider;
+    }
+  } else if (quoteTypesToCheck.includes(props.quoteType)) {
+    initalPlanDetails = props.quoteRequest.plan;
+  } else {
+    initalPlanDetails = props.quoteRequest.insurance_provider;
+  }
+  planDetail.value = initalPlanDetails;
+};
+
 watch(
   () => props.quoteRequest,
   (newValue, oldValue) => {
     //refresh premium
-    if (
-      !(
-        paymentMethodsForm.status === 'edit' &&
-        isTotalPriceUpdated.value === true
-      )
-    ) {
-      if (props.isPlanDetailEnabled) {
-        initialAmount.value = props.quoteRequest.price_with_vat;
-      } else if (props.sendUpdate) {
-        initialAmount.value = props.sendUpdate?.price_with_vat;
-      } else if (props.quoteType === 'Health') {
-        initialAmount.value = props.eCommercePrice;
-      } else if (props.quoteType === 'Bike') {
-        initialAmount.value = props.quoteRequest.premium;
-      } else {
-        initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
-          ? props.quoteRequest.premium
-          : props.quoteRequest.price_with_vat;
-      }
-      totalPrice.value = initialAmount.value;
-    }
+    setPaymentInitialPrice();
     //refresh plan
-    if (
-      props.quoteType == 'Business' ||
-      props.quoteType == 'Home' ||
-      props.isPlanDetailEnabled
-    ) {
-      initalPlanDetails = props.quoteRequest.insurance_provider_details;
-    } else if (quoteTypesToCheck.includes(props.quoteType)) {
-      initalPlanDetails = props.quoteRequest.plan;
-    } else if (props.quoteType == 'Bike') {
-      initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
-      if (props.sendUpdate) {
-        initalPlanDetails =
-          props.quoteRequest.insurance_provider_details ??
-          props.quoteRequest.insurance_provider;
-      }
-    } else if (quoteTypesToCheck.includes(props.quoteType)) {
-      initalPlanDetails = props.quoteRequest.plan;
-    } else {
-      initalPlanDetails = props.quoteRequest.insurance_provider;
-    }
-    planDetail.value = initalPlanDetails;
+    setPlanDetail();
   },
 );
 const paymentAllocationStatusTooltip = payment_allocation_status => {
@@ -3119,6 +3139,22 @@ const splitPaymentTotalPrice = (
   }
 
   return formatAmount(total);
+};
+
+const isAmlVerified = () => {
+  //Bypass Travel Quote Type for aml verification
+  if (props.quoteType === quoteTypeCodeEnum.Travel) {
+    return true;
+  }
+
+  return (
+    props.quoteRequest.aml_status ===
+    page.props.amlStatusEnum.AMLScreeningCleared
+  );
+};
+
+const openAmlVerificationModal = () => {
+  isAmlApprovalRequired.value = true;
 };
 
 // verifiy if split payment deletion is enabled
@@ -3787,7 +3823,7 @@ const isSplitDeleteEnabled = computed(() => {
                     v-model="paymentMethodsForm.collection_type"
                     :rules="[rules.isRequired]"
                     @change="handleCollectionTypeChange"
-                    :disabled="isTotalPriceUpdated"
+                    :disabled="isCollectedByEnabled"
                   >
                     <template
                       v-for="option in collectionTypes"
@@ -5462,7 +5498,11 @@ const isSplitDeleteEnabled = computed(() => {
                       class="mr-2 focus:outline-black"
                       size="sm"
                       color="#ff5e00"
-                      @click="isApproveClicked = !isApproveClicked"
+                      @click="
+                        isAmlVerified()
+                          ? (isApproveClicked = !isApproveClicked)
+                          : openAmlVerificationModal()
+                      "
                       tabindex="0"
                     >
                       Approve
@@ -5615,6 +5655,73 @@ const isSplitDeleteEnabled = computed(() => {
                   >
                     <span>Confirm</span></x-button
                   >
+                </div>
+              </div>
+            </div>
+            <div
+              class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
+              v-if="isAmlApprovalRequired"
+            >
+              <div
+                class="modal-confirm-container bg-white w-full max-w-full overflow-hidden rounded-lg"
+              >
+                <div class="modal-confirm-header text-base text-white bg-white">
+                  <div
+                    class="flex flex-row-reverse text-lg font-semibold px-6 py-4"
+                  >
+                    <div class="flex items-center space-x-2">
+                      <span
+                        @click="closeAmlConfirmModal"
+                        class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 cursor-pointer"
+                      >
+                        <!-- Cross icon -->
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          tabindex="0"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          class="w-4 h-4 text-gray-800"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"
+                          ></path>
+                        </svg>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="w-full h-full mt-2 flex flex-col items-center">
+                  <div
+                    class="text-lg font-bold px-6 flex justify-between items-start"
+                  >
+                    <div class="text-left">
+                      <span>Please complete the AML screening to proceed.</span>
+                    </div>
+                  </div>
+                  <Link
+                    :href="`/kyc/aml/${page.props.quoteTypeId ?? props.sendUpdate.quote_type_id}/details/${props.quoteRequest.id}`"
+                  >
+                    <x-tooltip>
+                      <x-button
+                        v-if="can(permissionEnum.AMLList)"
+                        size="lg"
+                        color="orange"
+                        class="px-4 py-4 mt-4"
+                        :loading="paymentMethodsForm.processing"
+                      >
+                        <span>Go to AML & KYC page</span></x-button
+                      >
+                      <template #tooltip>
+                        <span>{{
+                          paymentTooltipEnum.GOTO_AML_AND_KYC_PAGE
+                        }}</span>
+                      </template>
+                    </x-tooltip>
+                  </Link>
                 </div>
               </div>
             </div>

@@ -28,11 +28,29 @@ class RolePermissionSeeder extends Seeder
                     'updated_at' => now(),
                 ]);
             }
-
             $uploadHealthCoveragesPermission = Permission::where('name', PermissionsEnum::UPLOAD_HEALTH_COVERAGES)->first();
             if (! $uploadHealthCoveragesPermission) {
                 Permission::create([
                     'name' => PermissionsEnum::UPLOAD_HEALTH_COVERAGES,
+                    'guard_name' => 'web',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+            $exportRMLeadPermission = Permission::where('name', PermissionsEnum::EXPORT_RM_LEADS)->first();
+            if (! $exportRMLeadPermission) {
+                Permission::create([
+                    'name' => PermissionsEnum::EXPORT_RM_LEADS,
+                    'guard_name' => 'web',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            $exportPUAUpdatePermission = Permission::where('name', PermissionsEnum::EXPORT_CAR_PUA_UPDATES)->first();
+            if (! $exportPUAUpdatePermission) {
+                Permission::create([
+                    'name' => PermissionsEnum::EXPORT_CAR_PUA_UPDATES,
                     'guard_name' => 'web',
                     'created_at' => now(),
                     'updated_at' => now(),

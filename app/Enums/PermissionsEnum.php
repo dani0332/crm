@@ -373,6 +373,9 @@ final class PermissionsEnum extends Enum
     public const ReApprovePayments = 'reapprove-payment';
     public const UPLOAD_HEALTH_RATES = 'upload-health-rates';
     public const UPLOAD_HEALTH_COVERAGES = 'upload-health-coverages';
+    public const EXPORT_RM_LEADS = 'export-rm-leads';
+    public const EXPORT_CAR_PUA_UPDATES = 'export-car-pua-updates';
+    public const DEPARTMENT_MANAGER = 'department-manager';
 
     public static function getAdvisorConversionReportPermissions()
     {

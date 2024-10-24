@@ -130,7 +130,7 @@ class InstallmentReportService extends ManagementReport
 
     protected function filterTeams($query, $teamIds, $isSSR = false)
     {
-        if (! empty($teamIds)) {
+        if (! empty($teamIds) || auth()->user()->isDepartmentManager()) {
             $userIds = $this->getUsersByTeamIds($teamIds)->pluck('id')->toArray();
             $query->whereIn('personal_quotes.advisor_id', $userIds);
         }
