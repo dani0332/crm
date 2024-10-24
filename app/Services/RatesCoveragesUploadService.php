@@ -182,7 +182,6 @@ class RatesCoveragesUploadService
         return $coverages;
     }
 
-
     public function rateUploadCreate($data)
     {
         $uploadedFile = $this->uploadFile();
