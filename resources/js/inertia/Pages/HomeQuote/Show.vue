@@ -591,10 +591,10 @@ const onTogglePlans = toggle => {
   ).value;
 
   axios
-    .post(route('manualPlanToggle', { quoteType: 'travel' }), {
-      modelType: 'Travel',
+    .post(route('homeManualPlanToggle', { quoteType: 'Home' }), {
+      modelType: 'PersonalQuote',
       planIds: planIds,
-      quote_uuid: page.props.quote.uuid,
+      personal_quote_uuid: page.props.quote.uuid,
       toggle: toggle,
     })
     .then(response => {
