@@ -10,6 +10,7 @@ use App\Jobs\UploadCoveragesJob;
 use App\Jobs\UploadRatesJob;
 use App\Models\RateCoveragesProcess;
 use App\Models\RatesCoveragesUpload;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -22,7 +23,8 @@ class RatesCoveragesUploadService
         $fileName = request()->file('file_name')->getClientOriginalName();
 
         // Generating name for file for azure usage
-        $azureFileName = get_guid().'_'.$fileName;
+        $datetime = date('Y-m-d_H-i-s');
+        $azureFileName = $datetime.'_'.$fileName;
 
         $azureFilePath = request()->file('file_name')->storeAs($path, $azureFileName, 'azureIM');
 
