@@ -144,7 +144,7 @@ function onSubmit(isValid) {
                 :href="
             azureStorageUrl +
             azureStorageContainer +
-            '/renewals/sample_upload_rates.xlsx'
+            '/ratings/health/sample/sample_upload_rates.xlsx'
           "
                 color="green"
                 icon-right="cells"

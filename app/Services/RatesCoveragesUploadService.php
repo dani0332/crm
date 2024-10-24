@@ -17,7 +17,7 @@ class RatesCoveragesUploadService
 {
     public function uploadFile()
     {
-        $path = 'documents/'; //Changing to azure exact path
+        $path = 'ratings/health';
         // Getting original file name
         $fileName = request()->file('file_name')->getClientOriginalName();
 
@@ -115,7 +115,7 @@ class RatesCoveragesUploadService
     public function createCoveragesData($uploadCoverages)
     {
         RateCoveragesProcess::where('rate_coverage_id', $uploadCoverages->id)
-            ->chunk(100, function ($coverages) {
+            ->chunk(500, function ($coverages) {
                 $planCodes = $coverages->pluck('data')->map(function ($data) {
                     if (is_string($data)) {
                         $decodedData = json_decode($data, true);
@@ -265,7 +265,7 @@ class RatesCoveragesUploadService
     public function createRateData($uploadRate)
     {
         RateCoveragesProcess::where('rate_coverage_id', $uploadRate->id)
-            ->chunk(100, function ($coverages) {
+            ->chunk(500, function ($coverages) {
                 $planCodes = $coverages->pluck('data')->map(function ($data) {
                     if (is_string($data)) {
                         $decodedData = json_decode($data, true);
