@@ -61,7 +61,7 @@ class LifeQuoteObserver
             $lifeQuote->quote_status_id === QuoteStatusEnum::PolicyIssued
         ) {
             $payment = $lifeQuote->payments()->mainLeadPayment()->first();
-            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($payment, QuoteTypes::LIFE->value);
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($lifeQuote, $payment, QuoteTypes::LIFE->value);
 
         }
     }
