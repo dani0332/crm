@@ -19,15 +19,13 @@ class SendEPDocumentsJob implements ShouldQueue
     public $timeout = 60;
     public $backoff = 180;
     private $emailData = null;
-    private $transaction = null;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($data, $transaction)
+    public function __construct($data)
     {
         $this->emailData = $data;
-        $this->transaction = $transaction;
     }
 
     /**
@@ -38,11 +36,6 @@ class SendEPDocumentsJob implements ShouldQueue
         try {
             $response = PostMark::sendEmail($this->emailData);
             info('SendEPDocumentsJob - Response: '.json_encode($response));
-
-            if ($response == 200) {
-                $this->transaction->update(['is_document_sent' => true]);
-            }
-
         } catch (Exception $e) {
             Log::error('SendEPDocumentsJob - ERROR:'.$e->getMessage());
         }

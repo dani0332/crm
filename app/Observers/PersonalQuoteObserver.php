@@ -73,14 +73,6 @@ class PersonalQuoteObserver
 
         if (
             isset($dirty['quote_status_id']) &&
-            $personalQuote->quote_status_id === QuoteStatusEnum::PolicyIssued &&
-            $personalQuote->quote_type_id === QuoteTypeId::Bike
-        ) {
-            EmbeddedProductRepository::capturePayment($personalQuote->id, QuoteTypes::getName($personalQuote->quote_type_id)->value);
-        }
-
-        if (
-            isset($dirty['quote_status_id']) &&
             in_array($personalQuote->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked]) &&
             in_array($personalQuote->quote_type_id, [QuoteTypeId::Pet, QuoteTypeId::Bike, QuoteTypeId::Cycle, QuoteTypeId::Yacht, QuoteTypeId::Jetski])
         ) {
@@ -93,7 +85,7 @@ class PersonalQuoteObserver
 
             if($personalQuote->quote_type_id === QuoteTypeId::Bike) {
                 // Ep send documents
-                EmbeddedProductRepository::sendDocumentsByLead($personalQuote->id, QuoteTypes::getName($personalQuote->quote_type_id)->value);
+                EmbeddedProductRepository::capturePayment($personalQuote->id, QuoteTypes::getName($personalQuote->quote_type_id)->value);
             }
         }
 

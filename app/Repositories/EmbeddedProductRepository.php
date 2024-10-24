@@ -254,7 +254,7 @@ class EmbeddedProductRepository extends BaseRepository
 
 
 
-    public function fetchSendDocumentsByLead($leadId, $modelType, $epId = null, $forceSendDocuments = false)
+    public function fetchSendDocumentsByLead($leadId, $modelType, $epId = null)
     {
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
         if (! in_array($quoteTypeId, [QuoteTypeId::Car, QuoteTypeId::Bike])) {
@@ -295,7 +295,6 @@ class EmbeddedProductRepository extends BaseRepository
                     $data['quoteId'] = $leadId;
                     $data['modelType'] = $modelType;
                     $data['epId'] = $embedded_product_id;
-                    $data['forceSendDocuments'] = $forceSendDocuments;
                     $this->fetchSendDocument($data);
                 }
             }
@@ -319,7 +318,6 @@ class EmbeddedProductRepository extends BaseRepository
         $quoteId = $data['quoteId'];
         $modelType = $data['modelType'];
         $epId = $data['epId'];
-        $forceSendDocuments = $data['forceSendDocuments'] ?? false;
 
         $ep = $this->where('id', $epId)->first();
         if (! $ep) {
@@ -345,12 +343,10 @@ class EmbeddedProductRepository extends BaseRepository
             return 'Documents cannot be sent';
         }
 
-        if($forceSendDocuments || $transaction->first()->is_document_sent == false) {
-            if ($isAlfredProtect) {
-                return $this->sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData);
-            } elseif (in_array($short_code, [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX])) {
-                return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $modelType, $attachments, $advisorData, $ep);
-            }   
+        if ($isAlfredProtect) {
+            return $this->sendAlfredProtectEmail($ep, $transaction, $quoteObject, $short_code, $attachmentsUrls, $advisorData);
+        } elseif (in_array($short_code, [EmbeddedProductEnum::MDX, EmbeddedProductEnum::RDX])) {
+            return $this->sendMedexEmail($short_code, $quoteObject, $transaction->first(), $modelType, $attachments, $advisorData, $ep);
         }
     }
 
@@ -442,7 +438,6 @@ class EmbeddedProductRepository extends BaseRepository
         info('Send Alfred Protect Email Response: '.json_encode($response));
 
         if ($response == 201) {
-            $transaction->first()->update(['is_document_sent' => true]);
             return $this->handleAjaxResponse('Certificate sent successfully.', 'success');
         } else {
             return $this->handleAjaxResponse('Error sending Certificate.', 'error');
@@ -486,7 +481,7 @@ class EmbeddedProductRepository extends BaseRepository
             'MessageStream' => config('constants.EMBEDDED_PRODUCTS_POSTMARK_STREAM'),
         ], JSON_UNESCAPED_SLASHES);
 
-        SendEPDocumentsJob::dispatch($body, $transaction);
+        SendEPDocumentsJob::dispatch($body);
 
         return 'Certificate sent successfully';
     }

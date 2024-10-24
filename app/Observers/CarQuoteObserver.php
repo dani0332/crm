@@ -84,10 +84,6 @@ class CarQuoteObserver
             $this->updatePersonalQuote($lead->uuid, QuoteTypeId::Car, $dirty);
         }
 
-        if (isset($dirty['quote_status_id']) && $lead->quote_status_id === QuoteStatusEnum::PolicyIssued) {
-            EmbeddedProductRepository::capturePayment($lead->id, quoteTypeCode::Car);
-        }
-
         if (
             $lead->isDirty('quote_status_id') &&
             in_array($lead->quote_status_id, [QuoteStatusEnum::PolicySentToCustomer, QuoteStatusEnum::PolicyBooked])
@@ -100,7 +96,7 @@ class CarQuoteObserver
             );
 
             // Ep send documents
-            EmbeddedProductRepository::sendDocumentsByLead($lead->id, quoteTypeCode::Car);
+            EmbeddedProductRepository::capturePayment($lead->id, quoteTypeCode::Car);
         }
         if (
             isset($dirty['quote_status_id']) &&
