@@ -15,12 +15,14 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\HealthPlanTypeEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\HomePossessionType;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentTooltip;
 use App\Enums\PermissionsEnum;
+use App\Enums\PolicyIssuanceEnum;
 use App\Enums\PuaEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\quoteStatusCode;
@@ -34,6 +36,7 @@ use App\Enums\TeamNameEnum;
 use App\Enums\TiersEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Events\LeadsCount;
+use App\Factories\PolicyIssuanceFactory;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\StorePaymentRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
@@ -1993,6 +1996,8 @@ class CRUDController extends Controller
         $this->updatePriceAndDiscount($quoteModel);
         $this->updateQuoteStatus($request->modelType, $request->quote_id);
 
+        /*$this->markPolicyIssuancePolicyPurchased($quoteModel, ucwords($request->modelType));*/
+
         info('Quote Code: '.$quoteModel->code.' Policy detail updated successfully');
 
         return redirect()->back()->with([
@@ -2272,5 +2277,37 @@ class CRUDController extends Controller
         } catch (\Exception $e) {
             Log::error('Error saving CustomerAddress: ', ['customer_id' => $dataObject['customer_id'], 'quote_uuid' => $dataObject['quote_uuid'], 'error' => $e->getMessage()]);
         }
+    }
+
+    public function markPolicyIssuancePolicyPurchased($quote, $modelType)
+    {
+        info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$quote->code.'  Quote Type :  '.$modelType.' started');
+        if (
+            $quote->policyIssuance &&
+            $quote->insuranceProvider?->code === InsuranceProvidersEnum::ALNC &&
+            $modelType === quoteTypeCode::Travel
+        ) {
+            info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$quote->code.' started');
+
+            $policyIssuance = $quote->policyIssuance;
+            $insuranceProvider = $quote->insuranceProvider;
+            $insuranceProviderAutomation = PolicyIssuanceFactory::make($modelType, $insuranceProvider->code);
+
+            if ($insuranceProviderAutomation) {
+                info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$quote->code.' - '.$insuranceProvider->text.' Automation  found');
+                $policyIssuance->update([
+                    'completed_step' => $insuranceProviderAutomation::PURCHASE_POLICY,
+                    'status' => PolicyIssuanceEnum::PENDING_STATUS,
+                ]);
+            } else {
+                info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$quote->model->code.' - '.$insuranceProvider->text.' Automation not found');
+            }
+
+
+            dd($policyIssuance);
+        }else{
+            info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$quote->code.'  Quote Type :  '.$modelType.' criteria not found for policy issuance');
+        }
+        info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$quote->code.' ended');
     }
 }
