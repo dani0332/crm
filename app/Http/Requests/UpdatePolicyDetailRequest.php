@@ -66,7 +66,7 @@ class UpdatePolicyDetailRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $quoteModel = $this->getQuoteObject(request()->modelType, request()->quote_id);
-            
+
             $this->validatePolicyBooked($validator, $quoteModel);
             $this->validatePolicyNumberFormat($validator);
             $this->validatePolicyNumberExists($validator, $quoteModel);
@@ -90,7 +90,7 @@ class UpdatePolicyDetailRequest extends FormRequest
     {
         $pattern = '/^[\w,\/\\| -]+$/';
         $quote_policy_number = trim(request()->quote_policy_number);
-        if (!preg_match($pattern, $quote_policy_number)) {
+        if (! preg_match($pattern, $quote_policy_number)) {
             $validator->errors()->add('value', 'Invalid format for policy number');
         }
     }
@@ -136,7 +136,6 @@ class UpdatePolicyDetailRequest extends FormRequest
         }
     }
 
-    
     private function validatePolicyBookingFailed($validator, $quote)
     {
         if ($quote && $quote->quote_status_id == QuoteStatusEnum::POLICY_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
