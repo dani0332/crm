@@ -431,7 +431,7 @@ onMounted(() => {
           v-if="filters.includeUnassignedLeads == 'yes'"
           v-model="filters.createdAtDate"
           label="Lead Created Date*"
-          placeholder="Specify Lead Created Date*"
+          placeholder="Specify Lead Created Date"
           range
           :max-range="30"
           :maxDate="new Date()"
