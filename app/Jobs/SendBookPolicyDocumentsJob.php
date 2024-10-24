@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Enums\QuoteTagEnums;
 use App\Enums\quoteTypeCode;
 use App\Models\ApplicationStorage;
-use App\Models\HealthPlan;
 use App\Models\HealthPlanCoPayment;
 use App\Models\QuoteTag;
 use App\Repositories\DocumentTypeRepository;
@@ -82,8 +81,8 @@ class SendBookPolicyDocumentsJob implements ShouldQueue
             // This will give handbook document from relevant policy wording table only for mentioned LOB's
             if (in_array($modelType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
                 $coPaymentIds = null;
-                if ($modelType == quoteTypeCode::Health){
-                    $coPaymentIds= HealthPlanCoPayment::where('health_plan_id', $quote->plan_id)->where('id', '!=', $quote->health_plan_co_payment_id)->pluck('id')->toArray();
+                if ($modelType == quoteTypeCode::Health) {
+                    $coPaymentIds = HealthPlanCoPayment::where('health_plan_id', $quote->plan_id)->where('id', '!=', $quote->health_plan_co_payment_id)->pluck('id')->toArray();
                 }
                 $handBookDocuments = app(QuoteDocumentService::class)->getHandBookDocuments($quote, $coPaymentIds);
             }
