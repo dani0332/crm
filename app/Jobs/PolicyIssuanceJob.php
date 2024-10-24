@@ -71,6 +71,6 @@ class PolicyIssuanceJob implements ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->process->model->code.'-'.Carbon::now()->timestamp))->dontRelease()];
+        return [(new WithoutOverlapping($this->process->model->code.'-'.Carbon::now()->format('YmdHi')))->dontRelease()];
     }
 }

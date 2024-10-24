@@ -2,14 +2,21 @@
 
 namespace App\Repositories;
 
+use App\Enums\PolicyIssuanceEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
+use App\Models\PolicyIssuance;
 use App\Models\TravelQuote;
 use App\Traits\CentralTrait;
 
 class TravelQuoteRepository extends BaseRepository
 {
     use CentralTrait;
+
+    public const TYPE = quoteTypeCode::Travel;
+    public const TYPE_ID = QuoteTypeId::Travel;
 
     public function model()
     {
@@ -50,5 +57,16 @@ class TravelQuoteRepository extends BaseRepository
     public function fetchCreateDuplicate(array $dataArr): object
     {
         return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::TRAVEL->value).'-quote', 'post', $dataArr);
+    }
+
+    public function createPolicyIssuanceSchedule($quote, $insurer)
+    {
+        return PolicyIssuance::create([
+            'insurance_provider_id' => $insurer->id,
+            'model_type' => $quote->getMorphClass(),
+            'model_id' => $quote->id,
+            'quote_type' => self::TYPE,
+            'status' => PolicyIssuanceEnum::PENDING_STATUS,
+        ]);
     }
 }
