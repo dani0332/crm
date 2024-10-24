@@ -47,11 +47,16 @@ class PaymentSplitsObserver
             }
         }
 
+        $splitAmount = $paymentSplits->payment_amount;
+        if($paymentSplits->sr_no === 1){
+            $splitAmount = $paymentSplits->payment_amount + $masterPayment->discount_value;
+        }
+
         [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat(
             $masterPayment->frequency,
             $masterPayment->total_price,
             $paymentSplits->sr_no,
-            $paymentSplits->payment_amount,
+            $splitAmount,
             $modelType,
             $quoteId,
             $totalSplitPayments,

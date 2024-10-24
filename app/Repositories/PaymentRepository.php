@@ -251,7 +251,6 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         foreach ($masterPayment->payment_splits as $splitPayment) {
             if (isset($splitPayment['payment_method']) && $splitPayment['payment_method'] != null) {
-                //[$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat($masterPayment->frequency, $masterPayment->total_price, $splitPayment['sr_no'], $splitPayment['payment_amount'], $request->modelType, $request->quote_id, $totalSplitPayments);
                 $splitPaymentInformation = [
                     'code' => $quoteID,
                     'sr_no' => $splitPayment['sr_no'],
@@ -817,7 +816,11 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
             if ($paymentSplits->whereNull('price_vat_applicable')->count()) {
                 foreach ($quotePayment->paymentSplits as $splitPayment) {
                     if (isset($splitPayment->payment_method) && $splitPayment->payment_method != null) {
-                        [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat($quotePayment->frequency, $quotePayment->total_price, $splitPayment->sr_no, $splitPayment->payment_amount, $modelType, $quote->id, count($paymentSplits));
+                        $splitAmount = $paymentSplits->payment_amount;
+                        if($paymentSplits->sr_no === 1){
+                            $splitAmount = $paymentSplits->payment_amount + $quotePayment->discount_value;
+                        }
+                        [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat($quotePayment->frequency, $quotePayment->total_price, $splitPayment->sr_no, $splitAmount, $modelType, $quote->id, count($paymentSplits));
                         $splitPayment->update([
                             'price_vat_applicable' => $priceWithoutVat,
                             'price_vat' => $vat,
