@@ -1,9 +1,24 @@
 <script setup>
+defineProps({
+    rates: Array,
+});
 const notification = useToast();
 const uploadForm = useForm({
   csvFile: '',
 });
 const contactLoader = ref(false);
+
+const tableHeader = [
+    {text: "ID" , value: "upload_id"},
+    { text: 'File Name', value: 'fileName' },
+    { text: 'Type', value: 'type' },
+    {text: 'Total Record' , value:'totalRecords'},
+    {text: "Uploaded Record" , value: 'good'},
+    {text: 'Bad Record' , value: 'cannotUpload'},
+    {text: "Error" , value: 'error'},
+
+];
+
 
 let errors = {
   type: '',
@@ -115,5 +130,32 @@ function onSubmit(isValid) {
         >
       </div>
     </x-form>
+
+      <div class="flex justify-between items-center">
+          <h2 class="text-xl font-semibold">Uploaded Rates</h2>
+          <div class="space-x-3"></div>
+      </div>
+      <x-divider class="my-4" />
+
+      <DataTable
+          table-class-name="tablefixed"
+          :headers="tableHeader"
+          :items="rates.data || []"
+          border-cell
+          hide-rows-per-page
+          hide-footer
+      >
+
+      </DataTable>
+
+      <Pagination
+          :links="{
+        next: rates.next_page_url,
+        prev: rates.prev_page_url,
+        current: rates.current_page,
+        from: rates.from,
+        to: rates.to,
+      }"
+      />
   </div>
 </template>

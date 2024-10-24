@@ -62,7 +62,6 @@ function onSubmit(isValid) {
                   position: 'top',
               });
           }
-          console.log(error.response.data.message,"======")
         contactLoader.value = false;
         uploadForm.setError(
           error.response.data.error || error.response.data.errors.file_name[0] || error.response.data.message,

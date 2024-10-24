@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Imports;
 
 use App\Models\RateCoveragesProcess;
@@ -17,34 +16,34 @@ use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Events\AfterImport;
 use Maatwebsite\Excel\Row;
 
-class CoveragesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, WithEvents, WithStartRow, WithValidation
+class RatesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, WithEvents, WithStartRow, WithValidation
 {
     use Importable, RegistersEventListeners, RenewalsImportTrait, SkipsFailures;
 
     private $validCount = 0;
     private $failedCount = 0;
-    private $totalRows;
-    private $fileName;
-    private $uploadType;
-    private $uploadCoverages;
+    private $uploadRate;
 
-    public function __construct(RatesCoveragesUpload $uploadCoverages)
+    public function __construct(RatesCoveragesUpload $uploadRate)
     {
-        $this->uploadCoverages = $uploadCoverages;
+        $this->uploadRate = $uploadRate;
     }
 
     public function onRow(Row $row)
     {
-        $this->validCount++;
         $row = $row->toArray();
 
-        $coverageData = $this->mapQuoteData($row);
+        $rateData = $this->mapQuoteData($row);
 
-        return RateCoveragesProcess::create([
-            'rate_coverage_id' => $this->uploadCoverages->id,
-            'data' => $coverageData,
-            'type' => 'coverage',
-        ]);
+        // Only proceed if rateData is valid
+        if (!empty($rateData)) {
+            $this->validCount++;
+            RateCoveragesProcess::create([
+                'rate_coverage_id' => $this->uploadRate->id,
+                'data' => $rateData,
+                'type' => 'rates',
+            ]);
+        }
     }
 
     public function chunkSize(): int
@@ -52,12 +51,9 @@ class CoveragesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, Wi
         return 2000;
     }
 
-    /**
-     * start import from row 2, first row have titles
-     */
     public function startRow(): int
     {
-        return 2;
+        return 2; // Starting from row 2 to skip headers
     }
 
     public function getValidCount(): int
@@ -70,57 +66,41 @@ class CoveragesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, Wi
         return $this->failedCount;
     }
 
-    /**
-     * create columns schema, with index, title and rules to be validated for each column.
-     *
-     * @return array[]
-     */
     public function getColumns()
     {
         return [
-            'code' => ['index' => 0, 'title' => 'code', 'rules' => 'required'],
-            'text' => ['index' => 1, 'title' => 'text', 'rules' => 'required'],
-            'description' => ['index' => 2, 'title' => 'description', 'rules' => 'required'],
-            'value' => ['index' => 3, 'title' => 'value', 'rules' => 'required'],
-            'type' => ['index' => 4, 'title' => 'type', 'rules' => 'required'],
-            'is_northern' => ['index' => 5, 'title' => 'is_northern', 'rules' => 'required'],
+            'is_northern' => ['index' => 0, 'title' => 'is_northern', 'rules' => 'required'],
+            'min_age' => ['index' => 1, 'title' => 'min_age', 'rules' => 'required'],
+            'max_age' => ['index' => 2, 'title' => 'max_age', 'rules' => 'required'],
+            'gender' => ['index' => 3, 'title' => 'gender', 'rules' => 'required'],
+            'premium' => ['index' => 4, 'title' => 'premium', 'rules' => 'required'],
+            'eligibility_code' => ['index' => 5, 'title' => 'eligibility_code', 'rules' => 'required'],
             'plan_code' => ['index' => 6, 'title' => 'plan_code', 'rules' => 'required'],
+            'copayment_code' => ['index' => 7, 'title' => 'copayment_code', 'rules' => 'required'],
         ];
     }
 
-    /**
-     * validation rules for every column in a row.
-     *
-     * @return string[]
-     */
     public function rules(): array
     {
         return $this->getRules();
     }
 
-    /**
-     * get all validation errors and store records in db along with errors.
-     *
-     * @return \Closure[]
-     */
     public function registerEvents(): array
     {
         return [
-
             AfterImport::class => function (AfterImport $event) {
                 $failed = [];
 
                 foreach ($this->failures() as $failure) {
-                    if (! isset($failed[$failure->row()])) {
+                    if (!isset($failed[$failure->row()])) {
                         $quoteData = $this->mapQuoteData($failure->values());
                         if (empty($quoteData)) {
-                            continue;
+                            continue; // Skip empty quote data
                         }
-                        info('DATAAA', [$quoteData]);
                         $failed[$failure->row()] = [
-                            'rate_coverage_id' => $this->uploadCoverages->id,
+                            'rate_coverage_id' => $this->uploadRate->id,
                             'data' => $quoteData,
-                            'type' => 'coverage',
+                            'type' => 'rate',
                         ];
 
                         $this->failedCount++;
@@ -140,25 +120,26 @@ class CoveragesImport implements OnEachRow, SkipsOnFailure, WithChunkReading, Wi
     protected function mapQuoteData(array $row): array
     {
         $data = [
-            'code' => $row[0] ?? null,
-            'text' => $row[1] ?? null,
-            'description' => $row[2] ?? null,
-            'value' => $row[3] ?? null,
-            'type' => $row[4] ?? null,
-            'is_northern' => $row[5] ?? null,
+            'is_northern' => $row[0] ?? null,
+            'min_age' => $row[1] ?? null,
+            'max_age' => $row[2] ?? null,
+            'gender' => $row[3] ?? null,
+            'premium' => $row[4] ?? null,
+            'eligibility_code' => $row[5] ?? null,
             'plan_code' => $row[6] ?? null,
+            'copayment_code' => $row[7] ?? null,
         ];
 
-        if (is_null($data['plan_code']) || $data['plan_code'] === '') {
+        // Return empty if crucial fields are missing
+        if (empty($data['plan_code']) || empty($data['eligibility_code']) || empty($data['copayment_code'])) {
             return [];
         }
 
         $filteredData = array_filter($data, function ($value) {
-            return ! is_null($value) && $value !== ''; // Exclude nulls and empty strings
+            return !is_null($value) && $value !== '';
         });
 
-        return ! empty($filteredData) ? $filteredData : [];
+        // Only return filtered data if it's not empty
+        return !empty($filteredData) ? $filteredData : [];
     }
-
-
 }
