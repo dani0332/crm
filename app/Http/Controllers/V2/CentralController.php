@@ -533,8 +533,8 @@ class CentralController extends Controller
                 $healthAutoFollowupSwitch = ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_AUTOMATED_FOLLOWUPS_SWITCH)->first();
                 // Send Automated Followup Email Job if Health Auto-Followups is enabled.
                 if ($healthAutoFollowupSwitch && $healthAutoFollowupSwitch->value == 1) {
-                    $delayTime = isLeadSic($healthQuote->uuid) ? 3 : 2;
-                    OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addMinutes($delayTime));
+                    $delayDays = isLeadSic($healthQuote->uuid) ? 3 : 2;
+                    OCAHealthFollowupEmailJob::dispatch($healthQuote->uuid)->delay(Carbon::now()->addDays($delayDays));
                     info('OCAHealthFollowupEmailJob dispatched for HEA-'.$healthQuote->uuid.' - Time: '.now());
                 }
 

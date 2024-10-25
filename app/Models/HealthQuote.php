@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\FilterTypes;
 use App\Enums\GenericRequestEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Events\QuoteEmailUpdated;
 use App\Traits\FilterCriteria;
@@ -164,6 +165,11 @@ class HealthQuote extends Model implements AuditableContract
         return $this->belongsTo(HealthPlan::class, 'plan_id');
     }
 
+    public function healthQuotePlan()
+    {
+        return $this->hasOne(HealthQuotePlan::class, 'health_quote_request_id');
+    }
+
     public function lostReason()
     {
         return $this->belongsTo(LostReasons::class, 'lost_reason_id');
@@ -233,5 +239,25 @@ class HealthQuote extends Model implements AuditableContract
     public function policyWording()
     {
         return $this->hasMany(HealthPlanPolicyWording::class, 'plan_id', 'plan_id');
+    }
+
+    public function isApplicationPending()
+    {
+        return $this->quote_status_id === QuoteStatusEnum::ApplicationPending;
+    }
+
+    public function isApplyNowEmailSent()
+    {
+        return ! is_null($this->apply_now_email_sent_at);
+    }
+
+    public function getCurrentPlan()
+    {
+        $payload = $this->healthQuotePlan?->payload;
+        if ($payload && property_exists($payload, 'plans')) {
+            return collect($payload->plans)->filter(fn ($plan) => $plan && $plan->id === $this->plan_id)->first();
+        }
+
+        return null;
     }
 }

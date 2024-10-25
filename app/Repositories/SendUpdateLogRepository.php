@@ -460,7 +460,7 @@ class SendUpdateLogRepository extends BaseRepository
             ];
 
             if ($insurerDetails['is_non_self_billing_enabled']) {
-                $sendUpdatePayload['insurer_commission_invoice_number'] = $insurerDetails['broker_invoice_number'];
+                $sendUpdatePayload['insurer_commission_invoice_number'] = $insurerDetails['broker_invoice_number'] ?? $sendUpdate->broker_invoice_number ?? null;
             }
 
             $sendUpdate->update($sendUpdatePayload);

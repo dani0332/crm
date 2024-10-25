@@ -35,10 +35,11 @@ use App\Models\TravelQuote;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\SendUpdateLogRepository;
-use App\Traits\GenericQueriesAllLobs;
+use App\Traits\CentralTrait;
 use App\Traits\HandlesDeadlockRetries;
 use App\Traits\SageLoggable;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -47,7 +48,7 @@ use PDF;
 
 class SplitPaymentService
 {
-    use GenericQueriesAllLobs;
+    use CentralTrait;
     use HandlesDeadlockRetries;
     use SageLoggable;
 
@@ -436,7 +437,11 @@ class SplitPaymentService
             $pdf = PDF::loadView('pdf.payment_receipt', compact('data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
-            $document = app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quote, false, true);
+
+            // Create a temporary file and write the PDF content to it
+            $tempFile = $this->createTempPdfFileForWatermark($pdfFile);
+
+            $document = app(QuoteDocumentService::class)->uploadQuoteDocument($pdfFile, $data, $quote, false, true, $tempFile);
         } catch (\Exception $ex) {
             $errorMessage = 'Payment Reciept - ERROR:'.$ex->getMessage();
             info($errorMessage);
