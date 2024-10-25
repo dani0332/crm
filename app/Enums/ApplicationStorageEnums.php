@@ -159,4 +159,5 @@ final class ApplicationStorageEnums extends Enum
     public const HEALTH_AUTOMATED_FOLLOWUPS_SWITCH = 'HEALTH_AUTOMATED_FOLLOWUPS_SWITCH';
     public const BIRD_ACCESS_KEY = 'BIRD_ACCESS_KEY';
     public const IS_CAMPAIGN = 'IS_CAMPAIGN';
+    public const NB_MOTOR_FOLLOWUP_DELAY_DURATION = 'NB_MOTOR_FOLLOWUP_DELAY_DURATION';
 }

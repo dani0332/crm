@@ -734,6 +734,16 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::NB_MOTOR_FOLLOWUP_DELAY_DURATION],
+            [
+                'value' => '24',
+                'created_at' => now(),
+                'updated_at' => now(),
+                'is_active' => 1,
+            ],
+        );
+
 
     }
 
