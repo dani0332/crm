@@ -130,7 +130,10 @@ class PersonalQuoteRepository extends BaseRepository
         info('Document array prepared for creation', $document);
 
         try {
-            [$insuranceProviderId] = app(SendUpdateLogService::class)->getEndorsementProviderDetails($quote);
+            $insuranceProviderId = null;
+            if (request()->is_send_update) {
+                [$insuranceProviderId] = app(SendUpdateLogService::class)->getEndorsementProviderDetails($quote);
+            }
             DB::transaction(function () use ($quote, $document, $documentType, $insuranceProviderId) {
 
                 $quoteDocuments = $quote->documents->pluck('document_type_code')->toArray();
@@ -148,7 +151,7 @@ class PersonalQuoteRepository extends BaseRepository
                 info('Document uploaded - Ref: '.$quote->code);
             });
 
-            if (! $insuranceProviderId) {
+            if (! $insuranceProviderId && request()->is_send_update) {
                 info('Insurance Provider not found - Ref: '.$quote->code);
 
                 return ['status' => true, 'message' => 'File Uploaded - Insurance Provider is required to generate broker invoice number'];
