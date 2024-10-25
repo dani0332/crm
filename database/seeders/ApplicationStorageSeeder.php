@@ -734,6 +734,24 @@ class ApplicationStorageSeeder extends Seeder
                 'is_active' => 1,
             ],
         );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ALLIANCE_TRAVEL_POLICY_ISSUANCE_AUTOMATION_ENABLED],
+            [
+                'value' => 1,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+        ApplicationStorage::firstOrCreate(
+            ['key_name' => ApplicationStorageEnums::ATTEMPT_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE_AUTOMATION],
+            [
+                'value' => 1,
+                'is_active' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
 
     }
 
