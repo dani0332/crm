@@ -1995,6 +1995,11 @@ class CRUDController extends Controller
 
         info('Quote Code: '.$quoteModel->code.' Policy detail updated successfully');
 
+        if (in_array($quoteModel->quote_status_id, [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicySentToCustomer])) {
+            (new PaymentRepository)->generateAndStoreBrokerInvoiceNumber($quoteModel, $payment, $request->modelType);
+            info('Quote Code: '.$quoteModel->code.' BIN Generated for transactional leads');
+        }
+
         return redirect()->back()->with([
             'success' => 'Policy details has been updated.',
         ]);
