@@ -10,11 +10,14 @@ use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
+use App\Traits\TeamHierarchyTrait;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class LeadAllocationController extends Controller
 {
+    use TeamHierarchyTrait;
+
     private QuoteTypes $quoteType;
 
     public function __construct()
