@@ -11,8 +11,15 @@ class RestartHaystack extends Command
     protected $signature = 'haystack:restart';
     protected $description = 'Restart a stopped haystack process';
 
+    public function __construct()
+    {
+        parent::__construct();
+    }
+
     public function handle()
     {
+        info('Haystack process is about to be restarted');
+
         $haystack = Haystack::whereNull('finished_at')
             ->whereNull('resume_at')
             ->where('started_at', '!=', null)
@@ -29,10 +36,10 @@ class RestartHaystack extends Command
 
                 return;
             } else {
-                $this->error('No bales found for the haystack process.');
+                info('HayStack:' . ' ---  No bales found for the haystack process.');
             }
         } else {
-            $this->error('Haystack process not found or already finished.');
+            info('HayStack:' . ' ---  process not found or already finished.');
         }
     }
 }
