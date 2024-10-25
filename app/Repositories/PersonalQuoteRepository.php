@@ -151,7 +151,7 @@ class PersonalQuoteRepository extends BaseRepository
             if (! $insuranceProviderId) {
                 info('Insurance Provider not found - Ref: '.$quote->code);
 
-                return ['status' => true, 'message' => 'File Uploaded - Insurance Provider not found'];
+                return ['status' => true, 'message' => 'File Uploaded - Insurance Provider is required to generate broker invoice number'];
             }
 
             return ['status' => true, 'message' => 'File Uploaded'];
