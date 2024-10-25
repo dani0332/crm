@@ -77,15 +77,31 @@ const onTogglePlans = () => {
       emit('onLoadAvailablePlansData');
     })
     .catch(error => {
-      notification.error({
-        title: error,
-        position: 'top',
-      });
+      if (error.response && error.response.status === 422) {
+        const errorData = error.response.data.errors;
+
+        Object.keys(errorData).forEach(field => {
+          errorData[field].forEach(errorMessage => {
+            notification.error({
+              title: 'Validation Error',
+              message: errorMessage,
+              position: 'top',
+            });
+          });
+        });
+      } else {
+        notification.error({
+          title: 'Error',
+          message: 'An unexpected error occurred',
+          position: 'top',
+        });
+      }
     })
     .finally(() => {
       toggleLoader.value = false;
     });
 };
+
 const homeDiscountOptions = computed(() => {
   let arr = [];
   for (let i = 0; i <= 20; i++) {
@@ -186,29 +202,38 @@ const onUpdatePlan = () => {
       },
     )
     .then(response => {
-      // Log the success response
       console.log('response', response);
 
-      // Show success notification
       notification.success({
         title: 'Plan updated successfully',
         position: 'top',
       });
 
-      // Emit event to load available plans
       emit('onLoadAvailablePlansData');
     })
     .catch(error => {
-      // Log the error for debugging
       console.error('error', error);
 
-      // Show error notification (handle server-side or network errors)
-      notification.error({
-        title: error.response?.data?.message || 'An error occurred',
-        position: 'top',
-      });
+      const errors = error.response?.data?.errors;
+
+      if (errors) {
+        Object.values(errors).forEach((messages) => {
+          messages.forEach((message) => {
+            notification.error({
+              title: message,
+              position: 'top',
+            });
+          });
+        });
+      } else {
+        notification.error({
+          title: error.response?.data?.message || 'An error occurred',
+          position: 'top',
+        });
+      }
     });
 };
+
 </script>
 
 <template>

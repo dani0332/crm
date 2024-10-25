@@ -269,6 +269,7 @@ class HomeQuoteRepository extends BaseRepository
         $quoteStatuses = app(CentralService::class)->lockTransactionStatus($quote, QuoteTypes::HOME->id(), $quoteStatuses);
 
         $planURL = $this->getEcomQuoteLink(QuoteTypes::HOME, $quote->uuid);
+        $allowedDuplicateLOB = app(CRUDService::class)->getAllowedDuplicateLOB('home', $quote->code);
         // dd($subArea, $quote->homeQuote->sub_area_id, $quote);
 
         return [
@@ -320,6 +321,7 @@ class HomeQuoteRepository extends BaseRepository
             ],
             'leadStatuses' => $leadStatuses,
             'planURL' => $planURL,
+            'allowedDuplicateLOB' => $allowedDuplicateLOB,
         ];
     }
 
@@ -339,11 +341,14 @@ class HomeQuoteRepository extends BaseRepository
             $quoteData['updated_by_id'] = auth()->user()->id;
             $quote->update($quoteData);
 
+            // allowed columns for home quote
+            $homeAllowedColumns = ['iam_possesion_type_id', 'ilivein_accommodation_type_id', 'address', 'has_contents', 'has_building', 'has_personal_belongings', 'contents_aed', 'building_aed', 'personal_belongings_aed', 'have_claimed_losses', 'is_property_rented_holiday_home', 'sub_area_id'];
+
             // check the columns to be updated in home quote request.
             if ($quote->homeQuote) {
-                $quote->homeQuote()->update(Arr::only($data, (new HomeQuote)->allowedColumns()));
+                $quote->homeQuote()->update(Arr::only($data, $homeAllowedColumns));
             } else {
-                $quote->homeQuote()->create(Arr::only($data, (new HomeQuote)->allowedColumns()));
+                $quote->homeQuote()->create(Arr::only($data, $homeAllowedColumns));
             }
 
             return $quote;

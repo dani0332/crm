@@ -18,7 +18,6 @@ class HomeQuote extends Model implements AuditableContract
 
     protected $table = 'home_quote_request';
     protected $fillable = [];
-    public $allowedColumns = ['iam_possesion_type_id', 'ilivein_accommodation_type_id', 'address', 'has_contents', 'has_building', 'has_personal_belongings', 'contents_aed', 'building_aed', 'personal_belongings_aed', 'have_claimed_losses', 'is_property_rented_holiday_home', 'sub_area_id'];
     protected $guarded = [];
     public $filterables = [
         'first_name' => FilterTypes::FREE,
@@ -148,11 +147,6 @@ class HomeQuote extends Model implements AuditableContract
     public function customerMembers()
     {
         return $this->morphMany(CustomerMembers::class, 'quote');
-    }
-
-    public function allowedColumns()
-    {
-        return $this->allowedColumns;
     }
 
     public function getAuditables()
