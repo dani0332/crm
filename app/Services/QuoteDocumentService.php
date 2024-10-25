@@ -401,6 +401,7 @@ class QuoteDocumentService extends BaseService
 
         return [];
     }
+
     /**
      * Get app download linked for Health LOB
      *
@@ -430,6 +431,7 @@ class QuoteDocumentService extends BaseService
 
         return $appDownloadLink;
     }
+
     /**
      * create pdf watermark function
      *
@@ -449,12 +451,12 @@ class QuoteDocumentService extends BaseService
         }
 
         if ($isKyc || $isPaymentReceipt) {
-            $file->move(storage_path('/app/temp'), $docName);
+            $file->move(storage_path('temp'), $docName);
             $filePath = 'temp/'.$docName;
-            $outputPath = storage_path('app/temp/'.$docName);
+            $outputPath = storage_path('temp/'.$docName);
         } else {
             $filePath = $file->storeAs('temp', $docName);
-            $outputPath = storage_path('app/temp/'.$docName);
+            $outputPath = storage_path('temp/'.$docName);
         }
 
         $pdf = new Fpdi;
@@ -534,7 +536,7 @@ class QuoteDocumentService extends BaseService
             15
         );
 
-        $image->save(storage_path('app/temp/'.$docName));
+        $image->save(storage_path('temp/'.$docName));
 
         return $this->storeWatermarkedMedia($docName, $data, $quote, $documentType, $originalName, $fileMimeType);
     }
@@ -552,7 +554,7 @@ class QuoteDocumentService extends BaseService
      */
     public function storeWatermarkedMedia($docName, $data, $quote, $documentType, $originalName, $fileMimeType)
     {
-        $watermarkedFile = new \Illuminate\Http\File(storage_path('app/temp/'.$docName));
+        $watermarkedFile = new \Illuminate\Http\File(storage_path('temp/'.$docName));
 
         // Set the filename for Azure storage
         $watermarkedFileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
@@ -566,7 +568,7 @@ class QuoteDocumentService extends BaseService
         }
 
         // delete temp file
-        unlink(storage_path('app/temp/'.$docName));
+        unlink(storage_path('temp/'.$docName));
 
         return [
             'watermarked_doc_name' => $docName,
