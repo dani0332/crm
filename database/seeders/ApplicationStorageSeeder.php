@@ -744,7 +744,6 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
 
-
     }
 
     private function seedBirdWorkflowUrls()
