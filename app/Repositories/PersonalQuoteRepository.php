@@ -17,6 +17,7 @@ use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\QuoteDocumentService;
+use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
@@ -87,6 +88,11 @@ class PersonalQuoteRepository extends BaseRepository
     public function fetchUploadDocument($id, $file, $data)
     {
         try {
+            $insuranceProviderId = null;
+            if (request()->is_send_update) {
+                [$insuranceProviderId] = app(SendUpdateLogService::class)->getEndorsementProviderDetails($quote);
+            }
+
             info('fn: fetchUploadDocument called');
             $quoteType = '';
             $quoteDocumentService = app(QuoteDocumentService::class);
@@ -161,6 +167,12 @@ class PersonalQuoteRepository extends BaseRepository
                     $quote->documents()->create($document);
                     info('Document uploaded - Ref: '.$quote->code);
                 });
+
+                if (! $insuranceProviderId && request()->is_send_update) {
+                    info('Insurance Provider not found - Ref: '.$quote->code);
+
+                    return ['status' => true, 'message' => 'File Uploaded - Insurance Provider is required to generate broker invoice number'];
+                }
 
                 return ['status' => true, 'message' => 'File Uploaded'];
             } catch (\Exception $exception) {
