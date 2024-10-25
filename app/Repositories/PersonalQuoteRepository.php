@@ -16,8 +16,8 @@ use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\CRUDService;
-use App\Services\SendUpdateLogService;
 use App\Services\QuoteDocumentService;
+use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
@@ -105,11 +105,9 @@ class PersonalQuoteRepository extends BaseRepository
                 $quoteType = request()->quote_type;
             }
 
-
             $documentType = $query->first();
 
             $isWaterMarkQualifyDoc = in_array($documentType->code, WatermarkDocTypesEnum::asArray());
-
 
             if (request()->is_send_update) {
                 $quote = SendUpdateLog::where('id', request()->send_update_id ?? '')->first();
