@@ -58,7 +58,7 @@ class HomeQuoteController extends Controller
         }
         dd('Done');
 
-        return redirect('personal-quotes/home/' . $response->quoteUID)->with('message', 'Quote created successfully');
+        return redirect('personal-quotes/home/'.$response->quoteUID)->with('message', 'Quote created successfully');
     }
 
     public function show($uuid)
@@ -120,7 +120,7 @@ class HomeQuoteController extends Controller
         // Check if the response is a success (e.g., 200 or 201)
         if (is_int($response) && in_array($response, [200, 201])) {
             return response()->json([
-                'message' => 'Plan has been updated successfully'
+                'message' => 'Plan has been updated successfully',
             ], 200);
         }
 
@@ -131,7 +131,7 @@ class HomeQuoteController extends Controller
 
         // Return error as JSON for API consumption
         return response()->json([
-            'message' => 'Home Plan has not been updated. ' . $responseMessage
+            'message' => 'Home Plan has not been updated. '.$responseMessage,
         ], 400); // 400 Bad Request or any relevant error code
     }
 

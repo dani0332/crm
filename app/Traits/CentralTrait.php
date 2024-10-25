@@ -32,11 +32,11 @@ trait CentralTrait
                 return '';
         }
         // Base link with trailing slash
-        $link = rtrim($afiaWebDomain, '/') . $basePath . $uuid . '/';
+        $link = rtrim($afiaWebDomain, '/').$basePath.$uuid.'/';
 
         // Append plan parameters if the plan is provided
         if ($plan) {
-            $link .= 'payment/?planId=' . $plan->id . '&providerCode=' . $plan->providerCode;
+            $link .= 'payment/?planId='.$plan->id.'&providerCode='.$plan->providerCode;
         }
 
         return $link;
@@ -56,8 +56,8 @@ trait CentralTrait
         $tempDir = storage_path('app/temp');
 
         // Generate a unique filename for the temp PDF file
-        $tempFileName = 'pdf_' . uniqid() . '.pdf';
-        $tempFilePath = $tempDir . '/' . $tempFileName;
+        $tempFileName = 'pdf_'.uniqid().'.pdf';
+        $tempFilePath = $tempDir.'/'.$tempFileName;
 
         // Create the temporary file and write the PDF content to it
         file_put_contents($tempFilePath, $pdfFile);

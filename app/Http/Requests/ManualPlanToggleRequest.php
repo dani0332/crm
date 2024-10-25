@@ -25,7 +25,7 @@ class ManualPlanToggleRequest extends FormRequest
             'modelType' => 'required|string|in:PersonalQuote',
             'planIds' => 'required|array|min:1',
             'personal_quote_uuid' => 'required|string',
-            'toggle' => 'required|boolean'
+            'toggle' => 'required|boolean',
         ];
     }
 
@@ -38,7 +38,7 @@ class ManualPlanToggleRequest extends FormRequest
             'planIds.*.integer' => 'Each plan ID must be an integer.',
             'personal_quote_uuid.required' => 'The personal quote UUID is required.',
             'toggle.required' => 'The toggle field is required.',
-            'toggle.boolean' => 'The toggle must be true or false.'
+            'toggle.boolean' => 'The toggle must be true or false.',
         ];
     }
 }
