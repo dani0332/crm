@@ -34,7 +34,7 @@ class PolicyIssuanceJob implements ShouldQueue
     public function handle(): void
     {
         $this->process->update(['status' => PolicyIssuanceEnum::PROCESSING_STATUS]);
-        info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process status updated to : '.$this->process->status);
+        info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
 
         $quoteType = $this->process->quote_type;
         $insuranceProvider = $this->process->insuranceProvider;
@@ -55,10 +55,10 @@ class PolicyIssuanceJob implements ShouldQueue
         info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' Response : '.json_encode($response));
         if (! $response['status']) {
             $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $response['error']])]);
-            info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process status updated to : '.$this->process->status.' Error : '.json_encode($response['error']));
+            info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.json_encode($response['error']));
         } else {
             $this->process->update(['status' => PolicyIssuanceEnum::COMPLETED_STATUS]);
-            info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process status updated to : '.$this->process->status);
+            info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
         }
     }
 
@@ -66,7 +66,7 @@ class PolicyIssuanceJob implements ShouldQueue
     {
         $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
 
-        Log::error('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' Error : '.$exception->getMessage());
+        Log::error('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code .' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.$exception->getMessage());
     }
 
     public function middleware()
