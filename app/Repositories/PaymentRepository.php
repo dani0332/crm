@@ -584,63 +584,98 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return $map[$documentTypeCode] ?? $documentTypeCode;
     }
 
+    /**
+     * This method updates the payment status for payments with an upfront frequency.
+     *
+     * @param  \App\Models\Payment  $payment  The payment object to update.
+     * @return void
+     */
+    private function updatePaymentStatusForUpFront($payment)
+    {
+        if ($payment->frequency !== PaymentFrequency::UPFRONT) {
+            return;
+        }
+
+        $capturedAmount = $payment->captured_amount;
+        $totalAmount = $payment->total_amount;
+
+        if ($capturedAmount > 0 && $totalAmount > $capturedAmount) {
+            $payment->update(['payment_status_id' => PaymentStatusEnum::PARTIALLY_PAID]);
+        } else {
+            $firstSplitStatus = $payment->paymentSplits[0]->payment_status_id;
+            switch ($firstSplitStatus) {
+                case PaymentStatusEnum::PAID:
+                    $payment->update(['payment_status_id' => PaymentStatusEnum::CAPTURED]);
+                    break;
+                case PaymentStatusEnum::PARTIALLY_PAID:
+                    $payment->update(['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED]);
+                    break;
+                default:
+                    $payment->update(['payment_status_id' => $firstSplitStatus]);
+                    break;
+            }
+        }
+    }
+
+    /**
+     * This method updates the payment status for payments that do not have an upfront frequency.
+     *
+     * @param  \App\Models\Payment  $payment  The payment object to update.
+     * @return void
+     */
+    private function updatePaymentStatusNonUpFront($payment)
+    {
+        $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
+            PaymentStatusEnum::PAID,
+            PaymentStatusEnum::CAPTURED,
+            PaymentStatusEnum::PARTIAL_CAPTURED,
+            PaymentStatusEnum::PARTIALLY_PAID,
+        ])
+            ->where('code', $payment->code)
+            ->count();
+
+        info('Total paid payments for '.$payment->code.': '.$totalPaidPayments.' out of '.$payment->total_payments);
+
+        if (
+            $totalPaidPayments == $payment->total_payments
+            && $payment->captured_amount >= ($payment->total_price - $payment->discount_value)
+        ) {
+            info('All payments are captured. Updating Payment status to CAPTURED: '.$payment->code);
+            $payment->update(
+                ['payment_status_id' => PaymentStatusEnum::CAPTURED]
+            );
+        } elseif ($totalPaidPayments > 0) {
+            info('Some payments are captured. Updating Payment status to PARTIAL_CAPTURED: '.$payment->code);
+            $payment->update(
+                ['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED]
+            );
+        } else {
+            //verify credit approved status
+            $totalCreditPayments = PaymentSplits::whereIn('payment_status_id', [
+                PaymentStatusEnum::CREDIT_APPROVED,
+            ])->where('code', $payment->code)->count();
+            info('Total credit approved payments for '.$payment->code.': '.$totalCreditPayments);
+            if ($totalCreditPayments > 0) {
+                info('Updating payment status to CREDIT_APPROVED for '.$payment->code);
+                $payment->update(
+                    ['payment_status_id' => PaymentStatusEnum::CREDIT_APPROVED]
+                );
+            } else {
+                info('Updating payment status to NEW for '.$payment->code);
+                $payment->update(
+                    ['payment_status_id' => PaymentStatusEnum::NEW]
+                );
+            }
+        }
+    }
+
     public function setMasterPaymentStatus($payment)
     {
         if ($payment) {
             if ($payment->frequency == 'upfront') {
-                if ($payment->paymentSplits[0]->payment_status_id == PaymentStatusEnum::PAID) {
-                    $payment->update(
-                        ['payment_status_id' => PaymentStatusEnum::CAPTURED]
-                    );
-                } elseif ($payment->paymentSplits[0]->payment_status_id == PaymentStatusEnum::PARTIALLY_PAID) {
-                    $payment->update(
-                        ['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED]
-                    );
-                } else {
-                    $payment->update(
-                        ['payment_status_id' => $payment->paymentSplits[0]->payment_status_id]
-                    );
-                }
+                $this->updatePaymentStatusForUpFront($payment);
             } else {
-                $totalPaidPayments = PaymentSplits::whereIn('payment_status_id', [
-                    PaymentStatusEnum::PAID,
-                    PaymentStatusEnum::CAPTURED,
-                    PaymentStatusEnum::PARTIAL_CAPTURED,
-                    PaymentStatusEnum::PARTIALLY_PAID,
-                ])
-                    ->where('code', $payment->code)
-                    ->count();
-
-                info('Total paid payments for '.$payment->code.': '.$totalPaidPayments.' out of '.$payment->total_payments);
-
-                if (
-                    $totalPaidPayments == $payment->total_payments
-                    && $payment->captured_amount >= ($payment->total_price - $payment->discount_value)
-                ) {
-                    info('All payments are captured. Updating Payment status to CAPTURED: '.$payment->code);
-                    $payment->update(
-                        ['payment_status_id' => PaymentStatusEnum::CAPTURED]
-                    );
-                } elseif ($totalPaidPayments > 0) {
-                    info('Some payments are captured. Updating Payment status to PARTIAL_CAPTURED: '.$payment->code);
-                    $payment->update(
-                        ['payment_status_id' => PaymentStatusEnum::PARTIAL_CAPTURED]
-                    );
-                } else {
-                    //verify credit approved status
-                    $totalCreditPayments = PaymentSplits::whereIn('payment_status_id', [
-                        PaymentStatusEnum::CREDIT_APPROVED,
-                    ])->where('code', $payment->code)->count();
-                    if ($totalCreditPayments > 0) {
-                        $payment->update(
-                            ['payment_status_id' => PaymentStatusEnum::CREDIT_APPROVED]
-                        );
-                    } else {
-                        $payment->update(
-                            ['payment_status_id' => PaymentStatusEnum::NEW]
-                        );
-                    }
-                }
+                $this->updatePaymentStatusNonUpFront($payment);
             }
             info('Updating lead status for Payment Code: '.$payment->code);
             app(SplitPaymentService::class)->updateLeadStatus($payment); //update lead status

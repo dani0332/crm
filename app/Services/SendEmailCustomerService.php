@@ -15,6 +15,7 @@ use App\Jobs\OCAHealthFollowupEmailJob;
 use App\Jobs\UpdateSendPolicySubjectJob;
 use App\Models\ApplicationStorage;
 use App\Models\Customer;
+use App\Models\HealthQuote;
 use App\Models\InsuranceProvider;
 use App\Models\User;
 use Carbon\Carbon;
@@ -621,6 +622,13 @@ class SendEmailCustomerService extends BaseService
 
     public function sendRMIntroEmail($quoteUuid, $previousAdvisorId, $isReassignment)
     {
+        $healthQuote = HealthQuote::where('uuid', $quoteUuid)->first();
+        if ($healthQuote && $healthQuote->isApplicationPending()) {
+            info('sendRMIntroEmail: Health quote is Application Pending, skipping RM Intro Email for uuid: '.$quoteUuid);
+
+            return;
+        }
+
         $dataArr = [
             'quoteUID' => $quoteUuid,
             'resend' => false,
@@ -803,7 +811,7 @@ class SendEmailCustomerService extends BaseService
             $attachments = [];
             if (! empty($documents)) {
                 foreach ($documents as $document) {
-                    $path = $document->doc_url;
+                    $path = $document->watermarked_doc_url ?? $document->doc_url;
                     $documentURL = $path !== '' ? $websiteURL.$path : '';
                     $attachments[] = [
                         'url' => $this->encodeUrl($documentURL),
@@ -974,7 +982,7 @@ class SendEmailCustomerService extends BaseService
             $attachments = [];
             if (! empty($documents)) {
                 foreach ($documents as $document) {
-                    $path = $document['doc_url'];
+                    $path = $document['watermarked_doc_url'] ?? $document['doc_url'];
                     $documentURL = $path !== '' ? $websiteURL.$path : '';
                     $attachments[] = [
                         'url' => $documentURL,
@@ -1438,5 +1446,39 @@ class SendEmailCustomerService extends BaseService
         $encodedFileName = urlencode($fileName);
 
         return str_replace($fileName, $encodedFileName, $url);
+    }
+
+    public function sendApplyNowEmail($emailData, bool $sendToAdvisorOnly = false)
+    {
+        $body = [
+            'to' => [[
+                'email' => $emailData->email,
+                'name' => $emailData->customerName,
+            ]],
+            'templateId' => (int) getAppStorageValueByKey(ApplicationStorageEnums::HEALTH_APPLY_NOW_EMAIL_TEMPLATE_ID),
+            'params' => $emailData,
+            'tags' => ['health-apply-now'],
+        ];
+
+        if (property_exists($emailData, 'advisorDetails')) {
+            if ($sendToAdvisorOnly) {
+                $body['to'] = [[
+                    'email' => $emailData->advisorDetails['email'],
+                    'name' => $emailData->advisorDetails['name'],
+                ]];
+            } else {
+                $body['replyTo'] = ['name' => $emailData->advisorDetails['name'], 'email' => $emailData->advisorDetails['email']];
+                $body['cc'] = [[
+                    'email' => $emailData->advisorDetails['email'],
+                    'name' => $emailData->advisorDetails['name'],
+                ]];
+            }
+        }
+
+        ['code' => $responseCode, 'response' => $response, 'sent' => $isEmailSent] = $this->sendMail($body);
+
+        $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->email);
+
+        return $responseCode;
     }
 }

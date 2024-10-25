@@ -20,10 +20,10 @@ class EmailStatusEventJob implements ShouldQueue
 
     public $timeout = 15;
     public $backoff = 300;
-    private $data;
+    private $emailData;
     public function __construct($emailData)
     {
-        $this->data = $emailData;
+        $this->emailData = $emailData;
     }
 
     /**
@@ -31,35 +31,36 @@ class EmailStatusEventJob implements ShouldQueue
      */
     public function handle()
     {
-        if (! empty($this->data->message_id) && ! empty($this->data->status)) {
-            $isEmailStatus = EmailStatus::where('msg_id', $this->data->message_id)
-                ->where('email_status', $this->data->status)
+        if (! empty($this->emailData->message_id) && ! empty($this->emailData->status)) {
+            $isEmailStatus = EmailStatus::where('msg_id', $this->emailData->message_id)
+                ->where('email_status', $this->emailData->status)
                 ->exists();
-
             if ($isEmailStatus) {
-                $msg = 'EmailStatus already exists for msg_id: '.$this->data->message_id;
+                $msg = 'EmailStatus already exists for msg_id: '.$this->emailData->message_id;
                 info($msg);
 
                 return true;
             }
-            $emailStatusData = EmailStatus::where('msg_id', $this->data->message_id)->first();
+            $emailStatusData = EmailStatus::where('msg_id', $this->emailData->message_id)->first();
             if (! empty($emailStatusData)) {
-                if (! empty($emailStatusData->quoteTypeId) && ! empty($emailStatusData->quoteId)) {
+                if (! empty($emailStatusData->quote_type_id) && ! empty($emailStatusData->quote_id)) {
                     $newEmailStatus = new EmailStatus;
-                    $newEmailStatus->quote_type_id = $emailStatusData->quoteTypeId;
-                    $newEmailStatus->quote_id = $emailStatusData->quoteId;
-                    $newEmailStatus->email_address = $this->data->customer_email ?? null;
-                    $newEmailStatus->msg_id = $this->data->message_id;
-                    $newEmailStatus->email_status = $this->data->status;
-                    $newEmailStatus->email_subject = $this->data->subject;
+                    $newEmailStatus->quote_type_id = $emailStatusData->quote_type_id;
+                    $newEmailStatus->quote_id = $emailStatusData->quote_id;
+                    $newEmailStatus->email_address = $this->emailData->customer_email ?? $emailStatusData->email_address;
+                    $newEmailStatus->msg_id = $this->emailData->message_id;
+                    $newEmailStatus->email_status = $this->emailData->status;
+                    $newEmailStatus->email_subject = $this->emailData->subject ?? $emailStatusData->email_subject;
                     $newEmailStatus->save();
-                    info('EmailStatusEventJob - EmailStatus created for msg_id: '.$this->data->message_id.' email_status: '.$newEmailStatus->email_status.' | Time:'.now());
+                    info('EmailStatusEventJob - EmailStatus created for msg_id: '.$this->emailData->message_id.' email_status: '.$newEmailStatus->email_status.' | Time:'.now());
 
                     return true;
+                } else {
+                    info('EmailStatusEventJob - quote_type_id not found: msg_id: '.$this->emailData->message_id.' | Time: '.now());
                 }
 
             } else {
-                info('EmailStatusEventJob - email data not found for msg_id: '.$this->data->message_id);
+                info('EmailStatusEventJob - email data not found for msg_id: '.$this->emailData->message_id);
 
                 return true;
             }
