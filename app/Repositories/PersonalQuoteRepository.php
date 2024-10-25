@@ -15,6 +15,7 @@ use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
 use App\Services\CentralService;
 use App\Services\CRUDService;
+use App\Services\SendUpdateLogService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
@@ -129,20 +130,29 @@ class PersonalQuoteRepository extends BaseRepository
         info('Document array prepared for creation', $document);
 
         try {
-            DB::transaction(function () use ($quote, $document, $documentType) {
+            [$insuranceProviderId] = app(SendUpdateLogService::class)->getEndorsementProviderDetails($quote);
+            DB::transaction(function () use ($quote, $document, $documentType, $insuranceProviderId) {
 
                 $quoteDocuments = $quote->documents->pluck('document_type_code')->toArray();
                 $taxInvoiceDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
 
                 if (request()->is_send_update && in_array($documentType->code, $taxInvoiceDocuments) && count(array_intersect($taxInvoiceDocuments, $quoteDocuments)) == 0) {
-                    app(CentralService::class)->updateSendUpdateStatusLogs($quote->id, $quote->status, SendUpdateLogStatusEnum::UPDATE_ISSUED);
-                    $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_ISSUED]);
-                    info('Send Update status updated to UPDATE_ISSUED - Ref: '.$quote->code);
+                    if ($insuranceProviderId) {
+                        app(CentralService::class)->updateSendUpdateStatusLogs($quote->id, $quote->status, SendUpdateLogStatusEnum::UPDATE_ISSUED);
+                        $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_ISSUED]);
+                        info('Send Update status updated to UPDATE_ISSUED - Ref: '.$quote->code);
+                    }
                 }
 
                 $quote->documents()->create($document);
                 info('Document uploaded - Ref: '.$quote->code);
             });
+
+            if (! $insuranceProviderId) {
+                info('Insurance Provider not found - Ref: '.$quote->code);
+
+                return ['status' => true, 'message' => 'File Uploaded - Insurance Provider is required to generate broker invoice number'];
+            }
 
             return ['status' => true, 'message' => 'File Uploaded'];
         } catch (\Exception $exception) {
