@@ -74,6 +74,7 @@ use App\Http\Controllers\V2\SendUpdateLogController;
 use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
+use App\Http\Controllers\QuoteExportLogController;
 use App\Http\Middleware\SetReadDbConnection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -491,6 +492,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
 
         Route::post('car/change-insurer', [CarQuoteController::class, 'changeInsurer'])->name('change-car-insurer');
+
+        Route::post('/export-logs/create', [QuoteExportLogController::class, 'store'])->name('export-logs.create');
     });
 
     Route::get('personal-plans/list', [PersonalPlanController::class, 'getList']);

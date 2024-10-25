@@ -42,10 +42,10 @@ enum QuoteTypes: string
 
     public function id(): string
     {
-        return self::getId($this);
+        return self::getId($this) ?? '';
     }
 
-    public static function getId(self $value): int
+    public static function getId(self $value): ?int
     {
         return match ($value) {
             QuoteTypes::CAR => 1,
@@ -61,6 +61,7 @@ enum QuoteTypes: string
             QuoteTypes::JETSKI => 11,
             QuoteTypes::CORPLINE => 101,
             QuoteTypes::GROUP_MEDICAL => 102,
+            default => null,
         };
     }
     public static function getName($value)
@@ -204,4 +205,29 @@ enum QuoteTypes: string
             self::TRAVEL,self::CAR,self::HEALTH => "{$this->ecomUrl()}{$uuid}".($queryParamsStr ? "?{$queryParamsStr}" : ''),
         };
     }
+
+    /**
+     * Get all quote types with their IDs.
+     *
+     * @return array
+     */
+    public static function allTypesWithIds(): array
+    {
+        $typesWithIds = [];
+        foreach (self::cases() as $quoteType) {
+            if (!$quoteType) continue;
+
+            $id = $quoteType->id();
+
+            if (!$id) continue;
+            
+            $typesWithIds[] = [
+                'id' => $id,
+                'name' => $quoteType->value,
+            ];
+        }
+
+        return $typesWithIds;
+    }
+
 }

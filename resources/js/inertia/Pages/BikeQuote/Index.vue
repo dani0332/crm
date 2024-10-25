@@ -161,7 +161,8 @@ const onLeadAssigned = () => {
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'bike');
-  window.open(url + '?' + new URLSearchParams(data).toString());
+  const payload = {quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Bike'), url: url + '?' + new URLSearchParams(data).toString()};
+  logQuoteExportAndExport(payload);
 };
 function daysAgoFromAuthorizedDate(authorizedDate) {
   let date = authorizedDate.split(' ')[0];

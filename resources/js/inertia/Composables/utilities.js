@@ -359,3 +359,25 @@ export const calculateDaysDifference = (start_date, end_date) => {
   }
   return 0;
 };
+
+// Function to get the quote type ID based on quote type name
+export const getQuoteTypeId = (quoteTypes, quoteType) => {
+  return quoteTypes.filter(
+    item => item.name === quoteType,
+  )[0]?.id;
+}
+
+// Function to log quote export and open the URL
+export const logQuoteExportAndExport = (payload, url) => {
+  axios
+    .post("/quotes/export-logs/create", payload)
+    .then(res => {
+      console.log(res);
+    })
+    .catch(err => {
+      console.log(err);
+    })
+    .finally(() => {
+      window.open(payload.url);
+    });
+}

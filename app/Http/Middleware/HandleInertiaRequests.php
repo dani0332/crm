@@ -21,6 +21,7 @@ use App\Enums\QuoteIssuanceStatusEnum;
 use App\Enums\QuoteSegmentEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\SendPolicyTypeEnum;
 use App\Enums\SendUpdateLogStatusEnum;
@@ -120,6 +121,7 @@ class HandleInertiaRequests extends Middleware
             'documentTypeCodeEnum' => DocumentTypeCode::asArray(),
             'paymentFrequencyEnum' => PaymentFrequency::asArray(),
             'pendingActivityCount' => app(ActivitiesService::class)->getPendingActivityCount(),
+            'quoteTypes' => QuoteTypes::allTypesWithIds(),
         ];
     }
 

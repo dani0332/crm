@@ -162,7 +162,8 @@ const tableHeader = [
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'jetski');
-  window.open(url + '?' + new URLSearchParams(data).toString());
+  const payload = {quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Jetski'), url: url + '?' + new URLSearchParams(data).toString()};
+  logQuoteExportAndExport(payload);
 };
 
 watch(
