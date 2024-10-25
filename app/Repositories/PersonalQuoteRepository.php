@@ -92,7 +92,7 @@ class PersonalQuoteRepository extends BaseRepository
             if (request()->is_send_update) {
                 [$insuranceProviderId] = app(SendUpdateLogService::class)->getEndorsementProviderDetails($quote);
             }
-            DB::transaction(function () use ($quote, $document, $documentType, $insuranceProviderId) {
+
             info('fn: fetchUploadDocument called');
             $quoteType = '';
             $quoteDocumentService = app(QuoteDocumentService::class);
@@ -105,16 +105,11 @@ class PersonalQuoteRepository extends BaseRepository
                 $quoteType = request()->quote_type;
             }
 
-                
+
             $documentType = $query->first();
 
             $isWaterMarkQualifyDoc = in_array($documentType->code, WatermarkDocTypesEnum::asArray());
 
-            if (! $insuranceProviderId && request()->is_send_update) {
-                info('Insurance Provider not found - Ref: '.$quote->code);
-
-                return ['status' => true, 'message' => 'File Uploaded - Insurance Provider is required to generate broker invoice number'];
-            }
 
             if (request()->is_send_update) {
                 $quote = SendUpdateLog::where('id', request()->send_update_id ?? '')->first();
@@ -174,6 +169,12 @@ class PersonalQuoteRepository extends BaseRepository
                     $quote->documents()->create($document);
                     info('Document uploaded - Ref: '.$quote->code);
                 });
+
+                if (! $insuranceProviderId && request()->is_send_update) {
+                    info('Insurance Provider not found - Ref: '.$quote->code);
+
+                    return ['status' => true, 'message' => 'File Uploaded - Insurance Provider is required to generate broker invoice number'];
+                }
 
                 return ['status' => true, 'message' => 'File Uploaded'];
             } catch (\Exception $exception) {
