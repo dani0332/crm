@@ -546,7 +546,10 @@ const onAddDocumentSubmit = event => {
               <x-button
                 size="xs"
                 color="emerald"
-                :disabled="!item.send_document_button || item.short_code == embeddedProductEnum.COURIER"
+                :disabled="
+                  !item.send_document_button ||
+                  item.short_code == embeddedProductEnum.COURIER
+                "
                 :loading="sendDocumentLoader"
                 @click.prevent="sendDcoument(item.id)"
               >
