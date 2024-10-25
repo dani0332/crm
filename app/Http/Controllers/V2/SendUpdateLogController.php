@@ -26,7 +26,6 @@ use App\Models\PersonalQuote;
 use App\Models\QuoteType;
 use App\Models\SendUpdateLog;
 use App\Repositories\CustomerMembersRepository;
-use App\Repositories\InslyDetailRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\PolicyIssuanceStatusRepository;
@@ -190,16 +189,12 @@ class SendUpdateLogController extends Controller
 
         $sendUpdatePayments = $this->sendUpdateLogService->getSendUpdatePayments($sendUpdateLog, $quoteType);
 
-        if ($realQuote?->insly_id) {
-            $insuranceProviderId = InslyDetailRepository::getProvider($realQuote->insly_id)?->id;
+        if (in_array($quoteType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
+            $paymentEntityModel->load(['plan', 'plan.insuranceProvider']);
+            $insuranceProviderId = $paymentEntityModel?->plan?->insuranceProvider?->id;
         } else {
-            if (in_array($quoteType, [quoteTypeCode::Car, quoteTypeCode::Travel, quoteTypeCode::Health])) {
-                $paymentEntityModel->load(['plan', 'plan.insuranceProvider']);
-                $insuranceProviderId = $paymentEntityModel?->plan?->insuranceProvider?->id;
-            } else {
-                checkPersonalQuotes($quoteType) ? $realQuote->load(['insuranceProvider']) : $paymentEntityModel->load(['insuranceProvider']);
-                $insuranceProviderId = $realQuote?->insurance_provider_id ?? $realQuote?->insuranceProvider?->id ?? null;
-            }
+            checkPersonalQuotes($quoteType) ? $realQuote->load(['insuranceProvider']) : $paymentEntityModel->load(['insuranceProvider']);
+            $insuranceProviderId = $realQuote?->insurance_provider_id ?? $realQuote?->insuranceProvider?->id ?? null;
         }
 
         // quote type business only has 2 providers, but as per business lead detail page it's getting providers via Corpline.
