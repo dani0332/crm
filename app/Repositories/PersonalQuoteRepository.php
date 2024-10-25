@@ -105,13 +105,7 @@ class PersonalQuoteRepository extends BaseRepository
                 $quoteType = request()->quote_type;
             }
 
-                if (request()->is_send_update && in_array($documentType->code, $taxInvoiceDocuments) && count(array_intersect($taxInvoiceDocuments, $quoteDocuments)) == 0) {
-                    if ($insuranceProviderId) {
-                        app(CentralService::class)->updateSendUpdateStatusLogs($quote->id, $quote->status, SendUpdateLogStatusEnum::UPDATE_ISSUED);
-                        $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_ISSUED]);
-                        info('Send Update status updated to UPDATE_ISSUED - Ref: '.$quote->code);
-                    }
-                }
+                
             $documentType = $query->first();
 
             $isWaterMarkQualifyDoc = in_array($documentType->code, WatermarkDocTypesEnum::asArray());
@@ -121,7 +115,7 @@ class PersonalQuoteRepository extends BaseRepository
 
                 return ['status' => true, 'message' => 'File Uploaded - Insurance Provider is required to generate broker invoice number'];
             }
-            
+
             if (request()->is_send_update) {
                 $quote = SendUpdateLog::where('id', request()->send_update_id ?? '')->first();
             } else {
