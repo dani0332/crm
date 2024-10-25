@@ -36,10 +36,10 @@ class RestartHaystack extends Command
 
                 return;
             } else {
-                info('HayStack:' . ' ---  No bales found for the haystack process.');
+                info('HayStack:'.' ---  No bales found for the haystack process.');
             }
         } else {
-            info('HayStack:' . ' ---  process not found or already finished.');
+            info('HayStack:'.' ---  process not found or already finished.');
         }
     }
 }
