@@ -641,7 +641,6 @@ class ReportService extends BaseService
         }
         $dataCollection = collect();
         foreach ($allowedLOBs as $details) {
-
             $premiumColumn = $details['table'].'.premium';
 
             $query = DB::table($details['table'])
@@ -663,6 +662,13 @@ class ReportService extends BaseService
                 $query->join('user_team', 'user_team.user_id', 'users.id')
                     ->join('teams', 'teams.id', '=', 'user_team.team_id')
                     ->whereIn('teams.name', $userTeams);
+            }
+            if (isset($request->quoteType)) {
+                $quoteType = explode(' ', Str::lower(trim($request->quoteType)))[0];
+                if (checkPersonalQuotes(ucfirst($quoteType))) {
+                    $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($quoteType));
+                    $query->where('quote_type_id', $quoteTypeId);
+                }
             }
             if (isset($request->userIds)) {
                 $query->whereIn('advisor_id', $request->userIds);
