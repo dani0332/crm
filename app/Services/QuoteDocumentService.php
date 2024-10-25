@@ -446,8 +446,8 @@ class QuoteDocumentService extends BaseService
      */
     public function watermarkPdf($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType, $isKyc = false, $isPaymentReceipt = false)
     {
-        if (! file_exists(storage_path('/app/temp'))) {
-            mkdir(storage_path('/app/temp'), 0775, true);
+        if (! file_exists(storage_path('/temp'))) {
+            mkdir(storage_path('/temp'), 0775, true);
         }
 
         if ($isKyc || $isPaymentReceipt) {
@@ -501,8 +501,8 @@ class QuoteDocumentService extends BaseService
      */
     public function watermarkImage($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType)
     {
-        if (! file_exists(storage_path('/app/temp'))) {
-            mkdir(storage_path('/app/temp'), 0775, true);
+        if (! file_exists(storage_path('/temp'))) {
+            mkdir(storage_path('/temp'), 0775, true);
         }
 
         $manager = new ImageManager(new Driver);
@@ -578,11 +578,11 @@ class QuoteDocumentService extends BaseService
 
     public function watermarkWordDocs($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType)
     {
-        if (! file_exists(storage_path('/app/temp'))) {
-            mkdir(storage_path('/app/temp'), 0775, true);
+        if (! file_exists(storage_path('/temp'))) {
+            mkdir(storage_path('/temp'), 0775, true);
         }
 
-        $tempFile = $fileOrBase64->move(storage_path('/app/temp'), $docName)->getRealPath();
+        $tempFile = $fileOrBase64->move(storage_path('/temp'), $docName)->getRealPath();
 
         $phpWord = IOFactory::load($tempFile);
         $section = $phpWord->getSection(0);
