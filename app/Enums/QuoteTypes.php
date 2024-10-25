@@ -208,19 +208,21 @@ enum QuoteTypes: string
 
     /**
      * Get all quote types with their IDs.
-     *
-     * @return array
      */
     public static function allTypesWithIds(): array
     {
         $typesWithIds = [];
         foreach (self::cases() as $quoteType) {
-            if (!$quoteType) continue;
+            if (! $quoteType) {
+                continue;
+            }
 
             $id = $quoteType->id();
 
-            if (!$id) continue;
-            
+            if (! $id) {
+                continue;
+            }
+
             $typesWithIds[] = [
                 'id' => $id,
                 'name' => $quoteType->value,

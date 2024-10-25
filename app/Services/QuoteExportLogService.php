@@ -10,16 +10,17 @@ class QuoteExportLogService extends BaseService
     /**
      * Save the quote export log.
      *
-     * @param array $data
      * @return QuoteExportLog
      */
     public function saveLog(array $data): bool
     {
         try {
             QuoteExportLog::create($data);
+
             return true;
         } catch (\Exception $e) {
             Log::error('Error qoute export log: '.$e->getMessage());
+
             return false;
         }
     }
