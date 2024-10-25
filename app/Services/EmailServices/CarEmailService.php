@@ -81,7 +81,9 @@ class CarEmailService extends BaseService
         if (! $triggerOnlyWorkflow) {
             if ($lead->advisor_id) {
                 $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
-                NBMotorFollowupEmailJob::dispatch($lead->uuid)->delay(Carbon::now()->addMinutes(2));
+
+                $nbFollowupDelayDuration = ApplicationStorage::where('key_name', ApplicationStorageEnums::NB_MOTOR_FOLLOWUP_DELAY_DURATION)->first();
+                NBMotorFollowupEmailJob::dispatch($lead->uuid)->delay(Carbon::now()->addHours($nbFollowupDelayDuration->value ?? 24));
                 info('NBMotorFollowupEmailJob - Dispatched - Ref ID:'.$lead->uuid.' | Time: '.now());
             } else {
                 info('sendCarOCBIntroEmail - sendNonAdvisorIntroEmail - Ref ID:'.$lead->uuid.' Time: '.now());
