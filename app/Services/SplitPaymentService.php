@@ -13,13 +13,13 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentProcessJobEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PaymentStatusTextEnum;
-use App\Enums\PolicyIssuanceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\SageEnum;
 use App\Enums\SendUpdateLogStatusEnum;
+use App\Factories\PolicyIssuanceFactory;
 use App\Factories\SagePayloadFactory;
 use App\Models\CarQuote;
 use App\Models\CcPaymentProcess;
@@ -27,7 +27,6 @@ use App\Models\HealthQuote;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Models\PersonalQuote;
-use App\Models\PolicyIssuance;
 use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
 use App\Models\SendUpdateLog;
@@ -39,7 +38,6 @@ use App\Traits\CentralTrait;
 use App\Traits\HandlesDeadlockRetries;
 use App\Traits\SageLoggable;
 use Carbon\Carbon;
-use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -770,14 +768,8 @@ class SplitPaymentService
                     Log::error('Error in processSplitPaymentApprove '.$quoteModel->code.': '.$retryResponse['message']);
                 }
             } else {
-                if ($isFromJob && $modelType === QuoteTypes::TRAVEL && $paymentSplit->payment->insuranceProvider->code = InsuranceProvidersEnum::ALNC) {
-                    PolicyIssuance::create([
-                        'insurance_provider_id' => $paymentSplit->payment->insuranceProvider->id,
-                        'model_type' => $quoteModel::class,
-                        'model_id' => $quoteModel->id,
-                        'quote_type' => $modelType,
-                        'status' => PolicyIssuanceEnum::PENDING_STATUS,
-                    ]);
+                if ($isFromJob) { // TODO : Add Ecom check to make sure only customer purchased policu schedule for automation
+                    $this->createPolicyIssuanceAutomation($quoteModel, $modelType, $paymentSplit->payment);
                 }
                 CcPaymentProcess::where('payment_splits_id', $splitPaymentId)->update(['status' => PaymentProcessJobEnum::SUCCESS, 'message' => PaymentProcessJobEnum::SUCCESS_MESSAGE]);
             }
@@ -1120,5 +1112,16 @@ class SplitPaymentService
         // Delete the payment split
         $paymentSplit->delete();
         info('Deleted Payment Split For Code: '.$paymentSplit->code.' Split Payment: '.$paymentSplit->id.'-'.$paymentSplit->sr_no);
+    }
+
+    private function createPolicyIssuanceAutomation($quote, $quoteType, $payment)
+    {
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType);
+
+        if ($insuranceProvider) {
+            $insuranceProviderAutomation = PolicyIssuanceFactory::make($quoteType, $insuranceProvider->code);
+            $insuranceProviderAutomation?->createPolicyIssuanceSchedule($quote, $insuranceProvider);
+        }
+
     }
 }

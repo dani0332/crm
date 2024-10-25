@@ -780,17 +780,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
     }
     public function generateInvoiceDescription($payment, $quoteType, $record): string
     {
-        $insuranceProvider = null;
-        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
-        if (in_array(ucfirst($quoteType), $allowedQuoteTypes)) {
-            $planRelationName = strtolower($quoteType).'Plan';
-            $payment->load($planRelationName);
-            $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
-        }
-
-        if (! $insuranceProvider) {
-            $insuranceProvider = $payment?->insuranceProvider;
-        }
+        $insuranceProvider = getInsuranceProvider($payment, $quoteType);
 
         $insuranceProviderCode = $insuranceProvider?->code;
 

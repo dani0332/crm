@@ -1235,18 +1235,7 @@ class SagePayloadFactory
             $sageRequest->invoicePaymentStatus = $firstChildPayment->payment_status_id;
         }
 
-        $insuranceProvider = null;
-
-        $allowedQuoteTypes = [QuoteTypes::CAR->value, QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value, QuoteTypes::BIKE->value];
-        if (in_array(ucfirst($modelType), $allowedQuoteTypes)) {
-            $planRelationName = strtolower($modelType).'Plan';
-            $payment->load($planRelationName);
-            $insuranceProvider = $payment->$planRelationName?->insuranceProvider;
-        }
-
-        if (! $insuranceProvider) {
-            $insuranceProvider = $payment->insuranceProvider;
-        }
+        $insuranceProvider = getInsuranceProvider($payment, $modelType);
 
         if ($quote?->insly_migrated && ! empty($payment->send_update_log_id)) {
             $insuranceProviderDetails = InsuranceProvider::where('id', $quote->insurance_provider_id)->first();

@@ -59,14 +59,5 @@ class TravelQuoteRepository extends BaseRepository
         return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::TRAVEL->value).'-quote', 'post', $dataArr);
     }
 
-    public function createPolicyIssuanceSchedule($quote, $insurer)
-    {
-        return PolicyIssuance::create([
-            'insurance_provider_id' => $insurer->id,
-            'model_type' => $quote->getMorphClass(),
-            'model_id' => $quote->id,
-            'quote_type' => self::TYPE,
-            'status' => PolicyIssuanceEnum::PENDING_STATUS,
-        ]);
-    }
+
 }

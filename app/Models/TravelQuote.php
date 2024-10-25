@@ -231,7 +231,7 @@ class TravelQuote extends Model implements AuditableContract
 
     public function policyIssuance()
     {
-        return $this->morphMany(PolicyIssuance::class, 'model');
+        return $this->morphOne(PolicyIssuance::class, 'model');
     }
 
 }
