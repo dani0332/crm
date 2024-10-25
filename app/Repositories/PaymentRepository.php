@@ -817,7 +817,7 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
                 foreach ($quotePayment->paymentSplits as $splitPayment) {
                     if (isset($splitPayment->payment_method) && $splitPayment->payment_method != null) {
                         $splitAmount = $paymentSplits->payment_amount;
-                        if($paymentSplits->sr_no === 1){
+                        if ($paymentSplits->sr_no === 1) {
                             $splitAmount = $paymentSplits->payment_amount + $quotePayment->discount_value;
                         }
                         [$priceWithoutVat, $vat] = app(SplitPaymentService::class)->calculatePriceAndVat($quotePayment->frequency, $quotePayment->total_price, $splitPayment->sr_no, $splitAmount, $modelType, $quote->id, count($paymentSplits));

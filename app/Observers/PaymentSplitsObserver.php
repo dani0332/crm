@@ -48,7 +48,7 @@ class PaymentSplitsObserver
         }
 
         $splitAmount = $paymentSplits->payment_amount;
-        if($paymentSplits->sr_no === 1){
+        if ($paymentSplits->sr_no === 1) {
             $splitAmount = $paymentSplits->payment_amount + $masterPayment->discount_value;
         }
 
