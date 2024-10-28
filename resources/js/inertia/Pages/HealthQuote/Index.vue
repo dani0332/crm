@@ -791,7 +791,9 @@ watch(() => {
           placeholder="Insurer Tax Invoice No"
         />
         <x-input
-          v-if="can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)"
+          v-if="
+            can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)
+          "
           v-model="filters.insurer_commission_tax_invoice_number"
           type="text"
           name="insurer_commission_tax_invoice_number"

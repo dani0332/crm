@@ -507,7 +507,9 @@ const validateDateRange = () => {
           placeholder="Insurer Tax Invoice No"
         />
         <x-input
-          v-if="can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)"
+          v-if="
+            can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)
+          "
           v-model="filters.insurer_commmission_invoice_number"
           type="text"
           name="insurer_commmission_invoice_number"
