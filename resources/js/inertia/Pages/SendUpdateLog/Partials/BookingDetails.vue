@@ -1108,13 +1108,15 @@ watch(
   },
 );
 
-watch(() => props.bookingDetails?.broker_invoice_number, (newValue, oldValue) => {
+watch(
+  () => props.bookingDetails?.broker_invoice_number,
+  (newValue, oldValue) => {
     bookingDetailsForm.broker_invoice_number = newValue;
   },
 );
 
-
-watch(() => props.bookingDetails?.insurer_commission_invoice_number,
+watch(
+  () => props.bookingDetails?.insurer_commission_invoice_number,
   (newValue, oldValue) => {
     bookingDetailsForm.insurer_commission_invoice_number = newValue;
   },
