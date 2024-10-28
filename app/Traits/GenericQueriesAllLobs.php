@@ -2,11 +2,13 @@
 
 namespace App\Traits;
 
+use App\Enums\DatabaseColumnsString;
 use App\Enums\DiscountTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentFrequency;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\PolicyIssuanceStatusEnum;
 use App\Enums\ProductionProcessTooltipEnum;
 use App\Enums\QuoteStatusEnum;
@@ -842,6 +844,25 @@ trait GenericQueriesAllLobs
         $startDate = isset($request[$dateType]) ? Carbon::parse($request[$dateType][0])->startOfDay() : $defaultDate;
         $endDate = isset($request[$dateType]) ? Carbon::parse($request[$dateType][1])->endOfDay() : $defaultDate;
         $query->whereBetween($columnName, [$startDate->format($dateFormat), $endDate->format($dateFormat)]);
+    }
+
+    public function adjustQueryByInsurerInvoiceFilters($query)
+    {
+        $request = request();
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_number')) {
+            $value = $request->get('insurer_tax_number');
+            $query->whereHas('payments', function ($query) use ($value) {
+                $query->where(DatabaseColumnsString::INSURER_TAX_INVOICE_NUMBER, $value);
+            });
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commmission_invoice_number')) {
+            $value = $request->get('insurer_commmission_invoice_number');
+            $query->whereHas('payments', function ($query) use ($value) {
+                $query->where(DatabaseColumnsString::INSURER_COMMISSION_TAX_INVOICE_NUMBER, $value);
+            });
+        }
     }
 
     public function getSendUpdatePaymentCode($sendUpdateLogId): string
