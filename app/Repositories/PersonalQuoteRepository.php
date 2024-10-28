@@ -88,7 +88,7 @@ class PersonalQuoteRepository extends BaseRepository
     public function fetchUploadDocument($id, $file, $data)
     {
         try {
-            
+
             info('fn: fetchUploadDocument called');
             $quoteType = '';
             $quoteDocumentService = app(QuoteDocumentService::class);
