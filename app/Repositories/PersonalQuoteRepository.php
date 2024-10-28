@@ -146,7 +146,7 @@ class PersonalQuoteRepository extends BaseRepository
                 'doc_uuid' => $docUuid,
                 'created_by_id' => auth()->id(),
             ];
-            info('Document array prepared for creation', $document);
+            // info('Document array prepared for creation', $document);
 
             try {
                 $insuranceProviderId = null;
