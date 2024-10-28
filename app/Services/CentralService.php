@@ -33,6 +33,7 @@ use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
 use App\Models\QuoteBatches;
 use App\Models\QuoteStatusLog;
+use App\Models\SendUpdateStatusLog;
 use App\Models\Team;
 use App\Models\TravelQuote;
 use App\Models\User;
@@ -256,6 +257,14 @@ class CentralService
 
             if ($priceWithVat > $payment->total_price && in_array($payment->payment_status_id, [PaymentStatusEnum::PAID, PaymentStatusEnum::CAPTURED])) {
                 $paymentData['payment_status_id'] = PaymentStatusEnum::PARTIALLY_PAID;
+            }
+
+            if ($payment->frequency == PaymentFrequency::UPFRONT && $payment->payment_status_id == PaymentStatusEnum::AUTHORISED) {
+                if ($payment->premium_authorized > 0 && $priceWithVat <= $payment->premium_authorized) {
+                    $paymentData['total_amount'] = $priceWithVat;
+                    // update total amount of first split payment
+                    $payment->paymentSplits()->first()->update(['payment_amount' => $priceWithVat]);
+                }
             }
 
             $payment->update($paymentData);
@@ -833,6 +842,7 @@ class CentralService
             QuoteStatusEnum::CancellationPending,
             QuoteStatusEnum::PolicyCancelled,
             QuoteStatusEnum::PolicyCancelledReissued,
+            QuoteStatusEnum::POLICY_BOOKING_QUEUED, QuoteStatusEnum::POLICY_BOOKING_FAILED,
         ];
 
         $isTransactionApproved = QuoteStatusLog::where('quote_type_id', $quoteTypeId)
@@ -850,5 +860,26 @@ class CentralService
         }
 
         return $quoteStatuses;
+    }
+
+    public function updateSendUpdateStatusLogs($sendUpdateLogId, $previousStatus, $currentStatus): void
+    {
+        SendUpdateStatusLog::create([
+            'send_update_log_id' => $sendUpdateLogId,
+            'previous_status' => $previousStatus,
+            'current_status' => $currentStatus,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+        ]);
+    }
+
+    public function checkStatusSUStatusLogs($sendUpdateId, $sendUpdateStatus): bool
+    {
+        $sendUpdateStatusCount = SendUpdateStatusLog::where('send_update_log_id', $sendUpdateId)
+            ->where('current_status', $sendUpdateStatus)
+            ->orWhere('previous_status', $sendUpdateStatus)
+            ->count();
+
+        return $sendUpdateStatusCount > 0;
     }
 }

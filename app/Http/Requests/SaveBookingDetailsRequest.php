@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\SendUpdateLogStatusEnum;
 use App\Models\SendUpdateLog;
+use App\Repositories\InsuranceProviderRepository;
 use App\Rules\NotZero;
+use App\Services\SendUpdateLogService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SaveBookingDetailsRequest extends FormRequest
@@ -43,7 +46,7 @@ class SaveBookingDetailsRequest extends FormRequest
             'price_vat_not_applicable' => 'sometimes|numeric',
             'total_price' => 'sometimes|numeric',
             'price_with_vat' => 'required|numeric',
-            'broker_invoice_number' => 'required|string',
+            'broker_invoice_number' => 'sometimes',
             'transaction_payment_status' => 'required|string',
             'commission_percentage' => 'required|numeric',
             'vat_on_commission' => 'required|numeric',
@@ -88,6 +91,13 @@ class SaveBookingDetailsRequest extends FormRequest
             $rules = array_diff_key($rules, array_flip($skipRules));
         }
 
+        [$insuranceProviderId, $planId] = app(SendUpdateLogService::class)->getEndorsementProviderDetails($this->sendUpdate);
+        $insuranceProvider = InsuranceProviderRepository::find($insuranceProviderId);
+
+        if ($insuranceProvider?->non_self_billing) {
+            $rules['broker_invoice_number'] = 'required|string';
+        }
+
         return $rules;
     }
 
@@ -111,6 +121,14 @@ class SaveBookingDetailsRequest extends FormRequest
             if ($validatedCatForPrices && ! $isAdditionalCommission && in_array($this->sendUpdate->quote_type_id, [QuoteTypeId::Business, QuoteTypeId::Health]) &&
                 request()->input('price_vat_applicable') == 0 && request()->input('price_vat_not_applicable') == 0) {
                 $validator->errors()->add('value', 'One of the fields, either "price vat applicable" or "price vat not applicable", must be greater than 0');
+            }
+
+            if ($this->sendUpdate->status == SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED && ! auth()->user()->can(PermissionsEnum::BOOKING_FAILED_EDIT)) {
+                $validator->errors()->add('error', 'Endorsement Booking Failed! Please contact finance');
+            }
+
+            if ($this->sendUpdate->status == SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED) {
+                return $validator->errors()->add('error', 'Update booking already in queued');
             }
         });
     }

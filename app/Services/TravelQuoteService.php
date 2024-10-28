@@ -344,6 +344,12 @@ class TravelQuoteService extends BaseService
         if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date) && ! isset($request->renewal_batch) && ! isset($request->previous_quote_policy_number)) {
             $this->query->whereBetween('tqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
+        if ($request->transaction_approved_dates) {
+            $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+            $startDate = Carbon::parse($request->transaction_approved_dates[0])->startOfDay()->format($dateFormat);
+            $endDate = Carbon::parse($request->transaction_approved_dates[1])->endOfDay()->format($dateFormat);
+            $this->query->whereBetween('tqr.transaction_approved_at', [$startDate, $endDate]);
+        }
         if (
             empty($request->email) && empty($request->code) && empty($request->first_name) &&
             empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)
@@ -450,7 +456,7 @@ class TravelQuoteService extends BaseService
                 if ($request[$item] == 'null') {
                     $this->query->whereNull($item);
                 } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
-                    if ($request[$item][0] == 'null') {
+                    if (in_array('-1', $request[$item]) || in_array(-1, $request[$item])) {
                         $this->query->whereNull('advisor_id');
                     } else {
                         $this->query->whereIn('advisor_id', $request[$item]);

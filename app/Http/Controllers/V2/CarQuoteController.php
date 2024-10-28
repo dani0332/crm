@@ -9,11 +9,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CarQuoteRequest;
 use App\Http\Requests\ChangeInsurerRequest;
 use App\Http\Requests\UpdateCarQuotePlanDetailsRequest;
+use App\Jobs\NBEventFollowup;
 use App\Models\QuoteBatches;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\UserRepository;
 use App\Services\CarPlanService;
 use App\Services\CarQuoteService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class CarQuoteController extends Controller
@@ -208,5 +210,19 @@ class CarQuoteController extends Controller
         $carPlans = app(CarPlanService::class)->getNonQuotedCarPlans($insuranceProviderId, $quotePlanId);
 
         return response()->json($carPlans);
+    }
+
+    public function sendNBEventFollowup(Request $request)
+    {
+
+        if (count($request->uuids) < 1) {
+            return back()->with('error', 'No UUID provided');
+        }
+
+        foreach ($request->uuids as $uuid) {
+            NBEventFollowup::dispatch($uuid, $request->followup_type)->delay(Carbon::now()->addMinutes(2));
+        }
+
+        return back()->with('success', 'Event Followup sending successful');
     }
 }

@@ -50,9 +50,9 @@ class SendPaymentEmail extends Command
      */
     public function handle()
     {
-        $emailEnable = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION)->first();
+        $emailEnable = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION_EMAIL)->first();
         if ($emailEnable && $emailEnable->value == 0) {
-            info('Payment Email is Disable');
+            info('ENABLE_PAYMENT_NOTIFICATION_EMAIL is Disable');
 
             return false;
         }
@@ -187,5 +187,4 @@ class SendPaymentEmail extends Command
             }
         });
     }
-
 }
