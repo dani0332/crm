@@ -51,10 +51,14 @@ class SendUpdateValidationRequest extends FormRequest
                 $validator->errors()->add('error', 'Update booking already in queued');
             }
 
+            $checkTransactionApprovedInSUStatusLogs = app(CentralService::class)->checkStatusSUStatusLogs($sendUpdateLog->id, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
+
             if ($sendUpdateLog->status == SendUpdateLogStatusEnum::UPDATE_BOOKED) {
                 return $validator->errors()->add('error', 'Update already booked');
             } elseif ($sendUpdateLog->status == SendUpdateLogStatusEnum::REQUEST_IN_PROGRESS) {
-                $validator->errors()->add('error', 'Transaction approval is required');
+                if (! $checkTransactionApprovedInSUStatusLogs) {
+                    $validator->errors()->add('error', 'Transaction approval is required');
+                }
             }
 
             $sendUpdateCategoryCode = $sendUpdateLog?->category->code ?? '';
@@ -144,8 +148,6 @@ class SendUpdateValidationRequest extends FormRequest
                     SendUpdateLogStatusEnum::UPDATE_BOOKING_FAILED,
                     SendUpdateLogStatusEnum::UPDATE_BOOKING_QUEUED,
                 ];
-
-                $checkTransactionApprovedInSUStatusLogs = app(CentralService::class)->checkStatusSUStatusLogs($sendUpdateLog->id, SendUpdateLogStatusEnum::TRANSACTION_APPROVED);
 
                 if ($sendUpdateCategoryCode == SendUpdateLogStatusEnum::EF && ! $checkTransactionApprovedInSUStatusLogs &&
                     ! in_array($sendUpdateLog->status, [SendUpdateLogStatusEnum::TRANSACTION_APPROVED, SendUpdateLogStatusEnum::UPDATE_SENT_TO_CUSTOMER]) &&

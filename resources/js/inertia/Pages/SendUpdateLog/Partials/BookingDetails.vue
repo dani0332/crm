@@ -1114,6 +1114,13 @@ watch(
     bookingDetailsForm.broker_invoice_number = newValue;
   },
 );
+
+watch(
+  () => props.bookingDetails?.insurer_commission_invoice_number,
+  (newValue, oldValue) => {
+    bookingDetailsForm.insurer_commission_invoice_number = newValue;
+  },
+);
 </script>
 
 <template>

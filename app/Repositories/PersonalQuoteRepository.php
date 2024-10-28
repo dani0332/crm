@@ -160,9 +160,15 @@ class PersonalQuoteRepository extends BaseRepository
 
                     if (request()->is_send_update && in_array($documentType->code, $taxInvoiceDocuments) && count(array_intersect($taxInvoiceDocuments, $quoteDocuments)) == 0) {
                         if ($insuranceProviderId) {
-                            app(CentralService::class)->updateSendUpdateStatusLogs($quote->id, $quote->status, SendUpdateLogStatusEnum::UPDATE_ISSUED);
-                            $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_ISSUED]);
-                            info('Send Update status updated to UPDATE_ISSUED - Ref: '.$quote->code);
+                            $checkTransactionApprovedInSUStatusLogs = app(CentralService::class)->checkStatusSUStatusLogs($quote->id, SendUpdateLogStatusEnum::UPDATE_ISSUED);
+                            if ($checkTransactionApprovedInSUStatusLogs) {
+                                app(SendUpdateLogService::class)->generateBrokerInvoiceNumberForSU($quote);
+                            } else {
+                                app(CentralService::class)->updateSendUpdateStatusLogs($quote->id, $quote->status, SendUpdateLogStatusEnum::UPDATE_ISSUED);
+                                $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_ISSUED]);
+                                info('Send Update status updated to UPDATE_ISSUED - Ref: '.$quote->code);
+                            }
+
                         }
                     }
 
