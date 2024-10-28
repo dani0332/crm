@@ -88,11 +88,7 @@ class PersonalQuoteRepository extends BaseRepository
     public function fetchUploadDocument($id, $file, $data)
     {
         try {
-            $insuranceProviderId = null;
-            if (request()->is_send_update) {
-                [$insuranceProviderId] = app(SendUpdateLogService::class)->getEndorsementProviderDetails($quote);
-            }
-
+            
             info('fn: fetchUploadDocument called');
             $quoteType = '';
             $quoteDocumentService = app(QuoteDocumentService::class);
