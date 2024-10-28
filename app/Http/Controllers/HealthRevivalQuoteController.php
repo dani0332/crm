@@ -190,6 +190,6 @@ class HealthRevivalQuoteController extends Controller
         $quote = HealthRevivalQuoteRepository::getBy('uuid', $uuid);
         $quote->update(request()->all());
 
-        return redirect()->route('healthrevival-quotes-show', $quote->uuid);
+        return redirect()->route('health-revival-quotes-show', $quote->uuid);
     }
 }

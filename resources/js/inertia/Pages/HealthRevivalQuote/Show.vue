@@ -1180,13 +1180,13 @@ const onCreateDuplicate = isValid => {
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
         </x-button>
-        <Link :href="route('healthrevival-quotes-list')" preserve-scroll>
+        <Link :href="route('health-revival-quotes-list')" preserve-scroll>
           <x-button size="sm" color="primary" tag="div">
             Health Revival List
           </x-button>
         </Link>
 
-        <Link :href="route('healthrevival-quotes-edit', quote.uuid)">
+        <Link :href="route('health-revival-quotes-edit', quote.uuid)">
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
       </template>

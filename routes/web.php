@@ -192,10 +192,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('revival/{uuid}', [CarRevivalQuoteController::class, 'show'])->name('carrevival-quotes-show');
 
             // health revival
-            Route::get('health-revival', [HealthRevivalQuoteController::class, 'index'])->name('healthrevival-quotes-list');
-            Route::get('health-revival/{uuid}', [HealthRevivalQuoteController::class, 'show'])->name('healthrevival-quotes-show');
-            Route::get('health-revival/{uuid}/edit', [HealthRevivalQuoteController::class, 'edit'])->name('healthrevival-quotes-edit');
-            Route::put('health-revival/{uuid}', [HealthRevivalQuoteController::class, 'update'])->name('healthrevival-quotes-update');
+            Route::get('health-revival', [HealthRevivalQuoteController::class, 'index'])->name('health-revival-quotes-list');
+            Route::get('health-revival/{uuid}', [HealthRevivalQuoteController::class, 'show'])->name('health-revival-quotes-show');
+            Route::get('health-revival/{uuid}/edit', [HealthRevivalQuoteController::class, 'edit'])->name('health-revival-quotes-edit');
+            Route::put('health-revival/{uuid}', [HealthRevivalQuoteController::class, 'update'])->name('health-revival-quotes-update');
         });
 
         if (in_array(quoteTypeCode::Life, newUi())) {

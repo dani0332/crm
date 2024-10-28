@@ -288,7 +288,7 @@ class HandleInertiaRequests extends Middleware
                         ->addIf(
                             auth()->user()->can(PermissionsEnum::HEALTH_REVIVAL_QUOTES_LIST),
                             'Health Revival Quotes',
-                            route('healthrevival-quotes-list'),
+                            route('health-revival-quotes-list'),
                             fn ($s) => $s->attributes(['icon' => 'health'])
                         ),
                 )

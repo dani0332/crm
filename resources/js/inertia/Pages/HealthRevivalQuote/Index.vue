@@ -147,7 +147,7 @@ function onSubmit(isValid) {
         (filters[key] === '' || filters[key].length === 0) &&
         delete filters[key],
     );
-    router.visit(route('healthrevival-quotes-list'), {
+    router.visit(route('health-revival-quotes-list'), {
       method: 'get',
       data: filters,
       preserveState: true,
@@ -161,7 +161,7 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
-  router.visit(route('healthrevival-quotes-list'), {
+  router.visit(route('health-revival-quotes-list'), {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -455,7 +455,7 @@ onMounted(() => {});
     >
       <template #item-code="{ code, uuid }">
         <Link
-          :href="route('healthrevival-quotes-show', uuid)"
+          :href="route('health-revival-quotes-show', uuid)"
           class="text-primary-500 hover:underline"
         >
           {{ code }}

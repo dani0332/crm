@@ -120,7 +120,7 @@ function onSubmit(isValid) {
   quoteForm.clearErrors();
 
   const method = 'put';
-  const url = route('healthrevival-quotes-update', props.quote.uuid);
+  const url = route('health-revival-quotes-update', props.quote.uuid);
   const options = {
     onError: errors => {
       quoteForm.setError(errors);
@@ -145,7 +145,7 @@ function onSubmit(isValid) {
         {{ isEdit ? 'Edit' : 'Create' }} Health Revival
       </h2>
       <div>
-        <Link :href="route('healthrevival-quotes-list')">
+        <Link :href="route('health-revival-quotes-list')">
           <x-button size="sm" color="#1d83bc" tag="div">
             Health Revival List
           </x-button>
