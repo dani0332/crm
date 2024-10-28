@@ -3173,6 +3173,24 @@ const isSplitDeleteEnabled = computed(() => {
 
   return false;
 });
+
+const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
+  const eligibleStatuses = [
+    props.paymentStatusEnum.PAID,
+    props.paymentStatusEnum.CAPTURED,
+    props.paymentStatusEnum.AUTHORISED,
+    props.paymentStatusEnum.REFUNDED,
+    props.paymentStatusEnum.PARTIAL_CAPTURED,
+    props.paymentStatusEnum.PARTIALLY_PAID,
+  ];
+
+  return (
+    isSplitDeleteEnabled &&
+    item.total_payments == splitIndex + 1 &&
+    !eligibleStatuses.includes(splitPayment.payment_status_id) &&
+    splitPayment.sr_no > 1
+  );
+}
 </script>
 
 <template>
@@ -3691,19 +3709,7 @@ const isSplitDeleteEnabled = computed(() => {
                               >Copy Payment Link</x-button
                             >
                             <x-button
-                              v-if="
-                                isSplitDeleteEnabled &&
-                                item.total_payments == splitIndex + 1 &&
-                                ![
-                                  paymentStatusEnum.PAID,
-                                  paymentStatusEnum.CAPTURED,
-                                  paymentStatusEnum.AUTHORISED,
-                                  paymentStatusEnum.REFUNDED,
-                                  paymentStatusEnum.PARTIAL_CAPTURED,
-                                  paymentStatusEnum.PARTIALLY_PAID,
-                                ].includes(splitPayment.payment_status_id) &&
-                                splitPayment.sr_no > 1
-                              "
+                              v-if="canDeleteSplitPayment(item, splitIndex, splitPayment)"
                               size="xs"
                               color="red"
                               class="ml-2"
