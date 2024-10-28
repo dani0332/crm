@@ -735,7 +735,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::ALLIANCE_TRAVEL_POLICY_ISSUANCE_AUTOMATION_ENABLED],
+            ['key_name' => ApplicationStorageEnums::ALLIANCE_TRAVEL_POLICY_ISSUANCE_ENABLED],
             [
                 'value' => 1,
                 'is_active' => 1,
@@ -744,7 +744,7 @@ class ApplicationStorageSeeder extends Seeder
             ],
         );
         ApplicationStorage::firstOrCreate(
-            ['key_name' => ApplicationStorageEnums::ATTEMPT_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE_AUTOMATION],
+            ['key_name' => ApplicationStorageEnums::RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE],
             [
                 'value' => 1,
                 'is_active' => 1,

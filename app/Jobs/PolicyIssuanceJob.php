@@ -18,6 +18,9 @@ class PolicyIssuanceJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    private const TIMEOUT_MESSAGE = 'cURL error 28';
+    // 28 is the cURL error code for timeout
+    private $className = null;
     private mixed $process;
 
     /**
@@ -26,6 +29,7 @@ class PolicyIssuanceJob implements ShouldQueue
     public function __construct($process)
     {
         $this->process = $process;
+        $this->className = basename(__CLASS__);
     }
 
     /**
@@ -33,44 +37,63 @@ class PolicyIssuanceJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->process->update(['status' => PolicyIssuanceEnum::PROCESSING_STATUS]);
-        info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
+        info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Started');
 
-        $quoteType = $this->process->quote_type;
-        $insuranceProvider = $this->process->insuranceProvider;
-        if (! $insuranceProvider) {
-            info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Insurance Provider not found');
+        if ($this->isProcessable($this->process)) {
 
-            return;
-        }
+            $this->process->update(['status' => PolicyIssuanceEnum::PROCESSING_STATUS]);
+            info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
 
-        $insuranceProviderAutomation = PolicyIssuanceFactory::make($quoteType, $insuranceProvider->code);
-        if (! $insuranceProviderAutomation) {
-            info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - '.$insuranceProvider->text.' Automation not found');
+            $quoteType = $this->process->quote_type;
+            $insuranceProvider = $this->process->insuranceProvider;
 
-            return;
-        }
+            if (! $insuranceProvider) {
+                info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Insurance Provider not found');
 
-        $response = $insuranceProviderAutomation->handle($this->process);
-        info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' Response : '.json_encode($response));
-        if (! $response['status']) {
-            $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $response['error']])]);
-            info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.json_encode($response['error']));
+                return;
+            }
+
+            $insuranceProviderAutomation = PolicyIssuanceFactory::make($quoteType, $insuranceProvider->code);
+            if ($insuranceProviderAutomation) {
+                $response = $insuranceProviderAutomation->handle($this->process);
+                info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' Response : '.json_encode($response));
+                if (! $response['status']) {
+                    $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $response['error']])]);
+                    info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.json_encode($response['error']));
+                } else {
+                    $this->process->update(['status' => PolicyIssuanceEnum::COMPLETED_STATUS]);
+                    info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
+                }
+
+            } else {
+                info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - '.$insuranceProvider->text.' Automation not found');
+            }
+
         } else {
-            $this->process->update(['status' => PolicyIssuanceEnum::COMPLETED_STATUS]);
-            info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status);
+            info('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' Status : '.$this->process->status.' is skipped.');
         }
+
+        info('cmd:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' completed');
     }
 
     public function failed(Throwable $exception)
     {
-        $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
-
-        Log::error('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code .' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.$exception->getMessage());
+        $message = $exception->getMessage();
+        if (str_contains($message, self::TIMEOUT_MESSAGE)) {
+            $this->process->update(['status' => PolicyIssuanceEnum::TIMEOUT_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
+        } else {
+            $this->process->update(['status' => PolicyIssuanceEnum::FAILED_STATUS, 'message' => json_encode(['error' => $exception->getMessage()])]);
+        }
+        Log::error('job:'.$this->className.' fn:'.__FUNCTION__.' Quote :  '.$this->process->model->code.' - Process ID : '.$this->process->id.' updated to : '.$this->process->status.' Error : '.$exception->getMessage());
     }
 
     public function middleware()
     {
         return [(new WithoutOverlapping($this->process->model->code.'-'.Carbon::now()->format('YmdHi')))->dontRelease()];
+    }
+
+    private function isProcessable($process)
+    {
+        return in_array($process->status, [PolicyIssuanceEnum::PENDING_STATUS, PolicyIssuanceEnum::TIMEOUT_STATUS]);
     }
 }

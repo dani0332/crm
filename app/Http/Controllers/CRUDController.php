@@ -2284,7 +2284,7 @@ class CRUDController extends Controller
         }
     }
 
-    public function markPolicyIssuancePolicyPurchased($quote, $modelType)
+    /*public function markPolicyIssuancePolicyPurchased($quote, $modelType)
     {
         info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$quote->code.'  Quote Type :  '.$modelType.' started');
         if (
@@ -2314,5 +2314,5 @@ class CRUDController extends Controller
             info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$quote->code.'  Quote Type :  '.$modelType.' criteria not found for policy issuance');
         }
         info('job:'.basename(__CLASS__).' fn:'.__FUNCTION__.' Quote :  '.$quote->code.' ended');
-    }
+    }*/
 }

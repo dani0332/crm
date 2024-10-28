@@ -15,6 +15,7 @@ final class PolicyIssuanceEnum extends Enum
 {
     const PENDING_STATUS = 'pending';
     const PROCESSING_STATUS = 'processing';
+    const TIMEOUT_STATUS = 'timeout';
     const COMPLETED_STATUS = 'completed';
     const FAILED_STATUS = 'failed';
 }
