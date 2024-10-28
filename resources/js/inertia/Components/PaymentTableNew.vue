@@ -3159,9 +3159,12 @@ const openAmlVerificationModal = () => {
 
 // verifiy if split payment deletion is enabled
 const isSplitDeleteEnabled = computed(() => {
-  const isNotUpfront = paymentMethodsForm.frequency !== paymentFrequencyEnum.UPFRONT;
+  const isNotUpfront =
+    paymentMethodsForm.frequency !== paymentFrequencyEnum.UPFRONT;
   const hasEditPermission = can(permissionEnum.PaymentsEdit);
-  const isPolicyNotBooked = props.quoteRequest.quote_status_id !== page.props.quoteStatusEnum.PolicyBooked;
+  const isPolicyNotBooked =
+    props.quoteRequest.quote_status_id !==
+    page.props.quoteStatusEnum.PolicyBooked;
 
   if (props.sendUpdate && isNotUpfront && hasEditPermission) {
     return true;
@@ -3190,7 +3193,7 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
     !eligibleStatuses.includes(splitPayment.payment_status_id) &&
     splitPayment.sr_no > 1
   );
-}
+};
 </script>
 
 <template>
@@ -3709,7 +3712,13 @@ const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
                               >Copy Payment Link</x-button
                             >
                             <x-button
-                              v-if="canDeleteSplitPayment(item, splitIndex, splitPayment)"
+                              v-if="
+                                canDeleteSplitPayment(
+                                  item,
+                                  splitIndex,
+                                  splitPayment,
+                                )
+                              "
                               size="xs"
                               color="red"
                               class="ml-2"
