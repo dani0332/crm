@@ -18,7 +18,6 @@ use App\Jobs\SendUpdateSageJob;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\QuoteRequestEntityMapping;
-use App\Models\QuoteStatus;
 use App\Models\QuoteStatusLog;
 use App\Models\QuoteTag;
 use App\Models\SageApiLog;
@@ -632,13 +631,13 @@ class SageApiService
         // and either the previous_quote_status_id or current_quote_status_id matches the target status ID
 
         $isPolicySentLogExists = QuoteStatusLog::where('quote_request_id', $quote->id)
-        ->where(function($query){
-            $query->where('previous_quote_status_id', QuoteStatusEnum::PolicySentToCustomer)
-                  ->orWhere('current_quote_status_id', QuoteStatusEnum::PolicySentToCustomer);
-        })
-        ->exists();
+            ->where(function ($query) {
+                $query->where('previous_quote_status_id', QuoteStatusEnum::PolicySentToCustomer)
+                    ->orWhere('current_quote_status_id', QuoteStatusEnum::PolicySentToCustomer);
+            })
+            ->exists();
 
-        if (!$isPolicySentLogExists) {
+        if (! $isPolicySentLogExists) {
             info('################################## Send Customer Documents to customer after booking of : '.$quote->code.' ##################################');
             // dispath job to send email
             SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
