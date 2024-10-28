@@ -41,6 +41,7 @@ const tableHeader = [
   { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
   { text: 'DATE OF BIRTH', value: 'dob' },
   { text: 'LEAD SOURCE', value: 'source' },
+  { text: 'ADVISOR REQUESTED', value: 'sic_advisor_requested' },
   { text: 'NATIONALITY', value: 'nationality_id_text' },
   { text: 'UAE LICENCE HELD FOR', value: 'uae_license_held_for_id_text' },
   { text: 'CAR MAKE', value: 'car_make_id_text' },
@@ -231,6 +232,7 @@ const filters = reactive({
   page: 1,
   paid_at_start: '',
   paid_at_end: '',
+  sic_advisor_requested: 'All',
   segment_filter: 'all',
   teams: [],
   transaction_approved_dates: page.props.transaction_approved_dates || '',
@@ -760,6 +762,17 @@ const exportPUAUrl = () => {
           :options="quoteSegments"
           :single="true"
         />
+        <x-select
+          v-model="filters.sic_advisor_requested"
+          label="Advisor Requested"
+          placeholder="Select any option"
+          :options="[
+            { value: 'All', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+          class="w-full"
+        />
         <DatePicker
           v-model="filters.payment_due_date"
           label="Payment Due Date"
@@ -945,6 +958,13 @@ const exportPUAUrl = () => {
         <div class="text-center">
           <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
             {{ is_ecommerce ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
+      </template>
+      <template #item-sic_advisor_requested="{ sic_advisor_requested }">
+        <div class="text-center">
+          <x-tag size="sm" :color="sic_advisor_requested ? 'success' : 'error'">
+            {{ sic_advisor_requested ? 'Yes' : 'No' }}
           </x-tag>
         </div>
       </template>
