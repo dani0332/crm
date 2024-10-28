@@ -138,6 +138,7 @@ class HealthEmailService extends BaseService
                 'networkLinks' => array_map(fn ($item) => (array) $item, $currentPlan?->benefits?->networkLink ?? []),
                 'mafLink' => $currentPlan?->mafLink,
             ],
+            'isCampaign' => getAppStorageValueByKey(ApplicationStorageEnums::IS_CAMPAIGN) == '1',
         ];
 
         if ($advisor) {
