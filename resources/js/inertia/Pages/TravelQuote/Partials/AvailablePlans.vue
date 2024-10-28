@@ -82,7 +82,6 @@ const onUpdatePlan = () => {
       },
     });
 };
-
 </script>
 
 <template>
@@ -165,13 +164,10 @@ const onUpdatePlan = () => {
               <dt class="font-bold">Total Price with VAT:</dt>
               <dd>AED: {{ totalPremiumWithVat.toFixed(2) }}</dd>
             </div>
-            <div
-              class="flex justify-end"
-            >
+            <div class="flex justify-end">
               <x-button
                 v-if="
-                  (access.travelManagerCanEdit ||
-                    access.travelAdvisorCanEdit)
+                  access.travelManagerCanEdit || access.travelAdvisorCanEdit
                 "
                 color="primary"
                 class="mt-5"
