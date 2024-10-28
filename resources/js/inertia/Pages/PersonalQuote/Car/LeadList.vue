@@ -26,10 +26,16 @@ const rolesEnum = page.props.rolesEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const quoteSegments = page.props.quoteSegments;
+const cleanObj = obj => useCleanObj(obj);
 
 const createLead = reactive({
   modal: false,
   type: '',
+});
+
+const serverOptions = ref({
+  page: 1,
+  sortType: 'desc',
 });
 
 const tableHeader = [
@@ -79,6 +85,11 @@ const tableHeader = [
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'QUOTE LINK', value: 'quote_link' },
   { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
+  {
+    text: 'Previous Policy Premium',
+    value: 'previous_quote_policy_premium',
+    sortable: true,
+  },
   { text: 'Renewal Batch', value: 'renewal_batch' },
 ];
 
@@ -296,13 +307,14 @@ function onSubmit(isValid) {
       return;
     }
     filters.page = 1;
+    serverOptions.value.page = 1;
     let data = { ...filters };
     Object.keys(data).forEach(
       key => (data[key] === '' || data[key]?.length === 0) && delete data[key],
     );
     router.visit(route('car.index'), {
       method: 'get',
-      data: data,
+      data: { ...data, ...serverOptions.value },
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loader.table = true),
@@ -437,6 +449,22 @@ const readOnlyMode = reactive({
 });
 onMounted(() => {
   setQueryStringFilters();
+  let filtersCleaned = cleanObj(filters);
+
+  if (filtersCleaned.sortBy) {
+    serverOptions.value.sortBy = filtersCleaned.sortBy;
+    delete filtersCleaned.sortBy;
+  }
+
+  if (filtersCleaned.sortType) {
+    serverOptions.value.sortType = filtersCleaned.sortType;
+    delete filtersCleaned.sortType;
+  }
+
+  if (filtersCleaned.page) {
+    serverOptions.value.page = filtersCleaned.page;
+    delete filtersCleaned.page;
+  }
   readOnlyMode.isDisable = !can(permissionsEnum.All_QUOTES_VIEWONLY_ACCESS);
 });
 
@@ -496,6 +524,14 @@ const exportPUAUrl = () => {
   let url = '/pua-leads-export';
   return url;
 };
+
+watch(
+  () => serverOptions.value,
+  (newValue, oldValue) => {
+    if (oldValue !== newValue) onSubmit(true);
+  },
+  { deep: true },
+);
 </script>
 
 <template>
@@ -902,6 +938,7 @@ const exportPUAUrl = () => {
     <x-divider class="my-4" />
     <DataTable
       v-model:items-selected="quotesSelected"
+      v-model:server-options="serverOptions"
       table-class-name="tablefixed"
       :loading="loader.table"
       :headers="filteredTableHeader"

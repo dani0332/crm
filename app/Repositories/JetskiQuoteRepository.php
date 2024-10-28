@@ -119,8 +119,12 @@ class JetskiQuoteRepository extends BaseRepository
         ])->when(auth()->user()->hasRole(RolesEnum::JetskiAdvisor), function ($query) {
             $query->where('advisor_id', auth()->user()->id);
         })->filter(! $forExport)
-            ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc');
+            ->withFakeLeadCriteria();
+            // ->orderBy('created_at', 'desc');
+
+        if (request()->sortBy) {
+            $query->orderBy('personal_quotes.'.request()->sortBy ?? 'personal_quotes.created_at', request()->sortType ?? 'desc');
+        }
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
     }

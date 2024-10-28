@@ -470,6 +470,12 @@ class TravelQuoteService extends BaseService
         $this->query->filterBySegment();
         $this->adjustQueryByDateFilters($this->query, 'tqr');
 
+        if (isset($request->sortBy) && $request->sortBy != '') {
+            return $this->query->orderBy($request->sortBy, $request->sortType);
+        } else {
+            return $this->query->orderBy('tqr.created_at', 'DESC');
+        }
+
         $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';

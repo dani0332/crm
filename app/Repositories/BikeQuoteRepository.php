@@ -212,7 +212,10 @@ class BikeQuoteRepository extends BaseRepository
             ->withFakeLeadCriteria();
 
         $this->adjustQueryByDateFilters($query, 'personal_quotes');
-        $this->orderBy('personal_quotes.created_at', 'desc');
+        if (request()->sortBy) {
+            $query->orderBy('personal_quotes.'.request()->sortBy ?? 'personal_quotes.created_at', request()->sortType ?? 'desc');
+        }
+        // $this->orderBy('personal_quotes.created_at', 'desc');
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
     }
