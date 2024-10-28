@@ -190,7 +190,7 @@ class PersonalQuoteRepository extends BaseRepository
                 return ['status' => false, 'message' => $exception->getMessage() ?? 'Error uploading file'];
             }
         } catch (\Exception $exception) {
-            Log::error('Document Upload Error: '.$exception->getMessage());
+            Log::error('Document Upload Error - UUID: '.$quote->code.' - Message: '.$exception->getMessage());
 
             return ['status' => true, 'message' => 'Document upload failed, please try again'];
         }
