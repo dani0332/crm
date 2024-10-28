@@ -683,11 +683,11 @@ class ReportService extends BaseService
             }
 
             if (isset($request->todayDate)) {
-                $query->having('expiry_days', '=', 1);
+                $query->where(DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW())"), '=', 1);
             }
 
             if (isset($request->tomorrowDate)) {
-                $query->having('expiry_days', '=', 2);
+                $query->where(DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW())"), '=', 2);
             }
 
             if (isset($request->thisWeek)) {
