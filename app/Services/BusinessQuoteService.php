@@ -43,7 +43,8 @@ class BusinessQuoteService extends BaseService
                 'bqr.last_name',
                 'bqr.email',
                 'bqr.mobile_no',
-                'bqr.company_name',
+                'bqr.company_name AS business_company_name',
+                'bqr.company_address AS business_company_address',
                 'bqr.brief_details',
                 'bqr.number_of_employees',
                 'bqr.business_type_of_insurance_id',
@@ -229,6 +230,8 @@ class BusinessQuoteService extends BaseService
             'numberOfEmployees' => $request->number_of_employees,
             'mobileNo' => $request->mobile_no,
             'companyName' => $request->company_name,
+            'companyAddress' => $request->company_address,
+            'gender' => $request->gender,
             'briefDetails' => $request->brief_details,
             'premium' => $request->premium,
             'businessTypeOfInsuranceId' => $request->business_type_of_insurance_id,
@@ -238,7 +241,8 @@ class BusinessQuoteService extends BaseService
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
-
+        \Log::debug('capi request');
+        \Log::debug($dataArr);
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-business-quote', $dataArr);
 
         if (isset($response->quoteUID)) {
@@ -441,6 +445,7 @@ class BusinessQuoteService extends BaseService
             $businessQuote->first_name = $request->first_name;
             $businessQuote->last_name = $request->last_name;
             $businessQuote->company_name = $request->company_name;
+            $businessQuote->company_address = $request->company_address;
             $businessQuote->gender = $request->gender;
             $businessQuote->brief_details = $request->brief_details;
             $businessQuote->premium = $request->premium;
@@ -468,7 +473,8 @@ class BusinessQuoteService extends BaseService
             'last_name' => 'input|text|required',
             'email' => 'input|email|required',
             'mobile_no' => 'input|title|number|required',
-            'company_name' => 'input|text|required',
+            'company_name' => 'input|text',
+            'company_address' => 'input|text',
             'next_followup_date' => 'input|date|title|range',
             'transapp_code' => 'readonly|none',
             'source' => 'input|text',

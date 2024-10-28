@@ -38,6 +38,8 @@ class YachtQuoteRepository extends BaseRepository
             'email' => $data['email'],
             'firstName' => $data['first_name'],
             'lastName' => $data['last_name'],
+            'companyName' => $data['company_name'],
+            'companyAddress' => $data['company_address'],
             'boatDetails' => $data['boat_details'],
             'engineDetails' => $data['engine_details'],
             'claimExperience' => $data['claim_experience'],
@@ -65,7 +67,7 @@ class YachtQuoteRepository extends BaseRepository
         return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->byQuoteTypeId(QuoteTypes::YACHT->id())->where('uuid', $uuid)->firstOrFail();
 
-            $quoteData = Arr::only($data, ['first_name', 'last_name', 'email', 'mobile_no', 'asset_value']);
+            $quoteData = Arr::only($data, ['first_name', 'last_name', 'email', 'mobile_no', 'company_name', 'company_address', 'asset_value']);
             $quoteData['updated_by_id'] = Auth::user()->id;
 
             $quote->update($quoteData);

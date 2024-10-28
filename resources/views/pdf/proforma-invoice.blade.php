@@ -391,6 +391,7 @@
     $vat = 0;
     $vatPercentage = ApplicationStorage::where('key_name', ApplicationStorageEnums::VAT_VALUE)->first()?->value;
     $entity = null;
+    $quoteType = explode('-', $quote->code)[0];
 
     if($isRequestFromSendUpdateLogPage){
         $sendUpdateLog = $proformaPaymentRequest->sendUpdateLog;
@@ -400,7 +401,7 @@
 
     }else{
 
-        if(explode('-', $quote->code)[0] == QuoteTypeShortCode::CAR){
+        if($quoteType == QuoteTypeShortCode::CAR){
             $carQuoteDetails = $quote->carQuoteRequestDetail;
             $subTotal =  $carQuoteDetails->actual_premium;
             $vat =  $carQuoteDetails->premium_vat;
@@ -410,7 +411,7 @@
             $vat =  $proformaPaymentRequest->price_vat;
             $totalAmount =  $subTotal + $vat;
         }
-        if(explode('-', $quote->code)[0] == QuoteTypeShortCode::BUS){
+        if($quoteType == QuoteTypeShortCode::BUS){
             $entity = $quote?->quoteRequestEntityMapping?->entity;
         }
 
@@ -581,11 +582,18 @@
             <tr>
 
                 <td class="customer">
-                    {{--   temp code to be removed in next deployment --}}
-                    @if($quote->code != 'BUS-AD8GZJ6Y')
+                    @if(in_array($quoteType, [QuoteTypeShortCode::BUS, QuoteTypeShortCode::CAR, QuoteTypeShortCode::HOM, QuoteTypeShortCode::YAC]))
+                        {{ $quote->company_name ?? '' }} </br>
+                        {{ $quote->company_address ?? '' }} </br>
+                    @elseif($entity)
+                        {{ $entity->company_name ?? '' }} </br>
+                        {{ $entity->company_address ?? '' }} </br>
+                    @elseif($customerName)
                         {{ $customerName }} </br>
+                    @else
+                        {{ $customerDetail->employer_company_name ?? '' }}
+                        {{ $quote->address ?? '' }}
                     @endif
-
                 </td>
 
                 <th class="date">
@@ -597,25 +605,6 @@
                 </td>
 
             </tr>
-            <tr>
-
-                <td class="customer">
-                    @if($entity)
-                        {{ $entity?->company_name }} </br>
-                    {{ $entity?->company_address }} </br>
-                    @elseif(explode('-', $quote->code)[0] == QuoteTypeShortCode::BUS)
-                        {{ $quote?->company_name }} </br>
-                    @else
-                        {{ $customerDetail?->employer_company_name }}
-                        {{ $quote->address ?? '' }}
-                    @endif
-
-                </td>
-            </tr>
-            <tr>
-                <td class="customer"></td>
-            </tr>
-
             </tbody>
         </table>
 
