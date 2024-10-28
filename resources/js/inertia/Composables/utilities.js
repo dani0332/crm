@@ -368,7 +368,8 @@ export const getQuoteTypeId = (quoteTypes, quoteType) => {
 }
 
 // Function to log quote export and open the URL
-export const logQuoteExportAndExport = (payload, url) => {
+export const logAndExportQuotes = async(payload) => {
+  payload.ip_address = await getIp();
   axios
     .post("/quotes/export-logs/create", payload)
     .then(res => {
@@ -380,4 +381,14 @@ export const logQuoteExportAndExport = (payload, url) => {
     .finally(() => {
       window.open(payload.url);
     });
+}
+
+// Function to get the IP address
+export const getIp = async () => {
+  try {
+    const res = await axios.get("https://api.ipify.org?format=json");
+    return res.data.ip;
+  } catch (err) {
+    return null;
+  }
 }

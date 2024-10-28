@@ -210,7 +210,7 @@ const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'cycle');
   const payload = {quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Cycle'), url: url + '?' + new URLSearchParams(data).toString()};
-  logQuoteExportAndExport(payload);
+  logAndExportQuotes(payload);
 };
 
 function setQueryStringFilters() {

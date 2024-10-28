@@ -132,7 +132,7 @@ const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'home');
   const payload = {quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Home'), url: url + '?' + new URLSearchParams(data).toString()};
-  logQuoteExportAndExport(payload);
+  logAndExportQuotes(payload);
 };
 
 function onSubmit(isValid) {

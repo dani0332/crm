@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\QuoteExportLogService;
-use Illuminate\Http\Request;
+use App\Http\Requests\QuoteExportLogRequest;
 
 class QuoteExportLogController extends Controller
 {
@@ -19,17 +19,13 @@ class QuoteExportLogController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function store(Request $request)
+    public function store(QuoteExportLogRequest $request)
     {
-        $data = $request->validate([
-            'quote_type_id' => 'required|exists:quote_type,id',
-            'url' => 'required',
-        ]);
+        $quoteLogData = $request->validated();
+        $quoteLogData['user_id'] = auth()->user()->id;
+        $quoteLogData['ip_address'] = $request->ip_address ?? $request->ip();
 
-        $data['user_id'] = auth()->user()->id;
-        $data['ip_address'] = $request->ip();
-
-        $result = $this->quoteExportLogService->saveLog($data);
+        $result = $this->quoteExportLogService->saveLog($quoteLogData);
 
         return response()->json(['success' => $result]);
     }

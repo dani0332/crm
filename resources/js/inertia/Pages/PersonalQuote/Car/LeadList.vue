@@ -499,7 +499,7 @@ const exportPUAUrl = () => {
 
 const onExport = (url) => {
   const payload = {quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Car'), url: `${window.location.origin}${url}`};
-  logQuoteExportAndExport(payload);
+  logAndExportQuotes(payload);
 }
 </script>
 

@@ -261,7 +261,7 @@ const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'travel');
   const payload = {quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Travel'), url: url + '?' + new URLSearchParams(data).toString()};
-  logQuoteExportAndExport(payload);
+  logAndExportQuotes(payload);
 };
 
 function daysAgoFromAuthorizedDate(authorizedDate) {
