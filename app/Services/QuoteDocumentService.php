@@ -381,10 +381,19 @@ class QuoteDocumentService extends BaseService
      *
      * @return array
      */
-    public function getHandBookDocuments($quote)
+    public function getHandBookDocuments($quote, $coPaymentIds = null)
     {
         if ($quote->policyWording) {
-            $policyWording = $quote->policyWording->map(function ($policyWording) use ($quote) {
+            $policyWording = $quote->policyWording;
+
+            // Filter out documents with matching co-payment codes
+            if ($coPaymentIds != null) {
+                $policyWording = $policyWording->reject(function ($policyWording) use ($coPaymentIds) {
+                    return $coPaymentIds && in_array($policyWording->health_plan_co_payment_id, $coPaymentIds);
+                });
+            }
+
+            $policyWording = $policyWording->map(function ($policyWording) use ($quote) {
                 $baseUrl = config('constants.AZURE_IM_STORAGE_URL');
                 if (strpos($policyWording->link, $baseUrl) !== 0) {
                     $policyWording->link = rtrim($baseUrl, '/').'/'.ltrim($policyWording->link, '/');
@@ -401,6 +410,7 @@ class QuoteDocumentService extends BaseService
 
         return [];
     }
+
     /**
      * Get app download linked for Health LOB
      *
@@ -430,6 +440,7 @@ class QuoteDocumentService extends BaseService
 
         return $appDownloadLink;
     }
+
     /**
      * create pdf watermark function
      *
@@ -444,17 +455,17 @@ class QuoteDocumentService extends BaseService
      */
     public function watermarkPdf($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType, $isKyc = false, $isPaymentReceipt = false)
     {
-        if (! file_exists(storage_path('/app/temp'))) {
-            mkdir(storage_path('/app/temp'), 0775, true);
+        if (! file_exists(storage_path('/temp'))) {
+            mkdir(storage_path('/temp'), 0775, true);
         }
 
         if ($isKyc || $isPaymentReceipt) {
-            $file->move(storage_path('/app/temp'), $docName);
+            $file->move(storage_path('temp'), $docName);
             $filePath = 'temp/'.$docName;
-            $outputPath = storage_path('app/temp/'.$docName);
+            $outputPath = storage_path('temp/'.$docName);
         } else {
             $filePath = $file->storeAs('temp', $docName);
-            $outputPath = storage_path('app/temp/'.$docName);
+            $outputPath = storage_path('temp/'.$docName);
         }
 
         $pdf = new Fpdi;
@@ -499,8 +510,8 @@ class QuoteDocumentService extends BaseService
      */
     public function watermarkImage($file, $docName, $data, $quote, $documentType, $originalName, $fileMimeType)
     {
-        if (! file_exists(storage_path('/app/temp'))) {
-            mkdir(storage_path('/app/temp'), 0775, true);
+        if (! file_exists(storage_path('/temp'))) {
+            mkdir(storage_path('/temp'), 0775, true);
         }
 
         $manager = new ImageManager(new Driver);
@@ -534,7 +545,7 @@ class QuoteDocumentService extends BaseService
             15
         );
 
-        $image->save(storage_path('app/temp/'.$docName));
+        $image->save(storage_path('temp/'.$docName));
 
         return $this->storeWatermarkedMedia($docName, $data, $quote, $documentType, $originalName, $fileMimeType);
     }
@@ -552,7 +563,7 @@ class QuoteDocumentService extends BaseService
      */
     public function storeWatermarkedMedia($docName, $data, $quote, $documentType, $originalName, $fileMimeType)
     {
-        $watermarkedFile = new \Illuminate\Http\File(storage_path('app/temp/'.$docName));
+        $watermarkedFile = new \Illuminate\Http\File(storage_path('temp/'.$docName));
 
         // Set the filename for Azure storage
         $watermarkedFileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
@@ -566,7 +577,7 @@ class QuoteDocumentService extends BaseService
         }
 
         // delete temp file
-        unlink(storage_path('app/temp/'.$docName));
+        unlink(storage_path('temp/'.$docName));
 
         return [
             'watermarked_doc_name' => $docName,
@@ -576,11 +587,11 @@ class QuoteDocumentService extends BaseService
 
     public function watermarkWordDocs($fileOrBase64, $docName, $data, $quote, $documentType, $originalName, $fileMimeType)
     {
-        if (! file_exists(storage_path('/app/temp'))) {
-            mkdir(storage_path('/app/temp'), 0775, true);
+        if (! file_exists(storage_path('/temp'))) {
+            mkdir(storage_path('/temp'), 0775, true);
         }
 
-        $tempFile = $fileOrBase64->move(storage_path('/app/temp'), $docName)->getRealPath();
+        $tempFile = $fileOrBase64->move(storage_path('/temp'), $docName)->getRealPath();
 
         $phpWord = IOFactory::load($tempFile);
         $section = $phpWord->getSection(0);
