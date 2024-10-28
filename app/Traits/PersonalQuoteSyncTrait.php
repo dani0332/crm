@@ -6,7 +6,6 @@ use App\Enums\EnvEnum;
 use App\Enums\QuoteSyncStatus;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypeShortCode;
-use App\Models\ApplicationStorage;
 use App\Models\BikeQuote;
 use App\Models\BikeQuoteRequestDetail;
 use App\Models\BusinessQuote;
@@ -399,25 +398,47 @@ trait PersonalQuoteSyncTrait
         }
     }
 
-    public function syncLeadEntries($uuid)
+    /**
+     * Returns personal quote record, creates if doesn't exists from source quote and updates if data is provided
+     *
+     * @param  mixed  $uuid
+     * @param  mixed  $quoteTypeId
+     * @param  mixed  $data
+     * @return mixed
+     */
+    public function updatePersonalQuote($uuid, $quoteTypeId, $data)
     {
+        $personalQuote = PersonalQuoteRepository::where([
+            'quote_type_id' => $quoteTypeId,
+            'uuid' => $uuid,
+        ])->first();
+
         $this->init();
-
-        info('----------- QuoteSyncJob - single entry - Started -----------');
-        $isQuoteSyncEnabled = ApplicationStorage::where('key_name', 'quote_sync_enabled')->first();
-
-        if (! $isQuoteSyncEnabled || $isQuoteSyncEnabled->value == 0) {
-            info('----------- QuoteSync - single entry - is disabled -----------');
-
-            return;
+        if (! $personalQuote) {
+            $sourceQuote = $this->getQuoteRecord($quoteTypeId, $uuid);
+            if ($sourceQuote) {
+                $personalQuote = $this->createPersonalQuoteFromSource($sourceQuote, $data, $uuid, $quoteTypeId);
+                $this->upsertPersonalQuoteDetail($personalQuote, $data);
+            }
         }
 
-        $entries = QuoteSync::where('is_synced', false)
-            ->where('id', '>', $this->startId)
-            ->where('quote_uuid', $uuid)
-            ->get();
+        if (! empty($data)) {
+            $dataToBeUpdated = [];
+            foreach ($data as $column => $value) {
+                if (in_array($column, ['id', 'currently_insured_with', 'created_at', 'updated_at', 'is_cold'])) {
+                    continue;
+                }
+                if (isset($this->schemas['personal_quotes']['columns'][$column])) {
+                    $dataToBeUpdated[$column] = $value;
+                }
+            }
 
-        $this->processQuoteSyncEntries($entries, true);
+            if (! empty($dataToBeUpdated)) {
+                $personalQuote->update($dataToBeUpdated);
+            }
+        }
+
+        return $personalQuote;
     }
 
     private function processQuoteSyncEntries($entries, $isSingle = false)
@@ -438,7 +459,7 @@ trait PersonalQuoteSyncTrait
 
         foreach ($entries as $entry) {
             try {
-                info('Syncing entry: '.$entry->quote_uuid.' - '.$entry->id.' - '.$isSingle);
+                // info('Syncing entry: '.$entry->quote_uuid.' - '.$entry->id.' - '.$isSingle);
                 if ($entry->updated_fields === '{"is_cold":true}') {
                     QuoteSync::where('id', $entry->id)->update(['is_synced' => true, 'status' => QuoteSyncStatus::COMPLETED, 'synced_at' => now()]);
                 } else {
@@ -451,7 +472,7 @@ trait PersonalQuoteSyncTrait
                         $quotes[$key] = $this->processQuoteNotFound($entry);
                     }
                 }
-                info('Syncing entry complete: '.$entry->quote_uuid.' - '.$entry->id.' - '.$isSingle);
+                // info('Syncing entry complete: '.$entry->quote_uuid.' - '.$entry->id.' - '.$isSingle);
             } catch (Exception $e) {
                 $error = 'QuoteSyncJob Error syncing entry: '.$entry->quote_uuid.' - '.$entry->id.' - '.$isSingle.' - '.$e->getMessage();
                 info($error.' --- '.$e->getTraceAsString());

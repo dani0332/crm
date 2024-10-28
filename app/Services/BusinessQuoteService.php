@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -250,7 +251,6 @@ class BusinessQuoteService extends BaseService
 
     public function getGridData($model, $request)
     {
-
         $searchProperties = [];
         $isRenewalUser = Auth::user()->isRenewalUser();
         $isRenewalAdvisor = Auth::user()->isRenewalAdvisor();
@@ -265,7 +265,7 @@ class BusinessQuoteService extends BaseService
             $searchProperties = $model->searchProperties;
         }
 
-        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date)) {
+        if (! isset($request->code) && ! isset($request->email) && ! isset($request->mobile_no) && ! isset($request->created_at_start) && ! isset($request->payment_due_date) && ! isset($request->booking_date) && ! isset($request->company_name) && ! isset($request->insurer_tax_invoice_number) && ! isset($request->insurer_commission_tax_invoice_number)) {
             $this->query->whereBetween('bqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
         }
         // if ($request->ajax()) {
@@ -285,6 +285,9 @@ class BusinessQuoteService extends BaseService
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
             $this->query->whereBetween('bqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
+        if (isset($request->company_name)) {
+            $this->query->where('ent.company_name', 'like', '%'.$request->company_name.'%');
+        }
 
         if (
             in_array('created_at', $searchProperties)
@@ -296,6 +299,8 @@ class BusinessQuoteService extends BaseService
             && empty($request->payment_due_date)
             && empty($request->booking_date)
             && ! isset($request->previous_quote_policy_number)
+            && ! isset($request->insurer_tax_invoice_number)
+            && ! isset($request->insurer_commission_tax_invoice_number)
         ) {
             $dateFrom = Carbon::parse($request['created_at_start'])->startOfDay()->toDateTimeString();
             $dateTo = Carbon::parse($request['created_at_end'])->endOfDay()->toDateTimeString();
@@ -368,8 +373,16 @@ class BusinessQuoteService extends BaseService
             $this->query->whereNotNull('bqr.stale_at');
         }
 
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_invoice_number')) {
+            $this->query->where('py.insurer_tax_number', $request->insurer_tax_invoice_number);
+        }
+
+        if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commission_tax_invoice_number')) {
+            $this->query->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
+        }
+
         foreach ($searchProperties as $item) {
-            if (! empty($request[$item]) && $item != 'created_at') {
+            if (! empty($request[$item]) && $item != 'created_at' && $item != 'company_name') {
                 if ($request[$item] == 'null') {
                     $this->query->whereNull($item);
                 } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {

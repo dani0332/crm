@@ -26,6 +26,7 @@ const rolesEnum = page.props.rolesEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const quoteSegments = page.props.quoteSegments;
+
 const createLead = reactive({
   modal: false,
   type: '',
@@ -40,6 +41,7 @@ const tableHeader = [
   { text: 'PAYMENT EXPIRY', value: 'expiry_date' },
   { text: 'DATE OF BIRTH', value: 'dob' },
   { text: 'LEAD SOURCE', value: 'source' },
+  { text: 'ADVISOR REQUESTED', value: 'sic_advisor_requested' },
   { text: 'NATIONALITY', value: 'nationality_id_text' },
   { text: 'UAE LICENCE HELD FOR', value: 'uae_license_held_for_id_text' },
   { text: 'CAR MAKE', value: 'car_make_id_text' },
@@ -230,6 +232,7 @@ const filters = reactive({
   page: 1,
   paid_at_start: '',
   paid_at_end: '',
+  sic_advisor_requested: 'All',
   segment_filter: 'all',
   teams: [],
   transaction_approved_dates: page.props.transaction_approved_dates || '',
@@ -237,6 +240,8 @@ const filters = reactive({
   booking_date: '',
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  insurer_tax_invoice_number: '',
+  insurer_commission_tax_invoice_number: '',
 });
 
 const teamUsers =
@@ -490,6 +495,11 @@ const validateDateRange = () => {
 
 const formatDate = dateString =>
   useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY').value;
+
+const exportPUAUrl = () => {
+  let url = '/pua-leads-export';
+  return url;
+};
 </script>
 
 <template>
@@ -752,6 +762,17 @@ const formatDate = dateString =>
           :options="quoteSegments"
           :single="true"
         />
+        <x-select
+          v-model="filters.sic_advisor_requested"
+          label="Advisor Requested"
+          placeholder="Select any option"
+          :options="[
+            { value: 'All', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+          class="w-full"
+        />
         <DatePicker
           v-model="filters.payment_due_date"
           label="Payment Due Date"
@@ -767,6 +788,26 @@ const formatDate = dateString =>
           range
           multi-calendars
           multi-calendars-solo
+        />
+        <x-input
+          v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
+          v-model="filters.insurer_tax_invoice_number"
+          type="text"
+          name="insurer_tax_invoice_number"
+          label="Insurer Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Tax Invoice No"
+        />
+        <x-input
+          v-if="
+            can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)
+          "
+          v-model="filters.insurer_commission_tax_invoice_number"
+          type="text"
+          name="insurer_commission_tax_invoice_number"
+          label="Insurer Commission Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Commission Tax Invoice No"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
@@ -864,6 +905,15 @@ const formatDate = dateString =>
           >
             Extract makes models trims
           </x-button>
+          <x-button
+            v-if="can(permissionsEnum.EXPORT_CAR_PUA_UPDATES)"
+            size="sm"
+            color="emerald"
+            href="/pua-leads-export"
+            class="justify-self-start mr-3"
+          >
+            Export PUA Updates
+          </x-button>
         </div>
         <div class="flex justify-self-end gap-3">
           <x-button type="submit" size="sm" color="#ff5e00">Search</x-button>
@@ -908,6 +958,13 @@ const formatDate = dateString =>
         <div class="text-center">
           <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
             {{ is_ecommerce ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
+      </template>
+      <template #item-sic_advisor_requested="{ sic_advisor_requested }">
+        <div class="text-center">
+          <x-tag size="sm" :color="sic_advisor_requested ? 'success' : 'error'">
+            {{ sic_advisor_requested ? 'Yes' : 'No' }}
           </x-tag>
         </div>
       </template>

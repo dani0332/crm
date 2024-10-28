@@ -1,6 +1,6 @@
 <script setup>
 import ToolTip from './../Components/ToolTip.vue';
-import { onMounted, reactive } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import moment from 'moment';
 import NProgress from 'nprogress';
 import { computed } from 'vue';
@@ -132,6 +132,7 @@ const isTotalPriceUpdated = ref(false);
 const trashedFilesModal = ref([]);
 const isApproveNotChecked = ref(true);
 const isApproveConfirmed = ref(false);
+const isAmlApprovalRequired = ref(false);
 const isCreditApprovalAllowed = ref(true);
 const isVerificationAllowed = ref(true);
 const isPaymentFrequencyNotSelected = ref(false);
@@ -139,10 +140,12 @@ const isDiscountAllowed = ref(true);
 const isRetryModalOpen = ref(false);
 const retryProcessJobId = ref(0);
 const retryPaymentErrorMessage = ref('');
+const isSplitAmountInvalid = ref([]);
+const isSplitAmountInvalidError = ref([]);
 const isDeleteModalOpen = ref(false);
 const deleteSplitPaymentId = ref(0);
 const deleteSplitPaymentStatus = ref(0);
-
+const isCollectedByEnabled = ref(false);
 const modal2Ref = ref(null);
 
 const familyEmployeDiscount = ['Car', 'Health', 'Home', 'Travel'];
@@ -200,6 +203,11 @@ let planDetail = ref(initalPlanDetails);
 const paidAmountSum = ref(0);
 const totalPaidAmount = ref(0);
 const masterPaymentStatus = ref('NEW');
+
+const getCustomReasonIndex = value => {
+  const index = declinedReasons.findIndex(reason => reason.value === value);
+  return index !== -1 ? index : null;
+};
 
 const calculateTotalAmount = () => {
   const discount = discountValue.value;
@@ -348,6 +356,9 @@ const closeConfirmModal = () => {
   isApproveConfirmed.value = false;
   isApproveNotChecked.value = true;
 };
+const closeAmlConfirmModal = () => {
+  isAmlApprovalRequired.value = false;
+};
 const hasNextFile = computed(() => {
   return currentFileIndex.value < filesTest.value.length - 1;
 });
@@ -427,7 +438,7 @@ const handleDeclinedChange = () => {
   isDeclineClicked.value = true;
   isApproveClicked.value = false;
   isDeclineCustomReason.value = false;
-  paymentMethodsForm.declined_reason = '';
+  handleDeclinedReasonChange();
   return true;
 };
 
@@ -707,10 +718,7 @@ const handleDiscountReasonChange = () => {
 };
 
 const handleDeclinedReasonChange = () => {
-  if (paymentMethodsForm.declined_reason !== '') {
-    isDeclinedReasonError.value = false;
-  }
-  if (paymentMethodsForm.declined_reason === '6') {
+  if (getCustomReasonIndex(paymentMethodsForm.declined_reason) === 6) {
     isDeclineCustomReason.value = true;
   } else {
     isDeclineCustomReason.value = false;
@@ -936,10 +944,7 @@ const handleApprovalReasonChange = () => {
         page.props.paymentMethodsEnum?.CreditApproval;
     }
   } else {
-    if (
-      isTotalPriceUpdated.value === false &&
-      isPaymentLocked.value === false
-    ) {
+    if (isTotalPriceUpdated.value === true && isPaymentLocked.value === false) {
       handleCollectionTypeChange();
     }
   }
@@ -1587,7 +1592,6 @@ const addPaymentModal = () => {
 };
 
 const retrySplitPaymentModal = (process_job_id, message) => {
-  console.log('retrySplitPaymentModal', process_job_id, message);
   retryProcessJobId.value = process_job_id;
   retryPaymentErrorMessage.value = message;
   isRetryModalOpen.value = true;
@@ -1670,7 +1674,8 @@ const editPaymentModal = (
   if (
     sr_no === 0 &&
     payment.payment_status.id === props.paymentStatusEnum.PAID &&
-    capture_approval === 0
+    capture_approval === 0 &&
+    isPaidEditable.value === false
   ) {
     notification.error({
       title: 'No further actions allowed to paid payments',
@@ -1733,6 +1738,7 @@ const resetPaymentForm = () => {
   authorizedPayments.value = [];
   isApproveConfirmed.value = false;
   isApproveNotChecked.value = true;
+  isAmlApprovalRequired.value = false;
 };
 
 const initializePaymentForm = (
@@ -1791,6 +1797,12 @@ const initializePaymentForm = (
     paymentMethodsForm.discount =
       payment.discount_type !== null ? payment.discount_type : '';
   }
+  paymentMethodsForm.declined_reason =
+    splitPaymentRecord.value.decline_reason_id == null
+      ? ''
+      : splitPaymentRecord.value.decline_reason_id;
+  paymentMethodsForm.declined_custom_reason =
+    splitPaymentRecord.value.decline_custom_reason;
 };
 
 const processPaymentSplits = payment => {
@@ -1857,22 +1869,38 @@ const finalizePaymentForm = (payment, capture_approval) => {
 
   const handleEditStatus = () => {
     updateTotalValues();
+    const isAnyChildPaymentPaid = isAnyPaid(payment);
+
+    // Check if the payment is locked
     if (isPaymentLocked.value) {
       isFieldReadonly.value = true;
     } else if (
-      isAnyPaid(payment) &&
+      isAnyChildPaymentPaid &&
       payment.total_price <= payment.total_amount + payment.discount_value
     ) {
-      isFieldReadonly.value = !is_lacking_payment.value;
+      isFieldReadonly.value = true;
       isTotalPriceUpdated.value = is_lacking_payment.value;
-    } else if (
-      payment.total_price >
-      payment.total_amount + payment.discount_value
-    ) {
-      isFieldReadonly.value = false;
-      isTotalPriceUpdated.value = true;
     } else {
       isFieldReadonly.value = false;
+    }
+
+    // Check if the total price is greater than the total amount plus discount
+    if (payment.total_price > payment.total_amount + payment.discount_value) {
+      isTotalPriceUpdated.value = false;
+    }
+
+    // Check if the total amount is greater than the collected amount and frequency is upfront
+    if (
+      payment.total_amount > payment.collected_amount &&
+      payment.frequency === paymentFrequencyEnum.UPFRONT
+    ) {
+      isTotalPriceUpdated.value = false;
+      isFieldReadonly.value = false;
+    }
+
+    // Enable collected by field if any child payment is paid
+    if (isAnyChildPaymentPaid) {
+      isCollectedByEnabled.value = true;
     }
   };
 
@@ -1934,7 +1962,6 @@ const finalizePaymentForm = (payment, capture_approval) => {
 };
 
 const isAnyPaid = payment => {
-  console.log('isAnyPaid', payment);
   const paidStatusIds = [
     props.paymentStatusEnum.PAID,
     props.paymentStatusEnum.PARTIALLY_PAID,
@@ -2063,6 +2090,24 @@ const validateCapturePayment = isValid => {
   return false;
 };
 
+const validatePaymentAmount = isValid => {
+  for (let i = 1; i <= paymentMethodsForm.payment_no; i++) {
+    isSplitAmountInvalid.value[i] = false;
+    if (
+      parseFloat(splitAmountModels.value[i]) >
+      parseFloat(collectionAmountModels.value[i])
+    ) {
+      isSplitAmountInvalid.value[i] = true;
+      isSplitAmountInvalidError.value[i] =
+        'Amount should not exceed ' + collectionAmountModels.value[i] + ' AED';
+    }
+  }
+  if (isSplitAmountInvalid.value.includes(true)) {
+    return true;
+  }
+  return false;
+};
+
 const addPayment = isValid => {
   if (
     !props.sendUpdate?.insurance_provider_id &&
@@ -2080,8 +2125,12 @@ const addPayment = isValid => {
     if (validateViewPayment(isValid)) return;
   } else if (paymentMethodsForm.status !== 'view') {
     if (validatePaymentOption()) return;
+    if (isPaidEditable.value === true) {
+      if (validatePaymentAmount()) return;
+    }
   }
   if (!isValid) return;
+
   //define main payment method
   let mainPaymentMethod = paymentMethodsModels.value[0]
     ? paymentMethodsModels.value[0]
@@ -2157,29 +2206,6 @@ const addPayment = isValid => {
   data.payment.payment_splits = splitPayments;
 
   let declinedCustomReason = paymentMethodsForm.declined_custom_reason;
-  if (
-    paymentMethodsForm.status === 'view' ||
-    isCreditApprovalView.value === true
-  ) {
-    if (
-      isDeclineClicked.value === true &&
-      paymentMethodsForm.declined_reason === ''
-    ) {
-      isDeclinedReasonError.value = true;
-      return;
-    } else {
-      isDeclinedReasonError.value = false;
-    }
-    if (
-      paymentMethodsForm.declined_reason != '6' &&
-      isDeclineClicked.value === true
-    ) {
-      declinedCustomReason = declinedReasons.find(
-        reason => reason.value === paymentMethodsForm.declined_reason,
-      ).label;
-    }
-  }
-
   if (isCreditApprovalView.value === true) {
     let viewData = {
       modelType: props.quoteType,
@@ -2256,7 +2282,8 @@ const addPayment = isValid => {
   if (paymentMethodsForm.status === 'edit') {
     if (
       totalPaidAmount.value == paymentMethodsForm.payment_no &&
-      isPolicyIssuanceDiscount.value === false
+      isPolicyIssuanceDiscount.value === false &&
+      isPaidEditable.value === false
     ) {
       notification.error({
         title: 'No further actions allowed to paid payments',
@@ -2270,6 +2297,7 @@ const addPayment = isValid => {
       trashedFilesModal: trashedFilesModal.value,
       isPaymentLocked: isPaymentLocked.value,
       isPolicyIssuanceDiscount: isPolicyIssuanceDiscount.value,
+      isPaidEditable: isPaidEditable.value,
     };
     paymentMethodsForm
       .transform(data => editData)
@@ -2880,53 +2908,56 @@ watch(
   },
 );
 
+const setPaymentInitialPrice = () => {
+  if (paymentMethodsForm.status !== 'edit') {
+    if (props.isPlanDetailEnabled) {
+      initialAmount.value = props.quoteRequest.price_with_vat;
+    } else if (props.sendUpdate) {
+      initialAmount.value = props.sendUpdate?.price_with_vat;
+    } else if (props.quoteType === 'Health') {
+      initialAmount.value = props.eCommercePrice;
+    } else if (props.quoteType === 'Bike') {
+      initialAmount.value = props.quoteRequest.premium;
+    } else {
+      initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
+        ? props.quoteRequest.premium
+        : props.quoteRequest.price_with_vat;
+    }
+    totalPrice.value = initialAmount.value;
+  }
+};
+
+const setPlanDetail = () => {
+  if (
+    props.quoteType == 'Business' ||
+    props.quoteType == 'Home' ||
+    props.isPlanDetailEnabled
+  ) {
+    initalPlanDetails = props.quoteRequest.insurance_provider_details;
+  } else if (quoteTypesToCheck.includes(props.quoteType)) {
+    initalPlanDetails = props.quoteRequest.plan;
+  } else if (props.quoteType == 'Bike') {
+    initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
+    if (props.sendUpdate) {
+      initalPlanDetails =
+        props.quoteRequest.insurance_provider_details ??
+        props.quoteRequest.insurance_provider;
+    }
+  } else if (quoteTypesToCheck.includes(props.quoteType)) {
+    initalPlanDetails = props.quoteRequest.plan;
+  } else {
+    initalPlanDetails = props.quoteRequest.insurance_provider;
+  }
+  planDetail.value = initalPlanDetails;
+};
+
 watch(
   () => props.quoteRequest,
   (newValue, oldValue) => {
     //refresh premium
-    if (
-      !(
-        paymentMethodsForm.status === 'edit' &&
-        isTotalPriceUpdated.value === true
-      )
-    ) {
-      if (props.isPlanDetailEnabled) {
-        initialAmount.value = props.quoteRequest.price_with_vat;
-      } else if (props.sendUpdate) {
-        initialAmount.value = props.sendUpdate?.price_with_vat;
-      } else if (props.quoteType === 'Health') {
-        initialAmount.value = props.eCommercePrice;
-      } else if (props.quoteType === 'Bike') {
-        initialAmount.value = props.quoteRequest.premium;
-      } else {
-        initialAmount.value = quoteTypesToCheck.includes(props.quoteType)
-          ? props.quoteRequest.premium
-          : props.quoteRequest.price_with_vat;
-      }
-      totalPrice.value = initialAmount.value;
-    }
+    setPaymentInitialPrice();
     //refresh plan
-    if (
-      props.quoteType == 'Business' ||
-      props.quoteType == 'Home' ||
-      props.isPlanDetailEnabled
-    ) {
-      initalPlanDetails = props.quoteRequest.insurance_provider_details;
-    } else if (quoteTypesToCheck.includes(props.quoteType)) {
-      initalPlanDetails = props.quoteRequest.plan;
-    } else if (props.quoteType == 'Bike') {
-      initalPlanDetails = props.quoteRequest?.car_plan?.insurance_provider;
-      if (props.sendUpdate) {
-        initalPlanDetails =
-          props.quoteRequest.insurance_provider_details ??
-          props.quoteRequest.insurance_provider;
-      }
-    } else if (quoteTypesToCheck.includes(props.quoteType)) {
-      initalPlanDetails = props.quoteRequest.plan;
-    } else {
-      initalPlanDetails = props.quoteRequest.insurance_provider;
-    }
-    planDetail.value = initalPlanDetails;
+    setPlanDetail();
   },
 );
 const paymentAllocationStatusTooltip = payment_allocation_status => {
@@ -2975,6 +3006,13 @@ let is_lacking_payment = ref(
     false,
 );
 
+const isPaidEditable = ref(
+  page.props?.bookPolicyDetails?.isPaidEditable ||
+    page.props?.bookingDetails?.isPaidEditable ||
+    page.props?.isPaidEditable ||
+    false,
+);
+
 watch(
   () => page.props?.bookPolicyDetails?.isLackingOfPayment,
   newVal => {
@@ -2986,6 +3024,20 @@ watch(
   () => page.props?.bookingDetails?.isLackingOfPayment,
   newVal => {
     is_lacking_payment.value = newVal || false;
+  },
+);
+
+watch(
+  () => page.props?.bookPolicyDetails?.isPaidEditable,
+  newVal => {
+    isPaidEditable.value = newVal || false;
+  },
+);
+
+watch(
+  () => page.props?.isPaidEditable,
+  newVal => {
+    isPaidEditable.value = newVal || false;
   },
 );
 
@@ -3074,15 +3126,55 @@ const splitPaymentTotalPrice = (
   return formatAmount(total);
 };
 
+const isAmlVerified = () => {
+  //Bypass Travel Quote Type for aml verification
+  if (props.quoteType === quoteTypeCodeEnum.Travel) {
+    return true;
+  }
+
+  return (
+    props.quoteRequest.aml_status ===
+    page.props.amlStatusEnum.AMLScreeningCleared
+  );
+};
+
+const openAmlVerificationModal = () => {
+  isAmlApprovalRequired.value = true;
+};
+
 // verifiy if split payment deletion is enabled
 const isSplitDeleteEnabled = computed(() => {
-  return (
-    paymentMethodsForm.frequency != paymentFrequencyEnum.UPFRONT &&
-    can(permissionEnum.PaymentsEdit) &&
-    props.quoteRequest.quote_status_id !=
-      page.props.quoteStatusEnum.PolicyBooked
-  );
+  const isNotUpfront =
+    paymentMethodsForm.frequency !== paymentFrequencyEnum.UPFRONT;
+  const hasEditPermission = can(permissionEnum.PaymentsEdit);
+  const isPolicyNotBooked =
+    props.quoteRequest.quote_status_id !==
+    page.props.quoteStatusEnum.PolicyBooked;
+
+  if (props.sendUpdate && isNotUpfront && hasEditPermission) {
+    return true;
+  }
+
+  return isNotUpfront && hasEditPermission && isPolicyNotBooked;
 });
+
+const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
+  const eligibleStatuses = [
+    props.paymentStatusEnum.PAID,
+    props.paymentStatusEnum.CAPTURED,
+    props.paymentStatusEnum.AUTHORISED,
+    props.paymentStatusEnum.REFUNDED,
+    props.paymentStatusEnum.PARTIAL_CAPTURED,
+    props.paymentStatusEnum.PARTIALLY_PAID,
+  ];
+
+  return (
+    isSplitDeleteEnabled &&
+    item.total_payments == splitIndex + 1 &&
+    !eligibleStatuses.includes(splitPayment.payment_status_id) &&
+    splitPayment.sr_no > 1
+  );
+};
 </script>
 
 <template>
@@ -3602,17 +3694,11 @@ const isSplitDeleteEnabled = computed(() => {
                             >
                             <x-button
                               v-if="
-                                isSplitDeleteEnabled &&
-                                item.total_payments == splitIndex + 1 &&
-                                ![
-                                  paymentStatusEnum.PAID,
-                                  paymentStatusEnum.CAPTURED,
-                                  paymentStatusEnum.AUTHORISED,
-                                  paymentStatusEnum.REFUNDED,
-                                  paymentStatusEnum.PARTIAL_CAPTURED,
-                                  paymentStatusEnum.PARTIALLY_PAID,
-                                ].includes(splitPayment.payment_status_id) &&
-                                splitPayment.sr_no > 1
+                                canDeleteSplitPayment(
+                                  item,
+                                  splitIndex,
+                                  splitPayment,
+                                )
                               "
                               size="xs"
                               color="red"
@@ -3740,7 +3826,7 @@ const isSplitDeleteEnabled = computed(() => {
                     v-model="paymentMethodsForm.collection_type"
                     :rules="[rules.isRequired]"
                     @change="handleCollectionTypeChange"
-                    :disabled="isTotalPriceUpdated"
+                    :disabled="isCollectedByEnabled"
                   >
                     <template
                       v-for="option in collectionTypes"
@@ -4907,7 +4993,9 @@ const isSplitDeleteEnabled = computed(() => {
                       </template>
                     </div>
                     <div class="w-1/5 px-2">
-                      <template v-if="readOnlyPayments[count]">
+                      <template
+                        v-if="readOnlyPayments[count] && !isPaidEditable"
+                      >
                         {{ formatAmount(splitAmountModels[count]) }}
                       </template>
                       <template v-else>
@@ -4917,6 +5005,11 @@ const isSplitDeleteEnabled = computed(() => {
                           :rules="[rules.isRequired]"
                           :disabled="isPaymentLocked"
                         />
+                        <sup
+                          v-if="isSplitAmountInvalid[count]"
+                          class="text-sm text-red-500 dark:text-red-400"
+                          >{{ isSplitAmountInvalidError[count] }}</sup
+                        >
                       </template>
                     </div>
                     <div class="w-1/5 px-2" v-if="isCreditApprovalView">
@@ -5083,7 +5176,7 @@ const isSplitDeleteEnabled = computed(() => {
               </div>
               <x-divider class="mb-4 mt-1" />
               <div class="flex w-full">
-                <div class="px-2">
+                <div class="w-full px-2">
                   <x-field label="DECLINE REASON" required>
                     <select
                       :class="{ 'custom-select-error': isDeclinedReasonError }"
@@ -5109,7 +5202,7 @@ const isSplitDeleteEnabled = computed(() => {
                     </p>
                   </x-field>
                 </div>
-                <div v-if="isDeclineCustomReason" class="px-2">
+                <div v-if="isDeclineCustomReason" class="w-full px-2">
                   <x-field label="CUSTOM REASON" required>
                     <x-input
                       class="w-full"
@@ -5408,7 +5501,11 @@ const isSplitDeleteEnabled = computed(() => {
                       class="mr-2 focus:outline-black"
                       size="sm"
                       color="#ff5e00"
-                      @click="isApproveClicked = !isApproveClicked"
+                      @click="
+                        isAmlVerified()
+                          ? (isApproveClicked = !isApproveClicked)
+                          : openAmlVerificationModal()
+                      "
                       tabindex="0"
                     >
                       Approve
@@ -5561,6 +5658,73 @@ const isSplitDeleteEnabled = computed(() => {
                   >
                     <span>Confirm</span></x-button
                   >
+                </div>
+              </div>
+            </div>
+            <div
+              class="modal-confirm-overlay fixed inset-0 bg-opacity-30 flex items-center justify-center"
+              v-if="isAmlApprovalRequired"
+            >
+              <div
+                class="modal-confirm-container bg-white w-full max-w-full overflow-hidden rounded-lg"
+              >
+                <div class="modal-confirm-header text-base text-white bg-white">
+                  <div
+                    class="flex flex-row-reverse text-lg font-semibold px-6 py-4"
+                  >
+                    <div class="flex items-center space-x-2">
+                      <span
+                        @click="closeAmlConfirmModal"
+                        class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 cursor-pointer"
+                      >
+                        <!-- Cross icon -->
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          tabindex="0"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          class="w-4 h-4 text-gray-800"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"
+                          ></path>
+                        </svg>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="w-full h-full mt-2 flex flex-col items-center">
+                  <div
+                    class="text-lg font-bold px-6 flex justify-between items-start"
+                  >
+                    <div class="text-left">
+                      <span>Please complete the AML screening to proceed.</span>
+                    </div>
+                  </div>
+                  <Link
+                    :href="`/kyc/aml/${page.props.quoteTypeId ?? props.sendUpdate.quote_type_id}/details/${props.quoteRequest.id}`"
+                  >
+                    <x-tooltip>
+                      <x-button
+                        v-if="can(permissionEnum.AMLList)"
+                        size="lg"
+                        color="orange"
+                        class="px-4 py-4 mt-4"
+                        :loading="paymentMethodsForm.processing"
+                      >
+                        <span>Go to AML & KYC page</span></x-button
+                      >
+                      <template #tooltip>
+                        <span>{{
+                          paymentTooltipEnum.GOTO_AML_AND_KYC_PAGE
+                        }}</span>
+                      </template>
+                    </x-tooltip>
+                  </Link>
                 </div>
               </div>
             </div>

@@ -41,8 +41,8 @@ const filters = reactive({
   last_name: '',
   email: '',
   mobile_no: '',
-  created_at_start: new Date() || '',
-  created_at_end: new Date() || '',
+  created_at_start: new Date().toISOString() || '',
+  created_at_end: new Date().toISOString() || '',
   leadStatus: [],
   advisor_id: '',
   page: 1,
@@ -52,6 +52,9 @@ const filters = reactive({
   booking_date: '',
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  company_name: '',
+  insurer_tax_invoice_number: '',
+  insurer_commission_tax_invoice_number: '',
 });
 
 const leadStatusOptions = computed(() => {
@@ -342,6 +345,13 @@ const validateDateRange = () => {
 };
 const formatDate = dateString =>
   useDateFormat(useConvertDate(dateString), 'DD-MMM-YYYY').value;
+
+watch(() => {
+  if (filters.company_name) {
+    filters.created_at_start = '';
+    filters.created_at_end = '';
+  }
+});
 </script>
 
 <template>
@@ -429,6 +439,15 @@ const formatDate = dateString =>
             placeholder="Search by Mobile Number"
           />
         </x-field>
+        <x-field label="Company Name">
+          <x-input
+            v-model="filters.company_name"
+            type="search"
+            name="company_name"
+            class="w-full"
+            placeholder="Search by Company Name"
+          />
+        </x-field>
         <x-field label="Created Date Start">
           <DatePicker
             v-model="filters.created_at_start"
@@ -439,7 +458,8 @@ const formatDate = dateString =>
               filters.email ||
               filters.renewal_batch ||
               filters.payment_due_date ||
-              filters.booking_date
+              filters.booking_date ||
+              filters.company_name
                 ? []
                 : [isRequired]
             "
@@ -455,7 +475,8 @@ const formatDate = dateString =>
               filters.email ||
               filters.renewal_batch ||
               filters.payment_due_date ||
-              filters.booking_date
+              filters.booking_date ||
+              filters.company_name
                 ? []
                 : [isRequired]
             "
@@ -521,6 +542,26 @@ const formatDate = dateString =>
           range
           multi-calendars
           multi-calendars-solo
+        />
+        <x-input
+          v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
+          v-model="filters.insurer_tax_invoice_number"
+          type="text"
+          name="insurer_tax_invoice_number"
+          label="Insurer Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Tax Invoice No"
+        />
+        <x-input
+          v-if="
+            can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)
+          "
+          v-model="filters.insurer_commission_tax_invoice_number"
+          type="text"
+          name="insurer_commission_tax_invoice_number"
+          label="Insurer Commission Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Commission Tax Invoice No"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

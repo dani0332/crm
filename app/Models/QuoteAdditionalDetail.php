@@ -7,5 +7,5 @@ use MongoDB\Laravel\Eloquent\Model;
 class QuoteAdditionalDetail extends Model
 {
     protected $connection = 'mongodb';
-    protected $collection = 'quote-additional-details';
+    protected $table = 'quote-additional-details';
 }
