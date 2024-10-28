@@ -3159,12 +3159,19 @@ const openAmlVerificationModal = () => {
 
 // verifiy if split payment deletion is enabled
 const isSplitDeleteEnabled = computed(() => {
-  return (
-    paymentMethodsForm.frequency != paymentFrequencyEnum.UPFRONT &&
-    can(permissionEnum.PaymentsEdit) &&
-    props.quoteRequest.quote_status_id !=
-      page.props.quoteStatusEnum.PolicyBooked
-  );
+  const isNotUpfront = paymentMethodsForm.frequency !== paymentFrequencyEnum.UPFRONT;
+  const hasEditPermission = can(permissionEnum.PaymentsEdit);
+  const isPolicyNotBooked = props.quoteRequest.quote_status_id !== page.props.quoteStatusEnum.PolicyBooked;
+
+  if (props.sendUpdate && isNotUpfront && hasEditPermission) {
+    return true;
+  }
+
+  if (isNotUpfront && hasEditPermission && isPolicyNotBooked) {
+    return true;
+  }
+
+  return false;
 });
 </script>
 
