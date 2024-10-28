@@ -72,7 +72,7 @@ const statusText = statusId => {
 
 const tableHeader = ref([
   { text: 'Name', value: 'userName', width: '240' },
-  { text: 'Team Type', value: 'teamName', sortable: true },
+  { text: 'Teams', value: 'teamNames', sortable: true },
   {
     text: 'Total Assigned Leads',
     value: 'allocationCount',

@@ -51,7 +51,7 @@ class LeadAllocationController extends Controller
                     'la.manual_assignment_count as manualAllocationCount',
                     'la.auto_assignment_count as autoAllocationCount',
                     'la.reset_cap',
-                    DB::RAW('GROUP_CONCAT(teams.name ORDER BY teams.name ASC SEPARATOR ", ") as teamName')
+                    DB::RAW('GROUP_CONCAT(teams.name ORDER BY teams.name ASC SEPARATOR ", ") as teamNames')
                 )
                 ->join('lead_allocation as la', 'la.user_id', 'users.id')
                 ->join('user_team', 'user_team.user_id', 'users.id')
