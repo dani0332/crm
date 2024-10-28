@@ -50,8 +50,14 @@ trait GenericQueriesAllLobs
     {
         $nameSpace = '\\App\\Models\\';
         $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
-
         if (! class_exists($model)) {
+            if (in_array(ucwords($quoteType), [quoteTypeCode::GroupMedical, quoteTypeCode::CORPLINE])) {
+                $model = $nameSpace.'BusinessQuote';
+                if (class_exists($model)) {
+                    return $model;
+                }
+            }
+
             return false;
         }
 
