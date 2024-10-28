@@ -827,6 +827,7 @@ class TravelQuoteService extends BaseService
             if ($getStatusCode == 200) {
                 $getContents = $kenRequest->getBody();
                 $getdecodeContents = json_decode($getContents);
+
                 return $getdecodeContents;
 
             }
