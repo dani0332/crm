@@ -88,10 +88,6 @@ class PersonalQuoteRepository extends BaseRepository
     public function fetchUploadDocument($id, $file, $data)
     {
         try {
-            $insuranceProviderId = null;
-            if (request()->is_send_update) {
-                [$insuranceProviderId] = app(SendUpdateLogService::class)->getEndorsementProviderDetails($quote);
-            }
 
             info('fn: fetchUploadDocument called');
             $quoteType = '';
@@ -153,15 +149,21 @@ class PersonalQuoteRepository extends BaseRepository
             info('Document array prepared for creation', $document);
 
             try {
-                DB::transaction(function () use ($quote, $document, $documentType) {
+                $insuranceProviderId = null;
+                if (request()->is_send_update) {
+                    [$insuranceProviderId] = app(SendUpdateLogService::class)->getEndorsementProviderDetails($quote);
+                }
+                DB::transaction(function () use ($quote, $document, $documentType, $insuranceProviderId) {
 
                     $quoteDocuments = $quote->documents->pluck('document_type_code')->toArray();
                     $taxInvoiceDocuments = [DocumentTypeCode::SEND_UPDATE_TAX_INVOICE, DocumentTypeCode::SEND_UPDATE_TAX_INVOICE_RAISED_BUYER];
 
                     if (request()->is_send_update && in_array($documentType->code, $taxInvoiceDocuments) && count(array_intersect($taxInvoiceDocuments, $quoteDocuments)) == 0) {
-                        app(CentralService::class)->updateSendUpdateStatusLogs($quote->id, $quote->status, SendUpdateLogStatusEnum::UPDATE_ISSUED);
-                        $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_ISSUED]);
-                        info('Send Update status updated to UPDATE_ISSUED - Ref: '.$quote->code);
+                        if ($insuranceProviderId) {
+                            app(CentralService::class)->updateSendUpdateStatusLogs($quote->id, $quote->status, SendUpdateLogStatusEnum::UPDATE_ISSUED);
+                            $quote->update(['status' => SendUpdateLogStatusEnum::UPDATE_ISSUED]);
+                            info('Send Update status updated to UPDATE_ISSUED - Ref: '.$quote->code);
+                        }
                     }
 
                     $quote->documents()->create($document);
@@ -181,9 +183,9 @@ class PersonalQuoteRepository extends BaseRepository
                 return ['status' => false, 'message' => $exception->getMessage() ?? 'Error uploading file'];
             }
         } catch (\Exception $exception) {
-            Log::info($exception->getMessage());
+            Log::error('Document Upload Error: '.$exception->getMessage());
 
-            return response()->json(['error' => 'Document upload failed, please try again'], 500);
+            return ['status' => true, 'message' => 'Document upload failed, please try again'];
         }
     }
 
