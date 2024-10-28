@@ -58,7 +58,7 @@ class LeadAllocationController extends Controller
                 ->join('teams', 'teams.id', 'user_team.team_id')
                 ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
                 ->join('roles as r', 'r.id', '=', 'mhr.role_id')
-                ->where('la.quote_type_id', $this->quoteType->id())
+                ->where('la.quote_type_id', in_array($this->quoteType, [QuoteTypes::CORPLINE, QuoteTypes::GROUP_MEDICAL]) ? QuoteTypes::BUSINESS->id() : $this->quoteType->id())
                 ->whereIn('r.name', $this->quoteType->advisorRoles())
                 // subquery to exclude users with any kind of "manager" roles
                 ->whereNotExists(function ($query) use ($managerRoleIds) {
