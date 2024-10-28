@@ -387,9 +387,9 @@ const expandNotes = ref(false);
             <div class="flex gap-3 items-center">
               {{ notes.text }}
               <x-icon
-                  @click="expandNotes = !expandNotes"
-                  icon="chevronDown"
-                  :class="{ 'rotate-180': expandNotes }"
+                @click="expandNotes = !expandNotes"
+                icon="chevronDown"
+                :class="{ 'rotate-180': expandNotes }"
               />
             </div>
           </template>
