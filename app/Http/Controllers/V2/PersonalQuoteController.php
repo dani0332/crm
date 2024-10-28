@@ -44,7 +44,7 @@ class PersonalQuoteController extends Controller
         // update status policy issued of req fulfilled
         $this->updateQuoteStatus($request->folder_path, $quoteId);
 
-        return back()->with('message', 'File Uploaded');
+        return back()->with('message', $response['message']);
     }
 
     /**

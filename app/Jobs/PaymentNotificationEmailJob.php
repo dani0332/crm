@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Enums\ApplicationStorageEnums;
+use App\Models\ApplicationStorage;
 use App\Services\SendEmailCustomerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -39,6 +41,12 @@ class PaymentNotificationEmailJob implements ShouldQueue
      */
     public function handle(SendEmailCustomerService $sendEmailCustomerService)
     {
+        $emailEnable = ApplicationStorage::where('key_name', '=', ApplicationStorageEnums::ENABLE_PAYMENT_NOTIFICATION_EMAIL)->first();
+        if ($emailEnable && $emailEnable->value == 0) {
+            info('ENABLE_PAYMENT_NOTIFICATION_EMAIL is Disable');
+
+            return false;
+        }
         if (! $this->lead) {
             info('PaymentNotificationEmailJob: Email data is not found');
 
