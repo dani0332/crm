@@ -461,7 +461,7 @@ class SendUpdateLogService
         $getQuoteDetails = $this->getQuoteObjectBy($quoteType, $sendUpdateLog->quote_uuid, 'uuid');
         $payments = $this->getPayments($getQuoteDetails->id, $getQuoteDetails->uuid, QuoteTypes::getName($sendUpdateLog->quote_type_id)->value);
 
-        if ($sendUpdateLog?->category->code == SendUpdateLogStatusEnum::CPD || empty($payments)) {
+        if ($sendUpdateLog?->category->code == SendUpdateLogStatusEnum::CPD || $payments->isEmpty()) {
             $insuranceProviderId = $sendUpdateLog->insurance_provider_id;
         } else {
             if ($getQuoteDetails->insly_id || $getQuoteDetails->insly_migrated) {
@@ -475,6 +475,9 @@ class SendUpdateLogService
                 } else {
                     $insuranceProviderId = $sendUpdateLog->insurance_provider_id;
                 }
+            } elseif (! $payments->isEmpty()) {
+                $insuranceProviderId = $payments[0]->insurance_provider_id ?? null;
+                $planId = $payments[0]->plan_id ?? null;
             } else {
                 @[$insuranceProviderId, $planId] = $this->getProviderDetails($getQuoteDetails, $sendUpdateLog->quote_type_id);
             }
@@ -661,11 +664,11 @@ class SendUpdateLogService
             if ($insurerDetails !== null) {
                 $sendUpdatePaymentDetails = [
                     'invoice_description' => $insurerDetails['invoice_description'],
-                    'broker_invoice_number' => $insurerDetails['broker_invoice_number'],
+                    'broker_invoice_number' => $insurerDetails['broker_invoice_number'] ?? $sendUpdateLog->broker_invoice_number ?? null,
                 ];
 
                 if ($insurerDetails['is_non_self_billing_enabled']) {
-                    $sendUpdatePaymentDetails['insurer_commmission_invoice_number'] = $insurerDetails['broker_invoice_number'];
+                    $sendUpdatePaymentDetails['insurer_commmission_invoice_number'] = $insurerDetails['broker_invoice_number'] ?? $sendUpdateLog->broker_invoice_number ?? null;
                 }
             } else {
                 $sendUpdatePaymentDetails = [
@@ -1268,11 +1271,13 @@ class SendUpdateLogService
 
         $insuranceProvider = InsuranceProviderRepository::find($insuranceProviderId);
         $generateBrokerInvoice = true;
-        if (! isNonSelfBillingEnabledForInsuranceProvider($insuranceProvider)) {
-            info('InsuranceProvider - Non Self Billing Not Enabled - InsuranceProviderID: '.$insuranceProvider->id.' - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
-            $response['message'] = 'Non Self Billing Not Enabled for Insurance Provider: '.$insuranceProvider->text;
-
+        if (! $insuranceProviderId) {
             $generateBrokerInvoice = false;
+            $response['message'] = 'Insurance Provider not found for Send Update Log: '.$sendUpdateLog->uuid;
+            $response['status'] = true;
+        } elseif (! isNonSelfBillingEnabledForInsuranceProvider($insuranceProvider)) {
+            info('InsuranceProvider - Non Self Billing Not Enabled - InsuranceProviderID: '.$insuranceProvider?->id.' - QuoteUUID: '.$sendUpdateLog->quote_uuid.' - SendUpdateUUID: '.$sendUpdateLog->uuid);
+            $response['message'] = 'Non Self Billing Not Enabled for Insurance Provider: '.$insuranceProvider->text;
             $response['status'] = true;
             // return $response;
         }
