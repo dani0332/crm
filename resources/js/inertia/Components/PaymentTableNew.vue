@@ -3144,13 +3144,37 @@ const openAmlVerificationModal = () => {
 
 // verifiy if split payment deletion is enabled
 const isSplitDeleteEnabled = computed(() => {
-  return (
-    paymentMethodsForm.frequency != paymentFrequencyEnum.UPFRONT &&
-    can(permissionEnum.PaymentsEdit) &&
-    props.quoteRequest.quote_status_id !=
-      page.props.quoteStatusEnum.PolicyBooked
-  );
+  const isNotUpfront =
+    paymentMethodsForm.frequency !== paymentFrequencyEnum.UPFRONT;
+  const hasEditPermission = can(permissionEnum.PaymentsEdit);
+  const isPolicyNotBooked =
+    props.quoteRequest.quote_status_id !==
+    page.props.quoteStatusEnum.PolicyBooked;
+
+  if (props.sendUpdate && isNotUpfront && hasEditPermission) {
+    return true;
+  }
+
+  return isNotUpfront && hasEditPermission && isPolicyNotBooked;
 });
+
+const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
+  const eligibleStatuses = [
+    props.paymentStatusEnum.PAID,
+    props.paymentStatusEnum.CAPTURED,
+    props.paymentStatusEnum.AUTHORISED,
+    props.paymentStatusEnum.REFUNDED,
+    props.paymentStatusEnum.PARTIAL_CAPTURED,
+    props.paymentStatusEnum.PARTIALLY_PAID,
+  ];
+
+  return (
+    isSplitDeleteEnabled &&
+    item.total_payments == splitIndex + 1 &&
+    !eligibleStatuses.includes(splitPayment.payment_status_id) &&
+    splitPayment.sr_no > 1
+  );
+};
 </script>
 
 <template>
@@ -3670,17 +3694,11 @@ const isSplitDeleteEnabled = computed(() => {
                             >
                             <x-button
                               v-if="
-                                isSplitDeleteEnabled &&
-                                item.total_payments == splitIndex + 1 &&
-                                ![
-                                  paymentStatusEnum.PAID,
-                                  paymentStatusEnum.CAPTURED,
-                                  paymentStatusEnum.AUTHORISED,
-                                  paymentStatusEnum.REFUNDED,
-                                  paymentStatusEnum.PARTIAL_CAPTURED,
-                                  paymentStatusEnum.PARTIALLY_PAID,
-                                ].includes(splitPayment.payment_status_id) &&
-                                splitPayment.sr_no > 1
+                                canDeleteSplitPayment(
+                                  item,
+                                  splitIndex,
+                                  splitPayment,
+                                )
                               "
                               size="xs"
                               color="red"
