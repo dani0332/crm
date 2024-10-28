@@ -51,12 +51,15 @@ class LeadAllocationController extends Controller
                     'la.manual_assignment_count as manualAllocationCount',
                     'la.auto_assignment_count as autoAllocationCount',
                     'la.reset_cap',
-                    'teams.name as teamName',
+                    DB::RAW('GROUP_CONCAT(teams.name ORDER BY teams.name ASC SEPARATOR ", ") as teamName')
                 )
                 ->join('lead_allocation as la', 'la.user_id', 'users.id')
                 ->join('user_team', 'user_team.user_id', 'users.id')
                 ->join('teams', 'teams.id', 'user_team.team_id')
+                ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
+                ->join('roles as r', 'r.id', '=', 'mhr.role_id')
                 ->where('la.quote_type_id', $this->quoteType->id())
+                ->whereIn('r.name', $this->quoteType->advisorRoles())
                 // subquery to exclude users with any kind of "manager" roles
                 ->whereNotExists(function ($query) use ($managerRoleIds) {
                     $query->select(DB::raw(1))
