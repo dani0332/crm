@@ -173,7 +173,7 @@ function showCustomDate() {
 function setUrl(advisor_id, quote_status_id) {
   let url = '';
 
-  if (!this.filters || !this.filters.quoteType) {
+  if (!filters || !filters.quoteType) {
     notification.error({
       title: 'Please select a line of business.',
       position: 'top',
@@ -201,7 +201,7 @@ function setUrl(advisor_id, quote_status_id) {
       'Yacht Insurance',
     ]);
 
-    const formattedQuoteType = quoteTypeMapping[this.filters.quoteType];
+    const formattedQuoteType = quoteTypeMapping[filters.quoteType];
 
     const quoteStatusParams = quote_status_id
       .map(id => `quote_status_id[]=${id}`)
@@ -364,6 +364,7 @@ onMounted(() => {
           :href="url"
           @click.prevent="setUrl(advisor_id, filters.statusId)"
           class="text-black underline"
+          style="cursor: pointer"
         >
           {{ advisor_name }}
         </a>

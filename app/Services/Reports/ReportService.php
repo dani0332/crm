@@ -585,6 +585,7 @@ class ReportService extends BaseService
         // Execute the query and return the result
         return $result;
     }
+
     public function getPaymentAuthorisedSummary($request)
     {
 
@@ -640,7 +641,6 @@ class ReportService extends BaseService
         }
         $dataCollection = collect();
         foreach ($allowedLOBs as $details) {
-
             $premiumColumn = $details['table'].'.premium';
 
             $query = DB::table($details['table'])
@@ -648,14 +648,14 @@ class ReportService extends BaseService
                     'users.id as advisor_id',
                     'users.name as advisor_name',
                     'quote_status_id',
-                    DB::raw('COUNT(*) as total_leads'),
-                    DB::raw('SUM('.$premiumColumn.') as total_premium'),
+                    DB::raw('COUNT(DISTINCT '.$details['table'].'.code) as total_leads'),
+                    DB::raw('SUM(DISTINCT '.$premiumColumn.') as total_premium'),
                     DB::raw('DATE_FORMAT(py.authorized_at, "%d-%m-%Y") as authorized_at'),
                     DB::raw("DATEDIFF(DATE_ADD(py.authorized_at, INTERVAL $expiryDays DAY), NOW()) as expiry_days")
                 )
                 ->leftJoin('payments as py', 'py.code', '=', $details['table'].'.code')
                 ->join('users', 'users.id', $details['table'].'.advisor_id');
-
+            $query->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED);
             if ($user->isAdvisor()) {
                 $query->where($details['table'].'.advisor_id', $user->id);
             } else {
@@ -663,11 +663,13 @@ class ReportService extends BaseService
                     ->join('teams', 'teams.id', '=', 'user_team.team_id')
                     ->whereIn('teams.name', $userTeams);
             }
-
-            $query->where('py.payment_status_id', PaymentStatusEnum::AUTHORISED)
-                ->groupBy('users.id', 'users.name')
-                ->orderBy('total_leads', 'desc');
-
+            if (isset($request->quoteType)) {
+                $quoteType = explode(' ', Str::lower(trim($request->quoteType)))[0];
+                if (checkPersonalQuotes(ucfirst($quoteType))) {
+                    $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($quoteType));
+                    $query->where('quote_type_id', $quoteTypeId);
+                }
+            }
             if (isset($request->userIds)) {
                 $query->whereIn('advisor_id', $request->userIds);
             }
@@ -700,7 +702,8 @@ class ReportService extends BaseService
                 $query->whereBetween(DB::raw('DATE_ADD(py.authorized_at, INTERVAL '.$expiryDays.' DAY)'), [$startDate, $endDate]);
             }
 
-            $dataCollection = $dataCollection->merge($query->get());
+            $dataCollection = $query->groupBy('users.id')
+                ->orderBy('total_leads', 'desc')->get();
         }
         $items = $dataCollection->groupBy('advisor_id')->map(function ($group) {
             return [
