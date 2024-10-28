@@ -381,10 +381,19 @@ class QuoteDocumentService extends BaseService
      *
      * @return array
      */
-    public function getHandBookDocuments($quote)
+    public function getHandBookDocuments($quote, $coPaymentIds = null)
     {
         if ($quote->policyWording) {
-            $policyWording = $quote->policyWording->map(function ($policyWording) use ($quote) {
+            $policyWording = $quote->policyWording;
+
+            // Filter out documents with matching co-payment codes
+            if ($coPaymentIds != null) {
+                $policyWording = $policyWording->reject(function ($policyWording) use ($coPaymentIds) {
+                    return $coPaymentIds && in_array($policyWording->health_plan_co_payment_id, $coPaymentIds);
+                });
+            }
+
+            $policyWording = $policyWording->map(function ($policyWording) use ($quote) {
                 $baseUrl = config('constants.AZURE_IM_STORAGE_URL');
                 if (strpos($policyWording->link, $baseUrl) !== 0) {
                     $policyWording->link = rtrim($baseUrl, '/').'/'.ltrim($policyWording->link, '/');
