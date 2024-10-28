@@ -64,6 +64,13 @@ class QuoteAllocation extends Command
             $this->executeHealthAllocation(QuoteTypeId::Health, $to, $chunkSize, $allocationStartDate);
             $this->executeBikeAllocation(QuoteTypeId::Bike, $to, $chunkSize, $allocationStartDate, $applicationStorageService);
             $this->executeTravelAllocation(QuoteTypeId::Travel, $to, $chunkSize, $allocationStartDate);
+
+            $this->executeAllocation(QuoteTypes::CORPLINE, $to, $chunkSize, $allocationStartDate);
+            $this->executeAllocation(QuoteTypes::CYCLE, $to, $chunkSize, $allocationStartDate);
+            $this->executeAllocation(QuoteTypes::PET, $to, $chunkSize, $allocationStartDate);
+            $this->executeAllocation(QuoteTypes::YACHT, $to, $chunkSize, $allocationStartDate);
+            $this->executeAllocation(QuoteTypes::LIFE, $to, $chunkSize, $allocationStartDate);
+            $this->executeAllocation(QuoteTypes::HOME, $to, $chunkSize, $allocationStartDate);
         } else {
             info('Quote Allocation Command is turned Off');
         }
@@ -183,10 +190,10 @@ class QuoteAllocation extends Command
         $this->logProcessedRecords($processedRecords, $quoteType);
     }
 
-    private function logProcessedRecords($processedRecords, $quoteType)
+    private function logProcessedRecords($processedRecords, mixed $quoteType)
     {
         if ($processedRecords === 0) {
-            info('No records found for '.QuoteTypeId::getDescription($quoteType));
+            info('No records found for '.($quoteType instanceof QuoteTypes ? $quoteType->value : QuoteTypeId::getDescription($quoteType)));
         }
     }
 
@@ -219,6 +226,28 @@ class QuoteAllocation extends Command
             QuoteTypes::BIKE->allocate(uuid: $lead->uuid);
             $processedRecords++;
             info('Processed record for Bike Quote Allocation with uuid: '.$lead->uuid);
+        }
+        $this->logProcessedRecords($processedRecords, $quoteType);
+    }
+
+    private function executeAllocation(QuoteTypes $quoteType, $to, $chunkSize, $allocationStartDate)
+    {
+        $processedRecords = 0;
+        $leads = $quoteType->model()::whereNull('advisor_id')
+            ->select('uuid', 'payment_status_id')
+            ->whereBetween('created_at', [$allocationStartDate, $to])
+            ->orderBy('created_at', 'desc')
+            ->when($quoteType->isPersonalQuote(), function ($q) use ($quoteType) {
+                $q->where('quote_type_id', $quoteType->id());
+            })
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
+            ->take($chunkSize);
+
+        foreach ($leads->get() as $lead) {
+            info("Processing record for Quote Allocation with uuid: {$lead->uuid} and Quote Type: {$quoteType->value}");
+            $quoteType->allocate(uuid: $lead->uuid);
+            $processedRecords++;
+            info("Processed record for Quote Allocation with uuid: {$lead->uuid} and Quote Type: {$quoteType->value}");
         }
         $this->logProcessedRecords($processedRecords, $quoteType);
     }
