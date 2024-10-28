@@ -130,8 +130,7 @@ class UpdateStaleLeads extends Command
                                 'auditable_type' => $eligibleQuoteType,
                                 'auditable_id' => $staleLead->id,
                                 'old_values' => ['quote_status_id' => $staleLead->quote_status_id],
-                                // 'new_values' => ['quote_status_id' => QuoteStatusEnum::Lost, 'notes' => 'Stale for more than 90 days'],
-                                'new_values' => ['quote_status_id' => QuoteStatusEnum::Lost, 'notes' => 'Stale for more than 5 days'],
+                                'new_values' => ['quote_status_id' => QuoteStatusEnum::Lost, 'notes' => 'Stale for more than 90 days'],
                                 'created_at' => now(),
                                 'updated_at' => now(),
                             ]);

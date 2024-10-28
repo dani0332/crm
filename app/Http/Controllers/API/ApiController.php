@@ -14,8 +14,11 @@ use App\Http\Requests\EmailEventsRequest;
 use App\Http\Requests\EvaluateTierRequest;
 use App\Http\Requests\HandleZeroPlansRequest;
 use App\Http\Requests\PaymentNotificationRequest;
+use App\Http\Requests\SendHealthApplyNowEmailRequest;
 use App\Http\Requests\SICWorkflowRequest;
 use App\Jobs\FixQuoteStatusDate;
+use App\Models\HealthQuote;
+use App\Models\HealthQuotePlan;
 use App\Models\QuoteFlowDetails;
 use App\Services\ApiService;
 use App\Services\BirdService;
@@ -24,6 +27,7 @@ use App\Services\InboundEmailsHookService;
 use App\Services\NotificationService;
 use App\Services\QuoteStatusService;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -94,6 +98,7 @@ class ApiController extends Controller
     {
         return $this->apiService->evaluateTier($request);
     }
+
     public function inboundEmailsHook()
     {
         return $this->inboundEmailsHookService->process();
@@ -134,6 +139,7 @@ class ApiController extends Controller
 
         return apiResponse(['response_body' => $response->body ?? null], Response::HTTP_OK, 'Email event stopped successfully');
     }
+
     // Temporary Endpoint - Will be Removed after fixing Quote Status Dates for all LOBs
     public function fixQuoteStatusDate()
     {
@@ -152,6 +158,62 @@ class ApiController extends Controller
         }
 
         return apiResponse(null, Response::HTTP_OK, 'Invalid Quote Type');
+    }
+
+    // Temporary Endpoint - Will be Removed after analysing health data
+    public function analyseHealthData()
+    {
+        $leads = HealthQuote::with('advisor')->whereBetween('created_at', [Carbon::parse(request('start')), Carbon::parse(request('end'))])->latest('id')->get();
+
+        $getMaxPricePlan = function ($lead) {
+            $healthQuotePlan = HealthQuotePlan::where('health_quote_request_id', $lead->id)->first();
+            if ($healthQuotePlan) {
+                $payload = $healthQuotePlan->plan_payload ? json_decode($healthQuotePlan->plan_payload) : null;
+                if ($payload && property_exists($payload, 'plans')) {
+                    return collect($payload->plans)->map(function ($plan) {
+                        $premium = collect($plan->ratesPerCopay)->max('premium');
+
+                        return [
+                            'id' => property_exists($plan, 'id') ? $plan->id : null,
+                            'planCode' => property_exists($plan, 'planCode') ? $plan->planCode : null,
+                            'name' => property_exists($plan, 'name') ? $plan->name : null,
+                            'premium' => $premium,
+                        ];
+                    })->sortByDesc('premium')->first();
+                }
+            }
+
+            return null;
+        };
+
+        $data = collect([]);
+        foreach ($leads as $lead) {
+            $maxPricePlan = $getMaxPricePlan($lead);
+
+            if ($maxPricePlan) {
+                $data->push([
+                    'id' => $lead->id,
+                    'uuid' => $lead->uuid,
+                    'health_team_type' => $lead->health_team_type,
+                    'price_starting_from' => $lead->price_starting_from,
+                    'premium' => $lead->premium,
+                    'advisor_id' => $lead->advisor_id,
+                    'advisor_name' => $lead->advisor?->name,
+                    'plan_id' => $maxPricePlan['id'],
+                    'plan_code' => $maxPricePlan['planCode'],
+                    'plan_name' => $maxPricePlan['name'],
+                    'max_premium' => $maxPricePlan['premium'],
+                    'created_at' => $lead->created_at,
+                ]);
+            }
+        }
+
+        return response()->json($data);
+    }
+
+    public function sendHealthApplyNowEmail(SendHealthApplyNowEmailRequest $request)
+    {
+        return $this->apiService->sendHealthApplyNowEmail($request);
     }
 
     public function quoteUpdated(QuoteUpdatedRequest $request)
