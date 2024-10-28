@@ -204,6 +204,11 @@ const paidAmountSum = ref(0);
 const totalPaidAmount = ref(0);
 const masterPaymentStatus = ref('NEW');
 
+const getCustomReasonIndex = value => {
+  const index = declinedReasons.findIndex(reason => reason.value === value);
+  return index !== -1 ? index : null;
+};
+
 const calculateTotalAmount = () => {
   const discount = discountValue.value;
   if (
@@ -433,7 +438,7 @@ const handleDeclinedChange = () => {
   isDeclineClicked.value = true;
   isApproveClicked.value = false;
   isDeclineCustomReason.value = false;
-  paymentMethodsForm.declined_reason = '';
+  handleDeclinedReasonChange();
   return true;
 };
 
@@ -713,10 +718,7 @@ const handleDiscountReasonChange = () => {
 };
 
 const handleDeclinedReasonChange = () => {
-  if (paymentMethodsForm.declined_reason !== '') {
-    isDeclinedReasonError.value = false;
-  }
-  if (paymentMethodsForm.declined_reason === '6') {
+  if (getCustomReasonIndex(paymentMethodsForm.declined_reason) === 6) {
     isDeclineCustomReason.value = true;
   } else {
     isDeclineCustomReason.value = false;
@@ -1795,6 +1797,12 @@ const initializePaymentForm = (
     paymentMethodsForm.discount =
       payment.discount_type !== null ? payment.discount_type : '';
   }
+  paymentMethodsForm.declined_reason =
+    splitPaymentRecord.value.decline_reason_id == null
+      ? ''
+      : splitPaymentRecord.value.decline_reason_id;
+  paymentMethodsForm.declined_custom_reason =
+    splitPaymentRecord.value.decline_custom_reason;
 };
 
 const processPaymentSplits = payment => {
@@ -2198,29 +2206,6 @@ const addPayment = isValid => {
   data.payment.payment_splits = splitPayments;
 
   let declinedCustomReason = paymentMethodsForm.declined_custom_reason;
-  if (
-    paymentMethodsForm.status === 'view' ||
-    isCreditApprovalView.value === true
-  ) {
-    if (
-      isDeclineClicked.value === true &&
-      paymentMethodsForm.declined_reason === ''
-    ) {
-      isDeclinedReasonError.value = true;
-      return;
-    } else {
-      isDeclinedReasonError.value = false;
-    }
-    if (
-      paymentMethodsForm.declined_reason != '6' &&
-      isDeclineClicked.value === true
-    ) {
-      declinedCustomReason = declinedReasons.find(
-        reason => reason.value === paymentMethodsForm.declined_reason,
-      ).label;
-    }
-  }
-
   if (isCreditApprovalView.value === true) {
     let viewData = {
       modelType: props.quoteType,
@@ -5173,7 +5158,7 @@ const isSplitDeleteEnabled = computed(() => {
               </div>
               <x-divider class="mb-4 mt-1" />
               <div class="flex w-full">
-                <div class="px-2">
+                <div class="w-full px-2">
                   <x-field label="DECLINE REASON" required>
                     <select
                       :class="{ 'custom-select-error': isDeclinedReasonError }"
@@ -5199,7 +5184,7 @@ const isSplitDeleteEnabled = computed(() => {
                     </p>
                   </x-field>
                 </div>
-                <div v-if="isDeclineCustomReason" class="px-2">
+                <div v-if="isDeclineCustomReason" class="w-full px-2">
                   <x-field label="CUSTOM REASON" required>
                     <x-input
                       class="w-full"
