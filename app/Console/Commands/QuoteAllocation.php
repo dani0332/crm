@@ -131,6 +131,7 @@ class QuoteAllocation extends Command
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate, QuoteStatusEnum::Lost])
             ->where('health_quote_request.price_starting_from', '!=', null)
             ->where('health_quote_request.is_error_email_sent', 0)
+            ->where('source', '!=', LeadSourceEnum::IMCRM)
             ->where(function ($q) {
                 $q->leadAllocationFailed()
                     ->orSicFlowDisabled()

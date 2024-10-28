@@ -2107,7 +2107,7 @@ class CarQuoteService extends BaseService
                     ->whereNotNull('cqp.pua_premium')
                     ->whereRaw('q.paid_at <= DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 24 HOUR')
                     ->whereRaw('q.paid_at > DATE_ADD(NOW(), INTERVAL 4 HOUR) - INTERVAL 30 DAY')
-                    ->where('cqp.plan_id', '=', 'q.plan_id');
+                    ->whereColumn('cqp.plan_id', '=', 'q.plan_id');
             })
             ->orderBy('q.paid_at', 'desc');
 

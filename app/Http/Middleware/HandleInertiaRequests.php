@@ -6,6 +6,7 @@ use App\Enums\AMLStatusCode;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\DocumentTypeCode;
 use App\Enums\DocumentTypeEnum;
+use App\Enums\EmbeddedProductEnum;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\Kyc;
 use App\Enums\LeadSourceEnum;
@@ -120,6 +121,7 @@ class HandleInertiaRequests extends Middleware
             'documentTypeCodeEnum' => DocumentTypeCode::asArray(),
             'paymentFrequencyEnum' => PaymentFrequency::asArray(),
             'pendingActivityCount' => app(ActivitiesService::class)->getPendingActivityCount(),
+            'embeddedProductEnum' => EmbeddedProductEnum::asArray(),
         ];
     }
 
