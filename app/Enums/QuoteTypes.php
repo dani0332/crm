@@ -232,4 +232,20 @@ enum QuoteTypes: string
         return $typesWithIds;
     }
 
+    public function advisorRoles()
+    {
+        return match ($this) {
+            self::CAR => [RolesEnum::CarAdvisor],
+            self::HEALTH => [RolesEnum::HealthAdvisor],
+            self::BIKE => [RolesEnum::BikeAdvisor],
+            self::TRAVEL => [RolesEnum::TravelAdvisor],
+            self::CYCLE => [RolesEnum::CycleAdvisor],
+            self::YACHT => [RolesEnum::YachtAdvisor],
+            self::PET => [RolesEnum::PetAdvisor],
+            self::LIFE => [RolesEnum::LifeAdvisor],
+            self::CORPLINE => [RolesEnum::CorpLineAdvisor],
+            self::HOME => [RolesEnum::HomeAdvisor],
+            default => [],
+        };
+    }
 }

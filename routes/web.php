@@ -57,6 +57,7 @@ use App\Http\Controllers\V2\AlfredChatController;
 use App\Http\Controllers\V2\AMLController;
 use App\Http\Controllers\V2\AmtController as V2AmtController;
 use App\Http\Controllers\V2\BikeQuoteController;
+use App\Http\Controllers\V2\BuyLeadController;
 use App\Http\Controllers\V2\CarQuoteController;
 use App\Http\Controllers\V2\CarRevivalQuoteController;
 use App\Http\Controllers\V2\CentralController;
@@ -421,6 +422,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::put('/update/{quoteSync}', [QuoteSyncController::class, 'update'])->name('admin.quotesync.update');
             Route::post('/sync-stuck-entries', [QuoteSyncController::class, 'addStuckEntriesForSyncing'])->name('admin.quotesync.sync-stuck-entries');
             Route::post('/sync-failed-entries', [QuoteSyncController::class, 'addFailedEntriesForSyncing'])->name('admin.quotesync.sync-failed-entries');
+        });
+
+        Route::prefix('buy-leads')->group(function () {
+            Route::post('config/upsert', [BuyLeadController::class, 'upsertConfiguration'])->name('admin.buy-leads.config.upsert');
+            Route::post('request', [BuyLeadController::class, 'requestBuyLeads'])->name('admin.buy-leads.request');
         });
     });
 
