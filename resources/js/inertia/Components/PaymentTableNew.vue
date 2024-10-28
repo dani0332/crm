@@ -3170,11 +3170,7 @@ const isSplitDeleteEnabled = computed(() => {
     return true;
   }
 
-  if (isNotUpfront && hasEditPermission && isPolicyNotBooked) {
-    return true;
-  }
-
-  return false;
+  return isNotUpfront && hasEditPermission && isPolicyNotBooked;
 });
 
 const canDeleteSplitPayment = (item, splitIndex, splitPayment) => {
