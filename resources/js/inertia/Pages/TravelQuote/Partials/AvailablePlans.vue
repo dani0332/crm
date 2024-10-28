@@ -5,6 +5,8 @@ const props = defineProps({
   access: Object,
 });
 
+const emit = defineEmits(['onLoadAvailablePlansData']);
+
 const listQuotePlansMembers = computed(() => {
   return props.plan.listQuotePlansMembers.map((item, index) => {
     return { ...item, index };

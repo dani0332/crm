@@ -614,37 +614,37 @@
                 "type" => ""
             ],
             [
-                "code" => "hazardousActivitiesCover",
+                "code" => "hazardousActivities",
                 "title" => "Hazardous Activities Cover",
                 "type" => "addons"
             ],
             [
-                "code" => "adventureSportsCover",
+                "code" => "adventureSports",
                 "title" => "Adventure Sports Cover",
                 "type" => "addons"
             ],
             [
-                "code" => "winterSportsCover",
+                "code" => "winterSports",
                 "title" => "Winter Sports Cover",
                 "type" => "addons"
             ],
             [
-                "code" => "waterSportsCover",
+                "code" => "waterSports",
                 "title" => "Water Sports Cover",
                 "type" => "addons"
             ],
             [
-                "code" => "businessCover",
+                "code" => "business",
                 "title" => "Business Cover",
                 "type" => "addons"
             ],
             [
-                "code" => "golfCover",
+                "code" => "golf",
                 "title" => "Golf Cover",
                 "type" => "addons"
             ],
             [
-                "code" => "terrorismCover",
+                "code" => "terrorism",
                 "title" => "Terrorism Cover",
                 "type" => "addons"
             ],
@@ -654,17 +654,17 @@
                 "type" => "addons"
             ],
             [
-                "code" => "rentalCarExcess",
+                "code" => "rentalCar",
                 "title" => "Rental Car Excess",
                 "type" => "addons"
             ],
             [
-                "code" => "trekkingGIG",
+                "code" => "trekking",
                 "title" => "Trekking (GIG)",
                 "type" => "addons"
             ],
             [
-                "code" => "safariGIG",
+                "code" => "safari",
                 "title" => "Safari (GIG)",
                 "type" => "addons"
             ],
