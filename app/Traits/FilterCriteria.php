@@ -4,7 +4,6 @@ namespace App\Traits;
 
 use App\Enums\DatabaseColumnsString;
 use App\Enums\FilterTypes;
-use App\Enums\PermissionsEnum;
 use Carbon\Carbon;
 
 trait FilterCriteria

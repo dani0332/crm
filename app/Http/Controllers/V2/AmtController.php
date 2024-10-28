@@ -194,11 +194,11 @@ class AmtController extends Controller
         }
 
         if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_invoice_number')) {
-            $data->where("py.insurer_tax_number", $request->insurer_tax_invoice_number);
+            $data->where('py.insurer_tax_number', $request->insurer_tax_invoice_number);
         }
 
         if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commission_tax_invoice_number')) {
-            $data->where("py.insurer_commmission_invoice_number", $request->insurer_commission_tax_invoice_number);
+            $data->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
         }
 
         $this->adjustQueryByDateFilters($data, 'bqr');

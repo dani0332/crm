@@ -328,11 +328,11 @@ class HomeQuoteService extends BaseService
         }
 
         if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_invoice_number')) {
-            $this->query->where("py.insurer_tax_number", $request->insurer_tax_invoice_number);
+            $this->query->where('py.insurer_tax_number', $request->insurer_tax_invoice_number);
         }
 
         if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commission_tax_invoice_number')) {
-            $this->query->where("py.insurer_commmission_invoice_number", $request->insurer_commission_tax_invoice_number);
+            $this->query->where('py.insurer_commmission_invoice_number', $request->insurer_commission_tax_invoice_number);
         }
 
         foreach ($searchProperties as $item) {

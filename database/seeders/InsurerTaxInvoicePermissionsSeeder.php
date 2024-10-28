@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Permission;
 use App\Enums\PermissionsEnum;
+use App\Models\Permission;
 use Illuminate\Database\Seeder;
 
 class InsurerTaxInvoicePermissionsSeeder extends Seeder

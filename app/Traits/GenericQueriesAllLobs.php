@@ -846,14 +846,14 @@ trait GenericQueriesAllLobs
 
         if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_TAX_INVOICE_NUMBER) && $request->has('insurer_tax_number')) {
             $value = $request->get('insurer_tax_number');
-            $query->whereHas('payments', function($query) use ($value) {
+            $query->whereHas('payments', function ($query) use ($value) {
                 $query->where(DatabaseColumnsString::INSURER_TAX_INVOICE_NUMBER, $value);
             });
         }
 
         if (auth()->user()->can(PermissionsEnum::SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER) && $request->has('insurer_commmission_invoice_number')) {
             $value = $request->get('insurer_commmission_invoice_number');
-            $query->whereHas('payments', function($query) use ($value) {
+            $query->whereHas('payments', function ($query) use ($value) {
                 $query->where(DatabaseColumnsString::INSURER_COMMISSION_TAX_INVOICE_NUMBER, $value);
             });
         }
