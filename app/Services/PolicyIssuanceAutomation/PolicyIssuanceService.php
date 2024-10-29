@@ -17,7 +17,7 @@ class PolicyIssuanceService
         $insuranceProvider = getInsuranceProvider($payment, $quoteType);
         $insuranceProviderAutomation = PolicyIssuanceFactory::make($quoteType, $insuranceProvider->code);
         if (! $insuranceProviderAutomation || ! $insuranceProviderAutomation?->isPolicyIssuanceAutomationEnabled()) {
-            $response['isPolicyAutomationEnabled'] = true;
+            $response['isPolicyAutomationEnabled'] = false;
 
             return $response;
         }

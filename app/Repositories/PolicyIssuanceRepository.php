@@ -17,7 +17,7 @@ class PolicyIssuanceRepository extends BaseRepository
 
     public function fetchSchedulePolicyIssuance($quote, $insurer, $quoteType, $logFor)
     {
-        $policyIssuance = $this->where(['model_type' => $quote->getMorphClass(), 'model_id' => $quote->id, 'quote_type' => $quoteType])->first();
+        $policyIssuance = $quote->policyIssuance;
 
         if ($policyIssuance) {
             info('automation:'.$logFor.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' -  Policy Issuance Schedule already exists PID : '.$policyIssuance->id);

@@ -6,6 +6,7 @@ use App\Enums\BusinessTypeOfInsuranceIdEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Services\PolicyIssuanceAutomation\PolicyIssuanceService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\ValidationException;
@@ -66,6 +67,11 @@ class UpdatePolicyDetailRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $quoteModel = $this->getQuoteObject(request()->modelType, request()->quote_id);
+
+            $lockStatusOfPolicyIssuanceSteps = (new PolicyIssuanceService)->getPolicyIssuanceStepsStatus($quoteModel, request()->modelType);
+            if ($lockStatusOfPolicyIssuanceSteps['isPolicyAutomationEnabled'] && $lockStatusOfPolicyIssuanceSteps['isEditPolicyDetailsDisabled']) {
+                $validator->errors()->add('value', 'Policy Booking is scheduled! You are not allowed to edit policy details');
+            }
 
             $this->validatePolicyBooked($validator, $quoteModel);
             $this->validatePolicyNumberFormat($validator);
