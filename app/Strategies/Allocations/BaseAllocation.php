@@ -93,7 +93,7 @@ abstract class BaseAllocation extends AllocationService
                 $q->whereIn('users.id', fn ($query) => $query->select('user_id')->from('user_team')->where('team_id', $this->teamId));
             })
             ->whereIn('r.name', $roles)
-            ->where('la.quote_type_id', $this->quoteType->id())
+            ->where('la.quote_type_id', in_array($this->quoteType, [QuoteTypes::CORPLINE, QuoteTypes::GROUP_MEDICAL]) ? QuoteTypes::BUSINESS->id() : $this->quoteType->id())
             ->where('users.is_active', true)
             ->orderBy('la.last_allocated', 'asc');
     }
