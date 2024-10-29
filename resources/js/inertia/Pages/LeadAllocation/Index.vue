@@ -203,7 +203,11 @@ const onSubmitChanges = async () => {
         position: 'top',
       });
 
-      fetchData();
+        router.get(route('lead-allocation-dashboard', page.props.quoteType), {
+            replace: true,
+            preserveScroll: true,
+            preserveState: true,
+        });
     })
     .finally(() => {
       loaders.submit = false;
@@ -320,7 +324,7 @@ onMounted(() => {
     <DataTable
       table-class-name="compact"
       :headers="tableHeader"
-      :items="props.data || []"
+      :items="$page.props.data || []"
       :sort-by="'userName'"
       :sort-type="'asc'"
       :rows-per-page="999"
