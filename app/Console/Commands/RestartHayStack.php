@@ -26,14 +26,13 @@ class RestartHaystack extends Command
             ->where('created_at', '>=', Carbon::parse('20-oct-2024'))
             ->orderBy('created_at', 'desc')
             ->first();
-
+        // dd($haystack->updated_at->diffInMinutes(Carbon::now()) > 4);
         if ($haystack) {
-            if ($haystack->bales()->count() > 0) {
+            if ($haystack->bales()->count() > 0 && $haystack->data->first()->updated_at->diffInMinutes(Carbon::now()) > 30) {
                 $haystack->restart();
                 $haystack->resume_at = Carbon::now();
                 $haystack->save();
                 $this->info('Haystack process restarted successfully.');
-
                 return;
             } else {
                 info('HayStack:'.' ---  No bales found for the haystack process.');

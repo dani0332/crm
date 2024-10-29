@@ -274,7 +274,7 @@ class RenewalsUploadService
             });
 
             if ($jobs != null && count($jobs)) {
-                Haystack::build()
+                $hayStack = Haystack::build()
                     ->onQueue('renewals')
                     ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $renewalsUploadLead) {
@@ -290,7 +290,12 @@ class RenewalsUploadService
                     })
                     ->allowFailures()
                     ->withDelay(2)
-                    ->dispatch();
+                    ->create();
+                info('Updating renewalsUploadLead with haystack_id: ' . $hayStack->id);
+                $renewalsUploadLead->haystack_id = $hayStack->id;
+                $renewalsUploadLead->save();
+
+                $hayStack->start();
             } else {
                 info($logPrefix.' No jobs to create quotes');
                 $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
@@ -319,7 +324,7 @@ class RenewalsUploadService
             });
 
             if ($jobs != null && count($jobs)) {
-                Haystack::build()
+                $hayStack = Haystack::build()
                     ->onQueue('renewals')
                     ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $renewalsUploadLead) {
@@ -336,8 +341,12 @@ class RenewalsUploadService
                     })
                     ->allowFailures()
                     ->withDelay(2)
-                    ->dispatch();
+                    ->create();
+                info('Updating renewalsUploadLead with haystack_id: ' . $hayStack->id);
+                $renewalsUploadLead->haystack_id = $hayStack->id;
+                $renewalsUploadLead->save();
 
+                $hayStack->start();
                 info($logPrefix.' jobs dispatched');
             } else {
                 info($logPrefix.' no jobs to create quotes');
@@ -412,7 +421,7 @@ class RenewalsUploadService
             if ($jobs != null && count($jobs)) {
                 info($logPrefix.' '.count($jobs).' found to schedule for fetch plans');
 
-                Haystack::build()
+                $hayStack = Haystack::build()
                     ->onQueue('renewals')
                     ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $renewalStatusProcess) {
@@ -429,8 +438,11 @@ class RenewalsUploadService
                     })
                     ->allowFailures()
                     ->withDelay(10)
-                    ->dispatch();
+                    ->create();
+                $renewalStatusProcess->haystack_id = $hayStack->id;
+                $renewalStatusProcess->save();
 
+                $hayStack->start();
                 info($logPrefix.' all jobs are scheduled');
             } else {
                 info($logPrefix.' no leads available for fetch plans, about to mark status as completed');
@@ -454,6 +466,10 @@ class RenewalsUploadService
     {
         info('FetchPlans FN: fetchRenewalPlans individual lead plan process started for policy_number: '.$renewalQuoteProcess->policy_number);
         $leadData = (object) $renewalQuoteProcess->data;
+
+        // update haystack count for this process, so we can restart after last update
+        $hayStack = Haystack::where('id', $renewalStatusProcess->haystack_id)->first();
+        isset($hayStack) && $hayStack->setData('count', $hayStack->getData('count') + 1);
 
         $quoteType = $this->getQuoteTypeByShortCode($renewalQuoteProcess->quote_type);
         $quoteObject = $this->createQuoteObject($quoteType->code);
@@ -734,13 +750,16 @@ class RenewalsUploadService
     {
         $data = $renewalQuoteProcess->data;
         $quoteType = $this->getQuoteTypeByShortCode($data['quote_type']);
+        $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
         $logPrefix = 'UAC FN: createQuote Policy NO: '.$data['policy_number'].' EndDate: '.$data['end_date'];
         info($logPrefix.' Quote creation started');
 
-        $quote = DB::transaction(function () use ($renewalQuoteProcess, $logPrefix, $data, $quoteType) {
-            $detailData = [];
+        // update haystack count for this process, so we can restart after last update
+        $hayStack = Haystack::where('id', $renewalUploadLead->haystack_id)->first();
+        isset($hayStack) && $hayStack->setData('count', $hayStack->getData('count') + 1);
 
-            $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
+        $quote = DB::transaction(function () use ($renewalQuoteProcess, $logPrefix, $data, $renewalUploadLead, $quoteType) {
+            $detailData = [];
 
             $transApprovedId = $quoteType->short_code === QuoteTypeShortCode::CAR ? $this->getquoteStatusIdbyCode(quoteStatusCode::NEW_LEAD) : $this->getquoteStatusIdbyCode(quoteStatusCode::ALLOCATED);
 
@@ -874,7 +893,8 @@ class RenewalsUploadService
 
             $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PROCESSED, 'quote_id' => $quote->id]);
 
-            RenewalsUploadLeads::where('id', $renewalUploadLead->id)->update(['good' => DB::raw('good+1')]);
+            $newRenewalUpload = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
+            $newRenewalUpload->update(['good' => DB::raw('good+1')]);
 
             info($logPrefix.' Quote created. QuoteType: '.$data['quote_type'].' UUID: '.$quote->uuid);
 
@@ -930,10 +950,15 @@ class RenewalsUploadService
 
         $isNameChanged = false;
 
-        $quote = DB::transaction(function () use ($renewalQuoteProcess, $data, $logPrefix, &$isNameChanged) {
+        $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
+
+        // update haystack count for this process, so we can restart after last update
+        $hayStack = Haystack::where('id', $renewalUploadLead->haystack_id)->first();
+        isset($hayStack) && $hayStack->setData('count', $hayStack->getData('count') + 1);
+
+        $quote = DB::transaction(function () use ($renewalQuoteProcess, $data, $renewalUploadLead, $logPrefix, &$isNameChanged) {
             throw_if($data['quote_type'] != QuoteTypeShortCode::CAR, 'Only Insurance Type Car is allowed to update lead');
 
-            $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
 
             info($logPrefix.' update quote started for PolicyNo: '.$data['policy_number'].' ID: '.$renewalQuoteProcess->id.' UploadLeadId: '.$renewalUploadLead->id);
 
@@ -1257,6 +1282,9 @@ class RenewalsUploadService
         try {
             $carQuote = CarQuote::find($renewalQuoteProcess->quote_id);
             Log::info('Renewals OCB Email started for uuid: '.$carQuote->uuid);
+
+            $hayStack = Haystack::where('id', $renewalsBatchEmail->haystack_id)->first();
+            isset($hayStack) && $hayStack->setData('count', $hayStack->getData('count') + 1);
 
             if ($carQuote->previous_quote_policy_number != null) {
                 $listQuotePlans = $this->carQuoteService->getPlans($carQuote->uuid, true, true);
@@ -1823,7 +1851,7 @@ class RenewalsUploadService
 
             if ($jobs != null && count($jobs)) {
                 info($logPrefix.'total leads to be scheduled for OCB : '.count($jobs));
-                Haystack::build()
+                $hayStack = Haystack::build()
                     ->onQueue('renewals')
                     ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $renewalsBatchEmail, $batch) {
@@ -1849,6 +1877,10 @@ class RenewalsUploadService
                     ->allowFailures()
                     ->withDelay(1)
                     ->dispatch();
+                    info('Updating renewalsUploadLead with haystack_id: ' . $hayStack->id);
+                    $renewalsBatchEmail->haystack_id = $hayStack->id;
+                    $renewalsBatchEmail->save();
+                    $hayStack->start();
             } else {
                 info($logPrefix.' No leads to schedule OCB email');
                 $renewalsBatchEmail->update(['status' => ProcessStatusCode::COMPLETED]);
@@ -1978,7 +2010,7 @@ class RenewalsUploadService
 
             if ($jobs != null && count($jobs)) {
                 info('the value of $jobs is : '.count($jobs));
-                Haystack::build()
+                $hayStack = Haystack::build()
                     ->onQueue('renewals')
                     ->addJobs($jobs)
                     ->then(function () use ($logPrefix, $renewalsUploadLead) {
@@ -1994,7 +2026,11 @@ class RenewalsUploadService
                     })
                     ->allowFailures()
                     ->withDelay(2)
-                    ->dispatch();
+                    ->create();
+                info('Updating renewalsUploadLead with haystack_id: ' . $hayStack->id);
+                $renewalsUploadLead->haystack_id = $hayStack->id;
+                $renewalsUploadLead->save();
+                $hayStack->start();
             } else {
                 info($logPrefix.' No jobs to create quotes');
                 $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
@@ -2017,9 +2053,13 @@ class RenewalsUploadService
         $logPrefix = 'UAC FN: createQuote Policy NO: '.$data['policy_number'];
         info($logPrefix.' Quote creation started');
 
-        $quote = DB::transaction(function () use ($renewalQuoteProcess, $logPrefix, $data, $quoteType) {
+        $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
+        // update haystack count for this process, so we can restart after last update
+        $hayStack = Haystack::where('id', $renewalUploadLead->haystack_id)->first();
+        isset($hayStack) && $hayStack->setData('count', $hayStack->getData('count') + 1);
+
+        $quote = DB::transaction(function () use ($renewalQuoteProcess, $renewalUploadLead, $logPrefix, $data, $quoteType) {
             $searchByName = true;
-            $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
             $transApprovedId = $this->getquoteStatusIdbyCode(quoteStatusCode::NEW_LEAD);
             //advisor and previous advisors will be ignored when not exists
             $advisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);

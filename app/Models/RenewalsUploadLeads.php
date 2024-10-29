@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class RenewalsUploadLeads extends Model implements AuditableContract
 {
@@ -32,5 +33,10 @@ class RenewalsUploadLeads extends Model implements AuditableContract
     public function createdby()
     {
         return $this->belongsTo(User::class, 'created_by_id', 'id');
+    }
+
+    public function hayStack()
+    {
+        return $this->belongsTo(Haystack::class, 'haystack_id');
     }
 }
