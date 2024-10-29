@@ -109,13 +109,12 @@ class EndorsementReportService extends ManagementReport
                 'send_update_logs.invoice_date as insurer_tax_invoice_date',
                 'send_update_logs.broker_invoice_number',
                 'btoi.text as sub_type_line_of_business',
-                'l.text as endorsement_sub_type',
+                DB::raw('IFNULL(l.text, lc.text) as endorsement_sub_type'),
                 'send_update_logs.booking_date',
                 DB::raw('IFNULL(send_update_logs.insurer_commission_invoice_number, p.insurer_commmission_invoice_number) as insurer_commmission_invoice_number'),
                 DB::raw('CASE WHEN ps.sr_no is NULL OR ps.sr_no=1 THEN IFNULL(send_update_logs.commission_percentage, p.commmission_percentage) ELSE 0 END as commmission_percentage'),
                 DB::raw("'Endorsement' as transaction_type"),
                 'personal_quotes.source',
-                'personal_quotes.policy_booking_date',
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -132,6 +131,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('payment_gateway as pg', 'pg.id', '=', 'ps.payment_gateway_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
+            ->leftJoin('lookups as lc', 'send_update_logs.category_id', '=', 'lc.id')
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
         $this->getUtmGroup($request, $query);
@@ -188,13 +188,12 @@ class EndorsementReportService extends ManagementReport
                 DB::raw('IFNULL(p.insurer_invoice_date, IFNULL(s2.invoice_date, "")) as insurer_tax_invoice_date'),
                 DB::raw('IFNULL(CONCAT(p.broker_invoice_number, "-REV"), CONCAT(s2.broker_invoice_number, "-REV")) as broker_invoice_number'),
                 'btoi.text as sub_type_line_of_business',
-                'l.text as endorsement_sub_type',
+                DB::raw('IFNULL(l.text, lc.text) as endorsement_sub_type'),
                 'send_update_logs.booking_date',
                 DB::raw('IFNULL(CONCAT(p.insurer_commmission_invoice_number, "-REV"), IFNULL(CONCAT(send_update_logs.insurer_commission_invoice_number, "-REV"), null)) as insurer_commmission_invoice_number'),
                 DB::raw('-1 * IFNULL(send_update_logs.commission_percentage, IFNULL(p.commmission_percentage, 0)) as commmission_percentage'),
                 DB::raw("'Endorsement' as transaction_type"),
                 'personal_quotes.source',
-                'personal_quotes.policy_booking_date',
             )
             ->leftJoin('personal_quotes', 'personal_quotes.id', '=', 'send_update_logs.personal_quote_id')
             ->leftJoin('payments as pq', 'pq.code', '=', 'personal_quotes.code')
@@ -209,6 +208,7 @@ class EndorsementReportService extends ManagementReport
             ->leftJoin('insurance_provider as ip2', 'ip2.id', '=', 'send_update_logs.insurance_provider_id')
             ->leftJoin('business_type_of_insurance as btoi', 'btoi.id', '=', 'personal_quotes.business_type_of_insurance_id')
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
+            ->leftJoin('lookups as lc', 'send_update_logs.category_id', '=', 'lc.id')
             ->where('send_update_logs.status', '=', EndorsementStatusEnum::UPDATE_BOOKED)
             ->whereNotNull('send_update_logs.reversal_invoice')
             ->whereIn('send_update_logs.category_id', $endrosementCategoryIds);
@@ -258,7 +258,6 @@ class EndorsementReportService extends ManagementReport
             $item->collects = strtoupper($item->collects);
             $item->customer_name = $this->concatValues([$item->first_name, $item->last_name], ' ');
             $item->commmission_percentage = number_format($item->commmission_percentage, 2);
-            $item->policy_booking_date = ! empty($item->policy_booking_date) ? Carbon::parse($item->policy_booking_date)->format('Y-m-d') : null;
         });
     }
 
