@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\QuoteExportLogService;
 use App\Http\Requests\QuoteExportLogRequest;
+use App\Services\QuoteExportLogService;
 
 class QuoteExportLogController extends Controller
 {
