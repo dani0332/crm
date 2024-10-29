@@ -1,4 +1,6 @@
 <script setup>
+import { computed } from 'vue';
+
 const props = defineProps({
   type: {
     required: false,
@@ -19,10 +21,19 @@ const props = defineProps({
   },
 });
 
+const page = usePage();
 const insuranceProviderId = ref(null);
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss a');
 const modals = reactive({
   apiLog: false,
+});
+
+
+const insuranceProviders = computed(() => {
+  return page.props.insuranceProviders.map(item => ({
+    value: item.value ? item.value : item.id,
+    label: item.label ? item.label : item.text,
+  }));
 });
 
 const selectedLog = ref({});
@@ -106,12 +117,7 @@ const onLoadAuditLogData = async () => {
                 :single="true"
                 class="w-full"
                 v-model="insuranceProviderId"
-                :options="
-                  $page.props.insuranceProviders.map(item => ({
-                    value: item.id,
-                    label: item.text,
-                  }))
-                "
+                :options="insuranceProviders"
               />
             </x-field>
             <x-button
