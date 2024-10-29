@@ -67,8 +67,6 @@ const state = reactive({
   reversalSectionEdit: false,
 });
 
-const insCommTaxInvNumState = ref(false);
-
 const page = usePage();
 const notification = useToast();
 const sendUpdateStatusEnum = page.props.sendUpdateStatusEnum;
@@ -185,9 +183,7 @@ const checkSectionToEdit = () => {
       return;
     }
   }
-  if (props.bookingDetails?.is_non_self_billing_enabled) {
-    insCommTaxInvNumState.value = true;
-  }
+
   state.isEdit = !state.isEdit;
 };
 
@@ -233,10 +229,6 @@ function isNotZero(value) {
   return value;
 }
 
-const isNonSelfBillingEnabled = computed(() => {
-  return props.bookingDetails?.is_non_self_billing_enabled ?? false;
-});
-
 const bookingDetailsForm = useForm({
   id: props.sendUpdateLog.id,
   send_update_type: props.sendUpdateLog.category.code,
@@ -257,10 +249,7 @@ const bookingDetailsForm = useForm({
     props?.payments[0]?.discount_value ||
     props.sendUpdateLog?.discount ||
     '0.00',
-  insurer_commission_invoice_number: props.bookingDetails
-    ?.is_non_self_billing_enabled
-    ? (props.bookingDetails?.broker_invoice_number ?? '')
-    : props.sendUpdateLog?.insurer_commission_invoice_number ||
+  insurer_commission_invoice_number: props.sendUpdateLog?.insurer_commission_invoice_number ||
       props?.payments[0]?.insurer_commmission_invoice_number ||
       '',
   commission_percentage:
@@ -652,13 +641,7 @@ const onUpdateReversal = () => {
     reversalEntry.insurer_tax_invoice_number.replace('REV', 'NEW');
   bookingDetailsForm.broker_invoice_number =
     props.sendUpdateLog?.broker_invoice_number ?? '';
-  bookingDetailsForm.insurer_commission_invoice_number =
-    (isNonSelfBillingEnabled.value
-      ? (props.sendUpdateLog?.broker_invoice_number ?? '')
-      : reversalEntry.insurer_commission_invoice_number.replace(
-          'REV',
-          'NEW',
-        )) || '';
+  bookingDetailsForm.insurer_commission_invoice_number = reversalEntry.insurer_commission_invoice_number.replace('REV', 'NEW') || '';
   bookingDetailsForm.price_vat_applicable =
     Math.abs(reversalEntry.price_vat_applicable) || '0.00';
   bookingDetailsForm.commission_percentage =
@@ -968,10 +951,8 @@ const onCancel = () => {
   bookingDetailsForm.commission_vat_applicable =
     props.bookingDetails?.commission_vat_applicable || '';
 
-  if (!props.bookingDetails?.is_non_self_billing_enabled) {
-    bookingDetailsForm.insurer_commission_invoice_number =
-      props.bookingDetails?.insurer_commission_invoice_number || '';
-  }
+bookingDetailsForm.insurer_commission_invoice_number =
+  props.bookingDetails?.insurer_commission_invoice_number || '';
 };
 
 const [sendUpdateConfirmBtnTemp, SendUpdateReuseBtnTemp] =
@@ -1115,12 +1096,6 @@ watch(
   },
 );
 
-watch(
-  () => props.bookingDetails?.insurer_commission_invoice_number,
-  (newValue, oldValue) => {
-    bookingDetailsForm.insurer_commission_invoice_number = newValue;
-  },
-);
 </script>
 
 <template>
@@ -1334,9 +1309,7 @@ watch(
                   </label>
                   <template #tooltip>
                     {{
-                      isNonSelfBillingEnabled
-                        ? productionProcessTooltipEnum.NON_SELF_BILLING_INSURER_COM_TAX_INVOICE_NUMBER_TOOLTIP
-                        : productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                      productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
                     }}
                   </template>
                 </x-tooltip>
@@ -1836,9 +1809,7 @@ watch(
                     </label>
                     <template #tooltip>
                       {{
-                        isNonSelfBillingEnabled
-                          ? productionProcessTooltipEnum.NON_SELF_BILLING_INSURER_COM_TAX_INVOICE_NUMBER_TOOLTIP
-                          : productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                         productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
                       }}
                     </template>
                   </x-tooltip>
@@ -1850,7 +1821,7 @@ watch(
                       bookingDetailsForm.insurer_commission_invoice_number
                     "
                     class="!mb-0 w-full"
-                    :disabled="!state.isEdit || insCommTaxInvNumState"
+                    :disabled="!state.isEdit"
                     placeholder="Enter Commission Tax Invoice No"
                     :rules="[isRequired]"
                     size="xs"
