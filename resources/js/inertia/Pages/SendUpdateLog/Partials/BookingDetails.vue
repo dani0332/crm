@@ -249,9 +249,10 @@ const bookingDetailsForm = useForm({
     props?.payments[0]?.discount_value ||
     props.sendUpdateLog?.discount ||
     '0.00',
-  insurer_commission_invoice_number: props.sendUpdateLog?.insurer_commission_invoice_number ||
-      props?.payments[0]?.insurer_commmission_invoice_number ||
-      '',
+  insurer_commission_invoice_number:
+    props.sendUpdateLog?.insurer_commission_invoice_number ||
+    props?.payments[0]?.insurer_commmission_invoice_number ||
+    '',
   commission_percentage:
     props.sendUpdateLog?.commission_percentage ||
     props?.payments[0]?.commmission_percentage ||
@@ -641,7 +642,8 @@ const onUpdateReversal = () => {
     reversalEntry.insurer_tax_invoice_number.replace('REV', 'NEW');
   bookingDetailsForm.broker_invoice_number =
     props.sendUpdateLog?.broker_invoice_number ?? '';
-  bookingDetailsForm.insurer_commission_invoice_number = reversalEntry.insurer_commission_invoice_number.replace('REV', 'NEW') || '';
+  bookingDetailsForm.insurer_commission_invoice_number =
+    reversalEntry.insurer_commission_invoice_number.replace('REV', 'NEW') || '';
   bookingDetailsForm.price_vat_applicable =
     Math.abs(reversalEntry.price_vat_applicable) || '0.00';
   bookingDetailsForm.commission_percentage =
@@ -951,8 +953,8 @@ const onCancel = () => {
   bookingDetailsForm.commission_vat_applicable =
     props.bookingDetails?.commission_vat_applicable || '';
 
-bookingDetailsForm.insurer_commission_invoice_number =
-  props.bookingDetails?.insurer_commission_invoice_number || '';
+  bookingDetailsForm.insurer_commission_invoice_number =
+    props.bookingDetails?.insurer_commission_invoice_number || '';
 };
 
 const [sendUpdateConfirmBtnTemp, SendUpdateReuseBtnTemp] =
@@ -1095,7 +1097,6 @@ watch(
     bookingDetailsForm.broker_invoice_number = newValue;
   },
 );
-
 </script>
 
 <template>
@@ -1809,7 +1810,7 @@ watch(
                     </label>
                     <template #tooltip>
                       {{
-                         productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
+                        productionProcessTooltipEnum.INSURER_COMMISSION_TAX_INVOICE_NUMBER
                       }}
                     </template>
                   </x-tooltip>
