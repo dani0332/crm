@@ -427,19 +427,24 @@ const disableBookPolicyButton = computed(() => {
 });
 
 const disableIfPolicyFailedAndNoBookingFailedEditPermission = computed(() => {
+  let disableEditBookingDetails = false;
+
+  let policyIssuanceSteps = page.props.lockStatusOfPolicyIssuanceSteps;
+  if (policyIssuanceSteps?.isPolicyAutomationEnabled) {
+    disableEditBookingDetails =
+      policyIssuanceSteps?.isEditBookingDetailsDisabled;
+  }
+
   let isPolicyBookingFailed =
     props.quote.quote_status_id ==
     page.props.quoteStatusEnum.POLICY_BOOKING_FAILED;
-  if (isPolicyBookingFailed) {
-    let hasBookingFailedEditPermission = can(
-      permissionsEnum.BOOKING_FAILED_EDIT,
-    );
-    if (!hasBookingFailedEditPermission) {
-      return true;
-    }
-    return false;
+  let hasBookingFailedEditPermission = can(permissionsEnum.BOOKING_FAILED_EDIT);
+
+  if (isPolicyBookingFailed && !hasBookingFailedEditPermission) {
+    disableEditBookingDetails = true;
   }
-  return false;
+
+  return disableEditBookingDetails;
 });
 
 const showBookingFailedAlert = () => {
