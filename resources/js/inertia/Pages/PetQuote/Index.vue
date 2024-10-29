@@ -220,7 +220,11 @@ const quotesSelected = ref([]);
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'pet');
-  window.open(url + '?' + new URLSearchParams(data).toString());
+  const payload = {
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Pet'),
+    url: url + '?' + new URLSearchParams(data).toString(),
+  };
+  logAndExportQuotes(payload);
 };
 
 const onLeadAssigned = () => {

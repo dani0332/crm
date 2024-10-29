@@ -500,6 +500,14 @@ const exportPUAUrl = () => {
   let url = '/pua-leads-export';
   return url;
 };
+
+const onExport = url => {
+  const payload = {
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Car'),
+    url: `${window.location.origin}${url}`,
+  };
+  logAndExportQuotes(payload);
+};
 </script>
 
 <template>
@@ -816,7 +824,7 @@ const exportPUAUrl = () => {
             v-if="canExport && can(permissionsEnum.DATA_EXTRACTION)"
             size="sm"
             color="emerald"
-            :href="`/car/leads-export?${objToUrl(filters)}`"
+            @click="onExport(`/car/leads-export?${objToUrl(filters)}`)"
             class="justify-self-start mr-3"
           >
             Export
@@ -841,9 +849,13 @@ const exportPUAUrl = () => {
             "
             size="sm"
             color="emerald"
-            :href="`/car/leads-export-plan/${
-              genericRequestEnum.EXPORT_PLAN_DETAIL
-            }?${objToUrl(filters)}`"
+            @click="
+              onExport(
+                `/car/leads-export-plan/${
+                  genericRequestEnum.EXPORT_PLAN_DETAIL
+                }?${objToUrl(filters)}`,
+              )
+            "
             class="justify-self-start mr-3"
           >
             Extract leads and plan detail
@@ -871,9 +883,13 @@ const exportPUAUrl = () => {
             "
             size="sm"
             color="emerald"
-            :href="`/car/leads-details-with-email/${
-              genericRequestEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE
-            }?${objToUrl(filters)}`"
+            @click="
+              onExport(
+                `/car/leads-details-with-email/${
+                  genericRequestEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE
+                }?${objToUrl(filters)}`,
+              )
+            "
             class="justify-self-start mr-3"
           >
             Extract leads detail with email/mobile_no
@@ -898,9 +914,13 @@ const exportPUAUrl = () => {
             v-if="can(permissionsEnum.EXPORT_MAKES_MODELS)"
             size="sm"
             color="emerald"
-            :href="`/car/export-makes-model/${
-              genericRequestEnum.EXPORT_MAKES_MODELS
-            }?${objToUrl(filters)}`"
+            @click="
+              onExport(
+                `/car/export-makes-model/${
+                  genericRequestEnum.EXPORT_MAKES_MODELS
+                }?${objToUrl(filters)}`,
+              )
+            "
             class="justify-self-start mr-3"
           >
             Extract makes models trims
@@ -909,7 +929,7 @@ const exportPUAUrl = () => {
             v-if="can(permissionsEnum.EXPORT_CAR_PUA_UPDATES)"
             size="sm"
             color="emerald"
-            href="/pua-leads-export"
+            @click="onExport('/pua-leads-export')"
             class="justify-self-start mr-3"
           >
             Export PUA Updates

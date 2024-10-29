@@ -382,7 +382,18 @@ const onDataExport = () => {
 
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'health');
-  window.open(url + '?' + new URLSearchParams(data).toString());
+  const payload = {
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Health'),
+    url: url + '?' + new URLSearchParams(data).toString(),
+  };
+  logAndExportQuotes(payload);
+};
+
+const exportRmLeads = () => {
+  logAndExportQuotes({
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Health'),
+    url: `${window.location.origin}/rm-leads-export`,
+  });
 };
 
 onMounted(() => {
@@ -832,7 +843,7 @@ watch(() => {
             v-if="can(permissionsEnum.EXPORT_RM_LEADS)"
             size="sm"
             color="emerald"
-            href="/rm-leads-export"
+            @click="exportRmLeads()"
             class="justify-self-start mr-3"
           >
             Export RM Leads by Car Advisors
