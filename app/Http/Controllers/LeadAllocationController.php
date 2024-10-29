@@ -141,7 +141,7 @@ class LeadAllocationController extends Controller
     {
         $updateLogString = '----- Update done successfully to change the';
         $quoteTypeId = QuoteTypes::getIdFromValue(request('quoteType')) ?? null;
-        $quoteTypeId = in_array($quoteTypeId, [QuoteTypeId::Corpline, QuoteTypeId::GroupMedical]) ? QuoteTypeId::Business : $quoteTypeId;
+        $quoteTypeId = in_array(request('quoteType'), [quoteTypeCode::CORPLINE, quoteTypeCode::GroupMedical]) ? QuoteTypeId::Business : $quoteTypeId;
         foreach ($request->all() as $item) {
             if ($quoteTypeId) {
                 $leadAllocationUser = LeadAllocation::where('user_id', $item['userId'])->where('quote_type_id', $quoteTypeId)->where('id', $item['id'])->first();
@@ -190,7 +190,7 @@ class LeadAllocationController extends Controller
     {
         if (isset($request->max_cap)) {
             $quoteTypeId = QuoteTypes::getIdFromValue(request('quoteType')) ?? null;
-            $quoteTypeId = in_array($quoteTypeId, [QuoteTypeId::Corpline, QuoteTypeId::GroupMedical]) ? QuoteTypeId::Business : $quoteTypeId;
+            $quoteTypeId = in_array(request('quoteType'), [quoteTypeCode::CORPLINE, quoteTypeCode::GroupMedical]) ? QuoteTypeId::Business : $quoteTypeId;
             foreach ($request->max_cap as $item) {
                 if ($item['userId'] && $item['maxCap']) {
                     if ($quoteTypeId) {

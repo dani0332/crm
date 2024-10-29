@@ -22,6 +22,11 @@ abstract class BaseAllocation extends AllocationService
 
     public function __construct(public QuoteTypes $quoteType, public string $uuid, public $teamId = false, public bool $overrideAdvisorId = false) {}
 
+    private function getQuoteTypeId()
+    {
+        return in_array($this->quoteType, [QuoteTypes::CORPLINE, QuoteTypes::GROUP_MEDICAL]) ? QuoteTypes::BUSINESS->id() : $this->quoteType->id();
+    }
+
     public function executeSteps()
     {
         $response = [
@@ -93,7 +98,7 @@ abstract class BaseAllocation extends AllocationService
                 $q->whereIn('users.id', fn ($query) => $query->select('user_id')->from('user_team')->where('team_id', $this->teamId));
             })
             ->whereIn('r.name', $roles)
-            ->where('la.quote_type_id', in_array($this->quoteType, [QuoteTypes::CORPLINE, QuoteTypes::GROUP_MEDICAL]) ? QuoteTypes::BUSINESS->id() : $this->quoteType->id())
+            ->where('la.quote_type_id', $this->getQuoteTypeId())
             ->where('users.is_active', true)
             ->orderBy('la.last_allocated', 'asc');
     }
@@ -145,7 +150,7 @@ abstract class BaseAllocation extends AllocationService
 
             if ($this->lead->source != LeadSourceEnum::REFERRAL) {
                 info(self::class.' - lead source is not referral so about to update allocation record');
-                $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($advisor->id, $this->quoteType->id()) : $this->adjustAllocationCounts($advisor->id, $this->lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType, $this->quoteType->id());
+                $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($advisor->id, $this->getQuoteTypeId()) : $this->adjustAllocationCounts($advisor->id, $this->lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType, $this->getQuoteTypeId());
             }
             DB::commit();
         } catch (\Exception $e) {
