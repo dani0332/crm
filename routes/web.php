@@ -28,6 +28,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MembersDetailController;
 use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\QuoteDocumentController;
+use App\Http\Controllers\QuoteExportLogController;
 use App\Http\Controllers\RawQueryController;
 use App\Http\Controllers\ReasonController;
 use App\Http\Controllers\RenewalBatchController;
@@ -495,6 +496,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
 
         Route::post('car/change-insurer', [CarQuoteController::class, 'changeInsurer'])->name('change-car-insurer');
+
+        Route::post('/export-logs/create', [QuoteExportLogController::class, 'store'])->name('export-logs.create');
     });
 
     Route::get('personal-plans/list', [PersonalPlanController::class, 'getList']);

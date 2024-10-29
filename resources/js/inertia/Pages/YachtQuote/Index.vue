@@ -192,7 +192,8 @@ const handleSelectedFilters = selectedFilters => {
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'yacht');
-  window.open(url + '?' + new URLSearchParams(data).toString());
+  const payload = {quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Yacht'), url: url + '?' + new URLSearchParams(data).toString()};
+  logAndExportQuotes(payload);
 };
 
 const advisorOptionsFilter = computed(() => {
