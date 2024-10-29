@@ -6,6 +6,7 @@ use App\Enums\PolicyIssuanceEnum;
 use App\Factories\PolicyIssuanceFactory;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -14,7 +15,7 @@ use Illuminate\Queue\SerializesModels;
 use Log;
 use Throwable;
 
-class PolicyIssuanceJob implements ShouldQueue
+class PolicyIssuanceJob implements ShouldQueue , ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -23,6 +24,9 @@ class PolicyIssuanceJob implements ShouldQueue
     // 28 is the cURL error code for timeout
     private $className = null;
     private mixed $process;
+
+    public $uniqueFor = 60 * 15; // 15 minutes
+
 
     /**
      * Create a new job instance.
@@ -96,5 +100,10 @@ class PolicyIssuanceJob implements ShouldQueue
     private function isProcessable($process)
     {
         return in_array($process->status, [PolicyIssuanceEnum::PENDING_STATUS, PolicyIssuanceEnum::TIMEOUT_STATUS]);
+    }
+
+    public function uniqueId(): string
+    {
+        return $this->process->model->code;
     }
 }

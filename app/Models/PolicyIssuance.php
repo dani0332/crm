@@ -21,4 +21,9 @@ class PolicyIssuance extends Model
         return $this->belongsTo(InsuranceProvider::class);
     }
 
+    public function policyIssuanceLogs()
+    {
+        return $this->hasMany(PolicyIssuanceLog::class);
+    }
+
 }

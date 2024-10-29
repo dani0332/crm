@@ -447,7 +447,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
             'message' => 'All steps are locked',
         ];
 
-        if ($policyIssuance->status === PolicyIssuanceEnum::FAILED_STATUS) {
+        if ($policyIssuance?->status === PolicyIssuanceEnum::FAILED_STATUS) {
             if (! $policyIssuance->completed_step || $policyIssuance->completed_step === PolicyIssuanceEnum::ALLIANCE_TRAVEL_ISSUE_POLICY) {
                 $response['isEditPolicyDetailsDisabled'] = false;
                 $response['isPolicyDocumentUploadDisabled'] = false;
