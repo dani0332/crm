@@ -174,7 +174,6 @@ class SaleSummaryReportService extends ManagementReport
             ->leftJoin('lookups as l', 'send_update_logs.option_id', '=', 'l.id')
             ->select(
                 DB::raw('COUNT(send_update_logs.uuid) as total_endorsements'),
-                DB::raw('sum(IFNULL( IF(ps.discount_value IS NULL OR ps.discount_value = 0, send_update_logs.discount, ps.discount_value) , 0 )) as discount'),
                 DB::raw('((
                     sum(IFNULL( ps.price_vat_applicable , IFNULL( send_update_logs.price_vat_applicable , 0 ) + IFNULL( send_update_logs.price_vat_not_applicable , 0 ))) +
                     sum(IFNULL( IFNULL(ps.price_vat, send_update_logs.total_vat_amount) , 0 ))) -
@@ -248,7 +247,6 @@ class SaleSummaryReportService extends ManagementReport
             ->whereNotNull('send_update_logs.reversal_invoice')
             ->select(
                 DB::raw('COUNT(send_update_logs.uuid) as total_endorsements'),
-                DB::raw('sum(-1 * IFNULL(p.discount_value, 0)) as discount'),
                 DB::raw('-1 * ((
                  sum(IFNULL(s2.price_vat_applicable, IFNULL(p.price_vat_applicable, 0))) +
                  sum(IFNULL(IFNULL(s2.total_vat_amount, IFNULL(p.price_vat, 0)), 0))) -
@@ -327,7 +325,6 @@ class SaleSummaryReportService extends ManagementReport
                     'total_endorsements' => $group->sum('total_endorsements'),
                     'total_endorsement_amount' => $group->sum('total_endorsement_amount'),
                     'commission_vat_applicable' => $group->sum('commission_vat_applicable'),
-                    'discount' => $group->sum('discount'),
                 ];
             })->values());
 
