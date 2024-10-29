@@ -34,6 +34,8 @@ let availableFilters = {
   page: 1,
   policy_expiry_date: '',
   policy_expiry_date_end: '',
+  insurer_tax_number: '',
+  insurer_commmission_invoice_number: '',
 };
 
 const filters = reactive(availableFilters);
@@ -162,7 +164,11 @@ const tableHeader = [
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'jetski');
-  window.open(url + '?' + new URLSearchParams(data).toString());
+  const payload = {
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Jetski'),
+    url: url + '?' + new URLSearchParams(data).toString(),
+  };
+  logAndExportQuotes(payload);
 };
 
 watch(
@@ -397,6 +403,26 @@ const validateDateRange = () => {
             class="w-full"
           />
         </x-field>
+        <x-input
+          v-if="can(permissionsEnum.SEARCH_INSURER_TAX_INVOICE_NUMBER)"
+          v-model="filters.insurer_tax_number"
+          type="text"
+          name="insurer_tax_number"
+          label="Insurer Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Tax Invoice No"
+        />
+        <x-input
+          v-if="
+            can(permissionsEnum.SEARCH_INSURER_COMMISSION_TAX_INVOICE_NUMBER)
+          "
+          v-model="filters.insurer_commmission_invoice_number"
+          type="text"
+          name="insurer_commmission_invoice_number"
+          label="Insurer Commission Tax Invoice No"
+          class="w-full"
+          placeholder="Insurer Commission Tax Invoice No"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">

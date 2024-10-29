@@ -1114,6 +1114,13 @@ watch(
     bookingDetailsForm.broker_invoice_number = newValue;
   },
 );
+
+watch(
+  () => props.bookingDetails?.insurer_commission_invoice_number,
+  (newValue, oldValue) => {
+    bookingDetailsForm.insurer_commission_invoice_number = newValue;
+  },
+);
 </script>
 
 <template>
@@ -1653,14 +1660,7 @@ watch(
                   </span>
                 </div>
               </div>
-              <div
-                v-if="
-                  props.sendUpdateLog.option?.code !==
-                    sendUpdateStatusEnum.ACB &&
-                  props.sendUpdateLog.option?.code !== sendUpdateStatusEnum.ATIB
-                "
-                class="grid sm:grid-cols-2 pb-1.5"
-              >
+              <div class="grid sm:grid-cols-2 pb-1.5">
                 <div class="font-bold">
                   <x-tooltip placement="left">
                     <label

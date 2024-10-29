@@ -979,11 +979,6 @@ class SplitPaymentService
                 }
             }
             $splitPaymentAmount = $splitPaymentAmount - $priceVatNotApplicable;
-            $paymentDiscount = $quoteModel->payments()->where('code', $quoteModel->code)->value('discount_value');
-            if ($splitPaymentNumber === 1 && $paymentDiscount > 0) {
-                $splitPaymentAmount = $splitPaymentAmount + $paymentDiscount; //discount
-            }
-
             if ($frequency == PaymentFrequency::SPLIT_PAYMENTS) {
                 $priceWithoutVat = $splitPaymentAmount / (1 + ($vatValue / 100));
                 $vat = $priceWithoutVat * $vatValue / 100;
