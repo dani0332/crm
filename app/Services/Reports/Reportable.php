@@ -8,6 +8,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\RolesEnum;
 use App\Services\ApplicationStorageService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
