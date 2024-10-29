@@ -188,7 +188,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
 
         $customerMember = $quote->customerMembers()->where('customer_entity_id', $quote->customer_id)->first();
 
-        $endpoint = $this->baseUrl.'/v1/quote/'.$travelType.'/finalise';
+        $endPoint = $this->baseUrl.'/v1/quote/'.$travelType.'/finalise';
         $payload = [
             'agency_id' => $this->agencyId,
             'agency_code' => $this->agencyCode,
@@ -209,11 +209,11 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         ];
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PayLoad : '.json_encode($payload));
 
-        $issuePolicy = Http::post($endpoint, $payload);
+        $issuePolicy = Http::post($endPoint, $payload);
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Response : '.$issuePolicy);
 
         $issuePolicyResponse = $issuePolicy->object();
-        $this->storePolicyIssuanceLog($quote, $payload, $issuePolicyResponse, $response['completed_step']);
+        $this->storePolicyIssuanceLog($quote, $payload, $issuePolicyResponse, $endPoint, $response['completed_step']);
 
         if ($issuePolicy->failed()) {
             $response['error'] = $issuePolicyResponse?->errors;
@@ -250,7 +250,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' started');
 
         $response = ['status' => false, 'completed_step' => PolicyIssuanceEnum::ALLIANCE_TRAVEL_PURCHASE_POLICY, 'error' => null, 'message' => null];
-        $endpoint = $this->baseUrl.'/v1/quote/'.$travelType.'/purchase';
+        $endPoint = $this->baseUrl.'/v1/quote/'.$travelType.'/purchase';
 
         $payload = [
             'agency_id' => $this->agencyId,
@@ -259,11 +259,11 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         ];
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PayLoad : '.json_encode($payload));
 
-        $policyPurchase = Http::post($endpoint, $payload);
+        $policyPurchase = Http::post($endPoint, $payload);
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Response : '.$policyPurchase);
 
         $policyPurchaseResponse = $policyPurchase->object();
-        $this->storePolicyIssuanceLog($quote, $payload, $policyPurchaseResponse, $response['completed_step']);
+        $this->storePolicyIssuanceLog($quote, $payload, $policyPurchaseResponse, $endPoint , $response['completed_step']);
 
         if ($policyPurchase->failed()) {
             $response['error'] = $policyPurchaseResponse?->errors;
@@ -301,12 +301,12 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         ];
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PayLoad : '.json_encode($payload));
 
-        $endpoint = $this->baseUrl.'/v1/policy/'.$travelType.'/documents';
-        $policyDocuments = Http::post($endpoint, $payload);
+        $endPoint = $this->baseUrl.'/v1/policy/'.$travelType.'/documents';
+        $policyDocuments = Http::post($endPoint, $payload);
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Response : '.$policyDocuments);
 
         $policyDocumentsResponse = $policyDocuments->object();
-        $this->storePolicyIssuanceLog($quote, $payload, $policyDocumentsResponse, $response['completed_step']);
+        $this->storePolicyIssuanceLog($quote, $payload, $policyDocumentsResponse, $endPoint, $response['completed_step']);
         if ($policyDocuments->failed()) {
             $response['error'] = $policyDocumentsResponse?->errors;
 
@@ -346,12 +346,12 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         ];
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - PayLoad : '.json_encode($payload));
 
-        $endpoint = $this->baseUrl.'/v1/agency/buyer-tax-invoices';
-        $buyerTaxInvoice = Http::post($endpoint, $payload);
+        $endPoint = $this->baseUrl.'/v1/agency/buyer-tax-invoices';
+        $buyerTaxInvoice = Http::post($endPoint, $payload);
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Response : '.$buyerTaxInvoice);
 
         $buyerTaxInvoiceResponse = $buyerTaxInvoice->object();
-        $this->storePolicyIssuanceLog($quote, $payload, $buyerTaxInvoiceResponse, $response['completed_step']);
+        $this->storePolicyIssuanceLog($quote, $payload, $buyerTaxInvoiceResponse, $endPoint, $response['completed_step']);
 
         if ($buyerTaxInvoice->failed()) {
             $response['error'] = $buyerTaxInvoiceResponse?->errors;
@@ -534,13 +534,14 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         };
     }
 
-    private function storePolicyIssuanceLog($quote, $payload, $response, $step)
+    private function storePolicyIssuanceLog($quote, $payload, $response, $endPoint, $step)
     {
         $log = PolicyIssuanceLog::create([
             'policy_issuance_id' => $this->policyIssuance->id,
             'model_type' => $quote->getMorphClass(),
             'model_id' => $quote->id,
             'step' => $step,
+            'endPoint' => $endPoint,
             'payload' => json_encode($payload),
             'response' => json_encode($response),
         ]);

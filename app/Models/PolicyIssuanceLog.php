@@ -16,6 +16,7 @@ class PolicyIssuanceLog extends Model
         'model_type',
         'model_id',
         'step',
+        'endPoint',
         'payload',
         'response',
         'created_at',
