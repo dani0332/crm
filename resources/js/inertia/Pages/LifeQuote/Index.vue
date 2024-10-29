@@ -214,7 +214,10 @@ const permissionsEnum = page.props.permissionsEnum;
 const onExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'life');
-  const payload = {quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Life'), url: url + '?' + new URLSearchParams(data).toString()};
+  const payload = {
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Life'),
+    url: url + '?' + new URLSearchParams(data).toString(),
+  };
   logAndExportQuotes(payload);
 };
 
