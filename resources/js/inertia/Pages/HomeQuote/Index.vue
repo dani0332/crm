@@ -133,7 +133,10 @@ const advisorOptions = computed(() => {
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'home');
-  const payload = {quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Home'), url: url + '?' + new URLSearchParams(data).toString()};
+  const payload = {
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Home'),
+    url: url + '?' + new URLSearchParams(data).toString(),
+  };
   logAndExportQuotes(payload);
 };
 

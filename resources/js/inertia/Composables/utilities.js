@@ -362,16 +362,14 @@ export const calculateDaysDifference = (start_date, end_date) => {
 
 // Function to get the quote type ID based on quote type name
 export const getQuoteTypeId = (quoteTypes, quoteType) => {
-  return quoteTypes.filter(
-    item => item.name === quoteType,
-  )[0]?.id;
-}
+  return quoteTypes.filter(item => item.name === quoteType)[0]?.id;
+};
 
 // Function to log quote export and open the URL
-export const logAndExportQuotes = async(payload) => {
+export const logAndExportQuotes = async payload => {
   payload.ip_address = await getIp();
   axios
-    .post("/quotes/export-logs/create", payload)
+    .post('/quotes/export-logs/create', payload)
     .then(res => {
       console.log(res);
     })
@@ -381,14 +379,14 @@ export const logAndExportQuotes = async(payload) => {
     .finally(() => {
       window.open(payload.url);
     });
-}
+};
 
 // Function to get the IP address
 export const getIp = async () => {
   try {
-    const res = await axios.get("https://api.ipify.org?format=json");
+    const res = await axios.get('https://api.ipify.org?format=json');
     return res.data.ip;
   } catch (err) {
     return null;
   }
-}
+};

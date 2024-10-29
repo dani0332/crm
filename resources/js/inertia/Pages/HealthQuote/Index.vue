@@ -382,12 +382,18 @@ const onDataExport = () => {
 
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'health');
-  const payload = {quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Health'), url: url + '?' + new URLSearchParams(data).toString()};
+  const payload = {
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Health'),
+    url: url + '?' + new URLSearchParams(data).toString(),
+  };
   logAndExportQuotes(payload);
 };
 
 const exportRmLeads = () => {
-  logAndExportQuotes({quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Health'), url: `${window.location.origin}/rm-leads-export`})
+  logAndExportQuotes({
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Health'),
+    url: `${window.location.origin}/rm-leads-export`,
+  });
 };
 
 onMounted(() => {
