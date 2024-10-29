@@ -501,10 +501,13 @@ const exportPUAUrl = () => {
   return url;
 };
 
-const onExport = (url) => {
-  const payload = {quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Car'), url: `${window.location.origin}${url}`};
+const onExport = url => {
+  const payload = {
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Car'),
+    url: `${window.location.origin}${url}`,
+  };
   logAndExportQuotes(payload);
-}
+};
 </script>
 
 <template>
@@ -846,9 +849,13 @@ const onExport = (url) => {
             "
             size="sm"
             color="emerald"
-            @click="onExport(`/car/leads-export-plan/${
-              genericRequestEnum.EXPORT_PLAN_DETAIL
-            }?${objToUrl(filters)}`)"
+            @click="
+              onExport(
+                `/car/leads-export-plan/${
+                  genericRequestEnum.EXPORT_PLAN_DETAIL
+                }?${objToUrl(filters)}`,
+              )
+            "
             class="justify-self-start mr-3"
           >
             Extract leads and plan detail
@@ -876,9 +883,13 @@ const onExport = (url) => {
             "
             size="sm"
             color="emerald"
-            @click="onExport(`/car/leads-details-with-email/${
-              genericRequestEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE
-            }?${objToUrl(filters)}`)"
+            @click="
+              onExport(
+                `/car/leads-details-with-email/${
+                  genericRequestEnum.EXPORT_LEADS_DETAIL_WITH_EMAIL_MOBILE
+                }?${objToUrl(filters)}`,
+              )
+            "
             class="justify-self-start mr-3"
           >
             Extract leads detail with email/mobile_no
@@ -903,9 +914,13 @@ const onExport = (url) => {
             v-if="can(permissionsEnum.EXPORT_MAKES_MODELS)"
             size="sm"
             color="emerald"
-            @click="onExport(`/car/export-makes-model/${
-              genericRequestEnum.EXPORT_MAKES_MODELS
-            }?${objToUrl(filters)}`)"
+            @click="
+              onExport(
+                `/car/export-makes-model/${
+                  genericRequestEnum.EXPORT_MAKES_MODELS
+                }?${objToUrl(filters)}`,
+              )
+            "
             class="justify-self-start mr-3"
           >
             Extract makes models trims

@@ -331,7 +331,10 @@ const onDataExport = () => {
 
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'business');
-  const payload = {quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Business'), url: url + '?' + new URLSearchParams(data).toString()};
+  const payload = {
+    quote_type_id: getQuoteTypeId(page.props.quoteTypes, 'Business'),
+    url: url + '?' + new URLSearchParams(data).toString(),
+  };
   logAndExportQuotes(payload);
 };
 
