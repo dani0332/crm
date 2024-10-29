@@ -1501,13 +1501,13 @@ if (! function_exists('getInsuranceProvider')) {
 if (! function_exists('isAllianceTravelAutomationEnabled')) {
     function isAllianceTravelAutomationEnabled()
     {
-        return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ALLIANCE_TRAVEL_POLICY_ISSUANCE_ENABLED);
+        return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ENABLE_ALLIANCE_TRAVEL_POLICY_ISSUANCE);
     }
 }
 
 if (! function_exists('isAllianceTravelPolicyIssuanceRetryEnabledForTimeout')) {
     function isAllianceTravelPolicyIssuanceRetryEnabledForTimeout()
     {
-        return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE);
+        return app(ApplicationStorageService::class)->getValueByKey(ApplicationStorageEnums::ENABLE_RETRY_TIMEOUT_ALLIANCE_TRAVEL_POLICY_ISSUANCE);
     }
 }
