@@ -34,11 +34,6 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
     public const INSURER_CODE = InsuranceProvidersEnum::ALNC;
     public const TYPE = quoteTypeCode::Travel;
     public const TYPE_ID = QuoteTypeId::Travel;
-    public const ISSUE_POLICY = 'IssuePolicy';
-    public const PURCHASE_POLICY = 'PurchasePolicy';
-    public const UPLOAD_POLICY_DOCUMENTS = 'UploadPolicyDocuments';
-    public const FILL_POLICY_BOOKING_DETAILS = 'FillPolicyBookingDetails';
-    public const BOOK_POLICY = 'BookPolicy';
 
     public mixed $vat = null;
     public $policyIssuance = null;
@@ -263,7 +258,7 @@ class AllianceInsuranceService implements PolicyIssuanceInterface
         info('automation:'.$this->className.' fn:'.__FUNCTION__.' Quote : '.$quote->code.' - Response : '.$policyPurchase);
 
         $policyPurchaseResponse = $policyPurchase->object();
-        $this->storePolicyIssuanceLog($quote, $payload, $policyPurchaseResponse, $endPoint , $response['completed_step']);
+        $this->storePolicyIssuanceLog($quote, $payload, $policyPurchaseResponse, $endPoint, $response['completed_step']);
 
         if ($policyPurchase->failed()) {
             $response['error'] = $policyPurchaseResponse?->errors;
