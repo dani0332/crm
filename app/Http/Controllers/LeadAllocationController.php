@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
@@ -140,6 +141,7 @@ class LeadAllocationController extends Controller
     {
         $updateLogString = '----- Update done successfully to change the';
         $quoteTypeId = QuoteTypes::getIdFromValue(request('quoteType')) ?? null;
+        $quoteTypeId = in_array($quoteTypeId, [QuoteTypeId::Corpline, QuoteTypeId::GroupMedical]) ? QuoteTypeId::Business : $quoteTypeId;
         foreach ($request->all() as $item) {
             if ($quoteTypeId) {
                 $leadAllocationUser = LeadAllocation::where('user_id', $item['userId'])->where('quote_type_id', $quoteTypeId)->where('id', $item['id'])->first();
@@ -188,13 +190,20 @@ class LeadAllocationController extends Controller
     {
         if (isset($request->max_cap)) {
             $quoteTypeId = QuoteTypes::getIdFromValue(request('quoteType')) ?? null;
+            $quoteTypeId = in_array($quoteTypeId, [QuoteTypeId::Corpline, QuoteTypeId::GroupMedical]) ? QuoteTypeId::Business : $quoteTypeId;
             foreach ($request->max_cap as $item) {
                 if ($item['userId'] && $item['maxCap']) {
                     if ($quoteTypeId) {
-                        $leadAllocationObj = LeadAllocation::with(['leadAllocationUser'])->where('quote_type_id', $quoteTypeId)->where('user_id', $item['userId'])->first();
-                        $leadAllocationObj->max_capacity = (int) $item['maxCap'];
-                        $leadAllocationObj->save();
-                        info('Updated max cap of user : '.$leadAllocationObj->leadAllocationUser->email.' to '.(int) $item['maxCap']);
+                        $leadAllocationObj = LeadAllocation::with(['leadAllocationUser'])
+                            ->where('quote_type_id', $quoteTypeId)
+                            ->where('user_id', $item['userId'])->first();
+                        if ($leadAllocationObj) {
+                            $leadAllocationObj->max_capacity = (int) $item['maxCap'];
+                            $leadAllocationObj->save();
+                            info('Updated max cap of user : '.$leadAllocationObj->leadAllocationUser->email.' to '.(int) $item['maxCap']);
+                        } else {
+                            info('No LeadAllocation record found for user : '.$item['userId']);
+                        }
                     }
                 }
             }
