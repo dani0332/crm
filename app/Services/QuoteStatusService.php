@@ -93,7 +93,7 @@ class QuoteStatusService
     /**
      * Check if a policy sent log exists for the given quote.
      *
-     * @param int $quoteId The ID of the quote to check.
+     * @param  int  $quoteId  The ID of the quote to check.
      * @return bool True if a policy sent log exists, false otherwise.
      */
     public function isPolicySentLogExists(int $quoteId): bool
