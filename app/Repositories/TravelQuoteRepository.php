@@ -2,12 +2,10 @@
 
 namespace App\Repositories;
 
-use App\Enums\PolicyIssuanceEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
-use App\Models\PolicyIssuance;
 use App\Models\TravelQuote;
 use App\Traits\CentralTrait;
 
@@ -58,6 +56,5 @@ class TravelQuoteRepository extends BaseRepository
     {
         return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::TRAVEL->value).'-quote', 'post', $dataArr);
     }
-
 
 }

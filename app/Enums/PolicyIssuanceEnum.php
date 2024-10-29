@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
-use App\Services\PolicyIssuanceAutomation\Travel\AllianceInsuranceService;
 use BenSampo\Enum\Enum;
 
 /**
@@ -19,7 +18,6 @@ final class PolicyIssuanceEnum extends Enum
     const TIMEOUT_STATUS = 'timeout';
     const COMPLETED_STATUS = 'completed';
     const FAILED_STATUS = 'failed';
-
 
     /* Alliance Travel Steps*/
     const ALLIANCE_TRAVEL_ISSUE_POLICY = 'IssuePolicy';

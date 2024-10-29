@@ -10,6 +10,7 @@ use Illuminate\Console\Command;
 class RetryTimeoutPolicyIssuanceCommand extends Command
 {
     private $className = null;
+
     /**
      * The name and signature of the console command.
      *

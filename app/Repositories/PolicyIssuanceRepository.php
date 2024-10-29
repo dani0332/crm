@@ -2,7 +2,6 @@
 
 namespace App\Repositories;
 
-use App\Enums\CustomerTypeEnum;
 use App\Enums\PolicyIssuanceEnum;
 use App\Models\PolicyIssuance;
 
