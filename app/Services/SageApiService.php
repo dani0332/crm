@@ -627,17 +627,7 @@ class SageApiService
             info('################################## Sage Policy Booked Already for : '.$quote->code.' ##################################');
         }
 
-        // Check if a record exists in the QuoteStatusLog table where the quote_request_id matches the current quote's ID
-        // and either the previous_quote_status_id or current_quote_status_id matches the target status ID
-
-        $isPolicySentLogExists = QuoteStatusLog::where('quote_request_id', $quote->id)
-            ->where(function ($query) {
-                $query->where('previous_quote_status_id', QuoteStatusEnum::PolicySentToCustomer)
-                    ->orWhere('current_quote_status_id', QuoteStatusEnum::PolicySentToCustomer);
-            })
-            ->exists();
-
-        if (! $isPolicySentLogExists) {
+        if (!(app(QuoteStatusService::class)->isPolicySentLogExists($quote->id))) {
             info('################################## Send Customer Documents to customer after booking of : '.$quote->code.' ##################################');
             // dispath job to send email
             SendBookPolicyDocumentsJob::dispatch($request, $quote->code);
