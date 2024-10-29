@@ -90,7 +90,7 @@ class QuoteStatusService
         return $updateQuote;
     }
 
-    private function isPolicySentLogExists($quoteId): bool
+    public function isPolicySentLogExists($quoteId): bool
     {
         // Check if a policy sent log exists for the given quote.
         return QuoteStatusLog::where('quote_request_id', $quoteId)
